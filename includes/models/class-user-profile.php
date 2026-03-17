@@ -1,0 +1,151 @@
+<?php
+namespace Jetonomy\Models;
+
+defined( 'ABSPATH' ) || exit;
+
+use function Jetonomy\now;
+
+class UserProfile extends Model {
+
+	protected static function table_name(): string {
+		return 'user_profiles';
+	}
+
+	/**
+	 * Find an existing profile or create one with defaults.
+	 *
+	 * @param int $user_id
+	 * @return object
+	 */
+	public static function find_or_create( int $user_id ): object {
+		$existing = static::find_by_user( $user_id );
+
+		if ( $existing ) {
+			return $existing;
+		}
+
+		$now = now();
+		static::db()->insert(
+			static::table(),
+			[
+				'user_id'    => $user_id,
+				'created_at' => $now,
+				'updated_at' => $now,
+			]
+		);
+
+		return static::find_by_user( $user_id );
+	}
+
+	/**
+	 * Find a profile by user ID.
+	 *
+	 * @param int $user_id
+	 * @return object|null
+	 */
+	public static function find_by_user( int $user_id ): ?object {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d',
+				$user_id
+			)
+		);
+		return $row ?: null;
+	}
+
+	/**
+	 * Update profile fields for a user.
+	 *
+	 * @param int   $user_id
+	 * @param array $data Column data to update.
+	 * @return bool
+	 */
+	public static function update_profile( int $user_id, array $data ): bool {
+		return false !== static::db()->update(
+			static::table(),
+			$data,
+			[ 'user_id' => $user_id ]
+		);
+	}
+
+	/**
+	 * Add or subtract from a user's reputation score.
+	 *
+	 * @param int $user_id
+	 * @param int $delta Amount to add (use negative value to subtract).
+	 */
+	public static function adjust_reputation( int $user_id, int $delta ): void {
+		static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET reputation = reputation + %d WHERE user_id = %d',
+				$delta,
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Increment the post_count for a user profile.
+	 *
+	 * @param int $user_id
+	 */
+	public static function increment_post_count( int $user_id ): void {
+		static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET post_count = post_count + 1 WHERE user_id = %d',
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Increment the reply_count for a user profile.
+	 *
+	 * @param int $user_id
+	 */
+	public static function increment_reply_count( int $user_id ): void {
+		static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET reply_count = reply_count + 1 WHERE user_id = %d',
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Update the last_seen_at timestamp for a user.
+	 *
+	 * @param int $user_id
+	 */
+	public static function update_last_seen( int $user_id ): void {
+		static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET last_seen_at = %s WHERE user_id = %d',
+				now(),
+				$user_id
+			)
+		);
+	}
+
+	/**
+	 * Return the decoded settings array for a user profile.
+	 *
+	 * @param int $user_id
+	 * @return array Settings key/value pairs, or empty array if none.
+	 */
+	public static function get_settings( int $user_id ): array {
+		$row = static::db()->get_row(
+			static::db()->prepare(
+				'SELECT settings FROM ' . static::table() . ' WHERE user_id = %d',
+				$user_id
+			)
+		);
+
+		if ( ! $row || empty( $row->settings ) ) {
+			return [];
+		}
+
+		$decoded = json_decode( $row->settings, true );
+		return is_array( $decoded ) ? $decoded : [];
+	}
+}
