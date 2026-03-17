@@ -1,0 +1,106 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+
+$space_slug = $data['slug'] ?? '';
+$space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
+
+if ( ! $space ) {
+	status_header( 404 );
+	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div></div>';
+	return;
+}
+
+// Fetch posts tagged as idea-like or within ideas spaces.
+// Render as a kanban board grouped by resolved/open status.
+global $wpdb;
+$posts_tbl = \Jetonomy\table( 'posts' );
+
+// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$all_ideas = $wpdb->get_results(
+	$wpdb->prepare(
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		"SELECT * FROM {$posts_tbl}
+		 WHERE space_id = %d AND status = 'publish'
+		 ORDER BY vote_score DESC, created_at DESC
+		 LIMIT 60",
+		(int) $space->id
+	)
+) ?: [];
+
+// Group into columns by is_resolved / is_closed.
+$columns = [
+	'open'        => [ 'label' => __( 'Open', 'jetonomy' ), 'color' => 'var(--jt-accent)', 'posts' => [] ],
+	'in-progress' => [ 'label' => __( 'In Progress', 'jetonomy' ), 'color' => 'var(--jt-warn)', 'posts' => [] ],
+	'resolved'    => [ 'label' => __( 'Resolved', 'jetonomy' ), 'color' => 'var(--jt-success)', 'posts' => [] ],
+	'closed'      => [ 'label' => __( 'Closed', 'jetonomy' ), 'color' => 'var(--jt-text-tertiary)', 'posts' => [] ],
+];
+
+foreach ( $all_ideas as $idea ) {
+	if ( $idea->is_closed ) {
+		$columns['closed']['posts'][] = $idea;
+	} elseif ( $idea->is_resolved ) {
+		$columns['resolved']['posts'][] = $idea;
+	} else {
+		// Simple heuristic: posts with at least one reply are "in progress".
+		if ( (int) $idea->reply_count > 0 ) {
+			$columns['in-progress']['posts'][] = $idea;
+		} else {
+			$columns['open']['posts'][] = $idea;
+		}
+	}
+}
+
+$category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$base     = home_url( '/community' );
+
+$crumbs = [];
+if ( $category ) {
+	$crumbs[] = [ 'label' => $category->name, 'url' => '' ];
+}
+$crumbs[] = [ 'label' => $space->title, 'url' => $base . '/s/' . $space->slug . '/' ];
+$crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
+?>
+<div class="jt-container">
+
+	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
+
+	<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+		<?php if ( ! empty( $space->emoji ) ) : ?>
+			<span style="font-size:24px;"><?php echo esc_html( $space->emoji ); ?></span>
+		<?php endif; ?>
+		<h1 style="font-family:var(--jt-font-heading);font-size:20px;font-weight:700;margin:0;">
+			<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
+		</h1>
+	</div>
+
+	<div class="jt-kanban">
+		<?php foreach ( $columns as $col_key => $col ) : ?>
+			<div class="jt-col">
+				<div class="jt-col-head" style="border-color:<?php echo esc_attr( $col['color'] ); ?>;">
+					<span class="jt-col-title" style="color:<?php echo esc_attr( $col['color'] ); ?>;">
+						<?php echo esc_html( $col['label'] ); ?>
+					</span>
+					<span class="jt-col-n"><?php echo count( $col['posts'] ); ?></span>
+				</div>
+				<?php if ( empty( $col['posts'] ) ) : ?>
+					<p style="font-size:12px;color:var(--jt-text-tertiary);text-align:center;padding:20px 0;"><?php esc_html_e( 'None', 'jetonomy' ); ?></p>
+				<?php else : ?>
+					<?php foreach ( $col['posts'] as $idea ) : ?>
+						<?php $idea_url = $base . '/s/' . $space->slug . '/t/' . $idea->slug . '/'; ?>
+						<div class="jt-idea" onclick="window.location='<?php echo esc_url( $idea_url ); ?>'">
+							<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
+							<div style="font-size:11px;color:var(--jt-text-tertiary);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+								<?php echo esc_html( wp_strip_all_tags( $idea->content ) ); ?>
+							</div>
+							<div class="jt-idea-meta">
+								<span class="jt-idea-votes">&#9650; <?php echo (int) $idea->vote_score; ?></span>
+								<span><?php echo (int) $idea->reply_count; ?> <?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				<?php endif; ?>
+			</div>
+		<?php endforeach; ?>
+	</div>
+
+</div>

@@ -1,0 +1,49 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+$author      = get_userdata( (int) $reply->author_id );
+$profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
+$initials    = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
+$trust       = $profile ? (int) $profile->trust_level : 0;
+$time_ago    = human_time_diff( strtotime( $reply->created_at ), current_time( 'timestamp', true ) );
+$is_op       = (int) $reply->author_id === (int) $post->author_id;
+$is_accepted = (int) $reply->is_accepted;
+?>
+<div class="jt-reply <?php echo $is_accepted ? 'accepted' : ''; ?>" data-wp-interactive="jetonomy">
+	<div class="jt-reply-head">
+		<span class="jt-avatar jt-avatar-sm"><?php echo esc_html( $initials ); ?></span>
+		<strong style="font-size:13px;"><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
+		<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+		<?php if ( $is_op ) : ?>
+			<span style="font-size:12px;color:var(--jt-accent);font-weight:600;"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
+		<?php endif; ?>
+		<span style="color:var(--jt-text-tertiary);font-size:12px;">
+			<?php
+			/* translators: %s: human-readable time difference */
+			echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+			?>
+		</span>
+		<?php if ( $is_accepted ) : ?>
+			<span class="jt-accepted-tag">&#10003; <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
+		<?php endif; ?>
+	</div>
+	<div class="jt-reply-body">
+		<?php echo wp_kses_post( $reply->content ); ?>
+	</div>
+	<div class="jt-reply-foot">
+		<button class="jt-act"
+			data-wp-on--click="actions.voteReplyUp"
+			data-reply-id="<?php echo (int) $reply->id; ?>"
+			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+			&#9650; <span class="n"><?php echo (int) $reply->vote_score; ?></span>
+		</button>
+		<button class="jt-act"
+			data-wp-on--click="actions.voteReplyDown"
+			data-reply-id="<?php echo (int) $reply->id; ?>"
+			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">&#9660;</button>
+		<?php if ( is_user_logged_in() ) : ?>
+			<button class="jt-act"
+				data-wp-on--click="actions.showReplyComposer"
+				data-reply-id="<?php echo (int) $reply->id; ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
+		<?php endif; ?>
+	</div>
+</div>
