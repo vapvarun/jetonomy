@@ -52,6 +52,17 @@ class Template_Loader {
             JETONOMY_VERSION
         );
 
+        // Set up Interactivity API state
+        wp_interactivity_state( 'jetonomy', [
+            'apiBase'       => rest_url( 'jetonomy/v1' ),
+            '_nonce'        => wp_create_nonce( 'wp_rest' ),
+            'currentPostId' => 0,
+            'postScores'    => new \stdClass(),
+            'replyScores'   => new \stdClass(),
+            'currentSort'   => sanitize_text_field( $_GET['sort'] ?? 'latest' ),
+            'unreadCount'   => 0,
+        ] );
+
         // Enqueue Interactivity API module
         wp_enqueue_script_module(
             'jetonomy-view',
