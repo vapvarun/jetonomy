@@ -53,7 +53,11 @@ final class Jetonomy {
 
     private function load_dependencies(): void {
         require_once JETONOMY_DIR . 'includes/functions.php';
-        
+
+        require_once JETONOMY_DIR . 'includes/class-router.php';
+        require_once JETONOMY_DIR . 'includes/class-template-loader.php';
+        new Router();
+
         require_once JETONOMY_DIR . 'includes/api/class-api.php';
         new API\Api();
     }
