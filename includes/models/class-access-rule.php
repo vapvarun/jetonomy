@@ -1,0 +1,128 @@
+<?php
+namespace Jetonomy\Models;
+
+defined( 'ABSPATH' ) || exit;
+
+use function Jetonomy\now;
+
+class AccessRule extends Model {
+
+	protected static function table_name(): string {
+		return 'access_rules';
+	}
+
+	/**
+	 * Create a new access rule.
+	 *
+	 * Automatically sets created_at if absent.
+	 *
+	 * @param array $data Column data (space_id, rule_type, rule_value, grants, priority, etc.).
+	 * @return int Inserted row ID.
+	 */
+	public static function create( array $data ): int {
+		$data = array_merge(
+			[
+				'created_at' => now(),
+			],
+			$data
+		);
+
+		return static::insert( $data );
+	}
+
+	/**
+	 * List all access rules for a space, ordered by priority descending.
+	 *
+	 * @param int $space_id
+	 * @return object[]
+	 */
+	public static function list_for_space( int $space_id ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY priority DESC',
+				$space_id
+			)
+		) ?: [];
+	}
+
+	/**
+	 * Evaluate access rules for a user in a space.
+	 *
+	 * Iterates rules in priority order (highest first) and returns the first
+	 * rule whose conditions match the user, as an array containing the rule's
+	 * decoded grants and the space_role (if set).
+	 *
+	 * Rule types evaluated:
+	 *   - 'everyone'    → always matches
+	 *   - 'logged_in'   → matches if $user_id > 0
+	 *   - 'role'        → matches if the WP user has the given WP role
+	 *   - 'capability'  → matches if user_can( $user_id, $rule_value )
+	 *   - 'trust_level' → matches if the user's trust_level >= (int) $rule_value
+	 *   - 'membership'  → skipped (handled by adapters)
+	 *
+	 * @param int $user_id WP user ID (0 = guest).
+	 * @param int $space_id
+	 * @return array|null Matched rule's resolved data, or null if no rule matched.
+	 */
+	public static function resolve_access( int $user_id, int $space_id ): ?array {
+		$rules = static::list_for_space( $space_id );
+
+		if ( empty( $rules ) ) {
+			return null;
+		}
+
+		$wp_user = $user_id > 0 ? get_userdata( $user_id ) : null;
+
+		foreach ( $rules as $rule ) {
+			$matched = false;
+
+			switch ( $rule->rule_type ) {
+				case 'everyone':
+					$matched = true;
+					break;
+
+				case 'logged_in':
+					$matched = $user_id > 0;
+					break;
+
+				case 'role':
+					if ( $wp_user && in_array( $rule->rule_value, (array) $wp_user->roles, true ) ) {
+						$matched = true;
+					}
+					break;
+
+				case 'capability':
+					if ( $user_id > 0 && user_can( $user_id, $rule->rule_value ) ) {
+						$matched = true;
+					}
+					break;
+
+				case 'trust_level':
+					if ( $user_id > 0 ) {
+						$profile = UserProfile::find_by_user( $user_id );
+						if ( $profile && isset( $profile->trust_level ) && (int) $profile->trust_level >= (int) $rule->rule_value ) {
+							$matched = true;
+						}
+					}
+					break;
+
+				case 'membership':
+					// Handled by adapters; skip for now.
+					break;
+			}
+
+			if ( $matched ) {
+				$grants = ! empty( $rule->grants ) ? json_decode( $rule->grants, true ) : [];
+
+				return [
+					'grants'     => is_array( $grants ) ? $grants : [],
+					'space_role' => $rule->space_role ?? null,
+					'rule_id'    => (int) $rule->id,
+					'rule_type'  => $rule->rule_type,
+				];
+			}
+		}
+
+		return null;
+	}
+}
