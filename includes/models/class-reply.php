@@ -39,20 +39,24 @@ class Reply extends Model {
 	}
 
 	/**
-	 * List published replies for a post with sorting options.
+	 * List published replies for a post with sorting and cursor-based pagination.
 	 *
 	 * Sort options:
 	 *   'oldest' — created_at ASC (default)
 	 *   'newest' — created_at DESC
 	 *   'best'   — vote_score DESC
 	 *
+	 * Cursor param:
+	 *   $after > 0  — return only rows with id > $after (forward cursor)
+	 *
 	 * @param int    $post_id
 	 * @param string $sort
 	 * @param int    $limit
-	 * @param int    $offset
+	 * @param int    $offset  Legacy offset; ignored when $after > 0.
+	 * @param int    $after   Cursor: return replies after this reply ID.
 	 * @return object[]
 	 */
-	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0 ): array {
+	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
 			$settings = get_option( 'jetonomy_settings', [] );
 			$limit    = (int) ( $settings['posts_per_page'] ?? 30 );
@@ -72,6 +76,19 @@ class Reply extends Model {
 			default:
 				$order_by = 'created_at ASC';
 				break;
+		}
+
+		// Cursor: prefer id-based over offset when $after is provided.
+		if ( $after > 0 ) {
+			return static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' AND id > %d ORDER BY {$order_by} LIMIT %d",
+					$post_id,
+					$after,
+					$limit
+				)
+			) ?: [];
 		}
 
 		return static::db()->get_results(

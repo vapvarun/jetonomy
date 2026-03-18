@@ -62,42 +62,58 @@ class Post extends Model {
 	}
 
 	/**
-	 * List published posts in a space with sorting options.
+	 * List published posts in a space with sorting and cursor-based pagination.
 	 *
 	 * Sort options:
 	 *   'latest'      — sticky posts first, then last_reply_at DESC
 	 *   'popular'     — vote_score DESC
 	 *   'unanswered'  — reply_count = 0, created_at DESC
 	 *
+	 * Cursor param:
+	 *   $after > 0  — return only rows with id > $after (forward cursor)
+	 *
 	 * @param int    $space_id
 	 * @param string $sort
 	 * @param int    $limit
-	 * @param int    $offset
+	 * @param int    $offset  Legacy offset; ignored when $after > 0.
+	 * @param int    $after   Cursor: return items after this post ID.
 	 * @return object[]
 	 */
-	public static function list_by_space( int $space_id, string $sort = 'latest', int $limit = -1, int $offset = 0 ): array {
+	public static function list_by_space( int $space_id, string $sort = 'latest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
 			$settings = get_option( 'jetonomy_settings', [] );
 			$limit    = (int) ( $settings['posts_per_page'] ?? 20 );
 		}
 		$table = static::table();
 
+		$extra_where = '';
+
 		switch ( $sort ) {
 			case 'popular':
 				$order_by = 'vote_score DESC';
-				$extra_where = '';
 				break;
 
 			case 'unanswered':
-				$order_by = 'created_at DESC';
+				$order_by    = 'created_at DESC';
 				$extra_where = ' AND reply_count = 0';
 				break;
 
 			case 'latest':
 			default:
 				$order_by = 'is_sticky DESC, last_reply_at DESC';
-				$extra_where = '';
 				break;
+		}
+
+		// Cursor: prefer id-based over offset when $after is provided.
+		if ( $after > 0 ) {
+			$params = [ $space_id, $after, $limit ];
+			return static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
+					...$params
+				)
+			) ?: [];
 		}
 
 		return static::db()->get_results(

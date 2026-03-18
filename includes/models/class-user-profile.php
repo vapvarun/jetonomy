@@ -4,6 +4,7 @@ namespace Jetonomy\Models;
 defined( 'ABSPATH' ) || exit;
 
 use function Jetonomy\now;
+use Jetonomy\Cache;
 
 class UserProfile extends Model {
 
@@ -38,29 +39,36 @@ class UserProfile extends Model {
 	}
 
 	/**
-	 * Find a profile by user ID.
+	 * Find a profile by user ID, with 2-minute object-cache.
 	 *
 	 * @param int $user_id
 	 * @return object|null
 	 */
 	public static function find_by_user( int $user_id ): ?object {
-		$row = static::db()->get_row(
-			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d',
-				$user_id
-			)
+		return Cache::remember(
+			"profile:{$user_id}",
+			function() use ( $user_id ) {
+				$row = static::db()->get_row(
+					static::db()->prepare(
+						'SELECT * FROM ' . static::table() . ' WHERE user_id = %d',
+						$user_id
+					)
+				);
+				return $row ?: null;
+			},
+			120
 		);
-		return $row ?: null;
 	}
 
 	/**
-	 * Update profile fields for a user.
+	 * Update profile fields for a user and invalidate the cache.
 	 *
 	 * @param int   $user_id
 	 * @param array $data Column data to update.
 	 * @return bool
 	 */
 	public static function update_profile( int $user_id, array $data ): bool {
+		Cache::delete( "profile:{$user_id}" );
 		return false !== static::db()->update(
 			static::table(),
 			$data,
@@ -69,12 +77,13 @@ class UserProfile extends Model {
 	}
 
 	/**
-	 * Add or subtract from a user's reputation score.
+	 * Add or subtract from a user's reputation score, then invalidate the cache.
 	 *
 	 * @param int $user_id
 	 * @param int $delta Amount to add (use negative value to subtract).
 	 */
 	public static function adjust_reputation( int $user_id, int $delta ): void {
+		Cache::delete( "profile:{$user_id}" );
 		static::db()->query(
 			static::db()->prepare(
 				'UPDATE ' . static::table() . ' SET reputation = reputation + %d WHERE user_id = %d',

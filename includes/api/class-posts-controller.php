@@ -115,8 +115,12 @@ class Posts_Controller extends Base_Controller {
 			$space_id,
 			$pagination['sort'],
 			(int) $pagination['limit'],
-			(int) $pagination['offset']
+			(int) $pagination['offset'],
+			(int) $pagination['after']
 		);
+
+		// Eager-load all author data in a single batch before preparing items.
+		$posts = $this->enrich_with_author( $posts );
 
 		$items = array_map( [ $this, 'prepare_post' ], $posts );
 
@@ -469,12 +473,32 @@ class Posts_Controller extends Base_Controller {
 
 	/**
 	 * Format a post object for API output.
+	 *
+	 * When called after enrich_with_author() the author fields are already set
+	 * on the object — individual DB/cache lookups are skipped in that case.
 	 */
 	private function prepare_post( object $post ): array {
 		$author_id = (int) ( $post->author_id ?? 0 );
-		$author    = $author_id ? get_userdata( $author_id ) : null;
-		$profile   = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
 		$space     = \Jetonomy\Models\Space::find( (int) $post->space_id );
+
+		// Use pre-enriched data if present, otherwise fall back to per-item lookup.
+		if ( isset( $post->author_name ) ) {
+			$author_name   = $post->author_name;
+			$author_avatar = $post->author_avatar;
+			$author_login  = $post->author_login;
+			$trust_level   = $post->trust_level;
+			$reputation    = $post->reputation;
+			$profile_url   = $post->profile_url;
+		} else {
+			$author        = $author_id ? get_userdata( $author_id ) : null;
+			$profile       = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
+			$author_name   = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
+			$author_avatar = $author ? get_avatar_url( $author_id, [ 'size' => 64 ] ) : '';
+			$author_login  = $author ? $author->user_login : '';
+			$trust_level   = $profile ? (int) $profile->trust_level : 0;
+			$reputation    = $profile ? (int) $profile->reputation : 0;
+			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
+		}
 
 		return [
 			'id'                => (int) $post->id,
@@ -499,13 +523,13 @@ class Posts_Controller extends Base_Controller {
 			'created_at'        => $post->created_at ?? null,
 			'updated_at'        => $post->updated_at ?? null,
 			// Enriched author data (for app clients + JS rendering)
-			'author_name'       => $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ),
-			'author_avatar'     => $author ? get_avatar_url( $author_id, [ 'size' => 64 ] ) : '',
-			'author_login'      => $author ? $author->user_login : '',
-			'trust_level'       => $profile ? (int) $profile->trust_level : 0,
-			'reputation'        => $profile ? (int) $profile->reputation : 0,
+			'author_name'       => $author_name,
+			'author_avatar'     => $author_avatar,
+			'author_login'      => $author_login,
+			'trust_level'       => $trust_level,
+			'reputation'        => $reputation,
 			'time_ago'          => $post->created_at ? human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
-			'profile_url'       => $author_id ? \Jetonomy\get_profile_url( $author_id ) : '',
+			'profile_url'       => $profile_url,
 			// Space context
 			'space_title'       => $space ? $space->title : '',
 			'space_slug'        => $space ? $space->slug : '',

@@ -3,6 +3,7 @@ namespace Jetonomy\Permissions;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Cache;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\Restriction;
@@ -43,12 +44,30 @@ class Permission_Engine {
 	/**
 	 * Determine whether a user is allowed to perform an action.
 	 *
+	 * Results are cached for 60 seconds per user/action/space combination.
+	 *
 	 * @param int         $user_id  WP user ID to check.
 	 * @param string      $action   Action name (without 'jetonomy_' prefix for WP cap check).
 	 * @param int|null    $space_id Optional space context.
 	 * @return bool
 	 */
 	public static function can( int $user_id, string $action, ?int $space_id = null ): bool {
+		$cache_key = "perm:{$user_id}:{$action}:" . ( $space_id ?? 0 );
+		$cached    = Cache::get( $cache_key );
+		if ( false !== $cached ) {
+			return (bool) $cached;
+		}
+
+		$result = self::resolve( $user_id, $action, $space_id );
+		// Store as 1/0 so we can distinguish a cached false from a cache miss.
+		Cache::set( $cache_key, $result ? 1 : 0, 60 );
+		return $result;
+	}
+
+	/**
+	 * Internal uncached resolution — called by can().
+	 */
+	private static function resolve( int $user_id, string $action, ?int $space_id ): bool {
 		// Layer 0: Global ban.
 		if ( $user_id && Restriction::is_banned( $user_id ) ) {
 			return false;

@@ -4,11 +4,38 @@ namespace Jetonomy\Models;
 defined( 'ABSPATH' ) || exit;
 
 use function Jetonomy\now;
+use Jetonomy\Cache;
 
 class Space extends Model {
 
 	protected static function table_name(): string {
 		return 'spaces';
+	}
+
+	/**
+	 * Find a space by ID, with 5-minute object-cache.
+	 *
+	 * @param int $id Space ID.
+	 * @return object|null
+	 */
+	public static function find( int $id ): ?object {
+		return Cache::remember(
+			"space:{$id}",
+			fn() => parent::find( $id ),
+			300
+		);
+	}
+
+	/**
+	 * Invalidate the cached row and then delegate to Model::update().
+	 *
+	 * @param int   $id   Space ID.
+	 * @param array $data Column data.
+	 * @return bool
+	 */
+	public static function update( int $id, array $data ): bool {
+		Cache::delete( "space:{$id}" );
+		return parent::update( $id, $data );
 	}
 
 	/**
@@ -40,19 +67,25 @@ class Space extends Model {
 	}
 
 	/**
-	 * Find a space by its slug.
+	 * Find a space by its slug, with 5-minute object-cache.
 	 *
 	 * @param string $slug
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug ): ?object {
-		$row = static::db()->get_row(
-			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
-				$slug
-			)
+		return Cache::remember(
+			"space:slug:{$slug}",
+			function() use ( $slug ) {
+				$row = static::db()->get_row(
+					static::db()->prepare(
+						'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
+						$slug
+					)
+				);
+				return $row ?: null;
+			},
+			300
 		);
-		return $row ?: null;
 	}
 
 	/**
