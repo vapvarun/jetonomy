@@ -372,11 +372,15 @@ class Replies_Controller extends Base_Controller {
 	 * Format a reply object for API output.
 	 */
 	private function prepare_reply( object $reply ): array {
+		$author_id = (int) ( $reply->author_id ?? 0 );
+		$author    = $author_id ? get_userdata( $author_id ) : null;
+		$profile   = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
+
 		return [
 			'id'            => (int) $reply->id,
 			'post_id'       => (int) $reply->post_id,
 			'parent_id'     => $reply->parent_id ? (int) $reply->parent_id : null,
-			'author_id'     => (int) $reply->author_id,
+			'author_id'     => $author_id,
 			'content'       => $reply->content ?? '',
 			'content_plain' => $reply->content_plain ?? '',
 			'status'        => $reply->status ?? 'publish',
@@ -385,6 +389,14 @@ class Replies_Controller extends Base_Controller {
 			'edited_at'     => $reply->edited_at ?? null,
 			'edited_by'     => $reply->edited_by ? (int) $reply->edited_by : null,
 			'created_at'    => $reply->created_at ?? null,
+			// Enriched author data (for app clients + JS rendering)
+			'author_name'   => $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ),
+			'author_avatar' => $author ? get_avatar_url( $author_id, [ 'size' => 64 ] ) : '',
+			'author_login'  => $author ? $author->user_login : '',
+			'trust_level'   => $profile ? (int) $profile->trust_level : 0,
+			'reputation'    => $profile ? (int) $profile->reputation : 0,
+			'time_ago'      => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'   => $author_id ? \Jetonomy\get_profile_url( $author_id ) : '',
 		];
 	}
 

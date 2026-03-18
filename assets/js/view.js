@@ -325,6 +325,79 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Load More Replies (no page reload) ──
+        *loadMoreReplies() {
+            const ctx = getContext();
+            if ( ctx.loading || ! ctx.hasMore ) return;
+
+            ctx.loading = true;
+
+            try {
+                const response = yield fetch(
+                    `${ state.apiBase }/posts/${ ctx.postId }/replies?sort=${ ctx.sort }&limit=20&offset=${ ctx.loadedCount }`,
+                    {
+                        headers: { 'X-WP-Nonce': state.nonce },
+                    }
+                );
+
+                if ( ! response.ok ) return;
+                const result = yield response.json();
+                const replies = result.data || result;
+
+                if ( ! replies.length ) {
+                    ctx.hasMore = false;
+                    return;
+                }
+
+                // Render replies and append to container
+                const container = document.getElementById( 'jt-replies-container' );
+                if ( ! container ) return;
+
+                for ( const reply of replies ) {
+                    const author = reply.author_name || 'Anonymous';
+                    const initials = author.substring( 0, 2 ).toUpperCase();
+                    const avatarUrl = reply.author_avatar || '';
+                    const timeAgo = reply.time_ago || '';
+                    const isAccepted = reply.is_accepted ? ' accepted' : '';
+                    const trustLevel = reply.trust_level || 0;
+
+                    const avatarHtml = avatarUrl
+                        ? `<img src="${ avatarUrl }" alt="${ author }" class="jt-avatar jt-avatar-sm" width="28" height="28" loading="lazy">`
+                        : `<span class="jt-avatar jt-avatar-sm">${ initials }</span>`;
+
+                    const replyHtml = `
+                        <div class="jt-reply${ isAccepted }" data-wp-interactive="jetonomy">
+                            <div class="jt-reply-head">
+                                <a href="#" class="jt-user-link">${ avatarHtml } <span class="jt-user-name">${ author }</span></a>
+                                <span class="jt-tl" data-jt-tl="${ trustLevel }">${ trustLevel }</span>
+                                <span class="jt-reply-time">${ timeAgo }</span>
+                                ${ isAccepted ? '<span class="jt-accepted-tag">&#10003; Accepted</span>' : '' }
+                            </div>
+                            <div class="jt-reply-body">${ reply.content }</div>
+                            <div class="jt-reply-foot">
+                                <button class="jt-act" data-wp-on--click="actions.voteReplyUp" data-reply-id="${ reply.id }">&#9650; <span class="n">${ reply.vote_score || 0 }</span></button>
+                                <button class="jt-act">&#9660;</button>
+                            </div>
+                        </div>`;
+
+                    container.insertAdjacentHTML( 'beforeend', replyHtml );
+                }
+
+                ctx.loadedCount += replies.length;
+                ctx.lastReplyId = replies[ replies.length - 1 ].id;
+
+                // Update remaining count on button
+                const remaining = ctx.totalReplies - ctx.loadedCount;
+                if ( remaining <= 0 ) {
+                    ctx.hasMore = false;
+                }
+            } catch {
+                // silent
+            } finally {
+                ctx.loading = false;
+            }
+        },
+
         // ── Notification polling ──
         *pollNotifications() {
             if ( ! state.nonce ) return;

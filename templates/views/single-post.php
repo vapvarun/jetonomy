@@ -42,20 +42,12 @@ $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
 	$reply_sort = 'oldest';
 }
-$replies_per_page = 20;
-// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$reply_page = max( 1, (int) ( $_GET['rp'] ?? 1 ) );
-$reply_offset = ( $reply_page - 1 ) * $replies_per_page;
+// Initial batch — server-rendered for SEO and first paint
+$replies_per_batch = 20;
 $total_replies = (int) $post->reply_count;
-$total_reply_pages = max( 1, (int) ceil( $total_replies / $replies_per_page ) );
-
-// For "newest" sort, default to last page (show latest replies first)
-if ( 'newest' === $reply_sort && ! isset( $_GET['rp'] ) ) {
-	$reply_page = $total_reply_pages;
-	$reply_offset = ( $reply_page - 1 ) * $replies_per_page;
-}
-
-$replies = \Jetonomy\Models\Reply::list_by_post( (int) $post->id, $reply_sort, $replies_per_page, $reply_offset );
+$replies = \Jetonomy\Models\Reply::list_by_post( (int) $post->id, $reply_sort, $replies_per_batch, 0 );
+$has_more_replies = $total_replies > $replies_per_batch;
+$last_reply_id = ! empty( $replies ) ? (int) end( $replies )->id : 0;
 
 // Current user vote on post.
 $user_id        = get_current_user_id();
@@ -166,7 +158,18 @@ wp_interactivity_state(
 			</article>
 
 			<!-- Replies -->
-			<div class="jt-replies-section" id="replies">
+			<div class="jt-replies-section" id="replies"
+				data-wp-interactive="jetonomy"
+				data-wp-context='<?php echo wp_json_encode( [
+					'postId'        => (int) $post->id,
+					'totalReplies'  => $total_replies,
+					'loadedCount'   => count( $replies ),
+					'lastReplyId'   => $last_reply_id,
+					'sort'          => $reply_sort,
+					'hasMore'       => $has_more_replies,
+					'loading'       => false,
+				] ); ?>'>
+
 				<div class="jt-replies-head">
 					<h3>
 						<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
@@ -189,25 +192,15 @@ wp_interactivity_state(
 								</a>
 							<?php endforeach; ?>
 						</div>
-						<?php if ( $total_replies > $replies_per_page ) : ?>
-							<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $total_reply_pages, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-btn jt-btn-ghost jt-btn-sm">
-								<?php esc_html_e( 'Jump to Latest', 'jetonomy' ); ?> &darr;
-							</a>
-						<?php endif; ?>
 					</div>
 				</div>
 
-				<?php if ( $total_replies > $replies_per_page ) : ?>
-					<!-- Reply pagination info -->
-					<div class="jt-replies-pagination-info">
+				<?php if ( $total_replies > count( $replies ) ) : ?>
+					<div class="jt-replies-status">
 						<?php
-						$showing_start = $reply_offset + 1;
-						$showing_end   = min( $reply_offset + $replies_per_page, $total_replies );
 						printf(
-							/* translators: 1: start number, 2: end number, 3: total */
-							esc_html__( 'Showing %1$d–%2$d of %3$d replies', 'jetonomy' ),
-							$showing_start,
-							$showing_end,
+							esc_html__( 'Showing %1$d of %2$d replies', 'jetonomy' ),
+							count( $replies ),
 							$total_replies
 						);
 						?>
@@ -219,47 +212,28 @@ wp_interactivity_state(
 						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
 					</div>
 				<?php else : ?>
-					<div class="jt-replies-list">
+					<!-- Server-rendered initial batch -->
+					<div class="jt-replies-list" id="jt-replies-container">
 						<?php foreach ( $replies as $reply ) : ?>
 							<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post ] ); ?>
 						<?php endforeach; ?>
 					</div>
 
-					<?php if ( $total_reply_pages > 1 ) : ?>
-						<!-- Reply page navigation -->
-						<nav class="jt-reply-pages" aria-label="<?php esc_attr_e( 'Reply pages', 'jetonomy' ); ?>">
-							<?php if ( $reply_page > 1 ) : ?>
-								<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $reply_page - 1, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-reply-page-btn">
-									&larr; <?php esc_html_e( 'Previous', 'jetonomy' ); ?>
-								</a>
-							<?php endif; ?>
-
-							<div class="jt-reply-page-numbers">
+					<!-- Dynamic "Load More" via Interactivity API -->
+					<?php if ( $has_more_replies ) : ?>
+						<div class="jt-load-more" data-wp-bind--hidden="!context.hasMore">
+							<button class="jt-btn jt-btn-ghost jt-load-more-btn"
+								data-wp-on--click="actions.loadMoreReplies"
+								data-wp-bind--disabled="context.loading"
+								data-wp-text="context.loading ? '<?php echo esc_js( __( 'Loading…', 'jetonomy' ) ); ?>' : '<?php echo esc_js( sprintf( __( 'Load More Replies (%d remaining)', 'jetonomy' ), $total_replies - count( $replies ) ) ); ?>'">
 								<?php
-								// Show page numbers: 1 ... 4 5 [6] 7 8 ... 12
-								$range = 2;
-								for ( $i = 1; $i <= $total_reply_pages; $i++ ) :
-									if ( $i === 1 || $i === $total_reply_pages || ( $i >= $reply_page - $range && $i <= $reply_page + $range ) ) :
+								printf(
+									esc_html__( 'Load More Replies (%d remaining)', 'jetonomy' ),
+									$total_replies - count( $replies )
+								);
 								?>
-										<?php if ( $i === $reply_page ) : ?>
-											<span class="jt-reply-page-current"><?php echo $i; ?></span>
-										<?php else : ?>
-											<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $i, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-reply-page-num"><?php echo $i; ?></a>
-										<?php endif; ?>
-								<?php
-									elseif ( $i === $reply_page - $range - 1 || $i === $reply_page + $range + 1 ) :
-										echo '<span class="jt-reply-page-dots">&hellip;</span>';
-									endif;
-								endfor;
-								?>
-							</div>
-
-							<?php if ( $reply_page < $total_reply_pages ) : ?>
-								<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $reply_page + 1, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-reply-page-btn">
-									<?php esc_html_e( 'Next', 'jetonomy' ); ?> &rarr;
-								</a>
-							<?php endif; ?>
-						</nav>
+							</button>
+						</div>
 					<?php endif; ?>
 				<?php endif; ?>
 			</div>
