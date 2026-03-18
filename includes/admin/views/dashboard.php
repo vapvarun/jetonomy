@@ -1,12 +1,114 @@
-<div class="wrap">
-    <h1><?php esc_html_e( 'Jetonomy Dashboard', 'jetonomy' ); ?></h1>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:20px 0;">
-        <?php foreach ( $stats as $key => $val ) : ?>
-            <div style="background:white;padding:20px;border:1px solid #ddd;border-radius:8px;text-align:center;">
-                <div style="font-size:28px;font-weight:700;"><?php echo esc_html( number_format_i18n( $val ) ); ?></div>
-                <div style="color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;"><?php echo esc_html( str_replace( '_', ' ', $key ) ); ?></div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-    <p><a href="<?php echo esc_url( home_url( '/community/' ) ); ?>" class="button button-primary" target="_blank"><?php esc_html_e( 'Visit Community', 'jetonomy' ); ?></a></p>
+<?php
+defined( 'ABSPATH' ) || exit;
+
+$stat_cards = [
+	'total_posts'   => [ 'label' => __( 'Total Posts', 'jetonomy' ),   'icon' => 'dashicons-admin-post' ],
+	'total_replies' => [ 'label' => __( 'Total Replies', 'jetonomy' ), 'icon' => 'dashicons-format-chat' ],
+	'active_spaces' => [ 'label' => __( 'Active Spaces', 'jetonomy' ), 'icon' => 'dashicons-networking' ],
+	'users'         => [ 'label' => __( 'Registered Users', 'jetonomy' ), 'icon' => 'dashicons-admin-users' ],
+	'pending_flags' => [ 'label' => __( 'Pending Flags', 'jetonomy' ), 'icon' => 'dashicons-flag' ],
+	'posts_today'   => [ 'label' => __( 'Posts Today', 'jetonomy' ),   'icon' => 'dashicons-calendar-alt' ],
+];
+?>
+<div class="wrap jetonomy-admin">
+	<h1><?php esc_html_e( 'Jetonomy Dashboard', 'jetonomy' ); ?></h1>
+
+	<!-- Stat Cards -->
+	<div class="jetonomy-stat-cards">
+		<?php foreach ( $stat_cards as $key => $card ) : ?>
+			<div class="jetonomy-stat-card<?php echo 'pending_flags' === $key && $stats[ $key ] > 0 ? ' jetonomy-stat-card--warning' : ''; ?>">
+				<div class="jetonomy-stat-card__icon">
+					<span class="dashicons <?php echo esc_attr( $card['icon'] ); ?>"></span>
+				</div>
+				<div class="jetonomy-stat-card__content">
+					<div class="jetonomy-stat-card__value"><?php echo esc_html( number_format_i18n( $stats[ $key ] ) ); ?></div>
+					<div class="jetonomy-stat-card__label"><?php echo esc_html( $card['label'] ); ?></div>
+				</div>
+			</div>
+		<?php endforeach; ?>
+	</div>
+
+	<div class="jetonomy-dashboard-grid">
+		<!-- Recent Activity -->
+		<div class="jetonomy-dashboard-card">
+			<h2><?php esc_html_e( 'Recent Activity', 'jetonomy' ); ?></h2>
+			<?php if ( empty( $recent_activity ) ) : ?>
+				<p class="jetonomy-empty-state"><?php esc_html_e( 'No activity recorded yet.', 'jetonomy' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Object', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'When', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $recent_activity as $activity ) :
+							$actor = get_userdata( $activity->user_id );
+						?>
+							<tr>
+								<td><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
+								<td><code><?php echo esc_html( $activity->action ); ?></code></td>
+								<td><?php echo esc_html( $activity->object_type . ' #' . $activity->object_id ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+		</div>
+
+		<!-- Quick Actions & System Info -->
+		<div class="jetonomy-dashboard-sidebar">
+			<!-- Quick Actions -->
+			<div class="jetonomy-dashboard-card">
+				<h2><?php esc_html_e( 'Quick Actions', 'jetonomy' ); ?></h2>
+				<div class="jetonomy-quick-actions">
+					<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=new' ) ); ?>" class="button button-primary">
+						<span class="dashicons dashicons-plus-alt2"></span>
+						<?php esc_html_e( 'Create Space', 'jetonomy' ); ?>
+					</a>
+					<a href="<?php echo esc_url( home_url( '/' . $base_slug . '/' ) ); ?>" class="button" target="_blank">
+						<span class="dashicons dashicons-external"></span>
+						<?php esc_html_e( 'View Community', 'jetonomy' ); ?>
+					</a>
+					<button type="button" class="button" id="jetonomy-flush-rules">
+						<span class="dashicons dashicons-update"></span>
+						<?php esc_html_e( 'Flush Rules', 'jetonomy' ); ?>
+					</button>
+				</div>
+			</div>
+
+			<!-- System Info -->
+			<div class="jetonomy-dashboard-card">
+				<h2><?php esc_html_e( 'System Info', 'jetonomy' ); ?></h2>
+				<table class="widefat">
+					<tbody>
+						<tr>
+							<td><strong><?php esc_html_e( 'Plugin Version', 'jetonomy' ); ?></strong></td>
+							<td><?php echo esc_html( JETONOMY_VERSION ); ?></td>
+						</tr>
+						<tr>
+							<td><strong><?php esc_html_e( 'DB Version', 'jetonomy' ); ?></strong></td>
+							<td><?php echo esc_html( get_option( 'jetonomy_db_version', JETONOMY_DB_VERSION ) ); ?></td>
+						</tr>
+						<tr>
+							<td><strong><?php esc_html_e( 'PHP Version', 'jetonomy' ); ?></strong></td>
+							<td><?php echo esc_html( PHP_VERSION ); ?></td>
+						</tr>
+						<tr>
+							<td><strong><?php esc_html_e( 'WordPress Version', 'jetonomy' ); ?></strong></td>
+							<td><?php echo esc_html( get_bloginfo( 'version' ) ); ?></td>
+						</tr>
+						<tr>
+							<td><strong><?php esc_html_e( 'Base URL', 'jetonomy' ); ?></strong></td>
+							<td><code>/<?php echo esc_html( $base_slug ); ?>/</code></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
 </div>

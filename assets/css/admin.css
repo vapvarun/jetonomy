@@ -1,1 +1,876 @@
-.wrap h1 { font-weight: 600; }
+/**
+ * Jetonomy Admin Styles
+ * Production-ready admin panel CSS
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   Base & Layout
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .wrap > h1 {
+	font-weight: 600;
+	margin-bottom: 16px;
+}
+
+.jetonomy-admin .required {
+	color: #d63638;
+}
+
+.jetonomy-admin .description {
+	color: #646970;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Stat Cards (Dashboard)
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-stat-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+	gap: 16px;
+	margin: 20px 0;
+}
+
+.jetonomy-stat-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 16px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	transition: box-shadow 0.15s ease;
+}
+
+.jetonomy-stat-card:hover {
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.jetonomy-stat-card--warning {
+	border-left: 4px solid #dba617;
+}
+
+.jetonomy-stat-card__icon .dashicons {
+	font-size: 32px;
+	width: 32px;
+	height: 32px;
+	color: #2271b1;
+	opacity: 0.7;
+}
+
+.jetonomy-stat-card--warning .jetonomy-stat-card__icon .dashicons {
+	color: #dba617;
+}
+
+.jetonomy-stat-card__value {
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #1d2327;
+}
+
+.jetonomy-stat-card__label {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: #646970;
+	margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Dashboard Grid
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-dashboard-grid {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 20px;
+	margin-top: 20px;
+}
+
+@media (max-width: 1200px) {
+	.jetonomy-dashboard-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.jetonomy-dashboard-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 16px 20px;
+}
+
+.jetonomy-dashboard-card h2 {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.jetonomy-dashboard-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+/* Quick Actions */
+.jetonomy-quick-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.jetonomy-quick-actions .button {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	justify-content: center;
+}
+
+.jetonomy-quick-actions .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Badges (Visibility, Status, Type, Trust, Flags)
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.5;
+}
+
+.jetonomy-badge--public {
+	background: #dff0d8;
+	color: #3c763d;
+}
+
+.jetonomy-badge--private {
+	background: #fcf8e3;
+	color: #8a6d3b;
+}
+
+.jetonomy-badge--hidden {
+	background: #f0f0f1;
+	color: #646970;
+}
+
+.jetonomy-badge--read {
+	background: #e8f0fe;
+	color: #1a73e8;
+}
+
+.jetonomy-badge--participate {
+	background: #fef7e0;
+	color: #b45309;
+}
+
+.jetonomy-badge--full {
+	background: #dff0d8;
+	color: #3c763d;
+}
+
+.jetonomy-badge--ban {
+	background: #fce8e6;
+	color: #d93025;
+}
+
+.jetonomy-badge--flag-spam {
+	background: #fce8e6;
+	color: #d93025;
+}
+
+.jetonomy-badge--flag-offensive {
+	background: #fce8e6;
+	color: #d93025;
+}
+
+.jetonomy-badge--flag-off_topic {
+	background: #fcf8e3;
+	color: #8a6d3b;
+}
+
+.jetonomy-badge--flag-harassment {
+	background: #fce8e6;
+	color: #d93025;
+}
+
+.jetonomy-badge--flag-other {
+	background: #f0f0f1;
+	color: #646970;
+}
+
+/* Space Type Badges */
+.jetonomy-type-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.jetonomy-type-badge--forum {
+	background: #e8f0fe;
+	color: #1a73e8;
+}
+
+.jetonomy-type-badge--qa {
+	background: #e6f4ea;
+	color: #137333;
+}
+
+.jetonomy-type-badge--ideas {
+	background: #fef7e0;
+	color: #b45309;
+}
+
+.jetonomy-type-badge--feed {
+	background: #f3e8fd;
+	color: #7c3aed;
+}
+
+/* Status Dot */
+.jetonomy-status-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
+.jetonomy-status-dot--active {
+	background: #00a32a;
+}
+
+.jetonomy-status-dot--archived {
+	background: #dba617;
+}
+
+.jetonomy-status-dot--locked {
+	background: #d63638;
+}
+
+/* Trust Level Badges */
+.jetonomy-trust-badge {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 10px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+.jetonomy-trust-badge--0 {
+	background: #f0f0f1;
+	color: #646970;
+}
+
+.jetonomy-trust-badge--1 {
+	background: #e8f0fe;
+	color: #1a73e8;
+}
+
+.jetonomy-trust-badge--2 {
+	background: #e6f4ea;
+	color: #137333;
+}
+
+.jetonomy-trust-badge--3 {
+	background: #fef7e0;
+	color: #b45309;
+}
+
+.jetonomy-trust-badge--4 {
+	background: #f3e8fd;
+	color: #7c3aed;
+}
+
+.jetonomy-trust-badge--5 {
+	background: #fce8e6;
+	color: #d93025;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Inline Forms
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-inline-form {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 16px 20px;
+	margin-bottom: 20px;
+}
+
+.jetonomy-inline-form h2 {
+	font-size: 14px;
+	font-weight: 600;
+	margin: 0 0 12px;
+}
+
+.jetonomy-form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.jetonomy-form-field--wide {
+	grid-column: 1 / -1;
+}
+
+.jetonomy-form-field label {
+	display: block;
+	font-weight: 600;
+	font-size: 12px;
+	margin-bottom: 4px;
+	color: #1d2327;
+}
+
+.jetonomy-form-field input[type="text"],
+.jetonomy-form-field input[type="email"],
+.jetonomy-form-field input[type="number"],
+.jetonomy-form-field textarea,
+.jetonomy-form-field select {
+	width: 100%;
+}
+
+.jetonomy-form-row {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	flex-wrap: wrap;
+}
+
+.jetonomy-form-row input[type="text"] {
+	min-width: 200px;
+}
+
+.jetonomy-form-row .button {
+	flex-shrink: 0;
+}
+
+@media (max-width: 782px) {
+	.jetonomy-form-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Categories - Drag & Child Indent
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-drag-handle {
+	cursor: grab;
+	color: #c3c4c7;
+	transition: color 0.15s;
+}
+
+.jetonomy-drag-handle:hover {
+	color: #2271b1;
+}
+
+.jetonomy-category-row.ui-sortable-helper {
+	background: #fff;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.jetonomy-category-row.ui-sortable-placeholder {
+	visibility: visible !important;
+	background: #f0f6fc;
+	border: 2px dashed #2271b1;
+}
+
+.jetonomy-child-indent {
+	display: inline-block;
+	width: 20px;
+	border-left: 2px solid #c3c4c7;
+	height: 14px;
+	margin-right: 8px;
+	vertical-align: middle;
+}
+
+.column-drag {
+	width: 30px;
+	text-align: center;
+	padding: 8px 4px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Modal Overlay
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 100100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.jetonomy-modal__overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.6);
+}
+
+.jetonomy-modal__content {
+	position: relative;
+	background: #fff;
+	border-radius: 4px;
+	padding: 24px;
+	max-width: 600px;
+	width: 90%;
+	max-height: 80vh;
+	overflow-y: auto;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.jetonomy-modal__content h2 {
+	margin-top: 0;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.jetonomy-modal__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #f0f0f1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Tabs (WordPress nav-tab overrides)
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .nav-tab-wrapper {
+	margin-bottom: 20px;
+}
+
+.jetonomy-tab-content {
+	margin-top: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Moderation Actions
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-mod-actions {
+	white-space: nowrap;
+}
+
+.jetonomy-mod-actions .button + .button {
+	margin-left: 4px;
+}
+
+.jetonomy-content-preview {
+	margin-top: 4px !important;
+	font-style: italic;
+	max-width: 400px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+tr.jetonomy-moderated {
+	opacity: 0.4;
+	transition: opacity 0.3s ease;
+}
+
+tr.jetonomy-moderated td {
+	text-decoration: line-through;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Empty States
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-empty-state {
+	text-align: center;
+	padding: 40px 20px;
+	color: #646970;
+}
+
+.jetonomy-empty-state .dashicons {
+	font-size: 48px;
+	width: 48px;
+	height: 48px;
+	color: #00a32a;
+	margin-bottom: 12px;
+}
+
+.jetonomy-empty-state h2 {
+	margin: 12px 0 8px;
+	color: #1d2327;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   User Search Dropdown
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-search-results {
+	position: absolute;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: 0;
+	border-radius: 0 0 4px 4px;
+	max-height: 200px;
+	overflow-y: auto;
+	z-index: 1000;
+	width: 280px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.jetonomy-search-results .jetonomy-search-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	cursor: pointer;
+	border-bottom: 1px solid #f0f0f1;
+	font-size: 13px;
+}
+
+.jetonomy-search-results .jetonomy-search-item:hover {
+	background: #f0f6fc;
+}
+
+.jetonomy-search-results .jetonomy-search-item img {
+	border-radius: 50%;
+	width: 24px;
+	height: 24px;
+}
+
+/* Trust Level Dropdown */
+.jetonomy-dropdown {
+	position: absolute;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 8px 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Import Page
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-import-sources {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+	gap: 20px;
+	margin-top: 20px;
+}
+
+.jetonomy-import-source {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 24px;
+}
+
+.jetonomy-import-source--unavailable {
+	opacity: 0.5;
+}
+
+.jetonomy-import-source__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+}
+
+.jetonomy-import-source__header h2 {
+	margin: 0;
+	font-size: 18px;
+}
+
+.jetonomy-import-stats {
+	display: flex;
+	gap: 24px;
+	margin-bottom: 20px;
+}
+
+.jetonomy-import-stat {
+	display: flex;
+	flex-direction: column;
+}
+
+.jetonomy-import-stat__value {
+	font-size: 24px;
+	font-weight: 700;
+	color: #1d2327;
+}
+
+.jetonomy-import-stat__label {
+	font-size: 12px;
+	text-transform: uppercase;
+	color: #646970;
+}
+
+.jetonomy-import-action {
+	margin-bottom: 16px;
+}
+
+/* Progress Bar */
+.jetonomy-progress-bar {
+	width: 100%;
+	height: 24px;
+	background: #f0f0f1;
+	border-radius: 12px;
+	overflow: hidden;
+	margin-bottom: 8px;
+}
+
+.jetonomy-progress-bar__fill {
+	height: 100%;
+	background: linear-gradient(90deg, #2271b1, #135e96);
+	border-radius: 12px;
+	width: 0;
+	transition: width 0.3s ease;
+	animation: jetonomy-progress-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes jetonomy-progress-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+.jetonomy-import-status-text {
+	font-size: 13px;
+	color: #646970;
+}
+
+/* Import Results */
+.jetonomy-import-results__summary {
+	padding: 12px 16px;
+	background: #dff0d8;
+	border: 1px solid #d6e9c6;
+	border-radius: 4px;
+	color: #3c763d;
+	margin-bottom: 8px;
+}
+
+.jetonomy-import-results__errors ul {
+	margin: 0;
+	padding-left: 20px;
+}
+
+.jetonomy-import-results__errors li {
+	color: #d63638;
+	font-size: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Toast Notifications
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-toast {
+	position: fixed;
+	top: 40px;
+	right: 20px;
+	z-index: 100200;
+	min-width: 280px;
+	max-width: 400px;
+	padding: 12px 16px;
+	border-radius: 4px;
+	font-size: 13px;
+	font-weight: 500;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	animation: jetonomy-toast-in 0.3s ease, jetonomy-toast-out 0.3s ease 2.7s forwards;
+	pointer-events: none;
+}
+
+.jetonomy-toast--success {
+	background: #00a32a;
+	color: #fff;
+	border-left: 4px solid #006d1b;
+}
+
+.jetonomy-toast--error {
+	background: #d63638;
+	color: #fff;
+	border-left: 4px solid #8b0000;
+}
+
+.jetonomy-toast--info {
+	background: #2271b1;
+	color: #fff;
+	border-left: 4px solid #135e96;
+}
+
+@keyframes jetonomy-toast-in {
+	from {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+@keyframes jetonomy-toast-out {
+	from {
+		transform: translateX(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Cover Image Preview
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-cover-preview {
+	margin-bottom: 8px;
+	position: relative;
+	display: inline-block;
+}
+
+.jetonomy-cover-preview img {
+	max-width: 300px;
+	max-height: 150px;
+	border-radius: 4px;
+	border: 1px solid #c3c4c7;
+}
+
+.jetonomy-cover-preview .button {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Space Form
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-space-form .form-table th {
+	width: 160px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Members Table - Avatar inline
+   ═══════════════════════════════════════════════════════════ */
+
+#jetonomy-members-table td img,
+.jetonomy-admin td img.avatar {
+	border-radius: 50%;
+	vertical-align: middle;
+	margin-right: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Settings - Code Editor
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .CodeMirror {
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	height: 250px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Spinner Alignment
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .spinner {
+	float: none;
+	vertical-align: middle;
+}
+
+.jetonomy-admin p.submit .spinner.is-active {
+	display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Table Row Actions Visibility
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .wp-list-table .row-actions {
+	padding: 2px 0 0;
+}
+
+.jetonomy-admin .wp-list-table tr:hover .row-actions {
+	position: static;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Color Picker Container
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .wp-picker-container {
+	display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Responsive Adjustments
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 782px) {
+	.jetonomy-stat-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.jetonomy-import-sources {
+		grid-template-columns: 1fr;
+	}
+
+	.jetonomy-form-row {
+		flex-direction: column;
+	}
+
+	.jetonomy-form-row input[type="text"] {
+		min-width: auto;
+		width: 100%;
+	}
+
+	.jetonomy-mod-actions {
+		white-space: normal;
+	}
+
+	.jetonomy-mod-actions .button {
+		margin-bottom: 4px;
+	}
+}
+
+@media (max-width: 600px) {
+	.jetonomy-stat-cards {
+		grid-template-columns: 1fr;
+	}
+
+	.jetonomy-modal__content {
+		width: 95%;
+		padding: 16px;
+	}
+
+	.jetonomy-dashboard-grid {
+		grid-template-columns: 1fr;
+	}
+}
