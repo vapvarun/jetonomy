@@ -1326,6 +1326,9 @@ class Admin {
 			'join_policy' => 'open',
 		] );
 
+		// Add admin as space member.
+		SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
+
 		// Create user profile for admin.
 		UserProfile::find_or_create( get_current_user_id() );
 
@@ -1364,6 +1367,12 @@ class Admin {
 
 		// Space 4: Code Snippets.
 		$s4 = Space::create( [ 'category_id' => $cat1, 'author_id' => $uid, 'type' => 'forum', 'title' => 'Code Snippets', 'slug' => 'code-snippets', 'description' => 'Share useful code snippets.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+
+		// Add admin as member of all spaces.
+		SpaceMember::add( $s1, $uid, 'admin' );
+		SpaceMember::add( $s2, $uid, 'admin' );
+		SpaceMember::add( $s3, $uid, 'admin' );
+		SpaceMember::add( $s4, $uid, 'admin' );
 
 		// Sample posts.
 		$sample_posts = [

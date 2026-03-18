@@ -10,9 +10,9 @@ $post_url = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
 $time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 ?>
-<div class="jt-row <?php echo $post->is_sticky ? 'pinned' : ''; ?>"
+<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? 'pinned' : ''; ?>"
 	data-wp-interactive="jetonomy"
-	onclick="window.location='<?php echo esc_url( $post_url ); ?>'">
+	style="text-decoration:none;color:inherit;">
 	<div class="jt-votes">
 		<button class="jt-v-btn"
 			data-wp-on--click="actions.voteUp"
@@ -54,4 +54,4 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 			?>
 		</div>
 	</div>
-</div>
+</a>

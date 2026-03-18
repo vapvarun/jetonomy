@@ -26,9 +26,10 @@ $base = home_url( '/community' );
 		?>
 	</nav>
 	<div class="jt-header-right">
-		<form class="jt-search" action="<?php echo esc_url( $base . '/search/' ); ?>" method="get">
+		<form class="jt-search" action="<?php echo esc_url( $base . '/search/' ); ?>" method="get" role="search" aria-label="<?php esc_attr_e( 'Search community', 'jetonomy' ); ?>">
+			<label for="jt-search-input" class="jt-sr-only"><?php esc_html_e( 'Search', 'jetonomy' ); ?></label>
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-			<input type="text" name="q" placeholder="<?php esc_attr_e( 'Search...', 'jetonomy' ); ?>" value="<?php echo esc_attr( isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>">
+			<input type="text" id="jt-search-input" name="q" placeholder="<?php esc_attr_e( 'Search...', 'jetonomy' ); ?>" value="<?php echo esc_attr( isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>">
 		</form>
 		<?php if ( $user_id ) : ?>
 			<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-icon-btn" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
@@ -42,6 +43,9 @@ $base = home_url( '/community' );
 				<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $current_user->ID, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
 			</a>
 		<?php else : ?>
+			<?php if ( get_option( 'users_can_register' ) ) : ?>
+				<a href="<?php echo esc_url( wp_registration_url() ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Register', 'jetonomy' ); ?></a>
+			<?php endif; ?>
 			<a href="<?php echo esc_url( wp_login_url( $base ) ); ?>" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Log In', 'jetonomy' ); ?></a>
 		<?php endif; ?>
 	</div>

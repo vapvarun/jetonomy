@@ -4,29 +4,38 @@
    Inherits from WP theme.json, falls back to neutral defaults
    ═══════════════════════════════════════════ */
 
-@layer jetonomy-base {
   :root, .jt-app {
-    /* Typography — inherit from theme, fallback to system */
-    --jt-font: var(--wp--preset--font-family--body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-    --jt-font-heading: var(--wp--preset--font-family--heading, var(--jt-font));
+    /* Typography — inherit from theme, fallback to inherit for classic themes */
+    --jt-font: var(--wp--preset--font-family--body, inherit);
+    --jt-font-heading: var(--wp--preset--font-family--heading, inherit);
     --jt-font-mono: var(--wp--preset--font-family--monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
 
     /* Colors — inherit from theme, fallback to neutral */
     --jt-accent: var(--wp--preset--color--primary, #3B82F6);
+    --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
+    --jt-accent-light: #EFF6FF;
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 10%, white);
+    --jt-accent-muted: #DBEAFE;
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 15%, white);
 
     --jt-text: var(--wp--preset--color--contrast, #1a1a1a);
+    --jt-text-secondary: #6B7280;
     --jt-text-secondary: color-mix(in srgb, var(--jt-text) 55%, transparent);
+    --jt-text-tertiary: #9CA3AF;
     --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 35%, transparent);
 
     --jt-bg: var(--wp--preset--color--base, #ffffff);
+    --jt-bg-subtle: #F9FAFB;
     --jt-bg-subtle: color-mix(in srgb, var(--jt-text) 3%, var(--jt-bg));
+    --jt-bg-muted: #F3F4F6;
     --jt-bg-muted: color-mix(in srgb, var(--jt-text) 6%, var(--jt-bg));
+    --jt-bg-hover: #F9FAFB;
     --jt-bg-hover: color-mix(in srgb, var(--jt-text) 4%, var(--jt-bg));
 
+    --jt-border: rgba(0,0,0,0.1);
     --jt-border: color-mix(in srgb, var(--jt-text) 10%, transparent);
+    --jt-border-strong: rgba(0,0,0,0.18);
     --jt-border-strong: color-mix(in srgb, var(--jt-text) 18%, transparent);
 
     /* Semantic colors */
@@ -78,9 +87,7 @@
     --jt-warn-light: #422006;
     --jt-danger-light: #450a0a;
   }
-}
 
-@layer jetonomy-components {
   /* Reset within app */
   .jt-app { font-family: var(--jt-font); line-height: 1.6; color: var(--jt-text); }
   .jt-app *, .jt-app *::before, .jt-app *::after { box-sizing: border-box; }
@@ -88,7 +95,7 @@
   .jt-app a:hover { color: var(--jt-accent-hover); }
 
   /* ── Header ── */
-  .jt-header { border-bottom: 1px solid var(--jt-border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; background: var(--jt-bg); position: sticky; top: 0; z-index: 100; }
+  .jt-header { border-bottom: 1px solid var(--jt-border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; background: var(--jt-bg); z-index: 50; }
   .jt-logo { font-family: var(--jt-font-heading); font-weight: 700; font-size: 1.125em; display: flex; align-items: center; gap: 8px; color: var(--jt-text); }
   .jt-logo-icon { width: 26px; height: 26px; border-radius: 6px; background: var(--jt-accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8125em; font-weight: 800; }
 
@@ -119,7 +126,7 @@
   .jt-avatar img, img.jt-avatar { border-radius: 50%; object-fit: cover; }
 
   /* ── Layout ── */
-  .jt-container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .jt-container { max-width: var(--wp--style--global--content-size, 1100px); margin: 0 auto; padding: 24px; }
   .jt-two-col { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
 
   /* ── Breadcrumb ── */
@@ -157,6 +164,8 @@
   .jt-row:last-child { border-bottom: none; }
   .jt-row:hover { background: var(--jt-bg-hover); }
   .jt-row.pinned { background: var(--jt-accent-muted); }
+  a.jt-row { text-decoration: none; color: inherit; }
+  a.jt-row:hover { color: inherit; }
   .jt-row-main { min-width: 0; }
   .jt-row-title { font-weight: 600; line-height: 1.3; color: var(--jt-text); }
   .jt-row:hover .jt-row-title { color: var(--jt-accent); }
@@ -246,7 +255,7 @@
 
   /* ── Profile ── */
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
-  .jt-profile-banner { height: 120px; background: linear-gradient(135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }
+  .jt-profile-banner { height: 120px; background: linear-gradient(135deg, var(--jt-accent), #1e40af); background: linear-gradient(135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }
   .jt-profile-body { padding: 0 20px 20px; margin-top: -32px; }
   .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
   .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.375em; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; }
@@ -314,9 +323,7 @@
   .jt-d2 { animation-delay: 0.08s; }
   .jt-d3 { animation-delay: 0.12s; }
   .jt-d4 { animation-delay: 0.16s; }
-}
 
-@layer jetonomy-responsive {
   /* Mobile hamburger */
   .jt-mobile-toggle { display: none; width: 40px; height: 40px; border-radius: 50%; align-items: center; justify-content: center; color: var(--jt-text-secondary); border: none; background: none; cursor: pointer; }
 
@@ -343,9 +350,7 @@
     .jt-stats-bar { grid-template-columns: repeat(2, 1fr); }
     .jt-post-head h1 { font-size: 1.25em; }
   }
-}
 
-@layer jetonomy-utilities {
   .jt-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   .jt-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .jt-hidden { display: none !important; }
@@ -378,9 +383,7 @@
   .jt-text-right { text-align: right; }
   .jt-block { display: block; }
   .jt-no-underline { text-decoration: none; }
-}
 
-@layer jetonomy-components {
   /* ── Category header ── */
   .jt-cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .jt-cat-emoji { font-size: 1.25em; }
@@ -510,9 +513,7 @@
 
   /* ── Card flush (no padding, overflow hidden) ── */
   .jt-card-flush { padding: 0; overflow: hidden; }
-}
 
-@layer jetonomy-components {
   /* ── Forms ── */
   .jt-form-group { margin-bottom: 16px; }
   .jt-label { display: block; font-size: 0.875em; font-weight: 600; color: var(--jt-text); margin-bottom: 6px; }
@@ -532,4 +533,3 @@
   /* ── Prism.js override for theme consistency ── */
   .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); }
   .jt-dark .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
-}
