@@ -73,3 +73,17 @@
 | Medium | 7 tasks | ~6 hours |
 | Low | 5 tasks | ~5 hours |
 | **Total** | **22 tasks** | **~20 hours** |
+
+---
+
+## Scalability Tasks (also shipped in v1.0.0) ✅
+
+- [x] **S1: Cache class** — `includes/class-cache.php` with get/set/delete/remember/flush. Applied to Space::find, UserProfile::find_by_user, Permission_Engine::can
+- [x] **S2: Eager loading in API** — `batch_load_users()`, `batch_load_profiles()`, `enrich_with_author()` in Base_Controller. Posts + Replies list endpoints use batch loading (2 queries instead of N+1)
+- [x] **S3: Cursor-based pagination** — `?after=ID&limit=20` supported on all list endpoints. `cursor_next` in response meta. Offset still works as fallback.
+- [x] **S4: Queue class (Pro)** — `Jetonomy_Pro\Queue` with Action Scheduler detection + WP-Cron fallback. async/recurring/batch/cancel methods.
+- [x] **S5: Batch Email Digest** — 50 users per batch via Queue::batch(). No more full-user-table iteration.
+- [x] **S6: Batch Badge Evaluator** — 100 users per batch via Queue::batch(). Badges loaded once per batch, not per user.
+- [x] **S7: Cached messaging unread counts** — 30s TTL cache, invalidated on new message. X-Cache header for debugging.
+
+**All scalability items shipped in v1.0.0. Zero deferrals.**

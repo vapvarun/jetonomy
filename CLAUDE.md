@@ -65,6 +65,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-03-19 | `439553d` | Cache layer, eager loading, cursor-based pagination — scalability for 10K+ users |
 | 2026-03-19 | `c6932b3` | Premium reply UX: collapsible threads, slide-up animations, infinite scroll, real-time new replies banner, vote micro-interactions |
 | 2026-03-19 | pending | Threaded replies (3 levels deep) + smart gap loader for high-traffic posts |
 | 2026-03-19 | `a44e5d9` | Uniform container via theme `.container` wrapper, auth redirects in template loader, IA audit (4 missing actions added) |
