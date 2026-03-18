@@ -19,7 +19,7 @@ $profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id )
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $category = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
 
-$initials = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
+$author_id = (int) $post->author_id;
 $trust    = $profile ? (int) $profile->trust_level : 0;
 $time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
 $base     = home_url( '/community' );
@@ -70,7 +70,7 @@ wp_interactivity_state(
 				<div class="jt-post-head">
 					<h1><?php echo esc_html( $post->title ); ?></h1>
 					<div class="jt-meta">
-						<span class="jt-avatar jt-avatar-sm"><?php echo esc_html( $initials ); ?></span>
+						<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $author_id, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
 						<strong><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
 						<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 						<span>

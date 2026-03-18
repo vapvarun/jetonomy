@@ -30,15 +30,17 @@ $base = home_url( '/community' );
 					<span class="jt-badge-dot"></span>
 				<?php endif; ?>
 			</a>
-			<?php
-			$current_user = wp_get_current_user();
-			$initials     = strtoupper( substr( $current_user->display_name, 0, 2 ) );
-			?>
-			<a href="<?php echo esc_url( $base . '/u/' . $current_user->user_login . '/' ); ?>" class="jt-avatar jt-avatar-sm" title="<?php echo esc_attr( $current_user->display_name ); ?>">
-				<?php echo esc_html( $initials ); ?>
+			<?php $current_user = wp_get_current_user(); ?>
+			<a href="<?php echo esc_url( $base . '/u/' . $current_user->user_login . '/' ); ?>" title="<?php echo esc_attr( $current_user->display_name ); ?>">
+				<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $current_user->ID, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
 			</a>
 		<?php else : ?>
 			<a href="<?php echo esc_url( wp_login_url( $base ) ); ?>" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Log In', 'jetonomy' ); ?></a>
 		<?php endif; ?>
 	</div>
+	<button class="jt-mobile-toggle" aria-label="<?php esc_attr_e( 'Menu', 'jetonomy' ); ?>">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M3 12h18M3 6h18M3 18h18"/>
+		</svg>
+	</button>
 </header>

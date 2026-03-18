@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 $author      = get_userdata( (int) $reply->author_id );
 $profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
-$initials    = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
+$author_id   = (int) $reply->author_id;
 $trust       = $profile ? (int) $profile->trust_level : 0;
 $time_ago    = human_time_diff( strtotime( $reply->created_at ), current_time( 'timestamp', true ) );
 $is_op       = (int) $reply->author_id === (int) $post->author_id;
@@ -10,7 +10,7 @@ $is_accepted = (int) $reply->is_accepted;
 ?>
 <div class="jt-reply <?php echo $is_accepted ? 'accepted' : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
-		<span class="jt-avatar jt-avatar-sm"><?php echo esc_html( $initials ); ?></span>
+		<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $author_id, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
 		<strong style="font-size:13px;"><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
 		<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 		<?php if ( $is_op ) : ?>

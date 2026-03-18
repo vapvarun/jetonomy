@@ -10,19 +10,25 @@ if ( ! $user ) {
 	return;
 }
 
-$profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
-$trust    = $profile ? (int) $profile->trust_level : 0;
-$rep      = $profile ? (int) $profile->reputation : 0;
-$p_count  = $profile ? (int) $profile->post_count : 0;
-$r_count  = $profile ? (int) $profile->reply_count : 0;
-$initials = strtoupper( substr( $user->display_name, 0, 2 ) );
-$base     = home_url( '/community' );
+$profile         = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
+$trust           = $profile ? (int) $profile->trust_level : 0;
+$rep             = $profile ? (int) $profile->reputation : 0;
+$p_count         = $profile ? (int) $profile->post_count : 0;
+$r_count         = $profile ? (int) $profile->reply_count : 0;
+$profile_user_id = (int) $user->ID;
+$base            = home_url( '/community' );
+$initials        = strtoupper( substr( $user->display_name, 0, 2 ) );
 
 $joined = $profile && $profile->created_at
 	? date_i18n( get_option( 'date_format' ), strtotime( $profile->created_at ) )
 	: date_i18n( get_option( 'date_format' ), strtotime( $user->user_registered ) );
 
-// Recent posts by this user.
+// Recent posts by this user (paginated).
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$per_page = 20;
+$offset   = ( $page - 1 ) * $per_page;
+
 global $wpdb;
 $posts_tbl  = \Jetonomy\table( 'posts' );
 $spaces_tbl = \Jetonomy\table( 'spaces' );
@@ -35,8 +41,10 @@ $recent_posts = $wpdb->get_results(
 		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
 		 WHERE p.author_id = %d AND p.status = 'publish'
 		 ORDER BY p.created_at DESC
-		 LIMIT 10",
-		(int) $user->ID
+		 LIMIT %d OFFSET %d",
+		(int) $user->ID,
+		$per_page,
+		$offset
 	)
 ) ?: [];
 
@@ -55,11 +63,18 @@ $crumbs = [
 				<div class="jt-profile-banner"></div>
 				<div class="jt-profile-body">
 					<div class="jt-profile-av"><?php echo esc_html( $initials ); ?></div>
-					<h1 class="jt-profile-name">
-						<?php echo esc_html( $user->display_name ); ?>
-						<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);width:20px;height:20px;font-size:11px;" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
-						<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
-					</h1>
+					<div style="display:flex;align-items:flex-start;justify-content:space-between;width:100%;">
+						<h1 class="jt-profile-name">
+							<?php echo esc_html( $user->display_name ); ?>
+							<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);width:20px;height:20px;font-size:11px;" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
+						</h1>
+						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
+							<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/edit/' ); ?>" class="jt-btn jt-btn-ghost" style="flex-shrink:0;">
+								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
+							</a>
+						<?php endif; ?>
+					</div>
 
 					<?php if ( ! empty( $profile->bio ) ) : ?>
 						<p style="color:var(--jt-text-secondary);font-size:14px;margin-top:8px;line-height:1.6;">
@@ -146,6 +161,8 @@ $crumbs = [
 						</div>
 					<?php endforeach; ?>
 				</div>
+
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $recent_posts ) >= $per_page ] ); ?>
 			<?php endif; ?>
 		</main>
 

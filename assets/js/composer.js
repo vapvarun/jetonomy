@@ -2,6 +2,26 @@
  * Jetonomy Reply Composer
  * Simple contenteditable enhancement with toolbar actions
  */
+
+// Mobile hamburger navigation
+document.addEventListener( 'DOMContentLoaded', function() {
+    var toggle = document.querySelector( '.jt-mobile-toggle' );
+    var nav    = document.querySelector( '.jt-nav' );
+    if ( toggle && nav ) {
+        toggle.addEventListener( 'click', function() {
+            nav.classList.toggle( 'open' );
+            if ( nav.classList.contains( 'open' ) && ! nav.querySelector( '.jt-mobile-close' ) ) {
+                var close = document.createElement( 'button' );
+                close.className = 'jt-mobile-close';
+                close.innerHTML = '&times;';
+                close.setAttribute( 'aria-label', 'Close menu' );
+                close.addEventListener( 'click', function() { nav.classList.remove( 'open' ); } );
+                nav.prepend( close );
+            }
+        } );
+    }
+} );
+
 document.addEventListener( 'DOMContentLoaded', () => {
     const composers = document.querySelectorAll( '.jt-editor' );
 
