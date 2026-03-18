@@ -10,6 +10,7 @@ class Import_Manager {
 	public static function init(): void {
 		self::register( 'bbpress', new BBPress_Importer() );
 		self::register( 'wpforo', new WPForo_Importer() );
+		self::register( 'asgaros', new Asgaros_Importer() );
 
 		// Allow third-party importers
 		self::$importers = apply_filters( 'jetonomy_importers', self::$importers );

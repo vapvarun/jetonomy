@@ -35,7 +35,7 @@ Jetonomy is a next-generation community platform for WordPress that replaces out
 * REST API (35+ endpoints)
 * SEO (Schema.org, XML Sitemaps, Open Graph)
 * MemberPress & PMPro integration
-* bbPress & wpForo import
+* bbPress, wpForo & Asgaros Forum import
 * Theme-adaptive CSS
 * WP-CLI commands
 
@@ -62,6 +62,17 @@ Jetonomy is a next-generation community platform for WordPress that replaces out
 3. Follow the setup wizard to create your first community space
 4. Visit yoursite.com/community/ to see your forum
 
+== Screenshots ==
+
+1. Community homepage with categories and spaces
+2. Space view with topic listing and voting
+3. Single post view with replies
+4. Q&A mode with accepted answers
+5. Admin dashboard with statistics
+6. Setup wizard for first-time configuration
+7. Moderation queue with pending posts and flags
+8. Settings page with 5 configuration tabs
+
 == Frequently Asked Questions ==
 
 = Does Jetonomy replace bbPress? =
@@ -85,5 +96,6 @@ Jetonomy uses custom database tables with denormalized counters and proper index
 * REST API with 35+ endpoints
 * WP Interactivity API frontend
 * MemberPress and PMPro integration
-* bbPress and wpForo import tools
+* bbPress, wpForo, and Asgaros Forum import tools
 * Admin dashboard, moderation, settings
+* i18n POT template (run `wp i18n make-pot . languages/jetonomy.pot` to regenerate)

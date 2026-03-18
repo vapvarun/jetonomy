@@ -1,0 +1,268 @@
+<?php
+namespace Jetonomy\Import;
+
+defined( 'ABSPATH' ) || exit;
+
+use Jetonomy\Models\Category;
+use Jetonomy\Models\Space;
+use Jetonomy\Models\Post as JtPost;
+use Jetonomy\Models\Reply as JtReply;
+use Jetonomy\Models\UserProfile;
+use function Jetonomy\now;
+
+class Asgaros_Importer extends Importer {
+
+	public function get_source_name(): string {
+		return 'Asgaros Forum';
+	}
+
+	public function is_source_available(): bool {
+		global $wpdb;
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'forum_forums' )
+		);
+	}
+
+	public function get_source_stats(): array {
+		global $wpdb;
+		$p = $wpdb->prefix;
+		return [
+			'forums' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_forums" ),
+			'topics' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_topics" ),
+			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_posts" ),
+		];
+	}
+
+	public function run( array $options = [] ): array {
+		$cat_id = Category::create( [
+			'name' => __( 'Imported from Asgaros', 'jetonomy' ),
+			'slug' => 'imported-asgaros',
+		] );
+
+		$this->import_forums( $cat_id );
+		$this->import_topics();
+		$this->import_replies();
+		$this->create_profiles();
+		$this->recount();
+
+		return $this->results();
+	}
+
+	private function import_forums( int $cat_id ): void {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// Fetch all forums ordered by sort position then ID
+		$forums = $wpdb->get_results(
+			"SELECT * FROM {$p}forum_forums ORDER BY sort ASC, id ASC"
+		);
+
+		// Two-pass: first pass creates all spaces; second pass would wire up parent_id.
+		// Because Asgaros stores parent_id references to other forum rows, we need
+		// to process parents before children. Sort guarantees top-level (parent_id=0)
+		// come first in typical installs, but we do a dependency-safe ordered insert.
+		$ordered = $this->sort_by_dependency( $forums );
+
+		foreach ( $ordered as $forum ) {
+			$parent_space_id = null;
+			if ( (int) $forum->parent_id > 0 ) {
+				$parent_space_id = $this->get_mapped_id( 'forum', (int) $forum->parent_id );
+			}
+
+			$space_id = Space::create( [
+				'category_id' => $cat_id,
+				'parent_id'   => $parent_space_id,
+				'author_id'   => 1,
+				'type'        => 'forum',
+				'title'       => $forum->name,
+				'slug'        => sanitize_title( $forum->name ) ?: 'forum-' . $forum->id,
+				'description' => wp_strip_all_tags( $forum->description ?? '' ),
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+				'sort_order'  => (int) ( $forum->sort ?? 0 ),
+			] );
+
+			if ( $space_id ) {
+				$this->map_id( 'forum', (int) $forum->id, $space_id );
+				$this->imported++;
+			} else {
+				$this->log_error( 'forum', $forum->id, 'Failed to create space' );
+				$this->skipped++;
+			}
+		}
+	}
+
+	/**
+	 * Sort forums so parents always appear before their children.
+	 *
+	 * @param object[] $forums
+	 * @return object[]
+	 */
+	private function sort_by_dependency( array $forums ): array {
+		$indexed  = [];
+		$children = [];
+
+		foreach ( $forums as $forum ) {
+			$indexed[ $forum->id ] = $forum;
+			if ( (int) $forum->parent_id === 0 ) {
+				$children[0][] = $forum->id;
+			} else {
+				$children[ $forum->parent_id ][] = $forum->id;
+			}
+		}
+
+		$ordered = [];
+		$queue   = $children[0] ?? [];
+
+		while ( ! empty( $queue ) ) {
+			$id = array_shift( $queue );
+			if ( isset( $indexed[ $id ] ) ) {
+				$ordered[] = $indexed[ $id ];
+				// Enqueue children of this node
+				if ( ! empty( $children[ $id ] ) ) {
+					array_splice( $queue, 0, 0, $children[ $id ] );
+				}
+			}
+		}
+
+		// Append any orphaned forums not reached by the walk
+		foreach ( $forums as $forum ) {
+			if ( ! in_array( $forum, $ordered, true ) ) {
+				$ordered[] = $forum;
+			}
+		}
+
+		return $ordered;
+	}
+
+	private function import_topics(): void {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		$topics = $wpdb->get_results(
+			"SELECT * FROM {$p}forum_topics ORDER BY id ASC"
+		);
+
+		foreach ( $topics as $topic ) {
+			$space_id = $this->get_mapped_id( 'forum', (int) $topic->forum_id );
+			if ( ! $space_id ) {
+				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->forum_id} not imported" );
+				$this->skipped++;
+				continue;
+			}
+
+			// The first post in forum_posts for this topic supplies the body
+			$first_post = $wpdb->get_row( $wpdb->prepare(
+				"SELECT * FROM {$p}forum_posts WHERE topic_id = %d ORDER BY id ASC LIMIT 1",
+				$topic->id
+			) );
+
+			$content = $first_post ? $first_post->text : '';
+
+			// Map Asgaros status: 0 = visible, 1 = deleted/spam
+			$status = ( isset( $topic->status ) && (int) $topic->status === 1 ) ? 'pending' : 'publish';
+
+			$post_id = JtPost::create( [
+				'space_id'      => $space_id,
+				'author_id'     => (int) ( $topic->author_id ?? 1 ),
+				'type'          => 'topic',
+				'title'         => $topic->name,
+				'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
+				'content'       => wp_kses_post( $content ),
+				'content_plain' => wp_strip_all_tags( $content ),
+				'status'        => $status,
+				'is_sticky'     => (int) ( $topic->sticky ?? 0 ),
+				'is_closed'     => (int) ( $topic->closed ?? 0 ),
+				'created_at'    => $first_post->date ?? now(),
+			] );
+
+			if ( $post_id ) {
+				$this->map_id( 'topic', (int) $topic->id, $post_id );
+				if ( $first_post ) {
+					// Record the first post's Asgaros ID so we skip it during reply import
+					$this->map_id( 'asgaros_post_skip', (int) $first_post->id, 0 );
+				}
+				$this->imported++;
+			} else {
+				$this->log_error( 'topic', $topic->id, 'Failed to create post' );
+				$this->skipped++;
+			}
+		}
+	}
+
+	private function import_replies(): void {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// Fetch all posts that are NOT the first post of their topic.
+		// The sub-select identifies the minimum id per topic (= the topic body post).
+		$posts = $wpdb->get_results(
+			"SELECT p.* FROM {$p}forum_posts p
+			 INNER JOIN (
+			     SELECT topic_id, MIN(id) AS first_id
+			     FROM {$p}forum_posts
+			     GROUP BY topic_id
+			 ) f ON p.topic_id = f.topic_id
+			 WHERE p.id != f.first_id
+			 ORDER BY p.id ASC"
+		);
+
+		foreach ( $posts as $asgaros_post ) {
+			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->topic_id );
+			if ( ! $post_id ) {
+				$this->skipped++;
+				continue;
+			}
+
+			// Asgaros uses parent_id for threaded/quoted replies
+			$parent_reply_id = null;
+			if ( ! empty( $asgaros_post->parent_id ) && (int) $asgaros_post->parent_id > 0 ) {
+				$parent_reply_id = $this->get_mapped_id( 'asgaros_reply', (int) $asgaros_post->parent_id );
+			}
+
+			$reply_id = JtReply::create( [
+				'post_id'       => $post_id,
+				'parent_id'     => $parent_reply_id,
+				'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
+				'content'       => wp_kses_post( $asgaros_post->text ),
+				'content_plain' => wp_strip_all_tags( $asgaros_post->text ),
+				'status'        => 'publish',
+				'created_at'    => $asgaros_post->date ?? now(),
+			] );
+
+			if ( $reply_id ) {
+				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );
+				$this->imported++;
+			} else {
+				$this->log_error( 'reply', $asgaros_post->id, 'Failed to create reply' );
+				$this->skipped++;
+			}
+		}
+	}
+
+	private function create_profiles(): void {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		$ids = $wpdb->get_col(
+			"SELECT DISTINCT author_id FROM {$p}forum_topics WHERE author_id > 0
+			 UNION
+			 SELECT DISTINCT author_id FROM {$p}forum_posts WHERE author_id > 0"
+		);
+
+		foreach ( $ids as $uid ) {
+			$this->ensure_profile( (int) $uid );
+		}
+	}
+
+	private function recount(): void {
+		global $wpdb;
+		$pt = \Jetonomy\table( 'posts' );
+		$rt = \Jetonomy\table( 'replies' );
+		$st = \Jetonomy\table( 'spaces' );
+
+		$wpdb->query( "UPDATE {$pt} p SET p.reply_count    = (SELECT COUNT(*)   FROM {$rt} r WHERE r.post_id  = p.id AND r.status = 'publish')" );
+		$wpdb->query( "UPDATE {$st} s SET s.post_count     = (SELECT COUNT(*)   FROM {$pt} p WHERE p.space_id = s.id AND p.status = 'publish')" );
+		$wpdb->query( "UPDATE {$pt} p SET p.last_reply_at  = (SELECT MAX(r.created_at) FROM {$rt} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+	}
+}

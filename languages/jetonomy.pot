@@ -1,0 +1,779 @@
+# Copyright (C) 2026 Jetonomy
+# This file is distributed under the GPL v2 or later.
+# To regenerate this file run:
+#   wp i18n make-pot . languages/jetonomy.pot --domain=jetonomy
+msgid ""
+msgstr ""
+"Project-Id-Version: Jetonomy 1.0.0\n"
+"Report-Msgid-Bugs-To: https://jetonomy.com\n"
+"POT-Creation-Date: 2026-03-18 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: Jetonomy\n"
+"X-Domain: jetonomy\n"
+
+#: includes/import/class-asgaros-importer.php
+msgid "Imported from Asgaros"
+msgstr ""
+
+#: includes/import/class-bbpress-importer.php
+msgid "Imported from bbPress"
+msgstr ""
+
+#: includes/import/class-bbpress-importer.php
+msgid "Forums imported from bbPress"
+msgstr ""
+
+#: includes/import/class-wpforo-importer.php
+msgid "Imported from wpForo"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Jetonomy"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Dashboard"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Categories"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Spaces"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Moderation"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Users"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Import"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Settings"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Extensions"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "License"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Jetonomy Setup"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Jetonomy Dashboard"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Jetonomy Settings"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Are you sure? This cannot be undone."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Are you sure you want to ban this user?"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Saving..."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Saved!"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Deleted."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Something went wrong."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Importing..."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Import complete!"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Select Image"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Use this image"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Test email sent!"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Rewrite rules flushed."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Space not found."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Permission denied."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Name is required."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to create category."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Category created."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid category ID."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "No data to update."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to update category."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Category updated."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Cannot delete a category that contains spaces. Move or delete the spaces first."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Cannot delete a category that has sub-categories. Delete them first."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to delete category."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Category deleted."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid order data."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Order saved."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Title is required."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to create space."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Space created."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid space ID."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to update space."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Space updated."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to delete space."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Space deleted."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Missing required fields."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "User not found."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Member removed."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid role."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Role updated."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Missing space ID."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid rule type."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to create access rule."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Access rule added."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid rule ID."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to delete rule."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Access rule deleted."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Content approved."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid content."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Marked as spam."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Content trashed."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid flag data."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Flag not found."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Flag resolved."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid user ID."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to ban user."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "User banned."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid restriction ID."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to remove ban."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Ban removed."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to update trust level."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Trust level updated."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Unknown import source."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Jetonomy Test Email"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "This is a test email from your Jetonomy forum plugin. If you received this, email is working correctly."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Failed to send test email. Check your WordPress email configuration."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Add Category"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Add New Space"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Edit Category"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Update Category"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Update Space"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Add Member"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Add Access Rule"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Ban User"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Change Trust Level"
+msgstr ""
+
+#. translators: %s = user display name, %s = role name
+#: includes/admin/class-admin.php
+msgid "%s added as %s."
+msgstr ""
+
+#. translators: %s = email address
+#: includes/admin/class-admin.php
+msgid "Test email sent to %s."
+msgstr ""
+
+#: templates/community-home.php
+msgid "Welcome to Jetonomy!"
+msgstr ""
+
+#: templates/community-home.php
+msgid "No categories yet. Check back soon!"
+msgstr ""
+
+#: templates/community-home.php
+msgid "No spaces in this category yet."
+msgstr ""
+
+#: templates/space.php
+msgid "Ask a Question"
+msgstr ""
+
+#: templates/space.php
+msgid "New Post"
+msgstr ""
+
+#: templates/space.php
+msgid "No posts yet. Be the first to start a discussion!"
+msgstr ""
+
+#: templates/space.php
+msgid "Load More"
+msgstr ""
+
+#: templates/space.php
+msgid "Closed"
+msgstr ""
+
+#: templates/space.php
+msgid "Locked"
+msgstr ""
+
+#: templates/single-post.php
+msgid "Post Reply"
+msgstr ""
+
+#: templates/single-post.php
+msgid "No replies yet. Be the first to reply!"
+msgstr ""
+
+#: templates/single-post.php
+msgid "This post is closed and cannot receive new replies."
+msgstr ""
+
+#: templates/single-post.php
+msgid "Reply editor"
+msgstr ""
+
+#: templates/single-post.php
+msgid "Markdown · Ctrl+Enter to submit"
+msgstr ""
+
+#: templates/single-post.php
+msgid "Accepted"
+msgstr ""
+
+#: templates/single-post.php
+msgid "Vote up"
+msgstr ""
+
+#: templates/single-post.php
+msgid "Vote down"
+msgstr ""
+
+#: templates/single-post.php
+msgid "Log in to reply"
+msgstr ""
+
+#: templates/single-post.php
+msgid "This post is closed and no longer accepts replies."
+msgstr ""
+
+#: templates/single-post.php
+msgid "This space is private. You need to be a member to access it."
+msgstr ""
+
+#: templates/new-post.php
+msgid "Post Question"
+msgstr ""
+
+#: templates/new-post.php
+msgid "What is your question?"
+msgstr ""
+
+#: templates/new-post.php
+msgid "Write your post..."
+msgstr ""
+
+#: templates/new-post.php
+msgid "Post content is required."
+msgstr ""
+
+#: templates/new-post.php
+msgid "Post title is required."
+msgstr ""
+
+#: templates/new-post.php
+msgid "Failed to create post."
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Edit Profile"
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Save Profile"
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Joined %s"
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Reputation"
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Posts"
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Replies"
+msgstr ""
+
+#: templates/user-profile.php
+msgid "Tell us about yourself..."
+msgstr ""
+
+#: templates/search.php
+msgid "Search"
+msgstr ""
+
+#: templates/search.php
+msgid "No results for \"%s\""
+msgstr ""
+
+#: templates/search.php
+msgid "Enter a search term above to find discussions, spaces, and tags."
+msgstr ""
+
+#: templates/leaderboard.php
+msgid "Leaderboard"
+msgstr ""
+
+#: templates/leaderboard.php
+msgid "Top Members"
+msgstr ""
+
+#: templates/leaderboard.php
+msgid "View full leaderboard \u2192"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Moderation Queue"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Pending Posts (%d)"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Pending Replies (%d)"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Flags (%d)"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Banned Users (%d)"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Approve"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "Trash"
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "No pending posts. The queue is clear."
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "No pending replies. The queue is clear."
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "No pending flags. Everything looks good."
+msgstr ""
+
+#: templates/mod-queue.php
+msgid "No active bans."
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "%s replied to your post \"%s\""
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "%s replied in \"%s\""
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "replied to your post"
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "mentioned you"
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "upvoted your post"
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "accepted your reply"
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "Your answer accepted"
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "new activity in a subscribed space"
+msgstr ""
+
+#: includes/notifications/class-notifier.php
+msgid "badge earned"
+msgstr ""
+
+#: includes/trust/class-trust-level-evaluator.php
+msgid "Congratulations! You have been promoted to %s (Level %d)"
+msgstr ""
+
+#: includes/api/class-posts-controller.php
+msgid "Rate limit exceeded. Please try again later."
+msgstr ""
+
+#: includes/api/class-posts-controller.php
+msgid "Failed to create post."
+msgstr ""
+
+#: includes/api/class-posts-controller.php
+msgid "Failed to create reply."
+msgstr ""
+
+#: includes/api/class-posts-controller.php
+msgid "Post not found."
+msgstr ""
+
+#: includes/api/class-posts-controller.php
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: includes/api/class-posts-controller.php
+msgid "You must be logged in."
+msgstr ""
+
+#: includes/api/class-votes-controller.php
+msgid "Vote value must be 1 or -1."
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "Welcome to Jetonomy"
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "Configure the basics for your community. You can always change these later in Settings."
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "Create Your First Space"
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "A Space is a community section where people can start discussions. You can add more spaces later."
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "Your community is ready!"
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "Everything is set up. Start exploring your new Jetonomy community."
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "Community Base URL"
+msgstr ""
+
+#: includes/class-wizard.php
+msgid "All community pages will be nested under this URL."
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Jetonomy Settings"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "General"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Appearance"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Permissions"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Notifications"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Advanced"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Save Settings"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Community URL Slug"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Default Community Type"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Forum"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Q&amp;A"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Ideas"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Feed"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Inherit theme colors"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Inherit theme fonts"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Allow guests to read public spaces"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Require login to participate"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "New posts require moderator approval before publishing"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Allow Voting"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Include community pages in XML sitemap"
+msgstr ""
+
+#: includes/admin/views/settings.php
+msgid "Enable schema markup (DiscussionForumPosting)"
+msgstr ""
