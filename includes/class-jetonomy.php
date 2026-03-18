@@ -30,15 +30,19 @@ final class Jetonomy {
         require_once JETONOMY_DIR . 'includes/permissions/class-capabilities.php';
         Permissions\Capabilities::register();
 
+        Cron::schedule();
+
         update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
         flush_rewrite_rules();
     }
 
     public function deactivate(): void {
+        Cron::unschedule();
         flush_rewrite_rules();
     }
 
     public function init(): void {
+        load_plugin_textdomain( 'jetonomy', false, dirname( plugin_basename( JETONOMY_FILE ) ) . '/languages' );
         $this->check_db_version();
         $this->load_dependencies();
     }
@@ -64,6 +68,7 @@ final class Jetonomy {
         // Adapters — autoloader resolves all classes
         Adapters\Adapter_Registry::init_defaults();
         Adapters\Adapter_Registry::register_email( 'wp-mail', new Adapters\WP_Mail_Adapter() );
+        Adapters\Adapter_Registry::register_search( 'fulltext', new Search\Fulltext_Search() );
 
         // MemberPress adapter (conditional)
         if ( defined( 'MEPR_VERSION' ) ) {
@@ -80,6 +85,8 @@ final class Jetonomy {
         }
 
         new Notifications\Notifier();
+        new Cron();
+        new Privacy();
 
         Import\Import_Manager::init();
 

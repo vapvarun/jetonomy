@@ -31,3 +31,8 @@ function jetonomy(): Jetonomy\Jetonomy {
 }
 
 jetonomy();
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+    require_once JETONOMY_DIR . 'includes/class-cli.php';
+    \WP_CLI::add_command( 'jetonomy', 'Jetonomy\\CLI' );
+}
