@@ -40,9 +40,10 @@ $is_accepted = (int) $reply->is_accepted;
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">&#9660;</button>
 		<?php if ( is_user_logged_in() ) : ?>
-			<button class="jt-act"
-				data-wp-on--click="actions.showReplyComposer"
-				data-reply-id="<?php echo (int) $reply->id; ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
+			<button class="jt-act jt-reply-to-btn"
+				data-wp-on--click="actions.setReplyTo"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && ( (int) $reply->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
 			<button class="jt-act jt-reply-edit" title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>

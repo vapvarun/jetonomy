@@ -104,4 +104,102 @@ class Reply extends Model {
 			)
 		);
 	}
+
+	/**
+	 * Get replies as a threaded tree.
+	 *
+	 * Returns top-level replies with nested 'children' arrays.
+	 * Max depth: 3 levels.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $sort    Sort order: 'oldest', 'newest', or 'best'.
+	 * @param int    $limit   Max top-level replies to return (0 = all).
+	 * @param int    $offset  Offset for top-level replies.
+	 * @return array Threaded reply tree.
+	 */
+	public static function get_threaded( int $post_id, string $sort = 'oldest', int $limit = 0, int $offset = 0 ): array {
+		// Fetch ALL replies for this post (we need full tree to build hierarchy).
+		$all = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM " . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC",
+				$post_id
+			)
+		);
+
+		if ( empty( $all ) ) {
+			return [];
+		}
+
+		// Build tree: group by parent_id.
+		$by_parent = [];
+		foreach ( $all as $reply ) {
+			$pid = (int) ( $reply->parent_id ?? 0 );
+			$by_parent[ $pid ][] = $reply;
+		}
+
+		// Recursively attach children (max 3 levels).
+		$tree = self::build_tree( $by_parent, 0, 0, 3 );
+
+		// Sort top-level based on sort param.
+		if ( 'newest' === $sort ) {
+			$tree = array_reverse( $tree );
+		} elseif ( 'best' === $sort ) {
+			usort( $tree, fn( $a, $b ) => (int) $b->vote_score - (int) $a->vote_score );
+		}
+
+		// Apply offset/limit to top-level replies only.
+		if ( $limit > 0 ) {
+			$tree = array_slice( $tree, $offset, $limit );
+		}
+
+		return $tree;
+	}
+
+	/**
+	 * Recursively build threaded tree from grouped replies.
+	 *
+	 * @param array $by_parent Replies grouped by parent_id.
+	 * @param int   $parent_id Current parent ID.
+	 * @param int   $depth     Current depth.
+	 * @param int   $max_depth Maximum nesting depth.
+	 * @return array Nested reply nodes.
+	 */
+	private static function build_tree( array &$by_parent, int $parent_id, int $depth, int $max_depth ): array {
+		if ( ! isset( $by_parent[ $parent_id ] ) ) {
+			return [];
+		}
+
+		$nodes = [];
+		foreach ( $by_parent[ $parent_id ] as $reply ) {
+			$reply->depth    = $depth;
+			$reply->children = [];
+
+			if ( $depth < $max_depth ) {
+				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth + 1, $max_depth );
+			} else {
+				// At max depth, flatten further children at the same level.
+				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth, $max_depth );
+			}
+
+			$nodes[] = $reply;
+		}
+
+		return $nodes;
+	}
+
+	/**
+	 * Count top-level replies (parent_id IS NULL or 0).
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int
+	 */
+	public static function count_top_level( int $post_id ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				"SELECT COUNT(*) FROM " . static::table() . " WHERE post_id = %d AND (parent_id IS NULL OR parent_id = 0) AND status = 'publish'",
+				$post_id
+			)
+		);
+	}
 }

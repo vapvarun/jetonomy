@@ -222,8 +222,21 @@
   .jt-reply-body p { margin: 0 0 10px; }
   .jt-reply-foot { display: flex; gap: 4px; padding: 6px 12px 10px; }
   .jt-accepted-tag { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 0.9375rem; font-weight: 600; color: var(--jt-success); }
-  .jt-nested { margin-left: 32px; position: relative; }
-  .jt-nested::before { content: ''; position: absolute; left: -16px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: 1px; }
+  /* Threaded reply nesting — up to 3 levels */
+  .jt-nested { margin-left: 24px; position: relative; }
+  .jt-nested::before { content: ''; position: absolute; left: -12px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: 1px; }
+  .jt-nested-1 { margin-left: 24px; }
+  .jt-nested-2 { margin-left: 24px; }
+  .jt-nested-3 { margin-left: 24px; }
+
+  /* Gap loader — in-between divider */
+  .jt-load-gap { text-align: center; padding: 16px 0; position: relative; }
+  .jt-load-gap::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--jt-border); }
+  .jt-load-gap-btn { position: relative; z-index: 1; background: var(--jt-bg) !important; padding: 8px 20px; border-radius: var(--jt-radius-full); }
+
+  /* Reply-to indicator */
+  .jt-replying-to { font-size: 0.875rem; color: var(--jt-text-tertiary); padding: 8px 14px; border-left: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); margin-bottom: 8px; border-radius: 0 var(--jt-radius) var(--jt-radius) 0; display: flex; align-items: center; justify-content: space-between; }
+  .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; }
 
   /* ── Composer ── */
   .jt-editor { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; transition: border-color 0.2s; }
@@ -344,6 +357,7 @@
     .jt-kanban { grid-template-columns: 1fr; }
     .jt-badges { grid-template-columns: repeat(2, 1fr); }
     .jt-stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-left: 12px; }
   }
 
   .jt-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }

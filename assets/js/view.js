@@ -4,6 +4,39 @@
  */
 import { store, getContext, getElement } from '@wordpress/interactivity';
 
+/**
+ * Build reply HTML for client-side rendering (used by loadGapReplies and loadMoreReplies).
+ */
+function buildReplyHtml( reply ) {
+    const author = reply.author_name || 'Anonymous';
+    const initials = author.substring( 0, 2 ).toUpperCase();
+    const avatarUrl = reply.author_avatar || '';
+    const timeAgo = reply.time_ago || '';
+    const isAccepted = reply.is_accepted ? ' accepted' : '';
+    const trustLevel = reply.trust_level || 0;
+    const profileUrl = reply.profile_url || '#';
+
+    const avatarHtml = avatarUrl
+        ? `<img src="${ avatarUrl }" alt="${ author }" class="jt-avatar jt-avatar-sm" width="28" height="28" loading="lazy">`
+        : `<span class="jt-avatar jt-avatar-sm">${ initials }</span>`;
+
+    return `
+        <div class="jt-reply${ isAccepted }" data-wp-interactive="jetonomy">
+            <div class="jt-reply-head">
+                <a href="${ profileUrl }" class="jt-user-link">${ avatarHtml } <span class="jt-user-name">${ author }</span></a>
+                <span class="jt-tl" data-jt-tl="${ trustLevel }">${ trustLevel }</span>
+                <span class="jt-reply-time">${ timeAgo }</span>
+                ${ reply.is_accepted ? '<span class="jt-accepted-tag">&#10003; Accepted</span>' : '' }
+            </div>
+            <div class="jt-reply-body">${ reply.content }</div>
+            <div class="jt-reply-foot">
+                <button class="jt-act" data-wp-on--click="actions.voteReplyUp" data-reply-id="${ reply.id }">&#9650; <span class="n">${ reply.vote_score || 0 }</span></button>
+                <button class="jt-act" data-wp-on--click="actions.voteReplyDown" data-reply-id="${ reply.id }">&#9660;</button>
+                <button class="jt-act jt-reply-to-btn" data-wp-on--click="actions.setReplyTo" data-reply-id="${ reply.id }" data-reply-author="${ author }">Reply</button>
+            </div>
+        </div>`;
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -19,6 +52,9 @@ const { state, actions } = store( 'jetonomy', {
         // Composer visibility
         composerVisible: false,
         composerReplyTo: null,
+        // Threaded reply-to tracking
+        replyToId: null,
+        replyToAuthor: '',
         // Form submission state
         isSubmitting: false,
         submitLabel: 'Post Topic',
@@ -174,6 +210,100 @@ const { state, actions } = store( 'jetonomy', {
         cancelReplyComposer() {
             state.composerVisible = false;
             state.composerReplyTo = null;
+            state.replyToId = null;
+            state.replyToAuthor = '';
+
+            // Remove the reply-to indicator.
+            const composer = document.getElementById( 'jt-composer' );
+            if ( composer ) {
+                const existing = composer.querySelector( '.jt-replying-to' );
+                if ( existing ) existing.remove();
+            }
+        },
+
+        // ── Set reply-to parent (threaded replies) ──
+        setReplyTo() {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            const authorName = el.ref.dataset.replyAuthor;
+            state.replyToId = replyId ? parseInt( replyId, 10 ) : null;
+            state.replyToAuthor = authorName || '';
+            state.composerReplyTo = replyId || null;
+
+            // Show "Replying to X" indicator in composer.
+            const composer = document.getElementById( 'jt-composer' );
+            if ( composer ) {
+                // Remove existing indicator.
+                const existing = composer.querySelector( '.jt-replying-to' );
+                if ( existing ) existing.remove();
+
+                if ( replyId ) {
+                    const indicator = document.createElement( 'div' );
+                    indicator.className = 'jt-replying-to';
+
+                    const textNode = document.createTextNode( 'Replying to ' );
+                    const strong = document.createElement( 'strong' );
+                    strong.textContent = authorName || 'reply';
+                    const cancelBtn = document.createElement( 'button' );
+                    cancelBtn.className = 'jt-replying-to-cancel';
+                    cancelBtn.setAttribute( 'aria-label', 'Cancel reply' );
+                    cancelBtn.textContent = '\u2715';
+                    cancelBtn.addEventListener( 'click', () => {
+                        indicator.remove();
+                        state.replyToId = null;
+                        state.replyToAuthor = '';
+                        state.composerReplyTo = null;
+                    } );
+
+                    indicator.appendChild( textNode );
+                    indicator.appendChild( strong );
+                    indicator.appendChild( cancelBtn );
+                    composer.prepend( indicator );
+                }
+
+                const input = composer.querySelector( '[contenteditable]' );
+                if ( input ) {
+                    input.focus();
+                    composer.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+                }
+            }
+        },
+
+        // ── Load gap replies (in-between) ──
+        *loadGapReplies() {
+            const ctx = getContext();
+            if ( ctx.loading ) return;
+            ctx.loading = true;
+
+            try {
+                const response = yield fetch(
+                    `${ state.apiBase }/posts/${ ctx.postId }/replies?sort=oldest&limit=${ ctx.gapCount }&offset=${ ctx.gapStart }`,
+                    { headers: { 'X-WP-Nonce': state.nonce } }
+                );
+
+                if ( ! response.ok ) return;
+                const result = yield response.json();
+                const replies = result.data || result;
+
+                if ( ! replies.length ) return;
+
+                // Find the gap element and insert replies before it.
+                const elRef = getElement();
+                const gap = elRef.ref.closest( '.jt-load-gap' );
+                if ( ! gap ) return;
+
+                for ( const reply of replies ) {
+                    const html = buildReplyHtml( reply );
+                    gap.insertAdjacentHTML( 'beforebegin', html );
+                }
+
+                // Remove the gap loader.
+                gap.remove();
+            } catch {
+                // silent
+            } finally {
+                ctx.loading = false;
+            }
         },
 
         // ── Editor input tracking ──
@@ -237,7 +367,7 @@ const { state, actions } = store( 'jetonomy', {
                         },
                         body: JSON.stringify( {
                             content: body.innerHTML,
-                            parent_id: replyTo || null,
+                            parent_id: state.replyToId || replyTo || null,
                         } ),
                     }
                 );
@@ -354,33 +484,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! container ) return;
 
                 for ( const reply of replies ) {
-                    const author = reply.author_name || 'Anonymous';
-                    const initials = author.substring( 0, 2 ).toUpperCase();
-                    const avatarUrl = reply.author_avatar || '';
-                    const timeAgo = reply.time_ago || '';
-                    const isAccepted = reply.is_accepted ? ' accepted' : '';
-                    const trustLevel = reply.trust_level || 0;
-
-                    const avatarHtml = avatarUrl
-                        ? `<img src="${ avatarUrl }" alt="${ author }" class="jt-avatar jt-avatar-sm" width="28" height="28" loading="lazy">`
-                        : `<span class="jt-avatar jt-avatar-sm">${ initials }</span>`;
-
-                    const replyHtml = `
-                        <div class="jt-reply${ isAccepted }" data-wp-interactive="jetonomy">
-                            <div class="jt-reply-head">
-                                <a href="#" class="jt-user-link">${ avatarHtml } <span class="jt-user-name">${ author }</span></a>
-                                <span class="jt-tl" data-jt-tl="${ trustLevel }">${ trustLevel }</span>
-                                <span class="jt-reply-time">${ timeAgo }</span>
-                                ${ isAccepted ? '<span class="jt-accepted-tag">&#10003; Accepted</span>' : '' }
-                            </div>
-                            <div class="jt-reply-body">${ reply.content }</div>
-                            <div class="jt-reply-foot">
-                                <button class="jt-act" data-wp-on--click="actions.voteReplyUp" data-reply-id="${ reply.id }">&#9650; <span class="n">${ reply.vote_score || 0 }</span></button>
-                                <button class="jt-act">&#9660;</button>
-                            </div>
-                        </div>`;
-
-                    container.insertAdjacentHTML( 'beforeend', replyHtml );
+                    container.insertAdjacentHTML( 'beforeend', buildReplyHtml( reply ) );
                 }
 
                 ctx.loadedCount += replies.length;
