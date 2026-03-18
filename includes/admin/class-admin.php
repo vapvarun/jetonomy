@@ -138,6 +138,26 @@ class Admin {
 			'jetonomy-settings',
 			[ $this, 'render_settings' ]
 		);
+
+		// Pro-only subpages — only show when Pro is active.
+		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
+			add_submenu_page(
+				'jetonomy',
+				__( 'Extensions', 'jetonomy' ),
+				__( 'Extensions', 'jetonomy' ),
+				'jetonomy_manage_settings',
+				'jetonomy-extensions',
+				[ $this, 'render_extensions' ]
+			);
+			add_submenu_page(
+				'jetonomy',
+				__( 'License', 'jetonomy' ),
+				__( 'License', 'jetonomy' ),
+				'jetonomy_manage_settings',
+				'jetonomy-license',
+				[ $this, 'render_license' ]
+			);
+		}
 	}
 
 	// ── Settings API ──
@@ -426,6 +446,28 @@ class Admin {
 	public function render_settings(): void {
 		$settings = get_option( 'jetonomy_settings', [] );
 		include JETONOMY_DIR . 'includes/admin/views/settings.php';
+	}
+
+	/**
+	 * Render the Extensions page — content provided by Pro via hook.
+	 */
+	public function render_extensions(): void {
+		/**
+		 * Fires to render the Extensions page content.
+		 * Hooked by Jetonomy Pro to display the extensions manager.
+		 */
+		do_action( 'jetonomy_admin_render_extensions' );
+	}
+
+	/**
+	 * Render the License page — content provided by Pro via hook.
+	 */
+	public function render_license(): void {
+		/**
+		 * Fires to render the License page content.
+		 * Hooked by Jetonomy Pro to display the license form.
+		 */
+		do_action( 'jetonomy_admin_render_license' );
 	}
 
 	// ── Helpers ──

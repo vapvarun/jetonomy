@@ -830,6 +830,87 @@ tr.jetonomy-moderated td {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Pro Badge & Upsell
+   ═══════════════════════════════════════════════════════════ */
+
+/* Pro Badge */
+.jt-pro-badge {
+	display: inline-block;
+	background: linear-gradient(135deg, #8B5CF6, #6366F1);
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding: 2px 6px;
+	border-radius: 3px;
+	vertical-align: middle;
+	margin-left: 4px;
+}
+
+/* Pro Upsell Block */
+.jt-pro-upsell {
+	background: #F8F7FF;
+	border: 1px dashed #C4B5FD;
+	border-radius: 8px;
+	padding: 20px;
+	margin: 16px 0;
+	text-align: center;
+}
+
+.jt-pro-upsell h4 {
+	margin: 8px 0 4px;
+	font-size: 15px;
+}
+
+.jt-pro-upsell p {
+	color: #6B7280;
+	font-size: 13px;
+	margin-bottom: 12px;
+}
+
+/* Pro Upsell Card (sidebar widget) */
+.jt-pro-upsell-card {
+	background: #F8F7FF;
+	border: 1px dashed #C4B5FD;
+	border-radius: 8px;
+	padding: 16px;
+	text-align: center;
+}
+
+.jt-pro-upsell-card h3 {
+	margin: 0 0 8px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.jt-pro-upsell-card p {
+	color: #6B7280;
+	font-size: 13px;
+	margin: 0 0 12px;
+}
+
+/* Disabled nav tab (Pro locked) */
+.nav-tab.disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* Feature Matrix */
+.jt-feature-matrix {
+	margin-top: 30px;
+	padding-top: 20px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.jt-feature-matrix h2 {
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════
    Responsive Adjustments
    ═══════════════════════════════════════════════════════════ */
 

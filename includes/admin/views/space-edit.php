@@ -19,6 +19,19 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<a href="<?php echo esc_url( $edit_url . '&tab=members' ); ?>" class="nav-tab <?php echo 'members' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Members', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url . '&tab=access' ); ?>" class="nav-tab <?php echo 'access' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Access Rules', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url . '&tab=settings' ); ?>" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></a>
+		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Custom Fields', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Reactions', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php endif; ?>
+		<?php
+		/**
+		 * Fires to render additional space edit tabs.
+		 * Pro hooks Custom Fields, Reactions, etc. here.
+		 *
+		 * @param object $space The space being edited.
+		 */
+		do_action( 'jetonomy_admin_space_edit_tabs', $space );
+		?>
 	</nav>
 
 	<?php if ( 'general' === $active_tab ) : ?>
@@ -301,5 +314,16 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</p>
 			</form>
 		</div>
+	<?php
+	/**
+	 * Fires to render additional space edit tab content.
+	 * Pro hooks Custom Fields, Reactions, etc. here.
+	 *
+	 * @param string $active_tab Current active tab slug.
+	 * @param object $space      The space being edited.
+	 */
+	do_action( 'jetonomy_admin_space_edit_tab_content', $active_tab, $space );
+	?>
+
 	<?php endif; ?>
 </div>

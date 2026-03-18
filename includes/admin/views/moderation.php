@@ -19,6 +19,18 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo 'banned' === $active_tab ? 'nav-tab-active' : ''; ?>">
 			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), count( $banned_users ) ); ?>
 		</a>
+		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
+		<?php endif; ?>
+		<?php
+		/**
+		 * Fires to render additional moderation tabs.
+		 * Pro hooks "Auto-Rules" tab here.
+		 *
+		 * @param string $active_tab Current active tab slug.
+		 */
+		do_action( 'jetonomy_admin_moderation_tabs', $active_tab );
+		?>
 	</nav>
 
 	<?php if ( 'posts' === $active_tab ) : ?>
@@ -202,5 +214,15 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				</table>
 			<?php endif; ?>
 		</div>
+	<?php
+	/**
+	 * Fires to render additional moderation tab content.
+	 * Pro hooks its Auto-Rules tab content here.
+	 *
+	 * @param string $active_tab Current active tab slug.
+	 */
+	do_action( 'jetonomy_admin_moderation_tab_content', $active_tab );
+	?>
+
 	<?php endif; ?>
 </div>

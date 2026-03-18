@@ -28,6 +28,15 @@ $stat_cards = [
 		<?php endforeach; ?>
 	</div>
 
+	<?php
+	/**
+	 * Fires after the dashboard stat cards.
+	 *
+	 * @param array $stats Dashboard statistics.
+	 */
+	do_action( 'jetonomy_admin_dashboard_after_stats', $stats );
+	?>
+
 	<div class="jetonomy-dashboard-grid">
 		<!-- Recent Activity -->
 		<div class="jetonomy-dashboard-card">
@@ -109,6 +118,23 @@ $stat_cards = [
 					</tbody>
 				</table>
 			</div>
+
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+				<!-- Pro Upsell: Analytics -->
+				<div class="jt-pro-upsell-card">
+					<h3><?php esc_html_e( 'Analytics', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></h3>
+					<p><?php esc_html_e( 'Engagement graphs, user growth, top spaces, and more.', 'jetonomy' ); ?></p>
+					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+				</div>
+			<?php endif; ?>
+
+			<?php
+			/**
+			 * Fires to render additional dashboard widgets.
+			 * Pro hooks analytics and other widgets here.
+			 */
+			do_action( 'jetonomy_admin_dashboard_widgets' );
+			?>
 		</div>
 	</div>
 </div>

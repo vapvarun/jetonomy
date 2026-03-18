@@ -13,6 +13,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<a href="<?php echo esc_url( $settings_url . '&tab=email' ); ?>" class="nav-tab <?php echo 'email' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Email', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $settings_url . '&tab=appearance' ); ?>" class="nav-tab <?php echo 'appearance' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Appearance', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $settings_url . '&tab=seo' ); ?>" class="nav-tab <?php echo 'seo' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'SEO', 'jetonomy' ); ?></a>
+		<?php
+		/**
+		 * Fires to render additional settings tabs.
+		 * Pro hooks extra tabs (e.g. White Label, Integrations) here.
+		 *
+		 * @param string $active_tab Current active tab slug.
+		 */
+		do_action( 'jetonomy_admin_settings_tabs', $active_tab );
+		?>
 	</nav>
 
 	<form method="post" action="options.php" id="jetonomy-settings-form">
@@ -208,6 +217,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</tbody>
 			</table>
 
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+				<div class="jt-pro-upsell">
+					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
+					<h4><?php esc_html_e( 'Email Digest', 'jetonomy' ); ?></h4>
+					<p><?php esc_html_e( 'Send daily/weekly email digests to keep your community engaged.', 'jetonomy' ); ?></p>
+					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+				</div>
+			<?php endif; ?>
+
 		<?php elseif ( 'appearance' === $active_tab ) : ?>
 			<!-- Appearance Tab -->
 			<table class="form-table">
@@ -252,6 +270,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</td>
 				</tr>
 			</table>
+
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+				<div class="jt-pro-upsell">
+					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
+					<h4><?php esc_html_e( 'White Label', 'jetonomy' ); ?></h4>
+					<p><?php esc_html_e( 'Remove Jetonomy branding and use your own logo, colors, and custom CSS globally.', 'jetonomy' ); ?></p>
+					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+				</div>
+			<?php endif; ?>
 
 		<?php elseif ( 'seo' === $active_tab ) : ?>
 			<!-- SEO Tab -->
@@ -307,8 +334,87 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</td>
 				</tr>
 			</table>
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+				<div class="jt-pro-upsell">
+					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
+					<h4><?php esc_html_e( 'SEO Pro', 'jetonomy' ); ?></h4>
+					<p><?php esc_html_e( 'Advanced SEO controls, Open Graph tags, breadcrumbs, and canonical URL management.', 'jetonomy' ); ?></p>
+					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+				</div>
+			<?php endif; ?>
+
 		<?php endif; ?>
+
+		<?php
+		/**
+		 * Fires to render additional settings tab content.
+		 * Pro hooks its own tab content here.
+		 * This fires outside the core if/elseif chain so Pro tabs can render.
+		 *
+		 * @param string $active_tab Current active tab slug.
+		 */
+		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
+		?>
 
 		<?php submit_button(); ?>
 	</form>
+
+	<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+		<!-- Feature Matrix: Free vs Pro -->
+		<div class="jt-feature-matrix">
+			<h2><?php esc_html_e( 'Free vs Pro', 'jetonomy' ); ?></h2>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Feature', 'jetonomy' ); ?></th>
+						<th style="width:80px;text-align:center;"><?php esc_html_e( 'Free', 'jetonomy' ); ?></th>
+						<th style="width:80px;text-align:center;"><?php esc_html_e( 'Pro', 'jetonomy' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					$features = [
+						[ __( 'Forum, Q&A, Ideas, Feed Spaces', 'jetonomy' ), true, true ],
+						[ __( 'Trust Levels & Reputation', 'jetonomy' ), true, true ],
+						[ __( 'Moderation Queue & Flags', 'jetonomy' ), true, true ],
+						[ __( 'MemberPress & PMPro Integration', 'jetonomy' ), true, true ],
+						[ __( 'bbPress & wpForo Import', 'jetonomy' ), true, true ],
+						[ __( 'SEO (Schema, Sitemap)', 'jetonomy' ), true, true ],
+						[ __( 'Custom CSS & Theme Integration', 'jetonomy' ), true, true ],
+						[ __( 'Analytics Dashboard', 'jetonomy' ), false, true ],
+						[ __( 'Email Digest', 'jetonomy' ), false, true ],
+						[ __( 'Advanced Auto-Moderation Rules', 'jetonomy' ), false, true ],
+						[ __( 'Custom Fields for Spaces', 'jetonomy' ), false, true ],
+						[ __( 'Emoji Reactions', 'jetonomy' ), false, true ],
+						[ __( 'Polls', 'jetonomy' ), false, true ],
+						[ __( 'Private Messaging', 'jetonomy' ), false, true ],
+						[ __( 'Custom Badges', 'jetonomy' ), false, true ],
+						[ __( 'White Label / Branding', 'jetonomy' ), false, true ],
+						[ __( 'WooCommerce, RCP & LearnDash', 'jetonomy' ), false, true ],
+						[ __( 'SEO Pro (Open Graph, Breadcrumbs)', 'jetonomy' ), false, true ],
+						[ __( 'Priority Support', 'jetonomy' ), false, true ],
+					];
+					foreach ( $features as $row ) :
+					?>
+						<tr>
+							<td><?php echo esc_html( $row[0] ); ?></td>
+							<td style="text-align:center;">
+								<?php if ( $row[1] ) : ?>
+									<span class="dashicons dashicons-yes" style="color:#00a32a;"></span>
+								<?php else : ?>
+									<span class="dashicons dashicons-lock" style="color:#c3c4c7;"></span>
+								<?php endif; ?>
+							</td>
+							<td style="text-align:center;">
+								<span class="dashicons dashicons-yes" style="color:#00a32a;"></span>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p style="text-align:center;margin-top:16px;">
+				<a href="https://jetonomy.com/pro" class="button button-primary button-hero" target="_blank"><?php esc_html_e( 'Upgrade to Jetonomy Pro', 'jetonomy' ); ?></a>
+			</p>
+		</div>
+	<?php endif; ?>
 </div>
