@@ -91,8 +91,10 @@
   /* Reset within app */
   .jt-app { font-family: var(--jt-font); line-height: 1.6; color: var(--jt-text); }
   .jt-app *, .jt-app *::before, .jt-app *::after { box-sizing: border-box; }
-  .jt-app a { color: var(--jt-accent); text-decoration: none; transition: color var(--jt-dur); }
-  .jt-app a:hover { color: var(--jt-accent-hover); }
+  /* Links inherit text color by default (Notion-style).
+     Only explicit .jt-link or interactive elements use accent color. */
+  .jt-app a { color: inherit; text-decoration: none; transition: color var(--jt-dur); }
+  .jt-app a:hover { color: var(--jt-text-secondary); }
 
   /* ── Community Sub-Navigation (below theme header) ── */
   .jt-community-nav { border-bottom: 1px solid var(--jt-border); background: var(--jt-bg); }
@@ -100,7 +102,7 @@
   .jt-community-nav-links { display: flex; gap: 2px; }
   .jt-community-nav-links a { color: var(--jt-text-secondary); font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; transition: all var(--jt-dur) var(--jt-ease); }
   .jt-community-nav-links a:hover { color: var(--jt-text); border-bottom-color: var(--jt-border-strong); }
-  .jt-community-nav-links a.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); font-weight: 600; }
+  .jt-community-nav-links a.active { color: var(--jt-text); border-bottom-color: var(--jt-accent); font-weight: 600; }
   .jt-community-nav-actions { display: flex; align-items: center; gap: 8px; }
   .jt-community-nav-notif { color: var(--jt-text-secondary); display: flex; align-items: center; gap: 4px; padding: 8px; border-radius: var(--jt-radius-full); transition: all var(--jt-dur); position: relative; }
   .jt-community-nav-notif:hover { color: var(--jt-text); background: var(--jt-bg-muted); }
@@ -123,7 +125,7 @@
   /* ── Breadcrumb ── */
   .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--jt-text-tertiary); margin-bottom: 20px; }
   .jt-crumb a { color: var(--jt-text-tertiary); }
-  .jt-crumb a:hover { color: var(--jt-accent); }
+  .jt-crumb a:hover { color: var(--jt-text-secondary); }
 
   /* ── Space header ── */
   .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
@@ -159,7 +161,7 @@
   a.jt-row:hover { color: inherit; }
   .jt-row-main { min-width: 0; }
   .jt-row-title { font-weight: 600; line-height: 1.3; color: var(--jt-text); }
-  .jt-row:hover .jt-row-title { color: var(--jt-accent); }
+  .jt-row:hover .jt-row-title { color: var(--jt-text-secondary); }
   .jt-row-sub { color: var(--jt-text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .jt-row-stat { text-align: center; }
   .jt-row-stat-n { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 600; }
@@ -168,8 +170,8 @@
   /* ── Vote buttons ── */
   .jt-votes { display: flex; flex-direction: column; align-items: center; gap: 1px; }
   .jt-v-btn { width: 24px; height: 18px; display: flex; align-items: center; justify-content: center; color: var(--jt-text-tertiary); font-size: 0.7rem; border-radius: 3px; transition: all 0.1s; border: none; background: none; cursor: pointer; }
-  .jt-v-btn:hover { color: var(--jt-accent); background: var(--jt-accent-muted); }
-  .jt-v-btn.voted, .jt-v-btn[data-wp-class--voted] { color: var(--jt-accent); }
+  .jt-v-btn:hover { color: var(--jt-text-secondary); background: var(--jt-accent-muted); }
+  .jt-v-btn.voted, .jt-v-btn[data-wp-class--voted] { color: var(--jt-text-secondary); }
   .jt-v-num { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 700; }
 
   /* ── Tags ── */
@@ -274,7 +276,7 @@
   .jt-idea { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); padding: 12px; margin-bottom: 8px; cursor: pointer; transition: all var(--jt-dur); }
   .jt-idea:hover { border-color: var(--jt-border-strong); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
   .jt-idea-title { font-weight: 600; line-height: 1.4; margin-bottom: 6px; }
-  .jt-idea-votes { font-family: var(--jt-font-mono); font-size: 0.8rem; font-weight: 600; color: var(--jt-accent); }
+  .jt-idea-votes { font-family: var(--jt-font-mono); font-size: 0.8rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-idea-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.75rem; color: var(--jt-text-tertiary); }
 
   /* ── Leaderboard ── */
@@ -282,24 +284,24 @@
   .jt-leader:last-child { border-bottom: none; }
   .jt-leader-rank { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 700; color: var(--jt-text-tertiary); width: 20px; text-align: center; }
   .jt-leader-name { flex: 1; font-weight: 500; }
-  .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 600; color: var(--jt-accent); }
+  .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 600; color: var(--jt-text-secondary); }
 
   /* ── Trending ── */
   .jt-trend { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--jt-border); }
   .jt-trend:last-child { border-bottom: none; }
   .jt-trend-n { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 700; color: var(--jt-border-strong); min-width: 24px; }
   .jt-trend-title { font-weight: 500; line-height: 1.4; cursor: pointer; }
-  .jt-trend-title:hover { color: var(--jt-accent); }
+  .jt-trend-title:hover { color: var(--jt-text-secondary); }
   .jt-trend-meta { font-size: 0.75rem; color: var(--jt-text-tertiary); margin-top: 2px; }
 
   /* ── Tags cloud ── */
   .jt-tags { display: flex; flex-wrap: wrap; gap: 5px; }
   .jt-tags .jt-tag { cursor: pointer; transition: all 0.1s; }
-  .jt-tags .jt-tag:hover { background: var(--jt-accent-muted); color: var(--jt-accent); }
+  .jt-tags .jt-tag:hover { background: var(--jt-accent-muted); color: var(--jt-text-secondary); }
 
   /* ── Loading ── */
   .jt-loading { text-align: center; padding: 40px; color: var(--jt-text-tertiary); }
-  .jt-spinner { width: 24px; height: 24px; border: 2px solid var(--jt-border); border-top-color: var(--jt-accent); border-radius: 50%; animation: jt-spin 0.6s linear infinite; margin: 0 auto 8px; }
+  .jt-spinner { width: 24px; height: 24px; border: 2px solid var(--jt-border); border-top-color: var(--jt-text-secondary); border-radius: 50%; animation: jt-spin 0.6s linear infinite; margin: 0 auto 8px; }
   @keyframes jt-spin { to { transform: rotate(360deg); } }
 
   /* ── Empty state ── */
@@ -395,7 +397,7 @@
   .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-danger { background: var(--jt-danger); color: white; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
-  .jt-badge-accent { font-size: 0.75rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-accent); padding: 2px 8px; border-radius: var(--jt-radius-full); }
+  .jt-badge-accent { font-size: 0.75rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
   /* ── View count ── */
   .jt-view-count { margin-left: auto; font-size: 0.85rem; color: var(--jt-text-tertiary); }
@@ -465,7 +467,7 @@
 
   /* ── Reply card extras ── */
   .jt-reply-author { }
-  .jt-reply-op { font-size: 0.85rem; color: var(--jt-accent); font-weight: 600; }
+  .jt-reply-op { font-size: 0.85rem; color: var(--jt-text-secondary); font-weight: 600; }
   .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.85rem; }
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
 
@@ -481,7 +483,7 @@
   .jt-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); }
   .jt-member-name { font-weight: 600; color: var(--jt-text); }
   .jt-member-joined { font-size: 0.85rem; color: var(--jt-text-tertiary); margin-top: 2px; }
-  .jt-member-rep { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 600; color: var(--jt-accent); }
+  .jt-member-rep { font-family: var(--jt-font-mono); font-size: 0.85rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-member-sub { color: var(--jt-text-tertiary); margin-top: 2px; }
 
