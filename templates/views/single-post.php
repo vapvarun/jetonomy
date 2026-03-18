@@ -6,7 +6,7 @@ $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
 if ( ! $post || 'publish' !== $post->status ) {
 	status_header( 404 );
-	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -19,7 +19,7 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
 	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			echo '<div class="jt-container"><div class="jt-empty"><p>' . esc_html__( 'This content is in a private space.', 'jetonomy' ) . '</p></div></div>';
+			echo '<div class="jt-empty"><p>' . esc_html__( 'This content is in a private space.', 'jetonomy' ) . '</p></div>';
 			return;
 		}
 	}
@@ -71,11 +71,9 @@ wp_interactivity_state(
 	]
 );
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-two-col">
+<div class="jt-two-col">
 		<main>
 			<!-- Post -->
 			<article class="jt-post" data-wp-interactive="jetonomy">
@@ -216,5 +214,3 @@ wp_interactivity_state(
 
 		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
 	</div>
-
-</div>

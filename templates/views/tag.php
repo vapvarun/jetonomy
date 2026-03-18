@@ -6,7 +6,7 @@ $tag      = \Jetonomy\Models\Tag::find_by_slug( $tag_slug );
 
 if ( ! $tag ) {
 	status_header( 404 );
-	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Tag not found.', 'jetonomy' ) . '</div></div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Tag not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -44,11 +44,9 @@ $crumbs = [
 	[ 'label' => $tag->name, 'url' => '' ],
 ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-two-col">
+<div class="jt-two-col">
 		<main>
 			<div class="jt-flex jt-items-center jt-gap-12 jt-mb-20">
 				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
@@ -94,5 +92,3 @@ $crumbs = [
 
 		<?php \Jetonomy\Template_Loader::partial( 'sidebar' ); ?>
 	</div>
-
-</div>

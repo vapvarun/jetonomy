@@ -6,6 +6,13 @@ defined( 'ABSPATH' ) || exit;
 class Template_Loader {
 
     public static function render( array $data ): void {
+        // ── Auth redirect for protected routes (BEFORE any output) ──
+        $auth_required_routes = [ 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post' ];
+        if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
+            wp_safe_redirect( wp_login_url( home_url( $_SERVER['REQUEST_URI'] ) ) );
+            exit;
+        }
+
         // Allow theme overrides: theme/jetonomy/views/home.php
         $theme_dir = get_stylesheet_directory() . '/jetonomy/';
         $plugin_dir = JETONOMY_DIR . 'templates/';
@@ -116,9 +123,9 @@ class Template_Loader {
         // Use WP's get_header/get_footer for theme integration
         get_header();
 
-        echo '<div id="jetonomy-app" class="jt-app">';
+        echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy">';
 
-        // Load the Jetonomy header partial
+        // Load the Jetonomy header partial (full-width, outside container)
         $header_path = file_exists( $theme_dir . 'partials/header.php' )
             ? $theme_dir . 'partials/header.php'
             : $plugin_dir . 'partials/header.php';
@@ -126,10 +133,15 @@ class Template_Loader {
             include $header_path;
         }
 
+        // Open theme-compatible container for content
+        echo '<div class="container">';
+
         // Load the main template
         include $template_path;
 
-        echo '</div>';
+        echo '</div>'; // .container
+
+        echo '</div>'; // #jetonomy-app
 
         get_footer();
     }

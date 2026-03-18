@@ -1,11 +1,7 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-if ( ! is_user_logged_in() ) {
-	wp_redirect( wp_login_url() );
-	exit;
-}
-
+// Auth check is handled by Template_Loader before output.
 $current_user = wp_get_current_user();
 $profile      = \Jetonomy\Models\UserProfile::find_or_create( $current_user->ID );
 $base         = home_url( '/community' );
@@ -21,7 +17,7 @@ $base         = home_url( '/community' );
 );
 ?>
 
-<div class="jt-container jt-narrower">
+<div class="jt-narrower">
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
 	<form id="jt-edit-profile" class="jt-new-post-form"

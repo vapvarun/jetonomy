@@ -6,7 +6,7 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -60,11 +60,9 @@ if ( $category ) {
 $crumbs[] = [ 'label' => $space->title, 'url' => $base . '/s/' . $space->slug . '/' ];
 $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-cat-page-row">
+<div class="jt-cat-page-row">
 		<?php if ( ! empty( $space->emoji ) ) : ?>
 			<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
 		<?php endif; ?>
@@ -102,5 +100,3 @@ $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 			</div>
 		<?php endforeach; ?>
 	</div>
-
-</div>

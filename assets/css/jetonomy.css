@@ -119,7 +119,9 @@
   .jt-avatar img, img.jt-avatar { border-radius: 50%; object-fit: cover; }
 
   /* ── Layout ── */
-  /* Use wideSize (not contentSize) — forums need full width for sidebar layout */
+  /* Theme's .container handles max-width; add vertical padding for Jetonomy content. */
+  .jt-app > .container { padding-top: 24px; padding-bottom: 24px; }
+  /* Fallback: if .jt-container is used (e.g. theme overrides), keep the old rule. */
   .jt-container { max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; padding: 24px; }
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
 

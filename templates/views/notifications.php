@@ -1,11 +1,7 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-if ( ! is_user_logged_in() ) {
-	wp_redirect( wp_login_url( home_url( '/community/notifications/' ) ) );
-	exit;
-}
-
+// Auth check is handled by Template_Loader before output.
 $user_id = get_current_user_id();
 $notifications = \Jetonomy\Models\Notification::list_for_user( $user_id, 30 );
 
@@ -27,11 +23,9 @@ $type_labels = [
 	'subscription'  => __( 'new activity in a subscribed space', 'jetonomy' ),
 ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-notif-wrap">
+<div class="jt-notif-wrap">
 		<h1 class="jt-page-title jt-mb-20">
 			<?php esc_html_e( 'Notifications', 'jetonomy' ); ?>
 		</h1>
@@ -97,5 +91,3 @@ $type_labels = [
 			</div>
 		<?php endif; ?>
 	</div>
-
-</div>

@@ -30,11 +30,9 @@ $crumbs = [
 	[ 'label' => __( 'Leaderboard', 'jetonomy' ), 'url' => '' ],
 ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-leaderboard-wrap">
+<div class="jt-leaderboard-wrap">
 		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?>
@@ -99,5 +97,3 @@ $crumbs = [
 			<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $leaders ) >= $per_page ] ); ?>
 		<?php endif; ?>
 	</div>
-
-</div>

@@ -118,6 +118,32 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        *voteReplyDown( event ) {
+            event.stopPropagation();
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            if ( ! replyId ) return;
+
+            const current = state.replyScores[ replyId ] || 0;
+            state.replyScores[ replyId ] = current - 1;
+
+            try {
+                yield fetch(
+                    `${ state.apiBase }/replies/${ replyId }/vote`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': state.nonce,
+                        },
+                        body: JSON.stringify( { value: -1 } ),
+                    }
+                );
+            } catch {
+                state.replyScores[ replyId ] = current;
+            }
+        },
+
         // ── Sort ──
         changeSort( event ) {
             const sort = event.target.dataset.sort;
@@ -145,16 +171,62 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
-        // ── Reply submission ──
-        *submitReply() {
-            const composer = document.getElementById( 'jt-composer' );
-            const body = composer?.querySelector( '[contenteditable]' );
-            if ( ! body || ! body.innerHTML.trim() ) return;
+        cancelReplyComposer() {
+            state.composerVisible = false;
+            state.composerReplyTo = null;
+        },
 
-            state.isLoading = true;
+        // ── Editor input tracking ──
+        onEditorInput() {
+            // Placeholder for editor input handling (e.g. auto-save, char count).
+            // The contenteditable body dispatches this on every keystroke.
+        },
+
+        // ── Moderation ──
+        *dismissFlag( event ) {
+            const el = getElement();
+            const flagId = el.ref.dataset.flagId;
+            const flagAction = el.ref.dataset.action; // 'approved' or 'dismissed'
+            if ( ! flagId ) return;
 
             try {
-                const postId = state.currentPostId;
+                const response = yield fetch(
+                    `${ state.apiBase }/moderation/flags/${ flagId }`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': state.nonce,
+                        },
+                        body: JSON.stringify( { status: flagAction } ),
+                    }
+                );
+                if ( response.ok ) {
+                    // Remove the flag card from the DOM
+                    const card = el.ref.closest( '.jt-mod-flag' );
+                    if ( card ) card.remove();
+                }
+            } catch {
+                // Silent fail
+            }
+        },
+
+        // ── Reply submission ──
+        *submitReply() {
+            const el = getElement();
+            const postId = el.ref.dataset.postId || state.currentPostId;
+            const replyTo = el.ref.dataset.replyTo || state.composerReplyTo || null;
+
+            // Find the closest editor container (the .jt-editor wrapper)
+            const editorWrap = el.ref.closest( '.jt-editor' );
+            const body = editorWrap?.querySelector( '[contenteditable]' )
+                || document.getElementById( `jt-composer-${ postId }` );
+            if ( ! body || ! body.innerHTML.trim() ) return;
+
+            const ctx = getContext();
+            ctx.submitting = true;
+
+            try {
                 const response = yield fetch(
                     `${ state.apiBase }/posts/${ postId }/replies`,
                     {
@@ -165,7 +237,7 @@ const { state, actions } = store( 'jetonomy', {
                         },
                         body: JSON.stringify( {
                             content: body.innerHTML,
-                            parent_id: state.composerReplyTo || null,
+                            parent_id: replyTo || null,
                         } ),
                     }
                 );
@@ -175,7 +247,7 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.reload();
                 }
             } finally {
-                state.isLoading = false;
+                ctx.submitting = false;
             }
         },
 

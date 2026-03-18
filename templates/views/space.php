@@ -6,7 +6,7 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -14,7 +14,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
 	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			echo '<div class="jt-container"><div class="jt-empty"><p>' . esc_html__( 'This space is private. You need to be a member to access it.', 'jetonomy' ) . '</p></div></div>';
+			echo '<div class="jt-empty"><p>' . esc_html__( 'This space is private. You need to be a member to access it.', 'jetonomy' ) . '</p></div>';
 			return;
 		}
 	}
@@ -42,11 +42,9 @@ if ( $category ) {
 }
 $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-two-col">
+<div class="jt-two-col">
 		<main>
 			<div class="jt-space-head">
 				<?php if ( ! empty( $space->icon ) ) : ?>
@@ -129,5 +127,3 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 
 		<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => $space ] ); ?>
 	</div>
-
-</div>

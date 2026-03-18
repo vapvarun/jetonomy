@@ -1,14 +1,10 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-if ( ! is_user_logged_in() ) {
-    wp_redirect( wp_login_url( home_url( '/community/s/' . esc_attr( $data['slug'] ) . '/new/' ) ) );
-    exit;
-}
-
+// Auth check is handled by Template_Loader before output.
 $space = \Jetonomy\Models\Space::find_by_slug( $data['slug'] );
 if ( ! $space ) {
-    echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">404</div><p>Space not found.</p></div></div>';
+    echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'Space not found.', 'jetonomy' ) . '</p></div>';
     return;
 }
 
@@ -25,7 +21,7 @@ $type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : _
 ] );
 ?>
 
-<div class="jt-container jt-narrow">
+<div class="jt-narrow">
     <h1 class="jt-post-create-title"><?php echo esc_html( $type_label ); ?></h1>
     <p class="jt-post-create-subtitle">
         <?php printf( esc_html__( 'Posting in %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); ?>

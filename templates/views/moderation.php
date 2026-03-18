@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 // Require moderator / admin access.
 if ( ! current_user_can( 'moderate_comments' ) && ! current_user_can( 'manage_options' ) ) {
 	status_header( 403 );
-	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128274;</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128274;</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -24,11 +24,9 @@ $crumbs = [
 	[ 'label' => __( 'Moderation Queue', 'jetonomy' ), 'url' => '' ],
 ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-mod-wrap">
+<div class="jt-mod-wrap">
 		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Moderation Queue', 'jetonomy' ); ?>
@@ -149,5 +147,3 @@ $crumbs = [
 			</div>
 		<?php endif; ?>
 	</div>
-
-</div>

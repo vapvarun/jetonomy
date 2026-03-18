@@ -3,9 +3,7 @@ defined( 'ABSPATH' ) || exit;
 $categories = \Jetonomy\Models\Category::list_top_level();
 $base        = home_url( '/community' );
 ?>
-<div class="jt-container">
-
-	<div class="jt-two-col">
+<div class="jt-two-col">
 		<main>
 			<?php if ( empty( $categories ) ) : ?>
 				<div class="jt-empty">
@@ -73,5 +71,3 @@ $base        = home_url( '/community' );
 
 		<?php \Jetonomy\Template_Loader::partial( 'sidebar' ); ?>
 	</div>
-
-</div>

@@ -6,7 +6,7 @@ $user       = get_user_by( 'login', $user_login );
 
 if ( ! $user ) {
 	status_header( 404 );
-	echo '<div class="jt-container"><div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'User not found.', 'jetonomy' ) . '</div></div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'User not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -52,11 +52,9 @@ $crumbs = [
 	[ 'label' => $user->display_name, 'url' => '' ],
 ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-two-col">
+<div class="jt-two-col">
 		<main>
 			<!-- Profile card -->
 			<div class="jt-profile jt-mb-md">
@@ -188,5 +186,3 @@ $crumbs = [
 
 		<?php \Jetonomy\Template_Loader::partial( 'sidebar' ); ?>
 	</div>
-
-</div>

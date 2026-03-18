@@ -66,11 +66,9 @@ $crumbs = [
 	[ 'label' => __( 'Search', 'jetonomy' ), 'url' => '' ],
 ];
 ?>
-<div class="jt-container">
+<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
-
-	<div class="jt-two-col">
+<div class="jt-two-col">
 		<main>
 			<!-- Search form -->
 			<div class="jt-search-form-wrap">
@@ -221,5 +219,3 @@ $crumbs = [
 
 		<?php \Jetonomy\Template_Loader::partial( 'sidebar' ); ?>
 	</div>
-
-</div>
