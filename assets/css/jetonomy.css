@@ -666,3 +666,194 @@
   .jt-nested-1::before { background: var(--jt-accent); opacity: 0.3; }
   .jt-nested-2::before { background: var(--jt-success); opacity: 0.3; }
   .jt-nested-3::before { background: var(--jt-warn); opacity: 0.3; }
+
+  /* ═══════════════════════════════════════════
+     PREMIUM UX — Uniform Across All Pages
+     Entrance animations, hover states, micro-interactions
+     ═══════════════════════════════════════════ */
+
+  /* ── 1. Entrance Animations — staggered fade-in ── */
+
+  /* Topic list rows */
+  .jt-topics > a:nth-child(1) { animation: jt-slideUp 0.3s ease both; animation-delay: 0s; }
+  .jt-topics > a:nth-child(2) { animation: jt-slideUp 0.3s ease both; animation-delay: 0.03s; }
+  .jt-topics > a:nth-child(3) { animation: jt-slideUp 0.3s ease both; animation-delay: 0.05s; }
+  .jt-topics > a:nth-child(4) { animation: jt-slideUp 0.3s ease both; animation-delay: 0.07s; }
+  .jt-topics > a:nth-child(5) { animation: jt-slideUp 0.3s ease both; animation-delay: 0.09s; }
+  .jt-topics > a:nth-child(n+6) { animation: jt-slideUp 0.3s ease both; animation-delay: 0.1s; }
+
+  /* Search results (div-wrapped rows) */
+  .jt-topics > div { animation: jt-slideUp 0.3s ease both; }
+
+  /* Space cards */
+  .jt-space-grid > * { animation: jt-slideUp 0.3s ease both; }
+  .jt-space-grid > :nth-child(1) { animation-delay: 0s; }
+  .jt-space-grid > :nth-child(2) { animation-delay: 0.05s; }
+  .jt-space-grid > :nth-child(3) { animation-delay: 0.1s; }
+  .jt-space-grid > :nth-child(4) { animation-delay: 0.12s; }
+  .jt-space-grid > :nth-child(5) { animation-delay: 0.14s; }
+  .jt-space-grid > :nth-child(n+6) { animation-delay: 0.15s; }
+
+  /* Sidebar cards */
+  .jt-sidebar > * { animation: jt-slideUp 0.35s ease both; }
+  .jt-sidebar > :nth-child(1) { animation-delay: 0.1s; }
+  .jt-sidebar > :nth-child(2) { animation-delay: 0.2s; }
+  .jt-sidebar > :nth-child(3) { animation-delay: 0.3s; }
+
+  /* Category sections on home page */
+  section { animation: jt-slideUp 0.4s ease both; }
+
+  /* Leaderboard rows */
+  .jt-leader { animation: jt-slideUp 0.3s ease both; }
+
+  /* Badge cards */
+  .jt-badge-card { animation: jt-slideUp 0.3s ease both; }
+
+  /* ── 2. Hover States — ALL Interactive Elements ── */
+
+  /* Space cards — lift on hover */
+  .jt-space-card { transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; }
+  .jt-space-card:hover { transform: translateY(-2px); box-shadow: var(--jt-shadow-card, 0 4px 12px rgba(0,0,0,0.08)); }
+
+  /* Topic rows — subtle horizontal shift */
+  a.jt-row { transition: background 0.15s, transform 0.1s; }
+  a.jt-row:hover { transform: translateX(3px); }
+
+  /* Leaderboard rows — hover background */
+  .jt-leader { transition: background 0.15s; padding: 8px 12px; margin: 0 -12px; border-radius: var(--jt-radius); }
+  .jt-leader:hover { background: var(--jt-bg-hover); }
+
+  /* Sidebar trending items — hover background */
+  .jt-trend { transition: background 0.15s; padding: 6px 8px; margin: 0 -8px; border-radius: var(--jt-radius); }
+  .jt-trend:hover { background: var(--jt-bg-hover); }
+
+  /* Tag pills */
+  .jt-tag { transition: all 0.15s; }
+  .jt-tag:hover { transform: translateY(-1px); }
+
+  /* Notification items */
+  .jt-notif-item { transition: background 0.15s; }
+  .jt-notif-item:hover { background: var(--jt-bg-hover); }
+
+  /* Member items */
+  .jt-member-item { transition: background 0.15s; }
+  .jt-member-item:hover { background: var(--jt-bg-hover); }
+
+  /* User profile links */
+  .jt-user-link { transition: opacity 0.15s; }
+  .jt-user-link:hover { opacity: 0.8; }
+
+  /* Buttons — press effect */
+  .jt-btn:active { transform: scale(0.97); }
+  .jt-pill:active { transform: scale(0.95); }
+
+  /* Cards — subtle border glow on hover */
+  .jt-card { transition: border-color 0.2s; }
+  .jt-card:hover { border-color: var(--jt-border-strong); }
+
+  /* ── 3. Community Nav — Active State Animation ── */
+  .jt-community-nav-links a { position: relative; }
+  .jt-community-nav-links a.active::after {
+    content: '';
+    position: absolute; bottom: -2px; left: 14px; right: 14px;
+    height: 2px; background: var(--jt-accent);
+    animation: jt-navUnderline 0.3s ease;
+  }
+  @keyframes jt-navUnderline {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+  /* Use ::after underline instead of static border-bottom */
+  .jt-community-nav-links a.active { border-bottom-color: transparent; }
+
+  /* ── 4. Page Title / Heading Animation ── */
+  @keyframes jt-fadeTitle {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .jt-space-head h1, .jt-post-head h1, .jt-page-title {
+    animation: jt-fadeTitle 0.5s ease both;
+  }
+
+  /* ── 5. Breadcrumb Trail Animation ── */
+  .jt-crumb { animation: jt-fadeIn 0.4s ease both; animation-delay: 0.05s; }
+  .jt-crumb a { transition: color 0.15s; }
+
+  /* ── 6. Empty State Animation ── */
+  .jt-empty { animation: jt-fadeIn 0.6s ease both; animation-delay: 0.2s; }
+  .jt-empty-icon { animation: jt-emptyPulse 3s ease infinite; }
+  @keyframes jt-emptyPulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+
+  /* ── 7. Sort Pills — Active State Transition ── */
+  .jt-pill.on, .jt-pill.active {
+    transition: background 0.2s, color 0.15s, box-shadow 0.2s;
+  }
+
+  /* ── 8. Profile Page Premium ── */
+
+  /* Profile banner gradient shimmer */
+  .jt-profile-banner {
+    background-size: 200% 200%;
+    animation: jt-gradientShift 8s ease infinite;
+  }
+  @keyframes jt-gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Stats counter — number pop on load */
+  .jt-stat-n { animation: jt-countPop 0.5s ease both; animation-delay: 0.3s; }
+  @keyframes jt-countPop {
+    from { opacity: 0; transform: scale(0.5); }
+    70% { transform: scale(1.1); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Badge cards — staggered entrance */
+  .jt-badge-card:nth-child(1) { animation-delay: 0.1s; }
+  .jt-badge-card:nth-child(2) { animation-delay: 0.15s; }
+  .jt-badge-card:nth-child(3) { animation-delay: 0.2s; }
+  .jt-badge-card:nth-child(4) { animation-delay: 0.25s; }
+  .jt-badge-card:nth-child(5) { animation-delay: 0.3s; }
+  .jt-badge-card:nth-child(6) { animation-delay: 0.35s; }
+
+  /* ── 9. Idea Cards (Kanban) Premium ── */
+  .jt-idea { transition: all 0.2s ease; }
+  .jt-idea:hover { transform: translateY(-3px) rotate(-0.5deg); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+
+  /* Kanban columns stagger in */
+  .jt-kanban > .jt-col:nth-child(1) { animation: jt-slideUp 0.4s ease both; animation-delay: 0s; }
+  .jt-kanban > .jt-col:nth-child(2) { animation: jt-slideUp 0.4s ease both; animation-delay: 0.1s; }
+  .jt-kanban > .jt-col:nth-child(3) { animation: jt-slideUp 0.4s ease both; animation-delay: 0.2s; }
+  .jt-kanban > .jt-col:nth-child(4) { animation: jt-slideUp 0.4s ease both; animation-delay: 0.3s; }
+
+  /* ── 10. Focus Visible Rings (Accessibility + Premium) ── */
+  .jt-app *:focus-visible {
+    outline: 2px solid var(--jt-accent);
+    outline-offset: 2px;
+    border-radius: var(--jt-radius-sm);
+  }
+  .jt-app *:focus:not(:focus-visible) { outline: none; }
+
+  /* ── 12. Progress Bar Animation ── */
+  .jt-progress-fill {
+    animation: jt-progressGrow 0.8s ease both;
+    animation-delay: 0.3s;
+  }
+  @keyframes jt-progressGrow {
+    from { width: 0; }
+  }
+
+  /* ── 11. Reduced Motion — Respect User Preference ── */
+  /* Must be last to override all animation rules above */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
