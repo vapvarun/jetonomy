@@ -10,12 +10,12 @@ use function Jetonomy\table;
 
 class Search_Controller extends Base_Controller {
 
-	protected string $rest_base = 'search';
+	protected $rest_base = 'search';
 
 	/**
 	 * Register REST routes for search.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		register_rest_route( $ns, '/search', [

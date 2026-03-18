@@ -10,12 +10,12 @@ use Jetonomy\Models\Notification;
 
 class Notifications_Controller extends Base_Controller {
 
-	protected string $rest_base = 'notifications';
+	protected $rest_base = 'notifications';
 
 	/**
 	 * Register all REST routes for notifications.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Collection.

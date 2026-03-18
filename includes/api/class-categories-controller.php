@@ -11,12 +11,12 @@ use Jetonomy\Models\Space;
 
 class Categories_Controller extends Base_Controller {
 
-	protected string $rest_base = 'categories';
+	protected $rest_base = 'categories';
 
 	/**
 	 * Register all REST routes.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		register_rest_route( $ns, '/categories', [
@@ -98,7 +98,7 @@ class Categories_Controller extends Base_Controller {
 	/**
 	 * GET /categories/{id} — Get a single category with its spaces.
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item( $request ) {
 		$id       = absint( $request->get_param( 'id' ) );
 		$category = Category::find( $id );
 
@@ -115,7 +115,7 @@ class Categories_Controller extends Base_Controller {
 	/**
 	 * POST /categories — Create a new category.
 	 */
-	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function create_item( $request ) {
 		$name = sanitize_text_field( $request->get_param( 'name' ) );
 
 		if ( empty( $name ) ) {
@@ -158,7 +158,7 @@ class Categories_Controller extends Base_Controller {
 	/**
 	 * PATCH /categories/{id} — Partially update a category.
 	 */
-	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function update_item( $request ) {
 		$id       = absint( $request->get_param( 'id' ) );
 		$category = Category::find( $id );
 
@@ -207,7 +207,7 @@ class Categories_Controller extends Base_Controller {
 	/**
 	 * DELETE /categories/{id} — Delete a category.
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item( $request ) {
 		$id       = absint( $request->get_param( 'id' ) );
 		$category = Category::find( $id );
 

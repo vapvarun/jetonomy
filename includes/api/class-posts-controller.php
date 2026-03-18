@@ -15,12 +15,12 @@ use Jetonomy\Models\UserProfile;
 
 class Posts_Controller extends Base_Controller {
 
-	protected string $rest_base = 'posts';
+	protected $rest_base = 'posts';
 
 	/**
 	 * Register all REST routes for posts.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Collection routes nested under spaces.
@@ -98,7 +98,7 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * GET /spaces/{space_id}/posts — List posts in a space.
 	 */
-	public function list_items( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function list_items( $request ) {
 		$space_id = absint( $request->get_param( 'space_id' ) );
 
 		if ( ! $this->check_permission( 'read', $space_id ) ) {
@@ -129,7 +129,7 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * GET /posts/{id} — Retrieve a single post.
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item( $request ) {
 		$id   = absint( $request->get_param( 'id' ) );
 		$post = Post::find( $id );
 
@@ -149,7 +149,7 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * POST /spaces/{space_id}/posts — Create a new post.
 	 */
-	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function create_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -244,7 +244,7 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * PATCH /posts/{id} — Update a post.
 	 */
-	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function update_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -306,7 +306,7 @@ class Posts_Controller extends Base_Controller {
 	/**
 	 * DELETE /posts/{id} — Soft-delete (trash) a post.
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;

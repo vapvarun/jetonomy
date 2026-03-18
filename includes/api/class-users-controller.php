@@ -14,12 +14,12 @@ use function Jetonomy\table;
 
 class Users_Controller extends Base_Controller {
 
-	protected string $rest_base = 'users';
+	protected $rest_base = 'users';
 
 	/**
 	 * Register all REST routes for users.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Current-user routes.
@@ -89,7 +89,7 @@ class Users_Controller extends Base_Controller {
 	/**
 	 * GET /users/{id} — Return a public profile (no sensitive data).
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item( $request ) {
 		$id = absint( $request->get_param( 'id' ) );
 
 		$wp_user = get_userdata( $id );

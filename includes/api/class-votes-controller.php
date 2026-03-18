@@ -13,7 +13,7 @@ use Jetonomy\Models\UserProfile;
 
 class Votes_Controller extends Base_Controller {
 
-	protected string $rest_base = 'votes';
+	protected $rest_base = 'votes';
 
 	// Reputation deltas.
 	private const REP_POST_UPVOTE   = 10;
@@ -23,7 +23,7 @@ class Votes_Controller extends Base_Controller {
 	/**
 	 * Register all REST routes for votes.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		register_rest_route( $ns, '/posts/(?P<id>\d+)/vote', [
@@ -199,7 +199,7 @@ class Votes_Controller extends Base_Controller {
 	 * @param int    $id
 	 * @return object|WP_Error
 	 */
-	private function load_object( string $type, int $id ): object|WP_Error {
+	private function load_object( string $type, int $id ) {
 		if ( 'post' === $type ) {
 			$object = Post::find( $id );
 			$label  = 'Post';

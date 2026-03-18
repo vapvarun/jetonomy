@@ -15,7 +15,7 @@ use Jetonomy\Models\UserProfile;
 
 class Replies_Controller extends Base_Controller {
 
-	protected string $rest_base = 'replies';
+	protected $rest_base = 'replies';
 
 	/**
 	 * Reputation delta awarded when a reply is accepted as the answer.
@@ -25,7 +25,7 @@ class Replies_Controller extends Base_Controller {
 	/**
 	 * Register all REST routes for replies.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Collection routes nested under posts.
@@ -84,7 +84,7 @@ class Replies_Controller extends Base_Controller {
 	/**
 	 * GET /posts/{post_id}/replies — List replies for a post.
 	 */
-	public function list_items( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function list_items( $request ) {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 		$post    = Post::find( $post_id );
 
@@ -118,7 +118,7 @@ class Replies_Controller extends Base_Controller {
 	/**
 	 * POST /posts/{post_id}/replies — Create a new reply.
 	 */
-	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function create_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -231,7 +231,7 @@ class Replies_Controller extends Base_Controller {
 	/**
 	 * PATCH /replies/{id} — Update a reply.
 	 */
-	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function update_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -287,7 +287,7 @@ class Replies_Controller extends Base_Controller {
 	/**
 	 * DELETE /replies/{id} — Soft-delete (trash) a reply.
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;

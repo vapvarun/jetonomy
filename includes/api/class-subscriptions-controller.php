@@ -11,12 +11,12 @@ use function Jetonomy\table;
 
 class Subscriptions_Controller extends Base_Controller {
 
-	protected string $rest_base = 'subscriptions';
+	protected $rest_base = 'subscriptions';
 
 	/**
 	 * Register all REST routes for subscriptions.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Collection.
@@ -90,7 +90,7 @@ class Subscriptions_Controller extends Base_Controller {
 	/**
 	 * POST /subscriptions — Subscribe to a space or post.
 	 */
-	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function create_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -138,7 +138,7 @@ class Subscriptions_Controller extends Base_Controller {
 	/**
 	 * DELETE /subscriptions/{id} — Remove a subscription.
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;

@@ -11,12 +11,12 @@ use function Jetonomy\table;
 
 class Tags_Controller extends Base_Controller {
 
-	protected string $rest_base = 'tags';
+	protected $rest_base = 'tags';
 
 	/**
 	 * Register REST routes for tags.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Post tags.

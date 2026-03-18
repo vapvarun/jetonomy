@@ -10,12 +10,12 @@ use function Jetonomy\table;
 
 class Updates_Controller extends Base_Controller {
 
-	protected string $rest_base = 'updates';
+	protected $rest_base = 'updates';
 
 	/**
 	 * Register REST routes for real-time updates polling.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		register_rest_route( $ns, '/updates', [

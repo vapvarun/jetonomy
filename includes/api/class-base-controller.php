@@ -12,7 +12,9 @@ use Jetonomy\Models\UserProfile;
 
 abstract class Base_Controller extends WP_REST_Controller {
 
-	protected string $namespace = 'jetonomy/v1';
+	public function __construct() {
+		$this->namespace = 'jetonomy/v1';
+	}
 
 	/**
 	 * Check if current user can perform action in space.
@@ -102,7 +104,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	/**
 	 * Standard pagination args for route registration.
 	 */
-	protected function get_collection_params(): array {
+	public function get_collection_params(): array {
 		return [
 			'limit' => [
 				'type'    => 'integer',

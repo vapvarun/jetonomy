@@ -11,7 +11,7 @@ use Jetonomy\Models\SpaceMember;
 
 class Spaces_Controller extends Base_Controller {
 
-	protected string $rest_base = 'spaces';
+	protected $rest_base = 'spaces';
 
 	/**
 	 * Valid member roles.
@@ -26,7 +26,7 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * Register all REST routes.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// Collection routes.
@@ -210,7 +210,7 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * GET /spaces/{id} — Get a single space.
 	 */
-	public function get_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 
@@ -233,7 +233,7 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * POST /spaces — Create a new space.
 	 */
-	public function create_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function create_item( $request ) {
 		$title = sanitize_text_field( $request->get_param( 'title' ) );
 
 		if ( empty( $title ) ) {
@@ -295,7 +295,7 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * PATCH /spaces/{id} — Partially update a space (space admin or manage_options).
 	 */
-	public function update_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function update_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 
@@ -360,7 +360,7 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * DELETE /spaces/{id} — Delete a space (space admin or manage_options).
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item( $request ) {
 		$id    = absint( $request->get_param( 'id' ) );
 		$space = Space::find( $id );
 

@@ -12,12 +12,12 @@ use function Jetonomy\table;
 
 class Moderation_Controller extends Base_Controller {
 
-	protected string $rest_base = 'moderation';
+	protected $rest_base = 'moderation';
 
 	/**
 	 * Register REST routes for moderation.
 	 */
-	public function register_routes(): void {
+	public function register_routes() {
 		$ns = $this->namespace;
 
 		// GET moderation queue.
