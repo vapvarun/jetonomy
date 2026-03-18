@@ -60,6 +60,14 @@ class Router {
 
         // Tags
         add_rewrite_rule( "^{$base}/tags/([^/]+)/?$", 'index.php?jetonomy_route=tag&jetonomy_slug=$matches[1]', 'top' );
+
+        // Messages (Pro module registers its own rules, but the free plugin
+        // reserves the URL pattern so that flushing works correctly when
+        // Pro is activated/deactivated).
+        if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
+            add_rewrite_rule( "^{$base}/messages/?$", 'index.php?jetonomy_route=messages', 'top' );
+            add_rewrite_rule( "^{$base}/messages/(\d+)/?$", 'index.php?jetonomy_route=conversation&jetonomy_slug=$matches[1]', 'top' );
+        }
     }
 
     public function add_query_vars( array $vars ): array {

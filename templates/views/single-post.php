@@ -101,6 +101,15 @@ wp_interactivity_state(
 					<?php echo wp_kses_post( $post->content ); ?>
 				</div>
 
+				<?php
+				/**
+				 * Fires after the post body to display custom field values.
+				 *
+				 * @param object $post The Jetonomy post object.
+				 */
+				do_action( 'jetonomy_post_meta_fields', $post );
+				?>
+
 				<?php echo apply_filters( 'jetonomy_after_post_content', '', $post ); ?>
 
 				<div class="jt-post-foot">

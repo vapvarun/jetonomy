@@ -17,6 +17,13 @@ $base = home_url( '/community' );
 		<a href="<?php echo esc_url( $base ); ?>" class="<?php echo 'home' === $current_route ? 'active' : ''; ?>"><?php esc_html_e( 'Home', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="<?php echo 'search' === $current_route ? 'active' : ''; ?>"><?php esc_html_e( 'Search', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="<?php echo 'leaderboard' === $current_route ? 'active' : ''; ?>"><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></a>
+		<?php
+		/**
+		 * Fires inside the header nav to allow Pro or other plugins to
+		 * add additional navigation links (e.g., Messages).
+		 */
+		do_action( 'jetonomy_header_nav_items' );
+		?>
 	</nav>
 	<div class="jt-header-right">
 		<form class="jt-search" action="<?php echo esc_url( $base . '/search/' ); ?>" method="get">

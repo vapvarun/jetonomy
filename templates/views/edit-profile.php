@@ -51,6 +51,16 @@ $base         = home_url( '/community' );
 			</div>
 		</div>
 
+		<?php
+		/**
+		 * Fires after the standard profile edit fields, before submit.
+		 * Pro hooks custom profile fields here.
+		 *
+		 * @param int $user_id The user ID being edited.
+		 */
+		do_action( 'jetonomy_profile_edit_fields', $current_user->ID );
+		?>
+
 		<div class="jt-form-actions">
 			<a href="<?php echo esc_url( $base . '/u/' . $current_user->user_login . '/' ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
 			<button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting"><?php esc_html_e( 'Save Profile', 'jetonomy' ); ?></button>

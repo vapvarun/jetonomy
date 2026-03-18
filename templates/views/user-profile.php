@@ -124,6 +124,16 @@ $crumbs = [
 					 */
 					do_action( 'jetonomy_profile_after_stats', $profile_user_id );
 					?>
+
+					<?php
+					/**
+					 * Fires after the stats bar to display custom profile field values.
+					 * Pro hooks custom fields display here.
+					 *
+					 * @param int $profile_user_id The profile user's ID.
+					 */
+					do_action( 'jetonomy_profile_display_fields', $profile_user_id );
+					?>
 				</div>
 			</div>
 

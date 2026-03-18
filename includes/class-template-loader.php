@@ -28,6 +28,17 @@ class Template_Loader {
             'edit-profile'  => 'views/edit-profile.php',
         ];
 
+        /**
+         * Filter the template map so Pro (or other plugins) can register
+         * additional routes or override existing template paths.
+         *
+         * Values may be relative (resolved against plugin_dir/theme_dir)
+         * or absolute paths (starting with /).
+         *
+         * @param array $template_map Route => template file map.
+         */
+        $template_map = apply_filters( 'jetonomy_template_map', $template_map );
+
         $route = $data['route'];
         $template_file = $template_map[ $route ] ?? null;
 
@@ -36,10 +47,15 @@ class Template_Loader {
             return;
         }
 
-        // Check theme override first, then plugin
-        $template_path = file_exists( $theme_dir . $template_file )
-            ? $theme_dir . $template_file
-            : $plugin_dir . $template_file;
+        // If the template path is absolute (from Pro), use it directly.
+        // Otherwise, check theme override first, then plugin directory.
+        if ( str_starts_with( $template_file, '/' ) || str_starts_with( $template_file, ABSPATH ) ) {
+            $template_path = $template_file;
+        } else {
+            $template_path = file_exists( $theme_dir . $template_file )
+                ? $theme_dir . $template_file
+                : $plugin_dir . $template_file;
+        }
 
         if ( ! file_exists( $template_path ) ) {
             status_header( 404 );

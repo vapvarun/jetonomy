@@ -64,6 +64,16 @@ $type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : _
             </div>
         </div>
 
+        <?php
+        /**
+         * Fires after the standard new-post form fields, before the submit button.
+         * Pro hooks custom fields here.
+         *
+         * @param object|null $space The space object.
+         */
+        do_action( 'jetonomy_new_post_fields', $space );
+        ?>
+
         <div class="jt-form-actions">
             <a href="<?php echo esc_url( $space_url ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
             <button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting" data-wp-text="state.submitLabel">
