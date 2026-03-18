@@ -567,5 +567,102 @@
   .jt-load-more-btn:hover { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
   .jt-load-more-btn:disabled { opacity: 0.6; cursor: wait; }
 
-  /* New reply animation */
-  .jt-reply { animation: jt-fadeIn 0.3s var(--jt-ease) both; }
+  /* ── Thread collapse/expand ── */
+  .jt-thread-toggle-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; margin: 4px 0 4px 24px;
+    border: none; background: none; color: var(--jt-text-tertiary);
+    font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+    border-radius: var(--jt-radius-full);
+    transition: all 0.2s;
+    font-family: var(--jt-font);
+  }
+  .jt-thread-toggle-btn:hover { color: var(--jt-text-secondary); background: var(--jt-bg-muted); }
+
+  .jt-thread-children {
+    overflow: hidden;
+    max-height: 5000px;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    opacity: 1;
+  }
+  .jt-thread-children.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+  }
+
+  /* ── Reply entrance animation ── */
+  .jt-reply {
+    animation: jt-slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes jt-slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Stagger animation for server-rendered replies */
+  .jt-replies-list > :nth-child(1) .jt-reply { animation-delay: 0s; }
+  .jt-replies-list > :nth-child(2) .jt-reply { animation-delay: 0.03s; }
+  .jt-replies-list > :nth-child(3) .jt-reply { animation-delay: 0.06s; }
+  .jt-replies-list > :nth-child(4) .jt-reply { animation-delay: 0.09s; }
+  .jt-replies-list > :nth-child(5) .jt-reply { animation-delay: 0.12s; }
+
+  /* ── Voting micro-interaction ── */
+  .jt-v-btn:active { transform: scale(1.3); }
+  .jt-v-num { transition: transform 0.2s ease; }
+
+  /* ── Reply card hover — subtle shift ── */
+  .jt-reply { transition: border-color 0.2s, transform 0.15s ease; }
+  .jt-reply:hover { transform: translateX(2px); }
+
+  /* ── New replies indicator banner ── */
+  .jt-new-replies-banner {
+    position: sticky; bottom: 20px; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    margin: 16px auto; max-width: 300px;
+    padding: 10px 20px; border-radius: var(--jt-radius-full);
+    background: var(--jt-accent); color: white;
+    font-weight: 600; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: jt-bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.2s;
+  }
+  .jt-new-replies-banner:hover { transform: scale(1.05); }
+  @keyframes jt-bounceIn {
+    from { opacity: 0; transform: scale(0.8) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* ── Infinite scroll sentinel ── */
+  .jt-scroll-sentinel { height: 1px; margin-top: -1px; }
+
+  /* ── Gap loader line with pulse ── */
+  .jt-load-gap::before {
+    animation: jt-pulse 2s ease infinite;
+  }
+  @keyframes jt-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Replying-to indicator slide in ── */
+  .jt-replying-to {
+    animation: jt-slideDown 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes jt-slideDown {
+    from { opacity: 0; transform: translateY(-8px); max-height: 0; padding: 0 14px; }
+    to { opacity: 1; transform: translateY(0); max-height: 60px; padding: 8px 14px; }
+  }
+
+  /* ── Post actions — hover reveal ── */
+  .jt-post-foot .jt-act { opacity: 0.7; transition: opacity 0.15s; }
+  .jt-post-foot:hover .jt-act { opacity: 1; }
+  .jt-post-foot .jt-act:first-child { opacity: 1; }
+
+  /* ── Smooth focus transitions ── */
+  .jt-editor-body:focus { box-shadow: inset 0 0 0 1px var(--jt-accent-muted); }
+
+  /* ── Reply depth visual indicator (colored thread lines) ── */
+  .jt-nested-1::before { background: var(--jt-accent); opacity: 0.3; }
+  .jt-nested-2::before { background: var(--jt-success); opacity: 0.3; }
+  .jt-nested-3::before { background: var(--jt-warn); opacity: 0.3; }

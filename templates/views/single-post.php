@@ -112,7 +112,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 	?>
 	<div class="<?php echo esc_attr( $wrapper_class ); ?>">
 		<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post ] ); ?>
-		<?php if ( ! empty( $reply->children ) ) : ?>
+		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
+			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
+				data-wp-context='{"collapsed": false, "childCount": <?php echo count( $reply->children ); ?>}'>
+				<button class="jt-thread-toggle-btn" data-wp-on--click="actions.toggleThread"
+					data-wp-text="context.collapsed ? '+ Show ' + context.childCount + ' replies' : '&minus; Hide replies'">
+					&minus; Hide replies
+				</button>
+				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
+					<?php foreach ( $reply->children as $child ) : ?>
+						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1 ); ?>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		<?php elseif ( ! empty( $reply->children ) ) : ?>
 			<?php foreach ( $reply->children as $child ) : ?>
 				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1 ); ?>
 			<?php endforeach; ?>
@@ -205,6 +218,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 			<!-- Replies -->
 			<div class="jt-replies-section" id="replies"
 				data-wp-interactive="jetonomy"
+				data-wp-init--infinite="callbacks.initInfiniteScroll"
+				data-wp-init--polling="callbacks.initReplyPolling"
 				data-wp-context='<?php echo wp_json_encode( [
 					'postId'           => (int) $post->id,
 					'totalReplies'     => $total_replies,

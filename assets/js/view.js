@@ -78,6 +78,13 @@ const { state, actions } = store( 'jetonomy', {
             const current = state.postScores[ postId ] || 0;
             state.postScores[ postId ] = current + 1;
 
+            // Visual feedback — vote pop
+            const scoreEl = el.ref.querySelector( '.n' );
+            if ( scoreEl ) {
+                scoreEl.style.transform = 'scale(1.3)';
+                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+            }
+
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/posts/${ postId }/vote`,
@@ -108,6 +115,13 @@ const { state, actions } = store( 'jetonomy', {
             const current = state.postScores[ postId ] || 0;
             state.postScores[ postId ] = current - 1;
 
+            // Visual feedback — vote pop
+            const scoreEl = el.ref.querySelector( '.n' );
+            if ( scoreEl ) {
+                scoreEl.style.transform = 'scale(1.3)';
+                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+            }
+
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/posts/${ postId }/vote`,
@@ -137,6 +151,13 @@ const { state, actions } = store( 'jetonomy', {
             const current = state.replyScores[ replyId ] || 0;
             state.replyScores[ replyId ] = current + 1;
 
+            // Visual feedback — vote pop
+            const scoreEl = el.ref.parentElement?.querySelector( '.n' );
+            if ( scoreEl ) {
+                scoreEl.style.transform = 'scale(1.3)';
+                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+            }
+
             try {
                 yield fetch(
                     `${ state.apiBase }/replies/${ replyId }/vote`,
@@ -163,6 +184,13 @@ const { state, actions } = store( 'jetonomy', {
             const current = state.replyScores[ replyId ] || 0;
             state.replyScores[ replyId ] = current - 1;
 
+            // Visual feedback — vote pop
+            const scoreEl = el.ref.parentElement?.querySelector( '.n' );
+            if ( scoreEl ) {
+                scoreEl.style.transform = 'scale(1.3)';
+                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+            }
+
             try {
                 yield fetch(
                     `${ state.apiBase }/replies/${ replyId }/vote`,
@@ -178,6 +206,12 @@ const { state, actions } = store( 'jetonomy', {
             } catch {
                 state.replyScores[ replyId ] = current;
             }
+        },
+
+        // ── Toggle collapsible thread ──
+        toggleThread() {
+            const ctx = getContext();
+            ctx.collapsed = ! ctx.collapsed;
         },
 
         // ── Sort ──
@@ -530,6 +564,64 @@ const { state, actions } = store( 'jetonomy', {
             setInterval( () => {
                 actions.pollNotifications();
             }, 30000 );
+        },
+
+        // Auto-trigger gap loading when user scrolls to it (infinite scroll)
+        initInfiniteScroll() {
+            const gaps = document.querySelectorAll( '.jt-load-gap' );
+            if ( ! gaps.length ) return;
+
+            const observer = new IntersectionObserver( ( entries ) => {
+                entries.forEach( ( entry ) => {
+                    if ( entry.isIntersecting ) {
+                        const btn = entry.target.querySelector( '.jt-load-gap-btn' );
+                        if ( btn && ! btn.disabled ) {
+                            btn.click();
+                            observer.unobserve( entry.target );
+                        }
+                    }
+                } );
+            }, { rootMargin: '200px' } );
+
+            gaps.forEach( ( gap ) => observer.observe( gap ) );
+        },
+
+        // Poll for new replies and show a sticky banner
+        initReplyPolling() {
+            const repliesSection = document.getElementById( 'jt-replies-container' );
+            if ( ! repliesSection || ! state.currentPostId ) return;
+
+            let lastCheck = Date.now();
+
+            setInterval( async () => {
+                try {
+                    const since = new Date( lastCheck ).toISOString();
+                    const response = await fetch(
+                        `${ state.apiBase }/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`,
+                        { headers: { 'X-WP-Nonce': state.nonce } }
+                    );
+                    if ( ! response.ok ) return;
+                    const data = await response.json();
+                    const newReplies = ( data.data || [] ).length;
+
+                    if ( newReplies > 0 ) {
+                        let banner = document.querySelector( '.jt-new-replies-banner' );
+                        if ( ! banner ) {
+                            banner = document.createElement( 'div' );
+                            banner.className = 'jt-new-replies-banner';
+                            banner.addEventListener( 'click', () => {
+                                window.location.reload();
+                            } );
+                            repliesSection.parentElement.appendChild( banner );
+                        }
+                        banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                    }
+
+                    lastCheck = Date.now();
+                } catch {
+                    // silent
+                }
+            }, 15000 );
         },
     },
 } );
