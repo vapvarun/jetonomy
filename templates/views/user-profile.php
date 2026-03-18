@@ -62,7 +62,7 @@ $crumbs = [
 			<div class="jt-profile jt-mb-md">
 				<div class="jt-profile-banner"></div>
 				<div class="jt-profile-body">
-					<div class="jt-profile-av"><?php echo esc_html( $initials ); ?></div>
+					<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $profile_user_id, 'size' => 64, 'class' => 'jt-profile-av' ] ); ?>
 					<div style="display:flex;align-items:flex-start;justify-content:space-between;width:100%;">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
