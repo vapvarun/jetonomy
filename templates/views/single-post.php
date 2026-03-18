@@ -42,7 +42,20 @@ $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
 	$reply_sort = 'oldest';
 }
-$replies = \Jetonomy\Models\Reply::list_by_post( (int) $post->id, $reply_sort, 50 );
+$replies_per_page = 20;
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$reply_page = max( 1, (int) ( $_GET['rp'] ?? 1 ) );
+$reply_offset = ( $reply_page - 1 ) * $replies_per_page;
+$total_replies = (int) $post->reply_count;
+$total_reply_pages = max( 1, (int) ceil( $total_replies / $replies_per_page ) );
+
+// For "newest" sort, default to last page (show latest replies first)
+if ( 'newest' === $reply_sort && ! isset( $_GET['rp'] ) ) {
+	$reply_page = $total_reply_pages;
+	$reply_offset = ( $reply_page - 1 ) * $replies_per_page;
+}
+
+$replies = \Jetonomy\Models\Reply::list_by_post( (int) $post->id, $reply_sort, $replies_per_page, $reply_offset );
 
 // Current user vote on post.
 $user_id        = get_current_user_id();
@@ -153,40 +166,103 @@ wp_interactivity_state(
 			</article>
 
 			<!-- Replies -->
-			<div class="jt-replies-head">
-				<h3>
-					<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
-					<span class="jt-count-pill"><?php echo (int) $post->reply_count; ?></span>
-				</h3>
-				<div class="jt-pills">
-					<?php
-					$reply_sorts = [
-						'oldest' => __( 'Oldest', 'jetonomy' ),
-						'newest' => __( 'Newest', 'jetonomy' ),
-						'best'   => __( 'Best', 'jetonomy' ),
-					];
-					foreach ( $reply_sorts as $key => $label ) :
-						$rsort_url = add_query_arg( 'rsort', $key, $post_url );
-					?>
-						<a href="<?php echo esc_url( $rsort_url ); ?>"
-							class="jt-pill <?php echo $reply_sort === $key ? 'on' : ''; ?>">
-							<?php echo esc_html( $label ); ?>
-						</a>
-					<?php endforeach; ?>
+			<div class="jt-replies-section" id="replies">
+				<div class="jt-replies-head">
+					<h3>
+						<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
+						<span class="jt-count-pill"><?php echo (int) $total_replies; ?></span>
+					</h3>
+					<div class="jt-replies-controls">
+						<div class="jt-pills">
+							<?php
+							$reply_sorts = [
+								'oldest' => __( 'Oldest', 'jetonomy' ),
+								'newest' => __( 'Newest', 'jetonomy' ),
+								'best'   => __( 'Best', 'jetonomy' ),
+							];
+							foreach ( $reply_sorts as $key => $label ) :
+								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
+							?>
+								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
+									class="jt-pill <?php echo $reply_sort === $key ? 'on' : ''; ?>">
+									<?php echo esc_html( $label ); ?>
+								</a>
+							<?php endforeach; ?>
+						</div>
+						<?php if ( $total_replies > $replies_per_page ) : ?>
+							<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $total_reply_pages, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-btn jt-btn-ghost jt-btn-sm">
+								<?php esc_html_e( 'Jump to Latest', 'jetonomy' ); ?> &darr;
+							</a>
+						<?php endif; ?>
+					</div>
 				</div>
-			</div>
 
-			<?php if ( empty( $replies ) ) : ?>
-				<div class="jt-empty-compact">
-					<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
-				</div>
-			<?php else : ?>
-				<div class="jt-replies-list">
-					<?php foreach ( $replies as $reply ) : ?>
-						<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post ] ); ?>
-					<?php endforeach; ?>
-				</div>
-			<?php endif; ?>
+				<?php if ( $total_replies > $replies_per_page ) : ?>
+					<!-- Reply pagination info -->
+					<div class="jt-replies-pagination-info">
+						<?php
+						$showing_start = $reply_offset + 1;
+						$showing_end   = min( $reply_offset + $replies_per_page, $total_replies );
+						printf(
+							/* translators: 1: start number, 2: end number, 3: total */
+							esc_html__( 'Showing %1$d–%2$d of %3$d replies', 'jetonomy' ),
+							$showing_start,
+							$showing_end,
+							$total_replies
+						);
+						?>
+					</div>
+				<?php endif; ?>
+
+				<?php if ( empty( $replies ) ) : ?>
+					<div class="jt-empty-compact">
+						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
+					</div>
+				<?php else : ?>
+					<div class="jt-replies-list">
+						<?php foreach ( $replies as $reply ) : ?>
+							<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post ] ); ?>
+						<?php endforeach; ?>
+					</div>
+
+					<?php if ( $total_reply_pages > 1 ) : ?>
+						<!-- Reply page navigation -->
+						<nav class="jt-reply-pages" aria-label="<?php esc_attr_e( 'Reply pages', 'jetonomy' ); ?>">
+							<?php if ( $reply_page > 1 ) : ?>
+								<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $reply_page - 1, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-reply-page-btn">
+									&larr; <?php esc_html_e( 'Previous', 'jetonomy' ); ?>
+								</a>
+							<?php endif; ?>
+
+							<div class="jt-reply-page-numbers">
+								<?php
+								// Show page numbers: 1 ... 4 5 [6] 7 8 ... 12
+								$range = 2;
+								for ( $i = 1; $i <= $total_reply_pages; $i++ ) :
+									if ( $i === 1 || $i === $total_reply_pages || ( $i >= $reply_page - $range && $i <= $reply_page + $range ) ) :
+								?>
+										<?php if ( $i === $reply_page ) : ?>
+											<span class="jt-reply-page-current"><?php echo $i; ?></span>
+										<?php else : ?>
+											<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $i, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-reply-page-num"><?php echo $i; ?></a>
+										<?php endif; ?>
+								<?php
+									elseif ( $i === $reply_page - $range - 1 || $i === $reply_page + $range + 1 ) :
+										echo '<span class="jt-reply-page-dots">&hellip;</span>';
+									endif;
+								endfor;
+								?>
+							</div>
+
+							<?php if ( $reply_page < $total_reply_pages ) : ?>
+								<a href="<?php echo esc_url( add_query_arg( [ 'rp' => $reply_page + 1, 'rsort' => $reply_sort ], $post_url ) ); ?>#replies" class="jt-reply-page-btn">
+									<?php esc_html_e( 'Next', 'jetonomy' ); ?> &rarr;
+								</a>
+							<?php endif; ?>
+						</nav>
+					<?php endif; ?>
+				<?php endif; ?>
+			</div>
 
 			<!-- Composer -->
 			<?php if ( ! $post->is_closed ) : ?>

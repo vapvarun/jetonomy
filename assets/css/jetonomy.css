@@ -541,3 +541,17 @@
 
   /* ── Search result excerpt ── */
   .jt-row-excerpt { color: var(--jt-text-tertiary); margin-top: 4px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+  /* ── Reply pagination ── */
+  .jt-replies-controls { display: flex; align-items: center; gap: 12px; }
+  .jt-btn-sm { padding: 5px 12px; font-size: 0.8125rem; }
+  .jt-replies-pagination-info { font-size: 0.875rem; color: var(--jt-text-tertiary); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--jt-border); }
+  .jt-reply-pages { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--jt-border); }
+  .jt-reply-page-btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); color: var(--jt-text-secondary); font-weight: 500; transition: all 0.15s; }
+  .jt-reply-page-btn:hover { border-color: var(--jt-accent); color: var(--jt-text); }
+  .jt-reply-page-numbers { display: flex; align-items: center; gap: 4px; }
+  .jt-reply-page-num { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 36px; border-radius: var(--jt-radius); color: var(--jt-text-secondary); font-weight: 500; transition: all 0.15s; }
+  .jt-reply-page-num:hover { background: var(--jt-bg-muted); color: var(--jt-text); }
+  .jt-reply-page-current { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 36px; border-radius: var(--jt-radius); background: var(--jt-accent); color: white; font-weight: 600; }
+  .jt-reply-page-dots { color: var(--jt-text-tertiary); padding: 0 4px; }
+  .jt-replies-section { scroll-margin-top: 80px; }
