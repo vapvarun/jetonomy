@@ -42,12 +42,20 @@ $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
 	$reply_sort = 'oldest';
 }
-// Initial batch — server-rendered for SEO and first paint
+// Load the NEWEST replies first — users want to see the latest conversation
 $replies_per_batch = 20;
 $total_replies = (int) $post->reply_count;
-$replies = \Jetonomy\Models\Reply::list_by_post( (int) $post->id, $reply_sort, $replies_per_batch, 0 );
-$has_more_replies = $total_replies > $replies_per_batch;
-$last_reply_id = ! empty( $replies ) ? (int) end( $replies )->id : 0;
+
+// For "best" sort, load from top. For "oldest"/"newest", load the last batch so newest are visible.
+if ( 'best' === $reply_sort ) {
+	$initial_offset = 0;
+} else {
+	$initial_offset = max( 0, $total_replies - $replies_per_batch );
+}
+
+$replies = \Jetonomy\Models\Reply::list_by_post( (int) $post->id, 'oldest', $replies_per_batch, $initial_offset );
+$has_earlier_replies = $initial_offset > 0;
+$earliest_loaded_id = ! empty( $replies ) ? (int) $replies[0]->id : 0;
 
 // Current user vote on post.
 $user_id        = get_current_user_id();
@@ -161,13 +169,16 @@ wp_interactivity_state(
 			<div class="jt-replies-section" id="replies"
 				data-wp-interactive="jetonomy"
 				data-wp-context='<?php echo wp_json_encode( [
-					'postId'        => (int) $post->id,
-					'totalReplies'  => $total_replies,
-					'loadedCount'   => count( $replies ),
-					'lastReplyId'   => $last_reply_id,
-					'sort'          => $reply_sort,
-					'hasMore'       => $has_more_replies,
-					'loading'       => false,
+					'postId'           => (int) $post->id,
+					'totalReplies'     => $total_replies,
+					'loadedCount'      => count( $replies ),
+					'earliestId'       => $earliest_loaded_id,
+					'initialOffset'    => $initial_offset,
+					'sort'             => $reply_sort,
+					'hasEarlier'       => $has_earlier_replies,
+					'hasMore'          => false,
+					'loadingEarlier'   => false,
+					'loadingMore'      => false,
 				] ); ?>'>
 
 				<div class="jt-replies-head">
@@ -195,46 +206,41 @@ wp_interactivity_state(
 					</div>
 				</div>
 
-				<?php if ( $total_replies > count( $replies ) ) : ?>
-					<div class="jt-replies-status">
-						<?php
-						printf(
-							esc_html__( 'Showing %1$d of %2$d replies', 'jetonomy' ),
-							count( $replies ),
-							$total_replies
-						);
-						?>
-					</div>
-				<?php endif; ?>
-
 				<?php if ( empty( $replies ) ) : ?>
 					<div class="jt-empty-compact">
 						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
 					</div>
 				<?php else : ?>
-					<!-- Server-rendered initial batch -->
+
+					<!-- "Load Earlier" button at TOP — loads older replies above -->
+					<?php if ( $has_earlier_replies ) : ?>
+						<div class="jt-load-earlier" data-wp-bind--hidden="!context.hasEarlier">
+							<button class="jt-btn jt-btn-ghost jt-load-earlier-btn"
+								data-wp-on--click="actions.loadEarlierReplies"
+								data-wp-bind--disabled="context.loadingEarlier">
+								<span data-wp-text="context.loadingEarlier ? '<?php echo esc_js( __( 'Loading…', 'jetonomy' ) ); ?>' : '<?php echo esc_js( sprintf( __( 'Show Earlier Replies (%d more)', 'jetonomy' ), $initial_offset ) ); ?>'">
+									<?php printf( esc_html__( 'Show Earlier Replies (%d more)', 'jetonomy' ), $initial_offset ); ?>
+								</span>
+							</button>
+							<div class="jt-replies-status">
+								<?php
+								printf(
+									esc_html__( 'Showing latest %1$d of %2$d replies', 'jetonomy' ),
+									count( $replies ),
+									$total_replies
+								);
+								?>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<!-- Reply container — earlier replies prepend here, newer append -->
 					<div class="jt-replies-list" id="jt-replies-container">
 						<?php foreach ( $replies as $reply ) : ?>
 							<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post ] ); ?>
 						<?php endforeach; ?>
 					</div>
 
-					<!-- Dynamic "Load More" via Interactivity API -->
-					<?php if ( $has_more_replies ) : ?>
-						<div class="jt-load-more" data-wp-bind--hidden="!context.hasMore">
-							<button class="jt-btn jt-btn-ghost jt-load-more-btn"
-								data-wp-on--click="actions.loadMoreReplies"
-								data-wp-bind--disabled="context.loading"
-								data-wp-text="context.loading ? '<?php echo esc_js( __( 'Loading…', 'jetonomy' ) ); ?>' : '<?php echo esc_js( sprintf( __( 'Load More Replies (%d remaining)', 'jetonomy' ), $total_replies - count( $replies ) ) ); ?>'">
-								<?php
-								printf(
-									esc_html__( 'Load More Replies (%d remaining)', 'jetonomy' ),
-									$total_replies - count( $replies )
-								);
-								?>
-							</button>
-						</div>
-					<?php endif; ?>
 				<?php endif; ?>
 			</div>
 
