@@ -75,7 +75,7 @@ $crumbs = [
 						</span>
 						<span class="jt-avatar jt-avatar-md"><?php echo esc_html( $initials ); ?></span>
 						<span class="jt-leader-name">
-							<a href="<?php echo esc_url( $base . '/u/' . $lu->user_login . '/' ); ?>">
+							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
 								<?php echo esc_html( $lu->display_name ); ?>
 							</a>
 							<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>

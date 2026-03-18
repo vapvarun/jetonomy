@@ -67,11 +67,9 @@ $role_labels = [
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
 						<div class="jt-member-item">
-							<a href="<?php echo esc_url( $base . '/u/' . $mu->user_login . '/' ); ?>">
-								<span class="jt-avatar jt-avatar-md"><?php echo esc_html( $initials ); ?></span>
-							</a>
+							<?php echo \Jetonomy\get_user_link( (int) $member->user_id, 'jt-avatar-md', 36, false ); ?>
 							<div class="jt-flex-1">
-								<a href="<?php echo esc_url( $base . '/u/' . $mu->user_login . '/' ); ?>"
+								<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $member->user_id ) ); ?>"
 									class="jt-member-name">
 									<?php echo esc_html( $mu->display_name ); ?>
 								</a>

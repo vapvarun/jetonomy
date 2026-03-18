@@ -83,7 +83,7 @@ $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
 				<span class="jt-leader-rank"><?php echo $rank + 1; ?></span>
 				<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
 				<span class="jt-leader-name">
-					<a href="<?php echo esc_url( $base . '/u/' . $lu->user_login . '/' ); ?>">
+					<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
 						<?php echo esc_html( $lu->display_name ); ?>
 					</a>
 				</span>

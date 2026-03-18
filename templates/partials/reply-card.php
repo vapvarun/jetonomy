@@ -10,8 +10,7 @@ $is_accepted = (int) $reply->is_accepted;
 ?>
 <div class="jt-reply <?php echo $is_accepted ? 'accepted' : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
-		<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $author_id, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
-		<strong class="jt-reply-author"><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
+		<?php echo \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ); ?>
 		<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 		<?php if ( $is_op ) : ?>
 			<span class="jt-reply-op"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>

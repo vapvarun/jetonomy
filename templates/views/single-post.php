@@ -80,8 +80,7 @@ wp_interactivity_state(
 				<div class="jt-post-head">
 					<h1><?php echo esc_html( $post->title ); ?></h1>
 					<div class="jt-meta">
-						<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $author_id, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
-						<strong><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
+						<?php echo \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ); ?>
 						<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 						<span>
 							<?php
