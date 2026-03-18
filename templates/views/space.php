@@ -17,8 +17,8 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$paged  = max( 1, (int) ( $_GET['page'] ?? 1 ) );
-$limit  = 25;
+$paged  = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$limit  = 20;
 $offset = ( $paged - 1 ) * $limit;
 
 $posts    = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );
@@ -113,14 +113,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 					<?php endforeach; ?>
 				</div>
 
-				<?php if ( count( $posts ) >= $limit ) : ?>
-					<div style="text-align:center;margin-top:20px;">
-						<a href="<?php echo esc_url( add_query_arg( [ 'sort' => $sort, 'page' => $paged + 1 ], $space_url ) ); ?>"
-							class="jt-btn jt-btn-ghost">
-							<?php esc_html_e( 'Load more', 'jetonomy' ); ?>
-						</a>
-					</div>
-				<?php endif; ?>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $posts ) >= $limit ] ); ?>
 			<?php endif; ?>
 		</main>
 

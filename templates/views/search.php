@@ -9,6 +9,11 @@ if ( ! in_array( $filter, [ 'all', 'posts', 'spaces', 'tags' ], true ) ) {
 	$filter = 'all';
 }
 
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$per_page = 20;
+$offset   = ( $page - 1 ) * $per_page;
+
 $base   = home_url( '/community' );
 $posts  = [];
 $spaces = [];
@@ -32,9 +37,11 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 				 WHERE p.status = 'publish'
 				   AND ( p.title LIKE %s OR p.content LIKE %s )
 				 ORDER BY p.vote_score DESC, p.created_at DESC
-				 LIMIT 20",
+				 LIMIT %d OFFSET %d",
 				$like,
-				$like
+				$like,
+				$per_page,
+				$offset
 			)
 		) ?: [];
 	}
@@ -168,6 +175,8 @@ $crumbs = [
 								</div>
 							<?php endforeach; ?>
 						</div>
+
+						<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $posts ) >= $per_page ] ); ?>
 					<?php endif; ?>
 
 					<?php if ( ! empty( $spaces ) ) : ?>

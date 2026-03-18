@@ -45,5 +45,8 @@ $is_accepted = (int) $reply->is_accepted;
 				data-wp-on--click="actions.showReplyComposer"
 				data-reply-id="<?php echo (int) $reply->id; ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 		<?php endif; ?>
+		<?php if ( is_user_logged_in() && ( (int) $reply->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
+			<button class="jt-act" style="color:var(--jt-text-tertiary);margin-left:auto;" title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
+		<?php endif; ?>
 	</div>
 </div>

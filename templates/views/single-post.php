@@ -121,6 +121,13 @@ wp_interactivity_state(
 						echo esc_html( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
 						?>
 					</span>
+				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
+					<span style="display:flex;gap:4px;margin-left:8px;">
+						<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&id=' . (int) $post->space_id ) ); ?>" class="jt-act" title="<?php esc_attr_e( 'Admin', 'jetonomy' ); ?>">&#9881;</a>
+						<?php endif; ?>
+					</span>
+				<?php endif; ?>
 				</div>
 			</article>
 

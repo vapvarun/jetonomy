@@ -25,6 +25,7 @@ class Template_Loader {
             'moderation'    => 'views/moderation.php',
             'tag'           => 'views/tag.php',
             'new-post'      => 'views/new-post.php',
+            'edit-profile'  => 'views/edit-profile.php',
         ];
 
         $route = $data['route'];
@@ -80,6 +81,13 @@ class Template_Loader {
             JETONOMY_VERSION,
             true
         );
+
+        // Enqueue Prism.js for code syntax highlighting on post pages.
+        if ( in_array( $data['route'], [ 'post', 'new-post' ], true ) ) {
+            wp_enqueue_style( 'prismjs', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css', [], '1.29.0' );
+            wp_enqueue_script( 'prismjs', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js', [], '1.29.0', true );
+            wp_enqueue_script( 'prismjs-autoloader', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js', [ 'prismjs' ], '1.29.0', true );
+        }
 
         // Set up SEO
         self::set_seo_meta( $data );

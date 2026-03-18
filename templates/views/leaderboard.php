@@ -10,13 +10,18 @@ if ( ! in_array( $period, [ 'all', 'month', 'week' ], true ) ) {
 	$period = 'all';
 }
 
-$limit = 50;
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$per_page = 20;
+$offset   = ( $page - 1 ) * $per_page;
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $leaders = $wpdb->get_results(
 	$wpdb->prepare(
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d",
-		$limit
+		"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d OFFSET %d",
+		$per_page,
+		$offset
 	)
 ) ?: [];
 
@@ -90,6 +95,8 @@ $crumbs = [
 					</div>
 				<?php endforeach; ?>
 			</div>
+
+			<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $leaders ) >= $per_page ] ); ?>
 		<?php endif; ?>
 	</div>
 

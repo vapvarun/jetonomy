@@ -40,6 +40,9 @@ class Router {
         // User profile
         add_rewrite_rule( "^{$base}/u/([^/]+)/?$", 'index.php?jetonomy_route=profile&jetonomy_slug=$matches[1]', 'top' );
 
+        // User profile edit
+        add_rewrite_rule( "^{$base}/u/([^/]+)/edit/?$", 'index.php?jetonomy_route=edit-profile&jetonomy_slug=$matches[1]', 'top' );
+
         // User sub-pages
         add_rewrite_rule( "^{$base}/u/([^/]+)/(posts|badges|activity)/?$", 'index.php?jetonomy_route=profile&jetonomy_slug=$matches[1]&jetonomy_tab=$matches[2]', 'top' );
 

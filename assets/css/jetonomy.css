@@ -378,4 +378,14 @@
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 24px; font-weight: 700; margin: 0; }
   .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 14px; margin: 4px 0 20px; }
+
+  /* ── Pagination ── */
+  .jt-pagination { text-align: center; margin: 20px 0; }
+  .jt-pagination-btn { min-width: 200px; justify-content: center; }
+
+  /* ── Prism.js override for theme consistency ── */
+  .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); font-size: 13px; }
+  @media (prefers-color-scheme: dark) {
+    .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
+  }
 }
