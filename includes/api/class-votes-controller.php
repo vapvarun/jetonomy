@@ -10,15 +10,11 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Vote;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Trust\Reputation;
 
 class Votes_Controller extends Base_Controller {
 
 	protected $rest_base = 'votes';
-
-	// Reputation deltas.
-	private const REP_POST_UPVOTE   = 10;
-	private const REP_REPLY_UPVOTE  = 5;
-	private const REP_DOWNVOTE      = -2;
 
 	/**
 	 * Register all REST routes for votes.
@@ -218,6 +214,9 @@ class Votes_Controller extends Base_Controller {
 	/**
 	 * Apply reputation changes to the object author based on the vote result.
 	 *
+	 * Uses Reputation::award() to ensure the `jetonomy_reputation_changed` action
+	 * fires consistently and point values stay centralised.
+	 *
 	 * @param string $type      'post' or 'reply'.
 	 * @param int    $value     The vote value (1 or -1).
 	 * @param array  $result    The result from Vote::cast().
@@ -229,47 +228,46 @@ class Votes_Controller extends Base_Controller {
 		}
 
 		$action    = $result['action'];
-		$old_value = $result['old_value'];
+		$old_value = $result['old_value'] ?? null;
 
 		// No reputation change if nothing happened.
 		if ( 'none' === $action ) {
 			return;
 		}
 
-		$base_rep = $this->reputation_delta_for( $type, $value );
-
 		if ( 'created' === $action ) {
-			// New vote: apply full reputation delta.
-			UserProfile::adjust_reputation( $author_id, $base_rep );
+			// New vote: award via Reputation class.
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
 			return;
 		}
 
 		if ( 'removed' === $action ) {
-			// Undo vote: reverse the reputation.
-			UserProfile::adjust_reputation( $author_id, -$base_rep );
+			// Undo vote: reverse the points.
+			$delta = Reputation::points_for( self::reputation_action_for( $type, $value ) );
+			UserProfile::adjust_reputation( $author_id, -$delta );
 			return;
 		}
 
 		if ( 'updated' === $action && null !== $old_value ) {
-			// Changed vote direction: reverse old and apply new.
-			$old_rep = $this->reputation_delta_for( $type, $old_value );
-			UserProfile::adjust_reputation( $author_id, -$old_rep + $base_rep );
+			// Changed vote direction: reverse old and award new.
+			$old_delta = Reputation::points_for( self::reputation_action_for( $type, $old_value ) );
+			UserProfile::adjust_reputation( $author_id, -$old_delta );
+			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
 		}
 	}
 
 	/**
-	 * Return the reputation delta for a given object type and vote direction.
+	 * Map a vote type and direction to a Reputation action key.
 	 *
 	 * @param string $type  'post' or 'reply'.
 	 * @param int    $value 1 (upvote) or -1 (downvote).
-	 * @return int
+	 * @return string
 	 */
-	private function reputation_delta_for( string $type, int $value ): int {
+	private static function reputation_action_for( string $type, int $value ): string {
 		if ( $value > 0 ) {
-			return 'post' === $type ? self::REP_POST_UPVOTE : self::REP_REPLY_UPVOTE;
+			return 'post' === $type ? 'post_upvoted' : 'reply_upvoted';
 		}
-
-		return self::REP_DOWNVOTE;
+		return 'downvoted';
 	}
 
 	/**

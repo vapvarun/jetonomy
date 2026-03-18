@@ -13,7 +13,18 @@ if ( ! $post || 'publish' !== $post->status ) {
 // Increment view count (best-effort, ignore errors).
 \Jetonomy\Models\Post::increment_view_count( (int) $post->id );
 
-$space    = \Jetonomy\Models\Space::find( (int) $post->space_id );
+$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+
+if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+	$user_id = get_current_user_id();
+	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			echo '<div class="jt-container"><div class="jt-empty"><p>' . esc_html__( 'This content is in a private space.', 'jetonomy' ) . '</p></div></div>';
+			return;
+		}
+	}
+}
+
 $author   = get_userdata( (int) $post->author_id );
 $profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
@@ -52,10 +63,11 @@ $post_scores = [ (int) $post->id => (int) $post->vote_score ];
 wp_interactivity_state(
 	'jetonomy',
 	[
-		'postScores'   => $post_scores,
-		'replyScores'  => [],
-		'activeReply'  => 0,
-		'submitting'   => false,
+		'currentPostId' => (int) $post->id,
+		'postScores'    => $post_scores,
+		'replyScores'   => [],
+		'activeReply'   => 0,
+		'submitting'    => false,
 	]
 );
 ?>
@@ -135,7 +147,7 @@ wp_interactivity_state(
 				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
 					<span style="display:flex;gap:4px;margin-left:8px;">
 						<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&id=' . (int) $post->space_id ) ); ?>" class="jt-act" title="<?php esc_attr_e( 'Admin', 'jetonomy' ); ?>">&#9881;</a>
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>" class="jt-act" title="<?php esc_attr_e( 'Admin', 'jetonomy' ); ?>">&#9881;</a>
 						<?php endif; ?>
 					</span>
 				<?php endif; ?>

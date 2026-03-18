@@ -51,6 +51,13 @@ class Adapter_Registry {
         return null;
     }
 
+    public static function get_search(): ?Search_Adapter {
+        foreach ( self::$search as $adapter ) {
+            if ( $adapter->is_active() ) return $adapter;
+        }
+        return null;
+    }
+
     public static function get_all_membership(): array {
         return self::$membership;
     }

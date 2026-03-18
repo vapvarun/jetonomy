@@ -53,12 +53,12 @@ class AccessRule extends Model {
 	 * decoded grants and the space_role (if set).
 	 *
 	 * Rule types evaluated:
-	 *   - 'everyone'    → always matches
-	 *   - 'logged_in'   → matches if $user_id > 0
-	 *   - 'role'        → matches if the WP user has the given WP role
-	 *   - 'capability'  → matches if user_can( $user_id, $rule_value )
-	 *   - 'trust_level' → matches if the user's trust_level >= (int) $rule_value
-	 *   - 'membership'  → skipped (handled by adapters)
+	 *   - 'everyone'    - always matches
+	 *   - 'logged_in'   - matches if $user_id > 0
+	 *   - 'role'        - matches if the WP user has the given WP role
+	 *   - 'capability'  - matches if user_can( $user_id, $rule_value )
+	 *   - 'trust_level' - matches if the user's trust_level >= (int) $rule_value
+	 *   - 'membership'  - matches if any active membership adapter confirms the user has the level
 	 *
 	 * @param int $user_id WP user ID (0 = guest).
 	 * @param int $space_id
@@ -107,7 +107,15 @@ class AccessRule extends Model {
 					break;
 
 				case 'membership':
-					// Handled by adapters; skip for now.
+					$adapters = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+					$matched = false;
+					foreach ( $adapters as $adapter ) {
+						if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule->rule_value ) ) {
+							$matched = true;
+							break;
+						}
+					}
+					if ( ! $matched ) continue 2;
 					break;
 			}
 

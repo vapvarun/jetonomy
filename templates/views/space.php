@@ -10,6 +10,16 @@ if ( ! $space ) {
 	return;
 }
 
+if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+	$user_id = get_current_user_id();
+	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			echo '<div class="jt-container"><div class="jt-empty"><p>' . esc_html__( 'This space is private. You need to be a member to access it.', 'jetonomy' ) . '</p></div></div>';
+			return;
+		}
+	}
+}
+
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'latest';
 if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {

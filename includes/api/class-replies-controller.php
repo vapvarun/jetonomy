@@ -10,7 +10,6 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Revision;
 use Jetonomy\Models\Notification;
-use Jetonomy\Models\Subscription;
 use Jetonomy\Models\UserProfile;
 
 class Replies_Controller extends Base_Controller {
@@ -209,38 +208,7 @@ class Replies_Controller extends Base_Controller {
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );
 
-		// Notify the post author (skip self-notification).
-		$post_author_id = (int) $post->author_id;
-		if ( $post_author_id && $post_author_id !== $user_id ) {
-			Notification::create( [
-				'user_id'     => $post_author_id,
-				'type'        => 'reply',
-				'object_type' => 'reply',
-				'object_id'   => $reply_id,
-				'actor_id'    => $user_id,
-			] );
-		}
-
-		// Notify all subscribers of the post (excluding the replier and post author
-		// already notified above).
-		$already_notified = [ $user_id, $post_author_id ];
-		$subscribers      = Subscription::get_subscribers( 'post', $post_id );
-
-		foreach ( $subscribers as $subscriber_id ) {
-			if ( in_array( $subscriber_id, $already_notified, true ) ) {
-				continue;
-			}
-
-			Notification::create( [
-				'user_id'     => $subscriber_id,
-				'type'        => 'reply',
-				'object_type' => 'reply',
-				'object_id'   => $reply_id,
-				'actor_id'    => $user_id,
-			] );
-		}
-
-		// Fire action for Notifier and other listeners.
+		// Fire action for Notifier and other listeners (handles all notifications).
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
 
 		$reply = Reply::find( $reply_id );

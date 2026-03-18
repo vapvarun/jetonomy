@@ -20,45 +20,35 @@ $spaces = [];
 $tags   = [];
 
 if ( '' !== $q && strlen( $q ) >= 2 ) {
-	global $wpdb;
-	$posts_tbl  = \Jetonomy\table( 'posts' );
-	$spaces_tbl = \Jetonomy\table( 'spaces' );
-	$tags_tbl   = \Jetonomy\table( 'tags' );
-	$like       = '%' . $wpdb->esc_like( $q ) . '%';
+	$search_adapter = \Jetonomy\Adapters\Adapter_Registry::get_search();
+	if ( ! $search_adapter ) {
+		$search_adapter = new \Jetonomy\Search\Fulltext_Search();
+	}
 
 	if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$posts = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
-				 FROM {$posts_tbl} p
-				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE p.status = 'publish'
-				   AND ( p.title LIKE %s OR p.content LIKE %s )
-				 ORDER BY p.vote_score DESC, p.created_at DESC
-				 LIMIT %d OFFSET %d",
-				$like,
-				$like,
-				$per_page,
-				$offset
-			)
-		) ?: [];
+		$posts = $search_adapter->search( $q, 'post', null, $per_page, $offset );
+
+		// Enrich post results with space slug/title for display.
+		$space_cache = [];
+		foreach ( $posts as $post ) {
+			$sid = (int) $post->space_id;
+			if ( ! isset( $space_cache[ $sid ] ) ) {
+				$space_cache[ $sid ] = \Jetonomy\Models\Space::find( $sid );
+			}
+			$sp = $space_cache[ $sid ];
+			$post->space_slug  = $sp ? $sp->slug : '';
+			$post->space_title = $sp ? $sp->title : '';
+		}
 	}
 
 	if ( in_array( $filter, [ 'all', 'spaces' ], true ) ) {
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$spaces = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$spaces_tbl} WHERE title LIKE %s OR description LIKE %s ORDER BY post_count DESC LIMIT 10",
-				$like,
-				$like
-			)
-		) ?: [];
+		$spaces = $search_adapter->search( $q, 'space', null, 10, 0 );
 	}
 
 	if ( in_array( $filter, [ 'all', 'tags' ], true ) ) {
+		global $wpdb;
+		$tags_tbl = \Jetonomy\table( 'tags' );
+		$like     = '%' . $wpdb->esc_like( $q ) . '%';
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$tags = $wpdb->get_results(
 			$wpdb->prepare(

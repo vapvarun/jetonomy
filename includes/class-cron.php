@@ -72,6 +72,8 @@ class Cron {
     public function evaluate_trust_levels(): void {
         global $wpdb;
         $profiles_t = table( 'user_profiles' );
+        $replies_t  = table( 'replies' );
+        $posts_t    = table( 'posts' );
 
         $profiles = $wpdb->get_results(
             "SELECT user_id, post_count, reply_count, reputation, trust_level, created_at FROM {$profiles_t} WHERE trust_level < 4"
@@ -82,11 +84,16 @@ class Cron {
                 ? (int) ( ( time() - strtotime( $profile->created_at ) ) / DAY_IN_SECONDS )
                 : 0;
 
+            $replies_received = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$replies_t} r INNER JOIN {$posts_t} p ON r.post_id = p.id WHERE p.author_id = %d AND r.author_id != %d AND r.status = 'publish'",
+                $profile->user_id, $profile->user_id
+            ) );
+
             $new_level = Trust_Evaluator::evaluate_level( [
                 'post_count'       => (int) $profile->post_count,
                 'days_active'      => $days_active,
                 'reputation'       => (int) $profile->reputation,
-                'replies_received' => 0,
+                'replies_received' => $replies_received,
             ] );
 
             if ( $new_level > (int) $profile->trust_level ) {
