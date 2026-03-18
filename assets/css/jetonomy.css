@@ -98,7 +98,7 @@
 
   /* ── Community Sub-Navigation (below theme header) ── */
   .jt-community-nav { border-bottom: 1px solid var(--jt-border); background: var(--jt-bg); }
-  .jt-community-nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; max-width: var(--wp--style--global--content-size, inherit); margin: 0 auto; }
+  .jt-community-nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; }
   .jt-community-nav-links { display: flex; gap: 2px; }
   .jt-community-nav-links a { color: var(--jt-text-secondary); font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; transition: all var(--jt-dur) var(--jt-ease); }
   .jt-community-nav-links a:hover { color: var(--jt-text); border-bottom-color: var(--jt-border-strong); }
@@ -119,7 +119,8 @@
   .jt-avatar img, img.jt-avatar { border-radius: 50%; object-fit: cover; }
 
   /* ── Layout ── */
-  .jt-container { max-width: var(--wp--style--global--content-size, inherit); margin: 0 auto; padding: 24px; }
+  /* Use wideSize (not contentSize) — forums need full width for sidebar layout */
+  .jt-container { max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; padding: 24px; }
   .jt-two-col { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
 
   /* ── Breadcrumb ── */

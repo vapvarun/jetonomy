@@ -11,7 +11,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<a href="<?php echo esc_url( $settings_url . '&tab=general' ); ?>" class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $settings_url . '&tab=permissions' ); ?>" class="nav-tab <?php echo 'permissions' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Permissions', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $settings_url . '&tab=email' ); ?>" class="nav-tab <?php echo 'email' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Email', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $settings_url . '&tab=appearance' ); ?>" class="nav-tab <?php echo 'appearance' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Appearance', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $settings_url . '&tab=seo' ); ?>" class="nav-tab <?php echo 'seo' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'SEO', 'jetonomy' ); ?></a>
 		<?php
 		/**
