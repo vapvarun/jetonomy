@@ -88,6 +88,9 @@ final class Jetonomy {
         new Cron();
         new Privacy();
 
+        new SEO\Sitemap();
+        new SEO\Schema_Markup();
+
         Import\Import_Manager::init();
 
         if ( is_admin() ) {

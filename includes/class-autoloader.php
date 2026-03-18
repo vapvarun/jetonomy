@@ -15,6 +15,7 @@ class Autoloader {
         'Jetonomy\\Notifications\\' => 'includes/notifications/',
         'Jetonomy\\Import\\'        => 'includes/import/',
         'Jetonomy\\Admin\\'         => 'includes/admin/',
+        'Jetonomy\\SEO\\'           => 'includes/seo/',
         'Jetonomy\\DB\\'            => 'includes/db/',
         'Jetonomy\\DB\\Migrations\\' => 'includes/db/migrations/',
         'Jetonomy\\'               => 'includes/',
