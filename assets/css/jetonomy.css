@@ -94,29 +94,20 @@
   .jt-app a { color: var(--jt-accent); text-decoration: none; transition: color var(--jt-dur); }
   .jt-app a:hover { color: var(--jt-accent-hover); }
 
-  /* ── Header ── */
-  .jt-header { border-bottom: 1px solid var(--jt-border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; background: var(--jt-bg); z-index: 50; }
-  .jt-logo { font-family: var(--jt-font-heading); font-weight: 700; font-size: 1.1em; display: flex; align-items: center; gap: 8px; color: var(--jt-text); }
-  .jt-logo-icon { width: 26px; height: 26px; border-radius: 6px; background: var(--jt-accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; }
+  /* ── Community Sub-Navigation (below theme header) ── */
+  .jt-community-nav { border-bottom: 1px solid var(--jt-border); background: var(--jt-bg); }
+  .jt-community-nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; max-width: var(--wp--style--global--content-size, inherit); margin: 0 auto; }
+  .jt-community-nav-links { display: flex; gap: 2px; }
+  .jt-community-nav-links a { color: var(--jt-text-secondary); font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; transition: all var(--jt-dur) var(--jt-ease); }
+  .jt-community-nav-links a:hover { color: var(--jt-text); border-bottom-color: var(--jt-border-strong); }
+  .jt-community-nav-links a.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); font-weight: 600; }
+  .jt-community-nav-actions { display: flex; align-items: center; gap: 8px; }
+  .jt-community-nav-notif { color: var(--jt-text-secondary); display: flex; align-items: center; gap: 4px; padding: 8px; border-radius: var(--jt-radius-full); transition: all var(--jt-dur); position: relative; }
+  .jt-community-nav-notif:hover { color: var(--jt-text); background: var(--jt-bg-muted); }
+  .jt-community-nav-badge { background: var(--jt-danger); color: white; font-size: 0.7rem; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
 
-  .jt-nav { display: flex; gap: 4px; }
-  .jt-nav a { color: var(--jt-text-secondary); font-weight: 500; padding: 6px 12px; border-radius: var(--jt-radius-full); transition: all var(--jt-dur) var(--jt-ease); }
-  .jt-nav a:hover { color: var(--jt-text); background: var(--jt-bg-hover); }
-  .jt-nav a.active { color: var(--jt-text); background: var(--jt-bg-muted); font-weight: 600; }
-
-  .jt-header-right { display: flex; align-items: center; gap: 8px; }
-
-  /* ── Search ── */
-  .jt-search { display: flex; align-items: center; gap: 6px; background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-full); padding: 6px 14px; width: 220px; transition: all 0.2s var(--jt-ease); }
-  .jt-search:focus-within { border-color: var(--jt-accent); width: 280px; box-shadow: 0 0 0 3px var(--jt-accent-muted); }
-  .jt-search input { border: none; background: none; font-family: var(--jt-font); color: var(--jt-text); outline: none; width: 100%; }
-  .jt-search input::placeholder { color: var(--jt-text-tertiary); }
-  .jt-search svg { color: var(--jt-text-tertiary); flex-shrink: 0; }
-
-  /* ── Icon button ── */
-  .jt-icon-btn { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--jt-text-secondary); position: relative; transition: all var(--jt-dur); border: none; background: none; cursor: pointer; }
-  .jt-icon-btn:hover { background: var(--jt-bg-muted); color: var(--jt-text); }
-  .jt-badge-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--jt-danger); border: 2px solid var(--jt-bg); }
+  /* Legacy header classes kept for backward compatibility */
+  .jt-header { display: none; } /* Hidden — theme header handles this */
 
   /* ── Avatar ── */
   .jt-avatar { border-radius: 50%; background: var(--jt-bg-muted); color: var(--jt-text-secondary); display: flex; align-items: center; justify-content: center; font-weight: 600; font-family: var(--jt-font); flex-shrink: 0; }
@@ -126,7 +117,7 @@
   .jt-avatar img, img.jt-avatar { border-radius: 50%; object-fit: cover; }
 
   /* ── Layout ── */
-  .jt-container { max-width: var(--wp--style--global--content-size, 1100px); margin: 0 auto; padding: 24px; }
+  .jt-container { max-width: var(--wp--style--global--content-size, inherit); margin: 0 auto; padding: 24px; }
   .jt-two-col { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
 
   /* ── Breadcrumb ── */
