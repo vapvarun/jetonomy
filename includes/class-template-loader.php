@@ -13,7 +13,7 @@ class Template_Loader {
                 $base_slug = $settings['base_slug'] ?? 'community';
                 wp_safe_redirect( home_url( '/' . $base_slug . '/u/' . wp_get_current_user()->user_login . '/' ) );
             } else {
-                wp_safe_redirect( wp_login_url( home_url( $_SERVER['REQUEST_URI'] ) ) );
+                wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
             }
             exit;
         }
@@ -21,7 +21,7 @@ class Template_Loader {
         // ── Auth redirect for protected routes (BEFORE any output) ──
         $auth_required_routes = [ 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post' ];
         if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
-            wp_safe_redirect( wp_login_url( home_url( $_SERVER['REQUEST_URI'] ) ) );
+            wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
             exit;
         }
 
@@ -124,9 +124,9 @@ class Template_Loader {
 
         // Enqueue Prism.js for code syntax highlighting on post pages.
         if ( in_array( $data['route'], [ 'post', 'new-post' ], true ) ) {
-            wp_enqueue_style( 'prismjs', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css', [], '1.29.0' );
-            wp_enqueue_script( 'prismjs', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js', [], '1.29.0', true );
-            wp_enqueue_script( 'prismjs-autoloader', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js', [ 'prismjs' ], '1.29.0', true );
+            wp_enqueue_style( 'prismjs', JETONOMY_URL . 'assets/vendor/prismjs/prism.min.css', [], '1.29.0' );
+            wp_enqueue_script( 'prismjs', JETONOMY_URL . 'assets/vendor/prismjs/prism.min.js', [], '1.29.0', true );
+            wp_enqueue_script( 'prismjs-autoloader', JETONOMY_URL . 'assets/vendor/prismjs/prism-autoloader.min.js', [ 'prismjs' ], '1.29.0', true );
         }
 
         // Pre-flight 404 detection: check before get_header() sends HTTP headers.

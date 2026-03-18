@@ -1,0 +1,12 @@
+.git
+.gitignore
+.distignore
+node_modules
+tests
+docs
+phpunit.xml.dist
+package.json
+package-lock.json
+composer.json
+CLAUDE.md
+seed-*.php
