@@ -70,13 +70,16 @@ class Admin {
 	// ── Menu ──
 
 	public function add_menu(): void {
+		$menu_label = apply_filters( 'jetonomy_admin_menu_label', __( 'Jetonomy', 'jetonomy' ) );
+		$menu_icon  = apply_filters( 'jetonomy_admin_menu_icon', 'dashicons-groups' );
+
 		add_menu_page(
-			__( 'Jetonomy', 'jetonomy' ),
-			__( 'Jetonomy', 'jetonomy' ),
+			$menu_label,
+			$menu_label,
 			'jetonomy_manage_settings',
 			'jetonomy',
 			[ $this, 'render_dashboard' ],
-			'dashicons-groups',
+			$menu_icon,
 			30
 		);
 

@@ -9,10 +9,10 @@ if ( $user_id ) {
 $base = home_url( '/community' );
 ?>
 <header class="jt-header">
-	<a href="<?php echo esc_url( $base ); ?>" class="jt-logo">
-		<span class="jt-logo-icon">J</span>
-		<?php echo esc_html( get_bloginfo( 'name' ) ); ?>
-	</a>
+	<?php
+	$jt_logo_html = '<a href="' . esc_url( $base ) . '" class="jt-logo"><span class="jt-logo-icon">J</span> ' . esc_html( get_bloginfo( 'name' ) ) . '</a>';
+	echo apply_filters( 'jetonomy_header_logo', $jt_logo_html ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Filtered HTML is expected to be pre-escaped by filter callbacks.
+	?>
 	<nav class="jt-nav">
 		<a href="<?php echo esc_url( $base ); ?>" class="<?php echo 'home' === $current_route ? 'active' : ''; ?>"><?php esc_html_e( 'Home', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="<?php echo 'search' === $current_route ? 'active' : ''; ?>"><?php esc_html_e( 'Search', 'jetonomy' ); ?></a>
