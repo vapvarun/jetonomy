@@ -419,7 +419,7 @@
   .jt-closed-notice { text-align: center; padding: 20px; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius); margin-top: 20px; }
 
   /* ── Leaderboard ── */
-  .jt-leaderboard-wrap { max-width: 700px; }
+  /* Leaderboard uses jt-two-col now — no max-width needed */
   .jt-page-title { font-family: var(--jt-font-heading); font-weight: 700; margin: 0; }
   .jt-page-title-sm { font-size: 1.25rem; }
   .jt-leader-stats { display: flex; gap: 16px; margin-left: auto; text-align: right; }
@@ -433,7 +433,7 @@
   .jt-tag-count { color: var(--jt-text-tertiary); font-size: 0.75rem; margin-left: 3px; }
 
   /* ── Notification list ── */
-  .jt-notif-wrap { max-width: 700px; }
+  /* Notifications uses jt-two-col now — no max-width needed */
   .jt-notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--jt-border); text-decoration: none; color: inherit; }
   .jt-notif-item.unread { background: var(--jt-accent-muted); }
   .jt-notif-body { flex: 1; min-width: 0; }
@@ -442,7 +442,7 @@
   .jt-notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--jt-accent); flex-shrink: 0; margin-top: 4px; }
 
   /* ── Moderation ── */
-  .jt-mod-wrap { max-width: 800px; }
+  /* Moderation — full width in container */
   .jt-mod-flag { padding: 16px; border-bottom: 1px solid var(--jt-border); }
   .jt-mod-flag-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .jt-mod-flag-type { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger); }
@@ -528,3 +528,9 @@
   /* ── Prism.js override for theme consistency ── */
   .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); }
   .jt-dark .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
+
+  /* ── User profile links ── */
+  .jt-user-link { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+  .jt-user-link:hover { color: inherit; }
+  .jt-user-link:hover .jt-user-name { text-decoration: underline; }
+  .jt-user-name { font-weight: 500; }

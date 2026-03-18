@@ -25,7 +25,8 @@ $type_labels = [
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-<div class="jt-notif-wrap">
+<div class="jt-two-col">
+<main>
 		<h1 class="jt-page-title jt-mb-20">
 			<?php esc_html_e( 'Notifications', 'jetonomy' ); ?>
 		</h1>
@@ -90,4 +91,9 @@ $type_labels = [
 				<?php endforeach; ?>
 			</div>
 		<?php endif; ?>
-	</div>
+</main>
+
+<aside class="jt-sidebar">
+	<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
+</aside>
+</div>
