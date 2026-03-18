@@ -121,7 +121,7 @@
   /* ── Layout ── */
   /* Use wideSize (not contentSize) — forums need full width for sidebar layout */
   .jt-container { max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; padding: 24px; }
-  .jt-two-col { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
+  .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
 
   /* ── Breadcrumb ── */
   .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-bottom: 20px; }
@@ -154,11 +154,11 @@
 
   /* ── Topic list ── */
   .jt-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
-  .jt-row { display: grid; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; cursor: pointer; }
+  .jt-row { display: grid !important; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; cursor: pointer; }
   .jt-row:last-child { border-bottom: none; }
   .jt-row:hover { background: var(--jt-bg-hover); }
   .jt-row.pinned { background: var(--jt-accent-muted); }
-  a.jt-row { text-decoration: none; color: inherit; }
+  a.jt-row { text-decoration: none; color: inherit; display: grid; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; }
   a.jt-row:hover { color: inherit; }
   .jt-row-main { min-width: 0; }
   .jt-row-title { font-weight: 600; line-height: 1.3; color: var(--jt-text); }
