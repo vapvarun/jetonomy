@@ -34,6 +34,7 @@ final class Jetonomy {
 
         update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
         flush_rewrite_rules();
+        set_transient( 'jetonomy_activation_redirect', true, 30 );
     }
 
     public function deactivate(): void {
@@ -43,8 +44,17 @@ final class Jetonomy {
 
     public function init(): void {
         load_plugin_textdomain( 'jetonomy', false, dirname( plugin_basename( JETONOMY_FILE ) ) . '/languages' );
+        $this->maybe_redirect_to_setup();
         $this->check_db_version();
         $this->load_dependencies();
+    }
+
+    private function maybe_redirect_to_setup(): void {
+        if ( ! get_transient( 'jetonomy_activation_redirect' ) ) return;
+        delete_transient( 'jetonomy_activation_redirect' );
+        if ( wp_doing_ajax() || wp_doing_cron() || is_network_admin() ) return;
+        wp_safe_redirect( admin_url( 'admin.php?page=jetonomy-setup' ) );
+        exit;
     }
 
     private function check_db_version(): void {

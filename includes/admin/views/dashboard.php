@@ -1,6 +1,14 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+if ( ! get_option( 'jetonomy_setup_complete' ) ) : ?>
+<div class="notice notice-info" style="padding:20px;border-left-color:var(--jt-accent,#3B82F6);">
+	<h3 style="margin:0 0 8px;"><?php esc_html_e( 'Welcome to Jetonomy!', 'jetonomy' ); ?></h3>
+	<p><?php esc_html_e( 'Complete the setup wizard to create your first community space.', 'jetonomy' ); ?></p>
+	<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-setup' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Run Setup Wizard', 'jetonomy' ); ?></a>
+</div>
+<?php endif;
+
 $stat_cards = [
 	'total_posts'   => [ 'label' => __( 'Total Posts', 'jetonomy' ),   'icon' => 'dashicons-admin-post' ],
 	'total_replies' => [ 'label' => __( 'Total Replies', 'jetonomy' ), 'icon' => 'dashicons-format-chat' ],

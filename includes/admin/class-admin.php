@@ -61,6 +61,10 @@ class Admin {
 		// Settings AJAX
 		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
 		add_action( 'wp_ajax_jetonomy_flush_rules', [ $this, 'ajax_flush_rules' ] );
+
+		// Setup Wizard AJAX
+		add_action( 'wp_ajax_jetonomy_setup_save', [ $this, 'ajax_setup_save' ] );
+		add_action( 'wp_ajax_jetonomy_setup_create_sample', [ $this, 'ajax_setup_create_sample' ] );
 	}
 
 	// ── Menu ──
@@ -158,6 +162,9 @@ class Admin {
 				[ $this, 'render_license' ]
 			);
 		}
+
+		// Hidden setup wizard page (no menu item).
+		add_submenu_page( '', __( 'Jetonomy Setup', 'jetonomy' ), '', 'manage_options', 'jetonomy-setup', [ $this, 'render_setup' ] );
 	}
 
 	// ── Settings API ──
@@ -1271,5 +1278,139 @@ class Admin {
 
 		flush_rewrite_rules();
 		wp_send_json_success( [ 'message' => __( 'Rewrite rules flushed.', 'jetonomy' ) ] );
+	}
+
+	// ═══════════════════════════════════════════════════════════════
+	//  Setup Wizard
+	// ═══════════════════════════════════════════════════════════════
+
+	public function render_setup(): void {
+		include JETONOMY_DIR . 'includes/admin/views/setup-wizard.php';
+	}
+
+	public function ajax_setup_save(): void {
+		check_ajax_referer( 'jetonomy_setup', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$settings = get_option( 'jetonomy_settings', [] );
+		$settings['base_slug']    = sanitize_title( $_POST['base_slug'] ?? 'community' );
+		$settings['default_type'] = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
+		$settings['guest_read']   = true;
+		update_option( 'jetonomy_settings', $settings );
+
+		// Create category + space.
+		$cat_name   = sanitize_text_field( $_POST['category_name'] ?? 'General' );
+		$space_name = sanitize_text_field( $_POST['space_name'] ?? 'Community Discussion' );
+		$space_desc = sanitize_textarea_field( $_POST['space_description'] ?? '' );
+		$space_type = $settings['default_type'];
+
+		$cat_id = Category::create( [
+			'name'       => $cat_name,
+			'slug'       => sanitize_title( $cat_name ),
+			'visibility' => 'public',
+		] );
+
+		$space_id = Space::create( [
+			'category_id' => $cat_id,
+			'author_id'   => get_current_user_id(),
+			'type'        => $space_type,
+			'title'       => $space_name,
+			'slug'        => sanitize_title( $space_name ),
+			'description' => $space_desc,
+			'visibility'  => 'public',
+			'join_policy' => 'open',
+		] );
+
+		// Create user profile for admin.
+		UserProfile::find_or_create( get_current_user_id() );
+
+		// Flush rewrite rules with new base slug.
+		flush_rewrite_rules();
+
+		// Mark setup as complete.
+		update_option( 'jetonomy_setup_complete', true );
+
+		wp_send_json_success( [ 'category_id' => $cat_id, 'space_id' => $space_id ] );
+	}
+
+	public function ajax_setup_create_sample(): void {
+		check_ajax_referer( 'jetonomy_setup', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error();
+		}
+
+		$uid = get_current_user_id();
+		UserProfile::find_or_create( $uid );
+
+		// Category 1: Development.
+		$cat1 = Category::create( [ 'name' => 'Development', 'slug' => 'development', 'description' => 'Programming discussions', 'visibility' => 'public' ] );
+
+		// Category 2: Community.
+		$cat2 = Category::create( [ 'name' => 'Community', 'slug' => 'community-cat', 'description' => 'General community topics', 'visibility' => 'public' ] );
+
+		// Space 1: General Discussion (forum).
+		$s1 = Space::create( [ 'category_id' => $cat2, 'author_id' => $uid, 'type' => 'forum', 'title' => 'General Discussion', 'slug' => 'general-discussion', 'description' => 'Talk about anything.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+
+		// Space 2: Help & Questions (Q&A).
+		$s2 = Space::create( [ 'category_id' => $cat1, 'author_id' => $uid, 'type' => 'qa', 'title' => 'Help & Questions', 'slug' => 'help-questions', 'description' => 'Ask questions and get answers from the community.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+
+		// Space 3: Feature Ideas.
+		$s3 = Space::create( [ 'category_id' => $cat2, 'author_id' => $uid, 'type' => 'ideas', 'title' => 'Feature Ideas', 'slug' => 'feature-ideas', 'description' => 'Submit and vote on ideas.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+
+		// Space 4: Code Snippets.
+		$s4 = Space::create( [ 'category_id' => $cat1, 'author_id' => $uid, 'type' => 'forum', 'title' => 'Code Snippets', 'slug' => 'code-snippets', 'description' => 'Share useful code snippets.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+
+		// Sample posts.
+		$sample_posts = [
+			[ 'space_id' => $s1, 'title' => 'Welcome to our community!', 'content' => '<p>This is a sample welcome post. Feel free to introduce yourself and start a conversation!</p>', 'type' => 'topic' ],
+			[ 'space_id' => $s1, 'title' => 'Community guidelines', 'content' => '<p>Be respectful, be helpful, and have fun. These are the basics of our community.</p>', 'type' => 'topic' ],
+			[ 'space_id' => $s2, 'title' => 'How do I get started?', 'content' => '<p>I am new here. What are the best ways to participate in this community?</p>', 'type' => 'question' ],
+			[ 'space_id' => $s2, 'title' => 'What tools do you recommend?', 'content' => '<p>Looking for recommendations on tools and resources. What do you use daily?</p>', 'type' => 'question' ],
+			[ 'space_id' => $s3, 'title' => 'Dark mode support', 'content' => '<p>It would be great to have a dark mode option for the community.</p>', 'type' => 'idea' ],
+			[ 'space_id' => $s4, 'title' => 'Useful PHP snippet: array_map with keys', 'content' => '<p>Here is a handy PHP snippet for mapping array values while keeping keys.</p><pre>$result = array_map(fn($v, $k) => "$k: $v", $array, array_keys($array));</pre>', 'type' => 'topic' ],
+		];
+
+		foreach ( $sample_posts as $p ) {
+			Post::create( [
+				'space_id'      => $p['space_id'],
+				'author_id'     => $uid,
+				'type'          => $p['type'],
+				'title'         => $p['title'],
+				'slug'          => sanitize_title( $p['title'] ),
+				'content'       => $p['content'],
+				'content_plain' => wp_strip_all_tags( $p['content'] ),
+				'status'        => 'publish',
+			] );
+		}
+
+		// Sample replies on first 3 posts.
+		$replies = [
+			'Thanks for setting this up! Looking forward to great discussions.',
+			'Great to be here. Hello everyone!',
+			'Nice guidelines. I appreciate the welcoming tone.',
+		];
+
+		global $wpdb;
+		$posts_table = \Jetonomy\table( 'posts' );
+		$all_posts   = $wpdb->get_results( "SELECT id, space_id FROM {$posts_table} ORDER BY id LIMIT 3" );
+
+		foreach ( $all_posts as $i => $post ) {
+			if ( isset( $replies[ $i ] ) ) {
+				Reply::create( [
+					'post_id'       => (int) $post->id,
+					'author_id'     => $uid,
+					'content'       => '<p>' . $replies[ $i ] . '</p>',
+					'content_plain' => $replies[ $i ],
+					'status'        => 'publish',
+				] );
+			}
+		}
+
+		flush_rewrite_rules();
+		update_option( 'jetonomy_setup_complete', true );
+
+		wp_send_json_success( [ 'message' => 'Sample data created' ] );
 	}
 }
