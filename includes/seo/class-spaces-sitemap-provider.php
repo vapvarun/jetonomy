@@ -8,8 +8,8 @@ use function Jetonomy\table;
 
 class Spaces_Sitemap_Provider extends WP_Sitemaps_Provider {
 
-	public $name = 'jetonomy-spaces';
-	public $object_type = 'jetonomy-space';
+	public $name        = 'jetonomyspaces';
+	public $object_type = 'jetonomyspace';
 
 	public function get_url_list( $page_num, $object_subtype = '' ) {
 		global $wpdb;

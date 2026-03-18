@@ -59,6 +59,11 @@ class Nav_Menus {
 				'url'   => $base . 'notifications/',
 				'class' => 'jetonomy-notifications',
 			],
+			[
+				'title' => __( 'My Profile', 'jetonomy' ),
+				'url'   => $base . 'u/me/',
+				'class' => 'jetonomy-profile',
+			],
 		];
 
 		// Add dynamic spaces

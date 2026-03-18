@@ -92,10 +92,7 @@ class Router {
             'tab'        => get_query_var( 'jetonomy_tab', '' ),
         ];
 
-        // Let WordPress know we're handling this
-        status_header( 200 );
-
-        // Load the template
+        // Load the template (template may call status_header(404) inside)
         Template_Loader::render( $data );
         exit;
     }

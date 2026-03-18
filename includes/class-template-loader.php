@@ -6,6 +6,18 @@ defined( 'ABSPATH' ) || exit;
 class Template_Loader {
 
     public static function render( array $data ): void {
+        // ── /u/me/ redirect to actual user profile ──
+        if ( 'profile' === $data['route'] && 'me' === $data['slug'] ) {
+            if ( is_user_logged_in() ) {
+                $settings = get_option( 'jetonomy_settings', [] );
+                $base_slug = $settings['base_slug'] ?? 'community';
+                wp_safe_redirect( home_url( '/' . $base_slug . '/u/' . wp_get_current_user()->user_login . '/' ) );
+            } else {
+                wp_safe_redirect( wp_login_url( home_url( $_SERVER['REQUEST_URI'] ) ) );
+            }
+            exit;
+        }
+
         // ── Auth redirect for protected routes (BEFORE any output) ──
         $auth_required_routes = [ 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post' ];
         if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
@@ -117,6 +129,9 @@ class Template_Loader {
             wp_enqueue_script( 'prismjs-autoloader', 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js', [ 'prismjs' ], '1.29.0', true );
         }
 
+        // Pre-flight 404 detection: check before get_header() sends HTTP headers.
+        self::maybe_set_404( $data );
+
         // Set up SEO
         self::set_seo_meta( $data );
 
@@ -220,6 +235,51 @@ class Template_Loader {
                 echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
             }
         }, 1 );
+    }
+
+    /**
+     * Pre-flight 404 check — runs BEFORE get_header() sends HTTP headers.
+     *
+     * This ensures that non-existent spaces, posts, users, and tags return
+     * a proper 404 HTTP status code rather than 200.
+     */
+    private static function maybe_set_404( array $data ): void {
+        $slug = $data['slug'] ?? '';
+
+        switch ( $data['route'] ) {
+            case 'space':
+                if ( $slug && ! \Jetonomy\Models\Space::find_by_slug( $slug ) ) {
+                    status_header( 404 );
+                }
+                break;
+
+            case 'post':
+                if ( $slug ) {
+                    $post = \Jetonomy\Models\Post::find_by_slug( $slug );
+                    if ( ! $post || 'publish' !== $post->status ) {
+                        status_header( 404 );
+                    }
+                }
+                break;
+
+            case 'profile':
+                if ( $slug && ! get_user_by( 'login', $slug ) ) {
+                    status_header( 404 );
+                }
+                break;
+
+            case 'tag':
+                if ( $slug && ! \Jetonomy\Models\Tag::find_by_slug( $slug ) ) {
+                    status_header( 404 );
+                }
+                break;
+
+            case 'category':
+                if ( $slug && ! \Jetonomy\Models\Category::find_by_slug( $slug ) ) {
+                    status_header( 404 );
+                }
+                break;
+        }
     }
 
     /**

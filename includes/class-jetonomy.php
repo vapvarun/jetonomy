@@ -75,9 +75,11 @@ final class Jetonomy {
         new Router();
 
         // Ensure rewrite rules are flushed at least once after activation.
-        if ( ! get_option( 'jetonomy_permalinks_flushed' ) ) {
+        // Version-keyed so a sitemap or URL change triggers a re-flush.
+        $flush_key = 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION;
+        if ( ! get_option( $flush_key ) ) {
             flush_rewrite_rules();
-            update_option( 'jetonomy_permalinks_flushed', true );
+            update_option( $flush_key, true );
         }
 
         new API\Api();

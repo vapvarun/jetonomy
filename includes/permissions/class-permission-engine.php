@@ -50,23 +50,30 @@ class Permission_Engine {
 	 */
 	public static function can( int $user_id, string $action, ?int $space_id = null ): bool {
 		// Layer 0: Global ban.
-		if ( Restriction::is_banned( $user_id ) ) {
+		if ( $user_id && Restriction::is_banned( $user_id ) ) {
 			return false;
 		}
 
 		// WP admin bypass — skip all further checks.
-		if ( user_can( $user_id, 'manage_options' ) ) {
+		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
 			return true;
 		}
 
 		// Layer 1: WordPress capability.
-		if ( ! user_can( $user_id, 'jetonomy_' . $action ) ) {
+		// Guest users (user_id=0) skip the WP cap check for 'read' actions;
+		// public space visibility is evaluated in Layer 2 instead.
+		if ( $user_id && ! user_can( $user_id, 'jetonomy_' . $action ) ) {
 			return false;
 		}
 
-		// No space context — WP cap is sufficient.
+		// Guests may only read — reject any non-read action immediately.
+		if ( ! $user_id && 'read' !== $action ) {
+			return false;
+		}
+
+		// No space context — WP cap is sufficient (logged-in), or deny guests.
 		if ( null === $space_id ) {
-			return true;
+			return (bool) $user_id;
 		}
 
 		// Layer 2: Space visibility + membership.
