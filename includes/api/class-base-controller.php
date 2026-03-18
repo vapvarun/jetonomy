@@ -1,4 +1,5 @@
 <?php
+// TODO v1.1: Replace offset-based pagination with cursor-based (?after=ID&limit=20) for scale.
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;

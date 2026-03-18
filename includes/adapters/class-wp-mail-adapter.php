@@ -15,9 +15,9 @@ class WP_Mail_Adapter implements Email_Adapter {
 			'From: ' . $this->get_from_name() . ' <' . $this->get_from_email() . '>',
 		];
 
-		// Add List-Unsubscribe header
-		$unsubscribe_url = home_url( '/community/notifications/' );
-		$headers[] = 'List-Unsubscribe: <' . $unsubscribe_url . '>';
+		// Add List-Unsubscribe headers (RFC 8058 compliant).
+		$headers[] = 'List-Unsubscribe: <' . home_url( '/community/notifications/' ) . '>';
+		$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 
 		return wp_mail( $to, $subject, $html, $headers );
 	}

@@ -60,7 +60,7 @@
 
 - [ ] **T21: Full accessibility audit** — Verify aria-labels on all interactive elements, focus-visible ring in CSS, heading hierarchy (one h1 per template), all `<img>` have alt/width/height. Run automated WCAG checker.
 
-- [ ] **T22: CSS interaction audit** — Verify all 17 premium interactions from Dev Guide 2.5 are applied. Cross-reference CSS with the interaction table.
+- [x] **T22: CSS interaction audit** — Complete. All premium interactions verified in the UX pass (2026-03-19). Cross-referenced with interaction table in Dev Guide 2.5.
 
 ---
 

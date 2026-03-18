@@ -13,10 +13,21 @@ use function Jetonomy\table;
 
 abstract class Importer {
 
-	protected array $id_map = [];
-	protected array $errors = [];
-	protected int $imported = 0;
-	protected int $skipped  = 0;
+	protected array $id_map  = [];
+	protected array $errors  = [];
+	protected int $imported  = 0;
+	protected int $skipped   = 0;
+	protected bool $dry_run  = false;
+
+	/**
+	 * Enable or disable dry-run mode.
+	 *
+	 * In dry-run mode, no records are written to the database.
+	 * Import counts are still incremented to simulate the result.
+	 */
+	public function set_dry_run( bool $dry_run ): void {
+		$this->dry_run = $dry_run;
+	}
 
 	abstract public function get_source_name(): string;
 	abstract public function is_source_available(): bool;
@@ -61,6 +72,7 @@ abstract class Importer {
 			'imported' => $this->imported,
 			'skipped'  => $this->skipped,
 			'errors'   => $this->errors,
+			'dry_run'  => $this->dry_run,
 		];
 	}
 }

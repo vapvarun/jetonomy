@@ -72,6 +72,7 @@ class Categories_Controller extends Base_Controller {
 
 		foreach ( $top_level as $category ) {
 			$item             = $this->prepare_category( $category );
+			$item['spaces']   = Space::list_by_category( (int) $category->id );
 			$item['children'] = $this->get_nested_children( (int) $category->id );
 			$items[]          = $item;
 		}

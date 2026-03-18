@@ -36,11 +36,15 @@ class BBPress_Importer extends Importer {
 
 	public function run( array $options = [] ): array {
 		// 1. Create a default category for imported forums
-		$cat_id = Category::create( [
-			'name'        => __( 'Imported from bbPress', 'jetonomy' ),
-			'slug'        => 'imported-bbpress',
-			'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
-		] );
+		if ( ! $this->dry_run ) {
+			$cat_id = Category::create( [
+				'name'        => __( 'Imported from bbPress', 'jetonomy' ),
+				'slug'        => 'imported-bbpress',
+				'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
+			] );
+		} else {
+			$cat_id = 0; // Simulate
+		}
 
 		// 2. Import forums as spaces
 		$this->import_forums( $cat_id );
@@ -51,11 +55,15 @@ class BBPress_Importer extends Importer {
 		// 4. Import replies
 		$this->import_replies();
 
-		// 5. Create user profiles for all authors
-		$this->create_profiles();
+		// 5. Create user profiles for all authors (skip in dry-run)
+		if ( ! $this->dry_run ) {
+			$this->create_profiles();
+		}
 
-		// 6. Recount all denormalized fields
-		$this->recount();
+		// 6. Recount all denormalized fields (skip in dry-run)
+		if ( ! $this->dry_run ) {
+			$this->recount();
+		}
 
 		return $this->results();
 	}
@@ -68,18 +76,22 @@ class BBPress_Importer extends Importer {
 		);
 
 		foreach ( $forums as $forum ) {
-			$space_id = Space::create( [
-				'category_id' => $cat_id,
-				'author_id'   => (int) $forum->post_author ?: 1,
-				'type'        => 'forum',
-				'title'       => $forum->post_title,
-				'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
-				'description' => wp_strip_all_tags( $forum->post_content ),
-				'visibility'  => 'public',
-				'join_policy' => 'open',
-			] );
+			if ( ! $this->dry_run ) {
+				$space_id = Space::create( [
+					'category_id' => $cat_id,
+					'author_id'   => (int) $forum->post_author ?: 1,
+					'type'        => 'forum',
+					'title'       => $forum->post_title,
+					'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
+					'description' => wp_strip_all_tags( $forum->post_content ),
+					'visibility'  => 'public',
+					'join_policy' => 'open',
+				] );
+			} else {
+				$space_id = 0; // Simulate
+			}
 
-			if ( $space_id ) {
+			if ( $space_id || $this->dry_run ) {
 				$this->map_id( 'forum', $forum->ID, $space_id );
 				$this->imported++;
 			} else {
@@ -108,20 +120,24 @@ class BBPress_Importer extends Importer {
 
 			$is_sticky = (int) get_post_meta( $topic->ID, '_bbp_topic_sticky', true );
 
-			$post_id = JtPost::create( [
-				'space_id'      => $space_id,
-				'author_id'     => (int) $topic->post_author,
-				'type'          => 'topic',
-				'title'         => $topic->post_title,
-				'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
-				'content'       => wp_kses_post( $topic->post_content ),
-				'content_plain' => wp_strip_all_tags( $topic->post_content ),
-				'status'        => 'publish',
-				'is_sticky'     => $is_sticky ? 1 : 0,
-				'created_at'    => $topic->post_date_gmt ?: now(),
-			] );
+			if ( ! $this->dry_run ) {
+				$post_id = JtPost::create( [
+					'space_id'      => $space_id,
+					'author_id'     => (int) $topic->post_author,
+					'type'          => 'topic',
+					'title'         => $topic->post_title,
+					'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
+					'content'       => wp_kses_post( $topic->post_content ),
+					'content_plain' => wp_strip_all_tags( $topic->post_content ),
+					'status'        => 'publish',
+					'is_sticky'     => $is_sticky ? 1 : 0,
+					'created_at'    => $topic->post_date_gmt ?: now(),
+				] );
+			} else {
+				$post_id = 0; // Simulate
+			}
 
-			if ( $post_id ) {
+			if ( $post_id || $this->dry_run ) {
 				$this->map_id( 'topic', $topic->ID, $post_id );
 				$this->imported++;
 			} else {
@@ -149,16 +165,20 @@ class BBPress_Importer extends Importer {
 				continue;
 			}
 
-			$reply_id = JtReply::create( [
-				'post_id'       => $post_id,
-				'author_id'     => (int) $reply->post_author,
-				'content'       => wp_kses_post( $reply->post_content ),
-				'content_plain' => wp_strip_all_tags( $reply->post_content ),
-				'status'        => 'publish',
-				'created_at'    => $reply->post_date_gmt ?: now(),
-			] );
+			if ( ! $this->dry_run ) {
+				$reply_id = JtReply::create( [
+					'post_id'       => $post_id,
+					'author_id'     => (int) $reply->post_author,
+					'content'       => wp_kses_post( $reply->post_content ),
+					'content_plain' => wp_strip_all_tags( $reply->post_content ),
+					'status'        => 'publish',
+					'created_at'    => $reply->post_date_gmt ?: now(),
+				] );
+			} else {
+				$reply_id = 0; // Simulate
+			}
 
-			if ( $reply_id ) {
+			if ( $reply_id || $this->dry_run ) {
 				$this->map_id( 'reply', $reply->ID, $reply_id );
 				$this->imported++;
 			} else {

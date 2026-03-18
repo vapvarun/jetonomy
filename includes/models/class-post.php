@@ -75,7 +75,11 @@ class Post extends Model {
 	 * @param int    $offset
 	 * @return object[]
 	 */
-	public static function list_by_space( int $space_id, string $sort = 'latest', int $limit = 20, int $offset = 0 ): array {
+	public static function list_by_space( int $space_id, string $sort = 'latest', int $limit = -1, int $offset = 0 ): array {
+		if ( -1 === $limit ) {
+			$settings = get_option( 'jetonomy_settings', [] );
+			$limit    = (int) ( $settings['posts_per_page'] ?? 20 );
+		}
 		$table = static::table();
 
 		switch ( $sort ) {

@@ -123,14 +123,19 @@ class CLI {
 	 * ## OPTIONS
 	 *
 	 * <source>
-	 * : Import source: bbpress or wpforo
+	 * : Import source: bbpress, wpforo, or asgaros
+	 *
+	 * [--dry-run]
+	 * : Validate and count without importing any data.
 	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy import bbpress
+	 *     wp jetonomy import bbpress --dry-run
 	 *     wp jetonomy import wpforo
 	 */
 	public function import( $args, $assoc_args ): void {
-		$source = $args[0] ?? '';
+		$source  = $args[0] ?? '';
+		$dry_run = ! empty( $assoc_args['dry-run'] );
 
 		Import_Manager::init();
 
@@ -139,14 +144,21 @@ class CLI {
 			return;
 		}
 
-		$result = Import_Manager::run( $source );
+		if ( $dry_run ) {
+			\WP_CLI::log( 'DRY RUN — no data will be written.' );
+		}
+
+		$result = Import_Manager::run( $source, [ 'dry_run' => $dry_run ] );
 		if ( null === $result ) {
 			\WP_CLI::error( "Unknown source: {$source}. Available: " . implode( ', ', array_keys( Import_Manager::get_available() ) ) );
 			return;
 		}
 
+		$prefix = $dry_run ? '[DRY RUN] ' : '';
+
 		\WP_CLI::success( sprintf(
-			'Import complete. Imported: %d, Skipped: %d, Errors: %d',
+			'%sImport complete. Imported: %d, Skipped: %d, Errors: %d',
+			$prefix,
 			$result['imported'],
 			$result['skipped'],
 			count( $result['errors'] )
@@ -159,7 +171,9 @@ class CLI {
 			}
 		}
 
-		flush_rewrite_rules();
+		if ( ! $dry_run ) {
+			flush_rewrite_rules();
+		}
 	}
 
 	/**

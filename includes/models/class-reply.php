@@ -52,7 +52,11 @@ class Reply extends Model {
 	 * @param int    $offset
 	 * @return object[]
 	 */
-	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = 30, int $offset = 0 ): array {
+	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0 ): array {
+		if ( -1 === $limit ) {
+			$settings = get_option( 'jetonomy_settings', [] );
+			$limit    = (int) ( $settings['posts_per_page'] ?? 30 );
+		}
 		$table = static::table();
 
 		switch ( $sort ) {

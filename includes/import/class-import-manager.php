@@ -35,6 +35,13 @@ class Import_Manager {
 
 	public static function run( string $id, array $options = [] ): ?array {
 		if ( ! isset( self::$importers[ $id ] ) ) return null;
-		return self::$importers[ $id ]->run( $options );
+
+		$importer = self::$importers[ $id ];
+
+		if ( ! empty( $options['dry_run'] ) ) {
+			$importer->set_dry_run( true );
+		}
+
+		return $importer->run( $options );
 	}
 }

@@ -27,9 +27,10 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$paged  = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
-$limit  = 20;
-$offset = ( $paged - 1 ) * $limit;
+$paged           = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$_jt_settings    = get_option( 'jetonomy_settings', [] );
+$limit           = (int) ( $_jt_settings['posts_per_page'] ?? 20 );
+$offset          = ( $paged - 1 ) * $limit;
 
 $posts    = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );
 $category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
