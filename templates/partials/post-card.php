@@ -11,19 +11,11 @@ $time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'time
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 ?>
 <a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? 'pinned' : ''; ?>"
-	data-wp-interactive="jetonomy"
-	style="text-decoration:none;color:inherit;">
+	data-wp-interactive="jetonomy">
 	<div class="jt-votes">
-		<button class="jt-v-btn"
-			data-wp-on--click="actions.voteUp"
-			data-post-id="<?php echo (int) $post->id; ?>"
-			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">&#9650;</button>
-		<span class="jt-v-num"
-			data-wp-text="state.postScores.<?php echo (int) $post->id; ?>"><?php echo (int) $post->vote_score; ?></span>
-		<button class="jt-v-btn"
-			data-wp-on--click="actions.voteDown"
-			data-post-id="<?php echo (int) $post->id; ?>"
-			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">&#9660;</button>
+		<span class="jt-v-btn" aria-hidden="true">&#9650;</span>
+		<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+		<span class="jt-v-btn" aria-hidden="true">&#9660;</span>
 	</div>
 	<div class="jt-row-main">
 		<div class="jt-row-title">
@@ -36,9 +28,7 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 			<?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?>
 			<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 			<?php foreach ( $tags as $tag ) : ?>
-				<a href="<?php echo esc_url( home_url( '/community/tag/' . $tag->slug . '/' ) ); ?>"
-					class="jt-tag"
-					onclick="event.stopPropagation();"><?php echo esc_html( $tag->name ); ?></a>
+				<span class="jt-tag"><?php echo esc_html( $tag->name ); ?></span>
 			<?php endforeach; ?>
 		</div>
 	</div>
