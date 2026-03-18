@@ -65,6 +65,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-03-18 | `97002fe` | Remove all hardcoded px font-sizes — inherit from theme, use relative em units only |
 | 2026-03-18 | `26fb607` | QA pass: inline style cleanup (60+ CSS classes), tag URL fix, rewrite flush, IA state init |
 | 2026-03-18 | `d391681` | Unit + integration tests for models, permissions, trust, schema, API |
 | 2026-03-18 | `3335ecb` | Asgaros Forum importer, i18n POT template, readme improvements |
