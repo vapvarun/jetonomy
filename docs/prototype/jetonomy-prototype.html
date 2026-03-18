@@ -1,0 +1,2770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jetonomy — Design Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   JETONOMY DESIGN SYSTEM — CSS Custom Properties
+   ═══════════════════════════════════════════════════ */
+:root {
+  /* Canvas */
+  --jt-bg: #FAFAF7;
+  --jt-bg-warm: #F5F0E8;
+  --jt-bg-card: #FFFFFF;
+  --jt-bg-hover: #F0EDE5;
+  --jt-bg-sunken: #EEEAE2;
+
+  /* Text */
+  --jt-ink: #1A1A2E;
+  --jt-ink-muted: #6B6B80;
+  --jt-ink-faint: #9B9BAD;
+  --jt-ink-on-primary: #FFFFFF;
+
+  /* Primary — Rich Indigo */
+  --jt-primary: #4338CA;
+  --jt-primary-light: #6366F1;
+  --jt-primary-lighter: #E0E7FF;
+  --jt-primary-dark: #3730A3;
+
+  /* Accent — Warm Tangerine */
+  --jt-accent: #F97316;
+  --jt-accent-light: #FFEDD5;
+  --jt-accent-dark: #EA580C;
+
+  /* Trust / Success — Emerald */
+  --jt-trust: #059669;
+  --jt-trust-light: #D1FAE5;
+
+  /* Warn — Amber */
+  --jt-warn: #D97706;
+  --jt-warn-light: #FEF3C7;
+
+  /* Danger — Rose */
+  --jt-danger: #E11D48;
+  --jt-danger-light: #FFE4E6;
+
+  /* Badge Tiers */
+  --jt-badge-bronze: #CD7F32;
+  --jt-badge-silver: #9CA3AF;
+  --jt-badge-gold: #F59E0B;
+
+  /* Trust Level Colors */
+  --jt-tl0: #9CA3AF;
+  --jt-tl1: #60A5FA;
+  --jt-tl2: #34D399;
+  --jt-tl3: #A78BFA;
+  --jt-tl4: #F472B6;
+  --jt-tl5: #FBBF24;
+
+  /* Shadows */
+  --jt-shadow-sm: 0 1px 2px rgba(26, 26, 46, 0.04), 0 1px 3px rgba(26, 26, 46, 0.06);
+  --jt-shadow-md: 0 4px 6px rgba(26, 26, 46, 0.04), 0 2px 8px rgba(26, 26, 46, 0.08);
+  --jt-shadow-lg: 0 10px 25px rgba(26, 26, 46, 0.06), 0 4px 12px rgba(26, 26, 46, 0.1);
+  --jt-shadow-glow: 0 0 0 3px rgba(67, 56, 202, 0.15);
+
+  /* Radius */
+  --jt-radius-sm: 6px;
+  --jt-radius-md: 10px;
+  --jt-radius-lg: 16px;
+  --jt-radius-xl: 24px;
+  --jt-radius-full: 9999px;
+
+  /* Spacing */
+  --jt-space-xs: 4px;
+  --jt-space-sm: 8px;
+  --jt-space-md: 16px;
+  --jt-space-lg: 24px;
+  --jt-space-xl: 32px;
+  --jt-space-2xl: 48px;
+  --jt-space-3xl: 64px;
+
+  /* Typography */
+  --jt-font-display: 'Bricolage Grotesque', sans-serif;
+  --jt-font-body: 'IBM Plex Sans', sans-serif;
+  --jt-font-mono: 'JetBrains Mono', monospace;
+
+  /* Transitions */
+  --jt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --jt-duration: 0.2s;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--jt-font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--jt-ink);
+  background: var(--jt-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+a { color: var(--jt-primary); text-decoration: none; transition: color var(--jt-duration) var(--jt-ease); }
+a:hover { color: var(--jt-primary-dark); }
+
+img { display: block; max-width: 100%; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-size: inherit;
+}
+
+/* ═══════════════════════════════════════════════════
+   PROTOTYPE NAV (view switcher)
+   ═══════════════════════════════════════════════════ */
+.proto-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: var(--jt-ink);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-xs);
+  padding: var(--jt-space-sm) var(--jt-space-lg);
+  font-size: 13px;
+  font-family: var(--jt-font-mono);
+  overflow-x: auto;
+}
+
+.proto-nav-label {
+  font-weight: 600;
+  color: var(--jt-accent);
+  margin-right: var(--jt-space-md);
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.proto-nav button {
+  color: rgba(255,255,255,0.6);
+  padding: 6px 14px;
+  border-radius: var(--jt-radius-full);
+  font-size: 12px;
+  font-family: var(--jt-font-mono);
+  white-space: nowrap;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.proto-nav button:hover { color: white; background: rgba(255,255,255,0.1); }
+.proto-nav button.active { color: var(--jt-ink); background: white; font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════
+   MAIN LAYOUT
+   ═══════════════════════════════════════════════════ */
+.jt-app {
+  margin-top: 44px;
+  min-height: calc(100vh - 44px);
+}
+
+.jt-header {
+  background: var(--jt-bg-card);
+  border-bottom: 1px solid var(--jt-bg-sunken);
+  padding: var(--jt-space-md) var(--jt-space-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 44px;
+  z-index: 100;
+  box-shadow: var(--jt-shadow-sm);
+}
+
+.jt-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  font-family: var(--jt-font-display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--jt-ink);
+  letter-spacing: -0.02em;
+}
+
+.jt-logo-mark {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--jt-primary), var(--jt-primary-light));
+  border-radius: var(--jt-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(67, 56, 202, 0.3);
+}
+
+.jt-header-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-lg);
+}
+
+.jt-header-nav a {
+  color: var(--jt-ink-muted);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 0;
+  border-bottom: 2px solid transparent;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-header-nav a:hover, .jt-header-nav a.active {
+  color: var(--jt-ink);
+  border-bottom-color: var(--jt-primary);
+}
+
+.jt-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-md);
+}
+
+.jt-search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--jt-bg);
+  border: 1px solid var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-full);
+  padding: 7px 14px;
+  gap: 8px;
+  width: 240px;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-search-bar:focus-within {
+  border-color: var(--jt-primary);
+  box-shadow: var(--jt-shadow-glow);
+  width: 300px;
+}
+
+.jt-search-bar input {
+  border: none;
+  background: none;
+  font-family: var(--jt-font-body);
+  font-size: 13px;
+  color: var(--jt-ink);
+  outline: none;
+  width: 100%;
+}
+
+.jt-search-bar input::placeholder { color: var(--jt-ink-faint); }
+
+.jt-notif-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--jt-ink-muted);
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-notif-btn:hover { background: var(--jt-bg); color: var(--jt-ink); }
+
+.jt-notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--jt-danger);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--jt-bg-card);
+  animation: notifPulse 2s ease infinite;
+}
+
+@keyframes notifPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.jt-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--jt-primary-light), var(--jt-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform var(--jt-duration) var(--jt-ease);
+}
+
+.jt-avatar:hover { transform: scale(1.08); }
+
+/* ═══════════════════════════════════════════════════
+   CONTAINER
+   ═══════════════════════════════════════════════════ */
+.jt-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--jt-space-xl);
+}
+
+.jt-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--jt-space-xl);
+  align-items: start;
+}
+
+/* ═══════════════════════════════════════════════════
+   BREADCRUMBS
+   ═══════════════════════════════════════════════════ */
+.jt-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  font-size: 13px;
+  color: var(--jt-ink-muted);
+  margin-bottom: var(--jt-space-lg);
+}
+
+.jt-breadcrumb a { color: var(--jt-ink-muted); }
+.jt-breadcrumb a:hover { color: var(--jt-primary); }
+.jt-breadcrumb-sep { color: var(--jt-ink-faint); font-size: 11px; }
+
+/* ═══════════════════════════════════════════════════
+   VIEW 1: COMMUNITY HOME
+   ═══════════════════════════════════════════════════ */
+.jt-hero {
+  background: linear-gradient(135deg, var(--jt-primary-dark) 0%, var(--jt-primary) 40%, var(--jt-primary-light) 100%);
+  color: white;
+  padding: var(--jt-space-3xl) var(--jt-space-xl);
+  border-radius: var(--jt-radius-xl);
+  margin-bottom: var(--jt-space-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.jt-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+}
+
+.jt-hero-content { position: relative; z-index: 1; max-width: 600px; }
+
+.jt-hero h1 {
+  font-family: var(--jt-font-display);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-hero p {
+  font-size: 17px;
+  opacity: 0.85;
+  line-height: 1.6;
+  margin-bottom: var(--jt-space-lg);
+}
+
+.jt-hero-stats {
+  display: flex;
+  gap: var(--jt-space-xl);
+}
+
+.jt-hero-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.jt-hero-stat-value {
+  font-family: var(--jt-font-mono);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.jt-hero-stat-label {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Category Section */
+.jt-category-section {
+  margin-bottom: var(--jt-space-2xl);
+}
+
+.jt-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-category-title {
+  font-family: var(--jt-font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+}
+
+.jt-category-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--jt-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.jt-category-count {
+  font-size: 13px;
+  color: var(--jt-ink-faint);
+  font-family: var(--jt-font-mono);
+}
+
+/* Space Cards */
+.jt-space-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--jt-space-md);
+}
+
+.jt-space-card {
+  background: var(--jt-bg-card);
+  border: 1px solid var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-lg);
+  padding: var(--jt-space-lg);
+  transition: all var(--jt-duration) var(--jt-ease);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.jt-space-card:hover {
+  border-color: var(--jt-primary-lighter);
+  box-shadow: var(--jt-shadow-md);
+  transform: translateY(-2px);
+}
+
+.jt-space-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jt-space-md);
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-space-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--jt-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.jt-space-card-title {
+  font-family: var(--jt-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.jt-space-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--jt-radius-full);
+  background: var(--jt-primary-lighter);
+  color: var(--jt-primary);
+}
+
+.jt-space-type-badge.qa { background: var(--jt-trust-light); color: var(--jt-trust); }
+.jt-space-type-badge.ideas { background: var(--jt-warn-light); color: var(--jt-warn); }
+.jt-space-type-badge.feed { background: var(--jt-accent-light); color: var(--jt-accent-dark); }
+
+.jt-space-card-desc {
+  font-size: 13px;
+  color: var(--jt-ink-muted);
+  line-height: 1.5;
+  margin-bottom: var(--jt-space-md);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jt-space-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-md);
+  font-size: 12px;
+  color: var(--jt-ink-faint);
+  font-family: var(--jt-font-mono);
+}
+
+.jt-space-card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.jt-space-card-activity {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--jt-bg-sunken);
+  overflow: hidden;
+}
+
+.jt-space-card-activity-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--jt-primary), var(--jt-accent));
+  border-radius: 0 3px 3px 0;
+  transition: width 0.6s var(--jt-ease);
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW 2: SPACE (Topic Listing)
+   ═══════════════════════════════════════════════════ */
+.jt-space-header {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-lg);
+  margin-bottom: var(--jt-space-lg);
+  padding-bottom: var(--jt-space-lg);
+  border-bottom: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-space-header-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--jt-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.jt-space-header-info h2 {
+  font-family: var(--jt-font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.jt-space-header-info p {
+  color: var(--jt-ink-muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.jt-space-header-stats {
+  display: flex;
+  gap: var(--jt-space-lg);
+  margin-left: auto;
+}
+
+.jt-space-stat {
+  text-align: center;
+}
+
+.jt-space-stat-value {
+  font-family: var(--jt-font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--jt-ink);
+}
+
+.jt-space-stat-label {
+  font-size: 11px;
+  color: var(--jt-ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Topic Toolbar */
+.jt-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-sort-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-full);
+  padding: 3px;
+}
+
+.jt-sort-tab {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--jt-ink-muted);
+  border-radius: var(--jt-radius-full);
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-sort-tab:hover { color: var(--jt-ink); }
+.jt-sort-tab.active {
+  background: var(--jt-bg-card);
+  color: var(--jt-ink);
+  box-shadow: var(--jt-shadow-sm);
+  font-weight: 600;
+}
+
+.jt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  padding: 9px 18px;
+  border-radius: var(--jt-radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-btn-primary {
+  background: var(--jt-primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(67, 56, 202, 0.25);
+}
+
+.jt-btn-primary:hover {
+  background: var(--jt-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.35);
+}
+
+.jt-btn-secondary {
+  background: var(--jt-bg);
+  color: var(--jt-ink);
+  border: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-btn-secondary:hover {
+  background: var(--jt-bg-hover);
+  border-color: var(--jt-ink-faint);
+}
+
+/* Topic List */
+.jt-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--jt-shadow-sm);
+}
+
+.jt-topic-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: var(--jt-space-md);
+  align-items: center;
+  padding: var(--jt-space-md) var(--jt-space-lg);
+  background: var(--jt-bg-card);
+  transition: background var(--jt-duration) var(--jt-ease);
+  cursor: pointer;
+}
+
+.jt-topic-row:hover { background: var(--jt-bg-hover); }
+
+.jt-topic-row.sticky {
+  background: var(--jt-primary-lighter);
+  border-left: 3px solid var(--jt-primary);
+}
+
+.jt-topic-row.sticky:hover { background: #D5DEFF; }
+
+.jt-topic-vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+}
+
+.jt-vote-btn {
+  width: 28px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--jt-ink-faint);
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-vote-btn:hover { color: var(--jt-accent); background: var(--jt-accent-light); }
+.jt-vote-btn.voted { color: var(--jt-accent); }
+
+.jt-vote-score {
+  font-family: var(--jt-font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--jt-ink);
+}
+
+.jt-topic-content {
+  min-width: 0;
+}
+
+.jt-topic-title {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  color: var(--jt-ink);
+  transition: color var(--jt-duration) var(--jt-ease);
+}
+
+.jt-topic-row:hover .jt-topic-title { color: var(--jt-primary); }
+
+.jt-topic-excerpt {
+  font-size: 13px;
+  color: var(--jt-ink-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.jt-topic-tags {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.jt-tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--jt-radius-full);
+  background: var(--jt-bg);
+  color: var(--jt-ink-muted);
+  border: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-topic-author {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  min-width: 120px;
+}
+
+.jt-topic-author-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--jt-ink);
+}
+
+.jt-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  font-family: var(--jt-font-mono);
+}
+
+.jt-topic-replies {
+  text-align: center;
+  min-width: 60px;
+}
+
+.jt-topic-replies-count {
+  font-family: var(--jt-font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jt-ink);
+}
+
+.jt-topic-replies-label {
+  font-size: 11px;
+  color: var(--jt-ink-faint);
+}
+
+.jt-topic-activity {
+  font-size: 12px;
+  color: var(--jt-ink-faint);
+  min-width: 80px;
+  text-align: right;
+  font-family: var(--jt-font-mono);
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW 3: SINGLE TOPIC
+   ═══════════════════════════════════════════════════ */
+.jt-post {
+  background: var(--jt-bg-card);
+  border-radius: var(--jt-radius-lg);
+  box-shadow: var(--jt-shadow-sm);
+  overflow: hidden;
+  margin-bottom: var(--jt-space-lg);
+}
+
+.jt-post-header {
+  padding: var(--jt-space-lg);
+  border-bottom: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-post-title {
+  font-family: var(--jt-font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: var(--jt-space-sm);
+}
+
+.jt-post-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-md);
+  font-size: 13px;
+  color: var(--jt-ink-muted);
+}
+
+.jt-post-author-full {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+}
+
+.jt-avatar-lg {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+}
+
+.jt-post-author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.jt-post-author-info strong {
+  font-size: 14px;
+  color: var(--jt-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.jt-post-author-info span {
+  font-size: 12px;
+  color: var(--jt-ink-faint);
+}
+
+.jt-post-body {
+  padding: var(--jt-space-lg);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--jt-ink);
+}
+
+.jt-post-body p { margin-bottom: var(--jt-space-md); }
+.jt-post-body code {
+  background: var(--jt-bg-sunken);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--jt-font-mono);
+  font-size: 13px;
+}
+
+.jt-post-body pre {
+  background: var(--jt-ink);
+  color: #E2E8F0;
+  padding: var(--jt-space-md);
+  border-radius: var(--jt-radius-md);
+  overflow-x: auto;
+  font-family: var(--jt-font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-post-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-md);
+  padding: var(--jt-space-md) var(--jt-space-lg);
+  border-top: 1px solid var(--jt-bg-sunken);
+  background: var(--jt-bg);
+}
+
+.jt-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--jt-radius-full);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--jt-ink-muted);
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-action-btn:hover { background: var(--jt-bg-card); color: var(--jt-ink); }
+
+.jt-action-btn.vote-up { color: var(--jt-trust); }
+.jt-action-btn.vote-down { color: var(--jt-danger); }
+
+.jt-action-btn .count {
+  font-family: var(--jt-font-mono);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Replies */
+.jt-replies-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-replies-header h3 {
+  font-family: var(--jt-font-display);
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+}
+
+.jt-replies-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--jt-primary);
+  color: white;
+  font-family: var(--jt-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--jt-radius-full);
+}
+
+.jt-reply {
+  background: var(--jt-bg-card);
+  border: 1px solid var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-lg);
+  margin-bottom: var(--jt-space-md);
+  overflow: hidden;
+  transition: border-color var(--jt-duration) var(--jt-ease);
+}
+
+.jt-reply:hover { border-color: var(--jt-primary-lighter); }
+
+.jt-reply.accepted {
+  border-color: var(--jt-trust);
+  border-width: 2px;
+}
+
+.jt-reply.accepted .jt-reply-header {
+  background: var(--jt-trust-light);
+}
+
+.jt-accepted-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--jt-trust);
+  margin-left: auto;
+}
+
+.jt-reply-header {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  padding: var(--jt-space-md) var(--jt-space-lg);
+  background: var(--jt-bg);
+  font-size: 13px;
+}
+
+.jt-reply-body {
+  padding: var(--jt-space-md) var(--jt-space-lg);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.jt-reply-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  padding: var(--jt-space-sm) var(--jt-space-lg) var(--jt-space-md);
+}
+
+/* Nested reply */
+.jt-reply-nested {
+  margin-left: var(--jt-space-2xl);
+  position: relative;
+}
+
+.jt-reply-nested::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--jt-bg-sunken);
+  border-radius: 1px;
+}
+
+/* Reply composer */
+.jt-composer {
+  background: var(--jt-bg-card);
+  border: 2px solid var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-lg);
+  overflow: hidden;
+  transition: border-color var(--jt-duration) var(--jt-ease);
+}
+
+.jt-composer:focus-within {
+  border-color: var(--jt-primary);
+  box-shadow: var(--jt-shadow-glow);
+}
+
+.jt-composer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--jt-space-sm) var(--jt-space-md);
+  border-bottom: 1px solid var(--jt-bg-sunken);
+  background: var(--jt-bg);
+}
+
+.jt-composer-toolbar button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--jt-radius-sm);
+  color: var(--jt-ink-muted);
+  font-size: 14px;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-composer-toolbar button:hover {
+  background: var(--jt-bg-card);
+  color: var(--jt-ink);
+}
+
+.jt-composer-body {
+  padding: var(--jt-space-md);
+  min-height: 120px;
+  font-size: 14px;
+  color: var(--jt-ink-muted);
+  outline: none;
+}
+
+.jt-composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jt-space-sm) var(--jt-space-md);
+  border-top: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-composer-hint {
+  font-size: 12px;
+  color: var(--jt-ink-faint);
+  font-family: var(--jt-font-mono);
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW 4: Q&A
+   ═══════════════════════════════════════════════════ */
+.jt-qa-post {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: var(--jt-space-md);
+}
+
+.jt-qa-voting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: var(--jt-space-lg);
+}
+
+.jt-qa-vote-btn {
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--jt-radius-sm);
+  color: var(--jt-ink-faint);
+  font-size: 18px;
+  transition: all 0.15s var(--jt-ease);
+}
+
+.jt-qa-vote-btn:hover { background: var(--jt-accent-light); color: var(--jt-accent); }
+.jt-qa-vote-btn.active { color: var(--jt-accent); }
+
+.jt-qa-score {
+  font-family: var(--jt-font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--jt-ink);
+}
+
+.jt-qa-accept-btn {
+  width: 40px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--jt-radius-sm);
+  color: var(--jt-ink-faint);
+  font-size: 20px;
+  transition: all 0.15s var(--jt-ease);
+}
+
+.jt-qa-accept-btn:hover { background: var(--jt-trust-light); color: var(--jt-trust); }
+.jt-qa-accept-btn.accepted { color: var(--jt-trust); font-size: 24px; }
+
+/* ═══════════════════════════════════════════════════
+   VIEW 5: USER PROFILE
+   ═══════════════════════════════════════════════════ */
+.jt-profile-card {
+  background: var(--jt-bg-card);
+  border-radius: var(--jt-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--jt-shadow-md);
+  margin-bottom: var(--jt-space-xl);
+}
+
+.jt-profile-cover {
+  height: 160px;
+  background: linear-gradient(135deg, var(--jt-primary-dark), var(--jt-primary), var(--jt-accent));
+  position: relative;
+}
+
+.jt-profile-info {
+  padding: 0 var(--jt-space-xl) var(--jt-space-xl);
+  margin-top: -40px;
+  position: relative;
+}
+
+.jt-profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid var(--jt-bg-card);
+  background: linear-gradient(135deg, var(--jt-primary-light), var(--jt-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--jt-font-display);
+  box-shadow: var(--jt-shadow-md);
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-profile-name {
+  font-family: var(--jt-font-display);
+  font-size: 24px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+}
+
+.jt-trust-level-pill {
+  font-family: var(--jt-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--jt-radius-full);
+  color: white;
+}
+
+.jt-profile-bio {
+  color: var(--jt-ink-muted);
+  font-size: 14px;
+  margin-top: 4px;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--jt-space-md);
+  padding: var(--jt-space-md);
+  background: var(--jt-bg);
+  border-radius: var(--jt-radius-md);
+}
+
+.jt-profile-stat {
+  text-align: center;
+}
+
+.jt-profile-stat-value {
+  font-family: var(--jt-font-mono);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.jt-profile-stat-label {
+  font-size: 11px;
+  color: var(--jt-ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Badges showcase */
+.jt-badges-section {
+  background: var(--jt-bg-card);
+  border-radius: var(--jt-radius-lg);
+  padding: var(--jt-space-lg);
+  box-shadow: var(--jt-shadow-sm);
+}
+
+.jt-badges-section h3 {
+  font-family: var(--jt-font-display);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--jt-space-md);
+}
+
+.jt-badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  padding: var(--jt-space-md);
+  border-radius: var(--jt-radius-md);
+  background: var(--jt-bg);
+  transition: all var(--jt-duration) var(--jt-ease);
+  cursor: default;
+}
+
+.jt-badge-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--jt-shadow-md);
+}
+
+.jt-badge-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  position: relative;
+}
+
+.jt-badge-icon::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid;
+  opacity: 0.3;
+}
+
+.jt-badge-icon.bronze { background: #FEF3C7; }
+.jt-badge-icon.bronze::after { border-color: var(--jt-badge-bronze); }
+.jt-badge-icon.silver { background: #F3F4F6; }
+.jt-badge-icon.silver::after { border-color: var(--jt-badge-silver); }
+.jt-badge-icon.gold { background: #FEF9C3; }
+.jt-badge-icon.gold::after { border-color: var(--jt-badge-gold); }
+
+.jt-badge-name {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.jt-badge-tier {
+  font-size: 10px;
+  font-family: var(--jt-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--jt-ink-faint);
+}
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════════════ */
+.jt-sidebar { display: flex; flex-direction: column; gap: var(--jt-space-lg); }
+
+.jt-sidebar-card {
+  background: var(--jt-bg-card);
+  border: 1px solid var(--jt-bg-sunken);
+  border-radius: var(--jt-radius-lg);
+  padding: var(--jt-space-lg);
+}
+
+.jt-sidebar-card h4 {
+  font-family: var(--jt-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--jt-ink-muted);
+  margin-bottom: var(--jt-space-md);
+}
+
+.jt-leaderboard-item {
+  display: flex;
+  align-items: center;
+  gap: var(--jt-space-sm);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-leaderboard-item:last-child { border-bottom: none; }
+
+.jt-leaderboard-rank {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--jt-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--jt-ink-faint);
+}
+
+.jt-leaderboard-rank.top { color: var(--jt-badge-gold); }
+
+.jt-leaderboard-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.jt-leaderboard-score {
+  font-family: var(--jt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jt-accent);
+}
+
+.jt-trending-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jt-space-sm);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--jt-bg-sunken);
+}
+
+.jt-trending-item:last-child { border-bottom: none; }
+
+.jt-trending-num {
+  font-family: var(--jt-font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--jt-bg-sunken);
+  min-width: 28px;
+}
+
+.jt-trending-title {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color var(--jt-duration) var(--jt-ease);
+}
+
+.jt-trending-title:hover { color: var(--jt-primary); }
+
+.jt-trending-meta {
+  font-size: 11px;
+  color: var(--jt-ink-faint);
+  margin-top: 2px;
+}
+
+.jt-tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.jt-tag-cloud .jt-tag {
+  transition: all var(--jt-duration) var(--jt-ease);
+  cursor: pointer;
+}
+
+.jt-tag-cloud .jt-tag:hover {
+  background: var(--jt-primary-lighter);
+  color: var(--jt-primary);
+  border-color: var(--jt-primary-lighter);
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEW 6: IDEAS BOARD
+   ═══════════════════════════════════════════════════ */
+.jt-kanban {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--jt-space-md);
+  overflow-x: auto;
+}
+
+.jt-kanban-column {
+  background: var(--jt-bg);
+  border-radius: var(--jt-radius-lg);
+  padding: var(--jt-space-md);
+  min-height: 400px;
+}
+
+.jt-kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--jt-space-md);
+  padding-bottom: var(--jt-space-sm);
+  border-bottom: 2px solid;
+}
+
+.jt-kanban-column-title {
+  font-family: var(--jt-font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.jt-kanban-column-count {
+  font-family: var(--jt-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--jt-bg-card);
+}
+
+.jt-idea-card {
+  background: var(--jt-bg-card);
+  border-radius: var(--jt-radius-md);
+  padding: var(--jt-space-md);
+  margin-bottom: var(--jt-space-sm);
+  box-shadow: var(--jt-shadow-sm);
+  cursor: pointer;
+  transition: all var(--jt-duration) var(--jt-ease);
+}
+
+.jt-idea-card:hover {
+  box-shadow: var(--jt-shadow-md);
+  transform: translateY(-1px);
+}
+
+.jt-idea-card-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.jt-idea-card-votes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--jt-font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--jt-accent);
+}
+
+.jt-idea-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--jt-ink-faint);
+}
+
+/* ═══════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.jt-animate { animation: fadeInUp 0.4s var(--jt-ease) both; }
+.jt-animate-d1 { animation-delay: 0.05s; }
+.jt-animate-d2 { animation-delay: 0.1s; }
+.jt-animate-d3 { animation-delay: 0.15s; }
+.jt-animate-d4 { animation-delay: 0.2s; }
+.jt-animate-d5 { animation-delay: 0.25s; }
+
+/* ═══════════════════════════════════════════════════
+   VIEWS VISIBILITY
+   ═══════════════════════════════════════════════════ */
+.jt-view { display: none; }
+.jt-view.active { display: block; }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .jt-layout { grid-template-columns: 1fr; }
+  .jt-sidebar { display: none; }
+  .jt-kanban { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .jt-container { padding: var(--jt-space-md); }
+  .jt-hero { padding: var(--jt-space-xl); }
+  .jt-hero h1 { font-size: 28px; }
+  .jt-topic-row { grid-template-columns: auto 1fr auto; }
+  .jt-topic-author, .jt-topic-activity { display: none; }
+  .jt-kanban { grid-template-columns: 1fr; }
+  .jt-space-header { flex-direction: column; text-align: center; }
+  .jt-space-header-stats { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     PROTOTYPE VIEW SWITCHER
+     ═══════════════════════════════════════════════════ -->
+<nav class="proto-nav">
+  <span class="proto-nav-label">Jetonomy Prototype</span>
+  <button class="active" onclick="showView('home')">Community Home</button>
+  <button onclick="showView('space')">Space (Forum)</button>
+  <button onclick="showView('topic')">Single Topic</button>
+  <button onclick="showView('qa')">Q&A Mode</button>
+  <button onclick="showView('ideas')">Ideas Board</button>
+  <button onclick="showView('profile')">User Profile</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════
+     APP SHELL
+     ═══════════════════════════════════════════════════ -->
+<div class="jt-app">
+  <!-- Header -->
+  <header class="jt-header">
+    <div class="jt-logo">
+      <div class="jt-logo-mark">J</div>
+      Jetonomy
+    </div>
+    <nav class="jt-header-nav">
+      <a href="#" class="active">Community</a>
+      <a href="#">Spaces</a>
+      <a href="#">Leaderboard</a>
+      <a href="#">Search</a>
+    </nav>
+    <div class="jt-header-actions">
+      <div class="jt-search-bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" placeholder="Search discussions...">
+      </div>
+      <button class="jt-notif-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="jt-notif-badge">3</span>
+      </button>
+      <div class="jt-avatar">VD</div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 1: COMMUNITY HOME
+       ═══════════════════════════════════════════════ -->
+  <div id="view-home" class="jt-view active">
+    <div class="jt-container">
+      <!-- Hero -->
+      <div class="jt-hero jt-animate">
+        <div class="jt-hero-content">
+          <h1>Welcome to Our Community</h1>
+          <p>Join thousands of members in discussions, Q&A, and collaborative idea sharing across dozens of topic spaces.</p>
+          <div class="jt-hero-stats">
+            <div class="jt-hero-stat">
+              <span class="jt-hero-stat-value">12,847</span>
+              <span class="jt-hero-stat-label">Discussions</span>
+            </div>
+            <div class="jt-hero-stat">
+              <span class="jt-hero-stat-value">2,341</span>
+              <span class="jt-hero-stat-label">Active Members</span>
+            </div>
+            <div class="jt-hero-stat">
+              <span class="jt-hero-stat-value">89,432</span>
+              <span class="jt-hero-stat-label">Replies</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="jt-layout">
+        <div>
+          <!-- Category: Development -->
+          <div class="jt-category-section jt-animate jt-animate-d1">
+            <div class="jt-category-header">
+              <h2 class="jt-category-title">
+                <span class="jt-category-icon" style="background:#E0E7FF;color:var(--jt-primary);">&#60;/&#62;</span>
+                Development
+              </h2>
+              <span class="jt-category-count">8 spaces</span>
+            </div>
+            <div class="jt-space-grid">
+              <div class="jt-space-card" onclick="showView('space')">
+                <div class="jt-space-card-header">
+                  <div class="jt-space-icon" style="background:#DBEAFE;">&#127919;</div>
+                  <div>
+                    <div class="jt-space-card-title">Python Developers</div>
+                    <span class="jt-space-type-badge">Forum</span>
+                  </div>
+                </div>
+                <div class="jt-space-card-desc">Everything Python — from beginner questions to advanced async patterns, Django, FastAPI, and data science.</div>
+                <div class="jt-space-card-meta">
+                  <span>&#128101; 1,247</span>
+                  <span>&#128172; 4,832</span>
+                  <span>&#128293; 23 today</span>
+                </div>
+                <div class="jt-space-card-activity"><div class="jt-space-card-activity-bar" style="width:82%"></div></div>
+              </div>
+
+              <div class="jt-space-card">
+                <div class="jt-space-card-header">
+                  <div class="jt-space-icon" style="background:#FEF3C7;">&#9889;</div>
+                  <div>
+                    <div class="jt-space-card-title">JavaScript Q&A</div>
+                    <span class="jt-space-type-badge qa">Q&A</span>
+                  </div>
+                </div>
+                <div class="jt-space-card-desc">Ask and answer JavaScript questions. React, Vue, Node.js, TypeScript — get help from the community.</div>
+                <div class="jt-space-card-meta">
+                  <span>&#128101; 2,891</span>
+                  <span>&#128172; 8,234</span>
+                  <span>&#128293; 45 today</span>
+                </div>
+                <div class="jt-space-card-activity"><div class="jt-space-card-activity-bar" style="width:95%"></div></div>
+              </div>
+
+              <div class="jt-space-card">
+                <div class="jt-space-card-header">
+                  <div class="jt-space-icon" style="background:#D1FAE5;">&#128161;</div>
+                  <div>
+                    <div class="jt-space-card-title">DevOps Ideas</div>
+                    <span class="jt-space-type-badge ideas">Ideas</span>
+                  </div>
+                </div>
+                <div class="jt-space-card-desc">Submit and vote on ideas for our DevOps tooling. Track what's planned, in progress, and shipped.</div>
+                <div class="jt-space-card-meta">
+                  <span>&#128101; 634</span>
+                  <span>&#128172; 1,247</span>
+                  <span>&#128293; 8 today</span>
+                </div>
+                <div class="jt-space-card-activity"><div class="jt-space-card-activity-bar" style="width:45%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category: Design -->
+          <div class="jt-category-section jt-animate jt-animate-d2">
+            <div class="jt-category-header">
+              <h2 class="jt-category-title">
+                <span class="jt-category-icon" style="background:#FCE7F3;color:#DB2777;">&#127912;</span>
+                Design & Creative
+              </h2>
+              <span class="jt-category-count">5 spaces</span>
+            </div>
+            <div class="jt-space-grid">
+              <div class="jt-space-card">
+                <div class="jt-space-card-header">
+                  <div class="jt-space-icon" style="background:#FCE7F3;">&#127912;</div>
+                  <div>
+                    <div class="jt-space-card-title">UI/UX Design</div>
+                    <span class="jt-space-type-badge">Forum</span>
+                  </div>
+                </div>
+                <div class="jt-space-card-desc">Design critiques, portfolio reviews, tool recommendations, and UX research discussions.</div>
+                <div class="jt-space-card-meta">
+                  <span>&#128101; 892</span>
+                  <span>&#128172; 2,456</span>
+                  <span>&#128293; 12 today</span>
+                </div>
+                <div class="jt-space-card-activity"><div class="jt-space-card-activity-bar" style="width:60%"></div></div>
+              </div>
+
+              <div class="jt-space-card">
+                <div class="jt-space-card-header">
+                  <div class="jt-space-icon" style="background:#FFEDD5;">&#128247;</div>
+                  <div>
+                    <div class="jt-space-card-title">Creative Feed</div>
+                    <span class="jt-space-type-badge feed">Feed</span>
+                  </div>
+                </div>
+                <div class="jt-space-card-desc">Share your latest work, get feedback, and discover inspiring projects from the community.</div>
+                <div class="jt-space-card-meta">
+                  <span>&#128101; 1,563</span>
+                  <span>&#128172; 5,891</span>
+                  <span>&#128293; 31 today</span>
+                </div>
+                <div class="jt-space-card-activity"><div class="jt-space-card-activity-bar" style="width:75%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="jt-sidebar">
+          <div class="jt-sidebar-card jt-animate jt-animate-d3">
+            <h4>&#127942; Top Contributors</h4>
+            <div class="jt-leaderboard-item">
+              <span class="jt-leaderboard-rank top">1</span>
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#F59E0B,#EF4444);">SK</div>
+              <span class="jt-leaderboard-name">Sarah Kim</span>
+              <span class="jt-leaderboard-score">4,231</span>
+            </div>
+            <div class="jt-leaderboard-item">
+              <span class="jt-leaderboard-rank top">2</span>
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#8B5CF6,#3B82F6);">MR</div>
+              <span class="jt-leaderboard-name">Mike Ross</span>
+              <span class="jt-leaderboard-score">3,892</span>
+            </div>
+            <div class="jt-leaderboard-item">
+              <span class="jt-leaderboard-rank top">3</span>
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#10B981,#3B82F6);">AP</div>
+              <span class="jt-leaderboard-name">Anika Patel</span>
+              <span class="jt-leaderboard-score">3,654</span>
+            </div>
+            <div class="jt-leaderboard-item">
+              <span class="jt-leaderboard-rank">4</span>
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#EC4899,#8B5CF6);">JL</div>
+              <span class="jt-leaderboard-name">James Liu</span>
+              <span class="jt-leaderboard-score">2,987</span>
+            </div>
+            <div class="jt-leaderboard-item">
+              <span class="jt-leaderboard-rank">5</span>
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#F97316,#F59E0B);">EM</div>
+              <span class="jt-leaderboard-name">Elena Martinez</span>
+              <span class="jt-leaderboard-score">2,541</span>
+            </div>
+          </div>
+
+          <div class="jt-sidebar-card jt-animate jt-animate-d4">
+            <h4>&#128200; Trending</h4>
+            <div class="jt-trending-item">
+              <span class="jt-trending-num">01</span>
+              <div>
+                <div class="jt-trending-title">Is Python 3.14 finally faster than Go for web servers?</div>
+                <div class="jt-trending-meta">87 replies &middot; 234 votes</div>
+              </div>
+            </div>
+            <div class="jt-trending-item">
+              <span class="jt-trending-num">02</span>
+              <div>
+                <div class="jt-trending-title">The death of CSS-in-JS: What comes next?</div>
+                <div class="jt-trending-meta">62 replies &middot; 189 votes</div>
+              </div>
+            </div>
+            <div class="jt-trending-item">
+              <span class="jt-trending-num">03</span>
+              <div>
+                <div class="jt-trending-title">How we migrated 2TB of data with zero downtime</div>
+                <div class="jt-trending-meta">45 replies &middot; 156 votes</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="jt-sidebar-card jt-animate jt-animate-d5">
+            <h4>&#127991;&#65039; Popular Tags</h4>
+            <div class="jt-tag-cloud">
+              <span class="jt-tag">python</span>
+              <span class="jt-tag">javascript</span>
+              <span class="jt-tag">react</span>
+              <span class="jt-tag">wordpress</span>
+              <span class="jt-tag">devops</span>
+              <span class="jt-tag">ai/ml</span>
+              <span class="jt-tag">typescript</span>
+              <span class="jt-tag">docker</span>
+              <span class="jt-tag">rust</span>
+              <span class="jt-tag">design</span>
+              <span class="jt-tag">career</span>
+              <span class="jt-tag">open-source</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 2: SPACE (Topic Listing)
+       ═══════════════════════════════════════════════ -->
+  <div id="view-space" class="jt-view">
+    <div class="jt-container">
+      <div class="jt-breadcrumb jt-animate">
+        <a href="#" onclick="showView('home')">Community</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <a href="#">Development</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <span>Python Developers</span>
+      </div>
+
+      <div class="jt-layout">
+        <div>
+          <div class="jt-space-header jt-animate">
+            <div class="jt-space-header-icon" style="background:#DBEAFE;">&#127919;</div>
+            <div class="jt-space-header-info">
+              <h2>Python Developers</h2>
+              <p>Everything Python — from beginner questions to advanced async patterns</p>
+            </div>
+            <div class="jt-space-header-stats">
+              <div class="jt-space-stat">
+                <div class="jt-space-stat-value">1,247</div>
+                <div class="jt-space-stat-label">Members</div>
+              </div>
+              <div class="jt-space-stat">
+                <div class="jt-space-stat-value">4,832</div>
+                <div class="jt-space-stat-label">Topics</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="jt-toolbar jt-animate jt-animate-d1">
+            <div class="jt-sort-tabs">
+              <button class="jt-sort-tab active">Latest</button>
+              <button class="jt-sort-tab">Popular</button>
+              <button class="jt-sort-tab">Unanswered</button>
+            </div>
+            <button class="jt-btn jt-btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              New Topic
+            </button>
+          </div>
+
+          <div class="jt-topic-list jt-animate jt-animate-d2">
+            <!-- Sticky -->
+            <div class="jt-topic-row sticky" onclick="showView('topic')">
+              <div class="jt-topic-vote">
+                <button class="jt-vote-btn voted">&#9650;</button>
+                <span class="jt-vote-score">234</span>
+                <button class="jt-vote-btn">&#9660;</button>
+              </div>
+              <div class="jt-topic-content">
+                <div class="jt-topic-title">&#128204; Welcome! Read this before posting — Community Guidelines & FAQ</div>
+                <div class="jt-topic-tags">
+                  <span class="jt-tag">pinned</span>
+                  <span class="jt-tag">guidelines</span>
+                </div>
+              </div>
+              <div class="jt-topic-author">
+                <div class="jt-avatar" style="width:24px;height:24px;font-size:10px;background:linear-gradient(135deg,#8B5CF6,#3B82F6);">AD</div>
+                <span class="jt-topic-author-name">Admin</span>
+                <span class="jt-trust-badge" style="background:var(--jt-tl5);">5</span>
+              </div>
+              <div class="jt-topic-replies">
+                <div class="jt-topic-replies-count">48</div>
+                <div class="jt-topic-replies-label">replies</div>
+              </div>
+              <div class="jt-topic-activity">2d ago</div>
+            </div>
+
+            <!-- Regular topics -->
+            <div class="jt-topic-row" onclick="showView('topic')">
+              <div class="jt-topic-vote">
+                <button class="jt-vote-btn">&#9650;</button>
+                <span class="jt-vote-score">67</span>
+                <button class="jt-vote-btn">&#9660;</button>
+              </div>
+              <div class="jt-topic-content">
+                <div class="jt-topic-title">How to properly structure a large Django project with multiple apps?</div>
+                <div class="jt-topic-excerpt">I'm building a SaaS platform and my Django project is getting unwieldy. Currently have 15+ apps and...</div>
+                <div class="jt-topic-tags">
+                  <span class="jt-tag">django</span>
+                  <span class="jt-tag">architecture</span>
+                  <span class="jt-tag">best-practices</span>
+                </div>
+              </div>
+              <div class="jt-topic-author">
+                <div class="jt-avatar" style="width:24px;height:24px;font-size:10px;background:linear-gradient(135deg,#10B981,#3B82F6);">SK</div>
+                <span class="jt-topic-author-name">Sarah Kim</span>
+                <span class="jt-trust-badge" style="background:var(--jt-tl3);">3</span>
+              </div>
+              <div class="jt-topic-replies">
+                <div class="jt-topic-replies-count">24</div>
+                <div class="jt-topic-replies-label">replies</div>
+              </div>
+              <div class="jt-topic-activity">3h ago</div>
+            </div>
+
+            <div class="jt-topic-row">
+              <div class="jt-topic-vote">
+                <button class="jt-vote-btn voted">&#9650;</button>
+                <span class="jt-vote-score">45</span>
+                <button class="jt-vote-btn">&#9660;</button>
+              </div>
+              <div class="jt-topic-content">
+                <div class="jt-topic-title">Python 3.14 JIT compiler — real benchmarks from production</div>
+                <div class="jt-topic-excerpt">I've been running Python 3.14 with the experimental JIT in our production workload for 2 weeks now...</div>
+                <div class="jt-topic-tags">
+                  <span class="jt-tag">python-3.14</span>
+                  <span class="jt-tag">performance</span>
+                  <span class="jt-tag">jit</span>
+                </div>
+              </div>
+              <div class="jt-topic-author">
+                <div class="jt-avatar" style="width:24px;height:24px;font-size:10px;background:linear-gradient(135deg,#F97316,#F59E0B);">MR</div>
+                <span class="jt-topic-author-name">Mike Ross</span>
+                <span class="jt-trust-badge" style="background:var(--jt-tl2);">2</span>
+              </div>
+              <div class="jt-topic-replies">
+                <div class="jt-topic-replies-count">56</div>
+                <div class="jt-topic-replies-label">replies</div>
+              </div>
+              <div class="jt-topic-activity">5h ago</div>
+            </div>
+
+            <div class="jt-topic-row">
+              <div class="jt-topic-vote">
+                <button class="jt-vote-btn">&#9650;</button>
+                <span class="jt-vote-score">12</span>
+                <button class="jt-vote-btn">&#9660;</button>
+              </div>
+              <div class="jt-topic-content">
+                <div class="jt-topic-title">AsyncIO vs Trio vs AnyIO — which async framework to choose in 2026?</div>
+                <div class="jt-topic-excerpt">Starting a new project and trying to decide on the async framework. I've used asyncio before but...</div>
+                <div class="jt-topic-tags">
+                  <span class="jt-tag">async</span>
+                  <span class="jt-tag">concurrency</span>
+                </div>
+              </div>
+              <div class="jt-topic-author">
+                <div class="jt-avatar" style="width:24px;height:24px;font-size:10px;background:linear-gradient(135deg,#EC4899,#8B5CF6);">NJ</div>
+                <span class="jt-topic-author-name">Nora Jensen</span>
+                <span class="jt-trust-badge" style="background:var(--jt-tl1);">1</span>
+              </div>
+              <div class="jt-topic-replies">
+                <div class="jt-topic-replies-count">8</div>
+                <div class="jt-topic-replies-label">replies</div>
+              </div>
+              <div class="jt-topic-activity">1d ago</div>
+            </div>
+
+            <div class="jt-topic-row">
+              <div class="jt-topic-vote">
+                <button class="jt-vote-btn">&#9650;</button>
+                <span class="jt-vote-score">3</span>
+                <button class="jt-vote-btn">&#9660;</button>
+              </div>
+              <div class="jt-topic-content">
+                <div class="jt-topic-title">Help with type hints for a decorator that preserves function signature</div>
+                <div class="jt-topic-excerpt">I'm writing a retry decorator and TypeScript... I mean Python's type system is driving me crazy...</div>
+                <div class="jt-topic-tags">
+                  <span class="jt-tag">typing</span>
+                  <span class="jt-tag">decorators</span>
+                  <span class="jt-tag">help</span>
+                </div>
+              </div>
+              <div class="jt-topic-author">
+                <div class="jt-avatar" style="width:24px;height:24px;font-size:10px;background:linear-gradient(135deg,#6366F1,#8B5CF6);">TW</div>
+                <span class="jt-topic-author-name">Tom Wilson</span>
+                <span class="jt-trust-badge" style="background:var(--jt-tl0);">0</span>
+              </div>
+              <div class="jt-topic-replies">
+                <div class="jt-topic-replies-count">0</div>
+                <div class="jt-topic-replies-label">replies</div>
+              </div>
+              <div class="jt-topic-activity">4h ago</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="jt-sidebar">
+          <div class="jt-sidebar-card">
+            <h4>About This Space</h4>
+            <p style="font-size:13px;color:var(--jt-ink-muted);margin-bottom:12px;">Everything Python — from beginner questions to advanced async patterns, Django, FastAPI, and data science.</p>
+            <div style="display:flex;gap:8px;">
+              <button class="jt-btn jt-btn-primary" style="flex:1;justify-content:center;font-size:13px;padding:8px;">Joined &#10003;</button>
+              <button class="jt-btn jt-btn-secondary" style="font-size:13px;padding:8px 12px;">&#128276;</button>
+            </div>
+          </div>
+          <div class="jt-sidebar-card">
+            <h4>Moderators</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="jt-avatar" style="width:32px;height:32px;font-size:12px;background:linear-gradient(135deg,#10B981,#3B82F6);">SK</div>
+              <div class="jt-avatar" style="width:32px;height:32px;font-size:12px;background:linear-gradient(135deg,#8B5CF6,#3B82F6);">MR</div>
+              <div class="jt-avatar" style="width:32px;height:32px;font-size:12px;background:linear-gradient(135deg,#F97316,#F59E0B);">AP</div>
+            </div>
+          </div>
+          <div class="jt-sidebar-card">
+            <h4>Space Rules</h4>
+            <ol style="font-size:13px;color:var(--jt-ink-muted);padding-left:16px;display:flex;flex-direction:column;gap:6px;">
+              <li>Be respectful and constructive</li>
+              <li>No self-promotion without context</li>
+              <li>Search before posting</li>
+              <li>Use code blocks for code</li>
+              <li>Tag your posts appropriately</li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 3: SINGLE TOPIC
+       ═══════════════════════════════════════════════ -->
+  <div id="view-topic" class="jt-view">
+    <div class="jt-container">
+      <div class="jt-breadcrumb jt-animate">
+        <a href="#" onclick="showView('home')">Community</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <a href="#" onclick="showView('space')">Python Developers</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <span>How to structure a large Django project</span>
+      </div>
+
+      <div class="jt-layout">
+        <div>
+          <!-- Original Post -->
+          <div class="jt-post jt-animate">
+            <div class="jt-post-header">
+              <h1 class="jt-post-title">How to properly structure a large Django project with multiple apps?</h1>
+              <div class="jt-post-meta">
+                <div class="jt-post-author-full">
+                  <div class="jt-avatar jt-avatar-lg" style="background:linear-gradient(135deg,#10B981,#3B82F6);">SK</div>
+                  <div class="jt-post-author-info">
+                    <strong>Sarah Kim <span class="jt-trust-badge" style="background:var(--jt-tl3);">3</span></strong>
+                    <span>Trusted &middot; 1,247 reputation &middot; 3 hours ago</span>
+                  </div>
+                </div>
+                <div class="jt-topic-tags" style="margin-left:auto;">
+                  <span class="jt-tag">django</span>
+                  <span class="jt-tag">architecture</span>
+                  <span class="jt-tag">best-practices</span>
+                </div>
+              </div>
+            </div>
+            <div class="jt-post-body">
+              <p>I'm building a SaaS platform and my Django project is getting unwieldy. Currently have 15+ apps and the dependency graph is becoming a nightmare. Looking for real-world advice on how to structure this properly.</p>
+              <p>Current structure looks like:</p>
+              <pre>myproject/
+├── apps/
+│   ├── accounts/
+│   ├── billing/
+│   ├── dashboard/
+│   ├── notifications/
+│   ├── api/
+│   └── ... 10 more apps
+├── core/
+│   ├── mixins.py
+│   └── utils.py
+└── config/
+    └── settings/</pre>
+              <p>The main problems I'm facing:</p>
+              <p>1. <strong>Circular imports</strong> between apps (billing needs accounts, accounts needs billing for subscription checks)<br>
+              2. <strong>Fat models</strong> — my User model is 800+ lines<br>
+              3. <strong>Where to put shared business logic</strong> that touches multiple apps?</p>
+              <p>Has anyone dealt with this at scale? Would love to see how others organize large Django projects. Thinking about moving to a <code>services/</code> layer pattern but not sure if that's the Django way.</p>
+            </div>
+            <div class="jt-post-actions">
+              <button class="jt-action-btn vote-up">&#9650; <span class="count">67</span></button>
+              <button class="jt-action-btn vote-down">&#9660;</button>
+              <button class="jt-action-btn">&#128278; Share</button>
+              <button class="jt-action-btn">&#128276; Subscribe</button>
+              <button class="jt-action-btn">&#128681; Flag</button>
+              <span style="margin-left:auto;font-size:12px;color:var(--jt-ink-faint);font-family:var(--jt-font-mono);">&#128065; 1,247 views</span>
+            </div>
+          </div>
+
+          <!-- Replies -->
+          <div class="jt-replies-header jt-animate jt-animate-d1">
+            <h3>Replies <span class="jt-replies-count-badge">24</span></h3>
+            <div class="jt-sort-tabs">
+              <button class="jt-sort-tab active">Best</button>
+              <button class="jt-sort-tab">Newest</button>
+              <button class="jt-sort-tab">Oldest</button>
+            </div>
+          </div>
+
+          <!-- Reply 1 -->
+          <div class="jt-reply jt-animate jt-animate-d2">
+            <div class="jt-reply-header">
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#F97316,#F59E0B);">MR</div>
+              <strong style="font-size:13px;">Mike Ross</strong>
+              <span class="jt-trust-badge" style="background:var(--jt-tl2);">2</span>
+              <span style="color:var(--jt-ink-faint);font-size:12px;">2 hours ago</span>
+            </div>
+            <div class="jt-reply-body">
+              <p>I've dealt with exactly this at my previous company (50+ Django apps). The pattern that saved us was the <strong>Domain Services Layer</strong>:</p>
+              <p>Instead of putting business logic in models or views, create a <code>services/</code> module in each app that handles cross-app operations. The key rule: <em>models only know about their own app, services can import from other apps</em>.</p>
+              <p>For your circular import problem — the service layer breaks the cycle. Your <code>billing/services.py</code> imports from <code>accounts/models.py</code>, and <code>accounts/services.py</code> imports from <code>billing/models.py</code>. No circular dependency because services are leaf nodes.</p>
+            </div>
+            <div class="jt-reply-actions">
+              <button class="jt-action-btn vote-up">&#9650; <span class="count">34</span></button>
+              <button class="jt-action-btn vote-down">&#9660;</button>
+              <button class="jt-action-btn">Reply</button>
+            </div>
+          </div>
+
+          <!-- Nested Reply -->
+          <div class="jt-reply-nested">
+            <div class="jt-reply jt-animate jt-animate-d3">
+              <div class="jt-reply-header">
+                <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#10B981,#3B82F6);">SK</div>
+                <strong style="font-size:13px;">Sarah Kim</strong>
+                <span style="font-size:12px;color:var(--jt-primary);font-weight:500;">OP</span>
+                <span style="color:var(--jt-ink-faint);font-size:12px;">1 hour ago</span>
+              </div>
+              <div class="jt-reply-body">
+                <p>This is great! The services layer approach makes a lot of sense. Quick follow-up: do you put the services in a separate top-level <code>services/</code> directory, or inside each app as <code>apps/billing/services.py</code>?</p>
+              </div>
+              <div class="jt-reply-actions">
+                <button class="jt-action-btn vote-up">&#9650; <span class="count">8</span></button>
+                <button class="jt-action-btn vote-down">&#9660;</button>
+                <button class="jt-action-btn">Reply</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reply 2 -->
+          <div class="jt-reply jt-animate jt-animate-d4">
+            <div class="jt-reply-header">
+              <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#EC4899,#8B5CF6);">AP</div>
+              <strong style="font-size:13px;">Anika Patel</strong>
+              <span class="jt-trust-badge" style="background:var(--jt-tl3);">3</span>
+              <span style="color:var(--jt-ink-faint);font-size:12px;">1 hour ago</span>
+            </div>
+            <div class="jt-reply-body">
+              <p>Another approach worth considering: <strong>break your monolith into bounded contexts</strong>, even within Django. Group related apps into packages:</p>
+              <pre>myproject/
+├── domains/
+│   ├── identity/     # accounts, auth, profiles
+│   ├── commerce/     # billing, subscriptions, invoices
+│   ├── engagement/   # notifications, emails, activity
+│   └── platform/     # dashboard, api, admin
+└── shared/           # truly shared utilities</pre>
+              <p>Each domain has its own <code>models/</code>, <code>services/</code>, and <code>api/</code>. Cross-domain communication goes through explicit interfaces (events or service calls), never direct model imports.</p>
+            </div>
+            <div class="jt-reply-actions">
+              <button class="jt-action-btn vote-up">&#9650; <span class="count">52</span></button>
+              <button class="jt-action-btn vote-down">&#9660;</button>
+              <button class="jt-action-btn">Reply</button>
+            </div>
+          </div>
+
+          <!-- Composer -->
+          <div class="jt-composer jt-animate jt-animate-d5" style="margin-top:var(--jt-space-lg);">
+            <div class="jt-composer-toolbar">
+              <button title="Bold"><strong>B</strong></button>
+              <button title="Italic"><em>I</em></button>
+              <button title="Code">&lt;/&gt;</button>
+              <button title="Link">&#128279;</button>
+              <button title="Image">&#128248;</button>
+              <button title="Quote">&#10077;</button>
+              <button title="List">&#9776;</button>
+              <button title="Mention" style="color:var(--jt-primary);">@</button>
+              <button title="Emoji">&#128522;</button>
+            </div>
+            <div class="jt-composer-body" contenteditable="true">Write your reply...</div>
+            <div class="jt-composer-footer">
+              <span class="jt-composer-hint">Markdown supported &middot; Drag & drop images</span>
+              <button class="jt-btn jt-btn-primary" style="font-size:13px;padding:7px 16px;">Post Reply</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="jt-sidebar">
+          <div class="jt-sidebar-card">
+            <h4>Topic Info</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Created</span><span style="font-family:var(--jt-font-mono);">3h ago</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Last reply</span><span style="font-family:var(--jt-font-mono);">12m ago</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Views</span><span style="font-family:var(--jt-font-mono);">1,247</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Participants</span><span style="font-family:var(--jt-font-mono);">18</span></div>
+            </div>
+          </div>
+          <div class="jt-sidebar-card">
+            <h4>Related Topics</h4>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <a href="#" style="font-size:13px;line-height:1.4;">Django project structure for microservices</a>
+              <a href="#" style="font-size:13px;line-height:1.4;">Fat models vs thin models debate</a>
+              <a href="#" style="font-size:13px;line-height:1.4;">Domain-driven design with Django</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 4: Q&A MODE
+       ═══════════════════════════════════════════════ -->
+  <div id="view-qa" class="jt-view">
+    <div class="jt-container">
+      <div class="jt-breadcrumb jt-animate">
+        <a href="#" onclick="showView('home')">Community</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <a href="#">JavaScript Q&A</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <span>How to debounce in React 19?</span>
+      </div>
+
+      <div class="jt-layout">
+        <div>
+          <!-- Question -->
+          <div class="jt-qa-post jt-animate">
+            <div class="jt-qa-voting">
+              <button class="jt-qa-vote-btn active">&#9650;</button>
+              <span class="jt-qa-score">42</span>
+              <button class="jt-qa-vote-btn">&#9660;</button>
+            </div>
+            <div class="jt-post">
+              <div class="jt-post-header">
+                <h1 class="jt-post-title" style="font-size:24px;">How to properly debounce input in React 19 with the new compiler?</h1>
+                <div class="jt-post-meta">
+                  <div class="jt-post-author-full">
+                    <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#6366F1,#8B5CF6);">TW</div>
+                    <div class="jt-post-author-info">
+                      <strong style="font-size:13px;">Tom Wilson <span class="jt-trust-badge" style="background:var(--jt-tl1);">1</span></strong>
+                      <span>4 hours ago</span>
+                    </div>
+                  </div>
+                  <div class="jt-topic-tags" style="margin-left:auto;">
+                    <span class="jt-tag">react</span>
+                    <span class="jt-tag">hooks</span>
+                    <span class="jt-tag">performance</span>
+                  </div>
+                </div>
+              </div>
+              <div class="jt-post-body">
+                <p>With React 19's compiler automatically memoizing everything, do we still need <code>useMemo</code> / <code>useCallback</code> for debouncing? My old pattern was:</p>
+                <pre>const debouncedSearch = useCallback(
+  debounce((term) => fetchResults(term), 300),
+  []
+);</pre>
+                <p>But with the React Compiler, this feels redundant. What's the idiomatic way to debounce in React 19?</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Answers Header -->
+          <div class="jt-replies-header jt-animate jt-animate-d1" style="margin-top:var(--jt-space-xl);">
+            <h3>5 Answers</h3>
+            <div class="jt-sort-tabs">
+              <button class="jt-sort-tab active">Votes</button>
+              <button class="jt-sort-tab">Newest</button>
+            </div>
+          </div>
+
+          <!-- Accepted Answer -->
+          <div class="jt-qa-post jt-animate jt-animate-d2">
+            <div class="jt-qa-voting">
+              <button class="jt-qa-vote-btn active">&#9650;</button>
+              <span class="jt-qa-score">89</span>
+              <button class="jt-qa-vote-btn">&#9660;</button>
+              <button class="jt-qa-accept-btn accepted" title="Accepted Answer">&#10003;</button>
+            </div>
+            <div class="jt-reply accepted">
+              <div class="jt-reply-header">
+                <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#10B981,#3B82F6);">SK</div>
+                <strong style="font-size:13px;">Sarah Kim</strong>
+                <span class="jt-trust-badge" style="background:var(--jt-tl3);">3</span>
+                <span style="color:var(--jt-ink-faint);font-size:12px;">3 hours ago</span>
+                <span class="jt-accepted-badge">&#10003; Accepted Answer</span>
+              </div>
+              <div class="jt-reply-body">
+                <p>Great question! With React 19's compiler, <code>useCallback</code> is indeed unnecessary for memoization. But debouncing is about <strong>timing control</strong>, not memoization. You still need it.</p>
+                <p>The idiomatic React 19 pattern uses <code>useDeferredValue</code> for most cases:</p>
+                <pre>function SearchInput() {
+  const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
+
+  // This re-renders with the deferred value
+  // React automatically batches and defers updates
+  return (
+    &lt;&gt;
+      &lt;input value={query} onChange={e =&gt; setQuery(e.target.value)} /&gt;
+      &lt;Suspense fallback={&lt;Spinner /&gt;}&gt;
+        &lt;SearchResults query={deferredQuery} /&gt;
+      &lt;/Suspense&gt;
+    &lt;/&gt;
+  );
+}</pre>
+                <p>For actual API debouncing (network requests), use a simple ref-based approach:</p>
+                <pre>function useDebounce(fn, delay) {
+  const timeoutRef = useRef(null);
+  return (...args) =&gt; {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() =&gt; fn(...args), delay);
+  };
+}</pre>
+                <p>The compiler handles the memoization. You handle the timing. Clean separation.</p>
+              </div>
+              <div class="jt-reply-actions">
+                <button class="jt-action-btn">Reply</button>
+                <button class="jt-action-btn">&#128278; Share</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regular Answer -->
+          <div class="jt-qa-post jt-animate jt-animate-d3">
+            <div class="jt-qa-voting">
+              <button class="jt-qa-vote-btn">&#9650;</button>
+              <span class="jt-qa-score">23</span>
+              <button class="jt-qa-vote-btn">&#9660;</button>
+              <button class="jt-qa-accept-btn">&#10003;</button>
+            </div>
+            <div class="jt-reply">
+              <div class="jt-reply-header">
+                <div class="jt-avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#F97316,#F59E0B);">MR</div>
+                <strong style="font-size:13px;">Mike Ross</strong>
+                <span class="jt-trust-badge" style="background:var(--jt-tl2);">2</span>
+                <span style="color:var(--jt-ink-faint);font-size:12px;">2 hours ago</span>
+              </div>
+              <div class="jt-reply-body">
+                <p>Worth mentioning: if you're using React Query / TanStack Query, it has built-in debouncing for queries. Just set <code>placeholderData: keepPreviousData</code> and let the query key change on input. TanStack handles the rest.</p>
+              </div>
+              <div class="jt-reply-actions">
+                <button class="jt-action-btn">Reply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="jt-sidebar">
+          <div class="jt-sidebar-card">
+            <h4>Question Stats</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Asked</span><span style="font-family:var(--jt-font-mono);">4h ago</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Views</span><span style="font-family:var(--jt-font-mono);">892</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--jt-ink-muted);">Answers</span><span style="font-family:var(--jt-font-mono);">5</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--jt-ink-muted);">Status</span><span style="font-size:12px;font-weight:600;color:var(--jt-trust);background:var(--jt-trust-light);padding:2px 8px;border-radius:var(--jt-radius-full);">&#10003; Resolved</span></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 5: IDEAS BOARD (Kanban)
+       ═══════════════════════════════════════════════ -->
+  <div id="view-ideas" class="jt-view">
+    <div class="jt-container">
+      <div class="jt-breadcrumb jt-animate">
+        <a href="#" onclick="showView('home')">Community</a>
+        <span class="jt-breadcrumb-sep">&#8250;</span>
+        <span>DevOps Ideas — Roadmap</span>
+      </div>
+
+      <div class="jt-space-header jt-animate">
+        <div class="jt-space-header-icon" style="background:#D1FAE5;">&#128161;</div>
+        <div class="jt-space-header-info">
+          <h2>DevOps Ideas — Roadmap</h2>
+          <p>Submit and vote on ideas. Track what's planned, in progress, and shipped.</p>
+        </div>
+        <button class="jt-btn jt-btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Submit Idea
+        </button>
+      </div>
+
+      <div class="jt-kanban jt-animate jt-animate-d1">
+        <!-- Submitted -->
+        <div class="jt-kanban-column">
+          <div class="jt-kanban-column-header" style="border-color:var(--jt-ink-faint);">
+            <span class="jt-kanban-column-title" style="color:var(--jt-ink-muted);">Submitted</span>
+            <span class="jt-kanban-column-count">12</span>
+          </div>
+          <div class="jt-idea-card">
+            <div class="jt-idea-card-title">Terraform state locking with DynamoDB</div>
+            <div class="jt-idea-card-votes">&#9650; 34</div>
+            <div class="jt-idea-card-meta">
+              <span>by James L.</span>
+              <span>2d ago</span>
+            </div>
+          </div>
+          <div class="jt-idea-card">
+            <div class="jt-idea-card-title">GitHub Actions reusable workflow templates</div>
+            <div class="jt-idea-card-votes">&#9650; 28</div>
+            <div class="jt-idea-card-meta">
+              <span>by Elena M.</span>
+              <span>3d ago</span>
+            </div>
+          </div>
+          <div class="jt-idea-card">
+            <div class="jt-idea-card-title">ArgoCD ApplicationSet generator for multi-env</div>
+            <div class="jt-idea-card-votes">&#9650; 15</div>
+            <div class="jt-idea-card-meta">
+              <span>by Nora J.</span>
+              <span>5d ago</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Planned -->
+        <div class="jt-kanban-column">
+          <div class="jt-kanban-column-header" style="border-color:var(--jt-primary);">
+            <span class="jt-kanban-column-title" style="color:var(--jt-primary);">Planned</span>
+            <span class="jt-kanban-column-count">5</span>
+          </div>
+          <div class="jt-idea-card">
+            <div class="jt-idea-card-title">Kubernetes cost optimization dashboard</div>
+            <div class="jt-idea-card-votes">&#9650; 87</div>
+            <div class="jt-idea-card-meta">
+              <span>by Sarah K.</span>
+              <span>1w ago</span>
+            </div>
+          </div>
+          <div class="jt-idea-card">
+            <div class="jt-idea-card-title">Automated canary deployment with Istio</div>
+            <div class="jt-idea-card-votes">&#9650; 62</div>
+            <div class="jt-idea-card-meta">
+              <span>by Mike R.</span>
+              <span>2w ago</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="jt-kanban-column">
+          <div class="jt-kanban-column-header" style="border-color:var(--jt-accent);">
+            <span class="jt-kanban-column-title" style="color:var(--jt-accent);">In Progress</span>
+            <span class="jt-kanban-column-count">3</span>
+          </div>
+          <div class="jt-idea-card" style="border-left:3px solid var(--jt-accent);">
+            <div class="jt-idea-card-title">Multi-cloud Pulumi templates library</div>
+            <div class="jt-idea-card-votes">&#9650; 124</div>
+            <div class="jt-idea-card-meta">
+              <span>by Anika P.</span>
+              <span>3w ago</span>
+            </div>
+          </div>
+          <div class="jt-idea-card" style="border-left:3px solid var(--jt-accent);">
+            <div class="jt-idea-card-title">Observability stack (Grafana + Loki + Tempo)</div>
+            <div class="jt-idea-card-votes">&#9650; 98</div>
+            <div class="jt-idea-card-meta">
+              <span>by Tom W.</span>
+              <span>1m ago</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completed -->
+        <div class="jt-kanban-column">
+          <div class="jt-kanban-column-header" style="border-color:var(--jt-trust);">
+            <span class="jt-kanban-column-title" style="color:var(--jt-trust);">Completed</span>
+            <span class="jt-kanban-column-count">8</span>
+          </div>
+          <div class="jt-idea-card" style="opacity:0.8;">
+            <div class="jt-idea-card-title">Docker Compose dev environment standardization</div>
+            <div class="jt-idea-card-votes" style="color:var(--jt-trust);">&#10003; 156</div>
+            <div class="jt-idea-card-meta">
+              <span>by Elena M.</span>
+              <span>shipped 2w ago</span>
+            </div>
+          </div>
+          <div class="jt-idea-card" style="opacity:0.8;">
+            <div class="jt-idea-card-title">Secret management with Vault + K8s integration</div>
+            <div class="jt-idea-card-votes" style="color:var(--jt-trust);">&#10003; 143</div>
+            <div class="jt-idea-card-meta">
+              <span>by James L.</span>
+              <span>shipped 1m ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       VIEW 6: USER PROFILE
+       ═══════════════════════════════════════════════ -->
+  <div id="view-profile" class="jt-view">
+    <div class="jt-container">
+      <div class="jt-layout" style="grid-template-columns:1fr 360px;">
+        <div>
+          <div class="jt-profile-card jt-animate">
+            <div class="jt-profile-cover"></div>
+            <div class="jt-profile-info">
+              <div class="jt-profile-avatar">SK</div>
+              <h2 class="jt-profile-name">
+                Sarah Kim
+                <span class="jt-trust-level-pill" style="background:var(--jt-tl3);">Level 3 — Trusted</span>
+              </h2>
+              <p class="jt-profile-bio">Full-stack developer building SaaS products with Django & React. Open source contributor. Community moderator for Python Developers space.</p>
+              <div class="jt-profile-stats-grid">
+                <div class="jt-profile-stat">
+                  <div class="jt-profile-stat-value" style="color:var(--jt-primary);">1,247</div>
+                  <div class="jt-profile-stat-label">Reputation</div>
+                </div>
+                <div class="jt-profile-stat">
+                  <div class="jt-profile-stat-value">342</div>
+                  <div class="jt-profile-stat-label">Posts</div>
+                </div>
+                <div class="jt-profile-stat">
+                  <div class="jt-profile-stat-value">1,891</div>
+                  <div class="jt-profile-stat-label">Replies</div>
+                </div>
+                <div class="jt-profile-stat">
+                  <div class="jt-profile-stat-value" style="color:var(--jt-trust);">47</div>
+                  <div class="jt-profile-stat-label">Accepted</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity -->
+          <div class="jt-animate jt-animate-d1" style="background:var(--jt-bg-card);border-radius:var(--jt-radius-lg);box-shadow:var(--jt-shadow-sm);overflow:hidden;">
+            <div style="padding:var(--jt-space-lg);border-bottom:1px solid var(--jt-bg-sunken);">
+              <div class="jt-sort-tabs" style="display:inline-flex;">
+                <button class="jt-sort-tab active">Posts</button>
+                <button class="jt-sort-tab">Replies</button>
+                <button class="jt-sort-tab">Activity</button>
+              </div>
+            </div>
+            <div style="padding:0;">
+              <div style="display:flex;align-items:center;gap:var(--jt-space-md);padding:var(--jt-space-md) var(--jt-space-lg);border-bottom:1px solid var(--jt-bg-sunken);cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='var(--jt-bg-hover)'" onmouseleave="this.style.background='transparent'">
+                <span style="font-family:var(--jt-font-mono);font-size:13px;font-weight:600;color:var(--jt-accent);min-width:32px;">+67</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">How to properly structure a large Django project with multiple apps?</div>
+                  <div style="font-size:12px;color:var(--jt-ink-faint);margin-top:2px;">Python Developers &middot; 24 replies &middot; 3h ago</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--jt-space-md);padding:var(--jt-space-md) var(--jt-space-lg);border-bottom:1px solid var(--jt-bg-sunken);cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='var(--jt-bg-hover)'" onmouseleave="this.style.background='transparent'">
+                <span style="font-family:var(--jt-font-mono);font-size:13px;font-weight:600;color:var(--jt-trust);min-width:32px;">&#10003;</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">How to properly debounce input in React 19?</div>
+                  <div style="font-size:12px;color:var(--jt-ink-faint);margin-top:2px;">JavaScript Q&A &middot; Answer accepted &middot; 4h ago</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--jt-space-md);padding:var(--jt-space-md) var(--jt-space-lg);border-bottom:1px solid var(--jt-bg-sunken);cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='var(--jt-bg-hover)'" onmouseleave="this.style.background='transparent'">
+                <span style="font-family:var(--jt-font-mono);font-size:13px;font-weight:600;color:var(--jt-accent);min-width:32px;">+45</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">PSA: Python 3.14 breaks these 5 popular libraries</div>
+                  <div style="font-size:12px;color:var(--jt-ink-faint);margin-top:2px;">Python Developers &middot; 89 replies &middot; 1d ago</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--jt-space-md);padding:var(--jt-space-md) var(--jt-space-lg);cursor:pointer;transition:background 0.15s;" onmouseenter="this.style.background='var(--jt-bg-hover)'" onmouseleave="this.style.background='transparent'">
+                <span style="font-family:var(--jt-font-mono);font-size:13px;font-weight:600;color:var(--jt-accent);min-width:32px;">+23</span>
+                <div>
+                  <div style="font-weight:600;font-size:14px;">Migrating from Django REST Framework to Ninja — worth it?</div>
+                  <div style="font-size:12px;color:var(--jt-ink-faint);margin-top:2px;">Python Developers &middot; 31 replies &middot; 3d ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Sidebar -->
+        <aside class="jt-sidebar">
+          <div class="jt-badges-section jt-animate jt-animate-d2">
+            <h3>Badges <span style="font-family:var(--jt-font-mono);font-size:13px;font-weight:400;color:var(--jt-ink-faint);margin-left:8px;">12 earned</span></h3>
+            <div class="jt-badge-grid">
+              <div class="jt-badge-item">
+                <div class="jt-badge-icon gold">&#127942;</div>
+                <span class="jt-badge-name">Top Contributor</span>
+                <span class="jt-badge-tier" style="color:var(--jt-badge-gold);">Gold</span>
+              </div>
+              <div class="jt-badge-item">
+                <div class="jt-badge-icon gold">&#11088;</div>
+                <span class="jt-badge-name">Trusted Voice</span>
+                <span class="jt-badge-tier" style="color:var(--jt-badge-gold);">Gold</span>
+              </div>
+              <div class="jt-badge-item">
+                <div class="jt-badge-icon silver">&#128161;</div>
+                <span class="jt-badge-name">Helpful Answer</span>
+                <span class="jt-badge-tier" style="color:var(--jt-badge-silver);">Silver &times;3</span>
+              </div>
+              <div class="jt-badge-item">
+                <div class="jt-badge-icon silver">&#128172;</div>
+                <span class="jt-badge-name">Conversation<br>Starter</span>
+                <span class="jt-badge-tier" style="color:var(--jt-badge-silver);">Silver</span>
+              </div>
+              <div class="jt-badge-item">
+                <div class="jt-badge-icon bronze">&#128075;</div>
+                <span class="jt-badge-name">First Post</span>
+                <span class="jt-badge-tier" style="color:var(--jt-badge-bronze);">Bronze</span>
+              </div>
+              <div class="jt-badge-item">
+                <div class="jt-badge-icon bronze">&#128640;</div>
+                <span class="jt-badge-name">Founding Member</span>
+                <span class="jt-badge-tier" style="color:var(--jt-badge-bronze);">Bronze</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="jt-sidebar-card jt-animate jt-animate-d3">
+            <h4>Trust Level Progress</h4>
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="font-weight:600;">Level 3 — Trusted</span>
+                <span style="color:var(--jt-ink-faint);font-family:var(--jt-font-mono);">72%</span>
+              </div>
+              <div style="height:6px;background:var(--jt-bg-sunken);border-radius:3px;overflow:hidden;">
+                <div style="width:72%;height:100%;background:linear-gradient(90deg,var(--jt-tl3),var(--jt-tl4));border-radius:3px;transition:width 1s var(--jt-ease);"></div>
+              </div>
+              <div style="font-size:11px;color:var(--jt-ink-faint);margin-top:4px;">28 more posts to Level 4 (Leader)</div>
+            </div>
+          </div>
+
+          <div class="jt-sidebar-card jt-animate jt-animate-d4">
+            <h4>Spaces Joined</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                <span>&#127919;</span>
+                <span style="font-weight:500;">Python Developers</span>
+                <span style="margin-left:auto;font-size:11px;color:var(--jt-primary);font-weight:600;background:var(--jt-primary-lighter);padding:2px 6px;border-radius:var(--jt-radius-full);">Mod</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                <span>&#9889;</span>
+                <span style="font-weight:500;">JavaScript Q&A</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                <span>&#128161;</span>
+                <span style="font-weight:500;">DevOps Ideas</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                <span>&#127912;</span>
+                <span style="font-weight:500;">UI/UX Design</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showView(viewName) {
+  // Hide all views
+  document.querySelectorAll('.jt-view').forEach(v => v.classList.remove('active'));
+  // Show selected
+  document.getElementById('view-' + viewName).classList.add('active');
+  // Update nav
+  document.querySelectorAll('.proto-nav button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  // Re-trigger animations
+  document.getElementById('view-' + viewName).querySelectorAll('.jt-animate').forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight; // trigger reflow
+    el.style.animation = '';
+  });
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Make space cards in home view clickable
+document.querySelectorAll('.jt-space-card').forEach(card => {
+  card.addEventListener('mouseenter', function() {
+    const bar = this.querySelector('.jt-space-card-activity-bar');
+    if (bar) bar.style.opacity = '1';
+  });
+});
+
+// Vote button interaction
+document.querySelectorAll('.jt-vote-btn, .jt-qa-vote-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    this.classList.toggle('voted');
+    const score = this.parentElement.querySelector('.jt-vote-score, .jt-qa-score');
+    if (score) {
+      const current = parseInt(score.textContent);
+      if (this.classList.contains('voted')) {
+        score.textContent = this.textContent.includes('▲') ? current + 1 : current - 1;
+      } else {
+        score.textContent = this.textContent.includes('▲') ? current - 1 : current + 1;
+      }
+    }
+  });
+});
+
+// Sort tab interaction
+document.querySelectorAll('.jt-sort-tabs').forEach(group => {
+  group.querySelectorAll('.jt-sort-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      group.querySelectorAll('.jt-sort-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+});
+</script>
+
+</body>
+</html>
