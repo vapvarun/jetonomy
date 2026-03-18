@@ -65,7 +65,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
-| 2026-03-19 | — | Uniform container via theme `.container` wrapper, auth redirects in template loader, IA audit (4 missing actions added) |
+| 2026-03-19 | `a44e5d9` | Uniform container via theme `.container` wrapper, auth redirects in template loader, IA audit (4 missing actions added) |
 | 2026-03-18 | `efdd455` | Fix font sizing — remove 32 unnecessary overrides, convert 45 from em to rem to prevent compounding |
 | 2026-03-18 | `97002fe` | Remove all hardcoded px font-sizes — inherit from theme, use relative em units only |
 | 2026-03-18 | `26fb607` | QA pass: inline style cleanup (60+ CSS classes), tag URL fix, rewrite flush, IA state init |
