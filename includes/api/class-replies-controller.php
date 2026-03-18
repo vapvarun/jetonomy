@@ -137,6 +137,13 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Rate limit check.
+		$profile = UserProfile::find_or_create( $user_id );
+		$trust   = (int) ( $profile->trust_level ?? 0 );
+		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_replies', $trust ) ) {
+			return $this->validation_error( __( 'Rate limit exceeded. Please try again later.', 'jetonomy' ) );
+		}
+
 		// Prevent replies to closed posts.
 		if ( ! empty( $post->is_closed ) ) {
 			return new WP_Error(
@@ -177,8 +184,10 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		// Update user profile reply count.
-		UserProfile::find_or_create( $user_id );
 		UserProfile::increment_reply_count( $user_id );
+
+		// Increment rate limit counter.
+		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );
 
 		// Notify the post author (skip self-notification).
 		$post_author_id = (int) $post->author_id;
@@ -210,6 +219,9 @@ class Replies_Controller extends Base_Controller {
 				'actor_id'    => $user_id,
 			] );
 		}
+
+		// Fire action for Notifier and other listeners.
+		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
 
 		$reply = Reply::find( $reply_id );
 
@@ -254,11 +266,10 @@ class Replies_Controller extends Base_Controller {
 
 		// Create a revision before updating.
 		Revision::create( [
-			'object_type'    => 'reply',
-			'object_id'      => $id,
-			'edited_by'      => $user_id,
-			'content_before' => $reply->content ?? '',
-			'content_after'  => $content,
+			'object_type' => 'reply',
+			'object_id'   => $id,
+			'author_id'   => $user_id,
+			'content'     => $reply->content ?? '',
 		] );
 
 		Reply::update( $id, [
@@ -345,6 +356,9 @@ class Replies_Controller extends Base_Controller {
 		// Mark the reply as accepted and resolve the post.
 		Reply::mark_accepted( $id );
 		Post::accept_reply( (int) $post->id, $id );
+
+		// Fire action for Notifier and other listeners.
+		do_action( 'jetonomy_reply_accepted', $id, (int) $post->id );
 
 		// Award reputation to the reply author (skip self-award).
 		if ( $reply_author_id && $reply_author_id !== $user_id ) {

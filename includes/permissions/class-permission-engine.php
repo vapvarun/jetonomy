@@ -6,6 +6,8 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\Restriction;
+use Jetonomy\Models\AccessRule;
+use Jetonomy\Models\UserProfile;
 
 /**
  * Three-layer permission resolver.
@@ -80,6 +82,21 @@ class Permission_Engine {
 			}
 		}
 
+		// Check access rules (membership, capability, trust level rules).
+		$access = AccessRule::resolve_access( $user_id, $space_id );
+		if ( $access ) {
+			// Access rule grants access — check if sufficient for the action.
+			$grants_map = [
+				'read'        => [ 'read' ],
+				'participate' => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
+				'full'        => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'close_posts', 'pin_posts' ],
+			];
+			$allowed_actions = $grants_map[ $access['grants'] ] ?? [ 'read' ];
+			if ( in_array( $action, $allowed_actions, true ) ) {
+				return true;
+			}
+		}
+
 		// Public space read — no membership required.
 		if ( 'read' === $action && 'public' === $space->visibility ) {
 			return true;
@@ -90,6 +107,25 @@ class Permission_Engine {
 		if ( ! $role ) {
 			// Non-member of a public space may only read.
 			return 'read' === $action;
+		}
+
+		// Layer 3: Trust level gates.
+		$profile     = UserProfile::find_by_user( $user_id );
+		$trust_level = $profile ? (int) $profile->trust_level : 0;
+
+		$trust_requirements = [
+			'edit_others_posts' => 3,
+			'move_posts'        => 3,
+			'close_posts'       => 3,
+			'pin_posts'         => 3,
+			'create_spaces'     => 4,
+		];
+
+		if ( isset( $trust_requirements[ $action ] ) && $trust_level < $trust_requirements[ $action ] ) {
+			// Space moderators/admins bypass trust requirements.
+			if ( ! in_array( $role, [ 'moderator', 'admin' ], true ) ) {
+				return false;
+			}
 		}
 
 		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? [], true );

@@ -166,6 +166,13 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Space' );
 		}
 
+		// Rate limit check.
+		$profile = UserProfile::find_or_create( $user_id );
+		$trust   = (int) ( $profile->trust_level ?? 0 );
+		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'create_posts', $trust ) ) {
+			return $this->validation_error( __( 'Rate limit exceeded. Please try again later.', 'jetonomy' ) );
+		}
+
 		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
 		if ( empty( $title ) ) {
 			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
@@ -207,8 +214,10 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		// Update user profile post count.
-		UserProfile::find_or_create( $user_id );
 		UserProfile::increment_post_count( $user_id );
+
+		// Increment rate limit counter.
+		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_posts' );
 
 		// Auto-subscribe the author.
 		Subscription::subscribe( $user_id, 'post', $post_id );
@@ -277,11 +286,11 @@ class Posts_Controller extends Base_Controller {
 
 		// Create a revision before updating.
 		Revision::create( [
-			'object_type'    => 'post',
-			'object_id'      => $id,
-			'edited_by'      => $user_id,
-			'content_before' => $post->content ?? '',
-			'content_after'  => $update_data['content'] ?? $post->content ?? '',
+			'object_type' => 'post',
+			'object_id'   => $id,
+			'author_id'   => $user_id,
+			'content'     => $post->content ?? '',
+			'title'       => $post->title ?? '',
 		] );
 
 		$update_data['edited_at'] = current_time( 'mysql' );

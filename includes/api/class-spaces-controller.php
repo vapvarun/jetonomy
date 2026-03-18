@@ -263,12 +263,12 @@ class Spaces_Controller extends Base_Controller {
 			'title'        => $title,
 			'slug'         => $slug,
 			'description'  => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
-			'type'         => sanitize_text_field( (string) $request->get_param( 'type' ) ) ?: 'discussion',
+			'type'         => sanitize_text_field( (string) $request->get_param( 'type' ) ) ?: 'forum',
 			'visibility'   => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
 			'join_policy'  => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
 			'icon'         => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
 			'settings'     => $settings,
-			'created_by'   => get_current_user_id(),
+			'author_id'    => get_current_user_id(),
 		];
 
 		// Remove empty optional fields so DB defaults apply.
@@ -576,7 +576,7 @@ class Spaces_Controller extends Base_Controller {
 			'title'           => $space->title,
 			'slug'            => $space->slug,
 			'description'     => $space->description ?? '',
-			'type'            => $space->type ?? 'discussion',
+			'type'            => $space->type ?? 'forum',
 			'visibility'      => $space->visibility ?? 'public',
 			'join_policy'     => $space->join_policy ?? 'open',
 			'icon'            => $space->icon ?? '',
@@ -584,7 +584,7 @@ class Spaces_Controller extends Base_Controller {
 			'member_count'    => (int) ( $space->member_count ?? 0 ),
 			'post_count'      => (int) ( $space->post_count ?? 0 ),
 			'sort_order'      => (int) ( $space->sort_order ?? 0 ),
-			'created_by'      => $space->created_by ? (int) $space->created_by : null,
+			'author_id'       => $space->author_id ? (int) $space->author_id : null,
 			'created_at'      => $space->created_at ?? null,
 			'updated_at'      => $space->updated_at ?? null,
 			'last_activity_at' => $space->last_activity_at ?? null,

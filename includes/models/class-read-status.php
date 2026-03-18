@@ -24,7 +24,7 @@ class ReadStatus extends Model {
 	public static function mark_read( int $user_id, int $post_id, int $reply_id ): void {
 		static::db()->query(
 			static::db()->prepare(
-				'REPLACE INTO ' . static::table() . ' (user_id, post_id, last_read_reply_id, read_at) VALUES (%d, %d, %d, %s)',
+				'REPLACE INTO ' . static::table() . ' (user_id, post_id, last_read_reply_id, updated_at) VALUES (%d, %d, %d, %s)',
 				$user_id,
 				$post_id,
 				$reply_id,

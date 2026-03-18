@@ -101,9 +101,23 @@ class Votes_Controller extends Base_Controller {
 			return $object;
 		}
 
-		$space_id = (int) ( $object->space_id ?? 0 );
+		// Resolve space_id — replies don't have space_id directly.
+		if ( 'reply' === $type ) {
+			$parent_post = Post::find( (int) $object->post_id );
+			$space_id    = $parent_post ? (int) $parent_post->space_id : 0;
+		} else {
+			$space_id = (int) ( $object->space_id ?? 0 );
+		}
+
 		if ( ! $this->check_permission( 'vote', $space_id ) ) {
 			return $this->permission_error();
+		}
+
+		// Rate limit check.
+		$profile = UserProfile::find_or_create( $user_id );
+		$trust   = (int) ( $profile->trust_level ?? 0 );
+		if ( ! \Jetonomy\Permissions\Rate_Limiter::check( $user_id, 'vote', $trust ) ) {
+			return $this->validation_error( __( 'Rate limit exceeded. Please try again later.', 'jetonomy' ) );
 		}
 
 		$value = (int) $request->get_param( 'value' );
@@ -112,6 +126,12 @@ class Votes_Controller extends Base_Controller {
 		}
 
 		$result = Vote::cast( $user_id, $type, $id, $value );
+
+		// Increment rate limit counter.
+		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
+
+		// Fire action for Notifier.
+		do_action( 'jetonomy_after_vote', $type, $id, $user_id );
 
 		// Award or adjust reputation on the object author.
 		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id );
@@ -143,7 +163,14 @@ class Votes_Controller extends Base_Controller {
 			return $object;
 		}
 
-		$space_id = (int) ( $object->space_id ?? 0 );
+		// Resolve space_id — replies don't have space_id directly.
+		if ( 'reply' === $type ) {
+			$parent_post = Post::find( (int) $object->post_id );
+			$space_id    = $parent_post ? (int) $parent_post->space_id : 0;
+		} else {
+			$space_id = (int) ( $object->space_id ?? 0 );
+		}
+
 		if ( ! $this->check_permission( 'vote', $space_id ) ) {
 			return $this->permission_error();
 		}

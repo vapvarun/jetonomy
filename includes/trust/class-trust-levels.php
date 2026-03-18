@@ -23,7 +23,7 @@ class Trust_Levels {
 	 */
 	private const LEVELS = [
 		0 => [
-			'name'         => 'New User',
+			'name'         => 'Newcomer',
 			'requirements' => [],
 			'rate_limits'  => [
 				'create_posts'   => 3,
@@ -34,7 +34,7 @@ class Trust_Levels {
 			'restrictions'  => [ 'rate_limited', 'no_upload_media', 'no_create_spaces' ],
 		],
 		1 => [
-			'name'         => 'Basic',
+			'name'         => 'Member',
 			'requirements' => [
 				'posts'            => 5,
 				'days_active'      => 3,
@@ -45,7 +45,7 @@ class Trust_Levels {
 			'restrictions'  => [ 'no_create_spaces' ],
 		],
 		2 => [
-			'name'         => 'Member',
+			'name'         => 'Regular',
 			'requirements' => [
 				'posts'       => 30,
 				'days_active' => 20,
@@ -56,7 +56,7 @@ class Trust_Levels {
 			'restrictions'  => [],
 		],
 		3 => [
-			'name'         => 'Regular',
+			'name'         => 'Trusted',
 			'requirements' => [
 				'posts'       => 100,
 				'days_active' => 60,
@@ -74,7 +74,7 @@ class Trust_Levels {
 			'restrictions'  => [],
 		],
 		5 => [
-			'name'         => 'Staff',
+			'name'         => 'Moderator',
 			'requirements' => [], // Manually granted.
 			'rate_limits'   => [],
 			'abilities'     => [ 'manage_settings', 'manage_categories', 'view_analytics' ],

@@ -28,9 +28,8 @@ class Tag extends Model {
 
 		return static::insert(
 			[
-				'name'       => $name,
-				'slug'       => $slug,
-				'created_at' => now(),
+				'name' => $name,
+				'slug' => $slug,
 			]
 		);
 	}

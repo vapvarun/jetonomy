@@ -112,11 +112,9 @@ class AccessRule extends Model {
 			}
 
 			if ( $matched ) {
-				$grants = ! empty( $rule->grants ) ? json_decode( $rule->grants, true ) : [];
-
 				return [
-					'grants'     => is_array( $grants ) ? $grants : [],
-					'space_role' => $rule->space_role ?? null,
+					'grants'     => $rule->grants,     // 'read', 'participate', or 'full'
+					'space_role' => $rule->space_role,
 					'rule_id'    => (int) $rule->id,
 					'rule_type'  => $rule->rule_type,
 				];

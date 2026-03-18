@@ -108,7 +108,7 @@ class Subscriptions_Controller extends Base_Controller {
 		}
 
 		$via = sanitize_key( (string) ( $request->get_param( 'via' ) ?? 'both' ) );
-		if ( ! in_array( $via, [ 'email', 'in_app', 'both' ], true ) ) {
+		if ( ! in_array( $via, [ 'web', 'email', 'both' ], true ) ) {
 			$via = 'both';
 		}
 
@@ -189,7 +189,7 @@ class Subscriptions_Controller extends Base_Controller {
 			'user_id'     => (int) $subscription->user_id,
 			'object_type' => $subscription->object_type ?? '',
 			'object_id'   => (int) $subscription->object_id,
-			'via'         => $subscription->via ?? 'both',
+			'via'         => $subscription->notify_via ?? 'both',
 			'created_at'  => $subscription->created_at ?? null,
 		];
 	}
@@ -212,7 +212,7 @@ class Subscriptions_Controller extends Base_Controller {
 			'via'         => [
 				'type'     => 'string',
 				'required' => false,
-				'enum'     => [ 'email', 'in_app', 'both' ],
+				'enum'     => [ 'web', 'email', 'both' ],
 				'default'  => 'both',
 			],
 		];

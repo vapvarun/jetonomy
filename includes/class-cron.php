@@ -23,6 +23,15 @@ class Cron {
      * Schedule all cron events on plugin activation.
      */
     public static function schedule(): void {
+        // Ensure weekly schedule exists before scheduling weekly events.
+        $schedules = wp_get_schedules();
+        if ( ! isset( $schedules['weekly'] ) ) {
+            add_filter( 'cron_schedules', function( $s ) {
+                $s['weekly'] = [ 'interval' => WEEK_IN_SECONDS, 'display' => 'Once Weekly' ];
+                return $s;
+            } );
+        }
+
         if ( ! wp_next_scheduled( 'jetonomy_trust_evaluation' ) ) {
             wp_schedule_event( time(), 'twicedaily', 'jetonomy_trust_evaluation' );
         }

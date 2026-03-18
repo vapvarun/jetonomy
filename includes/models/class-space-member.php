@@ -23,6 +23,8 @@ class SpaceMember extends Model {
 	 * @param string $role
 	 */
 	public static function add( int $space_id, int $user_id, string $role = 'member' ): void {
+		$exists = self::is_member( $space_id, $user_id );
+
 		static::db()->query(
 			static::db()->prepare(
 				'REPLACE INTO ' . static::table() . ' (space_id, user_id, role, joined_at) VALUES (%d, %d, %s, %s)',
@@ -33,7 +35,9 @@ class SpaceMember extends Model {
 			)
 		);
 
-		Space::increment_member_count( $space_id );
+		if ( ! $exists ) {
+			Space::increment_member_count( $space_id );
+		}
 	}
 
 	/**

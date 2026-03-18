@@ -17,8 +17,8 @@ $base        = home_url( '/community' );
 					<?php $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id ); ?>
 					<section class="jt-mb-md">
 						<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-							<?php if ( ! empty( $category->emoji ) ) : ?>
-								<span style="font-size:20px;"><?php echo esc_html( $category->emoji ); ?></span>
+							<?php if ( ! empty( $category->icon ) ) : ?>
+								<span style="font-size:20px;"><?php echo esc_html( $category->icon ); ?></span>
 							<?php endif; ?>
 							<h2 style="font-family:var(--jt-font-heading);font-size:16px;font-weight:700;margin:0;">
 								<?php echo esc_html( $category->name ); ?>
@@ -39,8 +39,8 @@ $base        = home_url( '/community' );
 										class="jt-card jt-space-card"
 										style="text-decoration:none;display:block;">
 										<div style="display:flex;align-items:flex-start;gap:10px;">
-											<?php if ( ! empty( $space->emoji ) ) : ?>
-												<span style="font-size:24px;flex-shrink:0;"><?php echo esc_html( $space->emoji ); ?></span>
+											<?php if ( ! empty( $space->icon ) ) : ?>
+												<span style="font-size:24px;flex-shrink:0;"><?php echo esc_html( $space->icon ); ?></span>
 											<?php endif; ?>
 											<div style="min-width:0;">
 												<div style="font-weight:600;font-size:14px;color:var(--jt-text);margin-bottom:3px;">

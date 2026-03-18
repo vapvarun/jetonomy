@@ -26,7 +26,7 @@ class Subscription extends Model {
 		static::db()->query(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"INSERT IGNORE INTO {$tbl} (user_id, object_type, object_id, via, created_at) VALUES (%d, %s, %d, %s, %s)",
+				"INSERT IGNORE INTO {$tbl} (user_id, object_type, object_id, notify_via, created_at) VALUES (%d, %s, %d, %s, %s)",
 				$user_id,
 				$object_type,
 				$object_id,

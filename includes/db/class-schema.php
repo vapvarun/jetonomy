@@ -204,6 +204,7 @@ class Schema {
   settings longtext,
   last_seen_at datetime DEFAULT NULL,
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  updated_at datetime DEFAULT NULL,
   PRIMARY KEY  (user_id),
   KEY trust_reputation (trust_level,reputation)
 ) $charset_collate;";

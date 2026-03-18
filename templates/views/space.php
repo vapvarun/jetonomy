@@ -39,8 +39,8 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 	<div class="jt-two-col">
 		<main>
 			<div class="jt-space-head">
-				<?php if ( ! empty( $space->emoji ) ) : ?>
-					<span class="jt-space-emoji"><?php echo esc_html( $space->emoji ); ?></span>
+				<?php if ( ! empty( $space->icon ) ) : ?>
+					<span class="jt-space-emoji"><?php echo esc_html( $space->icon ); ?></span>
 				<?php endif; ?>
 				<div>
 					<h1><?php echo esc_html( $space->title ); ?></h1>
