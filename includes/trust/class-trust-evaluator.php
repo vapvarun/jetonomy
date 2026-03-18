@@ -35,22 +35,37 @@ class Trust_Evaluator {
 
 		$level = 0;
 
-		// Level 1: posts >= 5, days_active >= 3, replies_received >= 10.
-		if ( $post_count >= 5 && $days_active >= 3 && $replies_received >= 10 ) {
+		// Level 1 requirements (admin-configurable).
+		$req1 = Trust_Levels::get_requirements( 1 );
+		if (
+			$post_count       >= ( $req1['posts']            ?? 5  ) &&
+			$days_active      >= ( $req1['days_active']      ?? 3  ) &&
+			$replies_received >= ( $req1['replies_received'] ?? 10 )
+		) {
 			$level = 1;
 		} else {
 			return $level;
 		}
 
-		// Level 2: posts >= 30, days_active >= 20, reputation >= 50.
-		if ( $post_count >= 30 && $days_active >= 20 && $reputation >= 50 ) {
+		// Level 2 requirements (admin-configurable).
+		$req2 = Trust_Levels::get_requirements( 2 );
+		if (
+			$post_count  >= ( $req2['posts']       ?? 30 ) &&
+			$days_active >= ( $req2['days_active']  ?? 20 ) &&
+			$reputation  >= ( $req2['reputation']   ?? 50 )
+		) {
 			$level = 2;
 		} else {
 			return $level;
 		}
 
-		// Level 3: posts >= 100, days_active >= 60, reputation >= 200.
-		if ( $post_count >= 100 && $days_active >= 60 && $reputation >= 200 ) {
+		// Level 3 requirements (admin-configurable).
+		$req3 = Trust_Levels::get_requirements( 3 );
+		if (
+			$post_count  >= ( $req3['posts']      ?? 100 ) &&
+			$days_active >= ( $req3['days_active'] ?? 60  ) &&
+			$reputation  >= ( $req3['reputation']  ?? 200 )
+		) {
 			$level = 3;
 		}
 

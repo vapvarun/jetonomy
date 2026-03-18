@@ -93,6 +93,26 @@ class Trust_Levels {
 	}
 
 	/**
+	 * Return the promotion requirements for a trust level, merging admin-
+	 * configured thresholds over the built-in defaults.
+	 *
+	 * @param int $level Trust level (1–3).
+	 * @return array Threshold key/value pairs, or empty array if not applicable.
+	 */
+	public static function get_requirements( int $level ): array {
+		$settings   = get_option( 'jetonomy_settings', [] );
+		$thresholds = $settings['trust_thresholds'] ?? [];
+
+		$defaults = [
+			1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
+			2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
+			3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+		];
+
+		return $thresholds[ $level ] ?? $defaults[ $level ] ?? [];
+	}
+
+	/**
 	 * Return the human-readable name for a trust level.
 	 *
 	 * @param int $level Trust level (0–5).

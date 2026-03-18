@@ -857,3 +857,7 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+
+/* Mentions */
+.jt-mention { color: var(--jt-accent); font-weight: 500; }

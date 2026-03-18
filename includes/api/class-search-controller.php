@@ -32,7 +32,7 @@ class Search_Controller extends Base_Controller {
 				'type'     => [
 					'type'    => 'string',
 					'default' => 'post',
-					'enum'    => [ 'post', 'reply', 'space' ],
+					'enum'    => [ 'post', 'reply', 'space', 'tag', 'all' ],
 				],
 				'space_id' => [
 					'type'    => 'integer',
@@ -56,6 +56,22 @@ class Search_Controller extends Base_Controller {
 
 		global $wpdb;
 
+		// Combined "all" mode returns posts, spaces, and tags grouped.
+		if ( 'all' === $type || empty( $type ) ) {
+			$posts  = $this->search_posts( $wpdb, $q, $space_id );
+			$spaces = $this->search_spaces( $wpdb, $q );
+			$tags   = $this->search_tags( $wpdb, $q );
+
+			return new WP_REST_Response( [
+				'data' => [
+					'posts'  => array_map( function( $row ) { $item = (array) $row; $item['type'] = 'post'; return $item; }, $posts ),
+					'spaces' => array_map( function( $row ) { $item = (array) $row; $item['type'] = 'space'; return $item; }, $spaces ),
+					'tags'   => array_map( function( $row ) { return (array) $row; }, $tags ),
+				],
+				'meta' => [ 'total' => count( $posts ) + count( $spaces ) + count( $tags ) ],
+			], 200 );
+		}
+
 		$results = [];
 
 		if ( 'post' === $type ) {
@@ -64,6 +80,8 @@ class Search_Controller extends Base_Controller {
 			$results = $this->search_replies( $wpdb, $q, $space_id );
 		} elseif ( 'space' === $type ) {
 			$results = $this->search_spaces( $wpdb, $q );
+		} elseif ( 'tag' === $type ) {
+			$results = $this->search_tags( $wpdb, $q );
 		}
 
 		$items = array_map(
@@ -156,6 +174,26 @@ class Search_Controller extends Base_Controller {
 			$wpdb->prepare(
 				"SELECT * FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public' LIMIT 20",
 				$like,
+				$like
+			)
+		) ?: [];
+	}
+
+	/**
+	 * LIKE search on jt_tags, ordered by post_count desc.
+	 *
+	 * @param \wpdb  $wpdb
+	 * @param string $q
+	 * @return object[]
+	 */
+	private function search_tags( \wpdb $wpdb, string $q ): array {
+		$tags_table = table( 'tags' );
+		$like       = '%' . $wpdb->esc_like( $q ) . '%';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$tags_table} WHERE name LIKE %s ORDER BY post_count DESC LIMIT 10",
 				$like
 			)
 		) ?: [];

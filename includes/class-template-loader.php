@@ -234,6 +234,10 @@ class Template_Loader {
                 echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
                 echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
             }
+
+            if ( $url ) {
+                echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+            }
         }, 1 );
     }
 

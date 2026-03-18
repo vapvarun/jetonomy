@@ -258,6 +258,12 @@ class Posts_Controller extends Base_Controller {
 
 		$post = Post::find( $post_id );
 
+		// Parse @mentions and notify.
+		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
+		if ( ! empty( $mentioned ) ) {
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'post', $post_id, $title );
+		}
+
 		return new WP_REST_Response( $this->prepare_post( $post ), 201 );
 	}
 

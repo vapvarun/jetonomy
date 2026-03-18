@@ -59,10 +59,13 @@ class Rate_Limiter {
 			return []; // No rate limits for Level 1+.
 		}
 
+		$settings = get_option( 'jetonomy_settings', [] );
+		$limits   = $settings['rate_limits'] ?? [];
+
 		return [
-			'create_posts'   => 3,
-			'create_replies' => 10,
-			'vote'           => 5,
+			'create_posts'   => (int) ( $limits['posts']   ?? 3  ),
+			'create_replies' => (int) ( $limits['replies']  ?? 10 ),
+			'vote'           => (int) ( $limits['votes']    ?? 5  ),
 		];
 	}
 }

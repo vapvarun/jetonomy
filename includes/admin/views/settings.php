@@ -75,6 +75,20 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 		<?php elseif ( 'permissions' === $active_tab ) : ?>
 			<!-- Permissions Tab -->
+			<?php
+			$thresholds  = $settings['trust_thresholds'] ?? [];
+			$rate_limits = $settings['rate_limits'] ?? [];
+			$tl_defaults = [
+				1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
+				2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
+				3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+			];
+			$level_names = [
+				1 => __( 'Level 1 (Member)', 'jetonomy' ),
+				2 => __( 'Level 2 (Regular)', 'jetonomy' ),
+				3 => __( 'Level 3 (Trusted)', 'jetonomy' ),
+			];
+			?>
 			<h2><?php esc_html_e( 'Trust Level Thresholds', 'jetonomy' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Configure what users need to achieve to reach each trust level.', 'jetonomy' ); ?></p>
 			<table class="wp-list-table widefat fixed">
@@ -88,13 +102,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</tr>
 				</thead>
 				<tbody>
-					<?php for ( $level = 1; $level <= 3; $level++ ) : ?>
+					<?php for ( $level = 1; $level <= 3; $level++ ) :
+						$td = $tl_defaults[ $level ];
+					?>
 						<tr>
-							<td><strong><?php printf( esc_html__( 'Level %d', 'jetonomy' ), $level ); ?></strong></td>
-							<td><input type="number" name="jetonomy_settings[trust_level_<?php echo $level; ?>_posts]" value="<?php echo absint( $settings["trust_level_{$level}_posts"] ?? ( $level * 5 ) ); ?>" min="0" class="small-text"></td>
-							<td><input type="number" name="jetonomy_settings[trust_level_<?php echo $level; ?>_days]" value="<?php echo absint( $settings["trust_level_{$level}_days"] ?? ( $level * 5 ) ); ?>" min="0" class="small-text"></td>
-							<td><input type="number" name="jetonomy_settings[trust_level_<?php echo $level; ?>_reputation]" value="<?php echo absint( $settings["trust_level_{$level}_reputation"] ?? ( $level * 20 ) ); ?>" min="0" class="small-text"></td>
-							<td><input type="number" name="jetonomy_settings[trust_level_<?php echo $level; ?>_replies]" value="<?php echo absint( $settings["trust_level_{$level}_replies"] ?? ( $level * 5 ) ); ?>" min="0" class="small-text"></td>
+							<td><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></td>
+							<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+							<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
+							<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
+							<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
 						</tr>
 					<?php endfor; ?>
 				</tbody>
@@ -104,15 +120,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<table class="form-table">
 				<tr>
 					<th scope="row"><label><?php esc_html_e( 'Posts per Day', 'jetonomy' ); ?></label></th>
-					<td><input type="number" name="jetonomy_settings[rate_limit_posts]" value="<?php echo absint( $settings['rate_limit_posts'] ?? 3 ); ?>" min="1" class="small-text"></td>
+					<td><input type="number" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? 3 ); ?>" min="1" class="small-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label><?php esc_html_e( 'Replies per Day', 'jetonomy' ); ?></label></th>
-					<td><input type="number" name="jetonomy_settings[rate_limit_replies]" value="<?php echo absint( $settings['rate_limit_replies'] ?? 10 ); ?>" min="1" class="small-text"></td>
+					<td><input type="number" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? 10 ); ?>" min="1" class="small-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label><?php esc_html_e( 'Votes per Day', 'jetonomy' ); ?></label></th>
-					<td><input type="number" name="jetonomy_settings[rate_limit_votes]" value="<?php echo absint( $settings['rate_limit_votes'] ?? 20 ); ?>" min="1" class="small-text"></td>
+					<td><input type="number" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? 5 ); ?>" min="1" class="small-text"></td>
 				</tr>
 			</table>
 

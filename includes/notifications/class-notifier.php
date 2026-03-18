@@ -29,6 +29,9 @@ class Notifier {
 
 		// Trust level changed
 		add_action( 'jetonomy_trust_level_changed', [ $this, 'on_trust_change' ], 10, 3 );
+
+		// Moderator action on content
+		add_action( 'jetonomy_content_moderated', [ $this, 'on_content_moderated' ], 10, 4 );
 	}
 
 	/**
@@ -79,36 +82,72 @@ class Notifier {
 	}
 
 	/**
-	 * Notify when content gets voted on.
+	 * Notify when content gets voted on — batches votes within the last hour.
 	 */
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
 		if ( 'post' === $object_type ) {
-			$post = Post::find( $object_id );
-			if ( ! $post || (int) $post->author_id === $voter_id ) return;
+			$obj = Post::find( $object_id );
+			if ( ! $obj || (int) $obj->author_id === $voter_id ) return;
+			$author_id = (int) $obj->author_id;
+			$title     = mb_substr( $obj->title, 0, 50 );
+		} elseif ( 'reply' === $object_type ) {
+			$obj = Reply::find( $object_id );
+			if ( ! $obj || (int) $obj->author_id === $voter_id ) return;
+			$author_id = (int) $obj->author_id;
+			$title     = __( 'your reply', 'jetonomy' );
+		} else {
+			return;
+		}
 
+		// Check for existing vote notification on same object within last hour.
+		global $wpdb;
+		$table        = \Jetonomy\table( 'notifications' );
+		$one_hour_ago = gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing = $wpdb->get_row( $wpdb->prepare(
+			"SELECT id, message FROM {$table} WHERE user_id = %d AND type = 'vote' AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1",
+			$author_id,
+			$object_type,
+			$object_id,
+			$one_hour_ago
+		) );
+
+		if ( $existing ) {
+			// Update existing — show current total vote count.
+			$votes_table = \Jetonomy\table( 'votes' );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$vote_count = (int) $wpdb->get_var( $wpdb->prepare(
+				"SELECT COUNT(DISTINCT v.user_id) FROM {$votes_table} v WHERE v.object_type = %s AND v.object_id = %d",
+				$object_type,
+				$object_id
+			) );
+
+			$message = sprintf(
+				// translators: 1: vote count, 2: content title.
+				_n( '%1$d person voted on %2$s', '%1$d people voted on %2$s', $vote_count, 'jetonomy' ),
+				$vote_count,
+				'"' . $title . '"'
+			);
+
+			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$table,
+				[ 'message' => $message, 'created_at' => now() ],
+				[ 'id' => (int) $existing->id ]
+			);
+		} else {
+			// Create new notification.
 			Notification::create( [
-				'user_id'     => (int) $post->author_id,
+				'user_id'     => $author_id,
 				'actor_id'    => $voter_id,
 				'type'        => 'vote',
-				'object_type' => 'post',
+				'object_type' => $object_type,
 				'object_id'   => $object_id,
 				'message'     => sprintf(
-					__( 'Someone voted on your post "%s"', 'jetonomy' ),
-					mb_substr( $post->title, 0, 50 )
+					// translators: %s: content title.
+					__( 'Someone voted on %s', 'jetonomy' ),
+					'"' . $title . '"'
 				),
-				'created_at'  => now(),
-			] );
-		} elseif ( 'reply' === $object_type ) {
-			$reply = Reply::find( $object_id );
-			if ( ! $reply || (int) $reply->author_id === $voter_id ) return;
-
-			Notification::create( [
-				'user_id'     => (int) $reply->author_id,
-				'actor_id'    => $voter_id,
-				'type'        => 'vote',
-				'object_type' => 'reply',
-				'object_id'   => $object_id,
-				'message'     => __( 'Someone voted on your reply', 'jetonomy' ),
 				'created_at'  => now(),
 			] );
 		}
@@ -165,6 +204,42 @@ class Notifier {
 				$new_level
 			)
 		);
+	}
+
+	/**
+	 * Notify content author when a moderator acts on their content.
+	 */
+	public function on_content_moderated( string $action, string $object_type, int $object_id, int $moderator_id ): void {
+		if ( 'post' === $object_type ) {
+			$obj = Post::find( $object_id );
+		} else {
+			$obj = Reply::find( $object_id );
+		}
+		if ( ! $obj ) return;
+
+		$author_id = (int) $obj->author_id;
+		if ( $author_id === $moderator_id ) return;
+
+		$action_labels = [
+			'approved' => __( 'approved', 'jetonomy' ),
+			'spam'     => __( 'marked as spam', 'jetonomy' ),
+			'trash'    => __( 'removed', 'jetonomy' ),
+		];
+
+		Notification::create( [
+			'user_id'     => $author_id,
+			'actor_id'    => $moderator_id,
+			'type'        => 'moderation',
+			'object_type' => $object_type,
+			'object_id'   => $object_id,
+			'message'     => sprintf(
+				/* translators: 1: object type (post/reply), 2: action label */
+				__( 'Your %1$s was %2$s by a moderator', 'jetonomy' ),
+				$object_type,
+				$action_labels[ $action ] ?? $action
+			),
+			'created_at'  => now(),
+		] );
 	}
 
 	/**

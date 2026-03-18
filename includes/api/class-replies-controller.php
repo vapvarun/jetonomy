@@ -211,6 +211,12 @@ class Replies_Controller extends Base_Controller {
 		// Fire action for Notifier and other listeners (handles all notifications).
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
 
+		// Parse @mentions and notify.
+		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
+		if ( ! empty( $mentioned ) ) {
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ) );
+		}
+
 		$reply = Reply::find( $reply_id );
 
 		return new WP_REST_Response( $this->prepare_reply( $reply ), 201 );
