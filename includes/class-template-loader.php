@@ -71,6 +71,15 @@ class Template_Loader {
             JETONOMY_VERSION
         );
 
+        // Enqueue composer enhancement script
+        wp_enqueue_script(
+            'jetonomy-composer',
+            JETONOMY_URL . 'assets/js/composer.js',
+            [],
+            JETONOMY_VERSION,
+            true
+        );
+
         // Set up SEO
         self::set_seo_meta( $data );
 
