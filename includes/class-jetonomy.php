@@ -54,28 +54,19 @@ final class Jetonomy {
     private function load_dependencies(): void {
         require_once JETONOMY_DIR . 'includes/functions.php';
 
+        // Non-namespaced files still need explicit require
         require_once JETONOMY_DIR . 'includes/class-router.php';
         require_once JETONOMY_DIR . 'includes/class-template-loader.php';
         new Router();
 
-        require_once JETONOMY_DIR . 'includes/api/class-api.php';
         new API\Api();
 
-        // Adapters
-        require_once JETONOMY_DIR . 'includes/adapters/interface-membership.php';
-        require_once JETONOMY_DIR . 'includes/adapters/interface-search.php';
-        require_once JETONOMY_DIR . 'includes/adapters/interface-realtime.php';
-        require_once JETONOMY_DIR . 'includes/adapters/interface-email.php';
-        require_once JETONOMY_DIR . 'includes/adapters/class-adapter-registry.php';
-        require_once JETONOMY_DIR . 'includes/adapters/class-wp-roles-adapter.php';
-        require_once JETONOMY_DIR . 'includes/adapters/class-polling-adapter.php';
-        require_once JETONOMY_DIR . 'includes/adapters/class-wp-mail-adapter.php';
+        // Adapters — autoloader resolves all classes
         Adapters\Adapter_Registry::init_defaults();
         Adapters\Adapter_Registry::register_email( 'wp-mail', new Adapters\WP_Mail_Adapter() );
 
         // MemberPress adapter (conditional)
         if ( defined( 'MEPR_VERSION' ) ) {
-            require_once JETONOMY_DIR . 'includes/adapters/class-memberpress-adapter.php';
             $mepr = new Adapters\MemberPress_Adapter();
             Adapters\Adapter_Registry::register_membership( 'memberpress', $mepr );
             $mepr->register_hooks();
@@ -83,21 +74,17 @@ final class Jetonomy {
 
         // PMPro adapter (conditional)
         if ( defined( 'PMPRO_VERSION' ) ) {
-            require_once JETONOMY_DIR . 'includes/adapters/class-pmpro-adapter.php';
             $pmpro = new Adapters\PMPro_Adapter();
             Adapters\Adapter_Registry::register_membership( 'pmpro', $pmpro );
             $pmpro->register_hooks();
         }
 
-        // Notifications
-        require_once JETONOMY_DIR . 'includes/notifications/class-notifier.php';
         new Notifications\Notifier();
 
-        // Import manager
-        require_once JETONOMY_DIR . 'includes/import/class-importer.php';
-        require_once JETONOMY_DIR . 'includes/import/class-bbpress-importer.php';
-        require_once JETONOMY_DIR . 'includes/import/class-wpforo-importer.php';
-        require_once JETONOMY_DIR . 'includes/import/class-import-manager.php';
         Import\Import_Manager::init();
+
+        if ( is_admin() ) {
+            new Admin\Admin();
+        }
     }
 }

@@ -21,6 +21,9 @@ define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
 
+require_once JETONOMY_DIR . 'includes/class-autoloader.php';
+Jetonomy\Autoloader::register();
+
 require_once JETONOMY_DIR . 'includes/class-jetonomy.php';
 
 function jetonomy(): Jetonomy\Jetonomy {
