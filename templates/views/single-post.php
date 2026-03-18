@@ -101,6 +101,8 @@ wp_interactivity_state(
 					<?php echo wp_kses_post( $post->content ); ?>
 				</div>
 
+				<?php echo apply_filters( 'jetonomy_after_post_content', '', $post ); ?>
+
 				<div class="jt-post-foot">
 					<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteUp"
@@ -128,6 +130,7 @@ wp_interactivity_state(
 						<?php endif; ?>
 					</span>
 				<?php endif; ?>
+				<?php do_action( 'jetonomy_post_actions', $post ); ?>
 				</div>
 			</article>
 
