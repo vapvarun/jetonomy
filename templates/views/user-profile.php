@@ -114,6 +114,16 @@ $crumbs = [
 							<div class="jt-stat-l"><?php esc_html_e( 'Trust', 'jetonomy' ); ?></div>
 						</div>
 					</div>
+
+					<?php
+					/**
+					 * Fires after the user stats bar on the profile page.
+					 * Pro hooks badge display here.
+					 *
+					 * @param int $profile_user_id The profile user's ID.
+					 */
+					do_action( 'jetonomy_profile_after_stats', $profile_user_id );
+					?>
 				</div>
 			</div>
 

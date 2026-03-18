@@ -203,6 +203,26 @@ class Posts_Controller extends Base_Controller {
 			'type'          => $type,
 		];
 
+		/**
+		 * Check content against moderation rules before insertion.
+		 *
+		 * @param string|null $action   null if no action, or 'flag', 'hold', 'block', 'spam'.
+		 * @param array       $data     Post data array with 'title' and 'content' keys.
+		 * @param int         $space_id Space ID.
+		 * @param int         $user_id  Author user ID.
+		 */
+		$moderation_action = apply_filters( 'jetonomy_check_content', null, $post_data, $space_id, $user_id );
+
+		if ( 'block' === $moderation_action ) {
+			return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
+		}
+		if ( 'hold' === $moderation_action ) {
+			$post_data['status'] = 'pending';
+		}
+		if ( 'spam' === $moderation_action ) {
+			$post_data['status'] = 'spam';
+		}
+
 		$post_id = Post::create( $post_data );
 
 		if ( ! $post_id ) {

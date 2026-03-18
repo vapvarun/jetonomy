@@ -173,6 +173,26 @@ class Replies_Controller extends Base_Controller {
 			$reply_data['parent_id'] = $parent_id;
 		}
 
+		/**
+		 * Check content against moderation rules before insertion.
+		 *
+		 * @param string|null $action   null if no action, or 'flag', 'hold', 'block', 'spam'.
+		 * @param array       $data     Reply data array with 'content' key.
+		 * @param int         $space_id Space ID.
+		 * @param int         $user_id  Author user ID.
+		 */
+		$moderation_action = apply_filters( 'jetonomy_check_content', null, $reply_data, $space_id, $user_id );
+
+		if ( 'block' === $moderation_action ) {
+			return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+		}
+		if ( 'hold' === $moderation_action ) {
+			$reply_data['status'] = 'pending';
+		}
+		if ( 'spam' === $moderation_action ) {
+			$reply_data['status'] = 'spam';
+		}
+
 		$reply_id = Reply::create( $reply_data );
 
 		if ( ! $reply_id ) {
