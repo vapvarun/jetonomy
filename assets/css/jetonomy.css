@@ -322,3 +322,17 @@
   .jt-mt-md { margin-top: 16px; }
   .jt-mb-md { margin-bottom: 16px; }
 }
+
+@layer jetonomy-components {
+  /* ── Forms ── */
+  .jt-form-group { margin-bottom: 16px; }
+  .jt-label { display: block; font-size: 13px; font-weight: 600; color: var(--jt-text); margin-bottom: 6px; }
+  .jt-label-hint { font-weight: 400; color: var(--jt-text-tertiary); }
+  .jt-input { width: 100%; padding: 9px 14px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 14px; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; }
+  .jt-input:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
+  .jt-input::placeholder { color: var(--jt-text-tertiary); }
+  .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .jt-new-post-form { margin-top: 16px; }
+  .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 24px; font-weight: 700; margin: 0; }
+  .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 14px; margin: 4px 0 20px; }
+}

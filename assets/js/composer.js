@@ -48,5 +48,14 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 body.innerHTML = '';
             }
         } );
+
+        // Ctrl+Enter / Cmd+Enter to submit
+        body.addEventListener( 'keydown', function( e ) {
+            if ( ( e.ctrlKey || e.metaKey ) && e.key === 'Enter' ) {
+                e.preventDefault();
+                const submitBtn = composer.querySelector( '.jt-btn-fill' );
+                if ( submitBtn ) submitBtn.click();
+            }
+        } );
     } );
 } );

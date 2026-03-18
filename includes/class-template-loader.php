@@ -24,6 +24,7 @@ class Template_Loader {
             'leaderboard'   => 'views/leaderboard.php',
             'moderation'    => 'views/moderation.php',
             'tag'           => 'views/tag.php',
+            'new-post'      => 'views/new-post.php',
         ];
 
         $route = $data['route'];
@@ -119,6 +120,65 @@ class Template_Loader {
             }
             return $parts;
         } );
+
+        // Meta description + OG tags
+        add_action( 'wp_head', function() use ( $data ) {
+            $desc  = '';
+            $title = '';
+            $url   = '';
+            $image = '';
+
+            switch ( $data['route'] ) {
+                case 'home':
+                    $title = get_bloginfo( 'name' ) . ' Community';
+                    $desc  = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
+                    $url   = home_url( '/community/' );
+                    break;
+                case 'space':
+                    $space = \Jetonomy\Models\Space::find_by_slug( $data['slug'] );
+                    if ( $space ) {
+                        $title = $space->title;
+                        $desc  = wp_strip_all_tags( $space->description ?? '' );
+                        $url   = home_url( '/community/s/' . $space->slug . '/' );
+                        $image = $space->cover_image ?? '';
+                    }
+                    break;
+                case 'post':
+                    $post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
+                    if ( $post ) {
+                        $title = $post->title;
+                        $desc  = mb_substr( wp_strip_all_tags( $post->content ), 0, 160 );
+                        $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+                        $url   = home_url( '/community/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' );
+                    }
+                    break;
+                case 'profile':
+                    $user = get_user_by( 'login', $data['slug'] );
+                    if ( $user ) {
+                        $title = $user->display_name;
+                        $desc  = __( 'Community member profile', 'jetonomy' );
+                        $url   = home_url( '/community/u/' . $data['slug'] . '/' );
+                    }
+                    break;
+            }
+
+            if ( $desc ) {
+                echo '<meta name="description" content="' . esc_attr( mb_substr( $desc, 0, 160 ) ) . '">' . "\n";
+            }
+            if ( $title ) {
+                echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
+                echo '<meta property="og:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
+                echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
+                echo '<meta property="og:type" content="website">' . "\n";
+                echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '">' . "\n";
+                if ( $image ) {
+                    echo '<meta property="og:image" content="' . esc_url( $image ) . '">' . "\n";
+                }
+                echo '<meta name="twitter:card" content="summary">' . "\n";
+                echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
+                echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
+            }
+        }, 1 );
     }
 
     /**
