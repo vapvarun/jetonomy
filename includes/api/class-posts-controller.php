@@ -465,10 +465,15 @@ class Posts_Controller extends Base_Controller {
 	 * Format a post object for API output.
 	 */
 	private function prepare_post( object $post ): array {
+		$author_id = (int) ( $post->author_id ?? 0 );
+		$author    = $author_id ? get_userdata( $author_id ) : null;
+		$profile   = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
+		$space     = \Jetonomy\Models\Space::find( (int) $post->space_id );
+
 		return [
 			'id'                => (int) $post->id,
 			'space_id'          => (int) $post->space_id,
-			'author_id'         => (int) $post->author_id,
+			'author_id'         => $author_id,
 			'title'             => $post->title ?? '',
 			'slug'              => $post->slug ?? '',
 			'content'           => $post->content ?? '',
@@ -487,6 +492,17 @@ class Posts_Controller extends Base_Controller {
 			'edited_by'         => $post->edited_by ? (int) $post->edited_by : null,
 			'created_at'        => $post->created_at ?? null,
 			'updated_at'        => $post->updated_at ?? null,
+			// Enriched author data (for app clients + JS rendering)
+			'author_name'       => $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ),
+			'author_avatar'     => $author ? get_avatar_url( $author_id, [ 'size' => 64 ] ) : '',
+			'author_login'      => $author ? $author->user_login : '',
+			'trust_level'       => $profile ? (int) $profile->trust_level : 0,
+			'reputation'        => $profile ? (int) $profile->reputation : 0,
+			'time_ago'          => $post->created_at ? human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'       => $author_id ? \Jetonomy\get_profile_url( $author_id ) : '',
+			// Space context
+			'space_title'       => $space ? $space->title : '',
+			'space_slug'        => $space ? $space->slug : '',
 		];
 	}
 

@@ -54,6 +54,15 @@ class Permission_Engine {
 			return false;
 		}
 
+		// Layer 0b: Silence check — can read but not write.
+		if ( $user_id && class_exists( 'Jetonomy\Models\Restriction' ) && Restriction::is_silenced( $user_id ) ) {
+			$write_actions = [ 'create_posts', 'create_replies', 'vote', 'flag', 'create_spaces', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' ];
+			if ( in_array( $action, $write_actions, true ) ) {
+				return false;
+			}
+			// Allow read actions to continue through the normal flow.
+		}
+
 		// WP admin bypass — skip all further checks.
 		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
 			return true;

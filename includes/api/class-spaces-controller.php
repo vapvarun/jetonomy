@@ -8,6 +8,8 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
+use Jetonomy\Models\JoinRequest;
+use Jetonomy\Models\UserProfile;
 
 class Spaces_Controller extends Base_Controller {
 
@@ -449,14 +451,17 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		if ( 'approval' === $join_policy ) {
-			// Store pending request in options table until a JoinRequest model is available.
-			$pending_key = 'jetonomy_join_request_' . $id . '_' . $user_id;
-			update_option( $pending_key, [
-				'space_id'    => $id,
-				'user_id'     => $user_id,
-				'requested_at' => \Jetonomy\now(),
-				'status'      => 'pending',
-			], false );
+			// Check for an existing pending request to avoid duplicates.
+			$existing = JoinRequest::find_pending( $id, $user_id );
+			if ( $existing ) {
+				return new WP_REST_Response( [
+					'status'  => 'pending',
+					'message' => __( 'You already have a pending join request for this space.', 'jetonomy' ),
+				], 202 );
+			}
+
+			$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
+			JoinRequest::create_request( $id, $user_id, $message );
 
 			return new WP_REST_Response( [
 				'status'  => 'pending',
@@ -595,11 +600,20 @@ class Spaces_Controller extends Base_Controller {
 	 * Format a space member row for API output.
 	 */
 	private function prepare_member( object $member ): array {
+		$user_id = (int) $member->user_id;
+		$user    = get_userdata( $user_id );
+		$profile = UserProfile::find_by_user( $user_id );
+
 		return [
-			'space_id'  => (int) $member->space_id,
-			'user_id'   => (int) $member->user_id,
-			'role'      => $member->role,
-			'joined_at' => $member->joined_at ?? null,
+			'space_id'     => (int) $member->space_id,
+			'user_id'      => $user_id,
+			'role'         => $member->role,
+			'joined_at'    => $member->joined_at ?? null,
+			'display_name' => $user ? $user->display_name : '',
+			'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 48 ] ),
+			'trust_level'  => $profile ? (int) $profile->trust_level : 0,
+			'reputation'   => $profile ? (int) $profile->reputation : 0,
+			'profile_url'  => home_url( '/community/u/' . ( $user ? $user->user_login : $user_id ) . '/' ),
 		];
 	}
 

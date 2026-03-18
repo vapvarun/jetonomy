@@ -137,15 +137,25 @@ class Notifications_Controller extends Base_Controller {
 			return [];
 		}
 
+		$actor_id = (int) ( $notification->actor_id ?? 0 );
+		$actor    = $actor_id ? get_userdata( $actor_id ) : null;
+
 		return [
-			'id'          => (int) $notification->id,
-			'user_id'     => (int) $notification->user_id,
-			'type'        => $notification->type ?? '',
-			'object_type' => $notification->object_type ?? null,
-			'object_id'   => $notification->object_id ? (int) $notification->object_id : null,
-			'actor_id'    => $notification->actor_id ? (int) $notification->actor_id : null,
-			'is_read'     => (bool) ( $notification->is_read ?? false ),
-			'created_at'  => $notification->created_at ?? null,
+			'id'           => (int) $notification->id,
+			'user_id'      => (int) $notification->user_id,
+			'type'         => $notification->type ?? '',
+			'object_type'  => $notification->object_type ?? null,
+			'object_id'    => $notification->object_id ? (int) $notification->object_id : null,
+			'actor_id'     => $actor_id ?: null,
+			'is_read'      => (bool) ( $notification->is_read ?? false ),
+			'created_at'   => $notification->created_at ?? null,
+			// Enriched actor data (for app clients + JS rendering)
+			'message'      => $notification->message ?? '',
+			'actor_name'   => $actor ? $actor->display_name : __( 'System', 'jetonomy' ),
+			'actor_avatar' => $actor ? get_avatar_url( $actor_id, [ 'size' => 64 ] ) : '',
+			'actor_login'  => $actor ? $actor->user_login : '',
+			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
 		];
 	}
 }

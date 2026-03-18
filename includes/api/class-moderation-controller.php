@@ -7,6 +7,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use Jetonomy\Models\Flag;
+use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
 use function Jetonomy\table;
 
@@ -73,6 +74,48 @@ class Moderation_Controller extends Base_Controller {
 		register_rest_route( $ns, '/moderation/flags', [
 			'methods'             => \WP_REST_Server::READABLE,
 			'callback'            => [ $this, 'list_flags' ],
+			'permission_callback' => [ $this, 'require_moderate' ],
+		] );
+
+		// Trash content.
+		register_rest_route( $ns, '/moderation/trash/(?P<type>post|reply)/(?P<id>\d+)', [
+			'methods'             => \WP_REST_Server::CREATABLE,
+			'callback'            => [ $this, 'trash_content' ],
+			'permission_callback' => [ $this, 'require_moderate' ],
+		] );
+
+		// Resolve flag.
+		register_rest_route( $ns, '/moderation/flags/(?P<id>\d+)/resolve', [
+			'methods'             => \WP_REST_Server::CREATABLE,
+			'callback'            => [ $this, 'resolve_flag' ],
+			'permission_callback' => [ $this, 'require_moderate' ],
+			'args'                => [
+				'status' => [
+					'type'     => 'string',
+					'required' => true,
+					'enum'     => [ 'valid', 'dismissed' ],
+				],
+			],
+		] );
+
+		// Ban user.
+		register_rest_route( $ns, '/moderation/ban', [
+			'methods'             => \WP_REST_Server::CREATABLE,
+			'callback'            => [ $this, 'ban_user' ],
+			'permission_callback' => [ $this, 'require_moderate' ],
+			'args'                => [
+				'user_id'    => [ 'type' => 'integer', 'required' => true ],
+				'type'       => [ 'type' => 'string', 'required' => true, 'enum' => [ 'global_ban', 'space_ban', 'silence' ] ],
+				'reason'     => [ 'type' => 'string' ],
+				'space_id'   => [ 'type' => 'integer' ],
+				'expires_at' => [ 'type' => 'string' ],
+			],
+		] );
+
+		// Unban user.
+		register_rest_route( $ns, '/moderation/ban/(?P<id>\d+)', [
+			'methods'             => \WP_REST_Server::DELETABLE,
+			'callback'            => [ $this, 'unban_user' ],
 			'permission_callback' => [ $this, 'require_moderate' ],
 		] );
 	}
@@ -150,6 +193,8 @@ class Moderation_Controller extends Base_Controller {
 			return $result;
 		}
 
+		do_action( 'jetonomy_content_moderated', 'approved', $type, $id, get_current_user_id() );
+
 		return new WP_REST_Response( [
 			'approved'    => true,
 			'object_type' => $type,
@@ -186,6 +231,8 @@ class Moderation_Controller extends Base_Controller {
 		if ( $author_id ) {
 			UserProfile::adjust_reputation( $author_id, -20 );
 		}
+
+		do_action( 'jetonomy_content_moderated', 'spam', $type, $id, get_current_user_id() );
 
 		return new WP_REST_Response( [
 			'marked_spam' => true,
@@ -237,6 +284,122 @@ class Moderation_Controller extends Base_Controller {
 			'total'    => count( $flags ),
 			'has_more' => false,
 		] );
+	}
+
+	/**
+	 * POST /moderation/trash/{type}/{id} — Trash (soft-delete) a post or reply.
+	 */
+	public function trash_content( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$type = $request->get_param( 'type' );
+		$id   = absint( $request->get_param( 'id' ) );
+
+		$result = $this->set_status( $type, $id, 'trash' );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		do_action( 'jetonomy_content_moderated', 'trash', $type, $id, get_current_user_id() );
+
+		return new WP_REST_Response( [
+			'trashed'     => true,
+			'object_type' => $type,
+			'id'          => $id,
+		], 200 );
+	}
+
+	/**
+	 * POST /moderation/flags/{id}/resolve — Resolve a flag as valid or dismissed.
+	 */
+	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id     = absint( $request->get_param( 'id' ) );
+		$status = sanitize_text_field( (string) $request->get_param( 'status' ) );
+
+		$flag = Flag::find( $id );
+		if ( ! $flag ) {
+			return $this->not_found( 'Flag' );
+		}
+
+		$resolved = Flag::resolve( $id, get_current_user_id(), $status );
+
+		if ( ! $resolved ) {
+			return new WP_Error(
+				'jetonomy_resolve_failed',
+				__( 'Failed to resolve flag.', 'jetonomy' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		return new WP_REST_Response( [
+			'resolved' => true,
+			'id'       => $id,
+			'status'   => $status,
+		], 200 );
+	}
+
+	/**
+	 * POST /moderation/ban — Issue a ban, space ban, or silence.
+	 */
+	public function ban_user( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id    = absint( $request->get_param( 'user_id' ) );
+		$type       = sanitize_text_field( (string) $request->get_param( 'type' ) );
+		$reason     = $request->get_param( 'reason' ) ? sanitize_textarea_field( (string) $request->get_param( 'reason' ) ) : null;
+		$space_id   = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
+		$expires_at = $request->get_param( 'expires_at' ) ? sanitize_text_field( (string) $request->get_param( 'expires_at' ) ) : null;
+
+		if ( ! get_userdata( $user_id ) ) {
+			return $this->not_found( 'User' );
+		}
+
+		$restriction_id = Restriction::ban(
+			$user_id,
+			$type,
+			get_current_user_id(),
+			$space_id,
+			$reason,
+			$expires_at
+		);
+
+		if ( ! $restriction_id ) {
+			return new WP_Error(
+				'jetonomy_ban_failed',
+				__( 'Failed to issue restriction.', 'jetonomy' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		return new WP_REST_Response( [
+			'banned'         => true,
+			'restriction_id' => $restriction_id,
+			'user_id'        => $user_id,
+			'type'           => $type,
+		], 201 );
+	}
+
+	/**
+	 * DELETE /moderation/ban/{id} — Lift a restriction by its ID.
+	 */
+	public function unban_user( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id = absint( $request->get_param( 'id' ) );
+
+		$restriction = Restriction::find( $id );
+		if ( ! $restriction ) {
+			return $this->not_found( 'Restriction' );
+		}
+
+		$removed = Restriction::remove_ban( $id );
+
+		if ( ! $removed ) {
+			return new WP_Error(
+				'jetonomy_unban_failed',
+				__( 'Failed to remove restriction.', 'jetonomy' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		return new WP_REST_Response( [
+			'removed' => true,
+			'id'      => $id,
+		], 200 );
 	}
 
 	/**
