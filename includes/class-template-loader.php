@@ -55,9 +55,12 @@ class Template_Loader {
         );
 
         // Set up Interactivity API state
+        $settings = get_option( 'jetonomy_settings', [] );
         wp_interactivity_state( 'jetonomy', [
             'apiBase'       => rest_url( 'jetonomy/v1' ),
             '_nonce'        => wp_create_nonce( 'wp_rest' ),
+            'nonce'         => wp_create_nonce( 'wp_rest' ),
+            'communityBase' => home_url( '/' . ( $settings['base_slug'] ?? 'community' ) ),
             'currentPostId' => 0,
             'postScores'    => new \stdClass(),
             'replyScores'   => new \stdClass(),

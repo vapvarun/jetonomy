@@ -24,7 +24,10 @@ $base         = home_url( '/community' );
 <div class="jt-container" style="max-width:600px;">
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
-	<form id="jt-edit-profile" class="jt-new-post-form">
+	<form id="jt-edit-profile" class="jt-new-post-form"
+	      data-wp-interactive="jetonomy"
+	      data-wp-on--submit="actions.saveProfile"
+	      data-wp-context='<?php echo wp_json_encode( [ "profileUrl" => $base . "/u/" . $current_user->user_login . "/" ] ); ?>'>
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></label>
 			<input type="text" name="display_name" class="jt-input" value="<?php echo esc_attr( $current_user->display_name ); ?>" required>
@@ -50,42 +53,7 @@ $base         = home_url( '/community' );
 
 		<div class="jt-form-actions">
 			<a href="<?php echo esc_url( $base . '/u/' . $current_user->user_login . '/' ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
-			<button type="submit" class="jt-btn jt-btn-fill" id="jt-save-profile"><?php esc_html_e( 'Save Profile', 'jetonomy' ); ?></button>
+			<button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting"><?php esc_html_e( 'Save Profile', 'jetonomy' ); ?></button>
 		</div>
 	</form>
 </div>
-
-<script>
-document.getElementById( 'jt-edit-profile' ).addEventListener( 'submit', function ( e ) {
-	e.preventDefault();
-	var btn  = document.getElementById( 'jt-save-profile' );
-	var form = new FormData( this );
-	btn.disabled    = true;
-	btn.textContent = '<?php echo esc_js( __( 'Saving...', 'jetonomy' ) ); ?>';
-
-	fetch( '<?php echo esc_url( rest_url( 'jetonomy/v1/users/me' ) ); ?>', {
-		method: 'PATCH',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>',
-		},
-		body: JSON.stringify( {
-			display_name: form.get( 'display_name' ),
-			bio: form.get( 'bio' ),
-		} ),
-	} )
-		.then( function ( r ) { return r.json(); } )
-		.then( function ( res ) {
-			if ( res.code ) {
-				alert( res.message || 'Error' );
-			} else {
-				window.location.href = '<?php echo esc_url( $base . '/u/' . $current_user->user_login . '/' ); ?>';
-			}
-		} )
-		.catch( function () { alert( 'Network error' ); } )
-		.finally( function () {
-			btn.disabled    = false;
-			btn.textContent = '<?php echo esc_js( __( 'Save Profile', 'jetonomy' ) ); ?>';
-		} );
-} );
-</script>

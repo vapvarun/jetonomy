@@ -19,6 +19,11 @@ const { state, actions } = store( 'jetonomy', {
         // Composer visibility
         composerVisible: false,
         composerReplyTo: null,
+        // Form submission state
+        isSubmitting: false,
+        submitLabel: 'Post Topic',
+        // Community base URL (populated from server state)
+        communityBase: '',
         // Nonce for API calls
         get nonce() {
             return state._nonce || '';
@@ -171,6 +176,80 @@ const { state, actions } = store( 'jetonomy', {
                 }
             } finally {
                 state.isLoading = false;
+            }
+        },
+
+        // ── New post submission ──
+        *submitNewPost( event ) {
+            event.preventDefault();
+            const ctx = getContext();
+            state.isSubmitting = true;
+            state.submitLabel = 'Posting...';
+
+            const form = getElement().ref;
+            const title = form.querySelector('[name="title"]')?.value?.trim();
+            const content = form.querySelector('[contenteditable]')?.innerHTML?.trim();
+            const tags = form.querySelector('[name="tags"]')?.value?.trim();
+
+            if ( ! title || ! content ) {
+                state.isSubmitting = false;
+                state.submitLabel = 'Post Topic';
+                return;
+            }
+
+            try {
+                const response = yield fetch(
+                    `${ state.apiBase }/spaces/${ ctx.spaceId }/posts`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
+                        body: JSON.stringify( {
+                            title,
+                            content,
+                            type: ctx.postType,
+                            tags: tags ? tags.split( ',' ).map( t => t.trim() ) : [],
+                        } ),
+                    }
+                );
+                const data = yield response.json();
+                if ( data.id || data.data?.id ) {
+                    const slug = data.slug || data.data?.slug || '';
+                    window.location.href = `${ state.communityBase }/s/${ ctx.spaceSlug }/t/${ slug }/`;
+                }
+            } catch {
+                // silent
+            } finally {
+                state.isSubmitting = false;
+                state.submitLabel = 'Post Topic';
+            }
+        },
+
+        // ── Profile save ──
+        *saveProfile( event ) {
+            event.preventDefault();
+            const ctx = getContext();
+            state.isSubmitting = true;
+
+            const form = getElement().ref;
+            const displayName = form.querySelector('[name="display_name"]')?.value;
+            const bio = form.querySelector('[name="bio"]')?.value;
+
+            try {
+                const response = yield fetch(
+                    `${ state.apiBase }/users/me`,
+                    {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
+                        body: JSON.stringify( { display_name: displayName, bio } ),
+                    }
+                );
+                if ( response.ok ) {
+                    window.location.href = ctx.profileUrl;
+                }
+            } catch {
+                // silent
+            } finally {
+                state.isSubmitting = false;
             }
         },
 
