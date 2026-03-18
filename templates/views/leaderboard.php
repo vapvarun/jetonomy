@@ -34,9 +34,9 @@ $crumbs = [
 
 	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<div style="max-width:700px;">
-		<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-			<h1 style="font-family:var(--jt-font-heading);font-size:22px;font-weight:700;margin:0;">
+	<div class="jt-leaderboard-wrap">
+		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
+			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?>
 			</h1>
 		</div>
@@ -65,7 +65,7 @@ $crumbs = [
 						$medal = '&#129943;'; // Bronze.
 					}
 					?>
-					<div class="jt-leader" style="padding:10px 0;">
+					<div class="jt-leader jt-leader-pad">
 						<span class="jt-leader-rank">
 							<?php
 							if ( $medal ) {
@@ -80,16 +80,16 @@ $crumbs = [
 							<a href="<?php echo esc_url( $base . '/u/' . $lu->user_login . '/' ); ?>">
 								<?php echo esc_html( $lu->display_name ); ?>
 							</a>
-							<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);margin-left:6px;" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+							<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 						</span>
-						<div style="display:flex;gap:16px;margin-left:auto;text-align:right;">
+						<div class="jt-leader-stats">
 							<div>
 								<div class="jt-leader-pts"><?php echo (int) $leader->reputation; ?></div>
-								<div style="font-size:10px;color:var(--jt-text-tertiary);text-transform:uppercase;letter-spacing:.05em;"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
+								<div class="jt-leader-stat-lbl"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
 							</div>
 							<div>
-								<div style="font-family:var(--jt-font-mono);font-size:12px;font-weight:600;"><?php echo (int) $leader->post_count; ?></div>
-								<div style="font-size:10px;color:var(--jt-text-tertiary);text-transform:uppercase;letter-spacing:.05em;"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
+								<div class="jt-leader-stat-val"><?php echo (int) $leader->post_count; ?></div>
+								<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
 							</div>
 						</div>
 					</div>

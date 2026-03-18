@@ -21,7 +21,7 @@ $base         = home_url( '/community' );
 );
 ?>
 
-<div class="jt-container" style="max-width:600px;">
+<div class="jt-container jt-narrower">
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
 	<form id="jt-edit-profile" class="jt-new-post-form"
@@ -40,9 +40,9 @@ $base         = home_url( '/community' );
 
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Avatar', 'jetonomy' ); ?></label>
-			<div style="display:flex;align-items:center;gap:12px;">
-				<img src="<?php echo esc_url( get_avatar_url( $current_user->ID, [ 'size' => 64 ] ) ); ?>" width="64" height="64" style="border-radius:50%;">
-				<span style="font-size:13px;color:var(--jt-text-tertiary);">
+			<div class="jt-avatar-row">
+				<img src="<?php echo esc_url( get_avatar_url( $current_user->ID, [ 'size' => 64 ] ) ); ?>" width="64" height="64" class="jt-avatar-round" alt="">
+				<span class="jt-avatar-hint">
 					<?php
 					/* translators: %s: link to Gravatar */
 					printf( esc_html__( 'Change your avatar at %s', 'jetonomy' ), '<a href="https://gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar.com</a>' );

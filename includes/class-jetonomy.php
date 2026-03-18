@@ -38,6 +38,7 @@ final class Jetonomy {
     }
 
     public function deactivate(): void {
+        delete_option( 'jetonomy_permalinks_flushed' );
         Cron::unschedule();
         flush_rewrite_rules();
     }
@@ -72,6 +73,12 @@ final class Jetonomy {
         require_once JETONOMY_DIR . 'includes/class-router.php';
         require_once JETONOMY_DIR . 'includes/class-template-loader.php';
         new Router();
+
+        // Ensure rewrite rules are flushed at least once after activation.
+        if ( ! get_option( 'jetonomy_permalinks_flushed' ) ) {
+            flush_rewrite_rules();
+            update_option( 'jetonomy_permalinks_flushed', true );
+        }
 
         new API\Api();
 

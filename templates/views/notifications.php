@@ -31,8 +31,8 @@ $type_labels = [
 
 	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<div style="max-width:700px;">
-		<h1 style="font-family:var(--jt-font-heading);font-size:22px;font-weight:700;margin-bottom:20px;">
+	<div class="jt-notif-wrap">
+		<h1 class="jt-page-title jt-mb-20">
 			<?php esc_html_e( 'Notifications', 'jetonomy' ); ?>
 		</h1>
 
@@ -42,7 +42,7 @@ $type_labels = [
 				<div class="jt-empty-text"><?php esc_html_e( 'You are all caught up!', 'jetonomy' ); ?></div>
 			</div>
 		<?php else : ?>
-			<div class="jt-card" style="padding:0;overflow:hidden;">
+			<div class="jt-card jt-card-flush">
 				<?php foreach ( $notifications as $notif ) : ?>
 					<?php
 					$actor = $notif->actor_id ? get_userdata( (int) $notif->actor_id ) : null;
@@ -73,16 +73,16 @@ $type_labels = [
 					}
 					?>
 					<a href="<?php echo esc_url( $notif_url ); ?>"
-						style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--jt-border);text-decoration:none;color:inherit;<?php echo ! $notif->is_read ? 'background:var(--jt-accent-muted);' : ''; ?>">
-						<span class="jt-avatar jt-avatar-sm" style="flex-shrink:0;">
+						class="jt-notif-item <?php echo ! $notif->is_read ? 'unread' : ''; ?>">
+						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0">
 							<?php echo esc_html( $actor ? strtoupper( substr( $actor->display_name, 0, 2 ) ) : '?' ); ?>
 						</span>
-						<div style="flex:1;min-width:0;">
-							<div style="font-size:13px;line-height:1.5;">
+						<div class="jt-notif-body">
+							<div class="jt-notif-text">
 								<strong><?php echo esc_html( $actor_name ); ?></strong>
 								<?php echo esc_html( $action_label ); ?>
 							</div>
-							<div style="font-size:11px;color:var(--jt-text-tertiary);margin-top:2px;">
+							<div class="jt-notif-time">
 								<?php
 								/* translators: %s: human-readable time difference */
 								echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
@@ -90,7 +90,7 @@ $type_labels = [
 							</div>
 						</div>
 						<?php if ( ! $notif->is_read ) : ?>
-							<span style="width:8px;height:8px;border-radius:50%;background:var(--jt-accent);flex-shrink:0;margin-top:4px;"></span>
+							<span class="jt-notif-dot"></span>
 						<?php endif; ?>
 					</a>
 				<?php endforeach; ?>

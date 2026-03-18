@@ -16,48 +16,47 @@ $base        = home_url( '/community' );
 				<?php foreach ( $categories as $category ) : ?>
 					<?php $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id ); ?>
 					<section class="jt-mb-md">
-						<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+						<div class="jt-cat-row">
 							<?php if ( ! empty( $category->icon ) ) : ?>
-								<span style="font-size:20px;"><?php echo esc_html( $category->icon ); ?></span>
+								<span class="jt-cat-emoji"><?php echo esc_html( $category->icon ); ?></span>
 							<?php endif; ?>
-							<h2 style="font-family:var(--jt-font-heading);font-size:16px;font-weight:700;margin:0;">
+							<h2 class="jt-cat-name">
 								<?php echo esc_html( $category->name ); ?>
 							</h2>
 							<?php if ( ! empty( $category->description ) ) : ?>
-								<span style="font-size:13px;color:var(--jt-text-tertiary);">&mdash; <?php echo esc_html( $category->description ); ?></span>
+								<span class="jt-cat-desc">&mdash; <?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>
 						</div>
 
 						<?php if ( empty( $spaces ) ) : ?>
-							<p style="font-size:13px;color:var(--jt-text-tertiary);padding:8px 0;">
+							<p class="jt-cat-empty">
 								<?php esc_html_e( 'No spaces in this category yet.', 'jetonomy' ); ?>
 							</p>
 						<?php else : ?>
 							<div class="jt-space-grid">
 								<?php foreach ( $spaces as $space ) : ?>
 									<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
-										class="jt-card jt-space-card"
-										style="text-decoration:none;display:block;">
-										<div style="display:flex;align-items:flex-start;gap:10px;">
+										class="jt-card jt-space-card jt-no-underline jt-block">
+										<div class="jt-space-card-inner">
 											<?php if ( ! empty( $space->icon ) ) : ?>
-												<span style="font-size:24px;flex-shrink:0;"><?php echo esc_html( $space->icon ); ?></span>
+												<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
 											<?php endif; ?>
-											<div style="min-width:0;">
-												<div style="font-weight:600;font-size:14px;color:var(--jt-text);margin-bottom:3px;">
+											<div class="jt-space-card-body">
+												<div class="jt-space-card-title">
 													<?php echo esc_html( $space->title ); ?>
 												</div>
 												<?php if ( ! empty( $space->description ) ) : ?>
-													<div style="font-size:12px;color:var(--jt-text-tertiary);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+													<div class="jt-space-card-excerpt">
 														<?php echo esc_html( $space->description ); ?>
 													</div>
 												<?php endif; ?>
-												<div style="display:flex;gap:12px;margin-top:8px;">
-													<span style="font-size:11px;color:var(--jt-text-tertiary);">
-														<strong style="font-family:var(--jt-font-mono);color:var(--jt-text-secondary);"><?php echo (int) $space->post_count; ?></strong>
+												<div class="jt-space-card-stats">
+													<span class="jt-space-card-stat">
+														<strong><?php echo (int) $space->post_count; ?></strong>
 														<?php esc_html_e( 'posts', 'jetonomy' ); ?>
 													</span>
-													<span style="font-size:11px;color:var(--jt-text-tertiary);">
-														<strong style="font-family:var(--jt-font-mono);color:var(--jt-text-secondary);"><?php echo (int) $space->member_count; ?></strong>
+													<span class="jt-space-card-stat">
+														<strong><?php echo (int) $space->member_count; ?></strong>
 														<?php esc_html_e( 'members', 'jetonomy' ); ?>
 													</span>
 												</div>

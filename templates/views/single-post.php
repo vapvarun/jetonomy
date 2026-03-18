@@ -84,7 +84,7 @@ wp_interactivity_state(
 					<div class="jt-meta">
 						<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $author_id, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
 						<strong><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
-						<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+						<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference */
@@ -92,12 +92,12 @@ wp_interactivity_state(
 							?>
 						</span>
 						<?php if ( $post->is_resolved ) : ?>
-							<span style="background:var(--jt-success-light);color:var(--jt-success);font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--jt-radius-full);">
+							<span class="jt-badge-resolved">
 								&#10003; <?php esc_html_e( 'Resolved', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
 						<?php if ( $post->is_closed ) : ?>
-							<span style="background:var(--jt-bg-muted);color:var(--jt-text-tertiary);font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--jt-radius-full);">
+							<span class="jt-badge-closed">
 								<?php esc_html_e( 'Closed', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
@@ -138,14 +138,14 @@ wp_interactivity_state(
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
 						&#9660;
 					</button>
-					<span style="margin-left:auto;font-size:12px;color:var(--jt-text-tertiary);">
+					<span class="jt-view-count">
 						<?php
 						/* translators: %d: number of views */
 						echo esc_html( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
 						?>
 					</span>
 				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
-					<span style="display:flex;gap:4px;margin-left:8px;">
+					<span class="jt-actions-group">
 						<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>" class="jt-act" title="<?php esc_attr_e( 'Admin', 'jetonomy' ); ?>">&#9881;</a>
 						<?php endif; ?>
@@ -180,7 +180,7 @@ wp_interactivity_state(
 			</div>
 
 			<?php if ( empty( $replies ) ) : ?>
-				<div class="jt-empty" style="padding:30px 20px;">
+				<div class="jt-empty-compact">
 					<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>
@@ -193,8 +193,8 @@ wp_interactivity_state(
 
 			<!-- Composer -->
 			<?php if ( ! $post->is_closed ) : ?>
-				<div style="margin-top:24px;">
-					<h4 style="font-size:14px;font-weight:600;margin-bottom:10px;">
+				<div class="jt-reply-composer">
+					<h4>
 						<?php esc_html_e( 'Your Reply', 'jetonomy' ); ?>
 					</h4>
 					<?php
@@ -208,7 +208,7 @@ wp_interactivity_state(
 					?>
 				</div>
 			<?php else : ?>
-				<div style="text-align:center;padding:20px;color:var(--jt-text-tertiary);font-size:13px;background:var(--jt-bg-subtle);border-radius:var(--jt-radius);margin-top:20px;">
+				<div class="jt-closed-notice">
 					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
 				</div>
 			<?php endif; ?>

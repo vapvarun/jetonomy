@@ -34,7 +34,7 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 		</div>
 		<div class="jt-row-sub">
 			<?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?>
-			<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+			<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 			<?php foreach ( $tags as $tag ) : ?>
 				<a href="<?php echo esc_url( home_url( '/community/tag/' . $tag->slug . '/' ) ); ?>"
 					class="jt-tag"
@@ -47,7 +47,7 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 		<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 	</div>
 	<div class="jt-row-stat">
-		<div class="jt-row-stat-n" style="font-size:12px;color:var(--jt-text-tertiary);">
+		<div class="jt-row-time">
 			<?php
 			/* translators: %s: human-readable time difference */
 			echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );

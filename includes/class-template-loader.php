@@ -80,8 +80,10 @@ class Template_Loader {
             'currentPostId' => 0,
             'postScores'    => new \stdClass(),
             'replyScores'   => new \stdClass(),
-            'currentSort'   => sanitize_text_field( $_GET['sort'] ?? 'latest' ),
+            'currentSort'   => sanitize_text_field( $_GET['sort'] ?? 'latest' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
             'unreadCount'   => 0,
+            'isSubmitting'  => false,
+            'submitLabel'   => __( 'Post Topic', 'jetonomy' ),
         ] );
 
         // Enqueue Interactivity API module

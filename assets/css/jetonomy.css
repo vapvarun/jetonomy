@@ -195,6 +195,12 @@
 
   /* ── Trust level badge ── */
   .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; font-size: 9px; font-weight: 700; color: white; font-family: var(--jt-font-mono); }
+  .jt-tl[data-jt-tl="0"] { background: var(--jt-tl0); }
+  .jt-tl[data-jt-tl="1"] { background: var(--jt-tl1); }
+  .jt-tl[data-jt-tl="2"] { background: var(--jt-tl2); }
+  .jt-tl[data-jt-tl="3"] { background: var(--jt-tl3); }
+  .jt-tl[data-jt-tl="4"] { background: var(--jt-tl4); }
+  .jt-tl[data-jt-tl="5"] { background: var(--jt-tl5); }
 
   /* ── Post ── */
   .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
@@ -360,10 +366,166 @@
   .jt-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .jt-hidden { display: none !important; }
   .jt-flex { display: flex; }
+  .jt-flex-col { display: flex; flex-direction: column; }
+  .jt-items-center { align-items: center; }
+  .jt-items-start { align-items: flex-start; }
+  .jt-justify-between { justify-content: space-between; }
+  .jt-flex-1 { flex: 1; min-width: 0; }
+  .jt-flex-shrink-0 { flex-shrink: 0; }
+  .jt-ml-auto { margin-left: auto; }
+  .jt-gap-xs { gap: 4px; }
   .jt-gap-sm { gap: 8px; }
+  .jt-gap-10 { gap: 10px; }
   .jt-gap-md { gap: 16px; }
+  .jt-gap-12 { gap: 12px; }
+  .jt-mt-sm { margin-top: 8px; }
+  .jt-mt-10 { margin-top: 10px; }
   .jt-mt-md { margin-top: 16px; }
+  .jt-mt-lg { margin-top: 24px; }
+  .jt-mb-sm { margin-bottom: 8px; }
+  .jt-mb-10 { margin-bottom: 10px; }
+  .jt-mb-12 { margin-bottom: 12px; }
   .jt-mb-md { margin-bottom: 16px; }
+  .jt-mb-20 { margin-bottom: 20px; }
+  .jt-mb-lg { margin-bottom: 24px; }
+  .jt-p-md { padding: 16px; }
+  .jt-w-full { width: 100%; }
+  .jt-text-center { text-align: center; }
+  .jt-text-right { text-align: right; }
+  .jt-block { display: block; }
+  .jt-no-underline { text-decoration: none; }
+}
+
+@layer jetonomy-components {
+  /* ── Category header ── */
+  .jt-cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .jt-cat-emoji { font-size: 20px; }
+  .jt-cat-name { font-family: var(--jt-font-heading); font-size: 16px; font-weight: 700; margin: 0; }
+  .jt-cat-desc { font-size: 13px; color: var(--jt-text-tertiary); }
+  .jt-cat-empty { font-size: 13px; color: var(--jt-text-tertiary); padding: 8px 0; }
+
+  /* ── Space card (home/category) ── */
+  .jt-space-card-inner { display: flex; align-items: flex-start; gap: 10px; }
+  .jt-space-card-emoji { font-size: 24px; flex-shrink: 0; }
+  .jt-space-card-body { min-width: 0; }
+  .jt-space-card-title { font-weight: 600; font-size: 14px; color: var(--jt-text); margin-bottom: 3px; }
+  .jt-space-card-excerpt { font-size: 12px; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .jt-space-card-stats { display: flex; gap: 12px; margin-top: 8px; }
+  .jt-space-card-stat { font-size: 11px; color: var(--jt-text-tertiary); }
+  .jt-space-card-stat strong { font-family: var(--jt-font-mono); color: var(--jt-text-secondary); }
+
+  /* ── Status badges ── */
+  .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
+  .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
+  .jt-badge-danger { background: var(--jt-danger); color: white; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
+  .jt-badge-accent { font-size: 11px; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-accent); padding: 2px 8px; border-radius: var(--jt-radius-full); }
+
+  /* ── View count ── */
+  .jt-view-count { margin-left: auto; font-size: 12px; color: var(--jt-text-tertiary); }
+
+  /* ── Mod/edit actions ── */
+  .jt-actions-group { display: flex; gap: 4px; margin-left: 8px; }
+
+  /* ── Empty with padding ── */
+  .jt-empty-compact { text-align: center; padding: 30px 20px; color: var(--jt-text-tertiary); }
+
+  /* ── Reply composer wrapper ── */
+  .jt-reply-composer { margin-top: 24px; }
+  .jt-reply-composer h4 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+
+  /* ── Closed post notice ── */
+  .jt-closed-notice { text-align: center; padding: 20px; color: var(--jt-text-tertiary); font-size: 13px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); margin-top: 20px; }
+
+  /* ── Leaderboard ── */
+  .jt-leaderboard-wrap { max-width: 700px; }
+  .jt-page-title { font-family: var(--jt-font-heading); font-size: 22px; font-weight: 700; margin: 0; }
+  .jt-page-title-sm { font-size: 20px; }
+  .jt-leader-stats { display: flex; gap: 16px; margin-left: auto; text-align: right; }
+  .jt-leader-stat-val { font-family: var(--jt-font-mono); font-size: 12px; font-weight: 600; }
+  .jt-leader-stat-lbl { font-size: 10px; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: .05em; }
+  .jt-leader-pad { padding: 10px 0; }
+
+  /* ── Sidebar extras ── */
+  .jt-sidebar-link { margin-top: 10px; }
+  .jt-sidebar-link a { font-size: 12px; color: var(--jt-text-tertiary); }
+  .jt-tag-count { color: var(--jt-text-tertiary); font-size: 10px; margin-left: 3px; }
+
+  /* ── Notification list ── */
+  .jt-notif-wrap { max-width: 700px; }
+  .jt-notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--jt-border); text-decoration: none; color: inherit; }
+  .jt-notif-item.unread { background: var(--jt-accent-muted); }
+  .jt-notif-body { flex: 1; min-width: 0; }
+  .jt-notif-text { font-size: 13px; line-height: 1.5; }
+  .jt-notif-time { font-size: 11px; color: var(--jt-text-tertiary); margin-top: 2px; }
+  .jt-notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--jt-accent); flex-shrink: 0; margin-top: 4px; }
+
+  /* ── Moderation ── */
+  .jt-mod-wrap { max-width: 800px; }
+  .jt-mod-flag { padding: 16px; border-bottom: 1px solid var(--jt-border); }
+  .jt-mod-flag-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .jt-mod-flag-type { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger); }
+  .jt-mod-flag-reason { font-size: 12px; font-weight: 500; color: var(--jt-text-secondary); }
+  .jt-mod-flag-reporter { margin-left: auto; font-size: 12px; color: var(--jt-text-tertiary); }
+  .jt-mod-flag-note { font-size: 13px; color: var(--jt-text-secondary); margin-bottom: 8px; padding: 8px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
+  .jt-mod-flag-actions { display: flex; gap: 8px; align-items: center; }
+  .jt-btn-danger { background: var(--jt-danger); }
+
+  /* ── Search ── */
+  .jt-search-form-wrap { margin-bottom: 24px; }
+  .jt-search-full { width: 100%; max-width: 600px; border-radius: var(--jt-radius); }
+  .jt-search-full input { font-size: 15px; }
+  .jt-section-label { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 8px; }
+  .jt-search-result-count { font-size: 13px; color: var(--jt-text-tertiary); }
+
+  /* ── Tag page ── */
+  .jt-tag-hero { font-size: 18px; padding: 4px 14px; }
+  .jt-tag-count-label { font-size: 13px; color: var(--jt-text-tertiary); }
+
+  /* ── Profile page extras ── */
+  .jt-profile-bio { color: var(--jt-text-secondary); font-size: 14px; margin-top: 8px; line-height: 1.6; }
+  .jt-profile-meta { display: flex; gap: 16px; margin-top: 10px; font-size: 13px; color: var(--jt-text-tertiary); }
+  .jt-section-heading { font-family: var(--jt-font-heading); font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
+  /* ── Reply card extras ── */
+  .jt-reply-author { font-size: 13px; }
+  .jt-reply-op { font-size: 12px; color: var(--jt-accent); font-weight: 600; }
+  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 12px; }
+  .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
+
+  /* ── Time stat on post rows ── */
+  .jt-row-time { font-size: 12px; color: var(--jt-text-tertiary); }
+
+  /* ── Category page header ── */
+  .jt-cat-page-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .jt-cat-page-emoji { font-size: 28px; }
+  .jt-cat-page-desc { color: var(--jt-text-secondary); font-size: 14px; margin-top: 4px; }
+
+  /* ── Space members ── */
+  .jt-member-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); }
+  .jt-member-name { font-weight: 600; font-size: 14px; color: var(--jt-text); }
+  .jt-member-joined { font-size: 12px; color: var(--jt-text-tertiary); margin-top: 2px; }
+  .jt-member-rep { font-family: var(--jt-font-mono); font-size: 12px; font-weight: 600; color: var(--jt-accent); }
+  .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
+  .jt-member-sub { color: var(--jt-text-tertiary); font-size: 13px; margin-top: 2px; }
+
+  /* ── Space roadmap extras ── */
+  .jt-idea-excerpt { font-size: 11px; color: var(--jt-text-tertiary); margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .jt-kanban-empty { font-size: 12px; color: var(--jt-text-tertiary); text-align: center; padding: 20px 0; }
+
+  /* ── Edit profile ── */
+  .jt-avatar-row { display: flex; align-items: center; gap: 12px; }
+  .jt-avatar-round { border-radius: 50%; }
+  .jt-avatar-hint { font-size: 13px; color: var(--jt-text-tertiary); }
+
+  /* ── Composer login ── */
+  .jt-editor-login { text-align: center; padding: 20px; }
+
+  /* ── Narrow container ── */
+  .jt-narrow { max-width: 800px; }
+  .jt-narrower { max-width: 600px; }
+
+  /* ── Card flush (no padding, overflow hidden) ── */
+  .jt-card-flush { padding: 0; overflow: hidden; }
 }
 
 @layer jetonomy-components {

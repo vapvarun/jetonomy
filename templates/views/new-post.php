@@ -25,7 +25,7 @@ $type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : _
 ] );
 ?>
 
-<div class="jt-container" style="max-width:800px;">
+<div class="jt-container jt-narrow">
     <h1 class="jt-post-create-title"><?php echo esc_html( $type_label ); ?></h1>
     <p class="jt-post-create-subtitle">
         <?php printf( esc_html__( 'Posting in %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); ?>

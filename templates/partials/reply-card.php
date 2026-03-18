@@ -11,12 +11,12 @@ $is_accepted = (int) $reply->is_accepted;
 <div class="jt-reply <?php echo $is_accepted ? 'accepted' : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
 		<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $author_id, 'size' => 30, 'class' => 'jt-avatar-sm' ] ); ?>
-		<strong style="font-size:13px;"><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
-		<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+		<strong class="jt-reply-author"><?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?></strong>
+		<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 		<?php if ( $is_op ) : ?>
-			<span style="font-size:12px;color:var(--jt-accent);font-weight:600;"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
+			<span class="jt-reply-op"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
 		<?php endif; ?>
-		<span style="color:var(--jt-text-tertiary);font-size:12px;">
+		<span class="jt-reply-time">
 			<?php
 			/* translators: %s: human-readable time difference */
 			echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
@@ -46,7 +46,7 @@ $is_accepted = (int) $reply->is_accepted;
 				data-reply-id="<?php echo (int) $reply->id; ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && ( (int) $reply->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
-			<button class="jt-act" style="color:var(--jt-text-tertiary);margin-left:auto;" title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
+			<button class="jt-act jt-reply-edit" title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
 		<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>

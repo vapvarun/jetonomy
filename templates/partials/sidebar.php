@@ -81,7 +81,7 @@ $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
 			?>
 			<div class="jt-leader">
 				<span class="jt-leader-rank"><?php echo $rank + 1; ?></span>
-				<span class="jt-avatar jt-avatar-sm" style="flex-shrink:0;"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
+				<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
 				<span class="jt-leader-name">
 					<a href="<?php echo esc_url( $base . '/u/' . $lu->user_login . '/' ); ?>">
 						<?php echo esc_html( $lu->display_name ); ?>
@@ -90,8 +90,8 @@ $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
 				<span class="jt-leader-pts"><?php echo (int) $leader->reputation; ?></span>
 			</div>
 		<?php endforeach; ?>
-		<div style="margin-top:10px;">
-			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" style="font-size:12px;color:var(--jt-text-tertiary);"><?php esc_html_e( 'View full leaderboard →', 'jetonomy' ); ?></a>
+		<div class="jt-sidebar-link">
+			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>"><?php esc_html_e( 'View full leaderboard →', 'jetonomy' ); ?></a>
 		</div>
 	</div>
 	<?php endif; ?>
@@ -103,7 +103,7 @@ $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
 			<?php foreach ( $popular_tags as $tag ) : ?>
 				<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
 					<?php echo esc_html( $tag->name ); ?>
-					<span style="color:var(--jt-text-tertiary);font-size:10px;margin-left:3px;"><?php echo (int) $tag->post_count; ?></span>
+					<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 				</a>
 			<?php endforeach; ?>
 		</div>

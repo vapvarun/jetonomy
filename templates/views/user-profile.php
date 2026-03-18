@@ -63,26 +63,26 @@ $crumbs = [
 				<div class="jt-profile-banner"></div>
 				<div class="jt-profile-body">
 					<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $profile_user_id, 'size' => 64, 'class' => 'jt-profile-av' ] ); ?>
-					<div style="display:flex;align-items:flex-start;justify-content:space-between;width:100%;">
+					<div class="jt-flex jt-items-start jt-justify-between jt-w-full">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
-							<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);width:20px;height:20px;font-size:11px;" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
 						</h1>
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
-							<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/edit/' ); ?>" class="jt-btn jt-btn-ghost" style="flex-shrink:0;">
+							<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
 						<?php endif; ?>
 					</div>
 
 					<?php if ( ! empty( $profile->bio ) ) : ?>
-						<p style="color:var(--jt-text-secondary);font-size:14px;margin-top:8px;line-height:1.6;">
+						<p class="jt-profile-bio">
 							<?php echo esc_html( $profile->bio ); ?>
 						</p>
 					<?php endif; ?>
 
-					<div style="display:flex;gap:16px;margin-top:10px;font-size:13px;color:var(--jt-text-tertiary);">
+					<div class="jt-profile-meta">
 						<span>
 							<?php
 							/* translators: %s: join date */
@@ -138,12 +138,12 @@ $crumbs = [
 			</div>
 
 			<!-- Recent posts -->
-			<h3 style="font-family:var(--jt-font-heading);font-size:15px;font-weight:700;margin-bottom:12px;">
+			<h3 class="jt-section-heading">
 				<?php esc_html_e( 'Recent Posts', 'jetonomy' ); ?>
 			</h3>
 
 			<?php if ( empty( $recent_posts ) ) : ?>
-				<div class="jt-empty" style="padding:30px 20px;">
+				<div class="jt-empty-compact">
 					<div class="jt-empty-text"><?php esc_html_e( 'No posts yet.', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>
@@ -171,7 +171,7 @@ $crumbs = [
 								<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 							</div>
 							<div class="jt-row-stat">
-								<div class="jt-row-stat-n" style="font-size:12px;color:var(--jt-text-tertiary);">
+								<div class="jt-row-time">
 									<?php
 									/* translators: %s: human-readable time difference */
 									echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );

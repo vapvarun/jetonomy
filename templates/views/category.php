@@ -23,14 +23,14 @@ $crumbs = [
 
 	<div class="jt-two-col">
 		<main>
-			<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+			<div class="jt-cat-page-row">
 				<?php if ( ! empty( $category->emoji ) ) : ?>
-					<span style="font-size:28px;"><?php echo esc_html( $category->emoji ); ?></span>
+					<span class="jt-cat-page-emoji"><?php echo esc_html( $category->emoji ); ?></span>
 				<?php endif; ?>
 				<div>
-					<h1 style="font-family:var(--jt-font-heading);font-size:22px;font-weight:700;margin:0;"><?php echo esc_html( $category->name ); ?></h1>
+					<h1 class="jt-page-title"><?php echo esc_html( $category->name ); ?></h1>
 					<?php if ( ! empty( $category->description ) ) : ?>
-						<p style="color:var(--jt-text-secondary);font-size:14px;margin-top:4px;"><?php echo esc_html( $category->description ); ?></p>
+						<p class="jt-cat-page-desc"><?php echo esc_html( $category->description ); ?></p>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -44,22 +44,21 @@ $crumbs = [
 				<div class="jt-space-grid">
 					<?php foreach ( $spaces as $space ) : ?>
 						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
-							class="jt-card jt-space-card"
-							style="text-decoration:none;display:block;">
-							<div style="display:flex;align-items:flex-start;gap:10px;">
+							class="jt-card jt-space-card jt-no-underline jt-block">
+							<div class="jt-space-card-inner">
 								<?php if ( ! empty( $space->emoji ) ) : ?>
-									<span style="font-size:24px;flex-shrink:0;"><?php echo esc_html( $space->emoji ); ?></span>
+									<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
 								<?php endif; ?>
-								<div style="min-width:0;">
-									<div style="font-weight:600;font-size:14px;color:var(--jt-text);"><?php echo esc_html( $space->title ); ?></div>
+								<div class="jt-space-card-body">
+									<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 									<?php if ( ! empty( $space->description ) ) : ?>
-										<div style="font-size:12px;color:var(--jt-text-tertiary);margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+										<div class="jt-space-card-excerpt">
 											<?php echo esc_html( $space->description ); ?>
 										</div>
 									<?php endif; ?>
-									<div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--jt-text-tertiary);">
-										<span><strong style="color:var(--jt-text-secondary);font-family:var(--jt-font-mono);"><?php echo (int) $space->post_count; ?></strong> <?php esc_html_e( 'posts', 'jetonomy' ); ?></span>
-										<span><strong style="color:var(--jt-text-secondary);font-family:var(--jt-font-mono);"><?php echo (int) $space->member_count; ?></strong> <?php esc_html_e( 'members', 'jetonomy' ); ?></span>
+									<div class="jt-space-card-stats">
+										<span class="jt-space-card-stat"><strong><?php echo (int) $space->post_count; ?></strong> <?php esc_html_e( 'posts', 'jetonomy' ); ?></span>
+										<span class="jt-space-card-stat"><strong><?php echo (int) $space->member_count; ?></strong> <?php esc_html_e( 'members', 'jetonomy' ); ?></span>
 									</div>
 								</div>
 							</div>

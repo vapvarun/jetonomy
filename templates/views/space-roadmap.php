@@ -64,11 +64,11 @@ $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 
 	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+	<div class="jt-cat-page-row">
 		<?php if ( ! empty( $space->emoji ) ) : ?>
-			<span style="font-size:24px;"><?php echo esc_html( $space->emoji ); ?></span>
+			<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
 		<?php endif; ?>
-		<h1 style="font-family:var(--jt-font-heading);font-size:20px;font-weight:700;margin:0;">
+		<h1 class="jt-page-title jt-page-title-sm">
 			<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
 		</h1>
 	</div>
@@ -83,13 +83,13 @@ $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 					<span class="jt-col-n"><?php echo count( $col['posts'] ); ?></span>
 				</div>
 				<?php if ( empty( $col['posts'] ) ) : ?>
-					<p style="font-size:12px;color:var(--jt-text-tertiary);text-align:center;padding:20px 0;"><?php esc_html_e( 'None', 'jetonomy' ); ?></p>
+					<p class="jt-kanban-empty"><?php esc_html_e( 'None', 'jetonomy' ); ?></p>
 				<?php else : ?>
 					<?php foreach ( $col['posts'] as $idea ) : ?>
 						<?php $idea_url = $base . '/s/' . $space->slug . '/t/' . $idea->slug . '/'; ?>
 						<div class="jt-idea" onclick="window.location='<?php echo esc_url( $idea_url ); ?>'">
 							<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
-							<div style="font-size:11px;color:var(--jt-text-tertiary);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+							<div class="jt-idea-excerpt">
 								<?php echo esc_html( wp_strip_all_tags( $idea->content ) ); ?>
 							</div>
 							<div class="jt-idea-meta">

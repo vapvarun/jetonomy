@@ -32,15 +32,15 @@ $role_labels = [
 
 	<div class="jt-two-col">
 		<main>
-			<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+			<div class="jt-cat-page-row">
 				<?php if ( ! empty( $space->emoji ) ) : ?>
-					<span style="font-size:24px;"><?php echo esc_html( $space->emoji ); ?></span>
+					<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
 				<?php endif; ?>
 				<div>
-					<h1 style="font-family:var(--jt-font-heading);font-size:20px;font-weight:700;margin:0;">
+					<h1 class="jt-page-title jt-page-title-sm">
 						<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Members', 'jetonomy' ); ?>
 					</h1>
-					<p style="color:var(--jt-text-tertiary);font-size:13px;margin-top:2px;">
+					<p class="jt-member-sub">
 						<?php
 						/* translators: %d: member count */
 						echo esc_html( sprintf( _n( '%d member', '%d members', (int) $space->member_count, 'jetonomy' ), (int) $space->member_count ) );
@@ -55,7 +55,7 @@ $role_labels = [
 					<div class="jt-empty-text"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>
-				<div class="jt-card" style="padding:0;overflow:hidden;">
+				<div class="jt-card jt-card-flush">
 					<?php foreach ( $members as $member ) : ?>
 						<?php
 						$mu = get_userdata( (int) $member->user_id );
@@ -68,17 +68,17 @@ $role_labels = [
 						$joined   = date_i18n( get_option( 'date_format' ), strtotime( $member->joined_at ) );
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
-						<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--jt-border);">
+						<div class="jt-member-item">
 							<a href="<?php echo esc_url( $base . '/u/' . $mu->user_login . '/' ); ?>">
 								<span class="jt-avatar jt-avatar-md"><?php echo esc_html( $initials ); ?></span>
 							</a>
-							<div style="flex:1;min-width:0;">
+							<div class="jt-flex-1">
 								<a href="<?php echo esc_url( $base . '/u/' . $mu->user_login . '/' ); ?>"
-									style="font-weight:600;font-size:14px;color:var(--jt-text);">
+									class="jt-member-name">
 									<?php echo esc_html( $mu->display_name ); ?>
 								</a>
-								<span class="jt-tl" style="background:var(--jt-tl<?php echo $trust; ?>);margin-left:6px;" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
-								<div style="font-size:12px;color:var(--jt-text-tertiary);margin-top:2px;">
+								<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+								<div class="jt-member-joined">
 									<?php
 									/* translators: %s: joined date */
 									echo esc_html( sprintf( __( 'Joined %s', 'jetonomy' ), $joined ) );
@@ -86,13 +86,13 @@ $role_labels = [
 								</div>
 							</div>
 							<?php if ( 'moderator' === $member->role ) : ?>
-								<span style="font-size:11px;font-weight:600;background:var(--jt-accent-muted);color:var(--jt-accent);padding:2px 8px;border-radius:var(--jt-radius-full);">
+								<span class="jt-badge-accent">
 									<?php echo esc_html( $role_label ); ?>
 								</span>
 							<?php endif; ?>
 							<?php if ( $mp ) : ?>
-								<span style="font-family:var(--jt-font-mono);font-size:12px;font-weight:600;color:var(--jt-accent);">
-									<?php echo (int) $mp->reputation; ?> <span style="font-weight:400;color:var(--jt-text-tertiary);"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
+								<span class="jt-member-rep">
+									<?php echo (int) $mp->reputation; ?> <span class="jt-member-rep-label"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
 								</span>
 							<?php endif; ?>
 						</div>

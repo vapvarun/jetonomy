@@ -50,9 +50,9 @@ $crumbs = [
 
 	<div class="jt-two-col">
 		<main>
-			<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-				<span class="jt-tag" style="font-size:18px;padding:4px 14px;"><?php echo esc_html( $tag->name ); ?></span>
-				<span style="font-size:13px;color:var(--jt-text-tertiary);">
+			<div class="jt-flex jt-items-center jt-gap-12 jt-mb-20">
+				<span class="jt-tag jt-tag-hero"><?php echo esc_html( $tag->name ); ?></span>
+				<span class="jt-tag-count-label">
 					<?php
 					/* translators: %d: number of posts with this tag */
 					echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $tag->post_count, 'jetonomy' ), (int) $tag->post_count ) );

@@ -73,15 +73,14 @@ $crumbs = [
 	<div class="jt-two-col">
 		<main>
 			<!-- Search form -->
-			<div style="margin-bottom:24px;">
+			<div class="jt-search-form-wrap">
 				<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>">
-					<div class="jt-search" style="width:100%;max-width:600px;border-radius:var(--jt-radius);">
+					<div class="jt-search jt-search-full">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
 						<input type="text" name="q"
 							value="<?php echo esc_attr( $q ); ?>"
 							placeholder="<?php esc_attr_e( 'Search discussions, spaces, tags…', 'jetonomy' ); ?>"
-							autofocus
-							style="font-size:15px;">
+							autofocus>
 					</div>
 					<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
 				</form>
@@ -89,7 +88,7 @@ $crumbs = [
 
 			<?php if ( '' !== $q ) : ?>
 				<!-- Filter pills -->
-				<div class="jt-bar" style="margin-bottom:20px;">
+				<div class="jt-bar jt-mb-20">
 					<div class="jt-pills">
 						<?php
 						$filters = [
@@ -107,7 +106,7 @@ $crumbs = [
 							</a>
 						<?php endforeach; ?>
 					</div>
-					<span style="font-size:13px;color:var(--jt-text-tertiary);">
+					<span class="jt-search-result-count">
 						<?php
 						/* translators: %d: number of results */
 						echo esc_html( sprintf( _n( '%d result', '%d results', $total, 'jetonomy' ), $total ) );
@@ -128,10 +127,10 @@ $crumbs = [
 				<?php else : ?>
 
 					<?php if ( ! empty( $posts ) ) : ?>
-						<h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--jt-text-tertiary);margin-bottom:8px;">
+						<h3 class="jt-section-label">
 							<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
 						</h3>
-						<div class="jt-topics" style="margin-bottom:24px;">
+						<div class="jt-topics jt-mb-lg">
 							<?php foreach ( $posts as $post ) : ?>
 								<?php
 								$time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
@@ -155,7 +154,7 @@ $crumbs = [
 										<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 									</div>
 									<div class="jt-row-stat">
-										<div class="jt-row-stat-n" style="font-size:12px;color:var(--jt-text-tertiary);">
+										<div class="jt-row-time">
 											<?php
 											/* translators: %s: human-readable time difference */
 											echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
@@ -170,24 +169,23 @@ $crumbs = [
 					<?php endif; ?>
 
 					<?php if ( ! empty( $spaces ) ) : ?>
-						<h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--jt-text-tertiary);margin-bottom:8px;">
+						<h3 class="jt-section-label">
 							<?php esc_html_e( 'Spaces', 'jetonomy' ); ?>
 						</h3>
-						<div class="jt-space-grid" style="margin-bottom:24px;">
+						<div class="jt-space-grid jt-mb-lg">
 							<?php foreach ( $spaces as $space ) : ?>
 								<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
-									class="jt-card jt-space-card"
-									style="text-decoration:none;display:block;">
-									<div style="display:flex;align-items:flex-start;gap:8px;">
+									class="jt-card jt-space-card jt-no-underline jt-block">
+									<div class="jt-space-card-inner">
 										<?php if ( ! empty( $space->emoji ) ) : ?>
-											<span style="font-size:20px;"><?php echo esc_html( $space->emoji ); ?></span>
+											<span class="jt-cat-emoji"><?php echo esc_html( $space->emoji ); ?></span>
 										<?php endif; ?>
 										<div>
-											<div style="font-weight:600;font-size:13px;"><?php echo esc_html( $space->title ); ?></div>
+											<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 											<?php if ( ! empty( $space->description ) ) : ?>
-												<div style="font-size:12px;color:var(--jt-text-tertiary);margin-top:3px;"><?php echo esc_html( wp_trim_words( $space->description, 12 ) ); ?></div>
+												<div class="jt-space-card-excerpt jt-mt-sm"><?php echo esc_html( wp_trim_words( $space->description, 12 ) ); ?></div>
 											<?php endif; ?>
-											<div style="font-size:11px;color:var(--jt-text-tertiary);margin-top:6px;">
+											<div class="jt-space-card-stat jt-mt-sm">
 												<?php echo esc_html( (int) $space->post_count ); ?> <?php esc_html_e( 'posts', 'jetonomy' ); ?>
 											</div>
 										</div>
@@ -198,14 +196,14 @@ $crumbs = [
 					<?php endif; ?>
 
 					<?php if ( ! empty( $tags ) ) : ?>
-						<h3 style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--jt-text-tertiary);margin-bottom:8px;">
+						<h3 class="jt-section-label">
 							<?php esc_html_e( 'Tags', 'jetonomy' ); ?>
 						</h3>
 						<div class="jt-tags">
 							<?php foreach ( $tags as $tag ) : ?>
-								<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag" style="font-size:13px;">
+								<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
 									<?php echo esc_html( $tag->name ); ?>
-									<span style="color:var(--jt-text-tertiary);margin-left:4px;"><?php echo (int) $tag->post_count; ?></span>
+									<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
 								</a>
 							<?php endforeach; ?>
 						</div>

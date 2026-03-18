@@ -28,13 +28,13 @@ $crumbs = [
 
 	<?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-	<div style="max-width:800px;">
-		<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-			<h1 style="font-family:var(--jt-font-heading);font-size:22px;font-weight:700;margin:0;">
+	<div class="jt-mod-wrap">
+		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
+			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Moderation Queue', 'jetonomy' ); ?>
 			</h1>
 			<?php if ( ! empty( $flags ) ) : ?>
-				<span style="background:var(--jt-danger);color:white;font-size:12px;font-weight:700;padding:3px 10px;border-radius:var(--jt-radius-full);">
+				<span class="jt-badge-danger">
 					<?php
 					/* translators: %d: number of pending flags */
 					echo esc_html( sprintf( _n( '%d pending', '%d pending', count( $flags ), 'jetonomy' ), count( $flags ) ) );
@@ -49,7 +49,7 @@ $crumbs = [
 				<div class="jt-empty-text"><?php esc_html_e( 'No pending flags. The community is clean!', 'jetonomy' ); ?></div>
 			</div>
 		<?php else : ?>
-			<div class="jt-card" style="padding:0;overflow:hidden;">
+			<div class="jt-card jt-card-flush">
 				<?php foreach ( $flags as $flag ) : ?>
 					<?php
 					$reporter = get_userdata( (int) $flag->flagged_by );
@@ -98,16 +98,16 @@ $crumbs = [
 						}
 					}
 					?>
-					<div style="padding:16px;border-bottom:1px solid var(--jt-border);"
+					<div class="jt-mod-flag"
 						data-wp-interactive="jetonomy">
-						<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-							<span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:var(--jt-radius-full);background:var(--jt-danger-light);color:var(--jt-danger);">
+						<div class="jt-mod-flag-head">
+							<span class="jt-mod-flag-type">
 								<?php echo esc_html( ucfirst( $flag->object_type ) ); ?>
 							</span>
-							<span style="font-size:12px;font-weight:500;color:var(--jt-text-secondary);">
+							<span class="jt-mod-flag-reason">
 								<?php echo esc_html( $reason ); ?>
 							</span>
-							<span style="margin-left:auto;font-size:12px;color:var(--jt-text-tertiary);">
+							<span class="jt-mod-flag-reporter">
 								<?php echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) ); ?>
 								&mdash;
 								<?php
@@ -118,19 +118,18 @@ $crumbs = [
 						</div>
 
 						<?php if ( ! empty( $flag->note ) ) : ?>
-							<p style="font-size:13px;color:var(--jt-text-secondary);margin-bottom:8px;padding:8px;background:var(--jt-bg-subtle);border-radius:var(--jt-radius-sm);">
+							<p class="jt-mod-flag-note">
 								<?php echo esc_html( $flag->note ); ?>
 							</p>
 						<?php endif; ?>
 
-						<div style="display:flex;gap:8px;align-items:center;">
+						<div class="jt-mod-flag-actions">
 							<?php if ( $object_url ) : ?>
 								<a href="<?php echo esc_url( $object_url ); ?>" class="jt-btn jt-btn-ghost" target="_blank">
 									<?php esc_html_e( 'View', 'jetonomy' ); ?>
 								</a>
 							<?php endif; ?>
-							<button type="button" class="jt-btn jt-btn-fill"
-								style="background:var(--jt-danger);"
+							<button type="button" class="jt-btn jt-btn-fill jt-btn-danger"
 								data-wp-on--click="actions.dismissFlag"
 								data-flag-id="<?php echo (int) $flag->id; ?>"
 								data-nonce="<?php echo esc_attr( $nonce_base ); ?>"
