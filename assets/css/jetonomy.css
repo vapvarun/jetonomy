@@ -61,25 +61,9 @@
     --jt-dur: 0.15s;
   }
 
-  /* Dark mode — auto-detect from OS preference or theme */
-  @media (prefers-color-scheme: dark) {
-    :root .jt-app, .jt-app {
-      --jt-text: #e5e5e5;
-      --jt-text-secondary: rgba(229, 229, 229, 0.65);
-      --jt-text-tertiary: rgba(229, 229, 229, 0.4);
-      --jt-bg: #171717;
-      --jt-bg-subtle: #1e1e1e;
-      --jt-bg-muted: #262626;
-      --jt-bg-hover: #1f1f1f;
-      --jt-border: rgba(255, 255, 255, 0.1);
-      --jt-border-strong: rgba(255, 255, 255, 0.18);
-      --jt-success-light: #052e16;
-      --jt-warn-light: #422006;
-      --jt-danger-light: #450a0a;
-    }
-  }
-
-  /* Manual dark mode class (for theme toggle) */
+  /* Dark mode — ONLY via theme class, never OS preference.
+     Themes that support dark mode add .jt-dark class to body or .jt-app.
+     This ensures the plugin always matches the theme, not the OS. */
   .jt-dark .jt-app, .jt-app.jt-dark {
     --jt-text: #e5e5e5;
     --jt-text-secondary: rgba(229, 229, 229, 0.65);
@@ -547,7 +531,5 @@
 
   /* ── Prism.js override for theme consistency ── */
   .jt-app pre[class*="language-"], .jt-app code[class*="language-"] { font-family: var(--jt-font-mono); font-size: 13px; }
-  @media (prefers-color-scheme: dark) {
-    .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
-  }
+  .jt-dark .jt-app pre[class*="language-"] { filter: invert(1) hue-rotate(180deg); }
 }
