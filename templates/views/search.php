@@ -129,37 +129,38 @@ $crumbs = [
 							<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
 						</h3>
 						<div class="jt-topics jt-mb-lg">
-							<?php foreach ( $posts as $post ) : ?>
-								<?php
+							<?php foreach ( $posts as $post ) :
 								$time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
 								$post_url = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
-								?>
-								<div class="jt-row" onclick="window.location='<?php echo esc_url( $post_url ); ?>'">
+								$excerpt  = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
+								$author   = get_userdata( (int) $post->author_id );
+							?>
+								<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row">
 									<div class="jt-votes">
 										<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
 									</div>
 									<div class="jt-row-main">
 										<div class="jt-row-title"><?php echo esc_html( $post->title ); ?></div>
 										<div class="jt-row-sub">
-											<a href="<?php echo esc_url( $base . '/s/' . $post->space_slug . '/' ); ?>"
-												onclick="event.stopPropagation();">
-												<?php echo esc_html( $post->space_title ); ?>
-											</a>
+											<?php echo esc_html( $author ? $author->display_name : '' ); ?>
+											&middot;
+											<?php echo esc_html( $post->space_title ); ?>
+											&middot;
+											<?php echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ); ?>
 										</div>
+										<?php if ( $excerpt ) : ?>
+											<div class="jt-row-excerpt"><?php echo esc_html( $excerpt ); ?></div>
+										<?php endif; ?>
 									</div>
 									<div class="jt-row-stat">
 										<div class="jt-row-stat-n"><?php echo (int) $post->reply_count; ?></div>
 										<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 									</div>
 									<div class="jt-row-stat">
-										<div class="jt-row-time">
-											<?php
-											/* translators: %s: human-readable time difference */
-											echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
-											?>
-										</div>
+										<div class="jt-row-stat-n"><?php echo (int) $post->vote_score; ?></div>
+										<div class="jt-row-stat-l"><?php esc_html_e( 'votes', 'jetonomy' ); ?></div>
 									</div>
-								</div>
+								</a>
 							<?php endforeach; ?>
 						</div>
 
