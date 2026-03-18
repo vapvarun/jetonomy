@@ -17,6 +17,7 @@ class Autoloader {
         'Jetonomy\\Admin\\'         => 'includes/admin/',
         'Jetonomy\\DB\\'            => 'includes/db/',
         'Jetonomy\\DB\\Migrations\\' => 'includes/db/migrations/',
+        'Jetonomy\\'               => 'includes/',
     ];
 
     public static function register(): void {
@@ -58,7 +59,7 @@ class Autoloader {
      *   WP_Roles_Adapter -> wp-roles-adapter
      *   BBPress_Importer -> bbpress-importer
      *   WP_Mail_Adapter -> wp-mail-adapter
-     *   Migration_1_0_0 -> migration-1_0_0
+     *   Migration_1_0_0 -> migration_1_0_0
      */
     private static function class_to_file( string $class ): string {
         // Handle underscore-separated names (e.g., Permission_Engine -> permission-engine)

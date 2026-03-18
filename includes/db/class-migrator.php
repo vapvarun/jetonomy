@@ -15,7 +15,7 @@ class Migrator {
 
 		foreach ( $migrations as $version => $class ) {
 			if ( version_compare( $from_version, $version, '<' ) ) {
-				require_once JETONOMY_DIR . "includes/db/migrations/class-migration-{$class}.php";
+				require_once JETONOMY_DIR . "includes/db/migrations/class-migration_{$class}.php";
 				$fqn = "Jetonomy\\DB\\Migrations\\Migration_{$class}";
 				( new $fqn() )->up();
 				update_option( 'jetonomy_db_version', $version );
