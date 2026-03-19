@@ -94,33 +94,33 @@
 
 ### Free (10 features)
 
-- [ ] **G1: Drag-drop image upload + paste-to-upload** — Hook into WP media AJAX uploader, paste event listener in editor, insert image URL into contenteditable. Files: `assets/js/view.js`, `templates/partials/composer.php`, `templates/views/new-post.php`
+- [x] **G1: Drag-drop image upload + paste-to-upload** — Hook into WP media AJAX uploader, paste event listener in editor, insert image URL into contenteditable. Files: `assets/js/view.js`, `templates/partials/composer.php`, `templates/views/new-post.php`
 
-- [ ] **G2: Auto-embed URLs (oEmbed)** — Process URLs in post content via `wp_oembed_get()` before display. YouTube, Twitter, Vimeo auto-preview. Files: `includes/api/class-posts-controller.php`, `includes/api/class-replies-controller.php`
+- [x] **G2: Auto-embed URLs (oEmbed)** — Process URLs in post content via `wp_oembed_get()` before display. YouTube, Twitter, Vimeo auto-preview. Files: `includes/api/class-posts-controller.php`, `includes/api/class-replies-controller.php`
 
-- [ ] **G3: Instant search-as-you-type** — Debounced AJAX search hitting REST API, dropdown overlay on header search + search page input, highlight matched terms. Files: `assets/js/view.js`, `assets/css/jetonomy.css`, `templates/partials/header.php`
+- [x] **G3: Instant search-as-you-type** — Debounced AJAX search hitting REST API, dropdown overlay on header search + search page input, highlight matched terms. Files: `assets/js/view.js`, `assets/css/jetonomy.css`, `templates/partials/header.php`
 
-- [ ] **G4: RTL stylesheet** — Generate `assets/css/jetonomy-rtl.css` with logical properties. Load when `is_rtl()`. Replace `margin-left` with `margin-inline-start` throughout. Files: `assets/css/jetonomy-rtl.css`, `includes/class-template-loader.php`
+- [x] **G4: RTL stylesheet** — Generate `assets/css/jetonomy-rtl.css` with logical properties. Load when `is_rtl()`. Replace `margin-left` with `margin-inline-start` throughout. Files: `assets/css/jetonomy-rtl.css`, `includes/class-template-loader.php`
 
-- [ ] **G5: Quote selected text** — Detect text selection on reply content, show floating "Quote" button, insert blockquote in composer with attribution. Files: `assets/js/view.js`, `assets/css/jetonomy.css`
+- [x] **G5: Quote selected text** — Detect text selection on reply content, show floating "Quote" button, insert blockquote in composer with attribution. Files: `assets/js/view.js`, `assets/css/jetonomy.css`
 
-- [ ] **G6: User hover cards** — Lightweight popover on avatar/name hover, AJAX-loaded user summary (bio, stats, badges, recent posts), debounced show/hide. Files: `assets/js/view.js`, `assets/css/jetonomy.css`, `includes/api/class-users-controller.php`
+- [x] **G6: User hover cards** — Lightweight popover on avatar/name hover, AJAX-loaded user summary (bio, stats, badges, recent posts), debounced show/hide. Files: `assets/js/view.js`, `assets/css/jetonomy.css`, `includes/api/class-users-controller.php`
 
-- [ ] **G7: IP tracking + Akismet integration** — Log IP on post/reply create, IP ban in restrictions table, Akismet spam check adapter. Files: `includes/api/class-posts-controller.php`, `includes/api/class-replies-controller.php`, `includes/models/class-restriction.php`, `includes/moderation/class-akismet.php`
+- [x] **G7: IP tracking + Akismet integration** — Log IP on post/reply create, IP ban in restrictions table, Akismet spam check adapter. Files: `includes/api/class-posts-controller.php`, `includes/api/class-replies-controller.php`, `includes/models/class-restriction.php`, `includes/moderation/class-akismet.php`
 
-- [ ] **G8: Keyboard shortcuts** — j/k navigate topics, l upvote, r reply, n new post, / focus search. Global listener + help modal (?). Files: `assets/js/view.js`, `assets/css/jetonomy.css`
+- [x] **G8: Keyboard shortcuts** — j/k navigate topics, l upvote, r reply, n new post, / focus search. Global listener + help modal (?). Files: `assets/js/view.js`, `assets/css/jetonomy.css`
 
-- [ ] **G9: Emoji picker in editor** — Lightweight emoji picker button in composer toolbar, insert emoji into contenteditable. Files: `assets/js/view.js`, `templates/partials/composer.php`, `templates/views/new-post.php`
+- [x] **G9: Emoji picker in editor** — Lightweight emoji picker button in composer toolbar, insert emoji into contenteditable. Files: `assets/js/view.js`, `templates/partials/composer.php`, `templates/views/new-post.php`
 
-- [ ] **G10: Invite links with expiry** — Generate shareable invite URL per space, configurable expiry, auto-join on visit. New table: `jt_invite_links`. Files: `includes/models/class-invite-link.php`, `includes/api/class-spaces-controller.php`, admin UI
+- [x] **G10: Invite links with expiry** — Generate shareable invite URL per space, configurable expiry, auto-join on visit. New table: `jt_invite_links`. Files: `includes/models/class-invite-link.php`, `includes/api/class-spaces-controller.php`, admin UI
 
 ### Pro (3 features)
 
-- [ ] **G11: Webhooks** — Webhook registration table, `do_action` hooks on all CRUD events, HTTP dispatch with retry, admin UI for managing endpoints. Files: `jetonomy-pro/includes/extensions/webhooks/class-extension.php`
+- [x] **G11: Webhooks** — Webhook registration table, `do_action` hooks on all CRUD events, HTTP dispatch with retry, admin UI for managing endpoints. Files: `jetonomy-pro/includes/extensions/webhooks/class-extension.php`
 
-- [ ] **G12: Reply-by-email** — Inbound email processing (IMAP polling or SendGrid/Mailgun inbound webhook), token-based reply address per notification, content parsing, security. Files: `jetonomy-pro/includes/extensions/reply-by-email/class-extension.php`
+- [x] **G12: Reply-by-email** — Inbound email processing (IMAP polling or SendGrid/Mailgun inbound webhook), token-based reply address per notification, content parsing, security. Files: `jetonomy-pro/includes/extensions/reply-by-email/class-extension.php`
 
-- [ ] **G13: Web push notifications** — Service worker, VAPID keys, push subscription storage, notification dispatch via Web Push protocol. Files: `jetonomy-pro/includes/extensions/web-push/class-extension.php`
+- [x] **G13: Web push notifications** — Service worker, VAPID keys, push subscription storage, notification dispatch via Web Push protocol. Files: `jetonomy-pro/includes/extensions/web-push/class-extension.php`
 
 ---
 
