@@ -65,6 +65,7 @@ class Schema {
 			'jt_flags',
 			'jt_revisions',
 			'jt_join_requests',
+			'jt_invite_links',
 		];
 	}
 
@@ -316,7 +317,7 @@ class Schema {
 		$sqls[] = "CREATE TABLE {$p}jt_restrictions (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  type ENUM('global_ban','space_ban','silence','post_restrict') NOT NULL DEFAULT 'silence',
+  type ENUM('global_ban','space_ban','silence','post_restrict','ip_ban') NOT NULL DEFAULT 'silence',
   space_id bigint(20) unsigned DEFAULT NULL,
   reason text,
   issued_by bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -386,6 +387,21 @@ class Schema {
   PRIMARY KEY  (id),
   UNIQUE KEY space_user_status (space_id,user_id,status),
   KEY space_status_created (space_id,status,created_at)
+) $charset_collate;";
+
+		// 22. jt_invite_links
+		$sqls[] = "CREATE TABLE {$p}jt_invite_links (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  space_id bigint(20) unsigned NOT NULL,
+  token varchar(64) NOT NULL,
+  created_by bigint(20) unsigned NOT NULL,
+  max_uses int DEFAULT 0,
+  use_count int DEFAULT 0,
+  expires_at datetime DEFAULT NULL,
+  created_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY token (token),
+  KEY idx_space (space_id)
 ) $charset_collate;";
 
 		return $sqls;

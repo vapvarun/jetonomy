@@ -68,6 +68,12 @@ class Permission_Engine {
 	 * Internal uncached resolution — called by can().
 	 */
 	private static function resolve( int $user_id, string $action, ?int $space_id ): bool {
+		// Layer 0: IP ban check.
+		$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+		if ( $ip && Restriction::is_ip_banned( $ip ) ) {
+			return false;
+		}
+
 		// Layer 0: Global ban.
 		if ( $user_id && Restriction::is_banned( $user_id ) ) {
 			return false;

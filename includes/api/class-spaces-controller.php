@@ -9,6 +9,7 @@ use WP_Error;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\JoinRequest;
+use Jetonomy\Models\InviteLink;
 use Jetonomy\Models\UserProfile;
 
 class Spaces_Controller extends Base_Controller {
@@ -79,6 +80,23 @@ class Spaces_Controller extends Base_Controller {
 				'callback'            => [ $this, 'join_space' ],
 				'permission_callback' => [ $this, 'require_login_check' ],
 			],
+		] );
+
+		// Invite link routes.
+		register_rest_route( $ns, '/spaces/(?P<id>\d+)/invite', [
+			'methods'             => \WP_REST_Server::CREATABLE,
+			'callback'            => [ $this, 'generate_invite' ],
+			'permission_callback' => [ $this, 'require_login_check' ],
+			'args'                => [
+				'max_uses'   => [ 'type' => 'integer', 'required' => false, 'default' => 0 ],
+				'expires_at' => [ 'type' => 'string', 'required' => false ],
+			],
+		] );
+
+		register_rest_route( $ns, '/invite/(?P<token>[a-zA-Z0-9]+)', [
+			'methods'             => \WP_REST_Server::READABLE,
+			'callback'            => [ $this, 'use_invite' ],
+			'permission_callback' => '__return_true',
 		] );
 
 		// Individual member routes.
@@ -568,6 +586,90 @@ class Spaces_Controller extends Base_Controller {
 			'space_id' => $id,
 			'user_id'  => $user_id,
 			'role'     => $role,
+		], 200 );
+	}
+
+	/**
+	 * POST /spaces/{id}/invite — Generate an invite link (space admin only).
+	 */
+	public function generate_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id    = absint( $request->get_param( 'id' ) );
+		$space = Space::find( $id );
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( ! $this->is_space_admin( $id, $user_id ) ) {
+			return $this->permission_error();
+		}
+
+		$max_uses   = absint( $request->get_param( 'max_uses' ) );
+		$expires_at = $request->get_param( 'expires_at' );
+
+		if ( $expires_at ) {
+			$expires_at = sanitize_text_field( $expires_at );
+		}
+
+		$token = InviteLink::generate( $id, $user_id, $max_uses, $expires_at ?: null );
+
+		$settings  = get_option( 'jetonomy_settings', [] );
+		$base_slug = $settings['base_slug'] ?? 'community';
+		$invite_url = home_url( '/' . $base_slug . '/invite/' . $token . '/' );
+
+		return new WP_REST_Response( [
+			'token'      => $token,
+			'invite_url' => $invite_url,
+			'max_uses'   => $max_uses,
+			'expires_at' => $expires_at ?: null,
+		], 201 );
+	}
+
+	/**
+	 * GET /invite/{token} — Validate and use an invite link.
+	 */
+	public function use_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$token = sanitize_text_field( $request->get_param( 'token' ) );
+
+		$invite = InviteLink::find_by_token( $token );
+		if ( ! $invite ) {
+			return new WP_Error( 'jetonomy_invalid_invite', __( 'Invalid invite link.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		if ( ! InviteLink::is_valid( $invite ) ) {
+			return new WP_Error( 'jetonomy_invite_expired', __( 'This invite link has expired or reached its usage limit.', 'jetonomy' ), [ 'status' => 410 ] );
+		}
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return new WP_Error( 'jetonomy_login_required', __( 'Please log in to use this invite.', 'jetonomy' ), [ 'status' => 401 ] );
+		}
+
+		$space_id = (int) $invite->space_id;
+		$space    = Space::find( $space_id );
+
+		if ( ! $space ) {
+			return new WP_Error( 'jetonomy_space_not_found', __( 'The space for this invite no longer exists.', 'jetonomy' ), [ 'status' => 404 ] );
+		}
+
+		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
+			return new WP_REST_Response( [
+				'status'     => 'already_member',
+				'space_id'   => $space_id,
+				'space_slug' => $space->slug,
+			], 200 );
+		}
+
+		// Add user as member and increment usage.
+		SpaceMember::add( $space_id, $user_id, 'member' );
+		InviteLink::use_invite( (int) $invite->id );
+
+		return new WP_REST_Response( [
+			'status'     => 'joined',
+			'space_id'   => $space_id,
+			'space_slug' => $space->slug,
 		], 200 );
 	}
 

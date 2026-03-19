@@ -44,6 +44,13 @@ class Users_Controller extends Base_Controller {
 			'permission_callback' => '__return_true',
 		] );
 
+		// Public profile by login (username).
+		register_rest_route( $ns, '/users/by-login/(?P<login>[a-zA-Z0-9_\-\.]+)', [
+			'methods'             => \WP_REST_Server::READABLE,
+			'callback'            => [ $this, 'get_by_login' ],
+			'permission_callback' => '__return_true',
+		] );
+
 		// Posts by user.
 		register_rest_route( $ns, '/users/(?P<id>\d+)/posts', [
 			'methods'             => \WP_REST_Server::READABLE,
@@ -110,6 +117,38 @@ class Users_Controller extends Base_Controller {
 			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
 			'bio'              => $profile->bio ?? null,
 			'avatar_url'       => $profile->avatar_url ?? null,
+			'created_at'       => $wp_user->user_registered ?? null,
+			'last_seen_at'     => $profile->last_seen_at ?? null,
+		];
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * GET /users/by-login/{login} — Return a public profile by username.
+	 */
+	public function get_by_login( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$login = sanitize_user( $request->get_param( 'login' ) );
+
+		$wp_user = get_user_by( 'login', $login );
+		if ( ! $wp_user ) {
+			return $this->not_found( 'User' );
+		}
+
+		$id          = (int) $wp_user->ID;
+		$profile     = UserProfile::find_by_user( $id );
+		$trust_level = (int) ( $profile->trust_level ?? 0 );
+
+		$data = [
+			'id'               => $id,
+			'display_name'     => $wp_user->display_name,
+			'trust_level'      => $trust_level,
+			'trust_level_name' => Trust_Levels::name( $trust_level ),
+			'reputation'       => (int) ( $profile->reputation ?? 0 ),
+			'post_count'       => (int) ( $profile->post_count ?? 0 ),
+			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
+			'bio'              => $profile->bio ?? null,
+			'avatar_url'       => $profile->avatar_url ?? get_avatar_url( $id, [ 'size' => 64 ] ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];

@@ -12,6 +12,7 @@ class Autoloader {
         'Jetonomy\\API\\'           => 'includes/api/',
         'Jetonomy\\Adapters\\'      => 'includes/adapters/',
         'Jetonomy\\Search\\'        => 'includes/search/',
+        'Jetonomy\\Moderation\\'    => 'includes/moderation/',
         'Jetonomy\\Notifications\\' => 'includes/notifications/',
         'Jetonomy\\Import\\'        => 'includes/import/',
         'Jetonomy\\Admin\\'         => 'includes/admin/',

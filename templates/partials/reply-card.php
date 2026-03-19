@@ -26,7 +26,7 @@ $is_accepted = (int) $reply->is_accepted;
 		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
-		<?php echo wp_kses_post( $reply->content ); ?>
+		<?php echo \Jetonomy\Embeds::process( wp_kses_post( $reply->content ) ); ?>
 	</div>
 	<div class="jt-reply-foot">
 		<button class="jt-act"

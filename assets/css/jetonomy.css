@@ -861,3 +861,51 @@
 
 /* Mentions */
 .jt-mention { color: var(--jt-accent); font-weight: 500; }
+
+/* ── Image Upload: Drag-over state ── */
+.jt-editor-dragover { border-color: var(--jt-accent) !important; background: var(--jt-accent-muted); }
+.jt-upload-placeholder { padding: 12px; text-align: center; color: var(--jt-text-tertiary); background: var(--jt-bg-muted); border-radius: var(--jt-radius); margin: 8px 0; animation: jt-pulse 1.5s ease infinite; }
+
+/* ── oEmbed wrappers ── */
+.jt-embed { margin: 12px 0; border-radius: var(--jt-radius); overflow: hidden; }
+.jt-embed iframe { max-width: 100%; border-radius: var(--jt-radius); }
+.jt-embed .twitter-tweet { margin: 0 !important; }
+
+/* ── Instant Search Dropdown ── */
+.jt-search-page-form { position: relative; }
+.jt-instant-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-top: none; border-radius: 0 0 var(--jt-radius-lg) var(--jt-radius-lg); box-shadow: 0 8px 24px rgba(0,0,0,0.1); z-index: 100; max-height: 400px; overflow-y: auto; }
+.jt-instant-result-item { display: block; padding: 12px 18px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; color: inherit; text-decoration: none; }
+.jt-instant-result-item:last-child { border-bottom: none; }
+.jt-instant-result-item:hover { background: var(--jt-bg-hover); }
+.jt-instant-result-item strong { display: block; font-weight: 600; margin-bottom: 2px; }
+.jt-instant-result-item span { color: var(--jt-text-tertiary); font-size: 0.875rem; }
+
+/* ── G5: Quote Button ── */
+.jt-quote-btn { position: absolute; z-index: 200; padding: 6px 14px; background: var(--jt-text); color: var(--jt-bg); border: none; border-radius: var(--jt-radius-full); cursor: pointer; font-weight: 600; font-size: 0.8125rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.1s; }
+.jt-quote-btn:hover { transform: scale(1.05); }
+.jt-quote { border-left: 3px solid var(--jt-accent); padding: 8px 14px; margin: 8px 0; background: var(--jt-bg-subtle); border-radius: 0 var(--jt-radius) var(--jt-radius) 0; color: var(--jt-text-secondary); }
+.jt-quote cite { display: block; font-weight: 600; font-size: 0.8125rem; color: var(--jt-text-tertiary); margin-bottom: 4px; font-style: normal; }
+
+/* ── G6: User Hover Cards ── */
+.jt-hover-card { position: absolute; z-index: 300; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 16px; width: 280px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); animation: jt-fadeIn 0.2s ease; }
+.jt-hc-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.jt-hc-avatar { border-radius: 50%; }
+.jt-hc-name { font-weight: 600; display: block; }
+.jt-hc-trust { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+.jt-hc-bio { font-size: 0.875rem; color: var(--jt-text-secondary); margin: 0 0 8px; line-height: 1.4; }
+.jt-hc-stats { display: flex; gap: 16px; font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; }
+
+/* ── G8: Keyboard Shortcuts ── */
+.jt-kb-focus { outline: 2px solid var(--jt-accent) !important; outline-offset: -2px; }
+.jt-shortcut-help { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+.jt-shortcut-modal { background: var(--jt-bg); border-radius: var(--jt-radius-lg); padding: 24px; max-width: 360px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
+.jt-shortcut-modal h3 { margin: 0 0 16px; }
+.jt-shortcut-modal table { width: 100%; }
+.jt-shortcut-modal td { padding: 6px 0; }
+.jt-shortcut-modal kbd { background: var(--jt-bg-muted); padding: 2px 8px; border-radius: 4px; font-family: var(--jt-font-mono); border: 1px solid var(--jt-border); }
+.jt-shortcut-modal button { margin-top: 16px; width: 100%; padding: 8px; border-radius: var(--jt-radius); border: 1px solid var(--jt-border); background: none; cursor: pointer; }
+
+/* ── G9: Emoji Picker ── */
+.jt-emoji-picker { position: absolute; bottom: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100; width: 220px; }
+.jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
+.jt-emoji-option:hover { background: var(--jt-bg-muted); }

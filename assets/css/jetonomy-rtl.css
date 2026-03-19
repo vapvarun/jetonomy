@@ -1,0 +1,23 @@
+/* RTL overrides — loaded when is_rtl() is true */
+.jt-app { direction: rtl; text-align: right; }
+
+/* Swap margins/paddings */
+.jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-left: 0; margin-right: 24px; }
+.jt-nested::before { left: auto; right: -12px; }
+.jt-space-nums { margin-left: 0; margin-right: auto; }
+.jt-accepted-tag { margin-left: 0; margin-right: auto; }
+.jt-leader-stats { margin-left: 0; margin-right: auto; }
+.jt-reply-edit { margin-left: 0; margin-right: auto; }
+.jt-view-count { margin-left: 0; margin-right: auto; }
+.jt-actions-group { margin-left: 0; margin-right: 8px; }
+
+/* Flip transforms */
+a.jt-row:hover { transform: translateX(-3px); }
+.jt-reply:hover { transform: translateX(-2px); }
+
+/* Breadcrumb separator */
+.jt-crumb { direction: rtl; }
+
+@media (max-width: 640px) {
+    .jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-right: 12px; margin-left: 0; }
+}

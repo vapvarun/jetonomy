@@ -163,12 +163,26 @@ class Replies_Controller extends Base_Controller {
 
 		$content_plain = wp_strip_all_tags( $content );
 
+		// Akismet spam check.
+		$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+		$user = get_userdata( $user_id );
+		$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
+			$content,
+			$user->display_name ?? '',
+			$user->user_email ?? '',
+			$ip
+		);
+
 		$reply_data = [
 			'post_id'       => $post_id,
 			'author_id'     => $user_id,
 			'content'       => $content,
 			'content_plain' => $content_plain,
 		];
+
+		if ( $akismet_spam ) {
+			$reply_data['status'] = 'spam';
+		}
 
 		// Support threaded replies via parent_id.
 		$parent_id = absint( $request->get_param( 'parent_id' ) );
@@ -204,6 +218,11 @@ class Replies_Controller extends Base_Controller {
 				__( 'Failed to create reply.', 'jetonomy' ),
 				[ 'status' => 500 ]
 			);
+		}
+
+		// Log IP address.
+		if ( $ip ) {
+			\Jetonomy\Models\ActivityLog::log( $user_id, 'created_reply', 'reply', $reply_id, [ 'ip' => $ip ] );
 		}
 
 		// Update user profile reply count.

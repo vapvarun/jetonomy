@@ -45,6 +45,7 @@ class Template_Loader {
             'tag'           => 'views/tag.php',
             'new-post'      => 'views/new-post.php',
             'edit-profile'  => 'views/edit-profile.php',
+            'invite'        => 'views/invite.php',
         ];
 
         /**
@@ -89,6 +90,11 @@ class Template_Loader {
             JETONOMY_VERSION
         );
 
+        // RTL stylesheet for right-to-left languages.
+        if ( is_rtl() ) {
+            wp_enqueue_style( 'jetonomy-rtl', JETONOMY_URL . 'assets/css/jetonomy-rtl.css', [ 'jetonomy' ], JETONOMY_VERSION );
+        }
+
         // Set up Interactivity API state
         $settings = get_option( 'jetonomy_settings', [] );
         wp_interactivity_state( 'jetonomy', [
@@ -121,6 +127,13 @@ class Template_Loader {
             JETONOMY_VERSION,
             true
         );
+
+        // Localize upload & API data for composer.js (image upload + instant search).
+        wp_localize_script( 'jetonomy-composer', 'jetonomyUpload', [
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce'   => wp_create_nonce( 'jetonomy_upload' ),
+            'apiBase' => rest_url( 'jetonomy/v1' ),
+        ] );
 
         // Enqueue Prism.js for code syntax highlighting on post pages.
         if ( in_array( $data['route'], [ 'post', 'new-post' ], true ) ) {

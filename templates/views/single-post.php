@@ -170,7 +170,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 				</div>
 
 				<div class="jt-post-body">
-					<?php echo wp_kses_post( $post->content ); ?>
+					<?php echo \Jetonomy\Embeds::process( wp_kses_post( $post->content ) ); ?>
 				</div>
 
 				<?php

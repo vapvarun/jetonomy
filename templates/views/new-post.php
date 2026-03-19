@@ -55,6 +55,8 @@ $type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : _
                     <button type="button" data-cmd="code" title="Code">&lt;/&gt;</button>
                     <button type="button" data-cmd="link" title="Link">&#128279;</button>
                     <button type="button" data-cmd="quote" title="Quote">&#10077;</button>
+                    <button type="button" data-cmd="image" title="Upload Image">&#128247;</button>
+                    <button type="button" data-cmd="emoji" title="Emoji">&#128522;</button>
                 </div>
                 <div class="jt-editor-body" contenteditable="true" data-placeholder="<?php esc_attr_e( 'Write your post...', 'jetonomy' ); ?>"></div>
             </div>

@@ -197,6 +197,16 @@ class Posts_Controller extends Base_Controller {
 		$content_plain = wp_strip_all_tags( $content );
 		$slug          = $this->unique_post_slug( sanitize_title( $title ) );
 
+		// Akismet spam check.
+		$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+		$user = get_userdata( $user_id );
+		$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
+			$content,
+			$user->display_name ?? '',
+			$user->user_email ?? '',
+			$ip
+		);
+
 		$post_data = [
 			'space_id'      => $space_id,
 			'author_id'     => $user_id,
@@ -206,6 +216,10 @@ class Posts_Controller extends Base_Controller {
 			'content_plain' => $content_plain,
 			'type'          => $type,
 		];
+
+		if ( $akismet_spam ) {
+			$post_data['status'] = 'spam';
+		}
 
 		/**
 		 * Check content against moderation rules before insertion.
@@ -235,6 +249,11 @@ class Posts_Controller extends Base_Controller {
 				__( 'Failed to create post.', 'jetonomy' ),
 				[ 'status' => 500 ]
 			);
+		}
+
+		// Log IP address.
+		if ( $ip ) {
+			\Jetonomy\Models\ActivityLog::log( $user_id, 'created_post', 'post', $post_id, [ 'ip' => $ip ] );
 		}
 
 		// Update user profile post count.

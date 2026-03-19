@@ -110,6 +110,7 @@ final class Jetonomy {
         new SEO\Sitemap();
         new SEO\Schema_Markup();
         new Nav_Menus();
+        new Media();
 
         Import\Import_Manager::init();
 

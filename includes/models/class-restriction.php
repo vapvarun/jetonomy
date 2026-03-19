@@ -126,6 +126,28 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Check whether an IP address is currently banned.
+	 *
+	 * IP bans are stored with type = 'ip_ban' and the IP in the reason column.
+	 *
+	 * @param string $ip IP address to check.
+	 * @return bool
+	 */
+	public static function is_ip_banned( string $ip ): bool {
+		$now = now();
+		return (bool) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table() . "
+				WHERE type = 'ip_ban'
+				  AND reason = %s
+				  AND (expires_at IS NULL OR expires_at > %s)",
+				$ip,
+				$now
+			)
+		);
+	}
+
+	/**
 	 * Lift a restriction by its ID.
 	 *
 	 * @param int $id Restriction row ID.
