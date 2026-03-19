@@ -108,7 +108,7 @@ class Admin {
 			'jetonomy',
 			__( 'Spaces', 'jetonomy' ),
 			__( 'Spaces', 'jetonomy' ),
-			'jetonomy_manage_spaces',
+			'jetonomy_manage_settings',
 			'jetonomy-spaces',
 			[ $this, 'render_spaces' ]
 		);

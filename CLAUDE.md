@@ -65,6 +65,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-03-19 | `2043cfb` | Enterprise import UX: completion tracking, resume on failure, step indicators, 4 import states (available / imported / in-progress / interrupted) |
 | 2026-03-19 | `c2440f8` | G4-G10: RTL stylesheet, quote selected text, user hover cards, IP ban + Akismet spam check, keyboard shortcuts, emoji picker, invite links with expiry |
 | 2026-03-19 | `439553d` | Cache layer, eager loading, cursor-based pagination — scalability for 10K+ users |
 | 2026-03-19 | `c6932b3` | Premium reply UX: collapsible threads, slide-up animations, infinite scroll, real-time new replies banner, vote micro-interactions |
