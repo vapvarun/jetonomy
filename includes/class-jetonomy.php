@@ -111,6 +111,8 @@ final class Jetonomy {
         new SEO\Schema_Markup();
         new Nav_Menus();
         new Media();
+        new Activity_Tracker();
+        new Abilities();
 
         Import\Import_Manager::init();
 

@@ -251,10 +251,8 @@ class Posts_Controller extends Base_Controller {
 			);
 		}
 
-		// Log IP address.
-		if ( $ip ) {
-			\Jetonomy\Models\ActivityLog::log( $user_id, 'created_post', 'post', $post_id, [ 'ip' => $ip ] );
-		}
+		// Fire action for Activity_Tracker, Notifier, and other listeners.
+		do_action( 'jetonomy_after_create_post', $post_id, $space_id );
 
 		// Update user profile post count.
 		UserProfile::increment_post_count( $user_id );

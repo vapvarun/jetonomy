@@ -37,6 +37,7 @@ class SpaceMember extends Model {
 
 		if ( ! $exists ) {
 			Space::increment_member_count( $space_id );
+			do_action( 'jetonomy_user_joined_space', $space_id, $user_id, $role );
 		}
 	}
 

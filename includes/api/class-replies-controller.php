@@ -220,11 +220,6 @@ class Replies_Controller extends Base_Controller {
 			);
 		}
 
-		// Log IP address.
-		if ( $ip ) {
-			\Jetonomy\Models\ActivityLog::log( $user_id, 'created_reply', 'reply', $reply_id, [ 'ip' => $ip ] );
-		}
-
 		// Update user profile reply count.
 		UserProfile::increment_reply_count( $user_id );
 
