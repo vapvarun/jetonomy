@@ -13,7 +13,7 @@ use function Jetonomy\table;
 
 abstract class Importer {
 
-	protected array $id_map  = [];
+	public array $id_map  = [];
 	protected array $errors  = [];
 	protected int $imported  = 0;
 	protected int $skipped   = 0;
@@ -33,6 +33,59 @@ abstract class Importer {
 	abstract public function is_source_available(): bool;
 	abstract public function get_source_stats(): array;
 	abstract public function run( array $options = [] ): array;
+
+	/**
+	 * Get the total count of records to import.
+	 * Used to calculate progress percentage.
+	 */
+	abstract public function get_total_count(): int;
+
+	/**
+	 * Run a single batch of the import.
+	 *
+	 * @param string $phase   Current phase: 'forums', 'topics', 'replies', 'profiles', 'recount'.
+	 * @param int    $offset     Where to start this batch.
+	 * @param int    $batch_size How many records per batch.
+	 * @return array{phase: string, offset: int, done: bool, processed: int}
+	 */
+	abstract public function run_batch( string $phase, int $offset, int $batch_size ): array;
+
+	/**
+	 * Get the import phases in order.
+	 *
+	 * @return string[]
+	 */
+	public function get_phases(): array {
+		return [ 'forums', 'topics', 'replies', 'profiles', 'recount' ];
+	}
+
+	/**
+	 * Save progress to wp_options for polling.
+	 */
+	public function save_progress( array $progress ): void {
+		update_option( 'jetonomy_import_progress', $progress, false );
+	}
+
+	/**
+	 * Get current import progress.
+	 */
+	public static function get_progress(): array {
+		return get_option( 'jetonomy_import_progress', [
+			'status'    => 'idle',
+			'phase'     => '',
+			'processed' => 0,
+			'total'     => 0,
+			'percent'   => 0,
+			'message'   => '',
+		] );
+	}
+
+	/**
+	 * Clear stored import progress.
+	 */
+	public static function clear_progress(): void {
+		delete_option( 'jetonomy_import_progress' );
+	}
 
 	/**
 	 * Map an old ID to a new ID.

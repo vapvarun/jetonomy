@@ -33,6 +33,25 @@ class WPForo_Importer extends Importer {
 		];
 	}
 
+	public function get_total_count(): int {
+		global $wpdb;
+		$p = $wpdb->prefix;
+		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" );
+		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" );
+		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" );
+		return $forums + $topics + $posts;
+	}
+
+	public function run_batch( string $phase, int $offset, int $batch_size ): array {
+		// TODO: implement batched import for wpForo.
+		// For now, fall through to run() via a single-shot batch.
+		if ( 'forums' === $phase && 0 === $offset ) {
+			$this->run();
+			return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => $this->imported ];
+		}
+		return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => 0 ];
+	}
+
 	public function run( array $options = [] ): array {
 		$cat_id = Category::create( [
 			'name' => __( 'Imported from wpForo', 'jetonomy' ),

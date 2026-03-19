@@ -55,8 +55,11 @@ class Admin {
 		add_action( 'wp_ajax_jetonomy_change_trust_level', [ $this, 'ajax_change_trust_level' ] );
 		add_action( 'wp_ajax_jetonomy_search_users', [ $this, 'ajax_search_users' ] );
 
-		// Import AJAX
+		// Import AJAX (legacy single-shot kept for CLI / backwards compat)
 		add_action( 'wp_ajax_jetonomy_run_import', [ $this, 'ajax_run_import' ] );
+		// Batched import
+		add_action( 'wp_ajax_jetonomy_import_batch', [ $this, 'ajax_import_batch' ] );
+		add_action( 'wp_ajax_jetonomy_import_progress', [ $this, 'ajax_import_progress' ] );
 
 		// Settings AJAX
 		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
@@ -1242,6 +1245,85 @@ class Admin {
 
 		flush_rewrite_rules();
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * AJAX: Run a single import batch (500 records) and return progress.
+	 */
+	public function ajax_import_batch(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$source     = sanitize_text_field( $_POST['source'] ?? '' );
+		$phase      = sanitize_text_field( $_POST['phase'] ?? 'forums' );
+		$offset     = absint( $_POST['offset'] ?? 0 );
+		$batch_size = absint( $_POST['batch_size'] ?? 500 );
+
+		Import_Manager::init();
+		$importers = Import_Manager::get_importers();
+
+		if ( ! isset( $importers[ $source ] ) ) {
+			wp_send_json_error( __( 'Unknown import source.', 'jetonomy' ) );
+		}
+
+		$importer = $importers[ $source ];
+
+		// Restore ID map from previous batch.
+		$importer->id_map = get_option( 'jetonomy_import_id_map', [] );
+
+		// Run one batch.
+		$result = $importer->run_batch( $phase, $offset, $batch_size );
+
+		// Calculate overall progress.
+		$total           = $importer->get_total_count();
+		$total_processed = absint( get_option( 'jetonomy_import_total_processed', 0 ) ) + $result['processed'];
+		update_option( 'jetonomy_import_total_processed', $total_processed, false );
+
+		$percent = $total > 0 ? min( 100, round( ( $total_processed / $total ) * 100, 1 ) ) : 0;
+
+		$phase_labels = [
+			'forums'   => __( 'Importing forums...', 'jetonomy' ),
+			'topics'   => __( 'Importing topics...', 'jetonomy' ),
+			'replies'  => __( 'Importing replies...', 'jetonomy' ),
+			'profiles' => __( 'Creating user profiles...', 'jetonomy' ),
+			'recount'  => __( 'Recounting statistics...', 'jetonomy' ),
+			'complete' => __( 'Import complete!', 'jetonomy' ),
+		];
+
+		// Save progress for polling endpoint.
+		$importer->save_progress( [
+			'status'    => $result['done'] ? 'complete' : 'running',
+			'phase'     => $result['phase'],
+			'processed' => $total_processed,
+			'total'     => $total,
+			'percent'   => $percent,
+			'message'   => $phase_labels[ $result['phase'] ] ?? '',
+		] );
+
+		if ( $result['done'] ) {
+			delete_option( 'jetonomy_import_total_processed' );
+		}
+
+		wp_send_json_success( [
+			'phase'     => $result['phase'],
+			'offset'    => $result['offset'],
+			'done'      => $result['done'],
+			'processed' => $total_processed,
+			'total'     => $total,
+			'percent'   => $percent,
+			'message'   => $phase_labels[ $result['phase'] ] ?? '',
+		] );
+	}
+
+	/**
+	 * AJAX: Return current import progress for polling.
+	 */
+	public function ajax_import_progress(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		$progress = \Jetonomy\Import\Importer::get_progress();
+		wp_send_json_success( $progress );
 	}
 
 	// ═══════════════════════════════════════════════════════════════

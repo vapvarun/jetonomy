@@ -20,6 +20,15 @@ class Import_Manager {
 		self::$importers[ $id ] = $importer;
 	}
 
+	/**
+	 * Get all registered importers.
+	 *
+	 * @return array<string, Importer>
+	 */
+	public static function get_importers(): array {
+		return self::$importers;
+	}
+
 	public static function get_available(): array {
 		$available = [];
 		foreach ( self::$importers as $id => $importer ) {

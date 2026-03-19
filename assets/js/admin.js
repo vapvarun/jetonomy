@@ -880,57 +880,63 @@
 			$(document).on('click', '.jetonomy-import-btn', function() {
 				var $btn = $(this);
 				var source = $btn.data('source');
-				var $progress = $('.jetonomy-import-progress[data-source="' + source + '"]');
-				var $results = $('.jetonomy-import-results[data-source="' + source + '"]');
+				var $card = $('#import-source-' + source);
+				var $progress = $card.find('.jetonomy-import-progress');
+				var $fill = $progress.find('.jetonomy-progress-bar__fill');
+				var $statusText = $progress.find('.jetonomy-import-status-text');
+				var $results = $card.find('.jetonomy-import-results');
 
 				$btn.prop('disabled', true);
-				$progress.show();
+				$progress.show().removeClass('jetonomy-import-progress--done');
 				$results.hide();
-
-				// Simulate progress animation
-				var $fill = $progress.find('.jetonomy-progress-bar__fill');
 				$fill.css('width', '0%');
-				var progressInterval = setInterval(function() {
-					var current = parseInt($fill.css('width'), 10) / $fill.parent().width() * 100;
-					if (current < 90) {
-						$fill.css('width', Math.min(current + Math.random() * 15, 90) + '%');
-					}
-				}, 500);
+				$statusText.text(self.i18n.importing || 'Starting import...');
 
-				$progress.find('.jetonomy-import-status-text').text(self.i18n.importing);
-
-				self.ajax('jetonomy_run_import', { source: source }).done(function(res) {
-					clearInterval(progressInterval);
-					$fill.css('width', '100%');
-
-					if (res.success) {
-						$progress.find('.jetonomy-import-status-text').text(self.i18n.importDone);
-
-						var summary = 'Imported: ' + (res.data.imported || 0) +
-							' | Skipped: ' + (res.data.skipped || 0) +
-							' | Errors: ' + ((res.data.errors && res.data.errors.length) || 0);
-
-						$results.find('.jetonomy-import-results__summary').text(summary);
-
-						if (res.data.errors && res.data.errors.length) {
-							var $errorList = $results.find('.jetonomy-import-results__errors ul').empty();
-							$.each(res.data.errors, function(i, err) {
-								$errorList.append('<li>' + $('<span>').text(err).html() + '</li>');
-							});
-							$results.find('.jetonomy-import-results__errors').show();
+				function runBatch(phase, offset) {
+					self.ajax('jetonomy_import_batch', {
+						source: source,
+						phase: phase,
+						offset: offset,
+						batch_size: 500
+					}).done(function(res) {
+						if (!res.success) {
+							$statusText.text('Error: ' + (res.data || 'Unknown error'));
+							$btn.prop('disabled', false);
+							return;
 						}
 
-						$results.show();
-						self.toast(self.i18n.importDone);
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
-				}).fail(function() {
-					clearInterval(progressInterval);
-					self.toast(self.i18n.error, 'error');
-				}).always(function() {
-					$btn.prop('disabled', false);
-				});
+						var d = res.data;
+						$fill.css('width', d.percent + '%');
+						$statusText.text(d.message + ' (' + d.percent + '%)');
+
+						if (!d.done) {
+							// Chain next batch
+							runBatch(d.phase, d.offset);
+						} else {
+							// Complete
+							$fill.css('width', '100%');
+							$progress.addClass('jetonomy-import-progress--done');
+							$statusText.text(self.i18n.importDone + ' ' + d.processed + ' records imported.');
+
+							$results.show();
+							$results.find('.jetonomy-import-results__summary')
+								.html('<div class="notice notice-success"><p><strong>' +
+									self.i18n.importDone + '</strong> ' + d.processed +
+									' records imported successfully.</p></div>');
+
+							$btn.prop('disabled', false);
+							$btn.text(self.i18n.importDone + ' \u2713');
+							self.toast(self.i18n.importDone);
+						}
+					}).fail(function() {
+						$statusText.text('Network error. Please try again.');
+						$btn.prop('disabled', false);
+						self.toast(self.i18n.error, 'error');
+					});
+				}
+
+				// Start with forums phase
+				runBatch('forums', 0);
 			});
 		},
 

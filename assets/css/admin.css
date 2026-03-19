@@ -659,6 +659,11 @@ tr.jetonomy-moderated td {
 	50% { opacity: 0.7; }
 }
 
+.jetonomy-import-progress--done .jetonomy-progress-bar__fill {
+	background: linear-gradient(90deg, #00a32a, #46b450);
+	animation: none;
+}
+
 .jetonomy-import-status-text {
 	font-size: 13px;
 	color: #646970;
