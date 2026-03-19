@@ -65,9 +65,18 @@ class Admin {
 		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
 		add_action( 'wp_ajax_jetonomy_flush_rules', [ $this, 'ajax_flush_rules' ] );
 
+		// Content AJAX (post/reply management)
+		add_action( 'wp_ajax_jetonomy_update_post', [ $this, 'ajax_update_post' ] );
+		add_action( 'wp_ajax_jetonomy_delete_post', [ $this, 'ajax_delete_post' ] );
+		add_action( 'wp_ajax_jetonomy_update_reply', [ $this, 'ajax_update_reply' ] );
+		add_action( 'wp_ajax_jetonomy_delete_reply', [ $this, 'ajax_delete_reply' ] );
+		add_action( 'wp_ajax_jetonomy_get_replies', [ $this, 'ajax_get_replies' ] );
+		add_action( 'wp_ajax_jetonomy_bulk_content_action', [ $this, 'ajax_bulk_content_action' ] );
+
 		// Setup Wizard AJAX
 		add_action( 'wp_ajax_jetonomy_setup_save', [ $this, 'ajax_setup_save' ] );
 		add_action( 'wp_ajax_jetonomy_setup_create_sample', [ $this, 'ajax_setup_create_sample' ] );
+		add_action( 'wp_ajax_jetonomy_cleanup_sample_data', [ $this, 'ajax_cleanup_sample_data' ] );
 	}
 
 	// ── Menu ──
@@ -111,6 +120,15 @@ class Admin {
 			'jetonomy_manage_settings',
 			'jetonomy-spaces',
 			[ $this, 'render_spaces' ]
+		);
+
+		add_submenu_page(
+			'jetonomy',
+			__( 'Content', 'jetonomy' ),
+			__( 'Content', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-content',
+			[ $this, 'render_content' ]
 		);
 
 		add_submenu_page(
@@ -1390,6 +1408,201 @@ class Admin {
 	}
 
 	// ═══════════════════════════════════════════════════════════════
+	//  Content Management
+	// ═══════════════════════════════════════════════════════════════
+
+	public function render_content(): void {
+		global $wpdb;
+		$posts_t  = table( 'posts' );
+		$spaces_t = table( 'spaces' );
+
+		$current_space  = absint( $_GET['space_id'] ?? 0 );
+		$current_status = sanitize_text_field( $_GET['status'] ?? 'all' );
+		$search_query   = sanitize_text_field( $_GET['s'] ?? '' );
+
+		$spaces = $wpdb->get_results( "SELECT id, title FROM {$spaces_t} ORDER BY title ASC" ) ?: [];
+
+		$where = '1=1';
+		$args  = [];
+		if ( $current_space ) {
+			$where .= ' AND p.space_id = %d';
+			$args[] = $current_space;
+		}
+		if ( 'all' !== $current_status ) {
+			$where .= ' AND p.status = %s';
+			$args[] = $current_status;
+		}
+		if ( $search_query ) {
+			$where .= ' AND p.title LIKE %s';
+			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
+		}
+
+		$sql = "SELECT p.*, s.title AS space_title, s.slug AS space_slug
+		        FROM {$posts_t} p
+		        LEFT JOIN {$spaces_t} s ON s.id = p.space_id
+		        WHERE {$where}
+		        ORDER BY p.created_at DESC
+		        LIMIT 100";
+
+		$posts = $args ? $wpdb->get_results( $wpdb->prepare( $sql, ...$args ) ) : $wpdb->get_results( $sql );
+		$posts = $posts ?: [];
+
+		include JETONOMY_DIR . 'includes/admin/views/content.php';
+	}
+
+	public function ajax_update_post(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$id = absint( $_POST['post_id'] ?? 0 );
+		if ( ! $id ) {
+			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
+		}
+
+		$data = [];
+		if ( isset( $_POST['title'] ) ) {
+			$data['title'] = sanitize_text_field( $_POST['title'] );
+		}
+		if ( isset( $_POST['content'] ) ) {
+			$data['content']       = wp_kses_post( $_POST['content'] );
+			$data['content_plain'] = wp_strip_all_tags( $data['content'] );
+		}
+		if ( isset( $_POST['status'] ) ) {
+			$data['status'] = sanitize_text_field( $_POST['status'] );
+		}
+
+		if ( empty( $data ) ) {
+			wp_send_json_error( __( 'Nothing to update.', 'jetonomy' ) );
+		}
+
+		$data['edited_at'] = current_time( 'mysql' );
+		$data['edited_by'] = get_current_user_id();
+
+		Post::update( $id, $data );
+		wp_send_json_success( [ 'message' => __( 'Post updated.', 'jetonomy' ) ] );
+	}
+
+	public function ajax_delete_post(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$id     = absint( $_POST['post_id'] ?? 0 );
+		$status = sanitize_text_field( $_POST['status'] ?? 'trash' );
+		if ( ! $id ) {
+			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
+		}
+
+		Post::update( $id, [ 'status' => $status ] );
+
+		do_action( 'jetonomy_content_moderated', $status, 'post', $id, get_current_user_id() );
+
+		wp_send_json_success();
+	}
+
+	public function ajax_update_reply(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$id = absint( $_POST['reply_id'] ?? 0 );
+		if ( ! $id ) {
+			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
+		}
+
+		$data = [];
+		if ( isset( $_POST['content'] ) ) {
+			$data['content']       = wp_kses_post( $_POST['content'] );
+			$data['content_plain'] = wp_strip_all_tags( $data['content'] );
+		}
+		if ( isset( $_POST['status'] ) ) {
+			$data['status'] = sanitize_text_field( $_POST['status'] );
+		}
+
+		if ( empty( $data ) ) {
+			wp_send_json_error( __( 'Nothing to update.', 'jetonomy' ) );
+		}
+
+		$data['edited_at'] = current_time( 'mysql' );
+		$data['edited_by'] = get_current_user_id();
+
+		Reply::update( $id, $data );
+		wp_send_json_success( [ 'message' => __( 'Reply updated.', 'jetonomy' ) ] );
+	}
+
+	public function ajax_delete_reply(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$id     = absint( $_POST['reply_id'] ?? 0 );
+		$status = sanitize_text_field( $_POST['status'] ?? 'trash' );
+		if ( ! $id ) {
+			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
+		}
+
+		Reply::update( $id, [ 'status' => $status ] );
+		wp_send_json_success();
+	}
+
+	public function ajax_get_replies(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$post_id = absint( $_POST['post_id'] ?? 0 );
+		if ( ! $post_id ) {
+			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
+		}
+
+		$replies = Reply::list_by_post( $post_id, 'oldest', 100, 0, 0 );
+		$items   = [];
+		foreach ( $replies as $r ) {
+			$author  = get_userdata( (int) $r->author_id );
+			$items[] = [
+				'id'          => (int) $r->id,
+				'author_name' => $author ? $author->display_name : __( 'Unknown', 'jetonomy' ),
+				'content'     => $r->content ?? '',
+				'status'      => $r->status ?? 'publish',
+				'created_at'  => $r->created_at ?? '',
+			];
+		}
+
+		wp_send_json_success( $items );
+	}
+
+	public function ajax_bulk_content_action(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$action = sanitize_text_field( $_POST['bulk_action'] ?? '' );
+		$ids    = array_map( 'absint', (array) ( $_POST['ids'] ?? [] ) );
+		$type   = sanitize_text_field( $_POST['type'] ?? 'post' );
+
+		if ( empty( $ids ) || ! in_array( $action, [ 'trash', 'spam', 'publish' ], true ) ) {
+			wp_send_json_error( __( 'Invalid bulk action.', 'jetonomy' ) );
+		}
+
+		foreach ( $ids as $id ) {
+			if ( 'post' === $type ) {
+				Post::update( $id, [ 'status' => $action ] );
+			} else {
+				Reply::update( $id, [ 'status' => $action ] );
+			}
+		}
+
+		wp_send_json_success( [ 'updated' => count( $ids ) ] );
+	}
+
+	// ═══════════════════════════════════════════════════════════════
 	//  Setup Wizard
 	// ═══════════════════════════════════════════════════════════════
 
@@ -1456,42 +1669,152 @@ class Admin {
 		$uid = get_current_user_id();
 		UserProfile::find_or_create( $uid );
 
-		// Category 1: Development.
-		$cat1 = Category::create( [ 'name' => 'Development', 'slug' => 'development', 'description' => 'Programming discussions', 'visibility' => 'public' ] );
+		// Track all IDs for cleanup.
+		$demo = [ 'categories' => [], 'spaces' => [], 'posts' => [], 'replies' => [] ];
 
-		// Category 2: Community.
-		$cat2 = Category::create( [ 'name' => 'Community', 'slug' => 'community-cat', 'description' => 'General community topics', 'visibility' => 'public' ] );
+		$settings = get_option( 'jetonomy_settings', [] );
+		$settings['base_slug']    = sanitize_title( $_POST['base_slug'] ?? 'community' );
+		$settings['default_type'] = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
+		$settings['guest_read']   = true;
+		update_option( 'jetonomy_settings', $settings );
 
-		// Space 1: General Discussion (forum).
-		$s1 = Space::create( [ 'category_id' => $cat2, 'author_id' => $uid, 'type' => 'forum', 'title' => 'General Discussion', 'slug' => 'general-discussion', 'description' => 'Talk about anything.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+		// ── Categories ──
 
-		// Space 2: Help & Questions (Q&A).
-		$s2 = Space::create( [ 'category_id' => $cat1, 'author_id' => $uid, 'type' => 'qa', 'title' => 'Help & Questions', 'slug' => 'help-questions', 'description' => 'Ask questions and get answers from the community.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+		$cat1 = Category::create( [
+			'name'        => 'Product & Engineering',
+			'slug'        => 'product-engineering',
+			'description' => 'Technical discussions, bug reports, and development workflows.',
+			'visibility'  => 'public',
+		] );
+		$demo['categories'][] = $cat1;
 
-		// Space 3: Feature Ideas.
-		$s3 = Space::create( [ 'category_id' => $cat2, 'author_id' => $uid, 'type' => 'ideas', 'title' => 'Feature Ideas', 'slug' => 'feature-ideas', 'description' => 'Submit and vote on ideas.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+		$cat2 = Category::create( [
+			'name'        => 'Community',
+			'slug'        => 'community-hub',
+			'description' => 'Everything about our community — introductions, events, and general chat.',
+			'visibility'  => 'public',
+		] );
+		$demo['categories'][] = $cat2;
 
-		// Space 4: Code Snippets.
-		$s4 = Space::create( [ 'category_id' => $cat1, 'author_id' => $uid, 'type' => 'forum', 'title' => 'Code Snippets', 'slug' => 'code-snippets', 'description' => 'Share useful code snippets.', 'visibility' => 'public', 'join_policy' => 'open' ] );
+		// ── Spaces ──
 
-		// Add admin as member of all spaces.
-		SpaceMember::add( $s1, $uid, 'admin' );
-		SpaceMember::add( $s2, $uid, 'admin' );
-		SpaceMember::add( $s3, $uid, 'admin' );
-		SpaceMember::add( $s4, $uid, 'admin' );
+		$s_welcome = Space::create( [
+			'category_id' => $cat2, 'author_id' => $uid, 'type' => 'forum',
+			'title'       => 'Welcome & Introductions',
+			'slug'        => 'welcome',
+			'description' => 'New here? Introduce yourself and say hello to the community.',
+			'visibility'  => 'public', 'join_policy' => 'open',
+		] );
+		$demo['spaces'][] = $s_welcome;
 
-		// Sample posts.
-		$sample_posts = [
-			[ 'space_id' => $s1, 'title' => 'Welcome to our community!', 'content' => '<p>This is a sample welcome post. Feel free to introduce yourself and start a conversation!</p>', 'type' => 'topic' ],
-			[ 'space_id' => $s1, 'title' => 'Community guidelines', 'content' => '<p>Be respectful, be helpful, and have fun. These are the basics of our community.</p>', 'type' => 'topic' ],
-			[ 'space_id' => $s2, 'title' => 'How do I get started?', 'content' => '<p>I am new here. What are the best ways to participate in this community?</p>', 'type' => 'question' ],
-			[ 'space_id' => $s2, 'title' => 'What tools do you recommend?', 'content' => '<p>Looking for recommendations on tools and resources. What do you use daily?</p>', 'type' => 'question' ],
-			[ 'space_id' => $s3, 'title' => 'Dark mode support', 'content' => '<p>It would be great to have a dark mode option for the community.</p>', 'type' => 'idea' ],
-			[ 'space_id' => $s4, 'title' => 'Useful PHP snippet: array_map with keys', 'content' => '<p>Here is a handy PHP snippet for mapping array values while keeping keys.</p><pre>$result = array_map(fn($v, $k) => "$k: $v", $array, array_keys($array));</pre>', 'type' => 'topic' ],
+		$s_general = Space::create( [
+			'category_id' => $cat2, 'author_id' => $uid, 'type' => 'forum',
+			'title'       => 'General Discussion',
+			'slug'        => 'general-discussion',
+			'description' => 'Off-topic conversations, industry news, and anything that doesn\'t fit elsewhere.',
+			'visibility'  => 'public', 'join_policy' => 'open',
+		] );
+		$demo['spaces'][] = $s_general;
+
+		$s_help = Space::create( [
+			'category_id' => $cat1, 'author_id' => $uid, 'type' => 'qa',
+			'title'       => 'Help & Support',
+			'slug'        => 'help-support',
+			'description' => 'Ask questions and get answers from experienced community members.',
+			'visibility'  => 'public', 'join_policy' => 'open',
+		] );
+		$demo['spaces'][] = $s_help;
+
+		$s_ideas = Space::create( [
+			'category_id' => $cat1, 'author_id' => $uid, 'type' => 'ideas',
+			'title'       => 'Feature Requests',
+			'slug'        => 'feature-requests',
+			'description' => 'Submit ideas, vote on what matters, and shape our roadmap together.',
+			'visibility'  => 'public', 'join_policy' => 'open',
+		] );
+		$demo['spaces'][] = $s_ideas;
+
+		$s_tips = Space::create( [
+			'category_id' => $cat1, 'author_id' => $uid, 'type' => 'forum',
+			'title'       => 'Tips & Best Practices',
+			'slug'        => 'tips-best-practices',
+			'description' => 'Share workflows, shortcuts, and hard-won lessons with fellow members.',
+			'visibility'  => 'public', 'join_policy' => 'open',
+		] );
+		$demo['spaces'][] = $s_tips;
+
+		// Memberships.
+		foreach ( $demo['spaces'] as $sid ) {
+			SpaceMember::add( $sid, $uid, 'admin' );
+		}
+
+		// ── Posts with realistic content ──
+
+		$posts_data = [
+			// Welcome space.
+			[
+				'space_id' => $s_welcome, 'type' => 'topic',
+				'title'    => 'Welcome to our community — here\'s how it works',
+				'content'  => '<p>Hey everyone! We\'re excited to have you here.</p><p>This community is built for real conversations — no algorithms, no noise. Here\'s a quick orientation:</p><ul><li><strong>Spaces</strong> are topic-specific areas. Browse the ones that interest you and join freely.</li><li><strong>Reputation</strong> grows as you contribute. Higher trust levels unlock more features.</li><li><strong>Voting</strong> helps the best content rise to the top. Use it generously.</li></ul><p>Don\'t be shy — introduce yourself below or jump straight into a discussion. Welcome aboard!</p>',
+			],
+			[
+				'space_id' => $s_welcome, 'type' => 'topic',
+				'title'    => 'Community guidelines — the short version',
+				'content'  => '<p>We keep things simple. Three principles:</p><ol><li><strong>Be respectful.</strong> Disagree with ideas, not with people. No personal attacks.</li><li><strong>Be helpful.</strong> If someone asks a question, try to answer it — or point them in the right direction.</li><li><strong>Stay on topic.</strong> Each space has a purpose. Use General Discussion for everything else.</li></ol><p>Moderators are here to keep conversations productive. If you see something that doesn\'t belong, use the flag button. Thanks for helping us build a great community.</p>',
+			],
+			// General Discussion.
+			[
+				'space_id' => $s_general, 'type' => 'topic',
+				'title'    => 'What\'s everyone working on this week?',
+				'content'  => '<p>I always find it motivating to hear what others are building. I\'m currently migrating a client\'s legacy forum to this platform — the import tools have been surprisingly smooth.</p><p>What\'s on your plate? Drop a quick update below.</p>',
+			],
+			[
+				'space_id' => $s_general, 'type' => 'topic',
+				'title'    => 'Interesting article: the future of online communities',
+				'content'  => '<p>Came across a thoughtful piece about how community platforms are shifting away from engagement metrics toward meaningful interactions. The core argument is that smaller, focused communities consistently outperform large social networks for professional learning.</p><p>Curious what you all think — does that match your experience?</p>',
+			],
+			// Help & Support (Q&A).
+			[
+				'space_id' => $s_help, 'type' => 'question',
+				'title'    => 'How do I customize the notification settings?',
+				'content'  => '<p>I\'m getting email notifications for every reply in spaces I\'ve joined. Is there a way to set it to daily digest instead? I looked in my profile settings but couldn\'t find the option.</p><p>Running the latest version on WordPress 6.9 with the BuddyX theme.</p>',
+			],
+			[
+				'space_id' => $s_help, 'type' => 'question',
+				'title'    => 'Can I restrict a space to specific membership levels?',
+				'content'  => '<p>We have a premium membership tier using MemberPress. I want to create a space that\'s only visible to members at the "Pro" level and above.</p><p>I see there\'s an Access Rules section in the space settings — is that the right place? What should the configuration look like?</p>',
+			],
+			[
+				'space_id' => $s_help, 'type' => 'question',
+				'title'    => 'Best approach for migrating from bbPress?',
+				'content'  => '<p>We have about 3,000 topics and 12,000 replies in bbPress. Before I hit the import button, a few questions:</p><ul><li>Does the importer preserve the original post dates?</li><li>What happens to forum categories — do they become spaces?</li><li>Is there a way to do a dry run first?</li></ul><p>Any migration tips from people who\'ve done this would be really helpful.</p>',
+			],
+			// Feature Requests.
+			[
+				'space_id' => $s_ideas, 'type' => 'idea',
+				'title'    => 'Dark mode toggle in user preferences',
+				'content'  => '<p>It would be great if users could switch to a dark color scheme directly from their profile preferences, independent of the system theme. Many of us work late and a dark mode would reduce eye strain significantly.</p><p>Ideally it should respect the theme\'s dark palette if one exists, and fall back to a sensible default otherwise.</p>',
+			],
+			[
+				'space_id' => $s_ideas, 'type' => 'idea',
+				'title'    => 'Saved/bookmarked posts for quick reference',
+				'content'  => '<p>I often find great answers in Q&A threads but have no way to save them for later. A simple "bookmark" or "save" button on posts and replies would be incredibly useful.</p><p>Bonus points if there\'s a "My Saved" page where I can see all my bookmarks organized by space.</p>',
+			],
+			// Tips & Best Practices.
+			[
+				'space_id' => $s_tips, 'type' => 'topic',
+				'title'    => 'Setting up your community for the first 100 members',
+				'content'  => '<p>After launching three communities over the past two years, here\'s what I\'ve learned about the critical first 100 members:</p><ol><li><strong>Seed the content yourself.</strong> Nobody wants to post in an empty forum. Write 10-15 quality topics across different spaces before inviting anyone.</li><li><strong>Personal invitations beat mass emails.</strong> Send individual messages to people you know will contribute.</li><li><strong>Respond to everything.</strong> For the first month, reply to every single post. People come back when they feel heard.</li><li><strong>Celebrate first-time posters.</strong> A simple "Great first post, welcome!" goes a long way.</li></ol><p>The goal isn\'t growth — it\'s establishing the culture. Get the first 100 right and the next 1,000 takes care of itself.</p>',
+			],
+			[
+				'space_id' => $s_tips, 'type' => 'topic',
+				'title'    => 'Keyboard shortcuts you might not know about',
+				'content'  => '<p>Quick productivity tip — this platform has built-in keyboard shortcuts:</p><ul><li><code>j</code> / <code>k</code> — Navigate between topics</li><li><code>l</code> — Upvote the current topic</li><li><code>r</code> — Open the reply composer</li><li><code>n</code> — New post</li><li><code>/</code> — Focus the search bar</li><li><code>?</code> — Show the full shortcut help</li></ul><p>Try pressing <code>?</code> anywhere on the community pages to see the complete list.</p>',
+			],
 		];
 
-		foreach ( $sample_posts as $p ) {
-			Post::create( [
+		foreach ( $posts_data as $p ) {
+			$pid = Post::create( [
 				'space_id'      => $p['space_id'],
 				'author_id'     => $uid,
 				'type'          => $p['type'],
@@ -1501,34 +1824,117 @@ class Admin {
 				'content_plain' => wp_strip_all_tags( $p['content'] ),
 				'status'        => 'publish',
 			] );
+			$demo['posts'][] = $pid;
 		}
 
-		// Sample replies on first 3 posts.
-		$replies = [
-			'Thanks for setting this up! Looking forward to great discussions.',
-			'Great to be here. Hello everyone!',
-			'Nice guidelines. I appreciate the welcoming tone.',
+		// ── Replies that form actual conversations ──
+
+		$replies_data = [
+			// Welcome post — 3 replies.
+			[ 'post_idx' => 0, 'content' => '<p>This is exactly the kind of community space I\'ve been looking for. Clean interface, no distractions. Happy to be here!</p>' ],
+			[ 'post_idx' => 0, 'content' => '<p>Love the reputation system — it\'s a smart way to build trust gradually. Looking forward to contributing.</p>' ],
+			[ 'post_idx' => 0, 'content' => '<p>Just joined today. Coming from a Discourse community that got too noisy. This feels much more focused already.</p>' ],
+
+			// Guidelines — 2 replies.
+			[ 'post_idx' => 1, 'content' => '<p>Simple and clear — the best kind of community guidelines. Bookmarked for reference.</p>' ],
+			[ 'post_idx' => 1, 'content' => '<p>Appreciate that flagging is encouraged. In my experience that\'s the best way to keep forums healthy without over-moderating.</p>' ],
+
+			// What are you working on? — 3 replies.
+			[ 'post_idx' => 2, 'content' => '<p>Currently setting up a knowledge base for our support team. We\'re using the Q&A space type which is perfect for structured answers. The voting system helps surface the best solutions.</p>' ],
+			[ 'post_idx' => 2, 'content' => '<p>Building out a members-only community for our online course. The MemberPress integration was a game-changer — took about 10 minutes to set up space-level access rules.</p>' ],
+			[ 'post_idx' => 2, 'content' => '<p>Rebuilding our company intranet forum. We had bbPress before and the migration import handled 8,000+ posts without a hitch. Pretty impressed so far.</p>' ],
+
+			// Notification settings Q&A — 2 replies.
+			[ 'post_idx' => 4, 'content' => '<p>Go to your profile → Edit → scroll down to the <strong>Notification Preferences</strong> section. You can choose between instant, daily digest, and weekly digest for each type of notification.</p><p>If the section isn\'t visible, make sure you\'re running at least version 1.0. The email digest feature requires Pro.</p>' ],
+			[ 'post_idx' => 4, 'content' => '<p>Adding to the above — you can also unsubscribe from individual spaces by clicking the bell icon on the space page. That way you only get notifications for spaces you actively follow.</p>' ],
+
+			// Access rules Q&A — 2 replies.
+			[ 'post_idx' => 5, 'content' => '<p>Yes, Access Rules is the right section. Here\'s the setup:</p><ol><li>Edit the space → Access Rules tab</li><li>Click "Add Rule"</li><li>Set Type to "Membership", Level to "Pro"</li><li>Set the space visibility to "Private"</li></ol><p>Members at the Pro level and above will see the space automatically. Others won\'t even know it exists.</p>' ],
+			[ 'post_idx' => 5, 'content' => '<p>One thing to note — if you\'re using the PMPro adapter instead of MemberPress, the setup is identical. The adapter pattern means all membership plugins work the same way from the community side.</p>' ],
+
+			// bbPress migration — 2 replies.
+			[ 'post_idx' => 6, 'content' => '<p>I migrated about 5,000 topics last week. To answer your questions:</p><ul><li>Yes, original dates are preserved. Posts appear in the correct chronological order.</li><li>bbPress forums become spaces; forum categories become Jetonomy categories.</li><li>Use the CLI command <code>wp jetonomy import --source=bbpress --dry-run</code> to preview without actually importing.</li></ul><p>Tip: run a database backup first. The importer is non-destructive (doesn\'t delete bbPress data) but better safe than sorry.</p>' ],
+			[ 'post_idx' => 6, 'content' => '<p>Did the same migration last month. The batched import was a lifesaver — we have 12,000 replies and it handled them in chunks with a progress bar. No timeouts. Took about 4 minutes total.</p>' ],
+
+			// Dark mode idea — 2 replies.
+			[ 'post_idx' => 7, 'content' => '<p>Fully support this. A lot of developer communities default to dark mode now. It would be great to see it built into the user preferences rather than relying on browser extensions.</p>' ],
+			[ 'post_idx' => 7, 'content' => '<p>If the theme supports a dark palette via theme.json, would it make sense to just toggle the CSS custom properties? That way it stays consistent with the overall site design.</p>' ],
+
+			// Bookmarks idea — 1 reply.
+			[ 'post_idx' => 8, 'content' => '<p>Yes please! I find myself copying URLs into a note-taking app which is not ideal. A native bookmark system would save me so much time. Especially in Q&A spaces where the accepted answers are gold.</p>' ],
+
+			// First 100 members — 2 replies.
+			[ 'post_idx' => 9, 'content' => '<p>Point 3 is so true. Early on, I was the only person replying in our community. It felt slow, but within a month people started replying to each other. That transition from "founder answers everything" to "community helps itself" is magical when it happens.</p>' ],
+			[ 'post_idx' => 9, 'content' => '<p>Great advice. I\'d add one more: <strong>create rituals</strong>. A weekly "What are you working on?" thread or a monthly AMA gives people a reason to come back regularly. Consistency beats novelty.</p>' ],
 		];
 
-		global $wpdb;
-		$posts_table = \Jetonomy\table( 'posts' );
-		$all_posts   = $wpdb->get_results( "SELECT id, space_id FROM {$posts_table} ORDER BY id LIMIT 3" );
-
-		foreach ( $all_posts as $i => $post ) {
-			if ( isset( $replies[ $i ] ) ) {
-				Reply::create( [
-					'post_id'       => (int) $post->id,
-					'author_id'     => $uid,
-					'content'       => '<p>' . $replies[ $i ] . '</p>',
-					'content_plain' => $replies[ $i ],
-					'status'        => 'publish',
-				] );
+		foreach ( $replies_data as $rd ) {
+			$post_id = $demo['posts'][ $rd['post_idx'] ] ?? 0;
+			if ( ! $post_id ) {
+				continue;
 			}
+			$rid = Reply::create( [
+				'post_id'       => $post_id,
+				'author_id'     => $uid,
+				'content'       => $rd['content'],
+				'content_plain' => wp_strip_all_tags( $rd['content'] ),
+				'status'        => 'publish',
+			] );
+			$demo['replies'][] = $rid;
 		}
+
+		// Store demo data IDs for cleanup.
+		update_option( 'jetonomy_demo_data', $demo );
 
 		flush_rewrite_rules();
 		update_option( 'jetonomy_setup_complete', true );
 
-		wp_send_json_success( [ 'message' => 'Sample data created' ] );
+		wp_send_json_success( [ 'message' => __( 'Sample community created with realistic content.', 'jetonomy' ) ] );
+	}
+
+	/**
+	 * Remove all demo data created by the setup wizard.
+	 */
+	public function ajax_cleanup_sample_data(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$demo = get_option( 'jetonomy_demo_data', [] );
+		if ( empty( $demo ) ) {
+			wp_send_json_error( __( 'No demo data found to clean up.', 'jetonomy' ) );
+		}
+
+		global $wpdb;
+
+		// Delete replies first (foreign key safety).
+		if ( ! empty( $demo['replies'] ) ) {
+			$ids = implode( ',', array_map( 'absint', $demo['replies'] ) );
+			$wpdb->query( "DELETE FROM " . table( 'replies' ) . " WHERE id IN ({$ids})" );
+		}
+
+		// Delete posts.
+		if ( ! empty( $demo['posts'] ) ) {
+			$ids = implode( ',', array_map( 'absint', $demo['posts'] ) );
+			$wpdb->query( "DELETE FROM " . table( 'posts' ) . " WHERE id IN ({$ids})" );
+		}
+
+		// Remove space memberships and spaces.
+		if ( ! empty( $demo['spaces'] ) ) {
+			$ids = implode( ',', array_map( 'absint', $demo['spaces'] ) );
+			$wpdb->query( "DELETE FROM " . table( 'space_members' ) . " WHERE space_id IN ({$ids})" );
+			$wpdb->query( "DELETE FROM " . table( 'spaces' ) . " WHERE id IN ({$ids})" );
+		}
+
+		// Delete categories.
+		if ( ! empty( $demo['categories'] ) ) {
+			$ids = implode( ',', array_map( 'absint', $demo['categories'] ) );
+			$wpdb->query( "DELETE FROM " . table( 'categories' ) . " WHERE id IN ({$ids})" );
+		}
+
+		delete_option( 'jetonomy_demo_data' );
+
+		wp_send_json_success( [ 'message' => __( 'All demo data has been removed.', 'jetonomy' ) ] );
 	}
 }
