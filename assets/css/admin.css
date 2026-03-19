@@ -664,9 +664,118 @@ tr.jetonomy-moderated td {
 	animation: none;
 }
 
+/* Import step indicator */
+.jetonomy-import-steps {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+	flex-wrap: wrap;
+}
+
+.jetonomy-step {
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 500;
+	background: #f0f0f0;
+	color: #666;
+	transition: all 0.3s;
+}
+
+.jetonomy-step--active {
+	background: #0073aa;
+	color: white;
+	animation: jetonomy-step-pulse 1.5s ease infinite;
+}
+
+.jetonomy-step--done {
+	background: #46b450;
+	color: white;
+}
+
+.jetonomy-step-arrow {
+	color: #ccc;
+	font-size: 14px;
+}
+
+@keyframes jetonomy-step-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+
+/* Import status row (text + percent) */
+.jetonomy-import-status {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 6px;
+}
+
 .jetonomy-import-status-text {
 	font-size: 13px;
 	color: #646970;
+}
+
+.jetonomy-import-status-percent {
+	font-weight: 700;
+	font-size: 16px;
+	color: #0073aa;
+}
+
+/* Import history info block */
+.jetonomy-import-history {
+	margin: 12px 0;
+	padding: 12px 16px;
+	background: #f8f8f8;
+	border-left: 3px solid #46b450;
+	border-radius: 0 4px 4px 0;
+}
+
+/* Interrupted resume info block */
+.jetonomy-import-resume-info {
+	margin: 12px 0;
+	padding: 12px 16px;
+	background: #fff8e5;
+	border-left: 3px solid #ffb900;
+	border-radius: 0 4px 4px 0;
+}
+
+/* Re-import button (secondary style) */
+.jetonomy-import-btn--reimport {
+	opacity: 0.7;
+}
+
+.jetonomy-import-btn--reimport:hover {
+	opacity: 1;
+}
+
+/* Badge variants for import states */
+.jetonomy-badge--success {
+	background: #46b450;
+	color: white;
+	padding: 3px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.jetonomy-badge--warning {
+	background: #ffb900;
+	color: #23282d;
+	padding: 3px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.jetonomy-badge--info {
+	background: #00a0d2;
+	color: white;
+	padding: 3px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 600;
 }
 
 /* Import Results */

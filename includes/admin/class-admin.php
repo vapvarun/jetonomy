@@ -1273,6 +1273,16 @@ class Admin {
 		// Restore ID map from previous batch.
 		$importer->id_map = get_option( 'jetonomy_import_id_map', [] );
 
+		// Save resume point so the import can be resumed if interrupted.
+		$existing_resume = get_option( 'jetonomy_import_resume', [] );
+		update_option( 'jetonomy_import_resume', [
+			'source'     => $source,
+			'phase'      => $phase,
+			'offset'     => $offset,
+			'batch_size' => $batch_size,
+			'started_at' => $existing_resume['started_at'] ?? current_time( 'mysql' ),
+		], false );
+
 		// Run one batch.
 		$result = $importer->run_batch( $phase, $offset, $batch_size );
 
@@ -1303,7 +1313,21 @@ class Admin {
 		] );
 
 		if ( $result['done'] ) {
+			// Save completion record to import history.
+			$history            = get_option( 'jetonomy_import_history', [] );
+			$history[ $source ] = [
+				'completed_at' => current_time( 'mysql' ),
+				'imported'     => $total_processed,
+				'source'       => $source,
+				'source_name'  => $importers[ $source ]->get_source_name(),
+			];
+			update_option( 'jetonomy_import_history', $history );
+
+			// Clear transient state.
+			delete_option( 'jetonomy_import_resume' );
 			delete_option( 'jetonomy_import_total_processed' );
+			delete_option( 'jetonomy_import_id_map' );
+			\Jetonomy\Import\Importer::clear_progress();
 		}
 
 		wp_send_json_success( [
