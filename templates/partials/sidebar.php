@@ -45,6 +45,47 @@ $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
 ?>
 <aside class="jt-sidebar">
 
+	<?php if ( ! empty( $space ) && isset( $space->id ) ) : ?>
+	<div class="jt-card jt-mb-md">
+		<h4><?php esc_html_e( 'About', 'jetonomy' ); ?></h4>
+		<?php if ( ! empty( $space->description ) ) : ?>
+			<p class="jt-sidebar-about"><?php echo esc_html( $space->description ); ?></p>
+		<?php endif; ?>
+		<div class="jt-sidebar-stats">
+			<div class="jt-sidebar-stat">
+				<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
+				<span><?php esc_html_e( 'Posts', 'jetonomy' ); ?></span>
+			</div>
+			<div class="jt-sidebar-stat">
+				<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>
+				<span><?php esc_html_e( 'Members', 'jetonomy' ); ?></span>
+			</div>
+		</div>
+		<?php
+		$space_type_labels = [
+			'forum'  => __( 'Forum', 'jetonomy' ),
+			'qa'     => __( 'Q&A', 'jetonomy' ),
+			'ideas'  => __( 'Ideas', 'jetonomy' ),
+			'social' => __( 'Social', 'jetonomy' ),
+		];
+		$space_type = $space->type ?? 'forum';
+		?>
+		<div class="jt-sidebar-meta">
+			<span class="jt-tag"><?php echo esc_html( $space_type_labels[ $space_type ] ?? ucfirst( $space_type ) ); ?></span>
+			<?php if ( 'public' !== ( $space->visibility ?? 'public' ) ) : ?>
+				<span class="jt-tag"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
+			<?php endif; ?>
+		</div>
+		<?php if ( is_user_logged_in() ) : ?>
+			<div style="margin-top:12px;">
+				<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
+					<?php esc_html_e( 'View all members →', 'jetonomy' ); ?>
+				</a>
+			</div>
+		<?php endif; ?>
+	</div>
+	<?php endif; ?>
+
 	<?php if ( ! empty( $trending ) ) : ?>
 	<div class="jt-card jt-mb-md">
 		<h4><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h4>
