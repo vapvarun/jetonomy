@@ -62,13 +62,98 @@ $stat_cards = [
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $recent_activity as $activity ) :
-							$actor = get_userdata( $activity->user_id );
+						<?php
+						foreach ( $recent_activity as $activity ) :
+							$actor       = get_userdata( $activity->user_id );
+							$action_code = $activity->action;
+							$object_type = $activity->object_type;
+							$object_id   = (int) $activity->object_id;
+
+							// --- Action label mapping ---
+							$action_labels = [
+								'created_post'        => __( 'Created a post', 'jetonomy' ),
+								'created_reply'       => __( 'Replied', 'jetonomy' ),
+								'voted'               => __( 'Voted', 'jetonomy' ),
+								'trust_level_changed' => __( 'Trust level changed', 'jetonomy' ),
+								'moderated_approve'   => __( 'Approved content', 'jetonomy' ),
+								'moderated_trash'     => __( 'Trashed content', 'jetonomy' ),
+								'moderated_spam'      => __( 'Marked as spam', 'jetonomy' ),
+								'reputation_changed'  => __( 'Reputation changed', 'jetonomy' ),
+								'joined_space'        => __( 'Joined a space', 'jetonomy' ),
+							];
+
+							$action_label = isset( $action_labels[ $action_code ] )
+								? $action_labels[ $action_code ]
+								: ucwords( str_replace( '_', ' ', $action_code ) );
+
+							// --- Dot color by action category ---
+							$create_actions     = [ 'created_post', 'created_reply', 'joined_space' ];
+							$vote_actions       = [ 'voted' ];
+							$moderate_actions   = [ 'moderated_approve', 'moderated_trash', 'moderated_spam' ];
+
+							if ( in_array( $action_code, $create_actions, true ) ) {
+								$dot_color = '#22c55e'; // green
+							} elseif ( in_array( $action_code, $vote_actions, true ) ) {
+								$dot_color = '#3b82f6'; // blue
+							} elseif ( in_array( $action_code, $moderate_actions, true ) ) {
+								$dot_color = '#f97316'; // orange
+							} else {
+								$dot_color = '#94a3b8'; // gray
+							}
+
+							// --- Object reference ---
+							$object_html = '';
+
+							if ( 'post' === $object_type ) {
+								$post_row = \Jetonomy\Models\Post::find( $object_id );
+								if ( $post_row ) {
+									$post_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . $object_id );
+									$object_html = '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post_row->title ) . '</a>';
+								} else {
+									/* translators: %d: post ID */
+									$object_html = esc_html( sprintf( __( 'post #%d', 'jetonomy' ), $object_id ) );
+								}
+							} elseif ( 'reply' === $object_type ) {
+								$reply_row = \Jetonomy\Models\Reply::find( $object_id );
+								if ( $reply_row ) {
+									$parent_post = \Jetonomy\Models\Post::find( (int) $reply_row->post_id );
+									if ( $parent_post ) {
+										$post_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
+										/* translators: %s: post title */
+										$object_html = sprintf(
+											__( 'Reply on %s', 'jetonomy' ),
+											'<a href="' . esc_url( $post_url ) . '">' . esc_html( $parent_post->title ) . '</a>'
+										);
+									} else {
+										/* translators: %d: reply ID */
+										$object_html = esc_html( sprintf( __( 'reply #%d', 'jetonomy' ), $object_id ) );
+									}
+								} else {
+									/* translators: %d: reply ID */
+									$object_html = esc_html( sprintf( __( 'reply #%d', 'jetonomy' ), $object_id ) );
+								}
+							} elseif ( 'space' === $object_type ) {
+								$space_row   = \Jetonomy\Models\Space::find( $object_id );
+								$object_html = $space_row
+									? esc_html( $space_row->title )
+									/* translators: %d: space ID */
+									: esc_html( sprintf( __( 'space #%d', 'jetonomy' ), $object_id ) );
+							} elseif ( 'user' === $object_type ) {
+								$obj_user    = get_userdata( $object_id );
+								$object_html = $obj_user
+									? esc_html( $obj_user->display_name )
+									/* translators: %d: user ID */
+									: esc_html( sprintf( __( 'user #%d', 'jetonomy' ), $object_id ) );
+							} else {
+								$object_html = esc_html( $object_type . ' #' . $object_id );
+							}
 						?>
 							<tr>
 								<td><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td><code><?php echo esc_html( $activity->action ); ?></code></td>
-								<td><?php echo esc_html( $activity->object_type . ' #' . $activity->object_id ); ?></td>
+								<td>
+									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
+								</td>
+								<td><?php echo wp_kses( $object_html, [ 'a' => [ 'href' => [] ] ] ); ?></td>
 								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>

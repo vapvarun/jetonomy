@@ -190,6 +190,94 @@ class CLI {
 	}
 
 	/**
+	 * Backfill the activity_log table from existing posts, replies, and space memberships.
+	 *
+	 * Useful after first installing the Activity Tracker, or after a migration.
+	 * Skips items that already have matching activity entries.
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy backfill-activity
+	 *
+	 * @subcommand backfill-activity
+	 */
+	public function backfill_activity( $args, $assoc_args ): void {
+		global $wpdb;
+		$posts_t    = table( 'posts' );
+		$replies_t  = table( 'replies' );
+		$members_t  = table( 'space_members' );
+		$activity_t = table( 'activity_log' );
+		$inserted   = 0;
+
+		// Posts.
+		\WP_CLI::log( 'Backfilling posts...' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$posts = $wpdb->get_results(
+			"SELECT p.id, p.author_id, p.space_id, p.created_at
+			 FROM {$posts_t} p
+			 LEFT JOIN {$activity_t} a ON a.action = 'created_post' AND a.object_type = 'post' AND a.object_id = p.id
+			 WHERE a.id IS NULL AND p.status = 'publish'
+			 ORDER BY p.id ASC"
+		);
+		foreach ( $posts as $p ) {
+			$wpdb->insert( $activity_t, [
+				'user_id'     => (int) $p->author_id,
+				'action'      => 'created_post',
+				'object_type' => 'post',
+				'object_id'   => (int) $p->id,
+				'metadata'    => wp_json_encode( [ 'space_id' => (int) $p->space_id ] ),
+				'created_at'  => $p->created_at,
+			] );
+			$inserted++;
+		}
+
+		// Replies.
+		\WP_CLI::log( 'Backfilling replies...' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$replies = $wpdb->get_results(
+			"SELECT r.id, r.author_id, r.post_id, r.created_at
+			 FROM {$replies_t} r
+			 LEFT JOIN {$activity_t} a ON a.action = 'created_reply' AND a.object_type = 'reply' AND a.object_id = r.id
+			 WHERE a.id IS NULL AND r.status = 'publish'
+			 ORDER BY r.id ASC"
+		);
+		foreach ( $replies as $r ) {
+			$wpdb->insert( $activity_t, [
+				'user_id'     => (int) $r->author_id,
+				'action'      => 'created_reply',
+				'object_type' => 'reply',
+				'object_id'   => (int) $r->id,
+				'metadata'    => wp_json_encode( [ 'post_id' => (int) $r->post_id ] ),
+				'created_at'  => $r->created_at,
+			] );
+			$inserted++;
+		}
+
+		// Space memberships.
+		\WP_CLI::log( 'Backfilling space joins...' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$members = $wpdb->get_results(
+			"SELECT m.space_id, m.user_id, m.role, m.joined_at
+			 FROM {$members_t} m
+			 LEFT JOIN {$activity_t} a ON a.action = 'joined_space' AND a.object_type = 'space' AND a.object_id = m.space_id AND a.user_id = m.user_id
+			 WHERE a.id IS NULL
+			 ORDER BY m.joined_at ASC"
+		);
+		foreach ( $members as $m ) {
+			$wpdb->insert( $activity_t, [
+				'user_id'     => (int) $m->user_id,
+				'action'      => 'joined_space',
+				'object_type' => 'space',
+				'object_id'   => (int) $m->space_id,
+				'metadata'    => wp_json_encode( [ 'role' => $m->role ] ),
+				'created_at'  => $m->joined_at,
+			] );
+			$inserted++;
+		}
+
+		\WP_CLI::success( sprintf( 'Backfilled %d activity entries.', $inserted ) );
+	}
+
+	/**
 	 * Show plugin status and stats.
 	 *
 	 * ## EXAMPLES

@@ -62,6 +62,23 @@ class Flag extends Model {
 	}
 
 	/**
+	 * List flags filtered by status, newest first.
+	 *
+	 * @param string $status Row status value to filter by (e.g. 'pending', 'approved', 'dismissed').
+	 * @param int    $limit  Maximum number of rows to return.
+	 * @return object[]
+	 */
+	public static function list_by_status( string $status = 'pending', int $limit = 50 ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY created_at DESC LIMIT %d',
+				$status,
+				$limit
+			)
+		) ?: [];
+	}
+
+	/**
 	 * Count how many flags exist for a given object (regardless of status).
 	 *
 	 * @param string $object_type

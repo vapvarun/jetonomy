@@ -140,4 +140,22 @@ class Tag extends Model {
 			)
 		) ?: [];
 	}
+
+	/**
+	 * Search tags by name using a partial-match query.
+	 *
+	 * @param string $query Search string matched against the name column.
+	 * @param int    $limit Maximum number of tags to return.
+	 * @return object[]
+	 */
+	public static function search( string $query, int $limit = 20 ): array {
+		$like = '%' . static::db()->esc_like( $query ) . '%';
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE name LIKE %s ORDER BY name ASC LIMIT %d',
+				$like,
+				$limit
+			)
+		) ?: [];
+	}
 }

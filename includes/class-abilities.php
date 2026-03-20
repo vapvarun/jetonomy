@@ -916,15 +916,8 @@ class Abilities {
 	}
 
 	public function execute_list_spaces( $input ) {
-		global $wpdb;
 		$category_id = (int) ( $input['category_id'] ?? 0 );
-		if ( $category_id ) {
-			$spaces = Space::list_by_category( $category_id );
-		} else {
-			$spaces = $wpdb->get_results(
-				'SELECT * FROM ' . \Jetonomy\table( 'spaces' ) . " WHERE status = 'active' ORDER BY title ASC"
-			) ?: [];
-		}
+		$spaces      = $category_id ? Space::list_by_category( $category_id ) : Space::list_all();
 		$items       = [];
 
 		foreach ( $spaces as $s ) {
@@ -1131,8 +1124,9 @@ class Abilities {
 	}
 
 	public function execute_list_flags( $input ) {
-		$limit = (int) ( $input['limit'] ?? 20 );
-		$flags = Flag::list_pending();
+		$status = sanitize_text_field( $input['status'] ?? 'pending' );
+		$limit  = (int) ( $input['limit'] ?? 20 );
+		$flags  = Flag::list_by_status( $status, $limit );
 		$items  = [];
 		foreach ( $flags as $f ) {
 			$items[] = [
@@ -1162,7 +1156,7 @@ class Abilities {
 			$results['spaces'] = $adapter->search_spaces( $query, $limit );
 		}
 		if ( in_array( $filter, [ 'all', 'tags' ], true ) ) {
-			$results['tags'] = Tag::list_popular( $limit );
+			$results['tags'] = Tag::search( $query, $limit );
 		}
 
 		$results['total'] = count( $results['posts'] ) + count( $results['spaces'] ) + count( $results['tags'] );

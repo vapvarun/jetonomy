@@ -156,6 +156,21 @@ class Space extends Model {
 	}
 
 	/**
+	 * List all spaces filtered by status.
+	 *
+	 * @param string $status Row status value to filter by (e.g. 'active', 'archived').
+	 * @return object[]
+	 */
+	public static function list_all( string $status = 'active' ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY title ASC',
+				$status
+			)
+		) ?: [];
+	}
+
+	/**
 	 * Return the decoded settings array for a space.
 	 *
 	 * @param int $id Space ID.
