@@ -21,6 +21,27 @@ final class Jetonomy {
         register_activation_hook( JETONOMY_FILE, [ $this, 'activate' ] );
         register_deactivation_hook( JETONOMY_FILE, [ $this, 'deactivate' ] );
         add_action( 'plugins_loaded', [ $this, 'init' ] );
+
+        // Register plugin-level theme.json for baseline typography, spacing, and colors.
+        // Active theme's theme.json always wins — this provides sensible defaults for classic themes.
+        add_filter( 'wp_theme_json_data_default', [ $this, 'register_plugin_theme_json' ] );
+    }
+
+    /**
+     * Merge plugin theme.json into the default layer so it provides a baseline
+     * but is overridden by the active theme's theme.json.
+     */
+    public function register_plugin_theme_json( $theme_json ) {
+        $plugin_json_path = JETONOMY_DIR . 'theme.json';
+        if ( ! file_exists( $plugin_json_path ) ) {
+            return $theme_json;
+        }
+        $plugin_data = json_decode( file_get_contents( $plugin_json_path ), true );
+        if ( ! $plugin_data ) {
+            return $theme_json;
+        }
+        $theme_json->update_with( $plugin_data );
+        return $theme_json;
     }
 
     public function activate(): void {
@@ -48,6 +69,7 @@ final class Jetonomy {
         $this->maybe_redirect_to_setup();
         $this->check_db_version();
         $this->load_dependencies();
+        $this->maybe_backfill_activity();
     }
 
     private function maybe_redirect_to_setup(): void {
@@ -65,50 +87,6 @@ final class Jetonomy {
             DB\Migrator::run( $current );
         }
 
-        // One-time activity backfill for existing installs that pre-date the Activity_Tracker.
-        if ( ! get_option( 'jetonomy_activity_backfilled' ) && get_option( 'jetonomy_setup_complete' ) ) {
-            $this->backfill_activity_log();
-            update_option( 'jetonomy_activity_backfilled', true );
-        }
-    }
-
-    /**
-     * Backfill activity_log from existing posts, replies, and space memberships.
-     * Runs once automatically. Also available via `wp jetonomy backfill-activity`.
-     */
-    private function backfill_activity_log(): void {
-        global $wpdb;
-        $posts_t    = \Jetonomy\table( 'posts' );
-        $replies_t  = \Jetonomy\table( 'replies' );
-        $members_t  = \Jetonomy\table( 'space_members' );
-        $activity_t = \Jetonomy\table( 'activity_log' );
-
-        // Only backfill if activity_log is empty (first run).
-        $count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$activity_t}" );
-        if ( $count > 0 ) {
-            return;
-        }
-
-        // Posts.
-        $wpdb->query(
-            "INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
-             SELECT author_id, 'created_post', 'post', id, JSON_OBJECT('space_id', space_id), created_at
-             FROM {$posts_t} WHERE status = 'publish'"
-        );
-
-        // Replies.
-        $wpdb->query(
-            "INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
-             SELECT author_id, 'created_reply', 'reply', id, JSON_OBJECT('post_id', post_id), created_at
-             FROM {$replies_t} WHERE status = 'publish'"
-        );
-
-        // Space memberships.
-        $wpdb->query(
-            "INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
-             SELECT user_id, 'joined_space', 'space', space_id, JSON_OBJECT('role', role), joined_at
-             FROM {$members_t}"
-        );
     }
 
     private function load_dependencies(): void {
@@ -164,5 +142,52 @@ final class Jetonomy {
         if ( is_admin() ) {
             new Admin\Admin();
         }
+    }
+
+    /**
+     * One-time activity backfill for existing installs that pre-date the Activity_Tracker.
+     * Runs AFTER load_dependencies() so the table() helper is available.
+     */
+    private function maybe_backfill_activity(): void {
+        if ( get_option( 'jetonomy_activity_backfilled' ) || ! get_option( 'jetonomy_setup_complete' ) ) {
+            return;
+        }
+
+        global $wpdb;
+        $activity_t = table( 'activity_log' );
+
+        // Only backfill if activity_log is empty (first run).
+        $count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$activity_t}" );
+        if ( $count > 0 ) {
+            update_option( 'jetonomy_activity_backfilled', true );
+            return;
+        }
+
+        $posts_t   = table( 'posts' );
+        $replies_t = table( 'replies' );
+        $members_t = table( 'space_members' );
+
+        // Posts.
+        $wpdb->query(
+            "INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+             SELECT author_id, 'created_post', 'post', id, JSON_OBJECT('space_id', space_id), created_at
+             FROM {$posts_t} WHERE status = 'publish'"
+        );
+
+        // Replies.
+        $wpdb->query(
+            "INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+             SELECT author_id, 'created_reply', 'reply', id, JSON_OBJECT('post_id', post_id), created_at
+             FROM {$replies_t} WHERE status = 'publish'"
+        );
+
+        // Space memberships.
+        $wpdb->query(
+            "INSERT INTO {$activity_t} (user_id, action, object_type, object_id, metadata, created_at)
+             SELECT user_id, 'joined_space', 'space', space_id, JSON_OBJECT('role', role), joined_at
+             FROM {$members_t}"
+        );
+
+        update_option( 'jetonomy_activity_backfilled', true );
     }
 }
