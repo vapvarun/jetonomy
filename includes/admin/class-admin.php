@@ -1883,6 +1883,55 @@ class Admin {
 			$demo['replies'][] = $rid;
 		}
 
+		// ── Seed badges if Pro is active ──
+
+		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
+			global $wpdb;
+			$badges_t = $wpdb->prefix . 'jt_badges';
+
+			// Check if badges table exists.
+			$table_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$badges_t}'" );
+			if ( $table_exists ) {
+				$now = current_time( 'mysql' );
+				$demo['badges'] = [];
+
+				$badge_data = [
+					[ 'name' => 'First Post',       'description' => 'Created your first post in the community.',                   'icon' => 'pencil',  'tier' => 'bronze', 'criteria_type' => 'post_count',  'criteria_value' => 1 ],
+					[ 'name' => 'Conversation Starter', 'description' => 'Started 10 discussions that got replies.',                'icon' => 'chat',    'tier' => 'silver', 'criteria_type' => 'post_count',  'criteria_value' => 10 ],
+					[ 'name' => 'Helpful Member',    'description' => 'Posted 25 replies that helped fellow members.',                'icon' => 'heart',   'tier' => 'bronze', 'criteria_type' => 'reply_count', 'criteria_value' => 25 ],
+					[ 'name' => 'Community Pillar',   'description' => 'Reached 100 reputation points through quality contributions.', 'icon' => 'star',    'tier' => 'gold',   'criteria_type' => 'reputation',  'criteria_value' => 100 ],
+					[ 'name' => 'Rising Star',        'description' => 'Earned Trust Level 2 through consistent participation.',       'icon' => 'rocket',  'tier' => 'silver', 'criteria_type' => 'trust_level', 'criteria_value' => 2 ],
+					[ 'name' => 'Veteran',            'description' => 'Been an active member for over 30 days.',                     'icon' => 'shield',  'tier' => 'bronze', 'criteria_type' => 'days_active', 'criteria_value' => 30 ],
+					[ 'name' => 'Top Contributor',    'description' => 'Reached 500 reputation — a true community leader.',            'icon' => 'trophy',  'tier' => 'gold',   'criteria_type' => 'reputation',  'criteria_value' => 500 ],
+					[ 'name' => 'Early Adopter',      'description' => 'Joined during the community launch period.',                   'icon' => 'flag',    'tier' => 'silver', 'criteria_type' => 'manual',      'criteria_value' => 0 ],
+				];
+
+				foreach ( $badge_data as $b ) {
+					$wpdb->insert( $badges_t, [
+						'name'           => $b['name'],
+						'description'    => $b['description'],
+						'icon'           => $b['icon'],
+						'tier'           => $b['tier'],
+						'criteria_type'  => $b['criteria_type'],
+						'criteria_value' => $b['criteria_value'],
+						'is_active'      => 1,
+						'created_at'     => $now,
+					] );
+					$demo['badges'][] = (int) $wpdb->insert_id;
+				}
+
+				// Award "Early Adopter" + "First Post" to the admin user.
+				$user_badges_t = $wpdb->prefix . 'jt_user_badges';
+				$ub_exists     = $wpdb->get_var( "SHOW TABLES LIKE '{$user_badges_t}'" );
+				if ( $ub_exists && ! empty( $demo['badges'] ) ) {
+					// Early Adopter = last badge.
+					$wpdb->insert( $user_badges_t, [ 'user_id' => $uid, 'badge_id' => end( $demo['badges'] ), 'awarded_at' => $now ] );
+					// First Post = first badge.
+					$wpdb->insert( $user_badges_t, [ 'user_id' => $uid, 'badge_id' => $demo['badges'][0], 'awarded_at' => $now ] );
+				}
+			}
+		}
+
 		// Store demo data IDs for cleanup.
 		update_option( 'jetonomy_demo_data', $demo );
 
@@ -1931,6 +1980,19 @@ class Admin {
 		if ( ! empty( $demo['categories'] ) ) {
 			$ids = implode( ',', array_map( 'absint', $demo['categories'] ) );
 			$wpdb->query( "DELETE FROM " . table( 'categories' ) . " WHERE id IN ({$ids})" );
+		}
+
+		// Delete badges (Pro).
+		if ( ! empty( $demo['badges'] ) ) {
+			$badges_t      = $wpdb->prefix . 'jt_badges';
+			$user_badges_t = $wpdb->prefix . 'jt_user_badges';
+			$ids           = implode( ',', array_map( 'absint', $demo['badges'] ) );
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '{$user_badges_t}'" ) ) {
+				$wpdb->query( "DELETE FROM {$user_badges_t} WHERE badge_id IN ({$ids})" );
+			}
+			if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_t}'" ) ) {
+				$wpdb->query( "DELETE FROM {$badges_t} WHERE id IN ({$ids})" );
+			}
 		}
 
 		delete_option( 'jetonomy_demo_data' );
