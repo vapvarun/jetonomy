@@ -23,7 +23,7 @@
     --jt-text-secondary: #4B5563;
     --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
     --jt-text-tertiary: #6B7280;
-    --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 50%, transparent);
+    --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 60%, transparent);
 
     --jt-bg: var(--wp--preset--color--base, #ffffff);
     --jt-bg-subtle: #F9FAFB;
@@ -126,7 +126,7 @@
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
 
   /* ── Breadcrumb ── */
-  .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 1rem; color: var(--jt-text-tertiary); margin-bottom: 20px; }
+  .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 1rem; color: var(--jt-text-secondary); margin-bottom: 20px; }
   .jt-crumb a { color: var(--jt-text-tertiary); }
   .jt-crumb a:hover { color: var(--jt-text-secondary); }
 
@@ -239,13 +239,13 @@
   .jt-replying-to-cancel { cursor: pointer; color: var(--jt-text-tertiary); border: none; background: none; padding: 4px; }
 
   /* ── Composer ── */
-  .jt-editor { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; transition: border-color 0.2s; }
+  .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
   .jt-editor:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-editor-bar { display: flex; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); }
-  .jt-editor-bar button { width: 30px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-tertiary); transition: all 0.1s; border: none; background: none; cursor: pointer; }
+  .jt-editor-bar button { width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; }
   .jt-editor-bar button:hover { background: var(--jt-bg); color: var(--jt-text); }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
-  .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-tertiary); }
+  .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
 
@@ -521,7 +521,7 @@
   .jt-editor-login { text-align: center; padding: 20px; }
 
   /* ── Narrow container ── */
-  .jt-narrow { max-width: 800px; }
+  .jt-narrow { max-width: 860px; margin-inline: auto; }
   .jt-narrower { max-width: 600px; }
 
   /* ── Card flush (no padding, overflow hidden) ── */
@@ -531,13 +531,13 @@
   .jt-form-group { margin-bottom: 16px; }
   .jt-label { display: block; font-weight: 600; color: var(--jt-text); margin-bottom: 6px; }
   .jt-label-hint { font-weight: 400; color: var(--jt-text-tertiary); }
-  .jt-input { width: 100%; padding: 9px 14px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); font-family: var(--jt-font); color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; }
+  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; }
   .jt-input:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
-  .jt-input::placeholder { color: var(--jt-text-tertiary); }
+  .jt-input::placeholder { color: var(--jt-text-secondary); }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-weight: 700; margin: 0; }
-  .jt-post-create-subtitle { color: var(--jt-text-secondary); margin: 4px 0 20px; }
+  .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
 
   /* ── Pagination ── */
   .jt-pagination { text-align: center; margin: 20px 0; }
