@@ -106,7 +106,7 @@
   .jt-community-nav-actions { display: flex; align-items: center; gap: 8px; }
   .jt-community-nav-notif { color: var(--jt-text-secondary); display: flex; align-items: center; gap: 4px; padding: 8px; border-radius: var(--jt-radius-full); transition: all var(--jt-dur); position: relative; }
   .jt-community-nav-notif:hover { color: var(--jt-text); background: var(--jt-bg-muted); }
-  .jt-community-nav-badge { background: var(--jt-danger); color: white; font-size: 0.75rem; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .jt-community-nav-badge { background: var(--jt-danger); color: #fff; font-size: 0.75rem; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
 
   /* Legacy header classes kept for backward compatibility */
   .jt-header { display: none; } /* Hidden — theme header handles this */
@@ -148,11 +148,11 @@
   .jt-pill.on, .jt-pill.active { background: var(--jt-bg); color: var(--jt-text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 -2px 0 var(--jt-accent); }
 
   /* ── Buttons ── */
-  .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: var(--jt-radius-full); font-weight: 600; transition: all var(--jt-dur) var(--jt-ease); border: none; cursor: pointer; font-family: var(--jt-font); }
-  .jt-btn-fill { background: var(--jt-accent); color: white; }
-  .jt-btn-fill:hover { background: var(--jt-accent-hover); }
-  .jt-btn-ghost { color: var(--jt-text-secondary); border: 1px solid var(--jt-border); background: none; }
-  .jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); }
+  .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: none; cursor: pointer; font-family: var(--jt-font); }
+  .jt-app .jt-btn-fill, .jt-app a.jt-btn-fill, .jt-app button.jt-btn-fill { background: var(--jt-accent); color: #fff; }
+  .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: #fff; text-decoration: none; }
+  .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
+  .jt-app .jt-btn-ghost:hover, .jt-app a.jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); text-decoration: none; }
 
   /* ── Topic list ── */
   .jt-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
@@ -183,7 +183,7 @@
   .jt-tag-ideas { background: var(--jt-warn-light); color: var(--jt-warn); }
 
   /* ── Trust level badge ── */
-  .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: white; font-family: var(--jt-font-mono); }
+  .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: #fff; font-family: var(--jt-font-mono); }
   .jt-tl[data-jt-tl="0"] { background: var(--jt-tl0); }
   .jt-tl[data-jt-tl="1"] { background: var(--jt-tl1); }
   .jt-tl[data-jt-tl="2"] { background: var(--jt-tl2); }
@@ -211,7 +211,7 @@
   /* ── Replies ── */
   .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: white; }
+  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: #fff; }
 
   .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; overflow: hidden; transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
@@ -266,9 +266,9 @@
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
   .jt-profile-banner { height: 120px; background: linear-gradient(135deg, var(--jt-accent), #1e40af); background: linear-gradient(135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }
   .jt-profile-body { padding: 0 20px 20px; margin-top: -32px; }
-  .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
+  .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
   .jt-profile-name { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; }
-  .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: white; }
+  .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: #fff; }
 
   .jt-stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
   .jt-stat { text-align: center; }
@@ -413,7 +413,7 @@
   /* ── Status badges ── */
   .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
-  .jt-badge-danger { background: var(--jt-danger); color: white; font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
+  .jt-badge-danger { background: var(--jt-danger); color: #fff; font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
   /* ── View count ── */
@@ -471,7 +471,8 @@
   .jt-mod-flag-reporter { margin-left: auto; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
   .jt-mod-flag-note { color: var(--jt-text-secondary); margin-bottom: 8px; padding: 8px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
   .jt-mod-flag-actions { display: flex; gap: 8px; align-items: center; }
-  .jt-btn-danger { background: var(--jt-danger); }
+  .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger); color: #fff; }
+  .jt-app .jt-btn-danger:hover { color: #fff; }
 
   /* ── Search ── */
   /* ── Search page form (separate from header search) ── */
@@ -628,7 +629,7 @@
     display: flex; align-items: center; justify-content: center;
     margin: 16px auto; max-width: 300px;
     padding: 10px 20px; border-radius: var(--jt-radius-full);
-    background: var(--jt-accent); color: white;
+    background: var(--jt-accent); color: #fff;
     font-weight: 600; cursor: pointer;
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     animation: jt-bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
