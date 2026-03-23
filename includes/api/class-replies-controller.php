@@ -276,6 +276,12 @@ class Replies_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
 		}
 
+		// Advanced Moderation: check updated content.
+		$moderation_action = apply_filters( 'jetonomy_check_content', null, [ 'content' => $content ], $space_id, $user_id );
+		if ( 'block' === $moderation_action ) {
+			return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+		}
+
 		// Create a revision before updating.
 		Revision::create( [
 			'object_type' => 'reply',
@@ -290,6 +296,8 @@ class Replies_Controller extends Base_Controller {
 			'edited_at'     => current_time( 'mysql' ),
 			'edited_by'     => $user_id,
 		] );
+
+		do_action( 'jetonomy_reply_updated', $id, $space_id, $user_id );
 
 		$updated = Reply::find( $id );
 
@@ -328,6 +336,8 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		Reply::update( $id, [ 'status' => 'trash' ] );
+
+		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
 
 		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
 	}

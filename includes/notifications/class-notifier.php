@@ -246,7 +246,7 @@ class Notifier {
 	 * Create notification and optionally send email.
 	 */
 	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message ): void {
-		Notification::create( [
+		$notification_id = Notification::create( [
 			'user_id'     => $user_id,
 			'actor_id'    => $actor_id,
 			'type'        => $type,
@@ -255,6 +255,8 @@ class Notifier {
 			'message'     => $message,
 			'created_at'  => now(),
 		] );
+
+		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
 
 		// Check user's email preference
 		$profile   = UserProfile::find_by_user( $user_id );

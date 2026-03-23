@@ -19,6 +19,8 @@ class WP_Mail_Adapter implements Email_Adapter {
 		$headers[] = 'List-Unsubscribe: <' . home_url( '/community/notifications/' ) . '>';
 		$headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
 
+		$headers = apply_filters( 'jetonomy_notification_email_headers', $headers, $to, $subject );
+
 		return wp_mail( $to, $subject, $html, $headers );
 	}
 

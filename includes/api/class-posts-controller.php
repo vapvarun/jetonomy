@@ -336,6 +336,13 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'No fields provided for update.', 'jetonomy' ) );
 		}
 
+		// Advanced Moderation: check updated content.
+		$check_data        = array_intersect_key( $update_data, array_flip( [ 'title', 'content' ] ) );
+		$moderation_action = apply_filters( 'jetonomy_check_content', null, $check_data, $space_id, $user_id );
+		if ( 'block' === $moderation_action ) {
+			return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
+		}
+
 		// Create a revision before updating.
 		Revision::create( [
 			'object_type' => 'post',
@@ -349,6 +356,8 @@ class Posts_Controller extends Base_Controller {
 		$update_data['edited_by'] = $user_id;
 
 		Post::update( $id, $update_data );
+
+		do_action( 'jetonomy_post_updated', $id, $space_id, $user_id );
 
 		$updated = Post::find( $id );
 
@@ -382,6 +391,8 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		Post::update( $id, [ 'status' => 'trash' ] );
+
+		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );
 
 		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
 	}
