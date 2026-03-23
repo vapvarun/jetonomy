@@ -8,16 +8,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 
 	<nav class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo 'posts' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), count( $pending_posts ) ); ?>
+			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), $total_posts ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo 'replies' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), count( $pending_replies ) ); ?>
+			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), $total_replies ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo 'flags' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), count( $pending_flags ) ); ?>
+			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), $total_flags ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo 'banned' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), count( $banned_users ) ); ?>
+			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), $total_banned ); ?>
 		</a>
 		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
@@ -42,6 +42,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<p><?php esc_html_e( 'No pending posts. The queue is clear.', 'jetonomy' ); ?></p>
 				</div>
 			<?php else : ?>
+				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
@@ -75,6 +76,30 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div><!-- /.jt-content-table-wrap -->
+				<?php if ( (int) ceil( $total_posts / $per_page ) > 1 ) : ?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<span class="displaying-num">
+							<?php
+							$_first = ( $paged_posts - 1 ) * $per_page + 1;
+							$_last  = min( $paged_posts * $per_page, $total_posts );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_posts ) );
+							?>
+						</span>
+						<?php
+						$plinks = paginate_links( [
+							'base'    => add_query_arg( [ 'tab' => 'posts', 'paged_posts' => '%#%' ] ),
+							'format'  => '',
+							'current' => $paged_posts,
+							'total'   => (int) ceil( $total_posts / $per_page ),
+							'type'    => 'array',
+						] );
+						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						?>
+					</div>
+				</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 
@@ -87,6 +112,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<p><?php esc_html_e( 'No pending replies. The queue is clear.', 'jetonomy' ); ?></p>
 				</div>
 			<?php else : ?>
+				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
@@ -117,6 +143,30 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div><!-- /.jt-content-table-wrap -->
+				<?php if ( (int) ceil( $total_replies / $per_page ) > 1 ) : ?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<span class="displaying-num">
+							<?php
+							$_first = ( $paged_replies - 1 ) * $per_page + 1;
+							$_last  = min( $paged_replies * $per_page, $total_replies );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_replies ) );
+							?>
+						</span>
+						<?php
+						$plinks = paginate_links( [
+							'base'    => add_query_arg( [ 'tab' => 'replies', 'paged_replies' => '%#%' ] ),
+							'format'  => '',
+							'current' => $paged_replies,
+							'total'   => (int) ceil( $total_replies / $per_page ),
+							'type'    => 'array',
+						] );
+						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						?>
+					</div>
+				</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 
@@ -129,6 +179,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<p><?php esc_html_e( 'No pending flags. Everything looks good.', 'jetonomy' ); ?></p>
 				</div>
 			<?php else : ?>
+				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
@@ -162,6 +213,30 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div><!-- /.jt-content-table-wrap -->
+				<?php if ( (int) ceil( $total_flags / $per_page ) > 1 ) : ?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<span class="displaying-num">
+							<?php
+							$_first = ( $paged_flags - 1 ) * $per_page + 1;
+							$_last  = min( $paged_flags * $per_page, $total_flags );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_flags ) );
+							?>
+						</span>
+						<?php
+						$plinks = paginate_links( [
+							'base'    => add_query_arg( [ 'tab' => 'flags', 'paged_flags' => '%#%' ] ),
+							'format'  => '',
+							'current' => $paged_flags,
+							'total'   => (int) ceil( $total_flags / $per_page ),
+							'type'    => 'array',
+						] );
+						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						?>
+					</div>
+				</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 
@@ -174,6 +249,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 					<p><?php esc_html_e( 'No active bans.', 'jetonomy' ); ?></p>
 				</div>
 			<?php else : ?>
+				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
 					<thead>
 						<tr>
@@ -212,6 +288,30 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div><!-- /.jt-content-table-wrap -->
+				<?php if ( (int) ceil( $total_banned / $per_page ) > 1 ) : ?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<span class="displaying-num">
+							<?php
+							$_first = ( $paged_banned - 1 ) * $per_page + 1;
+							$_last  = min( $paged_banned * $per_page, $total_banned );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_banned ) );
+							?>
+						</span>
+						<?php
+						$plinks = paginate_links( [
+							'base'    => add_query_arg( [ 'tab' => 'banned', 'paged_banned' => '%#%' ] ),
+							'format'  => '',
+							'current' => $paged_banned,
+							'total'   => (int) ceil( $total_banned / $per_page ),
+							'type'    => 'array',
+						] );
+						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						?>
+					</div>
+				</div>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 	<?php
