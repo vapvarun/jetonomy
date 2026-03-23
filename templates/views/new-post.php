@@ -10,8 +10,14 @@ if ( ! $space ) {
 
 $base = home_url( '/community' );
 $space_url = $base . '/s/' . esc_attr( $space->slug ) . '/';
-$post_type = ( 'qa' === $space->type ) ? 'question' : 'topic';
-$type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : __( 'New Topic', 'jetonomy' );
+$space_type_map = [
+	'qa'    => [ 'post_type' => 'question', 'label' => __( 'Ask a Question', 'jetonomy' ) ],
+	'ideas' => [ 'post_type' => 'idea',     'label' => __( 'Share an Idea',  'jetonomy' ) ],
+	'feed'  => [ 'post_type' => 'status',   'label' => __( 'New Status',     'jetonomy' ) ],
+];
+$type_defaults = $space_type_map[ $space->type ] ?? [ 'post_type' => 'topic', 'label' => __( 'New Topic', 'jetonomy' ) ];
+$post_type  = $type_defaults['post_type'];
+$type_label = $type_defaults['label'];
 
 \Jetonomy\Template_Loader::partial( 'breadcrumb', [
     'crumbs' => [
@@ -37,7 +43,14 @@ $type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : _
         <div class="jt-form-group">
             <label for="jt-post-title" class="jt-label"><?php esc_html_e( 'Title', 'jetonomy' ); ?></label>
             <input type="text" id="jt-post-title" name="title" class="jt-input"
-                   placeholder="<?php echo ( 'question' === $post_type ) ? esc_attr__( 'What is your question?', 'jetonomy' ) : esc_attr__( 'Topic title', 'jetonomy' ); ?>"
+                   placeholder="<?php
+				$title_placeholders = [
+					'question' => __( 'What is your question?', 'jetonomy' ),
+					'idea'     => __( 'Describe your idea',     'jetonomy' ),
+					'status'   => __( "What's on your mind?",  'jetonomy' ),
+				];
+				echo esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
+				?>"
                    required maxlength="255" autofocus>
         </div>
 
@@ -75,7 +88,14 @@ $type_label = ( 'qa' === $space->type ) ? __( 'Ask a Question', 'jetonomy' ) : _
         <div class="jt-form-actions">
             <a href="<?php echo esc_url( $space_url ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
             <button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting" data-wp-text="state.submitLabel">
-                <?php echo ( 'question' === $post_type ) ? esc_html__( 'Post Question', 'jetonomy' ) : esc_html__( 'Post Topic', 'jetonomy' ); ?>
+                <?php
+				$submit_labels = [
+					'question' => __( 'Post Question', 'jetonomy' ),
+					'idea'     => __( 'Submit Idea',   'jetonomy' ),
+					'status'   => __( 'Post Status',   'jetonomy' ),
+				];
+				echo esc_html( $submit_labels[ $post_type ] ?? __( 'Post Topic', 'jetonomy' ) );
+				?>
             </button>
         </div>
     </form>

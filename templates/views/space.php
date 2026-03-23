@@ -88,7 +88,14 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 				</div>
 				<?php if ( is_user_logged_in() ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
-						+ <?php esc_html_e( 'New Post', 'jetonomy' ); ?>
+						<?php
+						$new_post_labels = [
+							'qa'    => __( '+ Ask a Question', 'jetonomy' ),
+							'ideas' => __( '+ Share an Idea',  'jetonomy' ),
+							'feed'  => __( '+ New Status',     'jetonomy' ),
+						];
+						echo esc_html( $new_post_labels[ $space->type ] ?? __( '+ New Post', 'jetonomy' ) );
+						?>
 					</a>
 				<?php else : ?>
 					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-ghost">

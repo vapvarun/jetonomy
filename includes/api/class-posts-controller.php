@@ -190,8 +190,13 @@ class Posts_Controller extends Base_Controller {
 		// Derive post type from space type if not provided.
 		$type = sanitize_text_field( (string) $request->get_param( 'type' ) );
 		if ( empty( $type ) ) {
+			$space_type_to_post_type = [
+				'qa'    => 'question',
+				'ideas' => 'idea',
+				'feed'  => 'status',
+			];
 			$space_type = $space->type ?? 'forum';
-			$type       = ( 'qa' === $space_type ) ? 'question' : 'topic';
+			$type       = $space_type_to_post_type[ $space_type ] ?? 'topic';
 		}
 
 		$content_plain = wp_strip_all_tags( $content );
@@ -578,7 +583,7 @@ class Posts_Controller extends Base_Controller {
 			'type'    => [
 				'type'     => 'string',
 				'required' => false,
-				'enum'     => [ 'topic', 'question', 'discussion', 'announcement' ],
+				'enum'     => [ 'topic', 'question', 'discussion', 'announcement', 'idea', 'status' ],
 			],
 			'tags'    => [
 				'type'     => 'array',
