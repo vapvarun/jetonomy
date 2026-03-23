@@ -480,6 +480,24 @@
 
 .jt-status-badge--trash::before { background: #94a3b8; }
 
+/* Space status */
+.jt-status-badge--active   { background: #dcfce7; color: #166534; }
+.jt-status-badge--archived { background: #f1f5f9; color: #475569; }
+.jt-status-badge--locked   { background: #fef3c7; color: #92400e; }
+
+/* Visibility */
+.jt-status-badge--public  { background: #dbeafe; color: #1e40af; }
+.jt-status-badge--private { background: #fce7f3; color: #9d174d; }
+.jt-status-badge--hidden  { background: #f1f5f9; color: #475569; }
+
+/* Toolbar right-side count + actions */
+.jt-content-toolbar__right {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
 /* Content Page Toolbar */
 .jt-content-toolbar {
 	display: flex;
