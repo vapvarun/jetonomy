@@ -401,7 +401,7 @@ const { state, actions } = store( 'jetonomy', {
                         },
                         body: JSON.stringify( {
                             content: body.innerHTML,
-                            parent_id: state.replyToId || replyTo || null,
+                            ...( ( state.replyToId || replyTo ) && { parent_id: state.replyToId || replyTo } ),
                         } ),
                     }
                 );
