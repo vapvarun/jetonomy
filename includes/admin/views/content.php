@@ -35,79 +35,54 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Posts &amp; Replies', 'jetonomy' ); ?></h1>
 
-	<!-- ── Filters bar ───────────────────────────────────────── -->
-	<form method="get" action="" id="jetonomy-content-filters" class="jetonomy-content-filters">
+	<!-- ── Toolbar ───────────────────────────────────────────── -->
+	<form method="get" action="" id="jetonomy-content-filters">
 		<input type="hidden" name="page" value="jetonomy-content">
-		<div class="tablenav top">
-			<div class="alignleft actions">
+		<div class="jt-content-toolbar">
 
-				<!-- Space filter -->
-				<select name="space_id" id="jt-filter-space">
-					<option value="0" <?php selected( $current_space, 0 ); ?>>
-						<?php esc_html_e( 'All Spaces', 'jetonomy' ); ?>
-					</option>
-					<?php foreach ( $spaces as $space ) : ?>
-						<option value="<?php echo absint( $space->id ); ?>" <?php selected( $current_space, (int) $space->id ); ?>>
-							<?php echo esc_html( $space->title ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
+			<!-- Space filter -->
+			<select name="space_id" id="jt-filter-space">
+				<option value="0" <?php selected( $current_space, 0 ); ?>><?php esc_html_e( 'All Spaces', 'jetonomy' ); ?></option>
+				<?php foreach ( $spaces as $space ) : ?>
+					<option value="<?php echo absint( $space->id ); ?>" <?php selected( $current_space, (int) $space->id ); ?>><?php echo esc_html( $space->title ); ?></option>
+				<?php endforeach; ?>
+			</select>
 
-				<!-- Status filter -->
-				<select name="status" id="jt-filter-status">
-					<?php foreach ( $status_labels as $slug => $label ) : ?>
-						<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $current_status, $slug ); ?>>
-							<?php echo esc_html( $label ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
+			<!-- Status filter -->
+			<select name="status" id="jt-filter-status">
+				<?php foreach ( $status_labels as $slug => $label ) : ?>
+					<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $current_status, $slug ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
 
-				<!-- Search -->
-				<input
-					type="search"
-					name="s"
-					id="jt-filter-search"
-					value="<?php echo esc_attr( $search_query ); ?>"
-					placeholder="<?php esc_attr_e( 'Search by title\u2026', 'jetonomy' ); ?>"
-					class="regular-text"
-				>
+			<!-- Search -->
+			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" class="regular-text">
 
-				<button type="submit" class="button">
-					<?php esc_html_e( 'Filter', 'jetonomy' ); ?>
-				</button>
+			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
 
-				<?php if ( $search_query || $current_space || 'all' !== $current_status ) : ?>
-					<a href="<?php echo esc_url( $page_url ); ?>" class="button">
-						<?php esc_html_e( 'Clear', 'jetonomy' ); ?>
-					</a>
-				<?php endif; ?>
-			</div>
+			<?php if ( $search_query || $current_space || 'all' !== $current_status ) : ?>
+				<a href="<?php echo esc_url( $page_url ); ?>" class="button"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
+			<?php endif; ?>
+
+			<span class="jt-toolbar-spacer"></span>
 
 			<!-- Bulk actions -->
-			<div class="alignleft actions bulkactions">
-				<select id="jt-bulk-action">
-					<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
-					<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
-					<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
-					<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
-				</select>
-				<button type="button" class="button" id="jt-bulk-apply">
-					<?php esc_html_e( 'Apply', 'jetonomy' ); ?>
-				</button>
-				<span class="spinner" id="jt-bulk-spinner" style="float:none;"></span>
-			</div>
+			<select id="jt-bulk-action">
+				<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
+				<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
+				<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
+				<option value="spam"><?php esc_html_e( 'Mark as Spam', 'jetonomy' ); ?></option>
+			</select>
+			<button type="button" class="button" id="jt-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
+			<span class="spinner" id="jt-bulk-spinner" style="float:none;margin:0;"></span>
 
-			<div class="alignright">
-				<span class="displaying-num">
-					<?php
-					$count = count( $posts );
-					/* translators: %s: number of posts */
-					printf( esc_html( _n( '%s post', '%s posts', $count, 'jetonomy' ) ), number_format_i18n( $count ) );
-					?>
-				</span>
-			</div>
-
-			<br class="clear">
+			<span class="displaying-num">
+				<?php
+				$count = count( $posts );
+				/* translators: %s: number of posts */
+				printf( esc_html( _n( '%s post', '%s posts', $count, 'jetonomy' ) ), number_format_i18n( $count ) );
+				?>
+			</span>
 		</div>
 	</form>
 
@@ -119,6 +94,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		</div>
 	<?php else : ?>
 
+	<div class="jt-content-table-wrap">
 		<table class="wp-list-table widefat fixed striped" id="jt-posts-table">
 			<thead>
 				<tr>
@@ -283,8 +259,9 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							<?php echo esc_html( $author_name ); ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Status', 'jetonomy' ); ?>">
-							<span class="jetonomy-status-dot <?php echo esc_attr( $status_dot_class ); ?>"></span>
-							<?php echo esc_html( ucfirst( $p->status ) ); ?>
+							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $p->status ); ?>">
+								<?php echo esc_html( ucfirst( $p->status ) ); ?>
+							</span>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>">
 							<?php echo absint( $p->reply_count ?? 0 ); ?>
@@ -343,6 +320,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 				</tr>
 			</tfoot>
 		</table>
+	</div><!-- /.jt-content-table-wrap -->
 
 	<?php endif; ?>
 
