@@ -59,7 +59,7 @@ class Reply extends Model {
 	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
 			$settings = get_option( 'jetonomy_settings', [] );
-			$limit    = (int) ( $settings['posts_per_page'] ?? 30 );
+			$limit    = (int) ( $settings['replies_per_page'] ?? 30 );
 		}
 		$table = static::table();
 

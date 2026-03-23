@@ -27,6 +27,7 @@ class Api {
 			'moderation'    => 'Moderation_Controller',
 			'tags'          => 'Tags_Controller',
 			'updates'       => 'Updates_Controller',
+			'leaderboards'  => 'Leaderboards_Controller',
 		];
 
 		require_once $dir . 'class-base-controller.php';

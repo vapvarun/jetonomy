@@ -7,6 +7,9 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use Jetonomy\Models\Notification;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
+use Jetonomy\Models\Space;
 
 class Notifications_Controller extends Base_Controller {
 
@@ -140,12 +143,15 @@ class Notifications_Controller extends Base_Controller {
 		$actor_id = (int) ( $notification->actor_id ?? 0 );
 		$actor    = $actor_id ? get_userdata( $actor_id ) : null;
 
+		$object_type = $notification->object_type ?? '';
+		$object_id   = $notification->object_id ? (int) $notification->object_id : 0;
+
 		return [
 			'id'           => (int) $notification->id,
 			'user_id'      => (int) $notification->user_id,
 			'type'         => $notification->type ?? '',
-			'object_type'  => $notification->object_type ?? null,
-			'object_id'    => $notification->object_id ? (int) $notification->object_id : null,
+			'object_type'  => $object_type ?: null,
+			'object_id'    => $object_id ?: null,
 			'actor_id'     => $actor_id ?: null,
 			'is_read'      => (bool) ( $notification->is_read ?? false ),
 			'created_at'   => $notification->created_at ?? null,
@@ -156,6 +162,53 @@ class Notifications_Controller extends Base_Controller {
 			'actor_login'  => $actor ? $actor->user_login : '',
 			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
+			'object_url'   => $object_type && $object_id ? $this->resolve_object_url( $object_type, $object_id ) : '',
 		];
+	}
+
+	/**
+	 * Resolve a deep-link URL for a notification's target object.
+	 *
+	 * @param string $object_type 'post', 'reply', or 'user'.
+	 * @param int    $object_id   The object ID.
+	 * @return string URL or empty string if unresolvable.
+	 */
+	private function resolve_object_url( string $object_type, int $object_id ): string {
+		$settings   = get_option( 'jetonomy_settings', [] );
+		$base_slug  = $settings['base_slug'] ?? 'community';
+
+		if ( 'post' === $object_type ) {
+			$post = Post::find( $object_id );
+			if ( ! $post ) {
+				return '';
+			}
+			$space = Space::find( (int) $post->space_id );
+			if ( ! $space ) {
+				return '';
+			}
+			return home_url( '/' . $base_slug . '/s/' . $space->slug . '/t/' . $post->slug . '/' );
+		}
+
+		if ( 'reply' === $object_type ) {
+			$reply = Reply::find( $object_id );
+			if ( ! $reply ) {
+				return '';
+			}
+			$post = Post::find( (int) $reply->post_id );
+			if ( ! $post ) {
+				return '';
+			}
+			$space = Space::find( (int) $post->space_id );
+			if ( ! $space ) {
+				return '';
+			}
+			return home_url( '/' . $base_slug . '/s/' . $space->slug . '/t/' . $post->slug . '/#reply-' . $object_id );
+		}
+
+		if ( 'user' === $object_type ) {
+			return \Jetonomy\get_profile_url( $object_id );
+		}
+
+		return '';
 	}
 }

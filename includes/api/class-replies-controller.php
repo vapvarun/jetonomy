@@ -425,7 +425,7 @@ class Replies_Controller extends Base_Controller {
 			'post_id'       => (int) $reply->post_id,
 			'parent_id'     => $reply->parent_id ? (int) $reply->parent_id : null,
 			'author_id'     => $author_id,
-			'content'       => $reply->content ?? '',
+			'content'       => \Jetonomy\Embeds::process( $reply->content ?? '' ),
 			'content_plain' => $reply->content_plain ?? '',
 			'status'        => $reply->status ?? 'publish',
 			'is_accepted'   => (bool) ( $reply->is_accepted ?? false ),

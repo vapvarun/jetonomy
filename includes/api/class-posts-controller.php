@@ -528,7 +528,7 @@ class Posts_Controller extends Base_Controller {
 			'author_id'         => $author_id,
 			'title'             => $post->title ?? '',
 			'slug'              => $post->slug ?? '',
-			'content'           => $post->content ?? '',
+			'content'           => \Jetonomy\Embeds::process( $post->content ?? '' ),
 			'content_plain'     => $post->content_plain ?? '',
 			'type'              => $post->type ?? 'topic',
 			'status'            => $post->status ?? 'publish',
