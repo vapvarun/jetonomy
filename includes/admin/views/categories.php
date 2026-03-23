@@ -5,8 +5,10 @@ defined( 'ABSPATH' ) || exit;
 	<h1><?php esc_html_e( 'Categories', 'jetonomy' ); ?></h1>
 
 	<!-- Add New Category Form -->
-	<div class="jetonomy-inline-form" id="jetonomy-add-category-form">
-		<h2><?php esc_html_e( 'Add New Category', 'jetonomy' ); ?></h2>
+	<div class="jt-settings-card" id="jetonomy-add-category-form">
+		<div class="jt-settings-card__head">
+			<h2 class="jt-settings-card__title"><?php esc_html_e( 'Add New Category', 'jetonomy' ); ?></h2>
+		</div>
 		<div class="jetonomy-form-grid">
 			<div class="jetonomy-form-field">
 				<label for="cat-name"><?php esc_html_e( 'Name', 'jetonomy' ); ?> <span class="required">*</span></label>
@@ -53,7 +55,8 @@ defined( 'ABSPATH' ) || exit;
 	</div>
 
 	<!-- Categories Table -->
-	<table class="wp-list-table widefat fixed striped" id="jetonomy-categories-table">
+	<div class="jt-content-table-wrap">
+		<table class="wp-list-table widefat fixed striped" id="jetonomy-categories-table">
 		<thead>
 			<tr>
 				<th class="column-drag" style="width:30px;"></th>
@@ -111,6 +114,7 @@ defined( 'ABSPATH' ) || exit;
 			<?php endif; ?>
 		</tbody>
 	</table>
+	</div><!-- /.jt-content-table-wrap -->
 
 	<!-- Edit Category Modal -->
 	<div class="jetonomy-modal" id="jetonomy-edit-category-modal" style="display:none;">
