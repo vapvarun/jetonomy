@@ -1,11 +1,59 @@
 <?php
 defined( 'ABSPATH' ) || exit;
-$categories = \Jetonomy\Models\Category::list_top_level();
-$base        = home_url( '/community' );
+$categories          = \Jetonomy\Models\Category::list_top_level();
+$uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized();
+$base                = home_url( '/community' );
+
+/**
+ * Render a grid of space cards.
+ *
+ * @param object[] $spaces
+ * @param string   $base Community base URL.
+ */
+function jetonomy_render_space_grid( array $spaces, string $base ): void {
+	if ( empty( $spaces ) ) {
+		echo '<p class="jt-cat-empty">' . esc_html__( 'No spaces in this category yet.', 'jetonomy' ) . '</p>';
+		return;
+	}
+	echo '<div class="jt-space-grid">';
+	foreach ( $spaces as $space ) {
+		?>
+		<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
+			class="jt-card jt-space-card jt-no-underline jt-block">
+			<div class="jt-space-card-inner">
+				<?php if ( ! empty( $space->icon ) ) : ?>
+					<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
+				<?php endif; ?>
+				<div class="jt-space-card-body">
+					<div class="jt-space-card-title">
+						<?php echo esc_html( $space->title ); ?>
+					</div>
+					<?php if ( ! empty( $space->description ) ) : ?>
+						<div class="jt-space-card-excerpt">
+							<?php echo esc_html( $space->description ); ?>
+						</div>
+					<?php endif; ?>
+					<div class="jt-space-card-stats">
+						<span class="jt-space-card-stat">
+							<strong><?php echo (int) $space->post_count; ?></strong>
+							<?php esc_html_e( 'posts', 'jetonomy' ); ?>
+						</span>
+						<span class="jt-space-card-stat">
+							<strong><?php echo (int) $space->member_count; ?></strong>
+							<?php esc_html_e( 'members', 'jetonomy' ); ?>
+						</span>
+					</div>
+				</div>
+			</div>
+		</a>
+		<?php
+	}
+	echo '</div>';
+}
 ?>
 <div class="jt-two-col">
 		<main>
-			<?php if ( empty( $categories ) ) : ?>
+			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
 				<div class="jt-empty">
 					<div class="jt-empty-icon">&#128483;</div>
 					<div class="jt-empty-text"><?php esc_html_e( 'No categories yet. Check back soon!', 'jetonomy' ); ?></div>
@@ -25,47 +73,18 @@ $base        = home_url( '/community' );
 								<span class="jt-cat-desc">&mdash; <?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>
 						</div>
-
-						<?php if ( empty( $spaces ) ) : ?>
-							<p class="jt-cat-empty">
-								<?php esc_html_e( 'No spaces in this category yet.', 'jetonomy' ); ?>
-							</p>
-						<?php else : ?>
-							<div class="jt-space-grid">
-								<?php foreach ( $spaces as $space ) : ?>
-									<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
-										class="jt-card jt-space-card jt-no-underline jt-block">
-										<div class="jt-space-card-inner">
-											<?php if ( ! empty( $space->icon ) ) : ?>
-												<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-											<?php endif; ?>
-											<div class="jt-space-card-body">
-												<div class="jt-space-card-title">
-													<?php echo esc_html( $space->title ); ?>
-												</div>
-												<?php if ( ! empty( $space->description ) ) : ?>
-													<div class="jt-space-card-excerpt">
-														<?php echo esc_html( $space->description ); ?>
-													</div>
-												<?php endif; ?>
-												<div class="jt-space-card-stats">
-													<span class="jt-space-card-stat">
-														<strong><?php echo (int) $space->post_count; ?></strong>
-														<?php esc_html_e( 'posts', 'jetonomy' ); ?>
-													</span>
-													<span class="jt-space-card-stat">
-														<strong><?php echo (int) $space->member_count; ?></strong>
-														<?php esc_html_e( 'members', 'jetonomy' ); ?>
-													</span>
-												</div>
-											</div>
-										</div>
-									</a>
-								<?php endforeach; ?>
-							</div>
-						<?php endif; ?>
+						<?php jetonomy_render_space_grid( $spaces, $base ); ?>
 					</section>
 				<?php endforeach; ?>
+
+				<?php if ( ! empty( $uncategorized_spaces ) ) : ?>
+					<section class="jt-mb-md">
+						<div class="jt-cat-row">
+							<h2 class="jt-cat-name"><?php esc_html_e( 'Other Spaces', 'jetonomy' ); ?></h2>
+						</div>
+						<?php jetonomy_render_space_grid( $uncategorized_spaces, $base ); ?>
+					</section>
+				<?php endif; ?>
 			<?php endif; ?>
 		</main>
 

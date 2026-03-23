@@ -35,6 +35,9 @@ class UserProfile extends Model {
 			]
 		);
 
+		// Bust the cache so find_by_user() hits the DB and returns the newly-inserted row.
+		Cache::delete( "profile:{$user_id}" );
+
 		return static::find_by_user( $user_id );
 	}
 

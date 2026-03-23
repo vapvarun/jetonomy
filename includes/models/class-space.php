@@ -97,9 +97,20 @@ class Space extends Model {
 	public static function list_by_category( int $category_id ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) ORDER BY sort_order ASC, title ASC',
+				"SELECT * FROM " . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC",
 				$category_id
 			)
+		) ?: [];
+	}
+
+	/**
+	 * List spaces with no category assigned (category_id IS NULL or 0), excluding hidden.
+	 *
+	 * @return object[]
+	 */
+	public static function list_uncategorized(): array {
+		return static::db()->get_results(
+			"SELECT * FROM " . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC"
 		) ?: [];
 	}
 

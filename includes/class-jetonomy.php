@@ -60,7 +60,8 @@ final class Jetonomy {
     }
 
     public function deactivate(): void {
-        delete_option( 'jetonomy_permalinks_flushed' );
+        // Delete the versioned flush-key so the next activation triggers a fresh flush.
+        delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
         Cron::unschedule();
         flush_rewrite_rules();
     }

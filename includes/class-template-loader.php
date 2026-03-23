@@ -135,11 +135,14 @@ class Template_Loader {
             'apiBase' => rest_url( 'jetonomy/v1' ),
         ] );
 
-        // Enqueue Prism.js for code syntax highlighting on post pages.
-        if ( in_array( $data['route'], [ 'post', 'new-post' ], true ) ) {
+        // Enqueue Prism.js for code syntax highlighting on post pages (only if files exist).
+        $prism_dir = JETONOMY_DIR . 'assets/vendor/prismjs/';
+        if ( in_array( $data['route'], [ 'post', 'new-post' ], true ) && file_exists( $prism_dir . 'prism.min.js' ) ) {
             wp_enqueue_style( 'prismjs', JETONOMY_URL . 'assets/vendor/prismjs/prism.min.css', [], '1.29.0' );
             wp_enqueue_script( 'prismjs', JETONOMY_URL . 'assets/vendor/prismjs/prism.min.js', [], '1.29.0', true );
-            wp_enqueue_script( 'prismjs-autoloader', JETONOMY_URL . 'assets/vendor/prismjs/prism-autoloader.min.js', [ 'prismjs' ], '1.29.0', true );
+            if ( file_exists( $prism_dir . 'prism-autoloader.min.js' ) ) {
+                wp_enqueue_script( 'prismjs-autoloader', JETONOMY_URL . 'assets/vendor/prismjs/prism-autoloader.min.js', [ 'prismjs' ], '1.29.0', true );
+            }
         }
 
         // Pre-flight 404 detection: check before get_header() sends HTTP headers.
@@ -273,8 +276,16 @@ class Template_Loader {
             case 'post':
                 if ( $slug ) {
                     $post = \Jetonomy\Models\Post::find_by_slug( $slug );
-                    if ( ! $post || 'publish' !== $post->status ) {
+                    if ( ! $post ) {
                         status_header( 404 );
+                    } elseif ( 'publish' !== $post->status ) {
+                        // Allow moderators and the post author to view non-published posts.
+                        $user_id   = get_current_user_id();
+                        $is_author = $user_id && (int) $post->author_id === $user_id;
+                        $can_mod   = current_user_can( 'jetonomy_moderate' );
+                        if ( ! $is_author && ! $can_mod ) {
+                            status_header( 404 );
+                        }
                     }
                 }
                 break;

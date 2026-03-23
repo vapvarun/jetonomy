@@ -449,6 +449,14 @@ const { state, actions } = store( 'jetonomy', {
                 );
                 const data = yield response.json();
                 if ( data.id || data.data?.id ) {
+                    const status = data.status || data.data?.status || 'publish';
+                    if ( 'pending' === status || 'spam' === status ) {
+                        // Post held for moderation — stay on the page and notify the user.
+                        state.submitLabel = 'Post Topic';
+                        state.isSubmitting = false;
+                        alert( jetonomyData?.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
+                        return;
+                    }
                     const slug = data.slug || data.data?.slug || '';
                     window.location.href = `${ state.communityBase }/s/${ ctx.spaceSlug }/t/${ slug }/`;
                 }

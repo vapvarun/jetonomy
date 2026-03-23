@@ -20,8 +20,8 @@ class Capabilities {
 		],
 		'administrator' => [
 			'jetonomy_manage_settings', 'jetonomy_manage_categories',
-			'jetonomy_manage_badges', 'jetonomy_view_analytics',
-			'jetonomy_manage_extensions',
+			'jetonomy_manage_spaces', 'jetonomy_manage_badges',
+			'jetonomy_view_analytics', 'jetonomy_manage_extensions',
 		],
 	];
 
