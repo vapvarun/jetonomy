@@ -5,30 +5,82 @@ $active_tab   = sanitize_text_field( $_GET['tab'] ?? 'general' ); // phpcs:ignor
 $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 ?>
 <div class="wrap jetonomy-admin">
-	<h1><?php esc_html_e( 'Settings', 'jetonomy' ); ?></h1>
-	<p class="jt-admin-desc"><?php esc_html_e( 'Configure your Jetonomy community.', 'jetonomy' ); ?></p>
+	<?php
+	ob_start();
+	do_action( 'jetonomy_admin_settings_tabs', $active_tab );
+	$advanced_tabs_html = ob_get_clean();
 
-	<nav class="nav-tab-wrapper">
-		<a href="<?php echo esc_url( $settings_url . '&tab=general' ); ?>" class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $settings_url . '&tab=permissions' ); ?>" class="nav-tab <?php echo 'permissions' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Permissions', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $settings_url . '&tab=email' ); ?>" class="nav-tab <?php echo 'email' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Email', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $settings_url . '&tab=appearance' ); ?>" class="nav-tab <?php echo 'appearance' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Appearance', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $settings_url . '&tab=seo' ); ?>" class="nav-tab <?php echo 'seo' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'SEO', 'jetonomy' ); ?></a>
-		<?php
-		/**
-		 * Fires to render additional settings tabs.
-		 * Pro hooks extra tabs (e.g. White Label, Integrations) here.
-		 *
-		 * @param string $active_tab Current active tab slug.
-		 */
-		do_action( 'jetonomy_admin_settings_tabs', $active_tab );
-		?>
-	</nav>
+	// Pre-buffer Pro/extension tab content so notices can be hoisted above the layout.
+	$jt_primary_tabs  = [ 'general', 'permissions', 'email', 'appearance', 'seo' ];
+	$jt_ext_html      = '';
+	$jt_ext_notices   = '';
+	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) ) {
+		ob_start();
+		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
+		$jt_ext_raw = ob_get_clean();
+		if ( $jt_ext_raw ) {
+			$jt_ext_html = preg_replace_callback(
+				'/<div[^>]+class="[^"]*\\bnotice\\b[^"]*"[^>]*>.*?<\/div>/si',
+				function ( $m ) use ( &$jt_ext_notices ) {
+					$jt_ext_notices .= $m[0];
+					return '';
+				},
+				$jt_ext_raw
+			);
+		}
+	}
 
-	<form method="post" action="options.php" id="jetonomy-settings-form">
-		<?php settings_fields( 'jetonomy_settings' ); ?>
+	$tab_icons = [
+		'general'     => 'dashicons-admin-settings',
+		'permissions' => 'dashicons-shield',
+		'email'       => 'dashicons-email-alt',
+		'appearance'  => 'dashicons-admin-appearance',
+		'seo'         => 'dashicons-search',
+	];
+	$tab_labels = [
+		'general'     => __( 'General', 'jetonomy' ),
+		'permissions' => __( 'Permissions', 'jetonomy' ),
+		'email'       => __( 'Email', 'jetonomy' ),
+		'appearance'  => __( 'Appearance', 'jetonomy' ),
+		'seo'         => __( 'SEO', 'jetonomy' ),
+	];
+	?>
 
-		<div class="jt-settings-cards">
+	<?php settings_errors(); ?>
+	<?php if ( $jt_ext_notices ) echo $jt_ext_notices; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension ?>
+
+	<div class="jt-settings-layout">
+
+		<aside class="jt-settings-sidebar">
+			<div class="jt-settings-sidebar-brand">
+				<span class="dashicons dashicons-admin-settings jt-settings-brand-icon" aria-hidden="true"></span>
+				<div class="jt-settings-brand-text">
+					<p class="jt-settings-brand-name">Jetonomy</p>
+					<p class="jt-settings-brand-sub"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></p>
+				</div>
+			</div>
+			<nav class="jt-settings-sidebar-nav" aria-label="<?php esc_attr_e( 'Settings navigation', 'jetonomy' ); ?>">
+				<?php foreach ( $tab_labels as $slug => $label ) : ?>
+				<a href="<?php echo esc_url( $settings_url . '&tab=' . $slug ); ?>"
+				   class="jt-snav-link<?php echo $active_tab === $slug ? ' jt-snav-link--active' : ''; ?>">
+					<span class="dashicons <?php echo esc_attr( $tab_icons[ $slug ] ); ?>" aria-hidden="true"></span>
+					<?php echo esc_html( $label ); ?>
+				</a>
+				<?php endforeach; ?>
+
+				<?php if ( $advanced_tabs_html ) : ?>
+				<div class="jt-snav-divider" role="separator"></div>
+				<p class="jt-snav-section-label"><?php esc_html_e( 'Advanced', 'jetonomy' ); ?></p>
+				<?php echo $advanced_tabs_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — escaped by each extension ?>
+				<?php endif; ?>
+			</nav>
+		</aside>
+
+		<div class="jt-settings-main">
+			<form method="post" action="options.php" id="jetonomy-settings-form">
+				<?php settings_fields( 'jetonomy_settings' ); ?>
+
+				<div class="jt-settings-cards">
 
 		<?php if ( 'general' === $active_tab ) : ?>
 
@@ -480,17 +532,20 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		<?php endif; ?>
 
 		<?php
-		/**
-		 * Fires to render additional settings tab content.
-		 * Pro hooks its own tab content here.
-		 *
-		 * @param string $active_tab Current active tab slug.
-		 */
-		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
+			// Render primary tabs inline; Pro/extension tabs were pre-buffered at the top.
+		if ( in_array( $active_tab, $jt_primary_tabs, true ) ) {
+			do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
+		} elseif ( $jt_ext_html ) {
+			echo '<div class="jt-settings-card jt-settings-card--ext">' . $jt_ext_html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension
+		}
 		?>
 
-		</div><!-- /.jt-settings-cards -->
+				</div><!-- /.jt-settings-cards -->
 
-		<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
-	</form>
+				<?php if ( in_array( $active_tab, [ 'general', 'permissions', 'email', 'appearance', 'seo' ], true ) ) : ?>
+				<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
+			<?php endif; ?>
+			</form>
+		</div><!-- /.jt-settings-main -->
+	</div><!-- /.jt-settings-layout -->
 </div>

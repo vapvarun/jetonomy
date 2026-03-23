@@ -1473,6 +1473,13 @@ class Admin {
 	// ═══════════════════════════════════════════════════════════════
 
 	public function render_content(): void {
+		// Branch: if a post_id is given, show that post's replies page.
+		$post_id = absint( $_GET['post_id'] ?? 0 );
+		if ( $post_id ) {
+			$this->render_post_replies( $post_id );
+			return;
+		}
+
 		global $wpdb;
 		$posts_t  = table( 'posts' );
 		$spaces_t = table( 'spaces' );
@@ -1518,6 +1525,59 @@ class Admin {
 		$posts = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: [];
 
 		include JETONOMY_DIR . 'includes/admin/views/content.php';
+	}
+
+	/**
+	 * Renders the replies page for a specific post.
+	 * Handles pagination for posts with hundreds/thousands of replies.
+	 */
+	private function render_post_replies( int $post_id ): void {
+		global $wpdb;
+
+		$post = Post::find( $post_id );
+		if ( ! $post ) {
+			wp_die( esc_html__( 'Post not found.', 'jetonomy' ) );
+		}
+
+		$replies_t = table( 'replies' );
+
+		// Status filter.
+		$current_status = sanitize_text_field( $_GET['status'] ?? 'all' );
+		$valid_statuses = [ 'all', 'publish', 'pending', 'spam', 'trash' ];
+		if ( ! in_array( $current_status, $valid_statuses, true ) ) {
+			$current_status = 'all';
+		}
+
+		// Search.
+		$search_query = sanitize_text_field( $_GET['s'] ?? '' );
+
+		// Build WHERE clause.
+		$where = 'r.post_id = %d';
+		$args  = [ $post_id ];
+		if ( 'all' !== $current_status ) {
+			$where .= ' AND r.status = %s';
+			$args[] = $current_status;
+		}
+		if ( $search_query ) {
+			$where .= ' AND r.content_plain LIKE %s';
+			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
+		}
+
+		// Pagination — 50 per page for large reply sets.
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = 50;
+		$offset   = ( $paged - 1 ) * $per_page;
+
+		$count_sql   = "SELECT COUNT(*) FROM {$replies_t} r WHERE {$where}";
+		$total       = (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) );
+		$total_pages = (int) ceil( $total / $per_page );
+
+		$sql     = "SELECT r.* FROM {$replies_t} r WHERE {$where} ORDER BY r.created_at ASC LIMIT %d OFFSET %d";
+		$replies = $wpdb->get_results( $wpdb->prepare( $sql, ...array_merge( $args, [ $per_page, $offset ] ) ) ) ?: [];
+
+		$nonce_value = wp_create_nonce( 'jetonomy_admin' );
+
+		include JETONOMY_DIR . 'includes/admin/views/replies.php';
 	}
 
 	public function ajax_update_post(): void {

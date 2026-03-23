@@ -185,12 +185,12 @@ $stat_cards = [
 
 			<?php if ( get_option( 'jetonomy_demo_data' ) ) : ?>
 			<!-- Demo Data Cleanup -->
-			<div class="jetonomy-dashboard-card" id="jt-demo-card" style="border-left:4px solid #f59e0b;">
+			<div class="jetonomy-dashboard-card jt-card--warning" id="jt-demo-card">
 				<h2><?php esc_html_e( 'Demo Data Active', 'jetonomy' ); ?></h2>
-				<p style="color:#64748b;font-size:13px;margin:6px 0 14px;">
+				<p class="description">
 					<?php esc_html_e( 'Sample content from the setup wizard is still present. Remove it when you\'re ready.', 'jetonomy' ); ?>
 				</p>
-				<button type="button" class="button" id="jetonomy-cleanup-demo" style="color:#dc2626;border-color:#fca5a5;">
+				<button type="button" class="button button--danger" id="jetonomy-cleanup-demo">
 					<span class="dashicons dashicons-trash"></span>
 					<?php esc_html_e( 'Remove All Demo Data', 'jetonomy' ); ?>
 				</button>

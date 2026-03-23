@@ -4,6 +4,8 @@ defined( 'ABSPATH' ) || exit;
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Categories', 'jetonomy' ); ?></h1>
 
+	<div class="jetonomy-categories-layout">
+
 	<!-- Add New Category Form -->
 	<div class="jt-settings-card" id="jetonomy-add-category-form">
 		<div class="jt-settings-card__head">
@@ -64,12 +66,11 @@ defined( 'ABSPATH' ) || exit;
 				<th class="column-slug"><?php esc_html_e( 'Slug', 'jetonomy' ); ?></th>
 				<th class="column-spaces"><?php esc_html_e( 'Spaces', 'jetonomy' ); ?></th>
 				<th class="column-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></th>
-				<th class="column-order"><?php esc_html_e( 'Order', 'jetonomy' ); ?></th>
 			</tr>
 		</thead>
 		<tbody id="jetonomy-categories-list">
 			<?php if ( empty( $all_categories ) ) : ?>
-				<tr class="jetonomy-no-items"><td colspan="6"><?php esc_html_e( 'No categories yet. Create your first one above.', 'jetonomy' ); ?></td></tr>
+				<tr class="jetonomy-no-items"><td colspan="5"><?php esc_html_e( 'No categories yet. Create your first one above.', 'jetonomy' ); ?></td></tr>
 			<?php else : ?>
 				<?php foreach ( $all_categories as $cat ) : ?>
 					<tr data-id="<?php echo absint( $cat->id ); ?>" class="jetonomy-category-row">
@@ -77,7 +78,7 @@ defined( 'ABSPATH' ) || exit;
 						<td class="column-name">
 							<strong><?php echo esc_html( $cat->name ); ?></strong>
 							<?php if ( $cat->description ) : ?>
-								<br><span class="description"><?php echo esc_html( wp_trim_words( $cat->description, 10 ) ); ?></span>
+								<span class="description"><?php echo esc_html( wp_trim_words( $cat->description, 12 ) ); ?></span>
 							<?php endif; ?>
 							<div class="row-actions">
 								<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>" data-slug="<?php echo esc_attr( $cat->slug ); ?>" data-description="<?php echo esc_attr( $cat->description ?? '' ); ?>" data-parent="<?php echo absint( $cat->parent_id ); ?>" data-icon="<?php echo esc_attr( $cat->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $cat->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $cat->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
@@ -87,9 +88,8 @@ defined( 'ABSPATH' ) || exit;
 						<td class="column-slug"><code><?php echo esc_html( $cat->slug ); ?></code></td>
 						<td class="column-spaces"><?php echo absint( $cat->space_count ); ?></td>
 						<td class="column-visibility">
-							<span class="jetonomy-badge jetonomy-badge--<?php echo esc_attr( $cat->visibility ); ?>"><?php echo esc_html( ucfirst( $cat->visibility ) ); ?></span>
+							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $cat->visibility ); ?>"><?php echo esc_html( ucfirst( $cat->visibility ) ); ?></span>
 						</td>
-						<td class="column-order"><?php echo absint( $cat->sort_order ); ?></td>
 					</tr>
 					<?php if ( ! empty( $cat->children ) ) : foreach ( $cat->children as $child ) : ?>
 						<tr data-id="<?php echo absint( $child->id ); ?>" class="jetonomy-category-row jetonomy-category-child">
@@ -105,9 +105,8 @@ defined( 'ABSPATH' ) || exit;
 							<td class="column-slug"><code><?php echo esc_html( $child->slug ); ?></code></td>
 							<td class="column-spaces"><?php echo absint( $child->space_count ); ?></td>
 							<td class="column-visibility">
-								<span class="jetonomy-badge jetonomy-badge--<?php echo esc_attr( $child->visibility ); ?>"><?php echo esc_html( ucfirst( $child->visibility ) ); ?></span>
+								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $child->visibility ); ?>"><?php echo esc_html( ucfirst( $child->visibility ) ); ?></span>
 							</td>
-							<td class="column-order"><?php echo absint( $child->sort_order ); ?></td>
 						</tr>
 					<?php endforeach; endif; ?>
 				<?php endforeach; ?>
@@ -115,6 +114,8 @@ defined( 'ABSPATH' ) || exit;
 		</tbody>
 	</table>
 	</div><!-- /.jt-content-table-wrap -->
+
+	</div><!-- /.jetonomy-categories-layout -->
 
 	<!-- Edit Category Modal -->
 	<div class="jetonomy-modal" id="jetonomy-edit-category-modal" style="display:none;">
