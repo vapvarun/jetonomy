@@ -84,9 +84,17 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							<input type="hidden" id="space-cover-image" value="">
 							<div id="space-cover-preview" class="jetonomy-cover-preview" style="display:none;">
 								<img src="" alt="">
-								<button type="button" class="button jetonomy-remove-cover"><?php esc_html_e( 'Remove', 'jetonomy' ); ?></button>
+								<div class="jetonomy-cover-actions">
+									<button type="button" class="button jetonomy-remove-cover">
+										<span class="dashicons dashicons-trash"></span>
+										<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
+									</button>
+								</div>
 							</div>
-							<button type="button" class="button" id="space-cover-upload"><?php esc_html_e( 'Select Cover Image', 'jetonomy' ); ?></button>
+							<button type="button" class="button" id="space-cover-upload">
+								<span class="dashicons dashicons-format-image"></span>
+								<?php esc_html_e( 'Select Cover Image', 'jetonomy' ); ?>
+							</button>
 						</div>
 					</td>
 				</tr>
@@ -167,7 +175,15 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								</div>
 							</td>
 							<td class="column-type">
-								<span class="jetonomy-type-badge jetonomy-type-badge--<?php echo esc_attr( $space->type ); ?>"><?php echo esc_html( ucfirst( $space->type ) ); ?></span>
+								<?php
+								$type_labels = [
+									'forum' => __( 'Forum', 'jetonomy' ),
+									'qa'    => __( 'Q&A', 'jetonomy' ),
+									'ideas' => __( 'Ideas', 'jetonomy' ),
+									'feed'  => __( 'Feed', 'jetonomy' ),
+								];
+								?>
+								<span class="jetonomy-type-badge jetonomy-type-badge--<?php echo esc_attr( $space->type ); ?>"><?php echo esc_html( $type_labels[ $space->type ] ?? ucfirst( $space->type ) ); ?></span>
 							</td>
 							<td class="column-category"><?php echo esc_html( $cat_name ?: '&mdash;' ); ?></td>
 							<td class="column-members"><?php echo absint( $space->member_count ); ?></td>

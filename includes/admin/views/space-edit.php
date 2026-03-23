@@ -115,9 +115,17 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								<?php if ( ! empty( $space->cover_image ) ) : ?>
 									<img src="<?php echo esc_url( $space->cover_image ); ?>" alt="">
 								<?php endif; ?>
-								<button type="button" class="button jetonomy-remove-cover"><?php esc_html_e( 'Remove', 'jetonomy' ); ?></button>
+								<div class="jetonomy-cover-actions">
+									<button type="button" class="button jetonomy-remove-cover">
+										<span class="dashicons dashicons-trash"></span>
+										<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
+									</button>
+								</div>
 							</div>
-							<button type="button" class="button" id="space-cover-upload"><?php esc_html_e( 'Select Cover Image', 'jetonomy' ); ?></button>
+							<button type="button" class="button" id="space-cover-upload">
+								<span class="dashicons dashicons-format-image"></span>
+								<?php esc_html_e( 'Select Cover Image', 'jetonomy' ); ?>
+							</button>
 						</div>
 					</td>
 				</tr>

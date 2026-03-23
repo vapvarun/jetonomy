@@ -1044,8 +1044,10 @@ tr.jetonomy-moderated td {
 
 .jetonomy-cover-preview {
 	margin-bottom: 8px;
-	position: relative;
-	display: inline-block;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
 }
 
 .jetonomy-cover-preview img {
@@ -1053,12 +1055,22 @@ tr.jetonomy-moderated td {
 	max-height: 150px;
 	border-radius: 4px;
 	border: 1px solid #c3c4c7;
+	display: block;
 }
 
-.jetonomy-cover-preview .button {
-	position: absolute;
-	top: 4px;
-	right: 4px;
+.jetonomy-cover-actions {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.jetonomy-cover-preview .button .dashicons,
+#space-cover-upload .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+	margin-top: -2px;
 }
 
 /* ═══════════════════════════════════════════════════════════
