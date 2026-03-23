@@ -383,9 +383,21 @@ class Admin {
 			$where[] = $wpdb->prepare( 'status = %s', $filter_status );
 		}
 
-		$where_sql = implode( ' AND ', $where );
-		$spaces = $wpdb->get_results( "SELECT * FROM " . table( 'spaces' ) . " WHERE {$where_sql} ORDER BY title ASC" );
-		$categories = $this->get_all_categories_flat();
+		$where_sql   = implode( ' AND ', $where );
+		$spaces_t    = table( 'spaces' );
+		$paged       = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page    = 20;
+		$offset      = ( $paged - 1 ) * $per_page;
+		$total       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE {$where_sql}" );
+		$total_pages = (int) ceil( $total / $per_page );
+		$spaces      = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$spaces_t} WHERE {$where_sql} ORDER BY title ASC LIMIT %d OFFSET %d",
+				$per_page,
+				$offset
+			)
+		) ?: [];
+		$categories  = $this->get_all_categories_flat();
 
 		include JETONOMY_DIR . 'includes/admin/views/spaces.php';
 	}
@@ -393,28 +405,77 @@ class Admin {
 	public function render_moderation(): void {
 		global $wpdb;
 
+		$posts_t        = table( 'posts' );
+		$replies_t      = table( 'replies' );
+		$flags_t        = table( 'flags' );
+		$restrictions_t = table( 'restrictions' );
+		$per_page       = 20;
+
+		// Per-tab paged params.
+		$paged_posts   = max( 1, absint( $_GET['paged_posts'] ?? 1 ) );
+		$paged_replies = max( 1, absint( $_GET['paged_replies'] ?? 1 ) );
+		$paged_flags   = max( 1, absint( $_GET['paged_flags'] ?? 1 ) );
+		$paged_banned  = max( 1, absint( $_GET['paged_banned'] ?? 1 ) );
+
+		// Real totals for tab badge counts.
+		$total_posts   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'pending'" );
+		$total_replies = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'pending'" );
+		$total_flags   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" );
+		$total_banned  = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$restrictions_t}
+			 WHERE type IN ('global_ban','space_ban','silence')
+			 AND (expires_at IS NULL OR expires_at > '" . now() . "')"
+		);
+
 		$pending_posts = $wpdb->get_results(
-			"SELECT p.*, s.title as space_title FROM " . table( 'posts' ) . " p
-			 LEFT JOIN " . table( 'spaces' ) . " s ON s.id = p.space_id
-			 WHERE p.status = 'pending' ORDER BY p.created_at DESC LIMIT 50"
+			$wpdb->prepare(
+				"SELECT p.*, s.title as space_title
+				 FROM {$posts_t} p
+				 LEFT JOIN " . table( 'spaces' ) . " s ON s.id = p.space_id
+				 WHERE p.status = 'pending'
+				 ORDER BY p.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged_posts - 1 ) * $per_page
+			)
 		) ?: [];
 
 		$pending_replies = $wpdb->get_results(
-			"SELECT r.*, p.title as post_title FROM " . table( 'replies' ) . " r
-			 LEFT JOIN " . table( 'posts' ) . " p ON p.id = r.post_id
-			 WHERE r.status = 'pending' ORDER BY r.created_at DESC LIMIT 50"
+			$wpdb->prepare(
+				"SELECT r.*, p.title as post_title
+				 FROM {$replies_t} r
+				 LEFT JOIN {$posts_t} p ON p.id = r.post_id
+				 WHERE r.status = 'pending'
+				 ORDER BY r.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged_replies - 1 ) * $per_page
+			)
 		) ?: [];
 
 		$pending_flags = $wpdb->get_results(
-			"SELECT * FROM " . table( 'flags' ) . " WHERE status = 'pending' ORDER BY created_at DESC LIMIT 50"
+			$wpdb->prepare(
+				"SELECT * FROM {$flags_t}
+				 WHERE status = 'pending'
+				 ORDER BY created_at DESC
+				 LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged_flags - 1 ) * $per_page
+			)
 		) ?: [];
 
 		$banned_users = $wpdb->get_results(
-			"SELECT r.*, u.display_name, u.user_login FROM " . table( 'restrictions' ) . " r
-			 LEFT JOIN {$wpdb->users} u ON u.ID = r.user_id
-			 WHERE r.type IN ('global_ban','space_ban','silence')
-			 AND (r.expires_at IS NULL OR r.expires_at > '" . now() . "')
-			 ORDER BY r.created_at DESC"
+			$wpdb->prepare(
+				"SELECT r.*, u.display_name, u.user_login
+				 FROM {$restrictions_t} r
+				 LEFT JOIN {$wpdb->users} u ON u.ID = r.user_id
+				 WHERE r.type IN ('global_ban','space_ban','silence')
+				 AND (r.expires_at IS NULL OR r.expires_at > '" . now() . "')
+				 ORDER BY r.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$per_page,
+				( $paged_banned - 1 ) * $per_page
+			)
 		) ?: [];
 
 		include JETONOMY_DIR . 'includes/admin/views/moderation.php';
@@ -1437,15 +1498,24 @@ class Admin {
 			$args[] = '%' . $wpdb->esc_like( $search_query ) . '%';
 		}
 
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = 20;
+		$offset   = ( $paged - 1 ) * $per_page;
+
+		// Total count with same filters (no LIMIT).
+		$count_sql = "SELECT COUNT(*) FROM {$posts_t} p WHERE {$where}";
+		$total     = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
+		$total_pages = (int) ceil( $total / $per_page );
+
 		$sql = "SELECT p.*, s.title AS space_title, s.slug AS space_slug
 		        FROM {$posts_t} p
 		        LEFT JOIN {$spaces_t} s ON s.id = p.space_id
 		        WHERE {$where}
 		        ORDER BY p.created_at DESC
-		        LIMIT 100";
+		        LIMIT %d OFFSET %d";
 
-		$posts = $args ? $wpdb->get_results( $wpdb->prepare( $sql, ...$args ) ) : $wpdb->get_results( $sql );
-		$posts = $posts ?: [];
+		$full_args = array_merge( $args, [ $per_page, $offset ] );
+		$posts = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: [];
 
 		include JETONOMY_DIR . 'includes/admin/views/content.php';
 	}
