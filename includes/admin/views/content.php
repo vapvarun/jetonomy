@@ -76,13 +76,20 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			<button type="button" class="button" id="jt-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
 			<span class="spinner" id="jt-bulk-spinner" style="float:none;margin:0;"></span>
 
+			<?php if ( $total ) : ?>
 			<span class="displaying-num">
 				<?php
-				$count = count( $posts );
-				/* translators: %s: number of posts */
-				printf( esc_html( _n( '%s post', '%s posts', $count, 'jetonomy' ) ), number_format_i18n( $count ) );
+				$_first = ( $paged - 1 ) * $per_page + 1;
+				$_last  = min( $paged * $per_page, $total );
+				printf(
+					esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
+					number_format_i18n( $_first ),
+					number_format_i18n( $_last ),
+					number_format_i18n( $total )
+				);
 				?>
 			</span>
+			<?php endif; ?>
 		</div>
 	</form>
 
@@ -321,6 +328,25 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			</tfoot>
 		</table>
 	</div><!-- /.jt-content-table-wrap -->
+
+	<?php if ( $total_pages > 1 ) : ?>
+		<div class="tablenav bottom">
+			<div class="tablenav-pages">
+				<?php
+				$plinks = paginate_links( [
+					'base'    => add_query_arg( 'paged', '%#%' ),
+					'format'  => '',
+					'current' => $paged,
+					'total'   => $total_pages,
+					'type'    => 'array',
+				] );
+				if ( $plinks ) {
+					echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>';
+				}
+				?>
+			</div>
+		</div>
+	<?php endif; ?>
 
 	<?php endif; ?>
 
