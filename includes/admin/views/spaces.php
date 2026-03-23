@@ -113,32 +113,50 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=new' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'jetonomy' ); ?></a>
 		</h1>
 
-		<!-- Filters -->
-		<div class="tablenav top">
-			<div class="alignleft actions">
-				<select id="filter-category" name="category_id">
+		<!-- ── Toolbar ─────────────────────────────────────────────── -->
+		<form method="get" action="" id="jetonomy-spaces-filters">
+			<input type="hidden" name="page" value="jetonomy-spaces">
+			<div class="jt-content-toolbar">
+				<select name="category_id">
 					<option value=""><?php esc_html_e( 'All Categories', 'jetonomy' ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
-						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, $cat->id ); ?>><?php echo esc_html( $cat->name ); ?></option>
+						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $filter_category, (int) $cat->id ); ?>><?php echo esc_html( $cat->name ); ?></option>
 					<?php endforeach; ?>
 				</select>
-				<select id="filter-type" name="type">
+				<select name="type">
 					<option value=""><?php esc_html_e( 'All Types', 'jetonomy' ); ?></option>
 					<option value="forum" <?php selected( $filter_type, 'forum' ); ?>><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
 					<option value="qa" <?php selected( $filter_type, 'qa' ); ?>><?php esc_html_e( 'Q&A', 'jetonomy' ); ?></option>
 					<option value="ideas" <?php selected( $filter_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
 					<option value="feed" <?php selected( $filter_type, 'feed' ); ?>><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
 				</select>
-				<select id="filter-status" name="status">
+				<select name="status">
 					<option value=""><?php esc_html_e( 'All Statuses', 'jetonomy' ); ?></option>
 					<option value="active" <?php selected( $filter_status, 'active' ); ?>><?php esc_html_e( 'Active', 'jetonomy' ); ?></option>
 					<option value="archived" <?php selected( $filter_status, 'archived' ); ?>><?php esc_html_e( 'Archived', 'jetonomy' ); ?></option>
 					<option value="locked" <?php selected( $filter_status, 'locked' ); ?>><?php esc_html_e( 'Locked', 'jetonomy' ); ?></option>
 				</select>
-				<button type="button" class="button" id="jetonomy-filter-spaces"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
+				<div class="jt-content-toolbar__right">
+					<?php if ( $total ) : ?>
+					<span class="displaying-num">
+						<?php
+						$_first = ( $paged - 1 ) * $per_page + 1;
+						$_last  = min( $paged * $per_page, $total );
+						printf(
+							esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
+							number_format_i18n( $_first ),
+							number_format_i18n( $_last ),
+							number_format_i18n( $total )
+						);
+						?>
+					</span>
+					<?php endif; ?>
+					<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
+				</div>
 			</div>
-		</div>
+		</form>
 
+		<div class="jt-content-table-wrap">
 		<table class="wp-list-table widefat fixed striped">
 			<thead>
 				<tr>
@@ -189,17 +207,36 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							<td class="column-members"><?php echo absint( $space->member_count ); ?></td>
 							<td class="column-posts"><?php echo absint( $space->post_count ); ?></td>
 							<td class="column-status">
-								<span class="jetonomy-status-dot jetonomy-status-dot--<?php echo esc_attr( $space->status ); ?>"></span>
-								<?php echo esc_html( ucfirst( $space->status ) ); ?>
+								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $space->status ); ?>"><?php echo esc_html( ucfirst( $space->status ) ); ?></span>
 							</td>
 							<td class="column-join"><?php echo esc_html( ucfirst( $space->join_policy ) ); ?></td>
 							<td class="column-visibility">
-								<span class="jetonomy-badge jetonomy-badge--<?php echo esc_attr( $space->visibility ); ?>"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
+								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $space->visibility ); ?>"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
 							</td>
 						</tr>
 					<?php endforeach; ?>
 				<?php endif; ?>
 			</tbody>
 		</table>
+		</div><!-- /.jt-content-table-wrap -->
+
+		<?php if ( $total_pages > 1 ) : ?>
+			<div class="tablenav bottom">
+				<div class="tablenav-pages">
+					<?php
+					$page_links = paginate_links( [
+						'base'    => add_query_arg( 'paged', '%#%' ),
+						'format'  => '',
+						'current' => $paged,
+						'total'   => $total_pages,
+						'type'    => 'array',
+					] );
+					if ( $page_links ) {
+						echo '<span class="pagination-links">' . implode( ' ', $page_links ) . '</span>';
+					}
+					?>
+				</div>
+			</div>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
