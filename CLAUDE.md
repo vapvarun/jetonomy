@@ -94,3 +94,21 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 - Activity logging via `Activity_Tracker` hooks — no direct `ActivityLog::log()` in controllers
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
+
+## Basecamp Board
+
+- **Project ID**: `46596502`
+- **Board ID**: `9706083020`
+- **URL**: https://3.basecamp.com/5798509/buckets/46596502/card_tables/9706083020
+
+| Column | ID | Cards |
+|--------|----|-------|
+| Triage | `9706083021` | 0 |
+| Not now | `9706083022` | 0 |
+| Scope | `9706083326` | 0 |
+| Figuring it out | `9706083023` | 0 |
+| Bugs | `9706083723` | 12 |
+| UI | `9706189351` | 3 |
+| In progress | `9706083024` | 0 |
+| In Testing | `9706083581` | 0 |
+| Done | `9706083025` | 0 |

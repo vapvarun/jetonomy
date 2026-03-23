@@ -20,6 +20,7 @@ final class Jetonomy {
     private function register_hooks(): void {
         register_activation_hook( JETONOMY_FILE, [ $this, 'activate' ] );
         register_deactivation_hook( JETONOMY_FILE, [ $this, 'deactivate' ] );
+        add_action( 'plugins_loaded', [ $this, 'load_textdomain' ], 1 );
         add_action( 'plugins_loaded', [ $this, 'init' ] );
 
         // Register plugin-level theme.json for baseline typography, spacing, and colors.
@@ -64,8 +65,11 @@ final class Jetonomy {
         flush_rewrite_rules();
     }
 
-    public function init(): void {
+    public function load_textdomain(): void {
         load_plugin_textdomain( 'jetonomy', false, dirname( plugin_basename( JETONOMY_FILE ) ) . '/languages' );
+    }
+
+    public function init(): void {
         $this->maybe_redirect_to_setup();
         $this->check_db_version();
         $this->load_dependencies();
