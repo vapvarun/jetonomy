@@ -110,6 +110,15 @@ final class Jetonomy {
             update_option( $flush_key, true );
         }
 
+        // Re-register capabilities on version change so ROLE_MAP additions
+        // (e.g. jetonomy_manage_spaces) propagate without requiring re-activation.
+        $caps_key = 'jetonomy_caps_registered_' . JETONOMY_VERSION;
+        if ( ! get_option( $caps_key ) ) {
+            require_once JETONOMY_DIR . 'includes/permissions/class-capabilities.php';
+            Permissions\Capabilities::register();
+            update_option( $caps_key, true );
+        }
+
         new API\Api();
 
         // Adapters — autoloader resolves all classes

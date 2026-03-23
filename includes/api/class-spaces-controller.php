@@ -287,6 +287,7 @@ class Spaces_Controller extends Base_Controller {
 			'visibility'   => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
 			'join_policy'  => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
 			'icon'         => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
+			'cover_image'  => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
 			'settings'     => $settings,
 			'author_id'    => get_current_user_id(),
 		];
@@ -354,6 +355,9 @@ class Spaces_Controller extends Base_Controller {
 		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );
+		}
+		if ( null !== $request->get_param( 'cover_image' ) ) {
+			$data['cover_image'] = esc_url_raw( (string) $request->get_param( 'cover_image' ) );
 		}
 		if ( null !== $request->get_param( 'settings' ) ) {
 			$settings_raw = $request->get_param( 'settings' );
@@ -687,6 +691,7 @@ class Spaces_Controller extends Base_Controller {
 			'visibility'      => $space->visibility ?? 'public',
 			'join_policy'     => $space->join_policy ?? 'open',
 			'icon'            => $space->icon ?? '',
+			'cover_image'     => $space->cover_image ?? '',
 			'settings'        => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
 			'member_count'    => (int) ( $space->member_count ?? 0 ),
 			'post_count'      => (int) ( $space->post_count ?? 0 ),
@@ -778,8 +783,9 @@ class Spaces_Controller extends Base_Controller {
 			'description' => [ 'type' => 'string', 'required' => false ],
 			'visibility'  => [ 'type' => 'string', 'required' => false, 'enum' => [ 'public', 'private', 'hidden' ] ],
 			'join_policy' => [ 'type' => 'string', 'required' => false, 'enum' => self::VALID_JOIN_POLICIES ],
-			'icon'        => [ 'type' => 'string', 'required' => false ],
-			'settings'    => [ 'required' => false ],
+			'icon'         => [ 'type' => 'string', 'required' => false ],
+			'cover_image'  => [ 'type' => 'string', 'required' => false, 'format' => 'uri' ],
+			'settings'     => [ 'required' => false ],
 		];
 	}
 

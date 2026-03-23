@@ -22,7 +22,11 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 			class="jt-card jt-space-card jt-no-underline jt-block">
 			<div class="jt-space-card-inner">
 				<?php if ( ! empty( $space->icon ) ) : ?>
-					<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
+					<?php if ( str_starts_with( $space->icon, 'dashicons-' ) ) : ?>
+						<span class="jt-space-card-emoji dashicons <?php echo esc_attr( $space->icon ); ?>"></span>
+					<?php else : ?>
+						<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
+					<?php endif; ?>
 				<?php endif; ?>
 				<div class="jt-space-card-body">
 					<div class="jt-space-card-title">

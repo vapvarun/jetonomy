@@ -372,6 +372,10 @@ body.jt-setup-body {
 }
 
 /* Success step */
+#jt-step-3.jt-setup-card {
+	text-align: center;
+}
+
 .jt-success-icon {
 	display: flex;
 	align-items: center;
