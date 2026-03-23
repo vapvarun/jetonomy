@@ -416,6 +416,10 @@
   .jt-badge-danger { background: var(--jt-danger); color: #fff; font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
+  /* ── Inline notices (pending, spam, etc.) ── */
+  .jt-notice { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; margin-bottom: 16px; }
+  .jt-notice-warning { background: #fef9c3; color: #854d0e; border-left: 4px solid #ca8a04; }
+
   /* ── View count ── */
   .jt-view-count { margin-left: auto; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 

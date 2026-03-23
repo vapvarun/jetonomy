@@ -4,10 +4,22 @@ defined( 'ABSPATH' ) || exit;
 $post_slug = $data['slug'] ?? '';
 $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
-if ( ! $post || 'publish' !== $post->status ) {
+if ( ! $post ) {
 	status_header( 404 );
 	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 	return;
+}
+
+if ( 'publish' !== $post->status ) {
+	$viewer_id = get_current_user_id();
+	$is_author = $viewer_id && (int) $post->author_id === $viewer_id;
+	$is_mod    = current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' );
+
+	if ( ! $is_author && ! $is_mod ) {
+		status_header( 404 );
+		echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+		return;
+	}
 }
 
 // Increment view count (best-effort, ignore errors).
@@ -138,6 +150,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 
 <div class="jt-two-col">
 		<main>
+			<?php if ( 'publish' !== $post->status ) : ?>
+				<div class="jt-notice jt-notice-warning">
+					<?php
+					if ( 'pending' === $post->status ) {
+						esc_html_e( 'This post is pending review and not yet publicly visible.', 'jetonomy' );
+					} elseif ( 'spam' === $post->status ) {
+						esc_html_e( 'This post has been marked as spam.', 'jetonomy' );
+					} else {
+						/* translators: %s: post status */
+						echo esc_html( sprintf( __( 'This post has status: %s', 'jetonomy' ), $post->status ) );
+					}
+					?>
+				</div>
+			<?php endif; ?>
 			<!-- Post -->
 			<article class="jt-post" data-wp-interactive="jetonomy">
 				<div class="jt-post-head">
