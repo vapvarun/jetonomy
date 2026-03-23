@@ -38,7 +38,8 @@ $trust_labels = [
 		</div>
 	</div>
 
-	<table class="wp-list-table widefat fixed striped">
+	<div class="jt-content-table-wrap">
+		<table class="wp-list-table widefat fixed striped">
 		<thead>
 			<tr>
 				<th class="column-username"><?php esc_html_e( 'Username', 'jetonomy' ); ?></th>
@@ -87,6 +88,7 @@ $trust_labels = [
 			<?php endif; ?>
 		</tbody>
 	</table>
+	</div><!-- /.jt-content-table-wrap -->
 
 	<!-- Pagination -->
 	<?php if ( $total_pages > 1 ) : ?>
