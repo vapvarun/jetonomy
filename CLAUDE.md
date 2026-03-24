@@ -5,8 +5,8 @@
 - **PHP**: 8.1+ required
 - **WP**: 6.7+ required
 - **Namespace**: `Jetonomy\`
-- **Table prefix**: `jt_` (21 custom tables)
-- **REST API**: `jetonomy/v1` (35+ endpoints)
+- **Table prefix**: `jt_` (22 custom tables)
+- **REST API**: `jetonomy/v1` (42 endpoints, 15 controllers)
 
 ## Architecture
 - **Database**: Custom MySQL tables via `dbDelta()` — NOT WordPress CPTs
@@ -57,6 +57,9 @@
 /community/leaderboard/         → Leaderboard
 /community/notifications/       → Notifications
 /community/mod/                 → Moderation (admin)
+/community/invite/:code/        → Invite link landing page
+/community/messages/            → Private messages (Pro)
+/community/messages/:id/        → Conversation thread (Pro)
 ```
 
 ## Database Tables
@@ -118,6 +121,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 - `Settings_Handler` — test-email/flush-rules AJAX
 - `Content_Handler` — post/reply CRUD + bulk-action AJAX
 - `Setup_Handler` — setup wizard AJAX
+- `Demo_Seeder` — helper class (static seed/cleanup methods), NOT an AJAX handler; used by Setup_Handler
 
 **Naming conventions:**
 - Options: `jetonomy_*` prefix always
