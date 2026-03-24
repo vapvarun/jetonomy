@@ -210,6 +210,15 @@ class Template_Loader {
 
         echo '</div>'; // .container
 
+        /**
+         * Fires after the main content container closes, before the app wrapper
+         * closes. Bridge plugins use this to close their own shell wrapper
+         * (e.g. BuddyNext hub shell + community sidebar).
+         *
+         * @param array $data Route data array.
+         */
+        do_action( 'jetonomy_after_content', $data );
+
         echo '</div>'; // #jetonomy-app
 
         if ( wp_is_block_theme() ) {
@@ -248,14 +257,14 @@ class Template_Loader {
                 case 'home':
                     $title = get_bloginfo( 'name' ) . ' Community';
                     $desc  = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
-                    $url   = home_url( '/community/' );
+                    $url   = \Jetonomy\base_url() . '/';
                     break;
                 case 'space':
                     $space = \Jetonomy\Models\Space::find_by_slug( $data['slug'] );
                     if ( $space ) {
                         $title = $space->title;
                         $desc  = wp_strip_all_tags( $space->description ?? '' );
-                        $url   = home_url( '/community/s/' . $space->slug . '/' );
+                        $url   = \Jetonomy\base_url() . '/s/' . $space->slug . '/';
                         $image = $space->cover_image ?? '';
                     }
                     break;
@@ -265,7 +274,7 @@ class Template_Loader {
                         $title = $post->title;
                         $desc  = mb_substr( wp_strip_all_tags( $post->content ), 0, 160 );
                         $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
-                        $url   = home_url( '/community/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' );
+                        $url   = \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
                     }
                     break;
                 case 'profile':
@@ -273,7 +282,7 @@ class Template_Loader {
                     if ( $user ) {
                         $title = $user->display_name;
                         $desc  = __( 'Community member profile', 'jetonomy' );
-                        $url   = home_url( '/community/u/' . $data['slug'] . '/' );
+                        $url   = \Jetonomy\base_url() . '/u/' . $data['slug'] . '/';
                     }
                     break;
             }

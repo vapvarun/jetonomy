@@ -1,6 +1,17 @@
 <?php
 defined( 'ABSPATH' ) || exit;
-$base = home_url( '/community' );
+
+/**
+ * Allow bridge plugins to suppress Jetonomy's sidebar (e.g. when
+ * BuddyNext replaces it with its own community sidebar).
+ *
+ * @param bool $show Whether to render the sidebar. Default true.
+ */
+if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
+	return;
+}
+
+$base = \Jetonomy\base_url();
 
 global $wpdb;
 $posts_tbl   = \Jetonomy\table( 'posts' );
