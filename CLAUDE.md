@@ -99,6 +99,81 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
 
+## CSS Token Rules (enforced — mirrors BuddyNext pattern)
+
+**Golden rule: never write a hardcoded px, hex, or font-family value in any CSS file.**
+
+All values must reference `--jt-*` custom properties. If a token doesn't exist for the value you need, add it to the `:root, .jt-app` block in `jetonomy.css` first.
+
+### Where tokens are defined
+
+All `--jt-*` tokens live in `:root, .jt-app` at the top of `assets/css/jetonomy.css`. Root tokens inherit from WP preset tokens so they auto-adapt to the active theme:
+
+```css
+/* Root tokens inherit from theme — never override these per-component */
+--jt-font:     var(--wp--preset--font-family--body, inherit)
+--jt-accent:   var(--wp--preset--color--primary, #3B82F6)
+--jt-text:     var(--wp--preset--color--contrast, #1a1a1a)
+--jt-bg:       var(--wp--preset--color--base, #ffffff)
+--jt-radius:   var(--wp--custom--border-radius, 8px)
+```
+
+### Available token categories
+
+| Category | Tokens |
+|----------|--------|
+| Typography | `--jt-font`, `--jt-font-heading`, `--jt-font-mono` |
+| Accent | `--jt-accent`, `--jt-accent-hover`, `--jt-accent-light`, `--jt-accent-muted` |
+| Text | `--jt-text`, `--jt-text-secondary`, `--jt-text-tertiary` |
+| Background | `--jt-bg`, `--jt-bg-subtle`, `--jt-bg-muted`, `--jt-bg-hover` |
+| Border | `--jt-border`, `--jt-border-strong` |
+| Semantic | `--jt-success`, `--jt-success-light`, `--jt-warn`, `--jt-warn-light`, `--jt-danger`, `--jt-danger-light` |
+| Trust levels | `--jt-tl0` … `--jt-tl5` |
+| Badge tiers | `--jt-badge-bronze`, `--jt-badge-silver`, `--jt-badge-gold` |
+| Radius | `--jt-radius`, `--jt-radius-sm`, `--jt-radius-lg`, `--jt-radius-full` |
+| Motion | `--jt-ease`, `--jt-dur` |
+
+### The color-mix fallback pattern
+
+Derived color tokens use `color-mix()` for modern browsers with a hex fallback for older ones. Always write the hex fallback first, then override with `color-mix()` on the next line:
+
+```css
+/* Correct — hex fallback first, color-mix second */
+--jt-text-secondary: #4B5563;
+--jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
+
+/* Wrong — skipping the fallback */
+--jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
+```
+
+### Dark mode rule
+
+Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark .jt-app` in `jetonomy.css` by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
+
+```css
+/* Correct — uses tokens, dark mode is automatic */
+.jt-card { background: var(--jt-bg); border: 1px solid var(--jt-border); }
+
+/* Wrong — adds a separate dark selector per component */
+.jt-dark .jt-card { background: #1e1e1e; }
+```
+
+### Spacing and font-size
+
+There is no spacing scale yet (gap to fill in a future task). Until a `--jt-space-*` scale is added:
+- Use `rem` units for font sizes, not `px`
+- Prefer named spacing that references `--jt-radius` for radius values
+- Do NOT add a `--jt-space-*` scale without updating this section
+
+### What to do when adding new CSS
+
+1. Pick the closest existing `--jt-*` token
+2. If no token fits, add one to `:root, .jt-app` — inherit from `--wp--preset--*` if applicable
+3. Never copy-paste hex or px values from designs — always map them to token names first
+4. Test at 390px viewport width before committing
+
+---
+
 ## Admin Architecture Rules (enforced)
 
 **AJAX handlers live in `Jetonomy\Admin\Ajax\` — never in `Admin` class directly.**
