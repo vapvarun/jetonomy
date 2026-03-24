@@ -20,7 +20,7 @@ final class Jetonomy {
     private function register_hooks(): void {
         register_activation_hook( JETONOMY_FILE, [ $this, 'activate' ] );
         register_deactivation_hook( JETONOMY_FILE, [ $this, 'deactivate' ] );
-        add_action( 'plugins_loaded', [ $this, 'load_textdomain' ], 1 );
+        add_action( 'init', [ $this, 'load_textdomain' ], 1 );
         add_action( 'plugins_loaded', [ $this, 'init' ] );
 
         // Register plugin-level theme.json for baseline typography, spacing, and colors.
