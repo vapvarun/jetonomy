@@ -15,6 +15,7 @@ class Autoloader {
         'Jetonomy\\Moderation\\'    => 'includes/moderation/',
         'Jetonomy\\Notifications\\' => 'includes/notifications/',
         'Jetonomy\\Import\\'        => 'includes/import/',
+        'Jetonomy\\Admin\\Ajax\\'   => 'includes/admin/ajax/',
         'Jetonomy\\Admin\\'         => 'includes/admin/',
         'Jetonomy\\SEO\\'           => 'includes/seo/',
         'Jetonomy\\DB\\'            => 'includes/db/',
