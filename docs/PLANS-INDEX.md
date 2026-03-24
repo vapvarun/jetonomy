@@ -31,7 +31,7 @@ Executed during initial development (2026-03-18). Kept for reference only.
 
 | # | Plan | Plugin | Priority | Status | What it fixes |
 |---|------|--------|----------|--------|---------------|
-| 1 | [email-digest-meta-key-fix](../../../jetonomy-pro/docs/superpowers/plans/2026-03-24-email-digest-meta-key-fix.md) | jetonomy-pro | 🔴 HIGH | ⏳ Pending | Renames `jetonomy_last_digest_*` → `jetonomy_pro_last_digest_*` meta key. Without this, digest re-sends to users after upgrade. One-time migration guard included. |
+| 1 | [email-digest-meta-key-fix](../../../jetonomy-pro/docs/superpowers/plans/2026-03-24-email-digest-meta-key-fix.md) | jetonomy-pro | 🔴 HIGH | ✅ Done | Renames `jetonomy_last_digest_*` → `jetonomy_pro_last_digest_*` meta key. Without this, digest re-sends to users after upgrade. One-time migration guard included. |
 
 **How to run:** Open the plan file, use `superpowers:subagent-driven-development`.
 

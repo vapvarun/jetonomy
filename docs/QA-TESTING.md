@@ -140,7 +140,7 @@ Only test adapters if the third-party plugin is active on the test site.
 Before tagging v1.0.0:
 
 ```
-[ ] Execute email-digest meta key migration plan (jetonomy-pro/docs/superpowers/plans/2026-03-24-email-digest-meta-key-fix.md)
+[x] Execute email-digest meta key migration plan ✅ Done — constant renamed + maybe_migrate_meta_keys() wired in boot()
 [ ] All Stage 1–7 tests passing
 [ ] debug.log is empty after full test run
 [ ] git log: no uncommitted changes in either plugin
