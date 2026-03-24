@@ -530,7 +530,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
             form.appendChild(el);
         }
         el.textContent = msg;
-        el.style.color = isError ? '#c00' : '#060';
+        el.classList.toggle('jt-gate-msg--error', isError);
+        el.classList.toggle('jt-gate-msg--success', !isError);
     }
 
     // Direct join button (open policy, private space).

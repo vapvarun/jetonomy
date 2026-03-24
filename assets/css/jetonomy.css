@@ -950,3 +950,7 @@
 .jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: 220px; }
 .jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
 .jt-emoji-option:hover { background: var(--jt-bg-muted); }
+
+/* ── Gate message inline feedback (JS-toggled classes) ── */
+.jt-gate-msg--error   { color: var(--jt-danger); }
+.jt-gate-msg--success { color: var(--jt-success); }

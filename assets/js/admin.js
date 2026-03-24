@@ -1039,14 +1039,14 @@
 
 				self.ajax('jetonomy_test_email').done(function(res) {
 					if (res.success) {
-						$status.text(res.data.message).css('color', '#00a32a');
+						$status.text(res.data.message).removeClass('jt-admin-msg--error').addClass('jt-admin-msg--success');
 						self.toast(res.data.message);
 					} else {
-						$status.text(res.data || self.i18n.error).css('color', '#d63638');
+						$status.text(res.data || self.i18n.error).removeClass('jt-admin-msg--success').addClass('jt-admin-msg--error');
 						self.toast(res.data || self.i18n.error, 'error');
 					}
 				}).fail(function() {
-					$status.text(self.i18n.error).css('color', '#d63638');
+					$status.text(self.i18n.error).removeClass('jt-admin-msg--success').addClass('jt-admin-msg--error');
 				}).always(function() {
 					$btn.prop('disabled', false);
 				});
