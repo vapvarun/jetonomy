@@ -16,7 +16,7 @@ $rep             = $profile ? (int) $profile->reputation : 0;
 $p_count         = $profile ? (int) $profile->post_count : 0;
 $r_count         = $profile ? (int) $profile->reply_count : 0;
 $profile_user_id = (int) $user->ID;
-$base            = home_url( '/community' );
+$base            = \Jetonomy\base_url();
 $initials        = strtoupper( substr( $user->display_name, 0, 2 ) );
 
 $joined = $profile && $profile->created_at

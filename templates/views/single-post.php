@@ -42,7 +42,7 @@ $category = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find(
 $author_id = (int) $post->author_id;
 $trust    = $profile ? (int) $profile->trust_level : 0;
 $time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
-$base     = home_url( '/community' );
+$base     = \Jetonomy\base_url();
 $post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 
 // Replies sort.

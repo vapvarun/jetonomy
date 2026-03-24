@@ -29,7 +29,7 @@ class Posts_Sitemap_Provider extends WP_Sitemaps_Provider {
 		) );
 
 		$urls = [];
-		$base = home_url( '/community/s/' );
+		$base = \Jetonomy\base_url() . '/s/';
 
 		foreach ( $posts as $post ) {
 			$urls[] = [

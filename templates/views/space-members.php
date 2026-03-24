@@ -12,7 +12,7 @@ if ( ! $space ) {
 
 $members  = \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id );
 $category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base     = home_url( '/community' );
+$base     = \Jetonomy\base_url();
 
 $crumbs = [];
 if ( $category ) {

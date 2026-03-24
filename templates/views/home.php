@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 $categories          = \Jetonomy\Models\Category::list_top_level();
 $uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized();
-$base                = home_url( '/community' );
+$base                = \Jetonomy\base_url();
 
 /**
  * Render a grid of space cards.

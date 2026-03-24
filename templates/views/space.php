@@ -64,7 +64,7 @@ $offset          = ( $paged - 1 ) * $limit;
 
 $posts    = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );
 $category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base     = home_url( '/community' );
+$base     = \Jetonomy\base_url();
 $space_url = $base . '/s/' . $space->slug . '/';
 
 $crumbs = [];

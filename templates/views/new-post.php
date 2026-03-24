@@ -8,7 +8,7 @@ if ( ! $space ) {
     return;
 }
 
-$base = home_url( '/community' );
+$base = \Jetonomy\base_url();
 $space_url = $base . '/s/' . esc_attr( $space->slug ) . '/';
 $space_type_map = [
 	'qa'    => [ 'post_type' => 'question', 'label' => __( 'Ask a Question', 'jetonomy' ) ],

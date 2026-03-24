@@ -11,7 +11,7 @@ if ( ! $category ) {
 }
 
 $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id );
-$base   = home_url( '/community' );
+$base   = \Jetonomy\base_url();
 
 $crumbs = [
 	[ 'label' => $category->name, 'url' => '' ],

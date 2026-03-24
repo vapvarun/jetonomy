@@ -14,7 +14,7 @@ $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
-$base   = home_url( '/community' );
+$base   = \Jetonomy\base_url();
 $posts  = [];
 $spaces = [];
 $tags   = [];

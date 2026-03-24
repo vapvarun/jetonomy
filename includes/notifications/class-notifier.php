@@ -285,8 +285,8 @@ class Notifier {
 
 	private function render_email_template( string $type, string $message, \WP_User $user ): string {
 		$site_name     = esc_html( get_bloginfo( 'name' ) );
-		$community_url = esc_url( home_url( '/community/' ) );
-		$notif_url     = esc_url( home_url( '/community/notifications/' ) );
+		$community_url = esc_url( \Jetonomy\base_url() . '/' );
+		$notif_url     = esc_url( \Jetonomy\base_url() . '/notifications/' );
 
 		return "
 		<div style='font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px;'>

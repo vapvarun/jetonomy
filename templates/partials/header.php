@@ -17,7 +17,7 @@ $unread        = 0;
 if ( $user_id ) {
 	$unread = \Jetonomy\Models\Notification::unread_count( $user_id );
 }
-$base = home_url( '/community' );
+$base = \Jetonomy\base_url();
 
 /**
  * Filter whether to show the Jetonomy community navigation bar.

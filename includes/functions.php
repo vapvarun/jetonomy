@@ -8,6 +8,20 @@ function table( string $name ): string {
     return $wpdb->prefix . 'jt_' . $name;
 }
 
+/**
+ * Get the community base URL (e.g. http://forums.local/discussion).
+ *
+ * Reads the `base_slug` from jetonomy_settings (default: 'community').
+ * Every template and PHP class should call this instead of hardcoding /community/.
+ *
+ * @return string Base URL without trailing slash.
+ */
+function base_url(): string {
+    $settings  = get_option( 'jetonomy_settings', [] );
+    $base_slug = $settings['base_slug'] ?? 'community';
+    return home_url( '/' . $base_slug );
+}
+
 function now(): string {
     return current_time( 'mysql', true );
 }

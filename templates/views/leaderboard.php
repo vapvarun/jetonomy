@@ -25,7 +25,7 @@ $leaders = $wpdb->get_results(
 	)
 ) ?: [];
 
-$base   = home_url( '/community' );
+$base   = \Jetonomy\base_url();
 $crumbs = [
 	[ 'label' => __( 'Leaderboard', 'jetonomy' ), 'url' => '' ],
 ];

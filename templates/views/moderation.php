@@ -9,7 +9,7 @@ if ( ! current_user_can( 'moderate_comments' ) && ! current_user_can( 'manage_op
 }
 
 $flags        = \Jetonomy\Models\Flag::list_pending();
-$base         = home_url( '/community' );
+$base         = \Jetonomy\base_url();
 $nonce_base   = wp_create_nonce( 'jetonomy_moderation' );
 
 $reason_labels = [

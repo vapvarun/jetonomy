@@ -54,7 +54,7 @@ class Schema_Markup {
 
 		$author      = get_userdata( (int) $post->author_id );
 		$author_name = $author ? $author->display_name : 'Anonymous';
-		$base        = home_url( '/community/s/' . $space_slug . '/t/' . $slug . '/' );
+		$base        = \Jetonomy\base_url() . '/s/' . $space_slug . '/t/' . $slug . '/';
 
 		// Q&A type gets QAPage schema (rich results in Google).
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
@@ -125,7 +125,7 @@ class Schema_Markup {
 			'@type'       => 'DiscussionForumPosting',
 			'name'        => $space->title,
 			'description' => wp_strip_all_tags( $space->description ?? '' ),
-			'url'         => home_url( '/community/s/' . $space->slug . '/' ),
+			'url'         => \Jetonomy\base_url() . '/s/' . $space->slug . '/',
 		];
 	}
 
@@ -135,7 +135,7 @@ class Schema_Markup {
 			'@type'       => 'WebPage',
 			'name'        => get_bloginfo( 'name' ) . ' Community',
 			'description' => __( 'Community discussion forum', 'jetonomy' ),
-			'url'         => home_url( '/community/' ),
+			'url'         => \Jetonomy\base_url() . '/',
 		];
 	}
 
@@ -143,7 +143,7 @@ class Schema_Markup {
 		$route      = get_query_var( 'jetonomy_route' );
 		$slug       = get_query_var( 'jetonomy_slug' );
 		$space_slug = get_query_var( 'jetonomy_space_slug' );
-		$base       = home_url( '/community/' );
+		$base       = \Jetonomy\base_url() . '/';
 
 		$items = [
 			[ 'name' => __( 'Community', 'jetonomy' ), 'url' => $base ],

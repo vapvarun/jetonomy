@@ -8,19 +8,24 @@ $notifications = \Jetonomy\Models\Notification::list_for_user( $user_id, 30 );
 // Mark all as read on page load.
 \Jetonomy\Models\Notification::mark_all_read( $user_id );
 
-$base = home_url( '/community' );
+$base = \Jetonomy\base_url();
 
 $crumbs = [
 	[ 'label' => __( 'Notifications', 'jetonomy' ), 'url' => '' ],
 ];
 
 $type_labels = [
-	'reply'         => __( 'replied to your post', 'jetonomy' ),
-	'mention'       => __( 'mentioned you', 'jetonomy' ),
-	'vote_up'       => __( 'upvoted your post', 'jetonomy' ),
-	'accepted'      => __( 'accepted your reply', 'jetonomy' ),
-	'new_post'      => __( 'created a new post', 'jetonomy' ),
-	'subscription'  => __( 'new activity in a subscribed space', 'jetonomy' ),
+	'reply'            => __( 'replied to your post', 'jetonomy' ),
+	'mention'          => __( 'mentioned you', 'jetonomy' ),
+	'vote'             => __( 'voted on your post', 'jetonomy' ),
+	'vote_up'          => __( 'upvoted your post', 'jetonomy' ),
+	'accepted'         => __( 'accepted your reply', 'jetonomy' ),
+	'new_post'         => __( 'created a new post', 'jetonomy' ),
+	'subscription'     => __( 'new activity in a subscribed space', 'jetonomy' ),
+	'trust_promotion'  => __( 'you have been promoted to a new trust level', 'jetonomy' ),
+	'moderation'       => __( 'a moderator acted on your content', 'jetonomy' ),
+	'badge_earned'     => __( 'earned a badge', 'jetonomy' ),
+	'level_up'         => __( 'reached a new level', 'jetonomy' ),
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -42,7 +47,9 @@ $type_labels = [
 					<?php
 					$actor = $notif->actor_id ? get_userdata( (int) $notif->actor_id ) : null;
 					$actor_name = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
-					$action_label = $type_labels[ $notif->type ] ?? $notif->type;
+					$action_label = ! empty( $notif->message )
+					? $notif->message
+					: ( $type_labels[ $notif->type ] ?? $notif->type );
 					$time_ago = human_time_diff( strtotime( $notif->created_at ), current_time( 'timestamp', true ) );
 
 					// Build link to the relevant object.
@@ -74,8 +81,12 @@ $type_labels = [
 						</span>
 						<div class="jt-notif-body">
 							<div class="jt-notif-text">
-								<strong><?php echo esc_html( $actor_name ); ?></strong>
-								<?php echo esc_html( $action_label ); ?>
+								<?php if ( ! empty( $notif->message ) ) : ?>
+									<?php echo esc_html( $notif->message ); ?>
+								<?php else : ?>
+									<strong><?php echo esc_html( $actor_name ); ?></strong>
+									<?php echo esc_html( $action_label ); ?>
+								<?php endif; ?>
 							</div>
 							<div class="jt-notif-time">
 								<?php

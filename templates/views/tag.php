@@ -37,7 +37,7 @@ $posts = $wpdb->get_results(
 	)
 ) ?: [];
 
-$base = home_url( '/community' );
+$base = \Jetonomy\base_url();
 $tag_url = $base . '/tag/' . $tag->slug . '/';
 
 $crumbs = [

@@ -720,7 +720,7 @@ class Spaces_Controller extends Base_Controller {
 			'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 48 ] ),
 			'trust_level'  => $profile ? (int) $profile->trust_level : 0,
 			'reputation'   => $profile ? (int) $profile->reputation : 0,
-			'profile_url'  => home_url( '/community/u/' . ( $user ? $user->user_login : $user_id ) . '/' ),
+			'profile_url'  => \Jetonomy\base_url() . '/u/' . ( $user ? $user->user_login : $user_id ) . '/',
 		];
 	}
 

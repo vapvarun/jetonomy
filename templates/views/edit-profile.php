@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 // Auth check is handled by Template_Loader before output.
 $current_user = wp_get_current_user();
 $profile      = \Jetonomy\Models\UserProfile::find_or_create( $current_user->ID );
-$base         = home_url( '/community' );
+$base         = \Jetonomy\base_url();
 
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
