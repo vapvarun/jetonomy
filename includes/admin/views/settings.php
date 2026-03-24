@@ -86,7 +86,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		</aside>
 
 		<div class="jt-settings-main">
-			<?php if ( 'license' !== $active_tab ) : ?>
+			<?php if ( in_array( $active_tab, $jt_primary_tabs, true ) ) : ?>
 			<form method="post" action="options.php" id="jetonomy-settings-form">
 				<?php settings_fields( 'jetonomy_settings' ); ?>
 			<?php endif; ?>
@@ -557,16 +557,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		if ( in_array( $active_tab, $jt_primary_tabs, true ) ) {
 			do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
 		} elseif ( $jt_ext_html ) {
-			echo '<div class="jt-settings-card jt-settings-card--ext">' . $jt_ext_html . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension
+			echo $jt_ext_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension
 		}
 		?>
 
 				</div><!-- /.jt-settings-cards -->
 
-			<?php if ( 'license' !== $active_tab ) : ?>
-				<?php if ( in_array( $active_tab, [ 'general', 'permissions', 'email', 'appearance', 'seo' ], true ) ) : ?>
-				<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
-				<?php endif; ?>
+			<?php if ( in_array( $active_tab, $jt_primary_tabs, true ) ) : ?>
+			<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
 			</form>
 			<?php endif; ?>
 		</div><!-- /.jt-settings-main -->

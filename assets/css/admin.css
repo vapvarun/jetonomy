@@ -1824,6 +1824,26 @@ tr.jetonomy-moderated td {
 	border-bottom: none;
 }
 
+/* Submit button inside a card (extension tabs) */
+.jt-settings-card .submit {
+	padding: 14px 20px;
+	border-top: 1px solid #f1f5f9;
+	margin: 0;
+}
+
+/* Widefat / list tables inside a card (stats, webhooks) */
+.jt-settings-card .widefat {
+	border: none;
+	box-shadow: none;
+	border-radius: 0;
+	margin: 0;
+}
+
+.jt-settings-card .widefat th,
+.jt-settings-card .widefat td {
+	padding: 12px 20px;
+}
+
 /* Notification defaults real checkboxes */
 .jt-notif-defaults-table {
 	width: 100%;
