@@ -334,3 +334,187 @@
 - [ ] No JavaScript console errors from Pro frontend components
 - [ ] Pro tables created on activation, preserved on deactivation
 - [ ] Pro tables removed on uninstall (if "delete data" option checked)
+
+---
+
+## 17. Module 11: Webhooks
+
+> Enable Webhooks at **Jetonomy → Extensions**, then configure at **Jetonomy → Settings → Webhooks tab**.
+
+### Webhook Registration
+- [ ] Webhooks settings tab renders using `jt-settings-card` layout (two cards: list + form)
+- [ ] Add new webhook: fill Payload URL + select events + save → appears in list
+- [ ] Edit existing webhook: update URL or events → changes persist
+- [ ] Delete webhook → removed from list
+- [ ] Inactive (paused) webhook: toggle deactivates without deleting
+- [ ] Reactivate paused webhook → deliveries resume
+
+### Event Coverage (13 events)
+- [ ] `post.created` fires when a post is published
+- [ ] `post.updated` fires when a post is edited
+- [ ] `post.deleted` fires when a post is deleted
+- [ ] `reply.created` fires when a reply is published
+- [ ] `reply.updated` fires when a reply is edited
+- [ ] `reply.deleted` fires when a reply is deleted
+- [ ] `user.registered` fires when a new user account is created
+- [ ] `user.trust_level_changed` fires when trust level changes
+- [ ] `vote.cast` fires when a vote is cast
+- [ ] `flag.created` fires when a post/reply is flagged
+- [ ] `flag.resolved` fires when a flag is resolved
+- [ ] `space.member_joined` fires when a user joins a space
+- [ ] `space.member_left` fires when a user leaves a space
+
+### Payload & Security
+- [ ] Request body is valid JSON with expected fields (event, data, timestamp)
+- [ ] `X-Jetonomy-Signature` header present on every delivery (`sha256=HMAC`)
+- [ ] Signature verifies correctly against request body using the webhook secret
+- [ ] Each webhook has its own auto-generated unique secret (not shared)
+
+### Reliability
+- [ ] Failed delivery (endpoint returns 5xx or times out): retry logged
+- [ ] After 5 consecutive failures: webhook auto-disables, admin shown notice
+- [ ] Re-enabling a failed webhook resets fail counter
+- [ ] `POST /jetonomy/v1/webhooks/:id/test` sends test payload immediately
+- [ ] Test payload received at registered endpoint with valid signature
+- [ ] Table `jt_pro_webhooks` created on extension activation
+
+### REST API
+- [ ] `GET /jetonomy/v1/webhooks` lists all webhooks
+- [ ] `POST /jetonomy/v1/webhooks` creates a webhook
+- [ ] `PATCH /jetonomy/v1/webhooks/:id` updates a webhook
+- [ ] `DELETE /jetonomy/v1/webhooks/:id` deletes a webhook
+- [ ] `POST /jetonomy/v1/webhooks/:id/test` sends test payload
+
+---
+
+## 18. Module 12: Reply by Email
+
+> Enable at **Jetonomy → Extensions**, then configure at **Jetonomy → Settings → Reply by Email tab**.
+> Full functional test requires real IMAP/mail infrastructure. **Config-save + parsing-logic tests are in scope for v1.0 QA; live email delivery test is out of scope.**
+
+### Settings & Config
+- [ ] Reply by Email settings tab renders using `jt-settings-card` layout
+- [ ] Email Domain field saves correctly
+- [ ] IMAP method: IMAP Host, Port, Username, Password fields appear and save
+- [ ] Webhook method: inbound URL displayed (`/wp-json/jetonomy/v1/reply-by-email/inbound`)
+- [ ] Switching between IMAP and Webhook method works and saves
+- [ ] Saved settings persist after page reload
+
+### Token Mechanism
+- [ ] Outgoing notification emails contain a `Reply-To` address in format `reply+TOKEN@domain.com`
+- [ ] Token is unique per (user, post) pair — two notifications for different posts get different tokens
+- [ ] Expired tokens (>7 days) are rejected with error — no reply created
+- [ ] Invalid/tampered tokens are rejected — no reply created
+
+### Email Parsing Logic
+- [ ] Quoted reply lines (starting with `>`) are stripped from reply content
+- [ ] Email signature lines (after `-- ` separator) are stripped
+- [ ] Reply content after stripping is the actual message text only
+- [ ] HTML email bodies are converted to plain text before creating reply
+
+### Rate Limiting & Abuse
+- [ ] User sending more than 10 email replies per hour: 11th reply rejected
+- [ ] Rate limit resets after the hour window
+- [ ] Failed/rejected tokens do not increment reply counter
+
+### Inbound Webhook Method (config-level test)
+- [ ] `POST /jetonomy/v1/reply-by-email/inbound` endpoint exists (returns 400 without valid payload — not 404)
+- [ ] Cron job `jetonomy_pro_reply_by_email_poll` registered when IMAP method selected
+
+---
+
+## 19. Module 13: Web Push Notifications
+
+> Enable at **Jetonomy → Extensions**, then configure at **Jetonomy → Settings → Web Push tab**.
+> **Full delivery test requires HTTPS.** On localhost (HTTP), test config-save, frontend script load, and opt-in button appearance only.
+
+### Settings & VAPID
+- [ ] Web Push settings tab renders using `jt-settings-card` layout
+- [ ] VAPID Public Key auto-generated on activation (read-only field shows key)
+- [ ] Default Notification Title field saves correctly
+- [ ] Notification Icon URL field saves correctly
+- [ ] Settings persist after page reload
+
+### Service Worker & Frontend Script
+- [ ] Service worker endpoint exists: `GET /wp-json/jetonomy/v1/push/service-worker.js` returns JavaScript (not 404)
+- [ ] Response has header `Service-Worker-Allowed: /`
+- [ ] Web Push extension frontend script loads on community pages
+- [ ] No JavaScript errors in browser console on community pages with extension enabled
+
+### Opt-In Flow (HTTPS only)
+- [ ] "Enable notifications" button appears in community header for logged-in users
+- [ ] Button not shown for users who have already opted in
+- [ ] Clicking button triggers browser permission prompt
+- [ ] On grant: subscription stored in `jt_pro_push_subscriptions` table
+- [ ] "Enable notifications" button disappears after successful opt-in
+
+### Notification Delivery
+- [ ] Web Push notification sent when a reply is posted to the user's thread
+- [ ] Web Push notification sent when user is mentioned in a post or reply
+- [ ] Web Push notification sent when a badge is awarded
+- [ ] Notification payload includes title, body, and click-through URL
+- [ ] Clicking notification routes to the correct post/notification page
+
+### Subscription Lifecycle
+- [ ] Expired subscription (server returns 410): removed from `jt_pro_push_subscriptions` automatically
+- [ ] User with multiple devices: each device gets its own subscription row
+- [ ] Revoking browser permission stops deliveries to that device (browser-side)
+- [ ] Table `jt_pro_push_subscriptions` created on extension activation
+
+---
+
+## 20. Supplementary: Per-Extension Edge Cases
+
+### Reactions — Per-Space Config
+- [ ] Admin can configure which emoji reactions are enabled globally (Settings → Reactions tab)
+- [ ] Disabled emoji removed from reaction bar on next page load
+- [ ] Re-enabling emoji: reaction bar shows it again without data loss
+
+### Email Digest — Cron Verification
+- [ ] Daily cron event `jetonomy_pro_send_daily_digest` registered in WP Cron schedule
+- [ ] Weekly cron event `jetonomy_pro_send_weekly_digest` registered in WP Cron schedule
+- [ ] Sending test email from admin (Actions card) delivers to admin email address
+- [ ] Digest email respects user's subscribed spaces (only includes posts from subscribed spaces)
+- [ ] User with frequency "none" does not receive digest even if cron fires
+- [ ] Unsubscribe token in email footer is unique per user (not shared)
+- [ ] Clicking unsubscribe link sets user preference to "none" (no more digests)
+
+### Analytics — Custom Date Range
+- [ ] Custom date range (`range=custom&start=YYYY-MM-DD&end=YYYY-MM-DD`) works on all 6 API endpoints
+- [ ] CSV export for custom range includes only data from that date range
+- [ ] Period comparison % calculates against equivalent prior period (same duration)
+- [ ] Empty periods (no data) return zeros, not errors
+
+### Private Messaging — Additional Coverage
+- [ ] System messages (e.g., "X joined the group") render differently from user messages
+- [ ] Group conversation: admin/creator can add new participants
+- [ ] Group conversation name is editable by participants
+- [ ] Conversation participant count shown on conversation list
+
+### White Label — Frontend Verification
+- [ ] Custom community name appears in `<title>` on community pages
+- [ ] Custom logo appears in community header (not just admin)
+- [ ] Custom accent color applied to CTA buttons and links on community frontend
+- [ ] Custom CSS injection visible on community frontend (not only admin)
+- [ ] Admin menu label change: WordPress sidebar shows new plugin label
+
+---
+
+## 21. Future Test Infrastructure (Pro — Planned)
+
+> The tests in §§ 1–20 are the authoritative manual QA gate for v1.0.0.
+> Automated test layers will be added post-launch as time permits.
+
+| Layer | Scope | Status | Notes |
+|-------|-------|--------|-------|
+| WP-CLI batch test commands | Activate/deactivate all extensions, check tables, fire crons | Planned | CLI commands defined in plugin — write bash harness to call them sequentially |
+| PHPUnit integration tests | License gating, token validation, webhook signature, rate limiting | Planned | These are the highest-value unit-testable components |
+| Playwright E2E (Pro flows) | Full DM flow, badge award, poll vote, digest send-test | Planned | Extend free plugin E2E suite with Pro test file |
+| Load test (messaging) | 100 concurrent message sends to single conversation | Post-launch | Validate cursor-based pagination under real load |
+
+**Priority for first automated test pass:**
+1. Token validation (reply-by-email): pure functions, no browser needed
+2. Webhook HMAC signature: pure crypto, easy to unit test
+3. License tier gating: mock license stub → verify feature enable/disable
+4. Email digest cron logic: mock `wp_mail()` → verify recipient list and meta key reads
+

@@ -322,3 +322,211 @@
 - [ ] Plugin works with popular themes (Astra, GeneratePress, Kadence, Twenty Twenty-Five)
 - [ ] No JavaScript errors in browser console
 - [ ] No PHP notices/warnings in debug.log
+
+---
+
+## 22. WP-CLI Commands
+
+> Run all commands with `--path="/Users/varundubey/Local Sites/forums/app/public"`.
+
+- [ ] `wp jetonomy status` — displays plugin version, table counts, user/space/post counts, recent activity summary
+- [ ] `wp jetonomy flush-rules` — rewrite rules regenerated; verify `/community/*` URLs resolve correctly after
+- [ ] `wp jetonomy recount --type=all` — updates post_count, reply_count, vote_score on all spaces and posts
+- [ ] `wp jetonomy recount --type=posts` — only post counts updated; reply/vote counts unchanged
+- [ ] `wp jetonomy recount --type=votes` — only vote_score updated; counts unchanged
+- [ ] `wp jetonomy trust-evaluate` — auto-updates trust levels for all users based on current criteria; verify `wp_jt_user_profiles.trust_level` changes
+- [ ] `wp jetonomy backfill-activity` — populates `wp_jt_activity_log` with historical events; guarded by `jetonomy_activity_backfilled` flag (runs once only)
+- [ ] `wp jetonomy demo-seed` — creates demo users, spaces, categories, posts, replies; tracked in `jetonomy_demo_data` option
+- [ ] `wp jetonomy demo-seed --force` — re-seeds even if demo data exists
+- [ ] `wp jetonomy demo-cleanup` — removes all content tracked in `jetonomy_demo_data`; verify clean removal
+- [ ] `wp jetonomy import bbpress --dry-run` — shows import counts without importing; no data written
+- [ ] `wp jetonomy import bbpress` — imports bbPress posts/replies/users into Jetonomy tables
+- [ ] `wp jetonomy import wpforo` — imports wpForo content into Jetonomy tables
+- [ ] CLI commands fail gracefully when free plugin not active (clear error message)
+
+---
+
+## 23. Admin Pages — Detailed Coverage
+
+### Dashboard
+- [ ] Jetonomy admin dashboard loads at `admin.php?page=jetonomy`
+- [ ] Stats cards show correct totals: spaces, posts, replies, active users
+- [ ] Recent activity section shows last 10 activity items with type, user, time
+- [ ] Setup wizard notice visible on fresh install; dismissable after setup
+- [ ] Quick-action links work: New Space, New Category, View Community
+
+### Content Management
+- [ ] Jetonomy → Content page loads with post/reply table
+- [ ] Filter by status: Published, Pending, Spam, Trash — each filters correctly
+- [ ] Filter by space: dropdown shows all spaces; filters to that space's content
+- [ ] Bulk action: Trash selected items → items moved to trash
+- [ ] Bulk action: Approve (from Pending) → items published
+- [ ] Bulk action: Mark Spam → items marked spam
+- [ ] Inline: edit post title in table
+- [ ] Inline: move post to different space via dropdown
+- [ ] Pagination: 20 items per page default; Next/Prev links work
+- [ ] Empty state: "No posts found" message shows correctly
+
+### Moderation Queue
+- [ ] Jetonomy → Moderation → Pending tab shows content awaiting approval
+- [ ] Jetonomy → Moderation → Flags tab shows flagged content with reason
+- [ ] Jetonomy → Moderation → Banned Users tab shows restrictions
+- [ ] Approve pending post → moves to Published, author notified
+- [ ] Mark as Spam → moves to spam, author reputation penalized
+- [ ] Trash post → soft-deleted, author notified
+- [ ] Resolve flag: mark as valid (action taken) or dismissed
+- [ ] Ban user: IP ban, account ban with expiry date
+- [ ] Unban user: restriction deleted, access restored
+
+### Settings Page
+- [ ] Settings sidebar shows all 5 core tabs: General, Permissions, Email, Appearance, SEO
+- [ ] Each tab loads content without full page reload
+- [ ] General tab: base slug, community name, post types
+- [ ] Permissions tab: trust level thresholds configurable
+- [ ] Email tab: from name, from email, notification templates
+- [ ] Appearance tab: accent color, cover image, layout options
+- [ ] SEO tab: title template, meta description template, sitemap on/off
+- [ ] Settings saved correctly on submit (success notice)
+- [ ] Invalid input rejected with appropriate error
+
+### Setup Wizard
+- [ ] Setup wizard launches on first activation
+- [ ] Step 1: base URL slug → sets `jetonomy_settings[base_slug]`
+- [ ] Step 2: initial spaces → creates 1–3 starter spaces
+- [ ] Step 3: default trust thresholds
+- [ ] Complete wizard → wizard flag set, no longer shows on dashboard
+- [ ] Dismiss without completing → wizard dismissable
+
+---
+
+## 24. REST API — Extended Coverage
+
+### Posts
+- [ ] `POST /spaces/:id/posts` with `status=draft` → post created as draft (not public)
+- [ ] `POST /spaces/:id/posts` with `tags=["tag1","tag2"]` → tags applied
+- [ ] `PATCH /posts/:id` with `is_pinned=true` → post pinned at top of space
+- [ ] `PATCH /posts/:id` with `is_closed=true` → post closed, no new replies
+- [ ] `POST /posts/:id/close` — closes post; replying blocked after
+- [ ] `POST /posts/:id/pin` — pins post (space admin only)
+- [ ] `POST /posts/:id/move` with `space_id=456` → post moved; activity logged
+- [ ] Closed post: `POST /posts/:id/replies` returns 403 with "post is closed" message
+
+### Replies
+- [ ] `GET /replies/:id` — returns single reply with author data, vote count
+- [ ] `PATCH /replies/:id` — update reply content (creates revision)
+- [ ] `DELETE /replies/:id` — soft delete reply; status=trash
+
+### Voting
+- [ ] `POST /posts/:id/vote` with `value=1` → upvote; score +1; reputation +1 to author
+- [ ] `POST /posts/:id/vote` with `value=-1` → downvote; score -1
+- [ ] `POST /posts/:id/vote` with same value again → vote removed (toggle)
+- [ ] Flip vote (up → down) → old vote deleted, new vote created, score adjusted by 2
+- [ ] `DELETE /posts/:id/vote` → vote removed, score restored
+- [ ] Same endpoints for replies
+
+### Tags
+- [ ] `GET /tags` — returns all tags with usage_count, paginated
+- [ ] `GET /tags?search=keyword` — filters tags by name
+- [ ] `GET /tags/:slug` — returns single tag with recent posts
+
+### Search
+- [ ] `GET /search?q=keyword` — returns matching posts/spaces/users grouped
+- [ ] Search `filter=posts` — only posts returned
+- [ ] Search `filter=spaces` — only spaces returned
+- [ ] Search `filter=tags` — only tags returned
+- [ ] Search respects space visibility (private space results only for members)
+- [ ] Pagination works on search results
+
+### Leaderboard
+- [ ] `GET /leaderboards?type=posts` — top posters, ranked by post count
+- [ ] `GET /leaderboards?type=reputation` — highest reputation, ranked
+- [ ] `GET /leaderboards?range=7d` — filters to last 7 days
+- [ ] `GET /leaderboards?range=30d` — filters to last 30 days
+- [ ] `GET /leaderboards?range=all` — all-time leaderboard
+
+### Subscriptions
+- [ ] `POST /subscriptions` with `space_id=123` → user subscribed to space
+- [ ] `GET /subscriptions` → returns all user's subscriptions
+- [ ] `DELETE /subscriptions/:id` → unsubscribed; no more notifications from space
+
+### Notifications
+- [ ] `GET /notifications` — returns unread notifications, paginated
+- [ ] `GET /notifications?include_read=1` — includes read notifications
+- [ ] `PATCH /notifications/:id` with `is_read=true` → single notification marked read
+- [ ] `POST /notifications/mark-all-read` → all notifications marked read
+
+---
+
+## 25. Frontend Routes — Extended Coverage
+
+- [ ] `/community/s/:slug/new/` — new post form loads; composer ready; space context set
+- [ ] `/community/s/:slug/new/?reply_to=123` — composer pre-fills with quote from post 123
+- [ ] `/community/u/:login/edit/` — profile edit page loads; display name, bio, avatar editable
+- [ ] `/community/u/:login/edit/` save → profile updated; `jetonomy_user_profile_updated` hook fires
+- [ ] `/community/tag/:slug/` — tag page loads; all posts with that tag listed
+- [ ] `/community/tag/:slug/` pagination — works correctly
+- [ ] `/community/leaderboard/` — loads; tabs: Posts, Replies, Votes Received, Reputation
+- [ ] `/community/leaderboard/` time range selector: 7d, 30d, all-time
+- [ ] `/community/notifications/` — loads all notifications; paginated
+- [ ] `/community/notifications/` mark as read — individual and bulk
+
+---
+
+## 26. Trust Level System — Detailed Behavior
+
+- [ ] Level 0 rate limiting: >3 posts in 24h → 4th post blocked with error "Daily post limit reached"
+- [ ] Level 1+ has no rate limit on posts
+- [ ] Auto-promotion: user reaches Level 2 thresholds → trust_level auto-updated within 6h (cron)
+- [ ] `jetonomy_trust_level_changed` hook fires on auto-promotion (with user_id, old_level, new_level)
+- [ ] Admin manual override: set user to Level 5 → override persists after auto-eval runs
+- [ ] Level 0 cannot post links (stripped or blocked based on settings)
+- [ ] Level 3+ can close topics
+- [ ] Level 4+ can silence users
+- [ ] Level 5 (Moderator) bypasses all restrictions
+
+---
+
+## 27. Membership Adapters — Integration Scenarios
+
+### MemberPress
+- [ ] MemberPress membership activated → user auto-joins all spaces with matching access rule
+- [ ] MemberPress membership expires → user role in gated spaces downgraded to viewer
+- [ ] New membership level created → map to space access rule in Jetonomy admin
+- [ ] Adapter only loads when MemberPress plugin is active (no errors when inactive)
+
+### Restrict Content Pro
+- [ ] RCP subscription created → user auto-joins applicable spaces
+- [ ] RCP subscription cancelled → access revoked after grace period
+- [ ] RCP subscription level changed → space access updated accordingly
+- [ ] Adapter only loads when RCP plugin is active
+
+### WP Roles
+- [ ] Administrator role → granted `space_admin` capability
+- [ ] Editor role → granted `space_moderator` capability
+- [ ] Subscriber → viewer role only
+- [ ] Custom role mapping in Settings → Permissions works
+
+### PMPro
+- [ ] PMPro level assigned → user auto-joins gated spaces
+- [ ] PMPro level removed → access revoked
+- [ ] Adapter only loads when PMPro plugin is active
+
+---
+
+## 28. Future Test Infrastructure (Roadmap)
+
+> These sections will be implemented in a future sprint. Track in PLANS-INDEX.md.
+
+### WP-CLI Automated Tests (Planned)
+- All commands in § 22 will have corresponding WP-CLI test assertions
+- Scaffold: `wp scaffold plugin-tests jetonomy` → PHPUnit setup
+- CLI tests will use `WP_UnitTestCase` with database reset per test
+
+### PHP Unit Tests (Planned)
+- Model classes: Space, Post, Reply, Vote, UserProfile (CRUD + edge cases)
+- Permission Engine: all capability checks for each role
+- Trust Level auto-evaluation logic
+- REST API controllers: endpoint responses, permissions, pagination
+- Notifier: event-to-notification mapping
+
+> Until unit tests exist, § 1–27 manual QA is the authoritative test gate for release.
