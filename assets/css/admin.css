@@ -215,6 +215,10 @@
 	transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.jetonomy-admin .form-table select {
+	padding-right: 30px;
+}
+
 .jetonomy-admin .form-table input:focus,
 .jetonomy-admin .form-table select:focus,
 .jetonomy-admin .form-table textarea:focus {
