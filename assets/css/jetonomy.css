@@ -130,6 +130,19 @@
   .jt-crumb a { color: var(--jt-text-tertiary); }
   .jt-crumb a:hover { color: var(--jt-text-secondary); }
 
+  /* ── Space cover image ── */
+  .jt-space-cover {
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: var(--jt-radius, 6px);
+    margin-bottom: 16px;
+  }
+  @media (max-width: 640px) {
+    .jt-space-cover { height: 120px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
+  }
+
   /* ── Space header ── */
   .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
   .jt-space-emoji { font-size: 2em; }
