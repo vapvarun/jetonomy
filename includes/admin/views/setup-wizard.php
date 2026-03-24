@@ -32,6 +32,7 @@ body.jt-setup-body {
 .jt-setup-wrap {
 	width: 100%;
 	max-width: 640px;
+	margin: 1rem auto;
 }
 
 /* Header */
