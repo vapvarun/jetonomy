@@ -68,6 +68,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-03-24 | feature | BLOCK DT: Unified Design Token Bridge — `--jt-*` root tokens now reference BuddyNext tokens first (`--brand`, `--bg`, `--text-1`, `--green`, `--amber`, `--red`, `--r-md`, `--font-body`, `--font-display`), then WP theme.json, then hardcoded fallback; dark mode flows automatically via CSS cascade | `assets/css/jetonomy.css` |
 | 2026-03-24 | feature | Categories page split layout — form left (360px), table right; removed Order column; truncate description in table | includes/admin/views/categories.php, assets/css/admin.css |
 | 2026-03-20 | pending | Human-readable activity feed, activity backfill, uninstall.php, model methods, Pro abilities rewrite |
 | 2026-03-20 | `2c554ea` | Admin Content page (post/reply management), realistic demo data, demo cleanup |
@@ -110,12 +111,15 @@ All values must reference `--jt-*` custom properties. If a token doesn't exist f
 All `--jt-*` tokens live in `:root, .jt-app` at the top of `assets/css/jetonomy.css`. Root tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 
 ```css
-/* Root tokens inherit from theme — never override these per-component */
---jt-font:     var(--wp--preset--font-family--body, inherit)
---jt-accent:   var(--wp--preset--color--primary, #3B82F6)
---jt-text:     var(--wp--preset--color--contrast, #1a1a1a)
---jt-bg:       var(--wp--preset--color--base, #ffffff)
---jt-radius:   var(--wp--custom--border-radius, 8px)
+/* Root tokens inherit from BuddyNext first, then WP theme.json, then hardcoded fallback.
+   When BuddyNext is active, its TokenService injects --brand, --bg, --text-1 etc.
+   Dark mode flows automatically — BuddyNext's [data-theme="dark"] overrides the
+   underlying tokens, and --jt-* picks them up via the var() cascade. */
+--jt-font:     var(--font-body, var(--wp--preset--font-family--body, inherit))
+--jt-accent:   var(--brand, var(--wp--preset--color--primary, #3B82F6))
+--jt-text:     var(--text-1, var(--wp--preset--color--contrast, #1a1a1a))
+--jt-bg:       var(--bg, var(--wp--preset--color--base, #ffffff))
+--jt-radius:   var(--r-md, var(--wp--custom--border-radius, 8px))
 ```
 
 ### Available token categories

@@ -154,6 +154,17 @@ class Template_Loader {
         // Set up SEO
         self::set_seo_meta( $data );
 
+        // Signal to the active theme that this is a Jetonomy community page.
+        // Themes check for 'jt-page' in body_class to skip container/sidebar wrappers
+        // and render Jetonomy's layout at full viewport width.
+        add_filter(
+            'body_class',
+            static function ( array $classes ): array {
+                $classes[] = 'jt-page';
+                return $classes;
+            }
+        );
+
         // Use WP's get_header/get_footer for theme integration.
         // Block themes (FSE) have no header.php — use block_header_area() to avoid
         // the "Theme without header.php is deprecated" notice introduced in WP 3.0.
