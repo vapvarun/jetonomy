@@ -17,18 +17,18 @@
 
 ## 1. License & Auto-Updater
 
-- [ ] License page renders at Jetonomy → License
-- [ ] Enter valid Starter key → activates, shows tier and site count
-- [ ] Enter valid Growth key → activates, shows tier and site count
-- [ ] Enter valid Agency key → activates, shows tier and site count
-- [ ] Enter valid Lifetime key → activates, shows "Lifetime" status
-- [ ] Invalid key → clear error message
-- [ ] Deactivate license → status reverts, Pro features disabled
+> License is embedded in Settings → License tab (not a standalone admin page).
+
+- [ ] Jetonomy → Settings → License tab renders correctly (card layout, no raw admin page look)
+- [ ] Enter valid Starter key → activates, shows "License Active" badge with tier and expiry
+- [ ] Enter valid Lifetime key → activates, shows "Lifetime" in expiry field
+- [ ] Invalid key → clear error message shown in settings notice
+- [ ] Deactivate license → status reverts to "No Active License", Pro features disabled
+- [ ] Expired license → shows "License Expired" card with renewal link
 - [ ] Auto-updater checks EDD store for new versions
 - [ ] Update notification appears when new version available
 - [ ] Update installs successfully
-- [ ] Expired license → update blocked with renewal notice
-- [ ] Tier gating: Starter key cannot access Agency-only modules
+- [ ] Tier gating: lower-tier key cannot activate higher-tier-only modules
 
 ---
 
@@ -271,24 +271,43 @@
 
 ## 13. Pro Extension System
 
-- [ ] Extensions manager page lists all 10 modules
-- [ ] Enable/disable individual modules
-- [ ] Disabled module: features hidden, database tables remain
+- [ ] Extensions page (Jetonomy → Extensions) loads: 3-column card grid with category filter tabs
+- [ ] Category filter tabs: All / Engagement / Communication / Content / Administration
+- [ ] "All" tab shows all 13 extensions
+- [ ] Each category tab filters to the correct extensions
+- [ ] Enable/disable individual extension: toggle saves, page reloads with new state
+- [ ] Disabled module: features hidden on frontend, database tables preserved
 - [ ] Re-enable module: features restored without data loss
-- [ ] Each extension extends `Jetonomy_Extension` base class
-- [ ] `meta()`, `boot()`, `activate()`, `deactivate()` methods called correctly
-- [ ] Extension hooks fire and can be filtered by third-party code
+- [ ] Enabled extension: card shows enabled badge (green dot)
+- [ ] Disabled extension: card shows disabled state
 
 ---
 
 ## 14. Pro UI & Admin
 
-- [ ] Pro admin pages use branded card/button/table styles
-- [ ] Pro badge/indicator visible on Pro-only features
-- [ ] Settings pages for Pro modules render and save correctly
+### Settings Page Navigation
+- [ ] Jetonomy → Settings sidebar: shows 5 core tabs (General, Permissions, Email, Appearance, SEO)
+- [ ] Sidebar Pro section (below divider): License tab visible when Pro active
+- [ ] Sidebar Advanced section (below divider): Pro extension tabs appear when extensions enabled
+- [ ] Active tab link highlighted in sidebar
+- [ ] Switching tabs: page loads correct content without full reload
+
+### Settings Page Card Layout
+- [ ] All settings tabs use jt-settings-card layout (no raw h2/form-table/hr layout)
+- [ ] Settings → License: card with title "Jetonomy Pro License", license status card inside
+- [ ] Settings → Branding (White Label): single card with all form fields
+- [ ] Settings → Email Digest: 4 separate cards (Settings, Subscription Statistics, Actions, Cron Status)
+- [ ] Settings → Reactions: card wrapping emoji toggle form
+- [ ] Settings → Web Push: card wrapping VAPID config form
+- [ ] Settings → Reply by Email: card wrapping provider config form
+- [ ] Settings → Webhooks: two cards (Registered Webhooks list + Add/Edit Webhook form)
+- [ ] Settings → Integrations: card showing adapter status table
+
+### General Admin
 - [ ] No Pro features accessible without valid license
 - [ ] Expired license: Pro features show upgrade/renewal notice
-- [ ] Pro templates registered via `jetonomy_template_map` hook
+- [ ] No PHP errors or warnings in debug.log from any Pro module
+- [ ] No JavaScript console errors from Pro admin pages
 
 ---
 
