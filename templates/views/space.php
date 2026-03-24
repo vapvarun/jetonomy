@@ -14,7 +14,34 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
 	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			echo '<div class="jt-empty"><p>' . esc_html__( 'This space is private. You need to be a member to access it.', 'jetonomy' ) . '</p></div>';
+			$join_policy = $space->join_policy ?? 'open';
+			if ( ! $user_id ) {
+				// Guest — prompt to log in.
+				echo '<div class="jt-empty">';
+				echo '<p>' . esc_html__( 'This space is private. Please log in to request access.', 'jetonomy' ) . '</p>';
+				echo '<a href="' . esc_url( wp_login_url( get_permalink() ) ) . '" class="jt-btn jt-btn-fill">' . esc_html__( 'Log In', 'jetonomy' ) . '</a>';
+				echo '</div>';
+			} elseif ( 'invite' === $join_policy ) {
+				// Invite-only — cannot self-join.
+				echo '<div class="jt-empty"><p>' . esc_html__( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ) . '</p></div>';
+			} elseif ( 'approval' === $join_policy ) {
+				// Approval required — show a request form with nonce.
+				$join_nonce = wp_create_nonce( 'jetonomy_join_space_' . (int) $space->id );
+				echo '<div class="jt-empty jt-space-gate">';
+				echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
+				echo '<form class="jt-join-request-form" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
+				echo '<textarea class="jt-input" name="message" rows="3" placeholder="' . esc_attr__( 'Optional: why do you want to join?', 'jetonomy' ) . '"></textarea>';
+				echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Request to Join', 'jetonomy' ) . '</button>';
+				echo '</form>';
+				echo '</div>';
+			} else {
+				// Open join policy but private visibility — allow direct join.
+				$join_nonce = wp_create_nonce( 'jetonomy_join_space_' . (int) $space->id );
+				echo '<div class="jt-empty jt-space-gate">';
+				echo '<p>' . esc_html__( 'This space is private. Join to access posts and discussions.', 'jetonomy' ) . '</p>';
+				echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
+				echo '</div>';
+			}
 			return;
 		}
 	}

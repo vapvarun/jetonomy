@@ -505,3 +505,98 @@ document.addEventListener( 'DOMContentLoaded', () => {
         }
     });
 } );
+
+// ── Space Access Gate — Join and Request-to-Join handlers ──
+// These run outside DOMContentLoaded so they apply on all page loads including
+// the private/hidden space gate screen.
+
+(function() {
+    var apiBase = (window.jetonomyUpload && window.jetonomyUpload.apiBase)
+        ? window.jetonomyUpload.apiBase
+        : '/wp-json/jetonomy/v1';
+
+    function showGateMessage(form, msg, isError) {
+        var el = form.querySelector('.jt-gate-msg');
+        if (!el) {
+            el = document.createElement('p');
+            el.className = 'jt-gate-msg';
+            form.appendChild(el);
+        }
+        el.textContent = msg;
+        el.style.color = isError ? '#c00' : '#060';
+    }
+
+    // Direct join button (open policy, private space).
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.jt-join-btn');
+        if (!btn) return;
+        e.preventDefault();
+
+        var spaceId = btn.dataset.spaceId;
+        var nonce   = btn.dataset.nonce;
+        if (!spaceId) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Joining\u2026';
+
+        fetch(apiBase + '/spaces/' + spaceId + '/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+            credentials: 'same-origin',
+            body: JSON.stringify({}),
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (res.ok && res.data.status === 'joined') {
+                window.location.reload();
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Join Space';
+                alert(res.data.message || 'Could not join space. Please try again.');
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.textContent = 'Join Space';
+            alert('Network error. Please try again.');
+        });
+    });
+
+    // Request-to-join form (approval policy).
+    document.addEventListener('submit', function(e) {
+        var form = e.target.closest('.jt-join-request-form');
+        if (!form) return;
+        e.preventDefault();
+
+        var spaceId = form.dataset.spaceId;
+        var nonce   = form.dataset.nonce;
+        var message = (form.querySelector('[name="message"]') || {}).value || '';
+        if (!spaceId) return;
+
+        var submitBtn = form.querySelector('[type="submit"]');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting\u2026'; }
+
+        fetch(apiBase + '/spaces/' + spaceId + '/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+            credentials: 'same-origin',
+            body: JSON.stringify({ message: message }),
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (res.data.status === 'pending') {
+                showGateMessage(form, res.data.message || 'Request submitted. Awaiting approval.', false);
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Request Sent'; }
+            } else if (res.ok && res.data.status === 'joined') {
+                window.location.reload();
+            } else {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Request to Join'; }
+                showGateMessage(form, res.data.message || 'Could not submit request.', true);
+            }
+        })
+        .catch(function() {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Request to Join'; }
+            showGateMessage(form, 'Network error. Please try again.', true);
+        });
+    });
+}());
