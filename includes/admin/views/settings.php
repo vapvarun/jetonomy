@@ -14,7 +14,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	$jt_primary_tabs  = [ 'general', 'permissions', 'email', 'appearance', 'seo' ];
 	$jt_ext_html      = '';
 	$jt_ext_notices   = '';
-	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) ) {
+	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
 		ob_start();
 		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
 		$jt_ext_raw = ob_get_clean();
@@ -68,6 +68,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</a>
 				<?php endforeach; ?>
 
+				<?php if ( defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+				<div class="jt-snav-divider" role="separator"></div>
+				<a href="<?php echo esc_url( $settings_url . '&tab=license' ); ?>"
+				   class="jt-snav-link<?php echo 'license' === $active_tab ? ' jt-snav-link--active' : ''; ?>">
+					<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>
+					<?php esc_html_e( 'License', 'jetonomy' ); ?>
+				</a>
+				<?php endif; ?>
+
 				<?php if ( $advanced_tabs_html ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
 				<p class="jt-snav-section-label"><?php esc_html_e( 'Advanced', 'jetonomy' ); ?></p>
@@ -77,8 +86,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		</aside>
 
 		<div class="jt-settings-main">
+			<?php if ( 'license' !== $active_tab ) : ?>
 			<form method="post" action="options.php" id="jetonomy-settings-form">
 				<?php settings_fields( 'jetonomy_settings' ); ?>
+			<?php endif; ?>
 
 				<div class="jt-settings-cards">
 
@@ -529,6 +540,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 			<?php endif; ?>
 
+		<?php elseif ( 'license' === $active_tab ) : ?>
+
+			<?php do_action( 'jetonomy_admin_license_tab_content' ); ?>
+
 		<?php endif; ?>
 
 		<?php
@@ -542,10 +557,12 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 				</div><!-- /.jt-settings-cards -->
 
+			<?php if ( 'license' !== $active_tab ) : ?>
 				<?php if ( in_array( $active_tab, [ 'general', 'permissions', 'email', 'appearance', 'seo' ], true ) ) : ?>
 				<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
-			<?php endif; ?>
+				<?php endif; ?>
 			</form>
+			<?php endif; ?>
 		</div><!-- /.jt-settings-main -->
 	</div><!-- /.jt-settings-layout -->
 </div>

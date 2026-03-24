@@ -127,14 +127,7 @@ class Admin {
 				'jetonomy-extensions',
 				[ $this, 'render_extensions' ]
 			);
-			add_submenu_page(
-				'jetonomy',
-				__( 'License', 'jetonomy' ),
-				__( 'License', 'jetonomy' ),
-				'jetonomy_manage_settings',
-				'jetonomy-license',
-				[ $this, 'render_license' ]
-			);
+			// License is now a tab inside Settings — no separate submenu.
 		}
 
 		// Hidden setup wizard page (no menu item).
