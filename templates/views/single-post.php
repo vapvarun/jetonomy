@@ -22,14 +22,6 @@ if ( 'publish' !== $post->status ) {
 	}
 }
 
-// Increment view count once per post per session (24 h cookie deduplication).
-$view_cookie = 'jt_viewed_' . (int) $post->id;
-// phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
-if ( empty( $_COOKIE[ $view_cookie ] ) ) {
-	\Jetonomy\Models\Post::increment_view_count( (int) $post->id );
-	setcookie( $view_cookie, '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
-}
-
 $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
 if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {

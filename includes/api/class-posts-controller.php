@@ -170,6 +170,15 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Space' );
 		}
 
+		// Block posting to archived or locked spaces.
+		if ( in_array( $space->status ?? '', [ 'archived', 'locked' ], true ) ) {
+			return new WP_Error(
+				'jetonomy_space_restricted',
+				__( 'This space is archived or locked and no longer accepts new posts.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		// Rate limit check.
 		$profile = UserProfile::find_or_create( $user_id );
 		$trust   = (int) ( $profile->trust_level ?? 0 );

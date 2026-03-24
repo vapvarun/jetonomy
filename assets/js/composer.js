@@ -492,8 +492,15 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
             if (!isOpen) {
                 sharedPicker._activeToolbar = toolbar;
-                // Position the picker below the emoji button.
-                toolbar.appendChild(sharedPicker);
+                // Position the picker above the toolbar using fixed coords to escape overflow:hidden.
+                var rect = toolbar.getBoundingClientRect();
+                sharedPicker.style.bottom = ( window.innerHeight - rect.top ) + 'px';
+                sharedPicker.style.right  = ( window.innerWidth  - rect.right ) + 'px';
+                sharedPicker.style.top    = 'auto';
+                sharedPicker.style.left   = 'auto';
+                if ( sharedPicker.parentElement !== document.body ) {
+                    document.body.appendChild( sharedPicker );
+                }
                 sharedPicker.style.display = 'grid';
             }
             return;

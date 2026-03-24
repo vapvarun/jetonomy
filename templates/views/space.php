@@ -47,6 +47,9 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	}
 }
 
+$space_status  = $space->status ?? 'active';
+$is_restricted = in_array( $space_status, [ 'archived', 'locked' ], true );
+
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'latest';
 if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
@@ -103,6 +106,16 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 				</div>
 			</div>
 
+		<?php if ( $is_restricted ) : ?>
+			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
+				<?php if ( 'archived' === $space_status ) : ?>
+					<?php esc_html_e( 'This space is archived. New posts and replies are no longer accepted.', 'jetonomy' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'This space is locked. New posts and replies are not allowed.', 'jetonomy' ); ?>
+				<?php endif; ?>
+			</div>
+			<?php endif; ?>
+
 			<div class="jt-bar">
 				<div class="jt-pills">
 					<?php
@@ -120,7 +133,9 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						</a>
 					<?php endforeach; ?>
 				</div>
-				<?php if ( is_user_logged_in() ) : ?>
+				<?php if ( $is_restricted ) : ?>
+					<?php /* No new-post button for archived/locked spaces. */ ?>
+				<?php elseif ( is_user_logged_in() ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						$new_post_labels = [

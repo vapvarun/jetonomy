@@ -199,6 +199,25 @@ class Admin {
 		$clean['seo_noindex_profiles'] = ! empty( $input['seo_noindex_profiles'] );
 		$clean['seo_noindex_search']  = ! empty( $input['seo_noindex_search'] );
 
+		// Notification defaults — checkbox values absent when unchecked, so default false if not present.
+		$notif_types = [
+			'reply_to_post',
+			'reply_to_reply',
+			'mention',
+			'accepted_answer',
+			'new_post_in_sub',
+			'badge_earned',
+			'vote_on_post',
+		];
+		$raw_notif = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : [];
+		foreach ( $notif_types as $nt ) {
+			$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : [];
+			$clean['notification_defaults'][ $nt ] = [
+				'web'   => ! empty( $nt_data['web'] ),
+				'email' => ! empty( $nt_data['email'] ),
+			];
+		}
+
 		return $clean;
 	}
 

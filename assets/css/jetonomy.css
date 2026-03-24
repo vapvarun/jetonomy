@@ -254,7 +254,7 @@
   /* ── Composer ── */
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
   .jt-editor:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
-  .jt-editor-bar { display: flex; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); }
+  .jt-editor-bar { display: flex; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); position: relative; }
   .jt-editor-bar button { width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; }
   .jt-editor-bar button:hover { background: var(--jt-bg); color: var(--jt-text); }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
@@ -267,7 +267,7 @@
   .jt-card h4 { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); margin: 0 0 12px; }
 
   /* ── Space card (grid) ── */
-  .jt-space-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .jt-space-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
   .jt-space-card { transition: all var(--jt-dur); cursor: pointer; }
   .jt-space-card:hover { border-color: var(--jt-border-strong); }
 
@@ -414,14 +414,19 @@
   .jt-cat-empty { color: var(--jt-text-tertiary); padding: 8px 0; }
 
   /* ── Space card (home/category) ── */
-  .jt-space-card-inner { display: flex; align-items: flex-start; gap: 10px; }
-  .jt-space-card-emoji { font-size: 1.5em; flex-shrink: 0; }
-  .jt-space-card-body { min-width: 0; }
-  .jt-space-card-title { font-weight: 600; color: var(--jt-text); margin-bottom: 3px; }
-  .jt-space-card-excerpt { font-size: 1rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .jt-space-card-stats { display: flex; gap: 12px; margin-top: 8px; }
-  .jt-space-card-stat { font-size: 0.9375rem; color: var(--jt-text-tertiary); }
-  .jt-space-card-stat strong { font-family: var(--jt-font-mono); color: var(--jt-text-secondary); }
+  .jt-space-card-inner { display: flex; align-items: center; gap: 12px; }
+  .jt-space-card-emoji { font-size: 1.75em; flex-shrink: 0; line-height: 1; }
+  .jt-space-card-body { min-width: 0; flex: 1; }
+  .jt-space-card-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .jt-space-card-excerpt { font-size: 0.8125rem; color: var(--jt-text-tertiary); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .jt-space-card-stats { display: flex; gap: 12px; margin-top: 6px; }
+  .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
+
+  /* ── Space status banner ── */
+  .jt-status-banner { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; font-weight: 500; margin-bottom: 12px; }
+  .jt-status-banner--archived { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); }
+  .jt-status-banner--locked { background: #fff8e1; color: #7c5c00; border: 1px solid #ffe082; }
 
   /* ── Status badges ── */
   .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
@@ -931,6 +936,6 @@
 .jt-shortcut-modal button { margin-top: 16px; width: 100%; padding: 8px; border-radius: var(--jt-radius); border: 1px solid var(--jt-border); background: none; cursor: pointer; }
 
 /* ── G9: Emoji Picker ── */
-.jt-emoji-picker { position: absolute; bottom: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100; width: 220px; }
+.jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: 220px; }
 .jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
 .jt-emoji-option:hover { background: var(--jt-bg-muted); }

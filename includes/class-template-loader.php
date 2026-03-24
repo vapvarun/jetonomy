@@ -148,6 +148,9 @@ class Template_Loader {
         // Pre-flight 404 detection: check before get_header() sends HTTP headers.
         self::maybe_set_404( $data );
 
+        // Track post view + set deduplication cookie before any output.
+        self::maybe_track_post_view( $data );
+
         // Set up SEO
         self::set_seo_meta( $data );
 
@@ -255,6 +258,29 @@ class Template_Loader {
                 echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
             }
         }, 1 );
+    }
+
+    /**
+     * Track a post view with 24-hour cookie deduplication.
+     *
+     * Must run before get_header() so that setcookie() fires before any output.
+     */
+    private static function maybe_track_post_view( array $data ): void {
+        if ( 'post' !== $data['route'] || empty( $data['slug'] ) ) {
+            return;
+        }
+
+        $post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
+        if ( ! $post ) {
+            return;
+        }
+
+        $cookie = 'jt_viewed_' . (int) $post->id;
+        // phpcs:ignore WordPressVIPMinimum.Variables.RestrictedVariables.cache_constraints___COOKIE
+        if ( empty( $_COOKIE[ $cookie ] ) ) {
+            \Jetonomy\Models\Post::increment_view_count( (int) $post->id );
+            setcookie( $cookie, '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+        }
     }
 
     /**

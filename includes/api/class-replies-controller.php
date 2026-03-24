@@ -136,6 +136,16 @@ class Replies_Controller extends Base_Controller {
 
 		$space_id = (int) $post->space_id;
 
+		// Block replies in archived or locked spaces.
+		$space = \Jetonomy\Models\Space::find( $space_id );
+		if ( $space && in_array( $space->status ?? '', [ 'archived', 'locked' ], true ) ) {
+			return new WP_Error(
+				'jetonomy_space_restricted',
+				__( 'This space is archived or locked and no longer accepts new replies.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		if ( ! $this->check_permission( 'create_replies', $space_id ) ) {
 			return $this->permission_error();
 		}
