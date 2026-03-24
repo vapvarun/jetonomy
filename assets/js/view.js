@@ -506,6 +506,13 @@ const { state, actions } = store( 'jetonomy', {
             const ctx = getContext();
             ctx.submitting = true;
 
+            // Only include parent_id when it resolves to a positive integer.
+            // Passing null/undefined/"null" would fail REST schema validation.
+            const rawParentId = state.replyToId || ( replyTo ? parseInt( replyTo, 10 ) : null );
+            const parentId    = rawParentId && Number.isInteger( rawParentId ) && rawParentId > 0
+                ? rawParentId
+                : null;
+
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/posts/${ postId }/replies`,
@@ -517,7 +524,7 @@ const { state, actions } = store( 'jetonomy', {
                         },
                         body: JSON.stringify( {
                             content: body.innerHTML,
-                            ...( ( state.replyToId || replyTo ) && { parent_id: state.replyToId || replyTo } ),
+                            ...( parentId && { parent_id: parentId } ),
                         } ),
                     }
                 );
