@@ -154,22 +154,31 @@ class Admin {
 		$clean['guest_read']         = ! empty( $input['guest_read'] );
 		$clean['require_login']      = ! empty( $input['require_login'] );
 
-		// Permissions
-		$clean['trust_level_1_posts']      = absint( $input['trust_level_1_posts'] ?? 5 );
-		$clean['trust_level_1_days']       = absint( $input['trust_level_1_days'] ?? 3 );
-		$clean['trust_level_1_reputation'] = absint( $input['trust_level_1_reputation'] ?? 10 );
-		$clean['trust_level_1_replies']    = absint( $input['trust_level_1_replies'] ?? 5 );
-		$clean['trust_level_2_posts']      = absint( $input['trust_level_2_posts'] ?? 20 );
-		$clean['trust_level_2_days']       = absint( $input['trust_level_2_days'] ?? 15 );
-		$clean['trust_level_2_reputation'] = absint( $input['trust_level_2_reputation'] ?? 50 );
-		$clean['trust_level_2_replies']    = absint( $input['trust_level_2_replies'] ?? 20 );
-		$clean['trust_level_3_posts']      = absint( $input['trust_level_3_posts'] ?? 50 );
-		$clean['trust_level_3_days']       = absint( $input['trust_level_3_days'] ?? 50 );
-		$clean['trust_level_3_reputation'] = absint( $input['trust_level_3_reputation'] ?? 200 );
-		$clean['trust_level_3_replies']    = absint( $input['trust_level_3_replies'] ?? 50 );
-		$clean['rate_limit_posts']         = absint( $input['rate_limit_posts'] ?? 3 );
-		$clean['rate_limit_replies']       = absint( $input['rate_limit_replies'] ?? 10 );
-		$clean['rate_limit_votes']         = absint( $input['rate_limit_votes'] ?? 20 );
+		// Permissions — trust level thresholds (nested structure matching the view and Trust_Levels consumer).
+		$raw_thresholds = is_array( $input['trust_thresholds'] ?? null ) ? $input['trust_thresholds'] : [];
+		$tl_defaults    = [
+			1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
+			2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
+			3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+		];
+		foreach ( [ 1, 2, 3 ] as $level ) {
+			$td = $tl_defaults[ $level ];
+			$lv = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : [];
+			$clean['trust_thresholds'][ $level ] = [
+				'posts'            => absint( $lv['posts']            ?? $td['posts'] ),
+				'days_active'      => absint( $lv['days_active']      ?? $td['days_active'] ),
+				'reputation'       => absint( $lv['reputation']       ?? $td['reputation'] ),
+				'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
+			];
+		}
+
+		// Rate limits — nested structure matching the view and Rate_Limiter consumer.
+		$raw_limits              = is_array( $input['rate_limits'] ?? null ) ? $input['rate_limits'] : [];
+		$clean['rate_limits']    = [
+			'posts'   => absint( $raw_limits['posts']   ?? 3  ),
+			'replies' => absint( $raw_limits['replies'] ?? 10 ),
+			'votes'   => absint( $raw_limits['votes']   ?? 5  ),
+		];
 
 		// Email
 		$clean['email_from_name']  = sanitize_text_field( $input['email_from_name'] ?? '' );
