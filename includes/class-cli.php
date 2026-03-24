@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Trust\Trust_Evaluator;
 use Jetonomy\Import\Import_Manager;
+use Jetonomy\Admin\Ajax\Demo_Seeder;
 use function Jetonomy\table;
 
 class CLI {
@@ -275,6 +276,86 @@ class CLI {
 		}
 
 		\WP_CLI::success( sprintf( 'Backfilled %d activity entries.', $inserted ) );
+	}
+
+	/**
+	 * Seed a realistic multi-user demo community.
+	 *
+	 * Creates 5 demo users, 2 categories, 5 spaces, 11 posts, 18+ replies,
+	 * votes, flags, badges, and Pro data (reactions, poll) if Jetonomy Pro is active.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--force]
+	 * : Auto-cleanup existing demo data before seeding. Without this flag the
+	 *   command aborts if demo data already exists.
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy demo-seed
+	 *     wp jetonomy demo-seed --force
+	 *
+	 * @subcommand demo-seed
+	 */
+	public function demo_seed( $args, $assoc_args ): void {
+		$existing = get_option( 'jetonomy_demo_data', [] );
+		if ( ! empty( $existing ) ) {
+			if ( empty( $assoc_args['force'] ) ) {
+				\WP_CLI::error( 'Demo data already exists. Run with --force to replace it, or run `wp jetonomy demo-cleanup` first.' );
+				return;
+			}
+			\WP_CLI::log( 'Cleaning up existing demo data...' );
+			Demo_Seeder::cleanup( $existing );
+			delete_option( 'jetonomy_demo_data' );
+			\WP_CLI::log( 'Done.' );
+		}
+
+		$admin_id = (int) get_option( 'jetonomy_setup_admin_id', get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 1 );
+
+		\WP_CLI::log( 'Seeding demo users...' );
+		$demo = Demo_Seeder::seed( $admin_id );
+		update_option( 'jetonomy_demo_data', $demo );
+		flush_rewrite_rules();
+
+		\WP_CLI::log( sprintf( '  Users created:     %d', count( $demo['users'] ) ) );
+		\WP_CLI::log( sprintf( '  Categories:        %d', count( $demo['categories'] ) ) );
+		\WP_CLI::log( sprintf( '  Spaces:            %d', count( $demo['spaces'] ) ) );
+		\WP_CLI::log( sprintf( '  Posts:             %d', count( $demo['posts'] ) ) );
+		\WP_CLI::log( sprintf( '  Replies:           %d', count( $demo['replies'] ) ) );
+		\WP_CLI::log( sprintf( '  Flags (pending):   %d', count( $demo['flags'] ) ) );
+		\WP_CLI::log( sprintf( '  Badges defined:    %d', count( $demo['badges'] ) ) );
+
+		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
+			\WP_CLI::log( sprintf( '  Polls (Pro):       %d', count( $demo['polls'] ) ) );
+			\WP_CLI::log( '  Reactions seeded   (see wp_jt_pro_reactions)' );
+		}
+
+		\WP_CLI::success( 'Demo community seeded. Visit /community/ to see it.' );
+	}
+
+	/**
+	 * Remove all demo data created by demo-seed or the setup wizard.
+	 *
+	 * Deletes demo users, their content, votes, reactions, polls, badges, flags,
+	 * spaces, and categories — everything tracked in the jetonomy_demo_data option.
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy demo-cleanup
+	 *
+	 * @subcommand demo-cleanup
+	 */
+	public function demo_cleanup( $args, $assoc_args ): void {
+		$demo = get_option( 'jetonomy_demo_data', [] );
+		if ( empty( $demo ) ) {
+			\WP_CLI::error( 'No demo data found. Nothing to clean up.' );
+			return;
+		}
+
+		\WP_CLI::log( sprintf( 'Removing %d posts, %d replies, %d users, %d spaces...', count( $demo['posts'] ?? [] ), count( $demo['replies'] ?? [] ), count( $demo['users'] ?? [] ), count( $demo['spaces'] ?? [] ) ) );
+
+		Demo_Seeder::cleanup( $demo );
+		delete_option( 'jetonomy_demo_data' );
+
+		\WP_CLI::success( 'All demo data removed.' );
 	}
 
 	/**

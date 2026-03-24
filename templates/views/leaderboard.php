@@ -57,11 +57,11 @@ $crumbs = [
 					$initials = strtoupper( substr( $lu->display_name, 0, 2 ) );
 					$medal    = '';
 					if ( 0 === $rank ) {
-						$medal = '&#129945;'; // Gold.
+						$medal = '&#129351;'; // 🥇 Gold.
 					} elseif ( 1 === $rank ) {
-						$medal = '&#129944;'; // Silver.
+						$medal = '&#129352;'; // 🥈 Silver.
 					} elseif ( 2 === $rank ) {
-						$medal = '&#129943;'; // Bronze.
+						$medal = '&#129353;'; // 🥉 Bronze.
 					}
 					?>
 					<div class="jt-leader jt-leader-pad">
