@@ -156,12 +156,12 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = el.ref.dataset.replyId;
             if ( ! replyId ) return;
 
-            const current = state.replyScores[ replyId ] || 0;
-            state.replyScores[ replyId ] = current + 1;
+            const scoreEl = el.ref.querySelector( '.n' );
+            const current = parseInt( scoreEl?.textContent || '0', 10 );
 
-            // Visual feedback — vote pop
-            const scoreEl = el.ref.parentElement?.querySelector( '.n' );
+            state.replyScores[ replyId ] = current + 1;
             if ( scoreEl ) {
+                scoreEl.textContent = current + 1;
                 scoreEl.style.transform = 'scale(1.3)';
                 setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
             }
@@ -182,12 +182,15 @@ const { state, actions } = store( 'jetonomy', {
                     const data = yield response.json();
                     if ( data.score !== undefined ) {
                         state.replyScores[ replyId ] = data.score;
+                        if ( scoreEl ) scoreEl.textContent = data.score;
                     }
                 } else {
                     state.replyScores[ replyId ] = current;
+                    if ( scoreEl ) scoreEl.textContent = current;
                 }
             } catch {
                 state.replyScores[ replyId ] = current;
+                if ( scoreEl ) scoreEl.textContent = current;
             }
         },
 
@@ -197,12 +200,12 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = el.ref.dataset.replyId;
             if ( ! replyId ) return;
 
-            const current = state.replyScores[ replyId ] || 0;
-            state.replyScores[ replyId ] = current - 1;
+            const scoreEl = el.ref.querySelector( '.n' );
+            const current = parseInt( scoreEl?.textContent || '0', 10 );
 
-            // Visual feedback — vote pop
-            const scoreEl = el.ref.parentElement?.querySelector( '.n' );
+            state.replyScores[ replyId ] = current - 1;
             if ( scoreEl ) {
+                scoreEl.textContent = current - 1;
                 scoreEl.style.transform = 'scale(1.3)';
                 setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
             }
@@ -223,13 +226,102 @@ const { state, actions } = store( 'jetonomy', {
                     const data = yield response.json();
                     if ( data.score !== undefined ) {
                         state.replyScores[ replyId ] = data.score;
+                        if ( scoreEl ) scoreEl.textContent = data.score;
                     }
                 } else {
                     state.replyScores[ replyId ] = current;
+                    if ( scoreEl ) scoreEl.textContent = current;
                 }
             } catch {
                 state.replyScores[ replyId ] = current;
+                if ( scoreEl ) scoreEl.textContent = current;
             }
+        },
+
+        // ── Inline reply edit ──
+        editReply( event ) {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            if ( ! replyId ) return;
+
+            const replyCard = el.ref.closest( '.jt-reply' );
+            if ( ! replyCard ) return;
+            if ( replyCard.querySelector( '.jt-reply-editor' ) ) return;
+
+            const bodyEl = replyCard.querySelector( '.jt-reply-body' );
+            if ( ! bodyEl ) return;
+
+            const plainText = bodyEl.textContent.trim();
+            bodyEl.style.display = 'none';
+
+            const editor = document.createElement( 'div' );
+            editor.className = 'jt-reply-editor';
+            editor.style.cssText = 'margin:8px 0';
+
+            const textarea = document.createElement( 'textarea' );
+            textarea.className = 'jt-input';
+            textarea.value = plainText;
+            textarea.rows = 4;
+            textarea.style.cssText = 'width:100%;resize:vertical';
+
+            const btnRow = document.createElement( 'div' );
+            btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:8px';
+
+            const cancelBtn = document.createElement( 'button' );
+            cancelBtn.className = 'jt-btn jt-btn-ghost';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.type = 'button';
+
+            const saveBtn = document.createElement( 'button' );
+            saveBtn.className = 'jt-btn jt-btn-fill';
+            saveBtn.textContent = 'Save';
+            saveBtn.type = 'button';
+
+            btnRow.append( cancelBtn, saveBtn );
+            editor.append( textarea, btnRow );
+            bodyEl.after( editor );
+            textarea.focus();
+
+            cancelBtn.addEventListener( 'click', () => {
+                editor.remove();
+                bodyEl.style.display = '';
+            } );
+
+            saveBtn.addEventListener( 'click', async () => {
+                const content = textarea.value.trim();
+                if ( ! content ) return;
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                try {
+                    const res = await fetch( `${ state.apiBase }/replies/${ replyId }`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': state._nonce || state.nonce,
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify( { content } ),
+                    } );
+
+                    if ( res.ok ) {
+                        // Show edited plain text; server-rendered version loads on reload.
+                        bodyEl.textContent = content;
+                        editor.remove();
+                        bodyEl.style.display = '';
+                    } else {
+                        const err = await res.json().catch( () => ( {} ) );
+                        alert( err.message || 'Failed to save.' );
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save';
+                    }
+                } catch {
+                    alert( 'Network error. Please try again.' );
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save';
+                }
+            } );
         },
 
         // ── Toggle collapsible thread ──

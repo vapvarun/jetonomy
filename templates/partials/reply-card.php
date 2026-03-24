@@ -46,7 +46,10 @@ $is_accepted = (int) $reply->is_accepted;
 				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && ( (int) $reply->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
-			<button class="jt-act jt-reply-edit" title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
+			<button class="jt-act jt-reply-edit"
+				data-wp-on--click="actions.editReply"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
 		<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>
