@@ -442,43 +442,66 @@ document.addEventListener( 'DOMContentLoaded', () => {
         document.body.appendChild(modal);
     }
 
-    // ── G9: Emoji Picker ──
+    // ── G9: Emoji Picker (delegated — works for composers injected after DOMContentLoaded) ──
+    //
+    // Binding directly to each .jt-editor-bar at DOMContentLoaded misses toolbars that are
+    // injected later via modal/AJAX. Delegated listeners on document cover both cases.
 
     var emojis = ['\uD83D\uDE00','\uD83D\uDE02','\u2764\uFE0F','\uD83D\uDC4D','\uD83D\uDC4E','\uD83C\uDF89','\uD83E\uDD14','\uD83D\uDC40','\uD83D\uDE80','\uD83D\uDD25','\u2705','\u274C','\uD83D\uDCA1','\uD83D\uDCDD','\uD83D\uDE4F','\uD83D\uDCAA','\uD83D\uDE0D','\uD83D\uDE0E','\uD83E\uDD2F','\uD83E\uDD73'];
 
-    document.querySelectorAll('.jt-editor-bar').forEach(function(toolbar) {
-        var emojiBtn = toolbar.querySelector('[data-cmd="emoji"]');
-        if (!emojiBtn) return;
-
-        var picker = document.createElement('div');
-        picker.className = 'jt-emoji-picker';
-        picker.style.display = 'none';
-        emojis.forEach(function(emoji) {
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'jt-emoji-option';
-            btn.textContent = emoji;
-            btn.addEventListener('click', function() {
-                var editor = toolbar.closest('.jt-editor').querySelector('.jt-editor-body');
+    // Shared singleton picker — repositioned under the active toolbar.
+    var sharedPicker = document.createElement('div');
+    sharedPicker.className = 'jt-emoji-picker';
+    sharedPicker.style.display = 'none';
+    emojis.forEach(function(emoji) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'jt-emoji-option';
+        btn.textContent = emoji;
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var toolbar = sharedPicker._activeToolbar;
+            if (toolbar) {
+                var editor = toolbar.closest('.jt-editor');
                 if (editor) {
-                    editor.focus();
-                    document.execCommand('insertText', false, emoji);
+                    var body = editor.querySelector('.jt-editor-body');
+                    if (body) {
+                        body.focus();
+                        document.execCommand('insertText', false, emoji);
+                    }
                 }
-                picker.style.display = 'none';
-            });
-            picker.appendChild(btn);
-        });
-        toolbar.appendChild(picker);
-
-        emojiBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            picker.style.display = picker.style.display === 'none' ? 'grid' : 'none';
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.jt-emoji-picker') && e.target !== emojiBtn) {
-                picker.style.display = 'none';
             }
+            sharedPicker.style.display = 'none';
         });
+        sharedPicker.appendChild(btn);
+    });
+    document.body.appendChild(sharedPicker);
+
+    // Delegated click handler — catches emoji buttons in any toolbar, present or future.
+    document.addEventListener('click', function(e) {
+        var emojiBtn = e.target.closest('[data-cmd="emoji"]');
+        if (emojiBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var toolbar = emojiBtn.closest('.jt-editor-bar');
+            if (!toolbar) return;
+
+            var isOpen = sharedPicker.style.display !== 'none' && sharedPicker._activeToolbar === toolbar;
+            // Close any open picker first.
+            sharedPicker.style.display = 'none';
+
+            if (!isOpen) {
+                sharedPicker._activeToolbar = toolbar;
+                // Position the picker below the emoji button.
+                toolbar.appendChild(sharedPicker);
+                sharedPicker.style.display = 'grid';
+            }
+            return;
+        }
+
+        // Close picker on any outside click.
+        if (!e.target.closest('.jt-emoji-picker')) {
+            sharedPicker.style.display = 'none';
+        }
     });
 } );
