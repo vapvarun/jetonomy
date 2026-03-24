@@ -96,6 +96,37 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
 
+## Admin Architecture Rules (enforced)
+
+**AJAX handlers live in `Jetonomy\Admin\Ajax\` — never in `Admin` class directly.**
+
+| Rule | Detail |
+|------|--------|
+| `Admin` class max 750 lines | Render methods, menu, settings, assets only |
+| New AJAX group → new handler | Create `includes/admin/ajax/class-{domain}-handler.php` |
+| Handler max 400 lines | If exceeded, split the domain further |
+| Autoloader entry required | Add `'Jetonomy\\Admin\\Ajax\\'` → `'includes/admin/ajax/'` (already in map) |
+| No render logic in handlers | Render methods stay in `Admin`; handlers are AJAX-only |
+| No AJAX in `Admin::__construct()` | `__construct()` only: `add_menu`, `register_settings`, `enqueue_assets`, and `new Ajax\*_Handler()` calls |
+
+**Current handler map** (see `includes/admin/ajax/`):
+- `Categories_Handler` — create/update/delete/reorder category AJAX
+- `Spaces_Handler` — space + member + access-rule AJAX
+- `Moderation_Handler` — approve/spam/trash content + resolve flag AJAX
+- `Users_Handler` — ban/unban/trust-level/search-users AJAX
+- `Import_Handler` — run/batch/progress import AJAX
+- `Settings_Handler` — test-email/flush-rules AJAX
+- `Content_Handler` — post/reply CRUD + bulk-action AJAX
+- `Setup_Handler` — setup wizard AJAX
+
+**Naming conventions:**
+- Options: `jetonomy_*` prefix always
+- User meta: `jetonomy_*` prefix always
+- DB tables: `jt_*` prefix always (becomes `wp_jt_*` with WP prefix)
+- Hook names: `jetonomy_*` prefix always — never rename existing hooks
+- AJAX actions: `wp_ajax_jetonomy_*` — never rename existing actions
+- Asset handles: `jetonomy` or `jetonomy-{variant}`
+
 ## Basecamp Board
 
 - **Project ID**: `46596502`
