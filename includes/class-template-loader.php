@@ -173,6 +173,16 @@ class Template_Loader {
 
         echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy">';
 
+        /**
+         * Fires inside the Jetonomy app wrapper, before the header partial and
+         * content container. Bridge plugins use this hook to inject a unified
+         * community nav (e.g. BuddyNext subnav) in place of the default
+         * Jetonomy community nav.
+         *
+         * @param array $data Route data array: ['route' => string, 'slug' => string].
+         */
+        do_action( 'jetonomy_before_content', $data );
+
         // Load the Jetonomy header partial (full-width, outside container)
         $header_path = file_exists( $theme_dir . 'partials/header.php' )
             ? $theme_dir . 'partials/header.php'
