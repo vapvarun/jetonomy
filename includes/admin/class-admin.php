@@ -8,7 +8,6 @@ use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\UserProfile;
-use Jetonomy\Models\Flag;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
@@ -25,12 +24,7 @@ class Admin {
 
 		new Ajax\Categories_Handler();
 		new Ajax\Spaces_Handler();
-
-		// Moderation AJAX
-		add_action( 'wp_ajax_jetonomy_approve_content', [ $this, 'ajax_approve_content' ] );
-		add_action( 'wp_ajax_jetonomy_spam_content', [ $this, 'ajax_spam_content' ] );
-		add_action( 'wp_ajax_jetonomy_trash_content', [ $this, 'ajax_trash_content' ] );
-		add_action( 'wp_ajax_jetonomy_resolve_flag', [ $this, 'ajax_resolve_flag' ] );
+		new Ajax\Moderation_Handler();
 
 		// User AJAX
 		add_action( 'wp_ajax_jetonomy_ban_user', [ $this, 'ajax_ban_user' ] );
@@ -580,108 +574,6 @@ class Admin {
 	//  AJAX: Access Rules (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
 
-
-	// ═══════════════════════════════════════════════════════════════
-	//  AJAX: Moderation
-	// ═══════════════════════════════════════════════════════════════
-
-	public function ajax_approve_content(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$object_type = sanitize_text_field( $_POST['object_type'] ?? '' );
-		$object_id   = absint( $_POST['object_id'] ?? 0 );
-
-		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
-			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
-		}
-
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => 'publish' ] );
-		} else {
-			Reply::update( $object_id, [ 'status' => 'publish' ] );
-		}
-
-		wp_send_json_success( [ 'message' => __( 'Content approved.', 'jetonomy' ) ] );
-	}
-
-	public function ajax_spam_content(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$object_type = sanitize_text_field( $_POST['object_type'] ?? '' );
-		$object_id   = absint( $_POST['object_id'] ?? 0 );
-
-		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
-			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
-		}
-
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => 'spam' ] );
-		} else {
-			Reply::update( $object_id, [ 'status' => 'spam' ] );
-		}
-
-		wp_send_json_success( [ 'message' => __( 'Marked as spam.', 'jetonomy' ) ] );
-	}
-
-	public function ajax_trash_content(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$object_type = sanitize_text_field( $_POST['object_type'] ?? '' );
-		$object_id   = absint( $_POST['object_id'] ?? 0 );
-
-		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
-			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
-		}
-
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => 'trash' ] );
-		} else {
-			Reply::update( $object_id, [ 'status' => 'trash' ] );
-		}
-
-		wp_send_json_success( [ 'message' => __( 'Content trashed.', 'jetonomy' ) ] );
-	}
-
-	public function ajax_resolve_flag(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$flag_id    = absint( $_POST['flag_id'] ?? 0 );
-		$resolution = sanitize_text_field( $_POST['resolution'] ?? '' );
-
-		if ( ! $flag_id || ! in_array( $resolution, [ 'valid', 'dismissed' ], true ) ) {
-			wp_send_json_error( __( 'Invalid flag data.', 'jetonomy' ) );
-		}
-
-		$flag = Flag::find( $flag_id );
-		if ( ! $flag ) {
-			wp_send_json_error( __( 'Flag not found.', 'jetonomy' ) );
-		}
-
-		Flag::resolve( $flag_id, get_current_user_id(), $resolution );
-
-		// If valid, also trash the reported content
-		if ( 'valid' === $resolution ) {
-			if ( 'post' === $flag->object_type ) {
-				Post::update( (int) $flag->object_id, [ 'status' => 'trash' ] );
-			} elseif ( 'reply' === $flag->object_type ) {
-				Reply::update( (int) $flag->object_id, [ 'status' => 'trash' ] );
-			}
-		}
-
-		wp_send_json_success( [ 'message' => __( 'Flag resolved.', 'jetonomy' ) ] );
-	}
 
 	// ═══════════════════════════════════════════════════════════════
 	//  AJAX: Users
