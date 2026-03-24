@@ -58,8 +58,6 @@ const { state, actions } = store( 'jetonomy', {
         // Form submission state
         isSubmitting: false,
         submitLabel: 'Post Topic',
-        // Community base URL (populated from server state)
-        communityBase: '',
         // Nonce for API calls
         get nonce() {
             return state._nonce || '';
@@ -97,7 +95,12 @@ const { state, actions } = store( 'jetonomy', {
                         body: JSON.stringify( { value: 1 } ),
                     }
                 );
-                if ( ! response.ok ) {
+                if ( response.ok ) {
+                    const data = yield response.json();
+                    if ( data.score !== undefined ) {
+                        state.postScores[ postId ] = data.score;
+                    }
+                } else {
                     // Rollback on error
                     state.postScores[ postId ] = current;
                 }
@@ -134,7 +137,12 @@ const { state, actions } = store( 'jetonomy', {
                         body: JSON.stringify( { value: -1 } ),
                     }
                 );
-                if ( ! response.ok ) {
+                if ( response.ok ) {
+                    const data = yield response.json();
+                    if ( data.score !== undefined ) {
+                        state.postScores[ postId ] = data.score;
+                    }
+                } else {
                     state.postScores[ postId ] = current;
                 }
             } catch {
@@ -159,7 +167,7 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
-                yield fetch(
+                const response = yield fetch(
                     `${ state.apiBase }/replies/${ replyId }/vote`,
                     {
                         method: 'POST',
@@ -170,6 +178,14 @@ const { state, actions } = store( 'jetonomy', {
                         body: JSON.stringify( { value: 1 } ),
                     }
                 );
+                if ( response.ok ) {
+                    const data = yield response.json();
+                    if ( data.score !== undefined ) {
+                        state.replyScores[ replyId ] = data.score;
+                    }
+                } else {
+                    state.replyScores[ replyId ] = current;
+                }
             } catch {
                 state.replyScores[ replyId ] = current;
             }
@@ -192,7 +208,7 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
-                yield fetch(
+                const response = yield fetch(
                     `${ state.apiBase }/replies/${ replyId }/vote`,
                     {
                         method: 'POST',
@@ -203,6 +219,14 @@ const { state, actions } = store( 'jetonomy', {
                         body: JSON.stringify( { value: -1 } ),
                     }
                 );
+                if ( response.ok ) {
+                    const data = yield response.json();
+                    if ( data.score !== undefined ) {
+                        state.replyScores[ replyId ] = data.score;
+                    }
+                } else {
+                    state.replyScores[ replyId ] = current;
+                }
             } catch {
                 state.replyScores[ replyId ] = current;
             }

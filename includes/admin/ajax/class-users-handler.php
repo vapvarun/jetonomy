@@ -73,7 +73,10 @@ class Users_Handler {
 			wp_send_json_error( __( 'Failed to ban user.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'User banned.', 'jetonomy' ) ] );
+		wp_send_json_success( [
+			'message'        => __( 'User banned.', 'jetonomy' ),
+			'restriction_id' => $restriction_id,
+		] );
 	}
 
 	public function ajax_unban_user(): void {

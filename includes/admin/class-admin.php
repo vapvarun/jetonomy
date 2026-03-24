@@ -252,6 +252,8 @@ class Admin {
 				'useImage'         => __( 'Use this image', 'jetonomy' ),
 				'testEmailSent'    => __( 'Test email sent!', 'jetonomy' ),
 				'rewritesFlushed'  => __( 'Rewrite rules flushed.', 'jetonomy' ),
+				'unban'            => __( 'Unban', 'jetonomy' ),
+				'ban'              => __( 'Ban', 'jetonomy' ),
 			],
 		] );
 	}

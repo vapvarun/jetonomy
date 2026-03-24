@@ -314,6 +314,8 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 				<?php endif; ?>
 			<?php endif; ?>
 		</div>
+	<?php endif; ?>
+
 	<?php
 	/**
 	 * Fires to render additional moderation tab content.
@@ -323,6 +325,4 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 	 */
 	do_action( 'jetonomy_admin_moderation_tab_content', $active_tab );
 	?>
-
-	<?php endif; ?>
 </div>

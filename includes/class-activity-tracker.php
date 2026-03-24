@@ -74,7 +74,7 @@ class Activity_Tracker {
 		ActivityLog::log( $moderator_id, 'moderated_' . $action, $object_type, $object_id );
 	}
 
-	public function on_reputation( int $user_id, int $delta, string $reason ): void {
+	public function on_reputation( int $user_id, string $reason, int $delta ): void {
 		ActivityLog::log( $user_id, 'reputation_changed', 'user', $user_id, [
 			'delta'  => $delta,
 			'reason' => $reason,

@@ -352,20 +352,22 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		}
 	};
 
+	var table = document.getElementById( 'jt-posts-table' );
+
 	/* ── Helpers ───────────────────────────────────────────────────────── */
 
-	/**
-	 * Send an AJAX request and return a Promise resolving to the parsed JSON body.
-	 *
-	 * @param {string} action  wp_ajax action name.
-	 * @param {Object} data    Extra POST fields.
-	 * @returns {Promise<Object>}
-	 */
 	function ajax( action, data ) {
 		var params = new URLSearchParams();
 		params.set( 'action', action );
 		params.set( 'nonce',  cfg.nonce );
-		Object.keys( data ).forEach( function ( k ) { params.set( k, data[ k ] ); } );
+		Object.keys( data ).forEach( function ( k ) {
+			var v = data[ k ];
+			if ( Array.isArray( v ) ) {
+				v.forEach( function ( item ) { params.append( k + '[]', item ); } );
+			} else {
+				params.set( k, v );
+			}
+		} );
 
 		return fetch( cfg.ajaxUrl, {
 			method      : 'POST',
@@ -378,13 +380,6 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		} );
 	}
 
-	/**
-	 * Show a brief inline feedback message that auto-clears after 3.5 s.
-	 *
-	 * @param {Element} el       .jt-save-feedback element.
-	 * @param {string}  message  Plain-text message to display.
-	 * @param {string}  type     'success' | 'error'
-	 */
 	function showFeedback( el, message, type ) {
 		el.textContent = message;
 		el.className   = 'jt-save-feedback jt-save-feedback--' + type;
@@ -393,6 +388,122 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			el.className   = 'jt-save-feedback';
 		}, 3500 );
 	}
+
+	/* ── Inline edit ────────────────────────────────────────────────────── */
+
+	document.addEventListener( 'click', function ( e ) {
+		// Open inline edit
+		var trigger = e.target.closest( '.jt-edit-trigger' );
+		if ( trigger ) {
+			e.preventDefault();
+			var row = trigger.closest( 'tr' );
+			row.querySelector( '.jt-post-title-view' ).style.display = 'none';
+			row.querySelector( '.row-actions' ).style.display = 'none';
+			var editDiv = row.querySelector( '.jt-inline-edit' );
+			editDiv.style.display = '';
+			editDiv.removeAttribute( 'aria-hidden' );
+			editDiv.querySelector( '.jt-edit-title' ).focus();
+			return;
+		}
+
+		// Cancel inline edit
+		var cancelBtn = e.target.closest( '.jt-cancel-edit' );
+		if ( cancelBtn ) {
+			e.preventDefault();
+			var row = cancelBtn.closest( 'tr' );
+			row.querySelector( '.jt-inline-edit' ).style.display = 'none';
+			row.querySelector( '.jt-inline-edit' ).setAttribute( 'aria-hidden', 'true' );
+			row.querySelector( '.jt-post-title-view' ).style.display = '';
+			row.querySelector( '.row-actions' ).style.display = '';
+			return;
+		}
+
+		// Save inline edit
+		var saveBtn = e.target.closest( '.jt-save-post' );
+		if ( saveBtn ) {
+			e.preventDefault();
+			var row      = saveBtn.closest( 'tr' );
+			var postId   = saveBtn.getAttribute( 'data-id' );
+			var titleEl  = row.querySelector( '.jt-edit-title' );
+			var contentEl = row.querySelector( '.jt-edit-content' );
+			var spinner  = row.querySelector( '.jt-save-spinner' );
+			var feedback = row.querySelector( '.jt-save-feedback' );
+
+			saveBtn.disabled = true;
+			spinner.classList.add( 'is-active' );
+
+			ajax( 'jetonomy_update_post', {
+				post_id : postId,
+				title   : titleEl.value,
+				content : contentEl.value,
+			} ).then( function ( res ) {
+				saveBtn.disabled = false;
+				spinner.classList.remove( 'is-active' );
+				if ( res.success ) {
+					// Update the visible title
+					var titleView = row.querySelector( '.jt-post-title-view' );
+					var titleLink = titleView.querySelector( 'a' );
+					if ( titleLink ) {
+						titleLink.textContent = titleEl.value;
+					} else {
+						titleView.textContent = titleEl.value;
+					}
+					// Close the inline edit
+					row.querySelector( '.jt-inline-edit' ).style.display = 'none';
+					row.querySelector( '.jt-inline-edit' ).setAttribute( 'aria-hidden', 'true' );
+					titleView.style.display = '';
+					row.querySelector( '.row-actions' ).style.display = '';
+					showFeedback( feedback, cfg.i18n.saved, 'success' );
+				} else {
+					showFeedback( feedback, ( res.data && res.data.message ) || cfg.i18n.saveError, 'error' );
+				}
+			} ).catch( function () {
+				saveBtn.disabled = false;
+				spinner.classList.remove( 'is-active' );
+				showFeedback( feedback, cfg.i18n.saveError, 'error' );
+			} );
+			return;
+		}
+
+		// Row actions: Trash / Spam / Restore
+		var actionLink = e.target.closest( '.jt-action-link' );
+		if ( actionLink ) {
+			e.preventDefault();
+			var action = actionLink.getAttribute( 'data-action' );
+			var postId = actionLink.getAttribute( 'data-id' );
+			var type   = actionLink.getAttribute( 'data-type' );
+
+			var confirmMsg = 'trash' === action ? cfg.i18n.confirmTrash : cfg.i18n.confirmSpam;
+			if ( 'approve' !== action && ! window.confirm( confirmMsg ) ) { return; }
+
+			var ajaxAction   = 'post' === type ? 'jetonomy_delete_post' : 'jetonomy_delete_reply';
+			var idParam      = 'post' === type ? 'post_id' : 'reply_id';
+			var statusParam  = 'approve' === action ? 'publish' : action;
+
+			var data = { status: statusParam };
+			data[ idParam ] = postId;
+
+			ajax( ajaxAction, data ).then( function ( res ) {
+				if ( res.success ) {
+					var row = actionLink.closest( 'tr' );
+					row.style.opacity = '0.4';
+					setTimeout( function () { window.location.reload(); }, 600 );
+				}
+			} );
+			return;
+		}
+	} );
+
+	/* ── Select all ─────────────────────────────────────────────────────── */
+
+	document.addEventListener( 'change', function ( e ) {
+		if ( e.target.id === 'jt-select-all' || e.target.closest( 'tfoot input[type="checkbox"]' ) ) {
+			var checked = e.target.checked;
+			if ( table ) {
+				table.querySelectorAll( '.jt-row-cb' ).forEach( function ( cb ) { cb.checked = checked; } );
+			}
+		}
+	} );
 
 	/* ── Bulk actions ───────────────────────────────────────────────────── */
 
@@ -408,6 +519,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 				return;
 			}
 
+			if ( ! table ) { return; }
 			var checked = table.querySelectorAll( '.jt-row-cb:checked' );
 			if ( ! checked.length ) {
 				window.alert( cfg.i18n.noneSelected );
@@ -421,22 +533,22 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			var ids = [];
 			checked.forEach( function ( cb ) { ids.push( cb.value ); } );
 
-			var ajaxAction = 'approve' === action ? 'jetonomy_approve_content'
-				: 'spam' === action              ? 'jetonomy_spam_content'
-				: 'jetonomy_trash_content';
+			var bulkAction = 'approve' === action ? 'publish' : action;
 
 			bulkBtn.disabled = true;
 			bulkSpinner.classList.add( 'is-active' );
 
-			// One request per post ID to keep AJAX handlers simple.
-			var promises = ids.map( function ( id ) {
-				return ajax( ajaxAction, { type: 'post', id: id } );
-			} );
-
-			Promise.allSettled( promises ).then( function () {
+			ajax( 'jetonomy_bulk_content_action', {
+				bulk_action : bulkAction,
+				type        : 'post',
+				ids         : ids,
+			} ).then( function () {
 				bulkBtn.disabled = false;
 				bulkSpinner.classList.remove( 'is-active' );
 				window.location.reload();
+			} ).catch( function () {
+				bulkBtn.disabled = false;
+				bulkSpinner.classList.remove( 'is-active' );
 			} );
 		} );
 	}

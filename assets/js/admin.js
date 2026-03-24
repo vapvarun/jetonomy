@@ -731,7 +731,18 @@
 				}).done(function(res) {
 					if (res.success) {
 						self.toast(res.data.message);
-						$row.fadeOut(300, function() { $(this).remove(); });
+						// On Users page: restore Ban link. On Moderation page: remove row.
+						if ($row.find('.ban').length) {
+							$row.find('.ban').html(
+								'<a href="#" class="jetonomy-ban-trigger" data-user-id="' +
+								$row.data('user-id') + '" data-username="' +
+								$row.find('strong').first().text() + '">' +
+								self.i18n.ban +
+								'</a> | '
+							);
+						} else {
+							$row.fadeOut(300, function() { $(this).remove(); });
+						}
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 						$btn.prop('disabled', false);
@@ -858,6 +869,13 @@
 					if (res.success) {
 						self.toast(res.data.message);
 						$('#jetonomy-ban-modal').hide();
+						// Toggle row action: Ban → Unban
+						var $row = $('tr[data-user-id="' + userId + '"]');
+						$row.find('.ban').html(
+							'<a href="#" class="jetonomy-unban-user" data-restriction-id="' + res.data.restriction_id + '">' +
+							self.i18n.unban +
+							'</a> | '
+						);
 					} else {
 						self.toast(res.data || self.i18n.error, 'error');
 					}
