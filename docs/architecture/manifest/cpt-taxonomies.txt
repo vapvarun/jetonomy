@@ -1,0 +1,6 @@
+# CPT & Taxonomies Manifest
+# Generated: 2026-03-24
+# Total: 0
+
+# No custom post types or taxonomies registered.
+# Plugin uses its own custom MySQL tables (jt_*) instead of WP_Post.

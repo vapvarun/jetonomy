@@ -1,0 +1,80 @@
+# REST Endpoints Manifest
+# Generated: 2026-03-24
+# Namespace: jetonomy/v1
+# Total: 42
+
+## Categories (3)
+[x] GET    /categories | class-categories-controller.php:22 | status:documented
+[x] POST   /categories | class-categories-controller.php:22 | status:documented
+[x] GET    /categories/{id} | class-categories-controller.php:36 | status:documented
+[x] PATCH  /categories/{id} | class-categories-controller.php:36 | status:documented
+[x] DELETE /categories/{id} | class-categories-controller.php:36 | status:documented
+
+## Spaces (7)
+[x] GET    /spaces | class-spaces-controller.php:36 | status:documented
+[x] POST   /spaces | class-spaces-controller.php:36 | status:documented
+[x] GET    /spaces/{id} | class-spaces-controller.php:52 | status:documented
+[x] PATCH  /spaces/{id} | class-spaces-controller.php:52 | status:documented
+[x] DELETE /spaces/{id} | class-spaces-controller.php:52 | status:documented
+[x] GET    /spaces/{id}/members | class-spaces-controller.php:72 | status:documented
+[x] POST   /spaces/{id}/members | class-spaces-controller.php:72 | status:documented
+[x] DELETE /spaces/{id}/members/{user_id} | class-spaces-controller.php:103 | status:documented
+[x] PATCH  /spaces/{id}/members/{user_id} | class-spaces-controller.php:103 | status:documented
+[x] POST   /spaces/{id}/invite | class-spaces-controller.php:86 | status:documented
+[x] GET    /invite/{token} | class-spaces-controller.php:96 | status:documented
+
+## Posts (7)
+[x] GET    /spaces/{space_id}/posts | class-posts-controller.php:27 | status:documented
+[x] POST   /spaces/{space_id}/posts | class-posts-controller.php:27 | status:documented
+[x] GET    /posts/{id} | class-posts-controller.php:52 | status:documented
+[x] PATCH  /posts/{id} | class-posts-controller.php:52 | status:documented
+[x] DELETE /posts/{id} | class-posts-controller.php:52 | status:documented
+[x] POST   /posts/{id}/close | class-posts-controller.php:72 | status:documented
+[x] POST   /posts/{id}/pin | class-posts-controller.php:78 | status:documented
+[x] POST   /posts/{id}/move | class-posts-controller.php:84 | status:documented
+
+## Replies (5)
+[x] GET    /posts/{post_id}/replies | class-replies-controller.php:31 | status:documented
+[x] POST   /posts/{post_id}/replies | class-replies-controller.php:31 | status:documented
+[x] GET    /replies/{id} | class-replies-controller.php:61 | status:documented
+[x] PATCH  /replies/{id} | class-replies-controller.php:61 | status:documented
+[x] DELETE /replies/{id} | class-replies-controller.php:61 | status:documented
+[x] POST   /replies/{id}/accept | class-replies-controller.php:76 | status:documented
+
+## Votes (2)
+[x] POST   /posts/{id}/vote | class-votes-controller.php:25 | status:documented
+[x] POST   /replies/{id}/vote | class-votes-controller.php:39 | status:documented
+
+## Moderation (9)
+[x] GET    /moderation/queue | class-moderation-controller.php:25 | status:documented
+[x] POST   /moderation/approve/{type}/{id} | class-moderation-controller.php:32 | status:documented
+[x] POST   /moderation/spam/{type}/{id} | class-moderation-controller.php:39 | status:documented
+[x] POST   /moderation/trash/{type}/{id} | class-moderation-controller.php:81 | status:documented
+[x] POST   /flags | class-moderation-controller.php:46 | status:documented
+[x] GET    /moderation/flags | class-moderation-controller.php:74 | status:documented
+[x] POST   /moderation/flags/{id}/resolve | class-moderation-controller.php:88 | status:documented
+[x] POST   /moderation/ban | class-moderation-controller.php:102 | status:documented
+[x] DELETE /moderation/ban/{id} | class-moderation-controller.php:116 | status:documented
+
+## Users (4)
+[x] GET    /users/me | class-users-controller.php:26 | status:documented
+[x] GET    /users/{id} | class-users-controller.php:41 | status:documented
+[x] PATCH  /users/{id} | class-users-controller.php:41 | status:documented
+[x] GET    /users/by-login/{login} | class-users-controller.php:48 | status:documented
+[x] GET    /users/{id}/posts | class-users-controller.php:55 | status:documented
+
+## Notifications (4)
+[x] GET    /notifications | class-notifications-controller.php:25 | status:documented
+[x] GET    /notifications/unread-count | class-notifications-controller.php:33 | status:documented
+[x] POST   /notifications/mark-all-read | class-notifications-controller.php:40 | status:documented
+[x] PATCH  /notifications/{id} | class-notifications-controller.php:47 | status:documented
+
+## Tags + Search + Leaderboards + Subscriptions + Updates
+[x] GET    /tags | class-tags-controller.php:23 | status:documented
+[x] POST   /tags | class-tags-controller.php:23 | status:documented
+[x] GET    /space-tags | class-tags-controller.php:43 | status:documented
+[x] GET    /search | class-search-controller.php:21 | status:documented
+[x] GET    /leaderboards | class-leaderboards-controller.php:20 | status:documented
+[x] GET    /subscriptions | class-subscriptions-controller.php:23 | status:documented
+[x] DELETE /subscriptions/{id} | class-subscriptions-controller.php:39 | status:documented
+[x] GET    /updates | class-updates-controller.php:21 | status:documented

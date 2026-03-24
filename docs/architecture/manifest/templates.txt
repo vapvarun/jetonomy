@@ -1,0 +1,31 @@
+# Templates Manifest
+# Generated: 2026-03-24
+# Location: templates/ (theme-overridable via theme/jetonomy/)
+# Total: 23
+
+## Partials (8)
+[x] templates/partials/avatar.php | status:documented
+[x] templates/partials/breadcrumb.php | status:documented
+[x] templates/partials/composer.php | status:documented
+[x] templates/partials/header.php | status:documented
+[x] templates/partials/pagination.php | status:documented
+[x] templates/partials/post-card.php | status:documented
+[x] templates/partials/reply-card.php | status:documented
+[x] templates/partials/sidebar.php | status:documented
+
+## Views (15)
+[x] templates/views/home.php | status:documented
+[x] templates/views/category.php | status:documented
+[x] templates/views/space.php | status:documented
+[x] templates/views/space-members.php | status:documented
+[x] templates/views/space-roadmap.php | status:documented
+[x] templates/views/single-post.php | status:documented
+[x] templates/views/new-post.php | status:documented
+[x] templates/views/user-profile.php | status:documented
+[x] templates/views/edit-profile.php | status:documented
+[x] templates/views/leaderboard.php | status:documented
+[x] templates/views/notifications.php | status:documented
+[x] templates/views/moderation.php | status:documented
+[x] templates/views/search.php | status:documented
+[x] templates/views/tag.php | status:documented
+[x] templates/views/invite.php | status:documented

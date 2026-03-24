@@ -1,0 +1,27 @@
+# Database Tables Manifest
+# Generated: 2026-03-24
+# Prefix: wp_jt_* (jt_ + WP prefix)
+# Total: 22
+
+[x] jt_categories | class-schema.php:83 | status:documented
+[x] jt_spaces | class-schema.php:101 | status:documented
+[x] jt_posts | class-schema.php:129 | status:documented
+[x] jt_replies | class-schema.php:161 | status:documented
+[x] jt_votes | class-schema.php:182 | status:documented
+[x] jt_user_profiles | class-schema.php:194 | status:documented
+[x] jt_notifications | class-schema.php:214 | status:documented
+[x] jt_subscriptions | class-schema.php:229 | status:documented
+[x] jt_read_status | class-schema.php:241 | status:documented
+[x] jt_space_members | class-schema.php:250 | status:documented
+[x] jt_tags | class-schema.php:260 | status:documented
+[x] jt_post_tags | class-schema.php:270 | status:documented
+[x] jt_space_tags | class-schema.php:278 | status:documented
+[x] jt_space_tag_map | class-schema.php:288 | status:documented
+[x] jt_user_interests | class-schema.php:295 | status:documented
+[x] jt_activity_log | class-schema.php:303 | status:documented
+[x] jt_restrictions | class-schema.php:317 | status:documented
+[x] jt_access_rules | class-schema.php:332 | status:documented
+[x] jt_flags | class-schema.php:346 | status:documented
+[x] jt_revisions | class-schema.php:364 | status:documented
+[x] jt_join_requests | class-schema.php:378 | status:documented
+[x] jt_invite_links | class-schema.php:393 | status:documented

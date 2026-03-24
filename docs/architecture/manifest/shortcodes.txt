@@ -1,0 +1,6 @@
+# Shortcodes Manifest
+# Generated: 2026-03-24
+# Total: 0
+
+# No shortcodes registered. Plugin uses a custom URL routing system
+# (Router class + rewrite rules) to serve community pages.

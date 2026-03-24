@@ -1,0 +1,57 @@
+# AJAX Handlers Manifest
+# Generated: 2026-03-24
+# Source: includes/admin/class-admin.php (consolidated — pending extraction)
+# Total: 34
+
+## Categories (4)
+[x] wp_ajax_jetonomy_create_category | admin/class-admin.php:27 | status:documented
+[x] wp_ajax_jetonomy_update_category | admin/class-admin.php:28 | status:documented
+[x] wp_ajax_jetonomy_delete_category | admin/class-admin.php:29 | status:documented
+[x] wp_ajax_jetonomy_reorder_categories | admin/class-admin.php:30 | status:documented
+
+## Spaces (7)
+[x] wp_ajax_jetonomy_create_space | admin/class-admin.php:33 | status:documented
+[x] wp_ajax_jetonomy_update_space | admin/class-admin.php:34 | status:documented
+[x] wp_ajax_jetonomy_delete_space | admin/class-admin.php:35 | status:documented
+[x] wp_ajax_jetonomy_add_space_member | admin/class-admin.php:38 | status:documented
+[x] wp_ajax_jetonomy_remove_space_member | admin/class-admin.php:39 | status:documented
+[x] wp_ajax_jetonomy_change_member_role | admin/class-admin.php:40 | status:documented
+[x] wp_ajax_jetonomy_add_access_rule | admin/class-admin.php:43 | status:documented
+[x] wp_ajax_jetonomy_delete_access_rule | admin/class-admin.php:44 | status:documented
+
+## Moderation (4)
+[x] wp_ajax_jetonomy_approve_content | admin/class-admin.php:47 | status:documented
+[x] wp_ajax_jetonomy_spam_content | admin/class-admin.php:48 | status:documented
+[x] wp_ajax_jetonomy_trash_content | admin/class-admin.php:49 | status:documented
+[x] wp_ajax_jetonomy_resolve_flag | admin/class-admin.php:50 | status:documented
+
+## Users (4)
+[x] wp_ajax_jetonomy_ban_user | admin/class-admin.php:53 | status:documented
+[x] wp_ajax_jetonomy_unban_user | admin/class-admin.php:54 | status:documented
+[x] wp_ajax_jetonomy_change_trust_level | admin/class-admin.php:55 | status:documented
+[x] wp_ajax_jetonomy_search_users | admin/class-admin.php:56 | status:documented
+
+## Import (3)
+[x] wp_ajax_jetonomy_run_import | admin/class-admin.php:59 | status:documented
+[x] wp_ajax_jetonomy_import_batch | admin/class-admin.php:61 | status:documented
+[x] wp_ajax_jetonomy_import_progress | admin/class-admin.php:62 | status:documented
+
+## Settings (2)
+[x] wp_ajax_jetonomy_test_email | admin/class-admin.php:65 | status:documented
+[x] wp_ajax_jetonomy_flush_rules | admin/class-admin.php:66 | status:documented
+
+## Content (6)
+[x] wp_ajax_jetonomy_update_post | admin/class-admin.php:69 | status:documented
+[x] wp_ajax_jetonomy_delete_post | admin/class-admin.php:70 | status:documented
+[x] wp_ajax_jetonomy_update_reply | admin/class-admin.php:71 | status:documented
+[x] wp_ajax_jetonomy_delete_reply | admin/class-admin.php:72 | status:documented
+[x] wp_ajax_jetonomy_get_replies | admin/class-admin.php:73 | status:documented
+[x] wp_ajax_jetonomy_bulk_content_action | admin/class-admin.php:74 | status:documented
+
+## Setup (3)
+[x] wp_ajax_jetonomy_setup_save | admin/class-admin.php:77 | status:documented
+[x] wp_ajax_jetonomy_setup_create_sample | admin/class-admin.php:78 | status:documented
+[x] wp_ajax_jetonomy_cleanup_sample_data | admin/class-admin.php:79 | status:documented
+
+## Media (1)
+[x] wp_ajax_jetonomy_upload_image | class-media.php:9 | status:documented

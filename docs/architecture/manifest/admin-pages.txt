@@ -1,0 +1,17 @@
+# Admin Pages Manifest
+# Generated: 2026-03-24
+# Source: includes/admin/class-admin.php
+# Total: 11
+
+[x] jetonomy (parent menu) | admin/class-admin.php:88 | status:documented
+[x] jetonomy (dashboard) | admin/class-admin.php:98 | status:documented
+[x] jetonomy-spaces | admin/class-admin.php:107 | status:documented
+[x] jetonomy-content | admin/class-admin.php:116 | status:documented
+[x] jetonomy-categories | admin/class-admin.php:125 | status:documented
+[x] jetonomy-users | admin/class-admin.php:134 | status:documented
+[x] jetonomy-moderation | admin/class-admin.php:143 | status:documented
+[x] jetonomy-settings | admin/class-admin.php:152 | status:documented
+[x] jetonomy-import | admin/class-admin.php:161 | status:documented
+[x] jetonomy-leaderboard | admin/class-admin.php:172 (conditional) | status:documented
+[x] jetonomy-activity | admin/class-admin.php:180 (conditional) | status:documented
+[x] jetonomy-setup | admin/class-admin.php:191 (hidden) | status:documented

@@ -1,0 +1,100 @@
+# Classes Manifest
+# Generated: 2026-03-24
+# Source: /wp-content/plugins/jetonomy
+# Total: 67
+
+## Core
+[x] Jetonomy | includes/class-jetonomy.php | status:documented
+[x] Autoloader | includes/class-autoloader.php | status:documented
+[x] Router | includes/class-router.php | status:documented
+[x] Template_Loader | includes/class-template-loader.php | status:documented
+[x] Cache | includes/class-cache.php | status:documented
+[x] Cron | includes/class-cron.php | status:documented
+[x] Privacy | includes/class-privacy.php | status:documented
+[x] Media | includes/class-media.php | status:documented
+[x] Nav_Menus | includes/class-nav-menus.php | status:documented
+[x] Abilities | includes/class-abilities.php | status:documented
+[x] Activity_Tracker | includes/class-activity-tracker.php | status:documented
+[x] Mentions | includes/class-mentions.php | status:documented
+[x] Embeds | includes/class-embeds.php | status:documented
+[x] CLI | includes/class-cli.php | status:documented
+
+## Models (abstract base + 15 concrete)
+[x] Model (abstract) | includes/models/class-model.php | status:documented
+[x] Category | includes/models/class-category.php | status:documented
+[x] Space | includes/models/class-space.php | status:documented
+[x] Post | includes/models/class-post.php | status:documented
+[x] Reply | includes/models/class-reply.php | status:documented
+[x] Vote | includes/models/class-vote.php | status:documented
+[x] UserProfile | includes/models/class-user-profile.php | status:documented
+[x] Notification | includes/models/class-notification.php | status:documented
+[x] Subscription | includes/models/class-subscription.php | status:documented
+[x] ReadStatus | includes/models/class-read-status.php | status:documented
+[x] SpaceMember | includes/models/class-space-member.php | status:documented
+[x] Tag | includes/models/class-tag.php | status:documented
+[x] ActivityLog | includes/models/class-activity-log.php | status:documented
+[x] Restriction | includes/models/class-restriction.php | status:documented
+[x] AccessRule | includes/models/class-access-rule.php | status:documented
+[x] Flag | includes/models/class-flag.php | status:documented
+[x] Revision | includes/models/class-revision.php | status:documented
+[x] JoinRequest | includes/models/class-join-request.php | status:documented
+[x] InviteLink | includes/models/class-invite-link.php | status:documented
+
+## Permissions
+[x] Permission_Engine | includes/permissions/class-permission-engine.php | status:documented
+[x] Capabilities | includes/permissions/class-capabilities.php | status:documented
+[x] Rate_Limiter | includes/permissions/class-rate-limiter.php | status:documented
+
+## Trust
+[x] Trust_Levels | includes/trust/class-trust-levels.php | status:documented
+[x] Trust_Evaluator | includes/trust/class-trust-evaluator.php | status:documented
+[x] Reputation | includes/trust/class-reputation.php | status:documented
+
+## REST API
+[x] Api | includes/api/class-api.php | status:documented
+[x] Base_Controller (abstract) | includes/api/class-base-controller.php | status:documented
+[x] Categories_Controller | includes/api/class-categories-controller.php | status:documented
+[x] Spaces_Controller | includes/api/class-spaces-controller.php | status:documented
+[x] Posts_Controller | includes/api/class-posts-controller.php | status:documented
+[x] Replies_Controller | includes/api/class-replies-controller.php | status:documented
+[x] Votes_Controller | includes/api/class-votes-controller.php | status:documented
+[x] Users_Controller | includes/api/class-users-controller.php | status:documented
+[x] Notifications_Controller | includes/api/class-notifications-controller.php | status:documented
+[x] Subscriptions_Controller | includes/api/class-subscriptions-controller.php | status:documented
+[x] Tags_Controller | includes/api/class-tags-controller.php | status:documented
+[x] Search_Controller | includes/api/class-search-controller.php | status:documented
+[x] Moderation_Controller | includes/api/class-moderation-controller.php | status:documented
+[x] Leaderboards_Controller | includes/api/class-leaderboards-controller.php | status:documented
+[x] Updates_Controller | includes/api/class-updates-controller.php | status:documented
+
+## Adapters
+[x] Adapter_Registry | includes/adapters/class-adapter-registry.php | status:documented
+[x] WP_Roles_Adapter | includes/adapters/class-wp-roles-adapter.php | status:documented
+[x] WP_Mail_Adapter | includes/adapters/class-wp-mail-adapter.php | status:documented
+[x] Polling_Adapter | includes/adapters/class-polling-adapter.php | status:documented
+[x] MemberPress_Adapter | includes/adapters/class-member-press-adapter.php | status:documented
+[x] PMPro_Adapter | includes/adapters/class-pmpro-adapter.php | status:documented
+[x] Fulltext_Search | includes/search/class-fulltext-search.php | status:documented
+[x] Membership_Adapter (interface) | includes/adapters/interface-membership-adapter.php | status:documented
+[x] Email_Adapter (interface) | includes/adapters/interface-email-adapter.php | status:documented
+[x] Realtime_Adapter (interface) | includes/adapters/interface-realtime-adapter.php | status:documented
+[x] Search_Adapter (interface) | includes/adapters/interface-search-adapter.php | status:documented
+
+## Database
+[x] Schema | includes/db/class-schema.php | status:documented
+[x] Migrator | includes/db/class-migrator.php | status:documented
+[x] Migration_1_0_0 | includes/db/migrations/class-migration_1_0_0.php | status:documented
+
+## Notifications / Import / SEO / Admin / Moderation
+[x] Notifier | includes/notifications/class-notifier.php | status:documented
+[x] Import_Manager | includes/import/class-import-manager.php | status:documented
+[x] Importer (abstract) | includes/import/class-importer.php | status:documented
+[x] BBPress_Importer | includes/import/class-bbpress-importer.php | status:documented
+[x] WPForo_Importer | includes/import/class-wpforo-importer.php | status:documented
+[x] Asgaros_Importer | includes/import/class-asgaros-importer.php | status:documented
+[x] Sitemap | includes/seo/class-sitemap.php | status:documented
+[x] Posts_Sitemap_Provider | includes/seo/class-posts-sitemap-provider.php | status:documented
+[x] Spaces_Sitemap_Provider | includes/seo/class-spaces-sitemap-provider.php | status:documented
+[x] Schema_Markup | includes/seo/class-schema-markup.php | status:documented
+[x] Akismet | includes/moderation/class-akismet.php | status:documented
+[x] Admin | includes/admin/class-admin.php | status:documented

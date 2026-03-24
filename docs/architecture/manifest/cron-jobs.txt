@@ -1,0 +1,9 @@
+# Cron Jobs Manifest
+# Generated: 2026-03-24
+# Source: includes/class-cron.php
+# Total: 4
+
+[x] jetonomy_trust_evaluation | class-cron.php:36 | schedule:twicedaily | status:documented
+[x] jetonomy_cleanup_expired | class-cron.php:39 | schedule:hourly | status:documented
+[x] jetonomy_prune_activity | class-cron.php:42 | schedule:weekly | status:documented
+[x] jetonomy_cleanup_notifications | class-cron.php:45 | schedule:weekly | status:documented

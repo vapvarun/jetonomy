@@ -1,0 +1,12 @@
+# Global Functions Manifest
+# Generated: 2026-03-24
+# Source: includes/functions.php
+# Total: 7
+
+[x] table( string $name ) | functions.php:6 | status:documented
+[x] now() | functions.php:11 | status:documented
+[x] get_profile_url( int $user_id ) | functions.php:25 | status:documented
+[x] get_user_link( int $user_id, string $avatar_class, int $avatar_size, bool $show_name ) | functions.php:59 | status:documented
+[x] jetonomy() | jetonomy.php:29 | status:documented
+[x] jetonomy_render_space_grid( array $spaces, string $base ) | templates/views/home.php:13 | status:documented
+[x] jetonomy_render_threaded_reply( $reply, $post, int $depth ) | templates/views/single-post.php:121 | status:documented

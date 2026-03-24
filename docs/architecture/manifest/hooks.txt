@@ -1,0 +1,56 @@
+# Hooks Manifest (Actions + Filters)
+# Generated: 2026-03-24
+# Source: /wp-content/plugins/jetonomy
+# Total: 42
+
+## Action Hooks — Admin Extension Points
+[x] jetonomy_admin_dashboard_widgets | admin/views/dashboard.php:266 | status:documented
+[x] jetonomy_admin_dashboard_after_stats | admin/views/dashboard.php:45 | status:documented
+[x] jetonomy_admin_settings_tabs | admin/views/settings.php:10 | status:documented
+[x] jetonomy_admin_settings_tab_content | admin/views/settings.php:19,537 | status:documented
+[x] jetonomy_admin_moderation_tabs | admin/views/moderation.php:32 | status:documented
+[x] jetonomy_admin_moderation_tab_content | admin/views/moderation.php:324 | status:documented
+[x] jetonomy_admin_space_edit_tabs | admin/views/space-edit.php:33 | status:documented
+[x] jetonomy_admin_space_edit_tab_content | admin/views/space-edit.php:333 | status:documented
+[x] jetonomy_admin_render_extensions | admin/class-admin.php:551 | status:documented
+[x] jetonomy_admin_render_license | admin/class-admin.php:562 | status:documented
+
+## Action Hooks — Content Lifecycle
+[x] jetonomy_after_create_post | api/class-posts-controller.php:260 + class-abilities.php:791 | status:documented
+[x] jetonomy_after_create_reply | api/class-replies-controller.php:230 + class-abilities.php:866 | status:documented
+[x] jetonomy_post_updated | api/class-posts-controller.php:360 | status:documented
+[x] jetonomy_post_deleted | api/class-posts-controller.php:395 | status:documented
+[x] jetonomy_reply_updated | api/class-replies-controller.php:300 | status:documented
+[x] jetonomy_reply_deleted | api/class-replies-controller.php:340 | status:documented
+[x] jetonomy_reply_accepted | api/class-replies-controller.php:383 | status:documented
+[x] jetonomy_content_moderated | api/class-moderation-controller.php + admin/class-admin.php | status:documented
+[x] jetonomy_after_vote | api/class-votes-controller.php:130 + class-abilities.php:913 | status:documented
+
+## Action Hooks — Users / Trust
+[x] jetonomy_user_joined_space | models/class-space-member.php:40 | status:documented
+[x] jetonomy_trust_level_changed | class-cron.php:101 + class-cli.php:112 | status:documented
+[x] jetonomy_reputation_changed | trust/class-reputation.php:68 | status:documented
+[x] jetonomy_membership_activated | adapters/class-member-press-adapter.php:73 + class-pmpro-adapter.php:79 | status:documented
+[x] jetonomy_membership_deactivated | adapters/class-member-press-adapter.php:91 + class-pmpro-adapter.php:85 | status:documented
+[x] jetonomy_notification_created | notifications/class-notifier.php:259 | status:documented
+
+## Action Hooks — Templates
+[x] jetonomy_new_post_fields | templates/views/new-post.php:85 | status:documented
+[x] jetonomy_post_meta_fields | templates/views/single-post.php:208 | status:documented
+[x] jetonomy_post_actions | templates/views/single-post.php:240 | status:documented
+[x] jetonomy_reply_actions | templates/partials/reply-card.php:51 | status:documented
+[x] jetonomy_profile_after_stats | templates/views/user-profile.php:123 | status:documented
+[x] jetonomy_profile_display_fields | templates/views/user-profile.php:133 | status:documented
+[x] jetonomy_profile_edit_fields | templates/views/edit-profile.php:57 | status:documented
+[x] jetonomy_header_nav_items | templates/partials/header.php:44 | status:documented
+
+## Filter Hooks
+[x] jetonomy_admin_menu_label | admin/class-admin.php:85 | status:documented
+[x] jetonomy_admin_menu_icon | admin/class-admin.php:86 | status:documented
+[x] jetonomy_profile_url | includes/functions.php:45 | status:documented
+[x] jetonomy_template_map | class-template-loader.php:60 | status:documented
+[x] jetonomy_check_content | api/class-posts-controller.php:237 + class-replies-controller.php:201 | status:documented
+[x] jetonomy_notification_email_headers | adapters/class-wp-mail-adapter.php:22 | status:documented
+[x] jetonomy_importers | import/class-import-manager.php:16 | status:documented
+[x] jetonomy_show_community_nav | templates/partials/header.php:28 | status:documented
+[x] jetonomy_after_post_content | templates/views/single-post.php:211 | status:documented
