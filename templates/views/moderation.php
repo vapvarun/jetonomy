@@ -50,7 +50,7 @@ $crumbs = [
 			<div class="jt-card jt-card-flush">
 				<?php foreach ( $flags as $flag ) : ?>
 					<?php
-					$reporter = get_userdata( (int) $flag->flagged_by );
+					$reporter = get_userdata( (int) $flag->reporter_id );
 					$time_ago = human_time_diff( strtotime( $flag->created_at ), current_time( 'timestamp', true ) );
 					$reason   = $reason_labels[ $flag->reason ] ?? $flag->reason;
 

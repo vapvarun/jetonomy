@@ -295,7 +295,7 @@
 ### Settings Page Card Layout
 - [ ] All settings tabs use jt-settings-card layout (no raw h2/form-table/hr layout)
 - [ ] Settings → License: card with title "Jetonomy Pro License", license status card inside
-- [ ] Settings → Branding (White Label): single card with all form fields
+- [ ] Settings → Branding (White Label) — navigate with `?tab=branding` (not `white-label`): single card with all form fields
 - [ ] Settings → Email Digest: 4 separate cards (Settings, Subscription Statistics, Actions, Cron Status)
 - [ ] Settings → Reactions: card wrapping emoji toggle form
 - [ ] Settings → Web Push: card wrapping VAPID config form

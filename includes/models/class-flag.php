@@ -16,7 +16,7 @@ class Flag extends Model {
 	 *
 	 * Automatically sets status to 'pending' and created_at if absent.
 	 *
-	 * @param array $data Column data (object_type, object_id, flagged_by, reason, etc.).
+	 * @param array $data Column data (object_type, object_id, reporter_id, reason, etc.).
 	 * @return int Inserted row ID.
 	 */
 	public static function create( array $data ): int {
