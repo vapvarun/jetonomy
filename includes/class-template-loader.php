@@ -154,8 +154,22 @@ class Template_Loader {
         // Set up SEO
         self::set_seo_meta( $data );
 
-        // Use WP's get_header/get_footer for theme integration
-        get_header();
+        // Use WP's get_header/get_footer for theme integration.
+        // Block themes (FSE) have no header.php — use block_header_area() to avoid
+        // the "Theme without header.php is deprecated" notice introduced in WP 3.0.
+        if ( wp_is_block_theme() ) {
+            ?><!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+<meta charset="<?php bloginfo( 'charset' ); ?>">
+<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
+<?php wp_body_open(); block_header_area(); ?>
+<?php
+        } else {
+            get_header();
+        }
 
         echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy">';
 
@@ -177,7 +191,13 @@ class Template_Loader {
 
         echo '</div>'; // #jetonomy-app
 
-        get_footer();
+        if ( wp_is_block_theme() ) {
+            block_footer_area();
+            wp_footer();
+            ?></body></html><?php
+        } else {
+            get_footer();
+        }
     }
 
     private static function set_seo_meta( array $data ): void {
