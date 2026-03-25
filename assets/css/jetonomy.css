@@ -997,3 +997,9 @@
 .jt-toggle-slider::before { content: ''; position: absolute; height: 0.875rem; width: 0.875rem; left: 0.125rem; bottom: 0.125rem; background: var(--jt-bg); border-radius: 50%; transition: transform var(--jt-dur) var(--jt-ease); }
 .jt-toggle input:checked + .jt-toggle-slider { background: var(--jt-accent); }
 .jt-toggle input:checked + .jt-toggle-slider::before { transform: translateX(0.875rem); }
+
+/* ── Profile tabs ── */
+.jt-profile-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--jt-border); margin-bottom: 1rem; }
+.jt-profile-tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
+.jt-profile-tab:hover { color: var(--jt-text); }
+.jt-profile-tab.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); }
