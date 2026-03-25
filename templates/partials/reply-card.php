@@ -22,7 +22,7 @@ $is_accepted = (int) $reply->is_accepted;
 			?>
 		</span>
 		<?php if ( $is_accepted ) : ?>
-			<span class="jt-accepted-tag">&#10003; <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
+			<span class="jt-accepted-tag"><?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
 		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
@@ -46,14 +46,21 @@ $is_accepted = (int) $reply->is_accepted;
 				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && ( (int) $reply->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
-			<button class="jt-act jt-reply-edit"
-				data-wp-on--click="actions.editReply"
-				data-reply-id="<?php echo (int) $reply->id; ?>"
-				title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
-			<button class="jt-act jt-reply-delete"
-				data-wp-on--click="actions.deleteReply"
-				data-reply-id="<?php echo (int) $reply->id; ?>"
-				title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?></button>
+			<div class="jt-more-menu">
+				<button class="jt-act jt-more-trigger" type="button" data-wp-on--click="actions.toggleMoreMenu" title="<?php esc_attr_e( 'More', 'jetonomy' ); ?>">&hellip;</button>
+				<div class="jt-more-dropdown" hidden>
+					<button class="jt-more-item"
+						data-wp-on--click="actions.editReply"
+						data-reply-id="<?php echo (int) $reply->id; ?>">
+						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
+					</button>
+					<button class="jt-more-item jt-more-item--danger"
+						data-wp-on--click="actions.deleteReply"
+						data-reply-id="<?php echo (int) $reply->id; ?>">
+						<?php jetonomy_echo_icon( 'trash', 14 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?>
+					</button>
+				</div>
+			</div>
 		<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>
