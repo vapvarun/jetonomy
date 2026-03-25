@@ -324,6 +324,166 @@ const { state, actions } = store( 'jetonomy', {
             } );
         },
 
+        // ── Follow post ──
+        *followPost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            const isFollowing = el.ref.dataset.following === '1';
+            if ( ! postId ) return;
+
+            try {
+                if ( isFollowing ) {
+                    const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=post&object_id=${ postId }`, {
+                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                        credentials: 'same-origin',
+                    } );
+                    if ( res.ok ) {
+                        const data = yield res.json();
+                        const subs = data.items || data;
+                        if ( subs.length > 0 ) {
+                            yield fetch( `${ state.apiBase }/subscriptions/${ subs[0].id }`, {
+                                method: 'DELETE',
+                                headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                                credentials: 'same-origin',
+                            } );
+                        }
+                    }
+                    el.ref.dataset.following = '0';
+                    el.ref.textContent = 'Follow';
+                    el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
+                    el.ref.classList.add( 'jt-btn-ghost' );
+                } else {
+                    const res = yield fetch( `${ state.apiBase }/subscriptions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
+                        credentials: 'same-origin',
+                        body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), via: 'both' } ),
+                    } );
+                    if ( res.ok ) {
+                        el.ref.dataset.following = '1';
+                        el.ref.textContent = 'Following';
+                        el.ref.classList.remove( 'jt-btn-ghost' );
+                        el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
+                    }
+                }
+            } catch { /* non-critical */ }
+        },
+
+        // ── Follow space ──
+        *followSpace( event ) {
+            const el = getElement();
+            const spaceId = el.ref.dataset.spaceId;
+            const isFollowing = el.ref.dataset.following === '1';
+            if ( ! spaceId ) return;
+
+            try {
+                if ( isFollowing ) {
+                    const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=space&object_id=${ spaceId }`, {
+                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                        credentials: 'same-origin',
+                    } );
+                    if ( res.ok ) {
+                        const data = yield res.json();
+                        const subs = data.items || data;
+                        if ( subs.length > 0 ) {
+                            yield fetch( `${ state.apiBase }/subscriptions/${ subs[0].id }`, {
+                                method: 'DELETE',
+                                headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                                credentials: 'same-origin',
+                            } );
+                        }
+                    }
+                    el.ref.dataset.following = '0';
+                    el.ref.textContent = 'Follow';
+                    el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
+                    el.ref.classList.add( 'jt-btn-ghost' );
+                } else {
+                    const res = yield fetch( `${ state.apiBase }/subscriptions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
+                        credentials: 'same-origin',
+                        body: JSON.stringify( { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' } ),
+                    } );
+                    if ( res.ok ) {
+                        el.ref.dataset.following = '1';
+                        el.ref.textContent = 'Following';
+                        el.ref.classList.remove( 'jt-btn-ghost' );
+                        el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
+                    }
+                }
+            } catch { /* non-critical */ }
+        },
+
+        // ── Share post ──
+        sharePost() {
+            const el = getElement();
+            const url = el.ref.dataset.postUrl;
+            const title = el.ref.dataset.postTitle;
+            if ( ! url ) return;
+
+            let dropdown = el.ref.parentElement.querySelector( '.jt-share-dropdown' );
+            if ( dropdown ) { dropdown.remove(); return; }
+
+            dropdown = document.createElement( 'div' );
+            dropdown.className = 'jt-share-dropdown';
+
+            const encodedUrl = encodeURIComponent( url );
+            const encodedTitle = encodeURIComponent( title || '' );
+
+            const items = [
+                { label: 'Copy link', icon: '\u{1F517}', action: () => { navigator.clipboard.writeText( url ); dropdown.remove(); } },
+                { label: 'Twitter / X', icon: '\u{1D54F}', href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
+                { label: 'Facebook', icon: 'f', href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
+                { label: 'LinkedIn', icon: 'in', href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
+            ];
+
+            items.forEach( item => {
+                const btn = document.createElement( 'button' );
+                btn.className = 'jt-share-item';
+                btn.type = 'button';
+                btn.textContent = `${ item.icon } ${ item.label }`;
+                if ( item.href ) {
+                    btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); dropdown.remove(); } );
+                } else if ( item.action ) {
+                    btn.addEventListener( 'click', item.action );
+                }
+                dropdown.appendChild( btn );
+            } );
+
+            el.ref.style.position = 'relative';
+            el.ref.after( dropdown );
+
+            const closeHandler = ( e ) => {
+                if ( ! dropdown.contains( e.target ) && e.target !== el.ref ) {
+                    dropdown.remove();
+                    document.removeEventListener( 'click', closeHandler );
+                }
+            };
+            setTimeout( () => document.addEventListener( 'click', closeHandler ), 0 );
+        },
+
+        // ── Toggle bookmark ──
+        *toggleBookmark( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            if ( ! postId ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/bookmarks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( { post_id: parseInt( postId ) } ),
+                } );
+                if ( res.ok ) {
+                    const data = yield res.json();
+                    el.ref.dataset.bookmarked = data.bookmarked ? '1' : '0';
+                    el.ref.classList.toggle( 'bookmarked', data.bookmarked );
+                    el.ref.title = data.bookmarked ? 'Remove bookmark' : 'Bookmark';
+                }
+            } catch { /* non-critical */ }
+        },
+
         // ── Inline post (topic) edit ──
         editPost( event ) {
             const el = getElement();
@@ -780,13 +940,29 @@ const { state, actions } = store( 'jetonomy', {
             const displayName = form.querySelector('[name="display_name"]')?.value;
             const bio = form.querySelector('[name="bio"]')?.value;
 
+            // Collect notification preferences from toggle checkboxes.
+            const notifPrefs = {};
+            form.querySelectorAll( '[name^="notification_preferences"]' ).forEach( input => {
+                const match = input.name.match( /\[(\w+)\]\[(\w+)\]/ );
+                if ( match ) {
+                    const [ , type, channel ] = match;
+                    if ( ! notifPrefs[ type ] ) notifPrefs[ type ] = {};
+                    notifPrefs[ type ][ channel ] = input.checked;
+                }
+            } );
+
+            const payload = { display_name: displayName, bio };
+            if ( Object.keys( notifPrefs ).length > 0 ) {
+                payload.notification_preferences = notifPrefs;
+            }
+
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/users/me`,
                     {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
-                        body: JSON.stringify( { display_name: displayName, bio } ),
+                        body: JSON.stringify( payload ),
                     }
                 );
                 if ( response.ok ) {

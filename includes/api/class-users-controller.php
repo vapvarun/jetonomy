@@ -182,6 +182,28 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
+		// Handle notification_preferences — merge into existing settings JSON.
+		if ( null !== $request->get_param( 'notification_preferences' ) ) {
+			$notif_input  = $request->get_param( 'notification_preferences' );
+			if ( is_array( $notif_input ) ) {
+				$existing     = UserProfile::find_by_user( $user_id );
+				$cur_settings = $existing ? json_decode( $existing->settings ?? '{}', true ) : [];
+				if ( ! is_array( $cur_settings ) ) { $cur_settings = []; }
+
+				$valid_types = [ 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned' ];
+				$prefs       = [];
+				foreach ( $notif_input as $type => $channels ) {
+					if ( ! in_array( $type, $valid_types, true ) ) continue;
+					$prefs[ $type ] = [
+						'web'   => ! empty( $channels['web'] ),
+						'email' => ! empty( $channels['email'] ),
+					];
+				}
+				$cur_settings['notifications'] = $prefs;
+				$profile_data['settings']      = wp_json_encode( $cur_settings );
+			}
+		}
+
 		// update display_name via wp_update_user.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );

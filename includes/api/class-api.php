@@ -28,6 +28,7 @@ class Api {
 			'tags'          => 'Tags_Controller',
 			'updates'       => 'Updates_Controller',
 			'leaderboards'  => 'Leaderboards_Controller',
+			'bookmarks'     => 'Bookmarks_Controller',
 		];
 
 		require_once $dir . 'class-base-controller.php';

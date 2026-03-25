@@ -31,6 +31,7 @@ class Migrator {
 	private static function get_migrations(): array {
 		return [
 			'1.0.0' => '1_0_0',
+			'1.1.0' => '1_1_0',
 		];
 	}
 }

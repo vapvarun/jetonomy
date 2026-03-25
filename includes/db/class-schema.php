@@ -66,6 +66,7 @@ class Schema {
 			'jt_revisions',
 			'jt_join_requests',
 			'jt_invite_links',
+			'jt_bookmarks',
 		];
 	}
 
@@ -402,6 +403,15 @@ class Schema {
   PRIMARY KEY  (id),
   UNIQUE KEY token (token),
   KEY idx_space (space_id)
+) $charset_collate;";
+
+		// 23. jt_bookmarks
+		$sqls[] = "CREATE TABLE {$p}jt_bookmarks (
+  user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  post_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY  (user_id, post_id),
+  KEY user_created (user_id, created_at)
 ) $charset_collate;";
 
 		return $sqls;

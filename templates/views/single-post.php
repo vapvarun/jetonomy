@@ -190,6 +190,16 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 							</a>
 						<?php endforeach; ?>
 					</div>
+					<?php if ( is_user_logged_in() ) :
+						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
+					?>
+						<button class="jt-btn jt-btn-sm <?php echo $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost'; ?>"
+							data-wp-on--click="actions.followPost"
+							data-post-id="<?php echo (int) $post->id; ?>"
+							data-following="<?php echo $is_following ? '1' : '0'; ?>">
+							<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+						</button>
+					<?php endif; ?>
 				</div>
 
 				<div class="jt-post-body">
@@ -227,6 +237,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 						echo esc_html( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
 						?>
 					</span>
+				<button class="jt-act jt-share-btn"
+					data-wp-on--click="actions.sharePost"
+					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
+					data-post-title="<?php echo esc_attr( $post->title ); ?>"
+					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>">&#128279;</button>
+				<?php if ( is_user_logged_in() ) :
+					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
+				?>
+					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? 'bookmarked' : ''; ?>"
+						data-wp-on--click="actions.toggleBookmark"
+						data-post-id="<?php echo (int) $post->id; ?>"
+						data-bookmarked="<?php echo $is_bookmarked ? '1' : '0'; ?>"
+						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>">&#128278;</button>
+				<?php endif; ?>
 				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
 					<span class="jt-actions-group">
 						<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>

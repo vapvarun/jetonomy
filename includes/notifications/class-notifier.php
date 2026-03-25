@@ -258,35 +258,63 @@ class Notifier {
 
 		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
 
-		// Check user's email preference
-		$profile   = UserProfile::find_by_user( $user_id );
-		$settings  = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-		$email_pref = $settings['notifications'][ $type ]['email'] ?? 'none';
+		// Check user's email preference — per-user overrides global defaults.
+		$profile    = UserProfile::find_by_user( $user_id );
+		$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+		$user_prefs = $settings['notifications'] ?? [];
 
-		if ( 'immediate' === $email_pref || 'both' === $email_pref ) {
-			$this->send_email_notification( $user_id, $type, $message );
+		if ( isset( $user_prefs[ $type ]['email'] ) ) {
+			$send_email = ! empty( $user_prefs[ $type ]['email'] );
+		} else {
+			// Fall back to global defaults.
+			$global     = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+			$send_email = ! empty( $global[ $type ]['email'] );
+		}
+
+		if ( $send_email ) {
+			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id );
 		}
 	}
 
-	private function send_email_notification( int $user_id, string $type, string $message ): void {
+	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0 ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) return;
 
 		$email_adapter = Adapter_Registry::get_email();
 		if ( ! $email_adapter ) return;
 
+		// Build unsubscribe URL.
+		$unsub_token = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
+		$unsub_url   = add_query_arg( [
+			'jetonomy_unsubscribe' => $unsub_token,
+			'uid'                  => $user_id,
+			'type'                 => $type,
+		], home_url( '/' ) );
+
 		$site_name = get_bloginfo( 'name' );
 		$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
-		$html      = $this->render_email_template( $type, $message, $user );
+		$html      = $this->render_email_template( $type, $message, $user, $unsub_url );
 		$plain     = wp_strip_all_tags( $message );
 
-		$email_adapter->send( $user->user_email, $subject, $html, $plain );
+		// Add List-Unsubscribe headers (RFC 8058).
+		$headers = [
+			'List-Unsubscribe: <' . $unsub_url . '>',
+			'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
+		];
+
+		$email_adapter->send( $user->user_email, $subject, $html, $plain, $headers );
 	}
 
-	private function render_email_template( string $type, string $message, \WP_User $user ): string {
+	private function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '' ): string {
 		$site_name     = esc_html( get_bloginfo( 'name' ) );
 		$community_url = esc_url( \Jetonomy\base_url() . '/' );
 		$notif_url     = esc_url( \Jetonomy\base_url() . '/notifications/' );
+		$unsub_link    = $unsub_url ? esc_url( $unsub_url ) : '';
+
+		$footer = "<a href='{$notif_url}' style='color: #999;'>Manage preferences</a>";
+		if ( $unsub_link ) {
+			$footer .= " &middot; <a href='{$unsub_link}' style='color: #999;'>Unsubscribe from these emails</a>";
+		}
 
 		return "
 		<div style='font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px;'>
@@ -298,9 +326,7 @@ class Notifier {
 				<a href='{$community_url}' style='display: inline-block; padding: 8px 20px; background: #3B82F6; color: white; border-radius: 6px; text-decoration: none; font-weight: 600;'>View in Community</a>
 			</p>
 			<hr style='border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;'>
-			<p style='font-size: 12px; color: #999;'>
-				<a href='{$notif_url}' style='color: #999;'>Manage notification preferences</a>
-			</p>
+			<p style='font-size: 12px; color: #999;'>{$footer}</p>
 		</div>";
 	}
 

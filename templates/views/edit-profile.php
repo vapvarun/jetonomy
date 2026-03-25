@@ -48,6 +48,48 @@ $base         = \Jetonomy\base_url();
 		</div>
 
 		<?php
+		// Notification preferences.
+		$user_settings = json_decode( $profile->settings ?? '{}', true ) ?: [];
+		$notif_prefs   = $user_settings['notifications'] ?? [];
+		$global_defs   = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		$notif_types   = [
+			'reply_to_post'   => __( 'Reply to my post', 'jetonomy' ),
+			'reply_to_reply'  => __( 'Reply to my reply', 'jetonomy' ),
+			'mention'         => __( '@Mention', 'jetonomy' ),
+			'vote_on_post'    => __( 'Vote on my post', 'jetonomy' ),
+			'accepted_answer' => __( 'Accepted answer', 'jetonomy' ),
+			'new_post_in_sub' => __( 'New post in followed space', 'jetonomy' ),
+			'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
+		];
+		?>
+		<div class="jt-form-group">
+			<label class="jt-label"><?php esc_html_e( 'Notification Preferences', 'jetonomy' ); ?></label>
+			<div class="jt-notif-prefs">
+				<div class="jt-notif-row jt-notif-header">
+					<span></span>
+					<span><?php esc_html_e( 'Web', 'jetonomy' ); ?></span>
+					<span><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
+				</div>
+				<?php foreach ( $notif_types as $key => $label ) :
+					$web_on   = isset( $notif_prefs[ $key ]['web'] ) ? ! empty( $notif_prefs[ $key ]['web'] ) : ! empty( $global_defs[ $key ]['web'] );
+					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : ! empty( $global_defs[ $key ]['email'] );
+				?>
+					<div class="jt-notif-row">
+						<span><?php echo esc_html( $label ); ?></span>
+						<label class="jt-toggle">
+							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][web]" value="1" <?php checked( $web_on ); ?>>
+							<span class="jt-toggle-slider"></span>
+						</label>
+						<label class="jt-toggle">
+							<input type="checkbox" name="notification_preferences[<?php echo esc_attr( $key ); ?>][email]" value="1" <?php checked( $email_on ); ?>>
+							<span class="jt-toggle-slider"></span>
+						</label>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+
+		<?php
 		/**
 		 * Fires after the standard profile edit fields, before submit.
 		 * Pro hooks custom profile fields here.

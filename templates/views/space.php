@@ -104,6 +104,17 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						<div class="jt-num-lbl"><?php esc_html_e( 'Members', 'jetonomy' ); ?></div>
 					</div>
 				</div>
+				<?php if ( is_user_logged_in() ) :
+					$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
+				?>
+					<button class="jt-btn jt-btn-sm <?php echo $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost'; ?>"
+						data-wp-interactive="jetonomy"
+						data-wp-on--click="actions.followSpace"
+						data-space-id="<?php echo (int) $space->id; ?>"
+						data-following="<?php echo $is_following_space ? '1' : '0'; ?>">
+						<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+					</button>
+				<?php endif; ?>
 			</div>
 
 		<?php if ( $is_restricted ) : ?>

@@ -970,3 +970,30 @@
 /* ── Gate message inline feedback (JS-toggled classes) ── */
 .jt-gate-msg--error   { color: var(--jt-danger); }
 .jt-gate-msg--success { color: var(--jt-success); }
+
+/* ── Follow button ── */
+.jt-btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.75rem; border-radius: var(--jt-radius); }
+.jt-following { background: var(--jt-accent); color: #fff; border-color: var(--jt-accent); }
+.jt-following:hover { background: var(--jt-danger); border-color: var(--jt-danger); }
+
+/* ── Share dropdown ── */
+.jt-share-btn { position: relative; }
+.jt-share-dropdown { position: absolute; bottom: 100%; left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-bottom: 0.25rem; }
+.jt-share-item { display: block; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; }
+.jt-share-item:hover { background: var(--jt-bg-hover); }
+
+/* ── Bookmark button ── */
+.jt-bookmark-btn.bookmarked { color: var(--jt-accent); }
+
+/* ── Notification preferences grid ── */
+.jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
+.jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
+.jt-notif-row:last-child { border-bottom: none; }
+.jt-notif-header { font-weight: 600; background: var(--jt-bg-subtle); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--jt-text-secondary); }
+.jt-notif-header span:not(:first-child) { text-align: center; }
+.jt-toggle { position: relative; display: inline-block; width: 2rem; height: 1.125rem; margin: 0 auto; }
+.jt-toggle input { opacity: 0; width: 0; height: 0; }
+.jt-toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--jt-border-strong); border-radius: var(--jt-radius-full); transition: background var(--jt-dur) var(--jt-ease); }
+.jt-toggle-slider::before { content: ''; position: absolute; height: 0.875rem; width: 0.875rem; left: 0.125rem; bottom: 0.125rem; background: var(--jt-bg); border-radius: 50%; transition: transform var(--jt-dur) var(--jt-ease); }
+.jt-toggle input:checked + .jt-toggle-slider { background: var(--jt-accent); }
+.jt-toggle input:checked + .jt-toggle-slider::before { transform: translateX(0.875rem); }

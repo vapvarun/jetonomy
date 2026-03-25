@@ -121,6 +121,9 @@ final class Jetonomy {
 
         new API\Api();
 
+        // Handle email unsubscribe links.
+        add_action( 'init', [ $this, 'handle_email_unsubscribe' ] );
+
         // Adapters — autoloader resolves all classes
         Adapters\Adapter_Registry::init_defaults();
         Adapters\Adapter_Registry::register_email( 'wp-mail', new Adapters\WP_Mail_Adapter() );
@@ -203,5 +206,42 @@ final class Jetonomy {
         );
 
         update_option( 'jetonomy_activity_backfilled', true );
+    }
+
+    /**
+     * Handle one-click email unsubscribe via URL parameter.
+     */
+    public function handle_email_unsubscribe(): void {
+        if ( empty( $_GET['jetonomy_unsubscribe'] ) || empty( $_GET['uid'] ) ) {
+            return;
+        }
+
+        $token   = sanitize_text_field( wp_unslash( $_GET['jetonomy_unsubscribe'] ) );
+        $user_id = absint( $_GET['uid'] );
+        $type    = sanitize_key( $_GET['type'] ?? '' );
+
+        if ( ! $user_id || ! $type ) {
+            return;
+        }
+
+        // Verify token.
+        $expected = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
+        if ( ! hash_equals( $expected, $token ) ) {
+            wp_die( esc_html__( 'Invalid unsubscribe link.', 'jetonomy' ), '', [ 'response' => 403 ] );
+        }
+
+        // Disable this notification type for the user.
+        $profile = Models\UserProfile::find_by_user( $user_id );
+        if ( $profile ) {
+            $settings = json_decode( $profile->settings ?? '{}', true ) ?: [];
+            $settings['notifications'][ $type ]['email'] = false;
+            Models\UserProfile::update( (int) $profile->id, [ 'settings' => wp_json_encode( $settings ) ] );
+        }
+
+        wp_die(
+            esc_html__( 'You have been unsubscribed from these email notifications. You can re-enable them in your notification preferences.', 'jetonomy' ),
+            esc_html__( 'Unsubscribed', 'jetonomy' ),
+            [ 'response' => 200 ]
+        );
     }
 }
