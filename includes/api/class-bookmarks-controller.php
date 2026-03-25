@@ -93,7 +93,7 @@ class Bookmarks_Controller extends Base_Controller {
 	/**
 	 * DELETE /bookmarks/{post_id} — Remove a bookmark.
 	 */
-	public function delete_item( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function delete_item( $request ) {
 		$user_id = $this->require_auth();
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
