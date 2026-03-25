@@ -89,12 +89,14 @@ Target (Discourse/Circle pattern):
 - [x] Infinite scroll — IntersectionObserver on pagination partial, auto-fetches next page
 - [x] Beautiful empty states — 5 contextual SVG illustrations (posts, replies, search, notifications, members)
 
+**Completed (session 2 — batch 3):**
+- [x] User hover cards — hover on .jt-user-link / .jt-mention shows card with avatar, trust, bio, stats via REST
+- [x] Link preview cards — auto-detect bare URLs in post/reply, fetch OG metadata via /link-preview endpoint, render card
+- [x] Pin posts UI — already existed (button + REST + view.js action), improved with toast feedback
+
 **Remaining (future):**
 - [ ] Profile Media tab (needs WPMediaVerse bridge)
-- [ ] User hover cards on author names
-- [ ] Link preview cards (auto-fetch OG data)
 - [ ] Content scheduling (published_at field + cron)
-- [ ] Pin posts UI (backend Post::pin() exists, needs frontend button)
 
 ### Unified Icon System (cross-plugin)
 See: `buddynext/docs/ICON_SYSTEM_PLAN.md`

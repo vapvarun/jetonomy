@@ -393,6 +393,121 @@ $jt_js_data = [
 		var m = document.querySelector('.jt-shortcut-help');
 		if (m) m.remove();
 	};
+
+	/* ── User Hover Cards ── */
+	var hcCache = {};
+	var hcEl = null;
+	var hcTimer = null;
+	var hcHideTimer = null;
+	function getHoverCard() {
+		if (hcEl) return hcEl;
+		hcEl = document.createElement('div');
+		hcEl.className = 'jt-hover-card';
+		hcEl.style.display = 'none';
+		hcEl.addEventListener('mouseenter', function() { clearTimeout(hcHideTimer); });
+		hcEl.addEventListener('mouseleave', function() { hcEl.style.display = 'none'; });
+		document.body.appendChild(hcEl);
+		return hcEl;
+	}
+	function showHoverCard(anchor, userId) {
+		var card = getHoverCard();
+		var cached = hcCache[userId];
+		if (cached) {
+			renderHoverCard(card, cached, anchor);
+			return;
+		}
+		card.textContent = '...';
+		renderPosition(card, anchor);
+		card.style.display = '';
+		fetch(D.base.replace(/\/community\/?$/, '') + '/wp-json/jetonomy/v1/users/' + userId, {
+			headers: { 'X-WP-Nonce': D.nonce }
+		}).then(function(r) { return r.json(); }).then(function(data) {
+			hcCache[userId] = data;
+			renderHoverCard(card, data, anchor);
+		}).catch(function() { card.style.display = 'none'; });
+	}
+	function renderHoverCard(card, data, anchor) {
+		card.textContent = '';
+		var header = document.createElement('div');
+		header.className = 'jt-hc-header';
+		if (data.avatar_url) {
+			var img = document.createElement('img');
+			img.src = data.avatar_url;
+			img.width = 40; img.height = 40;
+			img.className = 'jt-hc-avatar';
+			img.alt = data.display_name || '';
+			header.appendChild(img);
+		}
+		var info = document.createElement('div');
+		var nameEl = document.createElement('span');
+		nameEl.className = 'jt-hc-name';
+		nameEl.textContent = data.display_name || '';
+		info.appendChild(nameEl);
+		var trustEl = document.createElement('span');
+		trustEl.className = 'jt-hc-trust';
+		trustEl.textContent = 'Level ' + (data.trust_level || 0) + ' · ' + (data.reputation || 0) + ' rep';
+		info.appendChild(trustEl);
+		header.appendChild(info);
+		card.appendChild(header);
+		if (data.bio) {
+			var bio = document.createElement('p');
+			bio.className = 'jt-hc-bio';
+			bio.textContent = data.bio;
+			card.appendChild(bio);
+		}
+		var stats = document.createElement('div');
+		stats.className = 'jt-hc-stats';
+		stats.textContent = (data.post_count || 0) + ' posts · ' + (data.reply_count || 0) + ' replies';
+		card.appendChild(stats);
+		renderPosition(card, anchor);
+		card.style.display = '';
+	}
+	function renderPosition(card, anchor) {
+		var rect = anchor.getBoundingClientRect();
+		card.style.position = 'fixed';
+		card.style.top = (rect.bottom + 8) + 'px';
+		card.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 296)) + 'px';
+	}
+	document.addEventListener('mouseover', function(e) {
+		if (!e.target || !e.target.closest) return;
+		var link = e.target.closest('.jt-user-link, .jt-mention');
+		if (!link) return;
+		var userId = link.dataset.userId;
+		if (!userId) {
+			var href = link.getAttribute('href') || '';
+			var m = href.match(/\/u\/([^/]+)/);
+			if (!m) return;
+			link.dataset.userLogin = m[1];
+		}
+		clearTimeout(hcHideTimer);
+		clearTimeout(hcTimer);
+		hcTimer = setTimeout(function() {
+			if (userId) { showHoverCard(link, userId); return; }
+			var login = link.dataset.userLogin;
+			if (!login) return;
+			var cachedId = hcCache['login_' + login];
+			if (cachedId) { showHoverCard(link, cachedId); return; }
+			fetch(D.base.replace(/\/community\/?$/, '') + '/wp-json/jetonomy/v1/users/by-login/' + encodeURIComponent(login), {
+				headers: { 'X-WP-Nonce': D.nonce }
+			}).then(function(r) { return r.json(); }).then(function(data) {
+				if (data.id) {
+					hcCache[data.id] = data;
+					hcCache['login_' + login] = data.id;
+					link.dataset.userId = data.id;
+					showHoverCard(link, data.id);
+				}
+			});
+		}, 400);
+	});
+	document.addEventListener('mouseout', function(e) {
+		if (!e.target || !e.target.closest) return;
+		var link = e.target.closest('.jt-user-link, .jt-mention');
+		if (!link) return;
+		clearTimeout(hcTimer);
+		hcHideTimer = setTimeout(function() {
+			if (hcEl) hcEl.style.display = 'none';
+		}, 200);
+	});
 })();
 </script>
 <?php

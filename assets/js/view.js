@@ -643,15 +643,21 @@ const { state, actions } = store( 'jetonomy', {
 
                 if ( res.ok ) {
                     const data = yield res.json();
-                    // Toggle the button text content (safe — no HTML from server)
-                    el.ref.textContent = data.is_sticky ? '\u{1F4CC}' : '\u{1F4CD}';
-                    el.ref.title = data.is_sticky ? 'Unpin' : 'Pin';
+                    // Reload page to reflect pinned state in UI
+                    if ( window.bnToast ) {
+                        window.bnToast( data.is_sticky ? 'Post pinned' : 'Post unpinned' );
+                    }
+                    setTimeout( () => window.location.reload(), 600 );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || 'Failed to toggle pin.' );
+                    if ( window.bnToast ) {
+                        window.bnToast( err.message || 'Failed to toggle pin.' );
+                    }
                 }
             } catch {
-                alert( 'Network error. Please try again.' );
+                if ( window.bnToast ) {
+                    window.bnToast( 'Network error. Please try again.' );
+                }
             }
         },
 
@@ -1167,3 +1173,66 @@ const { state, actions } = store( 'jetonomy', {
         },
     },
 } );
+
+/* ── Link Preview Cards ──
+   Scans .jt-post-body and .jt-reply-body for standalone links (only child of a <p>)
+   and fetches OG metadata to render a preview card below the link. */
+( function() {
+    const API_BASE = ( window.jetonomyData && window.jetonomyData.restBase )
+        ? window.jetonomyData.restBase
+        : '/wp-json/jetonomy/v1';
+
+    document.addEventListener( 'DOMContentLoaded', function() {
+        const bodies = document.querySelectorAll( '.jt-post-body, .jt-reply-body' );
+        bodies.forEach( function( body ) {
+            const links = body.querySelectorAll( 'p > a:only-child' );
+            links.forEach( function( a ) {
+                const href = a.getAttribute( 'href' );
+                if ( ! href || href.startsWith( '#' ) || href.startsWith( '/' ) ) return;
+                // Skip internal links (mentions, tags).
+                if ( a.classList.contains( 'jt-mention' ) || a.classList.contains( 'jt-tag-link' ) ) return;
+                // Only process if the link text IS the URL (bare link).
+                const text = ( a.textContent || '' ).trim();
+                if ( ! text.startsWith( 'http' ) ) return;
+
+                fetch( API_BASE + '/link-preview?url=' + encodeURIComponent( href ) )
+                    .then( function( r ) { return r.json(); } )
+                    .then( function( data ) {
+                        if ( ! data.title ) return;
+                        var card = document.createElement( 'a' );
+                        card.href = href;
+                        card.className = 'jt-link-preview';
+                        card.target = '_blank';
+                        card.rel = 'noopener';
+                        var cardBody = document.createElement( 'div' );
+                        cardBody.className = 'jt-link-preview-body';
+                        var title = document.createElement( 'strong' );
+                        title.className = 'jt-link-preview-title';
+                        title.textContent = data.title;
+                        cardBody.appendChild( title );
+                        if ( data.description ) {
+                            var desc = document.createElement( 'span' );
+                            desc.className = 'jt-link-preview-desc';
+                            desc.textContent = data.description.substring( 0, 120 );
+                            cardBody.appendChild( desc );
+                        }
+                        var domain = document.createElement( 'span' );
+                        domain.className = 'jt-link-preview-domain';
+                        domain.textContent = data.domain;
+                        cardBody.appendChild( domain );
+                        card.appendChild( cardBody );
+                        if ( data.image ) {
+                            var img = document.createElement( 'img' );
+                            img.src = data.image;
+                            img.className = 'jt-link-preview-img';
+                            img.alt = '';
+                            img.loading = 'lazy';
+                            card.appendChild( img );
+                        }
+                        // Insert card after the parent <p>.
+                        a.parentElement.insertAdjacentElement( 'afterend', card );
+                    } );
+            } );
+        } );
+    } );
+} )();

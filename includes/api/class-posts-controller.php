@@ -93,6 +93,77 @@ class Posts_Controller extends Base_Controller {
 				],
 			],
 		] );
+
+		// Link preview — fetch OG metadata for a URL.
+		register_rest_route( $ns, '/link-preview', [
+			'methods'             => \WP_REST_Server::READABLE,
+			'callback'            => [ $this, 'link_preview' ],
+			'permission_callback' => '__return_true',
+			'args'                => [
+				'url' => [
+					'type'              => 'string',
+					'required'          => true,
+					'sanitize_callback' => 'esc_url_raw',
+				],
+			],
+		] );
+	}
+
+	/**
+	 * GET /link-preview?url= — Fetch OG metadata for a URL.
+	 */
+	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$url = $request->get_param( 'url' );
+		if ( empty( $url ) || ! wp_http_validate_url( $url ) ) {
+			return new \WP_Error( 'invalid_url', 'Invalid URL.', [ 'status' => 400 ] );
+		}
+
+		// Check transient cache first.
+		$cache_key = 'jt_og_' . md5( $url );
+		$cached    = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return new \WP_REST_Response( $cached, 200 );
+		}
+
+		$response = wp_remote_get( $url, [
+			'timeout'   => 5,
+			'sslverify' => false,
+			'headers'   => [ 'Accept' => 'text/html' ],
+		] );
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return new \WP_REST_Response( [ 'title' => '', 'description' => '', 'image' => '', 'domain' => '' ], 200 );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = [
+			'title'       => '',
+			'description' => '',
+			'image'       => '',
+			'domain'      => wp_parse_url( $url, PHP_URL_HOST ) ?: '',
+		];
+
+		// Parse OG tags.
+		if ( preg_match( '/<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
+			$data['title'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
+		} elseif ( preg_match( '/<title[^>]*>([^<]+)/i', $body, $m ) ) {
+			$data['title'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
+		}
+
+		if ( preg_match( '/<meta[^>]+property=["\']og:description["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
+			$data['description'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
+		} elseif ( preg_match( '/<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
+			$data['description'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
+		}
+
+		if ( preg_match( '/<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
+			$data['image'] = esc_url_raw( $m[1] );
+		}
+
+		// Cache for 24 hours.
+		set_transient( $cache_key, $data, DAY_IN_SECONDS );
+
+		return new \WP_REST_Response( $data, 200 );
 	}
 
 	/**
