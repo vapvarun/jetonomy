@@ -449,7 +449,43 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     var emojis = ['\uD83D\uDE00','\uD83D\uDE02','\u2764\uFE0F','\uD83D\uDC4D','\uD83D\uDC4E','\uD83C\uDF89','\uD83E\uDD14','\uD83D\uDC40','\uD83D\uDE80','\uD83D\uDD25','\u2705','\u274C','\uD83D\uDCA1','\uD83D\uDCDD','\uD83D\uDE4F','\uD83D\uDCAA','\uD83D\uDE0D','\uD83D\uDE0E','\uD83E\uDD2F','\uD83E\uDD73'];
 
-    // Shared singleton picker — repositioned under the active toolbar.
+    function positionEmojiPicker(trigger) {
+        if (!trigger) {
+            return;
+        }
+
+        var rect = trigger.getBoundingClientRect();
+        var gutter = 8;
+        var viewportWidth = window.innerWidth;
+        var viewportHeight = window.innerHeight;
+        var pickerWidth = sharedPicker.offsetWidth;
+        var pickerHeight = sharedPicker.offsetHeight;
+        var left = rect.left;
+        var top = rect.bottom + gutter;
+
+        if (left + pickerWidth > viewportWidth - gutter) {
+            left = viewportWidth - pickerWidth - gutter;
+        }
+
+        if (left < gutter) {
+            left = gutter;
+        }
+
+        if (top + pickerHeight > viewportHeight - gutter) {
+            top = rect.top - pickerHeight - gutter;
+        }
+
+        if (top < gutter) {
+            top = gutter;
+        }
+
+        sharedPicker.style.top = top + 'px';
+        sharedPicker.style.left = left + 'px';
+        sharedPicker.style.right = 'auto';
+        sharedPicker.style.bottom = 'auto';
+    }
+
+    // Shared singleton picker — repositioned beside the active emoji button.
     var sharedPicker = document.createElement('div');
     sharedPicker.className = 'jt-emoji-picker';
     sharedPicker.style.display = 'none';
@@ -492,16 +528,11 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
             if (!isOpen) {
                 sharedPicker._activeToolbar = toolbar;
-                // Position the picker above the toolbar using fixed coords to escape overflow:hidden.
-                var rect = toolbar.getBoundingClientRect();
-                sharedPicker.style.bottom = ( window.innerHeight - rect.top ) + 'px';
-                sharedPicker.style.right  = ( window.innerWidth  - rect.right ) + 'px';
-                sharedPicker.style.top    = 'auto';
-                sharedPicker.style.left   = 'auto';
                 if ( sharedPicker.parentElement !== document.body ) {
                     document.body.appendChild( sharedPicker );
                 }
                 sharedPicker.style.display = 'grid';
+                positionEmojiPicker(emojiBtn);
             }
             return;
         }

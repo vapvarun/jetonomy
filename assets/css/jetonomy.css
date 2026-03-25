@@ -254,7 +254,7 @@
 
   /* ── Action buttons ── */
   .jt-act { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; transition: all 0.1s; border: none; background: none; cursor: pointer; font-family: var(--jt-font); }
-  .jt-act:hover { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+  .jt-act:hover { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: none; }
   .jt-act .n { font-family: var(--jt-font-mono); font-weight: 700; }
 
   /* ── Replies ── */
@@ -291,8 +291,8 @@
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
   .jt-editor:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-editor-bar { display: flex; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); position: relative; }
-  .jt-editor-bar button { width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; }
-  .jt-editor-bar button:hover { background: var(--jt-bg); color: var(--jt-text); }
+  .jt-editor-bar button { width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; padding: 0; }
+  .jt-editor-bar button:hover, .jt-editor-bar button:focus { background: var(--jt-bg); color: var(--jt-text); border: none; }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
@@ -973,8 +973,8 @@
 
 /* ── G9: Emoji Picker ── */
 .jt-emoji-picker { position: fixed; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 9999; width: 220px; }
-.jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
-.jt-emoji-option:hover { background: var(--jt-bg-muted); }
+.jt-emoji-option { border: none; background: none; cursor: pointer; font-size: 1.25rem; line-height: 1; padding: 6px; border-radius: var(--jt-radius-sm); transition: background 0.1s; }
+.jt-emoji-option:hover { border: none; background: var(--jt-bg-muted); }
 
 /* ── Gate message inline feedback (JS-toggled classes) ── */
 .jt-gate-msg--error   { color: var(--jt-danger); }
