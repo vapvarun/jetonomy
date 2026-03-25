@@ -413,6 +413,27 @@
     .jt-badges { grid-template-columns: repeat(2, 1fr); }
     .jt-stats-bar { grid-template-columns: repeat(2, 1fr); }
     .jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-left: 12px; }
+
+    /* Mobile: toolbar bar wraps — new post goes full width */
+    .jt-bar { flex-wrap: wrap; gap: 8px; }
+    .jt-bar > .jt-btn-fill,
+    .jt-bar > a.jt-btn-fill { order: 10; width: 100%; text-align: center; justify-content: center; }
+
+    /* Mobile: breadcrumb truncation */
+    .jt-crumb { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+    .jt-crumb a, .jt-crumb span { display: inline; }
+
+    /* Mobile: post title size */
+    .jt-post-head h1 { font-size: 1.125rem; padding-right: 0; }
+    .jt-post-head > .jt-btn-sm { position: static; margin-top: 8px; }
+
+    /* Mobile: action bar wrap */
+    .jt-post-foot { flex-wrap: wrap; gap: 6px; }
+    .jt-reply-foot { flex-wrap: wrap; gap: 6px; }
+
+    /* Mobile: reply composer */
+    .jt-editor-foot { flex-direction: column; gap: 6px; align-items: stretch; }
+    .jt-editor-foot .jt-btn { width: 100%; justify-content: center; }
   }
 
   .jt-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }

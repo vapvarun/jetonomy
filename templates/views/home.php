@@ -40,11 +40,11 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 					<div class="jt-space-card-stats">
 						<span class="jt-space-card-stat">
 							<strong><?php echo (int) $space->post_count; ?></strong>
-							<?php esc_html_e( 'posts', 'jetonomy' ); ?>
+							<?php echo esc_html( _n( 'post', 'posts', (int) $space->post_count, 'jetonomy' ) ); ?>
 						</span>
 						<span class="jt-space-card-stat">
 							<strong><?php echo (int) $space->member_count; ?></strong>
-							<?php esc_html_e( 'members', 'jetonomy' ); ?>
+							<?php echo esc_html( _n( 'member', 'members', (int) $space->member_count, 'jetonomy' ) ); ?>
 						</span>
 					</div>
 				</div>

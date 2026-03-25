@@ -130,8 +130,22 @@ $bn_active = did_action( 'buddynext_loaded' );
 						</div>
 						<div class="jt-trend-meta">
 							<?php
-							/* translators: 1: vote score, 2: reply count */
-							echo esc_html( sprintf( __( '%1$d votes · %2$d replies', 'jetonomy' ), (int) $t_post->vote_score, (int) $t_post->reply_count ) );
+							$v = (int) $t_post->vote_score;
+							$r = (int) $t_post->reply_count;
+							/* translators: 1: vote count with singular/plural, 2: reply count with singular/plural */
+							echo esc_html(
+								sprintf(
+									/* translators: %d: number of votes */
+									_n( '%d vote', '%d votes', $v, 'jetonomy' ),
+									$v
+								)
+								. ' · '
+								. sprintf(
+									/* translators: %d: number of replies */
+									_n( '%d reply', '%d replies', $r, 'jetonomy' ),
+									$r
+								)
+							);
 							?>
 						</div>
 					</div>
