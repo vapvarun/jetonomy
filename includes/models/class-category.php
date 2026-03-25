@@ -81,7 +81,7 @@ class Category extends Model {
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET space_count = space_count + %d WHERE id = %d',
+				'UPDATE ' . static::table() . ' SET space_count = GREATEST(space_count + %d, 0) WHERE id = %d',
 				$by,
 				$id
 			)

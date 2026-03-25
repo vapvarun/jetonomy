@@ -133,15 +133,20 @@ class Post extends Model {
 	}
 
 	/**
-	 * Increment reply_count and update last_reply_at and updated_at.
+	 * Adjust reply_count and update last_reply_at and updated_at.
+	 *
+	 * Pass a negative value to decrement. Uses GREATEST() to prevent
+	 * the counter from going below zero.
 	 *
 	 * @param int $id Post ID.
+	 * @param int $by Amount to adjust (default +1).
 	 */
-	public static function increment_reply_count( int $id ): void {
+	public static function increment_reply_count( int $id, int $by = 1 ): void {
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET reply_count = reply_count + 1, last_reply_at = %s, updated_at = %s WHERE id = %d',
+				'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0), last_reply_at = %s, updated_at = %s WHERE id = %d',
+				$by,
 				$now,
 				$now,
 				$id

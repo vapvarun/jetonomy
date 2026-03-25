@@ -399,6 +399,10 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Decrement denormalized counters before soft-deleting.
+		Space::increment_post_count( $space_id, -1 );
+		UserProfile::increment_post_count( (int) $post->author_id, -1 );
+
 		Post::update( $id, [ 'status' => 'trash' ] );
 
 		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );

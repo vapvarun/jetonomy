@@ -11,6 +11,7 @@ use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\JoinRequest;
 use Jetonomy\Models\InviteLink;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Models\Category;
 
 class Spaces_Controller extends Base_Controller {
 
@@ -396,6 +397,11 @@ class Spaces_Controller extends Base_Controller {
 
 		if ( ! $this->is_space_admin( $id, $user_id ) ) {
 			return $this->permission_error();
+		}
+
+		// Decrement category space_count before deleting.
+		if ( ! empty( $space->category_id ) ) {
+			Category::increment_space_count( (int) $space->category_id, -1 );
 		}
 
 		$deleted = Space::delete( $id );

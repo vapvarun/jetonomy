@@ -139,7 +139,7 @@ class Space extends Model {
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET post_count = post_count + %d, last_activity_at = %s, updated_at = %s WHERE id = %d',
+				'UPDATE ' . static::table() . ' SET post_count = GREATEST(post_count + %d, 0), last_activity_at = %s, updated_at = %s WHERE id = %d',
 				$by,
 				$now,
 				$now,
@@ -158,7 +158,7 @@ class Space extends Model {
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET member_count = member_count + %d, updated_at = %s WHERE id = %d',
+				'UPDATE ' . static::table() . ' SET member_count = GREATEST(member_count + %d, 0), updated_at = %s WHERE id = %d',
 				$by,
 				$now,
 				$id

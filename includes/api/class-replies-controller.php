@@ -345,6 +345,10 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Decrement denormalized counters before soft-deleting.
+		Post::increment_reply_count( (int) $reply->post_id, -1 );
+		UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
+
 		Reply::update( $id, [ 'status' => 'trash' ] );
 
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );

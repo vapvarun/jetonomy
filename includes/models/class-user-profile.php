@@ -97,28 +97,38 @@ class UserProfile extends Model {
 	}
 
 	/**
-	 * Increment the post_count for a user profile.
+	 * Adjust the post_count for a user profile.
 	 *
-	 * @param int $user_id
+	 * Pass a negative value to decrement. Uses GREATEST() to prevent
+	 * the counter from going below zero.
+	 *
+	 * @param int $user_id User ID.
+	 * @param int $by      Amount to adjust (default +1).
 	 */
-	public static function increment_post_count( int $user_id ): void {
+	public static function increment_post_count( int $user_id, int $by = 1 ): void {
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET post_count = post_count + 1 WHERE user_id = %d',
+				'UPDATE ' . static::table() . ' SET post_count = GREATEST(post_count + %d, 0) WHERE user_id = %d',
+				$by,
 				$user_id
 			)
 		);
 	}
 
 	/**
-	 * Increment the reply_count for a user profile.
+	 * Adjust the reply_count for a user profile.
 	 *
-	 * @param int $user_id
+	 * Pass a negative value to decrement. Uses GREATEST() to prevent
+	 * the counter from going below zero.
+	 *
+	 * @param int $user_id User ID.
+	 * @param int $by      Amount to adjust (default +1).
 	 */
-	public static function increment_reply_count( int $user_id ): void {
+	public static function increment_reply_count( int $user_id, int $by = 1 ): void {
 		static::db()->query(
 			static::db()->prepare(
-				'UPDATE ' . static::table() . ' SET reply_count = reply_count + 1 WHERE user_id = %d',
+				'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0) WHERE user_id = %d',
+				$by,
 				$user_id
 			)
 		);
