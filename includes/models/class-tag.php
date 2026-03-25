@@ -142,6 +142,55 @@ class Tag extends Model {
 	}
 
 	/**
+	 * Check whether a tag with the given slug exists.
+	 *
+	 * @param string $slug Tag slug.
+	 * @return bool
+	 */
+	public static function exists( string $slug ): bool {
+		return null !== static::find_by_slug( $slug );
+	}
+
+	/**
+	 * List posts (discussions) that have a given tag, ordered by recency.
+	 *
+	 * Returns rows from jt_posts joined through jt_post_tags.
+	 * Each row includes: id, title, slug, space_id, author_id, reply_count,
+	 * vote_score, created_at, plus the author's display_name.
+	 *
+	 * @param string $slug  Tag slug.
+	 * @param int    $limit Maximum number of posts to return.
+	 * @return object[]
+	 */
+	public static function list_by_tag( string $slug, int $limit = 5 ): array {
+		$tags      = static::table();
+		$post_tags = table( 'post_tags' );
+		$posts     = table( 'posts' );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT p.id, p.title, p.slug AS post_slug, p.space_id, p.author_id,
+				        p.reply_count, p.vote_score, p.created_at,
+				        u.display_name AS author_name
+				 FROM {$posts} p
+				 INNER JOIN {$post_tags} pt ON pt.post_id = p.id
+				 INNER JOIN {$tags} t ON t.id = pt.tag_id
+				 INNER JOIN {$GLOBALS['wpdb']->users} u ON u.ID = p.author_id
+				 WHERE t.slug = %s
+				 ORDER BY p.created_at DESC
+				 LIMIT %d",
+				$slug,
+				$limit
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return $results ?: [];
+	}
+
+	/**
 	 * Search tags by name using a partial-match query.
 	 *
 	 * @param string $query Search string matched against the name column.
