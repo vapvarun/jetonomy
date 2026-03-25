@@ -55,13 +55,13 @@ $crumbs = [
 					}
 					$trust    = (int) $leader->trust_level;
 					$initials = strtoupper( substr( $lu->display_name, 0, 2 ) );
-					$medal    = '';
+					$medal = '';
 					if ( 0 === $rank ) {
-						$medal = '&#129351;'; // 🥇 Gold.
+						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
 					} elseif ( 1 === $rank ) {
-						$medal = '&#129352;'; // 🥈 Silver.
+						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#C0C0C0" stroke="#808080" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
 					} elseif ( 2 === $rank ) {
-						$medal = '&#129353;'; // 🥉 Bronze.
+						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#CD7F32" stroke="#8B4513" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
 					}
 					?>
 					<div class="jt-leader jt-leader-pad">
