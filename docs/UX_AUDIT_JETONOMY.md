@@ -71,20 +71,26 @@ Target (Discourse/Circle pattern):
 - Cleaner vertical separation between content and actions
 
 ### Missing Features (from 6-phase BuddyNext comparison)
-- [ ] Profile Media/Replies/Likes tabs
-- [ ] @mention auto-linking in post/reply content
-- [ ] #hashtag auto-linking in content
+
+**In Progress (agents executing):**
+- [ ] @mention auto-linking in post/reply content — Agent 1
+- [ ] #hashtag auto-linking in content — Agent 1
+- [ ] Profile Replies + Votes tabs — Agent 2
+- [ ] Notification badge count in nav — Agent 2
+- [ ] Mobile bottom tab bar — Agent 3
+- [ ] Skeleton loading CSS — Agent 3
+
+**Remaining (next batch):**
+- [ ] Profile Media tab (needs WPMediaVerse bridge)
 - [ ] User hover cards on author names
-- [ ] Notification dropdown panel
+- [ ] Notification dropdown panel (bell → dropdown, not page)
 - [ ] Search overlay (cmd+K)
-- [ ] Keyboard shortcuts
-- [ ] Infinite scroll
-- [ ] Mobile bottom tab bar
-- [ ] Link preview cards
-- [ ] Content scheduling
-- [ ] Pin posts feature
-- [ ] Skeleton loading states
-- [ ] Beautiful empty states with illustrations
+- [ ] Keyboard shortcuts (/, n, j/k, ?)
+- [ ] Infinite scroll (IntersectionObserver on pagination)
+- [ ] Link preview cards (auto-fetch OG data)
+- [ ] Content scheduling (published_at field + cron)
+- [ ] Pin posts to space (is_sticky field exists)
+- [ ] Beautiful empty states with SVG illustrations
 
 ### Unified Icon System (cross-plugin)
 See: `buddynext/docs/ICON_SYSTEM_PLAN.md`
