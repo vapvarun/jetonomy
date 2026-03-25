@@ -176,7 +176,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 						</span>
 						<?php if ( $post->is_resolved ) : ?>
 							<span class="jt-badge-resolved">
-								&#10003; <?php esc_html_e( 'Resolved', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Resolved', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
 						<?php if ( $post->is_closed ) : ?>
@@ -265,7 +265,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
-									data-post-id="<?php echo (int) $post->id; ?>">&#9998; <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo (int) $post->id; ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"
@@ -279,7 +279,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
-								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>">&#9881; <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
+								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
 							<?php endif; ?>
 						</div>
 					</div>
