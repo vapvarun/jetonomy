@@ -40,8 +40,10 @@
 
 ## Execution Priority for Friday Release
 
-1. Fix emoji reactions → SVG or text labels
-2. Clean up action icon clutter
-3. Verify container width on all pages
-4. Add hover effects to discussion cards
-5. Wire toast notifications
+1. ~~Fix emoji reactions → SVG or text labels~~ DONE (text labels in JT Pro)
+2. ~~Replace all empty state + toolbar emoji → jetonomy_icon() SVG helpers~~ DONE (16 templates)
+3. **Redesign reaction UX** — single "React" button with hover picker (Facebook pattern), not 8 buttons shown at once. Match BuddyNext post-card reaction picker. (JT Pro Extension)
+4. Clean up action icon clutter on single-post view (too many icons in toolbar)
+5. Verify container width on all pages
+6. Add hover effects to discussion cards
+7. Wire window.bnToast() for JT actions (vote, reply, bookmark)
