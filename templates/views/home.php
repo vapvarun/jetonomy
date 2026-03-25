@@ -59,7 +59,7 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 		<main>
 			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
 				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'search', 48 ); ?></div>
+					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-posts', 80 ); ?></div>
 					<div class="jt-empty-text"><?php esc_html_e( 'No categories yet. Check back soon!', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>

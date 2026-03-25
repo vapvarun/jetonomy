@@ -166,7 +166,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 
 			<?php if ( empty( $posts ) ) : ?>
 				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'message-circle', 48 ); ?></div>
+					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-posts', 80 ); ?></div>
 					<div class="jt-empty-text">
 						<?php
 						if ( 'unanswered' === $sort ) {

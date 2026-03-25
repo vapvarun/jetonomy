@@ -49,7 +49,7 @@ $role_labels = [
 
 			<?php if ( empty( $members ) ) : ?>
 				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'users', 48 ); ?></div>
+					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-members', 80 ); ?></div>
 					<div class="jt-empty-text"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>

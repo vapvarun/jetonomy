@@ -328,7 +328,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 				</div>
 
 				<?php if ( empty( $first_batch ) && empty( $last_batch ) ) : ?>
-					<div class="jt-empty-compact">
+					<div class="jt-empty">
+						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-replies', 80 ); ?></div>
 						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
 					</div>
 				<?php else : ?>

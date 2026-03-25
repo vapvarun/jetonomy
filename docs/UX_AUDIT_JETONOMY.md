@@ -82,17 +82,19 @@ Target (Discourse/Circle pattern):
 - [x] Mobile bottom tab bar — 5-tab fixed bottom nav (≤640px)
 - [x] Skeleton loading CSS — shimmer animations for topics, replies, sidebar, profile
 
-**Remaining (next batch):**
+**Completed (session 2 — batch 2):**
+- [x] Notification dropdown panel — bell button opens panel with REST-fetched notifications + mark all read
+- [x] Search overlay (cmd+K) — modal overlay with debounced instant search, ESC to close
+- [x] Keyboard shortcuts — /, Ctrl+K search; j/k navigate rows; Enter open; n home; ? help modal
+- [x] Infinite scroll — IntersectionObserver on pagination partial, auto-fetches next page
+- [x] Beautiful empty states — 5 contextual SVG illustrations (posts, replies, search, notifications, members)
+
+**Remaining (future):**
 - [ ] Profile Media tab (needs WPMediaVerse bridge)
 - [ ] User hover cards on author names
-- [ ] Notification dropdown panel (bell → dropdown, not page)
-- [ ] Search overlay (cmd+K)
-- [ ] Keyboard shortcuts (/, n, j/k, ?)
-- [ ] Infinite scroll (IntersectionObserver on pagination)
 - [ ] Link preview cards (auto-fetch OG data)
 - [ ] Content scheduling (published_at field + cron)
-- [ ] Pin posts to space (is_sticky field exists)
-- [ ] Beautiful empty states with SVG illustrations
+- [ ] Pin posts UI (backend Post::pin() exists, needs frontend button)
 
 ### Unified Icon System (cross-plugin)
 See: `buddynext/docs/ICON_SYSTEM_PLAN.md`

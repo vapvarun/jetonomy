@@ -1061,6 +1061,101 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 
+/* ── Notification Dropdown Panel ── */
+.jt-notif-dropdown-wrap { position: relative; display: inline-flex; }
+.jt-notif-panel {
+  position: absolute; top: 100%; right: 0; z-index: 200;
+  width: 340px; max-height: 420px;
+  background: var(--jt-bg); border: 1px solid var(--jt-border);
+  border-radius: var(--jt-radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  overflow: hidden;
+  animation: jt-fadeIn 0.2s ease;
+}
+.jt-notif-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--jt-border);
+}
+.jt-notif-panel-head strong { font-size: 0.875rem; }
+.jt-notif-mark-read {
+  border: none; background: none; color: var(--jt-accent);
+  font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0;
+  font-family: var(--jt-font);
+}
+.jt-notif-mark-read:hover { text-decoration: underline; }
+.jt-notif-panel-body { max-height: 280px; overflow-y: auto; }
+.jt-notif-panel-loading, .jt-notif-panel-empty {
+  padding: 24px 16px; text-align: center;
+  color: var(--jt-text-tertiary); font-size: 0.875rem;
+}
+.jt-notif-panel-item {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 16px; border-bottom: 1px solid var(--jt-border);
+  text-decoration: none; color: inherit; transition: background 0.1s;
+}
+.jt-notif-panel-item:last-child { border-bottom: none; }
+.jt-notif-panel-item:hover { background: var(--jt-bg-hover); }
+.jt-notif-panel-item.unread { background: var(--jt-accent-light); }
+.jt-notif-panel-text { font-size: 0.8125rem; line-height: 1.4; }
+.jt-notif-panel-time { font-size: 0.6875rem; color: var(--jt-text-tertiary); }
+.jt-notif-panel-footer {
+  display: block; text-align: center;
+  padding: 10px 16px; border-top: 1px solid var(--jt-border);
+  font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent);
+  text-decoration: none; transition: background 0.1s;
+}
+.jt-notif-panel-footer:hover { background: var(--jt-bg-hover); color: var(--jt-accent); }
+@media (max-width: 640px) {
+  .jt-notif-panel { width: calc(100vw - 32px); right: -16px; }
+}
+
+/* ── Search Overlay (Cmd+K) ── */
+.jt-search-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.4);
+  display: none; align-items: flex-start; justify-content: center;
+  padding-top: 15vh;
+}
+.jt-search-overlay.open { display: flex; }
+.jt-search-overlay-inner {
+  width: 560px; max-width: calc(100vw - 32px);
+  background: var(--jt-bg); border-radius: var(--jt-radius-lg);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  overflow: hidden;
+  animation: jt-fadeIn 0.15s ease;
+}
+.jt-search-overlay-field {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 20px; border-bottom: 1px solid var(--jt-border);
+}
+.jt-search-overlay-icon { flex-shrink: 0; color: var(--jt-text-tertiary); display: flex; }
+.jt-search-overlay-input {
+  flex: 1; border: none; background: none; outline: none;
+  font-family: var(--jt-font); font-size: 1.0625rem; color: var(--jt-text);
+  padding: 0;
+}
+.jt-search-overlay-input::placeholder { color: var(--jt-text-tertiary); }
+.jt-search-overlay-kbd {
+  font-family: var(--jt-font-mono); font-size: 0.6875rem;
+  padding: 2px 6px; border-radius: 4px;
+  background: var(--jt-bg-muted); border: 1px solid var(--jt-border);
+  color: var(--jt-text-tertiary);
+}
+.jt-search-overlay-results { max-height: 360px; overflow-y: auto; }
+.jt-search-overlay-empty {
+  padding: 24px 20px; text-align: center;
+  color: var(--jt-text-tertiary); font-size: 0.875rem;
+}
+.jt-search-overlay-item {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 20px; border-bottom: 1px solid var(--jt-border);
+  text-decoration: none; color: inherit; transition: background 0.1s;
+}
+.jt-search-overlay-item:last-child { border-bottom: none; }
+.jt-search-overlay-item:hover { background: var(--jt-bg-hover); }
+.jt-search-overlay-item strong { font-size: 0.9375rem; }
+.jt-search-overlay-item span { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+
 /* ── Skeleton Loading Placeholders ── */
 @keyframes jt-shimmer {
   0% { background-position: -400px 0; }

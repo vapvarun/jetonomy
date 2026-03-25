@@ -38,7 +38,7 @@ $type_labels = [
 
 		<?php if ( empty( $notifications ) ) : ?>
 			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'bell', 48 ); ?></div>
+				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-notifications', 80 ); ?></div>
 				<div class="jt-empty-text"><?php esc_html_e( 'You are all caught up!', 'jetonomy' ); ?></div>
 			</div>
 		<?php else : ?>

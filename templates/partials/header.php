@@ -46,12 +46,26 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 
 		<div class="jt-community-nav-actions">
 			<?php if ( $user_id ) : ?>
-				<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-					<?php if ( $unread > 0 ) : ?>
-						<span class="jt-community-nav-badge"><?php echo (int) $unread; ?></span>
-					<?php endif; ?>
-				</a>
+				<div class="jt-notif-dropdown-wrap">
+					<button type="button" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>" onclick="jtToggleNotifDropdown(this)">
+						<?php jetonomy_echo_icon( 'bell', 16 ); ?>
+						<?php if ( $unread > 0 ) : ?>
+							<span class="jt-community-nav-badge"><?php echo (int) $unread; ?></span>
+						<?php endif; ?>
+					</button>
+					<div class="jt-notif-panel" hidden>
+						<div class="jt-notif-panel-head">
+							<strong><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></strong>
+							<button type="button" class="jt-notif-mark-read" onclick="jtMarkAllRead()"><?php esc_html_e( 'Mark all read', 'jetonomy' ); ?></button>
+						</div>
+						<div class="jt-notif-panel-body">
+							<div class="jt-notif-panel-loading"><?php esc_html_e( 'Loading...', 'jetonomy' ); ?></div>
+						</div>
+						<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-notif-panel-footer">
+							<?php esc_html_e( 'View all notifications', 'jetonomy' ); ?>
+						</a>
+					</div>
+				</div>
 			<?php endif; ?>
 
 			<?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
@@ -149,4 +163,236 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 })();
 </script>
 <?php endif; ?>
+
+<?php
+// Data for JS — all escaped server-side via wp_json_encode.
+$jt_js_data = [
+	'base'          => $base,
+	'nonce'         => wp_create_nonce( 'wp_rest' ),
+	'isLoggedIn'    => (bool) $user_id,
+	'restNotif'     => rest_url( 'jetonomy/v1/notifications' ),
+	'restMarkRead'  => rest_url( 'jetonomy/v1/notifications/mark-read' ),
+	'restSearch'    => rest_url( 'jetonomy/v1/search' ),
+	'searchIcon'    => jetonomy_icon( 'search', 20 ),
+	'i18n'          => [
+		'noNotifs'    => __( 'No notifications yet.', 'jetonomy' ),
+		'noResults'   => __( 'No results found.', 'jetonomy' ),
+		'searchPH'    => __( 'Search discussions...', 'jetonomy' ),
+		'shortcuts'   => __( 'Keyboard Shortcuts', 'jetonomy' ),
+		'close'       => __( 'Close', 'jetonomy' ),
+		'loadFail'    => __( 'Failed to load', 'jetonomy' ),
+	],
+];
+?>
+<script>
+(function() {
+	var D = <?php echo wp_json_encode( $jt_js_data ); ?>;
+
+	/* ── Notification Dropdown ── */
+	var notifLoaded = false;
+	window.jtToggleNotifDropdown = function(btn) {
+		var wrap = btn.closest('.jt-notif-dropdown-wrap');
+		var panel = wrap.querySelector('.jt-notif-panel');
+		var isOpen = !panel.hidden;
+		panel.hidden = isOpen;
+		if (!isOpen && !notifLoaded) {
+			notifLoaded = true;
+			fetch(D.restNotif + '?per_page=5', {
+				headers: { 'X-WP-Nonce': D.nonce }
+			}).then(function(r) { return r.json(); }).then(function(data) {
+				var body = panel.querySelector('.jt-notif-panel-body');
+				if (!data.length) {
+					body.textContent = D.i18n.noNotifs;
+					body.className = 'jt-notif-panel-body jt-notif-panel-empty';
+					return;
+				}
+				body.textContent = '';
+				data.forEach(function(n) {
+					var a = document.createElement('a');
+					a.href = n.url || (D.base + '/notifications/');
+					a.className = 'jt-notif-panel-item' + (n.is_read ? '' : ' unread');
+					var txt = document.createElement('span');
+					txt.className = 'jt-notif-panel-text';
+					txt.textContent = n.message || '';
+					a.appendChild(txt);
+					var time = document.createElement('span');
+					time.className = 'jt-notif-panel-time';
+					time.textContent = n.time_ago || '';
+					a.appendChild(time);
+					body.appendChild(a);
+				});
+			}).catch(function() {
+				var body = panel.querySelector('.jt-notif-panel-body');
+				body.textContent = D.i18n.loadFail;
+				body.className = 'jt-notif-panel-body jt-notif-panel-empty';
+			});
+		}
+	};
+	window.jtMarkAllRead = function() {
+		fetch(D.restMarkRead, {
+			method: 'POST', headers: { 'X-WP-Nonce': D.nonce }
+		}).then(function() {
+			var badge = document.querySelector('.jt-community-nav-badge');
+			if (badge) badge.remove();
+			document.querySelectorAll('.jt-notif-panel-item.unread').forEach(function(i) {
+				i.classList.remove('unread');
+			});
+		});
+	};
+	/* Close dropdown on outside click */
+	document.addEventListener('click', function(e) {
+		if (!e.target || !e.target.closest) return;
+		if (!e.target.closest('.jt-notif-dropdown-wrap')) {
+			var panel = document.querySelector('.jt-notif-panel');
+			if (panel) panel.hidden = true;
+		}
+	});
+
+	/* ── Search Overlay ── */
+	var searchEl = null, searchTimer = null;
+	function buildSearchOverlay() {
+		if (searchEl) return searchEl;
+		searchEl = document.createElement('div');
+		searchEl.className = 'jt-search-overlay';
+		var inner = document.createElement('div');
+		inner.className = 'jt-search-overlay-inner';
+		var field = document.createElement('div');
+		field.className = 'jt-search-overlay-field';
+		var iconSpan = document.createElement('span');
+		iconSpan.className = 'jt-search-overlay-icon';
+		iconSpan.innerHTML = D.searchIcon; /* Trusted SVG from server */
+		field.appendChild(iconSpan);
+		var input = document.createElement('input');
+		input.type = 'text';
+		input.className = 'jt-search-overlay-input';
+		input.placeholder = D.i18n.searchPH;
+		input.autocomplete = 'off';
+		field.appendChild(input);
+		var kbd = document.createElement('kbd');
+		kbd.className = 'jt-search-overlay-kbd';
+		kbd.textContent = 'ESC';
+		field.appendChild(kbd);
+		inner.appendChild(field);
+		var results = document.createElement('div');
+		results.className = 'jt-search-overlay-results';
+		inner.appendChild(results);
+		searchEl.appendChild(inner);
+		document.body.appendChild(searchEl);
+
+		input.addEventListener('input', function() {
+			clearTimeout(searchTimer);
+			var q = input.value.trim();
+			if (q.length < 2) { results.textContent = ''; return; }
+			searchTimer = setTimeout(function() {
+				fetch(D.restSearch + '?q=' + encodeURIComponent(q) + '&per_page=6', {
+					headers: { 'X-WP-Nonce': D.nonce }
+				}).then(function(r) { return r.json(); }).then(function(data) {
+					results.textContent = '';
+					if (!data.length) { results.textContent = D.i18n.noResults; results.className = 'jt-search-overlay-results jt-search-overlay-empty'; return; }
+					results.className = 'jt-search-overlay-results';
+					data.forEach(function(r) {
+						var a = document.createElement('a');
+						a.href = r.url;
+						a.className = 'jt-search-overlay-item';
+						var strong = document.createElement('strong');
+						strong.textContent = r.title;
+						a.appendChild(strong);
+						if (r.space_title) {
+							var span = document.createElement('span');
+							span.textContent = r.space_title;
+							a.appendChild(span);
+						}
+						results.appendChild(a);
+					});
+				});
+			}, 250);
+		});
+
+		searchEl.addEventListener('click', function(e) { if (e.target === searchEl) jtCloseSearch(); });
+		input.addEventListener('keydown', function(e) { if (e.key === 'Escape') jtCloseSearch(); });
+		return searchEl;
+	}
+	window.jtOpenSearch = function() {
+		var el = buildSearchOverlay();
+		el.classList.add('open');
+		var inp = el.querySelector('.jt-search-overlay-input');
+		inp.value = '';
+		el.querySelector('.jt-search-overlay-results').textContent = '';
+		setTimeout(function() { inp.focus(); }, 50);
+	};
+	window.jtCloseSearch = function() {
+		if (searchEl) searchEl.classList.remove('open');
+	};
+
+	/* ── Keyboard Shortcuts ── */
+	var shortcutOpen = false;
+	document.addEventListener('keydown', function(e) {
+		var tag = (e.target.tagName || '').toLowerCase();
+		if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+
+		if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); jtOpenSearch(); return; }
+		if (e.key === '/' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); jtOpenSearch(); return; }
+		if (e.key === 'n' && !e.metaKey && !e.ctrlKey && D.isLoggedIn) { window.location.href = D.base + '/'; return; }
+
+		if (e.key === 'j' || e.key === 'k') {
+			var rows = Array.from(document.querySelectorAll('.jt-row, a.jt-row'));
+			if (!rows.length) return;
+			var cur = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
+			var idx = cur ? rows.indexOf(cur) : -1;
+			if (cur) cur.classList.remove('jt-kb-focus');
+			idx = e.key === 'j' ? Math.min(idx + 1, rows.length - 1) : Math.max(idx - 1, 0);
+			rows[idx].classList.add('jt-kb-focus');
+			rows[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+			return;
+		}
+		if (e.key === 'Enter') {
+			var focused = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
+			if (focused) { focused.click(); return; }
+		}
+		if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
+			e.preventDefault();
+			if (shortcutOpen) { jtCloseShortcutHelp(); return; }
+			shortcutOpen = true;
+			var modal = document.createElement('div');
+			modal.className = 'jt-shortcut-help';
+			var box = document.createElement('div');
+			box.className = 'jt-shortcut-modal';
+			var h3 = document.createElement('h3');
+			h3.textContent = D.i18n.shortcuts;
+			box.appendChild(h3);
+			var tbl = document.createElement('table');
+			var shortcuts = [
+				['/ or Ctrl+K', 'Search'],
+				['j / k', 'Navigate up/down'],
+				['Enter', 'Open selected'],
+				['n', 'Home'],
+				['?', 'This help']
+			];
+			shortcuts.forEach(function(s) {
+				var tr = document.createElement('tr');
+				var td1 = document.createElement('td');
+				td1.textContent = s[0];
+				tr.appendChild(td1);
+				var td2 = document.createElement('td');
+				td2.textContent = s[1];
+				tr.appendChild(td2);
+				tbl.appendChild(tr);
+			});
+			box.appendChild(tbl);
+			var closeBtn = document.createElement('button');
+			closeBtn.textContent = D.i18n.close;
+			closeBtn.addEventListener('click', function() { jtCloseShortcutHelp(); });
+			box.appendChild(closeBtn);
+			modal.appendChild(box);
+			document.body.appendChild(modal);
+			modal.addEventListener('click', function(ev) { if (ev.target === modal) jtCloseShortcutHelp(); });
+		}
+	});
+	window.jtCloseShortcutHelp = function() {
+		shortcutOpen = false;
+		var m = document.querySelector('.jt-shortcut-help');
+		if (m) m.remove();
+	};
+})();
+</script>
 <?php
