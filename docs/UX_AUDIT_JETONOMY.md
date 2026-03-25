@@ -40,10 +40,54 @@
 
 ## Execution Priority for Friday Release
 
-1. ~~Fix emoji reactions → SVG or text labels~~ DONE (text labels in JT Pro)
-2. ~~Replace all empty state + toolbar emoji → jetonomy_icon() SVG helpers~~ DONE (16 templates)
-3. **Redesign reaction UX** — single "React" button with hover picker (Facebook pattern), not 8 buttons shown at once. Match BuddyNext post-card reaction picker. (JT Pro Extension)
-4. Clean up action icon clutter on single-post view (too many icons in toolbar)
-5. Verify container width on all pages
-6. Add hover effects to discussion cards
-7. Wire window.bnToast() for JT actions (vote, reply, bookmark)
+## Completed
+
+- [x] Emoji reactions → Fluentui 3D PNG icons (JT Pro) — MIT license, 308KB bundled
+- [x] Empty state + toolbar emoji → jetonomy_icon() SVG helpers (16 templates)
+- [x] Reaction UX → single "React" button with hover picker (Facebook pattern)
+- [x] Action clutter → edit/delete/pin into "..." dropdown (post + replies)
+- [x] Container widths → verified correct (token-based, BN bridge overrides)
+- [x] Hover effects → discussion cards lift on hover
+- [x] Toast notifications → wired for vote, bookmark, follow, flag (debounced)
+- [x] Icon system → jetonomy_icon() + 19 SVG files + edit.svg + settings.svg
+- [x] All HTML entities → replaced with SVG icons across all templates
+
+## Remaining — Premium UX (plan first, apply uniformly)
+
+### Reply Card Redesign (SaaS-level)
+Current: vote arrows + Reply + ... + React all inline, looks crowded
+Target (Discourse/Circle pattern):
+```
+┌─────────────────────────────────────────────────────┐
+│ [Avatar] Author Name  Trust Level  1 day ago    ... │
+│                                                      │
+│ Reply content here...                                │
+│                                                      │
+│ ▲ 3 ▼   [React chips: ❤️3 👍2]     Reply   React  │
+└─────────────────────────────────────────────────────┘
+```
+- Reaction summary chips inline with action bar
+- "..." dropdown for admin actions (edit/delete/report) in top-right corner
+- Cleaner vertical separation between content and actions
+
+### Missing Features (from 6-phase BuddyNext comparison)
+- [ ] Profile Media/Replies/Likes tabs
+- [ ] @mention auto-linking in post/reply content
+- [ ] #hashtag auto-linking in content
+- [ ] User hover cards on author names
+- [ ] Notification dropdown panel
+- [ ] Search overlay (cmd+K)
+- [ ] Keyboard shortcuts
+- [ ] Infinite scroll
+- [ ] Mobile bottom tab bar
+- [ ] Link preview cards
+- [ ] Content scheduling
+- [ ] Pin posts feature
+- [ ] Skeleton loading states
+- [ ] Beautiful empty states with illustrations
+
+### Unified Icon System (cross-plugin)
+See: `buddynext/docs/ICON_SYSTEM_PLAN.md`
+- Lucide for UI icons (line, monochrome)
+- Fluentui 3D for reaction icons (colorful, premium)
+- 30 shared icon slugs standardized across BN + JT + MVS
