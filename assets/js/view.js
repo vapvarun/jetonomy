@@ -100,7 +100,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( window.bnToast ) window.bnToast( 'Vote recorded' );
+                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
                 } else {
                     // Rollback on error
                     state.postScores[ postId ] = current;
@@ -143,7 +143,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( window.bnToast ) window.bnToast( 'Vote recorded' );
+                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
                 } else {
                     state.postScores[ postId ] = current;
                 }
