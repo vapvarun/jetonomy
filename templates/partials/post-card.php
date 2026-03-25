@@ -13,14 +13,14 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 <a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? 'pinned' : ''; ?>"
 	data-wp-interactive="jetonomy">
 	<div class="jt-votes">
-		<span class="jt-v-btn" aria-hidden="true">&#9650;</span>
+		<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
 		<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
-		<span class="jt-v-btn" aria-hidden="true">&#9660;</span>
+		<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
 	</div>
 	<div class="jt-row-main">
 		<div class="jt-row-title">
 			<?php if ( $post->is_sticky ) : ?>
-				<span aria-hidden="true">&#128204;</span>
+				<span aria-hidden="true"><?php jetonomy_echo_icon( 'pin', 14 ); ?></span>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
 		</div>

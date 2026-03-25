@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) || exit;
 // Require moderator / admin access.
 if ( ! current_user_can( 'moderate_comments' ) && ! current_user_can( 'manage_options' ) ) {
 	status_header( 403 );
-	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128274;</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'lock', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -43,7 +43,7 @@ $crumbs = [
 
 		<?php if ( empty( $flags ) ) : ?>
 			<div class="jt-empty">
-				<div class="jt-empty-icon">&#127881;</div>
+				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'check-circle', 48 ); ?></div>
 				<div class="jt-empty-text"><?php esc_html_e( 'No pending flags. The community is clean!', 'jetonomy' ); ?></div>
 			</div>
 		<?php else : ?>

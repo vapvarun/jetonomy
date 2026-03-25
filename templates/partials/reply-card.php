@@ -33,12 +33,12 @@ $is_accepted = (int) $reply->is_accepted;
 			data-wp-on--click="actions.voteReplyUp"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
-			&#9650; <span class="n"><?php echo (int) $reply->vote_score; ?></span>
+			<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 		</button>
 		<button class="jt-act"
 			data-wp-on--click="actions.voteReplyDown"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
-			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">&#9660;</button>
+			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 		<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
@@ -53,7 +53,7 @@ $is_accepted = (int) $reply->is_accepted;
 			<button class="jt-act jt-reply-delete"
 				data-wp-on--click="actions.deleteReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
-				title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>">&#128465;</button>
+				title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?></button>
 		<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>

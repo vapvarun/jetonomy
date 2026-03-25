@@ -42,7 +42,7 @@ $crumbs = [
 
 		<?php if ( empty( $leaders ) ) : ?>
 			<div class="jt-empty">
-				<div class="jt-empty-icon">&#127942;</div>
+				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'award', 48 ); ?></div>
 				<div class="jt-empty-text"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></div>
 			</div>
 		<?php else : ?>

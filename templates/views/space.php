@@ -6,7 +6,7 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -166,7 +166,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 
 			<?php if ( empty( $posts ) ) : ?>
 				<div class="jt-empty">
-					<div class="jt-empty-icon">&#128172;</div>
+					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'message-circle', 48 ); ?></div>
 					<div class="jt-empty-text">
 						<?php
 						if ( 'unanswered' === $sort ) {

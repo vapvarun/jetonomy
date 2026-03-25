@@ -6,7 +6,7 @@ $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
 if ( ! $post ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -17,7 +17,7 @@ if ( 'publish' !== $post->status ) {
 
 	if ( ! $is_author && ! $is_mod ) {
 		status_header( 404 );
-		echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+		echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 		return;
 	}
 }
@@ -222,14 +222,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 						data-wp-on--click="actions.voteUp"
 						data-post-id="<?php echo (int) $post->id; ?>"
 						aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
-						&#9650;
+						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 						<span class="n" data-wp-text="state.postScores.<?php echo (int) $post->id; ?>"><?php echo (int) $post->vote_score; ?></span>
 					</button>
 					<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteDown"
 						data-post-id="<?php echo (int) $post->id; ?>"
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
-						&#9660;
+						<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 					</button>
 					<span class="jt-view-count">
 						<?php
@@ -241,7 +241,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 					data-wp-on--click="actions.sharePost"
 					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
 					data-post-title="<?php echo esc_attr( $post->title ); ?>"
-					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>">&#128279;</button>
+					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<?php if ( is_user_logged_in() ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
 				?>
@@ -249,7 +249,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 						data-wp-on--click="actions.toggleBookmark"
 						data-post-id="<?php echo (int) $post->id; ?>"
 						data-bookmarked="<?php echo $is_bookmarked ? '1' : '0'; ?>"
-						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>">&#128278;</button>
+						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
 				<?php endif; ?>
 				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
 					<span class="jt-actions-group">
@@ -264,7 +264,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 								data-wp-on--click="actions.pinPost"
 								data-post-id="<?php echo (int) $post->id; ?>"
 								title="<?php echo $post->is_sticky ? esc_attr__( 'Unpin', 'jetonomy' ) : esc_attr__( 'Pin', 'jetonomy' ); ?>">
-								<?php echo $post->is_sticky ? '&#128204;' : '&#128205;'; ?>
+								<?php jetonomy_echo_icon( 'pin', 16 ); ?>
 							</button>
 						<?php endif; ?>
 						<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
@@ -272,7 +272,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 								data-wp-on--click="actions.deletePost"
 								data-post-id="<?php echo (int) $post->id; ?>"
 								data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"
-								title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>">&#128465;</button>
+								title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?></button>
 						<?php endif; ?>
 						<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 							<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>" class="jt-act" title="<?php esc_attr_e( 'Admin', 'jetonomy' ); ?>">&#9881;</a>

@@ -112,7 +112,7 @@ $crumbs = [
 
 				<?php if ( 0 === $total ) : ?>
 					<div class="jt-empty">
-						<div class="jt-empty-icon">&#128270;</div>
+						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'search', 48 ); ?></div>
 						<div class="jt-empty-text">
 							<?php
 							/* translators: %s: search query */
@@ -210,7 +210,7 @@ $crumbs = [
 			<?php else : ?>
 				<!-- No query yet -->
 				<div class="jt-empty">
-					<div class="jt-empty-icon">&#128270;</div>
+					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'search', 48 ); ?></div>
 					<div class="jt-empty-text"><?php esc_html_e( 'Enter a search term above to find discussions, spaces, and tags.', 'jetonomy' ); ?></div>
 				</div>
 			<?php endif; ?>

@@ -6,7 +6,7 @@ $tag      = \Jetonomy\Models\Tag::find_by_slug( $tag_slug );
 
 if ( ! $tag ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Tag not found.', 'jetonomy' ) . '</div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Tag not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -78,7 +78,7 @@ $crumbs = [
 
 			<?php if ( empty( $posts ) ) : ?>
 				<div class="jt-empty">
-					<div class="jt-empty-icon">&#128172;</div>
+					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'message-circle', 48 ); ?></div>
 					<div class="jt-empty-text"><?php esc_html_e( 'No posts with this tag yet.', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>

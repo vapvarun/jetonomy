@@ -6,7 +6,7 @@ $user       = get_user_by( 'login', $user_login );
 
 if ( ! $user ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'User not found.', 'jetonomy' ) . '</div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'User not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 

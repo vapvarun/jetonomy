@@ -32,6 +32,39 @@ function jetonomy(): Jetonomy\Jetonomy {
 
 jetonomy();
 
+/**
+ * Render an SVG icon from assets/icons/.
+ *
+ * @param string $name Icon slug (filename without .svg).
+ * @param int    $size Width/height in px (default 24).
+ * @return string Sanitized SVG markup.
+ */
+function jetonomy_icon( string $name, int $size = 24 ): string {
+	static $cache = array();
+	if ( isset( $cache[ $name ] ) ) {
+		$svg = $cache[ $name ];
+	} else {
+		$file = JETONOMY_DIR . 'assets/icons/' . sanitize_file_name( $name ) . '.svg';
+		if ( ! file_exists( $file ) ) {
+			return '';
+		}
+		$svg = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$cache[ $name ] = $svg;
+	}
+	$svg = str_replace( '<svg ', '<svg width="' . $size . '" height="' . $size . '" ', $svg );
+	return $svg;
+}
+
+/**
+ * Echo an SVG icon.
+ *
+ * @param string $name Icon slug.
+ * @param int    $size Width/height in px.
+ */
+function jetonomy_echo_icon( string $name, int $size = 24 ): void {
+	echo jetonomy_icon( $name, $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG from trusted local file.
+}
+
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
     require_once JETONOMY_DIR . 'includes/class-cli.php';
     \WP_CLI::add_command( 'jetonomy', 'Jetonomy\\CLI' );

@@ -6,7 +6,7 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-icon">&#128483;</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
@@ -91,7 +91,7 @@ $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 								<?php echo esc_html( wp_strip_all_tags( $idea->content ) ); ?>
 							</div>
 							<div class="jt-idea-meta">
-								<span class="jt-idea-votes">&#9650; <?php echo (int) $idea->vote_score; ?></span>
+								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo (int) $idea->vote_score; ?></span>
 								<span><?php echo (int) $idea->reply_count; ?> <?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
 							</div>
 						</div>
