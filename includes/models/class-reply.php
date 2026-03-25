@@ -215,6 +215,38 @@ class Reply extends Model {
 	}
 
 	/**
+	 * List published replies by a specific user, with parent post info.
+	 *
+	 * @param int $user_id  Author user ID.
+	 * @param int $limit    Max rows.
+	 * @param int $offset   Pagination offset.
+	 * @return object[]
+	 */
+	public static function list_by_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
+		$replies_tbl = static::table();
+		$posts_tbl   = \Jetonomy\table( 'posts' );
+		$spaces_tbl  = \Jetonomy\table( 'spaces' );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, sp.slug AS space_slug, sp.title AS space_title
+				 FROM {$replies_tbl} r
+				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE r.author_id = %d AND r.status = 'publish'
+				 ORDER BY r.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$user_id,
+				$limit,
+				$offset
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
 	 * Count top-level replies (parent_id IS NULL or 0).
 	 *
 	 * @param int $post_id Post ID.

@@ -64,6 +64,42 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		</div>
 	</div>
 </nav>
+<!-- Mobile bottom tab bar (visible ≤640px only, hidden when BuddyNext provides its own) -->
+<?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
+<nav class="jt-mobile-tabs" aria-label="<?php esc_attr_e( 'Mobile navigation', 'jetonomy' ); ?>">
+	<a href="<?php echo esc_url( $base . '/' ); ?>" class="jt-mobile-tab <?php echo 'home' === $current_route ? 'active' : ''; ?>">
+		<?php jetonomy_echo_icon( 'home', 20 ); ?>
+		<span><?php esc_html_e( 'Home', 'jetonomy' ); ?></span>
+	</a>
+	<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-mobile-tab <?php echo 'search' === $current_route ? 'active' : ''; ?>">
+		<?php jetonomy_echo_icon( 'search', 20 ); ?>
+		<span><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
+	</a>
+	<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="jt-mobile-tab <?php echo 'leaderboard' === $current_route ? 'active' : ''; ?>">
+		<?php jetonomy_echo_icon( 'award', 20 ); ?>
+		<span><?php esc_html_e( 'Ranks', 'jetonomy' ); ?></span>
+	</a>
+	<?php if ( $user_id ) : ?>
+		<a href="<?php echo esc_url( $base . '/notifications/' ); ?>" class="jt-mobile-tab <?php echo 'notifications' === $current_route ? 'active' : ''; ?>">
+			<?php jetonomy_echo_icon( 'bell', 20 ); ?>
+			<span><?php esc_html_e( 'Alerts', 'jetonomy' ); ?></span>
+			<?php if ( $unread > 0 ) : ?>
+				<span class="jt-mobile-tab-badge"><?php echo (int) $unread; ?></span>
+			<?php endif; ?>
+		</a>
+		<a href="<?php echo esc_url( $base . '/u/' . wp_get_current_user()->user_login . '/' ); ?>" class="jt-mobile-tab <?php echo 'profile' === $current_route ? 'active' : ''; ?>">
+			<?php jetonomy_echo_icon( 'users', 20 ); ?>
+			<span><?php esc_html_e( 'Profile', 'jetonomy' ); ?></span>
+		</a>
+	<?php else : ?>
+		<a href="<?php echo esc_url( wp_login_url( $base . '/' ) ); ?>" class="jt-mobile-tab">
+			<?php jetonomy_echo_icon( 'users', 20 ); ?>
+			<span><?php esc_html_e( 'Login', 'jetonomy' ); ?></span>
+		</a>
+	<?php endif; ?>
+</nav>
+<?php endif; ?>
+
 <?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
 <style>
 /* Font size control — mirrors BuddyNext A/A+/A++ pattern */

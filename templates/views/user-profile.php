@@ -58,6 +58,18 @@ if ( 'bookmarks' === $current_tab && $is_own ) {
 	$bookmarks = \Jetonomy\Models\Bookmark::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
+// Replies tab.
+$user_replies = [];
+if ( 'replies' === $current_tab ) {
+	$user_replies = \Jetonomy\Models\Reply::list_by_user( (int) $user->ID, $per_page, $offset );
+}
+
+// Votes tab.
+$user_votes = [];
+if ( 'votes' === $current_tab ) {
+	$user_votes = \Jetonomy\Models\Vote::list_by_user( (int) $user->ID, $per_page, $offset );
+}
+
 $crumbs = [
 	[ 'label' => $user->display_name, 'url' => '' ],
 ];
@@ -150,6 +162,12 @@ $crumbs = [
 				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/' ); ?>" class="jt-profile-tab <?php echo empty( $current_tab ) ? 'active' : ''; ?>">
 					<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
 				</a>
+				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/replies/' ); ?>" class="jt-profile-tab <?php echo 'replies' === $current_tab ? 'active' : ''; ?>">
+					<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
+				</a>
+				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/votes/' ); ?>" class="jt-profile-tab <?php echo 'votes' === $current_tab ? 'active' : ''; ?>">
+					<?php esc_html_e( 'Votes', 'jetonomy' ); ?>
+				</a>
 				<?php if ( $is_own ) : ?>
 					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/bookmarks/' ); ?>" class="jt-profile-tab <?php echo 'bookmarks' === $current_tab ? 'active' : ''; ?>">
 						<?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?>
@@ -157,7 +175,88 @@ $crumbs = [
 				<?php endif; ?>
 			</div>
 
-			<?php if ( 'bookmarks' === $current_tab && $is_own ) : ?>
+			<?php if ( 'replies' === $current_tab ) : ?>
+				<?php if ( empty( $user_replies ) ) : ?>
+					<div class="jt-empty-compact">
+						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet.', 'jetonomy' ); ?></div>
+					</div>
+				<?php else : ?>
+					<div class="jt-topics">
+						<?php foreach ( $user_replies as $ur ) : ?>
+							<?php
+							$ur_url = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
+							$ur_ago = human_time_diff( strtotime( $ur->created_at ), current_time( 'timestamp', true ) );
+							?>
+							<div class="jt-row" onclick="window.location='<?php echo esc_url( $ur_url ); ?>'">
+								<div class="jt-votes">
+									<span class="jt-v-num"><?php echo (int) $ur->vote_score; ?></span>
+								</div>
+								<div class="jt-row-main">
+									<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
+									<div class="jt-row-sub">
+										<?php
+										/* translators: %s: post title */
+										echo esc_html( sprintf( __( 'on %s', 'jetonomy' ), $ur->post_title ?? '' ) );
+										?>
+										&middot;
+										<?php echo esc_html( $ur->space_title ?? '' ); ?>
+									</div>
+								</div>
+								<div class="jt-row-stat">
+									<div class="jt-row-time">
+										<?php
+										/* translators: %s: human-readable time difference */
+										echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $ur_ago ) );
+										?>
+									</div>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_replies ) >= $per_page ] ); ?>
+				<?php endif; ?>
+
+			<?php elseif ( 'votes' === $current_tab ) : ?>
+				<?php if ( empty( $user_votes ) ) : ?>
+					<div class="jt-empty-compact">
+						<div class="jt-empty-text"><?php esc_html_e( 'No votes yet.', 'jetonomy' ); ?></div>
+					</div>
+				<?php else : ?>
+					<div class="jt-topics">
+						<?php foreach ( $user_votes as $uv ) : ?>
+							<?php
+							$uv_url = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
+							$uv_ago = human_time_diff( strtotime( $uv->voted_at ), current_time( 'timestamp', true ) );
+							?>
+							<div class="jt-row" onclick="window.location='<?php echo esc_url( $uv_url ); ?>'">
+								<div class="jt-votes">
+									<span class="jt-v-num"><?php echo (int) $uv->vote_score; ?></span>
+								</div>
+								<div class="jt-row-main">
+									<div class="jt-row-title"><?php echo esc_html( $uv->title ); ?></div>
+									<div class="jt-row-sub">
+										<?php echo esc_html( $uv->space_title ?? '' ); ?>
+									</div>
+								</div>
+								<div class="jt-row-stat">
+									<div class="jt-row-stat-n"><?php echo (int) $uv->reply_count; ?></div>
+									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
+								</div>
+								<div class="jt-row-stat">
+									<div class="jt-row-time">
+										<?php
+										/* translators: %s: human-readable time difference */
+										echo esc_html( sprintf( __( 'voted %s ago', 'jetonomy' ), $uv_ago ) );
+										?>
+									</div>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_votes ) >= $per_page ] ); ?>
+				<?php endif; ?>
+
+			<?php elseif ( 'bookmarks' === $current_tab && $is_own ) : ?>
 				<?php if ( empty( $bookmarks ) ) : ?>
 					<div class="jt-empty-compact">
 						<div class="jt-empty-text"><?php esc_html_e( 'No bookmarks yet. Bookmark posts to find them here later.', 'jetonomy' ); ?></div>

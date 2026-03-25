@@ -100,6 +100,39 @@ class Vote extends Model {
 	}
 
 	/**
+	 * List posts voted on by a user (upvotes only), with post + space info.
+	 *
+	 * @param int $user_id Voter user ID.
+	 * @param int $limit   Max rows.
+	 * @param int $offset  Pagination offset.
+	 * @return object[]
+	 */
+	public static function list_by_user( int $user_id, int $limit = 20, int $offset = 0 ): array {
+		$votes_tbl  = static::table();
+		$posts_tbl  = table( 'posts' );
+		$spaces_tbl = table( 'spaces' );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT v.value, v.created_at AS voted_at, p.id AS post_id, p.title, p.slug AS post_slug,
+				        p.vote_score, p.reply_count, sp.slug AS space_slug, sp.title AS space_title
+				 FROM {$votes_tbl} v
+				 INNER JOIN {$posts_tbl} p ON p.id = v.object_id
+				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+				 WHERE v.user_id = %d AND v.object_type = 'post' AND v.value > 0
+				 ORDER BY v.created_at DESC
+				 LIMIT %d OFFSET %d",
+				$user_id,
+				$limit,
+				$offset
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
 	 * Apply a score delta to the vote_score column of the target post or reply.
 	 *
 	 * @param string $object_type 'post' or 'reply'.

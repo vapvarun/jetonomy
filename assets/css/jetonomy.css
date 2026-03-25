@@ -1028,6 +1028,88 @@
 .jt-more-item--danger { color: var(--jt-danger); }
 .jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger); }
 
+/* ── Mobile Bottom Tab Bar ── */
+.jt-mobile-tabs {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+  background: var(--jt-bg);
+  border-top: 1px solid var(--jt-border);
+  padding: 6px 0 env(safe-area-inset-bottom, 0);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+}
+@media (max-width: 640px) {
+  .jt-mobile-tabs { display: flex; justify-content: space-around; align-items: center; }
+  /* Add bottom padding to body so content isn't hidden behind the tab bar */
+  .jt-app { padding-bottom: 68px; }
+}
+.jt-mobile-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 8px; min-width: 56px;
+  color: var(--jt-text-tertiary); text-decoration: none;
+  font-size: 0.625rem; font-weight: 500;
+  transition: color var(--jt-dur);
+  position: relative;
+}
+.jt-mobile-tab svg { display: block; }
+.jt-mobile-tab:hover, .jt-mobile-tab.active { color: var(--jt-accent); }
+.jt-mobile-tab-badge {
+  position: absolute; top: 2px; right: 4px;
+  background: var(--jt-danger); color: var(--jt-white);
+  font-size: 0.625rem; font-weight: 700;
+  min-width: 14px; height: 14px; padding: 0 3px;
+  border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ── Skeleton Loading Placeholders ── */
+@keyframes jt-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.jt-skeleton {
+  background: linear-gradient(90deg, var(--jt-bg-muted) 25%, var(--jt-bg-subtle) 50%, var(--jt-bg-muted) 75%);
+  background-size: 800px 100%;
+  animation: jt-shimmer 1.5s infinite linear;
+  border-radius: var(--jt-radius-sm);
+}
+.jt-skeleton-text { height: 0.875rem; margin-bottom: 6px; }
+.jt-skeleton-text--sm { width: 40%; }
+.jt-skeleton-text--md { width: 65%; }
+.jt-skeleton-text--lg { width: 90%; }
+.jt-skeleton-circle { border-radius: 50%; }
+.jt-skeleton-row {
+  display: grid; grid-template-columns: 48px 1fr 80px; gap: 12px; align-items: center;
+  padding: 14px 16px; border-bottom: 1px solid var(--jt-border);
+}
+.jt-skeleton-row .jt-skeleton-vote { width: 32px; height: 32px; border-radius: var(--jt-radius-sm); }
+.jt-skeleton-row .jt-skeleton-main { display: flex; flex-direction: column; gap: 6px; }
+.jt-skeleton-row .jt-skeleton-stat { width: 40px; height: 24px; border-radius: var(--jt-radius-sm); }
+
+/* Skeleton topic list — 5 placeholder rows */
+.jt-skeleton-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
+
+/* Skeleton reply card */
+.jt-skeleton-reply {
+  border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg);
+  margin-bottom: 10px; overflow: hidden;
+}
+.jt-skeleton-reply-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--jt-bg-subtle); }
+.jt-skeleton-reply-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.jt-skeleton-reply-foot { display: flex; gap: 12px; padding: 8px 16px; }
+
+/* Skeleton sidebar card */
+.jt-skeleton-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 16px; margin-bottom: 12px; }
+.jt-skeleton-card-title { height: 0.75rem; width: 50%; margin-bottom: 14px; }
+.jt-skeleton-card-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+
+/* Skeleton profile */
+.jt-skeleton-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
+.jt-skeleton-profile-banner { height: 120px; }
+.jt-skeleton-profile-body { padding: 0 20px 20px; margin-top: -20px; }
+.jt-skeleton-profile-avatar { width: 64px; height: 64px; border: 3px solid var(--jt-bg); margin-bottom: 10px; }
+.jt-skeleton-profile-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
+.jt-skeleton-profile-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
 .jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }

@@ -76,11 +76,11 @@ Target (Discourse/Circle pattern):
 - [x] @mention auto-linking in post/reply content — `jetonomy_format_content()`
 - [x] #hashtag auto-linking in content — same function
 
-**Next session (agents hit rate limit):**
-- [ ] Profile Replies + Votes tabs
-- [ ] Notification badge count in nav
-- [ ] Mobile bottom tab bar
-- [ ] Skeleton loading CSS
+**Completed (session 2):**
+- [x] Profile Replies + Votes tabs — model queries + template + router
+- [x] Notification badge count in nav — already existed in header.php
+- [x] Mobile bottom tab bar — 5-tab fixed bottom nav (≤640px)
+- [x] Skeleton loading CSS — shimmer animations for topics, replies, sidebar, profile
 
 **Remaining (next batch):**
 - [ ] Profile Media tab (needs WPMediaVerse bridge)
