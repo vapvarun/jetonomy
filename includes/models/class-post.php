@@ -38,8 +38,13 @@ class Post extends Model {
 
 		$id = static::insert( $data );
 
-		if ( $id > 0 && ! empty( $data['space_id'] ) ) {
-			Space::increment_post_count( (int) $data['space_id'] );
+		if ( $id > 0 ) {
+			if ( ! empty( $data['space_id'] ) ) {
+				Space::increment_post_count( (int) $data['space_id'] );
+			}
+			if ( ! empty( $data['author_id'] ) ) {
+				UserProfile::increment_post_count( (int) $data['author_id'] );
+			}
 		}
 
 		return $id;

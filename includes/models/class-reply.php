@@ -31,8 +31,13 @@ class Reply extends Model {
 
 		$id = static::insert( $data );
 
-		if ( $id > 0 && ! empty( $data['post_id'] ) ) {
-			Post::increment_reply_count( (int) $data['post_id'] );
+		if ( $id > 0 ) {
+			if ( ! empty( $data['post_id'] ) ) {
+				Post::increment_reply_count( (int) $data['post_id'] );
+			}
+			if ( ! empty( $data['author_id'] ) ) {
+				UserProfile::increment_reply_count( (int) $data['author_id'] );
+			}
 		}
 
 		return $id;
