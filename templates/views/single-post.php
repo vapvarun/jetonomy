@@ -250,34 +250,39 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 						data-post-id="<?php echo (int) $post->id; ?>"
 						data-bookmarked="<?php echo $is_bookmarked ? '1' : '0'; ?>"
 						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
+					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
+						<button class="jt-act"
+							data-wp-on--click="actions.flagPost"
+							data-post-id="<?php echo (int) $post->id; ?>"
+							title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
+					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
-					<span class="jt-actions-group">
-						<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
-							<button class="jt-act jt-post-edit"
-								data-wp-on--click="actions.editPost"
-								data-post-id="<?php echo (int) $post->id; ?>"
-								title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
-						<?php endif; ?>
-						<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
-							<button class="jt-act"
-								data-wp-on--click="actions.pinPost"
-								data-post-id="<?php echo (int) $post->id; ?>"
-								title="<?php echo $post->is_sticky ? esc_attr__( 'Unpin', 'jetonomy' ) : esc_attr__( 'Pin', 'jetonomy' ); ?>">
-								<?php jetonomy_echo_icon( 'pin', 16 ); ?>
-							</button>
-						<?php endif; ?>
-						<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
-							<button class="jt-act jt-post-delete"
-								data-wp-on--click="actions.deletePost"
-								data-post-id="<?php echo (int) $post->id; ?>"
-								data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"
-								title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?></button>
-						<?php endif; ?>
-						<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
-							<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>" class="jt-act" title="<?php esc_attr_e( 'Admin', 'jetonomy' ); ?>">&#9881;</a>
-						<?php endif; ?>
-					</span>
+					<div class="jt-more-menu">
+						<button class="jt-act jt-more-trigger" type="button" title="<?php esc_attr_e( 'More', 'jetonomy' ); ?>"
+							data-wp-on--click="actions.toggleMoreMenu">&hellip;</button>
+						<div class="jt-more-dropdown" hidden>
+							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
+								<button class="jt-more-item"
+									data-wp-on--click="actions.editPost"
+									data-post-id="<?php echo (int) $post->id; ?>">&#9998; <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
+							<?php endif; ?>
+							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+								<button class="jt-more-item"
+									data-wp-on--click="actions.pinPost"
+									data-post-id="<?php echo (int) $post->id; ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
+							<?php endif; ?>
+							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
+								<button class="jt-more-item jt-more-item--danger"
+									data-wp-on--click="actions.deletePost"
+									data-post-id="<?php echo (int) $post->id; ?>"
+									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
+							<?php endif; ?>
+							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>">&#9881; <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
+							<?php endif; ?>
+						</div>
+					</div>
 				<?php endif; ?>
 				<?php do_action( 'jetonomy_post_actions', $post ); ?>
 				</div>

@@ -778,12 +778,12 @@
   /* ── 2. Hover States — ALL Interactive Elements ── */
 
   /* Space cards — lift on hover */
-  .jt-space-card { transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; }
-  .jt-space-card:hover { transform: translateY(-2px); box-shadow: var(--jt-shadow-card, 0 4px 12px rgba(0,0,0,0.08)); }
+  .jt-space-card { transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .jt-space-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
-  /* Topic rows — subtle horizontal shift */
-  a.jt-row { transition: background 0.15s, transform 0.1s; }
-  a.jt-row:hover { transform: translateX(3px); }
+  /* Topic rows — lift on hover */
+  a.jt-row { transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.15s; }
+  a.jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
 
   /* Leaderboard rows — hover background */
   .jt-leader { transition: background 0.15s; padding: 8px 12px; margin: 0 -12px; border-radius: var(--jt-radius); }
@@ -813,9 +813,9 @@
   .jt-btn:active { transform: scale(0.97); }
   .jt-pill:active { transform: scale(0.95); }
 
-  /* Cards — subtle border glow on hover */
-  .jt-card { transition: border-color 0.2s; }
-  .jt-card:hover { border-color: var(--jt-border-strong); }
+  /* Cards — lift and shadow on hover */
+  .jt-card { transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .jt-card:hover { border-color: var(--jt-border-strong); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
 
   /* ── 3. Community Nav — Active State Animation ── */
   .jt-community-nav-links a { position: relative; }
@@ -1012,3 +1012,16 @@
 .jt-profile-tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
 .jt-profile-tab:hover { color: var(--jt-text); }
 .jt-profile-tab.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); }
+
+/* ── More menu (post action overflow) ── */
+.jt-more-menu { position: relative; display: inline-flex; margin-left: 8px; }
+.jt-more-trigger { font-size: 1.125rem; letter-spacing: 0.1em; }
+.jt-more-dropdown { position: absolute; bottom: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-bottom: 0.25rem; }
+.jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
+.jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
+.jt-more-item--danger { color: var(--jt-danger); }
+.jt-more-item--danger:hover { background: var(--jt-danger-light); color: var(--jt-danger); }
+
+/* ── Discussion row hover effects (non-anchor rows) ── */
+.jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
+.jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }

@@ -100,6 +100,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
+                    if ( window.bnToast ) window.bnToast( 'Vote recorded' );
                 } else {
                     // Rollback on error
                     state.postScores[ postId ] = current;
@@ -142,6 +143,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
+                    if ( window.bnToast ) window.bnToast( 'Vote recorded' );
                 } else {
                     state.postScores[ postId ] = current;
                 }
@@ -397,6 +399,7 @@ const { state, actions } = store( 'jetonomy', {
                     el.ref.textContent = 'Follow';
                     el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
                     el.ref.classList.add( 'jt-btn-ghost' );
+                    if ( window.bnToast ) window.bnToast( 'Unfollowed space' );
                 } else {
                     const res = yield fetch( `${ state.apiBase }/subscriptions`, {
                         method: 'POST',
@@ -409,6 +412,7 @@ const { state, actions } = store( 'jetonomy', {
                         el.ref.textContent = 'Following';
                         el.ref.classList.remove( 'jt-btn-ghost' );
                         el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
+                        if ( window.bnToast ) window.bnToast( 'Following space' );
                     }
                 }
             } catch { /* non-critical */ }
@@ -480,8 +484,60 @@ const { state, actions } = store( 'jetonomy', {
                     el.ref.dataset.bookmarked = data.bookmarked ? '1' : '0';
                     el.ref.classList.toggle( 'bookmarked', data.bookmarked );
                     el.ref.title = data.bookmarked ? 'Remove bookmark' : 'Bookmark';
+                    if ( window.bnToast ) window.bnToast( data.bookmarked ? 'Bookmarked' : 'Bookmark removed' );
                 }
             } catch { /* non-critical */ }
+        },
+
+        // ── Flag / report post ──
+        *flagPost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            if ( ! postId ) return;
+
+            const reason = prompt( 'Why are you reporting this post?' );
+            if ( reason === null ) return; // Cancelled
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/flags`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', detail: reason } ),
+                } );
+                if ( res.ok ) {
+                    if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    alert( err.message || 'Failed to submit report.' );
+                }
+            } catch {
+                alert( 'Network error. Please try again.' );
+            }
+        },
+
+        // ── Toggle "more" dropdown menu ──
+        toggleMoreMenu( event ) {
+            event.stopPropagation();
+            const el = getElement();
+            const menu = el.ref.closest( '.jt-more-menu' );
+            if ( ! menu ) return;
+
+            const dropdown = menu.querySelector( '.jt-more-dropdown' );
+            if ( ! dropdown ) return;
+
+            const isHidden = dropdown.hidden;
+            dropdown.hidden = ! isHidden;
+
+            if ( ! isHidden ) return;
+
+            const closeHandler = ( e ) => {
+                if ( ! menu.contains( e.target ) ) {
+                    dropdown.hidden = true;
+                    document.removeEventListener( 'click', closeHandler );
+                }
+            };
+            setTimeout( () => document.addEventListener( 'click', closeHandler ), 0 );
         },
 
         // ── Inline post (topic) edit ──
