@@ -230,6 +230,12 @@
   .jt-tag-qa { background: var(--jt-success-light); color: var(--jt-success); }
   .jt-tag-ideas { background: var(--jt-warn-light); color: var(--jt-warn); }
 
+  /* ── Inline mentions & hashtag links ── */
+  .jt-mention { color: var(--jt-accent); font-weight: 600; }
+  .jt-mention:hover { text-decoration: underline; }
+  .jt-tag-link { color: var(--jt-accent); }
+  .jt-tag-link:hover { text-decoration: underline; }
+
   /* ── Trust level badge ── */
   .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: var(--jt-white); font-family: var(--jt-font-mono); }
   .jt-tl[data-jt-tl="0"] { background: var(--jt-tl0); }

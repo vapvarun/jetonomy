@@ -65,6 +65,73 @@ function jetonomy_echo_icon( string $name, int $size = 24 ): void {
 	echo jetonomy_icon( $name, $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- SVG from trusted local file.
 }
 
+/**
+ * Format post/reply content with @mention and #hashtag auto-linking.
+ *
+ * Expects already-sanitized HTML (via wp_kses_post). Applies regex only
+ * to text segments outside HTML tags to avoid mangling existing markup.
+ * Individual replacement values are escaped with esc_html/esc_url.
+ *
+ * @param string $content Sanitized HTML content string.
+ * @return string Processed content with mention and tag links.
+ */
+function jetonomy_format_content( string $content ): string {
+	$base = \Jetonomy\base_url();
+
+	// Split content into HTML tags and text segments, process only text segments.
+	$parts = preg_split( '/(<[^>]*>)/u', $content, -1, PREG_SPLIT_DELIM_CAPTURE );
+	if ( false === $parts ) {
+		return $content;
+	}
+
+	$inside_a = 0;
+	foreach ( $parts as $i => $part ) {
+		// Track whether we're inside an <a> tag to avoid nesting links.
+		if ( preg_match( '/<a[\s>]/i', $part ) ) {
+			++$inside_a;
+			continue;
+		}
+		if ( preg_match( '/<\/a>/i', $part ) ) {
+			--$inside_a;
+			continue;
+		}
+		// Skip HTML tags and text inside anchor tags.
+		if ( isset( $part[0] ) && '<' === $part[0] ) {
+			continue;
+		}
+		if ( $inside_a > 0 ) {
+			continue;
+		}
+
+		// @mentions → profile links.
+		$part = preg_replace_callback(
+			'/@([a-zA-Z0-9_-]+)/u',
+			function ( $matches ) use ( $base ) {
+				$username = $matches[1];
+				$url      = $base . '/u/' . rawurlencode( $username ) . '/';
+				return '<a href="' . esc_url( $url ) . '" class="jt-mention">@' . esc_html( $username ) . '</a>';
+			},
+			$part
+		);
+
+		// #hashtags → tag page links.
+		$part = preg_replace_callback(
+			'/#([a-zA-Z0-9_-]+)/u',
+			function ( $matches ) use ( $base ) {
+				$tag  = $matches[1];
+				$slug = sanitize_title( $tag );
+				$url  = $base . '/tag/' . $slug . '/';
+				return '<a href="' . esc_url( $url ) . '" class="jt-tag-link">#' . esc_html( $tag ) . '</a>';
+			},
+			$part
+		);
+
+		$parts[ $i ] = $part;
+	}
+
+	return implode( '', $parts );
+}
+
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
     require_once JETONOMY_DIR . 'includes/class-cli.php';
     \WP_CLI::add_command( 'jetonomy', 'Jetonomy\\CLI' );
