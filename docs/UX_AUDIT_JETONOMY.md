@@ -72,13 +72,15 @@ Target (Discourse/Circle pattern):
 
 ### Missing Features (from 6-phase BuddyNext comparison)
 
-**In Progress (agents executing):**
-- [ ] @mention auto-linking in post/reply content — Agent 1
-- [ ] #hashtag auto-linking in content — Agent 1
-- [ ] Profile Replies + Votes tabs — Agent 2
-- [ ] Notification badge count in nav — Agent 2
-- [ ] Mobile bottom tab bar — Agent 3
-- [ ] Skeleton loading CSS — Agent 3
+**Done (this session):**
+- [x] @mention auto-linking in post/reply content — `jetonomy_format_content()`
+- [x] #hashtag auto-linking in content — same function
+
+**Next session (agents hit rate limit):**
+- [ ] Profile Replies + Votes tabs
+- [ ] Notification badge count in nav
+- [ ] Mobile bottom tab bar
+- [ ] Skeleton loading CSS
 
 **Remaining (next batch):**
 - [ ] Profile Media tab (needs WPMediaVerse bridge)
