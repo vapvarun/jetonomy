@@ -99,6 +99,14 @@
     --jt-danger-light: #450a0a;
   }
 
+  /* ── Font size scaling (A / A+ / A++) ─────────────────────────────────────
+     Uses the same data-bn-font-scale attribute and bn_font_scale localStorage
+     key as BuddyNext so the preference is shared across both plugins.
+     Since .jt-app uses rem-based type scale, html font-size % scales everything
+     uniformly — just like browser zoom. */
+  html[data-bn-font-scale="110"] { font-size: 110%; }
+  html[data-bn-font-scale="120"] { font-size: 120%; }
+
   /* Reset within app — lock down ALL typography so theme styles never leak in.
      Follows BuddyNext type scale: base 15px, headings 1.375→0.8125rem.
      Works identically with or without BuddyNext active. */
@@ -233,8 +241,9 @@
 
   /* ── Post ── */
   .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
-  .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); }
-  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; }
+  .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); position: relative; }
+  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; padding-right: 6rem; }
+  .jt-post-head > .jt-btn-sm { position: absolute; top: 20px; right: 20px; }
   .jt-meta { display: flex; align-items: center; gap: 10px; color: var(--jt-text-secondary); }
   .jt-meta strong { color: var(--jt-text); }
   .jt-post-body { padding: 24px; font-size: 1rem; line-height: 1.8; }
