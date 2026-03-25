@@ -50,6 +50,10 @@ $is_accepted = (int) $reply->is_accepted;
 				data-wp-on--click="actions.editReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				title="<?php esc_attr_e( 'Edit', 'jetonomy' ); ?>">&#9998;</button>
+			<button class="jt-act jt-reply-delete"
+				data-wp-on--click="actions.deleteReply"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				title="<?php esc_attr_e( 'Delete', 'jetonomy' ); ?>">&#128465;</button>
 		<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>

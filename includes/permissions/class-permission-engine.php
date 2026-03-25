@@ -138,15 +138,25 @@ class Permission_Engine {
 			}
 		}
 
-		// Public space read — no membership required.
-		if ( 'read' === $action && 'public' === $space->visibility ) {
-			return true;
+		// Public space — no membership required for read.
+		// Public + open join_policy — logged-in users may also participate.
+		if ( 'public' === $space->visibility ) {
+			if ( 'read' === $action ) {
+				return true;
+			}
+			$is_open = 'open' === ( $space->join_policy ?? 'open' );
+			if ( $is_open && $user_id ) {
+				$open_actions = [ 'create_posts', 'create_replies', 'vote', 'flag' ];
+				if ( in_array( $action, $open_actions, true ) ) {
+					return true;
+				}
+			}
 		}
 
 		// Resolve space role and check against role permissions.
 		$role = SpaceMember::get_role( $space_id, $user_id );
 		if ( ! $role ) {
-			// Non-member of a public space may only read.
+			// Non-member — only read is allowed (private/hidden already blocked above).
 			return 'read' === $action;
 		}
 

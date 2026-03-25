@@ -148,6 +148,9 @@
   /* Fallback: if .jt-container is used (e.g. theme overrides), keep the old rule. */
   .jt-container { max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; padding: 24px; }
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
+  .jt-two-col > main { min-width: 0; }
+  .jt-two-col > .jt-sidebar,
+  .jt-two-col > aside { position: sticky; top: 24px; align-self: start; }
 
   /* ── Breadcrumb ── */
   .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); margin-bottom: 20px; }
@@ -489,7 +492,7 @@
 
   /* ── Sidebar extras ── */
   .jt-sidebar-link { margin-top: 10px; }
-  .jt-sidebar-link a { font-size: 1rem; color: var(--jt-text-secondary); }
+  .jt-sidebar-link a { font-size: 0.9375rem; color: var(--jt-text-secondary); }
   .jt-sidebar-about { color: var(--jt-text-secondary); line-height: 1.5; margin-bottom: 12px; }
   .jt-sidebar-stats { display: flex; gap: 20px; margin-bottom: 12px; }
   .jt-sidebar-stat { display: flex; flex-direction: column; }

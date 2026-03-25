@@ -14,8 +14,8 @@ if ( ! apply_filters( 'jetonomy_show_sidebar', true ) ) {
 $base = \Jetonomy\base_url();
 
 global $wpdb;
-$posts_tbl   = \Jetonomy\table( 'posts' );
-$spaces_tbl  = \Jetonomy\table( 'spaces' );
+$posts_tbl    = \Jetonomy\table( 'posts' );
+$spaces_tbl   = \Jetonomy\table( 'spaces' );
 $profiles_tbl = \Jetonomy\table( 'user_profiles' );
 
 // Trending: top voted published posts, optionally scoped to the current space.
@@ -53,111 +53,147 @@ $leaders = $wpdb->get_results(
 
 // Popular tags.
 $popular_tags = \Jetonomy\Models\Tag::list_popular( 15 );
+
+// When BuddyNext is active, use its sidebar card skeleton so all sidebar
+// widgets across BuddyNext, Jetonomy, and WPMediaVerse look identical.
+$bn_active = did_action( 'buddynext_loaded' );
 ?>
 <aside class="jt-sidebar">
 
 	<?php if ( ! empty( $space ) && isset( $space->id ) ) : ?>
-	<div class="jt-card jt-mb-md">
-		<h4><?php esc_html_e( 'About', 'jetonomy' ); ?></h4>
-		<?php if ( ! empty( $space->description ) ) : ?>
-			<p class="jt-sidebar-about"><?php echo esc_html( $space->description ); ?></p>
-		<?php endif; ?>
-		<div class="jt-sidebar-stats">
-			<div class="jt-sidebar-stat">
-				<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
-				<span><?php esc_html_e( 'Posts', 'jetonomy' ); ?></span>
-			</div>
-			<div class="jt-sidebar-stat">
-				<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>
-				<span><?php esc_html_e( 'Members', 'jetonomy' ); ?></span>
-			</div>
-		</div>
-		<?php
-		$space_type_labels = [
-			'forum'  => __( 'Forum', 'jetonomy' ),
-			'qa'     => __( 'Q&A', 'jetonomy' ),
-			'ideas'  => __( 'Ideas', 'jetonomy' ),
-			'social' => __( 'Social', 'jetonomy' ),
-		];
-		$space_type = $space->type ?? 'forum';
-		?>
-		<div class="jt-sidebar-meta">
-			<span class="jt-tag"><?php echo esc_html( $space_type_labels[ $space_type ] ?? ucfirst( $space_type ) ); ?></span>
-			<?php if ( 'public' !== ( $space->visibility ?? 'public' ) ) : ?>
-				<span class="jt-tag"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
+	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md'; ?>">
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+			<?php if ( ! $bn_active ) : ?>
+				<h4><?php esc_html_e( 'About', 'jetonomy' ); ?></h4>
+			<?php else : ?>
+				<?php esc_html_e( 'About', 'jetonomy' ); ?>
 			<?php endif; ?>
 		</div>
-		<?php if ( is_user_logged_in() ) : ?>
-			<div style="margin-top:12px;">
-				<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
-					<?php esc_html_e( 'View all members →', 'jetonomy' ); ?>
-				</a>
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+			<?php if ( ! empty( $space->description ) ) : ?>
+				<p class="jt-sidebar-about"><?php echo esc_html( $space->description ); ?></p>
+			<?php endif; ?>
+			<div class="jt-sidebar-stats">
+				<div class="jt-sidebar-stat">
+					<strong><?php echo (int) ( $space->post_count ?? 0 ); ?></strong>
+					<span><?php esc_html_e( 'Posts', 'jetonomy' ); ?></span>
+				</div>
+				<div class="jt-sidebar-stat">
+					<strong><?php echo (int) ( $space->member_count ?? 0 ); ?></strong>
+					<span><?php esc_html_e( 'Members', 'jetonomy' ); ?></span>
+				</div>
 			</div>
-		<?php endif; ?>
+			<?php
+			$space_type_labels = [
+				'forum'  => __( 'Forum', 'jetonomy' ),
+				'qa'     => __( 'Q&A', 'jetonomy' ),
+				'ideas'  => __( 'Ideas', 'jetonomy' ),
+				'social' => __( 'Social', 'jetonomy' ),
+			];
+			$space_type = $space->type ?? 'forum';
+			?>
+			<div class="jt-sidebar-meta">
+				<span class="jt-tag"><?php echo esc_html( $space_type_labels[ $space_type ] ?? ucfirst( $space_type ) ); ?></span>
+				<?php if ( 'public' !== ( $space->visibility ?? 'public' ) ) : ?>
+					<span class="jt-tag"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
+				<?php endif; ?>
+			</div>
+			<?php if ( is_user_logged_in() ) : ?>
+				<div style="margin-top:12px;">
+					<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
+						<?php esc_html_e( 'View all members', 'jetonomy' ); ?>
+					</a>
+				</div>
+			<?php endif; ?>
+		</div>
 	</div>
 	<?php endif; ?>
 
 	<?php if ( ! empty( $trending ) ) : ?>
-	<div class="jt-card jt-mb-md">
-		<h4><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h4>
-		<?php foreach ( $trending as $i => $t_post ) : ?>
-			<div class="jt-trend">
-				<span class="jt-trend-n"><?php echo $i + 1; ?></span>
-				<div>
-					<div class="jt-trend-title">
-						<a href="<?php echo esc_url( $base . '/s/' . $t_post->space_slug . '/t/' . $t_post->slug . '/' ); ?>">
-							<?php echo esc_html( $t_post->title ); ?>
-						</a>
-					</div>
-					<div class="jt-trend-meta">
-						<?php
-						/* translators: 1: vote score, 2: reply count */
-						echo esc_html( sprintf( __( '%1$d votes · %2$d replies', 'jetonomy' ), (int) $t_post->vote_score, (int) $t_post->reply_count ) );
-						?>
+	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md'; ?>">
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+			<?php if ( ! $bn_active ) : ?>
+				<h4><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h4>
+			<?php else : ?>
+				<?php esc_html_e( 'Trending', 'jetonomy' ); ?>
+			<?php endif; ?>
+		</div>
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+			<?php foreach ( $trending as $i => $t_post ) : ?>
+				<div class="jt-trend">
+					<span class="jt-trend-n"><?php echo (int) ( $i + 1 ); ?></span>
+					<div>
+						<div class="jt-trend-title">
+							<a href="<?php echo esc_url( $base . '/s/' . $t_post->space_slug . '/t/' . $t_post->slug . '/' ); ?>">
+								<?php echo esc_html( $t_post->title ); ?>
+							</a>
+						</div>
+						<div class="jt-trend-meta">
+							<?php
+							/* translators: 1: vote score, 2: reply count */
+							echo esc_html( sprintf( __( '%1$d votes · %2$d replies', 'jetonomy' ), (int) $t_post->vote_score, (int) $t_post->reply_count ) );
+							?>
+						</div>
 					</div>
 				</div>
-			</div>
-		<?php endforeach; ?>
+			<?php endforeach; ?>
+		</div>
 	</div>
 	<?php endif; ?>
 
 	<?php if ( ! empty( $leaders ) ) : ?>
-	<div class="jt-card jt-mb-md">
-		<h4><?php esc_html_e( 'Top Members', 'jetonomy' ); ?></h4>
-		<?php foreach ( $leaders as $rank => $leader ) : ?>
-			<?php
-			$lu = get_userdata( (int) $leader->user_id );
-			if ( ! $lu ) {
-				continue;
-			}
-			?>
-			<div class="jt-leader">
-				<span class="jt-leader-rank"><?php echo $rank + 1; ?></span>
-				<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
-				<span class="jt-leader-name">
-					<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
-						<?php echo esc_html( $lu->display_name ); ?>
-					</a>
-				</span>
-				<span class="jt-leader-pts"><?php echo (int) $leader->reputation; ?></span>
+	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md'; ?>">
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+			<?php if ( ! $bn_active ) : ?>
+				<h4><?php esc_html_e( 'Top Members', 'jetonomy' ); ?></h4>
+			<?php else : ?>
+				<?php esc_html_e( 'Top Members', 'jetonomy' ); ?>
+			<?php endif; ?>
+		</div>
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+			<?php foreach ( $leaders as $rank => $leader ) : ?>
+				<?php
+				$lu = get_userdata( (int) $leader->user_id );
+				if ( ! $lu ) {
+					continue;
+				}
+				?>
+				<div class="jt-leader">
+					<span class="jt-leader-rank"><?php echo (int) ( $rank + 1 ); ?></span>
+					<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
+					<span class="jt-leader-name">
+						<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
+							<?php echo esc_html( $lu->display_name ); ?>
+						</a>
+					</span>
+					<span class="jt-leader-pts"><?php echo (int) $leader->reputation; ?></span>
+				</div>
+			<?php endforeach; ?>
+			<div class="jt-sidebar-link">
+				<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>"><?php esc_html_e( 'View full leaderboard', 'jetonomy' ); ?></a>
 			</div>
-		<?php endforeach; ?>
-		<div class="jt-sidebar-link">
-			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>"><?php esc_html_e( 'View full leaderboard →', 'jetonomy' ); ?></a>
 		</div>
 	</div>
 	<?php endif; ?>
 
 	<?php if ( ! empty( $popular_tags ) ) : ?>
-	<div class="jt-card">
-		<h4><?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?></h4>
-		<div class="jt-tags">
-			<?php foreach ( $popular_tags as $tag ) : ?>
-				<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
-					<?php echo esc_html( $tag->name ); ?>
-					<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
-				</a>
-			<?php endforeach; ?>
+	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card'; ?>">
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+			<?php if ( ! $bn_active ) : ?>
+				<h4><?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?></h4>
+			<?php else : ?>
+				<?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?>
+			<?php endif; ?>
+		</div>
+		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+			<div class="jt-tags">
+				<?php foreach ( $popular_tags as $tag ) : ?>
+					<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
+						<?php echo esc_html( $tag->name ); ?>
+						<span class="jt-tag-count"><?php echo (int) $tag->post_count; ?></span>
+					</a>
+				<?php endforeach; ?>
+			</div>
 		</div>
 	</div>
 	<?php endif; ?>

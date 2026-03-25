@@ -216,14 +216,14 @@ There is no spacing scale yet (gap to fill in a future task). Until a `--jt-spac
 - **Board ID**: `9706083020`
 - **URL**: https://3.basecamp.com/5798509/buckets/46596502/card_tables/9706083020
 
-| Column | ID | Cards |
-|--------|----|-------|
-| Triage | `9706083021` | 0 |
-| Not now | `9706083022` | 0 |
-| Scope | `9706083326` | 0 |
-| Figuring it out | `9706083023` | 0 |
-| Bugs | `9706083723` | 12 |
-| UI | `9706189351` | 3 |
-| In progress | `9706083024` | 0 |
-| In Testing | `9706083581` | 0 |
-| Done | `9706083025` | 0 |
+| Column | ID |
+|--------|----|
+| Triage | `9706083021` |
+| Not now | `9706083022` |
+| Scope | `9706083326` |
+| Figuring it out | `9706083023` |
+| Bugs | `9706083723` |
+| UI | `9706189351` |
+| In progress | `9706083024` |
+| In Testing | `9706083581` |
+| Done | `9706083025` |

@@ -324,6 +324,185 @@ const { state, actions } = store( 'jetonomy', {
             } );
         },
 
+        // ── Inline post (topic) edit ──
+        editPost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            if ( ! postId ) return;
+
+            const article = el.ref.closest( 'article' ) || el.ref.closest( '.jt-post' );
+            if ( ! article ) return;
+            if ( article.querySelector( '.jt-post-editor' ) ) return;
+
+            const bodyEl = article.querySelector( '.jt-post-body' );
+            if ( ! bodyEl ) return;
+
+            const plainText = bodyEl.textContent.trim();
+            bodyEl.style.display = 'none';
+
+            const editor = document.createElement( 'div' );
+            editor.className = 'jt-post-editor';
+            editor.style.cssText = 'margin:8px 0';
+
+            const textarea = document.createElement( 'textarea' );
+            textarea.className = 'jt-input';
+            textarea.value = plainText;
+            textarea.rows = 6;
+            textarea.style.cssText = 'width:100%;resize:vertical';
+
+            const btnRow = document.createElement( 'div' );
+            btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:8px';
+
+            const cancelBtn = document.createElement( 'button' );
+            cancelBtn.className = 'jt-btn jt-btn-ghost';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.type = 'button';
+
+            const saveBtn = document.createElement( 'button' );
+            saveBtn.className = 'jt-btn jt-btn-fill';
+            saveBtn.textContent = 'Save';
+            saveBtn.type = 'button';
+
+            btnRow.append( cancelBtn, saveBtn );
+            editor.append( textarea, btnRow );
+            bodyEl.after( editor );
+            textarea.focus();
+
+            cancelBtn.addEventListener( 'click', () => {
+                editor.remove();
+                bodyEl.style.display = '';
+            } );
+
+            saveBtn.addEventListener( 'click', async () => {
+                const content = textarea.value.trim();
+                if ( ! content ) return;
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                try {
+                    const res = await fetch( `${ state.apiBase }/posts/${ postId }`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': state._nonce || state.nonce,
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify( { content } ),
+                    } );
+
+                    if ( res.ok ) {
+                        bodyEl.textContent = content;
+                        editor.remove();
+                        bodyEl.style.display = '';
+                    } else {
+                        const err = await res.json().catch( () => ( {} ) );
+                        alert( err.message || 'Failed to save.' );
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save';
+                    }
+                } catch {
+                    alert( 'Network error. Please try again.' );
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save';
+                }
+            } );
+        },
+
+        // ── Pin / Unpin post ──
+        *pinPost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            if ( ! postId ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/pin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                } );
+
+                if ( res.ok ) {
+                    const data = yield res.json();
+                    // Toggle the button text content (safe — no HTML from server)
+                    el.ref.textContent = data.is_sticky ? '\u{1F4CC}' : '\u{1F4CD}';
+                    el.ref.title = data.is_sticky ? 'Unpin' : 'Pin';
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    alert( err.message || 'Failed to toggle pin.' );
+                }
+            } catch {
+                alert( 'Network error. Please try again.' );
+            }
+        },
+
+        // ── Delete post (topic) ──
+        *deletePost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            const spaceSlug = el.ref.dataset.spaceSlug;
+            if ( ! postId ) return;
+
+            if ( ! confirm( 'Are you sure you want to delete this topic?' ) ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                } );
+
+                if ( res.ok ) {
+                    // Redirect to space listing
+                    const base = state.communityBase || '/community';
+                    window.location.href = spaceSlug ? `${ base }/s/${ spaceSlug }/` : `${ base }/`;
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    alert( err.message || 'Failed to delete.' );
+                }
+            } catch {
+                alert( 'Network error. Please try again.' );
+            }
+        },
+
+        // ── Delete reply ──
+        *deleteReply( event ) {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            if ( ! replyId ) return;
+
+            if ( ! confirm( 'Are you sure you want to delete this reply?' ) ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                } );
+
+                if ( res.ok ) {
+                    const replyEl = el.ref.closest( '.jt-reply' );
+                    if ( replyEl ) {
+                        replyEl.style.opacity = '0.3';
+                        replyEl.style.pointerEvents = 'none';
+                        setTimeout( () => replyEl.remove(), 300 );
+                    }
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    alert( err.message || 'Failed to delete.' );
+                }
+            } catch {
+                alert( 'Network error. Please try again.' );
+            }
+        },
+
         // ── Toggle collapsible thread ──
         toggleThread() {
             const ctx = getContext();

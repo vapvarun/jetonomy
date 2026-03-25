@@ -453,7 +453,9 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		Post::pin( $id );
+		// Toggle: unpin if already pinned, pin if not.
+		$new_value = $post->is_sticky ? 0 : 1;
+		Post::update( $id, [ 'is_sticky' => $new_value ] );
 
 		$updated = Post::find( $id );
 
