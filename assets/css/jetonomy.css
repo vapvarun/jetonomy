@@ -628,8 +628,8 @@
   .jt-form-group { margin-bottom: 16px; }
   .jt-label { display: block; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 6px; }
   .jt-label-hint { font-size: 0.8125rem; font-weight: 400; color: var(--jt-text-tertiary); }
-  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; }
-  .jt-input:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
+  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; }
+  .jt-input:focus { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
   .jt-input::placeholder { color: var(--jt-text-secondary); }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }

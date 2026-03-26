@@ -20,6 +20,11 @@ class Rate_Limiter {
 	 * @return bool True if the action is allowed, false if the limit is reached.
 	 */
 	public static function check( int $user_id, string $action, int $trust_level ): bool {
+		// Admins and moderators bypass all rate limits.
+		if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' ) ) {
+			return true;
+		}
+
 		$limits = self::get_limits( $trust_level );
 		if ( ! isset( $limits[ $action ] ) ) {
 			return true; // No limit defined for this action.
