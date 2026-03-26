@@ -144,7 +144,9 @@ class Admin {
 	}
 
 	public function sanitize_settings( $input ): array {
-		$clean = [];
+		// Merge with existing settings so saving one tab doesn't wipe another.
+		$existing = get_option( 'jetonomy_settings', [] );
+		$clean    = is_array( $existing ) ? $existing : [];
 
 		// General
 		$clean['base_slug']          = sanitize_title( $input['base_slug'] ?? 'community' );
