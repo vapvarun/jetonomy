@@ -15,22 +15,26 @@ defined( 'ABSPATH' ) || exit;
 class Shortcodes {
 
 	public static function register(): void {
-		add_shortcode( 'jetonomy_recent_posts', [ __CLASS__, 'recent_posts' ] );
-		add_shortcode( 'jetonomy_spaces', [ __CLASS__, 'spaces' ] );
-		add_shortcode( 'jetonomy_leaderboard', [ __CLASS__, 'leaderboard' ] );
-		add_shortcode( 'jetonomy_user_profile', [ __CLASS__, 'user_profile' ] );
-		add_shortcode( 'jetonomy_space_members', [ __CLASS__, 'space_members' ] );
+		add_shortcode( 'jetonomy_recent_posts', array( __CLASS__, 'recent_posts' ) );
+		add_shortcode( 'jetonomy_spaces', array( __CLASS__, 'spaces' ) );
+		add_shortcode( 'jetonomy_leaderboard', array( __CLASS__, 'leaderboard' ) );
+		add_shortcode( 'jetonomy_user_profile', array( __CLASS__, 'user_profile' ) );
+		add_shortcode( 'jetonomy_space_members', array( __CLASS__, 'space_members' ) );
 	}
 
 	/**
 	 * [jetonomy_recent_posts count="5" space_id="" sort="latest"]
 	 */
 	public static function recent_posts( $atts ): string {
-		$atts = shortcode_atts( [
-			'count'    => 5,
-			'space_id' => 0,
-			'sort'     => 'latest',
-		], $atts, 'jetonomy_recent_posts' );
+		$atts = shortcode_atts(
+			array(
+				'count'    => 5,
+				'space_id' => 0,
+				'sort'     => 'latest',
+			),
+			$atts,
+			'jetonomy_recent_posts'
+		);
 
 		$limit = absint( $atts['count'] ) ?: 5;
 		$base  = base_url();
@@ -40,7 +44,7 @@ class Shortcodes {
 		$spaces_tbl = table( 'spaces' );
 
 		$where = "p.status = 'publish'";
-		$args  = [];
+		$args  = array();
 		if ( ! empty( $atts['space_id'] ) ) {
 			$where .= ' AND p.space_id = %d';
 			$args[] = absint( $atts['space_id'] );
@@ -49,7 +53,7 @@ class Shortcodes {
 		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC';
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$query = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
+		$query  = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
 		          FROM {$posts_tbl} p
 		          LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
 		          WHERE {$where}
@@ -58,7 +62,7 @@ class Shortcodes {
 		$args[] = $limit;
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$posts = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ) ?: [];
+		$posts = $wpdb->get_results( $wpdb->prepare( $query, ...$args ) ) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( empty( $posts ) ) {
@@ -67,21 +71,21 @@ class Shortcodes {
 
 		$out = '<div class="jt-shortcode jt-shortcode-recent-posts">';
 		foreach ( $posts as $post ) {
-			$url     = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
-			$time    = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
-			$author  = get_userdata( (int) $post->author_id );
-			$out    .= '<div class="jt-shortcode-post">';
-			$out    .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
-			$out    .= '<div class="jt-shortcode-post-meta">';
-			$out    .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
-			$out    .= ' · ' . esc_html( $post->space_title ?? '' );
+			$url    = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+			$time   = human_time_diff( strtotime( $post->created_at ), time() );
+			$author = get_userdata( (int) $post->author_id );
+			$out   .= '<div class="jt-shortcode-post">';
+			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
+			$out   .= '<div class="jt-shortcode-post-meta">';
+			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+			$out   .= ' · ' . esc_html( $post->space_title ?? '' );
 			/* translators: %s: human-readable time difference */
-			$out    .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
-			$out    .= '</div>';
-			$out    .= '<div class="jt-shortcode-post-stats">';
-			$out    .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
-			$out    .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
-			$out    .= '</div></div>';
+			$out .= ' · ' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time ) );
+			$out .= '</div>';
+			$out .= '<div class="jt-shortcode-post-stats">';
+			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
+			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
+			$out .= '</div></div>';
 		}
 		$out .= '</div>';
 
@@ -92,10 +96,14 @@ class Shortcodes {
 	 * [jetonomy_spaces count="6" category_id=""]
 	 */
 	public static function spaces( $atts ): string {
-		$atts = shortcode_atts( [
-			'count'       => 6,
-			'category_id' => 0,
-		], $atts, 'jetonomy_spaces' );
+		$atts = shortcode_atts(
+			array(
+				'count'       => 6,
+				'category_id' => 0,
+			),
+			$atts,
+			'jetonomy_spaces'
+		);
 
 		$limit = absint( $atts['count'] ) ?: 6;
 		$base  = base_url();
@@ -104,7 +112,7 @@ class Shortcodes {
 		$spaces_tbl = table( 'spaces' );
 
 		$where = "status = 'active' AND visibility = 'public'";
-		$args  = [];
+		$args  = array();
 		if ( ! empty( $atts['category_id'] ) ) {
 			$where .= ' AND category_id = %d';
 			$args[] = absint( $atts['category_id'] );
@@ -113,10 +121,12 @@ class Shortcodes {
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$spaces = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC LIMIT %d",
-			...$args
-		) ) ?: [];
+		$spaces = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$spaces_tbl} WHERE {$where} ORDER BY post_count DESC LIMIT %d",
+				...$args
+			)
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( empty( $spaces ) ) {
@@ -143,7 +153,7 @@ class Shortcodes {
 	 * [jetonomy_leaderboard count="10"]
 	 */
 	public static function leaderboard( $atts ): string {
-		$atts = shortcode_atts( [ 'count' => 10 ], $atts, 'jetonomy_leaderboard' );
+		$atts = shortcode_atts( array( 'count' => 10 ), $atts, 'jetonomy_leaderboard' );
 
 		$limit = absint( $atts['count'] ) ?: 10;
 		$base  = base_url();
@@ -153,10 +163,12 @@ class Shortcodes {
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$leaders = $wpdb->get_results( $wpdb->prepare(
-			"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d",
-			$limit
-		) ) ?: [];
+		$leaders = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d",
+				$limit
+			)
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( empty( $leaders ) ) {
@@ -182,7 +194,7 @@ class Shortcodes {
 	 * [jetonomy_user_profile user_id="1"]
 	 */
 	public static function user_profile( $atts ): string {
-		$atts = shortcode_atts( [ 'user_id' => 0 ], $atts, 'jetonomy_user_profile' );
+		$atts = shortcode_atts( array( 'user_id' => 0 ), $atts, 'jetonomy_user_profile' );
 
 		$user_id = absint( $atts['user_id'] ) ?: get_current_user_id();
 		if ( ! $user_id ) {
@@ -218,10 +230,14 @@ class Shortcodes {
 	 * [jetonomy_space_members space_id="1" count="10"]
 	 */
 	public static function space_members( $atts ): string {
-		$atts = shortcode_atts( [
-			'space_id' => 0,
-			'count'    => 10,
-		], $atts, 'jetonomy_space_members' );
+		$atts = shortcode_atts(
+			array(
+				'space_id' => 0,
+				'count'    => 10,
+			),
+			$atts,
+			'jetonomy_space_members'
+		);
 
 		$space_id = absint( $atts['space_id'] );
 		if ( ! $space_id ) {
@@ -236,16 +252,18 @@ class Shortcodes {
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$members = $wpdb->get_results( $wpdb->prepare(
-			"SELECT sm.user_id, sm.role, up.reputation, up.trust_level
+		$members = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT sm.user_id, sm.role, up.reputation, up.trust_level
 			 FROM {$members_tbl} sm
 			 LEFT JOIN {$profiles_tbl} up ON up.user_id = sm.user_id
 			 WHERE sm.space_id = %d
 			 ORDER BY up.reputation DESC
 			 LIMIT %d",
-			$space_id,
-			$limit
-		) ) ?: [];
+				$space_id,
+				$limit
+			)
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		if ( empty( $members ) ) {

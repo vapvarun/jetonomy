@@ -26,29 +26,44 @@ class Permission_Engine {
 	 *
 	 * Each higher role includes all actions of the roles below it.
 	 */
-	private const SPACE_ROLE_PERMS = [
-		'viewer'    => [ 'read' ],
-		'member'    => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
-		'moderator' => [
-			'read', 'create_posts', 'create_replies', 'vote', 'flag',
-			'edit_others_posts', 'delete_others_posts', 'close_posts',
-			'pin_posts', 'move_posts',
-		],
-		'admin'     => [
-			'read', 'create_posts', 'create_replies', 'vote', 'flag',
-			'edit_others_posts', 'delete_others_posts', 'close_posts',
-			'pin_posts', 'move_posts', 'manage_spaces',
-		],
-	];
+	private const SPACE_ROLE_PERMS = array(
+		'viewer'    => array( 'read' ),
+		'member'    => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag' ),
+		'moderator' => array(
+			'read',
+			'create_posts',
+			'create_replies',
+			'vote',
+			'flag',
+			'edit_others_posts',
+			'delete_others_posts',
+			'close_posts',
+			'pin_posts',
+			'move_posts',
+		),
+		'admin'     => array(
+			'read',
+			'create_posts',
+			'create_replies',
+			'vote',
+			'flag',
+			'edit_others_posts',
+			'delete_others_posts',
+			'close_posts',
+			'pin_posts',
+			'move_posts',
+			'manage_spaces',
+		),
+	);
 
 	/**
 	 * Determine whether a user is allowed to perform an action.
 	 *
 	 * Results are cached for 60 seconds per user/action/space combination.
 	 *
-	 * @param int         $user_id  WP user ID to check.
-	 * @param string      $action   Action name (without 'jetonomy_' prefix for WP cap check).
-	 * @param int|null    $space_id Optional space context.
+	 * @param int      $user_id  WP user ID to check.
+	 * @param string   $action   Action name (without 'jetonomy_' prefix for WP cap check).
+	 * @param int|null $space_id Optional space context.
 	 * @return bool
 	 */
 	public static function can( int $user_id, string $action, ?int $space_id = null ): bool {
@@ -81,7 +96,7 @@ class Permission_Engine {
 
 		// Layer 0b: Silence check — can read but not write.
 		if ( $user_id && class_exists( 'Jetonomy\Models\Restriction' ) && Restriction::is_silenced( $user_id ) ) {
-			$write_actions = [ 'create_posts', 'create_replies', 'vote', 'flag', 'create_spaces', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' ];
+			$write_actions = array( 'create_posts', 'create_replies', 'vote', 'flag', 'create_spaces', 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' );
 			if ( in_array( $action, $write_actions, true ) ) {
 				return false;
 			}
@@ -117,7 +132,7 @@ class Permission_Engine {
 		}
 
 		// Private / hidden spaces require membership.
-		if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+		if ( in_array( $space->visibility, array( 'private', 'hidden' ), true ) ) {
 			if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
 				return false;
 			}
@@ -127,12 +142,12 @@ class Permission_Engine {
 		$access = AccessRule::resolve_access( $user_id, $space_id );
 		if ( $access ) {
 			// Access rule grants access — check if sufficient for the action.
-			$grants_map = [
-				'read'        => [ 'read' ],
-				'participate' => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
-				'full'        => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'close_posts', 'pin_posts' ],
-			];
-			$allowed_actions = $grants_map[ $access['grants'] ] ?? [ 'read' ];
+			$grants_map      = array(
+				'read'        => array( 'read' ),
+				'participate' => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag' ),
+				'full'        => array( 'read', 'create_posts', 'create_replies', 'vote', 'flag', 'edit_others_posts', 'close_posts', 'pin_posts' ),
+			);
+			$allowed_actions = $grants_map[ $access['grants'] ] ?? array( 'read' );
 			if ( in_array( $action, $allowed_actions, true ) ) {
 				return true;
 			}
@@ -146,7 +161,7 @@ class Permission_Engine {
 			}
 			$is_open = 'open' === ( $space->join_policy ?? 'open' );
 			if ( $is_open && $user_id ) {
-				$open_actions = [ 'create_posts', 'create_replies', 'vote', 'flag' ];
+				$open_actions = array( 'create_posts', 'create_replies', 'vote', 'flag' );
 				if ( in_array( $action, $open_actions, true ) ) {
 					return true;
 				}
@@ -164,17 +179,17 @@ class Permission_Engine {
 		$profile     = UserProfile::find_by_user( $user_id );
 		$trust_level = $profile ? (int) $profile->trust_level : 0;
 
-		$trust_requirements = [
+		$trust_requirements = array(
 			'edit_others_posts' => 3,
 			'move_posts'        => 3,
 			'close_posts'       => 3,
 			'pin_posts'         => 3,
 			'create_spaces'     => 4,
-		];
+		);
 
 		if ( isset( $trust_requirements[ $action ] ) && $trust_level < $trust_requirements[ $action ] ) {
 			// Space moderators/admins bypass trust requirements.
-			if ( ! in_array( $role, [ 'moderator', 'admin' ], true ) ) {
+			if ( ! in_array( $role, array( 'moderator', 'admin' ), true ) ) {
 				return false;
 			}
 		}
@@ -198,7 +213,7 @@ class Permission_Engine {
 			return false;
 		}
 
-		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? [], true );
+		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? array(), true );
 	}
 
 	/**
@@ -209,12 +224,17 @@ class Permission_Engine {
 	 * @return bool
 	 */
 	private static function role_meets_restriction( string $role, string $restriction ): bool {
-		$hierarchy = [ 'viewer' => 0, 'member' => 1, 'moderator' => 2, 'admin' => 3 ];
-		$required  = [
+		$hierarchy = array(
+			'viewer'    => 0,
+			'member'    => 1,
+			'moderator' => 2,
+			'admin'     => 3,
+		);
+		$required  = array(
 			'members'    => 1,
 			'moderators' => 2,
 			'admins'     => 3,
-		];
+		);
 
 		$user_level = $hierarchy[ $role ] ?? 0;
 		$req_level  = $required[ $restriction ] ?? 1;

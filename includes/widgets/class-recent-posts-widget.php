@@ -9,7 +9,7 @@ class Recent_Posts_Widget extends \WP_Widget {
 		parent::__construct(
 			'jetonomy_recent_posts',
 			__( 'Jetonomy: Recent Posts', 'jetonomy' ),
-			[ 'description' => __( 'Display recent forum posts.', 'jetonomy' ) ]
+			array( 'description' => __( 'Display recent forum posts.', 'jetonomy' ) )
 		);
 	}
 
@@ -39,9 +39,9 @@ class Recent_Posts_Widget extends \WP_Widget {
 	}
 
 	public function update( $new_instance, $old_instance ): array {
-		return [
+		return array(
 			'title' => sanitize_text_field( $new_instance['title'] ?? '' ),
 			'count' => absint( $new_instance['count'] ?? 5 ),
-		];
+		);
 	}
 }

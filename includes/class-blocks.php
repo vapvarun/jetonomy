@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class Blocks {
 
 	public static function register(): void {
-		add_action( 'init', [ __CLASS__, 'register_blocks' ] );
+		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
 	}
 
 	public static function register_blocks(): void {
@@ -20,47 +20,74 @@ class Blocks {
 			return;
 		}
 
-		register_block_type( 'jetonomy/forum-feed', [
-			'api_version'     => 3,
-			'attributes'      => [
-				'count'   => [ 'type' => 'number', 'default' => 5 ],
-				'spaceId' => [ 'type' => 'number', 'default' => 0 ],
-				'sort'    => [ 'type' => 'string', 'default' => 'latest' ],
-			],
-			'render_callback' => [ __CLASS__, 'render_forum_feed' ],
-			'category'        => 'widgets',
-			'title'           => __( 'Forum Feed', 'jetonomy' ),
-			'description'     => __( 'Display recent forum discussions.', 'jetonomy' ),
-			'icon'            => 'format-chat',
-			'keywords'        => [ 'forum', 'posts', 'discussions', 'jetonomy' ],
-		] );
+		register_block_type(
+			'jetonomy/forum-feed',
+			array(
+				'api_version'     => 3,
+				'attributes'      => array(
+					'count'   => array(
+						'type'    => 'number',
+						'default' => 5,
+					),
+					'spaceId' => array(
+						'type'    => 'number',
+						'default' => 0,
+					),
+					'sort'    => array(
+						'type'    => 'string',
+						'default' => 'latest',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_forum_feed' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Forum Feed', 'jetonomy' ),
+				'description'     => __( 'Display recent forum discussions.', 'jetonomy' ),
+				'icon'            => 'format-chat',
+				'keywords'        => array( 'forum', 'posts', 'discussions', 'jetonomy' ),
+			)
+		);
 
-		register_block_type( 'jetonomy/space-list', [
-			'api_version'     => 3,
-			'attributes'      => [
-				'count'      => [ 'type' => 'number', 'default' => 6 ],
-				'categoryId' => [ 'type' => 'number', 'default' => 0 ],
-			],
-			'render_callback' => [ __CLASS__, 'render_space_list' ],
-			'category'        => 'widgets',
-			'title'           => __( 'Space List', 'jetonomy' ),
-			'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ),
-			'icon'            => 'groups',
-			'keywords'        => [ 'spaces', 'categories', 'forum', 'jetonomy' ],
-		] );
+		register_block_type(
+			'jetonomy/space-list',
+			array(
+				'api_version'     => 3,
+				'attributes'      => array(
+					'count'      => array(
+						'type'    => 'number',
+						'default' => 6,
+					),
+					'categoryId' => array(
+						'type'    => 'number',
+						'default' => 0,
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_space_list' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Space List', 'jetonomy' ),
+				'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ),
+				'icon'            => 'groups',
+				'keywords'        => array( 'spaces', 'categories', 'forum', 'jetonomy' ),
+			)
+		);
 
-		register_block_type( 'jetonomy/leaderboard', [
-			'api_version'     => 3,
-			'attributes'      => [
-				'count' => [ 'type' => 'number', 'default' => 10 ],
-			],
-			'render_callback' => [ __CLASS__, 'render_leaderboard' ],
-			'category'        => 'widgets',
-			'title'           => __( 'Leaderboard', 'jetonomy' ),
-			'description'     => __( 'Display top community members by reputation.', 'jetonomy' ),
-			'icon'            => 'awards',
-			'keywords'        => [ 'leaderboard', 'ranking', 'reputation', 'jetonomy' ],
-		] );
+		register_block_type(
+			'jetonomy/leaderboard',
+			array(
+				'api_version'     => 3,
+				'attributes'      => array(
+					'count' => array(
+						'type'    => 'number',
+						'default' => 10,
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_leaderboard' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Leaderboard', 'jetonomy' ),
+				'description'     => __( 'Display top community members by reputation.', 'jetonomy' ),
+				'icon'            => 'awards',
+				'keywords'        => array( 'leaderboard', 'ranking', 'reputation', 'jetonomy' ),
+			)
+		);
 	}
 
 	public static function render_forum_feed( array $attributes ): string {

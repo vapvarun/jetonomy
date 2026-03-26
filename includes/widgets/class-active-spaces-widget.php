@@ -9,7 +9,7 @@ class Active_Spaces_Widget extends \WP_Widget {
 		parent::__construct(
 			'jetonomy_active_spaces',
 			__( 'Jetonomy: Active Spaces', 'jetonomy' ),
-			[ 'description' => __( 'Display the most active forum spaces.', 'jetonomy' ) ]
+			array( 'description' => __( 'Display the most active forum spaces.', 'jetonomy' ) )
 		);
 	}
 
@@ -39,9 +39,9 @@ class Active_Spaces_Widget extends \WP_Widget {
 	}
 
 	public function update( $new_instance, $old_instance ): array {
-		return [
+		return array(
 			'title' => sanitize_text_field( $new_instance['title'] ?? '' ),
 			'count' => absint( $new_instance['count'] ?? 5 ),
-		];
+		);
 	}
 }

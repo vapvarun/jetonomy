@@ -9,7 +9,7 @@ class User_Stats_Widget extends \WP_Widget {
 		parent::__construct(
 			'jetonomy_user_stats',
 			__( 'Jetonomy: User Stats', 'jetonomy' ),
-			[ 'description' => __( 'Display the logged-in user\'s forum stats.', 'jetonomy' ) ]
+			array( 'description' => __( 'Display the logged-in user\'s forum stats.', 'jetonomy' ) )
 		);
 	}
 
@@ -38,8 +38,8 @@ class User_Stats_Widget extends \WP_Widget {
 	}
 
 	public function update( $new_instance, $old_instance ): array {
-		return [
+		return array(
 			'title' => sanitize_text_field( $new_instance['title'] ?? '' ),
-		];
+		);
 	}
 }

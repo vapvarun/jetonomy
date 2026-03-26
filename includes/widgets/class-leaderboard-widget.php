@@ -9,7 +9,7 @@ class Leaderboard_Widget extends \WP_Widget {
 		parent::__construct(
 			'jetonomy_leaderboard',
 			__( 'Jetonomy: Leaderboard', 'jetonomy' ),
-			[ 'description' => __( 'Display top community members by reputation.', 'jetonomy' ) ]
+			array( 'description' => __( 'Display top community members by reputation.', 'jetonomy' ) )
 		);
 	}
 
@@ -39,9 +39,9 @@ class Leaderboard_Widget extends \WP_Widget {
 	}
 
 	public function update( $new_instance, $old_instance ): array {
-		return [
+		return array(
 			'title' => sanitize_text_field( $new_instance['title'] ?? '' ),
 			'count' => absint( $new_instance['count'] ?? 5 ),
-		];
+		);
 	}
 }
