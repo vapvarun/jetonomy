@@ -32,6 +32,27 @@ function jetonomy(): Jetonomy\Jetonomy {
 
 jetonomy();
 
+// EDD Software Licensing SDK — free plugin auto-updates with preset key.
+add_action(
+	'edd_sl_sdk_registry',
+	function ( $registry ) {
+		$registry->register(
+			array(
+				'id'      => 'jetonomy',
+				'url'     => 'https://wbcomdesigns.com',
+				'item_id' => 0, // TODO: Set EDD download ID for Jetonomy Free.
+				'version' => JETONOMY_VERSION,
+				'file'    => JETONOMY_FILE,
+				'license' => 'free', // Preset — no user input needed for free plugin updates.
+			)
+		);
+	}
+);
+
+if ( file_exists( JETONOMY_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+	require_once JETONOMY_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+}
+
 /**
  * Render an SVG icon from assets/icons/.
  *
