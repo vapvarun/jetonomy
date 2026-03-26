@@ -18,6 +18,21 @@ class Template_Loader {
             exit;
         }
 
+        // ── Global access control from settings ──
+        $settings = get_option( 'jetonomy_settings', [] );
+
+        // require_login: redirect all non-logged-in users to login page.
+        if ( ! empty( $settings['require_login'] ) && ! is_user_logged_in() ) {
+            wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+            exit;
+        }
+
+        // guest_read: if disabled, non-logged-in users can't view any forum content.
+        if ( empty( $settings['guest_read'] ) && ! is_user_logged_in() ) {
+            wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+            exit;
+        }
+
         // ── Auth redirect for protected routes (BEFORE any output) ──
         $auth_required_routes = [ 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post' ];
         if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
@@ -95,8 +110,42 @@ class Template_Loader {
             wp_enqueue_style( 'jetonomy-rtl', JETONOMY_URL . 'assets/css/jetonomy-rtl.css', [ 'jetonomy' ], JETONOMY_VERSION );
         }
 
+        // ── Inject dynamic CSS from settings (accent color, custom CSS, etc.) ──
+        $dynamic_css = '';
+
+        // Accent color override.
+        if ( ! empty( $settings['accent_color'] ) && '#0073aa' !== $settings['accent_color'] ) {
+            $accent = sanitize_hex_color( $settings['accent_color'] );
+            if ( $accent ) {
+                $dynamic_css .= ':root,.jt-app{--jt-accent:' . $accent . ';}';
+            }
+        }
+
+        // Inherit fonts: when enabled, don't override theme fonts.
+        if ( ! empty( $settings['inherit_fonts'] ) ) {
+            $dynamic_css .= ':root,.jt-app{--jt-font:inherit;--jt-font-heading:inherit;}';
+        }
+
+        // Inherit colors: when enabled, use WP theme preset colors only.
+        if ( ! empty( $settings['inherit_colors'] ) ) {
+            $dynamic_css .= ':root,.jt-app{--jt-accent:var(--wp--preset--color--primary,#3B82F6);--jt-text:var(--wp--preset--color--contrast,#1a1a1a);--jt-bg:var(--wp--preset--color--base,#ffffff);}';
+        }
+
+        // Layout density.
+        if ( ! empty( $settings['layout_density'] ) && 'compact' === $settings['layout_density'] ) {
+            $dynamic_css .= '.jt-app{font-size:0.875rem;line-height:1.5;}.jt-row{padding:8px 12px;}.jt-reply-body{padding:12px 14px;}.jt-post-body{padding:16px;}';
+        }
+
+        // Custom CSS from settings.
+        if ( ! empty( $settings['custom_css'] ) ) {
+            $dynamic_css .= wp_strip_all_tags( $settings['custom_css'] );
+        }
+
+        if ( $dynamic_css ) {
+            wp_add_inline_style( 'jetonomy', $dynamic_css );
+        }
+
         // Set up Interactivity API state
-        $settings = get_option( 'jetonomy_settings', [] );
         wp_interactivity_state( 'jetonomy', [
             'apiBase'       => rest_url( 'jetonomy/v1' ),
             '_nonce'        => wp_create_nonce( 'wp_rest' ),

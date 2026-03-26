@@ -10,6 +10,12 @@ class Sitemap {
 	}
 
 	public function register(): void {
+		// Respect seo_sitemap toggle.
+		$settings = get_option( 'jetonomy_settings', [] );
+		if ( empty( $settings['seo_sitemap'] ) ) {
+			return;
+		}
+
 		$sitemaps = wp_sitemaps_get_server();
 		if ( ! $sitemaps ) {
 			return;

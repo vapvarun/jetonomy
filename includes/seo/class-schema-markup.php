@@ -7,12 +7,74 @@ class Schema_Markup {
 
 	public function __construct() {
 		add_action( 'wp_head', [ $this, 'output_schema' ] );
+		add_filter( 'document_title_parts', [ $this, 'filter_title' ] );
+	}
+
+	/**
+	 * Apply SEO title patterns from settings.
+	 *
+	 * Supports placeholders: {post_title}, {space_name}, {site_name}
+	 */
+	public function filter_title( array $title_parts ): array {
+		$route = get_query_var( 'jetonomy_route' );
+		if ( empty( $route ) ) {
+			return $title_parts;
+		}
+
+		$settings  = get_option( 'jetonomy_settings', [] );
+		$site_name = get_bloginfo( 'name' );
+
+		if ( 'post' === $route && ! empty( $settings['seo_post_title'] ) ) {
+			$slug  = get_query_var( 'jetonomy_slug' );
+			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
+			$space = $post ? \Jetonomy\Models\Space::find( (int) $post->space_id ) : null;
+			if ( $post ) {
+				$pattern = $settings['seo_post_title'];
+				$title_parts['title'] = str_replace(
+					[ '{post_title}', '{space_name}', '{site_name}' ],
+					[ $post->title, $space->title ?? '', $site_name ],
+					$pattern
+				);
+			}
+		}
+
+		if ( 'space' === $route && ! empty( $settings['seo_space_title'] ) ) {
+			$slug  = get_query_var( 'jetonomy_slug' );
+			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
+			if ( $space ) {
+				$pattern = $settings['seo_space_title'];
+				$title_parts['title'] = str_replace(
+					[ '{space_name}', '{site_name}' ],
+					[ $space->title, $site_name ],
+					$pattern
+				);
+			}
+		}
+
+		return $title_parts;
 	}
 
 	public function output_schema(): void {
 		$route = get_query_var( 'jetonomy_route' );
 		if ( empty( $route ) ) {
 			return;
+		}
+
+		$settings = get_option( 'jetonomy_settings', [] );
+
+		// Respect seo_schema toggle — if disabled, skip JSON-LD output.
+		if ( empty( $settings['seo_schema'] ) ) {
+			return;
+		}
+
+		// SEO noindex for profiles.
+		if ( 'profile' === $route && ! empty( $settings['seo_noindex_profiles'] ) ) {
+			echo '<meta name="robots" content="noindex, follow">' . "\n";
+		}
+
+		// SEO noindex for search.
+		if ( 'search' === $route && ! empty( $settings['seo_noindex_search'] ) ) {
+			echo '<meta name="robots" content="noindex, follow">' . "\n";
 		}
 
 		$schema = null;
