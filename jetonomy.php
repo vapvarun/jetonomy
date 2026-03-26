@@ -32,7 +32,7 @@ function jetonomy(): Jetonomy\Jetonomy {
 
 jetonomy();
 
-// EDD Software Licensing SDK — free plugin auto-updates with preset key.
+// EDD Software Licensing SDK — free plugin auto-updates (no license needed).
 add_action(
 	'edd_sl_sdk_registry',
 	function ( $registry ) {
@@ -43,7 +43,6 @@ add_action(
 				'item_id' => 1660320,
 				'version' => JETONOMY_VERSION,
 				'file'    => JETONOMY_FILE,
-				'license' => 'free', // Preset — no user input needed for free plugin updates.
 			)
 		);
 	}
