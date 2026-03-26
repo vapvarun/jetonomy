@@ -40,7 +40,7 @@ add_action(
 			array(
 				'id'      => 'jetonomy',
 				'url'     => 'https://wbcomdesigns.com',
-				'item_id' => 0, // TODO: Set EDD download ID for Jetonomy Free.
+				'item_id' => 1660320,
 				'version' => JETONOMY_VERSION,
 				'file'    => JETONOMY_FILE,
 				'license' => 'free', // Preset — no user input needed for free plugin updates.
