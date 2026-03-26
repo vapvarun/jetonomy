@@ -41,6 +41,11 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="<?php echo 'leaderboard' === $current_route ? 'active' : ''; ?>">
 				<?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?>
 			</a>
+			<?php if ( $user_id ) : ?>
+				<a href="<?php echo esc_url( $base . '/u/' . wp_get_current_user()->user_login . '/' ); ?>" class="<?php echo 'profile' === $current_route ? 'active' : ''; ?>">
+					<?php esc_html_e( 'My Profile', 'jetonomy' ); ?>
+				</a>
+			<?php endif; ?>
 			<?php do_action( 'jetonomy_header_nav_items' ); ?>
 		</div>
 
