@@ -15,17 +15,15 @@ $crumbs = [
 ];
 
 $type_labels = [
-	'reply'            => __( 'replied to your post', 'jetonomy' ),
+	'reply_to_post'    => __( 'replied to your post', 'jetonomy' ),
+	'reply_to_reply'   => __( 'replied to your comment', 'jetonomy' ),
 	'mention'          => __( 'mentioned you', 'jetonomy' ),
-	'vote'             => __( 'voted on your post', 'jetonomy' ),
-	'vote_up'          => __( 'upvoted your post', 'jetonomy' ),
-	'accepted'         => __( 'accepted your reply', 'jetonomy' ),
-	'new_post'         => __( 'created a new post', 'jetonomy' ),
-	'subscription'     => __( 'new activity in a subscribed space', 'jetonomy' ),
-	'trust_promotion'  => __( 'you have been promoted to a new trust level', 'jetonomy' ),
+	'vote_on_post'     => __( 'voted on your post', 'jetonomy' ),
+	'accepted_answer'  => __( 'accepted your reply', 'jetonomy' ),
+	'new_post_in_sub'  => __( 'new activity in a subscribed space', 'jetonomy' ),
 	'moderation'       => __( 'a moderator acted on your content', 'jetonomy' ),
 	'badge_earned'     => __( 'earned a badge', 'jetonomy' ),
-	'level_up'         => __( 'reached a new level', 'jetonomy' ),
+	'flag'             => __( 'new content flag requires review', 'jetonomy' ),
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -80,6 +78,11 @@ $type_labels = [
 							) );
 							if ( $row ) {
 								$notif_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/#reply-' . $row->reply_id;
+							}
+						} elseif ( 'badge' === $notif->object_type ) {
+							$badge_user = get_userdata( (int) $notif->user_id );
+							if ( $badge_user ) {
+								$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/';
 							}
 						}
 					}

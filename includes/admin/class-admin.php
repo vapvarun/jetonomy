@@ -224,6 +224,7 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
+			'moderation',
 		];
 		$raw_notif = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : [];
 		foreach ( $notif_types as $nt ) {

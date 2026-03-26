@@ -87,7 +87,20 @@ class Mentions {
 					if ( $user && $user->user_email ) {
 						$site_name = get_bloginfo( 'name' );
 						$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
-						$email_adapter->send( $user->user_email, $subject, $message, wp_strip_all_tags( $message ) );
+
+						// Build List-Unsubscribe headers (RFC 8058).
+						$unsub_token = wp_hash( $uid . ':mention:unsubscribe' );
+						$unsub_url   = add_query_arg( [
+							'jetonomy_unsubscribe' => $unsub_token,
+							'uid'                  => $uid,
+							'type'                 => 'mention',
+						], home_url( '/' ) );
+						$headers = [
+							'List-Unsubscribe: <' . $unsub_url . '>',
+							'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
+						];
+
+						$email_adapter->send( $user->user_email, $subject, $message, wp_strip_all_tags( $message ), $headers );
 					}
 				}
 			}

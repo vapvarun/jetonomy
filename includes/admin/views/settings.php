@@ -340,6 +340,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'new_post_in_sub' => __( 'New post in subscribed space', 'jetonomy' ),
 					'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'    => __( 'Vote on your post', 'jetonomy' ),
+					'moderation'      => __( 'Moderator action on your content', 'jetonomy' ),
 				];
 				?>
 				<table class="jt-notif-defaults-table">

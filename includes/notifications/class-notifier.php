@@ -7,6 +7,7 @@ use Jetonomy\Models\Notification;
 use Jetonomy\Models\Subscription;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Adapters\Adapter_Registry;
 use function Jetonomy\now;
@@ -18,6 +19,9 @@ class Notifier {
 	}
 
 	private function register_hooks(): void {
+		// Post created — notify space subscribers
+		add_action( 'jetonomy_after_create_post', [ $this, 'on_post_created' ], 10, 2 );
+
 		// Reply created — notify post author + subscribers
 		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 10, 2 );
 
@@ -32,6 +36,43 @@ class Notifier {
 
 		// Moderator action on content
 		add_action( 'jetonomy_content_moderated', [ $this, 'on_content_moderated' ], 10, 4 );
+
+		// Flag created — notify moderators
+		add_action( 'jetonomy_flag_created', [ $this, 'on_flag_created' ], 10, 2 );
+	}
+
+	/**
+	 * Notify space subscribers when a new post is created.
+	 */
+	public function on_post_created( int $post_id, int $space_id ): void {
+		$post = Post::find( $post_id );
+		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
+			return;
+		}
+
+		$space       = Space::find( $space_id );
+		$space_name  = $space ? $space->title : __( 'a space', 'jetonomy' );
+		$actor_id    = (int) $post->author_id;
+		$subscribers = Subscription::get_subscribers( 'space', $space_id );
+
+		foreach ( $subscribers as $sub_user_id ) {
+			if ( $sub_user_id === $actor_id ) {
+				continue;
+			}
+			$this->create_and_maybe_email(
+				$sub_user_id,
+				$actor_id,
+				'new_post_in_sub',
+				'post',
+				$post_id,
+				sprintf(
+					/* translators: 1: space name, 2: post title */
+					__( 'New post in %1$s: %2$s', 'jetonomy' ),
+					$space_name,
+					mb_substr( $post->title, 0, 50 )
+				)
+			);
+		}
 	}
 
 	/**
@@ -83,7 +124,7 @@ class Notifier {
 		// 3. Notify parent reply author (reply-to-reply)
 		if ( ! empty( $reply->parent_id ) ) {
 			$parent_reply = Reply::find( (int) $reply->parent_id );
-			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id && (int) $parent_reply->author_id !== (int) $post->author_id ) {
+			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id ) {
 				$this->create_and_maybe_email(
 					(int) $parent_reply->author_id,
 					$actor_id,
@@ -260,32 +301,58 @@ class Notifier {
 	}
 
 	/**
+	 * Notify moderators when a flag is created.
+	 */
+	public function on_flag_created( int $flag_id, string $object_type ): void {
+		$moderators = get_users( [
+			'capability__in' => [ 'jetonomy_moderate', 'manage_options' ],
+			'fields'         => 'ID',
+		] );
+
+		foreach ( $moderators as $mod_id ) {
+			Notification::create( [
+				'user_id'     => (int) $mod_id,
+				'actor_id'    => 0,
+				'type'        => 'flag',
+				'object_type' => $object_type,
+				'object_id'   => $flag_id,
+				'message'     => __( 'New content flag requires review', 'jetonomy' ),
+				'created_at'  => now(),
+			] );
+		}
+	}
+
+	/**
 	 * Create notification and optionally send email.
 	 */
 	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message ): void {
-		$notification_id = Notification::create( [
-			'user_id'     => $user_id,
-			'actor_id'    => $actor_id,
-			'type'        => $type,
-			'object_type' => $object_type,
-			'object_id'   => $object_id,
-			'message'     => $message,
-			'created_at'  => now(),
-		] );
+		// Load user preferences and global defaults.
+		$profile         = UserProfile::find_by_user( $user_id );
+		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+		$user_prefs      = $settings['notifications'] ?? [];
+		$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 
-		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
+		// Check web preference before creating notification.
+		$web_enabled = $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true;
+		if ( $web_enabled ) {
+			$notification_id = Notification::create( [
+				'user_id'     => $user_id,
+				'actor_id'    => $actor_id,
+				'type'        => $type,
+				'object_type' => $object_type,
+				'object_id'   => $object_id,
+				'message'     => $message,
+				'created_at'  => now(),
+			] );
 
-		// Check user's email preference — per-user overrides global defaults.
-		$profile    = UserProfile::find_by_user( $user_id );
-		$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
-		$user_prefs = $settings['notifications'] ?? [];
+			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
+		}
 
+		// Check email preference.
 		if ( isset( $user_prefs[ $type ]['email'] ) ) {
 			$send_email = ! empty( $user_prefs[ $type ]['email'] );
 		} else {
-			// Fall back to global defaults.
-			$global     = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
-			$send_email = ! empty( $global[ $type ]['email'] );
+			$send_email = ! empty( $global_defaults[ $type ]['email'] );
 		}
 
 		if ( $send_email ) {

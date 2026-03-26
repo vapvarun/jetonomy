@@ -268,6 +268,8 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
+		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
+
 		return new WP_REST_Response( [
 			'created' => true,
 			'id'      => $flag_id,

@@ -162,8 +162,27 @@ class Notifications_Controller extends Base_Controller {
 			'actor_login'  => $actor ? $actor->user_login : '',
 			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
-			'object_url'   => $object_type && $object_id ? $this->resolve_object_url( $object_type, $object_id ) : '',
+			'object_url'   => $this->resolve_notification_url( $notification, $object_type, $object_id ),
 		];
+	}
+
+	/**
+	 * Resolve URL for a notification, handling special types like badge.
+	 */
+	private function resolve_notification_url( object $notification, string $object_type, int $object_id ): string {
+		if ( 'badge' === $object_type ) {
+			$user = get_userdata( (int) $notification->user_id );
+			if ( $user ) {
+				return \Jetonomy\base_url() . '/u/' . rawurlencode( $user->user_login ) . '/';
+			}
+			return '';
+		}
+
+		if ( $object_type && $object_id ) {
+			return $this->resolve_object_url( $object_type, $object_id );
+		}
+
+		return '';
 	}
 
 	/**
