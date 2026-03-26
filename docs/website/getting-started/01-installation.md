@@ -59,6 +59,8 @@ Jetonomy registers 20 custom capabilities (`jetonomy_read`, `jetonomy_create_pos
 
 Your community URLs (e.g. `yoursite.com/community/`) are registered and rewrite rules are flushed immediately. No manual permalink reset needed.
 
+> **URL Note:** Throughout this documentation, `/community/` is used as the default base URL. You can change this to any slug (e.g. `/forum/`, `/discuss/`, `/hub/`) in **Jetonomy → Settings → General → Community Base URL**. All community URLs automatically update when you change the base slug.
+
 **Cron jobs scheduled:**
 
 Two background jobs are scheduled via WP-Cron:
