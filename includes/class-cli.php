@@ -359,6 +359,113 @@ class CLI {
 	}
 
 	/**
+	 * Run pre-release QA checks.
+	 *
+	 * Validates database tables, notification wiring, permission engine,
+	 * REST routes, rewrite rules, and settings integrity.
+	 * Run once before every release.
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy qa
+	 *
+	 * @subcommand qa
+	 */
+	public function qa( $args, $assoc_args ): void {
+		global $wpdb;
+		$pass = 0;
+		$fail = 0;
+
+		$check = function ( string $label, bool $ok, string $detail = '' ) use ( &$pass, &$fail ) {
+			if ( $ok ) {
+				\WP_CLI::log( "  ✓ {$label}" );
+				$pass++;
+			} else {
+				\WP_CLI::warning( "  ✗ {$label}" . ( $detail ? " — {$detail}" : '' ) );
+				$fail++;
+			}
+		};
+
+		// ── 1. Database Tables ──
+		\WP_CLI::log( '── Database Tables ──' );
+		$expected = [ 'categories', 'spaces', 'posts', 'replies', 'votes', 'user_profiles', 'notifications', 'subscriptions', 'read_status', 'space_members', 'tags', 'post_tags', 'space_tags', 'space_tag_map', 'user_interests', 'activity_log', 'restrictions', 'access_rules', 'flags', 'revisions', 'join_requests', 'invite_links' ];
+		foreach ( $expected as $t ) {
+			$full = table( $t );
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$full}'" ) === $full;
+			// phpcs:enable
+			$check( "Table {$t}", $exists );
+		}
+
+		// ── 2. Notification Type Keys ──
+		\WP_CLI::log( '── Notification Type Keys ──' );
+		$settings     = get_option( 'jetonomy_settings', [] );
+		$notif_defs   = $settings['notification_defaults'] ?? [];
+		$keys = [ 'reply_to_post', 'reply_to_reply', 'mention', 'accepted_answer', 'new_post_in_sub', 'badge_earned', 'vote_on_post', 'moderation' ];
+		foreach ( $keys as $key ) {
+			$check( "Notif type '{$key}'", isset( $notif_defs[ $key ] ) || array_key_exists( $key, $notif_defs ) );
+		}
+
+		// ── 3. Permission Engine ──
+		\WP_CLI::log( '── Permission Engine ──' );
+		$admin_id = (int) ( get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 1 );
+		$actions  = [ 'create_posts', 'create_replies', 'vote', 'flag' ];
+		foreach ( $actions as $action ) {
+			$can = \Jetonomy\Permissions\Permission_Engine::can( $admin_id, $action );
+			$check( "Admin can '{$action}'", $can );
+		}
+		$rate_ok = \Jetonomy\Permissions\Rate_Limiter::check( $admin_id, 'vote', 0 );
+		$check( 'Rate limiter: admin bypass', $rate_ok );
+
+		// ── 4. REST Routes ──
+		\WP_CLI::log( '── REST Routes ──' );
+		$server = rest_get_server();
+		$routes = $server->get_routes( 'jetonomy/v1' );
+		$check( 'REST namespace registered', count( $routes ) > 0, count( $routes ) . ' routes' );
+		$critical = [ '/jetonomy/v1/spaces', '/jetonomy/v1/notifications', '/jetonomy/v1/search', '/jetonomy/v1/flags' ];
+		foreach ( $critical as $route ) {
+			$check( "Route: {$route}", isset( $routes[ $route ] ) );
+		}
+
+		// ── 5. Rewrite Rules ──
+		\WP_CLI::log( '── Rewrite Rules ──' );
+		$base  = \Jetonomy\base_slug();
+		$rules = get_option( 'rewrite_rules', [] );
+		$check( 'Rewrite rules exist', ! empty( $rules ) );
+		$check( "Base slug is '{$base}'", ! empty( $base ) );
+
+		// ── 6. Settings ──
+		\WP_CLI::log( '── Settings ──' );
+		$jt = get_option( 'jetonomy_settings', [] );
+		$check( 'base_slug set', ! empty( $jt['base_slug'] ) );
+		$check( 'trust_thresholds set', ! empty( $jt['trust_thresholds'] ) );
+		$check( 'rate_limits set', ! empty( $jt['rate_limits'] ) );
+
+		// ── 7. Pro (if active) ──
+		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
+			\WP_CLI::log( '── Jetonomy Pro ──' );
+			$check( 'Pro active', true, JETONOMY_PRO_VERSION );
+			$exts = get_option( 'jetonomy_pro_extensions', [] );
+			$check( 'Extensions enabled', count( $exts ) > 0, count( $exts ) . ' active' );
+			$pro_tables = [ 'jt_pro_conversations', 'jt_pro_conversation_participants', 'jt_pro_messages' ];
+			foreach ( $pro_tables as $pt ) {
+				$full = $wpdb->prefix . $pt;
+				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$full}'" ) === $full;
+				// phpcs:enable
+				$check( "Pro table {$pt}", $exists );
+			}
+		}
+
+		// ── Summary ──
+		\WP_CLI::log( '' );
+		if ( $fail > 0 ) {
+			\WP_CLI::error( sprintf( '✗ %d failed, %d passed — RELEASE BLOCKED', $fail, $pass ) );
+		} else {
+			\WP_CLI::success( sprintf( '✓ All %d checks passed. Ready for release.', $pass ) );
+		}
+	}
+
+	/**
 	 * Show plugin status and stats.
 	 *
 	 * ## EXAMPLES
