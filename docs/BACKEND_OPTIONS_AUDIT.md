@@ -83,7 +83,7 @@
 
 ---
 
-## Total Effort
+## Total Effort (Global Settings)
 
 | Priority | Items | Time |
 |----------|-------|------|
@@ -91,3 +91,65 @@
 | P1 | 4 settings | ~50 min |
 | P2 | 6 settings | ~60 min |
 | **Total** | **14 settings** | **~2.5 hours** |
+
+**Status: ALL 14 FIXED** — commit `3bae019`
+
+---
+
+## Deep Audit: Per-Space Settings (CRITICAL GAPS)
+
+### UNWIRED — Admin UI exists, value saved, but NEVER enforced
+
+| # | Setting | Stored In | Admin UI | Read By | Status |
+|---|---------|-----------|----------|---------|--------|
+| 1 | **who_can_post** | `spaces.settings['who_can_post']` | space-edit.php dropdown (members/moderators/admins) | **Nothing** — Permission_Engine ignores it | **UNWIRED** |
+| 2 | **who_can_reply** | `spaces.settings['who_can_reply']` | space-edit.php dropdown | **Nothing** | **UNWIRED** |
+| 3 | **require_approval** | `spaces.settings['require_approval']` | space-edit.php checkbox | **Nothing** — posts publish immediately | **UNWIRED** |
+| 4 | **allow_voting** | `spaces.settings['allow_voting']` | space-edit.php checkbox | **Nothing** — voting always works | **UNWIRED** |
+| 5 | **posts_per_page** (space override) | `spaces.settings['posts_per_page']` | space-edit.php input | **Nothing** — uses global setting | **UNWIRED** |
+
+### Fix Plan
+
+| # | Fix | File | Effort |
+|---|-----|------|--------|
+| 1 | Read `who_can_post` in Permission_Engine before granting `create_posts` | `class-permission-engine.php` | 30 min |
+| 2 | Read `who_can_reply` in Permission_Engine before granting `create_replies` | `class-permission-engine.php` | 15 min |
+| 3 | Read `require_approval` in Posts_Controller::create_item — set status to 'pending' | `class-posts-controller.php` | 20 min |
+| 4 | Read `allow_voting` in Votes_Controller — reject if disabled | `class-votes-controller.php` | 10 min |
+| 5 | Read space `posts_per_page` in Post::list_by_space with global fallback | `class-post.php` | 10 min |
+
+---
+
+## Deep Audit: Notification Defaults
+
+### Current defaults are ALL `false` — first-time site owners get zero notifications
+
+**Recommended defaults for first-time experience:**
+
+| Type | Web | Email | Reason |
+|------|-----|-------|--------|
+| reply_to_post | **true** | **true** | Core feature — users expect replies to their posts |
+| reply_to_reply | **true** | false | In-app is enough for threaded replies |
+| mention | **true** | **true** | @mentions should always notify |
+| accepted_answer | **true** | **true** | Q&A core feature |
+| vote_on_post | **true** | false | In-app only — email per vote is noisy |
+| badge_earned | **true** | false | Nice-to-know, not urgent |
+| new_post_in_sub | **true** | false | In-app only — email would be noisy |
+
+---
+
+## QA Tester Protocol: Backend Options (reusable for all plugins)
+
+### 5-Layer Audit Checklist
+
+1. **Global Options** — every `get_option()` key: change in admin → verify frontend changes
+2. **Per-Entity Settings** — every DB column + JSON settings field: set value → verify enforcement
+3. **Per-User Preferences** — notification prefs, display prefs: change per-user → verify behavior
+4. **Access Rules** — membership rules, trust restrictions: create rule → verify access blocked/granted
+5. **Feature Flags** — toggles, checkboxes: disable → verify feature stops working
+
+### Red Flags
+- Admin dropdown exists but no code reads the value
+- Notification type in UI but no `notify()` hook fires for it
+- Permission setting in admin but Permission_Engine doesn't check it
+- Default is `false` but should be `true` for first-time experience
