@@ -1,0 +1,88 @@
+{
+  "product_name": "Jetonomy",
+  "product_slug": "jetonomy",
+  "product_type": "plugin",
+  "version": "1.0.0",
+  "tagline": "Next-gen Discussion Platform for WordPress",
+  "short_id": "jtnmy",
+  "categories": [
+    {
+      "slug": "getting-started",
+      "name": "Getting Started",
+      "description": "Install, configure, and launch your community in minutes.",
+      "order": 1
+    },
+    {
+      "slug": "spaces-and-categories",
+      "name": "Spaces & Categories",
+      "description": "Organize your community into discussion spaces.",
+      "order": 2
+    },
+    {
+      "slug": "discussions",
+      "name": "Discussions & Topics",
+      "description": "Create topics, reply, vote, and manage conversations.",
+      "order": 3
+    },
+    {
+      "slug": "search-and-discovery",
+      "name": "Search & Discovery",
+      "description": "Find content with full-text search, tags, and filters.",
+      "order": 4
+    },
+    {
+      "slug": "moderation-and-trust",
+      "name": "Moderation & Trust",
+      "description": "Keep your community safe with trust levels and moderation tools.",
+      "order": 5
+    },
+    {
+      "slug": "notifications",
+      "name": "Notifications & Email",
+      "description": "Stay informed with in-app and email notifications.",
+      "order": 6
+    },
+    {
+      "slug": "user-profiles",
+      "name": "User Profiles & Leaderboard",
+      "description": "Member profiles, reputation, and community rankings.",
+      "order": 7
+    },
+    {
+      "slug": "pro-features",
+      "name": "Pro Features",
+      "description": "Premium extensions: reactions, messaging, polls, badges, analytics, and more.",
+      "order": 8
+    },
+    {
+      "slug": "integrations",
+      "name": "Integrations",
+      "description": "Connect with membership plugins, themes, and third-party services.",
+      "order": 9
+    },
+    {
+      "slug": "admin-settings",
+      "name": "Admin Settings",
+      "description": "Configure every aspect of your Jetonomy community.",
+      "order": 10
+    },
+    {
+      "slug": "migration",
+      "name": "Migration",
+      "description": "Import from bbPress, wpForo, and other forum plugins.",
+      "order": 11
+    },
+    {
+      "slug": "why-jetonomy",
+      "name": "Why Jetonomy",
+      "description": "How Jetonomy compares to bbPress, wpForo, and other solutions.",
+      "order": 12
+    },
+    {
+      "slug": "developer-guide",
+      "name": "Developer Guide",
+      "description": "REST API, hooks, template overrides, and extending Jetonomy.",
+      "order": 13
+    }
+  ]
+}
