@@ -150,6 +150,84 @@ Target (Discourse/Circle pattern):
 - [ ] i18n: all JS strings via state.i18n.* (translatable)
 - [ ] RTL: jetonomy-rtl.css loaded when is_rtl()
 
+---
+
+## Code-Level Action Flow Audit (2026-03-26)
+
+### BROKEN — Must fix before release
+
+| # | Issue | File | Line | Fix |
+|---|-------|------|------|-----|
+| 1 | **dismissFlag** — wrong HTTP method (`PATCH`) + wrong URL (`/flags/{id}` not `/flags/{id}/resolve`) + wrong status enum (`approved` not `valid`) | `view.js` | ~943 | Change to `POST /moderation/flags/{id}/resolve` with `{ status: 'valid' \| 'dismissed' }` |
+| 2 | **flagPost** — sends `detail` field but REST expects `description` — user's report text silently dropped | `view.js` | ~574 | Change `detail:` → `description:` |
+
+### HIGH — Missing `credentials: 'same-origin'` in fetch
+
+Without `credentials`, auth cookies aren't sent in stricter environments → 403 or anonymous user.
+
+| # | Action | File | Lines |
+|---|--------|------|-------|
+| 3 | voteUp (post) | `view.js` | ~155 |
+| 4 | voteDown (post) | `view.js` | ~198 |
+| 5 | voteReplyUp | `view.js` | ~223 |
+| 6 | voteReplyDown | `view.js` | ~267 |
+| 7 | submitReply | `view.js` | ~986 |
+| 8 | submitNewPost | `view.js` | ~1029 |
+| 9 | loadGapReplies | `view.js` | ~898 |
+| 10 | loadMoreReplies | `view.js` | ~1116 |
+| 11 | pollNotifications | `view.js` | ~1160 |
+| 12 | search overlay fetch | `header.php` | inline JS |
+
+### HIGH — `alert()` in Jetonomy Pro JS
+
+| # | Action | File | Lines |
+|---|--------|------|-------|
+| 13 | newConversation validation | `pro-view.js` | ~208, 223, 247, 252 |
+| 14 | sendMessage error | `pro-view.js` | ~280 |
+| 15 | votePoll error | `pro-view.js` | ~340 |
+
+### MEDIUM — Silent failures (no user feedback)
+
+| # | Action | Issue | File | Lines |
+|---|--------|-------|------|-------|
+| 16 | submitReply | No `catch` block — user loses reply silently on network error | `view.js` | ~985 |
+| 17 | submitNewPost | Non-OK response message not surfaced | `view.js` | ~1028 |
+
+### LOW — Post-save DOM update loses formatting
+
+| # | Action | Issue | File |
+|---|--------|-------|------|
+| 18 | editPost | `bodyEl.textContent = content` strips HTML formatting; correct on reload | `view.js` |
+| 19 | editReply | Same pattern — plain text overwrites HTML | `view.js` |
+
+### Action Flow Summary (23 actions)
+
+| Action | Status | Toast | Optimistic | Error Handling |
+|--------|--------|-------|------------|----------------|
+| Vote Up (post) | OK | Yes | Yes | Rollback |
+| Vote Down (post) | OK | Yes | Yes | Rollback |
+| Vote Up (reply) | OK | Yes | Yes | Rollback |
+| Vote Down (reply) | OK | Yes | Yes | Rollback |
+| Follow Post | OK | No | Yes | Silent |
+| Follow Space | OK | Yes | Yes | Silent |
+| Share Post | OK | Yes (copy) | N/A | N/A |
+| Toggle Bookmark | OK | Yes | Yes | Toast |
+| Flag/Report | **FIX** | Yes | No | Toast |
+| Pin/Unpin Post | OK | Yes | No | Toast |
+| Delete Post | OK | Redirect | No | Toast |
+| Delete Reply | OK | DOM remove | No | Toast |
+| Edit Post | OK | DOM update | No | Toast |
+| Edit Reply | OK | DOM update | No | Toast |
+| Submit Reply | **FIX** | No | No | **Silent** |
+| Submit New Post | **FIX** | No | No | **Silent** |
+| Set Reply-To | OK | DOM | N/A | N/A |
+| Toggle More Menu | OK | DOM | N/A | N/A |
+| Toggle Reaction Picker | OK | DOM | N/A | N/A |
+| Toggle Reaction | OK | Chip update | Yes | Silent |
+| Notification Dropdown | OK | Lazy load | N/A | Toast fallback |
+| Mark All Read | OK | Badge clear | No | Silent |
+| Dismiss Flag | **BROKEN** | N/A | N/A | N/A |
+
 ### Unified Icon System (cross-plugin)
 See: `buddynext/docs/ICON_SYSTEM_PLAN.md`
 - Lucide for UI icons (line, monochrome)

@@ -160,6 +160,7 @@ const { state, actions } = store( 'jetonomy', {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': state.nonce,
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify( { value: 1 } ),
                     }
                 );
@@ -203,6 +204,7 @@ const { state, actions } = store( 'jetonomy', {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': state.nonce,
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify( { value: -1 } ),
                     }
                 );
@@ -245,6 +247,7 @@ const { state, actions } = store( 'jetonomy', {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': state.nonce,
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify( { value: 1 } ),
                     }
                 );
@@ -289,6 +292,7 @@ const { state, actions } = store( 'jetonomy', {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': state.nonce,
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify( { value: -1 } ),
                     }
                 );
@@ -571,7 +575,7 @@ const { state, actions } = store( 'jetonomy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
                     credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', detail: reason } ),
+                    body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason } ),
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
@@ -897,7 +901,7 @@ const { state, actions } = store( 'jetonomy', {
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/posts/${ ctx.postId }/replies?sort=oldest&limit=${ ctx.gapCount }&offset=${ ctx.gapStart }`,
-                    { headers: { 'X-WP-Nonce': state.nonce } }
+                    { headers: { 'X-WP-Nonce': state.nonce }, credentials: 'same-origin' }
                 );
 
                 if ( ! response.ok ) return;
@@ -938,25 +942,31 @@ const { state, actions } = store( 'jetonomy', {
             const flagAction = el.ref.dataset.action; // 'approved' or 'dismissed'
             if ( ! flagId ) return;
 
+            // Map template values to API-expected enum: 'valid' or 'dismissed'.
+            const apiStatus = flagAction === 'approved' ? 'valid' : 'dismissed';
+
             try {
                 const response = yield fetch(
-                    `${ state.apiBase }/moderation/flags/${ flagId }`,
+                    `${ state.apiBase }/moderation/flags/${ flagId }/resolve`,
                     {
-                        method: 'PATCH',
+                        method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
+                            'X-WP-Nonce': state._nonce || state.nonce,
                         },
-                        body: JSON.stringify( { status: flagAction } ),
+                        credentials: 'same-origin',
+                        body: JSON.stringify( { status: apiStatus } ),
                     }
                 );
                 if ( response.ok ) {
-                    // Remove the flag card from the DOM
                     const card = el.ref.closest( '.jt-mod-flag' );
                     if ( card ) card.remove();
+                    if ( window.bnToast ) window.bnToast( apiStatus === 'valid' ? 'Content removed' : 'Flag dismissed' );
+                } else {
+                    if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Failed' );
                 }
             } catch {
-                // Silent fail
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -991,6 +1001,7 @@ const { state, actions } = store( 'jetonomy', {
                             'Content-Type': 'application/json',
                             'X-WP-Nonce': state.nonce,
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify( {
                             content: body.innerHTML,
                             ...( parentId && { parent_id: parentId } ),
@@ -999,9 +1010,13 @@ const { state, actions } = store( 'jetonomy', {
                 );
 
                 if ( response.ok ) {
-                    // Reload to show new reply
                     window.location.reload();
+                } else {
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to post reply.' );
                 }
+            } catch {
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
             } finally {
                 ctx.submitting = false;
             }
@@ -1031,6 +1046,7 @@ const { state, actions } = store( 'jetonomy', {
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
+                        credentials: 'same-origin',
                         body: JSON.stringify( {
                             title,
                             content,
@@ -1039,11 +1055,15 @@ const { state, actions } = store( 'jetonomy', {
                         } ),
                     }
                 );
+                if ( ! response.ok ) {
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to create post.' );
+                    return;
+                }
                 const data = yield response.json();
                 if ( data.id || data.data?.id ) {
                     const status = data.status || data.data?.status || 'publish';
                     if ( 'pending' === status || 'spam' === status ) {
-                        // Post held for moderation — stay on the page and notify the user.
                         state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                         state.isSubmitting = false;
                         if ( window.bnToast ) window.bnToast( jetonomyData?.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
@@ -1053,7 +1073,7 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.href = `${ state.communityBase }/s/${ ctx.spaceSlug }/t/${ slug }/`;
                 }
             } catch {
-                // silent
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
             } finally {
                 state.isSubmitting = false;
                 state.submitLabel = state.i18n?.postTopic || 'Post Topic';
@@ -1092,6 +1112,7 @@ const { state, actions } = store( 'jetonomy', {
                     {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
+                        credentials: 'same-origin',
                         body: JSON.stringify( payload ),
                     }
                 );
@@ -1117,6 +1138,7 @@ const { state, actions } = store( 'jetonomy', {
                     `${ state.apiBase }/posts/${ ctx.postId }/replies?sort=${ ctx.sort }&limit=20&offset=${ ctx.loadedCount }`,
                     {
                         headers: { 'X-WP-Nonce': state.nonce },
+                        credentials: 'same-origin',
                     }
                 );
 
@@ -1161,6 +1183,7 @@ const { state, actions } = store( 'jetonomy', {
                     `${ state.apiBase }/notifications/unread-count`,
                     {
                         headers: { 'X-WP-Nonce': state.nonce },
+                        credentials: 'same-origin',
                     }
                 );
                 if ( response.ok ) {
@@ -1214,7 +1237,7 @@ const { state, actions } = store( 'jetonomy', {
                     const since = new Date( lastCheck ).toISOString();
                     const response = await fetch(
                         `${ state.apiBase }/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`,
-                        { headers: { 'X-WP-Nonce': state.nonce } }
+                        { headers: { 'X-WP-Nonce': state.nonce }, credentials: 'same-origin' }
                     );
                     if ( ! response.ok ) return;
                     const data = await response.json();
