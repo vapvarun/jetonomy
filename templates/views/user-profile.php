@@ -101,6 +101,11 @@ $crumbs = [
 							<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
 							</a>
+						<?php elseif ( is_user_logged_in() && defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+							<a href="<?php echo esc_url( $base . '/messages/?to=' . rawurlencode( $user->user_login ) ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
+								<?php jetonomy_echo_icon( 'send', 14 ); ?>
+								<?php esc_html_e( 'Message', 'jetonomy' ); ?>
+							</a>
 						<?php endif; ?>
 					</div>
 
