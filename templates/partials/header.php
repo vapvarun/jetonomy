@@ -46,6 +46,11 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 					<?php esc_html_e( 'My Profile', 'jetonomy' ); ?>
 				</a>
 			<?php endif; ?>
+			<?php if ( $user_id && ( current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) ) : ?>
+				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo 'moderation' === $current_route ? 'active' : ''; ?>">
+					<?php esc_html_e( 'Moderation', 'jetonomy' ); ?>
+				</a>
+			<?php endif; ?>
 			<?php do_action( 'jetonomy_header_nav_items' ); ?>
 		</div>
 
