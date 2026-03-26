@@ -1,5 +1,7 @@
 How Jetonomy compares to wpForo — two modern forum plugins with different approaches.
 
+![Jetonomy community home page showcasing the modern forum interface](../images/community-home.png)
+
 ## What You Will Learn
 
 - Key architectural differences between Jetonomy and wpForo

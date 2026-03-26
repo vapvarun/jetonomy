@@ -1,5 +1,7 @@
 Gate Jetonomy spaces by WooCommerce product purchase or active WooCommerce Subscription — so customers unlock discussion areas the moment they buy.
 
+![Jetonomy admin settings for WooCommerce integration setup](../images/admin-settings.png)
+
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn

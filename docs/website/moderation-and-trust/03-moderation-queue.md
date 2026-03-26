@@ -1,5 +1,7 @@
 The moderation queue is your single dashboard for everything that needs human review — posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
 
+![Admin moderation queue with pending items and bulk action controls](../images/admin-moderation.png)
+
 ## What You Will Learn
 
 - How to access the moderation queue

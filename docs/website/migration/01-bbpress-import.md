@@ -1,5 +1,7 @@
 Move your existing bbPress community into Jetonomy — forums, topics, replies, user data, and vote history — using the built-in importer.
 
+![Import tool interface with source selection and progress tracking](../images/admin-import.png)
+
 ## What You Will Learn
 
 - What data the bbPress importer brings over and what it leaves behind

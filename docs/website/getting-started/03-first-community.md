@@ -1,5 +1,7 @@
 Your community is installed and the wizard is complete. This guide walks you through what to do next — from organizing your spaces to inviting your first members — so your community is genuinely ready for people on day one.
 
+![Community home page showing spaces organized by category](../images/community-home.png)
+
 ## What You Will Learn
 
 - How to organize spaces with categories

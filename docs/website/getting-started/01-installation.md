@@ -1,5 +1,7 @@
 Get Jetonomy running on your WordPress site in under five minutes. This guide covers system requirements, how to install, and what happens the moment you activate.
 
+![Jetonomy setup wizard guiding you through initial configuration](../images/setup-wizard.png)
+
 ## What You Will Learn
 
 - Whether your server meets the requirements

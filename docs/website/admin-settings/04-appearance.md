@@ -1,5 +1,7 @@
 The Appearance settings tab gives you direct control over the visual style of your community — from a single accent color override to a full custom CSS field.
 
+![Appearance settings with accent color picker, font options, and layout density controls](../images/admin-appearance.png)
+
 ## What You Will Learn
 
 - How to set a custom accent color

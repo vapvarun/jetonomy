@@ -1,5 +1,7 @@
 When BuddyNext is active alongside Jetonomy, the two plugins integrate automatically — sharing navigation, design tokens, and community surfaces without any configuration.
 
+![Jetonomy admin settings showing BuddyNext integration status](../images/admin-settings.png)
+
 ## What You Will Learn
 
 - What the BuddyNext integration enables

@@ -1,5 +1,7 @@
 After you activate Jetonomy, a three-step wizard walks you through the only decisions you need to make before your community goes live. The whole process takes about two minutes.
 
+![Jetonomy setup wizard with step-by-step configuration](../images/setup-wizard.png)
+
 ## What You Will Learn
 
 - How to set your community URL slug

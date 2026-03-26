@@ -1,5 +1,7 @@
 Connect MemberPress membership levels to Jetonomy spaces — so paying members automatically land in the right discussion areas the moment their subscription activates.
 
+![Jetonomy admin settings panel for configuring integrations](../images/admin-settings.png)
+
 ## What You Will Learn
 
 - How Jetonomy detects and communicates with MemberPress

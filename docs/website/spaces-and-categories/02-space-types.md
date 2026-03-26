@@ -1,5 +1,7 @@
 The space type you choose determines how posts are structured, how replies work, and what extra features appear. Pick the right type and your community will feel purpose-built — pick the wrong one and members will feel like they are fighting the interface.
 
+![Q&A space showing questions with accepted answers and vote counts](../images/space-qa.png)
+
 ## What You Will Learn
 
 - What each space type is designed for

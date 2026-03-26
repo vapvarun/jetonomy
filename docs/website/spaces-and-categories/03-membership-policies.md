@@ -1,5 +1,7 @@
 Every space has two independent controls: who can see it (visibility) and how members get in (join policy). Combining them gives you precise control over every access scenario — from fully public forums to invite-only private communities.
 
+![Permissions settings panel with trust level thresholds and rate limits](../images/admin-permissions.png)
+
 ## What You Will Learn
 
 - The three visibility levels and when to use each

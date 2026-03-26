@@ -1,5 +1,7 @@
 The Permissions tab controls how quickly members earn trust in your community and how much they can do before you have had a chance to evaluate their behavior.
 
+![Permissions settings panel with trust level thresholds and rate limits](../images/admin-permissions.png)
+
 ## What You Will Learn
 
 - What Jetonomy's trust level system is and how it auto-promotes members

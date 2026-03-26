@@ -1,5 +1,7 @@
 Space moderators have a full toolkit for organizing, curating, and controlling discussions. Every action in this guide requires moderator permission on the space where the topic lives — or site-wide admin access.
 
+![Admin moderation panel with content review and bulk action controls](../images/admin-moderation.png)
+
 ## What You Will Learn
 
 - How to move a topic to a different space

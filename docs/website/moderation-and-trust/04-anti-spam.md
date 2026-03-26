@@ -1,5 +1,7 @@
 Spam is the fastest way to kill a community's quality. Jetonomy has multiple layers of protection that work silently in the background — your real members never know they are there.
 
+![Anti-spam settings with CAPTCHA provider selection and API key fields](../images/admin-antispam.png)
+
 ## What You Will Learn
 
 - How to enable reCAPTCHA v3 or Cloudflare Turnstile

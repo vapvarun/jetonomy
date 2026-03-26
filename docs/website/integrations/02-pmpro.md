@@ -1,5 +1,7 @@
 Gate Jetonomy spaces by Paid Memberships Pro subscription level — with automatic access granted on activation and revoked on cancellation or expiry.
 
+![Jetonomy admin settings showing integration configuration options](../images/admin-settings.png)
+
 ## What You Will Learn
 
 - How Jetonomy detects Paid Memberships Pro (PMPro)

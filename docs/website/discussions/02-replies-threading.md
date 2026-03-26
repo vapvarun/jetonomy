@@ -1,5 +1,7 @@
 Replies are where conversations happen. Jetonomy's reply system supports threaded discussions, multiple sort orders, accepted answers in Q&A spaces, and efficient loading for threads with hundreds of contributions.
 
+![Single topic page with threaded replies and voting controls](../images/single-topic-replies.png)
+
 ## What You Will Learn
 
 - How to add a reply to a topic

@@ -1,5 +1,7 @@
 Flagging lets any logged-in member report content that breaks your community rules. It is the first step in the moderation pipeline — members surface problems, and your moderators review and act.
 
+![Admin moderation dashboard showing flagged content awaiting review](../images/admin-moderation.png)
+
 ## What You Will Learn
 
 - How to flag a topic or reply

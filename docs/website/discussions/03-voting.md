@@ -1,5 +1,7 @@
 Voting is the engine behind Jetonomy's quality signals. It surfaces the best content, rewards helpful members, and gives you a community where the most useful posts rise to the top naturally — without moderator intervention.
 
+![Topic page showing upvote and downvote buttons with vote scores on replies](../images/single-topic-replies.png)
+
 ## What You Will Learn
 
 - How to vote on topics and replies

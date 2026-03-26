@@ -1,5 +1,7 @@
 Notifications keep your community members in the loop without requiring them to check back manually. Every relevant activity — replies, mentions, votes — surfaces instantly in the notification bell so members always know when something needs their attention.
 
+![Notifications panel showing recent activity alerts and unread count](../images/notifications.png)
+
 ## What You Will Learn
 
 - How the notification bell works and where it appears

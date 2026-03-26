@@ -1,5 +1,7 @@
 Connect LearnDash course and group enrollment to Jetonomy spaces — so students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
 
+![Jetonomy admin settings for LearnDash integration configuration](../images/admin-settings.png)
+
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn

@@ -1,5 +1,7 @@
 Move your existing wpForo community into Jetonomy — forums, topics, replies, user profiles, and reputation data — using the built-in wpForo importer.
 
+![Import tool with wpForo source selected and migration progress](../images/admin-import.png)
+
 ## What You Will Learn
 
 - What the wpForo importer brings over and how wpForo structures map to Jetonomy

@@ -1,5 +1,7 @@
 Each space can override the global Jetonomy defaults with its own settings. This page is a complete reference for every per-space option, how it interacts with global settings, and how invite links work.
 
+![Admin space editor showing per-space configuration options](../images/admin-space-edit.png)
+
 ## What You Will Learn
 
 - Every per-space setting and what it controls
