@@ -62,6 +62,24 @@ $is_accepted = (int) $reply->is_accepted;
 				</div>
 			</div>
 		<?php endif; ?>
+	<?php
+	// Accept Answer button — shown to post author on Q&A spaces, for non-accepted replies.
+	if (
+		is_user_logged_in()
+		&& isset( $post, $space )
+		&& 'qa' === ( $space->type ?? '' )
+		&& (int) $post->author_id === get_current_user_id()
+		&& ! $is_accepted
+	) :
+	?>
+		<button class="jt-act"
+			data-wp-on--click="actions.acceptReply"
+			data-reply-id="<?php echo (int) $reply->id; ?>"
+			data-post-id="<?php echo (int) $post->id; ?>"
+			aria-label="<?php esc_attr_e( 'Accept as best answer', 'jetonomy' ); ?>">
+			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accept', 'jetonomy' ); ?>
+		</button>
+	<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>
 </div>

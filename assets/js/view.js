@@ -797,6 +797,31 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Accept reply as best answer (Q&A) ──
+        *acceptReply( event ) {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            if ( ! replyId ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+                    method: 'POST',
+                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                    credentials: 'same-origin',
+                } );
+
+                if ( res.ok ) {
+                    if ( window.bnToast ) window.bnToast( state.i18n?.accepted || 'Accepted' );
+                    setTimeout( () => window.location.reload(), 600 );
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || 'Failed to accept.' );
+                }
+            } catch {
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error.' );
+            }
+        },
+
         // ── Toggle collapsible thread ──
         toggleThread() {
             const ctx = getContext();
