@@ -17,6 +17,7 @@ class Cron {
         add_action( 'jetonomy_cleanup_expired', [ $this, 'cleanup_expired_restrictions' ] );
         add_action( 'jetonomy_prune_activity', [ $this, 'prune_activity_log' ] );
         add_action( 'jetonomy_cleanup_notifications', [ $this, 'cleanup_old_notifications' ] );
+        add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
     }
 
     /**
@@ -44,6 +45,9 @@ class Cron {
         if ( ! wp_next_scheduled( 'jetonomy_cleanup_notifications' ) ) {
             wp_schedule_event( time(), 'weekly', 'jetonomy_cleanup_notifications' );
         }
+        if ( ! wp_next_scheduled( 'jetonomy_publish_scheduled' ) ) {
+            wp_schedule_event( time(), 'hourly', 'jetonomy_publish_scheduled' );
+        }
     }
 
     /**
@@ -54,6 +58,7 @@ class Cron {
         wp_clear_scheduled_hook( 'jetonomy_cleanup_expired' );
         wp_clear_scheduled_hook( 'jetonomy_prune_activity' );
         wp_clear_scheduled_hook( 'jetonomy_cleanup_notifications' );
+        wp_clear_scheduled_hook( 'jetonomy_publish_scheduled' );
     }
 
     public function add_schedules( array $schedules ): array {
@@ -137,5 +142,15 @@ class Cron {
             'UPDATE ' . table( 'notifications' ) . ' SET is_read = 1 WHERE is_read = 0 AND created_at < %s',
             $cutoff
         ) );
+    }
+
+    /**
+     * Publish any posts whose published_at datetime has passed (runs hourly).
+     */
+    public function publish_scheduled_posts(): void {
+        $due_posts = \Jetonomy\Models\Post::get_due_scheduled();
+        foreach ( $due_posts as $post ) {
+            \Jetonomy\Models\Post::publish_scheduled( (int) $post->id );
+        }
     }
 }

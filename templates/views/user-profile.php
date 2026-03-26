@@ -70,6 +70,12 @@ if ( 'votes' === $current_tab ) {
 	$user_votes = \Jetonomy\Models\Vote::list_by_user( (int) $user->ID, $per_page, $offset );
 }
 
+// Drafts tab — only for the profile owner.
+$user_drafts = [];
+if ( 'drafts' === $current_tab && $is_own ) {
+	$user_drafts = \Jetonomy\Models\Post::list_drafts_by_user( (int) $user->ID, $per_page, $offset );
+}
+
 $crumbs = [
 	[ 'label' => $user->display_name, 'url' => '' ],
 ];
@@ -82,7 +88,9 @@ $crumbs = [
 			<div class="jt-profile jt-mb-md">
 				<div class="jt-profile-banner"></div>
 				<div class="jt-profile-body">
+					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( $profile_user_id ) ? 'is-online' : ''; ?>">
 					<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $profile_user_id, 'size' => 64, 'class' => 'jt-profile-av' ] ); ?>
+				</span>
 					<div class="jt-flex jt-items-start jt-justify-between jt-w-full">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
@@ -172,6 +180,9 @@ $crumbs = [
 					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/bookmarks/' ); ?>" class="jt-profile-tab <?php echo 'bookmarks' === $current_tab ? 'active' : ''; ?>">
 						<?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?>
 					</a>
+					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/drafts/' ); ?>" class="jt-profile-tab <?php echo 'drafts' === $current_tab ? 'active' : ''; ?>">
+						<?php esc_html_e( 'Drafts', 'jetonomy' ); ?>
+					</a>
 				<?php endif; ?>
 			</div>
 
@@ -256,7 +267,57 @@ $crumbs = [
 					<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_votes ) >= $per_page ] ); ?>
 				<?php endif; ?>
 
-			<?php elseif ( 'bookmarks' === $current_tab && $is_own ) : ?>
+			<?php elseif ( 'drafts' === $current_tab && $is_own ) : ?>
+			<?php if ( empty( $user_drafts ) ) : ?>
+				<div class="jt-empty-compact">
+					<div class="jt-empty-text"><?php esc_html_e( 'No drafts yet. Save a post as draft and it will appear here.', 'jetonomy' ); ?></div>
+				</div>
+			<?php else : ?>
+				<div class="jt-topics">
+					<?php foreach ( $user_drafts as $dr_post ) : ?>
+						<?php
+						$dr_ago      = human_time_diff( strtotime( $dr_post->created_at ), current_time( 'timestamp', true ) );
+						$dr_edit_url = $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/new/';
+						$is_scheduled = ! empty( $dr_post->published_at );
+						?>
+						<div class="jt-row jt-row--draft">
+							<div class="jt-row-main">
+								<div class="jt-row-title">
+									<?php echo esc_html( $dr_post->title ); ?>
+									<?php if ( $is_scheduled ) : ?>
+										<span class="jt-badge jt-badge--scheduled">
+											<?php
+											$sched_date = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dr_post->published_at ) );
+											/* translators: %s: scheduled date/time */
+											echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), $sched_date ) );
+											?>
+										</span>
+									<?php else : ?>
+										<span class="jt-badge jt-badge--draft"><?php esc_html_e( 'Draft', 'jetonomy' ); ?></span>
+									<?php endif; ?>
+								</div>
+								<div class="jt-row-sub">
+									<a href="<?php echo esc_url( $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/' ); ?>"
+										onclick="event.stopPropagation();">
+										<?php echo esc_html( $dr_post->space_title ?? '' ); ?>
+									</a>
+								</div>
+							</div>
+							<div class="jt-row-stat">
+								<div class="jt-row-time">
+									<?php
+									/* translators: %s: human-readable time difference */
+									echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $dr_ago ) );
+									?>
+								</div>
+							</div>
+						</div>
+					<?php endforeach; ?>
+				</div>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $user_drafts ) >= $per_page ] ); ?>
+			<?php endif; ?>
+
+		<?php elseif ( 'bookmarks' === $current_tab && $is_own ) : ?>
 				<?php if ( empty( $bookmarks ) ) : ?>
 					<div class="jt-empty-compact">
 						<div class="jt-empty-text"><?php esc_html_e( 'No bookmarks yet. Bookmark posts to find them here later.', 'jetonomy' ); ?></div>

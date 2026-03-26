@@ -193,6 +193,15 @@ class Admin {
 		$clean['layout_density']   = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
 		$clean['custom_css']       = wp_strip_all_tags( $input['custom_css'] ?? '' );
 
+		// Anti-Spam — CAPTCHA
+		$allowed_providers              = [ 'none', 'recaptcha_v3', 'turnstile' ];
+		$raw_provider                   = sanitize_text_field( $input['captcha_provider'] ?? 'none' );
+		$clean['captcha_provider']      = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
+		$clean['captcha_site_key']      = sanitize_text_field( $input['captcha_site_key'] ?? '' );
+		$clean['captcha_secret_key']    = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
+		$raw_threshold                  = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
+		$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, $raw_threshold ) );
+
 		// SEO
 		$clean['seo_post_title']      = sanitize_text_field( $input['seo_post_title'] ?? '{post_title} - {space_name} | {site_name}' );
 		$clean['seo_space_title']     = sanitize_text_field( $input['seo_space_title'] ?? '{space_name} | {site_name}' );

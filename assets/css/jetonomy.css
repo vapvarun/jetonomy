@@ -150,6 +150,10 @@
   .jt-avatar-lg { width: 48px; height: 48px; font-size: 1.125em; }
   .jt-avatar img, img.jt-avatar { border-radius: 50%; object-fit: cover; }
 
+  /* ── Online status indicator ── */
+  .jt-avatar-wrap { position: relative; display: inline-block; }
+  .jt-avatar-wrap.is-online::after { content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--jt-success); border-radius: var(--jt-radius-full); border: 2px solid var(--jt-bg); box-sizing: content-box; }
+
   /* ── Layout ── */
   /* Theme's .container handles max-width; add vertical padding for Jetonomy content. */
   .jt-app > .container { padding-top: 24px; padding-bottom: 24px; }
@@ -627,10 +631,36 @@
   .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; }
   .jt-input:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-input::placeholder { color: var(--jt-text-secondary); }
-  .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
   .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
+
+  /* ── Publish mode split-button ── */
+  .jt-publish-mode { position: relative; display: inline-flex; }
+  .jt-publish-mode__submit { border-radius: var(--jt-radius) 0 0 var(--jt-radius); }
+  .jt-publish-mode__toggle { border-radius: 0 var(--jt-radius) var(--jt-radius) 0; border-left: 1px solid rgba(255,255,255,0.25); min-width: 34px; padding-left: 8px; padding-right: 8px; }
+  .jt-publish-mode__menu { position: absolute; bottom: calc(100% + 6px); right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
+  .jt-publish-mode__menu[hidden] { display: none; }
+  .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
+  .jt-publish-mode__option:hover { background: var(--jt-bg-hover); }
+
+  /* ── Schedule panel ── */
+  .jt-schedule-panel { margin-top: 16px; padding: 16px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); border: 1px solid var(--jt-border); }
+  .jt-schedule-panel[hidden] { display: none; }
+  .jt-input--datetime { font-family: var(--jt-font); }
+
+  /* ── Draft / scheduled badges on profile ── */
+  .jt-badge--draft { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
+  .jt-badge--scheduled { background: var(--jt-accent-light); color: var(--jt-accent); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
+  .jt-row--draft { opacity: 0.9; }
+
+  @media (max-width: 640px) {
+    .jt-form-actions { flex-wrap: wrap; }
+    .jt-publish-mode { width: 100%; }
+    .jt-publish-mode__submit { flex: 1; border-radius: var(--jt-radius) 0 0 var(--jt-radius); }
+    .jt-publish-mode__menu { right: 0; left: 0; min-width: unset; }
+  }
 
   /* ── Pagination ── */
   .jt-pagination { text-align: center; margin: 20px 0; }
@@ -1290,6 +1320,59 @@
 .jt-skeleton-profile-avatar { width: 64px; height: 64px; border: 3px solid var(--jt-bg); margin-bottom: 10px; }
 .jt-skeleton-profile-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
 .jt-skeleton-profile-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+
+/* ── Search filters ── */
+.jt-search-filters {
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius);
+	padding: 0;
+	margin-bottom: 1.25rem;
+}
+.jt-search-filters[open] {
+	padding: 0 1rem 1rem;
+}
+.jt-search-filters-toggle {
+	padding: 0.75rem 1rem;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.875rem;
+	color: var(--jt-text-secondary);
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	list-style: none;
+}
+.jt-search-filters-toggle::-webkit-details-marker { display: none; }
+.jt-search-filters[open] .jt-search-filters-toggle svg {
+	transform: rotate(180deg);
+}
+.jt-filter-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+.jt-filter-row label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.8125rem;
+	color: var(--jt-text-secondary);
+	flex: 1;
+	min-width: 140px;
+}
+.jt-filter-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+@media (max-width: 640px) {
+	.jt-filter-row {
+		flex-direction: column;
+	}
+	.jt-filter-row label {
+		min-width: 100%;
+	}
+}
 
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }

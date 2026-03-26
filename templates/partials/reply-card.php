@@ -10,7 +10,9 @@ $is_accepted = (int) $reply->is_accepted;
 ?>
 <div class="jt-reply <?php echo $is_accepted ? 'accepted' : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
-		<?php echo \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ); ?>
+		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? 'is-online' : ''; ?>">
+			<?php echo \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ); ?>
+		</span>
 		<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
 		<?php if ( $is_op ) : ?>
 			<span class="jt-reply-op"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
@@ -54,6 +56,15 @@ $is_accepted = (int) $reply->is_accepted;
 						data-reply-id="<?php echo (int) $reply->id; ?>">
 						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 					</button>
+					<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+					<button class="jt-more-item"
+						data-wp-on--click="actions.splitReply"
+						data-reply-id="<?php echo (int) $reply->id; ?>"
+						data-post-id="<?php echo (int) $post->id; ?>"
+						data-space-id="<?php echo (int) ( $post->space_id ?? 0 ); ?>">
+						<?php jetonomy_echo_icon( 'split', 14 ); ?> <?php esc_html_e( 'Split to Topic', 'jetonomy' ); ?>
+					</button>
+					<?php endif; ?>
 					<button class="jt-more-item jt-more-item--danger"
 						data-wp-on--click="actions.deleteReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">

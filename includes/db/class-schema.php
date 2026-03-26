@@ -137,6 +137,7 @@ class Schema {
   content longtext,
   content_plain longtext,
   status ENUM('publish','pending','draft','spam','trash') NOT NULL DEFAULT 'publish',
+  published_at datetime DEFAULT NULL,
   is_sticky tinyint(1) NOT NULL DEFAULT 0,
   is_closed tinyint(1) NOT NULL DEFAULT 0,
   is_resolved tinyint(1) NOT NULL DEFAULT 0,

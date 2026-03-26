@@ -11,7 +11,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	$advanced_tabs_html = ob_get_clean();
 
 	// Pre-buffer Pro/extension tab content so notices can be hoisted above the layout.
-	$jt_primary_tabs  = [ 'general', 'permissions', 'email', 'appearance', 'seo' ];
+	$jt_primary_tabs  = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam' ];
 	$jt_ext_html      = '';
 	$jt_ext_notices   = '';
 	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
@@ -36,6 +36,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		'email'       => 'dashicons-email-alt',
 		'appearance'  => 'dashicons-admin-appearance',
 		'seo'         => 'dashicons-search',
+		'antispam'    => 'dashicons-lock',
 	];
 	$tab_labels = [
 		'general'     => __( 'General', 'jetonomy' ),
@@ -43,6 +44,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		'email'       => __( 'Email', 'jetonomy' ),
 		'appearance'  => __( 'Appearance', 'jetonomy' ),
 		'seo'         => __( 'SEO', 'jetonomy' ),
+		'antispam'    => __( 'Anti-Spam', 'jetonomy' ),
 	];
 	?>
 
@@ -539,6 +541,65 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
+
+		<?php elseif ( 'antispam' === $active_tab ) : ?>
+
+			<!-- CAPTCHA Provider -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'CAPTCHA Provider', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Protect post and reply forms from bots. Trusted members (trust level 2+) are always exempt.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="captcha_provider"><?php esc_html_e( 'Provider', 'jetonomy' ); ?></label></th>
+						<td>
+							<select id="captcha_provider" name="jetonomy_settings[captcha_provider]" class="jt-captcha-provider-select">
+								<option value="none" <?php selected( $settings['captcha_provider'] ?? 'none', 'none' ); ?>><?php esc_html_e( 'Disabled', 'jetonomy' ); ?></option>
+								<option value="recaptcha_v3" <?php selected( $settings['captcha_provider'] ?? '', 'recaptcha_v3' ); ?>><?php esc_html_e( 'Google reCAPTCHA v3 (invisible)', 'jetonomy' ); ?></option>
+								<option value="turnstile" <?php selected( $settings['captcha_provider'] ?? '', 'turnstile' ); ?>><?php esc_html_e( 'Cloudflare Turnstile (privacy-friendly)', 'jetonomy' ); ?></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="captcha_site_key"><?php esc_html_e( 'Site Key', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="captcha_site_key" name="jetonomy_settings[captcha_site_key]" value="<?php echo esc_attr( $settings['captcha_site_key'] ?? '' ); ?>" class="regular-text">
+							<p class="description">
+								<?php esc_html_e( 'reCAPTCHA: get keys at', 'jetonomy' ); ?>
+								<a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener noreferrer">google.com/recaptcha/admin</a>.
+								<?php esc_html_e( 'Turnstile: get keys at', 'jetonomy' ); ?>
+								<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" rel="noopener noreferrer">dash.cloudflare.com</a>.
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="captcha_secret_key"><?php esc_html_e( 'Secret Key', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="password" id="captcha_secret_key" name="jetonomy_settings[captcha_secret_key]" value="<?php echo esc_attr( $settings['captcha_secret_key'] ?? '' ); ?>" class="regular-text" autocomplete="new-password">
+							<p class="description"><?php esc_html_e( 'Stored securely. Never shared with visitors.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr class="jt-captcha-recaptcha-only" <?php echo ( ( $settings['captcha_provider'] ?? 'none' ) !== 'recaptcha_v3' ) ? 'style="display:none"' : ''; ?>>
+						<th scope="row"><label for="captcha_score_threshold"><?php esc_html_e( 'Score Threshold', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="number" id="captcha_score_threshold" name="jetonomy_settings[captcha_score_threshold]" value="<?php echo esc_attr( $settings['captcha_score_threshold'] ?? '0.5' ); ?>" min="0.1" max="0.9" step="0.1" class="small-text">
+							<p class="description"><?php esc_html_e( 'reCAPTCHA v3 only. Scores below this value are treated as bots (0.1 = permissive, 0.9 = strict). Default: 0.5.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<script>
+			( function () {
+				var sel = document.getElementById( 'captcha_provider' );
+				var rcRow = document.querySelector( '.jt-captcha-recaptcha-only' );
+				if ( ! sel || ! rcRow ) return;
+				sel.addEventListener( 'change', function () {
+					rcRow.style.display = this.value === 'recaptcha_v3' ? '' : 'none';
+				} );
+			} )();
+			</script>
 
 		<?php elseif ( 'license' === $active_tab ) : ?>
 

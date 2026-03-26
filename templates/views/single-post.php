@@ -272,6 +272,16 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 									data-wp-on--click="actions.pinPost"
 									data-post-id="<?php echo (int) $post->id; ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
 							<?php endif; ?>
+							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+								<button class="jt-more-item"
+									data-wp-on--click="actions.movePost"
+									data-post-id="<?php echo (int) $post->id; ?>"
+									data-space-id="<?php echo (int) $post->space_id; ?>"><?php jetonomy_echo_icon( 'move', 14 ); ?> <?php esc_html_e( 'Move', 'jetonomy' ); ?></button>
+								<button class="jt-more-item"
+									data-wp-on--click="actions.mergePost"
+									data-post-id="<?php echo (int) $post->id; ?>"
+									data-space-id="<?php echo (int) $post->space_id; ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
+							<?php endif; ?>
 							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"

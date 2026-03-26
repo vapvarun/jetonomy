@@ -22,10 +22,10 @@ class Reply extends Model {
 	 */
 	public static function create( array $data ): int {
 		$data = array_merge(
-			[
+			array(
 				'status'     => 'publish',
 				'created_at' => now(),
-			],
+			),
 			$data
 		);
 
@@ -63,7 +63,7 @@ class Reply extends Model {
 	 */
 	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
-			$settings = get_option( 'jetonomy_settings', [] );
+			$settings = get_option( 'jetonomy_settings', array() );
 			$limit    = (int) ( $settings['replies_per_page'] ?? 30 );
 		}
 		$table = static::table();
@@ -93,7 +93,7 @@ class Reply extends Model {
 					$after,
 					$limit
 				)
-			) ?: [];
+			) ?: array();
 		}
 
 		return static::db()->get_results(
@@ -104,7 +104,7 @@ class Reply extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 	}
 
 	/**
@@ -113,7 +113,7 @@ class Reply extends Model {
 	 * @param int $id Reply ID.
 	 */
 	public static function mark_accepted( int $id ): void {
-		static::update( $id, [ 'is_accepted' => 1 ] );
+		static::update( $id, array( 'is_accepted' => 1 ) );
 	}
 
 	/**
@@ -148,19 +148,19 @@ class Reply extends Model {
 		$all = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM " . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC",
+				'SELECT * FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC",
 				$post_id
 			)
 		);
 
 		if ( empty( $all ) ) {
-			return [];
+			return array();
 		}
 
 		// Build tree: group by parent_id.
-		$by_parent = [];
+		$by_parent = array();
 		foreach ( $all as $reply ) {
-			$pid = (int) ( $reply->parent_id ?? 0 );
+			$pid                 = (int) ( $reply->parent_id ?? 0 );
 			$by_parent[ $pid ][] = $reply;
 		}
 
@@ -193,13 +193,13 @@ class Reply extends Model {
 	 */
 	private static function build_tree( array &$by_parent, int $parent_id, int $depth, int $max_depth ): array {
 		if ( ! isset( $by_parent[ $parent_id ] ) ) {
-			return [];
+			return array();
 		}
 
-		$nodes = [];
+		$nodes = array();
 		foreach ( $by_parent[ $parent_id ] as $reply ) {
 			$reply->depth    = $depth;
-			$reply->children = [];
+			$reply->children = array();
 
 			if ( $depth < $max_depth ) {
 				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth + 1, $max_depth );
@@ -242,7 +242,7 @@ class Reply extends Model {
 				$limit,
 				$offset
 			)
-		) ?: [];
+		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
@@ -255,9 +255,85 @@ class Reply extends Model {
 	public static function count_top_level( int $post_id ): int {
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				"SELECT COUNT(*) FROM " . static::table() . " WHERE post_id = %d AND (parent_id IS NULL OR parent_id = 0) AND status = 'publish'",
+				'SELECT COUNT(*) FROM ' . static::table() . " WHERE post_id = %d AND (parent_id IS NULL OR parent_id = 0) AND status = 'publish'",
 				$post_id
 			)
 		);
+	}
+
+	/**
+	 * Split a reply (and its children) into a new topic.
+	 *
+	 * Creates a new post from the reply content, moves child replies to
+	 * the new post, deletes the original reply from the source post,
+	 * and updates all denormalized counters.
+	 *
+	 * @param int    $reply_id       The reply to split.
+	 * @param string $new_title      Title for the new post.
+	 * @param int    $target_space_id Space for the new post (0 = same space as source post).
+	 * @return int New post ID, or 0 on failure.
+	 */
+	public static function split_to_topic( int $reply_id, string $new_title, int $target_space_id = 0 ): int {
+		$reply = static::find( $reply_id );
+		if ( ! $reply ) {
+			return 0;
+		}
+
+		$source_post = Post::find( (int) $reply->post_id );
+		if ( ! $source_post ) {
+			return 0;
+		}
+
+		if ( $target_space_id <= 0 ) {
+			$target_space_id = (int) $source_post->space_id;
+		}
+
+		// Create new post from reply content.
+		$new_post_id = Post::create(
+			array(
+				'space_id'      => $target_space_id,
+				'author_id'     => (int) $reply->author_id,
+				'title'         => $new_title,
+				'slug'          => sanitize_title( $new_title ),
+				'content'       => $reply->content ?? '',
+				'content_plain' => $reply->content_plain ?? wp_strip_all_tags( $reply->content ?? '' ),
+				'type'          => $source_post->type ?? 'topic',
+				'status'        => 'publish',
+				'created_at'    => $reply->created_at ?? now(),
+			)
+		);
+
+		if ( ! $new_post_id ) {
+			return 0;
+		}
+
+		// Move child replies (where parent_id = reply_id) to new post.
+		$table = static::table();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$moved_count = (int) static::db()->query(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"UPDATE {$table} SET post_id = %d, parent_id = 0 WHERE post_id = %d AND parent_id = %d",
+				$new_post_id,
+				(int) $reply->post_id,
+				$reply_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Update reply count on new post.
+		if ( $moved_count > 0 ) {
+			Post::update( $new_post_id, array( 'reply_count' => $moved_count ) );
+		}
+
+		// Delete original reply from source post (soft-delete).
+		static::update( $reply_id, array( 'status' => 'trash' ) );
+
+		// Decrement source post reply count (the split reply + its children).
+		Post::increment_reply_count( (int) $reply->post_id, -1 * ( 1 + $moved_count ) );
+
+		do_action( 'jetonomy_reply_split', $reply_id, $new_post_id, (int) $reply->post_id );
+
+		return $new_post_id;
 	}
 }

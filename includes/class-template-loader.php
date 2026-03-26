@@ -40,6 +40,12 @@ class Template_Loader {
 			exit;
 		}
 
+		// Update last_seen_at for online status tracking.
+		$current_user_id = get_current_user_id();
+		if ( $current_user_id ) {
+			\Jetonomy\Models\UserProfile::update_last_seen( $current_user_id );
+		}
+
 		// Allow theme overrides: theme/jetonomy/views/home.php
 		$theme_dir  = get_stylesheet_directory() . '/jetonomy/';
 		$plugin_dir = JETONOMY_DIR . 'templates/';
@@ -187,6 +193,16 @@ class Template_Loader {
 				'confirmDeletePost'  => __( 'Are you sure you want to delete this topic?', 'jetonomy' ),
 				'confirmDeleteReply' => __( 'Are you sure you want to delete this reply?', 'jetonomy' ),
 				'failedDelete'       => __( 'Failed to delete.', 'jetonomy' ),
+				'moveTopicTitle'     => __( 'Move topic to another space', 'jetonomy' ),
+				'topicMoved'         => __( 'Topic moved successfully.', 'jetonomy' ),
+				'moveFailed'         => __( 'Failed to move topic.', 'jetonomy' ),
+				'mergeTopicTitle'    => __( 'Merge into another topic', 'jetonomy' ),
+				'confirmMerge'      => __( 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', 'jetonomy' ),
+				'topicMerged'        => __( 'Topics merged successfully.', 'jetonomy' ),
+				'mergeFailed'        => __( 'Failed to merge topics.', 'jetonomy' ),
+				'splitReplyTitle'    => __( 'Enter a title for the new topic:', 'jetonomy' ),
+				'replySplit'         => __( 'Reply split into new topic.', 'jetonomy' ),
+				'splitFailed'        => __( 'Failed to split reply.', 'jetonomy' ),
 				'replyingTo'         => __( 'Replying to', 'jetonomy' ),
 				'cancelReply'        => __( 'Cancel reply', 'jetonomy' ),
 				'posting'            => __( 'Posting...', 'jetonomy' ),

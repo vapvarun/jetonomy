@@ -183,6 +183,9 @@ final class Jetonomy {
 			$pmpro->register_hooks();
 		}
 
+		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
+		Captcha\Captcha_Manager::init();
+
 		new Notifications\Notifier();
 		new Cron();
 		new Privacy();

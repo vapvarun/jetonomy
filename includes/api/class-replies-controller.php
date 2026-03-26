@@ -28,56 +28,88 @@ class Replies_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// Collection routes nested under posts.
-		register_rest_route( $ns, '/posts/(?P<post_id>\d+)/replies', [
-			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => '__return_true',
-				'args'                => array_merge(
-					$this->get_collection_params(),
-					[
-						'post_id' => [
-							'type'     => 'integer',
-							'required' => true,
-							'minimum'  => 1,
-						],
-						'sort' => [
-							'type'    => 'string',
-							'default' => 'oldest',
-							'enum'    => [ 'oldest', 'newest', 'best' ],
-						],
-					]
+		register_rest_route(
+			$ns,
+			'/posts/(?P<post_id>\d+)/replies',
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'list_items' ),
+					'permission_callback' => '__return_true',
+					'args'                => array_merge(
+						$this->get_collection_params(),
+						array(
+							'post_id' => array(
+								'type'     => 'integer',
+								'required' => true,
+								'minimum'  => 1,
+							),
+							'sort'    => array(
+								'type'    => 'string',
+								'default' => 'oldest',
+								'enum'    => array( 'oldest', 'newest', 'best' ),
+							),
+						)
+					),
 				),
-			],
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => '__return_true',
-				'args'                => $this->get_create_args(),
-			],
-		] );
+				array(
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'create_item' ),
+					'permission_callback' => '__return_true',
+					'args'                => $this->get_create_args(),
+				),
+			)
+		);
 
 		// Single-item routes.
-		register_rest_route( $ns, '/replies/(?P<id>\d+)', [
-			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => '__return_true',
-				'args'                => $this->get_update_args(),
-			],
-			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => '__return_true',
-			],
-		] );
+		register_rest_route(
+			$ns,
+			'/replies/(?P<id>\d+)',
+			array(
+				array(
+					'methods'             => 'PATCH',
+					'callback'            => array( $this, 'update_item' ),
+					'permission_callback' => '__return_true',
+					'args'                => $this->get_update_args(),
+				),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_item' ),
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
 
 		// Accept action.
-		register_rest_route( $ns, '/replies/(?P<id>\d+)/accept', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'accept_reply' ],
-			'permission_callback' => '__return_true',
-		] );
+		register_rest_route(
+			$ns,
+			'/replies/(?P<id>\d+)/accept',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'accept_reply' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		register_rest_route(
+			$ns,
+			'/replies/(?P<id>\d+)/split',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'split_reply' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'title'    => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'space_id' => array(
+						'type'     => 'integer',
+						'required' => false,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -110,12 +142,15 @@ class Replies_Controller extends Base_Controller {
 		// Eager-load all author data in a single batch before preparing items.
 		$replies = $this->enrich_with_author( $replies );
 
-		$items = array_map( [ $this, 'prepare_reply' ], $replies );
+		$items = array_map( array( $this, 'prepare_reply' ), $replies );
 
-		return $this->paginated_response( $items, [
-			'total'    => Reply::count_by_post( $post_id ),
-			'has_more' => count( $items ) === (int) $pagination['limit'],
-		] );
+		return $this->paginated_response(
+			$items,
+			array(
+				'total'    => Reply::count_by_post( $post_id ),
+				'has_more' => count( $items ) === (int) $pagination['limit'],
+			)
+		);
 	}
 
 	/**
@@ -138,11 +173,11 @@ class Replies_Controller extends Base_Controller {
 
 		// Block replies in archived or locked spaces.
 		$space = \Jetonomy\Models\Space::find( $space_id );
-		if ( $space && in_array( $space->status ?? '', [ 'archived', 'locked' ], true ) ) {
+		if ( $space && in_array( $space->status ?? '', array( 'archived', 'locked' ), true ) ) {
 			return new WP_Error(
 				'jetonomy_space_restricted',
 				__( 'This space is archived or locked and no longer accepts new replies.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -157,12 +192,23 @@ class Replies_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Rate limit exceeded. Please try again later.', 'jetonomy' ) );
 		}
 
+		// CAPTCHA verification (skipped for trust level 2+ users and admins).
+		$captcha_token  = sanitize_text_field( (string) $request->get_param( 'captcha_token' ) );
+		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip(
+			$user_id,
+			$captcha_token,
+			sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) )
+		);
+		if ( false === $captcha_result ) {
+			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
+		}
+
 		// Prevent replies to closed posts.
 		if ( ! empty( $post->is_closed ) ) {
 			return new WP_Error(
 				'jetonomy_post_closed',
 				__( 'This post is closed and cannot receive new replies.', 'jetonomy' ),
-				[ 'status' => 403 ]
+				array( 'status' => 403 )
 			);
 		}
 
@@ -174,8 +220,8 @@ class Replies_Controller extends Base_Controller {
 		$content_plain = wp_strip_all_tags( $content );
 
 		// Akismet spam check.
-		$ip = $_SERVER['REMOTE_ADDR'] ?? '';
-		$user = get_userdata( $user_id );
+		$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$user         = get_userdata( $user_id );
 		$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
 			$content,
 			$user->display_name ?? '',
@@ -183,12 +229,12 @@ class Replies_Controller extends Base_Controller {
 			$ip
 		);
 
-		$reply_data = [
+		$reply_data = array(
 			'post_id'       => $post_id,
 			'author_id'     => $user_id,
 			'content'       => $content,
 			'content_plain' => $content_plain,
-		];
+		);
 
 		if ( $akismet_spam ) {
 			$reply_data['status'] = 'spam';
@@ -226,7 +272,7 @@ class Replies_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_create_failed',
 				__( 'Failed to create reply.', 'jetonomy' ),
-				[ 'status' => 500 ]
+				array( 'status' => 500 )
 			);
 		}
 
@@ -287,25 +333,30 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		// Advanced Moderation: check updated content.
-		$moderation_action = apply_filters( 'jetonomy_check_content', null, [ 'content' => $content ], $space_id, $user_id );
+		$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
 		if ( 'block' === $moderation_action ) {
 			return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
 		}
 
 		// Create a revision before updating.
-		Revision::create( [
-			'object_type' => 'reply',
-			'object_id'   => $id,
-			'author_id'   => $user_id,
-			'content'     => $reply->content ?? '',
-		] );
+		Revision::create(
+			array(
+				'object_type' => 'reply',
+				'object_id'   => $id,
+				'author_id'   => $user_id,
+				'content'     => $reply->content ?? '',
+			)
+		);
 
-		Reply::update( $id, [
-			'content'       => $content,
-			'content_plain' => wp_strip_all_tags( $content ),
-			'edited_at'     => current_time( 'mysql' ),
-			'edited_by'     => $user_id,
-		] );
+		Reply::update(
+			$id,
+			array(
+				'content'       => $content,
+				'content_plain' => wp_strip_all_tags( $content ),
+				'edited_at'     => current_time( 'mysql' ),
+				'edited_by'     => $user_id,
+			)
+		);
 
 		do_action( 'jetonomy_reply_updated', $id, $space_id, $user_id );
 
@@ -349,11 +400,17 @@ class Replies_Controller extends Base_Controller {
 		Post::increment_reply_count( (int) $reply->post_id, -1 );
 		UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
 
-		Reply::update( $id, [ 'status' => 'trash' ] );
+		Reply::update( $id, array( 'status' => 'trash' ) );
 
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
 
-		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
+		return new WP_REST_Response(
+			array(
+				'deleted' => true,
+				'id'      => $id,
+			),
+			200
+		);
 	}
 
 	/**
@@ -402,18 +459,84 @@ class Replies_Controller extends Base_Controller {
 			UserProfile::adjust_reputation( $reply_author_id, self::REP_REPLY_ACCEPTED );
 
 			// Notify the reply author that their answer was accepted.
-			Notification::create( [
-				'user_id'     => $reply_author_id,
-				'type'        => 'reply_accepted',
-				'object_type' => 'reply',
-				'object_id'   => $id,
-				'actor_id'    => $user_id,
-			] );
+			Notification::create(
+				array(
+					'user_id'     => $reply_author_id,
+					'type'        => 'reply_accepted',
+					'object_type' => 'reply',
+					'object_id'   => $id,
+					'actor_id'    => $user_id,
+				)
+			);
 		}
 
 		$updated_reply = Reply::find( $id );
 
 		return new WP_REST_Response( $this->prepare_reply( $updated_reply ), 200 );
+	}
+
+	/**
+	 * POST /replies/{id}/split — Split a reply into a new topic.
+	 */
+	public function split_reply( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$reply_id = absint( $request->get_param( 'id' ) );
+		$reply    = \Jetonomy\Models\Reply::find( $reply_id );
+
+		if ( ! $reply ) {
+			return $this->not_found( 'Reply' );
+		}
+
+		$post = \Jetonomy\Models\Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		// Require moderator permission.
+		if ( ! $this->check_permission( 'move_posts', (int) $post->space_id ) ) {
+			return $this->permission_error();
+		}
+
+		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
+		if ( empty( $title ) ) {
+			return $this->validation_error( __( 'A title is required for the new topic.', 'jetonomy' ) );
+		}
+
+		$target_space_id = absint( $request->get_param( 'space_id' ) );
+
+		// If moving to a different space, check permission there too.
+		if ( $target_space_id > 0 && $target_space_id !== (int) $post->space_id ) {
+			if ( ! $this->check_permission( 'move_posts', $target_space_id ) ) {
+				return $this->permission_error();
+			}
+		}
+
+		$new_post_id = \Jetonomy\Models\Reply::split_to_topic( $reply_id, $title, $target_space_id );
+
+		if ( ! $new_post_id ) {
+			return new \WP_Error(
+				'jetonomy_split_failed',
+				__( 'Failed to split reply into new topic.', 'jetonomy' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		$new_post = \Jetonomy\Models\Post::find( $new_post_id );
+		$space    = \Jetonomy\Models\Space::find( (int) $new_post->space_id );
+
+		return new \WP_REST_Response(
+			array(
+				'id'         => $new_post_id,
+				'title'      => $new_post->title ?? '',
+				'slug'       => $new_post->slug ?? '',
+				'space_slug' => $space ? $space->slug : '',
+			),
+			201
+		);
 	}
 
 	/**
@@ -437,14 +560,14 @@ class Replies_Controller extends Base_Controller {
 			$author        = $author_id ? get_userdata( $author_id ) : null;
 			$profile       = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
 			$author_name   = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
-			$author_avatar = $author ? get_avatar_url( $author_id, [ 'size' => 64 ] ) : '';
+			$author_avatar = $author ? get_avatar_url( $author_id, array( 'size' => 64 ) ) : '';
 			$author_login  = $author ? $author->user_login : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
 			$reputation    = $profile ? (int) $profile->reputation : 0;
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		}
 
-		return [
+		return array(
 			'id'            => (int) $reply->id,
 			'post_id'       => (int) $reply->post_id,
 			'parent_id'     => $reply->parent_id ? (int) $reply->parent_id : null,
@@ -463,27 +586,37 @@ class Replies_Controller extends Base_Controller {
 			'author_login'  => $author_login,
 			'trust_level'   => $trust_level,
 			'reputation'    => $reputation,
-			'time_ago'      => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'time_ago'      => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'   => $profile_url,
-		];
+		);
 	}
 
 	/**
 	 * Args for create_item.
 	 */
 	private function get_create_args(): array {
-		return [
-			'content'   => [ 'type' => 'string', 'required' => true ],
-			'parent_id' => [ 'type' => 'integer', 'required' => false, 'minimum' => 1 ],
-		];
+		return array(
+			'content'   => array(
+				'type'     => 'string',
+				'required' => true,
+			),
+			'parent_id' => array(
+				'type'     => 'integer',
+				'required' => false,
+				'minimum'  => 1,
+			),
+		);
 	}
 
 	/**
 	 * Args for update_item.
 	 */
 	private function get_update_args(): array {
-		return [
-			'content' => [ 'type' => 'string', 'required' => true ],
-		];
+		return array(
+			'content' => array(
+				'type'     => 'string',
+				'required' => true,
+			),
+		);
 	}
 }

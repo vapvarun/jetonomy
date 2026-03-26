@@ -72,6 +72,184 @@ function jtPrompt( message, placeholder ) {
 	} );
 }
 
+
+/**
+ * Space picker modal — shows a dropdown of available spaces, excluding the current one.
+ * Fetches from GET /jetonomy/v1/spaces. Resolves with the selected space ID (string) or null.
+ *
+ * @param {string} title          Modal heading text.
+ * @param {string|number} excludeSpaceId  The space to exclude from the list.
+ * @return {Promise<string|null>}
+ */
+function jtSpacePicker( title, excludeSpaceId ) {
+	return new Promise( ( resolve ) => {
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'jt-modal-overlay';
+		const box = document.createElement( 'div' );
+		box.className = 'jt-modal-box';
+		const msg = document.createElement( 'p' );
+		msg.className = 'jt-modal-msg';
+		msg.textContent = title;
+		box.appendChild( msg );
+		const select = document.createElement( 'select' );
+		select.className = 'jt-modal-input jt-input';
+		const loadingOpt = document.createElement( 'option' );
+		loadingOpt.textContent = 'Loading spaces…';
+		loadingOpt.disabled = true;
+		loadingOpt.selected = true;
+		select.appendChild( loadingOpt );
+		box.appendChild( select );
+		const actions = document.createElement( 'div' );
+		actions.className = 'jt-modal-actions';
+		const cancelBtn = document.createElement( 'button' );
+		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.textContent = 'Cancel';
+		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
+		const okBtn = document.createElement( 'button' );
+		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.textContent = 'Move';
+		okBtn.disabled = true;
+		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( select.value || null ); } );
+		actions.appendChild( cancelBtn );
+		actions.appendChild( okBtn );
+		box.appendChild( actions );
+		overlay.appendChild( box );
+		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
+		document.body.appendChild( overlay );
+
+		// Derive API base: prefer the interactive element's data attribute, fall back to wpApiSettings.
+		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
+			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
+
+		fetch( apiBase + '/spaces', { credentials: 'same-origin' } )
+			.then( ( r ) => r.json() )
+			.then( ( data ) => {
+				select.innerHTML = '';
+				const defaultOpt = document.createElement( 'option' );
+				defaultOpt.textContent = 'Select a space…';
+				defaultOpt.value = '';
+				defaultOpt.disabled = true;
+				defaultOpt.selected = true;
+				select.appendChild( defaultOpt );
+				// GET /spaces returns { data: [...] } via paginated_response.
+				const spaces = Array.isArray( data.data ) ? data.data : ( Array.isArray( data ) ? data : [] );
+				spaces.forEach( ( s ) => {
+					if ( String( s.id ) === String( excludeSpaceId ) ) return;
+					const opt = document.createElement( 'option' );
+					opt.value = s.id;
+					opt.textContent = s.title;
+					select.appendChild( opt );
+				} );
+				if ( select.options.length <= 1 ) {
+					// Only the placeholder — no other spaces available.
+					const noneOpt = document.createElement( 'option' );
+					noneOpt.textContent = 'No other spaces available';
+					noneOpt.disabled = true;
+					select.appendChild( noneOpt );
+				} else {
+					select.addEventListener( 'change', () => { okBtn.disabled = ! select.value; } );
+				}
+			} )
+			.catch( () => {
+				select.innerHTML = '<option disabled>Failed to load spaces</option>';
+			} );
+	} );
+}
+
+/**
+ * Post picker modal for merge — search and select a target topic.
+ */
+function jtPostPicker( title, excludePostId, spaceId ) {
+	return new Promise( ( resolve ) => {
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'jt-modal-overlay';
+		const box = document.createElement( 'div' );
+		box.className = 'jt-modal-box';
+		const msg = document.createElement( 'p' );
+		msg.className = 'jt-modal-msg';
+		msg.textContent = title;
+		box.appendChild( msg );
+
+		const searchInput = document.createElement( 'input' );
+		searchInput.type = 'text';
+		searchInput.className = 'jt-modal-input jt-input';
+		searchInput.placeholder = 'Search for a topic...';
+		box.appendChild( searchInput );
+
+		const resultsList = document.createElement( 'div' );
+		resultsList.className = 'jt-modal-results';
+		resultsList.style.cssText = 'max-height:200px;overflow-y:auto;margin:8px 0;';
+		box.appendChild( resultsList );
+
+		let selectedId = null;
+		const actionsDiv = document.createElement( 'div' );
+		actionsDiv.className = 'jt-modal-actions';
+		const cancelBtn = document.createElement( 'button' );
+		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.textContent = 'Cancel';
+		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
+		const okBtn = document.createElement( 'button' );
+		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.textContent = 'Merge';
+		okBtn.disabled = true;
+		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( selectedId ); } );
+		actionsDiv.appendChild( cancelBtn );
+		actionsDiv.appendChild( okBtn );
+		box.appendChild( actionsDiv );
+		overlay.appendChild( box );
+		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
+		document.body.appendChild( overlay );
+		searchInput.focus();
+
+		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
+			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root + 'jetonomy/v1' : '/wp-json/jetonomy/v1' );
+
+		let debounce = null;
+		searchInput.addEventListener( 'input', () => {
+			clearTimeout( debounce );
+			debounce = setTimeout( () => {
+				const q = searchInput.value.trim();
+				if ( q.length < 2 ) { while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild ); return; }
+				fetch( `${ apiBase }/search?q=${ encodeURIComponent( q ) }&type=post`, { credentials: 'same-origin' } )
+					.then( r => r.json() )
+					.then( data => {
+						while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
+						const posts = data.data || data.results || data;
+						if ( ! Array.isArray( posts ) || posts.length === 0 ) {
+							const empty = document.createElement( 'div' );
+							empty.style.cssText = 'padding:8px;color:var(--jt-text-secondary);';
+							empty.textContent = 'No topics found';
+							resultsList.appendChild( empty );
+							return;
+						}
+						posts.forEach( p => {
+							if ( String( p.id ) === String( excludePostId ) ) return;
+							const item = document.createElement( 'div' );
+							item.style.cssText = 'padding:8px 10px;cursor:pointer;border-radius:var(--jt-radius-sm,4px);';
+							item.textContent = p.title;
+							item.addEventListener( 'mouseenter', () => { item.style.background = 'var(--jt-bg-hover)'; } );
+							item.addEventListener( 'mouseleave', () => { item.style.background = selectedId === String( p.id ) ? 'var(--jt-accent-light)' : ''; } );
+							item.addEventListener( 'click', () => {
+								resultsList.querySelectorAll( 'div' ).forEach( d => { d.style.background = ''; } );
+								item.style.background = 'var(--jt-accent-light)';
+								selectedId = String( p.id );
+								okBtn.disabled = false;
+							} );
+							resultsList.appendChild( item );
+						} );
+					} )
+					.catch( () => {
+						while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
+						const errDiv = document.createElement( 'div' );
+						errDiv.style.cssText = 'padding:8px;color:var(--jt-danger);';
+						errDiv.textContent = 'Search failed';
+						resultsList.appendChild( errDiv );
+					} );
+			}, 300 );
+		} );
+	} );
+}
+
 /**
  * Build reply HTML for client-side rendering (used by loadGapReplies and loadMoreReplies).
  */
@@ -126,6 +304,8 @@ const { state, actions } = store( 'jetonomy', {
         // Form submission state
         isSubmitting: false,
         submitLabel: 'Post Topic',
+        // Publish mode dropdown open/closed
+        publishMenuOpen: false,
         // Nonce for API calls
         get nonce() {
             return state._nonce || '';
@@ -732,6 +912,145 @@ const { state, actions } = store( 'jetonomy', {
                 }
             }
         },
+        // ── Move post (topic) to another space ──
+        *movePost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            const currentSpaceId = el.ref.dataset.spaceId;
+            if ( ! postId ) return;
+
+            const spaceId = yield jtSpacePicker(
+                state.i18n?.moveTopicTitle || 'Move topic to another space',
+                currentSpaceId
+            );
+            if ( ! spaceId ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/move`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( { target_space_id: parseInt( spaceId, 10 ) } ),
+                } );
+
+                if ( res.ok ) {
+                    const data = yield res.json();
+                    if ( window.bnToast ) {
+                        window.bnToast( state.i18n?.topicMoved || 'Topic moved successfully.' );
+                    }
+                    const base = state.communityBase || '/community';
+                    setTimeout( () => {
+                        window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
+                    }, 600 );
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) {
+                        window.bnToast( err.message || state.i18n?.moveFailed || 'Failed to move topic.' );
+                    }
+                }
+            } catch {
+                if ( window.bnToast ) {
+                    window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                }
+            }
+        },
+
+        // ── Merge post (topic) into another ──
+        *mergePost( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            const spaceId = el.ref.dataset.spaceId;
+            if ( ! postId ) return;
+
+            // Prompt for target post ID via search
+            const targetId = yield jtPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId );
+            if ( ! targetId ) return;
+
+            if ( ! ( yield jtConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/merge`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( { target_post_id: parseInt( targetId, 10 ) } ),
+                } );
+
+                if ( res.ok ) {
+                    const data = yield res.json();
+                    if ( window.bnToast ) {
+                        window.bnToast( state.i18n?.topicMerged || 'Topics merged successfully.' );
+                    }
+                    const base = state.communityBase || '/community';
+                    setTimeout( () => {
+                        window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
+                    }, 600 );
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) {
+                        window.bnToast( err.message || state.i18n?.mergeFailed || 'Failed to merge topics.' );
+                    }
+                }
+            } catch {
+                if ( window.bnToast ) {
+                    window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                }
+            }
+        },
+
+        // ── Split reply to new topic ──
+        *splitReply( event ) {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            const spaceId = el.ref.dataset.spaceId;
+            if ( ! replyId ) return;
+
+            const title = yield jtPrompt( state.i18n?.splitReplyTitle || 'Enter a title for the new topic:', '' );
+            if ( ! title ) return;
+
+            try {
+                const body = { title };
+                if ( spaceId ) {
+                    body.space_id = parseInt( spaceId, 10 );
+                }
+
+                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }/split`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( body ),
+                } );
+
+                if ( res.ok ) {
+                    const data = yield res.json();
+                    if ( window.bnToast ) {
+                        window.bnToast( state.i18n?.replySplit || 'Reply split into new topic.' );
+                    }
+                    const base = state.communityBase || '/community';
+                    setTimeout( () => {
+                        window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
+                    }, 600 );
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) {
+                        window.bnToast( err.message || state.i18n?.splitFailed || 'Failed to split reply.' );
+                    }
+                }
+            } catch {
+                if ( window.bnToast ) {
+                    window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                }
+            }
+        },
 
         // ── Delete post (topic) ──
         *deletePost( event ) {
@@ -1017,6 +1336,17 @@ const { state, actions } = store( 'jetonomy', {
                 ? rawParentId
                 : null;
 
+            // Get CAPTCHA token if a provider is active.
+            let captchaToken = '';
+            if ( window.jtCaptcha ) {
+                if ( window.jtCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
+                    captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jtCaptcha.siteKey, { action: 'submit' } ).then( r ) );
+                } else if ( window.jtCaptcha.provider === 'turnstile' ) {
+                    const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
+                    captchaToken = tsInput ? ( tsInput.value || '' ) : '';
+                }
+            }
+
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/posts/${ postId }/replies`,
@@ -1030,6 +1360,7 @@ const { state, actions } = store( 'jetonomy', {
                         body: JSON.stringify( {
                             content: body.innerHTML,
                             ...( parentId && { parent_id: parentId } ),
+                            ...( captchaToken && { captcha_token: captchaToken } ),
                         } ),
                     }
                 );
@@ -1047,12 +1378,44 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Publish mode menu ──
+        togglePublishMenu() {
+            state.publishMenuOpen = ! state.publishMenuOpen;
+        },
+
+        selectPublishNow() {
+            const ctx = getContext();
+            ctx.postStatus    = 'publish';
+            ctx.showScheduler = false;
+            state.publishMenuOpen = false;
+            state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+        },
+
+        selectSaveDraft() {
+            const ctx = getContext();
+            ctx.postStatus    = 'draft';
+            ctx.showScheduler = false;
+            state.publishMenuOpen = false;
+            state.submitLabel = state.i18n?.saveDraft || 'Save Draft';
+        },
+
+        selectSchedule() {
+            const ctx = getContext();
+            ctx.postStatus    = 'draft';
+            ctx.showScheduler = true;
+            state.publishMenuOpen = false;
+            state.submitLabel = state.i18n?.schedule || 'Schedule';
+        },
+
         // ── New post submission ──
         *submitNewPost( event ) {
             event.preventDefault();
             const ctx = getContext();
             state.isSubmitting = true;
             state.submitLabel = state.i18n?.posting || 'Posting...';
+
+            // Close publish menu if open.
+            state.publishMenuOpen = false;
 
             const form = getElement().ref;
             const title = form.querySelector('[name="title"]')?.value?.trim();
@@ -1063,6 +1426,31 @@ const { state, actions } = store( 'jetonomy', {
                 state.isSubmitting = false;
                 state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                 return;
+            }
+
+            // Determine post status and optional scheduled date.
+            const postStatus   = ctx.postStatus || 'publish';
+            const publishedAt  = ctx.showScheduler
+                ? ( form.querySelector('[name="published_at"]')?.value?.trim() || '' )
+                : '';
+
+            // Validate scheduler: a scheduled post needs a future date.
+            if ( 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
+                state.isSubmitting = false;
+                state.submitLabel = state.i18n?.schedule || 'Schedule';
+                if ( window.bnToast ) window.bnToast( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
+                return;
+            }
+
+            // Get CAPTCHA token if a provider is active.
+            let captchaToken = '';
+            if ( window.jtCaptcha ) {
+                if ( window.jtCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
+                    captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jtCaptcha.siteKey, { action: 'submit' } ).then( r ) );
+                } else if ( window.jtCaptcha.provider === 'turnstile' ) {
+                    const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
+                    captchaToken = tsInput ? ( tsInput.value || '' ) : '';
+                }
             }
 
             try {
@@ -1077,6 +1465,9 @@ const { state, actions } = store( 'jetonomy', {
                             content,
                             type: ctx.postType,
                             tags: tags ? tags.split( ',' ).map( t => t.trim() ) : [],
+                            status: postStatus,
+                            ...( publishedAt && { published_at: publishedAt } ),
+                            ...( captchaToken && { captcha_token: captchaToken } ),
                         } ),
                     }
                 );
@@ -1088,6 +1479,12 @@ const { state, actions } = store( 'jetonomy', {
                 const data = yield response.json();
                 if ( data.id || data.data?.id ) {
                     const status = data.status || data.data?.status || 'publish';
+                    if ( 'draft' === status ) {
+                        state.submitLabel = state.i18n?.saveDraft || 'Save Draft';
+                        state.isSubmitting = false;
+                        if ( window.bnToast ) window.bnToast( state.i18n?.draftSaved || 'Draft saved. You can find it in your profile under Drafts.' );
+                        return;
+                    }
                     if ( 'pending' === status || 'spam' === status ) {
                         state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                         state.isSubmitting = false;

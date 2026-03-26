@@ -44,7 +44,7 @@ class Router {
         add_rewrite_rule( "^{$base}/u/([^/]+)/edit/?$", 'index.php?jetonomy_route=edit-profile&jetonomy_slug=$matches[1]', 'top' );
 
         // User sub-pages
-        add_rewrite_rule( "^{$base}/u/([^/]+)/(posts|badges|activity|bookmarks|replies|votes)/?$", 'index.php?jetonomy_route=profile&jetonomy_slug=$matches[1]&jetonomy_tab=$matches[2]', 'top' );
+        add_rewrite_rule( "^{$base}/u/([^/]+)/(posts|badges|activity|bookmarks|replies|votes|drafts)/?$", 'index.php?jetonomy_route=profile&jetonomy_slug=$matches[1]&jetonomy_tab=$matches[2]', 'top' );
 
         // Notifications
         add_rewrite_rule( "^{$base}/notifications/?$", 'index.php?jetonomy_route=notifications', 'top' );

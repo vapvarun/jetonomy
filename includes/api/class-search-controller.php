@@ -23,20 +23,41 @@ class Search_Controller extends Base_Controller {
 			'callback'            => [ $this, 'search' ],
 			'permission_callback' => '__return_true',
 			'args'                => [
-				'q'        => [
+				'q'         => [
 					'type'              => 'string',
 					'required'          => true,
 					'minLength'         => 2,
 					'sanitize_callback' => 'sanitize_text_field',
 				],
-				'type'     => [
+				'type'      => [
 					'type'    => 'string',
 					'default' => 'post',
 					'enum'    => [ 'post', 'reply', 'space', 'tag', 'all' ],
 				],
-				'space_id' => [
+				'space_id'  => [
 					'type'    => 'integer',
 					'minimum' => 1,
+				],
+				'date_from' => [
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				],
+				'date_to'   => [
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				],
+				'author_id' => [
+					'type'    => 'integer',
+					'minimum' => 1,
+				],
+				'tag'       => [
+					'type'              => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				],
+				'sort'      => [
+					'type'    => 'string',
+					'default' => 'relevance',
+					'enum'    => [ 'relevance', 'newest', 'votes' ],
 				],
 			],
 		] );
@@ -46,9 +67,14 @@ class Search_Controller extends Base_Controller {
 	 * GET /jetonomy/v1/search — Full-text search across posts, replies, or spaces.
 	 */
 	public function search( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$q        = trim( (string) $request->get_param( 'q' ) );
-		$type     = $request->get_param( 'type' ) ?? 'post';
-		$space_id = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
+		$q         = trim( (string) $request->get_param( 'q' ) );
+		$type      = $request->get_param( 'type' ) ?? 'post';
+		$space_id  = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
+		$date_from = $request->get_param( 'date_from' ) ? sanitize_text_field( $request->get_param( 'date_from' ) ) : null;
+		$date_to   = $request->get_param( 'date_to' ) ? sanitize_text_field( $request->get_param( 'date_to' ) ) : null;
+		$author_id = $request->get_param( 'author_id' ) ? absint( $request->get_param( 'author_id' ) ) : null;
+		$tag_slug  = $request->get_param( 'tag' ) ? sanitize_text_field( $request->get_param( 'tag' ) ) : null;
+		$sort      = $request->get_param( 'sort' ) ?? 'relevance';
 
 		if ( strlen( $q ) < 2 ) {
 			return $this->validation_error( __( 'Search query must be at least 2 characters.', 'jetonomy' ) );
@@ -58,7 +84,7 @@ class Search_Controller extends Base_Controller {
 
 		// Combined "all" mode returns posts, spaces, and tags grouped.
 		if ( 'all' === $type || empty( $type ) ) {
-			$posts  = $this->search_posts( $wpdb, $q, $space_id );
+			$posts  = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort );
 			$spaces = $this->search_spaces( $wpdb, $q );
 			$tags   = $this->search_tags( $wpdb, $q );
 
@@ -75,9 +101,9 @@ class Search_Controller extends Base_Controller {
 		$results = [];
 
 		if ( 'post' === $type ) {
-			$results = $this->search_posts( $wpdb, $q, $space_id );
+			$results = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort );
 		} elseif ( 'reply' === $type ) {
-			$results = $this->search_replies( $wpdb, $q, $space_id );
+			$results = $this->search_replies( $wpdb, $q, $space_id, $date_from, $date_to, $author_id );
 		} elseif ( 'space' === $type ) {
 			$results = $this->search_spaces( $wpdb, $q );
 		} elseif ( 'tag' === $type ) {
@@ -100,28 +126,68 @@ class Search_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Full-text search on jt_posts.
+	 * Full-text search on jt_posts with optional date, author, tag, and sort filters.
 	 *
 	 * @param \wpdb       $wpdb
 	 * @param string      $q
 	 * @param int|null    $space_id
+	 * @param string|null $date_from  Date string in Y-m-d format.
+	 * @param string|null $date_to    Date string in Y-m-d format.
+	 * @param int|null    $author_id
+	 * @param string|null $tag_slug
+	 * @param string      $sort       One of 'relevance', 'newest', 'votes'.
 	 * @return object[]
 	 */
-	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id ): array {
+	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null, string $sort = 'relevance' ): array {
 		$posts_table = table( 'posts' );
 
+		$where  = [ "MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)", "status = 'publish'" ];
+		$params = [ $q ];
+
 		if ( $space_id ) {
+			$where[]  = 'space_id = %d';
+			$params[] = $space_id;
+		}
+		if ( $date_from ) {
+			$where[]  = 'created_at >= %s';
+			$params[] = $date_from . ' 00:00:00';
+		}
+		if ( $date_to ) {
+			$where[]  = 'created_at <= %s';
+			$params[] = $date_to . ' 23:59:59';
+		}
+		if ( $author_id ) {
+			$where[]  = 'author_id = %d';
+			$params[] = $author_id;
+		}
+
+		$order_by = 'votes' === $sort ? 'vote_score DESC' : 'created_at DESC';
+
+		/**
+		 * Filters the search query args before the query is built.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $filter_args Keys: q, space_id, date_from, date_to, author_id, tag_slug, sort.
+		 */
+		$filter_args = apply_filters( 'jetonomy_search_query_args', compact( 'q', 'space_id', 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) );
+
+		$where_sql = implode( ' AND ', $where );
+
+		if ( $tag_slug ) {
+			$tags_table      = table( 'tags' );
+			$post_tags_table = table( 'post_tags' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT * FROM {$posts_table} WHERE MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE) AND status = 'publish' AND space_id = %d LIMIT 20",
-				$q,
-				$space_id
+				"SELECT p.* FROM {$posts_table} p INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				$tag_slug,
+				...$params
 			);
 		} else {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT * FROM {$posts_table} WHERE MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE) AND status = 'publish' LIMIT 20",
-				$q
+				"SELECT * FROM {$posts_table} WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				...$params
 			);
 		}
 
@@ -129,29 +195,56 @@ class Search_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Full-text search on jt_replies.
+	 * Full-text search on jt_replies with optional date, author, and space filters.
 	 *
 	 * @param \wpdb       $wpdb
 	 * @param string      $q
 	 * @param int|null    $space_id
+	 * @param string|null $date_from  Date string in Y-m-d format.
+	 * @param string|null $date_to    Date string in Y-m-d format.
+	 * @param int|null    $author_id
 	 * @return object[]
 	 */
-	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id ): array {
+	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): array {
 		$replies_table = table( 'replies' );
+
+		$r_where  = [ "MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)", "r.status = 'publish'" ];
+		$r_params = [ $q ];
+
+		if ( $date_from ) {
+			$r_where[]  = 'r.created_at >= %s';
+			$r_params[] = $date_from . ' 00:00:00';
+		}
+		if ( $date_to ) {
+			$r_where[]  = 'r.created_at <= %s';
+			$r_params[] = $date_to . ' 23:59:59';
+		}
+		if ( $author_id ) {
+			$r_where[]  = 'r.author_id = %d';
+			$r_params[] = $author_id;
+		}
 
 		if ( $space_id ) {
 			$posts_table = table( 'posts' );
+			$r_where[]   = 'p.space_id = %d';
+			$r_params[]  = $space_id;
+			$where_sql   = implode( ' AND ', $r_where );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT r.* FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AND r.status = 'publish' AND p.space_id = %d LIMIT 20",
-				$q,
-				$space_id
+				"SELECT r.* FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql} LIMIT 20",
+				...$r_params
 			);
 		} else {
+			// No posts JOIN needed when no space filter.
+			$simple_where = array_map(
+				fn( $clause ) => str_replace( 'r.', '', $clause ),
+				$r_where
+			);
+			$where_sql    = implode( ' AND ', $simple_where );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT * FROM {$replies_table} WHERE MATCH(content_plain) AGAINST(%s IN BOOLEAN MODE) AND status = 'publish' LIMIT 20",
-				$q
+				"SELECT * FROM {$replies_table} WHERE {$where_sql} LIMIT 20",
+				...$r_params
 			);
 		}
 

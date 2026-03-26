@@ -14,6 +14,20 @@ $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$date_to   = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$author_id = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$tag_slug  = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'relevance';
+if ( ! in_array( $sort, [ 'relevance', 'newest', 'votes' ], true ) ) {
+	$sort = 'relevance';
+}
+
 $base   = \Jetonomy\base_url();
 $posts  = [];
 $spaces = [];
@@ -26,7 +40,51 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 	}
 
 	if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
-		$posts = $search_adapter->search( $q, 'post', null, $per_page, $offset );
+		if ( $date_from || $date_to || $author_id || $tag_slug || 'relevance' !== $sort ) {
+			// Use direct filtered query when advanced filters are active.
+			global $wpdb;
+			$posts_tbl = \Jetonomy\table( 'posts' );
+			$where     = [ "MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)", "status = 'publish'" ];
+			$params    = [ $q ];
+
+			if ( $date_from ) {
+				$where[]  = 'created_at >= %s';
+				$params[] = $date_from . ' 00:00:00';
+			}
+			if ( $date_to ) {
+				$where[]  = 'created_at <= %s';
+				$params[] = $date_to . ' 23:59:59';
+			}
+			if ( $author_id ) {
+				$where[]  = 'author_id = %d';
+				$params[] = $author_id;
+			}
+
+			$order_by  = 'votes' === $sort ? 'vote_score DESC' : 'created_at DESC';
+			$where_sql = implode( ' AND ', $where );
+
+			if ( $tag_slug ) {
+				$tags_tbl       = \Jetonomy\table( 'tags' );
+				$pt_tbl         = \Jetonomy\table( 'post_tags' );
+				$tag_params     = array_merge( [ $tag_slug ], $params, [ $per_page, $offset ] );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$sql = $wpdb->prepare(
+					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$pt_tbl} pt ON pt.post_id = p.id INNER JOIN {$tags_tbl} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+					...$tag_params
+				);
+			} else {
+				$paged_params = array_merge( $params, [ $per_page, $offset ] );
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$sql = $wpdb->prepare(
+					"SELECT * FROM {$posts_tbl} WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+					...$paged_params
+				);
+			}
+
+			$posts = $wpdb->get_results( $sql ) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		} else {
+			$posts = $search_adapter->search( $q, 'post', null, $per_page, $offset );
+		}
 
 		// Enrich post results with space slug/title for display.
 		$space_cache = [];
@@ -109,6 +167,39 @@ $crumbs = [
 						?>
 					</span>
 				</div>
+
+				<!-- Advanced filters -->
+				<details class="jt-search-filters jt-mb-20" <?php echo ( $date_from || $date_to || $author_id || $tag_slug || 'relevance' !== $sort ) ? 'open' : ''; ?>>
+					<summary class="jt-search-filters-toggle"><?php esc_html_e( 'Filters', 'jetonomy' ); ?> <?php jetonomy_echo_icon( 'chevron-down', 12 ); ?></summary>
+					<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-filters-form">
+						<input type="hidden" name="q" value="<?php echo esc_attr( $q ); ?>">
+						<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
+						<div class="jt-filter-row">
+							<label><?php esc_html_e( 'Date from', 'jetonomy' ); ?>
+								<input type="date" name="date_from" value="<?php echo esc_attr( $date_from ); ?>" class="jt-input jt-input-sm">
+							</label>
+							<label><?php esc_html_e( 'Date to', 'jetonomy' ); ?>
+								<input type="date" name="date_to" value="<?php echo esc_attr( $date_to ); ?>" class="jt-input jt-input-sm">
+							</label>
+							<label><?php esc_html_e( 'Tag', 'jetonomy' ); ?>
+								<input type="text" name="tag" value="<?php echo esc_attr( $tag_slug ); ?>" placeholder="<?php esc_attr_e( 'e.g. javascript', 'jetonomy' ); ?>" class="jt-input jt-input-sm">
+							</label>
+							<label><?php esc_html_e( 'Sort', 'jetonomy' ); ?>
+								<select name="sort" class="jt-input jt-input-sm">
+									<option value="relevance" <?php selected( $sort, 'relevance' ); ?>><?php esc_html_e( 'Relevance', 'jetonomy' ); ?></option>
+									<option value="newest" <?php selected( $sort, 'newest' ); ?>><?php esc_html_e( 'Newest', 'jetonomy' ); ?></option>
+									<option value="votes" <?php selected( $sort, 'votes' ); ?>><?php esc_html_e( 'Most voted', 'jetonomy' ); ?></option>
+								</select>
+							</label>
+						</div>
+						<div class="jt-filter-actions">
+							<button type="submit" class="jt-btn jt-btn-fill jt-btn-sm"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
+							<a href="<?php echo esc_url( add_query_arg( 'q', $q, $base . '/search/' ) ); ?>" class="jt-btn jt-btn-ghost jt-btn-sm"><?php esc_html_e( 'Clear', 'jetonomy' ); ?></a>
+						</div>
+					</form>
+				</details>
+
+				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 
 				<?php if ( 0 === $total ) : ?>
 					<div class="jt-empty">

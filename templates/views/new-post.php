@@ -36,7 +36,7 @@ $type_label = $type_defaults['label'];
     <form id="jt-new-post-form" class="jt-new-post-form"
           data-wp-interactive="jetonomy"
           data-wp-on--submit="actions.submitNewPost"
-          data-wp-context='<?php echo wp_json_encode( [ "spaceId" => (int) $space->id, "spaceSlug" => $space->slug, "postType" => $post_type ] ); ?>'>
+          data-wp-context='<?php echo wp_json_encode( [ "spaceId" => (int) $space->id, "spaceSlug" => $space->slug, "postType" => $post_type, "postStatus" => "publish", "showScheduler" => false ] ); ?>'>
         <input type="hidden" name="space_id" value="<?php echo (int) $space->id; ?>">
         <input type="hidden" name="type" value="<?php echo esc_attr( $post_type ); ?>">
 
@@ -84,18 +84,57 @@ $type_label = $type_defaults['label'];
         do_action( 'jetonomy_new_post_fields', $space );
         ?>
 
+        <!-- Scheduler panel — shown when "Schedule" is selected -->
+        <div class="jt-schedule-panel" data-wp-bind--hidden="!context.showScheduler">
+            <div class="jt-form-group">
+                <label for="jt-post-published-at" class="jt-label">
+                    <?php esc_html_e( 'Publish on', 'jetonomy' ); ?>
+                </label>
+                <input type="datetime-local" id="jt-post-published-at" name="published_at" class="jt-input jt-input--datetime">
+                <p class="jt-label-hint">
+                    <?php esc_html_e( 'Your post will be published automatically at this date and time.', 'jetonomy' ); ?>
+                </p>
+            </div>
+        </div>
+
         <div class="jt-form-actions">
             <a href="<?php echo esc_url( $space_url ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
-            <button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting" data-wp-text="state.submitLabel">
-                <?php
-				$submit_labels = [
-					'question' => __( 'Post Question', 'jetonomy' ),
-					'idea'     => __( 'Submit Idea',   'jetonomy' ),
-					'status'   => __( 'Post Status',   'jetonomy' ),
-				];
-				echo esc_html( $submit_labels[ $post_type ] ?? __( 'Post Topic', 'jetonomy' ) );
-				?>
-            </button>
+
+            <!-- Publish mode selector -->
+            <div class="jt-publish-mode">
+                <button type="submit" class="jt-btn jt-btn-fill jt-publish-mode__submit"
+                        data-wp-bind--disabled="state.isSubmitting"
+                        data-wp-text="state.submitLabel">
+                    <?php
+					$submit_labels = [
+						'question' => __( 'Post Question', 'jetonomy' ),
+						'idea'     => __( 'Submit Idea',   'jetonomy' ),
+						'status'   => __( 'Post Status',   'jetonomy' ),
+					];
+					echo esc_html( $submit_labels[ $post_type ] ?? __( 'Post Topic', 'jetonomy' ) );
+					?>
+                </button>
+                <button type="button" class="jt-btn jt-btn-fill jt-publish-mode__toggle"
+                        aria-label="<?php esc_attr_e( 'More publishing options', 'jetonomy' ); ?>"
+                        aria-haspopup="true"
+                        data-wp-on--click="actions.togglePublishMenu">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="jt-publish-mode__menu" data-wp-bind--hidden="!state.publishMenuOpen">
+                    <button type="button" class="jt-publish-mode__option"
+                            data-wp-on--click="actions.selectPublishNow">
+                        <?php esc_html_e( 'Publish now', 'jetonomy' ); ?>
+                    </button>
+                    <button type="button" class="jt-publish-mode__option"
+                            data-wp-on--click="actions.selectSaveDraft">
+                        <?php esc_html_e( 'Save as draft', 'jetonomy' ); ?>
+                    </button>
+                    <button type="button" class="jt-publish-mode__option"
+                            data-wp-on--click="actions.selectSchedule">
+                        <?php esc_html_e( 'Schedule...', 'jetonomy' ); ?>
+                    </button>
+                </div>
+            </div>
         </div>
     </form>
 </div>
