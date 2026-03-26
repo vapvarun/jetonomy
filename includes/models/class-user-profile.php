@@ -143,7 +143,7 @@ class UserProfile extends Model {
 	 * @param int $user_id WordPress user ID.
 	 */
 	public static function update_last_seen( int $user_id ): void {
-		$key = 'jt_seen_' . $user_id;
+		$key = 'jetonomy_seen_' . $user_id;
 		if ( get_transient( $key ) ) {
 			return; // Already updated within last minute.
 		}
@@ -172,7 +172,7 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function is_online( int $user_id ): bool {
-		$key    = 'jt_online_' . $user_id;
+		$key    = 'jetonomy_online_' . $user_id;
 		$cached = wp_cache_get( $key, 'jetonomy' );
 
 		if ( false !== $cached ) {

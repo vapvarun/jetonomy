@@ -74,7 +74,7 @@ class Captcha_Manager {
 		wp_add_inline_script(
 			'jetonomy-captcha-provider',
 			sprintf(
-				'window.jtCaptcha = %s;',
+				'window.jetonomyCaptcha = %s;',
 				wp_json_encode(
 					array(
 						'provider' => self::$adapter->get_name(),

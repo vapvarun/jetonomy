@@ -171,7 +171,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		// Check transient cache first.
-		$cache_key = 'jt_og_' . md5( $url );
+		$cache_key = 'jetonomy_og_' . md5( $url );
 		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
 			return new \WP_REST_Response( $cached, 200 );

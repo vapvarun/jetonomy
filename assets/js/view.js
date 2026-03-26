@@ -7,7 +7,7 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
 /**
  * Custom modal helpers — replace browser alert/confirm/prompt with styled modals.
  */
-function jtConfirm( message ) {
+function jetonomyConfirm( message ) {
 	return new Promise( ( resolve ) => {
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
@@ -37,7 +37,7 @@ function jtConfirm( message ) {
 	} );
 }
 
-function jtPrompt( message, placeholder ) {
+function jetonomyPrompt( message, placeholder ) {
 	return new Promise( ( resolve ) => {
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
@@ -81,7 +81,7 @@ function jtPrompt( message, placeholder ) {
  * @param {string|number} excludeSpaceId  The space to exclude from the list.
  * @return {Promise<string|null>}
  */
-function jtSpacePicker( title, excludeSpaceId ) {
+function jetonomySpacePicker( title, excludeSpaceId ) {
 	return new Promise( ( resolve ) => {
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
@@ -159,7 +159,7 @@ function jtSpacePicker( title, excludeSpaceId ) {
 /**
  * Post picker modal for merge — search and select a target topic.
  */
-function jtPostPicker( title, excludePostId, spaceId ) {
+function jetonomyPostPicker( title, excludePostId, spaceId ) {
 	return new Promise( ( resolve ) => {
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
@@ -253,7 +253,7 @@ function jtPostPicker( title, excludePostId, spaceId ) {
 /**
  * Build reply HTML for client-side rendering (used by loadGapReplies and loadMoreReplies).
  */
-function buildReplyHtml( reply ) {
+function jetonomyBuildReplyHtml( reply ) {
     const author = reply.author_name || 'Anonymous';
     const initials = author.substring( 0, 2 ).toUpperCase();
     const avatarUrl = reply.author_avatar || '';
@@ -349,7 +349,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
+                    if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
                 } else {
                     // Rollback on error
                     state.postScores[ postId ] = current;
@@ -393,7 +393,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
+                    if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
                 } else {
                     state.postScores[ postId ] = current;
                 }
@@ -747,7 +747,7 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
-            const reason = yield jtPrompt( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
+            const reason = yield jetonomyPrompt( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
             if ( reason === null ) return; // Cancelled
 
             try {
@@ -919,7 +919,7 @@ const { state, actions } = store( 'jetonomy', {
             const currentSpaceId = el.ref.dataset.spaceId;
             if ( ! postId ) return;
 
-            const spaceId = yield jtSpacePicker(
+            const spaceId = yield jetonomySpacePicker(
                 state.i18n?.moveTopicTitle || 'Move topic to another space',
                 currentSpaceId
             );
@@ -966,10 +966,10 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! postId ) return;
 
             // Prompt for target post ID via search
-            const targetId = yield jtPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId );
+            const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId );
             if ( ! targetId ) return;
 
-            if ( ! ( yield jtConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/posts/${ postId }/merge`, {
@@ -1011,7 +1011,7 @@ const { state, actions } = store( 'jetonomy', {
             const spaceId = el.ref.dataset.spaceId;
             if ( ! replyId ) return;
 
-            const title = yield jtPrompt( state.i18n?.splitReplyTitle || 'Enter a title for the new topic:', '' );
+            const title = yield jetonomyPrompt( state.i18n?.splitReplyTitle || 'Enter a title for the new topic:', '' );
             if ( ! title ) return;
 
             try {
@@ -1059,7 +1059,7 @@ const { state, actions } = store( 'jetonomy', {
             const spaceSlug = el.ref.dataset.spaceSlug;
             if ( ! postId ) return;
 
-            if ( ! ( yield jtConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
@@ -1089,7 +1089,7 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = el.ref.dataset.replyId;
             if ( ! replyId ) return;
 
-            if ( ! ( yield jtConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
+            if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/replies/${ replyId }`, {
@@ -1260,7 +1260,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! gap ) return;
 
                 for ( const reply of replies ) {
-                    const html = buildReplyHtml( reply );
+                    const html = jetonomyBuildReplyHtml( reply );
                     gap.insertAdjacentHTML( 'beforebegin', html );
                 }
 
@@ -1338,10 +1338,10 @@ const { state, actions } = store( 'jetonomy', {
 
             // Get CAPTCHA token if a provider is active.
             let captchaToken = '';
-            if ( window.jtCaptcha ) {
-                if ( window.jtCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
-                    captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jtCaptcha.siteKey, { action: 'submit' } ).then( r ) );
-                } else if ( window.jtCaptcha.provider === 'turnstile' ) {
+            if ( window.jetonomyCaptcha ) {
+                if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
+                    captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
+                } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
                     const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
                     captchaToken = tsInput ? ( tsInput.value || '' ) : '';
                 }
@@ -1444,10 +1444,10 @@ const { state, actions } = store( 'jetonomy', {
 
             // Get CAPTCHA token if a provider is active.
             let captchaToken = '';
-            if ( window.jtCaptcha ) {
-                if ( window.jtCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
-                    captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jtCaptcha.siteKey, { action: 'submit' } ).then( r ) );
-                } else if ( window.jtCaptcha.provider === 'turnstile' ) {
+            if ( window.jetonomyCaptcha ) {
+                if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
+                    captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
+                } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
                     const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
                     captchaToken = tsInput ? ( tsInput.value || '' ) : '';
                 }
@@ -1578,7 +1578,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! container ) return;
 
                 for ( const reply of replies ) {
-                    container.insertAdjacentHTML( 'beforeend', buildReplyHtml( reply ) );
+                    container.insertAdjacentHTML( 'beforeend', jetonomyBuildReplyHtml( reply ) );
                 }
 
                 ctx.loadedCount += replies.length;
