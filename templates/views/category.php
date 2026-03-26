@@ -22,8 +22,8 @@ $crumbs = [
 <div class="jt-two-col">
 		<main>
 			<div class="jt-cat-page-row">
-				<?php if ( ! empty( $category->emoji ) ) : ?>
-					<span class="jt-cat-page-emoji"><?php echo esc_html( $category->emoji ); ?></span>
+				<?php if ( ! empty( $category->icon ) ) : ?>
+					<span class="jt-cat-page-emoji"><?php echo esc_html( $category->icon ); ?></span>
 				<?php endif; ?>
 				<div>
 					<h1 class="jt-page-title"><?php echo esc_html( $category->name ); ?></h1>
@@ -44,8 +44,8 @@ $crumbs = [
 						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
 							class="jt-card jt-space-card jt-no-underline jt-block">
 							<div class="jt-space-card-inner">
-								<?php if ( ! empty( $space->emoji ) ) : ?>
-									<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
+								<?php if ( ! empty( $space->icon ) ) : ?>
+									<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
 								<?php endif; ?>
 								<div class="jt-space-card-body">
 									<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>

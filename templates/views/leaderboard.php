@@ -15,11 +15,18 @@ $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
+$period_where = '';
+if ( 'week' === $period ) {
+	$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
+} elseif ( 'month' === $period ) {
+	$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
+}
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $leaders = $wpdb->get_results(
 	$wpdb->prepare(
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d OFFSET %d",
+		"SELECT * FROM {$profiles_tbl}{$period_where} ORDER BY reputation DESC LIMIT %d OFFSET %d",
 		$per_page,
 		$offset
 	)
@@ -99,7 +106,5 @@ $crumbs = [
 		<?php endif; ?>
 </main>
 
-<aside class="jt-sidebar">
-	<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
-</aside>
+<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
 </div>

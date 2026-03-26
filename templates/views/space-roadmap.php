@@ -63,8 +63,8 @@ $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
 <div class="jt-cat-page-row">
-		<?php if ( ! empty( $space->emoji ) ) : ?>
-			<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
+		<?php if ( ! empty( $space->icon ) ) : ?>
+			<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
 		<?php endif; ?>
 		<h1 class="jt-page-title jt-page-title-sm">
 			<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>

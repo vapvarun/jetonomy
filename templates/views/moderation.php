@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Require moderator / admin access.
-if ( ! current_user_can( 'moderate_comments' ) && ! current_user_can( 'manage_options' ) ) {
+if ( ! current_user_can( 'jetonomy_moderate' ) && ! current_user_can( 'manage_options' ) ) {
 	status_header( 403 );
 	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'lock', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div>';
 	return;

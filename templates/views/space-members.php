@@ -31,8 +31,8 @@ $role_labels = [
 <div class="jt-two-col">
 		<main>
 			<div class="jt-cat-page-row">
-				<?php if ( ! empty( $space->emoji ) ) : ?>
-					<span class="jt-space-card-emoji"><?php echo esc_html( $space->emoji ); ?></span>
+				<?php if ( ! empty( $space->icon ) ) : ?>
+					<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
 				<?php endif; ?>
 				<div>
 					<h1 class="jt-page-title jt-page-title-sm">

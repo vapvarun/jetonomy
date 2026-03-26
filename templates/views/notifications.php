@@ -117,7 +117,5 @@ $type_labels = [
 		<?php endif; ?>
 </main>
 
-<aside class="jt-sidebar">
-	<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
-</aside>
+<?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
 </div>

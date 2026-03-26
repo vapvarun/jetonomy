@@ -277,7 +277,7 @@ $crumbs = [
 					<?php foreach ( $user_drafts as $dr_post ) : ?>
 						<?php
 						$dr_ago      = human_time_diff( strtotime( $dr_post->created_at ), current_time( 'timestamp', true ) );
-						$dr_edit_url = $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/new/';
+						$dr_edit_url = $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/new/?draft=' . (int) $dr_post->id;
 						$is_scheduled = ! empty( $dr_post->published_at );
 						?>
 						<div class="jt-row jt-row--draft">

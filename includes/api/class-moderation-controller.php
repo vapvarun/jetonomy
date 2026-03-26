@@ -138,6 +138,9 @@ class Moderation_Controller extends Base_Controller {
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}
+		if ( Restriction::is_silenced( $user_id ) ) {
+			return new WP_Error( 'silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
+		}
 		if ( ! current_user_can( 'jetonomy_flag' ) ) {
 			return $this->permission_error();
 		}

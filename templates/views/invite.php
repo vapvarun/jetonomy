@@ -48,13 +48,13 @@ if ( ! is_user_logged_in() ) {
 $user_id = get_current_user_id();
 
 if ( \Jetonomy\Models\SpaceMember::is_member( (int) $invite->space_id, $user_id ) ) {
-	wp_safe_redirect( $space_url );
-	exit;
+	echo '<script>window.location.href = ' . wp_json_encode( $space_url ) . ';</script>';
+	return;
 }
 
 // Accept the invite.
 \Jetonomy\Models\SpaceMember::add( (int) $invite->space_id, $user_id, 'member' );
 \Jetonomy\Models\InviteLink::use_invite( (int) $invite->id );
 
-wp_safe_redirect( $space_url );
-exit;
+echo '<script>window.location.href = ' . wp_json_encode( $space_url ) . ';</script>';
+return;

@@ -218,6 +218,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php echo apply_filters( 'jetonomy_after_post_content', '', $post ); ?>
 
 				<div class="jt-post-foot">
+					<?php if ( is_user_logged_in() ) : ?>
 					<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteUp"
 						data-post-id="<?php echo (int) $post->id; ?>"
@@ -231,6 +232,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 					</button>
+					<?php else : ?>
+					<span class="jt-act">
+						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+						<span class="n"><?php echo (int) $post->vote_score; ?></span>
+					</span>
+					<?php endif; ?>
 					<span class="jt-view-count">
 						<?php
 						/* translators: %d: number of views */
@@ -382,7 +389,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
-			<?php if ( ! $post->is_closed ) : ?>
+			<?php if ( $post->is_closed ) : ?>
+				<div class="jt-closed-notice">
+					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
+				</div>
+			<?php elseif ( is_user_logged_in() ) : ?>
 				<div class="jt-reply-composer" id="jt-composer">
 					<h4>
 						<?php esc_html_e( 'Your Reply', 'jetonomy' ); ?>
@@ -398,8 +409,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 				</div>
 			<?php else : ?>
-				<div class="jt-closed-notice">
-					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
+				<div class="jt-login-prompt">
+					<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 		</main>

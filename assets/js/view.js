@@ -601,7 +601,7 @@ const { state, actions } = store( 'jetonomy', {
                     } );
                     if ( res.ok ) {
                         const data = yield res.json();
-                        const subs = data.items || data;
+                        const subs = data.data || [];
                         if ( subs.length > 0 ) {
                             yield fetch( `${ state.apiBase }/subscriptions/${ subs[0].id }`, {
                                 method: 'DELETE',
@@ -646,7 +646,7 @@ const { state, actions } = store( 'jetonomy', {
                     } );
                     if ( res.ok ) {
                         const data = yield res.json();
-                        const subs = data.items || data;
+                        const subs = data.data || [];
                         if ( subs.length > 0 ) {
                             yield fetch( `${ state.apiBase }/subscriptions/${ subs[0].id }`, {
                                 method: 'DELETE',
@@ -1548,9 +1548,12 @@ const { state, actions } = store( 'jetonomy', {
                 );
                 if ( response.ok ) {
                     window.location.href = ctx.profileUrl;
+                } else {
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || 'Failed to save profile.', 'error' );
                 }
             } catch {
-                // silent
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.', 'error' );
             } finally {
                 state.isSubmitting = false;
             }
@@ -1752,7 +1755,8 @@ const { state, actions } = store( 'jetonomy', {
                         }
                         // Insert card after the parent <p>.
                         a.parentElement.insertAdjacentElement( 'afterend', card );
-                    } );
+                    } )
+                    .catch( function() {} );
             } );
         } );
     } );
