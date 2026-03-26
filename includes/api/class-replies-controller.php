@@ -469,16 +469,7 @@ class Replies_Controller extends Base_Controller {
 			UserProfile::find_or_create( $reply_author_id );
 			UserProfile::adjust_reputation( $reply_author_id, self::REP_REPLY_ACCEPTED );
 
-			// Notify the reply author that their answer was accepted.
-			Notification::create(
-				array(
-					'user_id'     => $reply_author_id,
-					'type'        => 'reply_accepted',
-					'object_type' => 'reply',
-					'object_id'   => $id,
-					'actor_id'    => $user_id,
-				)
-			);
+			// Notification handled by Notifier via jetonomy_reply_accepted hook above.
 		}
 
 		$updated_reply = Reply::find( $id );

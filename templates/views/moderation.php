@@ -10,8 +10,6 @@ if ( ! current_user_can( 'jetonomy_moderate' ) && ! current_user_can( 'manage_op
 
 $flags        = \Jetonomy\Models\Flag::list_pending();
 $base         = \Jetonomy\base_url();
-$nonce_base   = wp_create_nonce( 'jetonomy_moderation' );
-
 $reason_labels = [
 	'spam'        => __( 'Spam', 'jetonomy' ),
 	'abuse'       => __( 'Abuse / Harassment', 'jetonomy' ),
@@ -130,14 +128,14 @@ $crumbs = [
 							<button type="button" class="jt-btn jt-btn-fill jt-btn-danger"
 								data-wp-on--click="actions.dismissFlag"
 								data-flag-id="<?php echo (int) $flag->id; ?>"
-								data-nonce="<?php echo esc_attr( $nonce_base ); ?>"
+
 								data-action="approved">
 								<?php esc_html_e( 'Remove Content', 'jetonomy' ); ?>
 							</button>
 							<button type="button" class="jt-btn jt-btn-ghost"
 								data-wp-on--click="actions.dismissFlag"
 								data-flag-id="<?php echo (int) $flag->id; ?>"
-								data-nonce="<?php echo esc_attr( $nonce_base ); ?>"
+
 								data-action="dismissed">
 								<?php esc_html_e( 'Dismiss', 'jetonomy' ); ?>
 							</button>

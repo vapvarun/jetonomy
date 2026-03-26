@@ -18,7 +18,6 @@ if ( ! is_user_logged_in() ) {
 $_post_id  = isset( $post_id ) ? (int) $post_id : 0;
 $_reply_to = isset( $reply_to ) ? (int) $reply_to : 0;
 $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… (Markdown supported)', 'jetonomy' );
-$nonce     = wp_create_nonce( 'jetonomy_reply_' . $_post_id );
 ?>
 <div class="jt-editor"
 	data-wp-interactive="jetonomy"
@@ -50,7 +49,6 @@ $nonce     = wp_create_nonce( 'jetonomy_reply_' . $_post_id );
 				data-wp-on--click="actions.submitReply"
 				data-post-id="<?php echo $_post_id; ?>"
 				data-reply-to="<?php echo $_reply_to; ?>"
-				data-nonce="<?php echo esc_attr( $nonce ); ?>"
 				data-wp-bind--disabled="context.submitting">
 				<?php esc_html_e( 'Post Reply', 'jetonomy' ); ?>
 			</button>

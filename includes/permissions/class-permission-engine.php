@@ -103,6 +103,11 @@ class Permission_Engine {
 			// Allow read actions to continue through the normal flow.
 		}
 
+		// Layer 0c: Space-level ban.
+		if ( $user_id && $space_id && Restriction::is_space_banned( $user_id, $space_id ) ) {
+			return false;
+		}
+
 		// WP admin bypass — skip all further checks.
 		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
 			return true;

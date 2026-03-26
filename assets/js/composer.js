@@ -188,12 +188,12 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 editor.appendChild( img );
                 editor.appendChild( document.createElement( 'br' ) );
             } else {
-                alert( res.data || 'Upload failed' );
+                (window.bnToast ? window.bnToast( res.data || 'Upload failed', 'error' ) : null);
             }
         } )
         .catch( function() {
             placeholder.remove();
-            alert( 'Upload failed' );
+            (window.bnToast ? window.bnToast( 'Upload failed', 'error' ) : null);
         } );
     }
 
@@ -525,13 +525,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
             } else {
                 btn.disabled = false;
                 btn.textContent = 'Join Space';
-                alert(res.data.message || 'Could not join space. Please try again.');
+                (window.bnToast ? window.bnToast(res.data.message || 'Could not join space.', 'error') : null);
             }
         })
         .catch(function() {
             btn.disabled = false;
             btn.textContent = 'Join Space';
-            alert('Network error. Please try again.');
+            (window.bnToast ? window.bnToast('Network error. Please try again.', 'error') : null);
         });
     });
 

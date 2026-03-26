@@ -202,7 +202,7 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 		searchInput.focus();
 
 		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
-			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root + 'jetonomy/v1' : '/wp-json/jetonomy/v1' );
+			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
 
 		let debounce = null;
 		searchInput.addEventListener( 'input', () => {
@@ -358,6 +358,7 @@ const { state, actions } = store( 'jetonomy', {
                 }
             } catch {
                 state.postScores[ postId ] = current;
+                if ( window.bnToast ) window.bnToast( 'Network error. Please try again.', 'error' );
             }
         },
 
@@ -403,6 +404,7 @@ const { state, actions } = store( 'jetonomy', {
                 }
             } catch {
                 state.postScores[ postId ] = current;
+                if ( window.bnToast ) window.bnToast( 'Network error. Please try again.', 'error' );
             }
         },
 
