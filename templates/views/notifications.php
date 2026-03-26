@@ -54,23 +54,33 @@ $type_labels = [
 
 					// Build link to the relevant object.
 					$notif_url = $base;
-					if ( 'post' === $notif->object_type && $notif->object_id ) {
+					if ( $notif->object_id ) {
 						global $wpdb;
-						$posts_tbl  = \Jetonomy\table( 'posts' );
-						$spaces_tbl = \Jetonomy\table( 'spaces' );
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-						$row = $wpdb->get_row(
-							$wpdb->prepare(
+						$posts_tbl   = \Jetonomy\table( 'posts' );
+						$spaces_tbl  = \Jetonomy\table( 'spaces' );
+						$replies_tbl = \Jetonomy\table( 'replies' );
+
+						if ( 'post' === $notif->object_type ) {
+							// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+							$row = $wpdb->get_row( $wpdb->prepare(
 								// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								"SELECT p.slug AS post_slug, sp.slug AS space_slug
-								 FROM {$posts_tbl} p
-								 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-								 WHERE p.id = %d",
+								"SELECT p.slug AS post_slug, sp.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE p.id = %d",
 								(int) $notif->object_id
-							)
-						);
-						if ( $row ) {
-							$notif_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/';
+							) );
+							if ( $row ) {
+								$notif_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/';
+							}
+						} elseif ( 'reply' === $notif->object_type ) {
+							// Reply notification — look up parent post for URL + anchor to reply.
+							// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+							$row = $wpdb->get_row( $wpdb->prepare(
+								// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+								"SELECT p.slug AS post_slug, sp.slug AS space_slug, r.id AS reply_id FROM {$replies_tbl} r LEFT JOIN {$posts_tbl} p ON p.id = r.post_id LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE r.id = %d",
+								(int) $notif->object_id
+							) );
+							if ( $row ) {
+								$notif_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/#reply-' . $row->reply_id;
+							}
 						}
 					}
 					?>
