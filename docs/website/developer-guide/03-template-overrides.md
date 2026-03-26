@@ -1,5 +1,3 @@
-# Template Overrides
-
 Jetonomy's template system is designed to be overridden without touching plugin files. Place your custom templates in your theme and they will be loaded automatically — no hooks, no filters required for simple overrides.
 
 ---

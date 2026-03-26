@@ -19,7 +19,7 @@ Go to **Jetonomy → Settings** to access these options. All changes take effect
 
 This is the URL prefix for all Jetonomy pages on your site. With the default value, your community home is at `yoursite.com/community/`. Spaces live at `yoursite.com/community/s/space-name/`, and so on.
 
-You can change this to any URL-safe string — for example `forum`, `hub`, or `discuss`. After changing it, visit **Settings → Permalinks** and click **Save Changes** to flush the rewrite rules.
+You can change this to any URL-safe string — for example `forum`, `hub`, or `discuss`. Jetonomy automatically flushes rewrite rules when you change the base URL and save settings.
 
 > **Warning:** Changing the base URL after your community has content will break all existing links. If you must change it on a live site, set up 301 redirects from the old slug to the new one.
 

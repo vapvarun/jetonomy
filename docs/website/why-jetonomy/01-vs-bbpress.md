@@ -20,7 +20,7 @@ How Jetonomy compares to bbPress — and why communities are switching to a mode
 | Real-time interactions | Page reload required | WordPress Interactivity API |
 | Moderation queue | Basic | Flag system + queue + auto-rules (Pro) |
 | Anti-spam | Akismet only | Akismet + reCAPTCHA + Turnstile |
-| REST API | Limited | 48+ endpoints |
+| REST API | Limited | 61+ endpoints |
 | Private messaging | Not built-in | Built-in (Pro) |
 | Polls | Not built-in | Built-in (Pro) |
 | Analytics | Not available | Dashboard with export (Pro) |

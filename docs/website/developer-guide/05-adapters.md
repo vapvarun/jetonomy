@@ -1,5 +1,3 @@
-# Adapter System
-
 Jetonomy uses a universal adapter pattern for every external integration point. Instead of hard-coding a dependency on a specific search engine, email provider, membership plugin, or real-time service, each integration is represented by a PHP interface. You implement the interface, register your adapter, and Jetonomy uses it everywhere.
 
 All adapters are managed through the static `Adapter_Registry` class (`includes/adapters/class-adapter-registry.php`).
@@ -64,7 +62,7 @@ $all = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
 
 The Registry returns `null` when no active adapter is found for a type — always null-check before calling methods.
 
-**Registration timing:** Register your adapters at `plugins_loaded` with a priority after 10 (Jetonomy loads at priority 10). Priority 15 is a safe default:
+**Registration timing:** Register your adapters at `plugins_loaded`. Use priority 9 if you want your adapter to override a built-in default (e.g. replacing built-in search). Use priority 15 for additive adapters that do not need to override defaults (e.g. adding a new membership source):
 
 ```php
 add_action( 'plugins_loaded', function() {
@@ -503,6 +501,6 @@ add_action( 'plugins_loaded', function() {
 
 ## What's Next?
 
-- [REST API Reference](./01-rest-api.md) — All 42+ endpoints in detail
+- [REST API Reference](./01-rest-api.md) — All 61+ endpoints in detail
 - [Hooks Reference](./02-hooks-reference.md) — Connect your adapter to content lifecycle events
 - [Template Overrides](./03-template-overrides.md) — Customize the community UI

@@ -1,6 +1,4 @@
-# Hooks Reference (Actions & Filters)
-
-Jetonomy exposes 42 hooks in the free plugin and 20 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
+Jetonomy exposes 47 hooks in the free plugin and 8 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
 
 **Hook naming prefix:** `jetonomy_`
 **Namespace:** `Jetonomy\`
@@ -322,6 +320,7 @@ Fires when a user's membership subscription becomes active.
 |-----------|------|-------------|
 | `$user_id` | `int` | WP user ID |
 | `$level_id` | `string` | Membership level identifier |
+| `$adapter` | `string` | Adapter identifier (e.g. `'memberpress'`, `'pmpro'`, `'woocommerce'`) |
 
 **Source:** `includes/adapters/class-member-press-adapter.php`, `class-pmpro-adapter.php`
 
@@ -337,17 +336,18 @@ Fires when a user's membership expires or is cancelled.
 |-----------|------|-------------|
 | `$user_id` | `int` | WP user ID |
 | `$level_id` | `string` | Membership level identifier |
+| `$adapter` | `string` | Adapter identifier (e.g. `'memberpress'`, `'pmpro'`, `'woocommerce'`) |
 
 **Source:** `includes/adapters/class-member-press-adapter.php`, `class-pmpro-adapter.php`
 
 ```php
-add_action( 'jetonomy_membership_deactivated', function( int $user_id, string $level_id ) {
+add_action( 'jetonomy_membership_deactivated', function( int $user_id, string $level_id, string $adapter ) {
     // Revoke access to private spaces when membership lapses.
     $private_spaces = \Jetonomy\Models\Space::get_by_membership_level( $level_id );
     foreach ( $private_spaces as $space ) {
         \Jetonomy\Models\SpaceMember::remove( $user_id, $space->id );
     }
-}, 10, 2 );
+}, 10, 3 );
 ```
 
 ---

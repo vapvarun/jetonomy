@@ -126,4 +126,4 @@ The community sidebar (where the theme layout places it) shows active members, t
 
 Now that your community is live and populated, learn how to organize it further with spaces and categories — including sub-spaces, visibility rules, and per-space permissions.
 
-[Spaces and Categories →](../spaces-and-categories/01-spaces-overview.md)
+[Spaces and Categories →](../spaces-and-categories/01-creating-spaces.md)

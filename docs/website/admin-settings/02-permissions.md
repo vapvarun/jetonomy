@@ -1,4 +1,4 @@
-The Permissions tab controls how quickly members earn trust in your community and how much they can do before you've had a chance to evaluate their behavior.
+The Permissions tab controls how quickly members earn trust in your community and how much they can do before you have had a chance to evaluate their behavior.
 
 ## What You Will Learn
 
@@ -83,12 +83,11 @@ Rate limits cap how many actions a member can take in a given time window. They 
 
 | Action | Default Limit | Window |
 |---|---|---|
-| Create post | 5 | per hour |
-| Create reply | 10 | per hour |
-| Vote | 30 | per hour |
-| Flag | 5 | per hour |
+| Create post | 3 | per day |
+| Create reply | 10 | per day |
+| Vote | 5 | per day |
 
-Admins and Level 4+ members are exempt from all rate limits.
+Trust Level 1+ members are exempt from all rate limits.
 
 For high-traffic communities, raise these limits. For communities experiencing spam problems, lower them. Changes take effect immediately — no cache flush needed.
 

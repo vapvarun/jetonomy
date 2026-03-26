@@ -56,7 +56,7 @@ Reputation points accumulate on your public profile. The leaderboard ranks membe
 
 A cron job runs twice daily to evaluate all members against the current trust level thresholds. Any member whose reputation meets or exceeds the next threshold is automatically promoted.
 
-Promotion is silent — members are not notified by default. You can add a welcome notification using the `jetonomy_trust_level_promoted` action hook if you want to acknowledge promotions.
+Promotion is silent — members are not notified by default. You can add a welcome notification using the `jetonomy_trust_level_changed` action hook if you want to acknowledge promotions.
 
 Demotion works the same way. If a member's reputation falls below a threshold (for example, because posts were deleted), they are automatically moved back to the appropriate level on the next cron run.
 

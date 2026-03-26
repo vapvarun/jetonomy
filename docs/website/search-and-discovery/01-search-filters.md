@@ -80,7 +80,7 @@ add_filter( 'jetonomy_search_filters', function( $filters, $query_args ) {
 }, 10, 2 );
 ```
 
-See the [Hooks Reference](../developer-guide/hooks-reference.md) for the full parameter list.
+See the [Hooks Reference](../developer-guide/02-hooks-reference.md) for the full parameter list.
 
 ## What's Next?
 

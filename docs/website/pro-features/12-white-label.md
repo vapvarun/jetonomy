@@ -78,6 +78,6 @@ White Label also affects transactional emails and digests. In **Settings → Bra
 
 ## What's Next?
 
-You have covered all 12 Pro features. Return to the full Pro feature overview to review what each extension covers.
+You have covered all 12 Pro features. Return to the beginning of the Pro section to explore Emoji Reactions and other extensions.
 
-[Pro Features Overview →](../pro-features-overview.md)
+[Emoji Reactions →](01-reactions.md)

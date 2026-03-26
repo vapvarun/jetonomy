@@ -62,7 +62,7 @@ Trust Level 0 members (brand-new accounts) are subject to posting rate limits re
 | Topics per day | 3 |
 | Replies per day | 10 |
 
-Limits reset at midnight UTC. Members at Trust Level 1 and above have higher limits, and Trust Level 2+ members have no automatic posting limits.
+Limits reset after 24 hours. Members at Trust Level 1 and above are exempt from all rate limits.
 
 You can adjust the default thresholds at **Jetonomy → Settings → Permissions**. Setting a limit to 0 disables it for that trust level.
 
