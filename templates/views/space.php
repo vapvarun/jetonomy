@@ -26,7 +26,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 				echo '<div class="jt-empty"><p>' . esc_html__( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ) . '</p></div>';
 			} elseif ( 'approval' === $join_policy ) {
 				// Approval required — show a request form with nonce.
-				$join_nonce = wp_create_nonce( 'jetonomy_join_space_' . (int) $space->id );
+				$join_nonce = wp_create_nonce( 'wp_rest' );
 				echo '<div class="jt-empty jt-space-gate">';
 				echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
 				echo '<form class="jt-join-request-form" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
@@ -36,7 +36,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 				echo '</div>';
 			} else {
 				// Open join policy but private visibility — allow direct join.
-				$join_nonce = wp_create_nonce( 'jetonomy_join_space_' . (int) $space->id );
+				$join_nonce = wp_create_nonce( 'wp_rest' );
 				echo '<div class="jt-empty jt-space-gate">';
 				echo '<p>' . esc_html__( 'This space is private. Join to access posts and discussions.', 'jetonomy' ) . '</p>';
 				echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
@@ -59,7 +59,8 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $paged           = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $_jt_settings    = get_option( 'jetonomy_settings', [] );
-$limit           = (int) ( $_jt_settings['posts_per_page'] ?? 20 );
+$_space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+$limit           = (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 );
 $offset          = ( $paged - 1 ) * $limit;
 
 $posts    = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );

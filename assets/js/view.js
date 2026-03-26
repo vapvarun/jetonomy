@@ -353,6 +353,8 @@ const { state, actions } = store( 'jetonomy', {
                 } else {
                     // Rollback on error
                     state.postScores[ postId ] = current;
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
                 }
             } catch {
                 state.postScores[ postId ] = current;
@@ -396,6 +398,8 @@ const { state, actions } = store( 'jetonomy', {
                     if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
                 } else {
                     state.postScores[ postId ] = current;
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
                 }
             } catch {
                 state.postScores[ postId ] = current;
@@ -440,6 +444,8 @@ const { state, actions } = store( 'jetonomy', {
                 } else {
                     state.replyScores[ replyId ] = current;
                     if ( scoreEl ) scoreEl.textContent = current;
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
                 }
             } catch {
                 state.replyScores[ replyId ] = current;
@@ -485,6 +491,8 @@ const { state, actions } = store( 'jetonomy', {
                 } else {
                     state.replyScores[ replyId ] = current;
                     if ( scoreEl ) scoreEl.textContent = current;
+                    const err = yield response.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
                 }
             } catch {
                 state.replyScores[ replyId ] = current;

@@ -176,7 +176,7 @@ $jt_js_data = [
 	'nonce'         => wp_create_nonce( 'wp_rest' ),
 	'isLoggedIn'    => (bool) $user_id,
 	'restNotif'     => rest_url( 'jetonomy/v1/notifications' ),
-	'restMarkRead'  => rest_url( 'jetonomy/v1/notifications/mark-read' ),
+	'restMarkRead'  => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
 	'restSearch'    => rest_url( 'jetonomy/v1/search' ),
 	'searchIcon'    => jetonomy_icon( 'search', 20 ),
 	'i18n'          => [
@@ -214,11 +214,12 @@ $jt_js_data = [
 		panel.hidden = isOpen;
 		if (!isOpen && !notifLoaded) {
 			notifLoaded = true;
-			fetch(D.restNotif + '?per_page=5', {
+			fetch(D.restNotif + '?limit=5', {
 				headers: { 'X-WP-Nonce': D.nonce }
-			}).then(function(r) { return r.json(); }).then(function(data) {
+			}).then(function(r) { return r.json(); }).then(function(resp) {
 				var body = panel.querySelector('.jt-notif-panel-body');
-				if (!data.length) {
+				var data = resp.data || resp;
+				if (!data || !data.length) {
 					body.textContent = D.i18n.noNotifs;
 					body.className = 'jt-notif-panel-body jt-notif-panel-empty';
 					return;
@@ -226,7 +227,7 @@ $jt_js_data = [
 				body.textContent = '';
 				data.forEach(function(n) {
 					var a = document.createElement('a');
-					a.href = n.url || (D.base + '/notifications/');
+					a.href = n.object_url || n.url || (D.base + '/notifications/');
 					a.className = 'jt-notif-panel-item' + (n.is_read ? '' : ' unread');
 					var txt = document.createElement('span');
 					txt.className = 'jt-notif-panel-text';

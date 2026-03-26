@@ -115,12 +115,12 @@ wp_interactivity_state(
  * @param object $post  Parent post object.
  * @param int    $depth Current nesting depth (0 = top-level).
  */
-function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
+function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = null ) {
 	$depth         = isset( $reply->depth ) ? (int) $reply->depth : $depth;
 	$wrapper_class = $depth > 0 ? 'jt-nested jt-nested-' . min( $depth, 3 ) : '';
 	?>
 	<div class="<?php echo esc_attr( $wrapper_class ); ?>">
-		<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post ] ); ?>
+		<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post, 'space' => $space ] ); ?>
 		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
 			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
 				data-wp-context='{"collapsed": false, "childCount": <?php echo count( $reply->children ); ?>}'>
@@ -130,13 +130,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
 					<?php foreach ( $reply->children as $child ) : ?>
-						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1 ); ?>
+						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space ); ?>
 					<?php endforeach; ?>
 				</div>
 			</div>
 		<?php elseif ( ! empty( $reply->children ) ) : ?>
 			<?php foreach ( $reply->children as $child ) : ?>
-				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1 ); ?>
+				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space ); ?>
 			<?php endforeach; ?>
 		<?php endif; ?>
 	</div>
@@ -347,7 +347,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 					<div class="jt-replies-list" id="jt-replies-container">
 						<!-- First batch (opening conversation) -->
 						<?php foreach ( $first_batch as $reply ) : ?>
-							<?php jetonomy_render_threaded_reply( $reply, $post ); ?>
+							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
 						<?php endforeach; ?>
 
 						<!-- Gap loader (in-between) -->
@@ -374,7 +374,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0 ) {
 
 						<!-- Last batch (latest conversation) -->
 						<?php foreach ( $last_batch as $reply ) : ?>
-							<?php jetonomy_render_threaded_reply( $reply, $post ); ?>
+							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
 						<?php endforeach; ?>
 					</div>
 

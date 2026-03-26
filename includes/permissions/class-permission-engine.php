@@ -153,6 +153,31 @@ class Permission_Engine {
 			}
 		}
 
+		// Resolve space role (needed for restriction checks below).
+		$role = SpaceMember::get_role( $space_id, $user_id );
+
+		// Layer 4: Per-space settings (who_can_post, who_can_reply, allow_voting).
+		// Checked BEFORE the public+open shortcut so restrictions are enforced.
+		$space_settings = Space::get_settings( $space_id );
+
+		if ( 'create_posts' === $action && ! empty( $space_settings['who_can_post'] ) ) {
+			$check_role = $role ?: 'viewer';
+			if ( ! self::role_meets_restriction( $check_role, $space_settings['who_can_post'] ) ) {
+				return false;
+			}
+		}
+
+		if ( 'create_replies' === $action && ! empty( $space_settings['who_can_reply'] ) ) {
+			$check_role = $role ?: 'viewer';
+			if ( ! self::role_meets_restriction( $check_role, $space_settings['who_can_reply'] ) ) {
+				return false;
+			}
+		}
+
+		if ( 'vote' === $action && isset( $space_settings['allow_voting'] ) && '1' !== (string) $space_settings['allow_voting'] ) {
+			return false;
+		}
+
 		// Public space — no membership required for read.
 		// Public + open join_policy — logged-in users may also participate.
 		if ( 'public' === $space->visibility ) {
@@ -168,8 +193,6 @@ class Permission_Engine {
 			}
 		}
 
-		// Resolve space role and check against role permissions.
-		$role = SpaceMember::get_role( $space_id, $user_id );
 		if ( ! $role ) {
 			// Non-member — only read is allowed (private/hidden already blocked above).
 			return 'read' === $action;
@@ -192,25 +215,6 @@ class Permission_Engine {
 			if ( ! in_array( $role, array( 'moderator', 'admin' ), true ) ) {
 				return false;
 			}
-		}
-
-		// Layer 4: Per-space settings (who_can_post, who_can_reply, allow_voting).
-		$space_settings = Space::get_settings( $space_id );
-
-		if ( 'create_posts' === $action && ! empty( $space_settings['who_can_post'] ) ) {
-			if ( ! self::role_meets_restriction( $role, $space_settings['who_can_post'] ) ) {
-				return false;
-			}
-		}
-
-		if ( 'create_replies' === $action && ! empty( $space_settings['who_can_reply'] ) ) {
-			if ( ! self::role_meets_restriction( $role, $space_settings['who_can_reply'] ) ) {
-				return false;
-			}
-		}
-
-		if ( 'vote' === $action && isset( $space_settings['allow_voting'] ) && '1' !== (string) $space_settings['allow_voting'] ) {
-			return false;
 		}
 
 		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? array(), true );

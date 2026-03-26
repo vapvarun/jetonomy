@@ -438,8 +438,8 @@
 
 				if (whoCanPost) settings.who_can_post = whoCanPost;
 				if (whoCanReply) settings.who_can_reply = whoCanReply;
-				if (requireApproval) settings.require_approval = '1';
-				if (allowVoting) settings.allow_voting = '1';
+				settings.require_approval = requireApproval ? '1' : '0';
+				settings.allow_voting = allowVoting ? '1' : '0';
 				if (postsPerPage) settings.posts_per_page = postsPerPage;
 
 				$btn.prop('disabled', true);

@@ -49,7 +49,7 @@ class Notifier {
 			$this->create_and_maybe_email(
 				(int) $post->author_id,
 				$actor_id,
-				'reply',
+				'reply_to_post',
 				'post',
 				$post_id,
 				sprintf(
@@ -69,7 +69,7 @@ class Notifier {
 			$this->create_and_maybe_email(
 				$sub_user_id,
 				$actor_id,
-				'reply',
+				'reply_to_post',
 				'post',
 				$post_id,
 				sprintf(
@@ -78,6 +78,25 @@ class Notifier {
 					mb_substr( $post->title, 0, 50 )
 				)
 			);
+		}
+
+		// 3. Notify parent reply author (reply-to-reply)
+		if ( ! empty( $reply->parent_id ) ) {
+			$parent_reply = Reply::find( (int) $reply->parent_id );
+			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id && (int) $parent_reply->author_id !== (int) $post->author_id ) {
+				$this->create_and_maybe_email(
+					(int) $parent_reply->author_id,
+					$actor_id,
+					'reply_to_reply',
+					'reply',
+					$reply_id,
+					sprintf(
+						__( '%s replied to your comment in "%s"', 'jetonomy' ),
+						$this->get_display_name( $actor_id ),
+						mb_substr( $post->title, 0, 50 )
+					)
+				);
+			}
 		}
 	}
 
@@ -106,7 +125,7 @@ class Notifier {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$existing = $wpdb->get_row( $wpdb->prepare(
-			"SELECT id, message FROM {$table} WHERE user_id = %d AND type = 'vote' AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1",
+			"SELECT id, message FROM {$table} WHERE user_id = %d AND type = 'vote_on_post' AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1",
 			$author_id,
 			$object_type,
 			$object_id,
@@ -136,20 +155,19 @@ class Notifier {
 				[ 'id' => (int) $existing->id ]
 			);
 		} else {
-			// Create new notification.
-			Notification::create( [
-				'user_id'     => $author_id,
-				'actor_id'    => $voter_id,
-				'type'        => 'vote',
-				'object_type' => $object_type,
-				'object_id'   => $object_id,
-				'message'     => sprintf(
+			// Create new notification via email-aware path.
+			$this->create_and_maybe_email(
+				$author_id,
+				$voter_id,
+				'vote_on_post',
+				$object_type,
+				$object_id,
+				sprintf(
 					// translators: %s: content title.
 					__( 'Someone voted on %s', 'jetonomy' ),
 					'"' . $title . '"'
-				),
-				'created_at'  => now(),
-			] );
+				)
+			);
 		}
 	}
 
@@ -165,7 +183,7 @@ class Notifier {
 			$this->create_and_maybe_email(
 				(int) $reply->author_id,
 				(int) $post->author_id,
-				'accepted',
+				'accepted_answer',
 				'reply',
 				$reply_id,
 				sprintf(
@@ -195,7 +213,7 @@ class Notifier {
 		$this->create_and_maybe_email(
 			$user_id,
 			0, // system notification
-			'trust_promotion',
+			'badge_earned',
 			'badge',
 			$new_level,
 			sprintf(
@@ -226,20 +244,19 @@ class Notifier {
 			'trash'    => __( 'removed', 'jetonomy' ),
 		];
 
-		Notification::create( [
-			'user_id'     => $author_id,
-			'actor_id'    => $moderator_id,
-			'type'        => 'moderation',
-			'object_type' => $object_type,
-			'object_id'   => $object_id,
-			'message'     => sprintf(
+		$this->create_and_maybe_email(
+			$author_id,
+			$moderator_id,
+			'moderation',
+			$object_type,
+			$object_id,
+			sprintf(
 				/* translators: 1: object type (post/reply), 2: action label */
 				__( 'Your %1$s was %2$s by a moderator', 'jetonomy' ),
 				$object_type,
 				$action_labels[ $action ] ?? $action
-			),
-			'created_at'  => now(),
-		] );
+			)
+		);
 	}
 
 	/**

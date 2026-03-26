@@ -49,20 +49,48 @@ class Mentions {
 		foreach ( $user_ids as $uid ) {
 			if ( $uid === $actor_id ) continue; // Don't notify yourself
 
-			Models\Notification::create( [
+			$message = sprintf(
+				/* translators: 1: actor display name, 2: post/reply title */
+				__( '%1$s mentioned you in "%2$s"', 'jetonomy' ),
+				$actor_name,
+				mb_substr( $context_title, 0, 50 )
+			);
+
+			$notification_id = Models\Notification::create( [
 				'user_id'     => $uid,
 				'actor_id'    => $actor_id,
 				'type'        => 'mention',
 				'object_type' => $object_type,
 				'object_id'   => $object_id,
-				'message'     => sprintf(
-					/* translators: 1: actor display name, 2: post/reply title */
-					__( '%1$s mentioned you in "%2$s"', 'jetonomy' ),
-					$actor_name,
-					mb_substr( $context_title, 0, 50 )
-				),
+				'message'     => $message,
 				'created_at'  => now(),
 			] );
+
+			do_action( 'jetonomy_notification_created', $notification_id, $uid, 'mention', $object_type, $object_id );
+
+			// Check user email preference for mentions.
+			$profile    = Models\UserProfile::find_by_user( $uid );
+			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+			$user_prefs = $settings['notifications'] ?? [];
+
+			if ( isset( $user_prefs['mention']['email'] ) ) {
+				$send_email = ! empty( $user_prefs['mention']['email'] );
+			} else {
+				$global     = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+				$send_email = ! empty( $global['mention']['email'] );
+			}
+
+			if ( $send_email ) {
+				$email_adapter = Adapters\Adapter_Registry::get_email();
+				if ( $email_adapter ) {
+					$user = get_userdata( $uid );
+					if ( $user && $user->user_email ) {
+						$site_name = get_bloginfo( 'name' );
+						$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
+						$email_adapter->send( $user->user_email, $subject, $message, wp_strip_all_tags( $message ) );
+					}
+				}
+			}
 		}
 	}
 }
