@@ -148,91 +148,111 @@ class Admin {
 		$existing = get_option( 'jetonomy_settings', [] );
 		$clean    = is_array( $existing ) ? $existing : [];
 
-		// General — flush rewrites when slug changes.
-		$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
-		if ( $new_slug !== ( $existing['base_slug'] ?? '' ) ) {
-			// Delete the versioned flush key so Router re-registers rules on next load.
-			delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
+		// ── General tab ──
+		// Only process if base_slug is present (General tab was submitted).
+		if ( isset( $input['base_slug'] ) ) {
+			$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
+			if ( $new_slug !== ( $existing['base_slug'] ?? '' ) ) {
+				// Delete the versioned flush key so Router re-registers rules on next load.
+				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
+			}
+			$clean['base_slug']          = $new_slug;
+			$clean['posts_per_page']     = absint( $input['posts_per_page'] ?? 20 );
+			$clean['replies_per_page']   = absint( $input['replies_per_page'] ?? 30 );
+			$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );
+			$clean['guest_read']         = ! empty( $input['guest_read'] );
+			$clean['require_login']      = ! empty( $input['require_login'] );
 		}
-		$clean['base_slug']          = $new_slug;
-		$clean['posts_per_page']     = absint( $input['posts_per_page'] ?? 20 );
-		$clean['replies_per_page']   = absint( $input['replies_per_page'] ?? 30 );
-		$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );
-		$clean['guest_read']         = ! empty( $input['guest_read'] );
-		$clean['require_login']      = ! empty( $input['require_login'] );
 
-		// Permissions — trust level thresholds (nested structure matching the view and Trust_Levels consumer).
-		$raw_thresholds = is_array( $input['trust_thresholds'] ?? null ) ? $input['trust_thresholds'] : [];
-		$tl_defaults    = [
-			1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
-			2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
-			3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
-		];
-		foreach ( [ 1, 2, 3 ] as $level ) {
-			$td = $tl_defaults[ $level ];
-			$lv = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : [];
-			$clean['trust_thresholds'][ $level ] = [
-				'posts'            => absint( $lv['posts']            ?? $td['posts'] ),
-				'days_active'      => absint( $lv['days_active']      ?? $td['days_active'] ),
-				'reputation'       => absint( $lv['reputation']       ?? $td['reputation'] ),
-				'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
+		// ── Permissions tab ──
+		// Only process if trust_thresholds is present (Permissions tab was submitted).
+		if ( isset( $input['trust_thresholds'] ) ) {
+			$raw_thresholds = is_array( $input['trust_thresholds'] ) ? $input['trust_thresholds'] : [];
+			$tl_defaults    = [
+				1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
+				2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
+				3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+			];
+			foreach ( [ 1, 2, 3 ] as $level ) {
+				$td = $tl_defaults[ $level ];
+				$lv = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : [];
+				$clean['trust_thresholds'][ $level ] = [
+					'posts'            => absint( $lv['posts']            ?? $td['posts'] ),
+					'days_active'      => absint( $lv['days_active']      ?? $td['days_active'] ),
+					'reputation'       => absint( $lv['reputation']       ?? $td['reputation'] ),
+					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
+				];
+			}
+		}
+
+		// Only process if rate_limits is present (Permissions tab was submitted).
+		if ( isset( $input['rate_limits'] ) ) {
+			$raw_limits           = is_array( $input['rate_limits'] ) ? $input['rate_limits'] : [];
+			$clean['rate_limits'] = [
+				'posts'   => absint( $raw_limits['posts']   ?? 3  ),
+				'replies' => absint( $raw_limits['replies'] ?? 10 ),
+				'votes'   => absint( $raw_limits['votes']   ?? 5  ),
 			];
 		}
 
-		// Rate limits — nested structure matching the view and Rate_Limiter consumer.
-		$raw_limits              = is_array( $input['rate_limits'] ?? null ) ? $input['rate_limits'] : [];
-		$clean['rate_limits']    = [
-			'posts'   => absint( $raw_limits['posts']   ?? 3  ),
-			'replies' => absint( $raw_limits['replies'] ?? 10 ),
-			'votes'   => absint( $raw_limits['votes']   ?? 5  ),
-		];
+		// ── Email tab ──
+		// Only process if email_from_name is present (Email tab was submitted).
+		if ( isset( $input['email_from_name'] ) ) {
+			$clean['email_from_name']  = sanitize_text_field( $input['email_from_name'] ?? '' );
+			$clean['email_from_email'] = sanitize_email( $input['email_from_email'] ?? '' );
 
-		// Email
-		$clean['email_from_name']  = sanitize_text_field( $input['email_from_name'] ?? '' );
-		$clean['email_from_email'] = sanitize_email( $input['email_from_email'] ?? '' );
-
-		// Appearance
-		$clean['inherit_fonts']    = ! empty( $input['inherit_fonts'] );
-		$clean['inherit_colors']   = ! empty( $input['inherit_colors'] );
-		$clean['accent_color']     = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-		$clean['layout_density']   = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
-		$clean['custom_css']       = wp_strip_all_tags( $input['custom_css'] ?? '' );
-
-		// Anti-Spam — CAPTCHA
-		$allowed_providers              = [ 'none', 'recaptcha_v3', 'turnstile' ];
-		$raw_provider                   = sanitize_text_field( $input['captcha_provider'] ?? 'none' );
-		$clean['captcha_provider']      = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
-		$clean['captcha_site_key']      = sanitize_text_field( $input['captcha_site_key'] ?? '' );
-		$clean['captcha_secret_key']    = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
-		$raw_threshold                  = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
-		$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, $raw_threshold ) );
-
-		// SEO
-		$clean['seo_post_title']      = sanitize_text_field( $input['seo_post_title'] ?? '{post_title} - {space_name} | {site_name}' );
-		$clean['seo_space_title']     = sanitize_text_field( $input['seo_space_title'] ?? '{space_name} | {site_name}' );
-		$clean['seo_schema']          = ! empty( $input['seo_schema'] );
-		$clean['seo_sitemap']         = ! empty( $input['seo_sitemap'] );
-		$clean['seo_noindex_profiles'] = ! empty( $input['seo_noindex_profiles'] );
-		$clean['seo_noindex_search']  = ! empty( $input['seo_noindex_search'] );
-
-		// Notification defaults — checkbox values absent when unchecked, so default false if not present.
-		$notif_types = [
-			'reply_to_post',
-			'reply_to_reply',
-			'mention',
-			'accepted_answer',
-			'new_post_in_sub',
-			'badge_earned',
-			'vote_on_post',
-			'moderation',
-		];
-		$raw_notif = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : [];
-		foreach ( $notif_types as $nt ) {
-			$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : [];
-			$clean['notification_defaults'][ $nt ] = [
-				'web'   => ! empty( $nt_data['web'] ),
-				'email' => ! empty( $nt_data['email'] ),
+			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
+			$notif_types = [
+				'reply_to_post',
+				'reply_to_reply',
+				'mention',
+				'accepted_answer',
+				'new_post_in_sub',
+				'badge_earned',
+				'vote_on_post',
+				'moderation',
 			];
+			$raw_notif = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : [];
+			foreach ( $notif_types as $nt ) {
+				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : [];
+				$clean['notification_defaults'][ $nt ] = [
+					'web'   => ! empty( $nt_data['web'] ),
+					'email' => ! empty( $nt_data['email'] ),
+				];
+			}
+		}
+
+		// ── Appearance tab ──
+		// Only process if accent_color is present (Appearance tab was submitted).
+		if ( isset( $input['accent_color'] ) ) {
+			$clean['inherit_fonts']    = ! empty( $input['inherit_fonts'] );
+			$clean['inherit_colors']   = ! empty( $input['inherit_colors'] );
+			$clean['accent_color']     = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
+			$clean['layout_density']   = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
+			$clean['custom_css']       = wp_strip_all_tags( $input['custom_css'] ?? '' );
+		}
+
+		// ── Anti-Spam tab ──
+		// Only process if captcha_provider is present (Anti-Spam tab was submitted).
+		if ( isset( $input['captcha_provider'] ) ) {
+			$allowed_providers              = [ 'none', 'recaptcha_v3', 'turnstile' ];
+			$raw_provider                   = sanitize_text_field( $input['captcha_provider'] ?? 'none' );
+			$clean['captcha_provider']      = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
+			$clean['captcha_site_key']      = sanitize_text_field( $input['captcha_site_key'] ?? '' );
+			$clean['captcha_secret_key']    = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
+			$raw_threshold                  = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
+			$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, $raw_threshold ) );
+		}
+
+		// ── SEO tab ──
+		// Only process if seo_post_title is present (SEO tab was submitted).
+		if ( isset( $input['seo_post_title'] ) ) {
+			$clean['seo_post_title']       = sanitize_text_field( $input['seo_post_title'] ?? '{post_title} - {space_name} | {site_name}' );
+			$clean['seo_space_title']      = sanitize_text_field( $input['seo_space_title'] ?? '{space_name} | {site_name}' );
+			$clean['seo_schema']           = ! empty( $input['seo_schema'] );
+			$clean['seo_sitemap']          = ! empty( $input['seo_sitemap'] );
+			$clean['seo_noindex_profiles'] = ! empty( $input['seo_noindex_profiles'] );
+			$clean['seo_noindex_search']   = ! empty( $input['seo_noindex_search'] );
 		}
 
 		return $clean;

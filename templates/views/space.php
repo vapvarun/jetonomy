@@ -10,40 +10,44 @@ if ( ! $space ) {
 	return;
 }
 
-if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
-	$user_id = get_current_user_id();
-	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			$join_policy = $space->join_policy ?? 'open';
-			if ( ! $user_id ) {
-				// Guest — prompt to log in.
-				echo '<div class="jt-empty">';
-				echo '<p>' . esc_html__( 'This space is private. Please log in to request access.', 'jetonomy' ) . '</p>';
-				echo '<a href="' . esc_url( wp_login_url( get_permalink() ) ) . '" class="jt-btn jt-btn-fill">' . esc_html__( 'Log In', 'jetonomy' ) . '</a>';
-				echo '</div>';
-			} elseif ( 'invite' === $join_policy ) {
-				// Invite-only — cannot self-join.
-				echo '<div class="jt-empty"><p>' . esc_html__( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ) . '</p></div>';
-			} elseif ( 'approval' === $join_policy ) {
-				// Approval required — show a request form with nonce.
-				$join_nonce = wp_create_nonce( 'wp_rest' );
-				echo '<div class="jt-empty jt-space-gate">';
-				echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
-				echo '<form class="jt-join-request-form" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
-				echo '<textarea class="jt-input" name="message" rows="3" placeholder="' . esc_attr__( 'Optional: why do you want to join?', 'jetonomy' ) . '"></textarea>';
-				echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Request to Join', 'jetonomy' ) . '</button>';
-				echo '</form>';
-				echo '</div>';
-			} else {
-				// Open join policy but private visibility — allow direct join.
-				$join_nonce = wp_create_nonce( 'wp_rest' );
-				echo '<div class="jt-empty jt-space-gate">';
-				echo '<p>' . esc_html__( 'This space is private. Join to access posts and discussions.', 'jetonomy' ) . '</p>';
-				echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
-				echo '</div>';
-			}
-			return;
-		}
+$_jt_join_policy = $space->join_policy ?? 'open';
+$_jt_user_id     = get_current_user_id();
+$_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $_jt_user_id );
+$_jt_is_admin    = current_user_can( 'manage_options' );
+
+// Gate: block access for private/hidden spaces (full block) or public spaces with
+// restricted join policies (buttons handled below — content stays readable).
+if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin ) {
+	if ( ! $_jt_user_id ) {
+		// Guest — prompt to log in.
+		echo '<div class="jt-empty">';
+		echo '<p>' . esc_html__( 'This space is private. Please log in to request access.', 'jetonomy' ) . '</p>';
+		echo '<a href="' . esc_url( wp_login_url( get_permalink() ) ) . '" class="jt-btn jt-btn-fill">' . esc_html__( 'Log In', 'jetonomy' ) . '</a>';
+		echo '</div>';
+		return;
+	} elseif ( 'invite' === $_jt_join_policy ) {
+		// Invite-only — cannot self-join.
+		echo '<div class="jt-empty"><p>' . esc_html__( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ) . '</p></div>';
+		return;
+	} elseif ( 'approval' === $_jt_join_policy ) {
+		// Approval required — show a request form with nonce.
+		$join_nonce = wp_create_nonce( 'wp_rest' );
+		echo '<div class="jt-empty jt-space-gate">';
+		echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
+		echo '<form class="jt-join-request-form" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
+		echo '<textarea class="jt-input" name="message" rows="3" placeholder="' . esc_attr__( 'Optional: why do you want to join?', 'jetonomy' ) . '"></textarea>';
+		echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Request to Join', 'jetonomy' ) . '</button>';
+		echo '</form>';
+		echo '</div>';
+		return;
+	} else {
+		// Open join policy but private visibility — allow direct join.
+		$join_nonce = wp_create_nonce( 'wp_rest' );
+		echo '<div class="jt-empty jt-space-gate">';
+		echo '<p>' . esc_html__( 'This space is private. Join to access posts and discussions.', 'jetonomy' ) . '</p>';
+		echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
+		echo '</div>';
+		return;
 	}
 }
 
@@ -106,15 +110,33 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 					</div>
 				</div>
 				<?php if ( is_user_logged_in() ) :
-					$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
-				?>
-					<button class="jt-btn jt-btn-sm <?php echo $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost'; ?>"
-						data-wp-interactive="jetonomy"
-						data-wp-on--click="actions.followSpace"
-						data-space-id="<?php echo (int) $space->id; ?>"
-						data-following="<?php echo $is_following_space ? '1' : '0'; ?>">
-						<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
-					</button>
+					if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+						// Invite-only: show a disabled badge instead of Follow/Join.
+					?>
+						<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
+							<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
+						</span>
+					<?php elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+						// Approval required: show "Request to Join" button.
+						$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
+					?>
+						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
+							data-space-id="<?php echo (int) $space->id; ?>"
+							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+							<?php esc_html_e( 'Request to Join', 'jetonomy' ); ?>
+						</button>
+					<?php else :
+						// Member or open space: show Follow/Following toggle.
+						$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
+					?>
+						<button class="jt-btn jt-btn-sm <?php echo $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost'; ?>"
+							data-wp-interactive="jetonomy"
+							data-wp-on--click="actions.followSpace"
+							data-space-id="<?php echo (int) $space->id; ?>"
+							data-following="<?php echo $is_following_space ? '1' : '0'; ?>">
+							<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+						</button>
+					<?php endif; ?>
 				<?php endif; ?>
 			</div>
 
@@ -147,7 +169,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 				</div>
 				<?php if ( $is_restricted ) : ?>
 					<?php /* No new-post button for archived/locked spaces. */ ?>
-				<?php elseif ( is_user_logged_in() ) : ?>
+				<?php elseif ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy ) ) : ?>
 					<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 						<?php
 						$new_post_labels = [
@@ -158,7 +180,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						echo esc_html( $new_post_labels[ $space->type ] ?? __( '+ New Post', 'jetonomy' ) );
 						?>
 					</a>
-				<?php else : ?>
+				<?php elseif ( ! is_user_logged_in() ) : ?>
 					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-ghost">
 						<?php esc_html_e( 'Log in to post', 'jetonomy' ); ?>
 					</a>
@@ -177,7 +199,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						}
 						?>
 					</div>
-					<?php if ( is_user_logged_in() ) : ?>
+					<?php if ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy ) ) : ?>
 						<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
 							+ <?php esc_html_e( 'New Post', 'jetonomy' ); ?>
 						</a>
