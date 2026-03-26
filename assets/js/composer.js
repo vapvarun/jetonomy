@@ -229,8 +229,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     posts.forEach( function( post ) {
                         var item = document.createElement( 'a' );
                         item.className = 'jt-instant-result-item';
+                        var cBase = ( typeof jetonomyUpload !== 'undefined' && jetonomyUpload.communityBase ) ? jetonomyUpload.communityBase : '/community';
                         item.href = post.space_slug
-                            ? '/community/s/' + post.space_slug + '/t/' + post.slug + '/'
+                            ? cBase + '/s/' + post.space_slug + '/t/' + post.slug + '/'
                             : '#';
                         var strong = document.createElement( 'strong' );
                         strong.textContent = post.title || '';

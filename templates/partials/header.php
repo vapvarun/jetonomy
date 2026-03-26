@@ -173,6 +173,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 // Data for JS — all escaped server-side via wp_json_encode.
 $jt_js_data = [
 	'base'          => $base,
+	'restBase'      => rest_url( 'jetonomy/v1' ),
 	'nonce'         => wp_create_nonce( 'wp_rest' ),
 	'isLoggedIn'    => (bool) $user_id,
 	'restNotif'     => rest_url( 'jetonomy/v1/notifications' ),
@@ -437,7 +438,7 @@ $jt_js_data = [
 		card.textContent = '...';
 		renderPosition(card, anchor);
 		card.style.display = '';
-		fetch(D.base.replace(/\/community\/?$/, '') + '/wp-json/jetonomy/v1/users/' + userId, {
+		fetch(D.restBase + '/users/' + userId, {
 			headers: { 'X-WP-Nonce': D.nonce }
 		}).then(function(r) { return r.json(); }).then(function(data) {
 			hcCache[userId] = data;
@@ -505,7 +506,7 @@ $jt_js_data = [
 			if (!login) return;
 			var cachedId = hcCache['login_' + login];
 			if (cachedId) { showHoverCard(link, cachedId); return; }
-			fetch(D.base.replace(/\/community\/?$/, '') + '/wp-json/jetonomy/v1/users/by-login/' + encodeURIComponent(login), {
+			fetch(D.restBase + '/users/by-login/' + encodeURIComponent(login), {
 				headers: { 'X-WP-Nonce': D.nonce }
 			}).then(function(r) { return r.json(); }).then(function(data) {
 				if (data.id) {

@@ -236,9 +236,10 @@ class Template_Loader {
 			'jetonomy-composer',
 			'jetonomyUpload',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'jetonomy_upload' ),
-				'apiBase' => rest_url( 'jetonomy/v1' ),
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'nonce'         => wp_create_nonce( 'jetonomy_upload' ),
+				'apiBase'       => rest_url( 'jetonomy/v1' ),
+				'communityBase' => \Jetonomy\base_url(),
 			)
 		);
 
