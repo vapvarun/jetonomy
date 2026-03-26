@@ -100,7 +100,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
+                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
                 } else {
                     // Rollback on error
                     state.postScores[ postId ] = current;
@@ -143,7 +143,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
+                    if ( window.bnToast && !window._jtVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jtVoteToasted = true; setTimeout( () => { window._jtVoteToasted = false; }, 2000 ); }
                 } else {
                     state.postScores[ postId ] = current;
                 }
@@ -271,12 +271,12 @@ const { state, actions } = store( 'jetonomy', {
 
             const cancelBtn = document.createElement( 'button' );
             cancelBtn.className = 'jt-btn jt-btn-ghost';
-            cancelBtn.textContent = 'Cancel';
+            cancelBtn.textContent = state.i18n?.cancel || 'Cancel';
             cancelBtn.type = 'button';
 
             const saveBtn = document.createElement( 'button' );
             saveBtn.className = 'jt-btn jt-btn-fill';
-            saveBtn.textContent = 'Save';
+            saveBtn.textContent = state.i18n?.save || 'Save';
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
@@ -294,7 +294,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! content ) return;
 
                 saveBtn.disabled = true;
-                saveBtn.textContent = 'Saving...';
+                saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
                 try {
                     const res = await fetch( `${ state.apiBase }/replies/${ replyId }`, {
@@ -314,14 +314,14 @@ const { state, actions } = store( 'jetonomy', {
                         bodyEl.style.display = '';
                     } else {
                         const err = await res.json().catch( () => ( {} ) );
-                        alert( err.message || 'Failed to save.' );
+                        alert( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
-                        saveBtn.textContent = 'Save';
+                        saveBtn.textContent = state.i18n?.save || 'Save';
                     }
                 } catch {
-                    alert( 'Network error. Please try again.' );
+                    alert( state.i18n?.networkError || 'Network error. Please try again.' );
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Save';
+                    saveBtn.textContent = state.i18n?.save || 'Save';
                 }
             } );
         },
@@ -351,7 +351,7 @@ const { state, actions } = store( 'jetonomy', {
                         }
                     }
                     el.ref.dataset.following = '0';
-                    el.ref.textContent = 'Follow';
+                    el.ref.textContent = state.i18n?.follow || 'Follow';
                     el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
                     el.ref.classList.add( 'jt-btn-ghost' );
                 } else {
@@ -363,7 +363,7 @@ const { state, actions } = store( 'jetonomy', {
                     } );
                     if ( res.ok ) {
                         el.ref.dataset.following = '1';
-                        el.ref.textContent = 'Following';
+                        el.ref.textContent = state.i18n?.following || 'Following';
                         el.ref.classList.remove( 'jt-btn-ghost' );
                         el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
                     }
@@ -396,10 +396,10 @@ const { state, actions } = store( 'jetonomy', {
                         }
                     }
                     el.ref.dataset.following = '0';
-                    el.ref.textContent = 'Follow';
+                    el.ref.textContent = state.i18n?.follow || 'Follow';
                     el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
                     el.ref.classList.add( 'jt-btn-ghost' );
-                    if ( window.bnToast ) window.bnToast( 'Unfollowed space' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.unfollowedSpace || 'Unfollowed space' );
                 } else {
                     const res = yield fetch( `${ state.apiBase }/subscriptions`, {
                         method: 'POST',
@@ -409,10 +409,10 @@ const { state, actions } = store( 'jetonomy', {
                     } );
                     if ( res.ok ) {
                         el.ref.dataset.following = '1';
-                        el.ref.textContent = 'Following';
+                        el.ref.textContent = state.i18n?.following || 'Following';
                         el.ref.classList.remove( 'jt-btn-ghost' );
                         el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
-                        if ( window.bnToast ) window.bnToast( 'Following space' );
+                        if ( window.bnToast ) window.bnToast( state.i18n?.followingSpace || 'Following space' );
                     }
                 }
             } catch { /* non-critical */ }
@@ -435,7 +435,7 @@ const { state, actions } = store( 'jetonomy', {
             const encodedTitle = encodeURIComponent( title || '' );
 
             const items = [
-                { label: 'Copy link', icon: '\u{1F517}', action: () => { navigator.clipboard.writeText( url ); dropdown.remove(); } },
+                { label: state.i18n?.copyLink || 'Copy link', icon: '\u{1F517}', action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
                 { label: 'Twitter / X', icon: '\u{1D54F}', href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
                 { label: 'Facebook', icon: 'f', href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
                 { label: 'LinkedIn', icon: 'in', href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
@@ -483,8 +483,8 @@ const { state, actions } = store( 'jetonomy', {
                     const data = yield res.json();
                     el.ref.dataset.bookmarked = data.bookmarked ? '1' : '0';
                     el.ref.classList.toggle( 'bookmarked', data.bookmarked );
-                    el.ref.title = data.bookmarked ? 'Remove bookmark' : 'Bookmark';
-                    if ( window.bnToast ) window.bnToast( data.bookmarked ? 'Bookmarked' : 'Bookmark removed' );
+                    el.ref.title = data.bookmarked ? ( state.i18n?.removeBookmark || 'Remove bookmark' ) : ( state.i18n?.bookmark || 'Bookmark' );
+                    if ( window.bnToast ) window.bnToast( data.bookmarked ? ( state.i18n?.bookmarked || 'Bookmarked' ) : ( state.i18n?.bookmarkRemoved || 'Bookmark removed' ) );
                 }
             } catch { /* non-critical */ }
         },
@@ -495,7 +495,7 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
-            const reason = prompt( 'Why are you reporting this post?' );
+            const reason = prompt( state.i18n?.reportPrompt || 'Why are you reporting this post?' );
             if ( reason === null ) return; // Cancelled
 
             try {
@@ -509,10 +509,10 @@ const { state, actions } = store( 'jetonomy', {
                     if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || 'Failed to submit report.' );
+                    alert( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
-                alert( 'Network error. Please try again.' );
+                alert( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -571,12 +571,12 @@ const { state, actions } = store( 'jetonomy', {
 
             const cancelBtn = document.createElement( 'button' );
             cancelBtn.className = 'jt-btn jt-btn-ghost';
-            cancelBtn.textContent = 'Cancel';
+            cancelBtn.textContent = state.i18n?.cancel || 'Cancel';
             cancelBtn.type = 'button';
 
             const saveBtn = document.createElement( 'button' );
             saveBtn.className = 'jt-btn jt-btn-fill';
-            saveBtn.textContent = 'Save';
+            saveBtn.textContent = state.i18n?.save || 'Save';
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
@@ -594,7 +594,7 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! content ) return;
 
                 saveBtn.disabled = true;
-                saveBtn.textContent = 'Saving...';
+                saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
                 try {
                     const res = await fetch( `${ state.apiBase }/posts/${ postId }`, {
@@ -613,14 +613,14 @@ const { state, actions } = store( 'jetonomy', {
                         bodyEl.style.display = '';
                     } else {
                         const err = await res.json().catch( () => ( {} ) );
-                        alert( err.message || 'Failed to save.' );
+                        alert( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
-                        saveBtn.textContent = 'Save';
+                        saveBtn.textContent = state.i18n?.save || 'Save';
                     }
                 } catch {
-                    alert( 'Network error. Please try again.' );
+                    alert( state.i18n?.networkError || 'Network error. Please try again.' );
                     saveBtn.disabled = false;
-                    saveBtn.textContent = 'Save';
+                    saveBtn.textContent = state.i18n?.save || 'Save';
                 }
             } );
         },
@@ -645,18 +645,18 @@ const { state, actions } = store( 'jetonomy', {
                     const data = yield res.json();
                     // Reload page to reflect pinned state in UI
                     if ( window.bnToast ) {
-                        window.bnToast( data.is_sticky ? 'Post pinned' : 'Post unpinned' );
+                        window.bnToast( data.is_sticky ? ( state.i18n?.postPinned || 'Post pinned' ) : ( state.i18n?.postUnpinned || 'Post unpinned' ) );
                     }
                     setTimeout( () => window.location.reload(), 600 );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
                     if ( window.bnToast ) {
-                        window.bnToast( err.message || 'Failed to toggle pin.' );
+                        window.bnToast( err.message || state.i18n?.failedPin || 'Failed to toggle pin.' );
                     }
                 }
             } catch {
                 if ( window.bnToast ) {
-                    window.bnToast( 'Network error. Please try again.' );
+                    window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
                 }
             }
         },
@@ -668,7 +668,7 @@ const { state, actions } = store( 'jetonomy', {
             const spaceSlug = el.ref.dataset.spaceSlug;
             if ( ! postId ) return;
 
-            if ( ! confirm( 'Are you sure you want to delete this topic?' ) ) return;
+            if ( ! confirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
@@ -685,10 +685,10 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.href = spaceSlug ? `${ base }/s/${ spaceSlug }/` : `${ base }/`;
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || 'Failed to delete.' );
+                    alert( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
-                alert( 'Network error. Please try again.' );
+                alert( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -698,7 +698,7 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = el.ref.dataset.replyId;
             if ( ! replyId ) return;
 
-            if ( ! confirm( 'Are you sure you want to delete this reply?' ) ) return;
+            if ( ! confirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/replies/${ replyId }`, {
@@ -718,10 +718,10 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || 'Failed to delete.' );
+                    alert( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
-                alert( 'Network error. Please try again.' );
+                alert( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -792,12 +792,12 @@ const { state, actions } = store( 'jetonomy', {
                     const indicator = document.createElement( 'div' );
                     indicator.className = 'jt-replying-to';
 
-                    const textNode = document.createTextNode( 'Replying to ' );
+                    const textNode = document.createTextNode( ( state.i18n?.replyingTo || 'Replying to' ) + ' ' );
                     const strong = document.createElement( 'strong' );
                     strong.textContent = authorName || 'reply';
                     const cancelBtn = document.createElement( 'button' );
                     cancelBtn.className = 'jt-replying-to-cancel';
-                    cancelBtn.setAttribute( 'aria-label', 'Cancel reply' );
+                    cancelBtn.setAttribute( 'aria-label', state.i18n?.cancelReply || 'Cancel reply' );
                     cancelBtn.textContent = '\u2715';
                     cancelBtn.addEventListener( 'click', () => {
                         indicator.remove();
@@ -944,7 +944,7 @@ const { state, actions } = store( 'jetonomy', {
             event.preventDefault();
             const ctx = getContext();
             state.isSubmitting = true;
-            state.submitLabel = 'Posting...';
+            state.submitLabel = state.i18n?.posting || 'Posting...';
 
             const form = getElement().ref;
             const title = form.querySelector('[name="title"]')?.value?.trim();
@@ -953,7 +953,7 @@ const { state, actions } = store( 'jetonomy', {
 
             if ( ! title || ! content ) {
                 state.isSubmitting = false;
-                state.submitLabel = 'Post Topic';
+                state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                 return;
             }
 
@@ -976,7 +976,7 @@ const { state, actions } = store( 'jetonomy', {
                     const status = data.status || data.data?.status || 'publish';
                     if ( 'pending' === status || 'spam' === status ) {
                         // Post held for moderation — stay on the page and notify the user.
-                        state.submitLabel = 'Post Topic';
+                        state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                         state.isSubmitting = false;
                         alert( jetonomyData?.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
                         return;
@@ -988,7 +988,7 @@ const { state, actions } = store( 'jetonomy', {
                 // silent
             } finally {
                 state.isSubmitting = false;
-                state.submitLabel = 'Post Topic';
+                state.submitLabel = state.i18n?.postTopic || 'Post Topic';
             }
         },
 
