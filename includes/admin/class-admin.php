@@ -148,8 +148,13 @@ class Admin {
 		$existing = get_option( 'jetonomy_settings', [] );
 		$clean    = is_array( $existing ) ? $existing : [];
 
-		// General
-		$clean['base_slug']          = sanitize_title( $input['base_slug'] ?? 'community' );
+		// General — flush rewrites when slug changes.
+		$new_slug = sanitize_title( $input['base_slug'] ?? 'community' );
+		if ( $new_slug !== ( $existing['base_slug'] ?? '' ) ) {
+			// Delete the versioned flush key so Router re-registers rules on next load.
+			delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
+		}
+		$clean['base_slug']          = $new_slug;
 		$clean['posts_per_page']     = absint( $input['posts_per_page'] ?? 20 );
 		$clean['replies_per_page']   = absint( $input['replies_per_page'] ?? 30 );
 		$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );
