@@ -351,14 +351,14 @@
   .jt-idea-meta { display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
 
   /* ── Leaderboard ── */
-  .jt-leader { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--jt-border); }
+  .jt-leader { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
   .jt-leader:last-child { border-bottom: none; }
   .jt-leader-rank { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; color: var(--jt-text-tertiary); width: 20px; text-align: center; }
   .jt-leader-name { flex: 1; font-weight: 500; }
   .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
 
   /* ── Trending ── */
-  .jt-trend { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--jt-border); }
+  .jt-trend { display: flex; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
   .jt-trend:last-child { border-bottom: none; }
   .jt-trend-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; color: var(--jt-border-strong); min-width: 24px; }
   .jt-trend-title { font-size: 0.9375rem; font-weight: 500; line-height: 1.4; cursor: pointer; }
