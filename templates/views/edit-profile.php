@@ -17,6 +17,8 @@ $base         = \Jetonomy\base_url();
 );
 ?>
 
+<div class="jt-two-col">
+<main>
 <div class="jt-narrower">
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
@@ -104,4 +106,7 @@ $base         = \Jetonomy\base_url();
 			<button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting"><?php esc_html_e( 'Save Profile', 'jetonomy' ); ?></button>
 		</div>
 	</form>
+</div>
+</main>
+<?php \Jetonomy\Template_Loader::partial( 'sidebar' ); ?>
 </div>
