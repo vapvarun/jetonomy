@@ -98,6 +98,58 @@ Target (Discourse/Circle pattern):
 - [ ] Profile Media tab (needs WPMediaVerse bridge)
 - [ ] Content scheduling (published_at field + cron)
 
+---
+
+## Production QA Checklist (reusable)
+
+### Per-Page Checks (Desktop 1280px + Mobile 390px)
+
+| Page | URL | Check |
+|------|-----|-------|
+| Home | `/discussion/` | Categories render, space cards link, sidebar widgets, empty state SVG |
+| Space | `/discussion/s/:slug/` | Follow button, sort pills, +New Post, topic rows, vote arrows, trust badges |
+| Single Post | `/discussion/s/:slug/t/:slug/` | Vote up/down, follow, share (dropdown), bookmark (toggle), flag (modal), "..." menu (edit/pin/delete), reactions (picker opens, single-reaction, instant chip update) |
+| Reply Card | (within single post) | Vote, Reply button, "..." menu (edit/delete), React button, thread collapse |
+| Reply Composer | (within single post) | Toolbar (B/I/code/link/quote/image), placeholder, Post Reply, Ctrl+Enter |
+| Search | `/discussion/search/?q=test` | Input, filter pills (All/Posts/Spaces/Tags), results, empty state |
+| Category | `/discussion/category/:slug/` | Space cards, links |
+| Tag | `/discussion/tag/:slug/` | Sort pills, post rows, tag hero |
+| Profile | `/discussion/u/:login/` | Avatar, trust badge, bio, stats, tabs (Posts/Replies/Votes/Bookmarks) |
+| Edit Profile | `/discussion/u/:login/edit/` | Form fields, notification prefs, save/cancel |
+| Leaderboard | `/discussion/leaderboard/` | Rankings, reputation, avatar links |
+| Notifications | `/discussion/notifications/` | Items, unread highlight, mark read |
+| Moderation | `/discussion/mod/` | Flag queue, dismiss/remove buttons |
+| Space Members | `/discussion/s/:slug/members/` | Member list, profile links |
+
+### Global Features
+
+| Feature | Check |
+|---------|-------|
+| Community nav | Links active state, correct highlighting |
+| Notification bell | Dropdown opens, lazy-loads, mark all read, badge clears |
+| Search overlay | Cmd+K or "/" opens, ESC closes, debounced search, results link |
+| Keyboard shortcuts | j/k navigate rows, Enter opens, ? help modal, n → home |
+| Font scale A/A+/A++ | Buttons persist via localStorage, font scales uniformly |
+| Hover cards | Mouseover author names → card with avatar/trust/bio/stats (400ms delay) |
+| Mobile bottom bar | 5 tabs (Home/Search/Ranks/Alerts/Profile) at ≤640px |
+| Infinite scroll | Pagination auto-loads next page via IntersectionObserver |
+| Skeleton loading | CSS shimmer classes available for placeholder UI |
+| Toast notifications | All actions show toast (no browser alerts) |
+| Custom modals | Delete confirm + flag report use styled modals (no browser confirm/prompt) |
+| Link previews | Bare URLs in posts auto-fetch OG data and render preview card |
+| Empty states | SVG illustrations on: no posts, no replies, no results, no notifications, no members |
+
+### No-Go Criteria
+
+- [ ] Zero `alert()` / `confirm()` / `prompt()` browser dialogs
+- [ ] Zero JS console errors
+- [ ] Zero PHP errors in debug.log
+- [ ] No horizontal scroll at 390px
+- [ ] All actions work without page reload (optimistic UI)
+- [ ] Reactions: single per user, instant chip update
+- [ ] i18n: all JS strings via state.i18n.* (translatable)
+- [ ] RTL: jetonomy-rtl.css loaded when is_rtl()
+
 ### Unified Icon System (cross-plugin)
 See: `buddynext/docs/ICON_SYSTEM_PLAN.md`
 - Lucide for UI icons (line, monochrome)

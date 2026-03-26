@@ -188,6 +188,18 @@ $jt_js_data = [
 (function() {
 	var D = <?php echo wp_json_encode( $jt_js_data ); ?>;
 
+	/* ── Toast helper (standalone fallback — BuddyNext provides its own) ── */
+	if (!window.bnToast) {
+		window.bnToast = function(msg) {
+			var t = document.createElement('div');
+			t.className = 'jt-toast';
+			t.textContent = msg;
+			document.body.appendChild(t);
+			setTimeout(function() { t.classList.add('show'); }, 10);
+			setTimeout(function() { t.classList.remove('show'); setTimeout(function() { t.remove(); }, 300); }, 3000);
+		};
+	}
+
 	/* ── Notification Dropdown ── */
 	var notifLoaded = false;
 	window.jtToggleNotifDropdown = function(btn) {

@@ -1082,6 +1082,35 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 
+/* ── Toast notification (standalone fallback) ── */
+.jt-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  z-index: 10001; background: var(--jt-text, #1a1a1a); color: var(--jt-bg, #fff);
+  padding: 10px 24px; border-radius: var(--jt-radius-full, 20px);
+  font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  opacity: 0; transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+.jt-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Custom Modal (replaces browser alert/confirm/prompt) ── */
+.jt-modal-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  animation: jt-fadeIn 0.15s ease;
+}
+.jt-modal-box {
+  background: var(--jt-bg); border-radius: var(--jt-radius-lg);
+  padding: 24px; width: 400px; max-width: calc(100vw - 32px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+}
+.jt-modal-msg { font-size: 0.9375rem; line-height: 1.5; margin: 0 0 16px; color: var(--jt-text); }
+.jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
+.jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
+
 /* ── Link Preview Cards ── */
 .jt-link-preview {
   display: flex; gap: 12px; align-items: stretch;

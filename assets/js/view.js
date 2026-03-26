@@ -5,6 +5,74 @@
 import { store, getContext, getElement } from '@wordpress/interactivity';
 
 /**
+ * Custom modal helpers — replace browser alert/confirm/prompt with styled modals.
+ */
+function jtConfirm( message ) {
+	return new Promise( ( resolve ) => {
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'jt-modal-overlay';
+		const box = document.createElement( 'div' );
+		box.className = 'jt-modal-box';
+		const msg = document.createElement( 'p' );
+		msg.className = 'jt-modal-msg';
+		msg.textContent = message;
+		box.appendChild( msg );
+		const actions = document.createElement( 'div' );
+		actions.className = 'jt-modal-actions';
+		const cancelBtn = document.createElement( 'button' );
+		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.textContent = 'Cancel';
+		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( false ); } );
+		const okBtn = document.createElement( 'button' );
+		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.textContent = 'Confirm';
+		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( true ); } );
+		actions.appendChild( cancelBtn );
+		actions.appendChild( okBtn );
+		box.appendChild( actions );
+		overlay.appendChild( box );
+		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( false ); } } );
+		document.body.appendChild( overlay );
+		okBtn.focus();
+	} );
+}
+
+function jtPrompt( message, placeholder ) {
+	return new Promise( ( resolve ) => {
+		const overlay = document.createElement( 'div' );
+		overlay.className = 'jt-modal-overlay';
+		const box = document.createElement( 'div' );
+		box.className = 'jt-modal-box';
+		const msg = document.createElement( 'p' );
+		msg.className = 'jt-modal-msg';
+		msg.textContent = message;
+		box.appendChild( msg );
+		const input = document.createElement( 'textarea' );
+		input.className = 'jt-modal-input jt-input';
+		input.placeholder = placeholder || '';
+		input.rows = 3;
+		box.appendChild( input );
+		const actions = document.createElement( 'div' );
+		actions.className = 'jt-modal-actions';
+		const cancelBtn = document.createElement( 'button' );
+		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.textContent = 'Cancel';
+		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
+		const okBtn = document.createElement( 'button' );
+		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.textContent = 'Submit';
+		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( input.value.trim() ); } );
+		actions.appendChild( cancelBtn );
+		actions.appendChild( okBtn );
+		box.appendChild( actions );
+		overlay.appendChild( box );
+		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
+		document.body.appendChild( overlay );
+		input.focus();
+	} );
+}
+
+/**
  * Build reply HTML for client-side rendering (used by loadGapReplies and loadMoreReplies).
  */
 function buildReplyHtml( reply ) {
@@ -314,12 +382,12 @@ const { state, actions } = store( 'jetonomy', {
                         bodyEl.style.display = '';
                     } else {
                         const err = await res.json().catch( () => ( {} ) );
-                        alert( err.message || state.i18n?.failedSave || 'Failed to save.' );
+                        if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
                         saveBtn.textContent = state.i18n?.save || 'Save';
                     }
                 } catch {
-                    alert( state.i18n?.networkError || 'Network error. Please try again.' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
                     saveBtn.disabled = false;
                     saveBtn.textContent = state.i18n?.save || 'Save';
                 }
@@ -495,7 +563,7 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
-            const reason = prompt( state.i18n?.reportPrompt || 'Why are you reporting this post?' );
+            const reason = yield jtPrompt( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
             if ( reason === null ) return; // Cancelled
 
             try {
@@ -509,10 +577,10 @@ const { state, actions } = store( 'jetonomy', {
                     if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
-                alert( state.i18n?.networkError || 'Network error. Please try again.' );
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -613,12 +681,12 @@ const { state, actions } = store( 'jetonomy', {
                         bodyEl.style.display = '';
                     } else {
                         const err = await res.json().catch( () => ( {} ) );
-                        alert( err.message || state.i18n?.failedSave || 'Failed to save.' );
+                        if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
                         saveBtn.textContent = state.i18n?.save || 'Save';
                     }
                 } catch {
-                    alert( state.i18n?.networkError || 'Network error. Please try again.' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
                     saveBtn.disabled = false;
                     saveBtn.textContent = state.i18n?.save || 'Save';
                 }
@@ -668,7 +736,7 @@ const { state, actions } = store( 'jetonomy', {
             const spaceSlug = el.ref.dataset.spaceSlug;
             if ( ! postId ) return;
 
-            if ( ! confirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) return;
+            if ( ! ( yield jtConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
@@ -685,10 +753,10 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.href = spaceSlug ? `${ base }/s/${ spaceSlug }/` : `${ base }/`;
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
-                alert( state.i18n?.networkError || 'Network error. Please try again.' );
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -698,7 +766,7 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = el.ref.dataset.replyId;
             if ( ! replyId ) return;
 
-            if ( ! confirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) return;
+            if ( ! ( yield jtConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
 
             try {
                 const res = yield fetch( `${ state.apiBase }/replies/${ replyId }`, {
@@ -718,10 +786,10 @@ const { state, actions } = store( 'jetonomy', {
                     }
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
-                    alert( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
-                alert( state.i18n?.networkError || 'Network error. Please try again.' );
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
             }
         },
 
@@ -978,7 +1046,7 @@ const { state, actions } = store( 'jetonomy', {
                         // Post held for moderation — stay on the page and notify the user.
                         state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                         state.isSubmitting = false;
-                        alert( jetonomyData?.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
+                        if ( window.bnToast ) window.bnToast( jetonomyData?.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
                         return;
                     }
                     const slug = data.slug || data.data?.slug || '';
