@@ -179,6 +179,46 @@ class Permission_Engine {
 			}
 		}
 
+		// Layer 4: Per-space settings (who_can_post, who_can_reply, allow_voting).
+		$space_settings = Space::get_settings( $space_id );
+
+		if ( 'create_posts' === $action && ! empty( $space_settings['who_can_post'] ) ) {
+			if ( ! self::role_meets_restriction( $role, $space_settings['who_can_post'] ) ) {
+				return false;
+			}
+		}
+
+		if ( 'create_replies' === $action && ! empty( $space_settings['who_can_reply'] ) ) {
+			if ( ! self::role_meets_restriction( $role, $space_settings['who_can_reply'] ) ) {
+				return false;
+			}
+		}
+
+		if ( 'vote' === $action && isset( $space_settings['allow_voting'] ) && '1' !== (string) $space_settings['allow_voting'] ) {
+			return false;
+		}
+
 		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? [], true );
+	}
+
+	/**
+	 * Check if a space role meets a restriction level.
+	 *
+	 * @param string $role        User's space role (viewer/member/moderator/admin).
+	 * @param string $restriction Required level (members/moderators/admins).
+	 * @return bool
+	 */
+	private static function role_meets_restriction( string $role, string $restriction ): bool {
+		$hierarchy = [ 'viewer' => 0, 'member' => 1, 'moderator' => 2, 'admin' => 3 ];
+		$required  = [
+			'members'    => 1,
+			'moderators' => 2,
+			'admins'     => 3,
+		];
+
+		$user_level = $hierarchy[ $role ] ?? 0;
+		$req_level  = $required[ $restriction ] ?? 1;
+
+		return $user_level >= $req_level;
 	}
 }

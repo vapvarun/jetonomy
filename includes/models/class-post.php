@@ -86,8 +86,13 @@ class Post extends Model {
 	 */
 	public static function list_by_space( int $space_id, string $sort = 'latest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
-			$settings = get_option( 'jetonomy_settings', [] );
-			$limit    = (int) ( $settings['posts_per_page'] ?? 20 );
+			// Per-space override, then global fallback.
+			$space_settings = Space::get_settings( $space_id );
+			$limit          = ! empty( $space_settings['posts_per_page'] ) ? (int) $space_settings['posts_per_page'] : 0;
+			if ( $limit <= 0 ) {
+				$global = get_option( 'jetonomy_settings', [] );
+				$limit  = (int) ( $global['posts_per_page'] ?? 20 );
+			}
 		}
 		$table = static::table();
 

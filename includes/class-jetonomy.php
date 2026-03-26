@@ -55,6 +55,22 @@ final class Jetonomy {
         Cron::schedule();
 
         update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
+
+        // Set sensible notification defaults on fresh install.
+        $settings = get_option( 'jetonomy_settings', [] );
+        if ( empty( $settings['notification_defaults'] ) ) {
+            $settings['notification_defaults'] = [
+                'reply_to_post'   => [ 'web' => true, 'email' => true ],
+                'reply_to_reply'  => [ 'web' => true, 'email' => false ],
+                'mention'         => [ 'web' => true, 'email' => true ],
+                'accepted_answer' => [ 'web' => true, 'email' => true ],
+                'new_post_in_sub' => [ 'web' => true, 'email' => false ],
+                'badge_earned'    => [ 'web' => true, 'email' => false ],
+                'vote_on_post'    => [ 'web' => true, 'email' => false ],
+            ];
+            update_option( 'jetonomy_settings', $settings );
+        }
+
         flush_rewrite_rules();
         set_transient( 'jetonomy_activation_redirect', true, 30 );
     }

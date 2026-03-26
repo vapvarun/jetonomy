@@ -326,6 +326,17 @@ class Posts_Controller extends Base_Controller {
 			$post_data['status'] = 'spam';
 		}
 
+		// Per-space require_approval: hold for moderation unless moderator/admin.
+		if ( empty( $post_data['status'] ) || 'publish' === ( $post_data['status'] ?? '' ) ) {
+			$space_settings = Space::get_settings( $space_id );
+			if ( ! empty( $space_settings['require_approval'] ) ) {
+				$member_role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
+				if ( ! in_array( $member_role, [ 'moderator', 'admin' ], true ) && ! current_user_can( 'manage_options' ) ) {
+					$post_data['status'] = 'pending';
+				}
+			}
+		}
+
 		$post_id = Post::create( $post_data );
 
 		if ( ! $post_id ) {
