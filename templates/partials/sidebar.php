@@ -121,7 +121,6 @@ $bn_active = did_action( 'buddynext_loaded' );
 		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
 			<?php foreach ( $trending as $i => $t_post ) : ?>
 				<div class="jt-trend">
-					<span class="jt-trend-n"><?php echo (int) ( $i + 1 ); ?></span>
 					<div>
 						<div class="jt-trend-title">
 							<a href="<?php echo esc_url( $base . '/s/' . $t_post->space_slug . '/t/' . $t_post->slug . '/' ); ?>">
@@ -173,7 +172,6 @@ $bn_active = did_action( 'buddynext_loaded' );
 				}
 				?>
 				<div class="jt-leader">
-					<span class="jt-leader-rank"><?php echo (int) ( $rank + 1 ); ?></span>
 					<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
 					<span class="jt-leader-name">
 						<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
