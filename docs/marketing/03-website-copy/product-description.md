@@ -5,7 +5,7 @@
 
 ---
 
-## VERSION 1 — WordPress.org Short Description
+## VERSION 1 — Store Short Description
 
 ### Character limit: 150 characters
 
@@ -15,7 +15,7 @@ Forums, Q&A boards, and idea trackers for WordPress. Custom database tables, 6 t
 
 ---
 
-## VERSION 2 — WordPress.org Long Description
+## VERSION 2 — Store Long Description
 
 ### Jetonomy — Forums, Q&A, and Idea Boards for WordPress
 
@@ -127,6 +127,6 @@ Built-in importers for bbPress and wpForo. Auto-detection, dry run mode, and pro
 
 **Free, with a clear upgrade path**
 
-The free plugin on WordPress.org includes everything described above — spaces, voting, trust levels, moderation, search, notifications, SEO, REST API, and importers. Jetonomy Pro adds 13 additional modules including private messaging, polls, analytics, badges, webhooks, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+The free plugin at wbcomdesigns.com includes everything described above — spaces, voting, trust levels, moderation, search, notifications, SEO, REST API, and importers. Jetonomy Pro adds 13 additional modules including private messaging, polls, analytics, badges, webhooks, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 **Requirements:** PHP 8.1+, WordPress 6.7+, MySQL 5.7+.

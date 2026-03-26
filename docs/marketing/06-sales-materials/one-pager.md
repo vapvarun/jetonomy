@@ -62,7 +62,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | White label | — | Yes |
 | WooCommerce, LearnDash, RCP integrations | — | Yes |
 
-**Jetonomy Free** is on WordPress.org at no cost. It covers everything a real community needs.
+**Jetonomy Free** is available at wbcomdesigns.com at no cost. It covers everything a real community needs.
 **Jetonomy Pro** adds 13 modules for larger communities. Pricing at wbcomdesigns.com.
 
 ---
@@ -87,7 +87,7 @@ PHP 8.1+ — WordPress 6.7+ — MySQL 5.7+
 
 ## GET STARTED
 
-**Free:** wordpress.org/plugins/jetonomy/
+**Free:** wbcomdesigns.com/downloads/jetonomy/
 
 **Pro:** wbcomdesigns.com/downloads/jetonomy-pro/
 

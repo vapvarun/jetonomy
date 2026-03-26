@@ -21,7 +21,7 @@ For the WordPress Abilities API features (AI agent integration), WordPress 6.9+ 
 
 ## Q2 — How much does Jetonomy cost?
 
-**The core plugin is free.** Download it from WordPress.org with no account required. It includes forums, Q&A spaces, ideas boards, voting, trust levels, moderation, full-text search, notifications, SEO markup, 61+ REST API endpoints, and built-in importers for bbPress and wpForo.
+**The core plugin is free.** Download it from wbcomdesigns.com. It includes forums, Q&A spaces, ideas boards, voting, trust levels, moderation, full-text search, notifications, SEO markup, 61+ REST API endpoints, and built-in importers for bbPress and wpForo.
 
 **Jetonomy Pro** is a paid add-on that unlocks 13 additional modules: private messaging, emoji reactions, polls, analytics, email digest, custom badges, advanced auto-moderation, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
@@ -106,7 +106,7 @@ If you choose to delete the plugin, Jetonomy offers a complete data cleanup opti
 
 **Support depends on your license.**
 
-Free plugin users can post in the WordPress.org support forums. The Wbcom Designs team monitors the forums and responds to issues.
+Free plugin users can reach out via Wbcom Designs support. The team monitors support requests and responds to issues.
 
 Jetonomy Pro license holders get access to priority email support via the Wbcom Designs support portal. Response time targets and support scope details are on the Pro product page.
 

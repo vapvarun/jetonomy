@@ -16,7 +16,7 @@ Forums, Q&A, and idea boards — built for communities that grow.
 Most forum plugins store everything in WordPress posts and rely on you to moderate every piece of content. Jetonomy uses dedicated database tables for performance, a trust system that lets your community moderate itself, and a design that adapts to your theme automatically.
 
 ### Primary CTA
-Download Free on WordPress.org
+Download Free from wbcomdesigns.com
 
 ### Secondary CTA
 See Pro Features
@@ -84,7 +84,7 @@ Gate spaces by MemberPress or Paid Memberships Pro membership level. Access rule
 ## HOW IT WORKS — THREE STEPS
 
 ### Step 1 — Install and run the setup wizard
-Install from WordPress.org or upload the zip. The setup wizard walks you through creating your first space in about 5 minutes. Pick Forum, Q&A, or Ideas. Set visibility. Done.
+Download from wbcomdesigns.com or upload the zip. The setup wizard walks you through creating your first space in about 5 minutes. Pick Forum, Q&A, or Ideas. Set visibility. Done.
 
 ### Step 2 — Your community finds its home
 Members can join spaces, post topics, vote on replies, and follow discussions. Trust levels start working from day one — newcomers are gently rate-limited while active contributors earn more abilities over time.
@@ -132,7 +132,7 @@ The free plugin covers everything a real community needs. Pro adds the tools tha
 ## FAQ
 
 ### Is Jetonomy really free?
-Yes. The free plugin is on WordPress.org and includes forums, Q&A, ideas, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 13 additional modules.
+Yes. The free plugin is available at wbcomdesigns.com and includes forums, Q&A, ideas, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 13 additional modules.
 
 ### Will it slow down my WordPress site?
 Jetonomy does not use wp_posts or wp_postmeta for community content. It uses 22 custom MySQL tables with indexes designed for forum query patterns. Reply counts and vote scores are stored as denormalized counters — no COUNT queries on page load. With Redis, pages load in under 200ms at 50,000 topics.
@@ -157,10 +157,10 @@ Your data stays in the database until you choose to remove it. If you delete the
 Start your community today — it's free.
 
 ### Body
-Download Jetonomy from WordPress.org and have a forum running in about 5 minutes. If you outgrow the free version, Pro is waiting.
+Download Jetonomy from wbcomdesigns.com and have a forum running in about 5 minutes. If you outgrow the free version, Pro is waiting.
 
 ### Primary CTA
-Download Free on WordPress.org
+Download Free from wbcomdesigns.com
 
 ### Secondary CTA
 Compare Free and Pro

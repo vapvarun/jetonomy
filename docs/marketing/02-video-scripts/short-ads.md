@@ -40,8 +40,8 @@
 
 (0:48) "Need more? Jetonomy Pro adds reactions, private messaging, polls, badges, and analytics."
 
-**ON-SCREEN TEXT:** "Free on WordPress.org" + "jetonomy.com"
+**ON-SCREEN TEXT:** "Free at wbcomdesigns.com" + "jetonomy.com"
 
-(0:55) "Jetonomy. The modern forum plugin for WordPress. Free on WordPress.org."
+(0:55) "Jetonomy. The modern forum plugin for WordPress. Free at wbcomdesigns.com."
 
 **USE ON:** YouTube, product page hero video

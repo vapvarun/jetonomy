@@ -55,7 +55,7 @@ Screens to show:
 ### CLOSE (1:50 - 2:15)
 
 **VISUAL:** Setup wizard — step 1, step 2, step 3 done in quick cuts
-**NARRATOR:** "Get started in five minutes. Install, run the setup wizard, and your community is live. Free on WordPress.org."
+**NARRATOR:** "Get started in five minutes. Install, run the setup wizard, and your community is live. Free at wbcomdesigns.com."
 **ON-SCREEN TEXT:** "jetonomy.com" + "Download Free" button
 
 **VISUAL:** Community home page with active content, scrolling

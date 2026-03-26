@@ -1,8 +1,8 @@
 # Jetonomy Social Media Posts
 
 Copy-paste ready posts for launch. Replace [LINK] with the actual URL before posting.
-WordPress.org: [LINK-WP-ORG]
-Pro page: [LINK-PRO] (https://wbcomdesigns.com/downloads/jetonomy-pro/)
+Free: https://wbcomdesigns.com/downloads/jetonomy/
+Pro: https://wbcomdesigns.com/downloads/jetonomy-pro/
 
 ---
 
@@ -12,13 +12,13 @@ Pro page: [LINK-PRO] (https://wbcomdesigns.com/downloads/jetonomy-pro/)
 
 ### 1. Launch Announcement
 
-Jetonomy v1.0 is live on WordPress.org. 🎉
+Jetonomy v1.0 is live at wbcomdesigns.com. 🎉
 
 A modern forum plugin for WordPress — Forum, Q&A, and Ideas spaces, built on custom MySQL tables (fast), the Interactivity API (modern), and CSS that actually inherits from your theme.
 
 Free. No upsells to read your own content.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ForumPlugin #OpenSource
 
@@ -34,7 +34,7 @@ AI agents can now discover and operate your community — create posts, moderate
 
 No other forum plugin does this today.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #AI #WordPressAbilities
 
@@ -48,7 +48,7 @@ Jetonomy inherits your theme's fonts, colors, and spacing automatically via CSS 
 
 No CSS overrides. No shortcodes. No iframe hacks.
 
-Try it free: [LINK-WP-ORG]
+Try it free: https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WebDesign #ForumPlugin
 
@@ -62,7 +62,7 @@ Jetonomy's importer maps everything: forums → spaces, topics → posts, replie
 
 Your community history comes with you.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #bbPress #wpForo #Migration
 
@@ -74,7 +74,7 @@ Jetonomy ships with full-text search across posts, spaces, and tags — FULLTEXT
 
 Need more? The search system is adapter-based. Swap in Meilisearch or Elasticsearch when you're ready. Same API, better results.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #Search #ForumPlugin
 
@@ -91,9 +91,9 @@ Jetonomy Free includes:
 
 Jetonomy Pro adds 13 modules: messaging, polls, reactions, analytics, badges, email digest, webhooks, and more.
 
-Free on WP.org. Pro at wbcomdesigns.com.
+Free at wbcomdesigns.com. Pro also at wbcomdesigns.com.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ForumPlugin
 
@@ -113,7 +113,7 @@ Jetonomy for developers:
 
 Extensible from day one.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WPDev #WordPressPlugin
 
@@ -132,7 +132,7 @@ Jetonomy gives your members a reason to come back:
 
 The community earns the tools it uses. That's the design.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #CommunityBuilding #ForumPlugin
 
@@ -164,11 +164,11 @@ What's in v1.0:
 - bbPress and wpForo importer
 - WordPress Abilities API support — AI agents can discover and operate your community
 
-The free plugin is on WordPress.org. Jetonomy Pro (13 modules including messaging, analytics, polls, and badges) is at wbcomdesigns.com.
+The free plugin is at wbcomdesigns.com. Jetonomy Pro (13 modules including messaging, analytics, polls, and badges) is also at wbcomdesigns.com.
 
 If you're building community features on WordPress, I'd love to hear what you think.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WebDevelopment #CommunityPlatform #OpenSource
 
@@ -200,7 +200,7 @@ It's free. We think that's the right call for something this foundational.
 
 If you're building communities on WordPress, we'd genuinely appreciate you trying it and telling us what's missing.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ProductLaunch #WebDevelopment #Community
 
@@ -240,9 +240,9 @@ Otherwise: Allow.
 
 This is the kind of permission system that grows with you — from a small community where defaults handle everything, to a large multi-space platform with different membership tiers.
 
-Jetonomy is free on WordPress.org. The Pro version adds membership integrations for WooCommerce, LearnDash, and Restrict Content Pro.
+Jetonomy is free at wbcomdesigns.com. The Pro version adds membership integrations for WooCommerce, LearnDash, and Restrict Content Pro.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #CommunityManagement #ForumPlugin #WebDevelopment
 
@@ -282,7 +282,7 @@ One thing we're particularly happy about in Jetonomy: the three space types.
 
 Each space can have its own rules, its own moderators, and its own access controls. Mix and match however your community needs.
 
-Try it free: [LINK-WP-ORG]
+Try it free: https://wbcomdesigns.com/downloads/jetonomy/
 
 And if you migrate from bbPress or wpForo, the importer handles it. 🙌
 
@@ -308,8 +308,8 @@ What you get:
 - Direct line to the team — we mean it, reply to this post
 - Your feedback shapes v1.1
 
-Download the free plugin: [LINK-WP-ORG]
-Pro details: [LINK-PRO]
+Download the free plugin: https://wbcomdesigns.com/downloads/jetonomy/
+Pro details: https://wbcomdesigns.com/downloads/jetonomy-pro/
 
 Drop a comment below or send us a message. We're listening.
 

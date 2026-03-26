@@ -202,7 +202,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
 | Free version | Yes — full-featured | Yes — full plugin | Yes — core features |
-| Free on WordPress.org | Yes | Yes | Yes |
+| Free on WordPress.org | No (wbcomdesigns.com) | Yes | Yes |
 | Pro pricing | See wbcomdesigns.com | Add-ons sold separately | Paid plans available |
 | Lifetime license available | Yes (Pro) | N/A | No |
 

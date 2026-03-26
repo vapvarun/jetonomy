@@ -4,7 +4,7 @@
 
 The 3 posts in `SOCIAL-POSTS.md` cover the launch announcement, space types, and beta tester call-out. The 5 posts below cover complementary angles — trust levels, migration, member stories, engagement questions — designed for a WordPress user and small business owner audience.
 
-Replace `[LINK-WP-ORG]` and `[LINK-PRO]` before publishing. Post links in comments when possible to avoid Facebook's link-in-post penalty on reach.
+Links are embedded inline. Post links in comments when possible to avoid Facebook's link-in-post penalty on reach.
 
 ---
 
@@ -75,7 +75,7 @@ Without trust levels, every new member has the same capabilities as someone who'
 
 Jetonomy's trust system creates a natural ramp. New members are limited, but not blocked. As they contribute, they earn more. The community moderates itself, largely.
 
-Try Jetonomy free on WordPress.org — link in comments.
+Try Jetonomy free at wbcomdesigns.com — link in comments.
 
 What's your current approach to spam prevention on community platforms? We're curious what's worked and what hasn't.
 

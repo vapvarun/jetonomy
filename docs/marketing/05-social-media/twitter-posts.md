@@ -1,6 +1,6 @@
 # Jetonomy — Twitter / X Posts (Launch Week)
 
-15 posts across 7 days. Replace `[LINK-WP-ORG]` and `[LINK-PRO]` before publishing.
+15 posts across 7 days. Links are embedded inline. Review before publishing.
 
 **Note:** Posts marked "(Thread)" should be published as a reply chain to the first tweet in that group. Posts marked "(Standalone)" are single tweets.
 
@@ -12,13 +12,13 @@
 
 ### Tweet 1 — Launch Announcement (Standalone)
 
-Jetonomy v1.0 is live on WordPress.org.
+Jetonomy v1.0 is live at wbcomdesigns.com.
 
 Modern forums for WordPress — Forum, Q&A, and Ideas spaces on custom database tables (not wp_posts), with the WordPress Interactivity API frontend and CSS that inherits from your active theme automatically.
 
 Free. No feature gates on the basics.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ForumPlugin
 
@@ -43,7 +43,7 @@ Ideas spaces are community roadmaps. Members submit ideas, vote on them, and wat
 
 If you run a product and you've wanted a feedback board — this is it, on your own domain, in your own theme.
 
-All three space types in the free plugin: [LINK-WP-ORG]
+All three space types in the free plugin: https://wbcomdesigns.com/downloads/jetonomy/
 
 **Suggested image for Tweet 2 (thread opener):** A 3-column graphic showing Forum / Q&A / Ideas with one sentence each and a small icon. Simple, readable at mobile scale.
 
@@ -59,7 +59,7 @@ BuddyPress Activity — not really a forum
 
 Jetonomy — custom tables, Interactivity API frontend, trust levels, Q&A + Ideas spaces, bbPress importer
 
-Free on WordPress.org: [LINK-WP-ORG]
+Free at wbcomdesigns.com: https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #bbPress #wpForo
 
@@ -95,7 +95,7 @@ Most forum plugins look like a plugin dropped into your site.
 
 Jetonomy reads your theme's CSS custom properties and theme.json values. Fonts, colors, border radius — all inherited. Drop it into Twenty Twenty-Five, BuddyX, Astra, or any block theme and it fits without a single line of custom CSS.
 
-Free on WP.org: [LINK-WP-ORG]
+Free at wbcomdesigns.com: https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WebDesign #BlockThemes
 
@@ -115,7 +115,7 @@ In a Jetonomy Q&A space, the question author marks the best reply as accepted. I
 
 Better for the person asking. Better for future visitors. Better for the people who write good answers.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #QandA #SupportForum
 
@@ -129,7 +129,7 @@ Jetonomy's search uses MySQL FULLTEXT in BOOLEAN MODE across posts, spaces, and 
 
 When you're ready to go further: the search system is adapter-based. Swap in Meilisearch, Elasticsearch, or Algolia. Same API, same search page, better results.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #Search #WPDev
 
@@ -149,7 +149,7 @@ Jetonomy's Q&A spaces mean your customers get a visible accepted answer at the t
 
 And the importer brings your bbPress history with you.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #CustomerSupport #ForumPlugin
 
@@ -165,7 +165,7 @@ Members submit ideas. The community votes. You update statuses. Everyone can see
 
 Hosted on your own site. No third-party tools.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ProductManagement #CommunityFeedback
 
@@ -185,7 +185,7 @@ Pro: WooCommerce Memberships, Restrict Content Pro, and LearnDash adapters.
 
 The permission system is three layers — WP roles, per-space roles, trust levels — all resolving in one check. Flexible enough for complex membership setups.
 
-[LINK-PRO] for Pro membership adapters. Free plugin: [LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy-pro/ for Pro membership adapters. Free plugin: https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #MemberPress #MembershipSite
 
@@ -201,7 +201,7 @@ Jetonomy's Q&A spaces work well alongside LMS plugins — students ask questions
 
 Pro adds the LearnDash adapter for membership-gated course forums.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #LMS #LearnDash #EdTech
 
@@ -226,7 +226,7 @@ Frontend: WordPress Interactivity API (no jQuery). Server-rendered HTML that hyd
 **4/4**
 Templates: Override any view by placing it in `your-theme/jetonomy/`. Full action/filter hook system throughout. CSS via Custom Properties only — no hardcoded hex or px values. PHP 8.1+, WP 6.7+.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WPDev #WordPressPlugin #REST
 
@@ -240,7 +240,7 @@ If you're on bbPress and you've been waiting for a reason to move: the Jetonomy 
 
 It runs a dry-run pass before touching any data. Shows you exactly what it found. Most migrations under 10,000 posts complete in under 10 minutes.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #bbPress #Migration #ForumPlugin
 
@@ -256,7 +256,7 @@ It runs a dry-run pass before touching any data. Shows you exactly what it found
 
 — [Name], [Site or Role]
 
-Jetonomy v1.0 — free on WordPress.org: [LINK-WP-ORG]
+Jetonomy v1.0 — free at wbcomdesigns.com: https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ForumPlugin
 
@@ -268,11 +268,11 @@ Jetonomy v1.0 — free on WordPress.org: [LINK-WP-ORG]
 
 Launch week is wrapping up. If you've been meaning to try Jetonomy, this is a good moment.
 
-Free plugin on WordPress.org: everything you need to run a real forum.
+Free plugin at wbcomdesigns.com: everything you need to run a real forum.
 Pro: reactions, messaging, polls, analytics, badges, email digest, webhooks.
 
-Free: [LINK-WP-ORG]
-Pro: [LINK-PRO]
+Free: https://wbcomdesigns.com/downloads/jetonomy/
+Pro: https://wbcomdesigns.com/downloads/jetonomy-pro/
 
 #WordPress #ForumPlugin #Community
 

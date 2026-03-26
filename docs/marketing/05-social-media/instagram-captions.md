@@ -2,7 +2,7 @@
 
 5 posts. Instagram is visual-first. Each post here includes a detailed image/carousel brief followed by the caption. Captions are short — designed for mobile, with line breaks for scanability.
 
-Instagram bio link goes to the WordPress.org listing or a custom landing page. Refer to the link as "link in bio" throughout.
+Instagram bio link goes to the wbcomdesigns.com product page or a custom landing page. Refer to the link as "link in bio" throughout.
 
 ---
 
@@ -27,7 +27,7 @@ Split screen. Left: a slow loading spinner labeled "Forum plugin using wp_posts.
 Screenshot crop of a community homepage — space cards with post counts, member counts, last-activity time. Subtle drop shadow, phone or browser frame optional.
 
 **Slide 5 (CTA):**
-"Free on WordPress.org" in large type. Jetonomy wordmark. "Link in bio." Minimal — accent color background.
+"Free at wbcomdesigns.com" in large type. Jetonomy wordmark. "Link in bio." Minimal — accent color background.
 
 ---
 
@@ -81,7 +81,7 @@ Trusted contributors become moderators.
 Zero configuration.
 That's how trust levels work in Jetonomy.
 
-Free on WordPress.org — link in bio.
+Free at wbcomdesigns.com — link in bio.
 
 #WordPress #CommunityManagement #ForumPlugin #OnlineCommunity #WordPressDev
 
@@ -116,7 +116,7 @@ Drop it in. It fits.
 
 No CSS overrides. No fighting with shortcodes.
 
-Free on WordPress.org — link in bio.
+Free at wbcomdesigns.com — link in bio.
 
 #WordPress #WebDesign #ForumPlugin #ThemeDesign #BlockThemes #WordPressTheme
 
@@ -136,7 +136,7 @@ Screenshot of a single Q&A topic — accepted answer highlighted at the top with
 Close-up of the "mark as accepted" button — the interaction that lets the question author designate the best answer. Simple UI moment.
 
 **Slide 4 (CTA):**
-Light background. "Your Q&A space becomes a knowledge base over time." Large readable type. "Free on WordPress.org." Jetonomy wordmark.
+Light background. "Your Q&A space becomes a knowledge base over time." Large readable type. "Free at wbcomdesigns.com." Jetonomy wordmark.
 
 ---
 
@@ -154,7 +154,7 @@ The answer is already there.
 
 Swipe to see how it looks.
 
-Free on WordPress.org — link in bio.
+Free at wbcomdesigns.com — link in bio.
 
 #WordPress #CustomerSupport #CommunityBuilding #QandA #ForumPlugin #SupportForum
 

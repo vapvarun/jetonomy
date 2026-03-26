@@ -31,7 +31,7 @@ Where bbPress runs into real limits:
 
 **Close**
 
-If bbPress is currently serving a small community with no plans to grow and no need for Q&A or APIs, it may genuinely be enough. But if you're building something you expect to scale, or if you're tired of the moderation overhead, Jetonomy is worth a side-by-side comparison. The free plugin is on WordPress.org — you can test it without committing.
+If bbPress is currently serving a small community with no plans to grow and no need for Q&A or APIs, it may genuinely be enough. But if you're building something you expect to scale, or if you're tired of the moderation overhead, Jetonomy is worth a side-by-side comparison. The free plugin is at wbcomdesigns.com — you can test it without committing.
 
 ---
 
@@ -184,7 +184,7 @@ If you encounter a specific theme conflict after installing, the template overri
 
 **Close**
 
-The best way to verify is to install it. The free plugin is on WordPress.org. Drop it into your site and check /community/ — if something looks off, it is almost always fixable with a CSS custom property override at the theme level, not a plugin-level change.
+The best way to verify is to install it. The free plugin is at wbcomdesigns.com. Drop it into your site and check /community/ — if something looks off, it is almost always fixable with a CSS custom property override at the theme level, not a plugin-level change.
 
 ---
 

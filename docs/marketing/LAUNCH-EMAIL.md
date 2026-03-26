@@ -34,11 +34,11 @@ No more slow post-meta-based databases. No more themes fighting your forum style
 
 - **Three modes in one.** Create Forum spaces for open discussion, Q&A spaces where the best answer rises to the top, or Ideas spaces where members vote on what gets built next.
 
-The free plugin — available now on WordPress.org — includes everything you need to run a real community: spaces, categories, voting, trust levels, moderation, notifications, full-text search, and SEO-ready markup out of the box.
+The free plugin — available now at wbcomdesigns.com — includes everything you need to run a real community: spaces, categories, voting, trust levels, moderation, notifications, full-text search, and SEO-ready markup out of the box.
 
 Migrating from bbPress or wpForo? The importer handles it in a few clicks.
 
-[Download Free on WordPress.org] [LINK]
+[Download Free from wbcomdesigns.com] [https://wbcomdesigns.com/downloads/jetonomy/]
 
 Want polls, private messaging, analytics, and more? Jetonomy Pro adds 13 modules on top of the free core.
 
@@ -141,7 +141,7 @@ Here's what a few early users have shared:
 
 **Free vs Pro — what's the difference?**
 
-The free plugin on WordPress.org gives you a complete community platform. Jetonomy Pro adds the tools that help larger, more active communities thrive.
+The free plugin at wbcomdesigns.com gives you a complete community platform. Jetonomy Pro adds the tools that help larger, more active communities thrive.
 
 | | Free | Pro |
 |---|---|---|

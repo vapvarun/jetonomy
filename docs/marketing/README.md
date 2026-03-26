@@ -18,7 +18,7 @@ Launch date: March 27, 2026
 
 ### Website Copy (`03-website-copy/`)
 - [Landing Page](03-website-copy/landing-page.md) — Full landing page copy
-- [Product Description](03-website-copy/product-description.md) — WordPress.org + marketplace descriptions
+- [Product Description](03-website-copy/product-description.md) — Store + marketplace descriptions
 - [Features Page](03-website-copy/features.md) — Feature highlights grouped by category
 - [FAQ Content](03-website-copy/faq-content.md) — 10 website FAQ questions
 

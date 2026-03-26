@@ -45,7 +45,7 @@
 
 ## Meta Content Templates
 
-### WordPress.org Plugin Page
+### Product Page
 **Title:** Jetonomy — Forums, Q&A & Idea Boards for WordPress
 **Description:** Add a modern discussion platform to your WordPress site. Custom database tables for performance, trust levels for self-moderation, and a UI that adapts to your theme. Free.
 

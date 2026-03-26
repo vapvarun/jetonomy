@@ -2,7 +2,7 @@
 
 5 posts. LinkedIn rewards longer, narrative-driven content more than any other platform. Each post here is written to be read in full — not skimmed.
 
-Replace `[LINK-WP-ORG]` and `[LINK-PRO]` before publishing.
+Links are embedded inline. Review before publishing.
 
 **Note:** The launch announcement (Post 1) and "Why We Built Jetonomy" (Post 2) posts in `SOCIAL-POSTS.md` cover the broad professional audience. The 5 posts below go deeper — they're written for specific audiences: developers, educators, community managers, and decision-makers evaluating tools.
 
@@ -29,11 +29,11 @@ On top of that:
 - Three-layer permission system: WP capabilities, per-space roles, trust levels
 - bbPress and wpForo importer
 
-The free plugin is on WordPress.org. Jetonomy Pro adds 10 modules (messaging, analytics, polls, custom badges, webhooks, and more) starting at $99/yr.
+The free plugin is at wbcomdesigns.com. Jetonomy Pro adds 10 modules (messaging, analytics, polls, custom badges, webhooks, and more) starting at $99/yr.
 
 If you build community features on WordPress, I'd genuinely value your take on it.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #WebDevelopment #OpenSource #CommunityPlatform
 
@@ -67,11 +67,11 @@ The frontend. We used the WordPress Interactivity API — the modern approach Wo
 
 The trust system. Most forum plugins treat all members equally except admins and moderators. We built a trust level system where members earn capabilities by contributing. New accounts are automatically rate-limited and blocked from posting links. Trusted members unlock more. Moderators are elevated manually. It removes a huge chunk of spam and low-quality content without any configuration.
 
-We released Jetonomy 1.0 yesterday. It's free on WordPress.org.
+We released Jetonomy 1.0 yesterday. It's free at wbcomdesigns.com.
 
 If you're building on WordPress and you've wanted a community layer that actually fits the modern platform — I'd love to hear what you think after you try it.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #ProductLaunch #Community #WebDevelopment
 
@@ -103,7 +103,7 @@ The Extension API is available for Pro — same pattern Jetonomy Pro uses intern
 
 PHP 8.1+, WP 6.7+, zero jQuery dependencies, Composer autoloader.
 
-Docs at [LINK-DOCS]. Free plugin at [LINK-WP-ORG].
+Docs at [LINK-DOCS]. Free plugin at https://wbcomdesigns.com/downloads/jetonomy/.
 
 Happy to answer developer questions in comments.
 
@@ -131,8 +131,8 @@ The free plugin includes MemberPress and Paid Memberships Pro adapters.
 
 If you're running courses on WordPress and the community discussion piece hasn't quite worked, this is worth a look.
 
-Free plugin: [LINK-WP-ORG]
-Pro (LearnDash + LMS integrations): [LINK-PRO]
+Free plugin: https://wbcomdesigns.com/downloads/jetonomy/
+Pro (LearnDash + LMS integrations): https://wbcomdesigns.com/downloads/jetonomy-pro/
 
 #WordPress #LMS #OnlineLearning #LearnDash #EdTech
 
@@ -160,6 +160,6 @@ Where we're better: performance at scale, theme integration, Q&A and Ideas space
 
 If you're starting fresh, or if you've been frustrated by the options above, it's worth trying Jetonomy. The free plugin is complete — not a trial.
 
-[LINK-WP-ORG]
+https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #CommunityManagement #ForumPlugin #bbPress #WebDevelopment

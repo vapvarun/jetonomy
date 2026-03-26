@@ -16,7 +16,7 @@ This complements the launch email in `LAUNCH-EMAIL.md`. That file targets the Wb
 
 ## Preheader Text
 
-Custom database tables, theme-adaptive design, Q&A spaces, and trust levels. Free on WordPress.org.
+Custom database tables, theme-adaptive design, Q&A spaces, and trust levels. Free at wbcomdesigns.com.
 
 ---
 
@@ -64,7 +64,7 @@ The frontend reads your active theme's CSS custom properties and theme.json valu
 
 **The free plugin covers the real basics**
 
-Jetonomy's free version (on WordPress.org) includes:
+Jetonomy's free version (at wbcomdesigns.com) includes:
 
 - Unlimited spaces and sub-spaces with category organization
 - Full-text search across posts, spaces, and tags
@@ -100,8 +100,8 @@ The built-in importer maps your existing forums to Jetonomy spaces, preserves to
 
 **Ready to try it?**
 
-Download the free plugin on WordPress.org:
-[Download Jetonomy — Free] [LINK-WP-ORG]
+Download the free plugin at wbcomdesigns.com:
+[Download Jetonomy — Free] [https://wbcomdesigns.com/downloads/jetonomy/]
 
 If you want polls, private messaging, analytics, custom badges, webhooks, and more — Jetonomy Pro adds 10 additional modules starting at $99/yr:
 [See Jetonomy Pro] [LINK-PRO-PAGE]
