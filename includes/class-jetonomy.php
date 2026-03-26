@@ -156,6 +156,11 @@ final class Jetonomy {
 
         Import\Import_Manager::init();
 
+        // Shortcodes, Widgets, Blocks — embed forum content anywhere.
+        Shortcodes::register();
+        Widgets::register();
+        Blocks::register();
+
         if ( is_admin() ) {
             new Admin\Admin();
         }
