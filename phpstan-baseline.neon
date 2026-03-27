@@ -176,8 +176,13 @@ parameters:
 			path: includes/admin/views/space-edit.php
 
 		-
+			message: "#^Variable \\$join_requests might not be defined\\.$#"
+			count: 1
+			path: includes/admin/views/space-edit.php
+
+		-
 			message: "#^Variable \\$space might not be defined\\.$#"
-			count: 26
+			count: 28
 			path: includes/admin/views/space-edit.php
 
 		-

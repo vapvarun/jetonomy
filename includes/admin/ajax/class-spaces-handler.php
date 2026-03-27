@@ -20,19 +20,19 @@ class Spaces_Handler {
 
 	public function __construct() {
 		// Space AJAX
-		add_action( 'wp_ajax_jetonomy_create_space', [ $this, 'ajax_create_space' ] );
-		add_action( 'wp_ajax_jetonomy_update_space', [ $this, 'ajax_update_space' ] );
-		add_action( 'wp_ajax_jetonomy_delete_space', [ $this, 'ajax_delete_space' ] );
+		add_action( 'wp_ajax_jetonomy_create_space', array( $this, 'ajax_create_space' ) );
+		add_action( 'wp_ajax_jetonomy_update_space', array( $this, 'ajax_update_space' ) );
+		add_action( 'wp_ajax_jetonomy_delete_space', array( $this, 'ajax_delete_space' ) );
 		// Space Members AJAX
-		add_action( 'wp_ajax_jetonomy_add_space_member', [ $this, 'ajax_add_space_member' ] );
-		add_action( 'wp_ajax_jetonomy_remove_space_member', [ $this, 'ajax_remove_space_member' ] );
-		add_action( 'wp_ajax_jetonomy_change_member_role', [ $this, 'ajax_change_member_role' ] );
+		add_action( 'wp_ajax_jetonomy_add_space_member', array( $this, 'ajax_add_space_member' ) );
+		add_action( 'wp_ajax_jetonomy_remove_space_member', array( $this, 'ajax_remove_space_member' ) );
+		add_action( 'wp_ajax_jetonomy_change_member_role', array( $this, 'ajax_change_member_role' ) );
 		// Access Rules AJAX
-		add_action( 'wp_ajax_jetonomy_add_access_rule', [ $this, 'ajax_add_access_rule' ] );
-		add_action( 'wp_ajax_jetonomy_delete_access_rule', [ $this, 'ajax_delete_access_rule' ] );
+		add_action( 'wp_ajax_jetonomy_add_access_rule', array( $this, 'ajax_add_access_rule' ) );
+		add_action( 'wp_ajax_jetonomy_delete_access_rule', array( $this, 'ajax_delete_access_rule' ) );
 		// Join Requests AJAX
-		add_action( 'wp_ajax_jetonomy_approve_join_request', [ $this, 'ajax_approve_join_request' ] );
-		add_action( 'wp_ajax_jetonomy_deny_join_request', [ $this, 'ajax_deny_join_request' ] );
+		add_action( 'wp_ajax_jetonomy_approve_join_request', array( $this, 'ajax_approve_join_request' ) );
+		add_action( 'wp_ajax_jetonomy_deny_join_request', array( $this, 'ajax_deny_join_request' ) );
 	}
 
 	public function ajax_create_space(): void {
@@ -56,21 +56,21 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Title is required.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $type, [ 'forum', 'qa', 'ideas', 'feed' ], true ) ) {
+		if ( ! in_array( $type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
 			$type = 'forum';
 		}
-		if ( ! in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
+		if ( ! in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 			$visibility = 'public';
 		}
-		if ( ! in_array( $join_policy, [ 'open', 'approval', 'invite' ], true ) ) {
+		if ( ! in_array( $join_policy, array( 'open', 'approval', 'invite' ), true ) ) {
 			$join_policy = 'open';
 		}
-		if ( ! in_array( $status, [ 'active', 'archived', 'locked' ], true ) ) {
+		if ( ! in_array( $status, array( 'active', 'archived', 'locked' ), true ) ) {
 			$status = 'active';
 		}
 
 		$id = Space::create(
-			[
+			array(
 				'title'       => $title,
 				'slug'        => $slug,
 				'description' => $description,
@@ -82,7 +82,7 @@ class Spaces_Handler {
 				'icon'        => $icon ?: null,
 				'cover_image' => $cover_image ?: null,
 				'status'      => $status,
-			]
+			)
 		);
 
 		if ( ! $id ) {
@@ -90,10 +90,10 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'id'      => $id,
 				'message' => __( 'Space created.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -108,12 +108,12 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Invalid space ID.', 'jetonomy' ) );
 		}
 
-		$data           = [];
-		$allowed_fields = [
+		$data           = array();
+		$allowed_fields = array(
 			'title'       => 'sanitize_text_field',
 			'description' => 'wp_kses_post',
 			'icon'        => 'sanitize_text_field',
-		];
+		);
 
 		foreach ( $allowed_fields as $field => $sanitizer ) {
 			if ( isset( $_POST[ $field ] ) ) {
@@ -129,25 +129,25 @@ class Spaces_Handler {
 		}
 		if ( isset( $_POST['type'] ) ) {
 			$type = sanitize_text_field( $_POST['type'] );
-			if ( in_array( $type, [ 'forum', 'qa', 'ideas', 'feed' ], true ) ) {
+			if ( in_array( $type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
 				$data['type'] = $type;
 			}
 		}
 		if ( isset( $_POST['visibility'] ) ) {
 			$visibility = sanitize_text_field( $_POST['visibility'] );
-			if ( in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
+			if ( in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 				$data['visibility'] = $visibility;
 			}
 		}
 		if ( isset( $_POST['join_policy'] ) ) {
 			$join_policy = sanitize_text_field( $_POST['join_policy'] );
-			if ( in_array( $join_policy, [ 'open', 'approval', 'invite' ], true ) ) {
+			if ( in_array( $join_policy, array( 'open', 'approval', 'invite' ), true ) ) {
 				$data['join_policy'] = $join_policy;
 			}
 		}
 		if ( isset( $_POST['status'] ) ) {
 			$status = sanitize_text_field( $_POST['status'] );
-			if ( in_array( $status, [ 'active', 'archived', 'locked' ], true ) ) {
+			if ( in_array( $status, array( 'active', 'archived', 'locked' ), true ) ) {
 				$data['status'] = $status;
 			}
 		}
@@ -176,9 +176,9 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success(
-			[
+			array(
 				'message' => __( 'Space updated.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -208,7 +208,7 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Failed to delete space.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Space deleted.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Space deleted.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_add_space_member(): void {
@@ -225,7 +225,7 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $role, [ 'viewer', 'member', 'moderator', 'admin' ], true ) ) {
+		if ( ! in_array( $role, array( 'viewer', 'member', 'moderator', 'admin' ), true ) ) {
 			$role = 'member';
 		}
 
@@ -237,13 +237,13 @@ class Spaces_Handler {
 		SpaceMember::add( $space_id, $user_id, $role );
 
 		wp_send_json_success(
-			[
+			array(
 				'message'      => sprintf( __( '%1$s added as %2$s.', 'jetonomy' ), $user->display_name, $role ),
 				'user_id'      => $user_id,
 				'display_name' => $user->display_name,
 				'user_login'   => $user->user_login,
 				'role'         => $role,
-			]
+			)
 		);
 	}
 
@@ -262,7 +262,7 @@ class Spaces_Handler {
 
 		SpaceMember::remove( $space_id, $user_id );
 
-		wp_send_json_success( [ 'message' => __( 'Member removed.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Member removed.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_change_member_role(): void {
@@ -279,13 +279,13 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $role, [ 'viewer', 'member', 'moderator', 'admin' ], true ) ) {
+		if ( ! in_array( $role, array( 'viewer', 'member', 'moderator', 'admin' ), true ) ) {
 			wp_send_json_error( __( 'Invalid role.', 'jetonomy' ) );
 		}
 
 		SpaceMember::add( $space_id, $user_id, $role );
 
-		wp_send_json_success( [ 'message' => __( 'Role updated.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Role updated.', 'jetonomy' ) ) );
 	}
 
 	public function ajax_add_access_rule(): void {
@@ -305,28 +305,28 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing space ID.', 'jetonomy' ) );
 		}
 
-		$valid_types = [ 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' ];
+		$valid_types = array( 'membership', 'role', 'capability', 'trust_level', 'logged_in', 'everyone' );
 		if ( ! in_array( $rule_type, $valid_types, true ) ) {
 			wp_send_json_error( __( 'Invalid rule type.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $grants, [ 'read', 'participate', 'full' ], true ) ) {
+		if ( ! in_array( $grants, array( 'read', 'participate', 'full' ), true ) ) {
 			$grants = 'read';
 		}
 
-		if ( ! in_array( $space_role, [ 'viewer', 'member', 'moderator', 'admin' ], true ) ) {
+		if ( ! in_array( $space_role, array( 'viewer', 'member', 'moderator', 'admin' ), true ) ) {
 			$space_role = 'viewer';
 		}
 
 		$id = AccessRule::create(
-			[
+			array(
 				'space_id'   => $space_id,
 				'rule_type'  => $rule_type,
 				'rule_value' => $rule_value ?: null,
 				'grants'     => $grants,
 				'space_role' => $space_role,
 				'priority'   => $priority,
-			]
+			)
 		);
 
 		if ( ! $id ) {
@@ -335,11 +335,11 @@ class Spaces_Handler {
 
 		$rule = AccessRule::find( $id );
 		wp_send_json_success(
-			[
+			array(
 				'id'      => $id,
 				'rule'    => $rule,
 				'message' => __( 'Access rule added.', 'jetonomy' ),
-			]
+			)
 		);
 	}
 
@@ -359,9 +359,12 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Failed to delete rule.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [ 'message' => __( 'Access rule deleted.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Access rule deleted.', 'jetonomy' ) ) );
 	}
 
+	/**
+	 * Approve a pending join request and add the user as a space member.
+	 */
 	public function ajax_approve_join_request(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
 		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
@@ -383,9 +386,12 @@ class Spaces_Handler {
 		JoinRequest::approve( $request_id, get_current_user_id() );
 		SpaceMember::add( $space_id, (int) $request->user_id, 'member' );
 
-		wp_send_json_success( [ 'message' => __( 'Join request approved.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Join request approved.', 'jetonomy' ) ) );
 	}
 
+	/**
+	 * Deny a pending join request.
+	 */
 	public function ajax_deny_join_request(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
 		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
@@ -405,6 +411,6 @@ class Spaces_Handler {
 
 		JoinRequest::deny( $request_id, get_current_user_id() );
 
-		wp_send_json_success( [ 'message' => __( 'Join request denied.', 'jetonomy' ) ] );
+		wp_send_json_success( array( 'message' => __( 'Join request denied.', 'jetonomy' ) ) );
 	}
 }

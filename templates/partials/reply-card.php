@@ -19,6 +19,7 @@ $is_accepted = (int) $reply->is_accepted;
 		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? esc_attr( 'is-online' ) : ''; ?>">
 			<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ) ); ?>
 		</span>
+		<?php /* translators: %d: trust level number */ ?>
 		<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 		<?php if ( $is_op ) : ?>
 			<span class="jt-reply-op"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
@@ -57,7 +58,7 @@ $is_accepted = (int) $reply->is_accepted;
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 		<?php endif; ?>
-		<?php if ( is_user_logged_in() && ( (int) $reply->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
+		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
 			<div class="jt-more-menu">
 				<button class="jt-act jt-more-trigger" type="button" data-wp-on--click="actions.toggleMoreMenu" title="<?php esc_attr_e( 'More', 'jetonomy' ); ?>">&hellip;</button>
 				<div class="jt-more-dropdown" hidden>
@@ -89,7 +90,7 @@ $is_accepted = (int) $reply->is_accepted;
 		is_user_logged_in()
 		&& isset( $post, $space )
 		&& 'qa' === ( $space->type ?? '' )
-		&& (int) $post->author_id === get_current_user_id()
+		&& get_current_user_id() === (int) $post->author_id
 		&& ! $is_accepted
 	) :
 		?>

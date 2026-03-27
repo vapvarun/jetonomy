@@ -7,7 +7,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$active_tab = sanitize_text_field( $_GET['tab'] ?? 'general' );
+$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $space->id );
 ?>
 <div class="wrap jetonomy-admin">
@@ -69,8 +69,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<td>
 						<select id="space-category">
 							<option value="0"><?php esc_html_e( '(None)', 'jetonomy' ); ?></option>
-							<?php foreach ( $categories as $cat ) : ?>
-								<option value="<?php echo absint( $cat->id ); ?>" <?php selected( $space->category_id, $cat->id ); ?>><?php echo esc_html( $cat->name ); ?></option>
+							<?php foreach ( $categories as $space_cat ) : ?>
+								<option value="<?php echo absint( $space_cat->id ); ?>" <?php selected( $space->category_id, $space_cat->id ); ?>><?php echo esc_html( $space_cat->name ); ?></option>
 							<?php endforeach; ?>
 						</select>
 					</td>
@@ -169,7 +169,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</div>
 			</div>
 
-			<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), count( $members ) ); ?></h2>
+			<?php /* translators: %d: number of members */ ?>
+		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), count( $members ) ); ?></h2>
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-members-table">
 				<thead>
 					<tr>
@@ -246,7 +247,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</div>
 			</div>
 
-			<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), count( $access_rules ) ); ?></h2>
+			<?php /* translators: %d: number of access rules */ ?>
+		<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), count( $access_rules ) ); ?></h2>
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-rules-table">
 				<thead>
 					<tr>
@@ -265,7 +267,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<?php foreach ( $access_rules as $rule ) : ?>
 							<tr data-rule-id="<?php echo absint( $rule->id ); ?>">
 								<td><code><?php echo esc_html( $rule->rule_type ); ?></code></td>
-								<td><?php echo esc_html( $rule->rule_value ?: '&mdash;' ); ?></td>
+								<td><?php echo esc_html( ! empty( $rule->rule_value ) ? $rule->rule_value : '—' ); ?></td>
 								<td><span class="jetonomy-badge jetonomy-badge--<?php echo esc_attr( $rule->grants ); ?>"><?php echo esc_html( ucfirst( $rule->grants ) ); ?></span></td>
 								<td><?php echo esc_html( ucfirst( $rule->space_role ) ); ?></td>
 								<td><?php echo absint( $rule->priority ); ?></td>
@@ -353,7 +355,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 	<?php elseif ( 'join_requests' === $active_tab ) : ?>
 		<!-- Join Requests Tab -->
 		<div class="jetonomy-tab-content">
-			<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), count( $join_requests ) ); ?></h2>
+			<?php /* translators: %d: number of pending join requests */ ?>
+		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), count( $join_requests ) ); ?></h2>
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-join-requests-table">
 				<thead>
 					<tr>
@@ -380,7 +383,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 									<strong><?php echo esc_html( $user->display_name ); ?></strong>
 									<span class="description">(<?php echo esc_html( $user->user_login ); ?>)</span>
 								</td>
-								<td><?php echo esc_html( $request->message ?: '&mdash;' ); ?></td>
+								<td><?php echo esc_html( ! empty( $request->message ) ? $request->message : '—' ); ?></td>
 								<td><?php echo esc_html( human_time_diff( strtotime( $request->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 								<td>
 									<button type="button" class="button button-small button-primary jetonomy-approve-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
