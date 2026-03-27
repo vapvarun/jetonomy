@@ -690,7 +690,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[ 'name' => __( 'White Label', 'jetonomy' ), 'icon' => 'dashicons-admin-appearance', 'desc' => __( 'Replace all Jetonomy branding — custom logo, name, footer, accent color, CSS.', 'jetonomy' ), 'tier' => 'Agency' ],
 				];
 				?>
-				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 0 0 8px;">
+				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 16px;">
 					<?php foreach ( $jt_pro_exts as $ext ) : ?>
 					<div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; background: #fff;">
 						<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
