@@ -68,6 +68,11 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-03-27 | `e42b7ec` | Fix: space settings merge (not replace), join request state persists on refresh, join request email notification to admins |
+| 2026-03-27 | `e3a21fc` | Fix: WPCS translators comments, Yoda conditions, PHPStan baseline update for space-edit |
+| 2026-03-27 | `189fe6d` | Fix: 10 Basecamp bugs — notification defaults reset, vote state indicator, rewrite flush deferred, admin View link, join request admin UI, Post::create() last_reply_at default |
+| 2026-03-26 | `cc27780` | Fix: settings write pattern (always write all fields), nonce mismatch (wp_rest), credentials: same-origin on all fetch calls |
+| 2026-03-26 | CI | PHPUnit 219/219 pass, PHPStan 0 errors, WPCS 0 new errors, GitHub Actions CI green |
 | 2026-03-24 | feature | BLOCK DT: Unified Design Token Bridge — `--jt-*` root tokens now reference BuddyNext tokens first (`--brand`, `--bg`, `--text-1`, `--green`, `--amber`, `--red`, `--r-md`, `--font-body`, `--font-display`), then WP theme.json, then hardcoded fallback; dark mode flows automatically via CSS cascade | `assets/css/jetonomy.css` |
 | 2026-03-24 | feature | Categories page split layout — form left (360px), table right; removed Order column; truncate description in table | includes/admin/views/categories.php, assets/css/admin.css |
 | 2026-03-20 | pending | Human-readable activity feed, activity backfill, uninstall.php, model methods, Pro abilities rewrite |
@@ -95,7 +100,8 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 - Templates overridable via `theme/jetonomy/` directory
 - Zero inline styles in templates (except truly dynamic values like kanban column colors)
 - Trust level badges use `data-jt-tl` attribute selectors for background color
-- Rewrite rules auto-flush on first load via `jetonomy_permalinks_flushed` option
+- Rewrite rules auto-flush on first load via deferred `init:99` callback (not during activation — rules aren't registered yet)
+- Space settings save MERGES with existing JSON via `array_merge()` — never replaces entire settings column
 - Activity logging via `Activity_Tracker` hooks — no direct `ActivityLog::log()` in controllers
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
