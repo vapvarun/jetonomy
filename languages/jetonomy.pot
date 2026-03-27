@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-03-27 11:31:23+00:00\n"
+"POT-Creation-Date: 2026-03-27 12:36:00+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -637,7 +637,7 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:21
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:513
 #: includes/admin/class-admin.php:141 includes/admin/views/setup-wizard.php:21
-#: includes/admin/views/setup-wizard.php:513
+#: includes/admin/views/setup-wizard.php:515
 msgid "Jetonomy Setup"
 msgstr ""
 
@@ -1428,7 +1428,7 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/spaces.php:109
 #: dist/jetonomy/includes/class-abilities.php:665
 #: includes/admin/views/dashboard.php:198
-#: includes/admin/views/setup-wizard.php:618
+#: includes/admin/views/setup-wizard.php:620
 #: includes/admin/views/spaces.php:109 includes/class-abilities.php:665
 msgid "Create Space"
 msgstr ""
@@ -1953,7 +1953,7 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/spaces.php:206
 #: dist/jetonomy/templates/partials/sidebar.php:94
 #: includes/admin/views/settings.php:127
-#: includes/admin/views/setup-wizard.php:562
+#: includes/admin/views/setup-wizard.php:564
 #: includes/admin/views/space-edit.php:82 includes/admin/views/spaces.php:45
 #: includes/admin/views/spaces.php:134 includes/admin/views/spaces.php:206
 #: templates/partials/sidebar.php:94
@@ -2578,166 +2578,166 @@ msgid "Save Settings"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:514
-#: includes/admin/views/setup-wizard.php:514
+#: includes/admin/views/setup-wizard.php:516
 msgid "Let's get your community ready in a few simple steps."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:521
-#: includes/admin/views/setup-wizard.php:521
+#: includes/admin/views/setup-wizard.php:523
 msgid "Basics"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:526
-#: includes/admin/views/setup-wizard.php:526
+#: includes/admin/views/setup-wizard.php:528
 msgid "First Space"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:531
-#: includes/admin/views/setup-wizard.php:531
+#: includes/admin/views/setup-wizard.php:533
 msgid "Done!"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:537
-#: includes/admin/views/setup-wizard.php:537
+#: includes/admin/views/setup-wizard.php:539
 msgid "Welcome to Jetonomy"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:538
-#: includes/admin/views/setup-wizard.php:538
+#: includes/admin/views/setup-wizard.php:540
 msgid ""
 "Configure the basics for your community. You can always change these later "
 "in Settings."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:543
-#: includes/admin/views/setup-wizard.php:543
+#: includes/admin/views/setup-wizard.php:545
 msgid "Community URL Slug"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:553
-#: includes/admin/views/setup-wizard.php:553
+#: includes/admin/views/setup-wizard.php:555
 msgid "All community pages will be nested under this URL."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:557
-#: includes/admin/views/setup-wizard.php:557
+#: includes/admin/views/setup-wizard.php:559
 msgid "Default Community Type"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:563
-#: includes/admin/views/setup-wizard.php:563
+#: includes/admin/views/setup-wizard.php:565
 msgid "Threaded discussions, replies, topics"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:569
-#: includes/admin/views/setup-wizard.php:569
+#: includes/admin/views/setup-wizard.php:571
 msgid "Q&amp;A"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:570
-#: includes/admin/views/setup-wizard.php:570
+#: includes/admin/views/setup-wizard.php:572
 msgid "Questions, answers, accepted solution"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:578
-#: includes/admin/views/setup-wizard.php:578
+#: includes/admin/views/setup-wizard.php:580
 msgid "Next: First Space"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:586
-#: includes/admin/views/setup-wizard.php:586
+#: includes/admin/views/setup-wizard.php:588
 msgid "Create Your First Space"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:587
-#: includes/admin/views/setup-wizard.php:587
+#: includes/admin/views/setup-wizard.php:589
 msgid ""
 "A Space is a community section where people can start discussions. You can "
 "add more spaces later."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:592
-#: includes/admin/views/setup-wizard.php:592
+#: includes/admin/views/setup-wizard.php:594
 msgid "Category Name"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:594
-#: includes/admin/views/setup-wizard.php:594
+#: includes/admin/views/setup-wizard.php:596
 msgid "Categories group related spaces together."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:598
-#: includes/admin/views/setup-wizard.php:598
+#: includes/admin/views/setup-wizard.php:600
 msgid "Space Name"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:603
-#: includes/admin/views/setup-wizard.php:603
+#: includes/admin/views/setup-wizard.php:605
 msgid "Space Description"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:604
-#: includes/admin/views/setup-wizard.php:604
+#: includes/admin/views/setup-wizard.php:606
 msgid "A place for community discussions..."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:607
-#: includes/admin/views/setup-wizard.php:607
+#: includes/admin/views/setup-wizard.php:609
 msgid "or"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:611
-#: includes/admin/views/setup-wizard.php:611
+#: includes/admin/views/setup-wizard.php:613
 msgid "Create sample data instead (2 categories, 4 spaces, 10 posts)"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:616
-#: includes/admin/views/setup-wizard.php:616
+#: includes/admin/views/setup-wizard.php:618
 msgid "Back"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:631
-#: includes/admin/views/setup-wizard.php:631
+#: includes/admin/views/setup-wizard.php:633
 msgid "Your community is ready!"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:632
-#: includes/admin/views/setup-wizard.php:632
+#: includes/admin/views/setup-wizard.php:634
 msgid "Everything is set up. Start exploring your new Jetonomy community."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:637
-#: includes/admin/views/setup-wizard.php:637
+#: includes/admin/views/setup-wizard.php:639
 msgid "Visit Community"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:641
-#: includes/admin/views/setup-wizard.php:641
+#: includes/admin/views/setup-wizard.php:643
 msgid "Go to Dashboard"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:646
-#: includes/admin/views/setup-wizard.php:646
+#: includes/admin/views/setup-wizard.php:648
 msgid "Next Steps"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:648
-#: includes/admin/views/setup-wizard.php:648
+#: includes/admin/views/setup-wizard.php:650
 msgid "Customize appearance in Settings (colors, fonts, layout)"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:649
-#: includes/admin/views/setup-wizard.php:649
+#: includes/admin/views/setup-wizard.php:651
 msgid "Create more spaces for different topics"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:650
-#: includes/admin/views/setup-wizard.php:650
+#: includes/admin/views/setup-wizard.php:652
 msgid "Invite members to start discussions"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:651
-#: includes/admin/views/setup-wizard.php:651
+#: includes/admin/views/setup-wizard.php:653
 msgid "Import existing content from bbPress or wpForo"
 msgstr ""
 

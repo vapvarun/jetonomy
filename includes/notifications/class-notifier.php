@@ -62,6 +62,7 @@ class Notifier {
 		$space       = Space::find( $space_id );
 		$space_name  = $space ? $space->title : __( 'a space', 'jetonomy' );
 		$actor_id    = (int) $post->author_id;
+		$post_url    = $this->get_post_url( $post );
 		$subscribers = Subscription::get_subscribers( 'space', $space_id );
 
 		foreach ( $subscribers as $sub_user_id ) {
@@ -79,7 +80,8 @@ class Notifier {
 					__( 'New post in %1$s: %2$s', 'jetonomy' ),
 					$space_name,
 					mb_substr( $post->title, 0, 50 )
-				)
+				),
+				$post_url
 			);
 		}
 	}
@@ -95,6 +97,7 @@ class Notifier {
 		}
 
 		$actor_id = (int) $reply->author_id;
+		$post_url = $this->get_post_url( $post );
 
 		// 1. Notify post author (if not the replier)
 		if ( (int) $post->author_id !== $actor_id ) {
@@ -108,7 +111,8 @@ class Notifier {
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
 					$this->get_display_name( $actor_id ),
 					mb_substr( $post->title, 0, 50 )
-				)
+				),
+				$post_url
 			);
 		}
 
@@ -128,7 +132,8 @@ class Notifier {
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
 					$this->get_display_name( $actor_id ),
 					mb_substr( $post->title, 0, 50 )
-				)
+				),
+				$post_url
 			);
 		}
 
@@ -146,7 +151,8 @@ class Notifier {
 						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
 						$this->get_display_name( $actor_id ),
 						mb_substr( $post->title, 0, 50 )
-					)
+					),
+					$post_url
 				);
 			}
 		}
@@ -156,13 +162,15 @@ class Notifier {
 	 * Notify when content gets voted on — batches votes within the last hour.
 	 */
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
+		$content_url = '';
 		if ( 'post' === $object_type ) {
 			$obj = Post::find( $object_id );
 			if ( ! $obj || (int) $obj->author_id === $voter_id ) {
 				return;
 			}
-			$author_id = (int) $obj->author_id;
-			$title     = mb_substr( $obj->title, 0, 50 );
+			$author_id   = (int) $obj->author_id;
+			$title       = mb_substr( $obj->title, 0, 50 );
+			$content_url = $this->get_post_url( $obj );
 		} elseif ( 'reply' === $object_type ) {
 			$obj = Reply::find( $object_id );
 			if ( ! $obj || (int) $obj->author_id === $voter_id ) {
@@ -170,6 +178,10 @@ class Notifier {
 			}
 			$author_id = (int) $obj->author_id;
 			$title     = __( 'your reply', 'jetonomy' );
+			$parent    = $obj->post_id ? Post::find( (int) $obj->post_id ) : null;
+			if ( $parent ) {
+				$content_url = $this->get_post_url( $parent );
+			}
 		} else {
 			return;
 		}
@@ -229,7 +241,8 @@ class Notifier {
 					// translators: %s: content title.
 					__( 'Someone voted on %s', 'jetonomy' ),
 					'"' . $title . '"'
-				)
+				),
+				$content_url
 			);
 		}
 	}
@@ -342,16 +355,13 @@ class Notifier {
 		);
 
 		foreach ( $moderators as $mod_id ) {
-			Notification::create(
-				[
-					'user_id'     => (int) $mod_id,
-					'actor_id'    => 0,
-					'type'        => 'flag',
-					'object_type' => $object_type,
-					'object_id'   => $flag_id,
-					'message'     => __( 'New content flag requires review', 'jetonomy' ),
-					'created_at'  => now(),
-				]
+			$this->create_and_maybe_email(
+				(int) $mod_id,
+				0,
+				'moderation',
+				$object_type,
+				$flag_id,
+				__( 'New content flag requires review', 'jetonomy' )
 			);
 		}
 	}
@@ -359,7 +369,7 @@ class Notifier {
 	/**
 	 * Create notification and optionally send email.
 	 */
-	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message ): void {
+	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '' ): void {
 		// Load user preferences and global defaults.
 		$profile         = UserProfile::find_by_user( $user_id );
 		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
@@ -392,11 +402,11 @@ class Notifier {
 		}
 
 		if ( $send_email ) {
-			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id );
+			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url );
 		}
 	}
 
-	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0 ): void {
+	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '' ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;
@@ -420,7 +430,7 @@ class Notifier {
 
 		$site_name = get_bloginfo( 'name' );
 		$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
-		$html      = $this->render_email_template( $type, $message, $user, $unsub_url );
+		$html      = self::render_email_template( $type, $message, $user, $unsub_url, $url );
 		$plain     = wp_strip_all_tags( $message );
 
 		// Add List-Unsubscribe headers (RFC 8058).
@@ -432,29 +442,123 @@ class Notifier {
 		$email_adapter->send( $user->user_email, $subject, $html, $plain, $headers );
 	}
 
-	private function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '' ): string {
+	/**
+	 * Render a branded notification email.
+	 *
+	 * Static so Mentions::notify() and other callers can reuse the same template.
+	 */
+	public static function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '', string $content_url = '' ): string {
 		$site_name     = esc_html( get_bloginfo( 'name' ) );
-		$community_url = esc_url( \Jetonomy\base_url() . '/' );
+		$community_url = '' !== $content_url ? esc_url( $content_url ) : esc_url( \Jetonomy\base_url() . '/' );
 		$notif_url     = esc_url( \Jetonomy\base_url() . '/notifications/' );
 		$unsub_link    = $unsub_url ? esc_url( $unsub_url ) : '';
+		$home_url      = esc_url( home_url( '/' ) );
 
-		$footer = "<a href='{$notif_url}' style='color: #999;'>Manage preferences</a>";
-		if ( $unsub_link ) {
-			$footer .= " &middot; <a href='{$unsub_link}' style='color: #999;'>Unsubscribe from these emails</a>";
+		$settings    = get_option( 'jetonomy_settings', [] );
+		$accent      = $settings['accent_color'] ?? '#3B82F6';
+		$accent_safe = esc_attr( $accent );
+		$logo_url    = $settings['email_logo_url'] ?? '';
+
+		$type_labels = [
+			'reply_to_post'   => __( 'New Reply', 'jetonomy' ),
+			'reply_to_reply'  => __( 'New Reply', 'jetonomy' ),
+			'mention'         => __( 'Mention', 'jetonomy' ),
+			'vote_on_post'    => __( 'Vote', 'jetonomy' ),
+			'accepted_answer' => __( 'Answer Accepted', 'jetonomy' ),
+			'new_post_in_sub' => __( 'New Post', 'jetonomy' ),
+			'badge_earned'    => __( 'Achievement', 'jetonomy' ),
+			'moderation'      => __( 'Moderation', 'jetonomy' ),
+			'join_request'    => __( 'Join Request', 'jetonomy' ),
+		];
+		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
+
+		$cta_labels = [
+			'reply_to_post'   => __( 'View Post', 'jetonomy' ),
+			'reply_to_reply'  => __( 'View Reply', 'jetonomy' ),
+			'mention'         => __( 'View Post', 'jetonomy' ),
+			'vote_on_post'    => __( 'View Post', 'jetonomy' ),
+			'accepted_answer' => __( 'View Answer', 'jetonomy' ),
+			'new_post_in_sub' => __( 'View Post', 'jetonomy' ),
+			'moderation'      => __( 'Review in Mod Queue', 'jetonomy' ),
+			'join_request'    => __( 'Review Request', 'jetonomy' ),
+		];
+		$cta_text    = esc_html( $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' ) );
+		$cta_url     = esc_url( $community_url );
+		$message_esc = esc_html( $message );
+
+		// Header: logo image or text fallback.
+		if ( '' !== $logo_url ) {
+			$logo_safe  = esc_url( $logo_url );
+			$header_html = "<a href=\"{$home_url}\" style=\"text-decoration:none;\"><img src=\"{$logo_safe}\" alt=\"{$site_name}\" style=\"max-height:40px;max-width:200px;height:auto;width:auto;\" /></a>";
+		} else {
+			$header_html = "<a href=\"{$home_url}\" style=\"text-decoration:none;color:#111827;font-size:18px;font-weight:700;letter-spacing:-0.02em;\">{$site_name}</a>";
 		}
 
-		return "
-		<div style='font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px;'>
-			<div style='border-bottom: 1px solid #e5e5e5; padding-bottom: 12px; margin-bottom: 20px;'>
-				<strong style='font-size: 16px;'>{$site_name}</strong>
-			</div>
-			<p style='font-size: 15px; line-height: 1.6; color: #1a1a1a;'>" . esc_html( $message ) . "</p>
-			<p style='margin-top: 20px;'>
-				<a href='{$community_url}' style='display: inline-block; padding: 8px 20px; background: #3B82F6; color: white; border-radius: 6px; text-decoration: none; font-weight: 600;'>View in Community</a>
-			</p>
-			<hr style='border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;'>
-			<p style='font-size: 12px; color: #999;'>{$footer}</p>
-		</div>";
+		$footer_links = "<a href=\"{$notif_url}\" style=\"color:#6B7280;text-decoration:underline;\">" . esc_html__( 'Notification preferences', 'jetonomy' ) . '</a>';
+		if ( $unsub_link ) {
+			$footer_links .= " &nbsp;&middot;&nbsp; <a href=\"{$unsub_link}\" style=\"color:#6B7280;text-decoration:underline;\">" . esc_html__( 'Unsubscribe', 'jetonomy' ) . '</a>';
+		}
+
+		return <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6;">
+<tr><td align="center" style="padding:32px 16px;">
+
+<!-- Container -->
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+<!-- Accent bar -->
+<tr><td style="height:4px;background-color:{$accent_safe};border-radius:8px 8px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+<!-- Main card -->
+<tr><td style="background-color:#FFFFFF;padding:32px 32px 24px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;">
+
+<!-- Header -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td style="padding-bottom:24px;">
+	{$header_html}
+</td>
+<td align="right" style="padding-bottom:24px;">
+	<span style="display:inline-block;padding:3px 10px;background-color:{$accent_safe}1A;color:{$accent_safe};font-size:11px;font-weight:600;border-radius:12px;letter-spacing:0.04em;text-transform:uppercase;">{$type_label}</span>
+</td>
+</tr>
+</table>
+
+<!-- Divider -->
+<div style="border-top:1px solid #E5E7EB;margin-bottom:24px;"></div>
+
+<!-- Message -->
+<p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#374151;">{$message_esc}</p>
+
+<!-- CTA Button -->
+<table role="presentation" cellpadding="0" cellspacing="0">
+<tr><td style="border-radius:6px;background-color:{$accent_safe};">
+	<a href="{$cta_url}" style="display:inline-block;padding:12px 28px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:6px;">{$cta_text}</a>
+</td></tr>
+</table>
+
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="background-color:#F9FAFB;padding:20px 32px;border:1px solid #E5E7EB;border-top:none;border-radius:0 0 8px 8px;">
+<p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:#6B7280;">{$footer_links}</p>
+<p style="margin:0;font-size:11px;color:#9CA3AF;">
+	{$site_name} &middot; <a href="{$home_url}" style="color:#9CA3AF;text-decoration:none;">{$home_url}</a>
+</p>
+</td></tr>
+
+</table>
+<!-- /Container -->
+
+</td></tr>
+</table>
+</body>
+</html>
+HTML;
 	}
 
 	/**
@@ -494,5 +598,13 @@ class Notifier {
 	private function get_display_name( int $user_id ): string {
 		$user = get_userdata( $user_id );
 		return $user ? $user->display_name : __( 'Someone', 'jetonomy' );
+	}
+
+	private function get_post_url( object $post ): string {
+		$space = $post->space_id ? Space::find( (int) $post->space_id ) : null;
+		if ( ! $space ) {
+			return \Jetonomy\base_url() . '/';
+		}
+		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
 	}
 }

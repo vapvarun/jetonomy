@@ -226,6 +226,7 @@ class Admin {
 		if ( isset( $input['email_from_name'] ) ) {
 			$clean['email_from_name']  = sanitize_text_field( $input['email_from_name'] ?? '' );
 			$clean['email_from_email'] = sanitize_email( $input['email_from_email'] ?? '' );
+			$clean['email_logo_url']   = esc_url_raw( $input['email_logo_url'] ?? '' );
 
 			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
 			$notif_types = array(
@@ -237,6 +238,7 @@ class Admin {
 				'badge_earned',
 				'vote_on_post',
 				'moderation',
+				'join_request',
 			);
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {

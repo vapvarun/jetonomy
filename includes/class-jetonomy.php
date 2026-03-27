@@ -94,6 +94,14 @@ final class Jetonomy {
 					'web'   => true,
 					'email' => false,
 				),
+				'moderation'      => array(
+					'web'   => true,
+					'email' => true,
+				),
+				'join_request'    => array(
+					'web'   => true,
+					'email' => true,
+				),
 			);
 			update_option( 'jetonomy_settings', $settings );
 		}

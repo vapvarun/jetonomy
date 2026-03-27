@@ -316,6 +316,16 @@ class Moderation_Controller extends Base_Controller {
 		$reason      = sanitize_text_field( (string) $request->get_param( 'reason' ) );
 		$description = sanitize_textarea_field( (string) ( $request->get_param( 'description' ) ?? '' ) );
 
+		// Prevent duplicate flags by the same user on the same object.
+		$existing = Flag::find_by_reporter_and_object( $user_id, $object_type, $object_id );
+		if ( $existing ) {
+			return new WP_Error(
+				'jetonomy_already_flagged',
+				__( 'You have already reported this content.', 'jetonomy' ),
+				[ 'status' => 409 ]
+			);
+		}
+
 		$flag_id = Flag::create(
 			[
 				'reporter_id' => $user_id,

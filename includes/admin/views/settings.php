@@ -322,6 +322,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="email_logo_url"><?php esc_html_e( 'Email Logo', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="email_logo_url" name="jetonomy_settings[email_logo_url]" value="<?php echo esc_url( $settings['email_logo_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/logo.png">
+							<p class="description"><?php esc_html_e( 'URL to your logo image for notification emails. Recommended: 200x40px, PNG or SVG. Leave empty to use site name as text.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Email Adapter', 'jetonomy' ); ?></th>
 						<td>
 							<select disabled>
@@ -366,6 +373,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'    => __( 'Vote on your post', 'jetonomy' ),
 					'moderation'      => __( 'Moderator action on your content', 'jetonomy' ),
+					'join_request'    => __( 'Space join request', 'jetonomy' ),
 				];
 				?>
 				<table class="jt-notif-defaults-table">

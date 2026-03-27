@@ -54,11 +54,13 @@ class WP_Mail_Adapter implements Email_Adapter {
 
 	private function get_from_name(): string {
 		$settings = get_option( 'jetonomy_settings', [] );
-		return $settings['email_from_name'] ?? get_bloginfo( 'name' );
+		$name     = $settings['email_from_name'] ?? '';
+		return '' !== $name ? $name : get_bloginfo( 'name' );
 	}
 
 	private function get_from_email(): string {
 		$settings = get_option( 'jetonomy_settings', [] );
-		return $settings['email_from_email'] ?? get_option( 'admin_email' );
+		$email    = $settings['email_from_email'] ?? '';
+		return '' !== $email ? $email : get_option( 'admin_email' );
 	}
 }

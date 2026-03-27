@@ -20,6 +20,7 @@ $reason_labels = [
 	'spam'           => __( 'Spam', 'jetonomy' ),
 	'abuse'          => __( 'Abuse / Harassment', 'jetonomy' ),
 	'off-topic'      => __( 'Off-topic', 'jetonomy' ),
+	'off_topic'      => __( 'Off-topic', 'jetonomy' ),
 	'misinformation' => __( 'Misinformation', 'jetonomy' ),
 	'other'          => __( 'Other', 'jetonomy' ),
 ];
@@ -122,9 +123,9 @@ $crumbs = [
 							</span>
 						</div>
 
-						<?php if ( ! empty( $flag->note ) ) : ?>
+						<?php if ( ! empty( $flag->description ) ) : ?>
 							<p class="jt-mod-flag-note">
-								<?php echo esc_html( $flag->note ); ?>
+								<?php echo esc_html( $flag->description ); ?>
 							</p>
 						<?php endif; ?>
 

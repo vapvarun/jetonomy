@@ -85,6 +85,25 @@ class Flag extends Model {
 	}
 
 	/**
+	 * Find an existing flag by reporter and object (any status).
+	 *
+	 * @param int    $reporter_id Reporter user ID.
+	 * @param string $object_type Object type (post, reply).
+	 * @param int    $object_id   Object row ID.
+	 * @return object|null Flag row or null.
+	 */
+	public static function find_by_reporter_and_object( int $reporter_id, string $object_type, int $object_id ): ?object {
+		return static::db()->get_row(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' WHERE reporter_id = %d AND object_type = %s AND object_id = %d LIMIT 1',
+				$reporter_id,
+				$object_type,
+				$object_id
+			)
+		) ?: null;
+	}
+
+	/**
 	 * Count how many flags exist for a given object (regardless of status).
 	 *
 	 * @param string $object_type
