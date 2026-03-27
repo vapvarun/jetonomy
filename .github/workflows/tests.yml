@@ -34,11 +34,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Checkout Jetonomy Pro
-        uses: actions/checkout@v4
-        with:
-          repository: vapvarun/jetonomy-pro
-          token: ${{ secrets.PRO_REPO_TOKEN }}
-          path: ../jetonomy-pro
+        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -65,11 +61,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Checkout Jetonomy Pro
-        uses: actions/checkout@v4
-        with:
-          repository: vapvarun/jetonomy-pro
-          token: ${{ secrets.PRO_REPO_TOKEN }}
-          path: ../jetonomy-pro
+        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
 
       - name: Setup Node.js (for wp-env)
         uses: actions/setup-node@v4
