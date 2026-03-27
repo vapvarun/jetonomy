@@ -134,7 +134,7 @@ jobs:
         run: composer install --no-progress --prefer-dist
 
       - name: Run WPCS on Pro
-        run: vendor/bin/phpcs --standard=WordPress "$GITHUB_WORKSPACE/../jetonomy-pro/includes/"
+        run: vendor/bin/phpcs --standard="$GITHUB_WORKSPACE/../jetonomy-pro/phpcs.xml"
 
   # ── PHPStan static analysis (Free) ──────────────────────────────────────
   phpstan:
@@ -174,4 +174,4 @@ jobs:
         run: composer install --no-progress --prefer-dist
 
       - name: Run PHPStan on Pro
-        run: vendor/bin/phpstan analyse -c phpstan.neon.dist "$GITHUB_WORKSPACE/../jetonomy-pro/includes/"
+        run: vendor/bin/phpstan analyse -c phpstan-pro.neon.dist --memory-limit=1G

@@ -1,0 +1,216 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Function learndash_get_users_group_ids not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-learndash-adapter.php
+
+		-
+			message: "#^Function learndash_user_get_enrolled_courses not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-learndash-adapter.php
+
+		-
+			message: "#^Function rcp_get_customer not found\\.$#"
+			count: 3
+			path: ../jetonomy-pro/includes/adapters/class-rcp-adapter.php
+
+		-
+			message: "#^Function rcp_get_customer_by_user_id not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-rcp-adapter.php
+
+		-
+			message: "#^Function rcp_get_membership not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-rcp-adapter.php
+
+		-
+			message: "#^Function rcp_get_membership_levels not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-rcp-adapter.php
+
+		-
+			message: "#^Function rcp_get_memberships not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-rcp-adapter.php
+
+		-
+			message: "#^Function wc_get_product not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-woocommerce-adapter.php
+
+		-
+			message: "#^Function wc_get_products not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/adapters/class-woocommerce-adapter.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 2
+			path: ../jetonomy-pro/includes/class-extensions-admin.php
+
+		-
+			message: "#^Offset 'category' on array\\{id\\: string, name\\: string, description\\: string, version\\: string, requires\\: string, category\\: string, depends_on\\?\\: array\\<string\\>\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-extensions-admin.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_DIR not found\\.$#"
+			count: 11
+			path: ../jetonomy-pro/includes/class-jetonomy-pro.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-jetonomy-pro.php
+
+		-
+			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-jetonomy-pro.php
+
+		-
+			message: "#^Function as_enqueue_async_action not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-queue.php
+
+		-
+			message: "#^Function as_has_scheduled_action not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-queue.php
+
+		-
+			message: "#^Function as_schedule_recurring_action not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-queue.php
+
+		-
+			message: "#^Function as_unschedule_all_actions not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/class-queue.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 2
+			path: ../jetonomy-pro/includes/extensions/advanced-moderation/class-extension.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/analytics/class-extension.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 2
+			path: ../jetonomy-pro/includes/extensions/custom-badges/class-extension.php
+
+		-
+			message: "#^Method Jetonomy_Pro\\\\Extensions\\\\Custom_Badges\\\\Extension\\:\\:user_meets_criteria\\(\\) is unused\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/custom-badges/class-extension.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/custom-fields/class-extension.php
+
+		-
+			message: "#^Variable \\$context_labels might not be defined\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/custom-fields/views/admin.php
+
+		-
+			message: "#^Variable \\$editing might not be defined\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/custom-fields/views/admin.php
+
+		-
+			message: "#^Variable \\$spaces might not be defined\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/custom-fields/views/admin.php
+
+		-
+			message: "#^Variable \\$type_labels might not be defined\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/custom-fields/views/admin.php
+
+		-
+			message: "#^Method Jetonomy_Pro\\\\Extensions\\\\Email_Digest\\\\Extension\\:\\:get_users_for_frequency\\(\\) is unused\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/email-digest/class-extension.php
+
+		-
+			message: "#^Offset 'default_frequency' on array\\{enabled\\: bool, default_frequency\\: string, from_name\\: string, from_email\\: string\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			count: 2
+			path: ../jetonomy-pro/includes/extensions/email-digest/class-extension.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/polls/class-extension.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_DIR not found\\.$#"
+			count: 2
+			path: ../jetonomy-pro/includes/extensions/private-messaging/class-extension.php
+
+		-
+			message: "#^Variable \\$active_conv_id might not be defined\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/private-messaging/views/conversation-list.php
+
+		-
+			message: "#^Variable \\$base might not be defined\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/private-messaging/views/conversation-list.php
+
+		-
+			message: "#^Variable \\$user_id might not be defined\\.$#"
+			count: 2
+			path: ../jetonomy-pro/includes/extensions/private-messaging/views/conversation-list.php
+
+		-
+			message: "#^Variable \\$messages in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/private-messaging/views/conversation.php
+
+		-
+			message: "#^Parameter \\#1 \\$imap of function imap_fetchbody expects IMAP\\\\Connection, resource given\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/reply-by-email/class-extension.php
+
+		-
+			message: "#^Parameter \\#1 \\$imap of function imap_fetchstructure expects IMAP\\\\Connection, resource given\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/reply-by-email/class-extension.php
+
+		-
+			message: "#^Parameter \\#1 \\$imap of function imap_headerinfo expects IMAP\\\\Connection, resource given\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/reply-by-email/class-extension.php
+
+		-
+			message: "#^Parameter \\#1 \\$imap of function imap_setflag_full expects IMAP\\\\Connection, resource given\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/reply-by-email/class-extension.php
+
+		-
+			message: "#^Parameter \\#1 \\$imap of method Jetonomy_Pro\\\\Extensions\\\\Reply_By_Email\\\\Extension\\:\\:process_imap_message\\(\\) expects resource, IMAP\\\\Connection given\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/reply-by-email/class-extension.php
+
+		-
+			message: "#^PHPDoc tag @param references unknown parameter\\: \\$post$#"
+			count: 1
+			path: ../jetonomy-pro/includes/extensions/webhooks/class-extension.php
+
+		-
+			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/license/class-license-admin.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$response\\.$#"
+			count: 1
+			path: ../jetonomy-pro/includes/license/class-updater.php

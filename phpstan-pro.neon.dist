@@ -1,0 +1,17 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    - phpstan-baseline-pro.neon
+
+parameters:
+    level: 5
+    paths:
+        - ../jetonomy-pro/includes/
+    scanFiles:
+        - jetonomy.php
+        - ../jetonomy-pro/jetonomy-pro.php
+    scanDirectories:
+        - includes/
+    ignoreErrors:
+        -
+            message: '#(Mepr|MeprUser|MeprCptModel)#'
+            reportUnmatched: false
