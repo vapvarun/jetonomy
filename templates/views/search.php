@@ -1,4 +1,10 @@
 <?php
+/**
+ * Search view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -155,7 +161,7 @@ $crumbs = [
 							$f_url = add_query_arg( [ 'q' => $q, 'filter' => $key ], $base . '/search/' );
 						?>
 							<a href="<?php echo esc_url( $f_url ); ?>"
-								class="jt-pill <?php echo $filter === $key ? 'on' : ''; ?>">
+								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>">
 								<?php echo esc_html( $label ); ?>
 							</a>
 						<?php endforeach; ?>

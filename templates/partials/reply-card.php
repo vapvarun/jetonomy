@@ -1,4 +1,10 @@
 <?php
+/**
+ * Reply card partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 $author      = get_userdata( (int) $reply->author_id );
 $profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
@@ -8,12 +14,12 @@ $time_ago    = human_time_diff( strtotime( $reply->created_at ), current_time( '
 $is_op       = (int) $reply->author_id === (int) $post->author_id;
 $is_accepted = (int) $reply->is_accepted;
 ?>
-<div class="jt-reply <?php echo $is_accepted ? 'accepted' : ''; ?>" data-wp-interactive="jetonomy">
+<div class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
-		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? 'is-online' : ''; ?>">
-			<?php echo \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ); ?>
+		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? esc_attr( 'is-online' ) : ''; ?>">
+			<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ) ); ?>
 		</span>
-		<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+		<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 		<?php if ( $is_op ) : ?>
 			<span class="jt-reply-op"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
 		<?php endif; ?>
@@ -28,7 +34,7 @@ $is_accepted = (int) $reply->is_accepted;
 		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
-		<?php echo \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ); ?>
+		<?php echo \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- processed through wp_kses_post ?>
 	</div>
 	<div class="jt-reply-foot">
 		<button class="jt-act"

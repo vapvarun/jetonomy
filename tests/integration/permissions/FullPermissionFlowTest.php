@@ -8,6 +8,7 @@ use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Permissions\Permission_Engine;
+use Jetonomy\Cache;
 use Jetonomy\DB\Schema;
 
 class FullPermissionFlowTest extends WP_UnitTestCase {
@@ -15,6 +16,20 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 		Schema::create_tables();
+	}
+
+	/**
+	 * Flush all Jetonomy object-cache entries so permission checks
+	 * re-evaluate against the current DB state.
+	 *
+	 * Required in tests because Permission_Engine::can() caches results
+	 * for 60 seconds, which spans the entire test method execution.
+	 */
+	private function flush_permission_cache(): void {
+		Cache::flush();
+		// Fall back to full WP object cache flush for the jetonomy group
+		// if flush_group is not available.
+		wp_cache_flush();
 	}
 
 	/**
@@ -54,6 +69,7 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 
 		// 4. Add user as a member.
 		SpaceMember::add( $space_id, $user_id, 'member' );
+		$this->flush_permission_cache();
 
 		// 5. Verify access is now allowed.
 		$this->assertTrue(
@@ -68,6 +84,7 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 		// 6. Ban the user.
 		$admin_id = $this->factory()->user->create( [ 'role' => 'administrator' ] );
 		Restriction::ban( $user_id, 'global_ban', $admin_id );
+		$this->flush_permission_cache();
 
 		// 7. Verify the banned user is denied even as a member.
 		$this->assertFalse(
@@ -88,12 +105,16 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 		$user_id = $this->factory()->user->create( [ 'role' => 'subscriber' ] );
 		$this->grant_jetonomy_caps( $user_id );
 
-		// Non-member of a public space can only read.
+		// Non-member of a public + open space can read and participate.
 		$this->assertTrue( Permission_Engine::can( $user_id, 'read', $space_id ) );
-		$this->assertFalse( Permission_Engine::can( $user_id, 'create_posts', $space_id ) );
+		$this->assertTrue( Permission_Engine::can( $user_id, 'create_posts', $space_id ) );
 
-		// After joining as member, can create posts.
+		// Non-member cannot perform moderation actions even in a public space.
+		$this->assertFalse( Permission_Engine::can( $user_id, 'edit_others_posts', $space_id ) );
+
+		// After joining as member, participation is still allowed.
 		SpaceMember::add( $space_id, $user_id, 'member' );
+		$this->flush_permission_cache();
 		$this->assertTrue( Permission_Engine::can( $user_id, 'create_posts', $space_id ) );
 	}
 
@@ -154,6 +175,7 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 
 		// After trust level is elevated to 3, they can.
 		UserProfile::update_profile( $user_id, [ 'trust_level' => 3 ] );
+		$this->flush_permission_cache();
 		$this->assertTrue( Permission_Engine::can( $user_id, 'edit_others_posts', $space_id ) );
 	}
 
@@ -174,6 +196,7 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 
 		// After membership, allowed.
 		SpaceMember::add( $space_id, $user_id, 'member' );
+		$this->flush_permission_cache();
 		$this->assertTrue( Permission_Engine::can( $user_id, 'read', $space_id ) );
 	}
 

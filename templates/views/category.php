@@ -1,4 +1,10 @@
 <?php
+/**
+ * Category view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $category_slug = $data['slug'] ?? '';

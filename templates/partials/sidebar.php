@@ -61,15 +61,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 <aside class="jt-sidebar">
 
 	<?php if ( ! empty( $space ) && isset( $space->id ) ) : ?>
-	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md'; ?>">
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
 				<h4><?php esc_html_e( 'About', 'jetonomy' ); ?></h4>
 			<?php else : ?>
 				<?php esc_html_e( 'About', 'jetonomy' ); ?>
 			<?php endif; ?>
 		</div>
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<?php if ( ! empty( $space->description ) ) : ?>
 				<p class="jt-sidebar-about"><?php echo esc_html( $space->description ); ?></p>
 			<?php endif; ?>
@@ -110,15 +110,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<?php endif; ?>
 
 	<?php if ( ! empty( $trending ) ) : ?>
-	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md'; ?>">
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
 				<h4><?php esc_html_e( 'Trending', 'jetonomy' ); ?></h4>
 			<?php else : ?>
 				<?php esc_html_e( 'Trending', 'jetonomy' ); ?>
 			<?php endif; ?>
 		</div>
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<?php foreach ( $trending as $i => $t_post ) : ?>
 				<div class="jt-trend">
 					<div>
@@ -155,15 +155,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<?php endif; ?>
 
 	<?php if ( ! empty( $leaders ) ) : ?>
-	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md'; ?>">
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
 				<h4><?php esc_html_e( 'Top Members', 'jetonomy' ); ?></h4>
 			<?php else : ?>
 				<?php esc_html_e( 'Top Members', 'jetonomy' ); ?>
 			<?php endif; ?>
 		</div>
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<?php foreach ( $leaders as $rank => $leader ) : ?>
 				<?php
 				$lu = get_userdata( (int) $leader->user_id );
@@ -191,15 +191,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 	<?php endif; ?>
 
 	<?php if ( ! empty( $popular_tags ) ) : ?>
-	<div class="<?php echo $bn_active ? 'bn-sidebar-card' : 'jt-card'; ?>">
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__header' : ''; ?>">
+	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card' ); ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
 				<h4><?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?></h4>
 			<?php else : ?>
 				<?php esc_html_e( 'Popular Tags', 'jetonomy' ); ?>
 			<?php endif; ?>
 		</div>
-		<div class="<?php echo $bn_active ? 'bn-sidebar-card__body' : ''; ?>">
+		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__body' : '' ); ?>">
 			<div class="jt-tags">
 				<?php foreach ( $popular_tags as $tag ) : ?>
 					<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">

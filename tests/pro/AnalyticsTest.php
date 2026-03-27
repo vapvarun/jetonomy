@@ -42,11 +42,23 @@ class AnalyticsTest extends WP_UnitTestCase {
 
 		Schema::create_tables();
 
+		// Enable the extension and fake a valid lifetime license so boot() runs.
+		update_option( 'jetonomy_pro_extensions', [ 'private-messaging', 'reactions', 'polls', 'analytics' ] );
+		update_option( 'jetonomy_pro_license', [
+			'key'        => 'test-key',
+			'status'     => 'valid',
+			'expires'    => 'lifetime',
+			'tier'       => 'lifetime',
+			'item_name'  => 'Jetonomy Pro',
+			'checked_at' => current_time( 'mysql', true ),
+		] );
+
 		// Run extension activate() to ensure the capability is registered on
-		// the administrator role and REST routes are known to the test server.
+		// the administrator role, then boot() to register REST routes.
 		if ( class_exists( 'Jetonomy_Pro\Extensions\Analytics\Extension' ) ) {
 			$ext = new \Jetonomy_Pro\Extensions\Analytics\Extension();
 			$ext->activate();
+			$ext->boot();
 		}
 
 		// Bootstrap REST server.

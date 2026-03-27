@@ -1,4 +1,10 @@
 <?php
+/**
+ * Edit profile view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 // Auth check is handled by Template_Loader before output.
@@ -43,7 +49,7 @@ $base         = \Jetonomy\base_url();
 				<span class="jt-avatar-hint">
 					<?php
 					/* translators: %s: link to Gravatar */
-					printf( esc_html__( 'Change your avatar at %s', 'jetonomy' ), '<a href="https://gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar.com</a>' );
+					printf( esc_html__( 'Change your avatar at %s', 'jetonomy' ), '<a href="https://gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar.com</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted static HTML link.
 					?>
 				</span>
 			</div>

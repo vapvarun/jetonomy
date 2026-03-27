@@ -1,4 +1,10 @@
 <?php
+/**
+ * Space roadmap view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $space_slug = $data['slug'] ?? '';
@@ -78,7 +84,7 @@ $crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
 					<span class="jt-col-title" style="color:<?php echo esc_attr( $col['color'] ); ?>;">
 						<?php echo esc_html( $col['label'] ); ?>
 					</span>
-					<span class="jt-col-n"><?php echo count( $col['posts'] ); ?></span>
+					<span class="jt-col-n"><?php echo (int) count( $col['posts'] ); ?></span>
 				</div>
 				<?php if ( empty( $col['posts'] ) ) : ?>
 					<p class="jt-kanban-empty"><?php esc_html_e( 'None', 'jetonomy' ); ?></p>

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Reply composer partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 // $post_id   — the post this reply belongs to (required).
 // $reply_to  — optional parent reply ID for nested replies.
@@ -21,7 +27,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 ?>
 <div class="jt-editor"
 	data-wp-interactive="jetonomy"
-	data-wp-context='{"postId":<?php echo $_post_id; ?>,"replyTo":<?php echo $_reply_to; ?>,"submitting":false}'>
+	data-wp-context='{"postId":<?php echo (int) $_post_id; ?>,"replyTo":<?php echo (int) $_reply_to; ?>,"submitting":false}'>
 	<div class="jt-editor-bar">
 		<button type="button" class="jt-editor-bar-btn" data-cmd="bold" title="<?php esc_attr_e( 'Bold', 'jetonomy' ); ?>"><strong>B</strong></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
@@ -36,7 +42,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		contenteditable="true"
 		data-placeholder="<?php echo esc_attr( $_placeholder ); ?>"
 		data-wp-on--input="actions.onEditorInput"
-		id="jt-composer-<?php echo $_post_id; ?>"
+		id="jt-composer-<?php echo (int) $_post_id; ?>"
 		aria-label="<?php esc_attr_e( 'Reply editor', 'jetonomy' ); ?>"></div>
 	<div class="jt-editor-foot">
 		<span class="jt-editor-hint"><?php esc_html_e( 'Markdown · Ctrl+Enter to submit', 'jetonomy' ); ?></span>
@@ -47,8 +53,8 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 			<?php endif; ?>
 			<button type="button" class="jt-btn jt-btn-fill"
 				data-wp-on--click="actions.submitReply"
-				data-post-id="<?php echo $_post_id; ?>"
-				data-reply-to="<?php echo $_reply_to; ?>"
+				data-post-id="<?php echo (int) $_post_id; ?>"
+				data-reply-to="<?php echo (int) $_reply_to; ?>"
 				data-wp-bind--disabled="context.submitting">
 				<?php esc_html_e( 'Post Reply', 'jetonomy' ); ?>
 			</button>

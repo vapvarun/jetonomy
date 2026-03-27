@@ -77,8 +77,9 @@ class CategoriesApiTest extends WP_UnitTestCase {
 		$response = $this->do_request( 'GET', '/categories' );
 		$data     = $response->get_data();
 
-		// Response items at the top level should not include the child directly.
-		$names = array_column( $data, 'name' );
+		// paginated_response() wraps items in { data: [...], meta: {...} }.
+		$items = $data['data'] ?? $data;
+		$names = array_column( $items, 'name' );
 		$this->assertContains( 'Parent', $names );
 		$this->assertNotContains( 'Child', $names );
 	}

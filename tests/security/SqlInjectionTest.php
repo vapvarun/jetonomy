@@ -37,10 +37,13 @@ class SqlInjectionTest extends WP_UnitTestCase {
         $this->assertGreaterThan(0, $id);
         $post = Post::find($id);
         $this->assertNotNull($post);
-        // Table must still exist
+        // Table must still exist — verify by querying it directly.
+        // Note: SHOW TABLES does not list TEMPORARY tables used by WP test suite,
+        // so we SELECT from the table instead. A successful query proves the table
+        // was not dropped by the injection attempt.
         global $wpdb;
-        $exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}jt_posts'");
-        $this->assertNotNull($exists, 'jt_posts table was dropped by SQL injection');
+        $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}jt_posts");
+        $this->assertNotNull($count, 'jt_posts table was dropped by SQL injection');
     }
 
     public function test_reply_content_with_sql_injection(): void {
@@ -67,10 +70,11 @@ class SqlInjectionTest extends WP_UnitTestCase {
         wp_set_current_user(0);
         $response = rest_do_request($request);
         $this->assertContains($response->get_status(), [200, 400]);
-        // Table must still exist
+        // Table must still exist — verify by querying it directly.
+        // SHOW TABLES does not list TEMPORARY tables used by WP test suite.
         global $wpdb;
-        $exists = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}jt_posts'");
-        $this->assertNotNull($exists);
+        $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}jt_posts");
+        $this->assertNotNull($count, 'jt_posts table was dropped by SQL injection');
     }
 
     public function test_tag_name_with_sql_injection(): void {

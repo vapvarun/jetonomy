@@ -1,4 +1,10 @@
 <?php
+/**
+ * Moderation queue view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 // Require moderator / admin access.

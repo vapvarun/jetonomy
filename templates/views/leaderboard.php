@@ -1,4 +1,10 @@
 <?php
+/**
+ * Leaderboard view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 global $wpdb;
@@ -77,7 +83,7 @@ $crumbs = [
 							if ( $medal ) {
 								echo $medal; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- emoji literal.
 							} else {
-								echo $rank + 1;
+								echo (int) ( $rank + 1 );
 							}
 							?>
 						</span>
@@ -86,7 +92,7 @@ $crumbs = [
 							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
 								<?php echo esc_html( $lu->display_name ); ?>
 							</a>
-							<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+							<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 						</span>
 						<div class="jt-leader-stats">
 							<div>

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Tag view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $tag_slug = $data['slug'] ?? '';
@@ -69,7 +75,7 @@ $crumbs = [
 						$pill_url = add_query_arg( 'sort', $key, $tag_url );
 					?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
-							class="jt-pill <?php echo $sort === $key ? 'on' : ''; ?>">
+							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
 							<?php echo esc_html( $label ); ?>
 						</a>
 					<?php endforeach; ?>

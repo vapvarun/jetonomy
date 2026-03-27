@@ -53,10 +53,23 @@ class MessagingTest extends WP_UnitTestCase {
 
 		Schema::create_tables();
 
-		// Ensure the Pro messaging tables exist by running activate() on the extension.
+		// Enable the extension and fake a valid lifetime license so boot() runs.
+		update_option( 'jetonomy_pro_extensions', [ 'private-messaging', 'reactions', 'polls', 'analytics' ] );
+		update_option( 'jetonomy_pro_license', [
+			'key'        => 'test-key',
+			'status'     => 'valid',
+			'expires'    => 'lifetime',
+			'tier'       => 'lifetime',
+			'item_name'  => 'Jetonomy Pro',
+			'checked_at' => current_time( 'mysql', true ),
+		] );
+
+		// Ensure the Pro messaging tables exist and boot the extension so
+		// REST routes are registered before rest_api_init fires.
 		if ( class_exists( 'Jetonomy_Pro\Extensions\Private_Messaging\Extension' ) ) {
 			$ext = new \Jetonomy_Pro\Extensions\Private_Messaging\Extension();
 			$ext->activate();
+			$ext->boot();
 		}
 
 		// Bootstrap REST server.

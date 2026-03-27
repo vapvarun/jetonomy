@@ -44,10 +44,23 @@ class PollsTest extends WP_UnitTestCase {
 
 		Schema::create_tables();
 
-		// Ensure the polls tables exist.
+		// Enable the extension and fake a valid lifetime license so boot() runs.
+		update_option( 'jetonomy_pro_extensions', [ 'private-messaging', 'reactions', 'polls', 'analytics' ] );
+		update_option( 'jetonomy_pro_license', [
+			'key'        => 'test-key',
+			'status'     => 'valid',
+			'expires'    => 'lifetime',
+			'tier'       => 'lifetime',
+			'item_name'  => 'Jetonomy Pro',
+			'checked_at' => current_time( 'mysql', true ),
+		] );
+
+		// Ensure the polls tables exist and boot the extension so
+		// REST routes are registered before rest_api_init fires.
 		if ( class_exists( 'Jetonomy_Pro\Extensions\Polls\Extension' ) ) {
 			$ext = new \Jetonomy_Pro\Extensions\Polls\Extension();
 			$ext->activate();
+			$ext->boot();
 		}
 
 		// Bootstrap REST server.
@@ -123,7 +136,8 @@ class PollsTest extends WP_UnitTestCase {
 		$this->assertEquals( 201, $response->get_status(),
 			'Poll creation must return HTTP 201.' );
 
-		$data = $response->get_data();
+		$body = $response->get_data();
+		$data = $body['data'] ?? $body;
 		$this->assertArrayHasKey( 'options', $data,
 			'Response must include an "options" key.' );
 		$this->assertIsArray( $data['options'],
@@ -142,7 +156,8 @@ class PollsTest extends WP_UnitTestCase {
 		$this->assertEquals( 201, $create->get_status(),
 			'Poll must be created before voting.' );
 
-		$poll_data = $create->get_data();
+		$body      = $create->get_data();
+		$poll_data = $body['data'] ?? $body;
 		$poll_id   = (int) $poll_data['id'];
 
 		// Pick the first option.
@@ -158,7 +173,8 @@ class PollsTest extends WP_UnitTestCase {
 		$this->assertContains( $response->get_status(), [ 200, 201 ],
 			'Voting must succeed.' );
 
-		$data = $response->get_data();
+		$body = $response->get_data();
+		$data = $body['data'] ?? $body;
 		$this->assertArrayHasKey( 'user_votes', $data,
 			'Response must include "user_votes" key.' );
 		$this->assertContains( $option_id, (array) $data['user_votes'],

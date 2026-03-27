@@ -1,4 +1,10 @@
 <?php
+/**
+ * Breadcrumb partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 if ( empty( $crumbs ) ) {
 	return;

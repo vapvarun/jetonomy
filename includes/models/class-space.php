@@ -136,6 +136,7 @@ class Space extends Model {
 	 * @param int $by Amount to add (use negative value to decrement).
 	 */
 	public static function increment_post_count( int $id, int $by = 1 ): void {
+		Cache::delete( "space:{$id}" );
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
@@ -155,6 +156,7 @@ class Space extends Model {
 	 * @param int $by Amount to add (use negative value to decrement).
 	 */
 	public static function increment_member_count( int $id, int $by = 1 ): void {
+		Cache::delete( "space:{$id}" );
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(

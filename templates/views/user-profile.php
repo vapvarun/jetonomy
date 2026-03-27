@@ -1,4 +1,10 @@
 <?php
+/**
+ * User profile view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $user_login = $data['slug'] ?? '';
@@ -88,13 +94,13 @@ $crumbs = [
 			<div class="jt-profile jt-mb-md">
 				<div class="jt-profile-banner"></div>
 				<div class="jt-profile-body">
-					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( $profile_user_id ) ? 'is-online' : ''; ?>">
+					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( $profile_user_id ) ? esc_attr( 'is-online' ) : ''; ?>">
 					<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $profile_user_id, 'size' => 64, 'class' => 'jt-profile-av' ] ); ?>
 				</span>
 					<div class="jt-flex jt-items-start jt-justify-between jt-w-full">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
-							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
 						</h1>
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
@@ -131,19 +137,19 @@ $crumbs = [
 
 					<div class="jt-stats-bar">
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo $rep; ?></div>
+							<div class="jt-stat-n"><?php echo (int) $rep; ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo $p_count; ?></div>
+							<div class="jt-stat-n"><?php echo (int) $p_count; ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo $r_count; ?></div>
+							<div class="jt-stat-n"><?php echo (int) $r_count; ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo $trust; ?></div>
+							<div class="jt-stat-n"><?php echo (int) $trust; ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Trust', 'jetonomy' ); ?></div>
 						</div>
 					</div>

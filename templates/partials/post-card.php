@@ -1,4 +1,10 @@
 <?php
+/**
+ * Post card partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 $author  = get_userdata( $post->author_id );
 $profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
@@ -10,7 +16,7 @@ $post_url = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
 $time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 ?>
-<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? 'pinned' : ''; ?>"
+<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
 	<div class="jt-votes">
 		<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
@@ -26,7 +32,7 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 		</div>
 		<div class="jt-row-sub">
 			<?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?>
-			<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+			<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 			<?php foreach ( $tags as $tag ) : ?>
 				<span class="jt-tag"><?php echo esc_html( $tag->name ); ?></span>
 			<?php endforeach; ?>

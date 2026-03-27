@@ -1,4 +1,10 @@
 <?php
+/**
+ * Invite link landing page view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $token = $data['slug'] ?? '';
@@ -35,7 +41,7 @@ if ( ! is_user_logged_in() ) {
 	$login_url = wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 	?>
 	<div class="jt-narrow" style="text-align:center;padding:48px 0;">
-		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); ?></h2>
+		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
 		<?php if ( ! empty( $space->description ) ) : ?>
 			<p class="jt-text-secondary"><?php echo esc_html( wp_strip_all_tags( $space->description ) ); ?></p>
 		<?php endif; ?>

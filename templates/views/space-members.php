@@ -1,4 +1,10 @@
 <?php
+/**
+ * Space members view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $space_slug = $data['slug'] ?? '';
@@ -67,13 +73,13 @@ $role_labels = [
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
 						<div class="jt-member-item">
-							<?php echo \Jetonomy\get_user_link( (int) $member->user_id, 'jt-avatar-md', 36, false ); ?>
+							<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $member->user_id, 'jt-avatar-md', 36, false ) ); ?>
 							<div class="jt-flex-1">
 								<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $member->user_id ) ); ?>"
 									class="jt-member-name">
 									<?php echo esc_html( $mu->display_name ); ?>
 								</a>
-								<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+								<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 								<div class="jt-member-joined">
 									<?php
 									/* translators: %s: joined date */

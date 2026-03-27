@@ -1,4 +1,10 @@
 <?php
+/**
+ * Home view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 $categories          = \Jetonomy\Models\Category::list_top_level();
 $uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized();

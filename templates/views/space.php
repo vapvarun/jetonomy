@@ -1,4 +1,10 @@
 <?php
+/**
+ * Space view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $space_slug = $data['slug'] ?? '';
@@ -129,7 +135,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						// Member or open space: show Follow/Following toggle.
 						$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
 					?>
-						<button class="jt-btn jt-btn-sm <?php echo $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost'; ?>"
+						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-interactive="jetonomy"
 							data-wp-on--click="actions.followSpace"
 							data-space-id="<?php echo (int) $space->id; ?>"
@@ -162,7 +168,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						$pill_url = add_query_arg( 'sort', $key, $space_url );
 					?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
-							class="jt-pill <?php echo $sort === $key ? 'on' : ''; ?>">
+							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
 							<?php echo esc_html( $label ); ?>
 						</a>
 					<?php endforeach; ?>

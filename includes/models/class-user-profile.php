@@ -113,6 +113,7 @@ class UserProfile extends Model {
 				$user_id
 			)
 		);
+		Cache::delete( "profile:{$user_id}" );
 	}
 
 	/**
@@ -132,6 +133,7 @@ class UserProfile extends Model {
 				$user_id
 			)
 		);
+		Cache::delete( "profile:{$user_id}" );
 	}
 
 	/**

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Single post view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $post_slug = $data['slug'] ?? '';
@@ -166,8 +172,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-post-head">
 					<h1><?php echo esc_html( $post->title ); ?></h1>
 					<div class="jt-meta">
-						<?php echo \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ); ?>
-						<span class="jt-tl" data-jt-tl="<?php echo $trust; ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo $trust; ?></span>
+						<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) ); ?>
+						<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference */
@@ -193,7 +199,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php if ( is_user_logged_in() ) :
 						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
 					?>
-						<button class="jt-btn jt-btn-sm <?php echo $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost'; ?>"
+						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-on--click="actions.followPost"
 							data-post-id="<?php echo (int) $post->id; ?>"
 							data-following="<?php echo $is_following ? '1' : '0'; ?>">
@@ -252,7 +258,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php if ( is_user_logged_in() ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
 				?>
-					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? 'bookmarked' : ''; ?>"
+					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? esc_attr( 'bookmarked' ) : ''; ?>"
 						data-wp-on--click="actions.toggleBookmark"
 						data-post-id="<?php echo (int) $post->id; ?>"
 						data-bookmarked="<?php echo $is_bookmarked ? '1' : '0'; ?>"
@@ -336,7 +342,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
 							?>
 								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
-									class="jt-pill <?php echo $reply_sort === $key ? 'on' : ''; ?>">
+									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>">
 									<?php echo esc_html( $label ); ?>
 								</a>
 							<?php endforeach; ?>

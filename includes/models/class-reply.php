@@ -70,16 +70,16 @@ class Reply extends Model {
 
 		switch ( $sort ) {
 			case 'newest':
-				$order_by = 'created_at DESC';
+				$order_by = 'created_at DESC, id DESC';
 				break;
 
 			case 'best':
-				$order_by = 'vote_score DESC';
+				$order_by = 'vote_score DESC, id ASC';
 				break;
 
 			case 'oldest':
 			default:
-				$order_by = 'created_at ASC';
+				$order_by = 'created_at ASC, id ASC';
 				break;
 		}
 

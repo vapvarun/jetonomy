@@ -1,4 +1,10 @@
 <?php
+/**
+ * Avatar partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 $size   = $size ?? 30;
 $class  = $class ?? 'jt-avatar-sm';

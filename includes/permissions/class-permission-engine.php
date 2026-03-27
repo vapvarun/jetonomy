@@ -215,8 +215,12 @@ class Permission_Engine {
 			'create_spaces'     => 4,
 		);
 
-		if ( isset( $trust_requirements[ $action ] ) && $trust_level < $trust_requirements[ $action ] ) {
-			// Space moderators/admins bypass trust requirements.
+		if ( isset( $trust_requirements[ $action ] ) ) {
+			if ( $trust_level >= $trust_requirements[ $action ] ) {
+				// Trust level met — grant the action regardless of space role.
+				return true;
+			}
+			// Trust level not met — only space moderators/admins bypass.
 			if ( ! in_array( $role, array( 'moderator', 'admin' ), true ) ) {
 				return false;
 			}

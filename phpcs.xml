@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="Jetonomy" xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+	<description>Jetonomy WPCS ruleset — extends WordPress with PHP 8.1+ allowances.</description>
+
+	<file>includes/</file>
+	<file>templates/</file>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<!-- PHP 8.1+ is required; short array syntax [] is idiomatic and preferred. -->
+	<rule ref="WordPress">
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+	</rule>
+
+	<!-- Allow short ternary / null coalescing operators, common in PHP 7+. -->
+	<rule ref="WordPress.PHP.DisallowShortTernary">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Namespaced plugin — PrefixAllGlobals only applies to the global scope. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="jetonomy"/>
+				<element value="Jetonomy"/>
+				<element value="JETONOMY"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Text domain for i18n. -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="jetonomy"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Capabilities defined by this plugin are valid. -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="jetonomy_manage_spaces"/>
+				<element value="jetonomy_manage_categories"/>
+				<element value="jetonomy_moderate_content"/>
+				<element value="jetonomy_create_spaces"/>
+				<element value="jetonomy_create_posts"/>
+				<element value="jetonomy_view_content"/>
+				<element value="jetonomy_ban_users"/>
+				<element value="jetonomy_manage_users"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Exclude QA/test files from strict checks. -->
+	<exclude-pattern>includes/qa/*</exclude-pattern>
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<exclude-pattern>node_modules/*</exclude-pattern>
+	<exclude-pattern>assets/*</exclude-pattern>
+
+</ruleset>

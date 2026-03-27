@@ -1,4 +1,10 @@
 <?php
+/**
+ * Notifications view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 // Auth check is handled by Template_Loader before output.
@@ -88,7 +94,7 @@ $type_labels = [
 					}
 					?>
 					<a href="<?php echo esc_url( $notif_url ); ?>"
-						class="jt-notif-item <?php echo ! $notif->is_read ? 'unread' : ''; ?>">
+						class="jt-notif-item <?php echo ! $notif->is_read ? esc_attr( 'unread' ) : ''; ?>">
 						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0">
 							<?php echo esc_html( $actor ? strtoupper( substr( $actor->display_name, 0, 2 ) ) : '?' ); ?>
 						</span>

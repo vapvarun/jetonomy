@@ -1,4 +1,10 @@
 <?php
+/**
+ * New post form view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 // Auth check is handled by Template_Loader before output.
@@ -30,7 +36,7 @@ $type_label = $type_defaults['label'];
 <div class="jt-narrow">
     <h1 class="jt-post-create-title"><?php echo esc_html( $type_label ); ?></h1>
     <p class="jt-post-create-subtitle">
-        <?php printf( esc_html__( 'Posting in %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); ?>
+        <?php printf( esc_html__( 'Posting in %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?>
     </p>
 
     <form id="jt-new-post-form" class="jt-new-post-form"

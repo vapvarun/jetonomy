@@ -156,9 +156,20 @@ class PermissionEngineTest extends WP_UnitTestCase {
 	}
 
 	public function test_non_member_of_public_space_can_only_read(): void {
-		// No SpaceMember record — non-member of public space.
-		$can_read   = Permission_Engine::can( $this->regular_user_id, 'read', $this->public_space_id );
-		$can_create = Permission_Engine::can( $this->regular_user_id, 'create_posts', $this->public_space_id );
+		// Use a public space with approval-required join policy so non-members
+		// cannot participate (open-policy spaces allow any logged-in user to post).
+		$cat_id   = Category::create( [ 'name' => 'Approval Cat', 'slug' => 'approval-cat' ] );
+		$space_id = Space::create( [
+			'title'       => 'Approval Space',
+			'slug'        => 'approval-space-perm',
+			'category_id' => $cat_id,
+			'visibility'  => 'public',
+			'join_policy' => 'approval',
+		] );
+
+		// No SpaceMember record — non-member of public space with approval policy.
+		$can_read   = Permission_Engine::can( $this->regular_user_id, 'read', $space_id );
+		$can_create = Permission_Engine::can( $this->regular_user_id, 'create_posts', $space_id );
 
 		$this->assertTrue( $can_read );
 		$this->assertFalse( $can_create );

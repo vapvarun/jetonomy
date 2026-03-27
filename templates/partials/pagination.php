@@ -1,4 +1,10 @@
 <?php
+/**
+ * Pagination partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 if ( empty( $has_more ) ) {
 	return;

@@ -111,7 +111,7 @@ jobs:
         run: composer install --no-progress --prefer-dist
 
       - name: Run WordPress Coding Standards
-        run: vendor/bin/phpcs --standard=WordPress includes/ templates/
+        run: vendor/bin/phpcs includes/ templates/
 
   # ── PHPStan static analysis ───────────────────────────────────────────────
   phpstan:
