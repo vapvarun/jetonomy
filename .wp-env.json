@@ -1,0 +1,13 @@
+{
+  "core": "WordPress/WordPress#6.9",
+  "phpVersion": "8.2",
+  "plugins": [
+    ".",
+    "../jetonomy-pro"
+  ],
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true,
+    "SCRIPT_DEBUG": true
+  }
+}
