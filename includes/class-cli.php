@@ -465,7 +465,11 @@ class CLI {
 				$methods_str  = implode( '|', array_intersect( $methods, $mutating_methods ) );
 				$route_label  = "{$route_path} [{$methods_str}]";
 
-				$record( 'rest_routes', "Permission gate: {$route_label}", ! $is_open, $is_open ? 'permission_callback is __return_true — OPEN WRITE' : '' );
+				// Webhook/inbound endpoints are legitimately public — external services
+				// (SendGrid, Mailgun) call them without WP auth. Auth is via HMAC signature.
+				$is_webhook = str_contains( $route_path, 'inbound' ) || str_contains( $route_path, 'webhook' );
+
+				$record( 'rest_routes', "Permission gate: {$route_label}", ! $is_open || $is_webhook, $is_open && ! $is_webhook ? 'permission_callback is __return_true — OPEN WRITE' : '' );
 			}
 		}
 

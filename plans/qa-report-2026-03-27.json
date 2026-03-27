@@ -1,13 +1,13 @@
 {
     "date": "2026-03-27",
-    "timestamp": "2026-03-27T00:51:55+00:00",
+    "timestamp": "2026-03-27T02:03:00+00:00",
     "version": "1.0.0",
     "pro_version": "1.0.0",
-    "total_checks": 238,
-    "passed": 236,
-    "failed": 1,
+    "total_checks": 239,
+    "passed": 238,
+    "failed": 0,
     "warnings": 1,
-    "release_ready": false,
+    "release_ready": true,
     "sections": {
         "database": {
             "total": 23,
@@ -28,12 +28,12 @@
                 {
                     "label": "Table jt_posts",
                     "status": "pass",
-                    "detail": "43 rows"
+                    "detail": "72 rows"
                 },
                 {
                     "label": "Table jt_replies",
                     "status": "pass",
-                    "detail": "125 rows"
+                    "detail": "153 rows"
                 },
                 {
                     "label": "Table jt_votes",
@@ -133,15 +133,15 @@
             ]
         },
         "rest_routes": {
-            "total": 72,
-            "passed": 72,
+            "total": 73,
+            "passed": 73,
             "failed": 0,
             "warned": 0,
             "checks": [
                 {
                     "label": "Namespace jetonomy/v1 registered",
                     "status": "pass",
-                    "detail": "87 routes found"
+                    "detail": "88 routes found"
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/categories [POST]",
@@ -455,6 +455,11 @@
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+)/reactions [POST]",
+                    "status": "pass",
+                    "detail": ""
+                },
+                {
+                    "label": "Permission gate: /jetonomy/v1/reply-by-email/inbound [POST]",
                     "status": "pass",
                     "detail": ""
                 },
@@ -902,8 +907,8 @@
         },
         "pro_extensions": {
             "total": 54,
-            "passed": 53,
-            "failed": 1,
+            "passed": 54,
+            "failed": 0,
             "warned": 0,
             "checks": [
                 {
@@ -1108,8 +1113,8 @@
                 },
                 {
                     "label": "Extension 'reply-by-email': route '/reply-by-email/inbound' registered",
-                    "status": "fail",
-                    "detail": "Route '/reply-by-email/inbound' not found in live registry"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Extension 'seo-pro' discovered",
