@@ -561,3 +561,13 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 
 } () );
 </script>
+<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+<div class="jt-pro-upsell">
+	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
+	<h4><?php esc_html_e( 'Advanced Moderation & Webhooks', 'jetonomy' ); ?></h4>
+	<p><?php esc_html_e( 'Auto-moderate with keyword filters, regex patterns, and spam scoring. Connect to Slack, Zapier, or any webhook endpoint.', 'jetonomy' ); ?></p>
+	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+	&nbsp;
+	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
+</div>
+<?php endif; ?>

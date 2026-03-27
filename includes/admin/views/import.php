@@ -184,3 +184,13 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 		</div>
 	<?php endif; ?>
 </div>
+<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+<div class="jt-pro-upsell">
+	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
+	<h4><?php esc_html_e( 'Private Messaging & Email Digests', 'jetonomy' ); ?></h4>
+	<p><?php esc_html_e( 'Keep members engaged after migration with private messaging, daily/weekly email digests, and web push notifications.', 'jetonomy' ); ?></p>
+	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+	&nbsp;
+	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
+</div>
+<?php endif; ?>

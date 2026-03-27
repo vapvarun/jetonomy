@@ -250,3 +250,13 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 		<?php endif; ?>
 	<?php endif; ?>
 </div>
+<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+<div class="jt-pro-upsell">
+	<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
+	<h4><?php esc_html_e( 'Polls, Reactions & Analytics for Every Space', 'jetonomy' ); ?></h4>
+	<p><?php esc_html_e( 'Add emoji reactions, polls, and custom fields to your spaces. Track engagement with the analytics dashboard.', 'jetonomy' ); ?></p>
+	<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+	&nbsp;
+	<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button button-link" target="_blank"><?php esc_html_e( 'View Docs', 'jetonomy' ); ?></a>
+</div>
+<?php endif; ?>

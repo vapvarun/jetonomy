@@ -17,7 +17,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	$advanced_tabs_html = ob_get_clean();
 
 	// Pre-buffer Pro/extension tab content so notices can be hoisted above the layout.
-	$jt_primary_tabs = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam' ];
+	$jt_primary_tabs = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam', 'free-vs-pro' ];
 	$jt_ext_html     = '';
 	$jt_ext_notices  = '';
 	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
@@ -78,6 +78,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<?php echo esc_html( $label ); ?>
 				</a>
 				<?php endforeach; ?>
+
+				<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+				<div class="jt-snav-divider" role="separator"></div>
+				<a href="<?php echo esc_url( $settings_url . '&tab=free-vs-pro' ); ?>"
+					class="jt-snav-link<?php echo 'free-vs-pro' === $active_tab ? ' jt-snav-link--active' : ''; ?>"
+					style="<?php echo 'free-vs-pro' !== $active_tab ? 'color: var(--jt-admin-pro, #7C3AED);' : ''; ?>">
+					<span class="dashicons dashicons-star-filled" aria-hidden="true"></span>
+					<?php esc_html_e( 'Free vs Pro', 'jetonomy' ); ?>
+				</a>
+				<?php endif; ?>
 
 				<?php if ( defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
@@ -635,6 +645,96 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				} );
 			} )();
 			</script>
+
+		<?php elseif ( 'free-vs-pro' === $active_tab && ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
+
+			<!-- Hero -->
+			<div class="jt-settings-card" style="background: linear-gradient(135deg, #EDE9FE, #FEF3C7); border: none;">
+				<div style="text-align: center; padding: 12px 0;">
+					<h2 style="margin: 0 0 8px; font-size: 22px; color: #1F2937;"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
+					<p style="margin: 0 0 16px; color: #4B5563; font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
+						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more — as independent modules you enable only when you need them.', 'jetonomy' ); ?>
+					</p>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary button-hero" target="_blank" style="font-size: 14px; padding: 8px 28px;">
+						<?php esc_html_e( 'Get Jetonomy Pro — Starting at $69/yr', 'jetonomy' ); ?>
+					</a>
+					<p style="margin: 8px 0 0; font-size: 12px; color: #6B7280;">
+						<?php
+						/* translators: %s: coupon code */
+						printf( esc_html__( 'Use code %s for 30%% off lifetime plans.', 'jetonomy' ), '<strong>Jetonomy30</strong>' );
+						?>
+					</p>
+				</div>
+			</div>
+
+			<!-- Extensions Grid -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Pro Extensions', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Each extension is independent — enable only what you need. Disabled extensions load zero code.', 'jetonomy' ); ?></p>
+				</div>
+				<?php
+				$jt_pro_exts = [
+					[ 'name' => __( 'Emoji Reactions', 'jetonomy' ), 'icon' => 'dashicons-heart', 'desc' => __( 'Like, love, celebrate — Slack-style reactions on posts and replies.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Private Messaging', 'jetonomy' ), 'icon' => 'dashicons-format-chat', 'desc' => __( 'One-on-one and group conversations between community members.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Polls', 'jetonomy' ), 'icon' => 'dashicons-chart-bar', 'desc' => __( 'Create polls within posts for community voting and decision-making.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Analytics Dashboard', 'jetonomy' ), 'icon' => 'dashicons-chart-area', 'desc' => __( 'Engagement graphs, user growth, top spaces, post trends, and CSV export.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Email Digests', 'jetonomy' ), 'icon' => 'dashicons-email', 'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Web Push', 'jetonomy' ), 'icon' => 'dashicons-bell', 'desc' => __( 'Browser push notifications for replies, mentions, and forum events.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Webhooks', 'jetonomy' ), 'icon' => 'dashicons-rest-api', 'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Reply by Email', 'jetonomy' ), 'icon' => 'dashicons-email-alt2', 'desc' => __( 'Members reply to notifications by email — no login required.', 'jetonomy' ), 'tier' => 'Starter' ],
+					[ 'name' => __( 'Custom Badges', 'jetonomy' ), 'icon' => 'dashicons-awards', 'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ), 'tier' => 'Growth' ],
+					[ 'name' => __( 'Custom Fields', 'jetonomy' ), 'icon' => 'dashicons-forms', 'desc' => __( 'Add custom fields to posts and user profiles — text, select, checkbox, date, and more.', 'jetonomy' ), 'tier' => 'Growth' ],
+					[ 'name' => __( 'Advanced Moderation', 'jetonomy' ), 'icon' => 'dashicons-shield', 'desc' => __( 'Auto-moderation rules engine — keyword filters, regex, link limits, spam scoring.', 'jetonomy' ), 'tier' => 'Growth' ],
+					[ 'name' => __( 'SEO Pro', 'jetonomy' ), 'icon' => 'dashicons-search', 'desc' => __( 'Per-space meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), 'tier' => 'Growth' ],
+					[ 'name' => __( 'White Label', 'jetonomy' ), 'icon' => 'dashicons-admin-appearance', 'desc' => __( 'Replace all Jetonomy branding — custom logo, name, footer, accent color, CSS.', 'jetonomy' ), 'tier' => 'Agency' ],
+				];
+				?>
+				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 0 0 8px;">
+					<?php foreach ( $jt_pro_exts as $ext ) : ?>
+					<div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; background: #fff;">
+						<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+							<span class="dashicons <?php echo esc_attr( $ext['icon'] ); ?>" style="color: var(--jt-admin-pro, #7C3AED); font-size: 18px; width: 18px; height: 18px;"></span>
+							<strong style="font-size: 13px;"><?php echo esc_html( $ext['name'] ); ?></strong>
+							<span style="margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; background: <?php echo 'Agency' === $ext['tier'] ? '#FEF3C7' : ( 'Growth' === $ext['tier'] ? '#E0E7FF' : '#F0FDF4' ); ?>; color: <?php echo 'Agency' === $ext['tier'] ? '#92400E' : ( 'Growth' === $ext['tier'] ? '#3730A3' : '#166534' ); ?>;">
+								<?php echo esc_html( $ext['tier'] ); ?>
+							</span>
+						</div>
+						<p style="margin: 0; font-size: 12.5px; color: #6B7280; line-height: 1.5;"><?php echo esc_html( $ext['desc'] ); ?></p>
+					</div>
+					<?php endforeach; ?>
+				</div>
+			</div>
+
+			<!-- Pricing -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Pricing', 'jetonomy' ); ?></p>
+				</div>
+				<table class="wp-list-table widefat fixed striped" style="max-width: 640px;">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Plan', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Sites', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Annual', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Lifetime', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr><td><strong><?php esc_html_e( 'Personal', 'jetonomy' ); ?></strong></td><td>1</td><td>$69/yr</td><td>$199</td></tr>
+						<tr><td><strong><?php esc_html_e( 'Developer', 'jetonomy' ); ?></strong></td><td>5</td><td>$99/yr</td><td>$299</td></tr>
+						<tr><td><strong><?php esc_html_e( 'Agency', 'jetonomy' ); ?></strong></td><td><?php esc_html_e( 'Unlimited', 'jetonomy' ); ?></td><td>$199/yr</td><td>$499</td></tr>
+					</tbody>
+				</table>
+				<p style="margin: 12px 0 0; font-size: 13px; color: #6B7280;">
+					<?php esc_html_e( '30-day money-back guarantee. All plans include 1 year of updates and priority support.', 'jetonomy' ); ?>
+				</p>
+				<p style="margin: 16px 0 0;">
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary" target="_blank"><?php esc_html_e( 'Get Jetonomy Pro', 'jetonomy' ); ?></a>
+					&nbsp;
+					<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button" target="_blank"><?php esc_html_e( 'Read the Docs', 'jetonomy' ); ?></a>
+				</p>
+			</div>
 
 		<?php elseif ( 'license' === $active_tab ) : ?>
 

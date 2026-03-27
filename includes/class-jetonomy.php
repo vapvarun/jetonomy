@@ -62,6 +62,11 @@ final class Jetonomy {
 
 		update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 
+		// Preset EDD license key for free plugin auto-updates.
+		if ( ! get_option( 'jetonomy_license_key' ) ) {
+			update_option( 'jetonomy_license_key', 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11' );
+		}
+
 		// Set sensible notification defaults on fresh install.
 		$settings = get_option( 'jetonomy_settings', array() );
 		if ( empty( $settings['notification_defaults'] ) ) {
@@ -124,6 +129,11 @@ final class Jetonomy {
 	}
 
 	public function init(): void {
+		// Ensure preset license key exists for existing installs.
+		if ( ! get_option( 'jetonomy_license_key' ) ) {
+			update_option( 'jetonomy_license_key', 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11' );
+		}
+
 		$this->maybe_redirect_to_setup();
 		$this->check_db_version();
 		$this->load_dependencies();

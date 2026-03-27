@@ -44,7 +44,7 @@ add_action(
 				'item_id' => 1660320,
 				'version' => JETONOMY_VERSION,
 				'file'    => JETONOMY_FILE,
-				'license' => 'wbcomfree5d8a1f3c7b2e9a4c6f0d1e8b3c9a7f25',
+				'license' => 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11',
 			)
 		);
 	}
