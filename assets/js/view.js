@@ -1532,7 +1532,7 @@ const { state, actions } = store( 'jetonomy', {
                     if ( 'pending' === status || 'spam' === status ) {
                         state.submitLabel = state.i18n?.postTopic || 'Post Topic';
                         state.isSubmitting = false;
-                        if ( window.bnToast ) window.bnToast( jetonomyData?.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
+                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
                         return;
                     }
                     const slug = data.slug || data.data?.slug || '';
