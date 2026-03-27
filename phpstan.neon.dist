@@ -1,5 +1,6 @@
 includes:
     - vendor/szepeviktor/phpstan-wordpress/extension.neon
+    - phpstan-baseline.neon
 
 parameters:
     level: 5
@@ -8,6 +9,7 @@ parameters:
     scanFiles:
         - jetonomy.php
     ignoreErrors:
-        # Third-party plugin classes (MemberPress, PMPro) — not available in CI
-        - '#class Mepr(User|CptModel)#'
-        - '#function pmpro_getMembershipLevelForUser#'
+        # Third-party plugin classes not available in CI
+        -
+            message: '#(Mepr|MeprUser|MeprCptModel)#'
+            reportUnmatched: false

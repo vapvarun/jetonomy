@@ -49,7 +49,7 @@ jobs:
       - name: Install WordPress test library
         env:
           WP_VERSION: ${{ matrix.wp }}
-        run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION"
+        run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION" true
 
       - name: Run PHPUnit
         run: vendor/bin/phpunit --testdox
