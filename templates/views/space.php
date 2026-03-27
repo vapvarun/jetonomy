@@ -70,7 +70,7 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 $paged           = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $_jt_settings    = get_option( 'jetonomy_settings', [] );
 $_space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
-$limit           = (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 );
+$limit           = max( 1, (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 ) );
 $offset          = ( $paged - 1 ) * $limit;
 
 $posts     = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );

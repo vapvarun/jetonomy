@@ -167,8 +167,8 @@ class Admin {
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 			}
 			$clean['base_slug']          = $new_slug;
-			$clean['posts_per_page']     = absint( $input['posts_per_page'] ?? 20 );
-			$clean['replies_per_page']   = absint( $input['replies_per_page'] ?? 30 );
+			$clean['posts_per_page']     = max( 1, absint( $input['posts_per_page'] ?? 20 ) );
+			$clean['replies_per_page']   = max( 1, absint( $input['replies_per_page'] ?? 30 ) );
 			$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );
 			$clean['guest_read']         = ! empty( $input['guest_read'] );
 			$clean['require_login']      = ! empty( $input['require_login'] );
