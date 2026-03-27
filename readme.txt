@@ -1,5 +1,5 @@
 === Jetonomy — Community Forums, Q&A & Discussions ===
-Contributors: jetonomy
+Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
@@ -125,7 +125,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 - FULLTEXT indexes for instant search
 
 **Developer Tools**
-- 35+ REST API endpoints at `/wp-json/jetonomy/v1/`
+- 48+ REST API endpoints at `/wp-json/jetonomy/v1/`
 - 18 abilities registered with the WordPress Abilities API (WP 6.9+)
 - 20+ action hooks and filters for customization
 - WP-CLI commands for trust level management and imports
@@ -165,7 +165,7 @@ Jetonomy Pro extends the free plugin with power-user and enterprise features:
 * **White-label branding** — Remove Jetonomy branding, use your own logo
 * **Custom badge builder** — Design badges and award them manually or automatically
 
-[Learn more about Jetonomy Pro →](https://jetonomy.com/pro)
+[Learn more about Jetonomy Pro →](https://store.wbcomdesigns.com/jetonomy-pro/)
 
 ---
 
@@ -254,7 +254,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 35+ REST API endpoints, 18 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://jetonomy.com/docs/hooks) for the full list.
+Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
@@ -300,4 +300,4 @@ Each site in a Multisite network gets its own independent community. Network act
 - RTL stylesheet
 - Translation-ready with `.pot` file
 - WP-CLI commands
-- 35+ REST API endpoints at `/wp-json/jetonomy/v1/`
+- 48+ REST API endpoints at `/wp-json/jetonomy/v1/`

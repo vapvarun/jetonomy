@@ -407,7 +407,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'Email Digest', 'jetonomy' ); ?></h4>
 					<p><?php esc_html_e( 'Send daily or weekly email digests to re-engage members who haven\'t visited recently.', 'jetonomy' ); ?></p>
-					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 
@@ -486,7 +486,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'White Label', 'jetonomy' ); ?></h4>
 					<p><?php esc_html_e( 'Remove Jetonomy branding and replace it with your own logo and color scheme.', 'jetonomy' ); ?></p>
-					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 
@@ -565,7 +565,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'SEO Pro', 'jetonomy' ); ?></h4>
 					<p><?php esc_html_e( 'Open Graph tags, per-space canonical URLs, breadcrumb schema, and advanced robots control.', 'jetonomy' ); ?></p>
-					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 

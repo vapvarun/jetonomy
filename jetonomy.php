@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name: Jetonomy
- * Plugin URI:  https://jetonomy.com
+ * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress — forums, Q&A, and more.
  * Version:     1.0.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
- * Author:      Jetonomy
+ * Author:      Wbcom Designs
+ * Author URI:  https://wbcomdesigns.com/
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: jetonomy

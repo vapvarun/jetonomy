@@ -279,7 +279,7 @@ $stat_cards = [
 				<div class="jt-pro-upsell-card">
 					<h3><?php esc_html_e( 'Analytics', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></h3>
 					<p><?php esc_html_e( 'Engagement graphs, user growth, top spaces, and more.', 'jetonomy' ); ?></p>
-					<a href="https://jetonomy.com/pro" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 
