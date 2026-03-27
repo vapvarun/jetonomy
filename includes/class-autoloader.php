@@ -1,4 +1,10 @@
 <?php
+/**
+ * PSR-4 autoloader.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;

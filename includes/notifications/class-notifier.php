@@ -1,4 +1,10 @@
 <?php
+/**
+ * Notification dispatcher.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Notifications;
 
 defined( 'ABSPATH' ) || exit;

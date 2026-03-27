@@ -1,4 +1,10 @@
 <?php
+/**
+ * Rate limiter.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Permissions;
 
 defined( 'ABSPATH' ) || exit;

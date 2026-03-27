@@ -1,4 +1,10 @@
 <?php
+/**
+ * Search adapter interface.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Adapters;
 
 defined( 'ABSPATH' ) || exit;

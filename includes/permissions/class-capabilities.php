@@ -1,4 +1,10 @@
 <?php
+/**
+ * Capability registration and mapping.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Permissions;
 
 defined( 'ABSPATH' ) || exit;

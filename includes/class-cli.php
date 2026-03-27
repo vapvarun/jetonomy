@@ -1,4 +1,10 @@
 <?php
+/**
+ * WP-CLI commands.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;

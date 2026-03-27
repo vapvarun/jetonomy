@@ -1,4 +1,10 @@
 <?php
+/**
+ * Akismet spam integration.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Moderation;
 
 defined( 'ABSPATH' ) || exit;

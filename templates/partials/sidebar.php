@@ -1,4 +1,10 @@
 <?php
+/**
+ * Sidebar partial.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 /**

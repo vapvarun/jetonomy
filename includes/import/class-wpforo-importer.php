@@ -1,4 +1,10 @@
 <?php
+/**
+ * wpForo importer.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Import;
 
 defined( 'ABSPATH' ) || exit;

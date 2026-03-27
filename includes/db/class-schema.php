@@ -1,4 +1,10 @@
 <?php
+/**
+ * Database schema definitions.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\DB;
 
 defined( 'ABSPATH' ) || exit;

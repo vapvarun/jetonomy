@@ -1,4 +1,10 @@
 <?php
+/**
+ * Permission engine.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Permissions;
 
 defined( 'ABSPATH' ) || exit;

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Recent posts widget.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Widgets;
 
 defined( 'ABSPATH' ) || exit;

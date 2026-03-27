@@ -1,4 +1,10 @@
 <?php
+/**
+ * Spaces sitemap provider.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\SEO;
 
 defined( 'ABSPATH' ) || exit;

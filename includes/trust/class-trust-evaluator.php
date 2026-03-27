@@ -1,4 +1,10 @@
 <?php
+/**
+ * Trust level evaluator.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Trust;
 
 defined( 'ABSPATH' ) || exit;

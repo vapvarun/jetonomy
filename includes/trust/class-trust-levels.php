@@ -1,4 +1,10 @@
 <?php
+/**
+ * Trust level definitions.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Trust;
 
 defined( 'ABSPATH' ) || exit;

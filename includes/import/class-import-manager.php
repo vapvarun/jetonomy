@@ -1,4 +1,10 @@
 <?php
+/**
+ * Import manager.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Import;
 
 defined( 'ABSPATH' ) || exit;

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Migration 1.1.0 — schema updates.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\DB\Migrations;
 
 defined( 'ABSPATH' ) || exit;

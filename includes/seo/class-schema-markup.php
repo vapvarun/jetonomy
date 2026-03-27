@@ -1,4 +1,10 @@
 <?php
+/**
+ * Schema.org markup output.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\SEO;
 
 defined( 'ABSPATH' ) || exit;

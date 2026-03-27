@@ -1,4 +1,10 @@
 <?php
+/**
+ * Reputation calculator.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Trust;
 
 defined( 'ABSPATH' ) || exit;

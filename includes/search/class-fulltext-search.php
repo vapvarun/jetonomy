@@ -1,4 +1,10 @@
 <?php
+/**
+ * Full-text search adapter.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Search;
 
 defined( 'ABSPATH' ) || exit;

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Sitemap registration.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\SEO;
 
 defined( 'ABSPATH' ) || exit;

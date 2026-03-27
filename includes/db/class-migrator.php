@@ -1,4 +1,10 @@
 <?php
+/**
+ * Database migrator.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\DB;
 
 defined( 'ABSPATH' ) || exit;
