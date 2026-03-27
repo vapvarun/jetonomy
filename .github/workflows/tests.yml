@@ -95,7 +95,7 @@ jobs:
       - name: Run CLI QA (actions)
         run: wp-env run cli -- wp jetonomy qa-actions
 
-  # ── WordPress Coding Standards ────────────────────────────────────────────
+  # ── WordPress Coding Standards (Free) ─────────────────────────────────────
   wpcs:
     runs-on: ubuntu-latest
     continue-on-error: true
@@ -114,7 +114,29 @@ jobs:
       - name: Run WordPress Coding Standards
         run: vendor/bin/phpcs
 
-  # ── PHPStan static analysis ───────────────────────────────────────────────
+  # ── WordPress Coding Standards (Pro) ──────────────────────────────────────
+  wpcs-pro:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout Jetonomy Pro
+        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      - name: Run WPCS on Pro
+        run: vendor/bin/phpcs --standard=WordPress "$GITHUB_WORKSPACE/../jetonomy-pro/includes/"
+
+  # ── PHPStan static analysis (Free) ──────────────────────────────────────
   phpstan:
     runs-on: ubuntu-latest
     steps:
@@ -131,3 +153,25 @@ jobs:
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse -c phpstan.neon.dist
+
+  # ── PHPStan static analysis (Pro) ───────────────────────────────────────
+  phpstan-pro:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout Jetonomy Pro
+        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      - name: Run PHPStan on Pro
+        run: vendor/bin/phpstan analyse -c phpstan.neon.dist "$GITHUB_WORKSPACE/../jetonomy-pro/includes/"
