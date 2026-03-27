@@ -109,6 +109,8 @@ module.exports = function( grunt ) {
 							'!seed-*.php',
 							'!**/*.md',
 							'!vendor/**',
+							'!marketing/**',
+							'!.playwright-mcp/**',
 						],
 						dest: 'dist/jetonomy/',
 					},

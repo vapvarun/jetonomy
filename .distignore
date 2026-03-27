@@ -22,3 +22,5 @@ CLAUDE.md
 seed-*.php
 *.md
 !readme.txt
+marketing
+.playwright-mcp
