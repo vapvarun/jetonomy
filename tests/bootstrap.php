@@ -9,6 +9,9 @@ if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
     return;
 }
 
+// PHPUnit Polyfills — required by WP test suite since WP 5.9.
+define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__ ) . '/vendor/yoast/phpunit-polyfills/' );
+
 require_once $_tests_dir . '/includes/functions.php';
 
 tests_add_filter( 'muplugins_loaded', function () {
