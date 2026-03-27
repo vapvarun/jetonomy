@@ -436,11 +436,11 @@
 				var allowVoting = $('#ss-allow-voting').is(':checked');
 				var postsPerPage = $('#ss-posts-per-page').val();
 
-				if (whoCanPost) settings.who_can_post = whoCanPost;
-				if (whoCanReply) settings.who_can_reply = whoCanReply;
+				settings.who_can_post = whoCanPost || 'members';
+				settings.who_can_reply = whoCanReply || 'members';
 				settings.require_approval = requireApproval ? '1' : '0';
 				settings.allow_voting = allowVoting ? '1' : '0';
-				if (postsPerPage) settings.posts_per_page = postsPerPage;
+				settings.posts_per_page = Math.max(1, parseInt(postsPerPage, 10) || 20);
 
 				$btn.prop('disabled', true);
 				self.showSpinner($btn);
