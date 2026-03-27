@@ -971,14 +971,21 @@ class CLI {
 		$model = new \Jetonomy\QA\Model_Tests();
 		$r2    = $model->run();
 
+		// Phase 3: Pro extension tests.
+		\WP_CLI::log( '' );
+		\WP_CLI::log( 'Phase 3: Pro Extension Tests' );
+		$pro = new \Jetonomy\QA\Pro_Tests();
+		$r3  = $pro->run();
+
 		// Summary.
-		$total_pass = $r1['pass'] + $r2['pass'];
-		$total_fail = $r1['fail'] + $r2['fail'];
+		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'];
+		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'];
 
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' );
 		\WP_CLI::log( sprintf( '  REST Tests:  %d/%d', $r1['pass'], $r1['pass'] + $r1['fail'] ) );
 		\WP_CLI::log( sprintf( '  Model Tests: %d/%d', $r2['pass'], $r2['pass'] + $r2['fail'] ) );
+		\WP_CLI::log( sprintf( '  Pro Tests:   %d/%d', $r3['pass'], $r3['pass'] + $r3['fail'] ) );
 		\WP_CLI::log( sprintf( '  TOTAL:       %d/%d', $total_pass, $total_pass + $total_fail ) );
 		\WP_CLI::log( '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' );
 
