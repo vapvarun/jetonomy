@@ -19,7 +19,7 @@ class Template_Loader {
 				$base_slug = $settings['base_slug'] ?? 'community';
 				wp_safe_redirect( home_url( '/' . $base_slug . '/u/' . wp_get_current_user()->user_login . '/' ) );
 			} else {
-				wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+				wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			}
 			exit;
 		}
@@ -29,20 +29,20 @@ class Template_Loader {
 
 		// require_login: redirect all non-logged-in users to login page.
 		if ( ! empty( $settings['require_login'] ) && ! is_user_logged_in() ) {
-			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}
 
 		// guest_read: if disabled, non-logged-in users can't view any forum content.
 		if ( empty( $settings['guest_read'] ) && ! is_user_logged_in() ) {
-			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
 		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
-			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) ) );
+			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}
 

@@ -38,7 +38,7 @@ $base_slug = $settings['base_slug'] ?? 'community';
 $space_url = home_url( '/' . $base_slug . '/s/' . $space->slug . '/' );
 
 if ( ! is_user_logged_in() ) {
-	$login_url = wp_login_url( home_url( esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+	$login_url = wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) );
 	?>
 	<div class="jt-narrow" style="text-align:center;padding:48px 0;">
 		<h2><?php printf( esc_html__( 'You\'ve been invited to join %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?></h2>
