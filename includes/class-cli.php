@@ -1323,19 +1323,19 @@ class CLI {
 			'role'       => 'subscriber',
 		] );
 		if ( $ban_user_id && ! is_wp_error( $ban_user_id ) ) {
-			$ban_id = Models\Restriction::ban( $ban_user_id, 'ban', $admin_id, null, 'QA test ban' );
+			$ban_id = Models\Restriction::ban( $ban_user_id, 'global_ban', $admin_id, null, 'QA test ban' );
 			$is_banned = Models\Restriction::is_banned( $ban_user_id );
 			$check( 'Ban user: is_banned = true', $is_banned );
 
 			// Unban.
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->delete( $restrict_t, [ 'user_id' => $ban_user_id, 'type' => 'ban' ] );
+			$wpdb->delete( $restrict_t, [ 'user_id' => $ban_user_id, 'type' => 'global_ban' ] );
 			// phpcs:enable
 			$is_unbanned = ! Models\Restriction::is_banned( $ban_user_id );
 			$check( 'Unban user: is_banned = false', $is_unbanned );
 
 			// Permission blocked while banned.
-			$ban_id2 = Models\Restriction::ban( $ban_user_id, 'ban', $admin_id, null, 'QA reban' );
+			$ban_id2 = Models\Restriction::ban( $ban_user_id, 'global_ban', $admin_id, null, 'QA reban' );
 			$can_post_banned = Permissions\Permission_Engine::can( $ban_user_id, 'create_posts', (int) $space->id );
 			$check( 'Banned user cannot create_posts', ! $can_post_banned );
 
@@ -1352,11 +1352,12 @@ class CLI {
 		// ── 25. Revision ──
 		\WP_CLI::log( '── Revision ──' );
 		$rev_id = Models\Revision::create( [
-			'object_type'    => 'post',
-			'object_id'      => $post_id,
-			'edited_by'      => $admin_id,
-			'content_before' => '<p>Original QA content.</p>',
-			'content_after'  => '<p>Edited QA content.</p>',
+			'object_type'  => 'post',
+			'object_id'    => $post_id,
+			'author_id'    => $admin_id,
+			'content'      => '<p>Content before QA edit.</p>',
+			'title'        => 'QA Test Post',
+			'edit_summary' => 'QA test revision',
 		] );
 		$check( 'Revision::create() returns ID', $rev_id > 0 );
 		$cleanup[] = [ 'revision', $rev_id ];
