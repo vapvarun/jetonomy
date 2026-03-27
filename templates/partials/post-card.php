@@ -15,13 +15,15 @@ $base     = \Jetonomy\base_url();
 $post_url = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
 $time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
+$viewer_id     = get_current_user_id();
+$viewer_vote   = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 ?>
 <a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
 	<div class="jt-votes">
-		<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
+		<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
 		<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
-		<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
+		<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
 	</div>
 	<div class="jt-row-main">
 		<div class="jt-row-title">

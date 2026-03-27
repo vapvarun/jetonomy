@@ -39,9 +39,10 @@ class Post extends Model {
 		$now  = now();
 		$data = array_merge(
 			array(
-				'status'     => 'publish',
-				'created_at' => $now,
-				'updated_at' => $now,
+				'status'        => 'publish',
+				'created_at'    => $now,
+				'updated_at'    => $now,
+				'last_reply_at' => $now,
 			),
 			$data
 		);

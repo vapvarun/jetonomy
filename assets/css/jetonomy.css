@@ -226,7 +226,8 @@
   .jt-votes { display: flex; flex-direction: column; align-items: center; gap: 1px; }
   .jt-v-btn { width: 26px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--jt-text-secondary); font-size: 0.8125rem; border-radius: 3px; transition: all 0.1s; border: none; background: none; cursor: pointer; }
   .jt-v-btn:hover { color: var(--jt-text-secondary); background: var(--jt-accent-muted); }
-  .jt-v-btn.voted, .jt-v-btn[data-wp-class--voted] { color: var(--jt-text-secondary); }
+  .jt-v-btn.jt-voted { color: var(--jt-accent); }
+  .jt-act.voted { color: var(--jt-accent); }
   .jt-v-num { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; }
 
   /* ── Tags ── */

@@ -98,7 +98,9 @@ final class Jetonomy {
 			update_option( 'jetonomy_settings', $settings );
 		}
 
-		flush_rewrite_rules();
+		// Flag a rewrite flush for the next init — rules are not registered yet
+		// during activation, so flushing here would be a no-op.
+		delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 		set_transient( 'jetonomy_activation_redirect', true, 30 );
 	}
 
@@ -149,11 +151,18 @@ final class Jetonomy {
 		new Router();
 
 		// Ensure rewrite rules are flushed at least once after activation.
-		// Version-keyed so a sitemap or URL change triggers a re-flush.
+		// Version-keyed so a URL structure change triggers a re-flush.
+		// Deferred to init:99 so Router::add_rewrite_rules (init:10) has run first.
 		$flush_key = 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION;
 		if ( ! get_option( $flush_key ) ) {
-			flush_rewrite_rules();
-			update_option( $flush_key, true );
+			add_action(
+				'init',
+				static function () use ( $flush_key ) {
+					flush_rewrite_rules();
+					update_option( $flush_key, true );
+				},
+				99
+			);
 		}
 
 		// Re-register capabilities on version change so ROLE_MAP additions

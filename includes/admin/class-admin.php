@@ -14,6 +14,7 @@ use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
+use Jetonomy\Models\JoinRequest;
 use Jetonomy\Import\Import_Manager;
 use function Jetonomy\table;
 use function Jetonomy\now;
@@ -404,6 +405,7 @@ class Admin {
 			$members        = SpaceMember::list_by_space( $space_id );
 			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
+			$join_requests  = JoinRequest::list_pending_for_space( $space_id );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
 		}

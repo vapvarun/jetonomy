@@ -13,6 +13,7 @@ use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
+use Jetonomy\Models\JoinRequest;
 use function Jetonomy\now;
 
 class Spaces_Handler {
@@ -29,6 +30,9 @@ class Spaces_Handler {
 		// Access Rules AJAX
 		add_action( 'wp_ajax_jetonomy_add_access_rule', [ $this, 'ajax_add_access_rule' ] );
 		add_action( 'wp_ajax_jetonomy_delete_access_rule', [ $this, 'ajax_delete_access_rule' ] );
+		// Join Requests AJAX
+		add_action( 'wp_ajax_jetonomy_approve_join_request', [ $this, 'ajax_approve_join_request' ] );
+		add_action( 'wp_ajax_jetonomy_deny_join_request', [ $this, 'ajax_deny_join_request' ] );
 	}
 
 	public function ajax_create_space(): void {
@@ -356,5 +360,51 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success( [ 'message' => __( 'Access rule deleted.', 'jetonomy' ) ] );
+	}
+
+	public function ajax_approve_join_request(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$request_id = absint( $_POST['id'] ?? 0 );
+		$space_id   = absint( $_POST['space_id'] ?? 0 );
+
+		if ( ! $request_id || ! $space_id ) {
+			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
+		}
+
+		$request = JoinRequest::find( $request_id );
+		if ( ! $request || 'pending' !== $request->status ) {
+			wp_send_json_error( __( 'Join request not found or already processed.', 'jetonomy' ) );
+		}
+
+		JoinRequest::approve( $request_id, get_current_user_id() );
+		SpaceMember::add( $space_id, (int) $request->user_id, 'member' );
+
+		wp_send_json_success( [ 'message' => __( 'Join request approved.', 'jetonomy' ) ] );
+	}
+
+	public function ajax_deny_join_request(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$request_id = absint( $_POST['id'] ?? 0 );
+
+		if ( ! $request_id ) {
+			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
+		}
+
+		$request = JoinRequest::find( $request_id );
+		if ( ! $request || 'pending' !== $request->status ) {
+			wp_send_json_error( __( 'Join request not found or already processed.', 'jetonomy' ) );
+		}
+
+		JoinRequest::deny( $request_id, get_current_user_id() );
+
+		wp_send_json_success( [ 'message' => __( 'Join request denied.', 'jetonomy' ) ] );
 	}
 }

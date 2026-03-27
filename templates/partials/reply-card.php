@@ -36,14 +36,18 @@ $is_accepted = (int) $reply->is_accepted;
 	<div class="jt-reply-body">
 		<?php echo \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- processed through wp_kses_post ?>
 	</div>
+	<?php
+	$reply_viewer_id   = get_current_user_id();
+	$reply_viewer_vote = $reply_viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $reply_viewer_id, 'reply', (int) $reply->id ) : null;
+	?>
 	<div class="jt-reply-foot">
-		<button class="jt-act"
+		<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 			data-wp-on--click="actions.voteReplyUp"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 		</button>
-		<button class="jt-act"
+		<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 			data-wp-on--click="actions.voteReplyDown"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>

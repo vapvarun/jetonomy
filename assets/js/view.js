@@ -349,6 +349,15 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
+                    // Toggle voted state on the button.
+                    if ( data.action === 'removed' ) {
+                        el.ref.classList.remove( 'voted' );
+                    } else {
+                        el.ref.classList.add( 'voted' );
+                        // Remove voted from the sibling down button.
+                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
+                        if ( sibling ) sibling.classList.remove( 'voted' );
+                    }
                     if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
                 } else {
                     // Rollback on error
@@ -395,6 +404,15 @@ const { state, actions } = store( 'jetonomy', {
                     const data = yield response.json();
                     if ( data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
+                    }
+                    // Toggle voted state on the button.
+                    if ( data.action === 'removed' ) {
+                        el.ref.classList.remove( 'voted' );
+                    } else {
+                        el.ref.classList.add( 'voted' );
+                        // Remove voted from the sibling up button.
+                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteUp"], [data-wp-on--click="actions.voteUp"]' );
+                        if ( sibling ) sibling.classList.remove( 'voted' );
                     }
                     if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
                 } else {
@@ -443,6 +461,14 @@ const { state, actions } = store( 'jetonomy', {
                         state.replyScores[ replyId ] = data.score;
                         if ( scoreEl ) scoreEl.textContent = data.score;
                     }
+                    // Toggle voted state on the button.
+                    if ( data.action === 'removed' ) {
+                        el.ref.classList.remove( 'voted' );
+                    } else {
+                        el.ref.classList.add( 'voted' );
+                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyDown"], [data-wp-on--click="actions.voteReplyDown"]' );
+                        if ( sibling ) sibling.classList.remove( 'voted' );
+                    }
                 } else {
                     state.replyScores[ replyId ] = current;
                     if ( scoreEl ) scoreEl.textContent = current;
@@ -489,6 +515,14 @@ const { state, actions } = store( 'jetonomy', {
                     if ( data.score !== undefined ) {
                         state.replyScores[ replyId ] = data.score;
                         if ( scoreEl ) scoreEl.textContent = data.score;
+                    }
+                    // Toggle voted state on the button.
+                    if ( data.action === 'removed' ) {
+                        el.ref.classList.remove( 'voted' );
+                    } else {
+                        el.ref.classList.add( 'voted' );
+                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
+                        if ( sibling ) sibling.classList.remove( 'voted' );
                     }
                 } else {
                     state.replyScores[ replyId ] = current;

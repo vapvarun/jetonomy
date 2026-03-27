@@ -25,6 +25,14 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<a href="<?php echo esc_url( $edit_url . '&tab=members' ); ?>" class="nav-tab <?php echo 'members' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Members', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url . '&tab=access' ); ?>" class="nav-tab <?php echo 'access' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Access Rules', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url . '&tab=settings' ); ?>" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></a>
+		<?php if ( 'approval' === ( $space->join_policy ?? 'open' ) ) : ?>
+			<a href="<?php echo esc_url( $edit_url . '&tab=join_requests' ); ?>" class="nav-tab <?php echo 'join_requests' === $active_tab ? 'nav-tab-active' : ''; ?>">
+				<?php esc_html_e( 'Join Requests', 'jetonomy' ); ?>
+				<?php if ( ! empty( $join_requests ) ) : ?>
+					<span class="count">(<?php echo count( $join_requests ); ?>)</span>
+				<?php endif; ?>
+			</a>
+		<?php endif; ?>
 		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Custom Fields', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
 			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Reactions', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
@@ -341,6 +349,49 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		 */
 		do_action( 'jetonomy_admin_space_edit_tab_content', $active_tab, $space );
 		?>
+
+	<?php elseif ( 'join_requests' === $active_tab ) : ?>
+		<!-- Join Requests Tab -->
+		<div class="jetonomy-tab-content">
+			<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), count( $join_requests ) ); ?></h2>
+			<table class="wp-list-table widefat fixed striped" id="jetonomy-join-requests-table">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
+						<th><?php esc_html_e( 'Message', 'jetonomy' ); ?></th>
+						<th style="width:150px;"><?php esc_html_e( 'Requested', 'jetonomy' ); ?></th>
+						<th style="width:180px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if ( empty( $join_requests ) ) : ?>
+						<tr class="jetonomy-no-items"><td colspan="4"><?php esc_html_e( 'No pending join requests.', 'jetonomy' ); ?></td></tr>
+					<?php else : ?>
+						<?php
+						foreach ( $join_requests as $request ) :
+							$user = get_userdata( $request->user_id );
+							if ( ! $user ) {
+								continue;
+							}
+							?>
+							<tr data-request-id="<?php echo absint( $request->id ); ?>">
+								<td>
+									<?php echo get_avatar( $request->user_id, 24 ); ?>
+									<strong><?php echo esc_html( $user->display_name ); ?></strong>
+									<span class="description">(<?php echo esc_html( $user->user_login ); ?>)</span>
+								</td>
+								<td><?php echo esc_html( $request->message ?: '&mdash;' ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $request->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td>
+									<button type="button" class="button button-small button-primary jetonomy-approve-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
+									<button type="button" class="button button-small jetonomy-deny-join-request" data-id="<?php echo absint( $request->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Deny', 'jetonomy' ); ?></button>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					<?php endif; ?>
+				</tbody>
+			</table>
+		</div>
 
 	<?php endif; ?>
 </div>

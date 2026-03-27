@@ -196,6 +196,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								<br><code>/community/s/<?php echo esc_html( $space->slug ); ?>/</code>
 								<div class="row-actions">
 									<span class="edit"><a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $space->id ) ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
+									<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 									<span class="delete"><a href="#" class="jetonomy-delete-space" data-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 								</div>
 							</td>

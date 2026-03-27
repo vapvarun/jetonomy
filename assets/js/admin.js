@@ -631,6 +631,58 @@
 					}
 				});
 			});
+
+			// ── Join Requests ──
+
+			// Approve join request
+			$(document).on('click', '.jetonomy-approve-join-request', function() {
+				var $btn = $(this);
+				var $row = $btn.closest('tr');
+				var id = $btn.data('id');
+				var spaceId = $btn.data('space-id');
+
+				$btn.prop('disabled', true);
+
+				self.ajax('jetonomy_approve_join_request', {
+					id: id,
+					space_id: spaceId
+				}).done(function(res) {
+					if (res.success) {
+						self.toast(res.data.message);
+						$row.fadeOut(300, function() { $(this).remove(); });
+					} else {
+						self.toast(res.data || self.i18n.error, 'error');
+					}
+				}).fail(function() {
+					self.toast(self.i18n.error, 'error');
+				}).always(function() {
+					$btn.prop('disabled', false);
+				});
+			});
+
+			// Deny join request
+			$(document).on('click', '.jetonomy-deny-join-request', function() {
+				var $btn = $(this);
+				var $row = $btn.closest('tr');
+				var id = $btn.data('id');
+
+				$btn.prop('disabled', true);
+
+				self.ajax('jetonomy_deny_join_request', {
+					id: id
+				}).done(function(res) {
+					if (res.success) {
+						self.toast(res.data.message);
+						$row.fadeOut(300, function() { $(this).remove(); });
+					} else {
+						self.toast(res.data || self.i18n.error, 'error');
+					}
+				}).fail(function() {
+					self.toast(self.i18n.error, 'error');
+				}).always(function() {
+					$btn.prop('disabled', false);
+				});
+			});
 		},
 
 		// ═══════════════════════════════════════════════════════════
