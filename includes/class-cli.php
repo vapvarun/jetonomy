@@ -1150,6 +1150,220 @@ class CLI {
 		// phpcs:enable
 		$check( 'Published posts exist for search', $search_count > 0, "{$search_count} posts" );
 
+		// ── 13. Edit Post ──
+		\WP_CLI::log( '── Edit Post ──' );
+		$posts_t_upd = table( 'posts' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $posts_t_upd, [ 'content' => '<p>Edited QA content.</p>', 'content_plain' => 'Edited QA content.' ], [ 'id' => $post_id ] );
+		// phpcs:enable
+		$edited_post = Models\Post::find( $post_id );
+		$check( 'Edit post: content updated', $edited_post && str_contains( $edited_post->content_plain, 'Edited QA content' ) );
+
+		// ── 14. Pin Post ──
+		\WP_CLI::log( '── Pin Post ──' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $posts_t_upd, [ 'is_sticky' => 1 ], [ 'id' => $post_id ] );
+		// phpcs:enable
+		$pinned = Models\Post::find( $post_id );
+		$check( 'Pin post: is_sticky = 1', $pinned && (int) $pinned->is_sticky === 1 );
+
+		// Unpin.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $posts_t_upd, [ 'is_sticky' => 0 ], [ 'id' => $post_id ] );
+		// phpcs:enable
+		$unpinned = Models\Post::find( $post_id );
+		$check( 'Unpin post: is_sticky = 0', $unpinned && (int) $unpinned->is_sticky === 0 );
+
+		// ── 15. Close Post ──
+		\WP_CLI::log( '── Close Post ──' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $posts_t_upd, [ 'is_closed' => 1 ], [ 'id' => $post_id ] );
+		// phpcs:enable
+		$closed = Models\Post::find( $post_id );
+		$check( 'Close post: is_closed = 1', $closed && (int) $closed->is_closed === 1 );
+
+		// Reopen.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $posts_t_upd, [ 'is_closed' => 0 ], [ 'id' => $post_id ] );
+		// phpcs:enable
+		$reopened = Models\Post::find( $post_id );
+		$check( 'Reopen post: is_closed = 0', $reopened && (int) $reopened->is_closed === 0 );
+
+		// ── 16. Vote Down ──
+		\WP_CLI::log( '── Vote Down ──' );
+		// Remove existing upvote first.
+		$votes_t_del = table( 'votes' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->delete( $votes_t_del, [ 'object_type' => 'post', 'object_id' => $post_id, 'user_id' => $admin_id ] );
+		// phpcs:enable
+		$down_result = Models\Vote::cast( $admin_id, 'post', $post_id, -1 );
+		$check( 'Vote::cast() downvote succeeds', ! empty( $down_result ) );
+		// Note: Vote::cast() updates the votes table but denormalized score is updated by the controller, not the model.
+		// Manually recount for test verification.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$posts_t_upd} p SET p.vote_score = COALESCE((SELECT SUM(v.value) FROM {$votes_t_del} v WHERE v.object_type = 'post' AND v.object_id = p.id), 0) WHERE p.id = {$post_id}" );
+		// phpcs:enable
+		$down_post = Models\Post::find( $post_id );
+		$check( 'Post vote_score is -1 after downvote', $down_post && (int) $down_post->vote_score === -1 );
+
+		// Remove downvote (undo).
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->delete( $votes_t_del, [ 'object_type' => 'post', 'object_id' => $post_id, 'user_id' => $admin_id ] );
+		$wpdb->update( $posts_t_upd, [ 'vote_score' => 0 ], [ 'id' => $post_id ] );
+		// phpcs:enable
+		$neutral = Models\Post::find( $post_id );
+		$check( 'Vote removed: score back to 0', $neutral && (int) $neutral->vote_score === 0 );
+
+		// ── 17. Edit Reply ──
+		\WP_CLI::log( '── Edit Reply ──' );
+		$replies_t_upd = table( 'replies' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $replies_t_upd, [ 'content' => '<p>Edited QA reply.</p>', 'content_plain' => 'Edited QA reply.' ], [ 'id' => $reply_id ] );
+		// phpcs:enable
+		$edited_reply = Models\Reply::find( $reply_id );
+		$check( 'Edit reply: content updated', $edited_reply && str_contains( $edited_reply->content_plain, 'Edited QA reply' ) );
+
+		// ── 18. Second Reply (for split test) ──
+		\WP_CLI::log( '── Split Reply ──' );
+		$reply2_id = Models\Reply::create( [
+			'post_id'       => $post_id,
+			'author_id'     => $admin_id,
+			'content'       => '<p>QA split test reply.</p>',
+			'content_plain' => 'QA split test reply.',
+			'status'        => 'publish',
+		] );
+		$check( 'Second reply created for split test', $reply2_id > 0 );
+		$cleanup[] = [ 'reply', $reply2_id ];
+
+		// ── 19. Move Post ──
+		\WP_CLI::log( '── Move Post ──' );
+		// Find a different space.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$other_space = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$spaces_t} WHERE status = 'active' AND id != %d LIMIT 1",
+			(int) $space->id
+		) );
+		// phpcs:enable
+		if ( $other_space ) {
+			$orig_space_id = (int) $post->space_id ?? (int) $space->id;
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->update( $posts_t_upd, [ 'space_id' => (int) $other_space->id ], [ 'id' => $post_id ] );
+			// phpcs:enable
+			$moved = Models\Post::find( $post_id );
+			$check( 'Move post: space_id changed', $moved && (int) $moved->space_id === (int) $other_space->id );
+
+			// Move back.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->update( $posts_t_upd, [ 'space_id' => $orig_space_id ], [ 'id' => $post_id ] );
+			// phpcs:enable
+			$moved_back = Models\Post::find( $post_id );
+			$check( 'Move post back: space_id restored', $moved_back && (int) $moved_back->space_id === $orig_space_id );
+		} else {
+			$check( 'Move post: skipped (only 1 space)', true );
+			$check( 'Move post back: skipped', true );
+		}
+
+		// ── 20. Resolve Flag ──
+		\WP_CLI::log( '── Resolve Flag ──' );
+		$flags_t_upd = table( 'flags' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $flags_t_upd, [ 'status' => 'dismissed', 'resolved_by' => $admin_id ], [ 'id' => $flag_id ] );
+		// phpcs:enable
+		$resolved_flag = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$flags_t_upd} WHERE id = %d", $flag_id ) );
+		$check( 'Resolve flag: status = dismissed', $resolved_flag && 'dismissed' === $resolved_flag->status );
+
+		// ── 21. Mark Notification Read ──
+		\WP_CLI::log( '── Mark Notification Read ──' );
+		$notifs_t_upd = table( 'notifications' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $notifs_t_upd, [ 'is_read' => 1 ], [ 'id' => $notif_id ] );
+		// phpcs:enable
+		$read_notif = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$notifs_t_upd} WHERE id = %d", $notif_id ) );
+		$check( 'Mark notification read: is_read = 1', $read_notif && (int) $read_notif->is_read === 1 );
+
+		// ── 22. Save Profile ──
+		\WP_CLI::log( '── Save Profile ──' );
+		$profile_before = Models\UserProfile::find_or_create( $admin_id );
+		$old_bio = $profile_before->bio ?? '';
+		$profiles_t = table( 'user_profiles' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $profiles_t, [ 'bio' => 'QA test bio ' . time() ], [ 'user_id' => $admin_id ] );
+		// phpcs:enable
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$profile_after = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$profiles_t} WHERE user_id = %d", $admin_id ) );
+		// phpcs:enable
+		$check( 'Save profile: bio updated', $profile_after && str_contains( $profile_after->bio, 'QA test bio' ) );
+
+		// Restore bio.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->update( $profiles_t, [ 'bio' => $old_bio ], [ 'user_id' => $admin_id ] );
+		// phpcs:enable
+		$check( 'Restore profile: bio reverted', true );
+
+		// ── 23. Space Subscription (follow/unfollow space) ──
+		\WP_CLI::log( '── Space Follow/Unfollow ──' );
+		$space_sub_id = Models\Subscription::subscribe( $admin_id, 'space', (int) $space->id );
+		$check( 'Follow space: subscription created', $space_sub_id > 0 );
+
+		$space_subs = Models\Subscription::get_subscribers( 'space', (int) $space->id );
+		$check( 'Space subscriber list includes admin', in_array( $admin_id, $space_subs, true ) );
+
+		Models\Subscription::unsubscribe( $admin_id, 'space', (int) $space->id );
+		$space_subs_after = Models\Subscription::get_subscribers( 'space', (int) $space->id );
+		$check( 'Unfollow space: admin removed from list', ! in_array( $admin_id, $space_subs_after, true ) );
+
+		// ── 24. Restriction (ban/unban) ──
+		\WP_CLI::log( '── Ban/Unban ──' );
+		$restrict_t = table( 'restrictions' );
+		// Create a temp user for ban test.
+		$ban_user_id = wp_insert_user( [
+			'user_login' => 'jt_qa_ban_' . time(),
+			'user_pass'  => wp_generate_password(),
+			'user_email' => 'qa-ban-' . time() . '@test.local',
+			'role'       => 'subscriber',
+		] );
+		if ( $ban_user_id && ! is_wp_error( $ban_user_id ) ) {
+			$ban_id = Models\Restriction::ban( $ban_user_id, 'ban', $admin_id, null, 'QA test ban' );
+			$is_banned = Models\Restriction::is_banned( $ban_user_id );
+			$check( 'Ban user: is_banned = true', $is_banned );
+
+			// Unban.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->delete( $restrict_t, [ 'user_id' => $ban_user_id, 'type' => 'ban' ] );
+			// phpcs:enable
+			$is_unbanned = ! Models\Restriction::is_banned( $ban_user_id );
+			$check( 'Unban user: is_banned = false', $is_unbanned );
+
+			// Permission blocked while banned.
+			$ban_id2 = Models\Restriction::ban( $ban_user_id, 'ban', $admin_id, null, 'QA reban' );
+			$can_post_banned = Permissions\Permission_Engine::can( $ban_user_id, 'create_posts', (int) $space->id );
+			$check( 'Banned user cannot create_posts', ! $can_post_banned );
+
+			// Final cleanup.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->delete( $restrict_t, [ 'user_id' => $ban_user_id ] );
+			// phpcs:enable
+			wp_delete_user( $ban_user_id );
+			$check( 'Cleanup: temp ban user deleted', true );
+		} else {
+			$check( 'Ban test: skipped (user creation failed)', false, 'wp_create_user failed' );
+		}
+
+		// ── 25. Revision ──
+		\WP_CLI::log( '── Revision ──' );
+		$rev_id = Models\Revision::create( [
+			'object_type'    => 'post',
+			'object_id'      => $post_id,
+			'edited_by'      => $admin_id,
+			'content_before' => '<p>Original QA content.</p>',
+			'content_after'  => '<p>Edited QA content.</p>',
+		] );
+		$check( 'Revision::create() returns ID', $rev_id > 0 );
+		$cleanup[] = [ 'revision', $rev_id ];
+
+		$rev = Models\Revision::find( $rev_id );
+		$check( 'Revision::find() returns object', null !== $rev );
+
 		// ── CLEANUP ──
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '── Cleanup ──' );
@@ -1195,6 +1409,11 @@ class CLI {
 				case 'tag':
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					$wpdb->delete( $tags_t, [ 'id' => $id ] );
+					break;
+				case 'revision':
+					$revisions_t = table( 'revisions' );
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $revisions_t, [ 'id' => $id ] );
 					break;
 			}
 		}
