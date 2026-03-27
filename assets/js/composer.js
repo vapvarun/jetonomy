@@ -536,7 +536,49 @@ document.addEventListener( 'DOMContentLoaded', () => {
         });
     });
 
-    // Request-to-join form (approval policy).
+    // Request-to-join button (public + approval header button).
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.jt-join-request-btn');
+        if (!btn) return;
+        e.preventDefault();
+
+        var spaceId = btn.dataset.spaceId;
+        var nonce   = btn.dataset.nonce;
+        if (!spaceId) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Requesting\u2026';
+
+        fetch(apiBase + '/spaces/' + spaceId + '/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+            credentials: 'same-origin',
+            body: JSON.stringify({}),
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            if (res.data.status === 'pending') {
+                btn.disabled = true;
+                btn.textContent = 'Awaiting Approval';
+                btn.classList.remove('jt-btn-fill');
+                btn.classList.add('jt-btn-outline');
+                (window.bnToast ? window.bnToast(res.data.message || 'Request submitted. Awaiting approval.', 'success') : null);
+            } else if (res.ok && res.data.status === 'joined') {
+                window.location.reload();
+            } else {
+                btn.disabled = false;
+                btn.textContent = 'Request to Join';
+                (window.bnToast ? window.bnToast(res.data.message || 'Could not submit request.', 'error') : null);
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.textContent = 'Request to Join';
+            (window.bnToast ? window.bnToast('Network error. Please try again.', 'error') : null);
+        });
+    });
+
+    // Request-to-join form (approval policy — gate block form).
     document.addEventListener('submit', function(e) {
         var form = e.target.closest('.jt-join-request-form');
         if (!form) return;
