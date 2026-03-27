@@ -15,11 +15,6 @@
 		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 	</rule>
 
-	<!-- Allow short ternary / null coalescing operators, common in PHP 7+. -->
-	<rule ref="WordPress.PHP.DisallowShortTernary">
-		<severity>0</severity>
-	</rule>
-
 	<!-- Namespaced plugin — PrefixAllGlobals only applies to the global scope. -->
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>

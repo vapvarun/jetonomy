@@ -1,4 +1,10 @@
 <?php
+/**
+ * Reply model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

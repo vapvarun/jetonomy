@@ -1,4 +1,10 @@
 <?php
+/**
+ * Media upload handler.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;
@@ -34,10 +40,12 @@ class Media {
 			wp_send_json_error( $attachment_id->get_error_message() );
 		}
 
-		wp_send_json_success( [
-			'id'  => $attachment_id,
-			'url' => wp_get_attachment_url( $attachment_id ),
-			'alt' => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ?: '',
-		] );
+		wp_send_json_success(
+			[
+				'id'  => $attachment_id,
+				'url' => wp_get_attachment_url( $attachment_id ),
+				'alt' => get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ?: '',
+			]
+		);
 	}
 }

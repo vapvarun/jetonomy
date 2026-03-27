@@ -21,16 +21,16 @@ defined( 'ABSPATH' ) || exit;
 $settings  = get_option( 'jetonomy_settings', [] );
 $base_slug = $settings['base_slug'] ?? 'community';
 
-$back_url    = admin_url( 'admin.php?page=jetonomy-content' );
-$page_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $post->id ) );
+$back_url = admin_url( 'admin.php?page=jetonomy-content' );
+$page_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $post->id ) );
 
 // Post author & space.
-$post_author = get_userdata( (int) $post->author_id );
+$post_author      = get_userdata( (int) $post->author_id );
 $post_author_name = $post_author ? $post_author->display_name : __( 'Unknown', 'jetonomy' );
 
-$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+$space       = \Jetonomy\Models\Space::find( (int) $post->space_id );
 $space_title = $space ? $space->title : '';
-$space_slug  = $space ? $space->slug  : '';
+$space_slug  = $space ? $space->slug : '';
 $post_slug   = $post->slug ?? '';
 $front_url   = $space_slug && $post_slug
 	? home_url( "/{$base_slug}/s/{$space_slug}/t/{$post_slug}/" )
@@ -54,13 +54,15 @@ $status_labels = [
 		</a>
 	</p>
 
-	<h1><?php
+	<h1>
+	<?php
 		printf(
 			/* translators: %s: post title */
 			esc_html__( 'Replies: %s', 'jetonomy' ),
 			esc_html( wp_trim_words( $post->title, 10 ) )
 		);
-	?></h1>
+		?>
+	</h1>
 
 	<!-- Post meta bar -->
 	<div class="jt-replies-page-meta">
@@ -174,12 +176,13 @@ $status_labels = [
 				</tr>
 			</thead>
 			<tbody id="jt-replies-tbody">
-				<?php foreach ( $replies as $r ) :
+				<?php
+				foreach ( $replies as $r ) :
 					$author      = get_userdata( (int) $r->author_id );
 					$author_name = $author ? $author->display_name : __( 'Unknown', 'jetonomy' );
 					$row_id      = 'jt-reply-row-' . absint( $r->id );
 					$preview     = wp_trim_words( wp_strip_all_tags( $r->content ?? '' ), 40 );
-				?>
+					?>
 					<tr
 						id="<?php echo esc_attr( $row_id ); ?>"
 						data-id="<?php echo absint( $r->id ); ?>"
@@ -274,7 +277,7 @@ $status_labels = [
 								<?php
 								if ( ! empty( $r->created_at ) ) {
 									echo esc_html(
-										human_time_diff( strtotime( $r->created_at ), current_time( 'timestamp', true ) )
+										human_time_diff( strtotime( $r->created_at ), time() )
 										. ' ' . __( 'ago', 'jetonomy' )
 									);
 								} else {
@@ -300,17 +303,19 @@ $status_labels = [
 		</table>
 	</div><!-- /.jt-content-table-wrap -->
 
-	<?php if ( $total_pages > 1 ) : ?>
+		<?php if ( $total_pages > 1 ) : ?>
 		<div class="tablenav bottom">
 			<div class="tablenav-pages">
 				<?php
-				$plinks = paginate_links( [
-					'base'    => add_query_arg( 'paged', '%#%' ),
-					'format'  => '',
-					'current' => $paged,
-					'total'   => $total_pages,
-					'type'    => 'array',
-				] );
+				$plinks = paginate_links(
+					[
+						'base'    => add_query_arg( 'paged', '%#%' ),
+						'format'  => '',
+						'current' => $paged,
+						'total'   => $total_pages,
+						'type'    => 'array',
+					]
+				);
 				if ( $plinks ) {
 					echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>';
 				}

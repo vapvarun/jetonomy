@@ -1,4 +1,10 @@
 <?php
+/**
+ * Bookmark model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

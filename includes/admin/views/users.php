@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin users management view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $trust_labels = [
@@ -78,10 +84,10 @@ $trust_labels = [
 						<td><?php echo absint( $u->post_count ); ?></td>
 						<td><?php echo absint( $u->reply_count ); ?></td>
 						<td>
-							<?php echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '&mdash;' ); ?>
+							<?php echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '&mdash;' ); ?>
 						</td>
 						<td>
-							<?php echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) ); ?>
+							<?php echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) ); ?>
 						</td>
 					</tr>
 				<?php endforeach; ?>
@@ -95,13 +101,15 @@ $trust_labels = [
 		<div class="tablenav bottom">
 			<div class="tablenav-pages">
 				<?php
-				$pagination = paginate_links( [
-					'base'    => add_query_arg( 'paged', '%#%' ),
-					'format'  => '',
-					'current' => $paged,
-					'total'   => $total_pages,
-					'type'    => 'array',
-				] );
+				$pagination = paginate_links(
+					[
+						'base'    => add_query_arg( 'paged', '%#%' ),
+						'format'  => '',
+						'current' => $paged,
+						'total'   => $total_pages,
+						'type'    => 'array',
+					]
+				);
 				if ( $pagination ) {
 					echo '<span class="pagination-links">' . implode( ' ', $pagination ) . '</span>';
 				}

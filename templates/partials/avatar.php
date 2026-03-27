@@ -6,9 +6,9 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$size   = $size ?? 30;
-$class  = $class ?? 'jt-avatar-sm';
-$user   = is_numeric( $user_id ) ? get_userdata( $user_id ) : null;
+$size       = $size ?? 30;
+$class      = $class ?? 'jt-avatar-sm';
+$user       = is_numeric( $user_id ) ? get_userdata( $user_id ) : null;
 $initials   = $user ? strtoupper( mb_substr( $user->display_name, 0, 2 ) ) : '??';
 $avatar_url = $user ? get_avatar_url( $user_id, [ 'size' => $size * 2 ] ) : '';
 $name       = $user ? $user->display_name : __( 'Anonymous', 'jetonomy' );

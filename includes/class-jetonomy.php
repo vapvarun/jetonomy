@@ -1,4 +1,10 @@
 <?php
+/**
+ * Main plugin class.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;
@@ -37,7 +43,7 @@ final class Jetonomy {
 		if ( ! file_exists( $plugin_json_path ) ) {
 			return $theme_json;
 		}
-		$plugin_data = json_decode( file_get_contents( $plugin_json_path ), true );
+		$plugin_data = json_decode( file_get_contents( $plugin_json_path ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		if ( ! $plugin_data ) {
 			return $theme_json;
 		}

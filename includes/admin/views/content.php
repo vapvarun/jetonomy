@@ -118,13 +118,14 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 				</tr>
 			</thead>
 			<tbody id="jt-posts-tbody">
-				<?php foreach ( $posts as $p ) :
+				<?php
+				foreach ( $posts as $p ) :
 					$author      = get_userdata( $p->author_id );
 					$author_name = $author ? $author->display_name : __( 'Unknown', 'jetonomy' );
 
-					$space_slug  = $p->space_slug ?? '';
-					$post_slug   = $p->slug       ?? '';
-					$front_url   = $space_slug && $post_slug
+					$space_slug = $p->space_slug ?? '';
+					$post_slug  = $p->slug ?? '';
+					$front_url  = $space_slug && $post_slug
 						? home_url( "/{$base_slug}/s/{$space_slug}/t/{$post_slug}/" )
 						: '';
 
@@ -137,7 +138,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 					$status_dot_class = $status_class_map[ $p->status ] ?? '';
 
 					$row_id = 'jt-post-row-' . absint( $p->id );
-				?>
+					?>
 					<!-- ── Post row ── -->
 					<tr id="<?php echo esc_attr( $row_id ); ?>"
 						data-id="<?php echo absint( $p->id ); ?>"
@@ -249,7 +250,10 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
 							<?php echo esc_html( $p->space_title ?? '' ); ?>
-							<?php if ( empty( $p->space_title ) ) : ?>&mdash;<?php endif; ?>
+							<?php
+							if ( empty( $p->space_title ) ) :
+								?>
+								&mdash;<?php endif; ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Author', 'jetonomy' ); ?>">
 							<?php echo esc_html( $author_name ); ?>
@@ -264,7 +268,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							$reply_count = absint( $p->reply_count ?? 0 );
 							if ( $reply_count > 0 ) :
 								$replies_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . absint( $p->id ) );
-							?>
+								?>
 								<a href="<?php echo esc_url( $replies_url ); ?>"><?php echo esc_html( number_format_i18n( $reply_count ) ); ?></a>
 							<?php else : ?>
 								0
@@ -278,7 +282,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 								<?php
 								if ( ! empty( $p->created_at ) ) {
 									echo esc_html(
-										human_time_diff( strtotime( $p->created_at ), current_time( 'timestamp', true ) )
+										human_time_diff( strtotime( $p->created_at ), time() )
 										. ' ' . __( 'ago', 'jetonomy' )
 									);
 								} else {
@@ -310,17 +314,19 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		</table>
 	</div><!-- /.jt-content-table-wrap -->
 
-	<?php if ( $total_pages > 1 ) : ?>
+		<?php if ( $total_pages > 1 ) : ?>
 		<div class="tablenav bottom">
 			<div class="tablenav-pages">
 				<?php
-				$plinks = paginate_links( [
-					'base'    => add_query_arg( 'paged', '%#%' ),
-					'format'  => '',
-					'current' => $paged,
-					'total'   => $total_pages,
-					'type'    => 'array',
-				] );
+				$plinks = paginate_links(
+					[
+						'base'    => add_query_arg( 'paged', '%#%' ),
+						'format'  => '',
+						'current' => $paged,
+						'total'   => $total_pages,
+						'type'    => 'array',
+					]
+				);
 				if ( $plinks ) {
 					echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>';
 				}

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Notifications REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,33 +28,51 @@ class Notifications_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// Collection.
-		register_rest_route( $ns, '/notifications', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'list_items' ],
-			'permission_callback' => '__return_true',
-			'args'                => $this->get_collection_params(),
-		] );
+		register_rest_route(
+			$ns,
+			'/notifications',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'list_items' ],
+				'permission_callback' => '__return_true',
+				'args'                => $this->get_collection_params(),
+			]
+		);
 
 		// Unread count — registered before the (?P<id>\d+) route so it wins.
-		register_rest_route( $ns, '/notifications/unread-count', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'unread_count' ],
-			'permission_callback' => '__return_true',
-		] );
+		register_rest_route(
+			$ns,
+			'/notifications/unread-count',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'unread_count' ],
+				'permission_callback' => '__return_true',
+			]
+		);
 
 		// Mark all read.
-		register_rest_route( $ns, '/notifications/mark-all-read', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'mark_all_read' ],
-			'permission_callback' => function() { return is_user_logged_in(); },
-		] );
+		register_rest_route(
+			$ns,
+			'/notifications/mark-all-read',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'mark_all_read' ],
+				'permission_callback' => function () {
+					return is_user_logged_in(); },
+			]
+		);
 
 		// Single notification.
-		register_rest_route( $ns, '/notifications/(?P<id>\d+)', [
-			'methods'             => 'PATCH',
-			'callback'            => [ $this, 'mark_read' ],
-			'permission_callback' => function() { return is_user_logged_in(); },
-		] );
+		register_rest_route(
+			$ns,
+			'/notifications/(?P<id>\d+)',
+			[
+				'methods'             => 'PATCH',
+				'callback'            => [ $this, 'mark_read' ],
+				'permission_callback' => function () {
+					return is_user_logged_in(); },
+			]
+		);
 	}
 
 	/**
@@ -67,9 +91,12 @@ class Notifications_Controller extends Base_Controller {
 
 		$items = array_map( [ $this, 'prepare_notification' ], $notifications );
 
-		return $this->paginated_response( $items, [
-			'has_more' => count( $items ) === $limit,
-		] );
+		return $this->paginated_response(
+			$items,
+			[
+				'has_more' => count( $items ) === $limit,
+			]
+		);
 	}
 
 	/**
@@ -160,7 +187,7 @@ class Notifications_Controller extends Base_Controller {
 			'actor_name'   => $actor ? $actor->display_name : __( 'System', 'jetonomy' ),
 			'actor_avatar' => $actor ? get_avatar_url( $actor_id, [ 'size' => 64 ] ) : '',
 			'actor_login'  => $actor ? $actor->user_login : '',
-			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
 			'object_url'   => $this->resolve_notification_url( $notification, $object_type, $object_id ),
 		];
@@ -193,8 +220,8 @@ class Notifications_Controller extends Base_Controller {
 	 * @return string URL or empty string if unresolvable.
 	 */
 	private function resolve_object_url( string $object_type, int $object_id ): string {
-		$settings   = get_option( 'jetonomy_settings', [] );
-		$base_slug  = $settings['base_slug'] ?? 'community';
+		$settings  = get_option( 'jetonomy_settings', [] );
+		$base_slug = $settings['base_slug'] ?? 'community';
 
 		if ( 'post' === $object_type ) {
 			$post = Post::find( $object_id );

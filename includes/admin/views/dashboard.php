@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin dashboard view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 if ( ! get_option( 'jetonomy_setup_complete' ) ) : ?>
@@ -7,15 +13,34 @@ if ( ! get_option( 'jetonomy_setup_complete' ) ) : ?>
 	<p><?php esc_html_e( 'Complete the setup wizard to create your first community space.', 'jetonomy' ); ?></p>
 	<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-setup' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Run Setup Wizard', 'jetonomy' ); ?></a>
 </div>
-<?php endif;
+	<?php
+endif;
 
 $stat_cards = [
-	'total_posts'   => [ 'label' => __( 'Total Posts', 'jetonomy' ),   'icon' => 'dashicons-admin-post' ],
-	'total_replies' => [ 'label' => __( 'Total Replies', 'jetonomy' ), 'icon' => 'dashicons-format-chat' ],
-	'active_spaces' => [ 'label' => __( 'Active Spaces', 'jetonomy' ), 'icon' => 'dashicons-networking' ],
-	'users'         => [ 'label' => __( 'Registered Users', 'jetonomy' ), 'icon' => 'dashicons-admin-users' ],
-	'pending_flags' => [ 'label' => __( 'Pending Flags', 'jetonomy' ), 'icon' => 'dashicons-flag' ],
-	'posts_today'   => [ 'label' => __( 'Posts Today', 'jetonomy' ),   'icon' => 'dashicons-calendar-alt' ],
+	'total_posts'   => [
+		'label' => __( 'Total Posts', 'jetonomy' ),
+		'icon'  => 'dashicons-admin-post',
+	],
+	'total_replies' => [
+		'label' => __( 'Total Replies', 'jetonomy' ),
+		'icon'  => 'dashicons-format-chat',
+	],
+	'active_spaces' => [
+		'label' => __( 'Active Spaces', 'jetonomy' ),
+		'icon'  => 'dashicons-networking',
+	],
+	'users'         => [
+		'label' => __( 'Registered Users', 'jetonomy' ),
+		'icon'  => 'dashicons-admin-users',
+	],
+	'pending_flags' => [
+		'label' => __( 'Pending Flags', 'jetonomy' ),
+		'icon'  => 'dashicons-flag',
+	],
+	'posts_today'   => [
+		'label' => __( 'Posts Today', 'jetonomy' ),
+		'icon'  => 'dashicons-calendar-alt',
+	],
 ];
 ?>
 <div class="wrap jetonomy-admin">
@@ -87,9 +112,9 @@ $stat_cards = [
 								: ucwords( str_replace( '_', ' ', $action_code ) );
 
 							// --- Dot color by action category ---
-							$create_actions     = [ 'created_post', 'created_reply', 'joined_space' ];
-							$vote_actions       = [ 'voted' ];
-							$moderate_actions   = [ 'moderated_approve', 'moderated_trash', 'moderated_spam' ];
+							$create_actions   = [ 'created_post', 'created_reply', 'joined_space' ];
+							$vote_actions     = [ 'voted' ];
+							$moderate_actions = [ 'moderated_approve', 'moderated_trash', 'moderated_spam' ];
 
 							if ( in_array( $action_code, $create_actions, true ) ) {
 								$dot_color = '#22c55e'; // green
@@ -118,7 +143,7 @@ $stat_cards = [
 								if ( $reply_row ) {
 									$parent_post = \Jetonomy\Models\Post::find( (int) $reply_row->post_id );
 									if ( $parent_post ) {
-										$post_url    = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
+										$post_url = admin_url( 'admin.php?page=jetonomy-content&post_id=' . (int) $reply_row->post_id );
 										/* translators: %s: post title */
 										$object_html = sprintf(
 											__( 'Reply on %s', 'jetonomy' ),
@@ -147,14 +172,14 @@ $stat_cards = [
 							} else {
 								$object_html = esc_html( $object_type . ' #' . $object_id );
 							}
-						?>
+							?>
 							<tr>
 								<td><?php echo esc_html( $actor ? $actor->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
 								<td>
 									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
 								</td>
 								<td><?php echo wp_kses( $object_html, [ 'a' => [ 'href' => [] ] ] ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

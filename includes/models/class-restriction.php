@@ -1,4 +1,10 @@
 <?php
+/**
+ * Restriction model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

@@ -6,14 +6,14 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$author  = get_userdata( $post->author_id );
-$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
-$space   = \Jetonomy\Models\Space::find( (int) $post->space_id );
+$author   = get_userdata( $post->author_id );
+$profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
+$space    = \Jetonomy\Models\Space::find( (int) $post->space_id );
 $initials = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
 $trust    = $profile ? (int) $profile->trust_level : 0;
 $base     = \Jetonomy\base_url();
 $post_url = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
-$time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
+$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 ?>
 <a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"

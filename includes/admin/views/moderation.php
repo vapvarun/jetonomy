@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin moderation view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
@@ -54,9 +60,10 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $pending_posts as $p ) :
+						<?php
+						foreach ( $pending_posts as $p ) :
 							$author = get_userdata( $p->author_id );
-						?>
+							?>
 							<tr data-type="post" data-id="<?php echo absint( $p->id ); ?>">
 								<td>
 									<strong><?php echo esc_html( $p->title ); ?></strong>
@@ -66,7 +73,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								</td>
 								<td><?php echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
 								<td><?php echo esc_html( $p->space_title ?? '&mdash;' ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $p->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $p->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 								<td class="jetonomy-mod-actions">
 									<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
 									<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="post" data-id="<?php echo absint( $p->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
@@ -88,14 +95,22 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							?>
 						</span>
 						<?php
-						$plinks = paginate_links( [
-							'base'    => add_query_arg( [ 'tab' => 'posts', 'paged_posts' => '%#%' ] ),
-							'format'  => '',
-							'current' => $paged_posts,
-							'total'   => (int) ceil( $total_posts / $per_page ),
-							'type'    => 'array',
-						] );
-						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						$plinks = paginate_links(
+							[
+								'base'    => add_query_arg(
+									[
+										'tab'         => 'posts',
+										'paged_posts' => '%#%',
+									]
+								),
+								'format'  => '',
+								'current' => $paged_posts,
+								'total'   => (int) ceil( $total_posts / $per_page ),
+								'type'    => 'array',
+							]
+						);
+						if ( $plinks ) {
+							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
 						?>
 					</div>
 				</div>
@@ -124,16 +139,17 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $pending_replies as $r ) :
+						<?php
+						foreach ( $pending_replies as $r ) :
 							$author = get_userdata( $r->author_id );
-						?>
+							?>
 							<tr data-type="reply" data-id="<?php echo absint( $r->id ); ?>">
 								<td>
 									<p class="description jetonomy-content-preview"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $r->content ?? '' ), 30 ) ); ?></p>
 								</td>
 								<td><?php echo esc_html( $author ? $author->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
 								<td><?php echo esc_html( $r->post_title ?? '#' . $r->post_id ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $r->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $r->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 								<td class="jetonomy-mod-actions">
 									<button type="button" class="button button-primary button-small jetonomy-moderate-btn" data-action="approve" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></button>
 									<button type="button" class="button button-small jetonomy-moderate-btn" data-action="spam" data-type="reply" data-id="<?php echo absint( $r->id ); ?>"><?php esc_html_e( 'Spam', 'jetonomy' ); ?></button>
@@ -155,14 +171,22 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							?>
 						</span>
 						<?php
-						$plinks = paginate_links( [
-							'base'    => add_query_arg( [ 'tab' => 'replies', 'paged_replies' => '%#%' ] ),
-							'format'  => '',
-							'current' => $paged_replies,
-							'total'   => (int) ceil( $total_replies / $per_page ),
-							'type'    => 'array',
-						] );
-						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						$plinks = paginate_links(
+							[
+								'base'    => add_query_arg(
+									[
+										'tab'           => 'replies',
+										'paged_replies' => '%#%',
+									]
+								),
+								'format'  => '',
+								'current' => $paged_replies,
+								'total'   => (int) ceil( $total_replies / $per_page ),
+								'type'    => 'array',
+							]
+						);
+						if ( $plinks ) {
+							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
 						?>
 					</div>
 				</div>
@@ -192,9 +216,10 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $pending_flags as $f ) :
+						<?php
+						foreach ( $pending_flags as $f ) :
 							$reporter = get_userdata( $f->reporter_id );
-						?>
+							?>
 							<tr data-flag-id="<?php echo absint( $f->id ); ?>">
 								<td>
 									<code><?php echo esc_html( $f->object_type . ' #' . $f->object_id ); ?></code>
@@ -204,7 +229,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								</td>
 								<td><?php echo esc_html( $f->description ?: '&mdash;' ); ?></td>
 								<td><?php echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) ); ?></td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $f->created_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $f->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 								<td class="jetonomy-mod-actions">
 									<button type="button" class="button button-small button-link-delete jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="valid"><?php esc_html_e( 'Valid (Trash)', 'jetonomy' ); ?></button>
 									<button type="button" class="button button-small jetonomy-resolve-flag" data-flag-id="<?php echo absint( $f->id ); ?>" data-resolution="dismissed"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></button>
@@ -225,14 +250,22 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							?>
 						</span>
 						<?php
-						$plinks = paginate_links( [
-							'base'    => add_query_arg( [ 'tab' => 'flags', 'paged_flags' => '%#%' ] ),
-							'format'  => '',
-							'current' => $paged_flags,
-							'total'   => (int) ceil( $total_flags / $per_page ),
-							'type'    => 'array',
-						] );
-						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						$plinks = paginate_links(
+							[
+								'base'    => add_query_arg(
+									[
+										'tab'         => 'flags',
+										'paged_flags' => '%#%',
+									]
+								),
+								'format'  => '',
+								'current' => $paged_flags,
+								'total'   => (int) ceil( $total_flags / $per_page ),
+								'type'    => 'array',
+							]
+						);
+						if ( $plinks ) {
+							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
 						?>
 					</div>
 				</div>
@@ -262,9 +295,10 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $banned_users as $ban ) :
+						<?php
+						foreach ( $banned_users as $ban ) :
 							$issuer = get_userdata( $ban->issued_by );
-						?>
+							?>
 							<tr data-restriction-id="<?php echo absint( $ban->id ); ?>">
 								<td>
 									<strong><?php echo esc_html( $ban->display_name ?? $ban->user_login ?? __( 'Unknown', 'jetonomy' ) ); ?></strong>
@@ -275,7 +309,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								<td><?php echo esc_html( $ban->reason ?: '&mdash;' ); ?></td>
 								<td>
 									<?php if ( $ban->expires_at ) : ?>
-										<?php echo esc_html( human_time_diff( current_time( 'timestamp', true ), strtotime( $ban->expires_at ) ) ); ?>
+										<?php echo esc_html( human_time_diff( time(), strtotime( $ban->expires_at ) ) ); ?>
 									<?php else : ?>
 										<strong><?php esc_html_e( 'Permanent', 'jetonomy' ); ?></strong>
 									<?php endif; ?>
@@ -300,14 +334,22 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							?>
 						</span>
 						<?php
-						$plinks = paginate_links( [
-							'base'    => add_query_arg( [ 'tab' => 'banned', 'paged_banned' => '%#%' ] ),
-							'format'  => '',
-							'current' => $paged_banned,
-							'total'   => (int) ceil( $total_banned / $per_page ),
-							'type'    => 'array',
-						] );
-						if ( $plinks ) { echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+						$plinks = paginate_links(
+							[
+								'base'    => add_query_arg(
+									[
+										'tab'          => 'banned',
+										'paged_banned' => '%#%',
+									]
+								),
+								'format'  => '',
+								'current' => $paged_banned,
+								'total'   => (int) ceil( $total_banned / $per_page ),
+								'type'    => 'array',
+							]
+						);
+						if ( $plinks ) {
+							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
 						?>
 					</div>
 				</div>

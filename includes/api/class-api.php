@@ -1,4 +1,10 @@
 <?php
+/**
+ * API bootstrap — registers all REST controllers.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -37,7 +43,7 @@ class Api {
 			$file = $dir . 'class-' . str_replace( '_', '-', strtolower( $key ) ) . '-controller.php';
 			if ( file_exists( $file ) ) {
 				require_once $file;
-				$fqn = __NAMESPACE__ . '\\' . $class;
+				$fqn        = __NAMESPACE__ . '\\' . $class;
 				$controller = new $fqn();
 				$controller->register_routes();
 				$this->controllers[ $key ] = $controller;

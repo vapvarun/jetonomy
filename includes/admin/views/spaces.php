@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin spaces management view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
@@ -174,7 +180,8 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				<?php if ( empty( $spaces ) ) : ?>
 					<tr><td colspan="8"><?php esc_html_e( 'No spaces found.', 'jetonomy' ); ?></td></tr>
 				<?php else : ?>
-					<?php foreach ( $spaces as $space ) :
+					<?php
+					foreach ( $spaces as $space ) :
 						$cat_name = '';
 						foreach ( $categories as $c ) {
 							if ( (int) $c->id === (int) $space->category_id ) {
@@ -182,7 +189,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								break;
 							}
 						}
-					?>
+						?>
 						<tr data-id="<?php echo absint( $space->id ); ?>">
 							<td class="column-title">
 								<strong><a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . $space->id ) ); ?>"><?php echo esc_html( $space->title ); ?></a></strong>
@@ -224,13 +231,15 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 			<div class="tablenav bottom">
 				<div class="tablenav-pages">
 					<?php
-					$page_links = paginate_links( [
-						'base'    => add_query_arg( 'paged', '%#%' ),
-						'format'  => '',
-						'current' => $paged,
-						'total'   => $total_pages,
-						'type'    => 'array',
-					] );
+					$page_links = paginate_links(
+						[
+							'base'    => add_query_arg( 'paged', '%#%' ),
+							'format'  => '',
+							'current' => $paged,
+							'total'   => $total_pages,
+							'type'    => 'array',
+						]
+					);
 					if ( $page_links ) {
 						echo '<span class="pagination-links">' . implode( ' ', $page_links ) . '</span>';
 					}

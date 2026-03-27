@@ -1,4 +1,10 @@
 <?php
+/**
+ * Categories REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -19,38 +25,46 @@ class Categories_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		register_rest_route( $ns, '/categories', [
+		register_rest_route(
+			$ns,
+			'/categories',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => '__return_true',
-			],
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => [ $this, 'manage_permission_check' ],
-				'args'                => $this->get_create_args(),
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_items' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_item' ],
+					'permission_callback' => [ $this, 'manage_permission_check' ],
+					'args'                => $this->get_create_args(),
+				],
+			]
+		);
 
-		register_rest_route( $ns, '/categories/(?P<id>\d+)', [
+		register_rest_route(
+			$ns,
+			'/categories/(?P<id>\d+)',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_item' ],
-				'permission_callback' => '__return_true',
-			],
-			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => [ $this, 'manage_permission_check' ],
-				'args'                => $this->get_update_args(),
-			],
-			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => [ $this, 'manage_permission_check' ],
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_item' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => 'PATCH',
+					'callback'            => [ $this, 'update_item' ],
+					'permission_callback' => [ $this, 'manage_permission_check' ],
+					'args'                => $this->get_update_args(),
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_item' ],
+					'permission_callback' => [ $this, 'manage_permission_check' ],
+				],
+			]
+		);
 	}
 
 	/**
@@ -226,7 +240,13 @@ class Categories_Controller extends Base_Controller {
 			);
 		}
 
-		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
+		return new WP_REST_Response(
+			[
+				'deleted' => true,
+				'id'      => $id,
+			],
+			200
+		);
 	}
 
 	/**
@@ -257,7 +277,7 @@ class Categories_Controller extends Base_Controller {
 
 		while ( Category::find_by_slug( $slug ) ) {
 			$slug = $base_slug . '-' . $counter;
-			$counter++;
+			++$counter;
 		}
 
 		return $slug;
@@ -268,14 +288,42 @@ class Categories_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return [
-			'name'        => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
-			'slug'        => [ 'type' => 'string', 'required' => false ],
-			'description' => [ 'type' => 'string', 'required' => false ],
-			'parent_id'   => [ 'type' => 'integer', 'required' => false, 'minimum' => 0 ],
-			'icon'        => [ 'type' => 'string', 'required' => false ],
-			'color'       => [ 'type' => 'string', 'required' => false ],
-			'visibility'  => [ 'type' => 'string', 'required' => false, 'enum' => [ 'public', 'private', 'hidden' ] ],
-			'sort_order'  => [ 'type' => 'integer', 'required' => false, 'minimum' => 0 ],
+			'name'        => [
+				'type'              => 'string',
+				'required'          => true,
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'slug'        => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'description' => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'parent_id'   => [
+				'type'     => 'integer',
+				'required' => false,
+				'minimum'  => 0,
+			],
+			'icon'        => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'color'       => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'visibility'  => [
+				'type'     => 'string',
+				'required' => false,
+				'enum'     => [ 'public', 'private', 'hidden' ],
+			],
+			'sort_order'  => [
+				'type'     => 'integer',
+				'required' => false,
+				'minimum'  => 0,
+			],
 		];
 	}
 

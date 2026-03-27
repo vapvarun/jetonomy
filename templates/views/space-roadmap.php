@@ -35,10 +35,26 @@ $all_ideas = $wpdb->get_results(
 
 // Group into columns by is_resolved / is_closed.
 $columns = [
-	'open'        => [ 'label' => __( 'Open', 'jetonomy' ), 'color' => 'var(--jt-accent)', 'posts' => [] ],
-	'in-progress' => [ 'label' => __( 'In Progress', 'jetonomy' ), 'color' => 'var(--jt-warn)', 'posts' => [] ],
-	'resolved'    => [ 'label' => __( 'Resolved', 'jetonomy' ), 'color' => 'var(--jt-success)', 'posts' => [] ],
-	'closed'      => [ 'label' => __( 'Closed', 'jetonomy' ), 'color' => 'var(--jt-text-tertiary)', 'posts' => [] ],
+	'open'        => [
+		'label' => __( 'Open', 'jetonomy' ),
+		'color' => 'var(--jt-accent)',
+		'posts' => [],
+	],
+	'in-progress' => [
+		'label' => __( 'In Progress', 'jetonomy' ),
+		'color' => 'var(--jt-warn)',
+		'posts' => [],
+	],
+	'resolved'    => [
+		'label' => __( 'Resolved', 'jetonomy' ),
+		'color' => 'var(--jt-success)',
+		'posts' => [],
+	],
+	'closed'      => [
+		'label' => __( 'Closed', 'jetonomy' ),
+		'color' => 'var(--jt-text-tertiary)',
+		'posts' => [],
+	],
 ];
 
 foreach ( $all_ideas as $idea ) {
@@ -61,10 +77,19 @@ $base     = \Jetonomy\base_url();
 
 $crumbs = [];
 if ( $category ) {
-	$crumbs[] = [ 'label' => $category->name, 'url' => '' ];
+	$crumbs[] = [
+		'label' => $category->name,
+		'url'   => '',
+	];
 }
-$crumbs[] = [ 'label' => $space->title, 'url' => $base . '/s/' . $space->slug . '/' ];
-$crumbs[] = [ 'label' => __( 'Roadmap', 'jetonomy' ), 'url' => '' ];
+$crumbs[] = [
+	'label' => $space->title,
+	'url'   => $base . '/s/' . $space->slug . '/',
+];
+$crumbs[] = [
+	'label' => __( 'Roadmap', 'jetonomy' ),
+	'url'   => '',
+];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 

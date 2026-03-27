@@ -1,4 +1,10 @@
 <?php
+/**
+ * Spaces REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -34,92 +40,123 @@ class Spaces_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// Collection routes.
-		register_rest_route( $ns, '/spaces', [
+		register_rest_route(
+			$ns,
+			'/spaces',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => '__return_true',
-				'args'                => $this->get_list_args(),
-			],
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => [ $this, 'create_permission_check' ],
-				'args'                => $this->get_create_args(),
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_items' ],
+					'permission_callback' => '__return_true',
+					'args'                => $this->get_list_args(),
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_item' ],
+					'permission_callback' => [ $this, 'create_permission_check' ],
+					'args'                => $this->get_create_args(),
+				],
+			]
+		);
 
 		// Single space routes.
-		register_rest_route( $ns, '/spaces/(?P<id>\d+)', [
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_item' ],
-				'permission_callback' => '__return_true',
-			],
-			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'update_item' ],
-				'permission_callback' => [ $this, 'update_permission_check' ],
-				'args'                => $this->get_update_args(),
-			],
-			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => [ $this, 'update_permission_check' ],
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_item' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => 'PATCH',
+					'callback'            => [ $this, 'update_item' ],
+					'permission_callback' => [ $this, 'update_permission_check' ],
+					'args'                => $this->get_update_args(),
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_item' ],
+					'permission_callback' => [ $this, 'update_permission_check' ],
+				],
+			]
+		);
 
 		// Member collection routes.
-		register_rest_route( $ns, '/spaces/(?P<id>\d+)/members', [
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/members',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_members' ],
-				'permission_callback' => '__return_true',
-			],
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'join_space' ],
-				'permission_callback' => [ $this, 'require_login_check' ],
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_members' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'join_space' ],
+					'permission_callback' => [ $this, 'require_login_check' ],
+				],
+			]
+		);
 
 		// Invite link routes.
-		register_rest_route( $ns, '/spaces/(?P<id>\d+)/invite', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'generate_invite' ],
-			'permission_callback' => [ $this, 'require_login_check' ],
-			'args'                => [
-				'max_uses'   => [ 'type' => 'integer', 'required' => false, 'default' => 0 ],
-				'expires_at' => [ 'type' => 'string', 'required' => false ],
-			],
-		] );
-
-		register_rest_route( $ns, '/invite/(?P<token>[a-zA-Z0-9]+)', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'use_invite' ],
-			'permission_callback' => '__return_true',
-		] );
-
-		// Individual member routes.
-		register_rest_route( $ns, '/spaces/(?P<id>\d+)/members/(?P<user_id>\d+)', [
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/invite',
 			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'leave_space' ],
-				'permission_callback' => [ $this, 'require_login_check' ],
-			],
-			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'update_member_role' ],
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'generate_invite' ],
 				'permission_callback' => [ $this, 'require_login_check' ],
 				'args'                => [
-					'role' => [
+					'max_uses'   => [
+						'type'     => 'integer',
+						'required' => false,
+						'default'  => 0,
+					],
+					'expires_at' => [
 						'type'     => 'string',
-						'required' => true,
-						'enum'     => self::VALID_ROLES,
+						'required' => false,
 					],
 				],
-			],
-		] );
+			]
+		);
+
+		register_rest_route(
+			$ns,
+			'/invite/(?P<token>[a-zA-Z0-9]+)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'use_invite' ],
+				'permission_callback' => '__return_true',
+			]
+		);
+
+		// Individual member routes.
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/members/(?P<user_id>\d+)',
+			[
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'leave_space' ],
+					'permission_callback' => [ $this, 'require_login_check' ],
+				],
+				[
+					'methods'             => 'PATCH',
+					'callback'            => [ $this, 'update_member_role' ],
+					'permission_callback' => [ $this, 'require_login_check' ],
+					'args'                => [
+						'role' => [
+							'type'     => 'string',
+							'required' => true,
+							'enum'     => self::VALID_ROLES,
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -274,23 +311,23 @@ class Spaces_Controller extends Base_Controller {
 			if ( is_array( $settings_raw ) ) {
 				$settings = wp_json_encode( $settings_raw );
 			} else {
-				$decoded = json_decode( $settings_raw, true );
+				$decoded  = json_decode( $settings_raw, true );
 				$settings = is_array( $decoded ) ? wp_json_encode( $decoded ) : '';
 			}
 		}
 
 		$data = [
-			'category_id'  => absint( $request->get_param( 'category_id' ) ) ?: null,
-			'title'        => $title,
-			'slug'         => $slug,
-			'description'  => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
-			'type'         => sanitize_text_field( (string) $request->get_param( 'type' ) ) ?: 'forum',
-			'visibility'   => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
-			'join_policy'  => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
-			'icon'         => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
-			'cover_image'  => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
-			'settings'     => $settings,
-			'author_id'    => get_current_user_id(),
+			'category_id' => absint( $request->get_param( 'category_id' ) ) ?: null,
+			'title'       => $title,
+			'slug'        => $slug,
+			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
+			'type'        => sanitize_text_field( (string) $request->get_param( 'type' ) ) ?: 'forum',
+			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
+			'join_policy' => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
+			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
+			'cover_image' => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
+			'settings'    => $settings,
+			'author_id'   => get_current_user_id(),
 		];
 
 		// Remove empty optional fields so DB defaults apply.
@@ -365,7 +402,7 @@ class Spaces_Controller extends Base_Controller {
 			if ( is_array( $settings_raw ) ) {
 				$data['settings'] = wp_json_encode( $settings_raw );
 			} else {
-				$decoded = json_decode( $settings_raw, true );
+				$decoded          = json_decode( $settings_raw, true );
 				$data['settings'] = is_array( $decoded ) ? wp_json_encode( $decoded ) : '';
 			}
 		}
@@ -414,7 +451,13 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
+		return new WP_REST_Response(
+			[
+				'deleted' => true,
+				'id'      => $id,
+			],
+			200
+		);
 	}
 
 	/**
@@ -482,30 +525,39 @@ class Spaces_Controller extends Base_Controller {
 			// Check for an existing pending request to avoid duplicates.
 			$existing = JoinRequest::find_pending( $id, $user_id );
 			if ( $existing ) {
-				return new WP_REST_Response( [
-					'status'  => 'pending',
-					'message' => __( 'You already have a pending join request for this space.', 'jetonomy' ),
-				], 202 );
+				return new WP_REST_Response(
+					[
+						'status'  => 'pending',
+						'message' => __( 'You already have a pending join request for this space.', 'jetonomy' ),
+					],
+					202
+				);
 			}
 
 			$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
 			JoinRequest::create_request( $id, $user_id, $message );
 
-			return new WP_REST_Response( [
-				'status'  => 'pending',
-				'message' => __( 'Join request submitted. Awaiting approval.', 'jetonomy' ),
-			], 202 );
+			return new WP_REST_Response(
+				[
+					'status'  => 'pending',
+					'message' => __( 'Join request submitted. Awaiting approval.', 'jetonomy' ),
+				],
+				202
+			);
 		}
 
 		// open policy: add immediately.
 		SpaceMember::add( $id, $user_id, 'member' );
 
-		return new WP_REST_Response( [
-			'status'   => 'joined',
-			'space_id' => $id,
-			'user_id'  => $user_id,
-			'role'     => 'member',
-		], 201 );
+		return new WP_REST_Response(
+			[
+				'status'   => 'joined',
+				'space_id' => $id,
+				'user_id'  => $user_id,
+				'role'     => 'member',
+			],
+			201
+		);
 	}
 
 	/**
@@ -542,11 +594,14 @@ class Spaces_Controller extends Base_Controller {
 
 		SpaceMember::remove( $id, $user_id );
 
-		return new WP_REST_Response( [
-			'removed'   => true,
-			'space_id'  => $id,
-			'user_id'   => $user_id,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'removed'  => true,
+				'space_id' => $id,
+				'user_id'  => $user_id,
+			],
+			200
+		);
 	}
 
 	/**
@@ -588,15 +643,21 @@ class Spaces_Controller extends Base_Controller {
 		$wpdb->update(
 			\Jetonomy\table( 'space_members' ),
 			[ 'role' => $role ],
-			[ 'space_id' => $id, 'user_id' => $user_id ]
+			[
+				'space_id' => $id,
+				'user_id'  => $user_id,
+			]
 		);
 
-		return new WP_REST_Response( [
-			'updated'  => true,
-			'space_id' => $id,
-			'user_id'  => $user_id,
-			'role'     => $role,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'updated'  => true,
+				'space_id' => $id,
+				'user_id'  => $user_id,
+				'role'     => $role,
+			],
+			200
+		);
 	}
 
 	/**
@@ -625,16 +686,19 @@ class Spaces_Controller extends Base_Controller {
 
 		$token = InviteLink::generate( $id, $user_id, $max_uses, $expires_at ?: null );
 
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
+		$settings   = get_option( 'jetonomy_settings', [] );
+		$base_slug  = $settings['base_slug'] ?? 'community';
 		$invite_url = home_url( '/' . $base_slug . '/invite/' . $token . '/' );
 
-		return new WP_REST_Response( [
-			'token'      => $token,
-			'invite_url' => $invite_url,
-			'max_uses'   => $max_uses,
-			'expires_at' => $expires_at ?: null,
-		], 201 );
+		return new WP_REST_Response(
+			[
+				'token'      => $token,
+				'invite_url' => $invite_url,
+				'max_uses'   => $max_uses,
+				'expires_at' => $expires_at ?: null,
+			],
+			201
+		);
 	}
 
 	/**
@@ -665,22 +729,28 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
-			return new WP_REST_Response( [
-				'status'     => 'already_member',
-				'space_id'   => $space_id,
-				'space_slug' => $space->slug,
-			], 200 );
+			return new WP_REST_Response(
+				[
+					'status'     => 'already_member',
+					'space_id'   => $space_id,
+					'space_slug' => $space->slug,
+				],
+				200
+			);
 		}
 
 		// Add user as member and increment usage.
 		SpaceMember::add( $space_id, $user_id, 'member' );
 		InviteLink::use_invite( (int) $invite->id );
 
-		return new WP_REST_Response( [
-			'status'     => 'joined',
-			'space_id'   => $space_id,
-			'space_slug' => $space->slug,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'status'     => 'joined',
+				'space_id'   => $space_id,
+				'space_slug' => $space->slug,
+			],
+			200
+		);
 	}
 
 	/**
@@ -688,23 +758,23 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	private function prepare_space( object $space ): array {
 		return [
-			'id'              => (int) $space->id,
-			'category_id'     => $space->category_id ? (int) $space->category_id : null,
-			'title'           => $space->title,
-			'slug'            => $space->slug,
-			'description'     => $space->description ?? '',
-			'type'            => $space->type ?? 'forum',
-			'visibility'      => $space->visibility ?? 'public',
-			'join_policy'     => $space->join_policy ?? 'open',
-			'icon'            => $space->icon ?? '',
-			'cover_image'     => $space->cover_image ?? '',
-			'settings'        => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
-			'member_count'    => (int) ( $space->member_count ?? 0 ),
-			'post_count'      => (int) ( $space->post_count ?? 0 ),
-			'sort_order'      => (int) ( $space->sort_order ?? 0 ),
-			'author_id'       => $space->author_id ? (int) $space->author_id : null,
-			'created_at'      => $space->created_at ?? null,
-			'updated_at'      => $space->updated_at ?? null,
+			'id'               => (int) $space->id,
+			'category_id'      => $space->category_id ? (int) $space->category_id : null,
+			'title'            => $space->title,
+			'slug'             => $space->slug,
+			'description'      => $space->description ?? '',
+			'type'             => $space->type ?? 'forum',
+			'visibility'       => $space->visibility ?? 'public',
+			'join_policy'      => $space->join_policy ?? 'open',
+			'icon'             => $space->icon ?? '',
+			'cover_image'      => $space->cover_image ?? '',
+			'settings'         => ! empty( $space->settings ) ? json_decode( $space->settings, true ) : [],
+			'member_count'     => (int) ( $space->member_count ?? 0 ),
+			'post_count'       => (int) ( $space->post_count ?? 0 ),
+			'sort_order'       => (int) ( $space->sort_order ?? 0 ),
+			'author_id'        => $space->author_id ? (int) $space->author_id : null,
+			'created_at'       => $space->created_at ?? null,
+			'updated_at'       => $space->updated_at ?? null,
 			'last_activity_at' => $space->last_activity_at ?? null,
 		];
 	}
@@ -753,7 +823,7 @@ class Spaces_Controller extends Base_Controller {
 
 		while ( Space::find_by_slug( $slug ) ) {
 			$slug = $base_slug . '-' . $counter;
-			$counter++;
+			++$counter;
 		}
 
 		return $slug;
@@ -770,11 +840,20 @@ class Spaces_Controller extends Base_Controller {
 	 * Query args for list_items.
 	 */
 	private function get_list_args(): array {
-		return array_merge( $this->get_collection_params(), [
-			'category_id' => [ 'type' => 'integer', 'minimum' => 1 ],
-			'type'        => [ 'type' => 'string' ],
-			'visibility'  => [ 'type' => 'string', 'enum' => [ 'public', 'private', 'hidden' ] ],
-		] );
+		return array_merge(
+			$this->get_collection_params(),
+			[
+				'category_id' => [
+					'type'    => 'integer',
+					'minimum' => 1,
+				],
+				'type'        => [ 'type' => 'string' ],
+				'visibility'  => [
+					'type' => 'string',
+					'enum' => [ 'public', 'private', 'hidden' ],
+				],
+			]
+		);
 	}
 
 	/**
@@ -782,16 +861,47 @@ class Spaces_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return [
-			'category_id' => [ 'type' => 'integer', 'required' => false, 'minimum' => 1 ],
-			'type'        => [ 'type' => 'string', 'required' => false ],
-			'title'       => [ 'type' => 'string', 'required' => true ],
-			'slug'        => [ 'type' => 'string', 'required' => false ],
-			'description' => [ 'type' => 'string', 'required' => false ],
-			'visibility'  => [ 'type' => 'string', 'required' => false, 'enum' => [ 'public', 'private', 'hidden' ] ],
-			'join_policy' => [ 'type' => 'string', 'required' => false, 'enum' => self::VALID_JOIN_POLICIES ],
-			'icon'         => [ 'type' => 'string', 'required' => false ],
-			'cover_image'  => [ 'type' => 'string', 'required' => false, 'format' => 'uri' ],
-			'settings'     => [ 'required' => false ],
+			'category_id' => [
+				'type'     => 'integer',
+				'required' => false,
+				'minimum'  => 1,
+			],
+			'type'        => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'title'       => [
+				'type'     => 'string',
+				'required' => true,
+			],
+			'slug'        => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'description' => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'visibility'  => [
+				'type'     => 'string',
+				'required' => false,
+				'enum'     => [ 'public', 'private', 'hidden' ],
+			],
+			'join_policy' => [
+				'type'     => 'string',
+				'required' => false,
+				'enum'     => self::VALID_JOIN_POLICIES,
+			],
+			'icon'        => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'cover_image' => [
+				'type'     => 'string',
+				'required' => false,
+				'format'   => 'uri',
+			],
+			'settings'    => [ 'required' => false ],
 		];
 	}
 

@@ -17,14 +17,14 @@ class Reputation {
 	 * Points awarded (or deducted) per action type.
 	 */
 	private const POINTS_MAP = [
-		'post_upvoted'    =>  10,
-		'reply_upvoted'   =>   5,
-		'reply_accepted'  =>  15,
-		'idea_planned'    =>  20,
-		'downvoted'       =>  -2,
-		'flag_validated'  =>   5,
-		'post_reported'   => -10,
-		'post_removed'    => -20,
+		'post_upvoted'   => 10,
+		'reply_upvoted'  => 5,
+		'reply_accepted' => 15,
+		'idea_planned'   => 20,
+		'downvoted'      => -2,
+		'flag_validated' => 5,
+		'post_reported'  => -10,
+		'post_removed'   => -20,
 	];
 
 	/**

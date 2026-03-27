@@ -29,7 +29,7 @@ class Schema_Markup {
 			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
 			$space = $post ? \Jetonomy\Models\Space::find( (int) $post->space_id ) : null;
 			if ( $post ) {
-				$pattern = $settings['seo_post_title'];
+				$pattern              = $settings['seo_post_title'];
 				$title_parts['title'] = str_replace(
 					[ '{post_title}', '{space_name}', '{site_name}' ],
 					[ $post->title, $space->title ?? '', $site_name ],
@@ -42,7 +42,7 @@ class Schema_Markup {
 			$slug  = get_query_var( 'jetonomy_slug' );
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
 			if ( $space ) {
-				$pattern = $settings['seo_space_title'];
+				$pattern              = $settings['seo_space_title'];
 				$title_parts['title'] = str_replace(
 					[ '{space_name}', '{site_name}' ],
 					[ $space->title, $site_name ],
@@ -133,13 +133,19 @@ class Schema_Markup {
 					'dateCreated'    => $this->to_iso8601( $post->created_at ),
 					'answerCount'    => (int) $post->reply_count,
 					'upvoteCount'    => max( 0, (int) $post->vote_score ),
-					'author'         => [ '@type' => 'Person', 'name' => $author_name ],
+					'author'         => [
+						'@type' => 'Person',
+						'name'  => $author_name,
+					],
 					'acceptedAnswer' => $accepted ? [
 						'@type'       => 'Answer',
 						'text'        => wp_strip_all_tags( $accepted->content ),
 						'dateCreated' => $this->to_iso8601( $accepted->created_at ),
 						'upvoteCount' => max( 0, (int) $accepted->vote_score ),
-						'author'      => [ '@type' => 'Person', 'name' => $answer_author ? $answer_author->display_name : 'Anonymous' ],
+						'author'      => [
+							'@type' => 'Person',
+							'name'  => $answer_author ? $answer_author->display_name : 'Anonymous',
+						],
 						'url'         => $base . '#reply-' . $accepted->id,
 					] : null,
 				],
@@ -155,7 +161,10 @@ class Schema_Markup {
 			'url'                  => $base,
 			'datePublished'        => $this->to_iso8601( $post->created_at ),
 			'dateModified'         => $this->to_iso8601( $post->updated_at ?: $post->created_at ),
-			'author'               => [ '@type' => 'Person', 'name' => $author_name ],
+			'author'               => [
+				'@type' => 'Person',
+				'name'  => $author_name,
+			],
 			'interactionStatistic' => [
 				[
 					'@type'                => 'InteractionCounter',
@@ -208,13 +217,19 @@ class Schema_Markup {
 		$base       = \Jetonomy\base_url() . '/';
 
 		$items = [
-			[ 'name' => __( 'Community', 'jetonomy' ), 'url' => $base ],
+			[
+				'name' => __( 'Community', 'jetonomy' ),
+				'url'  => $base,
+			],
 		];
 
 		if ( 'space' === $route && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
 			if ( $space ) {
-				$items[] = [ 'name' => $space->title, 'url' => $base . 's/' . $slug . '/' ];
+				$items[] = [
+					'name' => $space->title,
+					'url'  => $base . 's/' . $slug . '/',
+				];
 			}
 		}
 
@@ -222,10 +237,16 @@ class Schema_Markup {
 			$space = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
 			if ( $space ) {
-				$items[] = [ 'name' => $space->title, 'url' => $base . 's/' . $space_slug . '/' ];
+				$items[] = [
+					'name' => $space->title,
+					'url'  => $base . 's/' . $space_slug . '/',
+				];
 			}
 			if ( $post ) {
-				$items[] = [ 'name' => $post->title, 'url' => $base . 's/' . $space_slug . '/t/' . $slug . '/' ];
+				$items[] = [
+					'name' => $post->title,
+					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',
+				];
 			}
 		}
 

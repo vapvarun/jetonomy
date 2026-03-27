@@ -1,4 +1,10 @@
 <?php
+/**
+ * Embed processor.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;

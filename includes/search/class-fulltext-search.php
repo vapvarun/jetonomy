@@ -19,7 +19,9 @@ class Fulltext_Search implements Search_Adapter {
 
 	public function search( string $query, string $type = 'post', ?int $space_id = null, int $limit = 20, int $offset = 0 ): array {
 		$query = trim( $query );
-		if ( strlen( $query ) < 2 ) return [];
+		if ( strlen( $query ) < 2 ) {
+			return [];
+		}
 
 		// Prepare boolean mode query (add + prefix for required terms)
 		$search_term = $this->prepare_boolean_query( $query );
@@ -52,11 +54,11 @@ class Fulltext_Search implements Search_Adapter {
 		$params = [ $term, $term ];
 
 		if ( $space_id ) {
-			$sql .= ' AND space_id = %d';
+			$sql     .= ' AND space_id = %d';
 			$params[] = $space_id;
 		}
 
-		$sql .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
+		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
 		$params[] = $limit;
 		$params[] = $offset;
 
@@ -75,14 +77,14 @@ class Fulltext_Search implements Search_Adapter {
 		$params = [ $term ];
 
 		if ( $space_id ) {
-			$sql .= " INNER JOIN {$pt} p ON r.post_id = p.id AND p.space_id = %d";
+			$sql     .= " INNER JOIN {$pt} p ON r.post_id = p.id AND p.space_id = %d";
 			$params[] = $space_id;
 		}
 
-		$sql .= " WHERE MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AND r.status = 'publish'";
+		$sql     .= " WHERE MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AND r.status = 'publish'";
 		$params[] = $term;
 
-		$sql .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
+		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
 		$params[] = $limit;
 		$params[] = $offset;
 
@@ -95,14 +97,16 @@ class Fulltext_Search implements Search_Adapter {
 		$t    = table( 'spaces' );
 		$like = '%' . $wpdb->esc_like( $query ) . '%';
 
-		return $wpdb->get_results( $wpdb->prepare(
+		return $wpdb->get_results(
+			$wpdb->prepare(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			"SELECT * FROM {$t} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public' AND status = 'active' ORDER BY member_count DESC LIMIT %d OFFSET %d",
-			$like,
-			$like,
-			$limit,
-			$offset
-		) ) ?: [];
+				"SELECT * FROM {$t} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public' AND status = 'active' ORDER BY member_count DESC LIMIT %d OFFSET %d",
+				$like,
+				$like,
+				$limit,
+				$offset
+			)
+		) ?: [];
 	}
 
 	/**

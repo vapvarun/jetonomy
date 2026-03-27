@@ -35,38 +35,55 @@ class Abilities {
 		add_action( 'wp_abilities_api_init', [ $this, 'register_abilities' ] );
 	}
 
-	/* ──────────────────────────────────────────────
+	/*
+	──────────────────────────────────────────────
 	 *  Categories
 	 * ──────────────────────────────────────────────*/
 
 	public function register_categories(): void {
-		wp_register_ability_category( 'jetonomy-content', [
-			'label'       => __( 'Forum Content', 'jetonomy' ),
-			'description' => __( 'Create, read, and manage forum posts and replies.', 'jetonomy' ),
-		] );
+		wp_register_ability_category(
+			'jetonomy-content',
+			[
+				'label'       => __( 'Forum Content', 'jetonomy' ),
+				'description' => __( 'Create, read, and manage forum posts and replies.', 'jetonomy' ),
+			]
+		);
 
-		wp_register_ability_category( 'jetonomy-spaces', [
-			'label'       => __( 'Community Spaces', 'jetonomy' ),
-			'description' => __( 'Manage community spaces (forums, Q&A boards, idea boards).', 'jetonomy' ),
-		] );
+		wp_register_ability_category(
+			'jetonomy-spaces',
+			[
+				'label'       => __( 'Community Spaces', 'jetonomy' ),
+				'description' => __( 'Manage community spaces (forums, Q&A boards, idea boards).', 'jetonomy' ),
+			]
+		);
 
-		wp_register_ability_category( 'jetonomy-users', [
-			'label'       => __( 'Community Users', 'jetonomy' ),
-			'description' => __( 'User profiles, notifications, and subscriptions.', 'jetonomy' ),
-		] );
+		wp_register_ability_category(
+			'jetonomy-users',
+			[
+				'label'       => __( 'Community Users', 'jetonomy' ),
+				'description' => __( 'User profiles, notifications, and subscriptions.', 'jetonomy' ),
+			]
+		);
 
-		wp_register_ability_category( 'jetonomy-moderation', [
-			'label'       => __( 'Content Moderation', 'jetonomy' ),
-			'description' => __( 'Flag, review, and moderate community content.', 'jetonomy' ),
-		] );
+		wp_register_ability_category(
+			'jetonomy-moderation',
+			[
+				'label'       => __( 'Content Moderation', 'jetonomy' ),
+				'description' => __( 'Flag, review, and moderate community content.', 'jetonomy' ),
+			]
+		);
 
-		wp_register_ability_category( 'jetonomy-search', [
-			'label'       => __( 'Community Search', 'jetonomy' ),
-			'description' => __( 'Search posts, spaces, users, and tags across the community.', 'jetonomy' ),
-		] );
+		wp_register_ability_category(
+			'jetonomy-search',
+			[
+				'label'       => __( 'Community Search', 'jetonomy' ),
+				'description' => __( 'Search posts, spaces, users, and tags across the community.', 'jetonomy' ),
+			]
+		);
 	}
 
-	/* ──────────────────────────────────────────────
+	/*
+	──────────────────────────────────────────────
 	 *  Abilities
 	 * ──────────────────────────────────────────────*/
 
@@ -83,224 +100,377 @@ class Abilities {
 	private function register_content_abilities(): void {
 
 		// ── Create Post ─────────────────────────────
-		wp_register_ability( 'jetonomy/create-post', [
-			'label'       => __( 'Create Post', 'jetonomy' ),
-			'description' => __( 'Create a new topic, question, or discussion post in a community space. Supports tags and auto-subscribes the author.', 'jetonomy' ),
-			'category'    => 'jetonomy-content',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'space_id' => [ 'type' => 'integer', 'description' => 'Target space ID.', 'required' => true ],
-					'title'    => [ 'type' => 'string',  'description' => 'Post title.',       'required' => true, 'minLength' => 1 ],
-					'content'  => [ 'type' => 'string',  'description' => 'Post body (HTML).',  'required' => true, 'minLength' => 1 ],
-					'type'     => [ 'type' => 'string',  'description' => 'Post type.',         'enum' => [ 'topic', 'question', 'discussion', 'announcement' ] ],
-					'tags'     => [ 'type' => 'array',   'description' => 'Tag names to attach.', 'items' => [ 'type' => 'string' ] ],
+		wp_register_ability(
+			'jetonomy/create-post',
+			[
+				'label'               => __( 'Create Post', 'jetonomy' ),
+				'description'         => __( 'Create a new topic, question, or discussion post in a community space. Supports tags and auto-subscribes the author.', 'jetonomy' ),
+				'category'            => 'jetonomy-content',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'space_id' => [
+							'type'        => 'integer',
+							'description' => 'Target space ID.',
+							'required'    => true,
+						],
+						'title'    => [
+							'type'        => 'string',
+							'description' => 'Post title.',
+							'required'    => true,
+							'minLength'   => 1,
+						],
+						'content'  => [
+							'type'        => 'string',
+							'description' => 'Post body (HTML).',
+							'required'    => true,
+							'minLength'   => 1,
+						],
+						'type'     => [
+							'type'        => 'string',
+							'description' => 'Post type.',
+							'enum'        => [ 'topic', 'question', 'discussion', 'announcement' ],
+						],
+						'tags'     => [
+							'type'        => 'array',
+							'description' => 'Tag names to attach.',
+							'items'       => [ 'type' => 'string' ],
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'id'       => [ 'type' => 'integer', 'description' => 'Created post ID.' ],
-					'title'    => [ 'type' => 'string' ],
-					'url'      => [ 'type' => 'string',  'description' => 'Permalink to the post.' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'id'    => [
+							'type'        => 'integer',
+							'description' => 'Created post ID.',
+						],
+						'title' => [ 'type' => 'string' ],
+						'url'   => [
+							'type'        => 'string',
+							'description' => 'Permalink to the post.',
+						],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_create_post' ],
-			'permission_callback' => function ( $input ) {
-				return $this->check_auth_and_permission( 'create_posts', (int) $input['space_id'] );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => false ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_create_post' ],
+				'permission_callback' => function ( $input ) {
+					return $this->check_auth_and_permission( 'create_posts', (int) $input['space_id'] );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => false,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── Get Post ────────────────────────────────
-		wp_register_ability( 'jetonomy/get-post', [
-			'label'       => __( 'Get Post', 'jetonomy' ),
-			'description' => __( 'Retrieve a single forum post by ID, including its author, vote score, reply count, and metadata.', 'jetonomy' ),
-			'category'    => 'jetonomy-content',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'post_id' => [ 'type' => 'integer', 'description' => 'Post ID.', 'required' => true ],
+		wp_register_ability(
+			'jetonomy/get-post',
+			[
+				'label'               => __( 'Get Post', 'jetonomy' ),
+				'description'         => __( 'Retrieve a single forum post by ID, including its author, vote score, reply count, and metadata.', 'jetonomy' ),
+				'category'            => 'jetonomy-content',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'post_id' => [
+							'type'        => 'integer',
+							'description' => 'Post ID.',
+							'required'    => true,
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'id'          => [ 'type' => 'integer' ],
-					'title'       => [ 'type' => 'string' ],
-					'content'     => [ 'type' => 'string' ],
-					'author_name' => [ 'type' => 'string' ],
-					'vote_score'  => [ 'type' => 'integer' ],
-					'reply_count' => [ 'type' => 'integer' ],
-					'status'      => [ 'type' => 'string' ],
-					'created_at'  => [ 'type' => 'string' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'id'          => [ 'type' => 'integer' ],
+						'title'       => [ 'type' => 'string' ],
+						'content'     => [ 'type' => 'string' ],
+						'author_name' => [ 'type' => 'string' ],
+						'vote_score'  => [ 'type' => 'integer' ],
+						'reply_count' => [ 'type' => 'integer' ],
+						'status'      => [ 'type' => 'string' ],
+						'created_at'  => [ 'type' => 'string' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_get_post' ],
-			'permission_callback' => function ( $input ) {
-				$post = Post::find( (int) $input['post_id'] );
-				if ( ! $post ) {
-					return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
-				}
-				return $this->check_permission_or_public( 'read', (int) $post->space_id );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_get_post' ],
+				'permission_callback' => function ( $input ) {
+					$post = Post::find( (int) $input['post_id'] );
+					if ( ! $post ) {
+						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+					}
+					return $this->check_permission_or_public( 'read', (int) $post->space_id );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── List Posts ──────────────────────────────
-		wp_register_ability( 'jetonomy/list-posts', [
-			'label'       => __( 'List Posts', 'jetonomy' ),
-			'description' => __( 'List posts in a community space with pagination. Returns titles, authors, scores, and reply counts.', 'jetonomy' ),
-			'category'    => 'jetonomy-content',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'space_id' => [ 'type' => 'integer', 'description' => 'Space ID.',                'required' => true ],
-					'limit'    => [ 'type' => 'integer', 'description' => 'Results per page (max 50).', 'default' => 20, 'minimum' => 1, 'maximum' => 50 ],
-					'after'    => [ 'type' => 'integer', 'description' => 'Cursor: post ID to start after (for pagination).', 'default' => 0 ],
-					'sort'     => [ 'type' => 'string',  'description' => 'Sort order.', 'enum' => [ 'latest', 'top', 'active' ], 'default' => 'latest' ],
+		wp_register_ability(
+			'jetonomy/list-posts',
+			[
+				'label'               => __( 'List Posts', 'jetonomy' ),
+				'description'         => __( 'List posts in a community space with pagination. Returns titles, authors, scores, and reply counts.', 'jetonomy' ),
+				'category'            => 'jetonomy-content',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'space_id' => [
+							'type'        => 'integer',
+							'description' => 'Space ID.',
+							'required'    => true,
+						],
+						'limit'    => [
+							'type'        => 'integer',
+							'description' => 'Results per page (max 50).',
+							'default'     => 20,
+							'minimum'     => 1,
+							'maximum'     => 50,
+						],
+						'after'    => [
+							'type'        => 'integer',
+							'description' => 'Cursor: post ID to start after (for pagination).',
+							'default'     => 0,
+						],
+						'sort'     => [
+							'type'        => 'string',
+							'description' => 'Sort order.',
+							'enum'        => [ 'latest', 'top', 'active' ],
+							'default'     => 'latest',
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'posts'    => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
-					'has_more' => [ 'type' => 'boolean' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'posts'    => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'object' ],
+						],
+						'has_more' => [ 'type' => 'boolean' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_list_posts' ],
-			'permission_callback' => function ( $input ) {
-				return $this->check_permission_or_public( 'read', (int) $input['space_id'] );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_list_posts' ],
+				'permission_callback' => function ( $input ) {
+					return $this->check_permission_or_public( 'read', (int) $input['space_id'] );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── Create Reply ────────────────────────────
-		wp_register_ability( 'jetonomy/create-reply', [
-			'label'       => __( 'Create Reply', 'jetonomy' ),
-			'description' => __( 'Reply to an existing forum post. Supports threaded replies up to 3 levels via parent_id.', 'jetonomy' ),
-			'category'    => 'jetonomy-content',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'post_id'   => [ 'type' => 'integer', 'description' => 'Post to reply to.',          'required' => true ],
-					'content'   => [ 'type' => 'string',  'description' => 'Reply body (HTML).',          'required' => true, 'minLength' => 1 ],
-					'parent_id' => [ 'type' => 'integer', 'description' => 'Parent reply ID for threads.' ],
+		wp_register_ability(
+			'jetonomy/create-reply',
+			[
+				'label'               => __( 'Create Reply', 'jetonomy' ),
+				'description'         => __( 'Reply to an existing forum post. Supports threaded replies up to 3 levels via parent_id.', 'jetonomy' ),
+				'category'            => 'jetonomy-content',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'post_id'   => [
+							'type'        => 'integer',
+							'description' => 'Post to reply to.',
+							'required'    => true,
+						],
+						'content'   => [
+							'type'        => 'string',
+							'description' => 'Reply body (HTML).',
+							'required'    => true,
+							'minLength'   => 1,
+						],
+						'parent_id' => [
+							'type'        => 'integer',
+							'description' => 'Parent reply ID for threads.',
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'id'      => [ 'type' => 'integer', 'description' => 'Created reply ID.' ],
-					'post_id' => [ 'type' => 'integer' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'id'      => [
+							'type'        => 'integer',
+							'description' => 'Created reply ID.',
+						],
+						'post_id' => [ 'type' => 'integer' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_create_reply' ],
-			'permission_callback' => function ( $input ) {
-				$post = Post::find( (int) $input['post_id'] );
-				if ( ! $post ) {
-					return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
-				}
-				if ( ! empty( $post->is_closed ) ) {
-					return new WP_Error( 'closed', __( 'Post is closed.', 'jetonomy' ) );
-				}
-				return $this->check_auth_and_permission( 'create_replies', (int) $post->space_id );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => false ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_create_reply' ],
+				'permission_callback' => function ( $input ) {
+					$post = Post::find( (int) $input['post_id'] );
+					if ( ! $post ) {
+						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+					}
+					if ( ! empty( $post->is_closed ) ) {
+						return new WP_Error( 'closed', __( 'Post is closed.', 'jetonomy' ) );
+					}
+					return $this->check_auth_and_permission( 'create_replies', (int) $post->space_id );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => false,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── List Replies ────────────────────────────
-		wp_register_ability( 'jetonomy/list-replies', [
-			'label'       => __( 'List Replies', 'jetonomy' ),
-			'description' => __( 'List replies for a forum post with pagination. Includes author info, vote scores, and thread structure.', 'jetonomy' ),
-			'category'    => 'jetonomy-content',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'post_id' => [ 'type' => 'integer', 'description' => 'Post ID.',                    'required' => true ],
-					'limit'   => [ 'type' => 'integer', 'description' => 'Results per page (max 50).',   'default' => 20, 'minimum' => 1, 'maximum' => 50 ],
-					'after'   => [ 'type' => 'integer', 'description' => 'Cursor: reply ID to start after.', 'default' => 0 ],
-					'sort'    => [ 'type' => 'string',  'description' => 'Sort order.',                  'enum' => [ 'oldest', 'newest', 'best' ], 'default' => 'oldest' ],
+		wp_register_ability(
+			'jetonomy/list-replies',
+			[
+				'label'               => __( 'List Replies', 'jetonomy' ),
+				'description'         => __( 'List replies for a forum post with pagination. Includes author info, vote scores, and thread structure.', 'jetonomy' ),
+				'category'            => 'jetonomy-content',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'post_id' => [
+							'type'        => 'integer',
+							'description' => 'Post ID.',
+							'required'    => true,
+						],
+						'limit'   => [
+							'type'        => 'integer',
+							'description' => 'Results per page (max 50).',
+							'default'     => 20,
+							'minimum'     => 1,
+							'maximum'     => 50,
+						],
+						'after'   => [
+							'type'        => 'integer',
+							'description' => 'Cursor: reply ID to start after.',
+							'default'     => 0,
+						],
+						'sort'    => [
+							'type'        => 'string',
+							'description' => 'Sort order.',
+							'enum'        => [ 'oldest', 'newest', 'best' ],
+							'default'     => 'oldest',
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'replies'  => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
-					'has_more' => [ 'type' => 'boolean' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'replies'  => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'object' ],
+						],
+						'has_more' => [ 'type' => 'boolean' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_list_replies' ],
-			'permission_callback' => function ( $input ) {
-				$post = Post::find( (int) $input['post_id'] );
-				if ( ! $post ) {
-					return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
-				}
-				return $this->check_permission_or_public( 'read', (int) $post->space_id );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_list_replies' ],
+				'permission_callback' => function ( $input ) {
+					$post = Post::find( (int) $input['post_id'] );
+					if ( ! $post ) {
+						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
+					}
+					return $this->check_permission_or_public( 'read', (int) $post->space_id );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── Vote ────────────────────────────────────
-		wp_register_ability( 'jetonomy/vote', [
-			'label'       => __( 'Vote on Content', 'jetonomy' ),
-			'description' => __( 'Upvote or downvote a post or reply. Toggles if voting the same direction again.', 'jetonomy' ),
-			'category'    => 'jetonomy-content',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'object_type' => [ 'type' => 'string',  'description' => 'Content type.',  'enum' => [ 'post', 'reply' ], 'required' => true ],
-					'object_id'   => [ 'type' => 'integer', 'description' => 'Content ID.',    'required' => true ],
-					'value'       => [ 'type' => 'integer', 'description' => '1 for upvote, -1 for downvote.', 'enum' => [ 1, -1 ], 'required' => true ],
+		wp_register_ability(
+			'jetonomy/vote',
+			[
+				'label'               => __( 'Vote on Content', 'jetonomy' ),
+				'description'         => __( 'Upvote or downvote a post or reply. Toggles if voting the same direction again.', 'jetonomy' ),
+				'category'            => 'jetonomy-content',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'object_type' => [
+							'type'        => 'string',
+							'description' => 'Content type.',
+							'enum'        => [ 'post', 'reply' ],
+							'required'    => true,
+						],
+						'object_id'   => [
+							'type'        => 'integer',
+							'description' => 'Content ID.',
+							'required'    => true,
+						],
+						'value'       => [
+							'type'        => 'integer',
+							'description' => '1 for upvote, -1 for downvote.',
+							'enum'        => [ 1, -1 ],
+							'required'    => true,
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'vote_score' => [ 'type' => 'integer', 'description' => 'New total score.' ],
-					'user_vote'  => [ 'type' => 'integer', 'description' => 'Current user vote (1, -1, or 0).' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'vote_score' => [
+							'type'        => 'integer',
+							'description' => 'New total score.',
+						],
+						'user_vote'  => [
+							'type'        => 'integer',
+							'description' => 'Current user vote (1, -1, or 0).',
+						],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_vote' ],
-			'permission_callback' => function ( $input ) {
-				$user_id = get_current_user_id();
-				if ( ! $user_id ) {
-					return new WP_Error( 'auth', __( 'Authentication required.', 'jetonomy' ) );
-				}
-				return Permission_Engine::can( $user_id, 'vote' );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_vote' ],
+				'permission_callback' => function ( $input ) {
+					$user_id = get_current_user_id();
+					if ( ! $user_id ) {
+						return new WP_Error( 'auth', __( 'Authentication required.', 'jetonomy' ) );
+					}
+					return Permission_Engine::can( $user_id, 'vote' );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 	}
 
 	/* ── Spaces ──────────────────────────────────── */
@@ -308,173 +478,251 @@ class Abilities {
 	private function register_space_abilities(): void {
 
 		// ── List Spaces ─────────────────────────────
-		wp_register_ability( 'jetonomy/list-spaces', [
-			'label'       => __( 'List Spaces', 'jetonomy' ),
-			'description' => __( 'List all community spaces (forums, Q&A boards, idea boards) the current user can access, grouped by category.', 'jetonomy' ),
-			'category'    => 'jetonomy-spaces',
-			'input_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'category_id' => [ 'type' => 'integer', 'description' => 'Filter by category ID.' ],
-				],
-			],
-			'output_schema' => [
-				'type'     => 'array',
-				'required' => true,
-				'items'    => [
+		wp_register_ability(
+			'jetonomy/list-spaces',
+			[
+				'label'               => __( 'List Spaces', 'jetonomy' ),
+				'description'         => __( 'List all community spaces (forums, Q&A boards, idea boards) the current user can access, grouped by category.', 'jetonomy' ),
+				'category'            => 'jetonomy-spaces',
+				'input_schema'        => [
 					'type'       => 'object',
+					'properties' => [
+						'category_id' => [
+							'type'        => 'integer',
+							'description' => 'Filter by category ID.',
+						],
+					],
+				],
+				'output_schema'       => [
+					'type'     => 'array',
+					'required' => true,
+					'items'    => [
+						'type'       => 'object',
+						'properties' => [
+							'id'           => [ 'type' => 'integer' ],
+							'title'        => [ 'type' => 'string' ],
+							'slug'         => [ 'type' => 'string' ],
+							'type'         => [ 'type' => 'string' ],
+							'post_count'   => [ 'type' => 'integer' ],
+							'member_count' => [ 'type' => 'integer' ],
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'execute_list_spaces' ],
+				'permission_callback' => '__return_true',
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
+
+		// ── Get Space ───────────────────────────────
+		wp_register_ability(
+			'jetonomy/get-space',
+			[
+				'label'               => __( 'Get Space Details', 'jetonomy' ),
+				'description'         => __( 'Retrieve detailed information about a community space including description, rules, member count, and settings.', 'jetonomy' ),
+				'category'            => 'jetonomy-spaces',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'space_id' => [
+							'type'        => 'integer',
+							'description' => 'Space ID.',
+							'required'    => true,
+						],
+					],
+				],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
 					'properties' => [
 						'id'           => [ 'type' => 'integer' ],
 						'title'        => [ 'type' => 'string' ],
-						'slug'         => [ 'type' => 'string' ],
+						'description'  => [ 'type' => 'string' ],
 						'type'         => [ 'type' => 'string' ],
+						'visibility'   => [ 'type' => 'string' ],
 						'post_count'   => [ 'type' => 'integer' ],
 						'member_count' => [ 'type' => 'integer' ],
 					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_list_spaces' ],
-			'permission_callback' => '__return_true',
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
-
-		// ── Get Space ───────────────────────────────
-		wp_register_ability( 'jetonomy/get-space', [
-			'label'       => __( 'Get Space Details', 'jetonomy' ),
-			'description' => __( 'Retrieve detailed information about a community space including description, rules, member count, and settings.', 'jetonomy' ),
-			'category'    => 'jetonomy-spaces',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'space_id' => [ 'type' => 'integer', 'description' => 'Space ID.', 'required' => true ],
+				'execute_callback'    => [ $this, 'execute_get_space' ],
+				'permission_callback' => function ( $input ) {
+					return $this->check_permission_or_public( 'read', (int) $input['space_id'] );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'id'           => [ 'type' => 'integer' ],
-					'title'        => [ 'type' => 'string' ],
-					'description'  => [ 'type' => 'string' ],
-					'type'         => [ 'type' => 'string' ],
-					'visibility'   => [ 'type' => 'string' ],
-					'post_count'   => [ 'type' => 'integer' ],
-					'member_count' => [ 'type' => 'integer' ],
-				],
-			],
-			'execute_callback'    => [ $this, 'execute_get_space' ],
-			'permission_callback' => function ( $input ) {
-				return $this->check_permission_or_public( 'read', (int) $input['space_id'] );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+			]
+		);
 
 		// ── Join Space ──────────────────────────────
-		wp_register_ability( 'jetonomy/join-space', [
-			'label'       => __( 'Join Space', 'jetonomy' ),
-			'description' => __( 'Join a community space as a member. For private spaces, this submits a join request for moderator approval.', 'jetonomy' ),
-			'category'    => 'jetonomy-spaces',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'space_id' => [ 'type' => 'integer', 'description' => 'Space to join.', 'required' => true ],
-				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'status' => [ 'type' => 'string', 'description' => 'joined or pending_approval.', 'enum' => [ 'joined', 'pending_approval' ] ],
-				],
-			],
-			'execute_callback'    => [ $this, 'execute_join_space' ],
-			'permission_callback' => function () {
-				return (bool) get_current_user_id();
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
-
-		// ── List Space Members ──────────────────────
-		wp_register_ability( 'jetonomy/list-space-members', [
-			'label'       => __( 'List Space Members', 'jetonomy' ),
-			'description' => __( 'List members of a community space with their roles, trust levels, and reputation.', 'jetonomy' ),
-			'category'    => 'jetonomy-spaces',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'space_id' => [ 'type' => 'integer', 'description' => 'Space ID.', 'required' => true ],
-				],
-			],
-			'output_schema' => [
-				'type'     => 'array',
-				'required' => true,
-				'items'    => [
+		wp_register_ability(
+			'jetonomy/join-space',
+			[
+				'label'               => __( 'Join Space', 'jetonomy' ),
+				'description'         => __( 'Join a community space as a member. For private spaces, this submits a join request for moderator approval.', 'jetonomy' ),
+				'category'            => 'jetonomy-spaces',
+				'input_schema'        => [
 					'type'       => 'object',
+					'required'   => true,
 					'properties' => [
-						'user_id'      => [ 'type' => 'integer' ],
-						'display_name' => [ 'type' => 'string' ],
-						'role'         => [ 'type' => 'string' ],
-						'trust_level'  => [ 'type' => 'integer' ],
-						'reputation'   => [ 'type' => 'integer' ],
+						'space_id' => [
+							'type'        => 'integer',
+							'description' => 'Space to join.',
+							'required'    => true,
+						],
 					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_list_space_members' ],
-			'permission_callback' => function ( $input ) {
-				return $this->check_permission_or_public( 'read', (int) $input['space_id'] );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'status' => [
+							'type'        => 'string',
+							'description' => 'joined or pending_approval.',
+							'enum'        => [ 'joined', 'pending_approval' ],
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'execute_join_space' ],
+				'permission_callback' => function () {
+					return (bool) get_current_user_id();
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
+
+		// ── List Space Members ──────────────────────
+		wp_register_ability(
+			'jetonomy/list-space-members',
+			[
+				'label'               => __( 'List Space Members', 'jetonomy' ),
+				'description'         => __( 'List members of a community space with their roles, trust levels, and reputation.', 'jetonomy' ),
+				'category'            => 'jetonomy-spaces',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'space_id' => [
+							'type'        => 'integer',
+							'description' => 'Space ID.',
+							'required'    => true,
+						],
+					],
+				],
+				'output_schema'       => [
+					'type'     => 'array',
+					'required' => true,
+					'items'    => [
+						'type'       => 'object',
+						'properties' => [
+							'user_id'      => [ 'type' => 'integer' ],
+							'display_name' => [ 'type' => 'string' ],
+							'role'         => [ 'type' => 'string' ],
+							'trust_level'  => [ 'type' => 'integer' ],
+							'reputation'   => [ 'type' => 'integer' ],
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'execute_list_space_members' ],
+				'permission_callback' => function ( $input ) {
+					return $this->check_permission_or_public( 'read', (int) $input['space_id'] );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── Create Space (Admin) ────────────────────
-		wp_register_ability( 'jetonomy/create-space', [
-			'label'       => __( 'Create Space', 'jetonomy' ),
-			'description' => __( 'Create a new community space (forum, Q&A, ideas, or social). Requires administrator or jetonomy_manage_settings capability.', 'jetonomy' ),
-			'category'    => 'jetonomy-spaces',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'title'       => [ 'type' => 'string',  'description' => 'Space name.',            'required' => true, 'minLength' => 1 ],
-					'description' => [ 'type' => 'string',  'description' => 'Space description.' ],
-					'type'        => [ 'type' => 'string',  'description' => 'Space type.',            'enum' => [ 'forum', 'qa', 'ideas', 'social' ], 'default' => 'forum' ],
-					'visibility'  => [ 'type' => 'string',  'description' => 'Visibility level.',      'enum' => [ 'public', 'private', 'hidden' ], 'default' => 'public' ],
-					'category_id' => [ 'type' => 'integer', 'description' => 'Parent category ID.' ],
+		wp_register_ability(
+			'jetonomy/create-space',
+			[
+				'label'               => __( 'Create Space', 'jetonomy' ),
+				'description'         => __( 'Create a new community space (forum, Q&A, ideas, or social). Requires administrator or jetonomy_manage_settings capability.', 'jetonomy' ),
+				'category'            => 'jetonomy-spaces',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'title'       => [
+							'type'        => 'string',
+							'description' => 'Space name.',
+							'required'    => true,
+							'minLength'   => 1,
+						],
+						'description' => [
+							'type'        => 'string',
+							'description' => 'Space description.',
+						],
+						'type'        => [
+							'type'        => 'string',
+							'description' => 'Space type.',
+							'enum'        => [ 'forum', 'qa', 'ideas', 'social' ],
+							'default'     => 'forum',
+						],
+						'visibility'  => [
+							'type'        => 'string',
+							'description' => 'Visibility level.',
+							'enum'        => [ 'public', 'private', 'hidden' ],
+							'default'     => 'public',
+						],
+						'category_id' => [
+							'type'        => 'integer',
+							'description' => 'Parent category ID.',
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'id'    => [ 'type' => 'integer', 'description' => 'Created space ID.' ],
-					'title' => [ 'type' => 'string' ],
-					'slug'  => [ 'type' => 'string' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'id'    => [
+							'type'        => 'integer',
+							'description' => 'Created space ID.',
+						],
+						'title' => [ 'type' => 'string' ],
+						'slug'  => [ 'type' => 'string' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_create_space' ],
-			'permission_callback' => function () {
-				return current_user_can( 'jetonomy_manage_settings' );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => false ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_create_space' ],
+				'permission_callback' => function () {
+					return current_user_can( 'jetonomy_manage_settings' );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => false,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 	}
 
 	/* ── Users ───────────────────────────────────── */
@@ -482,135 +730,189 @@ class Abilities {
 	private function register_user_abilities(): void {
 
 		// ── Get User Profile ────────────────────────
-		wp_register_ability( 'jetonomy/get-user-profile', [
-			'label'       => __( 'Get User Profile', 'jetonomy' ),
-			'description' => __( 'Retrieve a community member\'s profile including bio, trust level, reputation, post/reply counts, and badges.', 'jetonomy' ),
-			'category'    => 'jetonomy-users',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'user_id' => [ 'type' => 'integer', 'description' => 'WordPress user ID.', 'required' => true ],
+		wp_register_ability(
+			'jetonomy/get-user-profile',
+			[
+				'label'               => __( 'Get User Profile', 'jetonomy' ),
+				'description'         => __( 'Retrieve a community member\'s profile including bio, trust level, reputation, post/reply counts, and badges.', 'jetonomy' ),
+				'category'            => 'jetonomy-users',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'user_id' => [
+							'type'        => 'integer',
+							'description' => 'WordPress user ID.',
+							'required'    => true,
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'user_id'      => [ 'type' => 'integer' ],
-					'display_name' => [ 'type' => 'string' ],
-					'bio'          => [ 'type' => 'string' ],
-					'trust_level'  => [ 'type' => 'integer' ],
-					'reputation'   => [ 'type' => 'integer' ],
-					'post_count'   => [ 'type' => 'integer' ],
-					'reply_count'  => [ 'type' => 'integer' ],
-					'joined_at'    => [ 'type' => 'string' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'user_id'      => [ 'type' => 'integer' ],
+						'display_name' => [ 'type' => 'string' ],
+						'bio'          => [ 'type' => 'string' ],
+						'trust_level'  => [ 'type' => 'integer' ],
+						'reputation'   => [ 'type' => 'integer' ],
+						'post_count'   => [ 'type' => 'integer' ],
+						'reply_count'  => [ 'type' => 'integer' ],
+						'joined_at'    => [ 'type' => 'string' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_get_user_profile' ],
-			'permission_callback' => '__return_true',
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_get_user_profile' ],
+				'permission_callback' => '__return_true',
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── List Notifications ──────────────────────
-		wp_register_ability( 'jetonomy/list-notifications', [
-			'label'       => __( 'List Notifications', 'jetonomy' ),
-			'description' => __( 'List the current user\'s community notifications (replies, mentions, votes, badges) with read/unread status.', 'jetonomy' ),
-			'category'    => 'jetonomy-users',
-			'input_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'unread_only' => [ 'type' => 'boolean', 'description' => 'Only return unread notifications.', 'default' => false ],
-					'limit'       => [ 'type' => 'integer', 'description' => 'Results per page.', 'default' => 20, 'minimum' => 1, 'maximum' => 50 ],
-				],
-			],
-			'output_schema' => [
-				'type'     => 'array',
-				'required' => true,
-				'items'    => [
+		wp_register_ability(
+			'jetonomy/list-notifications',
+			[
+				'label'               => __( 'List Notifications', 'jetonomy' ),
+				'description'         => __( 'List the current user\'s community notifications (replies, mentions, votes, badges) with read/unread status.', 'jetonomy' ),
+				'category'            => 'jetonomy-users',
+				'input_schema'        => [
 					'type'       => 'object',
 					'properties' => [
-						'id'         => [ 'type' => 'integer' ],
-						'type'       => [ 'type' => 'string' ],
-						'message'    => [ 'type' => 'string' ],
-						'is_read'    => [ 'type' => 'boolean' ],
-						'created_at' => [ 'type' => 'string' ],
+						'unread_only' => [
+							'type'        => 'boolean',
+							'description' => 'Only return unread notifications.',
+							'default'     => false,
+						],
+						'limit'       => [
+							'type'        => 'integer',
+							'description' => 'Results per page.',
+							'default'     => 20,
+							'minimum'     => 1,
+							'maximum'     => 50,
+						],
 					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_list_notifications' ],
-			'permission_callback' => function () {
-				return (bool) get_current_user_id();
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'output_schema'       => [
+					'type'     => 'array',
+					'required' => true,
+					'items'    => [
+						'type'       => 'object',
+						'properties' => [
+							'id'         => [ 'type' => 'integer' ],
+							'type'       => [ 'type' => 'string' ],
+							'message'    => [ 'type' => 'string' ],
+							'is_read'    => [ 'type' => 'boolean' ],
+							'created_at' => [ 'type' => 'string' ],
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'execute_list_notifications' ],
+				'permission_callback' => function () {
+					return (bool) get_current_user_id();
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── Mark Notifications Read ─────────────────
-		wp_register_ability( 'jetonomy/mark-notifications-read', [
-			'label'       => __( 'Mark Notifications Read', 'jetonomy' ),
-			'description' => __( 'Mark one or all of the current user\'s notifications as read.', 'jetonomy' ),
-			'category'    => 'jetonomy-users',
-			'input_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'notification_id' => [ 'type' => 'integer', 'description' => 'Specific notification ID. Omit to mark all as read.' ],
-				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'marked' => [ 'type' => 'integer', 'description' => 'Number of notifications marked read.' ],
-				],
-			],
-			'execute_callback'    => [ $this, 'execute_mark_notifications_read' ],
-			'permission_callback' => function () {
-				return (bool) get_current_user_id();
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
-
-		// ── Get Activity Feed ───────────────────────
-		wp_register_ability( 'jetonomy/get-activity', [
-			'label'       => __( 'Get Activity Feed', 'jetonomy' ),
-			'description' => __( 'Retrieve the community activity feed showing recent posts, replies, votes, and other events.', 'jetonomy' ),
-			'category'    => 'jetonomy-users',
-			'input_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'limit' => [ 'type' => 'integer', 'description' => 'Number of entries.', 'default' => 20, 'minimum' => 1, 'maximum' => 50 ],
-				],
-			],
-			'output_schema' => [
-				'type'     => 'array',
-				'required' => true,
-				'items'    => [
+		wp_register_ability(
+			'jetonomy/mark-notifications-read',
+			[
+				'label'               => __( 'Mark Notifications Read', 'jetonomy' ),
+				'description'         => __( 'Mark one or all of the current user\'s notifications as read.', 'jetonomy' ),
+				'category'            => 'jetonomy-users',
+				'input_schema'        => [
 					'type'       => 'object',
 					'properties' => [
-						'user_id'     => [ 'type' => 'integer' ],
-						'action'      => [ 'type' => 'string' ],
-						'object_type' => [ 'type' => 'string' ],
-						'object_id'   => [ 'type' => 'integer' ],
-						'created_at'  => [ 'type' => 'string' ],
+						'notification_id' => [
+							'type'        => 'integer',
+							'description' => 'Specific notification ID. Omit to mark all as read.',
+						],
 					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_get_activity' ],
-			'permission_callback' => '__return_true',
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'marked' => [
+							'type'        => 'integer',
+							'description' => 'Number of notifications marked read.',
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'execute_mark_notifications_read' ],
+				'permission_callback' => function () {
+					return (bool) get_current_user_id();
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
+
+		// ── Get Activity Feed ───────────────────────
+		wp_register_ability(
+			'jetonomy/get-activity',
+			[
+				'label'               => __( 'Get Activity Feed', 'jetonomy' ),
+				'description'         => __( 'Retrieve the community activity feed showing recent posts, replies, votes, and other events.', 'jetonomy' ),
+				'category'            => 'jetonomy-users',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [
+						'limit' => [
+							'type'        => 'integer',
+							'description' => 'Number of entries.',
+							'default'     => 20,
+							'minimum'     => 1,
+							'maximum'     => 50,
+						],
+					],
+				],
+				'output_schema'       => [
+					'type'     => 'array',
+					'required' => true,
+					'items'    => [
+						'type'       => 'object',
+						'properties' => [
+							'user_id'     => [ 'type' => 'integer' ],
+							'action'      => [ 'type' => 'string' ],
+							'object_type' => [ 'type' => 'string' ],
+							'object_id'   => [ 'type' => 'integer' ],
+							'created_at'  => [ 'type' => 'string' ],
+						],
+					],
+				],
+				'execute_callback'    => [ $this, 'execute_get_activity' ],
+				'permission_callback' => '__return_true',
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 	}
 
 	/* ── Moderation ──────────────────────────────── */
@@ -618,134 +920,231 @@ class Abilities {
 	private function register_moderation_abilities(): void {
 
 		// ── Flag Content ────────────────────────────
-		wp_register_ability( 'jetonomy/flag-content', [
-			'label'       => __( 'Flag Content', 'jetonomy' ),
-			'description' => __( 'Flag a post or reply for moderator review. Provide a reason (spam, inappropriate, off-topic, other).', 'jetonomy' ),
-			'category'    => 'jetonomy-moderation',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'object_type' => [ 'type' => 'string',  'description' => 'Content type.', 'enum' => [ 'post', 'reply' ], 'required' => true ],
-					'object_id'   => [ 'type' => 'integer', 'description' => 'Content ID.',   'required' => true ],
-					'reason'      => [ 'type' => 'string',  'description' => 'Flag reason.',  'enum' => [ 'spam', 'inappropriate', 'off-topic', 'other' ], 'required' => true ],
-					'details'     => [ 'type' => 'string',  'description' => 'Additional details.' ],
+		wp_register_ability(
+			'jetonomy/flag-content',
+			[
+				'label'               => __( 'Flag Content', 'jetonomy' ),
+				'description'         => __( 'Flag a post or reply for moderator review. Provide a reason (spam, inappropriate, off-topic, other).', 'jetonomy' ),
+				'category'            => 'jetonomy-moderation',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'object_type' => [
+							'type'        => 'string',
+							'description' => 'Content type.',
+							'enum'        => [ 'post', 'reply' ],
+							'required'    => true,
+						],
+						'object_id'   => [
+							'type'        => 'integer',
+							'description' => 'Content ID.',
+							'required'    => true,
+						],
+						'reason'      => [
+							'type'        => 'string',
+							'description' => 'Flag reason.',
+							'enum'        => [ 'spam', 'inappropriate', 'off-topic', 'other' ],
+							'required'    => true,
+						],
+						'details'     => [
+							'type'        => 'string',
+							'description' => 'Additional details.',
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'flag_id' => [ 'type' => 'integer', 'description' => 'Created flag ID.' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'flag_id' => [
+							'type'        => 'integer',
+							'description' => 'Created flag ID.',
+						],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_flag_content' ],
-			'permission_callback' => function () {
-				return (bool) get_current_user_id();
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => false, 'idempotent' => false ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_flag_content' ],
+				'permission_callback' => function () {
+					return (bool) get_current_user_id();
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => false,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── Moderate Content ────────────────────────
-		wp_register_ability( 'jetonomy/moderate-content', [
-			'label'       => __( 'Moderate Content', 'jetonomy' ),
-			'description' => __( 'Take moderation action on flagged content. Approve, trash, or mark as spam. Requires moderator or administrator role.', 'jetonomy' ),
-			'category'    => 'jetonomy-moderation',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'object_type' => [ 'type' => 'string',  'description' => 'Content type.',   'enum' => [ 'post', 'reply' ], 'required' => true ],
-					'object_id'   => [ 'type' => 'integer', 'description' => 'Content ID.',     'required' => true ],
-					'action'      => [ 'type' => 'string',  'description' => 'Moderation action.', 'enum' => [ 'approve', 'trash', 'spam' ], 'required' => true ],
+		wp_register_ability(
+			'jetonomy/moderate-content',
+			[
+				'label'               => __( 'Moderate Content', 'jetonomy' ),
+				'description'         => __( 'Take moderation action on flagged content. Approve, trash, or mark as spam. Requires moderator or administrator role.', 'jetonomy' ),
+				'category'            => 'jetonomy-moderation',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'object_type' => [
+							'type'        => 'string',
+							'description' => 'Content type.',
+							'enum'        => [ 'post', 'reply' ],
+							'required'    => true,
+						],
+						'object_id'   => [
+							'type'        => 'integer',
+							'description' => 'Content ID.',
+							'required'    => true,
+						],
+						'action'      => [
+							'type'        => 'string',
+							'description' => 'Moderation action.',
+							'enum'        => [ 'approve', 'trash', 'spam' ],
+							'required'    => true,
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'success'    => [ 'type' => 'boolean' ],
-					'new_status' => [ 'type' => 'string' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'success'    => [ 'type' => 'boolean' ],
+						'new_status' => [ 'type' => 'string' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_moderate_content' ],
-			'permission_callback' => function () {
-				return current_user_can( 'jetonomy_moderate' );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => false, 'destructive' => true, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_moderate_content' ],
+				'permission_callback' => function () {
+					return current_user_can( 'jetonomy_moderate' );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => false,
+						'destructive' => true,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 
 		// ── List Flags ──────────────────────────────
-		wp_register_ability( 'jetonomy/list-flags', [
-			'label'       => __( 'List Pending Flags', 'jetonomy' ),
-			'description' => __( 'List all pending content flags awaiting moderator review. Requires moderator or administrator role.', 'jetonomy' ),
-			'category'    => 'jetonomy-moderation',
-			'input_schema' => [
-				'type'       => 'object',
-				'properties' => [
-					'status' => [ 'type' => 'string', 'description' => 'Filter by flag status.', 'enum' => [ 'pending', 'resolved', 'dismissed' ], 'default' => 'pending' ],
-					'limit'  => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 50 ],
+		wp_register_ability(
+			'jetonomy/list-flags',
+			[
+				'label'               => __( 'List Pending Flags', 'jetonomy' ),
+				'description'         => __( 'List all pending content flags awaiting moderator review. Requires moderator or administrator role.', 'jetonomy' ),
+				'category'            => 'jetonomy-moderation',
+				'input_schema'        => [
+					'type'       => 'object',
+					'properties' => [
+						'status' => [
+							'type'        => 'string',
+							'description' => 'Filter by flag status.',
+							'enum'        => [ 'pending', 'resolved', 'dismissed' ],
+							'default'     => 'pending',
+						],
+						'limit'  => [
+							'type'    => 'integer',
+							'default' => 20,
+							'minimum' => 1,
+							'maximum' => 50,
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'     => 'array',
-				'required' => true,
-				'items'    => [ 'type' => 'object' ],
-			],
-			'execute_callback'    => [ $this, 'execute_list_flags' ],
-			'permission_callback' => function () {
-				return current_user_can( 'jetonomy_moderate' );
-			},
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'output_schema'       => [
+					'type'     => 'array',
+					'required' => true,
+					'items'    => [ 'type' => 'object' ],
+				],
+				'execute_callback'    => [ $this, 'execute_list_flags' ],
+				'permission_callback' => function () {
+					return current_user_can( 'jetonomy_moderate' );
+				},
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 	}
 
 	/* ── Search ──────────────────────────────────── */
 
 	private function register_search_abilities(): void {
 
-		wp_register_ability( 'jetonomy/search', [
-			'label'       => __( 'Search Community', 'jetonomy' ),
-			'description' => __( 'Full-text search across posts, spaces, and tags. Supports filtering by type (posts, spaces, tags, all) and returns ranked results.', 'jetonomy' ),
-			'category'    => 'jetonomy-search',
-			'input_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'query'  => [ 'type' => 'string', 'description' => 'Search query.', 'required' => true, 'minLength' => 2 ],
-					'filter' => [ 'type' => 'string', 'description' => 'Result type.', 'enum' => [ 'all', 'posts', 'spaces', 'tags' ], 'default' => 'all' ],
-					'limit'  => [ 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 50 ],
+		wp_register_ability(
+			'jetonomy/search',
+			[
+				'label'               => __( 'Search Community', 'jetonomy' ),
+				'description'         => __( 'Full-text search across posts, spaces, and tags. Supports filtering by type (posts, spaces, tags, all) and returns ranked results.', 'jetonomy' ),
+				'category'            => 'jetonomy-search',
+				'input_schema'        => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'query'  => [
+							'type'        => 'string',
+							'description' => 'Search query.',
+							'required'    => true,
+							'minLength'   => 2,
+						],
+						'filter' => [
+							'type'        => 'string',
+							'description' => 'Result type.',
+							'enum'        => [ 'all', 'posts', 'spaces', 'tags' ],
+							'default'     => 'all',
+						],
+						'limit'  => [
+							'type'    => 'integer',
+							'default' => 20,
+							'minimum' => 1,
+							'maximum' => 50,
+						],
+					],
 				],
-			],
-			'output_schema' => [
-				'type'       => 'object',
-				'required'   => true,
-				'properties' => [
-					'posts'  => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
-					'spaces' => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
-					'tags'   => [ 'type' => 'array', 'items' => [ 'type' => 'object' ] ],
-					'total'  => [ 'type' => 'integer' ],
+				'output_schema'       => [
+					'type'       => 'object',
+					'required'   => true,
+					'properties' => [
+						'posts'  => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'object' ],
+						],
+						'spaces' => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'object' ],
+						],
+						'tags'   => [
+							'type'  => 'array',
+							'items' => [ 'type' => 'object' ],
+						],
+						'total'  => [ 'type' => 'integer' ],
+					],
 				],
-			],
-			'execute_callback'    => [ $this, 'execute_search' ],
-			'permission_callback' => '__return_true',
-			'meta' => [
-				'annotations'  => [ 'readonly' => true, 'destructive' => false, 'idempotent' => true ],
-				'show_in_rest' => true,
-			],
-		] );
+				'execute_callback'    => [ $this, 'execute_search' ],
+				'permission_callback' => '__return_true',
+				'meta'                => [
+					'annotations'  => [
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					],
+					'show_in_rest' => true,
+				],
+			]
+		);
 	}
 
-	/* ══════════════════════════════════════════════
+	/*
+	══════════════════════════════════════════════
 	 *  Execute Callbacks
 	 * ══════════════════════════════════════════════*/
 
@@ -762,15 +1161,17 @@ class Abilities {
 		}
 
 		$slug    = sanitize_title( $title );
-		$post_id = Post::create( [
-			'space_id'      => $space_id,
-			'author_id'     => $user_id,
-			'title'         => $title,
-			'slug'          => $slug,
-			'content'       => $content,
-			'content_plain' => wp_strip_all_tags( $content ),
-			'type'          => $type,
-		] );
+		$post_id = Post::create(
+			[
+				'space_id'      => $space_id,
+				'author_id'     => $user_id,
+				'title'         => $title,
+				'slug'          => $slug,
+				'content'       => $content,
+				'content_plain' => wp_strip_all_tags( $content ),
+				'type'          => $type,
+			]
+		);
 
 		if ( ! $post_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create post.', 'jetonomy' ) );
@@ -838,7 +1239,10 @@ class Abilities {
 				'created_at'  => $p->created_at ?? '',
 			];
 		}
-		return [ 'posts' => $items, 'has_more' => count( $items ) === $limit ];
+		return [
+			'posts'    => $items,
+			'has_more' => count( $items ) === $limit,
+		];
 	}
 
 	public function execute_create_reply( $input ) {
@@ -865,7 +1269,10 @@ class Abilities {
 		UserProfile::increment_reply_count( $user_id );
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
 
-		return [ 'id' => $reply_id, 'post_id' => $post_id ];
+		return [
+			'id'      => $reply_id,
+			'post_id' => $post_id,
+		];
 	}
 
 	public function execute_list_replies( $input ) {
@@ -887,7 +1294,10 @@ class Abilities {
 				'created_at'  => $r->created_at ?? '',
 			];
 		}
-		return [ 'replies' => $items, 'has_more' => count( $items ) === $limit ];
+		return [
+			'replies'  => $items,
+			'has_more' => count( $items ) === $limit,
+		];
 	}
 
 	public function execute_vote( $input ) {
@@ -912,7 +1322,10 @@ class Abilities {
 
 		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id );
 
-		return [ 'vote_score' => $score, 'user_vote' => (int) $user_vote ];
+		return [
+			'vote_score' => $score,
+			'user_vote'  => (int) $user_vote,
+		];
 	}
 
 	public function execute_list_spaces( $input ) {
@@ -1016,7 +1429,11 @@ class Abilities {
 
 		SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
 
-		return [ 'id' => $space_id, 'title' => $title, 'slug' => $slug ];
+		return [
+			'id'    => $space_id,
+			'title' => $title,
+			'slug'  => $slug,
+		];
 	}
 
 	public function execute_get_user_profile( $input ) {
@@ -1087,13 +1504,15 @@ class Abilities {
 	}
 
 	public function execute_flag_content( $input ) {
-		$flag_id = Flag::create( [
-			'object_type' => sanitize_text_field( $input['object_type'] ),
-			'object_id'   => (int) $input['object_id'],
-			'user_id'     => get_current_user_id(),
-			'reason'      => sanitize_text_field( $input['reason'] ),
-			'details'     => sanitize_textarea_field( $input['details'] ?? '' ),
-		] );
+		$flag_id = Flag::create(
+			[
+				'object_type' => sanitize_text_field( $input['object_type'] ),
+				'object_id'   => (int) $input['object_id'],
+				'user_id'     => get_current_user_id(),
+				'reason'      => sanitize_text_field( $input['reason'] ),
+				'details'     => sanitize_textarea_field( $input['details'] ?? '' ),
+			]
+		);
 		if ( ! $flag_id ) {
 			return new WP_Error( 'flag_failed', __( 'Failed to create flag.', 'jetonomy' ) );
 		}
@@ -1120,7 +1539,10 @@ class Abilities {
 
 		do_action( 'jetonomy_content_moderated', $action, $object_type, $object_id, get_current_user_id() );
 
-		return [ 'success' => true, 'new_status' => $new_status ];
+		return [
+			'success'    => true,
+			'new_status' => $new_status,
+		];
 	}
 
 	public function execute_list_flags( $input ) {
@@ -1147,7 +1569,12 @@ class Abilities {
 		$limit  = (int) ( $input['limit'] ?? 20 );
 
 		$adapter = Adapters\Adapter_Registry::get_search();
-		$results = [ 'posts' => [], 'spaces' => [], 'tags' => [], 'total' => 0 ];
+		$results = [
+			'posts'  => [],
+			'spaces' => [],
+			'tags'   => [],
+			'total'  => 0,
+		];
 
 		if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
 			$results['posts'] = $adapter->search_posts( $query, $limit );
@@ -1164,7 +1591,8 @@ class Abilities {
 		return $results;
 	}
 
-	/* ══════════════════════════════════════════════
+	/*
+	══════════════════════════════════════════════
 	 *  Permission Helpers
 	 * ══════════════════════════════════════════════*/
 

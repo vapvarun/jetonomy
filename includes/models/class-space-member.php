@@ -1,4 +1,10 @@
 <?php
+/**
+ * Space member model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

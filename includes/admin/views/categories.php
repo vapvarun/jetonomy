@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin categories management view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="wrap jetonomy-admin">
@@ -91,7 +97,10 @@ defined( 'ABSPATH' ) || exit;
 							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $cat->visibility ); ?>"><?php echo esc_html( ucfirst( $cat->visibility ) ); ?></span>
 						</td>
 					</tr>
-					<?php if ( ! empty( $cat->children ) ) : foreach ( $cat->children as $child ) : ?>
+					<?php
+					if ( ! empty( $cat->children ) ) :
+						foreach ( $cat->children as $child ) :
+							?>
 						<tr data-id="<?php echo absint( $child->id ); ?>" class="jetonomy-category-row jetonomy-category-child">
 							<td class="column-drag"><span class="dashicons dashicons-menu jetonomy-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'jetonomy' ); ?>"></span></td>
 							<td class="column-name">
@@ -108,7 +117,10 @@ defined( 'ABSPATH' ) || exit;
 								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $child->visibility ); ?>"><?php echo esc_html( ucfirst( $child->visibility ) ); ?></span>
 							</td>
 						</tr>
-					<?php endforeach; endif; ?>
+											<?php
+					endforeach;
+endif;
+					?>
 				<?php endforeach; ?>
 			<?php endif; ?>
 		</tbody>

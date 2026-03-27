@@ -177,21 +177,21 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 <?php
 // Data for JS — all escaped server-side via wp_json_encode.
 $jt_js_data = [
-	'base'          => $base,
-	'restBase'      => rest_url( 'jetonomy/v1' ),
-	'nonce'         => wp_create_nonce( 'wp_rest' ),
-	'isLoggedIn'    => (bool) $user_id,
-	'restNotif'     => rest_url( 'jetonomy/v1/notifications' ),
-	'restMarkRead'  => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
-	'restSearch'    => rest_url( 'jetonomy/v1/search' ),
-	'searchIcon'    => jetonomy_icon( 'search', 20 ),
-	'i18n'          => [
-		'noNotifs'    => __( 'No notifications yet.', 'jetonomy' ),
-		'noResults'   => __( 'No results found.', 'jetonomy' ),
-		'searchPH'    => __( 'Search discussions...', 'jetonomy' ),
-		'shortcuts'   => __( 'Keyboard Shortcuts', 'jetonomy' ),
-		'close'       => __( 'Close', 'jetonomy' ),
-		'loadFail'    => __( 'Failed to load', 'jetonomy' ),
+	'base'         => $base,
+	'restBase'     => rest_url( 'jetonomy/v1' ),
+	'nonce'        => wp_create_nonce( 'wp_rest' ),
+	'isLoggedIn'   => (bool) $user_id,
+	'restNotif'    => rest_url( 'jetonomy/v1/notifications' ),
+	'restMarkRead' => rest_url( 'jetonomy/v1/notifications/mark-all-read' ),
+	'restSearch'   => rest_url( 'jetonomy/v1/search' ),
+	'searchIcon'   => jetonomy_icon( 'search', 20 ),
+	'i18n'         => [
+		'noNotifs'  => __( 'No notifications yet.', 'jetonomy' ),
+		'noResults' => __( 'No results found.', 'jetonomy' ),
+		'searchPH'  => __( 'Search discussions...', 'jetonomy' ),
+		'shortcuts' => __( 'Keyboard Shortcuts', 'jetonomy' ),
+		'close'     => __( 'Close', 'jetonomy' ),
+		'loadFail'  => __( 'Failed to load', 'jetonomy' ),
 	],
 ];
 ?>

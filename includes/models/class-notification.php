@@ -1,4 +1,10 @@
 <?php
+/**
+ * Notification model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

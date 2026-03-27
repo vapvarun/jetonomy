@@ -6,9 +6,9 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$categories          = \Jetonomy\Models\Category::list_top_level();
+$categories           = \Jetonomy\Models\Category::list_top_level();
 $uncategorized_spaces = \Jetonomy\Models\Space::list_uncategorized();
-$base                = \Jetonomy\base_url();
+$base                 = \Jetonomy\base_url();
 
 /**
  * Render a grid of space cards.

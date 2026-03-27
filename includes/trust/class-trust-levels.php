@@ -30,8 +30,8 @@ class Trust_Levels {
 				'create_replies' => 10,
 				'vote'           => 5,
 			],
-			'abilities'     => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
-			'restrictions'  => [ 'rate_limited', 'no_upload_media', 'no_create_spaces' ],
+			'abilities'    => [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ],
+			'restrictions' => [ 'rate_limited', 'no_upload_media', 'no_create_spaces' ],
 		],
 		1 => [
 			'name'         => 'Member',
@@ -40,9 +40,9 @@ class Trust_Levels {
 				'days_active'      => 3,
 				'replies_received' => 10,
 			],
-			'rate_limits'   => [],
-			'abilities'     => [ 'upload_media', 'edit_own_posts', 'delete_own_posts' ],
-			'restrictions'  => [ 'no_create_spaces' ],
+			'rate_limits'  => [],
+			'abilities'    => [ 'upload_media', 'edit_own_posts', 'delete_own_posts' ],
+			'restrictions' => [ 'no_create_spaces' ],
 		],
 		2 => [
 			'name'         => 'Regular',
@@ -51,9 +51,9 @@ class Trust_Levels {
 				'days_active' => 20,
 				'reputation'  => 50,
 			],
-			'rate_limits'   => [],
-			'abilities'     => [ 'create_spaces', 'join_spaces' ],
-			'restrictions'  => [],
+			'rate_limits'  => [],
+			'abilities'    => [ 'create_spaces', 'join_spaces' ],
+			'restrictions' => [],
 		],
 		3 => [
 			'name'         => 'Trusted',
@@ -62,23 +62,23 @@ class Trust_Levels {
 				'days_active' => 60,
 				'reputation'  => 200,
 			],
-			'rate_limits'   => [],
-			'abilities'     => [ 'recategorize_posts', 'rename_topics' ],
-			'restrictions'  => [],
+			'rate_limits'  => [],
+			'abilities'    => [ 'recategorize_posts', 'rename_topics' ],
+			'restrictions' => [],
 		],
 		4 => [
 			'name'         => 'Leader',
 			'requirements' => [], // Manually granted.
-			'rate_limits'   => [],
-			'abilities'     => [ 'moderate', 'manage_users' ],
-			'restrictions'  => [],
+			'rate_limits'  => [],
+			'abilities'    => [ 'moderate', 'manage_users' ],
+			'restrictions' => [],
 		],
 		5 => [
 			'name'         => 'Moderator',
 			'requirements' => [], // Manually granted.
-			'rate_limits'   => [],
-			'abilities'     => [ 'manage_settings', 'manage_categories', 'view_analytics' ],
-			'restrictions'  => [],
+			'rate_limits'  => [],
+			'abilities'    => [ 'manage_settings', 'manage_categories', 'view_analytics' ],
+			'restrictions' => [],
 		],
 	];
 
@@ -104,9 +104,24 @@ class Trust_Levels {
 		$thresholds = $settings['trust_thresholds'] ?? [];
 
 		$defaults = [
-			1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
-			2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
-			3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+			1 => [
+				'posts'            => 5,
+				'days_active'      => 3,
+				'reputation'       => 0,
+				'replies_received' => 10,
+			],
+			2 => [
+				'posts'            => 30,
+				'days_active'      => 20,
+				'reputation'       => 50,
+				'replies_received' => 0,
+			],
+			3 => [
+				'posts'            => 100,
+				'days_active'      => 60,
+				'reputation'       => 200,
+				'replies_received' => 0,
+			],
 		];
 
 		return $thresholds[ $level ] ?? $defaults[ $level ] ?? [];

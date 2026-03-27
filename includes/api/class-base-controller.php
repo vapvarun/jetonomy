@@ -1,4 +1,10 @@
 <?php
+/**
+ * Base REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -66,14 +72,19 @@ abstract class Base_Controller extends WP_REST_Controller {
 			? ( is_object( $last_item ) ? (int) $last_item->id : (int) ( $last_item['id'] ?? 0 ) )
 			: null;
 
-		$response = new WP_REST_Response( [
-			'data' => $items,
-			'meta' => array_merge( [
-				'count'       => count( $items ),
-				'has_more'    => false,
-				'cursor_next' => $cursor_next,
-			], $meta ),
-		] );
+		$response = new WP_REST_Response(
+			[
+				'data' => $items,
+				'meta' => array_merge(
+					[
+						'count'       => count( $items ),
+						'has_more'    => false,
+						'cursor_next' => $cursor_next,
+					],
+					$meta
+				),
+			]
+		);
 
 		if ( isset( $meta['total'] ) ) {
 			$response->header( 'X-WP-Total', (string) $meta['total'] );
@@ -225,7 +236,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		$author_ids = array_unique(
 			array_filter(
 				array_map(
-					function( $item ) use ( $author_key ) {
+					function ( $item ) use ( $author_key ) {
 						return is_object( $item )
 							? (int) ( $item->$author_key ?? 0 )
 							: (int) ( $item[ $author_key ] ?? 0 );

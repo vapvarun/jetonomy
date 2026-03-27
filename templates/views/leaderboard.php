@@ -40,7 +40,10 @@ $leaders = $wpdb->get_results(
 
 $base   = \Jetonomy\base_url();
 $crumbs = [
-	[ 'label' => __( 'Leaderboard', 'jetonomy' ), 'url' => '' ],
+	[
+		'label' => __( 'Leaderboard', 'jetonomy' ),
+		'url'   => '',
+	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -68,7 +71,7 @@ $crumbs = [
 					}
 					$trust    = (int) $leader->trust_level;
 					$initials = strtoupper( substr( $lu->display_name, 0, 2 ) );
-					$medal = '';
+					$medal    = '';
 					if ( 0 === $rank ) {
 						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
 					} elseif ( 1 === $rank ) {

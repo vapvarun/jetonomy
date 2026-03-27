@@ -81,7 +81,9 @@ class Notifier {
 	public function on_reply_created( int $reply_id, int $post_id ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post ) return;
+		if ( ! $reply || ! $post ) {
+			return;
+		}
 
 		$actor_id = (int) $reply->author_id;
 
@@ -94,7 +96,7 @@ class Notifier {
 				'post',
 				$post_id,
 				sprintf(
-					__( '%s replied to your post "%s"', 'jetonomy' ),
+					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
 					$this->get_display_name( $actor_id ),
 					mb_substr( $post->title, 0, 50 )
 				)
@@ -114,7 +116,7 @@ class Notifier {
 				'post',
 				$post_id,
 				sprintf(
-					__( '%s replied in "%s"', 'jetonomy' ),
+					__( '%1$s replied in "%2$s"', 'jetonomy' ),
 					$this->get_display_name( $actor_id ),
 					mb_substr( $post->title, 0, 50 )
 				)
@@ -132,7 +134,7 @@ class Notifier {
 					'reply',
 					$reply_id,
 					sprintf(
-						__( '%s replied to your comment in "%s"', 'jetonomy' ),
+						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
 						$this->get_display_name( $actor_id ),
 						mb_substr( $post->title, 0, 50 )
 					)
@@ -147,12 +149,16 @@ class Notifier {
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
 		if ( 'post' === $object_type ) {
 			$obj = Post::find( $object_id );
-			if ( ! $obj || (int) $obj->author_id === $voter_id ) return;
+			if ( ! $obj || (int) $obj->author_id === $voter_id ) {
+				return;
+			}
 			$author_id = (int) $obj->author_id;
 			$title     = mb_substr( $obj->title, 0, 50 );
 		} elseif ( 'reply' === $object_type ) {
 			$obj = Reply::find( $object_id );
-			if ( ! $obj || (int) $obj->author_id === $voter_id ) return;
+			if ( ! $obj || (int) $obj->author_id === $voter_id ) {
+				return;
+			}
 			$author_id = (int) $obj->author_id;
 			$title     = __( 'your reply', 'jetonomy' );
 		} else {
@@ -165,23 +171,27 @@ class Notifier {
 		$one_hour_ago = gmdate( 'Y-m-d H:i:s', time() - HOUR_IN_SECONDS );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$existing = $wpdb->get_row( $wpdb->prepare(
-			"SELECT id, message FROM {$table} WHERE user_id = %d AND type = 'vote_on_post' AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1",
-			$author_id,
-			$object_type,
-			$object_id,
-			$one_hour_ago
-		) );
+		$existing = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT id, message FROM {$table} WHERE user_id = %d AND type = 'vote_on_post' AND object_type = %s AND object_id = %d AND created_at > %s ORDER BY created_at DESC LIMIT 1",
+				$author_id,
+				$object_type,
+				$object_id,
+				$one_hour_ago
+			)
+		);
 
 		if ( $existing ) {
 			// Update existing — show current total vote count.
 			$votes_table = \Jetonomy\table( 'votes' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$vote_count = (int) $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(DISTINCT v.user_id) FROM {$votes_table} v WHERE v.object_type = %s AND v.object_id = %d",
-				$object_type,
-				$object_id
-			) );
+			$vote_count = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(DISTINCT v.user_id) FROM {$votes_table} v WHERE v.object_type = %s AND v.object_id = %d",
+					$object_type,
+					$object_id
+				)
+			);
 
 			$message = sprintf(
 				// translators: 1: vote count, 2: content title.
@@ -192,7 +202,10 @@ class Notifier {
 
 			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$table,
-				[ 'message' => $message, 'created_at' => now() ],
+				[
+					'message'    => $message,
+					'created_at' => now(),
+				],
 				[ 'id' => (int) $existing->id ]
 			);
 		} else {
@@ -218,7 +231,9 @@ class Notifier {
 	public function on_reply_accepted( int $reply_id, int $post_id ): void {
 		$reply = Reply::find( $reply_id );
 		$post  = Post::find( $post_id );
-		if ( ! $reply || ! $post ) return;
+		if ( ! $reply || ! $post ) {
+			return;
+		}
 
 		if ( (int) $reply->author_id !== (int) $post->author_id ) {
 			$this->create_and_maybe_email(
@@ -239,7 +254,9 @@ class Notifier {
 	 * Notify on trust level promotion.
 	 */
 	public function on_trust_change( int $user_id, int $old_level, int $new_level ): void {
-		if ( $new_level <= $old_level ) return; // Only notify on promotion
+		if ( $new_level <= $old_level ) {
+			return; // Only notify on promotion
+		}
 
 		$level_names = [
 			1 => __( 'Member', 'jetonomy' ),
@@ -258,7 +275,7 @@ class Notifier {
 			'badge',
 			$new_level,
 			sprintf(
-				__( 'Congratulations! You have been promoted to %s (Level %d)', 'jetonomy' ),
+				__( 'Congratulations! You have been promoted to %1$s (Level %2$d)', 'jetonomy' ),
 				$name,
 				$new_level
 			)
@@ -274,10 +291,14 @@ class Notifier {
 		} else {
 			$obj = Reply::find( $object_id );
 		}
-		if ( ! $obj ) return;
+		if ( ! $obj ) {
+			return;
+		}
 
 		$author_id = (int) $obj->author_id;
-		if ( $author_id === $moderator_id ) return;
+		if ( $author_id === $moderator_id ) {
+			return;
+		}
 
 		$action_labels = [
 			'approved' => __( 'approved', 'jetonomy' ),
@@ -304,21 +325,25 @@ class Notifier {
 	 * Notify moderators when a flag is created.
 	 */
 	public function on_flag_created( int $flag_id, string $object_type ): void {
-		$moderators = get_users( [
-			'capability__in' => [ 'jetonomy_moderate', 'manage_options' ],
-			'fields'         => 'ID',
-		] );
+		$moderators = get_users(
+			[
+				'capability__in' => [ 'jetonomy_moderate', 'manage_options' ],
+				'fields'         => 'ID',
+			]
+		);
 
 		foreach ( $moderators as $mod_id ) {
-			Notification::create( [
-				'user_id'     => (int) $mod_id,
-				'actor_id'    => 0,
-				'type'        => 'flag',
-				'object_type' => $object_type,
-				'object_id'   => $flag_id,
-				'message'     => __( 'New content flag requires review', 'jetonomy' ),
-				'created_at'  => now(),
-			] );
+			Notification::create(
+				[
+					'user_id'     => (int) $mod_id,
+					'actor_id'    => 0,
+					'type'        => 'flag',
+					'object_type' => $object_type,
+					'object_id'   => $flag_id,
+					'message'     => __( 'New content flag requires review', 'jetonomy' ),
+					'created_at'  => now(),
+				]
+			);
 		}
 	}
 
@@ -335,15 +360,17 @@ class Notifier {
 		// Check web preference before creating notification.
 		$web_enabled = $user_prefs[ $type ]['web'] ?? $global_defaults[ $type ]['web'] ?? true;
 		if ( $web_enabled ) {
-			$notification_id = Notification::create( [
-				'user_id'     => $user_id,
-				'actor_id'    => $actor_id,
-				'type'        => $type,
-				'object_type' => $object_type,
-				'object_id'   => $object_id,
-				'message'     => $message,
-				'created_at'  => now(),
-			] );
+			$notification_id = Notification::create(
+				[
+					'user_id'     => $user_id,
+					'actor_id'    => $actor_id,
+					'type'        => $type,
+					'object_type' => $object_type,
+					'object_id'   => $object_id,
+					'message'     => $message,
+					'created_at'  => now(),
+				]
+			);
 
 			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
 		}
@@ -362,18 +389,25 @@ class Notifier {
 
 	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0 ): void {
 		$user = get_userdata( $user_id );
-		if ( ! $user || ! $user->user_email ) return;
+		if ( ! $user || ! $user->user_email ) {
+			return;
+		}
 
 		$email_adapter = Adapter_Registry::get_email();
-		if ( ! $email_adapter ) return;
+		if ( ! $email_adapter ) {
+			return;
+		}
 
 		// Build unsubscribe URL.
 		$unsub_token = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
-		$unsub_url   = add_query_arg( [
-			'jetonomy_unsubscribe' => $unsub_token,
-			'uid'                  => $user_id,
-			'type'                 => $type,
-		], home_url( '/' ) );
+		$unsub_url   = add_query_arg(
+			[
+				'jetonomy_unsubscribe' => $unsub_token,
+				'uid'                  => $user_id,
+				'type'                 => $type,
+			],
+			home_url( '/' )
+		);
 
 		$site_name = get_bloginfo( 'name' );
 		$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );

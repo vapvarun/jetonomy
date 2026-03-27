@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — content management.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;

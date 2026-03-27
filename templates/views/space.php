@@ -73,16 +73,22 @@ $_space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
 $limit           = (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 );
 $offset          = ( $paged - 1 ) * $limit;
 
-$posts    = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );
-$category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base     = \Jetonomy\base_url();
+$posts     = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );
+$category  = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$base      = \Jetonomy\base_url();
 $space_url = $base . '/s/' . $space->slug . '/';
 
 $crumbs = [];
 if ( $category ) {
-	$crumbs[] = [ 'label' => $category->name, 'url' => '' ];
+	$crumbs[] = [
+		'label' => $category->name,
+		'url'   => '',
+	];
 }
-$crumbs[] = [ 'label' => $space->title, 'url' => '' ];
+$crumbs[] = [
+	'label' => $space->title,
+	'url'   => '',
+];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
@@ -115,26 +121,29 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						<div class="jt-num-lbl"><?php esc_html_e( 'Members', 'jetonomy' ); ?></div>
 					</div>
 				</div>
-				<?php if ( is_user_logged_in() ) :
+				<?php
+				if ( is_user_logged_in() ) :
 					if ( 'invite' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
 						// Invite-only: show a disabled badge instead of Follow/Join.
-					?>
+						?>
 						<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
 							<?php esc_html_e( 'Invite Only', 'jetonomy' ); ?>
 						</span>
-					<?php elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+						<?php
+					elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
 						// Approval required: show "Request to Join" button.
 						$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
-					?>
+						?>
 						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
 							data-space-id="<?php echo (int) $space->id; ?>"
 							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
 							<?php esc_html_e( 'Request to Join', 'jetonomy' ); ?>
 						</button>
-					<?php else :
+						<?php
+					else :
 						// Member or open space: show Follow/Following toggle.
 						$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );
-					?>
+						?>
 						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-interactive="jetonomy"
 							data-wp-on--click="actions.followSpace"
@@ -166,7 +175,7 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 					];
 					foreach ( $sort_options as $key => $label ) :
 						$pill_url = add_query_arg( 'sort', $key, $space_url );
-					?>
+						?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
 							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
 							<?php echo esc_html( $label ); ?>
@@ -180,8 +189,8 @@ $crumbs[] = [ 'label' => $space->title, 'url' => '' ];
 						<?php
 						$new_post_labels = [
 							'qa'    => __( '+ Ask a Question', 'jetonomy' ),
-							'ideas' => __( '+ Share an Idea',  'jetonomy' ),
-							'feed'  => __( '+ New Status',     'jetonomy' ),
+							'ideas' => __( '+ Share an Idea', 'jetonomy' ),
+							'feed'  => __( '+ New Status', 'jetonomy' ),
 						];
 						echo esc_html( $new_post_labels[ $space->type ] ?? __( '+ New Post', 'jetonomy' ) );
 						?>

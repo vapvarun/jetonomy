@@ -28,9 +28,9 @@ class Trust_Evaluator {
 	 * @return int Resolved trust level (0–3).
 	 */
 	public static function evaluate_level( array $stats ): int {
-		$post_count       = (int) ( $stats['post_count']       ?? 0 );
-		$days_active      = (int) ( $stats['days_active']      ?? 0 );
-		$reputation       = (int) ( $stats['reputation']       ?? 0 );
+		$post_count       = (int) ( $stats['post_count'] ?? 0 );
+		$days_active      = (int) ( $stats['days_active'] ?? 0 );
+		$reputation       = (int) ( $stats['reputation'] ?? 0 );
 		$replies_received = (int) ( $stats['replies_received'] ?? 0 );
 
 		$level = 0;
@@ -38,8 +38,8 @@ class Trust_Evaluator {
 		// Level 1 requirements (admin-configurable).
 		$req1 = Trust_Levels::get_requirements( 1 );
 		if (
-			$post_count       >= ( $req1['posts']            ?? 5  ) &&
-			$days_active      >= ( $req1['days_active']      ?? 3  ) &&
+			$post_count >= ( $req1['posts'] ?? 5 ) &&
+			$days_active >= ( $req1['days_active'] ?? 3 ) &&
 			$replies_received >= ( $req1['replies_received'] ?? 10 )
 		) {
 			$level = 1;
@@ -50,9 +50,9 @@ class Trust_Evaluator {
 		// Level 2 requirements (admin-configurable).
 		$req2 = Trust_Levels::get_requirements( 2 );
 		if (
-			$post_count  >= ( $req2['posts']       ?? 30 ) &&
-			$days_active >= ( $req2['days_active']  ?? 20 ) &&
-			$reputation  >= ( $req2['reputation']   ?? 50 )
+			$post_count >= ( $req2['posts'] ?? 30 ) &&
+			$days_active >= ( $req2['days_active'] ?? 20 ) &&
+			$reputation >= ( $req2['reputation'] ?? 50 )
 		) {
 			$level = 2;
 		} else {
@@ -62,9 +62,9 @@ class Trust_Evaluator {
 		// Level 3 requirements (admin-configurable).
 		$req3 = Trust_Levels::get_requirements( 3 );
 		if (
-			$post_count  >= ( $req3['posts']      ?? 100 ) &&
-			$days_active >= ( $req3['days_active'] ?? 60  ) &&
-			$reputation  >= ( $req3['reputation']  ?? 200 )
+			$post_count >= ( $req3['posts'] ?? 100 ) &&
+			$days_active >= ( $req3['days_active'] ?? 60 ) &&
+			$reputation >= ( $req3['reputation'] ?? 200 )
 		) {
 			$level = 3;
 		}

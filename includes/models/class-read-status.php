@@ -1,4 +1,10 @@
 <?php
+/**
+ * Read status model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

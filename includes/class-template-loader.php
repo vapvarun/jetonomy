@@ -1,4 +1,10 @@
 <?php
+/**
+ * Template loader.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;
@@ -197,7 +203,7 @@ class Template_Loader {
 				'topicMoved'         => __( 'Topic moved successfully.', 'jetonomy' ),
 				'moveFailed'         => __( 'Failed to move topic.', 'jetonomy' ),
 				'mergeTopicTitle'    => __( 'Merge into another topic', 'jetonomy' ),
-				'confirmMerge'      => __( 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', 'jetonomy' ),
+				'confirmMerge'       => __( 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', 'jetonomy' ),
 				'topicMerged'        => __( 'Topics merged successfully.', 'jetonomy' ),
 				'mergeFailed'        => __( 'Failed to merge topics.', 'jetonomy' ),
 				'splitReplyTitle'    => __( 'Enter a title for the new topic:', 'jetonomy' ),

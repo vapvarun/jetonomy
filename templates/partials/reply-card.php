@@ -10,7 +10,7 @@ $author      = get_userdata( (int) $reply->author_id );
 $profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
 $author_id   = (int) $reply->author_id;
 $trust       = $profile ? (int) $profile->trust_level : 0;
-$time_ago    = human_time_diff( strtotime( $reply->created_at ), current_time( 'timestamp', true ) );
+$time_ago    = human_time_diff( strtotime( $reply->created_at ), time() );
 $is_op       = (int) $reply->author_id === (int) $post->author_id;
 $is_accepted = (int) $reply->is_accepted;
 ?>
@@ -88,7 +88,7 @@ $is_accepted = (int) $reply->is_accepted;
 		&& (int) $post->author_id === get_current_user_id()
 		&& ! $is_accepted
 	) :
-	?>
+		?>
 		<button class="jt-act"
 			data-wp-on--click="actions.acceptReply"
 			data-reply-id="<?php echo (int) $reply->id; ?>"

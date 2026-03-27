@@ -1,4 +1,10 @@
 <?php
+/**
+ * Flag model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -38,7 +44,7 @@ class Flag extends Model {
 	 */
 	public static function list_pending(): array {
 		return static::db()->get_results(
-			"SELECT * FROM " . static::table() . " WHERE status = 'pending' ORDER BY created_at DESC"
+			'SELECT * FROM ' . static::table() . " WHERE status = 'pending' ORDER BY created_at DESC"
 		) ?: [];
 	}
 

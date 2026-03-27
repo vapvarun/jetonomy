@@ -1,4 +1,10 @@
 <?php
+/**
+ * Cache layer.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;

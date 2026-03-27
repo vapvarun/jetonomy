@@ -90,7 +90,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				'ideas'  => __( 'Ideas', 'jetonomy' ),
 				'social' => __( 'Social', 'jetonomy' ),
 			];
-			$space_type = $space->type ?? 'forum';
+			$space_type        = $space->type ?? 'forum';
 			?>
 			<div class="jt-sidebar-meta">
 				<span class="jt-tag"><?php echo esc_html( $space_type_labels[ $space_type ] ?? ucfirst( $space_type ) ); ?></span>

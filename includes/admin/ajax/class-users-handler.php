@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — users.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
@@ -9,10 +15,10 @@ use Jetonomy\Models\UserProfile;
 class Users_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_ban_user',           [ $this, 'ajax_ban_user' ] );
-		add_action( 'wp_ajax_jetonomy_unban_user',         [ $this, 'ajax_unban_user' ] );
+		add_action( 'wp_ajax_jetonomy_ban_user', [ $this, 'ajax_ban_user' ] );
+		add_action( 'wp_ajax_jetonomy_unban_user', [ $this, 'ajax_unban_user' ] );
 		add_action( 'wp_ajax_jetonomy_change_trust_level', [ $this, 'ajax_change_trust_level' ] );
-		add_action( 'wp_ajax_jetonomy_search_users',       [ $this, 'ajax_search_users' ] );
+		add_action( 'wp_ajax_jetonomy_search_users', [ $this, 'ajax_search_users' ] );
 	}
 
 	public function ajax_ban_user(): void {
@@ -21,11 +27,11 @@ class Users_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$user_id   = absint( $_POST['user_id'] ?? 0 );
-		$type      = sanitize_text_field( $_POST['type'] ?? 'global_ban' );
-		$reason    = sanitize_text_field( $_POST['reason'] ?? '' );
-		$duration  = sanitize_text_field( $_POST['duration'] ?? 'permanent' );
-		$space_id  = absint( $_POST['space_id'] ?? 0 );
+		$user_id  = absint( $_POST['user_id'] ?? 0 );
+		$type     = sanitize_text_field( $_POST['type'] ?? 'global_ban' );
+		$reason   = sanitize_text_field( $_POST['reason'] ?? '' );
+		$duration = sanitize_text_field( $_POST['duration'] ?? 'permanent' );
+		$space_id = absint( $_POST['space_id'] ?? 0 );
 
 		if ( ! $user_id ) {
 			wp_send_json_error( __( 'Invalid user ID.', 'jetonomy' ) );
@@ -73,10 +79,12 @@ class Users_Handler {
 			wp_send_json_error( __( 'Failed to ban user.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [
-			'message'        => __( 'User banned.', 'jetonomy' ),
-			'restriction_id' => $restriction_id,
-		] );
+		wp_send_json_success(
+			[
+				'message'        => __( 'User banned.', 'jetonomy' ),
+				'restriction_id' => $restriction_id,
+			]
+		);
 	}
 
 	public function ajax_unban_user(): void {
@@ -122,10 +130,12 @@ class Users_Handler {
 			wp_send_json_error( __( 'Failed to update trust level.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [
-			'message'     => __( 'Trust level updated.', 'jetonomy' ),
-			'trust_level' => $trust_level,
-		] );
+		wp_send_json_success(
+			[
+				'message'     => __( 'Trust level updated.', 'jetonomy' ),
+				'trust_level' => $trust_level,
+			]
+		);
 	}
 
 	public function ajax_search_users(): void {
@@ -139,11 +149,13 @@ class Users_Handler {
 			wp_send_json_success( [ 'users' => [] ] );
 		}
 
-		$users = get_users( [
-			'search'         => '*' . $search . '*',
-			'search_columns' => [ 'user_login', 'display_name', 'user_email' ],
-			'number'         => 10,
-		] );
+		$users = get_users(
+			[
+				'search'         => '*' . $search . '*',
+				'search_columns' => [ 'user_login', 'display_name', 'user_email' ],
+				'number'         => 10,
+			]
+		);
 
 		$results = [];
 		foreach ( $users as $user ) {

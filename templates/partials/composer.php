@@ -21,8 +21,8 @@ if ( ! is_user_logged_in() ) {
 	return;
 }
 
-$_post_id  = isset( $post_id ) ? (int) $post_id : 0;
-$_reply_to = isset( $reply_to ) ? (int) $reply_to : 0;
+$_post_id     = isset( $post_id ) ? (int) $post_id : 0;
+$_reply_to    = isset( $reply_to ) ? (int) $reply_to : 0;
 $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… (Markdown supported)', 'jetonomy' );
 ?>
 <div class="jt-editor"

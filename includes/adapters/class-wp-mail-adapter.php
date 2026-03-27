@@ -1,4 +1,10 @@
 <?php
+/**
+ * wp_mail email adapter.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Adapters;
 
 defined( 'ABSPATH' ) || exit;

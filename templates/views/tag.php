@@ -17,8 +17,8 @@ if ( ! $tag ) {
 }
 
 global $wpdb;
-$posts_tbl    = \Jetonomy\table( 'posts' );
-$spaces_tbl   = \Jetonomy\table( 'spaces' );
+$posts_tbl     = \Jetonomy\table( 'posts' );
+$spaces_tbl    = \Jetonomy\table( 'spaces' );
 $post_tags_tbl = \Jetonomy\table( 'post_tags' );
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -43,11 +43,14 @@ $posts = $wpdb->get_results(
 	)
 ) ?: [];
 
-$base = \Jetonomy\base_url();
+$base    = \Jetonomy\base_url();
 $tag_url = $base . '/tag/' . $tag->slug . '/';
 
 $crumbs = [
-	[ 'label' => $tag->name, 'url' => '' ],
+	[
+		'label' => $tag->name,
+		'url'   => '',
+	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -73,7 +76,7 @@ $crumbs = [
 					];
 					foreach ( $sorts as $key => $label ) :
 						$pill_url = add_query_arg( 'sort', $key, $tag_url );
-					?>
+						?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
 							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
 							<?php echo esc_html( $label ); ?>

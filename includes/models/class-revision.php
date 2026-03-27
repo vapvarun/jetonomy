@@ -1,4 +1,10 @@
 <?php
+/**
+ * Revision model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

@@ -23,11 +23,11 @@ $offset   = ( $page - 1 ) * $per_page;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$date_to   = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
+$date_to = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $author_id = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$tag_slug  = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
+$tag_slug = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $sort = isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : 'relevance';
 if ( ! in_array( $sort, [ 'relevance', 'newest', 'votes' ], true ) ) {
@@ -50,7 +50,7 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			// Use direct filtered query when advanced filters are active.
 			global $wpdb;
 			$posts_tbl = \Jetonomy\table( 'posts' );
-			$where     = [ "MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)", "status = 'publish'" ];
+			$where     = [ 'MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)', "status = 'publish'" ];
 			$params    = [ $q ];
 
 			if ( $date_from ) {
@@ -70,9 +70,9 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			$where_sql = implode( ' AND ', $where );
 
 			if ( $tag_slug ) {
-				$tags_tbl       = \Jetonomy\table( 'tags' );
-				$pt_tbl         = \Jetonomy\table( 'post_tags' );
-				$tag_params     = array_merge( [ $tag_slug ], $params, [ $per_page, $offset ] );
+				$tags_tbl   = \Jetonomy\table( 'tags' );
+				$pt_tbl     = \Jetonomy\table( 'post_tags' );
+				$tag_params = array_merge( [ $tag_slug ], $params, [ $per_page, $offset ] );
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$sql = $wpdb->prepare(
 					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$pt_tbl} pt ON pt.post_id = p.id INNER JOIN {$tags_tbl} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
@@ -99,7 +99,7 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			if ( ! isset( $space_cache[ $sid ] ) ) {
 				$space_cache[ $sid ] = \Jetonomy\Models\Space::find( $sid );
 			}
-			$sp = $space_cache[ $sid ];
+			$sp                = $space_cache[ $sid ];
 			$post->space_slug  = $sp ? $sp->slug : '';
 			$post->space_title = $sp ? $sp->title : '';
 		}
@@ -127,7 +127,10 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 $total = count( $posts ) + count( $spaces ) + count( $tags );
 
 $crumbs = [
-	[ 'label' => __( 'Search', 'jetonomy' ), 'url' => '' ],
+	[
+		'label' => __( 'Search', 'jetonomy' ),
+		'url'   => '',
+	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -158,8 +161,14 @@ $crumbs = [
 							'tags'   => __( 'Tags', 'jetonomy' ),
 						];
 						foreach ( $filters as $key => $label ) :
-							$f_url = add_query_arg( [ 'q' => $q, 'filter' => $key ], $base . '/search/' );
-						?>
+							$f_url = add_query_arg(
+								[
+									'q'      => $q,
+									'filter' => $key,
+								],
+								$base . '/search/'
+							);
+							?>
 							<a href="<?php echo esc_url( $f_url ); ?>"
 								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>">
 								<?php echo esc_html( $label ); ?>
@@ -224,12 +233,13 @@ $crumbs = [
 							<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
 						</h3>
 						<div class="jt-topics jt-mb-lg">
-							<?php foreach ( $posts as $post ) :
-								$time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
+							<?php
+							foreach ( $posts as $post ) :
+								$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 								$post_url = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
 								$excerpt  = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author   = get_userdata( (int) $post->author_id );
-							?>
+								?>
 								<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row">
 									<div class="jt-votes">
 										<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>

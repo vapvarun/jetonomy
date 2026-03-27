@@ -46,10 +46,10 @@ $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $category = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
 
 $author_id = (int) $post->author_id;
-$trust    = $profile ? (int) $profile->trust_level : 0;
-$time_ago = human_time_diff( strtotime( $post->created_at ), current_time( 'timestamp', true ) );
-$base     = \Jetonomy\base_url();
-$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
+$trust     = $profile ? (int) $profile->trust_level : 0;
+$time_ago  = human_time_diff( strtotime( $post->created_at ), time() );
+$base      = \Jetonomy\base_url();
+$post_url  = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 
 // Replies sort.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -58,9 +58,9 @@ if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
 	$reply_sort = 'oldest';
 }
 // Smart threaded loading: first 10 top-level + last 10 top-level, with gap in between.
-$total_replies     = (int) $post->reply_count;
-$top_level_count   = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
-$batch_size        = 10;
+$total_replies   = (int) $post->reply_count;
+$top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
+$batch_size      = 10;
 
 if ( $top_level_count <= $batch_size * 2 ) {
 	// Small post — load all threaded.
@@ -91,25 +91,34 @@ $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'po
 // Breadcrumb.
 $crumbs = [];
 if ( $category ) {
-	$crumbs[] = [ 'label' => $category->name, 'url' => '' ];
+	$crumbs[] = [
+		'label' => $category->name,
+		'url'   => '',
+	];
 }
 if ( $space ) {
-	$crumbs[] = [ 'label' => $space->title, 'url' => $base . '/s/' . $space->slug . '/' ];
+	$crumbs[] = [
+		'label' => $space->title,
+		'url'   => $base . '/s/' . $space->slug . '/',
+	];
 }
-$crumbs[] = [ 'label' => $post->title, 'url' => '' ];
+$crumbs[] = [
+	'label' => $post->title,
+	'url'   => '',
+];
 
 // Server-side state for IA.
 $post_scores = [ (int) $post->id => (int) $post->vote_score ];
 wp_interactivity_state(
 	'jetonomy',
 	[
-		'currentPostId'  => (int) $post->id,
-		'postScores'     => $post_scores,
-		'replyScores'    => [],
-		'activeReply'    => 0,
-		'submitting'     => false,
-		'replyToId'      => null,
-		'replyToAuthor'  => '',
+		'currentPostId' => (int) $post->id,
+		'postScores'    => $post_scores,
+		'replyScores'   => [],
+		'activeReply'   => 0,
+		'submitting'    => false,
+		'replyToId'     => null,
+		'replyToAuthor' => '',
 	]
 );
 ?>
@@ -126,7 +135,16 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 	$wrapper_class = $depth > 0 ? 'jt-nested jt-nested-' . min( $depth, 3 ) : '';
 	?>
 	<div class="<?php echo esc_attr( $wrapper_class ); ?>">
-		<?php \Jetonomy\Template_Loader::partial( 'reply-card', [ 'reply' => $reply, 'post' => $post, 'space' => $space ] ); ?>
+		<?php
+		\Jetonomy\Template_Loader::partial(
+			'reply-card',
+			[
+				'reply' => $reply,
+				'post'  => $post,
+				'space' => $space,
+			]
+		);
+		?>
 		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
 			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
 				data-wp-context='{"collapsed": false, "childCount": <?php echo count( $reply->children ); ?>}'>
@@ -196,9 +214,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							</a>
 						<?php endforeach; ?>
 					</div>
-					<?php if ( is_user_logged_in() ) :
+					<?php
+					if ( is_user_logged_in() ) :
 						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
-					?>
+						?>
 						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-on--click="actions.followPost"
 							data-post-id="<?php echo (int) $post->id; ?>"
@@ -255,9 +274,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
 					data-post-title="<?php echo esc_attr( $post->title ); ?>"
 					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
-				<?php if ( is_user_logged_in() ) :
+				<?php
+				if ( is_user_logged_in() ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
-				?>
+					?>
 					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? esc_attr( 'bookmarked' ) : ''; ?>"
 						data-wp-on--click="actions.toggleBookmark"
 						data-post-id="<?php echo (int) $post->id; ?>"
@@ -316,14 +336,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				data-wp-interactive="jetonomy"
 				data-wp-init--infinite="callbacks.initInfiniteScroll"
 				data-wp-init--polling="callbacks.initReplyPolling"
-				data-wp-context='<?php echo wp_json_encode( [
-					'postId'           => (int) $post->id,
-					'totalReplies'     => $total_replies,
-					'topLevelCount'    => $top_level_count,
-					'sort'             => $reply_sort,
-					'hasMore'          => false,
-					'loadingMore'      => false,
-				] ); ?>'>
+				data-wp-context='
+				<?php
+				echo wp_json_encode(
+					[
+						'postId'        => (int) $post->id,
+						'totalReplies'  => $total_replies,
+						'topLevelCount' => $top_level_count,
+						'sort'          => $reply_sort,
+						'hasMore'       => false,
+						'loadingMore'   => false,
+					]
+				);
+				?>
+				'>
 
 				<div class="jt-replies-head">
 					<h3>
@@ -340,7 +366,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							];
 							foreach ( $reply_sorts as $key => $label ) :
 								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
-							?>
+								?>
 								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
 									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>">
 									<?php echo esc_html( $label ); ?>
@@ -366,12 +392,18 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<!-- Gap loader (in-between) -->
 						<?php if ( $gap_count > 0 ) : ?>
 							<div class="jt-load-gap" data-wp-interactive="jetonomy"
-								data-wp-context='<?php echo wp_json_encode( [
-									'postId'   => (int) $post->id,
-									'gapStart' => $batch_size,
-									'gapCount' => $gap_count,
-									'loading'  => false,
-								] ); ?>'>
+								data-wp-context='
+								<?php
+								echo wp_json_encode(
+									[
+										'postId'   => (int) $post->id,
+										'gapStart' => $batch_size,
+										'gapCount' => $gap_count,
+										'loading'  => false,
+									]
+								);
+								?>
+								'>
 								<button class="jt-btn jt-btn-ghost jt-load-gap-btn"
 									data-wp-on--click="actions.loadGapReplies"
 									data-wp-bind--disabled="context.loading">

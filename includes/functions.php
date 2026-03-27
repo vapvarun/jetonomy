@@ -1,11 +1,17 @@
 <?php
+/**
+ * Global helper functions.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;
 
 function table( string $name ): string {
-    global $wpdb;
-    return $wpdb->prefix . 'jt_' . $name;
+	global $wpdb;
+	return $wpdb->prefix . 'jt_' . $name;
 }
 
 /**
@@ -17,13 +23,13 @@ function table( string $name ): string {
  * @return string Base URL without trailing slash.
  */
 function base_url(): string {
-    $settings  = get_option( 'jetonomy_settings', [] );
-    $base_slug = $settings['base_slug'] ?? 'community';
-    return home_url( '/' . $base_slug );
+	$settings  = get_option( 'jetonomy_settings', [] );
+	$base_slug = $settings['base_slug'] ?? 'community';
+	return home_url( '/' . $base_slug );
 }
 
 function now(): string {
-    return current_time( 'mysql', true );
+	return current_time( 'mysql', true );
 }
 
 /**
@@ -37,26 +43,26 @@ function now(): string {
  * @return string The profile URL.
  */
 function get_profile_url( int $user_id ): string {
-    $user = get_userdata( $user_id );
-    if ( ! $user ) {
-        return '';
-    }
+	$user = get_userdata( $user_id );
+	if ( ! $user ) {
+		return '';
+	}
 
-    $settings  = get_option( 'jetonomy_settings', [] );
-    $base_slug = $settings['base_slug'] ?? 'community';
-    $default   = home_url( '/' . $base_slug . '/u/' . $user->user_login . '/' );
+	$settings  = get_option( 'jetonomy_settings', [] );
+	$base_slug = $settings['base_slug'] ?? 'community';
+	$default   = home_url( '/' . $base_slug . '/u/' . $user->user_login . '/' );
 
-    /**
-     * Filter the user profile URL.
-     *
-     * Allows third-party plugins (BuddyPress, BuddyBoss, Ultimate Member)
-     * to override where user profile links point to.
-     *
-     * @param string $url     The default Jetonomy profile URL.
-     * @param int    $user_id The user ID.
-     * @param object $user    The WP_User object.
-     */
-    return apply_filters( 'jetonomy_profile_url', $default, $user_id, $user );
+	/**
+	 * Filter the user profile URL.
+	 *
+	 * Allows third-party plugins (BuddyPress, BuddyBoss, Ultimate Member)
+	 * to override where user profile links point to.
+	 *
+	 * @param string $url     The default Jetonomy profile URL.
+	 * @param int    $user_id The user ID.
+	 * @param object $user    The WP_User object.
+	 */
+	return apply_filters( 'jetonomy_profile_url', $default, $user_id, $user );
 }
 
 /**
@@ -71,25 +77,25 @@ function get_profile_url( int $user_id ): string {
  * @return string HTML output.
  */
 function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int $avatar_size = 30, bool $show_name = true ): string {
-    $user = get_userdata( $user_id );
-    if ( ! $user ) {
-        return '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">??</span>';
-    }
+	$user = get_userdata( $user_id );
+	if ( ! $user ) {
+		return '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">??</span>';
+	}
 
-    $url        = get_profile_url( $user_id );
-    $name       = $user->display_name;
-    $avatar_url = get_avatar_url( $user_id, [ 'size' => $avatar_size * 2 ] );
-    $initials   = strtoupper( mb_substr( $name, 0, 2 ) );
+	$url        = get_profile_url( $user_id );
+	$name       = $user->display_name;
+	$avatar_url = get_avatar_url( $user_id, [ 'size' => $avatar_size * 2 ] );
+	$initials   = strtoupper( mb_substr( $name, 0, 2 ) );
 
-    $avatar_html = $avatar_url
-        ? '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr( $name ) . '" class="jt-avatar ' . esc_attr( $avatar_class ) . '" width="' . (int) $avatar_size . '" height="' . (int) $avatar_size . '" loading="lazy">'
-        : '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">' . esc_html( $initials ) . '</span>';
+	$avatar_html = $avatar_url
+		? '<img src="' . esc_url( $avatar_url ) . '" alt="' . esc_attr( $name ) . '" class="jt-avatar ' . esc_attr( $avatar_class ) . '" width="' . (int) $avatar_size . '" height="' . (int) $avatar_size . '" loading="lazy">'
+		: '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">' . esc_html( $initials ) . '</span>';
 
-    $name_html = $show_name ? ' <span class="jt-user-name">' . esc_html( $name ) . '</span>' : '';
+	$name_html = $show_name ? ' <span class="jt-user-name">' . esc_html( $name ) . '</span>' : '';
 
-    if ( $url ) {
-        return '<a href="' . esc_url( $url ) . '" class="jt-user-link">' . $avatar_html . $name_html . '</a>';
-    }
+	if ( $url ) {
+		return '<a href="' . esc_url( $url ) . '" class="jt-user-link">' . $avatar_html . $name_html . '</a>';
+	}
 
-    return $avatar_html . $name_html;
+	return $avatar_html . $name_html;
 }

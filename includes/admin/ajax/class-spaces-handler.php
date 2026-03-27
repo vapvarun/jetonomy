@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — spaces.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
@@ -13,16 +19,16 @@ class Spaces_Handler {
 
 	public function __construct() {
 		// Space AJAX
-		add_action( 'wp_ajax_jetonomy_create_space',        [ $this, 'ajax_create_space' ] );
-		add_action( 'wp_ajax_jetonomy_update_space',        [ $this, 'ajax_update_space' ] );
-		add_action( 'wp_ajax_jetonomy_delete_space',        [ $this, 'ajax_delete_space' ] );
+		add_action( 'wp_ajax_jetonomy_create_space', [ $this, 'ajax_create_space' ] );
+		add_action( 'wp_ajax_jetonomy_update_space', [ $this, 'ajax_update_space' ] );
+		add_action( 'wp_ajax_jetonomy_delete_space', [ $this, 'ajax_delete_space' ] );
 		// Space Members AJAX
-		add_action( 'wp_ajax_jetonomy_add_space_member',    [ $this, 'ajax_add_space_member' ] );
+		add_action( 'wp_ajax_jetonomy_add_space_member', [ $this, 'ajax_add_space_member' ] );
 		add_action( 'wp_ajax_jetonomy_remove_space_member', [ $this, 'ajax_remove_space_member' ] );
-		add_action( 'wp_ajax_jetonomy_change_member_role',  [ $this, 'ajax_change_member_role' ] );
+		add_action( 'wp_ajax_jetonomy_change_member_role', [ $this, 'ajax_change_member_role' ] );
 		// Access Rules AJAX
-		add_action( 'wp_ajax_jetonomy_add_access_rule',     [ $this, 'ajax_add_access_rule' ] );
-		add_action( 'wp_ajax_jetonomy_delete_access_rule',  [ $this, 'ajax_delete_access_rule' ] );
+		add_action( 'wp_ajax_jetonomy_add_access_rule', [ $this, 'ajax_add_access_rule' ] );
+		add_action( 'wp_ajax_jetonomy_delete_access_rule', [ $this, 'ajax_delete_access_rule' ] );
 	}
 
 	public function ajax_create_space(): void {
@@ -59,28 +65,32 @@ class Spaces_Handler {
 			$status = 'active';
 		}
 
-		$id = Space::create( [
-			'title'       => $title,
-			'slug'        => $slug,
-			'description' => $description,
-			'category_id' => $category_id,
-			'author_id'   => get_current_user_id(),
-			'type'        => $type,
-			'visibility'  => $visibility,
-			'join_policy' => $join_policy,
-			'icon'        => $icon ?: null,
-			'cover_image' => $cover_image ?: null,
-			'status'      => $status,
-		] );
+		$id = Space::create(
+			[
+				'title'       => $title,
+				'slug'        => $slug,
+				'description' => $description,
+				'category_id' => $category_id,
+				'author_id'   => get_current_user_id(),
+				'type'        => $type,
+				'visibility'  => $visibility,
+				'join_policy' => $join_policy,
+				'icon'        => $icon ?: null,
+				'cover_image' => $cover_image ?: null,
+				'status'      => $status,
+			]
+		);
 
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Failed to create space.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [
-			'id'      => $id,
-			'message' => __( 'Space created.', 'jetonomy' ),
-		] );
+		wp_send_json_success(
+			[
+				'id'      => $id,
+				'message' => __( 'Space created.', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function ajax_update_space(): void {
@@ -94,7 +104,7 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Invalid space ID.', 'jetonomy' ) );
 		}
 
-		$data = [];
+		$data           = [];
 		$allowed_fields = [
 			'title'       => 'sanitize_text_field',
 			'description' => 'wp_kses_post',
@@ -161,9 +171,11 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Failed to update space.', 'jetonomy' ) );
 		}
 
-		wp_send_json_success( [
-			'message' => __( 'Space updated.', 'jetonomy' ),
-		] );
+		wp_send_json_success(
+			[
+				'message' => __( 'Space updated.', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function ajax_delete_space(): void {
@@ -220,13 +232,15 @@ class Spaces_Handler {
 
 		SpaceMember::add( $space_id, $user_id, $role );
 
-		wp_send_json_success( [
-			'message'      => sprintf( __( '%s added as %s.', 'jetonomy' ), $user->display_name, $role ),
-			'user_id'      => $user_id,
-			'display_name' => $user->display_name,
-			'user_login'   => $user->user_login,
-			'role'         => $role,
-		] );
+		wp_send_json_success(
+			[
+				'message'      => sprintf( __( '%1$s added as %2$s.', 'jetonomy' ), $user->display_name, $role ),
+				'user_id'      => $user_id,
+				'display_name' => $user->display_name,
+				'user_login'   => $user->user_login,
+				'role'         => $role,
+			]
+		);
 	}
 
 	public function ajax_remove_space_member(): void {
@@ -300,25 +314,29 @@ class Spaces_Handler {
 			$space_role = 'viewer';
 		}
 
-		$id = AccessRule::create( [
-			'space_id'   => $space_id,
-			'rule_type'  => $rule_type,
-			'rule_value' => $rule_value ?: null,
-			'grants'     => $grants,
-			'space_role' => $space_role,
-			'priority'   => $priority,
-		] );
+		$id = AccessRule::create(
+			[
+				'space_id'   => $space_id,
+				'rule_type'  => $rule_type,
+				'rule_value' => $rule_value ?: null,
+				'grants'     => $grants,
+				'space_role' => $space_role,
+				'priority'   => $priority,
+			]
+		);
 
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Failed to create access rule.', 'jetonomy' ) );
 		}
 
 		$rule = AccessRule::find( $id );
-		wp_send_json_success( [
-			'id'      => $id,
-			'rule'    => $rule,
-			'message' => __( 'Access rule added.', 'jetonomy' ),
-		] );
+		wp_send_json_success(
+			[
+				'id'      => $id,
+				'rule'    => $rule,
+				'message' => __( 'Access rule added.', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function ajax_delete_access_rule(): void {

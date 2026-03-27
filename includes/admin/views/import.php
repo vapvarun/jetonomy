@@ -1,8 +1,14 @@
 <?php
+/**
+ * Admin import view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-$import_history  = get_option( 'jetonomy_import_history', [] );
-$resume_state    = get_option( 'jetonomy_import_resume', [] );
+$import_history   = get_option( 'jetonomy_import_history', [] );
+$resume_state     = get_option( 'jetonomy_import_resume', [] );
 $current_progress = \Jetonomy\Import\Importer::get_progress();
 ?>
 <div class="wrap jetonomy-admin">
@@ -33,11 +39,12 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 	<?php else : ?>
 		<!-- Available Sources -->
 		<div class="jetonomy-import-sources">
-			<?php foreach ( $available as $id => $info ) :
+			<?php
+			foreach ( $available as $id => $info ) :
 				$was_imported = isset( $import_history[ $id ] );
 				$has_resume   = ! empty( $resume_state ) && ( $resume_state['source'] ?? '' ) === $id;
 				$is_running   = ( $current_progress['status'] ?? '' ) === 'running';
-			?>
+				?>
 				<div class="jetonomy-import-source" id="import-source-<?php echo esc_attr( $id ); ?>"
 					data-source="<?php echo esc_attr( $id ); ?>"
 					data-was-imported="<?php echo $was_imported ? '1' : '0'; ?>"
@@ -59,20 +66,26 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 					<?php if ( $was_imported ) : ?>
 						<div class="jetonomy-import-history">
 							<p>
-								<?php printf(
+								<?php
+								printf(
 									/* translators: %s: date and time of last import */
 									esc_html__( 'Last imported: %s', 'jetonomy' ),
-									esc_html( date_i18n(
-										get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-										strtotime( $import_history[ $id ]['completed_at'] )
-									) )
-								); ?>
+									esc_html(
+										date_i18n(
+											get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+											strtotime( $import_history[ $id ]['completed_at'] )
+										)
+									)
+								);
+								?>
 								&mdash;
-								<?php printf(
+								<?php
+								printf(
 									/* translators: %s: number of records imported */
 									esc_html__( '%s records imported', 'jetonomy' ),
 									esc_html( number_format_i18n( $import_history[ $id ]['imported'] ) )
-								); ?>
+								);
+								?>
 							</p>
 							<p class="description">
 								<strong><?php esc_html_e( 'Warning:', 'jetonomy' ); ?></strong>
@@ -84,16 +97,20 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 					<?php if ( $has_resume ) : ?>
 						<div class="jetonomy-import-resume-info">
 							<p>
-								<?php printf(
+								<?php
+								printf(
 									/* translators: 1: phase name, 2: offset number, 3: start date/time */
 									esc_html__( 'Import was interrupted at phase: %1$s (offset: %2$s). Started: %3$s', 'jetonomy' ),
 									esc_html( $resume_state['phase'] ?? '' ),
 									esc_html( number_format_i18n( $resume_state['offset'] ?? 0 ) ),
-									esc_html( date_i18n(
-										get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
-										strtotime( $resume_state['started_at'] ?? '' )
-									) )
-								); ?>
+									esc_html(
+										date_i18n(
+											get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+											strtotime( $resume_state['started_at'] ?? '' )
+										)
+									)
+								);
+								?>
 							</p>
 						</div>
 					<?php endif; ?>

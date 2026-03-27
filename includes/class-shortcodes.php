@@ -1,4 +1,10 @@
 <?php
+/**
+ * Shortcodes registration.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;

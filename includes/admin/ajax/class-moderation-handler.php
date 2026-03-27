@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — moderation.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
@@ -11,9 +17,9 @@ class Moderation_Handler {
 
 	public function __construct() {
 		add_action( 'wp_ajax_jetonomy_approve_content', [ $this, 'ajax_approve_content' ] );
-		add_action( 'wp_ajax_jetonomy_spam_content',    [ $this, 'ajax_spam_content' ] );
-		add_action( 'wp_ajax_jetonomy_trash_content',   [ $this, 'ajax_trash_content' ] );
-		add_action( 'wp_ajax_jetonomy_resolve_flag',    [ $this, 'ajax_resolve_flag' ] );
+		add_action( 'wp_ajax_jetonomy_spam_content', [ $this, 'ajax_spam_content' ] );
+		add_action( 'wp_ajax_jetonomy_trash_content', [ $this, 'ajax_trash_content' ] );
+		add_action( 'wp_ajax_jetonomy_resolve_flag', [ $this, 'ajax_resolve_flag' ] );
 	}
 
 	public function ajax_approve_content(): void {

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Real-time updates REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -18,26 +24,30 @@ class Updates_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		register_rest_route( $ns, '/updates', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'get_updates' ],
-			'permission_callback' => '__return_true',
-			'args'                => [
-				'since' => [
-					'type'     => 'string',
-					'required' => true,
+		register_rest_route(
+			$ns,
+			'/updates',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_updates' ],
+				'permission_callback' => '__return_true',
+				'args'                => [
+					'since' => [
+						'type'     => 'string',
+						'required' => true,
+					],
+					'scope' => [
+						'type'    => 'string',
+						'default' => 'global',
+						'enum'    => [ 'global', 'space', 'post' ],
+					],
+					'id'    => [
+						'type'    => 'integer',
+						'minimum' => 1,
+					],
 				],
-				'scope' => [
-					'type'    => 'string',
-					'default' => 'global',
-					'enum'    => [ 'global', 'space', 'post' ],
-				],
-				'id'    => [
-					'type'    => 'integer',
-					'minimum' => 1,
-				],
-			],
-		] );
+			]
+		);
 	}
 
 	/**
@@ -79,15 +89,18 @@ class Updates_Controller extends Base_Controller {
 			$data = $this->get_global_updates( $wpdb, $since_dt );
 		}
 
-		$response = new WP_REST_Response( [
-			'data'  => $data,
-			'since' => $since_dt,
-			'scope' => $scope,
-			'meta'  => [
-				'count'   => count( $data ),
-				'has_more' => false,
+		$response = new WP_REST_Response(
+			[
+				'data'  => $data,
+				'since' => $since_dt,
+				'scope' => $scope,
+				'meta'  => [
+					'count'    => count( $data ),
+					'has_more' => false,
+				],
 			],
-		], 200 );
+			200
+		);
 
 		$response->header( 'Cache-Control', 'no-cache' );
 
@@ -112,14 +125,17 @@ class Updates_Controller extends Base_Controller {
 			)
 		) ?: [];
 
-		return array_map( function( $row ) {
-			return [
-				'action'      => $row->action,
-				'object_type' => $row->object_type,
-				'object_id'   => (int) $row->object_id,
-				'created_at'  => $row->created_at,
-			];
-		}, $rows );
+		return array_map(
+			function ( $row ) {
+				return [
+					'action'      => $row->action,
+					'object_type' => $row->object_type,
+					'object_id'   => (int) $row->object_id,
+					'created_at'  => $row->created_at,
+				];
+			},
+			$rows
+		);
 	}
 
 	/**
@@ -160,14 +176,17 @@ class Updates_Controller extends Base_Controller {
 			)
 		) ?: [];
 
-		return array_map( function( $row ) {
-			return [
-				'action'      => $row->action,
-				'object_type' => $row->object_type,
-				'object_id'   => (int) $row->object_id,
-				'created_at'  => $row->created_at,
-			];
-		}, $rows );
+		return array_map(
+			function ( $row ) {
+				return [
+					'action'      => $row->action,
+					'object_type' => $row->object_type,
+					'object_id'   => (int) $row->object_id,
+					'created_at'  => $row->created_at,
+				];
+			},
+			$rows
+		);
 	}
 
 	/**

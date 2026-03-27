@@ -14,18 +14,21 @@ if ( ! current_user_can( 'jetonomy_moderate' ) && ! current_user_can( 'manage_op
 	return;
 }
 
-$flags        = \Jetonomy\Models\Flag::list_pending();
-$base         = \Jetonomy\base_url();
+$flags         = \Jetonomy\Models\Flag::list_pending();
+$base          = \Jetonomy\base_url();
 $reason_labels = [
-	'spam'        => __( 'Spam', 'jetonomy' ),
-	'abuse'       => __( 'Abuse / Harassment', 'jetonomy' ),
-	'off-topic'   => __( 'Off-topic', 'jetonomy' ),
+	'spam'           => __( 'Spam', 'jetonomy' ),
+	'abuse'          => __( 'Abuse / Harassment', 'jetonomy' ),
+	'off-topic'      => __( 'Off-topic', 'jetonomy' ),
 	'misinformation' => __( 'Misinformation', 'jetonomy' ),
-	'other'       => __( 'Other', 'jetonomy' ),
+	'other'          => __( 'Other', 'jetonomy' ),
 ];
 
 $crumbs = [
-	[ 'label' => __( 'Moderation Queue', 'jetonomy' ), 'url' => '' ],
+	[
+		'label' => __( 'Moderation Queue', 'jetonomy' ),
+		'url'   => '',
+	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -55,7 +58,7 @@ $crumbs = [
 				<?php foreach ( $flags as $flag ) : ?>
 					<?php
 					$reporter = get_userdata( (int) $flag->reporter_id );
-					$time_ago = human_time_diff( strtotime( $flag->created_at ), current_time( 'timestamp', true ) );
+					$time_ago = human_time_diff( strtotime( $flag->created_at ), time() );
 					$reason   = $reason_labels[ $flag->reason ] ?? $flag->reason;
 
 					// Build link to the flagged object.

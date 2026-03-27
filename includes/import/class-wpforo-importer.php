@@ -35,7 +35,7 @@ class WPForo_Importer extends Importer {
 
 	public function get_total_count(): int {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		$p      = $wpdb->prefix;
 		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" );
 		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" );
 		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" );
@@ -47,16 +47,28 @@ class WPForo_Importer extends Importer {
 		// For now, fall through to run() via a single-shot batch.
 		if ( 'forums' === $phase && 0 === $offset ) {
 			$this->run();
-			return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => $this->imported ];
+			return [
+				'phase'     => 'complete',
+				'offset'    => 0,
+				'done'      => true,
+				'processed' => $this->imported,
+			];
 		}
-		return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => 0 ];
+		return [
+			'phase'     => 'complete',
+			'offset'    => 0,
+			'done'      => true,
+			'processed' => 0,
+		];
 	}
 
 	public function run( array $options = [] ): array {
-		$cat_id = Category::create( [
-			'name' => __( 'Imported from wpForo', 'jetonomy' ),
-			'slug' => 'imported-wpforo',
-		] );
+		$cat_id = Category::create(
+			[
+				'name' => __( 'Imported from wpForo', 'jetonomy' ),
+				'slug' => 'imported-wpforo',
+			]
+		);
 
 		$this->import_forums( $cat_id );
 		$this->import_topics();
@@ -75,23 +87,25 @@ class WPForo_Importer extends Importer {
 		$forums = $wpdb->get_results( "SELECT * FROM {$p}wpforo_forums ORDER BY `order` ASC" );
 
 		foreach ( $forums as $forum ) {
-			$space_id = Space::create( [
-				'category_id' => $cat_id,
-				'author_id'   => 1,
-				'type'        => 'forum',
-				'title'       => $forum->title,
-				'slug'        => $forum->slug ?: sanitize_title( $forum->title ),
-				'description' => wp_strip_all_tags( $forum->description ?? '' ),
-				'visibility'  => 'public',
-				'join_policy' => 'open',
-				'sort_order'  => (int) $forum->order,
-			] );
+			$space_id = Space::create(
+				[
+					'category_id' => $cat_id,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => $forum->title,
+					'slug'        => $forum->slug ?: sanitize_title( $forum->title ),
+					'description' => wp_strip_all_tags( $forum->description ?? '' ),
+					'visibility'  => 'public',
+					'join_policy' => 'open',
+					'sort_order'  => (int) $forum->order,
+				]
+			);
 
 			if ( $space_id ) {
 				$this->map_id( 'forum', $forum->forumid, $space_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -105,7 +119,7 @@ class WPForo_Importer extends Importer {
 		foreach ( $topics as $topic ) {
 			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
 			if ( ! $space_id ) {
-				$this->skipped++;
+				++$this->skipped;
 				continue;
 			}
 
@@ -122,28 +136,30 @@ class WPForo_Importer extends Importer {
 
 			$content = $first_post ? $first_post->body : '';
 
-			$post_id = JtPost::create( [
-				'space_id'      => $space_id,
-				'author_id'     => (int) $topic->userid,
-				'type'          => 'topic',
-				'title'         => $topic->title,
-				'slug'          => $topic->slug ?: sanitize_title( $topic->title ),
-				'content'       => wp_kses_post( $content ),
-				'content_plain' => wp_strip_all_tags( $content ),
-				'status'        => ( (int) ( $topic->status ?? 0 ) === 0 ) ? 'publish' : 'pending',
-				'is_sticky'     => $is_sticky,
-				'is_closed'     => (int) ( $topic->closed ?? 0 ),
-				'created_at'    => $topic->created ?? now(),
-			] );
+			$post_id = JtPost::create(
+				[
+					'space_id'      => $space_id,
+					'author_id'     => (int) $topic->userid,
+					'type'          => 'topic',
+					'title'         => $topic->title,
+					'slug'          => $topic->slug ?: sanitize_title( $topic->title ),
+					'content'       => wp_kses_post( $content ),
+					'content_plain' => wp_strip_all_tags( $content ),
+					'status'        => ( (int) ( $topic->status ?? 0 ) === 0 ) ? 'publish' : 'pending',
+					'is_sticky'     => $is_sticky,
+					'is_closed'     => (int) ( $topic->closed ?? 0 ),
+					'created_at'    => $topic->created ?? now(),
+				]
+			);
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', $topic->topicid, $post_id );
 				if ( $first_post ) {
 					$this->map_id( 'wpforo_post', $first_post->postid, 0 ); // Mark first post as imported (it's the topic body)
 				}
-				$this->imported++;
+				++$this->imported;
 			} else {
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -165,7 +181,7 @@ class WPForo_Importer extends Importer {
 		foreach ( $posts as $wf_post ) {
 			$post_id = $this->get_mapped_id( 'topic', $wf_post->topicid );
 			if ( ! $post_id ) {
-				$this->skipped++;
+				++$this->skipped;
 				continue;
 			}
 
@@ -175,21 +191,23 @@ class WPForo_Importer extends Importer {
 				$parent_id = $this->get_mapped_id( 'wpforo_reply', $wf_post->parentid );
 			}
 
-			$reply_id = JtReply::create( [
-				'post_id'       => $post_id,
-				'parent_id'     => $parent_id,
-				'author_id'     => (int) $wf_post->userid,
-				'content'       => wp_kses_post( $wf_post->body ),
-				'content_plain' => wp_strip_all_tags( $wf_post->body ),
-				'status'        => 'publish',
-				'created_at'    => $wf_post->created ?? now(),
-			] );
+			$reply_id = JtReply::create(
+				[
+					'post_id'       => $post_id,
+					'parent_id'     => $parent_id,
+					'author_id'     => (int) $wf_post->userid,
+					'content'       => wp_kses_post( $wf_post->body ),
+					'content_plain' => wp_strip_all_tags( $wf_post->body ),
+					'status'        => 'publish',
+					'created_at'    => $wf_post->created ?? now(),
+				]
+			);
 
 			if ( $reply_id ) {
 				$this->map_id( 'wpforo_reply', $wf_post->postid, $reply_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -207,10 +225,12 @@ class WPForo_Importer extends Importer {
 
 		foreach ( $likes as $like ) {
 			$reply_id = $this->get_mapped_id( 'wpforo_reply', $like->postid );
-			if ( ! $reply_id ) continue;
+			if ( ! $reply_id ) {
+				continue;
+			}
 
 			Vote::cast( (int) $like->userid, 'reply', $reply_id, 1 );
-			$this->imported++;
+			++$this->imported;
 		}
 	}
 

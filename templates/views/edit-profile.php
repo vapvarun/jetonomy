@@ -16,8 +16,14 @@ $base         = \Jetonomy\base_url();
 	'breadcrumb',
 	[
 		'crumbs' => [
-			[ 'label' => $current_user->display_name, 'url' => $base . '/u/' . $current_user->user_login . '/' ],
-			[ 'label' => __( 'Edit Profile', 'jetonomy' ), 'url' => '' ],
+			[
+				'label' => $current_user->display_name,
+				'url'   => $base . '/u/' . $current_user->user_login . '/',
+			],
+			[
+				'label' => __( 'Edit Profile', 'jetonomy' ),
+				'url'   => '',
+			],
 		],
 	]
 );
@@ -29,9 +35,9 @@ $base         = \Jetonomy\base_url();
 	<h1 class="jt-post-create-title"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></h1>
 
 	<form id="jt-edit-profile" class="jt-new-post-form"
-	      data-wp-interactive="jetonomy"
-	      data-wp-on--submit="actions.saveProfile"
-	      data-wp-context='<?php echo wp_json_encode( [ "profileUrl" => $base . "/u/" . $current_user->user_login . "/" ] ); ?>'>
+			data-wp-interactive="jetonomy"
+			data-wp-on--submit="actions.saveProfile"
+			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $base . '/u/' . $current_user->user_login . '/' ] ); ?>'>
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></label>
 			<input type="text" name="display_name" class="jt-input" value="<?php echo esc_attr( $current_user->display_name ); ?>" required>
@@ -78,10 +84,11 @@ $base         = \Jetonomy\base_url();
 					<span><?php esc_html_e( 'Web', 'jetonomy' ); ?></span>
 					<span><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
 				</div>
-				<?php foreach ( $notif_types as $key => $label ) :
+				<?php
+				foreach ( $notif_types as $key => $label ) :
 					$web_on   = isset( $notif_prefs[ $key ]['web'] ) ? ! empty( $notif_prefs[ $key ]['web'] ) : ! empty( $global_defs[ $key ]['web'] );
 					$email_on = isset( $notif_prefs[ $key ]['email'] ) ? ! empty( $notif_prefs[ $key ]['email'] ) : ! empty( $global_defs[ $key ]['email'] );
-				?>
+					?>
 					<div class="jt-notif-row">
 						<span><?php echo esc_html( $label ); ?></span>
 						<label class="jt-toggle">

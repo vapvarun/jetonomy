@@ -1,4 +1,10 @@
 <?php
+/**
+ * Join request model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -20,13 +26,15 @@ class JoinRequest extends Model {
 	 * @return int Inserted row ID.
 	 */
 	public static function create_request( int $space_id, int $user_id, string $message = '' ): int {
-		return self::insert( [
-			'space_id'   => $space_id,
-			'user_id'    => $user_id,
-			'message'    => $message,
-			'status'     => 'pending',
-			'created_at' => now(),
-		] );
+		return self::insert(
+			[
+				'space_id'   => $space_id,
+				'user_id'    => $user_id,
+				'message'    => $message,
+				'status'     => 'pending',
+				'created_at' => now(),
+			]
+		);
 	}
 
 	/**
@@ -37,11 +45,13 @@ class JoinRequest extends Model {
 	 * @return object|null
 	 */
 	public static function find_pending( int $space_id, int $user_id ): ?object {
-		return self::db()->get_row( self::db()->prepare(
-			"SELECT * FROM " . self::table() . " WHERE space_id = %d AND user_id = %d AND status = 'pending'",
-			$space_id,
-			$user_id
-		) );
+		return self::db()->get_row(
+			self::db()->prepare(
+				'SELECT * FROM ' . self::table() . " WHERE space_id = %d AND user_id = %d AND status = 'pending'",
+				$space_id,
+				$user_id
+			)
+		);
 	}
 
 	/**
@@ -51,10 +61,12 @@ class JoinRequest extends Model {
 	 * @return array
 	 */
 	public static function list_pending_for_space( int $space_id ): array {
-		return self::db()->get_results( self::db()->prepare(
-			"SELECT * FROM " . self::table() . " WHERE space_id = %d AND status = 'pending' ORDER BY created_at DESC",
-			$space_id
-		) ) ?: [];
+		return self::db()->get_results(
+			self::db()->prepare(
+				'SELECT * FROM ' . self::table() . " WHERE space_id = %d AND status = 'pending' ORDER BY created_at DESC",
+				$space_id
+			)
+		) ?: [];
 	}
 
 	/**
@@ -65,11 +77,14 @@ class JoinRequest extends Model {
 	 * @return bool
 	 */
 	public static function approve( int $id, int $reviewed_by ): bool {
-		return self::update( $id, [
-			'status'      => 'approved',
-			'reviewed_by' => $reviewed_by,
-			'reviewed_at' => now(),
-		] );
+		return self::update(
+			$id,
+			[
+				'status'      => 'approved',
+				'reviewed_by' => $reviewed_by,
+				'reviewed_at' => now(),
+			]
+		);
 	}
 
 	/**
@@ -80,10 +95,13 @@ class JoinRequest extends Model {
 	 * @return bool
 	 */
 	public static function deny( int $id, int $reviewed_by ): bool {
-		return self::update( $id, [
-			'status'      => 'denied',
-			'reviewed_by' => $reviewed_by,
-			'reviewed_at' => now(),
-		] );
+		return self::update(
+			$id,
+			[
+				'status'      => 'denied',
+				'reviewed_by' => $reviewed_by,
+				'reviewed_at' => now(),
+			]
+		);
 	}
 }

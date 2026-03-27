@@ -1,11 +1,17 @@
 <?php
+/**
+ * Admin setup wizard view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
-$settings   = get_option( 'jetonomy_settings', [] );
-$base_slug  = $settings['base_slug'] ?? 'community';
-$site_url   = trailingslashit( home_url() );
-$nonce      = wp_create_nonce( 'jetonomy_setup' );
-$ajax_url   = admin_url( 'admin-ajax.php' );
+$settings  = get_option( 'jetonomy_settings', [] );
+$base_slug = $settings['base_slug'] ?? 'community';
+$site_url  = trailingslashit( home_url() );
+$nonce     = wp_create_nonce( 'jetonomy_setup' );
+$ajax_url  = admin_url( 'admin-ajax.php' );
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>

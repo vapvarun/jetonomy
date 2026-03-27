@@ -47,41 +47,53 @@ class BBPress_Importer extends Importer {
 
 		switch ( $phase ) {
 			case 'forums':
-				$forums = $wpdb->get_results( $wpdb->prepare(
-					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC LIMIT %d OFFSET %d",
-					$batch_size, $offset
-				) );
+				$forums = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC LIMIT %d OFFSET %d",
+						$batch_size,
+						$offset
+					)
+				);
 
 				if ( empty( $forums ) ) {
-					return [ 'phase' => 'topics', 'offset' => 0, 'done' => false, 'processed' => 0 ];
+					return [
+						'phase'     => 'topics',
+						'offset'    => 0,
+						'done'      => false,
+						'processed' => 0,
+					];
 				}
 
 				// First batch: create import category.
 				if ( 0 === $offset ) {
-					$cat_id = Category::create( [
-						'name'       => __( 'Imported from bbPress', 'jetonomy' ),
-						'slug'       => 'imported-bbpress-' . time(),
-						'visibility' => 'public',
-					] );
+					$cat_id = Category::create(
+						[
+							'name'       => __( 'Imported from bbPress', 'jetonomy' ),
+							'slug'       => 'imported-bbpress-' . time(),
+							'visibility' => 'public',
+						]
+					);
 					update_option( 'jetonomy_import_bbpress_cat_id', $cat_id );
 				}
 
 				$cat_id = (int) get_option( 'jetonomy_import_bbpress_cat_id', 0 );
 
 				foreach ( $forums as $forum ) {
-					$space_id = Space::create( [
-						'category_id' => $cat_id,
-						'author_id'   => (int) $forum->post_author ?: 1,
-						'type'        => 'forum',
-						'title'       => $forum->post_title,
-						'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
-						'description' => wp_strip_all_tags( $forum->post_content ),
-						'visibility'  => 'public',
-						'join_policy' => 'open',
-					] );
+					$space_id = Space::create(
+						[
+							'category_id' => $cat_id,
+							'author_id'   => (int) $forum->post_author ?: 1,
+							'type'        => 'forum',
+							'title'       => $forum->post_title,
+							'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
+							'description' => wp_strip_all_tags( $forum->post_content ),
+							'visibility'  => 'public',
+							'join_policy' => 'open',
+						]
+					);
 					if ( $space_id ) {
 						$this->map_id( 'forum', $forum->ID, $space_id );
-						$this->imported++;
+						++$this->imported;
 					}
 				}
 
@@ -98,41 +110,51 @@ class BBPress_Importer extends Importer {
 			case 'topics':
 				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
 
-				$topics = $wpdb->get_results( $wpdb->prepare(
-					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'publish' ORDER BY ID ASC LIMIT %d OFFSET %d",
-					$batch_size, $offset
-				) );
+				$topics = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'topic' AND post_status = 'publish' ORDER BY ID ASC LIMIT %d OFFSET %d",
+						$batch_size,
+						$offset
+					)
+				);
 
 				if ( empty( $topics ) ) {
-					return [ 'phase' => 'replies', 'offset' => 0, 'done' => false, 'processed' => 0 ];
+					return [
+						'phase'     => 'replies',
+						'offset'    => 0,
+						'done'      => false,
+						'processed' => 0,
+					];
 				}
 
 				foreach ( $topics as $topic ) {
 					$forum_id = (int) $topic->post_parent;
 					$space_id = $this->get_mapped_id( 'forum', $forum_id );
 					if ( ! $space_id ) {
-						$this->skipped++;
+						++$this->skipped;
 						continue;
 					}
 
 					$is_sticky = (int) get_post_meta( $topic->ID, '_bbp_topic_sticky', true );
 
-					$post_id = JtPost::create( [
-						'space_id'      => $space_id,
-						'author_id'     => (int) $topic->post_author,
-						'type'          => 'topic',
-						'title'         => $topic->post_title,
-						'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
-						'content'       => wp_kses_post( $topic->post_content ),
-						'content_plain' => wp_strip_all_tags( $topic->post_content ),
-						'status'        => 'publish',
-						'is_sticky'     => $is_sticky ? 1 : 0,
-						'created_at'    => $topic->post_date_gmt ?: now(),
-					] );
+					$post_id = JtPost::create(
+						[
+							'space_id'      => $space_id,
+							'author_id'     => (int) $topic->post_author,
+							'type'          => 'topic',
+							'title'         => $topic->post_title,
+							'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
+							'content'       => wp_kses_post( $topic->post_content ),
+							'content_plain' => wp_strip_all_tags( $topic->post_content ),
+							'status'        => 'publish',
+							'is_sticky'     => $is_sticky ? 1 : 0,
+							'created_at'    => $topic->post_date_gmt ?: now(),
+						]
+					);
 
 					if ( $post_id ) {
 						$this->map_id( 'topic', $topic->ID, $post_id );
-						$this->imported++;
+						++$this->imported;
 					}
 				}
 
@@ -149,34 +171,44 @@ class BBPress_Importer extends Importer {
 			case 'replies':
 				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
 
-				$replies = $wpdb->get_results( $wpdb->prepare(
-					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status = 'publish' ORDER BY ID ASC LIMIT %d OFFSET %d",
-					$batch_size, $offset
-				) );
+				$replies = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'reply' AND post_status = 'publish' ORDER BY ID ASC LIMIT %d OFFSET %d",
+						$batch_size,
+						$offset
+					)
+				);
 
 				if ( empty( $replies ) ) {
-					return [ 'phase' => 'profiles', 'offset' => 0, 'done' => false, 'processed' => 0 ];
+					return [
+						'phase'     => 'profiles',
+						'offset'    => 0,
+						'done'      => false,
+						'processed' => 0,
+					];
 				}
 
 				foreach ( $replies as $reply ) {
 					$topic_id = (int) $reply->post_parent;
 					$post_id  = $this->get_mapped_id( 'topic', $topic_id );
 					if ( ! $post_id ) {
-						$this->skipped++;
+						++$this->skipped;
 						continue;
 					}
 
-					$reply_id = JtReply::create( [
-						'post_id'       => $post_id,
-						'author_id'     => (int) $reply->post_author,
-						'content'       => wp_kses_post( $reply->post_content ),
-						'content_plain' => wp_strip_all_tags( $reply->post_content ),
-						'status'        => 'publish',
-						'created_at'    => $reply->post_date_gmt ?: now(),
-					] );
+					$reply_id = JtReply::create(
+						[
+							'post_id'       => $post_id,
+							'author_id'     => (int) $reply->post_author,
+							'content'       => wp_kses_post( $reply->post_content ),
+							'content_plain' => wp_strip_all_tags( $reply->post_content ),
+							'status'        => 'publish',
+							'created_at'    => $reply->post_date_gmt ?: now(),
+						]
+					);
 
 					if ( $reply_id ) {
-						$this->imported++;
+						++$this->imported;
 					}
 				}
 
@@ -195,28 +227,45 @@ class BBPress_Importer extends Importer {
 				foreach ( $author_ids as $uid ) {
 					UserProfile::find_or_create( (int) $uid );
 				}
-				return [ 'phase' => 'recount', 'offset' => 0, 'done' => false, 'processed' => count( $author_ids ) ];
+				return [
+					'phase'     => 'recount',
+					'offset'    => 0,
+					'done'      => false,
+					'processed' => count( $author_ids ),
+				];
 
 			case 'recount':
 				$this->recount();
 				delete_option( 'jetonomy_import_id_map' );
 				delete_option( 'jetonomy_import_bbpress_cat_id' );
 				flush_rewrite_rules();
-				return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => 0 ];
+				return [
+					'phase'     => 'complete',
+					'offset'    => 0,
+					'done'      => true,
+					'processed' => 0,
+				];
 
 			default:
-				return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => 0 ];
+				return [
+					'phase'     => 'complete',
+					'offset'    => 0,
+					'done'      => true,
+					'processed' => 0,
+				];
 		}
 	}
 
 	public function run( array $options = [] ): array {
 		// 1. Create a default category for imported forums
 		if ( ! $this->dry_run ) {
-			$cat_id = Category::create( [
-				'name'        => __( 'Imported from bbPress', 'jetonomy' ),
-				'slug'        => 'imported-bbpress',
-				'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
-			] );
+			$cat_id = Category::create(
+				[
+					'name'        => __( 'Imported from bbPress', 'jetonomy' ),
+					'slug'        => 'imported-bbpress',
+					'description' => __( 'Forums imported from bbPress', 'jetonomy' ),
+				]
+			);
 		} else {
 			$cat_id = 0; // Simulate
 		}
@@ -252,26 +301,28 @@ class BBPress_Importer extends Importer {
 
 		foreach ( $forums as $forum ) {
 			if ( ! $this->dry_run ) {
-				$space_id = Space::create( [
-					'category_id' => $cat_id,
-					'author_id'   => (int) $forum->post_author ?: 1,
-					'type'        => 'forum',
-					'title'       => $forum->post_title,
-					'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
-					'description' => wp_strip_all_tags( $forum->post_content ),
-					'visibility'  => 'public',
-					'join_policy' => 'open',
-				] );
+				$space_id = Space::create(
+					[
+						'category_id' => $cat_id,
+						'author_id'   => (int) $forum->post_author ?: 1,
+						'type'        => 'forum',
+						'title'       => $forum->post_title,
+						'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
+						'description' => wp_strip_all_tags( $forum->post_content ),
+						'visibility'  => 'public',
+						'join_policy' => 'open',
+					]
+				);
 			} else {
 				$space_id = 0; // Simulate
 			}
 
 			if ( $space_id || $this->dry_run ) {
 				$this->map_id( 'forum', $forum->ID, $space_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
 				$this->log_error( 'forum', $forum->ID, 'Failed to create space' );
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -289,35 +340,37 @@ class BBPress_Importer extends Importer {
 
 			if ( ! $space_id ) {
 				$this->log_error( 'topic', $topic->ID, "Parent forum {$forum_id} not imported" );
-				$this->skipped++;
+				++$this->skipped;
 				continue;
 			}
 
 			$is_sticky = (int) get_post_meta( $topic->ID, '_bbp_topic_sticky', true );
 
 			if ( ! $this->dry_run ) {
-				$post_id = JtPost::create( [
-					'space_id'      => $space_id,
-					'author_id'     => (int) $topic->post_author,
-					'type'          => 'topic',
-					'title'         => $topic->post_title,
-					'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
-					'content'       => wp_kses_post( $topic->post_content ),
-					'content_plain' => wp_strip_all_tags( $topic->post_content ),
-					'status'        => 'publish',
-					'is_sticky'     => $is_sticky ? 1 : 0,
-					'created_at'    => $topic->post_date_gmt ?: now(),
-				] );
+				$post_id = JtPost::create(
+					[
+						'space_id'      => $space_id,
+						'author_id'     => (int) $topic->post_author,
+						'type'          => 'topic',
+						'title'         => $topic->post_title,
+						'slug'          => $topic->post_name ?: sanitize_title( $topic->post_title ),
+						'content'       => wp_kses_post( $topic->post_content ),
+						'content_plain' => wp_strip_all_tags( $topic->post_content ),
+						'status'        => 'publish',
+						'is_sticky'     => $is_sticky ? 1 : 0,
+						'created_at'    => $topic->post_date_gmt ?: now(),
+					]
+				);
 			} else {
 				$post_id = 0; // Simulate
 			}
 
 			if ( $post_id || $this->dry_run ) {
 				$this->map_id( 'topic', $topic->ID, $post_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
 				$this->log_error( 'topic', $topic->ID, 'Failed to create post' );
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -336,28 +389,30 @@ class BBPress_Importer extends Importer {
 
 			if ( ! $post_id ) {
 				// Try grandparent (nested reply)
-				$this->skipped++;
+				++$this->skipped;
 				continue;
 			}
 
 			if ( ! $this->dry_run ) {
-				$reply_id = JtReply::create( [
-					'post_id'       => $post_id,
-					'author_id'     => (int) $reply->post_author,
-					'content'       => wp_kses_post( $reply->post_content ),
-					'content_plain' => wp_strip_all_tags( $reply->post_content ),
-					'status'        => 'publish',
-					'created_at'    => $reply->post_date_gmt ?: now(),
-				] );
+				$reply_id = JtReply::create(
+					[
+						'post_id'       => $post_id,
+						'author_id'     => (int) $reply->post_author,
+						'content'       => wp_kses_post( $reply->post_content ),
+						'content_plain' => wp_strip_all_tags( $reply->post_content ),
+						'status'        => 'publish',
+						'created_at'    => $reply->post_date_gmt ?: now(),
+					]
+				);
 			} else {
 				$reply_id = 0; // Simulate
 			}
 
 			if ( $reply_id || $this->dry_run ) {
 				$this->map_id( 'reply', $reply->ID, $reply_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}

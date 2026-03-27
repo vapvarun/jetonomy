@@ -13,11 +13,11 @@ use function Jetonomy\table;
 
 abstract class Importer {
 
-	public array $id_map  = [];
-	protected array $errors  = [];
-	protected int $imported  = 0;
-	protected int $skipped   = 0;
-	protected bool $dry_run  = false;
+	public array $id_map    = [];
+	protected array $errors = [];
+	protected int $imported = 0;
+	protected int $skipped  = 0;
+	protected bool $dry_run = false;
 
 	/**
 	 * Enable or disable dry-run mode.
@@ -70,14 +70,17 @@ abstract class Importer {
 	 * Get current import progress.
 	 */
 	public static function get_progress(): array {
-		return get_option( 'jetonomy_import_progress', [
-			'status'    => 'idle',
-			'phase'     => '',
-			'processed' => 0,
-			'total'     => 0,
-			'percent'   => 0,
-			'message'   => '',
-		] );
+		return get_option(
+			'jetonomy_import_progress',
+			[
+				'status'    => 'idle',
+				'phase'     => '',
+				'processed' => 0,
+				'total'     => 0,
+				'percent'   => 0,
+				'message'   => '',
+			]
+		);
 	}
 
 	/**

@@ -1,4 +1,10 @@
 <?php
+/**
+ * User profile model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -50,7 +56,7 @@ class UserProfile extends Model {
 	public static function find_by_user( int $user_id ): ?object {
 		return Cache::remember(
 			"profile:{$user_id}",
-			function() use ( $user_id ) {
+			function () use ( $user_id ) {
 				$row = static::db()->get_row(
 					static::db()->prepare(
 						'SELECT * FROM ' . static::table() . ' WHERE user_id = %d',

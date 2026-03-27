@@ -110,7 +110,7 @@ class Nav_Menus {
 								value="<?php echo esc_attr( $item['class'] ); ?>">
 						</li>
 						<?php
-						$i--;
+						--$i;
 					endforeach;
 					?>
 				</ul>

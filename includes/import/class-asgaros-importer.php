@@ -35,7 +35,7 @@ class Asgaros_Importer extends Importer {
 
 	public function get_total_count(): int {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		$p      = $wpdb->prefix;
 		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_forums" );
 		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_topics" );
 		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}forum_posts" );
@@ -47,16 +47,28 @@ class Asgaros_Importer extends Importer {
 		// For now, fall through to run() via a single-shot batch.
 		if ( 'forums' === $phase && 0 === $offset ) {
 			$this->run();
-			return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => $this->imported ];
+			return [
+				'phase'     => 'complete',
+				'offset'    => 0,
+				'done'      => true,
+				'processed' => $this->imported,
+			];
 		}
-		return [ 'phase' => 'complete', 'offset' => 0, 'done' => true, 'processed' => 0 ];
+		return [
+			'phase'     => 'complete',
+			'offset'    => 0,
+			'done'      => true,
+			'processed' => 0,
+		];
 	}
 
 	public function run( array $options = [] ): array {
-		$cat_id = Category::create( [
-			'name' => __( 'Imported from Asgaros', 'jetonomy' ),
-			'slug' => 'imported-asgaros',
-		] );
+		$cat_id = Category::create(
+			[
+				'name' => __( 'Imported from Asgaros', 'jetonomy' ),
+				'slug' => 'imported-asgaros',
+			]
+		);
 
 		$this->import_forums( $cat_id );
 		$this->import_topics();
@@ -88,25 +100,27 @@ class Asgaros_Importer extends Importer {
 				$parent_space_id = $this->get_mapped_id( 'forum', (int) $forum->parent_id );
 			}
 
-			$space_id = Space::create( [
-				'category_id' => $cat_id,
-				'parent_id'   => $parent_space_id,
-				'author_id'   => 1,
-				'type'        => 'forum',
-				'title'       => $forum->name,
-				'slug'        => sanitize_title( $forum->name ) ?: 'forum-' . $forum->id,
-				'description' => wp_strip_all_tags( $forum->description ?? '' ),
-				'visibility'  => 'public',
-				'join_policy' => 'open',
-				'sort_order'  => (int) ( $forum->sort ?? 0 ),
-			] );
+			$space_id = Space::create(
+				[
+					'category_id' => $cat_id,
+					'parent_id'   => $parent_space_id,
+					'author_id'   => 1,
+					'type'        => 'forum',
+					'title'       => $forum->name,
+					'slug'        => sanitize_title( $forum->name ) ?: 'forum-' . $forum->id,
+					'description' => wp_strip_all_tags( $forum->description ?? '' ),
+					'visibility'  => 'public',
+					'join_policy' => 'open',
+					'sort_order'  => (int) ( $forum->sort ?? 0 ),
+				]
+			);
 
 			if ( $space_id ) {
 				$this->map_id( 'forum', (int) $forum->id, $space_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
 				$this->log_error( 'forum', $forum->id, 'Failed to create space' );
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -166,34 +180,38 @@ class Asgaros_Importer extends Importer {
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->forum_id );
 			if ( ! $space_id ) {
 				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->forum_id} not imported" );
-				$this->skipped++;
+				++$this->skipped;
 				continue;
 			}
 
 			// The first post in forum_posts for this topic supplies the body
-			$first_post = $wpdb->get_row( $wpdb->prepare(
-				"SELECT * FROM {$p}forum_posts WHERE topic_id = %d ORDER BY id ASC LIMIT 1",
-				$topic->id
-			) );
+			$first_post = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT * FROM {$p}forum_posts WHERE topic_id = %d ORDER BY id ASC LIMIT 1",
+					$topic->id
+				)
+			);
 
 			$content = $first_post ? $first_post->text : '';
 
 			// Map Asgaros status: 0 = visible, 1 = deleted/spam
 			$status = ( isset( $topic->status ) && (int) $topic->status === 1 ) ? 'pending' : 'publish';
 
-			$post_id = JtPost::create( [
-				'space_id'      => $space_id,
-				'author_id'     => (int) ( $topic->author_id ?? 1 ),
-				'type'          => 'topic',
-				'title'         => $topic->name,
-				'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
-				'content'       => wp_kses_post( $content ),
-				'content_plain' => wp_strip_all_tags( $content ),
-				'status'        => $status,
-				'is_sticky'     => (int) ( $topic->sticky ?? 0 ),
-				'is_closed'     => (int) ( $topic->closed ?? 0 ),
-				'created_at'    => $first_post->date ?? now(),
-			] );
+			$post_id = JtPost::create(
+				[
+					'space_id'      => $space_id,
+					'author_id'     => (int) ( $topic->author_id ?? 1 ),
+					'type'          => 'topic',
+					'title'         => $topic->name,
+					'slug'          => sanitize_title( $topic->name ) ?: 'topic-' . $topic->id,
+					'content'       => wp_kses_post( $content ),
+					'content_plain' => wp_strip_all_tags( $content ),
+					'status'        => $status,
+					'is_sticky'     => (int) ( $topic->sticky ?? 0 ),
+					'is_closed'     => (int) ( $topic->closed ?? 0 ),
+					'created_at'    => $first_post->date ?? now(),
+				]
+			);
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
@@ -201,10 +219,10 @@ class Asgaros_Importer extends Importer {
 					// Record the first post's Asgaros ID so we skip it during reply import
 					$this->map_id( 'asgaros_post_skip', (int) $first_post->id, 0 );
 				}
-				$this->imported++;
+				++$this->imported;
 			} else {
 				$this->log_error( 'topic', $topic->id, 'Failed to create post' );
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}
@@ -229,7 +247,7 @@ class Asgaros_Importer extends Importer {
 		foreach ( $posts as $asgaros_post ) {
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->topic_id );
 			if ( ! $post_id ) {
-				$this->skipped++;
+				++$this->skipped;
 				continue;
 			}
 
@@ -239,22 +257,24 @@ class Asgaros_Importer extends Importer {
 				$parent_reply_id = $this->get_mapped_id( 'asgaros_reply', (int) $asgaros_post->parent_id );
 			}
 
-			$reply_id = JtReply::create( [
-				'post_id'       => $post_id,
-				'parent_id'     => $parent_reply_id,
-				'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
-				'content'       => wp_kses_post( $asgaros_post->text ),
-				'content_plain' => wp_strip_all_tags( $asgaros_post->text ),
-				'status'        => 'publish',
-				'created_at'    => $asgaros_post->date ?? now(),
-			] );
+			$reply_id = JtReply::create(
+				[
+					'post_id'       => $post_id,
+					'parent_id'     => $parent_reply_id,
+					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
+					'content'       => wp_kses_post( $asgaros_post->text ),
+					'content_plain' => wp_strip_all_tags( $asgaros_post->text ),
+					'status'        => 'publish',
+					'created_at'    => $asgaros_post->date ?? now(),
+				]
+			);
 
 			if ( $reply_id ) {
 				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );
-				$this->imported++;
+				++$this->imported;
 			} else {
 				$this->log_error( 'reply', $asgaros_post->id, 'Failed to create reply' );
-				$this->skipped++;
+				++$this->skipped;
 			}
 		}
 	}

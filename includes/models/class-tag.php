@@ -1,4 +1,10 @@
 <?php
+/**
+ * Tag model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;

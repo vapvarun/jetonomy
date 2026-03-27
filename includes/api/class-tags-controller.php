@@ -1,4 +1,10 @@
 <?php
+/**
+ * Tags REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -20,44 +26,52 @@ class Tags_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// Post tags.
-		register_rest_route( $ns, '/tags', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'list_tags' ],
-			'permission_callback' => '__return_true',
-			'args'                => [
-				'limit' => [
-					'type'    => 'integer',
-					'default' => 30,
-					'minimum' => 1,
-					'maximum' => 100,
+		register_rest_route(
+			$ns,
+			'/tags',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'list_tags' ],
+				'permission_callback' => '__return_true',
+				'args'                => [
+					'limit' => [
+						'type'    => 'integer',
+						'default' => 30,
+						'minimum' => 1,
+						'maximum' => 100,
+					],
+					'sort'  => [
+						'type'    => 'string',
+						'default' => 'popular',
+						'enum'    => [ 'popular', 'alphabetical' ],
+					],
 				],
-				'sort'  => [
-					'type'    => 'string',
-					'default' => 'popular',
-					'enum'    => [ 'popular', 'alphabetical' ],
-				],
-			],
-		] );
+			]
+		);
 
 		// Space tags.
-		register_rest_route( $ns, '/space-tags', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'list_space_tags' ],
-			'permission_callback' => '__return_true',
-			'args'                => [
-				'limit' => [
-					'type'    => 'integer',
-					'default' => 30,
-					'minimum' => 1,
-					'maximum' => 100,
+		register_rest_route(
+			$ns,
+			'/space-tags',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'list_space_tags' ],
+				'permission_callback' => '__return_true',
+				'args'                => [
+					'limit' => [
+						'type'    => 'integer',
+						'default' => 30,
+						'minimum' => 1,
+						'maximum' => 100,
+					],
+					'sort'  => [
+						'type'    => 'string',
+						'default' => 'popular',
+						'enum'    => [ 'popular', 'alphabetical' ],
+					],
 				],
-				'sort'  => [
-					'type'    => 'string',
-					'default' => 'popular',
-					'enum'    => [ 'popular', 'alphabetical' ],
-				],
-			],
-		] );
+			]
+		);
 	}
 
 	/**
@@ -81,10 +95,13 @@ class Tags_Controller extends Base_Controller {
 			$tags = Tag::list_popular( $limit );
 		}
 
-		return $this->paginated_response( $tags, [
-			'total'    => count( $tags ),
-			'has_more' => count( $tags ) === $limit,
-		] );
+		return $this->paginated_response(
+			$tags,
+			[
+				'total'    => count( $tags ),
+				'has_more' => count( $tags ) === $limit,
+			]
+		);
 	}
 
 	/**
@@ -111,9 +128,12 @@ class Tags_Controller extends Base_Controller {
 			)
 		) ?: [];
 
-		return $this->paginated_response( $tags, [
-			'total'    => count( $tags ),
-			'has_more' => count( $tags ) === $limit,
-		] );
+		return $this->paginated_response(
+			$tags,
+			[
+				'total'    => count( $tags ),
+				'has_more' => count( $tags ) === $limit,
+			]
+		);
 	}
 }

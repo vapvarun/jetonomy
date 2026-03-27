@@ -1,4 +1,10 @@
 <?php
+/**
+ * Moderation REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,102 +28,145 @@ class Moderation_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// GET moderation queue.
-		register_rest_route( $ns, '/moderation/queue', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'get_queue' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/queue',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_queue' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+			]
+		);
 
 		// Approve a post or reply.
-		register_rest_route( $ns, '/moderation/approve/(?P<type>post|reply)/(?P<id>\d+)', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'approve' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/approve/(?P<type>post|reply)/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'approve' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+			]
+		);
 
 		// Mark a post or reply as spam.
-		register_rest_route( $ns, '/moderation/spam/(?P<type>post|reply)/(?P<id>\d+)', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'mark_spam' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/spam/(?P<type>post|reply)/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'mark_spam' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+			]
+		);
 
 		// Create a flag report (requires jetonomy_flag, not moderate).
-		register_rest_route( $ns, '/flags', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'create_flag' ],
-			'permission_callback' => [ $this, 'require_flag' ],
-			'args'                => [
-				'object_type' => [
-					'type'     => 'string',
-					'required' => true,
-					'enum'     => [ 'post', 'reply', 'user' ],
+		register_rest_route(
+			$ns,
+			'/flags',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'create_flag' ],
+				'permission_callback' => [ $this, 'require_flag' ],
+				'args'                => [
+					'object_type' => [
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => [ 'post', 'reply', 'user' ],
+					],
+					'object_id'   => [
+						'type'     => 'integer',
+						'required' => true,
+						'minimum'  => 1,
+					],
+					'reason'      => [
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => [ 'spam', 'offensive', 'off_topic', 'harassment', 'other' ],
+					],
+					'description' => [
+						'type'     => 'string',
+						'required' => false,
+					],
 				],
-				'object_id'   => [
-					'type'     => 'integer',
-					'required' => true,
-					'minimum'  => 1,
-				],
-				'reason'      => [
-					'type'     => 'string',
-					'required' => true,
-					'enum'     => [ 'spam', 'offensive', 'off_topic', 'harassment', 'other' ],
-				],
-				'description' => [
-					'type'     => 'string',
-					'required' => false,
-				],
-			],
-		] );
+			]
+		);
 
 		// List pending flags.
-		register_rest_route( $ns, '/moderation/flags', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'list_flags' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/flags',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'list_flags' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+			]
+		);
 
 		// Trash content.
-		register_rest_route( $ns, '/moderation/trash/(?P<type>post|reply)/(?P<id>\d+)', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'trash_content' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/trash/(?P<type>post|reply)/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'trash_content' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+			]
+		);
 
 		// Resolve flag.
-		register_rest_route( $ns, '/moderation/flags/(?P<id>\d+)/resolve', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'resolve_flag' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-			'args'                => [
-				'status' => [
-					'type'     => 'string',
-					'required' => true,
-					'enum'     => [ 'valid', 'dismissed' ],
+		register_rest_route(
+			$ns,
+			'/moderation/flags/(?P<id>\d+)/resolve',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'resolve_flag' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					'status' => [
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => [ 'valid', 'dismissed' ],
+					],
 				],
-			],
-		] );
+			]
+		);
 
 		// Ban user.
-		register_rest_route( $ns, '/moderation/ban', [
-			'methods'             => \WP_REST_Server::CREATABLE,
-			'callback'            => [ $this, 'ban_user' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-			'args'                => [
-				'user_id'    => [ 'type' => 'integer', 'required' => true ],
-				'type'       => [ 'type' => 'string', 'required' => true, 'enum' => [ 'global_ban', 'space_ban', 'silence' ] ],
-				'reason'     => [ 'type' => 'string' ],
-				'space_id'   => [ 'type' => 'integer' ],
-				'expires_at' => [ 'type' => 'string' ],
-			],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/ban',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'ban_user' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					'user_id'    => [
+						'type'     => 'integer',
+						'required' => true,
+					],
+					'type'       => [
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => [ 'global_ban', 'space_ban', 'silence' ],
+					],
+					'reason'     => [ 'type' => 'string' ],
+					'space_id'   => [ 'type' => 'integer' ],
+					'expires_at' => [ 'type' => 'string' ],
+				],
+			]
+		);
 
 		// Unban user.
-		register_rest_route( $ns, '/moderation/ban/(?P<id>\d+)', [
-			'methods'             => \WP_REST_Server::DELETABLE,
-			'callback'            => [ $this, 'unban_user' ],
-			'permission_callback' => [ $this, 'require_moderate' ],
-		] );
+		register_rest_route(
+			$ns,
+			'/moderation/ban/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'unban_user' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+			]
+		);
 	}
 
 	/**
@@ -168,20 +217,26 @@ class Moderation_Controller extends Base_Controller {
 
 		// Merge and sort by created_at DESC.
 		$merged = array_merge( $pending_posts, $pending_replies );
-		usort( $merged, function( $a, $b ) {
-			return strcmp( $b->created_at, $a->created_at );
-		} );
+		usort(
+			$merged,
+			function ( $a, $b ) {
+				return strcmp( $b->created_at, $a->created_at );
+			}
+		);
 
 		$pending_flags_count = count( Flag::list_pending() );
 
-		return new WP_REST_Response( [
-			'data'                => $merged,
-			'pending_flags_count' => $pending_flags_count,
-			'meta'                => [
-				'count'   => count( $merged ),
-				'has_more' => false,
+		return new WP_REST_Response(
+			[
+				'data'                => $merged,
+				'pending_flags_count' => $pending_flags_count,
+				'meta'                => [
+					'count'    => count( $merged ),
+					'has_more' => false,
+				],
 			],
-		], 200 );
+			200
+		);
 	}
 
 	/**
@@ -198,11 +253,14 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_content_moderated', 'approved', $type, $id, get_current_user_id() );
 
-		return new WP_REST_Response( [
-			'approved'    => true,
-			'object_type' => $type,
-			'id'          => $id,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'approved'    => true,
+				'object_type' => $type,
+				'id'          => $id,
+			],
+			200
+		);
 	}
 
 	/**
@@ -237,11 +295,14 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_content_moderated', 'spam', $type, $id, get_current_user_id() );
 
-		return new WP_REST_Response( [
-			'marked_spam' => true,
-			'object_type' => $type,
-			'id'          => $id,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'marked_spam' => true,
+				'object_type' => $type,
+				'id'          => $id,
+			],
+			200
+		);
 	}
 
 	/**
@@ -255,13 +316,15 @@ class Moderation_Controller extends Base_Controller {
 		$reason      = sanitize_text_field( (string) $request->get_param( 'reason' ) );
 		$description = sanitize_textarea_field( (string) ( $request->get_param( 'description' ) ?? '' ) );
 
-		$flag_id = Flag::create( [
-			'reporter_id' => $user_id,
-			'object_type' => $object_type,
-			'object_id'   => $object_id,
-			'reason'      => $reason,
-			'description' => $description,
-		] );
+		$flag_id = Flag::create(
+			[
+				'reporter_id' => $user_id,
+				'object_type' => $object_type,
+				'object_id'   => $object_id,
+				'reason'      => $reason,
+				'description' => $description,
+			]
+		);
 
 		if ( ! $flag_id ) {
 			return new WP_Error(
@@ -273,10 +336,13 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
 
-		return new WP_REST_Response( [
-			'created' => true,
-			'id'      => $flag_id,
-		], 201 );
+		return new WP_REST_Response(
+			[
+				'created' => true,
+				'id'      => $flag_id,
+			],
+			201
+		);
 	}
 
 	/**
@@ -285,10 +351,13 @@ class Moderation_Controller extends Base_Controller {
 	public function list_flags( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$flags = Flag::list_pending();
 
-		return $this->paginated_response( $flags, [
-			'total'    => count( $flags ),
-			'has_more' => false,
-		] );
+		return $this->paginated_response(
+			$flags,
+			[
+				'total'    => count( $flags ),
+				'has_more' => false,
+			]
+		);
 	}
 
 	/**
@@ -305,11 +374,14 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_content_moderated', 'trash', $type, $id, get_current_user_id() );
 
-		return new WP_REST_Response( [
-			'trashed'     => true,
-			'object_type' => $type,
-			'id'          => $id,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'trashed'     => true,
+				'object_type' => $type,
+				'id'          => $id,
+			],
+			200
+		);
 	}
 
 	/**
@@ -334,11 +406,14 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
-		return new WP_REST_Response( [
-			'resolved' => true,
-			'id'       => $id,
-			'status'   => $status,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'resolved' => true,
+				'id'       => $id,
+				'status'   => $status,
+			],
+			200
+		);
 	}
 
 	/**
@@ -372,12 +447,15 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
-		return new WP_REST_Response( [
-			'banned'         => true,
-			'restriction_id' => $restriction_id,
-			'user_id'        => $user_id,
-			'type'           => $type,
-		], 201 );
+		return new WP_REST_Response(
+			[
+				'banned'         => true,
+				'restriction_id' => $restriction_id,
+				'user_id'        => $user_id,
+				'type'           => $type,
+			],
+			201
+		);
 	}
 
 	/**
@@ -401,10 +479,13 @@ class Moderation_Controller extends Base_Controller {
 			);
 		}
 
-		return new WP_REST_Response( [
-			'removed' => true,
-			'id'      => $id,
-		], 200 );
+		return new WP_REST_Response(
+			[
+				'removed' => true,
+				'id'      => $id,
+			],
+			200
+		);
 	}
 
 	/**

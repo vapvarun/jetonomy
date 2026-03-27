@@ -68,9 +68,9 @@ class Rate_Limiter {
 		$limits   = $settings['rate_limits'] ?? [];
 
 		return [
-			'create_posts'   => (int) ( $limits['posts']   ?? 3  ),
-			'create_replies' => (int) ( $limits['replies']  ?? 10 ),
-			'vote'           => (int) ( $limits['votes']    ?? 5  ),
+			'create_posts'   => (int) ( $limits['posts'] ?? 3 ),
+			'create_replies' => (int) ( $limits['replies'] ?? 10 ),
+			'vote'           => (int) ( $limits['votes'] ?? 5 ),
 		];
 	}
 }

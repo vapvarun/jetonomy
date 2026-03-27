@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin space edit view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $active_tab = sanitize_text_field( $_GET['tab'] ?? 'general' );
@@ -169,10 +175,13 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php if ( empty( $members ) ) : ?>
 						<tr class="jetonomy-no-items"><td colspan="4"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></td></tr>
 					<?php else : ?>
-						<?php foreach ( $members as $member ) :
+						<?php
+						foreach ( $members as $member ) :
 							$user = get_userdata( $member->user_id );
-							if ( ! $user ) continue;
-						?>
+							if ( ! $user ) {
+								continue;
+							}
+							?>
 							<tr data-user-id="<?php echo absint( $member->user_id ); ?>">
 								<td>
 									<?php echo get_avatar( $member->user_id, 24 ); ?>
@@ -187,7 +196,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 										<option value="admin" <?php selected( $member->role, 'admin' ); ?>><?php esc_html_e( 'Admin', 'jetonomy' ); ?></option>
 									</select>
 								</td>
-								<td><?php echo esc_html( human_time_diff( strtotime( $member->joined_at ), current_time( 'timestamp', true ) ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
+								<td><?php echo esc_html( human_time_diff( strtotime( $member->joined_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 								<td>
 									<button type="button" class="button button-small jetonomy-remove-member" data-space-id="<?php echo absint( $space->id ); ?>" data-user-id="<?php echo absint( $member->user_id ); ?>"><?php esc_html_e( 'Remove', 'jetonomy' ); ?></button>
 								</td>
@@ -322,16 +331,16 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</p>
 			</form>
 		</div>
-	<?php
-	/**
-	 * Fires to render additional space edit tab content.
-	 * Pro hooks Custom Fields, Reactions, etc. here.
-	 *
-	 * @param string $active_tab Current active tab slug.
-	 * @param object $space      The space being edited.
-	 */
-	do_action( 'jetonomy_admin_space_edit_tab_content', $active_tab, $space );
-	?>
+		<?php
+		/**
+		 * Fires to render additional space edit tab content.
+		 * Pro hooks Custom Fields, Reactions, etc. here.
+		 *
+		 * @param string $active_tab Current active tab slug.
+		 * @param object $space      The space being edited.
+		 */
+		do_action( 'jetonomy_admin_space_edit_tab_content', $active_tab, $space );
+		?>
 
 	<?php endif; ?>
 </div>

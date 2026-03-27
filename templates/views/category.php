@@ -20,7 +20,10 @@ $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id );
 $base   = \Jetonomy\base_url();
 
 $crumbs = [
-	[ 'label' => $category->name, 'url' => '' ],
+	[
+		'label' => $category->name,
+		'url'   => '',
+	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>

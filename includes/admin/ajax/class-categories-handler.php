@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — categories.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
@@ -9,9 +15,9 @@ use Jetonomy\Models\Space;
 class Categories_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_create_category',    [ $this, 'ajax_create_category' ] );
-		add_action( 'wp_ajax_jetonomy_update_category',    [ $this, 'ajax_update_category' ] );
-		add_action( 'wp_ajax_jetonomy_delete_category',    [ $this, 'ajax_delete_category' ] );
+		add_action( 'wp_ajax_jetonomy_create_category', [ $this, 'ajax_create_category' ] );
+		add_action( 'wp_ajax_jetonomy_update_category', [ $this, 'ajax_update_category' ] );
+		add_action( 'wp_ajax_jetonomy_delete_category', [ $this, 'ajax_delete_category' ] );
 		add_action( 'wp_ajax_jetonomy_reorder_categories', [ $this, 'ajax_reorder_categories' ] );
 	}
 
@@ -37,26 +43,30 @@ class Categories_Handler {
 			$visibility = 'public';
 		}
 
-		$id = Category::create( [
-			'name'        => $name,
-			'slug'        => $slug,
-			'description' => $desc,
-			'parent_id'   => $parent_id,
-			'icon'        => $icon ?: null,
-			'color'       => $color ?: null,
-			'visibility'  => $visibility,
-		] );
+		$id = Category::create(
+			[
+				'name'        => $name,
+				'slug'        => $slug,
+				'description' => $desc,
+				'parent_id'   => $parent_id,
+				'icon'        => $icon ?: null,
+				'color'       => $color ?: null,
+				'visibility'  => $visibility,
+			]
+		);
 
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Failed to create category.', 'jetonomy' ) );
 		}
 
 		$category = Category::find( $id );
-		wp_send_json_success( [
-			'id'       => $id,
-			'category' => $category,
-			'message'  => __( 'Category created.', 'jetonomy' ),
-		] );
+		wp_send_json_success(
+			[
+				'id'       => $id,
+				'category' => $category,
+				'message'  => __( 'Category created.', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function ajax_update_category(): void {
@@ -106,10 +116,12 @@ class Categories_Handler {
 		}
 
 		$category = Category::find( $id );
-		wp_send_json_success( [
-			'category' => $category,
-			'message'  => __( 'Category updated.', 'jetonomy' ),
-		] );
+		wp_send_json_success(
+			[
+				'category' => $category,
+				'message'  => __( 'Category updated.', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function ajax_delete_category(): void {

@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Auth check is handled by Template_Loader before output.
-$user_id = get_current_user_id();
+$user_id       = get_current_user_id();
 $notifications = \Jetonomy\Models\Notification::list_for_user( $user_id, 30 );
 
 // Mark all as read on page load.
@@ -17,19 +17,22 @@ $notifications = \Jetonomy\Models\Notification::list_for_user( $user_id, 30 );
 $base = \Jetonomy\base_url();
 
 $crumbs = [
-	[ 'label' => __( 'Notifications', 'jetonomy' ), 'url' => '' ],
+	[
+		'label' => __( 'Notifications', 'jetonomy' ),
+		'url'   => '',
+	],
 ];
 
 $type_labels = [
-	'reply_to_post'    => __( 'replied to your post', 'jetonomy' ),
-	'reply_to_reply'   => __( 'replied to your comment', 'jetonomy' ),
-	'mention'          => __( 'mentioned you', 'jetonomy' ),
-	'vote_on_post'     => __( 'voted on your post', 'jetonomy' ),
-	'accepted_answer'  => __( 'accepted your reply', 'jetonomy' ),
-	'new_post_in_sub'  => __( 'new activity in a subscribed space', 'jetonomy' ),
-	'moderation'       => __( 'a moderator acted on your content', 'jetonomy' ),
-	'badge_earned'     => __( 'earned a badge', 'jetonomy' ),
-	'flag'             => __( 'new content flag requires review', 'jetonomy' ),
+	'reply_to_post'   => __( 'replied to your post', 'jetonomy' ),
+	'reply_to_reply'  => __( 'replied to your comment', 'jetonomy' ),
+	'mention'         => __( 'mentioned you', 'jetonomy' ),
+	'vote_on_post'    => __( 'voted on your post', 'jetonomy' ),
+	'accepted_answer' => __( 'accepted your reply', 'jetonomy' ),
+	'new_post_in_sub' => __( 'new activity in a subscribed space', 'jetonomy' ),
+	'moderation'      => __( 'a moderator acted on your content', 'jetonomy' ),
+	'badge_earned'    => __( 'earned a badge', 'jetonomy' ),
+	'flag'            => __( 'new content flag requires review', 'jetonomy' ),
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -49,12 +52,12 @@ $type_labels = [
 			<div class="jt-card jt-card-flush">
 				<?php foreach ( $notifications as $notif ) : ?>
 					<?php
-					$actor = $notif->actor_id ? get_userdata( (int) $notif->actor_id ) : null;
-					$actor_name = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
+					$actor        = $notif->actor_id ? get_userdata( (int) $notif->actor_id ) : null;
+					$actor_name   = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
 					$action_label = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );
-					$time_ago = human_time_diff( strtotime( $notif->created_at ), current_time( 'timestamp', true ) );
+					$time_ago     = human_time_diff( strtotime( $notif->created_at ), time() );
 
 					// Build link to the relevant object.
 					$notif_url = $base;
@@ -66,22 +69,26 @@ $type_labels = [
 
 						if ( 'post' === $notif->object_type ) {
 							// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-							$row = $wpdb->get_row( $wpdb->prepare(
+							$row = $wpdb->get_row(
+								$wpdb->prepare(
 								// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								"SELECT p.slug AS post_slug, sp.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE p.id = %d",
-								(int) $notif->object_id
-							) );
+									"SELECT p.slug AS post_slug, sp.slug AS space_slug FROM {$posts_tbl} p LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE p.id = %d",
+									(int) $notif->object_id
+								)
+							);
 							if ( $row ) {
 								$notif_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/';
 							}
 						} elseif ( 'reply' === $notif->object_type ) {
 							// Reply notification — look up parent post for URL + anchor to reply.
 							// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-							$row = $wpdb->get_row( $wpdb->prepare(
+							$row = $wpdb->get_row(
+								$wpdb->prepare(
 								// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								"SELECT p.slug AS post_slug, sp.slug AS space_slug, r.id AS reply_id FROM {$replies_tbl} r LEFT JOIN {$posts_tbl} p ON p.id = r.post_id LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE r.id = %d",
-								(int) $notif->object_id
-							) );
+									"SELECT p.slug AS post_slug, sp.slug AS space_slug, r.id AS reply_id FROM {$replies_tbl} r LEFT JOIN {$posts_tbl} p ON p.id = r.post_id LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE r.id = %d",
+									(int) $notif->object_id
+								)
+							);
 							if ( $row ) {
 								$notif_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/#reply-' . $row->reply_id;
 							}

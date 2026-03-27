@@ -43,7 +43,9 @@ class Import_Manager {
 	}
 
 	public static function run( string $id, array $options = [] ): ?array {
-		if ( ! isset( self::$importers[ $id ] ) ) return null;
+		if ( ! isset( self::$importers[ $id ] ) ) {
+			return null;
+		}
 
 		$importer = self::$importers[ $id ];
 

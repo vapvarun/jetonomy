@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin settings view.
+ *
+ * @package Jetonomy
+ */
+
 defined( 'ABSPATH' ) || exit;
 
 $active_tab   = sanitize_text_field( $_GET['tab'] ?? 'general' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -11,9 +17,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	$advanced_tabs_html = ob_get_clean();
 
 	// Pre-buffer Pro/extension tab content so notices can be hoisted above the layout.
-	$jt_primary_tabs  = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam' ];
-	$jt_ext_html      = '';
-	$jt_ext_notices   = '';
+	$jt_primary_tabs = [ 'general', 'permissions', 'email', 'appearance', 'seo', 'antispam' ];
+	$jt_ext_html     = '';
+	$jt_ext_notices  = '';
 	if ( ! in_array( $active_tab, $jt_primary_tabs, true ) && 'license' !== $active_tab ) {
 		ob_start();
 		do_action( 'jetonomy_admin_settings_tab_content', $active_tab );
@@ -30,7 +36,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		}
 	}
 
-	$tab_icons = [
+	$tab_icons  = [
 		'general'     => 'dashicons-admin-settings',
 		'permissions' => 'dashicons-shield',
 		'email'       => 'dashicons-email-alt',
@@ -49,7 +55,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	?>
 
 	<?php settings_errors(); ?>
-	<?php if ( $jt_ext_notices ) echo $jt_ext_notices; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension ?>
+	<?php
+	if ( $jt_ext_notices ) {
+		echo $jt_ext_notices;} // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension 
+	?>
 
 	<div class="jt-settings-layout">
 
@@ -64,7 +73,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<nav class="jt-settings-sidebar-nav" aria-label="<?php esc_attr_e( 'Settings navigation', 'jetonomy' ); ?>">
 				<?php foreach ( $tab_labels as $slug => $label ) : ?>
 				<a href="<?php echo esc_url( $settings_url . '&tab=' . $slug ); ?>"
-				   class="jt-snav-link<?php echo $active_tab === $slug ? ' jt-snav-link--active' : ''; ?>">
+					class="jt-snav-link<?php echo $active_tab === $slug ? ' jt-snav-link--active' : ''; ?>">
 					<span class="dashicons <?php echo esc_attr( $tab_icons[ $slug ] ); ?>" aria-hidden="true"></span>
 					<?php echo esc_html( $label ); ?>
 				</a>
@@ -73,7 +82,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php if ( defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
 				<a href="<?php echo esc_url( $settings_url . '&tab=license' ); ?>"
-				   class="jt-snav-link<?php echo 'license' === $active_tab ? ' jt-snav-link--active' : ''; ?>">
+					class="jt-snav-link<?php echo 'license' === $active_tab ? ' jt-snav-link--active' : ''; ?>">
 					<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>
 					<?php esc_html_e( 'License', 'jetonomy' ); ?>
 				</a>
@@ -82,7 +91,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php if ( $advanced_tabs_html ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
 				<p class="jt-snav-section-label"><?php esc_html_e( 'Advanced', 'jetonomy' ); ?></p>
-				<?php echo $advanced_tabs_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — escaped by each extension ?>
+					<?php echo $advanced_tabs_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — escaped by each extension ?>
 				<?php endif; ?>
 			</nav>
 		</aside>
@@ -176,9 +185,24 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			$thresholds  = $settings['trust_thresholds'] ?? [];
 			$rate_limits = $settings['rate_limits'] ?? [];
 			$tl_defaults = [
-				1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
-				2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
-				3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+				1 => [
+					'posts'            => 5,
+					'days_active'      => 3,
+					'reputation'       => 0,
+					'replies_received' => 10,
+				],
+				2 => [
+					'posts'            => 30,
+					'days_active'      => 20,
+					'reputation'       => 50,
+					'replies_received' => 0,
+				],
+				3 => [
+					'posts'            => 100,
+					'days_active'      => 60,
+					'reputation'       => 200,
+					'replies_received' => 0,
+				],
 			];
 			$level_names = [
 				1 => __( 'Level 1 — Member', 'jetonomy' ),
@@ -204,9 +228,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php for ( $level = 1; $level <= 3; $level++ ) :
+						<?php
+						for ( $level = 1; $level <= 3; $level++ ) :
 							$td = $tl_defaults[ $level ];
-						?>
+							?>
 							<tr>
 								<td><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></td>
 								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
@@ -352,10 +377,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $notif_types as $type => $label ) :
+						<?php
+						foreach ( $notif_types as $type => $label ) :
 							$web_on   = isset( $notif_defaults[ $type ]['web'] ) ? (bool) $notif_defaults[ $type ]['web'] : true;
 							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : true;
-						?>
+							?>
 							<tr>
 								<td><?php echo esc_html( $label ); ?></td>
 								<td>
@@ -626,7 +652,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div><!-- /.jt-settings-cards -->
 
 			<?php if ( in_array( $active_tab, $jt_primary_tabs, true ) ) : ?>
-			<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
+				<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
 			</form>
 			<?php endif; ?>
 		</div><!-- /.jt-settings-main -->

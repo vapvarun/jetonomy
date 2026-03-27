@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — setup wizard.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
@@ -11,7 +17,7 @@ use Jetonomy\Models\UserProfile;
 class Setup_Handler {
 
 	public function __construct() {
-		add_action( 'wp_ajax_jetonomy_setup_save',          [ $this, 'ajax_setup_save' ] );
+		add_action( 'wp_ajax_jetonomy_setup_save', [ $this, 'ajax_setup_save' ] );
 		add_action( 'wp_ajax_jetonomy_setup_create_sample', [ $this, 'ajax_setup_create_sample' ] );
 		add_action( 'wp_ajax_jetonomy_cleanup_sample_data', [ $this, 'ajax_cleanup_sample_data' ] );
 	}
@@ -22,7 +28,7 @@ class Setup_Handler {
 			wp_send_json_error();
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings                 = get_option( 'jetonomy_settings', [] );
 		$settings['base_slug']    = sanitize_title( $_POST['base_slug'] ?? 'community' );
 		$settings['default_type'] = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
 		$settings['guest_read']   = true;
@@ -32,22 +38,26 @@ class Setup_Handler {
 		$space_name = sanitize_text_field( $_POST['space_name'] ?? 'Community Discussion' );
 		$space_desc = sanitize_textarea_field( $_POST['space_description'] ?? '' );
 
-		$cat_id = Category::create( [
-			'name'       => $cat_name,
-			'slug'       => sanitize_title( $cat_name ),
-			'visibility' => 'public',
-		] );
+		$cat_id = Category::create(
+			[
+				'name'       => $cat_name,
+				'slug'       => sanitize_title( $cat_name ),
+				'visibility' => 'public',
+			]
+		);
 
-		$space_id = Space::create( [
-			'category_id' => $cat_id,
-			'author_id'   => get_current_user_id(),
-			'type'        => $settings['default_type'],
-			'title'       => $space_name,
-			'slug'        => sanitize_title( $space_name ),
-			'description' => $space_desc,
-			'visibility'  => 'public',
-			'join_policy' => 'open',
-		] );
+		$space_id = Space::create(
+			[
+				'category_id' => $cat_id,
+				'author_id'   => get_current_user_id(),
+				'type'        => $settings['default_type'],
+				'title'       => $space_name,
+				'slug'        => sanitize_title( $space_name ),
+				'description' => $space_desc,
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			]
+		);
 
 		SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
 		UserProfile::find_or_create( get_current_user_id() );
@@ -55,7 +65,12 @@ class Setup_Handler {
 		flush_rewrite_rules();
 		update_option( 'jetonomy_setup_complete', true );
 
-		wp_send_json_success( [ 'category_id' => $cat_id, 'space_id' => $space_id ] );
+		wp_send_json_success(
+			[
+				'category_id' => $cat_id,
+				'space_id'    => $space_id,
+			]
+		);
 	}
 
 	public function ajax_setup_create_sample(): void {
@@ -67,10 +82,10 @@ class Setup_Handler {
 		$uid = get_current_user_id();
 		UserProfile::find_or_create( $uid );
 
-		$settings                     = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']        = sanitize_title( $_POST['base_slug'] ?? 'community' );
-		$settings['default_type']     = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
-		$settings['guest_read']       = true;
+		$settings                 = get_option( 'jetonomy_settings', [] );
+		$settings['base_slug']    = sanitize_title( $_POST['base_slug'] ?? 'community' );
+		$settings['default_type'] = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
+		$settings['guest_read']   = true;
 		update_option( 'jetonomy_settings', $settings );
 
 		// Auto-cleanup any existing demo data before re-seeding.

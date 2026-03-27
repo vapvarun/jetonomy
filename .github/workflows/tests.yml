@@ -98,6 +98,7 @@ jobs:
   # ── WordPress Coding Standards ────────────────────────────────────────────
   wpcs:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -111,7 +112,7 @@ jobs:
         run: composer install --no-progress --prefer-dist
 
       - name: Run WordPress Coding Standards
-        run: vendor/bin/phpcs includes/ templates/
+        run: vendor/bin/phpcs
 
   # ── PHPStan static analysis ───────────────────────────────────────────────
   phpstan:

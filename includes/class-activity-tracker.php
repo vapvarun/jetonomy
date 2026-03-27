@@ -44,9 +44,15 @@ class Activity_Tracker {
 		if ( ! $user_id ) {
 			return;
 		}
-		ActivityLog::log( $user_id, 'created_post', 'post', $post_id, [
-			'space_id' => $space_id,
-		] );
+		ActivityLog::log(
+			$user_id,
+			'created_post',
+			'post',
+			$post_id,
+			[
+				'space_id' => $space_id,
+			]
+		);
 	}
 
 	public function on_reply_created( int $reply_id, int $post_id ): void {
@@ -54,9 +60,15 @@ class Activity_Tracker {
 		if ( ! $user_id ) {
 			return;
 		}
-		ActivityLog::log( $user_id, 'created_reply', 'reply', $reply_id, [
-			'post_id' => $post_id,
-		] );
+		ActivityLog::log(
+			$user_id,
+			'created_reply',
+			'reply',
+			$reply_id,
+			[
+				'post_id' => $post_id,
+			]
+		);
 	}
 
 	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
@@ -64,10 +76,16 @@ class Activity_Tracker {
 	}
 
 	public function on_trust_change( int $user_id, int $old_level, int $new_level ): void {
-		ActivityLog::log( $user_id, 'trust_level_changed', 'user', $user_id, [
-			'old' => $old_level,
-			'new' => $new_level,
-		] );
+		ActivityLog::log(
+			$user_id,
+			'trust_level_changed',
+			'user',
+			$user_id,
+			[
+				'old' => $old_level,
+				'new' => $new_level,
+			]
+		);
 	}
 
 	public function on_moderation( string $action, string $object_type, int $object_id, int $moderator_id ): void {
@@ -75,15 +93,27 @@ class Activity_Tracker {
 	}
 
 	public function on_reputation( int $user_id, string $reason, int $delta ): void {
-		ActivityLog::log( $user_id, 'reputation_changed', 'user', $user_id, [
-			'delta'  => $delta,
-			'reason' => $reason,
-		] );
+		ActivityLog::log(
+			$user_id,
+			'reputation_changed',
+			'user',
+			$user_id,
+			[
+				'delta'  => $delta,
+				'reason' => $reason,
+			]
+		);
 	}
 
 	public function on_space_join( int $space_id, int $user_id, string $role ): void {
-		ActivityLog::log( $user_id, 'joined_space', 'space', $space_id, [
-			'role' => $role,
-		] );
+		ActivityLog::log(
+			$user_id,
+			'joined_space',
+			'space',
+			$space_id,
+			[
+				'role' => $role,
+			]
+		);
 	}
 }

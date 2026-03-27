@@ -1,4 +1,10 @@
 <?php
+/**
+ * Invite link model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -23,15 +29,17 @@ class InviteLink extends Model {
 	public static function generate( int $space_id, int $created_by, int $max_uses = 0, ?string $expires_at = null ): string {
 		$token = wp_generate_password( 32, false );
 
-		self::insert( [
-			'space_id'   => $space_id,
-			'token'      => $token,
-			'created_by' => $created_by,
-			'max_uses'   => $max_uses,
-			'use_count'  => 0,
-			'expires_at' => $expires_at,
-			'created_at' => now(),
-		] );
+		self::insert(
+			[
+				'space_id'   => $space_id,
+				'token'      => $token,
+				'created_by' => $created_by,
+				'max_uses'   => $max_uses,
+				'use_count'  => 0,
+				'expires_at' => $expires_at,
+				'created_at' => now(),
+			]
+		);
 
 		return $token;
 	}
@@ -40,10 +48,12 @@ class InviteLink extends Model {
 	 * Find an invite link by its token.
 	 */
 	public static function find_by_token( string $token ): ?object {
-		$row = self::db()->get_row( self::db()->prepare(
-			'SELECT * FROM ' . self::table() . ' WHERE token = %s',
-			$token
-		) );
+		$row = self::db()->get_row(
+			self::db()->prepare(
+				'SELECT * FROM ' . self::table() . ' WHERE token = %s',
+				$token
+			)
+		);
 
 		return $row ?: null;
 	}
@@ -65,19 +75,23 @@ class InviteLink extends Model {
 	 * Increment the use count for an invite.
 	 */
 	public static function use_invite( int $id ): void {
-		self::db()->query( self::db()->prepare(
-			'UPDATE ' . self::table() . ' SET use_count = use_count + 1 WHERE id = %d',
-			$id
-		) );
+		self::db()->query(
+			self::db()->prepare(
+				'UPDATE ' . self::table() . ' SET use_count = use_count + 1 WHERE id = %d',
+				$id
+			)
+		);
 	}
 
 	/**
 	 * List all invite links for a space.
 	 */
 	public static function list_by_space( int $space_id ): array {
-		return self::db()->get_results( self::db()->prepare(
-			'SELECT * FROM ' . self::table() . ' WHERE space_id = %d ORDER BY created_at DESC',
-			$space_id
-		) ) ?: [];
+		return self::db()->get_results(
+			self::db()->prepare(
+				'SELECT * FROM ' . self::table() . ' WHERE space_id = %d ORDER BY created_at DESC',
+				$space_id
+			)
+		) ?: [];
 	}
 }

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Subscriptions REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -20,27 +26,37 @@ class Subscriptions_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// Collection.
-		register_rest_route( $ns, '/subscriptions', [
+		register_rest_route(
+			$ns,
+			'/subscriptions',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => '__return_true',
-				'args'                => $this->get_collection_params(),
-			],
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-				'args'                => $this->get_create_args(),
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_items' ],
+					'permission_callback' => '__return_true',
+					'args'                => $this->get_collection_params(),
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_item' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+					'args'                => $this->get_create_args(),
+				],
+			]
+		);
 
 		// Single item.
-		register_rest_route( $ns, '/subscriptions/(?P<id>\d+)', [
-			'methods'             => \WP_REST_Server::DELETABLE,
-			'callback'            => [ $this, 'delete_item' ],
-			'permission_callback' => function() { return is_user_logged_in(); },
-		] );
+		register_rest_route(
+			$ns,
+			'/subscriptions/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'delete_item' ],
+				'permission_callback' => function () {
+					return is_user_logged_in(); },
+			]
+		);
 	}
 
 	/**
@@ -81,10 +97,13 @@ class Subscriptions_Controller extends Base_Controller {
 
 		$items = array_map( [ $this, 'prepare_subscription' ], $rows );
 
-		return $this->paginated_response( $items, [
-			'total'    => $total,
-			'has_more' => count( $items ) === $limit,
-		] );
+		return $this->paginated_response(
+			$items,
+			[
+				'total'    => $total,
+				'has_more' => count( $items ) === $limit,
+			]
+		);
 	}
 
 	/**
@@ -173,7 +192,13 @@ class Subscriptions_Controller extends Base_Controller {
 			(int) $subscription->object_id
 		);
 
-		return new WP_REST_Response( [ 'deleted' => true, 'id' => $id ], 200 );
+		return new WP_REST_Response(
+			[
+				'deleted' => true,
+				'id'      => $id,
+			],
+			200
+		);
 	}
 
 	/**

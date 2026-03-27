@@ -55,8 +55,8 @@ $recent_posts = $wpdb->get_results(
 ) ?: [];
 
 // Current tab.
-$current_tab  = $data['tab'] ?? '';
-$is_own       = is_user_logged_in() && get_current_user_id() === (int) $user->ID;
+$current_tab = $data['tab'] ?? '';
+$is_own      = is_user_logged_in() && get_current_user_id() === (int) $user->ID;
 
 // Bookmarks (only for own profile on bookmarks tab).
 $bookmarks = [];
@@ -83,7 +83,10 @@ if ( 'drafts' === $current_tab && $is_own ) {
 }
 
 $crumbs = [
-	[ 'label' => $user->display_name, 'url' => '' ],
+	[
+		'label' => $user->display_name,
+		'url'   => '',
+	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -95,7 +98,16 @@ $crumbs = [
 				<div class="jt-profile-banner"></div>
 				<div class="jt-profile-body">
 					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( $profile_user_id ) ? esc_attr( 'is-online' ) : ''; ?>">
-					<?php \Jetonomy\Template_Loader::partial( 'avatar', [ 'user_id' => $profile_user_id, 'size' => 64, 'class' => 'jt-profile-av' ] ); ?>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'avatar',
+						[
+							'user_id' => $profile_user_id,
+							'size'    => 64,
+							'class'   => 'jt-profile-av',
+						]
+					);
+					?>
 				</span>
 					<div class="jt-flex jt-items-start jt-justify-between jt-w-full">
 						<h1 class="jt-profile-name">
@@ -207,7 +219,7 @@ $crumbs = [
 						<?php foreach ( $user_replies as $ur ) : ?>
 							<?php
 							$ur_url = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
-							$ur_ago = human_time_diff( strtotime( $ur->created_at ), current_time( 'timestamp', true ) );
+							$ur_ago = human_time_diff( strtotime( $ur->created_at ), time() );
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $ur_url ); ?>'">
 								<div class="jt-votes">
@@ -248,7 +260,7 @@ $crumbs = [
 						<?php foreach ( $user_votes as $uv ) : ?>
 							<?php
 							$uv_url = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
-							$uv_ago = human_time_diff( strtotime( $uv->voted_at ), current_time( 'timestamp', true ) );
+							$uv_ago = human_time_diff( strtotime( $uv->voted_at ), time() );
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $uv_url ); ?>'">
 								<div class="jt-votes">
@@ -279,7 +291,7 @@ $crumbs = [
 				<?php endif; ?>
 
 			<?php elseif ( 'drafts' === $current_tab && $is_own ) : ?>
-			<?php if ( empty( $user_drafts ) ) : ?>
+				<?php if ( empty( $user_drafts ) ) : ?>
 				<div class="jt-empty-compact">
 					<div class="jt-empty-text"><?php esc_html_e( 'No drafts yet. Save a post as draft and it will appear here.', 'jetonomy' ); ?></div>
 				</div>
@@ -287,8 +299,8 @@ $crumbs = [
 				<div class="jt-topics">
 					<?php foreach ( $user_drafts as $dr_post ) : ?>
 						<?php
-						$dr_ago      = human_time_diff( strtotime( $dr_post->created_at ), current_time( 'timestamp', true ) );
-						$dr_edit_url = $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/new/?draft=' . (int) $dr_post->id;
+						$dr_ago       = human_time_diff( strtotime( $dr_post->created_at ), time() );
+						$dr_edit_url  = $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/new/?draft=' . (int) $dr_post->id;
 						$is_scheduled = ! empty( $dr_post->published_at );
 						?>
 						<div class="jt-row jt-row--draft">
@@ -339,7 +351,7 @@ $crumbs = [
 							<?php
 							$bk_space = \Jetonomy\Models\Space::find( (int) $bk_post->space_id );
 							$bk_url   = $base . '/s/' . ( $bk_space->slug ?? '' ) . '/t/' . $bk_post->slug . '/';
-							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), current_time( 'timestamp', true ) );
+							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $bk_url ); ?>'">
 								<div class="jt-votes">
@@ -377,7 +389,7 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $recent_posts as $r_post ) : ?>
 							<?php
-							$time_ago = human_time_diff( strtotime( $r_post->created_at ), current_time( 'timestamp', true ) );
+							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
 							$post_url = $base . '/s/' . $r_post->space_slug . '/t/' . $r_post->slug . '/';
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $post_url ); ?>'">

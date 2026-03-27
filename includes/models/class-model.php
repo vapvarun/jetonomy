@@ -1,4 +1,10 @@
 <?php
+/**
+ * Abstract base model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -21,7 +27,8 @@ abstract class Model {
 	public static function find( int $id ): ?object {
 		$row = static::db()->get_row(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE id = %d', $id
+				'SELECT * FROM ' . static::table() . ' WHERE id = %d',
+				$id
 			)
 		);
 		return $row ?: null;

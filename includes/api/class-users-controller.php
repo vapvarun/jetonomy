@@ -1,4 +1,10 @@
 <?php
+/**
+ * Users REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -23,41 +29,58 @@ class Users_Controller extends Base_Controller {
 		$ns = $this->namespace;
 
 		// Current-user routes.
-		register_rest_route( $ns, '/users/me', [
+		register_rest_route(
+			$ns,
+			'/users/me',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_current_user' ],
-				'permission_callback' => '__return_true',
-			],
-			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'update_current_user' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-				'args'                => $this->get_update_args(),
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_current_user' ],
+					'permission_callback' => '__return_true',
+				],
+				[
+					'methods'             => 'PATCH',
+					'callback'            => [ $this, 'update_current_user' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+					'args'                => $this->get_update_args(),
+				],
+			]
+		);
 
 		// Public profile by ID.
-		register_rest_route( $ns, '/users/(?P<id>\d+)', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'get_item' ],
-			'permission_callback' => '__return_true',
-		] );
+		register_rest_route(
+			$ns,
+			'/users/(?P<id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_item' ],
+				'permission_callback' => '__return_true',
+			]
+		);
 
 		// Public profile by login (username).
-		register_rest_route( $ns, '/users/by-login/(?P<login>[a-zA-Z0-9_\-\.]+)', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'get_by_login' ],
-			'permission_callback' => '__return_true',
-		] );
+		register_rest_route(
+			$ns,
+			'/users/by-login/(?P<login>[a-zA-Z0-9_\-\.]+)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_by_login' ],
+				'permission_callback' => '__return_true',
+			]
+		);
 
 		// Posts by user.
-		register_rest_route( $ns, '/users/(?P<id>\d+)/posts', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'get_user_posts' ],
-			'permission_callback' => '__return_true',
-			'args'                => $this->get_collection_params(),
-		] );
+		register_rest_route(
+			$ns,
+			'/users/(?P<id>\d+)/posts',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_user_posts' ],
+				'permission_callback' => '__return_true',
+				'args'                => $this->get_collection_params(),
+			]
+		);
 	}
 
 	/**
@@ -184,16 +207,19 @@ class Users_Controller extends Base_Controller {
 
 		// Handle notification_preferences — merge into existing settings JSON.
 		if ( null !== $request->get_param( 'notification_preferences' ) ) {
-			$notif_input  = $request->get_param( 'notification_preferences' );
+			$notif_input = $request->get_param( 'notification_preferences' );
 			if ( is_array( $notif_input ) ) {
 				$existing     = UserProfile::find_by_user( $user_id );
 				$cur_settings = $existing ? json_decode( $existing->settings ?? '{}', true ) : [];
-				if ( ! is_array( $cur_settings ) ) { $cur_settings = []; }
+				if ( ! is_array( $cur_settings ) ) {
+					$cur_settings = []; }
 
 				$valid_types = [ 'reply_to_post', 'reply_to_reply', 'mention', 'vote_on_post', 'accepted_answer', 'new_post_in_sub', 'badge_earned' ];
 				$prefs       = [];
 				foreach ( $notif_input as $type => $channels ) {
-					if ( ! in_array( $type, $valid_types, true ) ) continue;
+					if ( ! in_array( $type, $valid_types, true ) ) {
+						continue;
+					}
 					$prefs[ $type ] = [
 						'web'   => ! empty( $channels['web'] ),
 						'email' => ! empty( $channels['email'] ),
@@ -208,10 +234,12 @@ class Users_Controller extends Base_Controller {
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
 			if ( ! empty( $display_name ) ) {
-				wp_update_user( [
-					'ID'           => $user_id,
-					'display_name' => $display_name,
-				] );
+				wp_update_user(
+					[
+						'ID'           => $user_id,
+						'display_name' => $display_name,
+					]
+				);
 			}
 		}
 
@@ -279,10 +307,13 @@ class Users_Controller extends Base_Controller {
 
 		$items = array_map( [ $this, 'prepare_post' ], $posts );
 
-		return $this->paginated_response( $items, [
-			'total'    => $total,
-			'has_more' => count( $items ) === $limit,
-		] );
+		return $this->paginated_response(
+			$items,
+			[
+				'total'    => $total,
+				'has_more' => count( $items ) === $limit,
+			]
+		);
 	}
 
 	/**
@@ -290,17 +321,17 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_profile( ?object $profile ): array {
 		return [
-			'id'          => (int) ( $profile->user_id ?? 0 ),
-			'user_id'     => (int) ( $profile->user_id ?? 0 ),
-			'reputation'  => (int) ( $profile->reputation ?? 0 ),
-			'post_count'  => (int) ( $profile->post_count ?? 0 ),
-			'reply_count' => (int) ( $profile->reply_count ?? 0 ),
-			'trust_level' => (int) ( $profile->trust_level ?? 0 ),
-			'bio'         => $profile->bio ?? null,
-			'avatar_url'  => $profile->avatar_url ?? null,
+			'id'           => (int) ( $profile->user_id ?? 0 ),
+			'user_id'      => (int) ( $profile->user_id ?? 0 ),
+			'reputation'   => (int) ( $profile->reputation ?? 0 ),
+			'post_count'   => (int) ( $profile->post_count ?? 0 ),
+			'reply_count'  => (int) ( $profile->reply_count ?? 0 ),
+			'trust_level'  => (int) ( $profile->trust_level ?? 0 ),
+			'bio'          => $profile->bio ?? null,
+			'avatar_url'   => $profile->avatar_url ?? null,
 			'last_seen_at' => $profile->last_seen_at ?? null,
-			'created_at'  => $profile->created_at ?? null,
-			'updated_at'  => $profile->updated_at ?? null,
+			'created_at'   => $profile->created_at ?? null,
+			'updated_at'   => $profile->updated_at ?? null,
 		];
 	}
 
@@ -309,16 +340,16 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_post( object $post ): array {
 		return [
-			'id'         => (int) $post->id,
-			'space_id'   => (int) $post->space_id,
-			'title'      => $post->title ?? '',
-			'slug'       => $post->slug ?? '',
-			'type'       => $post->type ?? 'topic',
-			'status'     => $post->status ?? 'publish',
-			'vote_score' => (int) ( $post->vote_score ?? 0 ),
+			'id'          => (int) $post->id,
+			'space_id'    => (int) $post->space_id,
+			'title'       => $post->title ?? '',
+			'slug'        => $post->slug ?? '',
+			'type'        => $post->type ?? 'topic',
+			'status'      => $post->status ?? 'publish',
+			'vote_score'  => (int) ( $post->vote_score ?? 0 ),
 			'reply_count' => (int) ( $post->reply_count ?? 0 ),
-			'view_count' => (int) ( $post->view_count ?? 0 ),
-			'created_at' => $post->created_at ?? null,
+			'view_count'  => (int) ( $post->view_count ?? 0 ),
+			'created_at'  => $post->created_at ?? null,
 		];
 	}
 
@@ -327,10 +358,23 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function get_update_args(): array {
 		return [
-			'display_name' => [ 'type' => 'string', 'required' => false ],
-			'bio'          => [ 'type' => 'string', 'required' => false ],
-			'avatar_url'   => [ 'type' => 'string', 'required' => false, 'format' => 'uri' ],
-			'settings'     => [ 'type' => 'object', 'required' => false ],
+			'display_name' => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'bio'          => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'avatar_url'   => [
+				'type'     => 'string',
+				'required' => false,
+				'format'   => 'uri',
+			],
+			'settings'     => [
+				'type'     => 'object',
+				'required' => false,
+			],
 		];
 	}
 }

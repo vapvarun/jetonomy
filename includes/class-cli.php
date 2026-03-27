@@ -111,7 +111,7 @@ class CLI {
 				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
 				\WP_CLI::log( sprintf( 'User %d: Level %d → %d', $profile->user_id, $profile->trust_level, $new_level ) );
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
-				$promoted++;
+				++$promoted;
 			}
 		}
 
@@ -157,13 +157,15 @@ class CLI {
 
 		$prefix = $dry_run ? '[DRY RUN] ' : '';
 
-		\WP_CLI::success( sprintf(
-			'%sImport complete. Imported: %d, Skipped: %d, Errors: %d',
-			$prefix,
-			$result['imported'],
-			$result['skipped'],
-			count( $result['errors'] )
-		) );
+		\WP_CLI::success(
+			sprintf(
+				'%sImport complete. Imported: %d, Skipped: %d, Errors: %d',
+				$prefix,
+				$result['imported'],
+				$result['skipped'],
+				count( $result['errors'] )
+			)
+		);
 
 		if ( ! empty( $result['errors'] ) ) {
 			\WP_CLI::warning( 'Errors:' );
@@ -220,15 +222,18 @@ class CLI {
 			 ORDER BY p.id ASC"
 		);
 		foreach ( $posts as $p ) {
-			$wpdb->insert( $activity_t, [
-				'user_id'     => (int) $p->author_id,
-				'action'      => 'created_post',
-				'object_type' => 'post',
-				'object_id'   => (int) $p->id,
-				'metadata'    => wp_json_encode( [ 'space_id' => (int) $p->space_id ] ),
-				'created_at'  => $p->created_at,
-			] );
-			$inserted++;
+			$wpdb->insert(
+				$activity_t,
+				[
+					'user_id'     => (int) $p->author_id,
+					'action'      => 'created_post',
+					'object_type' => 'post',
+					'object_id'   => (int) $p->id,
+					'metadata'    => wp_json_encode( [ 'space_id' => (int) $p->space_id ] ),
+					'created_at'  => $p->created_at,
+				]
+			);
+			++$inserted;
 		}
 
 		// Replies.
@@ -242,15 +247,18 @@ class CLI {
 			 ORDER BY r.id ASC"
 		);
 		foreach ( $replies as $r ) {
-			$wpdb->insert( $activity_t, [
-				'user_id'     => (int) $r->author_id,
-				'action'      => 'created_reply',
-				'object_type' => 'reply',
-				'object_id'   => (int) $r->id,
-				'metadata'    => wp_json_encode( [ 'post_id' => (int) $r->post_id ] ),
-				'created_at'  => $r->created_at,
-			] );
-			$inserted++;
+			$wpdb->insert(
+				$activity_t,
+				[
+					'user_id'     => (int) $r->author_id,
+					'action'      => 'created_reply',
+					'object_type' => 'reply',
+					'object_id'   => (int) $r->id,
+					'metadata'    => wp_json_encode( [ 'post_id' => (int) $r->post_id ] ),
+					'created_at'  => $r->created_at,
+				]
+			);
+			++$inserted;
 		}
 
 		// Space memberships.
@@ -264,15 +272,18 @@ class CLI {
 			 ORDER BY m.joined_at ASC"
 		);
 		foreach ( $members as $m ) {
-			$wpdb->insert( $activity_t, [
-				'user_id'     => (int) $m->user_id,
-				'action'      => 'joined_space',
-				'object_type' => 'space',
-				'object_id'   => (int) $m->space_id,
-				'metadata'    => wp_json_encode( [ 'role' => $m->role ] ),
-				'created_at'  => $m->joined_at,
-			] );
-			$inserted++;
+			$wpdb->insert(
+				$activity_t,
+				[
+					'user_id'     => (int) $m->user_id,
+					'action'      => 'joined_space',
+					'object_type' => 'space',
+					'object_id'   => (int) $m->space_id,
+					'metadata'    => wp_json_encode( [ 'role' => $m->role ] ),
+					'created_at'  => $m->joined_at,
+				]
+			);
+			++$inserted;
 		}
 
 		\WP_CLI::success( sprintf( 'Backfilled %d activity entries.', $inserted ) );
@@ -309,7 +320,16 @@ class CLI {
 			\WP_CLI::log( 'Done.' );
 		}
 
-		$admin_id = (int) get_option( 'jetonomy_setup_admin_id', get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 1 );
+		$admin_id = (int) get_option(
+			'jetonomy_setup_admin_id',
+			get_users(
+				[
+					'role'   => 'administrator',
+					'number' => 1,
+					'fields' => 'ID',
+				]
+			)[0] ?? 1
+		);
 
 		\WP_CLI::log( 'Seeding demo users...' );
 		$demo = Demo_Seeder::seed( $admin_id );
@@ -407,7 +427,7 @@ class CLI {
 			if ( ! isset( $sections[ $section ] ) ) {
 				$sections[ $section ] = [ 'checks' => [] ];
 			}
-			$status = $ok ? 'pass' : ( $warning ? 'warn' : 'fail' );
+			$status                           = $ok ? 'pass' : ( $warning ? 'warn' : 'fail' );
 			$sections[ $section ]['checks'][] = [
 				'label'  => $label,
 				'status' => $status,
@@ -420,7 +440,7 @@ class CLI {
 		$schema_tables = \Jetonomy\DB\Schema::get_table_names();
 
 		foreach ( $schema_tables as $table_suffix ) {
-			$full   = $wpdb->prefix . $table_suffix;
+			$full = $wpdb->prefix . $table_suffix;
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$full}'" ) === $full;
 
@@ -440,9 +460,9 @@ class CLI {
 		// ── Section 2: REST Routes (Discovery) ───────────────────────────────
 		// Discover all routes registered under jetonomy/v1 at runtime.
 		// This automatically captures any new controller added to class-api.php.
-		$server         = rest_get_server();
-		$all_routes     = $server->get_routes( 'jetonomy/v1' );
-		$namespace_ok   = count( $all_routes ) > 0;
+		$server       = rest_get_server();
+		$all_routes   = $server->get_routes( 'jetonomy/v1' );
+		$namespace_ok = count( $all_routes ) > 0;
 
 		$record( 'rest_routes', 'Namespace jetonomy/v1 registered', $namespace_ok, count( $all_routes ) . ' routes found' );
 
@@ -452,18 +472,18 @@ class CLI {
 
 		foreach ( $all_routes as $route_path => $route_handlers ) {
 			foreach ( $route_handlers as $handler ) {
-				$methods = array_keys( $handler['methods'] ?? [] );
+				$methods      = array_keys( $handler['methods'] ?? [] );
 				$has_mutating = ! empty( array_intersect( $methods, $mutating_methods ) );
 
 				if ( ! $has_mutating ) {
 					continue;
 				}
 
-				$perm_cb      = $handler['permission_callback'] ?? null;
-				$is_open      = $perm_cb === '__return_true'
+				$perm_cb     = $handler['permission_callback'] ?? null;
+				$is_open     = $perm_cb === '__return_true'
 					|| ( is_array( $perm_cb ) && in_array( '__return_true', $perm_cb, true ) );
-				$methods_str  = implode( '|', array_intersect( $methods, $mutating_methods ) );
-				$route_label  = "{$route_path} [{$methods_str}]";
+				$methods_str = implode( '|', array_intersect( $methods, $mutating_methods ) );
+				$route_label = "{$route_path} [{$methods_str}]";
 
 				// Webhook/inbound endpoints are legitimately public — external services
 				// (SendGrid, Mailgun) call them without WP auth. Auth is via HMAC signature.
@@ -508,7 +528,13 @@ class CLI {
 		}
 
 		// ── Section 4: Permission Engine ──────────────────────────────────────
-		$admin_id = (int) ( get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 1 );
+		$admin_id = (int) ( get_users(
+			[
+				'role'   => 'administrator',
+				'number' => 1,
+				'fields' => 'ID',
+			]
+		)[0] ?? 1 );
 
 		// All actions a space member can perform — from Permission_Engine::SPACE_ROLE_PERMS.
 		$member_actions = [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ];
@@ -580,7 +606,7 @@ class CLI {
 				$ok     = true;
 				$detail = '';
 				try {
-					$src    = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+					$src = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 					// Suppress the error handler so token_get_all triggers ParseError instead.
 					$tokens = @token_get_all( $src, TOKEN_PARSE ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 					$ok     = is_array( $tokens );
@@ -600,30 +626,30 @@ class CLI {
 		// This is static analysis — we check the compiled rules in the DB match what the Router
 		// registers. Dynamic base_slug is resolved at runtime.
 		$_jt_settings = get_option( 'jetonomy_settings', [] );
-		$base          = ! empty( $_jt_settings['base_slug'] ) ? $_jt_settings['base_slug'] : 'community';
-		$rules         = get_option( 'rewrite_rules', [] ) ?: [];
+		$base         = ! empty( $_jt_settings['base_slug'] ) ? $_jt_settings['base_slug'] : 'community';
+		$rules        = get_option( 'rewrite_rules', [] ) ?: [];
 
 		$record( 'rewrite_rules', 'Rewrite rules option is populated', ! empty( $rules ), empty( $rules ) ? 'No rules found — run wp rewrite flush' : '' );
 		$record( 'rewrite_rules', "Base slug '{$base}' is non-empty", ! empty( $base ) );
 
 		// Expected URL pattern fragments based on the Router source.
 		$expected_patterns = [
-			"^{$base}/?$"                                 => 'Community home',
-			"^{$base}/category/([^/]+)/?$"               => 'Category view',
-			"^{$base}/s/([^/]+)/?$"                      => 'Space view',
-			"^{$base}/s/([^/]+)/t/([^/]+)/?$"            => 'Single post',
-			"^{$base}/u/([^/]+)/?$"                       => 'User profile',
-			"^{$base}/notifications/?$"                   => 'Notifications',
-			"^{$base}/search/?$"                          => 'Search',
-			"^{$base}/leaderboard/?$"                     => 'Leaderboard',
-			"^{$base}/mod/?$"                             => 'Moderation',
-			"^{$base}/tag/([^/]+)/?$"                     => 'Tag view',
-			"^{$base}/invite/([a-zA-Z0-9]+)/?$"           => 'Invite link',
+			"^{$base}/?$"                       => 'Community home',
+			"^{$base}/category/([^/]+)/?$"      => 'Category view',
+			"^{$base}/s/([^/]+)/?$"             => 'Space view',
+			"^{$base}/s/([^/]+)/t/([^/]+)/?$"   => 'Single post',
+			"^{$base}/u/([^/]+)/?$"             => 'User profile',
+			"^{$base}/notifications/?$"         => 'Notifications',
+			"^{$base}/search/?$"                => 'Search',
+			"^{$base}/leaderboard/?$"           => 'Leaderboard',
+			"^{$base}/mod/?$"                   => 'Moderation',
+			"^{$base}/tag/([^/]+)/?$"           => 'Tag view',
+			"^{$base}/invite/([a-zA-Z0-9]+)/?$" => 'Invite link',
 		];
 
 		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
-			$expected_patterns[ "^{$base}/messages/?$" ]        = 'Messages list (Pro)';
-			$expected_patterns[ "^{$base}/messages/(\d+)/?$" ]  = 'Conversation thread (Pro)';
+			$expected_patterns[ "^{$base}/messages/?$" ]       = 'Messages list (Pro)';
+			$expected_patterns[ "^{$base}/messages/(\d+)/?$" ] = 'Conversation thread (Pro)';
 		}
 
 		foreach ( $expected_patterns as $pattern => $label ) {
@@ -657,7 +683,7 @@ class CLI {
 			if ( $ext_dir && is_dir( $ext_dir ) ) {
 				$ext_files = glob( $ext_dir . '*/class-extension.php' );
 				foreach ( $ext_files as $ext_file ) {
-					$ext_id = basename( dirname( $ext_file ) );
+					$ext_id           = basename( dirname( $ext_file ) );
 					$discovered_ids[] = $ext_id;
 
 					$is_enabled = in_array( $ext_id, $enabled_exts, true );
@@ -713,14 +739,14 @@ class CLI {
 
 			// Pro DB tables — only private-messaging creates them.
 			$pro_tables = [
-				'jt_pro_conversations'            => 'Conversations',
+				'jt_pro_conversations'             => 'Conversations',
 				'jt_pro_conversation_participants' => 'Conversation participants',
-				'jt_pro_messages'                 => 'Messages',
+				'jt_pro_messages'                  => 'Messages',
 			];
 			$pm_enabled = in_array( 'private-messaging', $enabled_exts, true );
 
 			foreach ( $pro_tables as $tbl => $label ) {
-				$full   = $wpdb->prefix . $tbl;
+				$full = $wpdb->prefix . $tbl;
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$full}'" ) === $full;
 				// These tables only exist when private-messaging is enabled.
@@ -756,10 +782,12 @@ class CLI {
 			);
 
 			// Combine and deduplicate segments.
-			$js_segments = array_unique( array_merge(
-				$template_literal_matches[1] ?? [],
-				$concat_matches[1] ?? []
-			) );
+			$js_segments = array_unique(
+				array_merge(
+					$template_literal_matches[1] ?? [],
+					$concat_matches[1] ?? []
+				)
+			);
 
 			// Strip query-string fragments (everything after ?) so we match path only.
 			$js_segments = array_map( fn( $s ) => explode( '?', $s )[0], $js_segments );
@@ -770,9 +798,9 @@ class CLI {
 			$route_slugs = [];
 			foreach ( array_keys( $all_routes ) as $rp ) {
 				// /jetonomy/v1/spaces/(?P<id>[\d]+) → spaces
-				$slug = preg_replace( '#^/jetonomy/v1/#', '', $rp );
-				$slug = preg_replace( '#/\(\?P<[^>]+>[^)]+\)#', '/{id}', $slug );
-				$slug = trim( $slug, '/' );
+				$slug          = preg_replace( '#^/jetonomy/v1/#', '', $rp );
+				$slug          = preg_replace( '#/\(\?P<[^>]+>[^)]+\)#', '/{id}', $slug );
+				$slug          = trim( $slug, '/' );
 				$route_slugs[] = $slug;
 			}
 
@@ -802,16 +830,16 @@ class CLI {
 
 		// Section display labels for the summary table.
 		$section_labels = [
-			'database'        => 'Database Tables',
-			'rest_routes'     => 'REST Routes',
+			'database'          => 'Database Tables',
+			'rest_routes'       => 'REST Routes',
 			'notification_keys' => 'Notification Keys',
-			'permissions'     => 'Permissions',
-			'templates'       => 'Templates',
-			'rewrite_rules'   => 'Rewrite Rules',
-			'settings'        => 'Settings',
-			'pro_extensions'  => 'Pro Extensions',
-			'pro_tables'      => 'Pro Tables',
-			'js_rest'         => 'JS-REST Alignment',
+			'permissions'       => 'Permissions',
+			'templates'         => 'Templates',
+			'rewrite_rules'     => 'Rewrite Rules',
+			'settings'          => 'Settings',
+			'pro_extensions'    => 'Pro Extensions',
+			'pro_tables'        => 'Pro Tables',
+			'js_rest'           => 'JS-REST Alignment',
 		];
 
 		$total_checks = 0;
@@ -850,24 +878,28 @@ class CLI {
 			$s        = $sections[ $key ];
 			$fraction = "{$s['passed']}/{$s['total']}";
 			$marker   = $s['failed'] > 0 ? 'FAIL' : ( $s['warned'] > 0 ? 'WARN' : 'OK' );
-			\WP_CLI::log( sprintf(
-				'  %-' . $col_label_width . 's %' . $col_count_width . 's  %s',
-				$label,
-				$fraction,
-				$marker
-			) );
+			\WP_CLI::log(
+				sprintf(
+					'  %-' . $col_label_width . 's %' . $col_count_width . 's  %s',
+					$label,
+					$fraction,
+					$marker
+				)
+			);
 		}
 
 		\WP_CLI::log( $line );
 		$total_fraction = "{$total_pass}/{$total_checks}";
 		$release_status = $total_fail === 0 ? 'RELEASE READY' : 'RELEASE BLOCKED';
-		\WP_CLI::log( sprintf(
-			'  %-' . $col_label_width . 's %' . $col_count_width . 's  %s%s',
-			'TOTAL',
-			$total_fraction,
-			$release_status,
-			$total_warn > 0 ? " ({$total_warn} warnings)" : ''
-		) );
+		\WP_CLI::log(
+			sprintf(
+				'  %-' . $col_label_width . 's %' . $col_count_width . 's  %s%s',
+				'TOTAL',
+				$total_fraction,
+				$release_status,
+				$total_warn > 0 ? " ({$total_warn} warnings)" : ''
+			)
+		);
 		\WP_CLI::log( $line );
 		\WP_CLI::log( '' );
 
@@ -907,26 +939,29 @@ class CLI {
 			$report_path = $plans_dir . "qa-report-{$date}.json";
 
 			$report = [
-				'date'         => $date,
-				'timestamp'    => gmdate( 'c' ),
-				'version'      => $version,
-				'pro_version'  => $pro_version,
-				'total_checks' => $total_checks,
-				'passed'       => $total_pass,
-				'failed'       => $total_fail,
-				'warnings'     => $total_warn,
+				'date'          => $date,
+				'timestamp'     => gmdate( 'c' ),
+				'version'       => $version,
+				'pro_version'   => $pro_version,
+				'total_checks'  => $total_checks,
+				'passed'        => $total_pass,
+				'failed'        => $total_fail,
+				'warnings'      => $total_warn,
 				'release_ready' => $total_fail === 0,
-				'sections'     => array_combine(
+				'sections'      => array_combine(
 					array_keys( $sections ),
-					array_map( function ( $section ) {
-						return [
-							'total'   => $section['total'],
-							'passed'  => $section['passed'],
-							'failed'  => $section['failed'],
-							'warned'  => $section['warned'],
-							'checks'  => $section['checks'],
-						];
-					}, $sections )
+					array_map(
+						function ( $section ) {
+							return [
+								'total'  => $section['total'],
+								'passed' => $section['passed'],
+								'failed' => $section['failed'],
+								'warned' => $section['warned'],
+								'checks' => $section['checks'],
+							];
+						},
+						$sections
+					)
 				),
 			];
 

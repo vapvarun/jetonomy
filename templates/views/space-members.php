@@ -22,10 +22,19 @@ $base     = \Jetonomy\base_url();
 
 $crumbs = [];
 if ( $category ) {
-	$crumbs[] = [ 'label' => $category->name, 'url' => '' ];
+	$crumbs[] = [
+		'label' => $category->name,
+		'url'   => '',
+	];
 }
-$crumbs[] = [ 'label' => $space->title, 'url' => $base . '/s/' . $space->slug . '/' ];
-$crumbs[] = [ 'label' => __( 'Members', 'jetonomy' ), 'url' => '' ];
+$crumbs[] = [
+	'label' => $space->title,
+	'url'   => $base . '/s/' . $space->slug . '/',
+];
+$crumbs[] = [
+	'label' => __( 'Members', 'jetonomy' ),
+	'url'   => '',
+];
 
 $role_labels = [
 	'moderator' => __( 'Moderator', 'jetonomy' ),
@@ -66,10 +75,10 @@ $role_labels = [
 						if ( ! $mu ) {
 							continue;
 						}
-						$mp       = \Jetonomy\Models\UserProfile::find_by_user( (int) $member->user_id );
-						$trust    = $mp ? (int) $mp->trust_level : 0;
-						$initials = strtoupper( substr( $mu->display_name, 0, 2 ) );
-						$joined   = date_i18n( get_option( 'date_format' ), strtotime( $member->joined_at ) );
+						$mp         = \Jetonomy\Models\UserProfile::find_by_user( (int) $member->user_id );
+						$trust      = $mp ? (int) $mp->trust_level : 0;
+						$initials   = strtoupper( substr( $mu->display_name, 0, 2 ) );
+						$joined     = date_i18n( get_option( 'date_format' ), strtotime( $member->joined_at ) );
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
 						<div class="jt-member-item">

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Bookmarks REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -15,25 +21,35 @@ class Bookmarks_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		register_rest_route( $ns, '/bookmarks', [
+		register_rest_route(
+			$ns,
+			'/bookmarks',
 			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => '__return_true',
-				'args'                => $this->get_collection_params(),
-			],
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'toggle_item' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_items' ],
+					'permission_callback' => '__return_true',
+					'args'                => $this->get_collection_params(),
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'toggle_item' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+				],
+			]
+		);
 
-		register_rest_route( $ns, '/bookmarks/(?P<post_id>\d+)', [
-			'methods'             => \WP_REST_Server::DELETABLE,
-			'callback'            => [ $this, 'delete_item' ],
-			'permission_callback' => function() { return is_user_logged_in(); },
-		] );
+		register_rest_route(
+			$ns,
+			'/bookmarks/(?P<post_id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'delete_item' ],
+				'permission_callback' => function () {
+					return is_user_logged_in(); },
+			]
+		);
 	}
 
 	/**
@@ -52,23 +68,29 @@ class Bookmarks_Controller extends Base_Controller {
 		$posts = Bookmark::list_by_user( $user_id, $limit, $offset );
 		$total = Bookmark::count_by_user( $user_id );
 
-		$items = array_map( function ( $post ) {
-			return [
-				'id'            => (int) $post->id,
-				'title'         => $post->title ?? '',
-				'slug'          => $post->slug ?? '',
-				'space_id'      => (int) $post->space_id,
-				'vote_score'    => (int) ( $post->vote_score ?? 0 ),
-				'reply_count'   => (int) ( $post->reply_count ?? 0 ),
-				'bookmarked_at' => $post->bookmarked_at ?? null,
-				'created_at'    => $post->created_at ?? null,
-			];
-		}, $posts );
+		$items = array_map(
+			function ( $post ) {
+				return [
+					'id'            => (int) $post->id,
+					'title'         => $post->title ?? '',
+					'slug'          => $post->slug ?? '',
+					'space_id'      => (int) $post->space_id,
+					'vote_score'    => (int) ( $post->vote_score ?? 0 ),
+					'reply_count'   => (int) ( $post->reply_count ?? 0 ),
+					'bookmarked_at' => $post->bookmarked_at ?? null,
+					'created_at'    => $post->created_at ?? null,
+				];
+			},
+			$posts
+		);
 
-		return $this->paginated_response( $items, [
-			'total'    => $total,
-			'has_more' => count( $items ) === $limit,
-		] );
+		return $this->paginated_response(
+			$items,
+			[
+				'total'    => $total,
+				'has_more' => count( $items ) === $limit,
+			]
+		);
 	}
 
 	/**
@@ -102,6 +124,12 @@ class Bookmarks_Controller extends Base_Controller {
 		$post_id = absint( $request->get_param( 'post_id' ) );
 		Bookmark::remove( $user_id, $post_id );
 
-		return new WP_REST_Response( [ 'deleted' => true, 'post_id' => $post_id ], 200 );
+		return new WP_REST_Response(
+			[
+				'deleted' => true,
+				'post_id' => $post_id,
+			],
+			200
+		);
 	}
 }

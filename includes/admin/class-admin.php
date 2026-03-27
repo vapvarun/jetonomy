@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin UI and settings.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin;
 
 defined( 'ABSPATH' ) || exit;
@@ -137,10 +143,14 @@ class Admin {
 	// ── Settings API ──
 
 	public function register_settings(): void {
-		register_setting( 'jetonomy_settings', 'jetonomy_settings', [
-			'type'              => 'array',
-			'sanitize_callback' => [ $this, 'sanitize_settings' ],
-		] );
+		register_setting(
+			'jetonomy_settings',
+			'jetonomy_settings',
+			[
+				'type'              => 'array',
+				'sanitize_callback' => [ $this, 'sanitize_settings' ],
+			]
+		);
 	}
 
 	public function sanitize_settings( $input ): array {
@@ -169,17 +179,32 @@ class Admin {
 		if ( isset( $input['trust_thresholds'] ) ) {
 			$raw_thresholds = is_array( $input['trust_thresholds'] ) ? $input['trust_thresholds'] : [];
 			$tl_defaults    = [
-				1 => [ 'posts' => 5,   'days_active' => 3,  'reputation' => 0,   'replies_received' => 10 ],
-				2 => [ 'posts' => 30,  'days_active' => 20, 'reputation' => 50,  'replies_received' => 0  ],
-				3 => [ 'posts' => 100, 'days_active' => 60, 'reputation' => 200, 'replies_received' => 0  ],
+				1 => [
+					'posts'            => 5,
+					'days_active'      => 3,
+					'reputation'       => 0,
+					'replies_received' => 10,
+				],
+				2 => [
+					'posts'            => 30,
+					'days_active'      => 20,
+					'reputation'       => 50,
+					'replies_received' => 0,
+				],
+				3 => [
+					'posts'            => 100,
+					'days_active'      => 60,
+					'reputation'       => 200,
+					'replies_received' => 0,
+				],
 			];
 			foreach ( [ 1, 2, 3 ] as $level ) {
-				$td = $tl_defaults[ $level ];
-				$lv = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : [];
+				$td                                  = $tl_defaults[ $level ];
+				$lv                                  = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : [];
 				$clean['trust_thresholds'][ $level ] = [
-					'posts'            => absint( $lv['posts']            ?? $td['posts'] ),
-					'days_active'      => absint( $lv['days_active']      ?? $td['days_active'] ),
-					'reputation'       => absint( $lv['reputation']       ?? $td['reputation'] ),
+					'posts'            => absint( $lv['posts'] ?? $td['posts'] ),
+					'days_active'      => absint( $lv['days_active'] ?? $td['days_active'] ),
+					'reputation'       => absint( $lv['reputation'] ?? $td['reputation'] ),
 					'replies_received' => absint( $lv['replies_received'] ?? $td['replies_received'] ),
 				];
 			}
@@ -189,9 +214,9 @@ class Admin {
 		if ( isset( $input['rate_limits'] ) ) {
 			$raw_limits           = is_array( $input['rate_limits'] ) ? $input['rate_limits'] : [];
 			$clean['rate_limits'] = [
-				'posts'   => absint( $raw_limits['posts']   ?? 3  ),
+				'posts'   => absint( $raw_limits['posts'] ?? 3 ),
 				'replies' => absint( $raw_limits['replies'] ?? 10 ),
-				'votes'   => absint( $raw_limits['votes']   ?? 5  ),
+				'votes'   => absint( $raw_limits['votes'] ?? 5 ),
 			];
 		}
 
@@ -212,7 +237,7 @@ class Admin {
 				'vote_on_post',
 				'moderation',
 			];
-			$raw_notif = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : [];
+			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : [];
 			foreach ( $notif_types as $nt ) {
 				$nt_data                               = is_array( $raw_notif[ $nt ] ?? null ) ? $raw_notif[ $nt ] : [];
 				$clean['notification_defaults'][ $nt ] = [
@@ -225,22 +250,22 @@ class Admin {
 		// ── Appearance tab ──
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
-			$clean['inherit_fonts']    = ! empty( $input['inherit_fonts'] );
-			$clean['inherit_colors']   = ! empty( $input['inherit_colors'] );
-			$clean['accent_color']     = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-			$clean['layout_density']   = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
-			$clean['custom_css']       = wp_strip_all_tags( $input['custom_css'] ?? '' );
+			$clean['inherit_fonts']  = ! empty( $input['inherit_fonts'] );
+			$clean['inherit_colors'] = ! empty( $input['inherit_colors'] );
+			$clean['accent_color']   = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
+			$clean['layout_density'] = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
+			$clean['custom_css']     = wp_strip_all_tags( $input['custom_css'] ?? '' );
 		}
 
 		// ── Anti-Spam tab ──
 		// Only process if captcha_provider is present (Anti-Spam tab was submitted).
 		if ( isset( $input['captcha_provider'] ) ) {
-			$allowed_providers              = [ 'none', 'recaptcha_v3', 'turnstile' ];
-			$raw_provider                   = sanitize_text_field( $input['captcha_provider'] ?? 'none' );
-			$clean['captcha_provider']      = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
-			$clean['captcha_site_key']      = sanitize_text_field( $input['captcha_site_key'] ?? '' );
-			$clean['captcha_secret_key']    = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
-			$raw_threshold                  = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
+			$allowed_providers                = [ 'none', 'recaptcha_v3', 'turnstile' ];
+			$raw_provider                     = sanitize_text_field( $input['captcha_provider'] ?? 'none' );
+			$clean['captcha_provider']        = in_array( $raw_provider, $allowed_providers, true ) ? $raw_provider : 'none';
+			$clean['captcha_site_key']        = sanitize_text_field( $input['captcha_site_key'] ?? '' );
+			$clean['captcha_secret_key']      = sanitize_text_field( $input['captcha_secret_key'] ?? '' );
+			$raw_threshold                    = (float) ( $input['captcha_score_threshold'] ?? 0.5 );
 			$clean['captcha_score_threshold'] = max( 0.1, min( 0.9, $raw_threshold ) );
 		}
 
@@ -294,26 +319,30 @@ class Admin {
 		// Media uploader
 		wp_enqueue_media();
 
-		wp_localize_script( 'jetonomy-admin', 'jetonomyAdmin', [
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'jetonomy_admin' ),
-			'i18n'    => [
-				'confirmDelete'    => __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
-				'confirmBan'       => __( 'Are you sure you want to ban this user?', 'jetonomy' ),
-				'saving'           => __( 'Saving...', 'jetonomy' ),
-				'saved'            => __( 'Saved!', 'jetonomy' ),
-				'deleted'          => __( 'Deleted.', 'jetonomy' ),
-				'error'            => __( 'Something went wrong.', 'jetonomy' ),
-				'importing'        => __( 'Importing...', 'jetonomy' ),
-				'importDone'       => __( 'Import complete!', 'jetonomy' ),
-				'selectImage'      => __( 'Select Image', 'jetonomy' ),
-				'useImage'         => __( 'Use this image', 'jetonomy' ),
-				'testEmailSent'    => __( 'Test email sent!', 'jetonomy' ),
-				'rewritesFlushed'  => __( 'Rewrite rules flushed.', 'jetonomy' ),
-				'unban'            => __( 'Unban', 'jetonomy' ),
-				'ban'              => __( 'Ban', 'jetonomy' ),
-			],
-		] );
+		wp_localize_script(
+			'jetonomy-admin',
+			'jetonomyAdmin',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'jetonomy_admin' ),
+				'i18n'    => [
+					'confirmDelete'   => __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
+					'confirmBan'      => __( 'Are you sure you want to ban this user?', 'jetonomy' ),
+					'saving'          => __( 'Saving...', 'jetonomy' ),
+					'saved'           => __( 'Saved!', 'jetonomy' ),
+					'deleted'         => __( 'Deleted.', 'jetonomy' ),
+					'error'           => __( 'Something went wrong.', 'jetonomy' ),
+					'importing'       => __( 'Importing...', 'jetonomy' ),
+					'importDone'      => __( 'Import complete!', 'jetonomy' ),
+					'selectImage'     => __( 'Select Image', 'jetonomy' ),
+					'useImage'        => __( 'Use this image', 'jetonomy' ),
+					'testEmailSent'   => __( 'Test email sent!', 'jetonomy' ),
+					'rewritesFlushed' => __( 'Rewrite rules flushed.', 'jetonomy' ),
+					'unban'           => __( 'Unban', 'jetonomy' ),
+					'ban'             => __( 'Ban', 'jetonomy' ),
+				],
+			]
+		);
 	}
 
 	// ── Page Renderers ──
@@ -336,24 +365,26 @@ class Admin {
 			'active_spaces' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$spaces_t} WHERE status = 'active'" ),
 			'users'         => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$users_t}" ),
 			'pending_flags' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" ),
-			'posts_today'   => (int) $wpdb->get_var( $wpdb->prepare(
-				"SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s",
-				$today . ' 00:00:00'
-			) ),
+			'posts_today'   => (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s",
+					$today . ' 00:00:00'
+				)
+			),
 		];
 
 		$recent_activity = $wpdb->get_results(
 			"SELECT * FROM {$activity_t} ORDER BY created_at DESC LIMIT 10"
 		) ?: [];
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		$settings  = get_option( 'jetonomy_settings', [] );
 		$base_slug = $settings['base_slug'] ?? 'community';
 
 		include JETONOMY_DIR . 'includes/admin/views/dashboard.php';
 	}
 
 	public function render_categories(): void {
-		$categories = Category::list_top_level();
+		$categories     = Category::list_top_level();
 		$all_categories = $this->get_all_categories_nested();
 		include JETONOMY_DIR . 'includes/admin/views/categories.php';
 	}
@@ -361,7 +392,7 @@ class Admin {
 	public function render_spaces(): void {
 		global $wpdb;
 
-		$action = sanitize_text_field( $_GET['action'] ?? 'list' );
+		$action   = sanitize_text_field( $_GET['action'] ?? 'list' );
 		$space_id = absint( $_GET['space_id'] ?? 0 );
 
 		if ( 'edit' === $action && $space_id > 0 ) {
@@ -369,9 +400,9 @@ class Admin {
 			if ( ! $space ) {
 				wp_die( esc_html__( 'Space not found.', 'jetonomy' ) );
 			}
-			$categories = $this->get_all_categories_flat();
-			$members = SpaceMember::list_by_space( $space_id );
-			$access_rules = AccessRule::list_for_space( $space_id );
+			$categories     = $this->get_all_categories_flat();
+			$members        = SpaceMember::list_by_space( $space_id );
+			$access_rules   = AccessRule::list_for_space( $space_id );
 			$space_settings = Space::get_settings( $space_id );
 			include JETONOMY_DIR . 'includes/admin/views/space-edit.php';
 			return;
@@ -494,22 +525,22 @@ class Admin {
 	public function render_users(): void {
 		global $wpdb;
 
-		$search      = sanitize_text_field( $_GET['s'] ?? '' );
+		$search       = sanitize_text_field( $_GET['s'] ?? '' );
 		$filter_trust = sanitize_text_field( $_GET['trust_level'] ?? '' );
-		$paged       = max( 1, absint( $_GET['paged'] ?? 1 ) );
-		$per_page    = 20;
-		$offset      = ( $paged - 1 ) * $per_page;
+		$paged        = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page     = 20;
+		$offset       = ( $paged - 1 ) * $per_page;
 
 		$profiles_t = table( 'user_profiles' );
 
-		$where = [ '1=1' ];
+		$where      = [ '1=1' ];
 		$join_where = '';
 
 		if ( '' !== $filter_trust && is_numeric( $filter_trust ) ) {
 			$where[] = $wpdb->prepare( 'p.trust_level = %d', absint( $filter_trust ) );
 		}
 		if ( $search ) {
-			$like = '%' . $wpdb->esc_like( $search ) . '%';
+			$like    = '%' . $wpdb->esc_like( $search ) . '%';
 			$where[] = $wpdb->prepare( '(u.user_login LIKE %s OR u.display_name LIKE %s OR u.user_email LIKE %s)', $like, $like, $like );
 		}
 
@@ -575,11 +606,11 @@ class Admin {
 	// ── Helpers ──
 
 	private function get_all_categories_nested(): array {
-		$top = Category::list_top_level();
+		$top    = Category::list_top_level();
 		$result = [];
 		foreach ( $top as $cat ) {
 			$cat->children = Category::list_children( (int) $cat->id );
-			$result[] = $cat;
+			$result[]      = $cat;
 		}
 		return $result;
 	}
@@ -592,24 +623,24 @@ class Admin {
 	}
 
 	// ═══════════════════════════════════════════════════════════════
-	//  AJAX: Spaces
+	// AJAX: Spaces
 	// ═══════════════════════════════════════════════════════════════
 
 
 
 	// ═══════════════════════════════════════════════════════════════
-	//  AJAX: Space Members (moved to Spaces_Handler)
+	// AJAX: Space Members (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
 
 
 
 	// ═══════════════════════════════════════════════════════════════
-	//  AJAX: Access Rules (moved to Spaces_Handler)
+	// AJAX: Access Rules (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
 
 
 	// ═══════════════════════════════════════════════════════════════
-	//  AJAX: Users
+	// AJAX: Users
 	// ═══════════════════════════════════════════════════════════════
 
 
@@ -617,12 +648,12 @@ class Admin {
 
 
 	// ═══════════════════════════════════════════════════════════════
-	//  AJAX: Misc
+	// AJAX: Misc
 	// ═══════════════════════════════════════════════════════════════
 
 
 	// ═══════════════════════════════════════════════════════════════
-	//  Content Management
+	// Content Management
 	// ═══════════════════════════════════════════════════════════════
 
 	public function render_content(): void {
@@ -663,8 +694,8 @@ class Admin {
 		$offset   = ( $paged - 1 ) * $per_page;
 
 		// Total count with same filters (no LIMIT).
-		$count_sql = "SELECT COUNT(*) FROM {$posts_t} p WHERE {$where}";
-		$total     = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
+		$count_sql   = "SELECT COUNT(*) FROM {$posts_t} p WHERE {$where}";
+		$total       = (int) ( $args ? $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) ) : $wpdb->get_var( $count_sql ) );
 		$total_pages = (int) ceil( $total / $per_page );
 
 		$sql = "SELECT p.*, s.title AS space_title, s.slug AS space_slug
@@ -675,7 +706,7 @@ class Admin {
 		        LIMIT %d OFFSET %d";
 
 		$full_args = array_merge( $args, [ $per_page, $offset ] );
-		$posts = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: [];
+		$posts     = $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ) ) ?: [];
 
 		include JETONOMY_DIR . 'includes/admin/views/content.php';
 	}
@@ -734,11 +765,10 @@ class Admin {
 	}
 
 	// ═══════════════════════════════════════════════════════════════
-	//  Setup Wizard
+	// Setup Wizard
 	// ═══════════════════════════════════════════════════════════════
 
 	public function render_setup(): void {
 		include JETONOMY_DIR . 'includes/admin/views/setup-wizard.php';
 	}
-
 }

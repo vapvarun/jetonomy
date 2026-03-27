@@ -1,4 +1,10 @@
 <?php
+/**
+ * Search REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -18,49 +24,53 @@ class Search_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		register_rest_route( $ns, '/search', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'search' ],
-			'permission_callback' => '__return_true',
-			'args'                => [
-				'q'         => [
-					'type'              => 'string',
-					'required'          => true,
-					'minLength'         => 2,
-					'sanitize_callback' => 'sanitize_text_field',
+		register_rest_route(
+			$ns,
+			'/search',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'search' ],
+				'permission_callback' => '__return_true',
+				'args'                => [
+					'q'         => [
+						'type'              => 'string',
+						'required'          => true,
+						'minLength'         => 2,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'type'      => [
+						'type'    => 'string',
+						'default' => 'post',
+						'enum'    => [ 'post', 'reply', 'space', 'tag', 'all' ],
+					],
+					'space_id'  => [
+						'type'    => 'integer',
+						'minimum' => 1,
+					],
+					'date_from' => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'date_to'   => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'author_id' => [
+						'type'    => 'integer',
+						'minimum' => 1,
+					],
+					'tag'       => [
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'sort'      => [
+						'type'    => 'string',
+						'default' => 'relevance',
+						'enum'    => [ 'relevance', 'newest', 'votes' ],
+					],
 				],
-				'type'      => [
-					'type'    => 'string',
-					'default' => 'post',
-					'enum'    => [ 'post', 'reply', 'space', 'tag', 'all' ],
-				],
-				'space_id'  => [
-					'type'    => 'integer',
-					'minimum' => 1,
-				],
-				'date_from' => [
-					'type'              => 'string',
-					'sanitize_callback' => 'sanitize_text_field',
-				],
-				'date_to'   => [
-					'type'              => 'string',
-					'sanitize_callback' => 'sanitize_text_field',
-				],
-				'author_id' => [
-					'type'    => 'integer',
-					'minimum' => 1,
-				],
-				'tag'       => [
-					'type'              => 'string',
-					'sanitize_callback' => 'sanitize_text_field',
-				],
-				'sort'      => [
-					'type'    => 'string',
-					'default' => 'relevance',
-					'enum'    => [ 'relevance', 'newest', 'votes' ],
-				],
-			],
-		] );
+			]
+		);
 	}
 
 	/**
@@ -88,14 +98,33 @@ class Search_Controller extends Base_Controller {
 			$spaces = $this->search_spaces( $wpdb, $q );
 			$tags   = $this->search_tags( $wpdb, $q );
 
-			return new WP_REST_Response( [
-				'data' => [
-					'posts'  => array_map( function( $row ) { $item = (array) $row; $item['type'] = 'post'; return $item; }, $posts ),
-					'spaces' => array_map( function( $row ) { $item = (array) $row; $item['type'] = 'space'; return $item; }, $spaces ),
-					'tags'   => array_map( function( $row ) { return (array) $row; }, $tags ),
+			return new WP_REST_Response(
+				[
+					'data' => [
+						'posts'  => array_map(
+							function ( $row ) {
+								$item         = (array) $row;
+								$item['type'] = 'post';
+								return $item; },
+							$posts
+						),
+						'spaces' => array_map(
+							function ( $row ) {
+								$item         = (array) $row;
+								$item['type'] = 'space';
+								return $item; },
+							$spaces
+						),
+						'tags'   => array_map(
+							function ( $row ) {
+								return (array) $row; },
+							$tags
+						),
+					],
+					'meta' => [ 'total' => count( $posts ) + count( $spaces ) + count( $tags ) ],
 				],
-				'meta' => [ 'total' => count( $posts ) + count( $spaces ) + count( $tags ) ],
-			], 200 );
+				200
+			);
 		}
 
 		$results = [];
@@ -111,7 +140,7 @@ class Search_Controller extends Base_Controller {
 		}
 
 		$items = array_map(
-			function( $row ) use ( $type ) {
+			function ( $row ) use ( $type ) {
 				$item         = (array) $row;
 				$item['type'] = $type;
 				return $item;
@@ -119,10 +148,13 @@ class Search_Controller extends Base_Controller {
 			$results
 		);
 
-		return $this->paginated_response( $items, [
-			'total'    => count( $items ),
-			'has_more' => count( $items ) === 20,
-		] );
+		return $this->paginated_response(
+			$items,
+			[
+				'total'    => count( $items ),
+				'has_more' => count( $items ) === 20,
+			]
+		);
 	}
 
 	/**
@@ -141,7 +173,7 @@ class Search_Controller extends Base_Controller {
 	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null, string $sort = 'relevance' ): array {
 		$posts_table = table( 'posts' );
 
-		$where  = [ "MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)", "status = 'publish'" ];
+		$where  = [ 'MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)', "status = 'publish'" ];
 		$params = [ $q ];
 
 		if ( $space_id ) {
@@ -208,7 +240,7 @@ class Search_Controller extends Base_Controller {
 	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): array {
 		$replies_table = table( 'replies' );
 
-		$r_where  = [ "MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)", "r.status = 'publish'" ];
+		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'" ];
 		$r_params = [ $q ];
 
 		if ( $date_from ) {

@@ -18,15 +18,17 @@ class Posts_Sitemap_Provider extends WP_Sitemaps_Provider {
 		$offset = ( $page_num - 1 ) * 2000;
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$posts = $wpdb->get_results( $wpdb->prepare(
-			"SELECT p.slug AS post_slug, s.slug AS space_slug, p.last_reply_at, p.updated_at, p.created_at
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT p.slug AS post_slug, s.slug AS space_slug, p.last_reply_at, p.updated_at, p.created_at
              FROM {$pt} p
              INNER JOIN {$st} s ON p.space_id = s.id
              WHERE p.status = 'publish' AND s.visibility = 'public' AND s.status = 'active'
              ORDER BY p.id ASC
              LIMIT 2000 OFFSET %d",
-			$offset
-		) );
+				$offset
+			)
+		);
 
 		$urls = [];
 		$base = \Jetonomy\base_url() . '/s/';
@@ -43,8 +45,8 @@ class Posts_Sitemap_Provider extends WP_Sitemaps_Provider {
 
 	public function get_max_num_pages( $object_subtype = '' ) {
 		global $wpdb;
-		$pt    = table( 'posts' );
-		$st    = table( 'spaces' );
+		$pt = table( 'posts' );
+		$st = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$total = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$pt} p INNER JOIN {$st} s ON p.space_id = s.id WHERE p.status = 'publish' AND s.visibility = 'public'"

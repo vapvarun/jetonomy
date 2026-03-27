@@ -7,21 +7,33 @@ class Capabilities {
 
 	private const ROLE_MAP = [
 		'subscriber'    => [
-			'jetonomy_read', 'jetonomy_create_posts', 'jetonomy_create_replies',
-			'jetonomy_edit_own_posts', 'jetonomy_delete_own_posts',
-			'jetonomy_vote', 'jetonomy_flag', 'jetonomy_join_spaces',
+			'jetonomy_read',
+			'jetonomy_create_posts',
+			'jetonomy_create_replies',
+			'jetonomy_edit_own_posts',
+			'jetonomy_delete_own_posts',
+			'jetonomy_vote',
+			'jetonomy_flag',
+			'jetonomy_join_spaces',
 		],
 		'contributor'   => [ 'jetonomy_upload_media' ],
 		'author'        => [ 'jetonomy_create_spaces' ],
 		'editor'        => [
-			'jetonomy_edit_others_posts', 'jetonomy_delete_others_posts',
-			'jetonomy_moderate', 'jetonomy_manage_users',
-			'jetonomy_move_posts', 'jetonomy_close_posts', 'jetonomy_pin_posts',
+			'jetonomy_edit_others_posts',
+			'jetonomy_delete_others_posts',
+			'jetonomy_moderate',
+			'jetonomy_manage_users',
+			'jetonomy_move_posts',
+			'jetonomy_close_posts',
+			'jetonomy_pin_posts',
 		],
 		'administrator' => [
-			'jetonomy_manage_settings', 'jetonomy_manage_categories',
-			'jetonomy_manage_spaces', 'jetonomy_manage_badges',
-			'jetonomy_view_analytics', 'jetonomy_manage_extensions',
+			'jetonomy_manage_settings',
+			'jetonomy_manage_categories',
+			'jetonomy_manage_spaces',
+			'jetonomy_manage_badges',
+			'jetonomy_view_analytics',
+			'jetonomy_manage_extensions',
 		],
 	];
 
@@ -35,7 +47,7 @@ class Capabilities {
 		$cumulative = [];
 		foreach ( self::ROLE_MAP as $role_name => $caps ) {
 			$cumulative = array_merge( $cumulative, $caps );
-			$role = get_role( $role_name );
+			$role       = get_role( $role_name );
 			if ( ! $role ) {
 				continue;
 			}

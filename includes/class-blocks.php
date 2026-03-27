@@ -1,4 +1,10 @@
 <?php
+/**
+ * Gutenberg blocks registration.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;

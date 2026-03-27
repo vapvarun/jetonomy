@@ -1,4 +1,10 @@
 <?php
+/**
+ * Admin AJAX handler — import.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Admin\Ajax;
 
 defined( 'ABSPATH' ) || exit;
@@ -9,9 +15,9 @@ class Import_Handler {
 
 	public function __construct() {
 		// Import AJAX (legacy single-shot kept for CLI / backwards compat)
-		add_action( 'wp_ajax_jetonomy_run_import',      [ $this, 'ajax_run_import' ] );
+		add_action( 'wp_ajax_jetonomy_run_import', [ $this, 'ajax_run_import' ] );
 		// Batched import
-		add_action( 'wp_ajax_jetonomy_import_batch',    [ $this, 'ajax_import_batch' ] );
+		add_action( 'wp_ajax_jetonomy_import_batch', [ $this, 'ajax_import_batch' ] );
 		add_action( 'wp_ajax_jetonomy_import_progress', [ $this, 'ajax_import_progress' ] );
 	}
 
@@ -61,13 +67,17 @@ class Import_Handler {
 
 		// Save resume point so the import can be resumed if interrupted.
 		$existing_resume = get_option( 'jetonomy_import_resume', [] );
-		update_option( 'jetonomy_import_resume', [
-			'source'     => $source,
-			'phase'      => $phase,
-			'offset'     => $offset,
-			'batch_size' => $batch_size,
-			'started_at' => $existing_resume['started_at'] ?? current_time( 'mysql' ),
-		], false );
+		update_option(
+			'jetonomy_import_resume',
+			[
+				'source'     => $source,
+				'phase'      => $phase,
+				'offset'     => $offset,
+				'batch_size' => $batch_size,
+				'started_at' => $existing_resume['started_at'] ?? current_time( 'mysql' ),
+			],
+			false
+		);
 
 		// Run one batch.
 		$result = $importer->run_batch( $phase, $offset, $batch_size );
@@ -89,14 +99,16 @@ class Import_Handler {
 		];
 
 		// Save progress for polling endpoint.
-		$importer->save_progress( [
-			'status'    => $result['done'] ? 'complete' : 'running',
-			'phase'     => $result['phase'],
-			'processed' => $total_processed,
-			'total'     => $total,
-			'percent'   => $percent,
-			'message'   => $phase_labels[ $result['phase'] ] ?? '',
-		] );
+		$importer->save_progress(
+			[
+				'status'    => $result['done'] ? 'complete' : 'running',
+				'phase'     => $result['phase'],
+				'processed' => $total_processed,
+				'total'     => $total,
+				'percent'   => $percent,
+				'message'   => $phase_labels[ $result['phase'] ] ?? '',
+			]
+		);
 
 		if ( $result['done'] ) {
 			// Save completion record to import history.
@@ -116,15 +128,17 @@ class Import_Handler {
 			\Jetonomy\Import\Importer::clear_progress();
 		}
 
-		wp_send_json_success( [
-			'phase'     => $result['phase'],
-			'offset'    => $result['offset'],
-			'done'      => $result['done'],
-			'processed' => $total_processed,
-			'total'     => $total,
-			'percent'   => $percent,
-			'message'   => $phase_labels[ $result['phase'] ] ?? '',
-		] );
+		wp_send_json_success(
+			[
+				'phase'     => $result['phase'],
+				'offset'    => $result['offset'],
+				'done'      => $result['done'],
+				'processed' => $total_processed,
+				'total'     => $total,
+				'percent'   => $percent,
+				'message'   => $phase_labels[ $result['phase'] ] ?? '',
+			]
+		);
 	}
 
 	/**

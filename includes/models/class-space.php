@@ -1,4 +1,10 @@
 <?php
+/**
+ * Space model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -75,7 +81,7 @@ class Space extends Model {
 	public static function find_by_slug( string $slug ): ?object {
 		return Cache::remember(
 			"space:slug:{$slug}",
-			function() use ( $slug ) {
+			function () use ( $slug ) {
 				$row = static::db()->get_row(
 					static::db()->prepare(
 						'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
@@ -97,7 +103,7 @@ class Space extends Model {
 	public static function list_by_category( int $category_id ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				"SELECT * FROM " . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC",
+				'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC",
 				$category_id
 			)
 		) ?: [];
@@ -110,7 +116,7 @@ class Space extends Model {
 	 */
 	public static function list_uncategorized(): array {
 		return static::db()->get_results(
-			"SELECT * FROM " . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC"
+			'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC"
 		) ?: [];
 	}
 

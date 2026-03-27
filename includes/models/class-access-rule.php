@@ -1,4 +1,10 @@
 <?php
+/**
+ * Access rule model.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\Models;
 
 defined( 'ABSPATH' ) || exit;
@@ -108,14 +114,16 @@ class AccessRule extends Model {
 
 				case 'membership':
 					$adapters = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
-					$matched = false;
+					$matched  = false;
 					foreach ( $adapters as $adapter ) {
 						if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule->rule_value ) ) {
 							$matched = true;
 							break;
 						}
 					}
-					if ( ! $matched ) continue 2;
+					if ( ! $matched ) {
+						continue 2;
+					}
 					break;
 			}
 

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Votes REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,33 +28,45 @@ class Votes_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		register_rest_route( $ns, '/posts/(?P<id>\d+)/vote', [
+		register_rest_route(
+			$ns,
+			'/posts/(?P<id>\d+)/vote',
 			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'vote_post' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-				'args'                => $this->get_vote_args(),
-			],
-			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'unvote_post' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'vote_post' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+					'args'                => $this->get_vote_args(),
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'unvote_post' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+				],
+			]
+		);
 
-		register_rest_route( $ns, '/replies/(?P<id>\d+)/vote', [
+		register_rest_route(
+			$ns,
+			'/replies/(?P<id>\d+)/vote',
 			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'vote_reply' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-				'args'                => $this->get_vote_args(),
-			],
-			[
-				'methods'             => \WP_REST_Server::DELETABLE,
-				'callback'            => [ $this, 'unvote_reply' ],
-				'permission_callback' => function() { return is_user_logged_in(); },
-			],
-		] );
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'vote_reply' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+					'args'                => $this->get_vote_args(),
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'unvote_reply' ],
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
+				],
+			]
+		);
 	}
 
 	/**
@@ -173,7 +191,13 @@ class Votes_Controller extends Base_Controller {
 
 		$existing = Vote::get_user_vote( $user_id, $type, $id );
 		if ( null === $existing ) {
-			return new WP_REST_Response( [ 'action' => 'none', 'score' => (int) ( $object->vote_score ?? 0 ) ], 200 );
+			return new WP_REST_Response(
+				[
+					'action' => 'none',
+					'score'  => (int) ( $object->vote_score ?? 0 ),
+				],
+				200
+			);
 		}
 
 		// Re-casting the same value toggles the vote off (handled in Vote::cast).

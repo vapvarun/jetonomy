@@ -1,4 +1,10 @@
 <?php
+/**
+ * Leaderboards REST API controller.
+ *
+ * @package Jetonomy
+ */
+
 namespace Jetonomy\API;
 
 defined( 'ABSPATH' ) || exit;
@@ -17,31 +23,35 @@ class Leaderboards_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		register_rest_route( $ns, '/leaderboards', [
-			'methods'             => \WP_REST_Server::READABLE,
-			'callback'            => [ $this, 'list_items' ],
-			'permission_callback' => '__return_true',
-			'args'                => [
-				'limit'  => [
-					'type'    => 'integer',
-					'default' => 20,
-					'minimum' => 1,
-					'maximum' => 100,
+		register_rest_route(
+			$ns,
+			'/leaderboards',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'list_items' ],
+				'permission_callback' => '__return_true',
+				'args'                => [
+					'limit'  => [
+						'type'    => 'integer',
+						'default' => 20,
+						'minimum' => 1,
+						'maximum' => 100,
+					],
+					'offset' => [
+						'type'    => 'integer',
+						'default' => 0,
+						'minimum' => 0,
+					],
+					'period' => [
+						'type'              => 'string',
+						'default'           => 'all',
+						'enum'              => [ 'all', 'month', 'week' ],
+						'description'       => 'Time period: all, month, or week.',
+						'sanitize_callback' => 'sanitize_key',
+					],
 				],
-				'offset' => [
-					'type'    => 'integer',
-					'default' => 0,
-					'minimum' => 0,
-				],
-				'period' => [
-					'type'              => 'string',
-					'default'           => 'all',
-					'enum'              => [ 'all', 'month', 'week' ],
-					'description'       => 'Time period: all, month, or week.',
-					'sanitize_callback' => 'sanitize_key',
-				],
-			],
-		] );
+			]
+		);
 	}
 
 	/**
@@ -75,7 +85,7 @@ class Leaderboards_Controller extends Base_Controller {
 		foreach ( $leaders as $leader ) {
 			$user = get_userdata( (int) $leader->user_id );
 			if ( ! $user ) {
-				$rank++;
+				++$rank;
 				continue;
 			}
 
@@ -92,12 +102,15 @@ class Leaderboards_Controller extends Base_Controller {
 				'trust_level'  => (int) $leader->trust_level,
 			];
 
-			$rank++;
+			++$rank;
 		}
 
-		return $this->paginated_response( $items, [
-			'has_more' => count( $leaders ) === $limit,
-			'period'   => $period,
-		] );
+		return $this->paginated_response(
+			$items,
+			[
+				'has_more' => count( $leaders ) === $limit,
+				'period'   => $period,
+			]
+		);
 	}
 }
