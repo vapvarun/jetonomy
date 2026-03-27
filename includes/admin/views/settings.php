@@ -706,36 +706,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 			</div>
 
-			<!-- Pricing -->
-			<div class="jt-settings-card">
-				<div class="jt-settings-card__head">
-					<p class="jt-settings-card__title"><?php esc_html_e( 'Pricing', 'jetonomy' ); ?></p>
-				</div>
-				<table class="wp-list-table widefat fixed striped" style="max-width: 640px;">
-					<thead>
-						<tr>
-							<th><?php esc_html_e( 'Plan', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Sites', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Annual', 'jetonomy' ); ?></th>
-							<th><?php esc_html_e( 'Lifetime', 'jetonomy' ); ?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr><td><strong><?php esc_html_e( 'Personal', 'jetonomy' ); ?></strong></td><td>1</td><td>$69/yr</td><td>$199</td></tr>
-						<tr><td><strong><?php esc_html_e( 'Developer', 'jetonomy' ); ?></strong></td><td>5</td><td>$99/yr</td><td>$299</td></tr>
-						<tr><td><strong><?php esc_html_e( 'Agency', 'jetonomy' ); ?></strong></td><td><?php esc_html_e( 'Unlimited', 'jetonomy' ); ?></td><td>$199/yr</td><td>$499</td></tr>
-					</tbody>
-				</table>
-				<p style="margin: 12px 0 0; font-size: 13px; color: #6B7280;">
-					<?php esc_html_e( '30-day money-back guarantee. All plans include 1 year of updates and priority support.', 'jetonomy' ); ?>
-				</p>
-				<p style="margin: 16px 0 0;">
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary" target="_blank"><?php esc_html_e( 'Get Jetonomy Pro', 'jetonomy' ); ?></a>
-					&nbsp;
-					<a href="https://store.wbcomdesigns.com/jetonomy/docs/" class="button" target="_blank"><?php esc_html_e( 'Read the Docs', 'jetonomy' ); ?></a>
-				</p>
-			</div>
-
 		<?php elseif ( 'license' === $active_tab ) : ?>
 
 			<div class="jt-settings-card">
@@ -759,7 +729,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 				</div><!-- /.jt-settings-cards -->
 
-			<?php if ( in_array( $active_tab, $jt_primary_tabs, true ) ) : ?>
+			<?php if ( in_array( $active_tab, $jt_primary_tabs, true ) && 'free-vs-pro' !== $active_tab ) : ?>
 				<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
 			</form>
 			<?php endif; ?>
