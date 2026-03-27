@@ -18,7 +18,14 @@ class Schema {
 
 		$sqls = self::get_table_definitions( $p, $charset_collate );
 
+		// FULLTEXT indexes are not supported on temporary InnoDB tables
+		// (used by the WP test suite). Strip them when running tests.
+		$is_temp = defined( 'WP_TESTS_TABLE_PREFIX' ) || ( defined( 'WP_TESTS_DOMAIN' ) );
+
 		foreach ( $sqls as $sql ) {
+			if ( $is_temp ) {
+				$sql = preg_replace( '/,\s*FULLTEXT KEY[^\n]+/i', '', $sql );
+			}
 			dbDelta( $sql );
 		}
 	}

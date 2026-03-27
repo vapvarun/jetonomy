@@ -413,9 +413,9 @@ class Moderation_Controller extends Base_Controller {
 	 * @param string $type   'post' or 'reply'.
 	 * @param int    $id     Row ID.
 	 * @param string $status New status value.
-	 * @return true|WP_Error
+	 * @return bool|WP_Error
 	 */
-	private function set_status( string $type, int $id, string $status ): true|WP_Error {
+	private function set_status( string $type, int $id, string $status ): bool|WP_Error {
 		global $wpdb;
 		$table = table( 'post' === $type ? 'posts' : 'replies' );
 
