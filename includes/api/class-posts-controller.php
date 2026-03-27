@@ -46,7 +46,7 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => '__return_true',
+					'permission_callback' => function() { return is_user_logged_in(); },
 					'args'                => $this->get_create_args(),
 				),
 			)
@@ -76,13 +76,13 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => '__return_true',
+					'permission_callback' => function() { return is_user_logged_in(); },
 					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => '__return_true',
+					'permission_callback' => function() { return is_user_logged_in(); },
 				),
 			)
 		);
@@ -94,7 +94,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'close_post' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 			)
 		);
 
@@ -104,7 +104,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'pin_post' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 			)
 		);
 
@@ -114,7 +114,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'move_post' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 				'args'                => array(
 					'target_space_id' => array(
 						'type'     => 'integer',
@@ -131,7 +131,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'merge_post' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 				'args'                => array(
 					'target_post_id' => array(
 						'type'     => 'integer',

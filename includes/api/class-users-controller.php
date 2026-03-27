@@ -32,7 +32,7 @@ class Users_Controller extends Base_Controller {
 			[
 				'methods'             => 'PATCH',
 				'callback'            => [ $this, 'update_current_user' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 				'args'                => $this->get_update_args(),
 			],
 		] );

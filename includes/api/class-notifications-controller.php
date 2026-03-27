@@ -40,14 +40,14 @@ class Notifications_Controller extends Base_Controller {
 		register_rest_route( $ns, '/notifications/mark-all-read', [
 			'methods'             => \WP_REST_Server::CREATABLE,
 			'callback'            => [ $this, 'mark_all_read' ],
-			'permission_callback' => '__return_true',
+			'permission_callback' => function() { return is_user_logged_in(); },
 		] );
 
 		// Single notification.
 		register_rest_route( $ns, '/notifications/(?P<id>\d+)', [
 			'methods'             => 'PATCH',
 			'callback'            => [ $this, 'mark_read' ],
-			'permission_callback' => '__return_true',
+			'permission_callback' => function() { return is_user_logged_in(); },
 		] );
 	}
 

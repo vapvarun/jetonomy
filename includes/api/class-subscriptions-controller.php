@@ -30,7 +30,7 @@ class Subscriptions_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_item' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 				'args'                => $this->get_create_args(),
 			],
 		] );
@@ -39,7 +39,7 @@ class Subscriptions_Controller extends Base_Controller {
 		register_rest_route( $ns, '/subscriptions/(?P<id>\d+)', [
 			'methods'             => \WP_REST_Server::DELETABLE,
 			'callback'            => [ $this, 'delete_item' ],
-			'permission_callback' => '__return_true',
+			'permission_callback' => function() { return is_user_logged_in(); },
 		] );
 	}
 

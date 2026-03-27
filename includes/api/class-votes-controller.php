@@ -26,13 +26,13 @@ class Votes_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'vote_post' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 				'args'                => $this->get_vote_args(),
 			],
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'unvote_post' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 			],
 		] );
 
@@ -40,13 +40,13 @@ class Votes_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'vote_reply' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 				'args'                => $this->get_vote_args(),
 			],
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'unvote_reply' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 			],
 		] );
 	}

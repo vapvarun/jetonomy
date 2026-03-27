@@ -25,14 +25,14 @@ class Bookmarks_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'toggle_item' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => function() { return is_user_logged_in(); },
 			],
 		] );
 
 		register_rest_route( $ns, '/bookmarks/(?P<post_id>\d+)', [
 			'methods'             => \WP_REST_Server::DELETABLE,
 			'callback'            => [ $this, 'delete_item' ],
-			'permission_callback' => '__return_true',
+			'permission_callback' => function() { return is_user_logged_in(); },
 		] );
 	}
 
