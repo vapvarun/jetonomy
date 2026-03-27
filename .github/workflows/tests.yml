@@ -51,11 +51,40 @@ jobs:
       - name: Run PHPUnit
         run: vendor/bin/phpunit --testdox
 
+  # ── CLI QA (full WordPress via wp-env + demo data) ───────────────────────
+  cli-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js (for wp-env)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring, intl
+
+      - name: Install wp-env
+        run: npm -g install @wordpress/env
+
+      - name: Start wp-env
+        run: wp-env start
+
+      - name: Activate plugins and seed demo data
+        run: |
+          wp-env run cli "wp plugin activate jetonomy"
+          wp-env run cli "wp rewrite flush"
+          wp-env run cli "wp jetonomy demo-seed"
+
       - name: Run CLI QA (structure)
-        run: wp jetonomy qa --report || true
+        run: wp-env run cli "wp jetonomy qa --report"
 
       - name: Run CLI QA (actions)
-        run: wp jetonomy qa-actions || true
+        run: wp-env run cli "wp jetonomy qa-actions"
 
   # ── WordPress Coding Standards ────────────────────────────────────────────
   wpcs:
