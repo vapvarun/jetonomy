@@ -537,6 +537,9 @@ class Spaces_Controller extends Base_Controller {
 			$message = sanitize_textarea_field( (string) ( $request->get_param( 'message' ) ?? '' ) );
 			JoinRequest::create_request( $id, $user_id, $message );
 
+			// Notify space admins about the join request.
+			do_action( 'jetonomy_join_request_created', $id, $user_id, $message );
+
 			return new WP_REST_Response(
 				[
 					'status'  => 'pending',

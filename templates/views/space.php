@@ -36,13 +36,20 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		echo '<div class="jt-empty"><p>' . esc_html__( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ) . '</p></div>';
 		return;
 	} elseif ( 'approval' === $_jt_join_policy ) {
-		// Approval required — show a request form with nonce.
+		// Approval required — check for existing pending request first.
+		$_jt_gate_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
+		if ( $_jt_gate_pending ) {
+			echo '<div class="jt-empty jt-space-gate">';
+			echo '<p>' . esc_html__( 'Your request to join this space is awaiting approval.', 'jetonomy' ) . '</p>';
+			echo '</div>';
+			return;
+		}
 		$join_nonce = wp_create_nonce( 'wp_rest' );
 		echo '<div class="jt-empty jt-space-gate">';
 		echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
 		echo '<form class="jt-join-request-form" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
 		echo '<textarea class="jt-input" name="message" rows="3" placeholder="' . esc_attr__( 'Optional: why do you want to join?', 'jetonomy' ) . '"></textarea>';
-		echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Request to Join', 'jetonomy' ) . '</button>';
+		echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Join', 'jetonomy' ) . '</button>';
 		echo '</form>';
 		echo '</div>';
 		return;
@@ -131,14 +138,23 @@ $crumbs[] = [
 						</span>
 						<?php
 					elseif ( 'approval' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
-						// Approval required: show "Request to Join" button.
-						$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
-						?>
-						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
-							data-space-id="<?php echo (int) $space->id; ?>"
-							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-							<?php esc_html_e( 'Request to Join', 'jetonomy' ); ?>
-						</button>
+						// Approval required: check for existing pending request.
+						$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
+						if ( $_jt_pending ) :
+							?>
+							<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
+								<?php esc_html_e( 'Awaiting Approval', 'jetonomy' ); ?>
+							</span>
+							<?php
+						else :
+							$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
+							?>
+							<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
+								data-space-id="<?php echo (int) $space->id; ?>"
+								data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+								<?php esc_html_e( 'Join', 'jetonomy' ); ?>
+							</button>
+						<?php endif; ?>
 						<?php
 					else :
 						// Member or open space: show Follow/Following toggle.

@@ -159,7 +159,10 @@ class Spaces_Handler {
 			if ( is_string( $settings_raw ) ) {
 				$decoded = json_decode( wp_unslash( $settings_raw ), true );
 				if ( is_array( $decoded ) ) {
-					$data['settings'] = wp_json_encode( $decoded );
+					// Merge with existing settings so other keys are not wiped.
+					$existing = Space::get_settings( $id );
+					$merged   = array_merge( $existing, $decoded );
+					$data['settings'] = wp_json_encode( $merged );
 				}
 			}
 		}

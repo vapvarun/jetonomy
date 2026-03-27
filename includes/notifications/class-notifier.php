@@ -45,6 +45,9 @@ class Notifier {
 
 		// Flag created — notify moderators
 		add_action( 'jetonomy_flag_created', [ $this, 'on_flag_created' ], 10, 2 );
+
+		// Join request — notify space admins
+		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
 	}
 
 	/**
@@ -452,6 +455,40 @@ class Notifier {
 			<hr style='border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;'>
 			<p style='font-size: 12px; color: #999;'>{$footer}</p>
 		</div>";
+	}
+
+	/**
+	 * Notify space admins/moderators when a join request is submitted.
+	 */
+	public function on_join_request( int $space_id, int $user_id, string $message ): void {
+		$space      = Space::find( $space_id );
+		$space_name = $space ? $space->title : __( 'a space', 'jetonomy' );
+
+		$moderators = get_users(
+			[
+				'capability__in' => [ 'jetonomy_manage_spaces', 'manage_options' ],
+				'fields'         => 'ID',
+			]
+		);
+
+		foreach ( $moderators as $mod_id ) {
+			if ( (int) $mod_id === $user_id ) {
+				continue;
+			}
+			$this->create_and_maybe_email(
+				(int) $mod_id,
+				$user_id,
+				'join_request',
+				'space',
+				$space_id,
+				sprintf(
+					/* translators: 1: user display name, 2: space name */
+					__( '%1$s requested to join %2$s', 'jetonomy' ),
+					$this->get_display_name( $user_id ),
+					$space_name
+				)
+			);
+		}
 	}
 
 	private function get_display_name( int $user_id ): string {
