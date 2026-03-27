@@ -33,6 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout Jetonomy Pro
+        uses: actions/checkout@v4
+        with:
+          repository: vapvarun/jetonomy-pro
+          token: ${{ secrets.PRO_REPO_TOKEN }}
+          path: ../jetonomy-pro
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -57,6 +64,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout Jetonomy Pro
+        uses: actions/checkout@v4
+        with:
+          repository: vapvarun/jetonomy-pro
+          token: ${{ secrets.PRO_REPO_TOKEN }}
+          path: ../jetonomy-pro
+
       - name: Setup Node.js (for wp-env)
         uses: actions/setup-node@v4
         with:
@@ -76,7 +90,7 @@ jobs:
 
       - name: Activate plugins and seed demo data
         run: |
-          wp-env run cli -- wp plugin activate jetonomy
+          wp-env run cli -- wp plugin activate jetonomy jetonomy-pro
           wp-env run cli -- wp rewrite flush
           wp-env run cli -- wp jetonomy demo-seed
 
