@@ -76,15 +76,15 @@ jobs:
 
       - name: Activate plugins and seed demo data
         run: |
-          wp-env run cli "wp plugin activate jetonomy"
-          wp-env run cli "wp rewrite flush"
-          wp-env run cli "wp jetonomy demo-seed"
+          wp-env run cli -- wp plugin activate jetonomy
+          wp-env run cli -- wp rewrite flush
+          wp-env run cli -- wp jetonomy demo-seed
 
       - name: Run CLI QA (structure)
-        run: wp-env run cli "wp jetonomy qa --report"
+        run: wp-env run cli -- wp jetonomy qa --report
 
       - name: Run CLI QA (actions)
-        run: wp-env run cli "wp jetonomy qa-actions"
+        run: wp-env run cli -- wp jetonomy qa-actions
 
   # ── WordPress Coding Standards ────────────────────────────────────────────
   wpcs:
