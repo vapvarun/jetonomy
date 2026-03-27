@@ -136,8 +136,8 @@
   .jt-community-nav-links a:hover { color: var(--jt-text); border-bottom-color: var(--jt-border-strong); }
   .jt-community-nav-links a.active { color: var(--jt-text); border-bottom-color: var(--jt-accent); font-weight: 600; }
   .jt-community-nav-actions { display: flex; align-items: center; gap: 8px; }
-  .jt-community-nav-notif { color: var(--jt-text-secondary); display: flex; align-items: center; gap: 4px; padding: 8px; border-radius: var(--jt-radius-full); transition: all var(--jt-dur); position: relative; }
-  .jt-community-nav-notif:hover { color: var(--jt-text); background: var(--jt-bg-muted); }
+  .jt-community-nav-notif { background: none; color: var(--jt-text-secondary); display: flex; align-items: center; gap: 4px; padding: 8px; border: none; border-radius: var(--jt-radius-full); transition: all var(--jt-dur); position: relative; }
+  .jt-community-nav-notif:hover { color: var(--jt-text); background: var(--jt-bg-muted); border: none; }
   .jt-community-nav-badge { background: var(--jt-danger); color: var(--jt-white); font-size: 0.75rem; font-weight: 700; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
 
   /* Legacy header classes kept for backward compatibility */
@@ -301,7 +301,7 @@
   .jt-editor { border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius-lg); overflow: hidden; background: var(--jt-bg); transition: border-color 0.2s; }
   .jt-editor:focus-within { border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-editor-bar { display: flex; gap: 2px; padding: 6px 10px; border-bottom: 1px solid var(--jt-border); background: var(--jt-bg-subtle); position: relative; }
-  .jt-editor-bar button { width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; padding: 0; }
+  .jt-editor-bar button { min-width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; padding: 0; }
   .jt-editor-bar button:hover, .jt-editor-bar button:focus { background: var(--jt-bg); color: var(--jt-text); border: none; }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
@@ -380,7 +380,7 @@
   @keyframes jt-spin { to { transform: rotate(360deg); } }
 
   /* ── Empty state ── */
-  .jt-empty { text-align: center; padding: 60px 20px; color: var(--jt-text-tertiary); }
+  .jt-empty { background: var(--jt-bg-muted); text-align: center; padding: 60px 20px; color: var(--jt-text-tertiary); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); }
   .jt-empty-icon { font-size: 3em; margin-bottom: 12px; }
   .jt-empty-text { font-size: 0.9375rem; margin-bottom: 16px; }
 
@@ -1198,7 +1198,7 @@
   font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 0;
   font-family: var(--jt-font);
 }
-.jt-notif-mark-read:hover { text-decoration: underline; }
+.jt-notif-mark-read:hover { border: none; background: none; color: var(--jt-accent); text-decoration: underline; }
 .jt-notif-panel-body { max-height: 280px; overflow-y: auto; }
 .jt-notif-panel-loading, .jt-notif-panel-empty {
   padding: 24px 16px; text-align: center;
