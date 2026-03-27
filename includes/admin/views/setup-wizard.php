@@ -378,12 +378,14 @@ body.jt-setup-body {
 	margin-top: 28px;
 }
 
-/* Success step */
+/* Success step — only visible when active */
 #jt-step-3.jt-setup-card {
 	text-align: center;
-	display: flex;
 	flex-direction: column;
 	align-items: center;
+}
+#jt-step-3.jt-step--active {
+	display: flex;
 }
 
 #jt-step-3 .jt-success-cta,
