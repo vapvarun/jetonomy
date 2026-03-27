@@ -1,11 +1,32 @@
-# Jetonomy
+<p align="center">
+  <strong>Jetonomy</strong><br>
+  Next-gen discussion platform for WordPress -- forums, Q&A, ideas, and more.
+</p>
 
-Next-gen discussion platform for WordPress -- forums, Q&A, ideas, and more.
+<p align="center">
+  <a href="https://github.com/vapvarun/jetonomy/actions/workflows/tests.yml"><img src="https://github.com/vapvarun/jetonomy/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.1%2B-777BB4.svg?logo=php&logoColor=white" alt="PHP 8.1+"></a>
+  <a href="https://wordpress.org/"><img src="https://img.shields.io/badge/WordPress-6.7%2B-21759B.svg?logo=wordpress&logoColor=white" alt="WordPress 6.7+"></a>
+  <a href="https://img.shields.io/badge/Tested%20up%20to-WP%206.9-success"><img src="https://img.shields.io/badge/Tested%20up%20to-WP%206.9-success" alt="Tested up to WP 6.9"></a>
+  <a href="https://www.gnu.org/licenses/gpl-2.0.html"><img src="https://img.shields.io/badge/License-GPLv2%2B-green.svg" alt="License: GPL v2+"></a>
+</p>
 
-[![Tests](https://github.com/vapvarun/jetonomy/actions/workflows/tests.yml/badge.svg)](https://github.com/vapvarun/jetonomy/actions/workflows/tests.yml)
-[![WordPress](https://img.shields.io/badge/WordPress-6.7%2B-blue.svg)](https://wordpress.org/)
-[![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4.svg)](https://www.php.net/)
-[![License: GPL v2+](https://img.shields.io/badge/License-GPLv2%2B-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
+<p align="center">
+  <img src="https://img.shields.io/badge/PHPUnit-194%20tests-brightgreen?logo=testing-library&logoColor=white" alt="194 Tests">
+  <img src="https://img.shields.io/badge/PHPStan-Level%205-brightgreen?logo=php&logoColor=white" alt="PHPStan Level 5">
+  <img src="https://img.shields.io/badge/REST%20API-61%2B%20endpoints-blue?logo=json&logoColor=white" alt="61+ REST API Endpoints">
+  <img src="https://img.shields.io/badge/Security-OWASP%20tested-blue?logo=owasp&logoColor=white" alt="Security Tested">
+</p>
+
+<p align="center">
+  <a href="https://store.wbcomdesigns.com/jetonomy/"><img src="https://img.shields.io/badge/Download-Free-brightgreen?style=for-the-badge&logo=wordpress&logoColor=white" alt="Download Free"></a>
+  &nbsp;
+  <a href="https://store.wbcomdesigns.com/jetonomy/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+  &nbsp;
+  <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-13%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro"></a>
+</p>
+
+---
 
 ## What is Jetonomy?
 
