@@ -1,0 +1,13 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - includes/
+    scanFiles:
+        - jetonomy.php
+    ignoreErrors:
+        # Third-party plugin classes (MemberPress, PMPro) — not available in CI
+        - '#class Mepr(User|CptModel)#'
+        - '#function pmpro_getMembershipLevelForUser#'

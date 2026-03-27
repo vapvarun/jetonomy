@@ -105,16 +105,35 @@ install_test_suite() {
         return;
     fi
 
-    # Set up testing suite.
+    # Set up testing suite via GitHub tarball (no svn dependency).
     mkdir -p $WP_TESTS_DIR
-    svn co --quiet --ignore-externals https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/ $WP_TESTS_DIR/includes
-    svn co --quiet --ignore-externals https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/ $WP_TESTS_DIR/data
+
+    # Convert SVN-style tag to GitHub ref (branches/6.9 → 6.9, tags/6.5.1 → 6.5.1)
+    local GIT_REF=${WP_TESTS_TAG#branches/}
+    GIT_REF=${GIT_REF#tags/}
+
+    local TARBALL_URL="https://github.com/WordPress/wordpress-develop/archive/refs/heads/${GIT_REF}.tar.gz"
+    if [[ $WP_TESTS_TAG == tags/* ]]; then
+        TARBALL_URL="https://github.com/WordPress/wordpress-develop/archive/refs/tags/${GIT_REF}.tar.gz"
+    fi
+
+    curl -sL "$TARBALL_URL" -o $TMPDIR/wp-develop.tar.gz
+
+    # GitHub tarballs prefix with "wordpress-develop-<ref>/"
+    # Extract test includes and data directories
+    local STRIP_DIR
+    STRIP_DIR=$(tar tzf $TMPDIR/wp-develop.tar.gz | head -1 | cut -d/ -f1)
+    mkdir -p $WP_TESTS_DIR/includes $WP_TESTS_DIR/data
+    tar xzf $TMPDIR/wp-develop.tar.gz --strip-components=3 -C $WP_TESTS_DIR/includes "${STRIP_DIR}/tests/phpunit/includes"
+    tar xzf $TMPDIR/wp-develop.tar.gz --strip-components=3 -C $WP_TESTS_DIR/data "${STRIP_DIR}/tests/phpunit/data"
 
     if [ -f "$WP_TESTS_DIR/wp-tests-config.php" ]; then
         return;
     fi
 
-    download https://develop.svn.wordpress.org/${WP_TESTS_TAG}/wp-tests-config-sample.php "$WP_TESTS_DIR"/wp-tests-config.php
+    # Extract wp-tests-config-sample.php from the same tarball
+    tar xzf $TMPDIR/wp-develop.tar.gz --strip-components=1 -C $WP_TESTS_DIR "${STRIP_DIR}/wp-tests-config-sample.php"
+    mv "$WP_TESTS_DIR/wp-tests-config-sample.php" "$WP_TESTS_DIR/wp-tests-config.php"
     # Remove all forward slashes in the end.
     WP_CORE_DIR=$(echo $WP_CORE_DIR | sed "s:/\+$::")
     sed $ioption "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR/':" "$WP_TESTS_DIR"/wp-tests-config.php
