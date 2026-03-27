@@ -1,11 +1,11 @@
 {
     "date": "2026-03-27",
-    "timestamp": "2026-03-27T00:41:06+00:00",
+    "timestamp": "2026-03-27T00:51:55+00:00",
     "version": "1.0.0",
     "pro_version": "1.0.0",
     "total_checks": 238,
-    "passed": 213,
-    "failed": 24,
+    "passed": 236,
+    "failed": 1,
     "warnings": 1,
     "release_ready": false,
     "sections": {
@@ -134,8 +134,8 @@
         },
         "rest_routes": {
             "total": 72,
-            "passed": 49,
-            "failed": 23,
+            "passed": 72,
+            "failed": 0,
             "warned": 0,
             "checks": [
                 {
@@ -195,108 +195,108 @@
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/spaces/(?P<space_id>\\d+)/posts [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+) [PATCH]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+) [DELETE]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+)/close [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+)/pin [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+)/move [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+)/merge [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<post_id>\\d+)/replies [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+) [PATCH]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+) [DELETE]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+)/accept [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+)/split [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+)/vote [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/posts/(?P<id>\\d+)/vote [DELETE]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+)/vote [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/replies/(?P<id>\\d+)/vote [DELETE]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/users/me [PATCH]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/notifications/mark-all-read [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/notifications/(?P<id>\\d+) [PATCH]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/subscriptions [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/subscriptions/(?P<id>\\d+) [DELETE]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+) [POST]",
@@ -335,13 +335,13 @@
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/bookmarks [POST]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/bookmarks/(?P<post_id>\\d+) [DELETE]",
-                    "status": "fail",
-                    "detail": "permission_callback is __return_true \u2014 OPEN WRITE"
+                    "status": "pass",
+                    "detail": ""
                 },
                 {
                     "label": "Permission gate: /jetonomy/v1/moderation/rules [POST]",

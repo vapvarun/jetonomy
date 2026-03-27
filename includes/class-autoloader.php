@@ -22,6 +22,7 @@ class Autoloader {
         'Jetonomy\\Captcha\\'       => 'includes/captcha/',
         'Jetonomy\\DB\\'            => 'includes/db/',
         'Jetonomy\\DB\\Migrations\\' => 'includes/db/migrations/',
+        'Jetonomy\\QA\\'            => 'includes/qa/',
         'Jetonomy\\'               => 'includes/',
     ];
 
