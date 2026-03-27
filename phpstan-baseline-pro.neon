@@ -201,11 +201,6 @@ parameters:
 			path: ../jetonomy-pro/includes/extensions/reply-by-email/class-extension.php
 
 		-
-			message: "#^PHPDoc tag @param references unknown parameter\\: \\$post$#"
-			count: 1
-			path: ../jetonomy-pro/includes/extensions/webhooks/class-extension.php
-
-		-
 			message: "#^Constant JETONOMY_PRO_URL not found\\.$#"
 			count: 1
 			path: ../jetonomy-pro/includes/license/class-license-admin.php
