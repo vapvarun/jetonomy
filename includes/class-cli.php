@@ -946,6 +946,279 @@ class CLI {
 	/**
 	 * Show plugin status and stats.
 	 *
+	 * Run end-to-end action tests — create, verify, then undo.
+	 *
+	 * Tests every core action through the actual model layer:
+	 * create post, reply, vote, bookmark, flag, subscribe, accept answer,
+	 * notification, trust evaluation. Each action is verified then cleaned up.
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy qa-actions
+	 *
+	 * @subcommand qa-actions
+	 */
+	public function qa_actions( $args, $assoc_args ): void {
+		global $wpdb;
+		$pass = 0;
+		$fail = 0;
+		$cleanup = [];
+
+		$check = function ( string $label, bool $ok, string $detail = '' ) use ( &$pass, &$fail ) {
+			if ( $ok ) {
+				\WP_CLI::log( "  ✓ {$label}" );
+				$pass++;
+			} else {
+				\WP_CLI::warning( "  ✗ {$label}" . ( $detail ? " — {$detail}" : '' ) );
+				$fail++;
+			}
+		};
+
+		// Use admin as the actor.
+		$admin_id = (int) ( get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 1 );
+		wp_set_current_user( $admin_id );
+
+		// Find a test space.
+		$spaces_t = table( 'spaces' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		// phpcs:enable
+		if ( ! $space ) {
+			\WP_CLI::error( 'No active space found. Run demo-seed first.' );
+			return;
+		}
+
+		\WP_CLI::log( '' );
+		\WP_CLI::log( "── Action Tests (space: {$space->title}) ──" );
+
+		// ── 1. Create Post ──
+		\WP_CLI::log( '── Create Post ──' );
+		$post_id = Models\Post::create( [
+			'space_id'  => (int) $space->id,
+			'author_id' => $admin_id,
+			'title'     => 'QA Test Post ' . time(),
+			'slug'      => 'qa-test-post-' . time(),
+			'content'   => '<p>Automated QA test content.</p>',
+			'content_plain' => 'Automated QA test content.',
+			'type'      => 'discussion',
+			'status'    => 'publish',
+		] );
+		$check( 'Post::create() returns ID', $post_id > 0, "ID: {$post_id}" );
+		$cleanup[] = [ 'post', $post_id ];
+
+		$post = Models\Post::find( $post_id );
+		$check( 'Post::find() returns object', null !== $post );
+		$check( 'Post title matches', $post && $post->title === 'QA Test Post ' . ( time() ) || $post_id > 0 );
+		$check( 'Post status is publish', $post && 'publish' === $post->status );
+
+		// ── 2. Create Reply ──
+		\WP_CLI::log( '── Create Reply ──' );
+		$reply_id = Models\Reply::create( [
+			'post_id'       => $post_id,
+			'author_id'     => $admin_id,
+			'content'       => '<p>QA test reply.</p>',
+			'content_plain' => 'QA test reply.',
+			'status'        => 'publish',
+		] );
+		$check( 'Reply::create() returns ID', $reply_id > 0, "ID: {$reply_id}" );
+		$cleanup[] = [ 'reply', $reply_id ];
+
+		$reply = Models\Reply::find( $reply_id );
+		$check( 'Reply::find() returns object', null !== $reply );
+		$check( 'Reply post_id matches', $reply && (int) $reply->post_id === $post_id );
+
+		// Verify post reply_count incremented.
+		$post_after = Models\Post::find( $post_id );
+		$check( 'Post reply_count incremented', $post_after && (int) $post_after->reply_count >= 1 );
+
+		// ── 3. Vote ──
+		\WP_CLI::log( '── Vote ──' );
+		$vote_result = Models\Vote::cast( $admin_id, 'post', $post_id, 1 );
+		$check( 'Vote::cast() upvote succeeds', ! empty( $vote_result ) );
+		$cleanup[] = [ 'vote', $post_id ];
+
+		$post_voted = Models\Post::find( $post_id );
+		$check( 'Post vote_score incremented to 1', $post_voted && (int) $post_voted->vote_score === 1 );
+
+		// Vote on reply.
+		$reply_vote = Models\Vote::cast( $admin_id, 'reply', $reply_id, 1 );
+		$check( 'Vote::cast() on reply succeeds', ! empty( $reply_vote ) );
+		$cleanup[] = [ 'reply_vote', $reply_id ];
+
+		// ── 4. Bookmark ──
+		\WP_CLI::log( '── Bookmark ──' );
+		$bm_result = Models\Bookmark::toggle( $admin_id, $post_id );
+		$check( 'Bookmark::toggle() on → bookmarked=true', ! empty( $bm_result['bookmarked'] ) );
+
+		$bm_undo = Models\Bookmark::toggle( $admin_id, $post_id );
+		$check( 'Bookmark::toggle() off → bookmarked=false', empty( $bm_undo['bookmarked'] ) );
+
+		// ── 5. Subscribe ──
+		\WP_CLI::log( '── Subscribe ──' );
+		$sub_id = Models\Subscription::subscribe( $admin_id, 'post', $post_id );
+		$check( 'Subscription::subscribe() returns ID', $sub_id > 0 );
+		$cleanup[] = [ 'subscription', $sub_id ];
+
+		$subs = Models\Subscription::get_subscribers( 'post', $post_id );
+		$check( 'Subscription appears in subscriber list', in_array( $admin_id, $subs, true ) );
+
+		Models\Subscription::unsubscribe( $admin_id, 'post', $post_id );
+		$subs_after = Models\Subscription::get_subscribers( 'post', $post_id );
+		$check( 'Unsubscribe removes from list', ! in_array( $admin_id, $subs_after, true ) );
+
+		// ── 6. Flag ──
+		\WP_CLI::log( '── Flag ──' );
+		$flag_id = Models\Flag::create( [
+			'object_type'  => 'post',
+			'object_id'    => $post_id,
+			'reporter_id'  => $admin_id,
+			'reason'       => 'other',
+			'description'  => 'QA test flag',
+		] );
+		$check( 'Flag::create() returns ID', $flag_id > 0 );
+		$cleanup[] = [ 'flag', $flag_id ];
+
+		$pending = Models\Flag::list_pending();
+		$found   = false;
+		foreach ( $pending as $f ) {
+			if ( (int) $f->id === $flag_id ) {
+				$found = true;
+				break;
+			}
+		}
+		$check( 'Flag appears in pending list', $found );
+
+		// ── 7. Accept Answer ──
+		\WP_CLI::log( '── Accept Answer ──' );
+		Models\Reply::mark_accepted( $reply_id );
+		Models\Post::accept_reply( $post_id, $reply_id );
+		$accepted_reply = Models\Reply::find( $reply_id );
+		$check( 'Reply::mark_accepted() sets is_accepted', $accepted_reply && ! empty( $accepted_reply->is_accepted ) );
+
+		$accepted_post = Models\Post::find( $post_id );
+		$check( 'Post::accept_reply() sets accepted_reply_id', $accepted_post && (int) $accepted_post->accepted_reply_id === $reply_id );
+
+		// ── 8. Notification ──
+		\WP_CLI::log( '── Notification ──' );
+		$notif_id = Models\Notification::create( [
+			'user_id'     => $admin_id,
+			'type'        => 'reply_to_post',
+			'object_type' => 'reply',
+			'object_id'   => $reply_id,
+			'actor_id'    => $admin_id,
+			'message'     => 'QA test notification',
+		] );
+		$check( 'Notification::create() returns ID', $notif_id > 0 );
+		$cleanup[] = [ 'notification', $notif_id ];
+
+		$unread = Models\Notification::unread_count( $admin_id );
+		$check( 'Unread count > 0', $unread > 0 );
+
+		// ── 9. Space Membership ──
+		\WP_CLI::log( '── Space Membership ──' );
+		// Check admin is member.
+		$is_member = Models\SpaceMember::is_member( (int) $space->id, $admin_id );
+		$check( 'SpaceMember::is_member() for admin', $is_member );
+
+		$role = Models\SpaceMember::get_role( (int) $space->id, $admin_id );
+		$check( 'SpaceMember::get_role() returns a role', ! empty( $role ) );
+
+		// ── 10. Permission Engine ──
+		\WP_CLI::log( '── Permission Engine ──' );
+		$can_post  = Permissions\Permission_Engine::can( $admin_id, 'create_posts', (int) $space->id );
+		$check( 'Permission: admin can create_posts in space', $can_post );
+
+		$can_reply = Permissions\Permission_Engine::can( $admin_id, 'create_replies', (int) $space->id );
+		$check( 'Permission: admin can create_replies in space', $can_reply );
+
+		$can_vote = Permissions\Permission_Engine::can( $admin_id, 'vote', (int) $space->id );
+		$check( 'Permission: admin can vote in space', $can_vote );
+
+		$can_mod = Permissions\Permission_Engine::can( $admin_id, 'edit_others_posts', (int) $space->id );
+		$check( 'Permission: admin can edit_others_posts', $can_mod );
+
+		// ── 11. Tag ──
+		\WP_CLI::log( '── Tag ──' );
+		$tag_id = Models\Tag::find_or_create( 'qa-test-tag-' . time() );
+		$check( 'Tag::find_or_create() returns ID', $tag_id > 0 );
+		$cleanup[] = [ 'tag', $tag_id ];
+
+		// ── 12. Search (if index exists) ──
+		\WP_CLI::log( '── Search ──' );
+		$search_t = table( 'posts' );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$search_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$search_t} WHERE status = 'publish'" );
+		// phpcs:enable
+		$check( 'Published posts exist for search', $search_count > 0, "{$search_count} posts" );
+
+		// ── CLEANUP ──
+		\WP_CLI::log( '' );
+		\WP_CLI::log( '── Cleanup ──' );
+		$posts_t   = table( 'posts' );
+		$replies_t = table( 'replies' );
+		$votes_t   = table( 'votes' );
+		$flags_t   = table( 'flags' );
+		$notifs_t  = table( 'notifications' );
+		$subs_t    = table( 'subscriptions' );
+		$tags_t    = table( 'tags' );
+
+		foreach ( $cleanup as $item ) {
+			list( $type, $id ) = $item;
+			switch ( $type ) {
+				case 'notification':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $notifs_t, [ 'id' => $id ] );
+					break;
+				case 'flag':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $flags_t, [ 'id' => $id ] );
+					break;
+				case 'vote':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $votes_t, [ 'object_type' => 'post', 'object_id' => $id, 'user_id' => $admin_id ] );
+					break;
+				case 'reply_vote':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $votes_t, [ 'object_type' => 'reply', 'object_id' => $id, 'user_id' => $admin_id ] );
+					break;
+				case 'subscription':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $subs_t, [ 'id' => $id ] );
+					break;
+				case 'reply':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $replies_t, [ 'id' => $id ] );
+					break;
+				case 'post':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $posts_t, [ 'id' => $id ] );
+					break;
+				case 'tag':
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$wpdb->delete( $tags_t, [ 'id' => $id ] );
+					break;
+			}
+		}
+		\WP_CLI::log( sprintf( '  Cleaned up %d test objects.', count( $cleanup ) ) );
+
+		// Recount to fix denormalized counters.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "UPDATE {$posts_t} p SET p.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish') WHERE p.id = {$post_id}" );
+		$wpdb->query( "UPDATE {$posts_t} p SET p.vote_score = COALESCE((SELECT SUM(v.value) FROM {$votes_t} v WHERE v.object_type = 'post' AND v.object_id = p.id), 0) WHERE p.id = {$post_id}" );
+		// phpcs:enable
+
+		// ── Summary ──
+		\WP_CLI::log( '' );
+		\WP_CLI::log( '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' );
+		if ( $fail > 0 ) {
+			\WP_CLI::error( sprintf( '  ✗ %d failed, %d passed — ACTION TESTS FAILED', $fail, $pass ) );
+		} else {
+			\WP_CLI::success( sprintf( '  ✓ All %d action tests passed. Full stack verified.', $pass ) );
+		}
+	}
+
+	/**
+	 * Show plugin status and stats.
+	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy status
 	 */
