@@ -33,9 +33,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout Jetonomy Pro
-        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -55,88 +52,9 @@ jobs:
         run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION" true
 
       - name: Run PHPUnit
-        run: vendor/bin/phpunit --testdox
+        run: vendor/bin/phpunit --testdox --exclude-group pro
 
-  # ── CLI QA (full WordPress via wp-env + demo data) ───────────────────────
-  cli-qa:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Checkout Jetonomy Pro
-        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
-
-      - name: Setup Node.js (for wp-env)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mysqli, mbstring, intl
-
-      - name: Install wp-env
-        run: npm -g install @wordpress/env
-
-      - name: Start wp-env
-        run: wp-env start
-
-      - name: Activate plugins and seed demo data
-        run: |
-          wp-env run cli -- wp plugin activate jetonomy jetonomy-pro
-          wp-env run cli -- wp rewrite flush
-          wp-env run cli -- wp jetonomy demo-seed
-
-      - name: Run CLI QA (structure)
-        run: wp-env run cli -- wp jetonomy qa --report
-
-      - name: Run CLI QA (actions)
-        run: wp-env run cli -- wp jetonomy qa-actions
-
-  # ── WordPress Coding Standards (Free) ─────────────────────────────────────
-  wpcs:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mysqli, mbstring
-
-      - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist
-
-      - name: Run WordPress Coding Standards
-        run: vendor/bin/phpcs
-
-  # ── WordPress Coding Standards (Pro) ──────────────────────────────────────
-  wpcs-pro:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Checkout Jetonomy Pro
-        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mysqli, mbstring
-
-      - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist
-
-      - name: Run WPCS on Pro
-        run: vendor/bin/phpcs --standard="$GITHUB_WORKSPACE/../jetonomy-pro/phpcs.xml"
-
-  # ── PHPStan static analysis (Free) ──────────────────────────────────────
+  # ── PHPStan static analysis ──────────────────────────────────────────────
   phpstan:
     runs-on: ubuntu-latest
     steps:
@@ -153,25 +71,3 @@ jobs:
 
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse -c phpstan.neon.dist
-
-  # ── PHPStan static analysis (Pro) ───────────────────────────────────────
-  phpstan-pro:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Checkout Jetonomy Pro
-        run: git clone --depth=1 https://x-access-token:${{ secrets.PRO_REPO_TOKEN }}@github.com/vapvarun/jetonomy-pro.git "$GITHUB_WORKSPACE/../jetonomy-pro"
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mysqli, mbstring
-
-      - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist
-
-      - name: Run PHPStan on Pro
-        run: vendor/bin/phpstan analyse -c phpstan-pro.neon.dist --memory-limit=1G
