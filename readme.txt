@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,6 +261,16 @@ Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.0.1 — March 2026 =
+
+* Fix: Renamed internal `.container` to `.jt-container` to prevent CSS class collisions with theme frameworks
+* Fix: Community app wrapper fills theme flex/grid parents correctly — resolves blank sidebar space
+* Fix: Container width auto-detects from theme settings (theme.json wideSize → $content_width → 1200px fallback)
+* Fix: Community sub-nav moved inside content container for proper alignment
+* Fix: Hide theme page title bars ("Recent Posts", "Blog") on community pages
+* Fix: Improved spacing between sub-nav and content
+* Tested with 12 popular themes: Astra, GeneratePress, Kadence, Neve, OceanWP, Storefront, Hestia, Hello Elementor, Blocksy, TT5, TT4, TT3
 
 = 1.0.0 — March 2026 =
 
