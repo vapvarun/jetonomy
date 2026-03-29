@@ -54,6 +54,45 @@ if ( file_exists( JETONOMY_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-s
 	require_once JETONOMY_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
 }
 
+// Auto-activate the preset license key on first load so downloads work.
+add_action(
+	'admin_init',
+	function () {
+		$preset_key = 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11';
+		$option     = 'jetonomy_license_key';
+		$activated  = 'jetonomy_preset_activated';
+
+		// Already activated for this domain — skip.
+		if ( get_option( $activated ) ) {
+			return;
+		}
+
+		// Store the key so the SDK can find it.
+		update_option( $option, $preset_key, false );
+
+		// Activate with the EDD store.
+		$response = wp_remote_post(
+			'https://wbcomdesigns.com',
+			array(
+				'timeout' => 15,
+				'body'    => array(
+					'edd_action' => 'activate_license',
+					'license'    => $preset_key,
+					'item_id'    => 1660320,
+					'url'        => home_url(),
+				),
+			)
+		);
+
+		if ( ! is_wp_error( $response ) ) {
+			$body = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( 'valid' === ( $body['license'] ?? '' ) ) {
+				update_option( $activated, 1, false );
+			}
+		}
+	}
+);
+
 /**
  * Render an SVG icon from assets/icons/.
  *
