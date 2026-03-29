@@ -118,11 +118,11 @@ module.exports = function( grunt ) {
 			},
 		},
 
-		// Create zip
+		// Create zip (version from package.json)
 		compress: {
 			dist: {
 				options: {
-					archive: 'dist/jetonomy.zip',
+					archive: 'dist/jetonomy-<%= pkg.version %>.zip',
 					mode: 'zip',
 				},
 				files: [
