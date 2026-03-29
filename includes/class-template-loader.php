@@ -182,9 +182,7 @@ class Template_Loader {
 			$dynamic_css .= wp_strip_all_tags( $settings['custom_css'] );
 		}
 
-		if ( $dynamic_css ) {
-			wp_add_inline_style( 'jetonomy', $dynamic_css );
-		}
+		wp_add_inline_style( 'jetonomy', $dynamic_css );
 
 		// Set up Interactivity API state
 		wp_interactivity_state(
