@@ -125,6 +125,35 @@ class Template_Loader {
 		// ── Inject dynamic CSS from settings (accent color, custom CSS, etc.) ──
 		$dynamic_css = '';
 
+		// Detect the theme's container width and set --jt-container-width.
+		// 1. Check Jetonomy setting (user override)
+		// 2. Read from theme.json via wp_get_global_settings()
+		// 3. Read WP's $content_width global (classic themes set this in functions.php)
+		// 4. Fallback to 1200px
+		$container_width = '';
+		if ( ! empty( $settings['container_width'] ) ) {
+			$container_width = $settings['container_width'];
+		}
+		if ( ! $container_width ) {
+			$global_settings = wp_get_global_settings( array( 'layout' ) );
+			// wideSize is the wider container (for layouts with sidebars).
+			$container_width = $global_settings['wideSize'] ?? '';
+			// If no wideSize, try contentSize.
+			if ( ! $container_width ) {
+				$container_width = $global_settings['contentSize'] ?? '';
+			}
+		}
+		if ( ! $container_width ) {
+			global $content_width;
+			if ( ! empty( $content_width ) ) {
+				$container_width = $content_width . 'px';
+			}
+		}
+		if ( ! $container_width ) {
+			$container_width = '1200px';
+		}
+		$dynamic_css .= '.jt-container{--jt-container-width:' . esc_attr( $container_width ) . ';}';
+
 		// Accent color override.
 		if ( ! empty( $settings['accent_color'] ) && '#0073aa' !== $settings['accent_color'] ) {
 			$accent = sanitize_hex_color( $settings['accent_color'] );
@@ -311,7 +340,10 @@ class Template_Loader {
 		 */
 		do_action( 'jetonomy_before_content', $data );
 
-		// Load the Jetonomy header partial (full-width, outside container)
+		// Open content container (jt-container avoids collisions with theme/framework .container classes).
+		echo '<div class="jt-container">';
+
+		// Load the Jetonomy header partial inside the container so nav aligns with content.
 		$header_path = file_exists( $theme_dir . 'partials/header.php' )
 			? $theme_dir . 'partials/header.php'
 			: $plugin_dir . 'partials/header.php';
@@ -319,13 +351,10 @@ class Template_Loader {
 			include $header_path;
 		}
 
-		// Open theme-compatible container for content
-		echo '<div class="container">';
-
 		// Load the main template
 		include $template_path;
 
-		echo '</div>'; // .container
+		echo '</div>'; // .jt-container
 
 		/**
 		 * Fires after the main content container closes, before the app wrapper

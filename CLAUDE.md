@@ -68,6 +68,7 @@ Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscrip
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-03-29 | v1.0.1 | Theme compat: .container→.jt-container rename, dynamic --jt-container-width from theme settings, flex parent fix, sub-nav inside container, page title suppression, tested 12 themes |
 | 2026-03-27 | `e42b7ec` | Fix: space settings merge (not replace), join request state persists on refresh, join request email notification to admins |
 | 2026-03-27 | `e3a21fc` | Fix: WPCS translators comments, Yoda conditions, PHPStan baseline update for space-edit |
 | 2026-03-27 | `189fe6d` | Fix: 10 Basecamp bugs — notification defaults reset, vote state indicator, rewrite flush deferred, admin View link, join request admin UI, Post::create() last_reply_at default |

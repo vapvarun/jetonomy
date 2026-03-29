@@ -129,8 +129,8 @@
   .jt-app a:hover { color: var(--jt-text-secondary); }
 
   /* ── Community Sub-Navigation (below theme header) ── */
-  .jt-community-nav { border-bottom: 1px solid var(--jt-border); background: var(--jt-bg); }
-  .jt-community-nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; }
+  .jt-community-nav { border-bottom: 1px solid var(--jt-border); margin-bottom: 24px; }
+  .jt-community-nav-inner { display: flex; align-items: center; justify-content: space-between; }
   .jt-community-nav-links { display: flex; gap: 2px; }
   .jt-community-nav-links a { font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; transition: all var(--jt-dur) var(--jt-ease); }
   .jt-community-nav-links a:hover { color: var(--jt-text); border-bottom-color: var(--jt-border-strong); }
@@ -155,10 +155,9 @@
   .jt-avatar-wrap.is-online::after { content: ''; position: absolute; bottom: 0; left: 0; width: 10px; height: 10px; background: var(--jt-success); border-radius: var(--jt-radius-full); border: 2px solid var(--jt-bg); box-sizing: content-box; }
 
   /* ── Layout ── */
-  /* Theme's .container handles max-width; add vertical padding for Jetonomy content. */
-  .jt-app > .container { padding-top: 24px; padding-bottom: 24px; }
-  /* Fallback: if .jt-container is used (e.g. theme overrides), keep the old rule. */
-  .jt-container { max-width: var(--wp--style--global--wide-size, 1200px); margin: 0 auto; padding: 24px; }
+  /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */
+  #jetonomy-app { width: 100%; min-width: 0; flex: 1 1 100%; }
+  .jt-container { max-width: var(--jt-container-width, 1200px); margin: 0 auto; padding: 12px 24px 24px; }
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
   .jt-two-col > main { min-width: 0; }
   .jt-two-col > .jt-sidebar,

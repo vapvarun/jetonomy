@@ -127,6 +127,20 @@ Full documentation is available at [store.wbcomdesigns.com/jetonomy/docs/](https
 
 Contributions are welcome. Please open an issue first to discuss what you'd like to change.
 
+## Changelog
+
+### 1.0.1
+- Fix: Renamed internal `.container` to `.jt-container` to prevent CSS class collisions with theme frameworks (Astra, GeneratePress, Bootstrap, etc.)
+- Fix: Community app wrapper now fills theme flex/grid parents correctly — resolves blank sidebar space on Astra and similar themes
+- Fix: Container width auto-detects from theme settings (theme.json wideSize → $content_width → 1200px fallback) via `--jt-container-width` CSS variable
+- Fix: Community sub-nav moved inside content container for proper alignment with theme wrapper
+- Fix: Hide theme page title bars ("Recent Posts", "Blog") that leaked through on community pages (OceanWP, etc.)
+- Fix: Improved spacing — 24px gap below sub-nav, reduced top container padding
+- Tested with 12 popular themes: Astra, GeneratePress, Kadence, Neve, OceanWP, Storefront, Hestia, Hello Elementor, Blocksy, Twenty Twenty-Five, Twenty Twenty-Four, Twenty Twenty-Three
+
+### 1.0.0
+- Initial release
+
 ## License
 
 GPL v2 or later. See [LICENSE](https://www.gnu.org/licenses/gpl-2.0.html).
