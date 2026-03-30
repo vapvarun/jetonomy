@@ -276,14 +276,17 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 							if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
 								$adapter_prefix_map = array(
-									'tutor_course_' => array( 'tutor', __( 'Tutor Course', 'jetonomy' ) ),
-									'ld_course_'    => array( 'learndash', __( 'LearnDash Course', 'jetonomy' ) ),
-									'ld_group_'     => array( 'learndash', __( 'LearnDash Group', 'jetonomy' ) ),
-									'wc_membership_' => array( 'woocommerce', __( 'WooCommerce Membership', 'jetonomy' ) ),
+									'tutor_course_'    => array( 'tutor', __( 'Tutor Course', 'jetonomy' ) ),
+									'sensei_course_'   => array( 'sensei', __( 'Sensei Course', 'jetonomy' ) ),
+									'llms_course_'     => array( 'lifterlms', __( 'LifterLMS Course', 'jetonomy' ) ),
+									'llms_membership_' => array( 'lifterlms', __( 'LifterLMS Membership', 'jetonomy' ) ),
+									'ld_course_'       => array( 'learndash', __( 'LearnDash Course', 'jetonomy' ) ),
+									'ld_group_'        => array( 'learndash', __( 'LearnDash Group', 'jetonomy' ) ),
+									'wc_membership_'   => array( 'woocommerce', __( 'WooCommerce Membership', 'jetonomy' ) ),
 									'wc_subscription_' => array( 'woocommerce', __( 'WooCommerce Subscription', 'jetonomy' ) ),
-									'rcp_'          => array( 'rcp', __( 'RCP Membership', 'jetonomy' ) ),
-									'mepr_'         => array( 'memberpress', __( 'MemberPress Plan', 'jetonomy' ) ),
-									'pmpro_'        => array( 'pmpro', __( 'PMPro Level', 'jetonomy' ) ),
+									'rcp_'             => array( 'rcp', __( 'RCP Membership', 'jetonomy' ) ),
+									'mepr_'            => array( 'memberpress', __( 'MemberPress Plan', 'jetonomy' ) ),
+									'pmpro_'           => array( 'pmpro', __( 'PMPro Level', 'jetonomy' ) ),
 								);
 								foreach ( $adapter_prefix_map as $prefix => $info ) {
 									if ( str_starts_with( $rule->rule_value, $prefix ) ) {
