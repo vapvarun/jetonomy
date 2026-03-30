@@ -36,7 +36,9 @@ Move your existing wpForo community into Jetonomy — forums, topics, replies, u
 
 wpForo and Jetonomy structure their data differently in a few key areas:
 
-**Forums and categories** — wpForo uses a single hierarchical `boards` table for both forums and categories. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates Jetonomy categories from wpForo's top-level boards and spaces from second-level boards.
+**Multi-board support** — wpForo supports multiple boards, each with its own set of forums, topics, and posts stored in separate database tables (e.g., `wp_wpforo1_forums` for board 1, `wp_wpforo2_forums` for board 2). The importer automatically detects all active boards and imports each into its own Jetonomy category. Single-board installs work without any extra configuration.
+
+**Forums and categories** — Within each board, wpForo uses a hierarchical forums table. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates a Jetonomy category per board and spaces from the forums within each board.
 
 **Post structure** — In wpForo, the first "post" of a topic is a reply in the same table. In Jetonomy, topics and replies are separate entities. The importer promotes the first wpForo post as the Jetonomy post body and imports subsequent posts as replies.
 
