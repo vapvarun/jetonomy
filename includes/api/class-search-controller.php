@@ -173,27 +173,39 @@ class Search_Controller extends Base_Controller {
 	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null, string $sort = 'relevance' ): array {
 		$posts_table = table( 'posts' );
 
-		$where  = [ 'MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)', "status = 'publish'" ];
+		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
 		$params = [ $q ];
 
+		// Private post visibility: exclude private posts unless viewer is author or privileged.
+		$viewer_id      = get_current_user_id();
+		$is_privileged  = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		if ( ! $is_privileged ) {
+			if ( $viewer_id > 0 ) {
+				$where[]  = '(p.is_private = 0 OR p.author_id = %d)';
+				$params[] = $viewer_id;
+			} else {
+				$where[] = 'p.is_private = 0';
+			}
+		}
+
 		if ( $space_id ) {
-			$where[]  = 'space_id = %d';
+			$where[]  = 'p.space_id = %d';
 			$params[] = $space_id;
 		}
 		if ( $date_from ) {
-			$where[]  = 'created_at >= %s';
+			$where[]  = 'p.created_at >= %s';
 			$params[] = $date_from . ' 00:00:00';
 		}
 		if ( $date_to ) {
-			$where[]  = 'created_at <= %s';
+			$where[]  = 'p.created_at <= %s';
 			$params[] = $date_to . ' 23:59:59';
 		}
 		if ( $author_id ) {
-			$where[]  = 'author_id = %d';
+			$where[]  = 'p.author_id = %d';
 			$params[] = $author_id;
 		}
 
-		$order_by = 'votes' === $sort ? 'vote_score DESC' : 'created_at DESC';
+		$order_by = 'votes' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
 
 		/**
 		 * Filters the search query args before the query is built.
@@ -206,19 +218,21 @@ class Search_Controller extends Base_Controller {
 
 		$where_sql = implode( ' AND ', $where );
 
+		$spaces_table = table( 'spaces' );
+
 		if ( $tag_slug ) {
 			$tags_table      = table( 'tags' );
 			$post_tags_table = table( 'post_tags' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.* FROM {$posts_table} p INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
 				$tag_slug,
 				...$params
 			);
 		} else {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT * FROM {$posts_table} WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
 				...$params
 			);
 		}
@@ -239,9 +253,23 @@ class Search_Controller extends Base_Controller {
 	 */
 	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): array {
 		$replies_table = table( 'replies' );
+		$posts_table   = table( 'posts' );
 
-		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'" ];
+		// Always JOIN posts to filter out replies on private posts.
+		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
 		$r_params = [ $q ];
+
+		// Private post visibility for replies.
+		$viewer_id     = get_current_user_id();
+		$r_privileged  = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		if ( ! $r_privileged ) {
+			if ( $viewer_id > 0 ) {
+				$r_where[]  = '(p.is_private = 0 OR p.author_id = %d)';
+				$r_params[] = $viewer_id;
+			} else {
+				$r_where[] = 'p.is_private = 0';
+			}
+		}
 
 		if ( $date_from ) {
 			$r_where[]  = 'r.created_at >= %s';
@@ -257,28 +285,16 @@ class Search_Controller extends Base_Controller {
 		}
 
 		if ( $space_id ) {
-			$posts_table = table( 'posts' );
-			$r_where[]   = 'p.space_id = %d';
-			$r_params[]  = $space_id;
-			$where_sql   = implode( ' AND ', $r_where );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$sql = $wpdb->prepare(
-				"SELECT r.* FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql} LIMIT 20",
-				...$r_params
-			);
-		} else {
-			// No posts JOIN needed when no space filter.
-			$simple_where = array_map(
-				fn( $clause ) => str_replace( 'r.', '', $clause ),
-				$r_where
-			);
-			$where_sql    = implode( ' AND ', $simple_where );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$sql = $wpdb->prepare(
-				"SELECT * FROM {$replies_table} WHERE {$where_sql} LIMIT 20",
-				...$r_params
-			);
+			$r_where[]  = 'p.space_id = %d';
+			$r_params[] = $space_id;
 		}
+
+		$where_sql = implode( ' AND ', $r_where );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$sql = $wpdb->prepare(
+			"SELECT r.* FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql} LIMIT 20",
+			...$r_params
+		);
 
 		return $wpdb->get_results( $sql ) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	}

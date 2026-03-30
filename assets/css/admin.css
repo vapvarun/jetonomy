@@ -1615,6 +1615,34 @@ tr.jetonomy-moderated td {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Topic Prefix Repeater
+   ═══════════════════════════════════════════════════════════ */
+
+.jt-prefix-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+.jt-prefix-name {
+	width: 200px;
+}
+.jt-prefix-color {
+	width: 40px;
+	height: 32px;
+	padding: 0;
+	border: 1px solid var(--jt-admin-border);
+	border-radius: 4px;
+	cursor: pointer;
+}
+.jt-prefix-remove {
+	color: var(--jt-admin-danger) !important;
+	border-color: var(--jt-admin-danger) !important;
+	min-width: 32px;
+	padding: 0 8px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
    Pro Badge & Upsell
    ═══════════════════════════════════════════════════════════ */
 

@@ -372,6 +372,35 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							<input type="number" id="ss-posts-per-page" value="<?php echo absint( $space_settings['posts_per_page'] ?? '' ); ?>" min="0" max="100" class="small-text" placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Topic Prefixes', 'jetonomy' ); ?></th>
+						<td>
+							<label style="margin-bottom:8px;display:block;">
+								<input type="checkbox" id="ss-enable-prefixes" value="1" <?php checked( ! empty( $space_settings['enable_prefixes'] ) ); ?>>
+								<?php esc_html_e( 'Enable topic prefixes for this space', 'jetonomy' ); ?>
+							</label>
+							<div id="jt-prefixes-config" <?php echo empty( $space_settings['enable_prefixes'] ) ? 'style="display:none;"' : ''; ?>>
+								<p class="description" style="margin-bottom:8px;"><?php esc_html_e( 'Colored labels members can apply to topics (e.g. Bug, Suggestion, Solved).', 'jetonomy' ); ?></p>
+								<div id="jt-prefixes-list">
+									<?php
+									$prefixes = ! empty( $space_settings['prefixes'] ) ? $space_settings['prefixes'] : array();
+									if ( ! empty( $prefixes ) ) :
+										foreach ( $prefixes as $pfx ) :
+											?>
+											<div class="jt-prefix-row">
+												<input type="text" class="jt-prefix-name" value="<?php echo esc_attr( $pfx['name'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Label', 'jetonomy' ); ?>" maxlength="50">
+												<input type="color" class="jt-prefix-color" value="<?php echo esc_attr( $pfx['color'] ?? '#3B82F6' ); ?>">
+												<button type="button" class="button jt-prefix-remove" title="<?php esc_attr_e( 'Remove', 'jetonomy' ); ?>">&times;</button>
+											</div>
+											<?php
+										endforeach;
+									endif;
+									?>
+								</div>
+								<button type="button" class="button" id="jt-add-prefix"><?php esc_html_e( '+ Add Prefix', 'jetonomy' ); ?></button>
+							</div>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Settings', 'jetonomy' ); ?></button>

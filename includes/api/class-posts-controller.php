@@ -273,9 +273,14 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Space' );
 		}
 
+		$user_id       = get_current_user_id();
+		$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
+
 		$pagination = $this->get_pagination( $request );
-		$posts      = Post::list_by_space(
+		$posts      = Post::list_by_space_visible(
 			$space_id,
+			$user_id,
+			$is_privileged,
 			$pagination['sort'],
 			(int) $pagination['limit'],
 			(int) $pagination['offset'],
@@ -307,7 +312,8 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		if ( ! $this->check_permission( 'read', (int) $post->space_id ) ) {
+		// Combined space + post-level visibility check.
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 			return $this->permission_error();
 		}
 
@@ -398,6 +404,18 @@ class Posts_Controller extends Base_Controller {
 			$ip
 		);
 
+		$is_private = ! empty( $request->get_param( 'is_private' ) ) ? 1 : 0;
+
+		// Validate prefix against space settings.
+		$prefix = sanitize_text_field( (string) $request->get_param( 'prefix' ) );
+		if ( ! empty( $prefix ) ) {
+			$space_settings    = Space::get_settings( $space_id );
+			$allowed_prefixes  = ! empty( $space_settings['prefixes'] ) ? array_column( $space_settings['prefixes'], 'name' ) : array();
+			if ( ! in_array( $prefix, $allowed_prefixes, true ) ) {
+				$prefix = '';
+			}
+		}
+
 		$post_data = array(
 			'space_id'      => $space_id,
 			'author_id'     => $user_id,
@@ -406,7 +424,12 @@ class Posts_Controller extends Base_Controller {
 			'content'       => $content,
 			'content_plain' => $content_plain,
 			'type'          => $type,
+			'is_private'    => $is_private,
 		);
+
+		if ( ! empty( $prefix ) ) {
+			$post_data['prefix'] = $prefix;
+		}
 
 		if ( $akismet_spam ) {
 			$post_data['status'] = 'spam';
@@ -547,6 +570,24 @@ class Posts_Controller extends Base_Controller {
 			$content                      = wp_kses_post( $request->get_param( 'content' ) );
 			$update_data['content']       = $content;
 			$update_data['content_plain'] = wp_strip_all_tags( $content );
+		}
+
+		if ( null !== $request->get_param( 'is_private' ) ) {
+			$update_data['is_private'] = ! empty( $request->get_param( 'is_private' ) ) ? 1 : 0;
+		}
+
+		if ( null !== $request->get_param( 'prefix' ) ) {
+			$prefix_val = sanitize_text_field( (string) $request->get_param( 'prefix' ) );
+			if ( '' === $prefix_val ) {
+				// Explicitly clear prefix.
+				$update_data['prefix'] = null;
+			} else {
+				$space_settings   = Space::get_settings( $space_id );
+				$allowed_prefixes = ! empty( $space_settings['prefixes'] ) ? array_column( $space_settings['prefixes'], 'name' ) : array();
+				if ( in_array( $prefix_val, $allowed_prefixes, true ) ) {
+					$update_data['prefix'] = $prefix_val;
+				}
+			}
 		}
 
 		if ( empty( $update_data ) ) {
@@ -815,10 +856,26 @@ class Posts_Controller extends Base_Controller {
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		}
 
+		// Resolve prefix color from space settings.
+		$prefix_name  = $post->prefix ?? null;
+		$prefix_color = null;
+		if ( $prefix_name && $space ) {
+			$space_settings = Space::get_settings( (int) $space->id );
+			$prefix_list    = $space_settings['prefixes'] ?? array();
+			foreach ( $prefix_list as $pfx ) {
+				if ( ( $pfx['name'] ?? '' ) === $prefix_name ) {
+					$prefix_color = $pfx['color'] ?? null;
+					break;
+				}
+			}
+		}
+
 		return array(
 			'id'                => (int) $post->id,
 			'space_id'          => (int) $post->space_id,
 			'author_id'         => $author_id,
+			'prefix'            => $prefix_name,
+			'prefix_color'      => $prefix_color,
 			'title'             => $post->title ?? '',
 			'slug'              => $post->slug ?? '',
 			'content'           => \Jetonomy\Embeds::process( $post->content ?? '' ),
@@ -826,6 +883,7 @@ class Posts_Controller extends Base_Controller {
 			'type'              => $post->type ?? 'topic',
 			'status'            => $post->status ?? 'publish',
 			'is_sticky'         => (bool) ( $post->is_sticky ?? false ),
+			'is_private'        => (bool) ( $post->is_private ?? false ),
 			'is_closed'         => (bool) ( $post->is_closed ?? false ),
 			'is_resolved'       => (bool) ( $post->is_resolved ?? false ),
 			'accepted_reply_id' => $post->accepted_reply_id ? (int) $post->accepted_reply_id : null,
@@ -890,6 +948,16 @@ class Posts_Controller extends Base_Controller {
 				'required' => false,
 				'items'    => array( 'type' => 'string' ),
 			),
+			'prefix'       => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'is_private'   => array(
+				'type'     => 'boolean',
+				'required' => false,
+				'default'  => false,
+			),
 			'status'       => array(
 				'type'     => 'string',
 				'required' => false,
@@ -909,13 +977,22 @@ class Posts_Controller extends Base_Controller {
 	 */
 	private function get_update_args(): array {
 		return array(
-			'title'   => array(
+			'title'      => array(
 				'type'     => 'string',
 				'required' => false,
 			),
-			'content' => array(
+			'content'    => array(
 				'type'     => 'string',
 				'required' => false,
+			),
+			'is_private' => array(
+				'type'     => 'boolean',
+				'required' => false,
+			),
+			'prefix'     => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
 			),
 		);
 	}

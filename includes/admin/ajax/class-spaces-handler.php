@@ -160,6 +160,21 @@ class Spaces_Handler {
 			if ( is_string( $settings_raw ) ) {
 				$decoded = json_decode( wp_unslash( $settings_raw ), true );
 				if ( is_array( $decoded ) ) {
+					// Sanitize topic prefixes if present.
+					if ( isset( $decoded['prefixes'] ) && is_array( $decoded['prefixes'] ) ) {
+						$sanitized_prefixes = array();
+						foreach ( $decoded['prefixes'] as $pfx ) {
+							$name  = sanitize_text_field( $pfx['name'] ?? '' );
+							$color = sanitize_hex_color( $pfx['color'] ?? '' );
+							if ( $name && $color ) {
+								$sanitized_prefixes[] = array(
+									'name'  => $name,
+									'color' => $color,
+								);
+							}
+						}
+						$decoded['prefixes'] = $sanitized_prefixes;
+					}
 					// Merge with existing settings so other keys are not wiped.
 					$existing = Space::get_settings( $id );
 					$merged   = array_merge( $existing, $decoded );
