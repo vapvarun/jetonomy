@@ -12,6 +12,8 @@ Connect LifterLMS course and membership enrollment to Jetonomy spaces — studen
 
 Jetonomy Pro detects LifterLMS automatically when both plugins are active. A **LifterLMS Course** option appears in the Access Rules rule type dropdown.
 
+![Integrations settings showing active LMS plugins](images/integrations-settings.png)
+
 ## Linking a Course to a Space
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
