@@ -586,17 +586,99 @@
 
 			// ── Access Rules ──
 
+			// Build adapter-specific rule type options and autocomplete.
+			(function() {
+				var adapters = (window.jetonomyAdmin && window.jetonomyAdmin.membershipAdapters) || [];
+				var adapterMap = {};
+				var $ruleType = $('#rule-type');
+
+				// Inject adapter-specific options into the rule type dropdown.
+				for (var i = 0; i < adapters.length; i++) {
+					var a = adapters[i];
+					adapterMap[a.id] = a.levels;
+					$ruleType.append('<option value="membership:' + a.id + '">' + a.label + '</option>');
+				}
+
+				var $wrap = $('#rule-value-membership-wrap');
+				var $input = $('#rule-value-membership-search');
+				var $hidden = $('#rule-value-membership');
+				var $results = $('#rule-value-membership-results');
+				var activeLevels = [];
+
+				function renderResults(query) {
+					$results.empty();
+					if (!query || query.length < 1) { $results.hide(); return; }
+					var q = query.toLowerCase();
+					var matches = activeLevels.filter(function(l) { return l.label.toLowerCase().indexOf(q) > -1; });
+					if (!matches.length) {
+						$results.append('<div class="jetonomy-ac-empty">No matches</div>');
+					} else {
+						var limit = Math.min(matches.length, 20);
+						for (var i = 0; i < limit; i++) {
+							$results.append(
+								'<div class="jetonomy-ac-item" data-id="' + matches[i].id + '">' +
+								$('<span>').text(matches[i].label).html() +
+								'</div>'
+							);
+						}
+						if (matches.length > 20) {
+							$results.append('<div class="jetonomy-ac-empty">' + (matches.length - 20) + ' more — refine search</div>');
+						}
+					}
+					$results.show();
+				}
+
+				$input.on('input', function() {
+					$hidden.val('');
+					renderResults($(this).val());
+				});
+
+				$results.on('click', '.jetonomy-ac-item', function() {
+					$input.val($(this).text());
+					$hidden.val($(this).data('id'));
+					$results.hide();
+				});
+
+				$(document).on('click', function(e) {
+					if (!$(e.target).closest('#rule-value-membership-wrap').length) {
+						$results.hide();
+					}
+				});
+
+				// Toggle between text input and adapter autocomplete.
+				$(document).on('change', '#rule-type', function() {
+					var val = $(this).val();
+					var isAdapter = val.indexOf('membership:') === 0;
+
+					$('#rule-value').toggle(!isAdapter).val('');
+					$wrap.toggle(isAdapter);
+					$input.val('');
+					$hidden.val('');
+					$results.hide();
+
+					if (isAdapter) {
+						var adapterId = val.replace('membership:', '');
+						activeLevels = adapterMap[adapterId] || [];
+						$input.attr('placeholder', adapters.filter(function(a) { return a.id === adapterId; })[0].label + '...');
+					}
+				});
+			})();
+
 			// Add rule
 			$(document).on('click', '#jetonomy-add-rule', function() {
 				var $btn = $(this);
 				var spaceId = $btn.data('space-id');
+				var ruleTypeVal = $('#rule-type').val();
+				var isAdapter = ruleTypeVal.indexOf('membership:') === 0;
+				var ruleType = isAdapter ? 'membership' : ruleTypeVal;
+				var ruleValue = isAdapter ? $('#rule-value-membership').val() : $('#rule-value').val();
 
 				$btn.prop('disabled', true);
 
 				self.ajax('jetonomy_add_access_rule', {
 					space_id: spaceId,
-					rule_type: $('#rule-type').val(),
-					rule_value: $('#rule-value').val(),
+					rule_type: ruleType,
+					rule_value: ruleValue,
 					grants: $('#rule-grants').val(),
 					space_role: $('#rule-space-role').val(),
 					priority: $('#rule-priority').val()
@@ -609,6 +691,31 @@
 					}
 				}).fail(function() {
 					self.toast(self.i18n.error, 'error');
+				}).always(function() {
+					$btn.prop('disabled', false);
+				});
+			});
+
+			// Sync existing memberships for a rule
+			$(document).on('click', '.jetonomy-sync-rule', function() {
+				var $btn = $(this);
+				$btn.prop('disabled', true).text('Syncing...');
+
+				self.ajax('jetonomy_sync_access_rule', {
+					space_id: $btn.data('space-id'),
+					rule_value: $btn.data('value'),
+					space_role: $btn.data('role')
+				}).done(function(res) {
+					if (res.success) {
+						self.toast(res.data.message);
+						$btn.text('Synced (' + res.data.synced + ')');
+					} else {
+						self.toast(res.data || self.i18n.error, 'error');
+						$btn.text('Sync');
+					}
+				}).fail(function() {
+					self.toast(self.i18n.error, 'error');
+					$btn.text('Sync');
 				}).always(function() {
 					$btn.prop('disabled', false);
 				});

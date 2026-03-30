@@ -323,13 +323,47 @@ class Admin {
 		// Media uploader
 		wp_enqueue_media();
 
+		// Gather membership adapters with their levels for the access rules UI.
+		$adapter_labels = array(
+			'wp-roles'    => __( 'WP Role', 'jetonomy' ),
+			'memberpress' => __( 'MemberPress Plan', 'jetonomy' ),
+			'pmpro'       => __( 'PMPro Level', 'jetonomy' ),
+			'woocommerce' => __( 'WooCommerce Membership', 'jetonomy' ),
+			'rcp'         => __( 'RCP Membership', 'jetonomy' ),
+			'learndash'   => __( 'LearnDash Course', 'jetonomy' ),
+			'tutor'       => __( 'Tutor Course', 'jetonomy' ),
+			'lifterlms'   => __( 'LifterLMS Course', 'jetonomy' ),
+			'sensei'      => __( 'Sensei Course', 'jetonomy' ),
+			'masterstudy' => __( 'MasterStudy Course', 'jetonomy' ),
+		);
+
+		$membership_adapters = array();
+		$all_adapters        = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+		foreach ( $all_adapters as $adapter_id => $adapter ) {
+			if ( $adapter->is_active() && 'wp-roles' !== $adapter_id ) {
+				$levels = array();
+				foreach ( $adapter->get_all_levels() as $level ) {
+					$levels[] = array(
+						'id'    => $level['id'],
+						'label' => $level['label'],
+					);
+				}
+				$membership_adapters[] = array(
+					'id'     => $adapter_id,
+					'label'  => $adapter_labels[ $adapter_id ] ?? ucfirst( $adapter_id ),
+					'levels' => $levels,
+				);
+			}
+		}
+
 		wp_localize_script(
 			'jetonomy-admin',
 			'jetonomyAdmin',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'jetonomy_admin' ),
-				'i18n'    => array(
+				'ajaxUrl'            => admin_url( 'admin-ajax.php' ),
+				'nonce'              => wp_create_nonce( 'jetonomy_admin' ),
+				'membershipAdapters' => $membership_adapters,
+				'i18n'             => array(
 					'confirmDelete'   => __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
 					'confirmBan'      => __( 'Are you sure you want to ban this user?', 'jetonomy' ),
 					'saving'          => __( 'Saving...', 'jetonomy' ),

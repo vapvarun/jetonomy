@@ -228,9 +228,14 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<option value="role"><?php esc_html_e( 'WP Role', 'jetonomy' ); ?></option>
 						<option value="capability"><?php esc_html_e( 'Capability', 'jetonomy' ); ?></option>
 						<option value="trust_level"><?php esc_html_e( 'Trust Level', 'jetonomy' ); ?></option>
-						<option value="membership"><?php esc_html_e( 'Membership', 'jetonomy' ); ?></option>
+						<?php /* Dynamic membership adapter options injected by JS */ ?>
 					</select>
 					<input type="text" id="rule-value" class="regular-text" placeholder="<?php esc_attr_e( 'Value (e.g., administrator, 2)', 'jetonomy' ); ?>">
+					<div id="rule-value-membership-wrap" style="display:none;position:relative;">
+						<input type="text" id="rule-value-membership-search" class="regular-text" placeholder="<?php esc_attr_e( 'Search courses, roles, memberships...', 'jetonomy' ); ?>" autocomplete="off">
+						<input type="hidden" id="rule-value-membership" value="">
+						<div id="rule-value-membership-results" class="jetonomy-ac-results" style="display:none;"></div>
+					</div>
 					<select id="rule-grants">
 						<option value="read"><?php esc_html_e( 'Read', 'jetonomy' ); ?></option>
 						<option value="participate"><?php esc_html_e( 'Participate', 'jetonomy' ); ?></option>
@@ -242,7 +247,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<option value="moderator"><?php esc_html_e( 'Moderator', 'jetonomy' ); ?></option>
 						<option value="admin"><?php esc_html_e( 'Admin', 'jetonomy' ); ?></option>
 					</select>
-					<input type="number" id="rule-priority" value="0" min="0" style="width:60px;" title="<?php esc_attr_e( 'Priority', 'jetonomy' ); ?>">
+					<input type="hidden" id="rule-priority" value="0">
 					<button type="button" class="button button-primary" id="jetonomy-add-rule" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Add Rule', 'jetonomy' ); ?></button>
 				</div>
 			</div>
@@ -256,23 +261,52 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<th><?php esc_html_e( 'Value', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Space Role', 'jetonomy' ); ?></th>
-						<th style="width:70px;"><?php esc_html_e( 'Priority', 'jetonomy' ); ?></th>
-						<th style="width:80px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php if ( empty( $access_rules ) ) : ?>
-						<tr class="jetonomy-no-items"><td colspan="6"><?php esc_html_e( 'No access rules defined. Default permissions apply.', 'jetonomy' ); ?></td></tr>
+						<tr class="jetonomy-no-items"><td colspan="5"><?php esc_html_e( 'No access rules defined. Default permissions apply.', 'jetonomy' ); ?></td></tr>
 					<?php else : ?>
 						<?php foreach ( $access_rules as $rule ) : ?>
+							<?php
+							// Resolve human-readable labels for membership rules.
+							$display_type  = ucfirst( str_replace( '_', ' ', $rule->rule_type ) );
+							$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
+
+							if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
+								$adapter_prefix_map = array(
+									'tutor_course_' => array( 'tutor', __( 'Tutor Course', 'jetonomy' ) ),
+									'ld_course_'    => array( 'learndash', __( 'LearnDash Course', 'jetonomy' ) ),
+									'ld_group_'     => array( 'learndash', __( 'LearnDash Group', 'jetonomy' ) ),
+									'wc_membership_' => array( 'woocommerce', __( 'WooCommerce Membership', 'jetonomy' ) ),
+									'wc_subscription_' => array( 'woocommerce', __( 'WooCommerce Subscription', 'jetonomy' ) ),
+									'rcp_'          => array( 'rcp', __( 'RCP Membership', 'jetonomy' ) ),
+									'mepr_'         => array( 'memberpress', __( 'MemberPress Plan', 'jetonomy' ) ),
+									'pmpro_'        => array( 'pmpro', __( 'PMPro Level', 'jetonomy' ) ),
+								);
+								foreach ( $adapter_prefix_map as $prefix => $info ) {
+									if ( str_starts_with( $rule->rule_value, $prefix ) ) {
+										$display_type = $info[1];
+										$adapter      = \Jetonomy\Adapters\Adapter_Registry::get_membership( $info[0] );
+										if ( $adapter && $adapter->is_active() ) {
+											$display_value = $adapter->get_level_label( $rule->rule_value );
+										}
+										break;
+									}
+								}
+							}
+							?>
 							<tr data-rule-id="<?php echo absint( $rule->id ); ?>">
-								<td><code><?php echo esc_html( $rule->rule_type ); ?></code></td>
-								<td><?php echo esc_html( ! empty( $rule->rule_value ) ? $rule->rule_value : '—' ); ?></td>
+								<td><code><?php echo esc_html( $display_type ); ?></code></td>
+								<td><?php echo esc_html( $display_value ); ?></td>
 								<td><span class="jetonomy-badge jetonomy-badge--<?php echo esc_attr( $rule->grants ); ?>"><?php echo esc_html( ucfirst( $rule->grants ) ); ?></span></td>
 								<td><?php echo esc_html( ucfirst( $rule->space_role ) ); ?></td>
-								<td><?php echo absint( $rule->priority ); ?></td>
-								<td>
-									<button type="button" class="button button-small button-link-delete jetonomy-delete-rule" data-id="<?php echo absint( $rule->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
+								<td class="jetonomy-rule-actions">
+									<?php if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) : ?>
+										<button type="button" class="button button-small button-primary jetonomy-sync-rule" data-id="<?php echo absint( $rule->id ); ?>" data-space-id="<?php echo absint( $space->id ); ?>" data-value="<?php echo esc_attr( $rule->rule_value ); ?>" data-role="<?php echo esc_attr( $rule->space_role ); ?>"><span class="dashicons dashicons-update"></span> <?php esc_html_e( 'Sync Members', 'jetonomy' ); ?></button>
+									<?php endif; ?>
+									<button type="button" class="button button-small button-link-delete jetonomy-delete-rule" data-id="<?php echo absint( $rule->id ); ?>"><span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 								</td>
 							</tr>
 						<?php endforeach; ?>

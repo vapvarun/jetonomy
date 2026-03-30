@@ -30,6 +30,7 @@ class Spaces_Handler {
 		// Access Rules AJAX
 		add_action( 'wp_ajax_jetonomy_add_access_rule', array( $this, 'ajax_add_access_rule' ) );
 		add_action( 'wp_ajax_jetonomy_delete_access_rule', array( $this, 'ajax_delete_access_rule' ) );
+		add_action( 'wp_ajax_jetonomy_sync_access_rule', array( $this, 'ajax_sync_access_rule' ) );
 		// Join Requests AJAX
 		add_action( 'wp_ajax_jetonomy_approve_join_request', array( $this, 'ajax_approve_join_request' ) );
 		add_action( 'wp_ajax_jetonomy_deny_join_request', array( $this, 'ajax_deny_join_request' ) );
@@ -363,6 +364,55 @@ class Spaces_Handler {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Access rule deleted.', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * Sync existing memberships for a specific access rule.
+	 *
+	 * Finds all users who currently have the membership level defined in the rule
+	 * and adds them to the space with the configured role.
+	 */
+	public function ajax_sync_access_rule(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$space_id   = absint( $_POST['space_id'] ?? 0 );
+		$rule_value = sanitize_text_field( $_POST['rule_value'] ?? '' );
+		$space_role = sanitize_text_field( $_POST['space_role'] ?? 'member' );
+
+		if ( ! $space_id || ! $rule_value ) {
+			wp_send_json_error( __( 'Missing parameters.', 'jetonomy' ) );
+		}
+
+		// Find the adapter that owns this level.
+		$adapters = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+		$synced   = 0;
+
+		// Get all users and check each against the adapter.
+		$users = get_users( array( 'fields' => 'ID' ) );
+
+		foreach ( $users as $user_id ) {
+			$user_id = (int) $user_id;
+			foreach ( $adapters as $adapter ) {
+				if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule_value ) ) {
+					if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
+						SpaceMember::add( $space_id, $user_id, $space_role );
+						++$synced;
+					}
+					break;
+				}
+			}
+		}
+
+		wp_send_json_success(
+			array(
+				/* translators: %d: number of members synced */
+				'message' => sprintf( __( 'Synced %d existing members.', 'jetonomy' ), $synced ),
+				'synced'  => $synced,
+			)
+		);
 	}
 
 	/**
