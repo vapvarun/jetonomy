@@ -110,6 +110,9 @@ Click "Quote" on any reply → quoted text auto-inserted into editor as styled b
 ### 5. Bookmarks
 Extend existing subscriptions table with a type flag. Save topics to read later — separate from notification subscriptions.
 
+### 6. Abilities API — 100% Coverage
+Every REST endpoint gets a corresponding WordPress Ability. Currently 19 free + 20 Pro = 39 abilities. Adding ~15 missing CRUD abilities so AI agents can fully operate the forum.
+
 ---
 
 ## Future Considerations
