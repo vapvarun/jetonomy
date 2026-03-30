@@ -157,11 +157,21 @@
   /* ── Layout ── */
   /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */
   #jetonomy-app { width: 100%; min-width: 0; flex: 1 1 100%; }
+  /* max-width is set dynamically via --jt-container-width (injected by PHP from theme settings).
+     Detection order: Jetonomy setting → theme.json wideSize → $content_width → 1200px fallback. */
   .jt-container { max-width: var(--jt-container-width, 1200px); margin: 0 auto; padding: 12px 24px 24px; }
   .jt-two-col { display: grid !important; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
   .jt-two-col > main { min-width: 0; }
   .jt-two-col > .jt-sidebar,
   .jt-two-col > aside { position: sticky; top: 24px; align-self: start; }
+
+  /* ── Theme compatibility ── */
+  /* Hide the theme's page title/header on Jetonomy pages — themes inject titles
+     like "Recent Posts" or "Blog" because WP sees the community as a blog page. */
+  body.jt-page > .page-header,
+  body.jt-page .site-main > .page-header,
+  body.jt-page .site-content > .page-header,
+  body.jt-page #content > .page-header { display: none; }
 
   /* ── Breadcrumb ── */
   .jt-crumb { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); margin-bottom: 20px; }

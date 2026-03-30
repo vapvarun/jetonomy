@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,6 +261,18 @@ Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.1.0 — March 2026 =
+
+* New: Configurable Community Title setting — displayed as H1 on the community home page
+* New: Adapter-specific rule type options in Access Rules (e.g. "Tutor Course", "LearnDash Course" instead of generic "Membership")
+* New: Searchable autocomplete for membership levels — scales to 1000+ courses
+* New: Human-readable labels in access rules table — shows course names instead of raw IDs
+* New: Sync Members button to pull in existing enrolled users when creating a rule
+* Fix: H1 heading added to community home page for SEO and accessibility
+* Fix: Membership deactivation now fully removes space access instead of downgrading to viewer
+* Improvement: Priority column hidden from access rules UI for cleaner admin experience
+* Improvement: Action buttons with icons (Sync Members, Delete) in access rules table
 
 = 1.0.1 — March 2026 =
 
