@@ -182,7 +182,17 @@ parameters:
 
 		-
 			message: "#^Variable \\$space might not be defined\\.$#"
-			count: 28
+			count: 29
+			path: includes/admin/views/space-edit.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
+			count: 1
+			path: includes/admin/views/space-edit.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$space_role\\.$#"
+			count: 1
 			path: includes/admin/views/space-edit.php
 
 		-
