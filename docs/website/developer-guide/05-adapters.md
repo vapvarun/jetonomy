@@ -33,6 +33,7 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 | `WooCommerce_Adapter` | Membership | WooCommerce Memberships is active |
 | `RCP_Adapter` | Membership | Restrict Content Pro is active |
 | `LearnDash_Adapter` | Membership | LearnDash is active |
+| `Tutor_Adapter` | Membership | Tutor LMS is active |
 
 Pro registers these via `Adapter_Registry::register_membership()` at `plugins_loaded` priority 20.
 
