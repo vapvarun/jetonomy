@@ -168,6 +168,7 @@ class Admin {
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 			}
 			$clean['base_slug']          = $new_slug;
+			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
 			$clean['posts_per_page']     = max( 1, absint( $input['posts_per_page'] ?? 20 ) );
 			$clean['replies_per_page']   = max( 1, absint( $input['replies_per_page'] ?? 30 ) );
 			$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );

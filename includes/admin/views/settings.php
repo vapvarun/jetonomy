@@ -131,6 +131,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="community_title"><?php esc_html_e( 'Community Title', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="community_title" name="jetonomy_settings[community_title]" value="<?php echo esc_attr( $settings['community_title'] ?? __( 'Community', 'jetonomy' ) ); ?>" class="regular-text">
+							<p class="description"><?php esc_html_e( 'Displayed as the main heading on the community home page.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="default_space_type"><?php esc_html_e( 'Default Space Type', 'jetonomy' ); ?></label></th>
 						<td>
 							<select id="default_space_type" name="jetonomy_settings[default_space_type]">

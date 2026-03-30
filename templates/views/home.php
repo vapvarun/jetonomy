@@ -61,6 +61,11 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 	echo '</div>';
 }
 ?>
+<?php
+$settings         = get_option( 'jetonomy_settings', array() );
+$community_title  = $settings['community_title'] ?? __( 'Community', 'jetonomy' );
+?>
+<h1 class="jt-page-title"><?php echo esc_html( $community_title ); ?></h1>
 <div class="jt-two-col">
 		<main>
 			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
