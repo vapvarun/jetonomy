@@ -35,7 +35,7 @@ class WPForo_Importer extends Importer {
 		return [
 			'forums' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" ),
 			'topics' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" ),
-			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" ),
+			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}posts" ),
 		];
 	}
 
@@ -44,7 +44,7 @@ class WPForo_Importer extends Importer {
 		$p      = $wpdb->prefix;
 		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" );
 		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" );
-		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" );
+		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}posts" );
 		return $forums + $topics + $posts;
 	}
 
@@ -69,28 +69,61 @@ class WPForo_Importer extends Importer {
 	}
 
 	public function run( array $options = [] ): array {
-		$cat_id = Category::create(
-			[
-				'name' => __( 'Imported from wpForo', 'jetonomy' ),
-				'slug' => 'imported-wpforo',
-			]
-		);
+		global $wpdb;
 
-		$this->import_forums( $cat_id );
-		$this->import_topics();
-		$this->import_replies();
-		$this->import_likes();
-		$this->create_profiles();
+		// Discover all wpForo boards (multi-board support).
+		$boards_table = $wpdb->prefix . 'wpforo_boards';
+		$boards       = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
+
+		if ( empty( $boards ) ) {
+			// Fallback: single board with default prefix.
+			$boards = [ (object) [ 'boardid' => 0, 'title' => 'Forums' ] ];
+		}
+
+		foreach ( $boards as $board ) {
+			$board_id = (int) $board->boardid;
+			$prefix   = $wpdb->prefix . 'wpforo' . ( $board_id ? $board_id . '_' : '_' );
+
+			// Verify this board's tables exist.
+			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $prefix . 'forums' ) ) ) {
+				continue;
+			}
+
+			$cat_name = count( $boards ) > 1
+				/* translators: %s: wpForo board name */
+				? sprintf( __( 'Imported from wpForo — %s', 'jetonomy' ), $board->title )
+				: __( 'Imported from wpForo', 'jetonomy' );
+
+			$cat_slug = count( $boards ) > 1
+				? 'imported-wpforo-' . sanitize_title( $board->title )
+				: 'imported-wpforo';
+
+			$cat_id = Category::create(
+				[
+					'name' => $cat_name,
+					'slug' => $cat_slug,
+				]
+			);
+
+			$this->import_forums( $cat_id, $prefix );
+			$this->import_topics( $prefix );
+			$this->import_replies( $prefix );
+			$this->import_likes( $prefix );
+			$this->create_profiles( $prefix );
+		}
+
 		$this->recount();
 
 		return $this->results();
 	}
 
-	private function import_forums( int $cat_id ): void {
+	private function import_forums( int $cat_id, string $p = '' ): void {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		if ( ! $p ) {
+			$p = $wpdb->prefix . 'wpforo_';
+		}
 
-		$forums = $wpdb->get_results( "SELECT * FROM {$p}wpforo_forums ORDER BY `order` ASC" );
+		$forums = $wpdb->get_results( "SELECT * FROM {$p}forums ORDER BY `order` ASC" );
 
 		foreach ( $forums as $forum ) {
 			$space_id = Space::create(
@@ -116,11 +149,13 @@ class WPForo_Importer extends Importer {
 		}
 	}
 
-	private function import_topics(): void {
+	private function import_topics( string $p = '' ): void {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		if ( ! $p ) {
+			$p = $wpdb->prefix . 'wpforo_';
+		}
 
-		$topics = $wpdb->get_results( "SELECT * FROM {$p}wpforo_topics ORDER BY topicid ASC" );
+		$topics = $wpdb->get_results( "SELECT * FROM {$p}topics ORDER BY topicid ASC" );
 
 		foreach ( $topics as $topic ) {
 			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
@@ -137,7 +172,7 @@ class WPForo_Importer extends Importer {
 
 			// Get first post content for the topic
 			$first_post = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$p}wpforo_posts WHERE topicid = %d ORDER BY postid ASC LIMIT 1", $topic->topicid )
+				$wpdb->prepare( "SELECT * FROM {$p}posts WHERE topicid = %d ORDER BY postid ASC LIMIT 1", $topic->topicid )
 			);
 
 			$content = $first_post ? $first_post->body : '';
@@ -170,15 +205,17 @@ class WPForo_Importer extends Importer {
 		}
 	}
 
-	private function import_replies(): void {
+	private function import_replies( string $p = '' ): void {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		if ( ! $p ) {
+			$p = $wpdb->prefix . 'wpforo_';
+		}
 
 		// Get all posts that aren't the first post of a topic
 		$posts = $wpdb->get_results(
-			"SELECT p.* FROM {$p}wpforo_posts p
+			"SELECT p.* FROM {$p}posts p
 			 INNER JOIN (
-			     SELECT topicid, MIN(postid) as first_postid FROM {$p}wpforo_posts GROUP BY topicid
+			     SELECT topicid, MIN(postid) as first_postid FROM {$p}posts GROUP BY topicid
 			 ) fp ON p.topicid = fp.topicid
 			 WHERE p.postid != fp.first_postid
 			 ORDER BY p.postid ASC"
@@ -218,11 +255,13 @@ class WPForo_Importer extends Importer {
 		}
 	}
 
-	private function import_likes(): void {
+	private function import_likes( string $p = '' ): void {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		if ( ! $p ) {
+			$p = $wpdb->prefix . 'wpforo_';
+		}
 
-		$likes_table = $p . 'wpforo_likes';
+		$likes_table = $p . 'likes';
 		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $likes_table ) ) ) {
 			return;
 		}
@@ -240,11 +279,13 @@ class WPForo_Importer extends Importer {
 		}
 	}
 
-	private function create_profiles(): void {
+	private function create_profiles( string $p = '' ): void {
 		global $wpdb;
-		$p = $wpdb->prefix;
+		if ( ! $p ) {
+			$p = $wpdb->prefix . 'wpforo_';
+		}
 
-		$profiles_table = $p . 'wpforo_profiles';
+		$profiles_table = $p . 'profiles';
 		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $profiles_table ) ) ) {
 			return;
 		}
