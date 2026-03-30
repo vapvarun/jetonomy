@@ -101,9 +101,14 @@ class Asgaros_Importer extends Importer {
 		$ordered = $this->sort_by_dependency( $forums );
 
 		foreach ( $ordered as $forum ) {
-			$parent_space_id = null;
-			if ( (int) $forum->parent_id > 0 ) {
-				$parent_space_id = $this->get_mapped_id( 'forum', (int) $forum->parent_id );
+			// parent_forum = parent forum ID for sub-forums (0 = top-level).
+			// parent_id = WordPress page ID where Asgaros is embedded (not a forum parent).
+			$parent_space_id = 0;
+			if ( (int) $forum->parent_forum > 0 ) {
+				$mapped = $this->get_mapped_id( 'forum', (int) $forum->parent_forum );
+				if ( $mapped ) {
+					$parent_space_id = $mapped;
+				}
 			}
 
 			$space_id = Space::create(
@@ -143,10 +148,10 @@ class Asgaros_Importer extends Importer {
 
 		foreach ( $forums as $forum ) {
 			$indexed[ $forum->id ] = $forum;
-			if ( (int) $forum->parent_id === 0 ) {
+			if ( (int) $forum->parent_forum === 0 ) {
 				$children[0][] = $forum->id;
 			} else {
-				$children[ $forum->parent_id ][] = $forum->id;
+				$children[ $forum->parent_forum ][] = $forum->id;
 			}
 		}
 
@@ -183,25 +188,26 @@ class Asgaros_Importer extends Importer {
 		);
 
 		foreach ( $topics as $topic ) {
-			$space_id = $this->get_mapped_id( 'forum', (int) $topic->forum_id );
+			// Asgaros uses parent_id to reference the forum (not a parent topic).
+			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( ! $space_id ) {
-				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->forum_id} not imported" );
+				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->parent_id} not imported" );
 				++$this->skipped;
 				continue;
 			}
 
-			// The first post in forum_posts for this topic supplies the body
+			// Asgaros links posts to topics via forum_posts.parent_id = topic.id.
 			$first_post = $wpdb->get_row(
 				$wpdb->prepare(
-					"SELECT * FROM {$p}forum_posts WHERE topic_id = %d ORDER BY id ASC LIMIT 1",
+					"SELECT * FROM {$p}forum_posts WHERE parent_id = %d ORDER BY id ASC LIMIT 1",
 					$topic->id
 				)
 			);
 
 			$content = $first_post ? $first_post->text : '';
 
-			// Map Asgaros status: 0 = visible, 1 = deleted/spam
-			$status = ( isset( $topic->status ) && (int) $topic->status === 1 ) ? 'pending' : 'publish';
+			// Asgaros uses 'approved' column: 1 = approved, 0 = pending.
+			$status = ( isset( $topic->approved ) && (int) $topic->approved === 1 ) ? 'publish' : 'pending';
 
 			$post_id = JtPost::create(
 				[
@@ -237,36 +243,32 @@ class Asgaros_Importer extends Importer {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
-		// Fetch all posts that are NOT the first post of their topic.
-		// The sub-select identifies the minimum id per topic (= the topic body post).
+		// In Asgaros, forum_posts.parent_id = topic ID (not a parent reply).
+		// First post per topic is the topic body (already imported). Skip it.
 		$posts = $wpdb->get_results(
 			"SELECT p.* FROM {$p}forum_posts p
 			 INNER JOIN (
-			     SELECT topic_id, MIN(id) AS first_id
+			     SELECT parent_id AS topic_id, MIN(id) AS first_id
 			     FROM {$p}forum_posts
-			     GROUP BY topic_id
-			 ) f ON p.topic_id = f.topic_id
+			     GROUP BY parent_id
+			 ) f ON p.parent_id = f.topic_id
 			 WHERE p.id != f.first_id
 			 ORDER BY p.id ASC"
 		);
 
 		foreach ( $posts as $asgaros_post ) {
-			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->topic_id );
+			// parent_id in forum_posts = topic ID in Asgaros.
+			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
 				++$this->skipped;
 				continue;
 			}
 
-			// Asgaros uses parent_id for threaded/quoted replies
-			$parent_reply_id = null;
-			if ( ! empty( $asgaros_post->parent_id ) && (int) $asgaros_post->parent_id > 0 ) {
-				$parent_reply_id = $this->get_mapped_id( 'asgaros_reply', (int) $asgaros_post->parent_id );
-			}
-
+			// Asgaros has no threaded replies — all replies are flat.
 			$reply_id = JtReply::create(
 				[
 					'post_id'       => $post_id,
-					'parent_id'     => $parent_reply_id,
+					'parent_id'     => null,
 					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
 					'content'       => wp_kses_post( $asgaros_post->text ),
 					'content_plain' => wp_strip_all_tags( $asgaros_post->text ),
