@@ -62,10 +62,10 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 }
 ?>
 <?php
-$settings         = get_option( 'jetonomy_settings', array() );
-$community_title  = $settings['community_title'] ?? __( 'Community', 'jetonomy' );
+$settings        = get_option( 'jetonomy_settings', array() );
+$community_title = ! empty( $settings['community_title'] ) ? $settings['community_title'] : __( 'Community', 'jetonomy' );
 ?>
-<h1 class="jt-page-title"><?php echo esc_html( $community_title ); ?></h1>
+<h1 class="jt-page-title screen-reader-text"><?php echo esc_html( $community_title ); ?></h1>
 <div class="jt-two-col">
 		<main>
 			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
