@@ -138,11 +138,7 @@ class MemberPress_Adapter implements Membership_Adapter {
 			if ( $activate ) {
 				SpaceMember::add( (int) $rule->space_id, $user_id, $rule->space_role ?? 'member' );
 			} else {
-				// Downgrade to viewer instead of removing (grace period)
-				$current_role = SpaceMember::get_role( (int) $rule->space_id, $user_id );
-				if ( $current_role && 'viewer' !== $current_role ) {
-					SpaceMember::add( (int) $rule->space_id, $user_id, 'viewer' );
-				}
+				SpaceMember::remove( (int) $rule->space_id, $user_id );
 			}
 		}
 	}

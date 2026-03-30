@@ -120,10 +120,7 @@ class PMPro_Adapter implements Membership_Adapter {
 			if ( $activate ) {
 				SpaceMember::add( (int) $rule->space_id, $user_id, $rule->space_role ?? 'member' );
 			} else {
-				$current = SpaceMember::get_role( (int) $rule->space_id, $user_id );
-				if ( $current && 'viewer' !== $current ) {
-					SpaceMember::add( (int) $rule->space_id, $user_id, 'viewer' );
-				}
+				SpaceMember::remove( (int) $rule->space_id, $user_id );
 			}
 		}
 	}
