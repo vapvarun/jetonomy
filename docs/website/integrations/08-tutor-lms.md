@@ -5,65 +5,70 @@ Connect Tutor LMS course enrollment to Jetonomy spaces — students get a dedica
 ## What You Will Learn
 
 - How to gate a Jetonomy space by Tutor LMS course enrollment
-- How open courses map to public spaces and paid courses to private spaces
+- How to auto-create spaces when new courses are published
+- How to sync existing students into a space
 - What happens when a student un-enrolls or cancels
 
 ## How Detection Works
 
-Jetonomy Pro detects Tutor LMS automatically when both plugins are active. The Tutor adapter registers with the Adapter Registry and adds a new Rule Type to the Access Rules tab: **Tutor Course**.
+Jetonomy Pro detects Tutor LMS automatically when both plugins are active. A **Tutor Course** option appears in the Access Rules rule type dropdown — no setup needed.
 
-## Gating a Space by Course Enrollment
+## Linking a Course to a Space
 
 1. Go to **Jetonomy → Spaces** and open (or create) the discussion space for your course.
 2. Open the **Access Rules** tab.
-3. Click **Add Rule** → set Rule Type to **Membership**.
-4. In the Value field, enter the course level ID (format: `tutor_course_123` where 123 is the course post ID).
-5. Set Grants to **Participate** and Space Role to **Member**.
-6. Save the rule.
+3. Select **Tutor Course** from the rule type dropdown.
+4. Start typing your course name — a searchable dropdown appears showing all published Tutor courses.
+5. Select the course, set Grants to **Participate** and Space Role to **Member**.
+6. Click **Add Rule**.
 
-Students who enroll in the selected course are added to the space automatically. Students who cancel or are removed from the course lose access immediately.
+The rule appears in the table showing the course name (not an ID), with a **Sync Members** button and **Delete** button.
 
-> **Tip:** Create one Jetonomy space per course and name it to match — for example "Photography Fundamentals — Discussion". Members immediately understand where they are.
+## Syncing Existing Students
 
-## Open vs Paid Courses
+If students are already enrolled in the course before the rule was created, click the **Sync Members** button next to the rule. This pulls in all currently enrolled students and adds them to the space. A toast notification shows how many were synced.
 
-| Tutor Course Type | Recommended Space Setup |
-|---|---|
-| Public course (`_tutor_is_public_course` = yes) | **Public** space with **Open** join policy — anyone can read and participate |
-| Free course (requires enrollment) | **Public** space — enrollment sync adds students as Members |
-| Paid course (WooCommerce/EDD) | **Private** space — only enrolled students can see content |
+New enrollments and cancellations are handled automatically after the rule is created — no further action needed.
+
+## Auto-Create Spaces for New Courses
+
+Instead of manually creating a space for each course:
+
+1. Go to **Jetonomy → Settings → Integrations**.
+2. Under **Auto-Create Spaces for Courses**, enable the Tutor LMS toggle.
+3. Choose the default space type (Q&A, Forum, or Feed).
+4. Click **Save Settings**.
+
+Now when you publish a new course in Tutor, a private discussion space is automatically created with:
+- The course title as the space name
+- A membership access rule linking the course to the space
+- The course author assigned as space admin
 
 ## Enrollment and Un-enrollment Events
 
 | Tutor LMS Event | Jetonomy Action |
 |---|---|
-| Student enrolls in course | Added to linked spaces as Member |
-| Student completes course | Access retained — they keep their discussion space |
-| Student enrollment cancelled | Removed from linked spaces |
-| Student enrollment deleted | Removed from linked spaces |
+| Student enrolls in course | Added to linked space as Member |
+| Student completes course | Access retained |
+| Student enrollment cancelled | Removed from linked space |
+| Student enrollment deleted | Removed from linked space |
 
-> **Note:** Course completion does not revoke access. Students keep access to their discussion space after finishing the course. Their posts and replies remain visible to other space members.
+Content (posts and replies) created by the student remains in the space — only access is revoked.
 
-## Typical Setup for a Course Community
+## Typical Setup
 
-A common setup for Tutor LMS course communities:
-
-- One **Private** space per paid course, gated to that course's enrollment
+- One **Private** space per paid course, gated to enrollment
 - One **Public** space per free course for open discussion
 - One **Public** space for general Q&A open to all students
 
-This keeps paid course discussions exclusive while giving all students a shared community area.
-
 ## Troubleshooting
 
-**Tutor Course does not appear in access rules** — Confirm Jetonomy Pro is active and Tutor LMS is active. The adapter auto-detects Tutor when the `TUTOR_VERSION` constant exists.
+**Tutor Course does not appear in the rule type dropdown** — Confirm Jetonomy Pro and Tutor LMS are both active. Check **Jetonomy → Settings → Integrations** to see the Tutor LMS status.
 
-**Students still have access after cancellation** — Confirm the cancellation uses Tutor's standard enrollment management. Custom enrollment plugins that bypass the `tutor_after_enrollment_cancelled` hook will not trigger Jetonomy's removal logic.
+**Students still have access after cancellation** — Confirm the cancellation uses Tutor's standard enrollment management. Set the space to **Private** to fully restrict access.
 
-**Student was removed but still sees the space** — If the space visibility is set to **Public**, non-members can still read content. Set the space to **Private** to fully restrict access to enrolled students only.
+**Sync Members shows 0 synced** — The students may already be space members, or no users are enrolled in the selected course.
 
 ## What's Next?
 
-Learn how to connect Jetonomy with your WordPress theme for a seamless look.
-
-[Theme Compatibility →](07-theme-compatibility.md)
+[LifterLMS Integration →](09-lifterlms.md)

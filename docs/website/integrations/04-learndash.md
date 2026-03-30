@@ -1,6 +1,4 @@
-Connect LearnDash course and group enrollment to Jetonomy spaces — so students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
-
-![Jetonomy admin settings for LearnDash integration configuration](../images/admin-settings.png)
+Connect LearnDash course and group enrollment to Jetonomy spaces — students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
@@ -8,69 +6,77 @@ Connect LearnDash course and group enrollment to Jetonomy spaces — so students
 
 - How to gate a Jetonomy space by LearnDash course enrollment
 - How to gate a space by LearnDash group membership
-- How instructors moderate their course discussion spaces
+- How to auto-create spaces when new courses are published
+- How to sync existing students into a space
 - What happens when a student un-enrolls
 
 ## How Detection Works
 
-Jetonomy Pro detects LearnDash automatically when both plugins are active. The LearnDash adapter registers with the Adapter Registry and adds two new Rule Types to the Access Rules tab: **LearnDash Course** and **LearnDash Group**.
+Jetonomy Pro detects LearnDash automatically when both plugins are active. A **LearnDash Course** option appears in the Access Rules rule type dropdown — no setup needed. Compatible with LearnDash 4.x and 5.x.
 
 ## Gating a Space by Course Enrollment
 
-1. Go to **Jetonomy → Spaces** and open the discussion space for your course.
-2. Open the **Access Rules** tab.
-3. Click **Add Rule** → set Rule Type to **LearnDash Course**.
-4. Select the course from the dropdown.
-5. Set the action to **Grant**.
-6. Save the space.
+1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
+2. Select **LearnDash Course** from the rule type dropdown.
+3. Start typing the course name — a searchable dropdown shows all published LearnDash courses.
+4. Select the course, set Grants to **Participate** and Space Role to **Member**.
+5. Click **Add Rule**.
 
-Students who enroll in the selected course are added to the space automatically. Students who complete or un-enroll from the course are removed.
-
-> **Tip:** Create one Jetonomy space per course and name it to match — for example "Photography Fundamentals — Discussion". Members immediately understand where they are.
+The rule appears in the table showing the course name and a **Sync Members** button.
 
 ## Gating a Space by LearnDash Group
 
-1. Add a rule with Rule Type **LearnDash Group**.
-2. Select the group from the dropdown.
-3. Set the action to **Grant** and save.
+LearnDash groups also appear in the searchable dropdown. This is ideal for cohort-based learning — one group, one space.
 
-Group-gated spaces work well for cohort-based or team learning scenarios. All members of the LearnDash group — including group leaders — gain access.
+1. Select **LearnDash Course** from the rule type dropdown.
+2. Type the group name — groups show as "Group Name (LD Group)" in the results.
+3. Select the group, set Grants and Space Role, and click **Add Rule**.
 
-## Instructor Moderation
+All members of the LearnDash group — including group leaders — gain access. When a user is removed from the group, they lose space access.
 
-When a WordPress user is assigned as a **Course Instructor** or **Group Leader** in LearnDash, Jetonomy Pro automatically assigns them the **Moderator** role in the linked Jetonomy space. They can approve, trash, or spam posts within their space, but cannot access the global Jetonomy moderation queue.
+## Syncing Existing Students
 
-> **Note:** Instructor role mapping requires the user to be assigned as instructor in LearnDash before the space access rule is created. If you add the instructor after, re-save the Access Rule to trigger the role sync.
+If students are already enrolled before the rule was created, click the **Sync Members** button. This pulls in all currently enrolled users. A notification shows how many were synced.
+
+New enrollments and removals are handled automatically after the rule is created.
+
+## Auto-Create Spaces for New Courses
+
+1. Go to **Jetonomy → Settings → Integrations**.
+2. Enable the **LearnDash** toggle under Auto-Create Spaces for Courses.
+3. Choose the default space type (Q&A, Forum, or Feed).
+4. Click **Save Settings**.
+
+When you publish a new course in LearnDash, a private discussion space is automatically created with:
+- The course title as the space name
+- A membership access rule linking the course to the space
+- The course author assigned as space admin
 
 ## Enrollment and Un-enrollment Events
 
 | LearnDash Event | Jetonomy Action |
 |---|---|
 | Student enrolls in course | Added to linked spaces as Member |
-| Student completes course | Access retained (configurable) |
+| Student completes course | Access retained |
 | Student un-enrolls or is removed | Removed from linked spaces |
-| Group leader assigned | Added to linked spaces as Moderator |
-| Group leader removed | Demoted to Member or removed |
+| User added to group | Added to linked spaces as Member |
+| User removed from group | Removed from linked spaces |
 
-> **Note:** By default, course completion does not revoke access. Students keep access to their discussion space after finishing the course. You can change this by adding a second Revoke rule on the same course — or by using WooCommerce Subscriptions with a subscription-per-course model.
+Content (posts and replies) remains in the space — only access is revoked.
 
 ## Typical Setup for a Course Community
 
-A common setup for course-based communities:
-
 - One **Private** space per course, gated to that course's enrollment
 - One **Public** space for general Q&A open to all students
-- One **Hidden** space per instructor cohort, gated to a LearnDash Group
-
-This keeps course discussions focused while giving students a shared general community area.
+- One **Hidden** space per group/cohort, gated to a LearnDash Group
 
 ## Troubleshooting
 
-**LearnDash Course/Group does not appear in Rule Type dropdown** — Confirm Jetonomy Pro is active and LearnDash is active. Check **Jetonomy → Extensions** to see the LearnDash integration status.
+**LearnDash Course does not appear in the rule type dropdown** — Confirm Jetonomy Pro and LearnDash are both active. Check **Jetonomy → Settings → Integrations** to see the LearnDash status.
 
-**Instructor not getting moderator role** — Ensure the WordPress user is assigned as Course Instructor in LearnDash's course settings, not just as a WordPress Editor or Administrator. Re-save the access rule after assigning the instructor role.
+**Students still have access after un-enrolling** — Confirm the un-enrollment uses LearnDash's standard course access management. Custom enrollment plugins that bypass the `learndash_update_course_access` hook will not trigger removal.
 
-**Students still have access after un-enrolling** — Confirm the LearnDash un-enrollment uses the standard `learndash_user_course_access_removed` action. Custom enrollment plugins that bypass this action will not trigger Jetonomy's removal logic.
+**Sync Members shows 0 synced** — The students may already be space members, or no users are enrolled in the selected course.
 
 ## What's Next?
 
