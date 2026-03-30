@@ -473,6 +473,12 @@
 				}
 				settings.prefixes = prefixes;
 
+				// BuddyPress group linking.
+				var $bpGroup = $('#ss-bp-group');
+				if ($bpGroup.length) {
+					settings.bp_group_id = $bpGroup.val() || '';
+				}
+
 				$btn.prop('disabled', true);
 				self.showSpinner($btn);
 
