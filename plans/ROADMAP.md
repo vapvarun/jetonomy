@@ -113,7 +113,10 @@ Extend existing subscriptions table with a type flag. Save topics to read later 
 ### 6. BuddyPress Integration
 BuddyPress/BuddyBoss group ↔ space mapping. Group members auto-synced. Forum tab in group pages. Activity stream integration. User profile forum stats.
 
-### 7. Abilities API — 100% Coverage
+### 7. GDPR — Pro Data Coverage
+Free core covers 13 tables. Pro needs export + erasure for private messages, reactions, and custom fields.
+
+### 8. Abilities API — 100% Coverage
 Every REST endpoint gets a corresponding WordPress Ability. Currently 19 free + 20 Pro = 39 abilities. Adding ~15 missing CRUD abilities so AI agents can fully operate the forum.
 
 ---
