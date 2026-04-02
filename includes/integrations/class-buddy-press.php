@@ -53,6 +53,11 @@ class BuddyPress {
 
 		// BP Member profile: Forum summary tab.
 		add_action( 'bp_setup_nav', array( $this, 'register_profile_forum_tab' ), 20 );
+
+		// Forum settings in group creation wizard + group manage screen.
+		add_action( 'groups_custom_group_fields_editable', array( $this, 'render_group_forum_settings' ) );
+		add_action( 'groups_group_details_edited', array( $this, 'save_group_forum_settings' ), 10, 1 );
+		add_action( 'groups_created_group', array( $this, 'save_group_forum_settings_on_create' ), 20, 1 );
 	}
 
 	/**
@@ -83,6 +88,18 @@ class BuddyPress {
 	 * @param object $group    BP_Groups_Group object.
 	 */
 	public function on_group_created( int $group_id, object $group ): void {
+		// If the forum settings form was submitted, let the form handler decide.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( isset( $_POST['jt_bp_forum_action'] ) ) {
+			$action = sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) );
+			if ( 'none' === $action || 0 === strpos( $action, 'link_' ) ) {
+				// User chose no forum or link existing — don't auto-create.
+				// The save_group_forum_settings_on_create handler at priority 20 handles linking.
+				return;
+			}
+		}
+
+		// Default: auto-create a linked space for the new group.
 		$visibility_map = array(
 			'public'  => 'public',
 			'private' => 'private',
@@ -284,9 +301,7 @@ class BuddyPress {
 			return;
 		}
 
-		$user_id       = get_current_user_id();
-		$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
-		$posts         = Post::list_by_space_visible( $space_id, $user_id, $is_privileged, 'latest', 20 );
+		$posts = Post::list_by_space( $space_id, 'latest', 20 );
 		$base          = \Jetonomy\base_url();
 		$space_url     = $base . '/s/' . $space->slug . '/';
 		$new_post_url  = $space_url . 'new/';
@@ -412,6 +427,157 @@ class BuddyPress {
 
 		echo '<p><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
 		echo '</div>';
+	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Group Create/Manage — Forum Settings
+	 * ══════════════════════════════════════════════
+	 */
+
+	/**
+	 * Render forum settings in group creation wizard and group manage screen.
+	 *
+	 * Fires via groups_custom_group_fields_editable (creation step + manage > details).
+	 */
+	public function render_group_forum_settings(): void {
+		$group_id       = bp_get_current_group_id();
+		$linked_space   = $group_id ? $this->get_linked_space( $group_id ) : null;
+		$existing_space = $linked_space ? Space::find( $linked_space ) : null;
+
+		// Get all unlinked spaces for the dropdown.
+		global $wpdb;
+		$p     = $wpdb->prefix;
+		$bp    = buddypress();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$linked_ids = $wpdb->get_col(
+			"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = '" . self::META_KEY . "' AND meta_value != ''"
+		);
+		$exclude    = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
+		$exclude_in = implode( ',', $exclude );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$available_spaces = $wpdb->get_results(
+			"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_in}) ORDER BY title ASC"
+		);
+
+		// Re-include the currently linked space so it shows as selected.
+		if ( $existing_space && ! in_array( (int) $existing_space->id, array_column( $available_spaces, 'id' ), true ) ) {
+			array_unshift( $available_spaces, $existing_space );
+		}
+		?>
+		<div class="jt-bp-forum-settings" style="margin-top: 16px; padding: 16px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
+			<h4 style="margin: 0 0 8px;"><?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?></h4>
+			<p class="description" style="margin: 0 0 12px;"><?php esc_html_e( 'Link a Jetonomy forum space to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+
+			<label for="jt-bp-forum-action" style="font-weight: 600; display: block; margin-bottom: 4px;">
+				<?php esc_html_e( 'Forum Space', 'jetonomy' ); ?>
+			</label>
+			<select name="jt_bp_forum_action" id="jt-bp-forum-action" style="width: 100%; max-width: 400px;">
+				<option value="none" <?php selected( ! $linked_space ); ?>><?php esc_html_e( 'No forum', 'jetonomy' ); ?></option>
+				<option value="create" <?php selected( false ); ?>><?php esc_html_e( 'Create new forum space', 'jetonomy' ); ?></option>
+				<?php if ( ! empty( $available_spaces ) ) : ?>
+					<optgroup label="<?php esc_attr_e( 'Link existing space', 'jetonomy' ); ?>">
+						<?php foreach ( $available_spaces as $space ) : ?>
+							<option value="link_<?php echo absint( $space->id ); ?>" <?php selected( $linked_space, (int) $space->id ); ?>>
+								<?php echo esc_html( $space->title ); ?>
+							</option>
+						<?php endforeach; ?>
+					</optgroup>
+				<?php endif; ?>
+			</select>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Save forum settings when group details are edited (manage screen).
+	 *
+	 * @param int $group_id Group ID.
+	 */
+	public function save_group_forum_settings( int $group_id ): void {
+		if ( ! isset( $_POST['jt_bp_forum_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- BP handles nonce
+			return;
+		}
+
+		$action = sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) );
+		$this->process_forum_action( $group_id, $action );
+	}
+
+	/**
+	 * Save forum settings during group creation (after group is saved).
+	 *
+	 * @param int $group_id Group ID.
+	 */
+	public function save_group_forum_settings_on_create( int $group_id ): void {
+		if ( ! isset( $_POST['jt_bp_forum_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- BP handles nonce
+			return;
+		}
+
+		$action = sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) );
+
+		// During creation, if action is "create", the on_group_created handler
+		// at priority 10 already created a space. Only handle "link" and "none".
+		if ( 'create' === $action ) {
+			return; // Already handled by on_group_created at priority 10.
+		}
+
+		$this->process_forum_action( $group_id, $action );
+	}
+
+	/**
+	 * Process forum link/unlink/create action for a group.
+	 *
+	 * @param int    $group_id Group ID.
+	 * @param string $action   'none', 'create', or 'link_{space_id}'.
+	 */
+	private function process_forum_action( int $group_id, string $action ): void {
+		$current_space = $this->get_linked_space( $group_id );
+
+		if ( 'none' === $action ) {
+			if ( $current_space ) {
+				self::unlink_group( $group_id );
+			}
+			return;
+		}
+
+		if ( 'create' === $action ) {
+			// Unlink old space first.
+			if ( $current_space ) {
+				self::unlink_group( $group_id );
+			}
+
+			$group    = groups_get_group( $group_id );
+			$space_id = Space::create(
+				array(
+					'title'       => $group->name ?? 'Group Forum',
+					'slug'        => sanitize_title( ( $group->name ?? 'group' ) . '-forum' ),
+					'description' => $group->description ?? '',
+					'visibility'  => 'public',
+					'author_id'   => $group->creator_id ?? get_current_user_id(),
+				)
+			);
+
+			if ( $space_id ) {
+				self::link_group_to_space( $group_id, $space_id );
+				$creator = (int) ( $group->creator_id ?? get_current_user_id() );
+				if ( $creator ) {
+					SpaceMember::add( $space_id, $creator, 'admin' );
+				}
+			}
+			return;
+		}
+
+		// Link existing space: action = "link_{space_id}".
+		if ( 0 === strpos( $action, 'link_' ) ) {
+			$target_space = absint( substr( $action, 5 ) );
+			if ( $target_space && Space::find( $target_space ) ) {
+				if ( $current_space && $current_space !== $target_space ) {
+					self::unlink_group( $group_id );
+				}
+				self::link_group_to_space( $group_id, $target_space );
+			}
+		}
 	}
 
 	/*
