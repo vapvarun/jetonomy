@@ -197,6 +197,22 @@
 	vertical-align: middle;
 }
 
+/* ── Back to Group Link ── */
+.jt-bp-back-banner {
+	font-size: 0.8125rem;
+	margin-bottom: 12px;
+}
+.jt-bp-back-banner a {
+	text-decoration: none;
+	color: var(--jt-text-secondary, #64748b);
+}
+.jt-bp-back-banner a:hover {
+	color: var(--jt-accent, #3b82f6);
+}
+
+/* ── Profile Link ── */
+.jt-bp-profile-link { margin-top: 20px; }
+
 /* ── Group Create/Manage Forum Settings ── */
 .jt-bp-forum-settings {
 	margin-top: 20px;

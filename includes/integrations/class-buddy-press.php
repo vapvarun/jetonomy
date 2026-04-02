@@ -48,6 +48,9 @@ class BuddyPress {
 		// Enqueue BP-specific styles on frontend.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 
+		// "Back to Group" banner on Jetonomy pages when space is linked to a BP group.
+		add_action( 'jetonomy_before_content', array( $this, 'render_back_to_group_banner' ) );
+
 		// BP Group nav: Forum tab.
 		add_action( 'bp_setup_nav', array( $this, 'register_group_forum_tab' ), 20 );
 
@@ -91,18 +94,19 @@ class BuddyPress {
 	 * @param object $group    BP_Groups_Group object.
 	 */
 	public function on_group_created( int $group_id, object $group ): void {
-		// If the forum settings form was submitted, let the form handler decide.
+		// Only create a forum space when explicitly requested via the form.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		if ( isset( $_POST['jt_bp_forum_action'] ) ) {
-			$action = sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) );
-			if ( 'none' === $action || 0 === strpos( $action, 'link_' ) ) {
-				// User chose no forum or link existing — don't auto-create.
-				// The save_group_forum_settings_on_create handler at priority 20 handles linking.
-				return;
-			}
+		$action = isset( $_POST['jt_bp_forum_action'] )
+			? sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) )
+			: 'none';
+
+		if ( 'create' !== $action ) {
+			// 'none', 'link_*', or no form data — don't auto-create.
+			// The save_group_forum_settings_on_create handler at priority 20 handles linking.
+			return;
 		}
 
-		// Default: auto-create a linked space for the new group.
+		// Explicitly requested: create a linked space for the new group.
 		$visibility_map = array(
 			'public'  => 'public',
 			'private' => 'private',
@@ -158,12 +162,21 @@ class BuddyPress {
 			return;
 		}
 
+		$visibility_map = array(
+			'public'  => 'public',
+			'private' => 'private',
+			'hidden'  => 'hidden',
+		);
+
 		$data = array();
 		if ( ! empty( $group->name ) ) {
 			$data['title'] = $group->name;
 		}
 		if ( isset( $group->description ) ) {
 			$data['description'] = $group->description;
+		}
+		if ( ! empty( $group->status ) && isset( $visibility_map[ $group->status ] ) ) {
+			$data['visibility'] = $visibility_map[ $group->status ];
 		}
 
 		if ( ! empty( $data ) ) {
@@ -312,10 +325,12 @@ class BuddyPress {
 
 		echo '<div class="jt-bp-forum">';
 
-		// Stats + action bar.
+		// Header + action bar.
 		echo '<div class="jt-bp-forum-head">';
 		echo '<strong>' . esc_html( $space->title ) . '</strong>';
-		echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html__( '+ New Topic', 'jetonomy' ) . '</a>';
+		if ( is_user_logged_in() ) {
+			echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html__( '+ New Topic', 'jetonomy' ) . '</a>';
+		}
 		echo '</div>';
 
 		if ( empty( $posts ) ) {
@@ -570,7 +585,7 @@ class BuddyPress {
 		$base   = \Jetonomy\base_url();
 		$jt_url = $user ? $base . '/u/' . $user->user_login . '/' : $base;
 
-		echo '<p style="margin-top: 20px;"><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
+		echo '<p class="jt-bp-profile-link"><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
 	}
 
 	/*
@@ -707,13 +722,19 @@ class BuddyPress {
 				self::unlink_group( $group_id );
 			}
 
-			$group    = groups_get_group( $group_id );
-			$space_id = Space::create(
+			$group          = groups_get_group( $group_id );
+			$visibility_map = array(
+				'public'  => 'public',
+				'private' => 'private',
+				'hidden'  => 'hidden',
+			);
+			$bp_status      = $group->status ?? 'public';
+			$space_id       = Space::create(
 				array(
 					'title'       => $group->name ?? 'Group Forum',
 					'slug'        => sanitize_title( ( $group->name ?? 'group' ) . '-forum' ),
 					'description' => $group->description ?? '',
-					'visibility'  => 'public',
+					'visibility'  => $visibility_map[ $bp_status ] ?? 'public',
 					'author_id'   => $group->creator_id ?? get_current_user_id(),
 				)
 			);
@@ -743,6 +764,48 @@ class BuddyPress {
 				self::link_group_to_space( $group_id, $target_space );
 			}
 		}
+	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  "Back to Group" Banner
+	 * ══════════════════════════════════════════════
+	 */
+
+	/**
+	 * Show a "Back to Group" banner on Jetonomy pages when the space is linked to a BP group.
+	 *
+	 * @param array $data Template data with 'slug' key for the current space.
+	 */
+	public function render_back_to_group_banner( $data = array() ): void {
+		$slug = $data['slug'] ?? '';
+		if ( ! $slug ) {
+			return;
+		}
+
+		$space = Space::find_by_slug( $slug );
+		if ( ! $space ) {
+			return;
+		}
+
+		$group_id = self::find_group_by_space( (int) $space->id );
+		if ( ! $group_id ) {
+			return;
+		}
+
+		$group = groups_get_group( $group_id );
+		if ( ! $group || empty( $group->name ) ) {
+			return;
+		}
+
+		$group_url = bp_get_group_url( $group );
+		?>
+		<div class="jt-bp-back-banner">
+			<a href="<?php echo esc_url( $group_url ); ?>">
+				&larr; <?php echo esc_html( $group->name ); ?>
+			</a>
+		</div>
+		<?php
 	}
 
 	/*
