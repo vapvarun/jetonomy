@@ -351,85 +351,219 @@ class BuddyPress {
 	 */
 
 	/**
-	 * Register a "Forum" nav item on BP member profiles.
+	 * Register the "Forum" nav item with sub-tabs on BP member profiles.
 	 */
 	public function register_profile_forum_tab(): void {
 		if ( ! bp_is_active( 'groups' ) ) {
 			return;
 		}
 
+		$user    = bp_is_my_profile() ? wp_get_current_user() : get_userdata( bp_displayed_user_id() );
+		$bp_url  = $user ? bp_members_get_user_url( $user->ID ) : '';
+		$jt_base = \Jetonomy\base_url();
+		$jt_url  = $user ? $jt_base . '/u/' . $user->user_login . '/' : $jt_base;
+
 		bp_core_new_nav_item(
 			array(
 				'name'                    => __( 'Forum', 'jetonomy' ),
 				'slug'                    => 'forum',
 				'position'                => 80,
-				'screen_function'         => array( $this, 'profile_forum_screen' ),
+				'screen_function'         => array( $this, 'profile_posts_screen' ),
 				'show_for_displayed_user' => true,
-				'default_subnav_slug'     => '',
+				'default_subnav_slug'     => 'posts',
 			)
 		);
+
+		// Sub-tab: Posts (default).
+		bp_core_new_subnav_item(
+			array(
+				'name'            => __( 'Posts', 'jetonomy' ),
+				'slug'            => 'posts',
+				'parent_slug'     => 'forum',
+				'parent_url'      => $bp_url . 'forum/',
+				'position'        => 10,
+				'screen_function' => array( $this, 'profile_posts_screen' ),
+			)
+		);
+
+		// Sub-tab: Replies.
+		bp_core_new_subnav_item(
+			array(
+				'name'            => __( 'Replies', 'jetonomy' ),
+				'slug'            => 'replies',
+				'parent_slug'     => 'forum',
+				'parent_url'      => $bp_url . 'forum/',
+				'position'        => 20,
+				'screen_function' => array( $this, 'profile_replies_screen' ),
+			)
+		);
+
+		// Sub-tab: Bookmarks (own profile only).
+		if ( bp_is_my_profile() ) {
+			bp_core_new_subnav_item(
+				array(
+					'name'            => __( 'Bookmarks', 'jetonomy' ),
+					'slug'            => 'bookmarks',
+					'parent_slug'     => 'forum',
+					'parent_url'      => $bp_url . 'forum/',
+					'position'        => 30,
+					'screen_function' => array( $this, 'profile_bookmarks_screen' ),
+					'user_has_access' => bp_is_my_profile(),
+				)
+			);
+		}
 	}
 
-	/**
-	 * Screen callback for the member profile Forum tab.
-	 */
-	public function profile_forum_screen(): void {
-		add_action( 'bp_template_content', array( $this, 'profile_forum_content' ) );
+	/* Screen callbacks */
+
+	public function profile_posts_screen(): void {
+		add_action( 'bp_template_content', array( $this, 'render_profile_posts' ) );
 		bp_core_load_template( 'members/single/plugins' );
 	}
 
-	/**
-	 * Render forum summary on a BP member profile.
-	 */
-	public function profile_forum_content(): void {
-		$displayed_user_id = bp_displayed_user_id();
-		if ( ! $displayed_user_id ) {
-			return;
-		}
+	public function profile_replies_screen(): void {
+		add_action( 'bp_template_content', array( $this, 'render_profile_replies' ) );
+		bp_core_load_template( 'members/single/plugins' );
+	}
 
-		$profile = UserProfile::find_by_user( $displayed_user_id );
-		$base    = \Jetonomy\base_url();
-		$user    = get_userdata( $displayed_user_id );
-		$jt_url  = $user ? $base . '/u/' . $user->user_login . '/' : $base;
+	public function profile_bookmarks_screen(): void {
+		add_action( 'bp_template_content', array( $this, 'render_profile_bookmarks' ) );
+		bp_core_load_template( 'members/single/plugins' );
+	}
 
-		$post_count  = $profile ? (int) $profile->post_count : 0;
-		$reply_count = $profile ? (int) $profile->reply_count : 0;
-		$reputation  = $profile ? (int) $profile->reputation : 0;
-		$trust_level = $profile ? (int) $profile->trust_level : 0;
+	/* ── Profile Sub-Tab: Posts ── */
 
-		echo '<div class="jt-bp-profile">';
+	public function render_profile_posts(): void {
+		$user_id = bp_displayed_user_id();
+		$this->render_profile_stats( $user_id );
 
-		// Stats bar.
-		echo '<div class="jt-bp-stats">';
-		echo '<div class="jt-bp-stat"><strong>' . (int) $post_count . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . (int) $reply_count . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . (int) $reputation . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . (int) $trust_level . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
-		echo '</div>';
+		$base  = \Jetonomy\base_url();
+		$posts = Post::list_by_author( $user_id, 10 );
 
-		// Recent topics.
-		$recent_posts = Post::list_by_author( $displayed_user_id, 5 );
-
-		if ( ! empty( $recent_posts ) ) {
-			echo '<h4>' . esc_html__( 'Recent Topics', 'jetonomy' ) . '</h4>';
+		if ( ! empty( $posts ) ) {
 			echo '<ul class="jt-bp-recent">';
-			foreach ( $recent_posts as $post ) {
+			foreach ( $posts as $post ) {
 				$space    = Space::find( (int) $post->space_id );
 				$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 				$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 				echo '<li>';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
+				if ( $space ) {
+					echo ' <span class="jt-bp-space-tag">' . esc_html( $space->title ) . '</span>';
+				}
 				// translators: %s: human-readable time difference.
 				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
 				echo '</li>';
 			}
 			echo '</ul>';
 		} else {
-			echo '<p>' . esc_html__( 'No forum topics yet.', 'jetonomy' ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html__( 'No forum posts yet.', 'jetonomy' ) . '</p>';
 		}
 
-		echo '<p><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
+		$this->render_profile_link( $user_id );
+	}
+
+	/* ── Profile Sub-Tab: Replies ── */
+
+	public function render_profile_replies(): void {
+		$user_id = bp_displayed_user_id();
+		$this->render_profile_stats( $user_id );
+
+		global $wpdb;
+		$base    = \Jetonomy\base_url();
+		$p       = $wpdb->prefix;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$replies = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT r.id, r.content_plain, r.created_at, r.post_id,
+				        p.title AS post_title, p.slug AS post_slug, p.space_id,
+				        s.slug AS space_slug, s.title AS space_title
+				 FROM {$p}jt_replies r
+				 INNER JOIN {$p}jt_posts p ON p.id = r.post_id
+				 INNER JOIN {$p}jt_spaces s ON s.id = p.space_id
+				 WHERE r.author_id = %d AND r.status = 'publish'
+				 ORDER BY r.created_at DESC
+				 LIMIT 10",
+				$user_id
+			)
+		);
+
+		if ( ! empty( $replies ) ) {
+			echo '<ul class="jt-bp-recent">';
+			foreach ( $replies as $reply ) {
+				$post_url = $base . '/s/' . $reply->space_slug . '/t/' . $reply->post_slug . '/';
+				$time_ago = human_time_diff( strtotime( $reply->created_at ), time() );
+				$snippet  = wp_trim_words( $reply->content_plain, 15, '...' );
+				echo '<li>';
+				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $snippet ) . '</a>';
+				echo ' <span class="jt-bp-space-tag">' . esc_html( $reply->post_title ) . '</span>';
+				// translators: %s: human-readable time difference.
+				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
+				echo '</li>';
+			}
+			echo '</ul>';
+		} else {
+			echo '<p class="jt-bp-empty">' . esc_html__( 'No forum replies yet.', 'jetonomy' ) . '</p>';
+		}
+
+		$this->render_profile_link( $user_id );
+	}
+
+	/* ── Profile Sub-Tab: Bookmarks ── */
+
+	public function render_profile_bookmarks(): void {
+		$user_id = bp_displayed_user_id();
+		$this->render_profile_stats( $user_id );
+
+		$bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, 10 );
+		$base      = \Jetonomy\base_url();
+
+		if ( ! empty( $bookmarks ) ) {
+			echo '<ul class="jt-bp-recent">';
+			foreach ( $bookmarks as $post ) {
+				$space    = Space::find( (int) $post->space_id );
+				$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
+				$time_ago = human_time_diff( strtotime( $post->bookmarked_at ?? $post->created_at ), time() );
+				echo '<li>';
+				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
+				if ( $space ) {
+					echo ' <span class="jt-bp-space-tag">' . esc_html( $space->title ) . '</span>';
+				}
+				// translators: %s: human-readable time difference.
+				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
+				echo '</li>';
+			}
+			echo '</ul>';
+		} else {
+			echo '<p class="jt-bp-empty">' . esc_html__( 'No bookmarked posts yet.', 'jetonomy' ) . '</p>';
+		}
+
+		$this->render_profile_link( $user_id );
+	}
+
+	/* ── Profile Shared Helpers ── */
+
+	private function render_profile_stats( int $user_id ): void {
+		$profile     = UserProfile::find_by_user( $user_id );
+		$post_count  = $profile ? (int) $profile->post_count : 0;
+		$reply_count = $profile ? (int) $profile->reply_count : 0;
+		$reputation  = $profile ? (int) $profile->reputation : 0;
+		$trust_level = $profile ? (int) $profile->trust_level : 0;
+
+		echo '<div class="jt-bp-stats">';
+		echo '<div class="jt-bp-stat"><strong>' . $post_count . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . $reply_count . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . $reputation . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . $trust_level . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
 		echo '</div>';
+	}
+
+	private function render_profile_link( int $user_id ): void {
+		$user   = get_userdata( $user_id );
+		$base   = \Jetonomy\base_url();
+		$jt_url = $user ? $base . '/u/' . $user->user_login . '/' : $base;
+
+		echo '<p style="margin-top: 20px;"><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
 	}
 
 	/*

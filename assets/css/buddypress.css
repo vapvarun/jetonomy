@@ -182,6 +182,16 @@
 	white-space: nowrap;
 	margin-left: 12px;
 }
+.jt-bp-space-tag {
+	display: inline-block;
+	font-size: 0.75rem;
+	color: #64748b;
+	background: #f1f5f9;
+	padding: 1px 8px;
+	border-radius: 4px;
+	margin-left: 6px;
+	vertical-align: middle;
+}
 
 /* ── Group Create/Manage Forum Settings ── */
 .jt-bp-forum-settings {
