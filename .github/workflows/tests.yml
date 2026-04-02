@@ -69,5 +69,11 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-progress --prefer-dist
 
+      - name: Download BuddyPress for type stubs
+        run: |
+          mkdir -p /tmp/bp-stubs
+          curl -sL "https://downloads.wordpress.org/plugin/buddypress.latest-stable.zip" -o /tmp/bp.zip
+          unzip -q /tmp/bp.zip -d /tmp/bp-stubs
+
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse -c phpstan.neon.dist

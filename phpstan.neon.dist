@@ -8,6 +8,8 @@ parameters:
         - includes/
     scanFiles:
         - jetonomy.php
+    scanDirectories:
+        - /tmp/bp-stubs/buddypress
     ignoreErrors:
         # Third-party plugin classes not available in CI
         -
