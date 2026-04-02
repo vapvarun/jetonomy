@@ -487,16 +487,16 @@ class BuddyPress {
 		?>
 		<div class="jt-bp-forum-settings" style="margin-top: 16px; padding: 16px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
 			<h4 style="margin: 0 0 8px;"><?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?></h4>
-			<p class="description" style="margin: 0 0 12px;"><?php esc_html_e( 'Link a Jetonomy forum space to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+			<p class="description" style="margin: 0 0 12px;"><?php esc_html_e( 'Add a discussion forum to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
 
 			<label for="jt-bp-forum-action" style="font-weight: 600; display: block; margin-bottom: 4px;">
-				<?php esc_html_e( 'Forum Space', 'jetonomy' ); ?>
+				<?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?>
 			</label>
 			<select name="jt_bp_forum_action" id="jt-bp-forum-action" style="width: 100%; max-width: 400px;">
 				<option value="none" <?php selected( ! $linked_space ); ?>><?php esc_html_e( 'No forum', 'jetonomy' ); ?></option>
-				<option value="create" <?php selected( false ); ?>><?php esc_html_e( 'Create new forum space', 'jetonomy' ); ?></option>
+				<option value="create" <?php selected( false ); ?>><?php esc_html_e( 'Create new discussion forum', 'jetonomy' ); ?></option>
 				<?php if ( ! empty( $available_spaces ) ) : ?>
-					<optgroup label="<?php esc_attr_e( 'Link existing space', 'jetonomy' ); ?>">
+					<optgroup label="<?php esc_attr_e( 'Link existing forum', 'jetonomy' ); ?>">
 						<?php foreach ( $available_spaces as $space ) : ?>
 							<option value="link_<?php echo absint( $space->id ); ?>" <?php selected( $linked_space, (int) $space->id ); ?>>
 								<?php echo esc_html( $space->title ); ?>
