@@ -442,6 +442,12 @@
 				settings.allow_voting = allowVoting ? '1' : '0';
 				settings.posts_per_page = Math.max(1, parseInt(postsPerPage, 10) || 20);
 
+				// BuddyPress group linking.
+				var $bpGroup = $('#ss-bp-group');
+				if ($bpGroup.length) {
+					settings.bp_group_id = $bpGroup.val() || '';
+				}
+
 				$btn.prop('disabled', true);
 				self.showSpinner($btn);
 

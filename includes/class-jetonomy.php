@@ -216,6 +216,11 @@ final class Jetonomy {
 			$pmpro->register_hooks();
 		}
 
+		// BuddyPress integration — Groups ↔ Spaces sync.
+		if ( function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
+			new Integrations\BuddyPress();
+		}
+
 		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
 		Captcha\Captcha_Manager::init();
 

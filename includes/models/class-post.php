@@ -194,6 +194,28 @@ class Post extends Model {
 	}
 
 	/**
+	 * List published posts by a specific author.
+	 *
+	 * @param int $user_id Author user ID.
+	 * @param int $limit   Max rows.
+	 * @param int $offset  Pagination offset.
+	 * @return object[]
+	 */
+	public static function list_by_author( int $user_id, int $limit = 20, int $offset = 0 ): array {
+		$table   = static::table();
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table} WHERE author_id = %d AND status = 'publish' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$user_id,
+				$limit,
+				$offset
+			)
+		);
+		return $results ? $results : array();
+	}
+
+	/**
 	 * Close a post (prevent new replies).
 	 *
 	 * @param int $id Post ID.

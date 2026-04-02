@@ -160,6 +160,21 @@ class Spaces_Handler {
 			if ( is_string( $settings_raw ) ) {
 				$decoded = json_decode( wp_unslash( $settings_raw ), true );
 				if ( is_array( $decoded ) ) {
+					// Handle BuddyPress group linking (stored in group meta, not space settings).
+					if ( isset( $decoded['bp_group_id'] ) && function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
+						$bp_gid = absint( $decoded['bp_group_id'] );
+						// Unlink any previously linked group.
+						$old_gid = \Jetonomy\Integrations\BuddyPress::find_group_by_space( $id );
+						if ( $old_gid && $old_gid !== $bp_gid ) {
+							\Jetonomy\Integrations\BuddyPress::unlink_group( $old_gid );
+						}
+						// Link new group.
+						if ( $bp_gid ) {
+							\Jetonomy\Integrations\BuddyPress::link_group_to_space( $bp_gid, $id );
+						}
+						unset( $decoded['bp_group_id'] );
+					}
+
 					// Merge with existing settings so other keys are not wiped.
 					$existing = Space::get_settings( $id );
 					$merged   = array_merge( $existing, $decoded );

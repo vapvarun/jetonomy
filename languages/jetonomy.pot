@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.1.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-03-30 10:23:05+00:00\n"
+"POT-Creation-Date: 2026-04-02 08:38:25+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -604,7 +604,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/new-post.php:104
 #: includes/admin/class-admin.php:84 includes/admin/class-admin.php:85
 #: includes/admin/views/moderation.php:134 includes/class-privacy.php:136
-#: includes/class-privacy.php:183 templates/views/new-post.php:104
+#: includes/class-privacy.php:183 templates/views/new-post.php:103
 msgid "Content"
 msgstr ""
 
@@ -1000,7 +1000,7 @@ msgstr ""
 #: includes/admin/views/replies.php:219 includes/admin/views/spaces.php:110
 #: includes/admin/views/users.php:129 includes/admin/views/users.php:169
 #: includes/class-template-loader.php:206 templates/partials/composer.php:52
-#: templates/views/edit-profile.php:118 templates/views/new-post.php:142
+#: templates/views/edit-profile.php:118 templates/views/new-post.php:141
 msgid "Cancel"
 msgstr ""
 
@@ -4489,7 +4489,7 @@ msgstr[1] ""
 #: dist/jetonomy/includes/class-template-loader.php:242
 #: dist/jetonomy/templates/views/new-post.php:155
 #: includes/class-template-loader.php:201
-#: includes/class-template-loader.php:242 templates/views/new-post.php:155
+#: includes/class-template-loader.php:242 templates/views/new-post.php:154
 msgid "Post Topic"
 msgstr ""
 
@@ -4716,7 +4716,13 @@ msgstr ""
 msgid "Forums imported from bbPress"
 msgstr ""
 
-#: dist/jetonomy/includes/import/class-wpforo-importer.php:74
+#: dist/jetonomy/includes/import/class-wpforo-importer.php:94
+#: includes/import/class-wpforo-importer.php:94
+#. translators: %s: wpForo board name
+msgid "Imported from wpForo — %s"
+msgstr ""
+
+#: dist/jetonomy/includes/import/class-wpforo-importer.php:95
 #: includes/import/class-wpforo-importer.php:95
 msgid "Imported from wpForo"
 msgstr ""
@@ -5454,89 +5460,89 @@ msgid "Posting in %s"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:88
-#: templates/views/new-post.php:88
+#: templates/views/new-post.php:86
 msgid "What is your question?"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:89
-#: templates/views/new-post.php:89
+#: templates/views/new-post.php:87
 msgid "Describe your idea"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:90
-#: templates/views/new-post.php:90
+#: templates/views/new-post.php:88
 msgid "What's on your mind?"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:92
-#: templates/views/new-post.php:92
+#: templates/views/new-post.php:90
 msgid "Topic title"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:99
 #: dist/jetonomy/templates/views/search.php:161
-#: dist/jetonomy/templates/views/search.php:304 templates/views/new-post.php:99
+#: dist/jetonomy/templates/views/search.php:304 templates/views/new-post.php:98
 #: templates/views/search.php:161 templates/views/search.php:304
 msgid "Tags"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:99
-#: templates/views/new-post.php:99
+#: templates/views/new-post.php:98
 msgid "(optional, comma-separated)"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:100
-#: templates/views/new-post.php:100
+#: templates/views/new-post.php:99
 msgid "e.g. python, django, architecture"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:114
-#: templates/views/new-post.php:114
+#: templates/views/new-post.php:113
 msgid "Write your post..."
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:132
-#: templates/views/new-post.php:132
+#: templates/views/new-post.php:131
 msgid "Publish on"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:136
-#: templates/views/new-post.php:136
+#: templates/views/new-post.php:135
 msgid "Your post will be published automatically at this date and time."
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:151
-#: templates/views/new-post.php:151
+#: templates/views/new-post.php:150
 msgid "Post Question"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:152
-#: templates/views/new-post.php:152
+#: templates/views/new-post.php:151
 msgid "Submit Idea"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:153
-#: templates/views/new-post.php:153
+#: templates/views/new-post.php:152
 msgid "Post Status"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:159
-#: templates/views/new-post.php:159
+#: templates/views/new-post.php:158
 msgid "More publishing options"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:167
-#: templates/views/new-post.php:167
+#: templates/views/new-post.php:166
 msgid "Publish now"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:171
-#: templates/views/new-post.php:171
+#: templates/views/new-post.php:170
 msgid "Save as draft"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:175
-#: templates/views/new-post.php:175
+#: templates/views/new-post.php:174
 msgid "Schedule..."
 msgstr ""
 
@@ -5969,11 +5975,6 @@ msgstr ""
 #: templates/views/user-profile.php:374
 #. translators: %s: human-readable time difference
 msgid "saved %s ago"
-msgstr ""
-
-#: includes/import/class-wpforo-importer.php:94
-#. translators: %s: wpForo board name
-msgid "Imported from wpForo — %s"
 msgstr ""
 
 #: vendor/easy-digital-downloads/edd-sl-sdk/src/Messenger.php:60

@@ -372,6 +372,31 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							<input type="number" id="ss-posts-per-page" value="<?php echo absint( $space_settings['posts_per_page'] ?? '' ); ?>" min="0" max="100" class="small-text" placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
 						</td>
 					</tr>
+					<?php if ( function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) : ?>
+					<tr>
+						<th scope="row"><label for="ss-bp-group"><?php esc_html_e( 'BuddyPress Group', 'jetonomy' ); ?></label></th>
+						<td>
+							<?php
+							$linked_group_id = \Jetonomy\Integrations\BuddyPress::find_group_by_space( (int) $space->id );
+							$bp_groups       = \BP_Groups_Group::get( array(
+								'per_page'          => 100,
+								'show_hidden'       => true,
+								'update_meta_cache' => false,
+							) );
+							$groups_list     = $bp_groups['groups'] ?? array();
+							?>
+							<select id="ss-bp-group">
+								<option value=""><?php esc_html_e( '(Not linked)', 'jetonomy' ); ?></option>
+								<?php foreach ( $groups_list as $bp_group ) : ?>
+									<option value="<?php echo absint( $bp_group->id ); ?>" <?php selected( $linked_group_id, (int) $bp_group->id ); ?>>
+										<?php echo esc_html( $bp_group->name ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description"><?php esc_html_e( 'Link this space to a BuddyPress group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<?php endif; ?>
 				</table>
 				<p class="submit">
 					<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Settings', 'jetonomy' ); ?></button>
