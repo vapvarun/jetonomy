@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-04-02 12:34:42+00:00\n"
+"POT-Creation-Date: 2026-04-02 12:51:44+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1211,10 +1211,8 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/content.php:309
 #: dist/jetonomy/includes/admin/views/import.php:165
 #: dist/jetonomy/includes/admin/views/users.php:56
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:417
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:580
-#: dist/jetonomy/includes/integrations/class-buddypress.php:305
-#: dist/jetonomy/includes/integrations/class-buddypress.php:387
+#: dist/jetonomy/includes/integrations/class-buddypress.php:417
+#: dist/jetonomy/includes/integrations/class-buddypress.php:580
 #: dist/jetonomy/templates/views/single-post.php:384
 #: dist/jetonomy/templates/views/user-profile.php:161
 #: dist/jetonomy/templates/views/user-profile.php:197
@@ -1792,8 +1790,7 @@ msgid "Forums"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/import.php:163
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:579
-#: dist/jetonomy/includes/integrations/class-buddypress.php:386
+#: dist/jetonomy/includes/integrations/class-buddypress.php:579
 #: includes/admin/views/import.php:163
 #: includes/integrations/class-buddypress.php:579
 msgid "Topics"
@@ -2115,10 +2112,8 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/spaces.php:45
 #: dist/jetonomy/includes/admin/views/spaces.php:134
 #: dist/jetonomy/includes/admin/views/spaces.php:206
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:288
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:393
-#: dist/jetonomy/includes/integrations/class-buddypress.php:252
-#: dist/jetonomy/includes/integrations/class-buddypress.php:345
+#: dist/jetonomy/includes/integrations/class-buddypress.php:288
+#: dist/jetonomy/includes/integrations/class-buddypress.php:393
 #: dist/jetonomy/templates/partials/sidebar.php:94
 #: includes/admin/views/settings.php:144
 #: includes/admin/views/setup-wizard.php:564
@@ -2245,8 +2240,7 @@ msgid ""
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/settings.php:240
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:582
-#: dist/jetonomy/includes/integrations/class-buddypress.php:389
+#: dist/jetonomy/includes/integrations/class-buddypress.php:582
 #: includes/admin/views/settings.php:240
 #: includes/integrations/class-buddypress.php:582
 msgid "Level"
@@ -2265,8 +2259,7 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/settings.php:243
 #: dist/jetonomy/includes/admin/views/users.php:54
 #: dist/jetonomy/includes/class-privacy.php:81
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:581
-#: dist/jetonomy/includes/integrations/class-buddypress.php:388
+#: dist/jetonomy/includes/integrations/class-buddypress.php:581
 #: dist/jetonomy/templates/views/user-profile.php:153
 #: includes/admin/views/settings.php:243 includes/admin/views/users.php:54
 #: includes/class-privacy.php:81 includes/integrations/class-buddypress.php:581
@@ -3599,7 +3592,7 @@ msgstr ""
 
 #: dist/jetonomy/includes/admin/views/spaces.php:173
 #: dist/jetonomy/includes/admin/views/users.php:55
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:405
+#: dist/jetonomy/includes/integrations/class-buddypress.php:405
 #: dist/jetonomy/templates/partials/sidebar.php:85
 #: dist/jetonomy/templates/views/search.php:159
 #: dist/jetonomy/templates/views/search.php:233
@@ -3796,8 +3789,7 @@ msgstr ""
 #: dist/jetonomy/includes/api/class-replies-controller.php:575
 #: dist/jetonomy/includes/class-abilities.php:1228
 #: dist/jetonomy/includes/class-shortcodes.php:86
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:358
-#: dist/jetonomy/includes/integrations/class-buddypress.php:315
+#: dist/jetonomy/includes/integrations/class-buddypress.php:358
 #: dist/jetonomy/templates/partials/avatar.php:14
 #: dist/jetonomy/templates/partials/post-card.php:56
 #: includes/api/class-base-controller.php:258
@@ -4381,19 +4373,19 @@ msgstr ""
 msgid "Display top community members by reputation."
 msgstr ""
 
-#: dist/jetonomy/includes/class-jetonomy.php:316
+#: dist/jetonomy/includes/class-jetonomy.php:317
 #: includes/class-jetonomy.php:317
 msgid "Invalid unsubscribe link."
 msgstr ""
 
-#: dist/jetonomy/includes/class-jetonomy.php:328
+#: dist/jetonomy/includes/class-jetonomy.php:329
 #: includes/class-jetonomy.php:329
 msgid ""
 "You have been unsubscribed from these email notifications. You can "
 "re-enable them in your notification preferences."
 msgstr ""
 
-#: dist/jetonomy/includes/class-jetonomy.php:329
+#: dist/jetonomy/includes/class-jetonomy.php:330
 #: includes/class-jetonomy.php:330
 msgid "Unsubscribed"
 msgstr ""
@@ -4511,12 +4503,10 @@ msgid "No posts yet."
 msgstr ""
 
 #: dist/jetonomy/includes/class-shortcodes.php:89
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:360
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:480
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:526
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:558
-#: dist/jetonomy/includes/integrations/class-buddypress.php:318
-#: dist/jetonomy/includes/integrations/class-buddypress.php:405
+#: dist/jetonomy/includes/integrations/class-buddypress.php:360
+#: dist/jetonomy/includes/integrations/class-buddypress.php:480
+#: dist/jetonomy/includes/integrations/class-buddypress.php:526
+#: dist/jetonomy/includes/integrations/class-buddypress.php:558
 #: dist/jetonomy/templates/partials/post-card.php:72
 #: dist/jetonomy/templates/partials/reply-card.php:30
 #: dist/jetonomy/templates/views/moderation.php:121
@@ -4815,19 +4805,17 @@ msgstr ""
 msgid "Imported from wpForo"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:335
-#: dist/jetonomy/includes/integrations/class-buddypress.php:297
+#: dist/jetonomy/includes/integrations/class-buddypress.php:335
 #: includes/integrations/class-buddypress.php:335
 msgid "+ New Topic"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:340
-#: dist/jetonomy/includes/integrations/class-buddypress.php:301
+#: dist/jetonomy/includes/integrations/class-buddypress.php:340
 #: includes/integrations/class-buddypress.php:340
 msgid "No topics yet. Start a discussion!"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:354
+#: dist/jetonomy/includes/integrations/class-buddypress.php:354
 #: dist/jetonomy/templates/partials/sidebar.php:159
 #: includes/integrations/class-buddypress.php:354
 #: templates/partials/sidebar.php:159
@@ -4840,89 +4828,70 @@ msgid_plural "%d replies"
 msgstr[0] ""
 msgstr[1] ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:366
-#: dist/jetonomy/includes/integrations/class-buddypress.php:323
+#: dist/jetonomy/includes/integrations/class-buddypress.php:366
 #: includes/integrations/class-buddypress.php:366
 msgid "View all topics"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:430
+#: dist/jetonomy/includes/integrations/class-buddypress.php:430
 #: dist/jetonomy/templates/views/user-profile.php:204
 #: includes/integrations/class-buddypress.php:430
 #: templates/views/user-profile.php:204
 msgid "Bookmarks"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:485
+#: dist/jetonomy/includes/integrations/class-buddypress.php:485
 #: includes/integrations/class-buddypress.php:485
 msgid "No forum posts yet."
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:531
+#: dist/jetonomy/includes/integrations/class-buddypress.php:531
 #: includes/integrations/class-buddypress.php:531
 msgid "No forum replies yet."
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:563
+#: dist/jetonomy/includes/integrations/class-buddypress.php:563
 #: includes/integrations/class-buddypress.php:563
 msgid "No bookmarked posts yet."
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:582
-#: dist/jetonomy/includes/integrations/class-buddypress.php:389
+#: dist/jetonomy/includes/integrations/class-buddypress.php:582
 #: dist/jetonomy/templates/views/user-profile.php:165
 #: includes/integrations/class-buddypress.php:582
 #: templates/views/user-profile.php:165
 msgid "Trust"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:591
-#: dist/jetonomy/includes/integrations/class-buddypress.php:413
+#: dist/jetonomy/includes/integrations/class-buddypress.php:591
 #: includes/integrations/class-buddypress.php:591
 msgid "View Full Forum Profile"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:648
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:652
+#: dist/jetonomy/includes/integrations/class-buddypress.php:648
+#: dist/jetonomy/includes/integrations/class-buddypress.php:652
 #: includes/integrations/class-buddypress.php:648
 #: includes/integrations/class-buddypress.php:652
 msgid "Discussion Forum"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:649
+#: dist/jetonomy/includes/integrations/class-buddypress.php:649
 #: includes/integrations/class-buddypress.php:649
 msgid "Add a discussion forum to this group. Members will be synced automatically."
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:655
+#: dist/jetonomy/includes/integrations/class-buddypress.php:655
 #: includes/integrations/class-buddypress.php:655
 msgid "No forum"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:656
+#: dist/jetonomy/includes/integrations/class-buddypress.php:656
 #: includes/integrations/class-buddypress.php:656
 msgid "Create new discussion forum"
 msgstr ""
 
-#: dist/jetonomy/includes/integrations/class-buddy-press.php:658
+#: dist/jetonomy/includes/integrations/class-buddypress.php:658
 #: includes/integrations/class-buddypress.php:658
 msgid "Link existing forum"
-msgstr ""
-
-#: dist/jetonomy/includes/integrations/class-buddypress.php:304
-msgid "Topic"
-msgstr ""
-
-#: dist/jetonomy/includes/integrations/class-buddypress.php:306
-msgid "Last Activity"
-msgstr ""
-
-#: dist/jetonomy/includes/integrations/class-buddypress.php:396
-msgid "Recent Topics"
-msgstr ""
-
-#: dist/jetonomy/includes/integrations/class-buddypress.php:410
-msgid "No forum topics yet."
 msgstr ""
 
 #: dist/jetonomy/includes/notifications/class-notifier.php:63

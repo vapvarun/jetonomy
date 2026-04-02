@@ -166,9 +166,10 @@
 	margin: 0 0 20px;
 }
 .jt-bp-recent li {
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr auto auto;
 	align-items: center;
-	justify-content: space-between;
+	gap: 10px;
 	padding: 10px 0;
 	border-bottom: 1px solid #f1f5f9;
 }
@@ -178,13 +179,16 @@
 	font-weight: 500;
 	color: #1e293b;
 	font-size: 0.9375rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .jt-bp-recent a:hover { color: #3b82f6; }
 .jt-bp-time {
 	color: #94a3b8;
 	font-size: 0.8125rem;
 	white-space: nowrap;
-	margin-right: 12px;
+	text-align: left;
 }
 .jt-bp-space-tag {
 	display: inline-block;
