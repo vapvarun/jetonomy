@@ -331,9 +331,9 @@ class BuddyPress {
 				echo '<tr>';
 				echo '<td><a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
 				echo '<br><small>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</small></td>';
-				echo '<td>' . (int) $post->reply_count . '</td>';
+				echo '<td class="jt-bp-replies">' . (int) $post->reply_count . '</td>';
 				// translators: %s: human-readable time difference.
-				echo '<td>' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</td>';
+				echo '<td class="jt-bp-activity">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</td>';
 				echo '</tr>';
 			}
 
@@ -485,14 +485,14 @@ class BuddyPress {
 			array_unshift( $available_spaces, $existing_space );
 		}
 		?>
-		<div class="jt-bp-forum-settings" style="margin-top: 16px; padding: 16px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa;">
-			<h4 style="margin: 0 0 8px;"><?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?></h4>
-			<p class="description" style="margin: 0 0 12px;"><?php esc_html_e( 'Add a discussion forum to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+		<div class="jt-bp-forum-settings">
+			<h4><?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?></h4>
+			<p class="description"><?php esc_html_e( 'Add a discussion forum to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
 
-			<label for="jt-bp-forum-action" style="font-weight: 600; display: block; margin-bottom: 4px;">
+			<label for="jt-bp-forum-action">
 				<?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?>
 			</label>
-			<select name="jt_bp_forum_action" id="jt-bp-forum-action" style="width: 100%; max-width: 400px;">
+			<select name="jt_bp_forum_action" id="jt-bp-forum-action">
 				<option value="none" <?php selected( ! $linked_space ); ?>><?php esc_html_e( 'No forum', 'jetonomy' ); ?></option>
 				<option value="create" <?php selected( false ); ?>><?php esc_html_e( 'Create new discussion forum', 'jetonomy' ); ?></option>
 				<?php if ( ! empty( $available_spaces ) ) : ?>
