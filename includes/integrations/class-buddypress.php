@@ -48,11 +48,25 @@ class BuddyPress {
 		// Enqueue BP-specific styles on frontend.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 
+		// "Back to Group" link on Jetonomy pages when space is linked to a BP group.
+		add_action( 'jetonomy_before_content', array( $this, 'render_back_to_group_banner' ) );
+
+		// Show linked group in sidebar About section.
+		add_action( 'jetonomy_sidebar_about_after_meta', array( $this, 'render_sidebar_group_link' ) );
+
 		// BP Group nav: Forum tab.
 		add_action( 'bp_setup_nav', array( $this, 'register_group_forum_tab' ), 20 );
 
 		// BP Member profile: Forum summary tab.
 		add_action( 'bp_setup_nav', array( $this, 'register_profile_forum_tab' ), 20 );
+
+		// Forum settings in group manage screen (Manage > Details).
+		add_action( 'groups_custom_group_fields_editable', array( $this, 'render_group_forum_settings' ) );
+		add_action( 'groups_group_details_edited', array( $this, 'save_group_forum_settings' ), 10, 1 );
+
+		// Forum settings in group creation wizard (Details step).
+		add_action( 'bp_after_group_details_creation_step', array( $this, 'render_group_forum_settings' ) );
+		add_action( 'groups_created_group', array( $this, 'save_group_forum_settings_on_create' ), 20, 1 );
 	}
 
 	/**
@@ -83,6 +97,19 @@ class BuddyPress {
 	 * @param object $group    BP_Groups_Group object.
 	 */
 	public function on_group_created( int $group_id, object $group ): void {
+		// Only create a forum space when explicitly requested via the form.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$action = isset( $_POST['jt_bp_forum_action'] )
+			? sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) )
+			: 'none';
+
+		if ( 'create' !== $action ) {
+			// 'none', 'link_*', or no form data — don't auto-create.
+			// The save_group_forum_settings_on_create handler at priority 20 handles linking.
+			return;
+		}
+
+		// Explicitly requested: create a linked space for the new group.
 		$visibility_map = array(
 			'public'  => 'public',
 			'private' => 'private',
@@ -96,9 +123,9 @@ class BuddyPress {
 			array(
 				'title'       => $group->name ?? '',
 				'slug'        => sanitize_title( $group->name ?? 'bp-group-' . $group_id ),
-				'description' => $group->description ?? '',
+				'description' => $group->description,
 				'visibility'  => $visibility,
-				'author_id'   => $group->creator_id ?? get_current_user_id(),
+				'author_id'   => (int) $group->creator_id ?: get_current_user_id(),
 			)
 		);
 
@@ -106,7 +133,7 @@ class BuddyPress {
 			groups_update_groupmeta( $group_id, self::META_KEY, $space_id );
 
 			// Add group creator as space admin.
-			$creator_id = (int) ( $group->creator_id ?? get_current_user_id() );
+			$creator_id = (int) ( (int) $group->creator_id ?: get_current_user_id() );
 			if ( $creator_id ) {
 				SpaceMember::add( $space_id, $creator_id, 'admin' );
 			}
@@ -138,12 +165,21 @@ class BuddyPress {
 			return;
 		}
 
+		$visibility_map = array(
+			'public'  => 'public',
+			'private' => 'private',
+			'hidden'  => 'hidden',
+		);
+
 		$data = array();
 		if ( ! empty( $group->name ) ) {
 			$data['title'] = $group->name;
 		}
 		if ( isset( $group->description ) ) {
 			$data['description'] = $group->description;
+		}
+		if ( ! empty( $group->status ) && isset( $visibility_map[ $group->status ] ) ) {
+			$data['visibility'] = $visibility_map[ $group->status ];
 		}
 
 		if ( ! empty( $data ) ) {
@@ -266,7 +302,7 @@ class BuddyPress {
 	 */
 	public function group_forum_screen(): void {
 		add_action( 'bp_template_content', array( $this, 'group_forum_content' ) );
-		bp_core_load_template( 'groups/single/plugins' );
+		bp_core_load_template( array( 'groups/single/plugins' ) );
 	}
 
 	/**
@@ -284,42 +320,49 @@ class BuddyPress {
 			return;
 		}
 
-		$user_id       = get_current_user_id();
-		$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
-		$posts         = Post::list_by_space_visible( $space_id, $user_id, $is_privileged, 'latest', 20 );
+		$posts         = Post::list_by_space( $space_id, 'latest', 20 );
 		$base          = \Jetonomy\base_url();
 		$space_url     = $base . '/s/' . $space->slug . '/';
 		$new_post_url  = $space_url . 'new/';
+		$post_count    = count( $posts );
 
 		echo '<div class="jt-bp-forum">';
+
+		// Header + action bar.
 		echo '<div class="jt-bp-forum-head">';
 		echo '<strong>' . esc_html( $space->title ) . '</strong>';
-		echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html__( '+ New Topic', 'jetonomy' ) . '</a>';
+		if ( is_user_logged_in() ) {
+			echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html__( '+ New Topic', 'jetonomy' ) . '</a>';
+		}
 		echo '</div>';
 
 		if ( empty( $posts ) ) {
 			echo '<p class="jt-bp-empty">' . esc_html__( 'No topics yet. Start a discussion!', 'jetonomy' ) . '</p>';
 		} else {
-			echo '<table class="jt-bp-topics"><thead><tr>';
-			echo '<th>' . esc_html__( 'Topic', 'jetonomy' ) . '</th>';
-			echo '<th>' . esc_html__( 'Replies', 'jetonomy' ) . '</th>';
-			echo '<th>' . esc_html__( 'Last Activity', 'jetonomy' ) . '</th>';
-			echo '</tr></thead><tbody>';
-
+			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
 				$post_url = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
 				$author   = get_userdata( (int) $post->author_id );
 				$time_ago = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
-				echo '<tr>';
-				echo '<td><a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
-				echo '<br><small>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</small></td>';
-				echo '<td>' . (int) $post->reply_count . '</td>';
-				// translators: %s: human-readable time difference.
-				echo '<td>' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</td>';
-				echo '</tr>';
-			}
+				$replies  = (int) $post->reply_count;
 
-			echo '</tbody></table>';
+				echo '<li>';
+				echo '<div class="jt-bp-topic-row">';
+				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
+				if ( $replies > 0 ) {
+					// translators: %d: number of replies.
+					echo ' <span class="jt-bp-space-tag">' . esc_html( sprintf( _n( '%d reply', '%d replies', $replies, 'jetonomy' ), $replies ) ) . '</span>';
+				}
+				echo '</div>';
+				echo '<div class="jt-bp-topic-meta">';
+				echo '<span>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</span>';
+				// translators: %s: human-readable time difference.
+				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
+				echo '</div>';
+				echo '</li>';
+			}
+			echo '</ul>';
+
 			echo '<p class="jt-bp-view-all"><a href="' . esc_url( $space_url ) . '">' . esc_html__( 'View all topics', 'jetonomy' ) . ' &rarr;</a></p>';
 		}
 
@@ -333,85 +376,475 @@ class BuddyPress {
 	 */
 
 	/**
-	 * Register a "Forum" nav item on BP member profiles.
+	 * Register the "Forum" nav item with sub-tabs on BP member profiles.
 	 */
 	public function register_profile_forum_tab(): void {
 		if ( ! bp_is_active( 'groups' ) ) {
 			return;
 		}
 
+		$user    = bp_is_my_profile() ? wp_get_current_user() : get_userdata( bp_displayed_user_id() );
+		$bp_url  = $user ? bp_members_get_user_url( $user->ID ) : '';
+		$jt_base = \Jetonomy\base_url();
+		$jt_url  = $user ? $jt_base . '/u/' . $user->user_login . '/' : $jt_base;
+
 		bp_core_new_nav_item(
 			array(
 				'name'                    => __( 'Forum', 'jetonomy' ),
 				'slug'                    => 'forum',
 				'position'                => 80,
-				'screen_function'         => array( $this, 'profile_forum_screen' ),
+				'screen_function'         => array( $this, 'profile_posts_screen' ),
 				'show_for_displayed_user' => true,
-				'default_subnav_slug'     => '',
+				'default_subnav_slug'     => 'posts',
 			)
 		);
-	}
 
-	/**
-	 * Screen callback for the member profile Forum tab.
-	 */
-	public function profile_forum_screen(): void {
-		add_action( 'bp_template_content', array( $this, 'profile_forum_content' ) );
-		bp_core_load_template( 'members/single/plugins' );
-	}
+		// Sub-tab: Posts (default).
+		bp_core_new_subnav_item(
+			array(
+				'name'            => __( 'Posts', 'jetonomy' ),
+				'slug'            => 'posts',
+				'parent_slug'     => 'forum',
+				'parent_url'      => $bp_url . 'forum/',
+				'position'        => 10,
+				'screen_function' => array( $this, 'profile_posts_screen' ),
+			)
+		);
 
-	/**
-	 * Render forum summary on a BP member profile.
-	 */
-	public function profile_forum_content(): void {
-		$displayed_user_id = bp_displayed_user_id();
-		if ( ! $displayed_user_id ) {
-			return;
+		// Sub-tab: Replies.
+		bp_core_new_subnav_item(
+			array(
+				'name'            => __( 'Replies', 'jetonomy' ),
+				'slug'            => 'replies',
+				'parent_slug'     => 'forum',
+				'parent_url'      => $bp_url . 'forum/',
+				'position'        => 20,
+				'screen_function' => array( $this, 'profile_replies_screen' ),
+			)
+		);
+
+		// Sub-tab: Bookmarks (own profile only).
+		if ( bp_is_my_profile() ) {
+			bp_core_new_subnav_item(
+				array(
+					'name'            => __( 'Bookmarks', 'jetonomy' ),
+					'slug'            => 'bookmarks',
+					'parent_slug'     => 'forum',
+					'parent_url'      => $bp_url . 'forum/',
+					'position'        => 30,
+					'screen_function' => array( $this, 'profile_bookmarks_screen' ),
+					'user_has_access' => bp_is_my_profile(),
+				)
+			);
 		}
+	}
 
-		$profile = UserProfile::find_by_user( $displayed_user_id );
-		$base    = \Jetonomy\base_url();
-		$user    = get_userdata( $displayed_user_id );
-		$jt_url  = $user ? $base . '/u/' . $user->user_login . '/' : $base;
+	/* Screen callbacks */
 
-		$post_count  = $profile ? (int) $profile->post_count : 0;
-		$reply_count = $profile ? (int) $profile->reply_count : 0;
-		$reputation  = $profile ? (int) $profile->reputation : 0;
-		$trust_level = $profile ? (int) $profile->trust_level : 0;
+	public function profile_posts_screen(): void {
+		add_action( 'bp_template_content', array( $this, 'render_profile_posts' ) );
+		bp_core_load_template( array( 'members/single/plugins' ) );
+	}
 
-		echo '<div class="jt-bp-profile">';
+	public function profile_replies_screen(): void {
+		add_action( 'bp_template_content', array( $this, 'render_profile_replies' ) );
+		bp_core_load_template( array( 'members/single/plugins' ) );
+	}
 
-		// Stats bar.
-		echo '<div class="jt-bp-stats">';
-		echo '<div class="jt-bp-stat"><strong>' . (int) $post_count . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . (int) $reply_count . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . (int) $reputation . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . (int) $trust_level . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
-		echo '</div>';
+	public function profile_bookmarks_screen(): void {
+		add_action( 'bp_template_content', array( $this, 'render_profile_bookmarks' ) );
+		bp_core_load_template( array( 'members/single/plugins' ) );
+	}
 
-		// Recent topics.
-		$recent_posts = Post::list_by_author( $displayed_user_id, 5 );
+	/* ── Profile Sub-Tab: Posts ── */
 
-		if ( ! empty( $recent_posts ) ) {
-			echo '<h4>' . esc_html__( 'Recent Topics', 'jetonomy' ) . '</h4>';
+	public function render_profile_posts(): void {
+		$user_id = bp_displayed_user_id();
+		$this->render_profile_stats( $user_id );
+
+		$base  = \Jetonomy\base_url();
+		$posts = Post::list_by_author( $user_id, 10 );
+
+		if ( ! empty( $posts ) ) {
 			echo '<ul class="jt-bp-recent">';
-			foreach ( $recent_posts as $post ) {
+			foreach ( $posts as $post ) {
 				$space    = Space::find( (int) $post->space_id );
 				$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 				$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 				echo '<li>';
 				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
+				if ( $space ) {
+					echo ' <span class="jt-bp-space-tag">' . esc_html( $space->title ) . '</span>';
+				}
 				// translators: %s: human-readable time difference.
 				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
 				echo '</li>';
 			}
 			echo '</ul>';
 		} else {
-			echo '<p>' . esc_html__( 'No forum topics yet.', 'jetonomy' ) . '</p>';
+			echo '<p class="jt-bp-empty">' . esc_html__( 'No forum posts yet.', 'jetonomy' ) . '</p>';
 		}
 
-		echo '<p><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
+		$this->render_profile_link( $user_id );
+	}
+
+	/* ── Profile Sub-Tab: Replies ── */
+
+	public function render_profile_replies(): void {
+		$user_id = bp_displayed_user_id();
+		$this->render_profile_stats( $user_id );
+
+		global $wpdb;
+		$base    = \Jetonomy\base_url();
+		$p       = $wpdb->prefix;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$replies = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT r.id, r.content_plain, r.created_at, r.post_id,
+				        p.title AS post_title, p.slug AS post_slug, p.space_id,
+				        s.slug AS space_slug, s.title AS space_title
+				 FROM {$p}jt_replies r
+				 INNER JOIN {$p}jt_posts p ON p.id = r.post_id
+				 INNER JOIN {$p}jt_spaces s ON s.id = p.space_id
+				 WHERE r.author_id = %d AND r.status = 'publish'
+				 ORDER BY r.created_at DESC
+				 LIMIT 10",
+				$user_id
+			)
+		);
+
+		if ( ! empty( $replies ) ) {
+			echo '<ul class="jt-bp-recent">';
+			foreach ( $replies as $reply ) {
+				$post_url = $base . '/s/' . $reply->space_slug . '/t/' . $reply->post_slug . '/';
+				$time_ago = human_time_diff( strtotime( $reply->created_at ), time() );
+				$snippet  = wp_trim_words( $reply->content_plain, 15, '...' );
+				echo '<li>';
+				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $snippet ) . '</a>';
+				echo ' <span class="jt-bp-space-tag">' . esc_html( $reply->post_title ) . '</span>';
+				// translators: %s: human-readable time difference.
+				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
+				echo '</li>';
+			}
+			echo '</ul>';
+		} else {
+			echo '<p class="jt-bp-empty">' . esc_html__( 'No forum replies yet.', 'jetonomy' ) . '</p>';
+		}
+
+		$this->render_profile_link( $user_id );
+	}
+
+	/* ── Profile Sub-Tab: Bookmarks ── */
+
+	public function render_profile_bookmarks(): void {
+		$user_id = bp_displayed_user_id();
+		$this->render_profile_stats( $user_id );
+
+		$bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, 10 );
+		$base      = \Jetonomy\base_url();
+
+		if ( ! empty( $bookmarks ) ) {
+			echo '<ul class="jt-bp-recent">';
+			foreach ( $bookmarks as $post ) {
+				$space    = Space::find( (int) $post->space_id );
+				$post_url = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
+				$time_ago = human_time_diff( strtotime( $post->bookmarked_at ?? $post->created_at ), time() );
+				echo '<li>';
+				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
+				if ( $space ) {
+					echo ' <span class="jt-bp-space-tag">' . esc_html( $space->title ) . '</span>';
+				}
+				// translators: %s: human-readable time difference.
+				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
+				echo '</li>';
+			}
+			echo '</ul>';
+		} else {
+			echo '<p class="jt-bp-empty">' . esc_html__( 'No bookmarked posts yet.', 'jetonomy' ) . '</p>';
+		}
+
+		$this->render_profile_link( $user_id );
+	}
+
+	/* ── Profile Shared Helpers ── */
+
+	private function render_profile_stats( int $user_id ): void {
+		$profile     = UserProfile::find_by_user( $user_id );
+		$post_count  = $profile ? (int) $profile->post_count : 0;
+		$reply_count = $profile ? (int) $profile->reply_count : 0;
+		$reputation  = $profile ? (int) $profile->reputation : 0;
+		$trust_level = $profile ? (int) $profile->trust_level : 0;
+
+		echo '<div class="jt-bp-stats">';
+		echo '<div class="jt-bp-stat"><strong>' . $post_count . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . $reply_count . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . $reputation . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . $trust_level . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
 		echo '</div>';
+	}
+
+	private function render_profile_link( int $user_id ): void {
+		$user   = get_userdata( $user_id );
+		$base   = \Jetonomy\base_url();
+		$jt_url = $user ? $base . '/u/' . $user->user_login . '/' : $base;
+
+		echo '<p class="jt-bp-profile-link"><a href="' . esc_url( $jt_url ) . '" class="button">' . esc_html__( 'View Full Forum Profile', 'jetonomy' ) . ' &rarr;</a></p>';
+	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Group Create/Manage — Forum Settings
+	 * ══════════════════════════════════════════════
+	 */
+
+	/**
+	 * Render forum settings in group creation wizard and group manage screen.
+	 *
+	 * Fires via groups_custom_group_fields_editable (creation step + manage > details).
+	 */
+	public function render_group_forum_settings(): void {
+		$group_id       = bp_get_current_group_id();
+		$linked_space   = $group_id ? $this->get_linked_space( $group_id ) : null;
+		$existing_space = $linked_space ? Space::find( $linked_space ) : null;
+
+		// Get unlinked spaces that the current user owns or moderates.
+		global $wpdb;
+		$p       = $wpdb->prefix;
+		$bp      = buddypress();
+		$user_id = get_current_user_id();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$linked_ids = $wpdb->get_col(
+			"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = '" . self::META_KEY . "' AND meta_value != ''"
+		);
+		$exclude    = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
+		$exclude_in = implode( ',', $exclude );
+
+		// Only show spaces the user is admin/moderator of, or site admins see all.
+		if ( current_user_can( 'manage_options' ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$available_spaces = $wpdb->get_results(
+				"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_in}) ORDER BY title ASC"
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$available_spaces = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT s.id, s.title, s.slug FROM {$p}jt_spaces s
+					INNER JOIN {$p}jt_space_members sm ON sm.space_id = s.id AND sm.user_id = %d AND sm.role IN ('admin', 'moderator')
+					WHERE s.id NOT IN ({$exclude_in})
+					ORDER BY s.title ASC",
+					$user_id
+				)
+			);
+		}
+
+		// Re-include the currently linked space so it shows as selected.
+		if ( $existing_space && ! in_array( (int) $existing_space->id, array_column( $available_spaces, 'id' ), true ) ) {
+			array_unshift( $available_spaces, $existing_space );
+		}
+		?>
+		<div class="jt-bp-forum-settings">
+			<h4><?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?></h4>
+			<p class="description"><?php esc_html_e( 'Add a discussion forum to this group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+
+			<label for="jt-bp-forum-action">
+				<?php esc_html_e( 'Discussion Forum', 'jetonomy' ); ?>
+			</label>
+			<select name="jt_bp_forum_action" id="jt-bp-forum-action">
+				<option value="none" <?php selected( ! $linked_space ); ?>><?php esc_html_e( 'No forum', 'jetonomy' ); ?></option>
+				<option value="create" <?php selected( false ); ?>><?php esc_html_e( 'Create new discussion forum', 'jetonomy' ); ?></option>
+				<?php if ( ! empty( $available_spaces ) ) : ?>
+					<optgroup label="<?php esc_attr_e( 'Link existing forum', 'jetonomy' ); ?>">
+						<?php foreach ( $available_spaces as $space ) : ?>
+							<option value="link_<?php echo absint( $space->id ); ?>" <?php selected( $linked_space, (int) $space->id ); ?>>
+								<?php echo esc_html( $space->title ); ?>
+							</option>
+						<?php endforeach; ?>
+					</optgroup>
+				<?php endif; ?>
+			</select>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Save forum settings when group details are edited (manage screen).
+	 *
+	 * @param int $group_id Group ID.
+	 */
+	public function save_group_forum_settings( int $group_id ): void {
+		if ( ! isset( $_POST['jt_bp_forum_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- BP handles nonce
+			return;
+		}
+
+		$action = sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) );
+		$this->process_forum_action( $group_id, $action );
+	}
+
+	/**
+	 * Save forum settings during group creation (after group is saved).
+	 *
+	 * @param int $group_id Group ID.
+	 */
+	public function save_group_forum_settings_on_create( int $group_id ): void {
+		if ( ! isset( $_POST['jt_bp_forum_action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- BP handles nonce
+			return;
+		}
+
+		$action = sanitize_text_field( wp_unslash( $_POST['jt_bp_forum_action'] ) );
+
+		// During creation, if action is "create", the on_group_created handler
+		// at priority 10 already created a space. Only handle "link" and "none".
+		if ( 'create' === $action ) {
+			return; // Already handled by on_group_created at priority 10.
+		}
+
+		$this->process_forum_action( $group_id, $action );
+	}
+
+	/**
+	 * Process forum link/unlink/create action for a group.
+	 *
+	 * @param int    $group_id Group ID.
+	 * @param string $action   'none', 'create', or 'link_{space_id}'.
+	 */
+	private function process_forum_action( int $group_id, string $action ): void {
+		$current_space = $this->get_linked_space( $group_id );
+
+		if ( 'none' === $action ) {
+			if ( $current_space ) {
+				self::unlink_group( $group_id );
+			}
+			return;
+		}
+
+		if ( 'create' === $action ) {
+			// Unlink old space first.
+			if ( $current_space ) {
+				self::unlink_group( $group_id );
+			}
+
+			$group          = groups_get_group( $group_id );
+			$visibility_map = array(
+				'public'  => 'public',
+				'private' => 'private',
+				'hidden'  => 'hidden',
+			);
+			$bp_status      = $group->status ?? 'public';
+			$space_id       = Space::create(
+				array(
+					'title'       => $group->name ?? 'Group Forum',
+					'slug'        => sanitize_title( ( $group->name ?? 'group' ) . '-forum' ),
+					'description' => $group->description,
+					'visibility'  => $visibility_map[ $bp_status ] ?? 'public',
+					'author_id'   => (int) $group->creator_id ?: get_current_user_id(),
+				)
+			);
+
+			if ( $space_id ) {
+				self::link_group_to_space( $group_id, $space_id );
+				$creator = (int) ( (int) $group->creator_id ?: get_current_user_id() );
+				if ( $creator ) {
+					SpaceMember::add( $space_id, $creator, 'admin' );
+				}
+			}
+			return;
+		}
+
+		// Link existing space: action = "link_{space_id}".
+		if ( 0 === strpos( $action, 'link_' ) ) {
+			$target_space = absint( substr( $action, 5 ) );
+			if ( $target_space && Space::find( $target_space ) ) {
+				// Prevent linking a space already linked to another group.
+				$already_linked = self::find_group_by_space( $target_space );
+				if ( $already_linked && $already_linked !== $group_id ) {
+					return;
+				}
+				if ( $current_space && $current_space !== $target_space ) {
+					self::unlink_group( $group_id );
+				}
+				self::link_group_to_space( $group_id, $target_space );
+			}
+		}
+	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Sidebar — Linked Group
+	 * ══════════════════════════════════════════════
+	 */
+
+	/**
+	 * Show the linked BP group in the sidebar About card.
+	 *
+	 * @param object $space The current space object.
+	 */
+	public function render_sidebar_group_link( $space ): void {
+		if ( ! isset( $space->id ) ) {
+			return;
+		}
+
+		$group_id = self::find_group_by_space( (int) $space->id );
+		if ( ! $group_id ) {
+			return;
+		}
+
+		$group = groups_get_group( $group_id );
+		if ( ! $group || empty( $group->name ) ) {
+			return;
+		}
+
+		$group_url = bp_get_group_url( $group );
+		?>
+		<div class="jt-sidebar-meta" style="margin-top: 8px;">
+			<a href="<?php echo esc_url( $group_url ); ?>" class="jt-tag" style="text-decoration: none;">
+				<?php echo esc_html( $group->name ); ?> &rarr;
+			</a>
+		</div>
+		<?php
+	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  "Back to Group" Banner
+	 * ══════════════════════════════════════════════
+	 */
+
+	/**
+	 * Show a "Back to Group" banner on Jetonomy pages when the space is linked to a BP group.
+	 *
+	 * @param array $data Template data with 'slug' key for the current space.
+	 */
+	public function render_back_to_group_banner( $data = array() ): void {
+		$slug = $data['slug'] ?? '';
+		if ( ! $slug ) {
+			return;
+		}
+
+		$space = Space::find_by_slug( $slug );
+		if ( ! $space ) {
+			return;
+		}
+
+		$group_id = self::find_group_by_space( (int) $space->id );
+		if ( ! $group_id ) {
+			return;
+		}
+
+		$group = groups_get_group( $group_id );
+		if ( ! $group || empty( $group->name ) ) {
+			return;
+		}
+
+		$group_url = bp_get_group_url( $group );
+		?>
+		<div class="jt-bp-back-banner">
+			<a href="<?php echo esc_url( $group_url ); ?>">
+				&larr; <?php echo esc_html( $group->name ); ?>
+			</a>
+		</div>
+		<?php
 	}
 
 	/*

@@ -218,6 +218,7 @@ final class Jetonomy {
 
 		// BuddyPress integration — Groups ↔ Spaces sync.
 		if ( function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
+			require_once JETONOMY_DIR . 'includes/integrations/class-buddypress.php';
 			new Integrations\BuddyPress();
 		}
 

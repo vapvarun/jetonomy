@@ -161,6 +161,16 @@ parameters:
 			path: includes/admin/views/replies.php
 
 		-
+			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
+			count: 1
+			path: includes/admin/views/space-edit.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$space_role\\.$#"
+			count: 1
+			path: includes/admin/views/space-edit.php
+
+		-
 			message: "#^Variable \\$access_rules might not be defined\\.$#"
 			count: 1
 			path: includes/admin/views/space-edit.php
@@ -171,28 +181,18 @@ parameters:
 			path: includes/admin/views/space-edit.php
 
 		-
-			message: "#^Variable \\$members might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/space-edit.php
-
-		-
 			message: "#^Variable \\$join_requests might not be defined\\.$#"
 			count: 1
 			path: includes/admin/views/space-edit.php
 
 		-
+			message: "#^Variable \\$members might not be defined\\.$#"
+			count: 1
+			path: includes/admin/views/space-edit.php
+
+		-
 			message: "#^Variable \\$space might not be defined\\.$#"
-			count: 29
-			path: includes/admin/views/space-edit.php
-
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
-			count: 1
-			path: includes/admin/views/space-edit.php
-
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$space_role\\.$#"
-			count: 1
+			count: 31
 			path: includes/admin/views/space-edit.php
 
 		-
@@ -296,7 +296,7 @@ parameters:
 			path: includes/api/class-posts-controller.php
 
 		-
-			message: "#^Offset 'status' on array\\{space_id\\: int, author_id\\: int, title\\: non\\-falsy\\-string, slug\\: string, content\\: non\\-falsy\\-string, content_plain\\: string, type\\: non\\-falsy\\-string, status\\: 'draft'\\|'pending'\\|'spam', \\.\\.\\.\\} on left side of \\?\\? always exists and is not nullable\\.$#"
+			message: "#^Offset 'status' on array\\{space_id\\: int, author_id\\: int, title\\: non\\-falsy\\-string, slug\\: string, content\\: non\\-falsy\\-string, content_plain\\: string, type\\: non\\-falsy\\-string, is_private\\: 0\\|1, \\.\\.\\.\\} on left side of \\?\\? always exists and is not nullable\\.$#"
 			count: 1
 			path: includes/api/class-posts-controller.php
 
@@ -437,7 +437,7 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 8
+			count: 9
 			path: includes/class-jetonomy.php
 
 		-
@@ -486,6 +486,51 @@ parameters:
 			path: includes/db/migrations/class-migration_1_2_0.php
 
 		-
+			message: "#^Constant DB_NAME not found\\.$#"
+			count: 1
+			path: includes/db/migrations/class-migration_1_2_1.php
+
+		-
+			message: "#^Constant DB_NAME not found\\.$#"
+			count: 1
+			path: includes/db/migrations/class-migration_1_2_2.php
+
+		-
+			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
+			count: 2
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Constant JETONOMY_URL not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Negated boolean expression is always false\\.$#"
+			count: 3
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Property BP_Groups_Group\\:\\:\\$description \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Property BP_Groups_Group\\:\\:\\$name \\(string\\) on left side of \\?\\? is not nullable\\.$#"
+			count: 2
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Property BP_Groups_Group\\:\\:\\$status \\(string\\) on left side of \\?\\? is not nullable\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Variable \\$data in empty\\(\\) always exists and is not falsy\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
 			count: 1
 			path: includes/models/class-post.php
@@ -509,6 +554,11 @@ parameters:
 			message: "#^Call to static method http_post\\(\\) on an unknown class Akismet\\.$#"
 			count: 1
 			path: includes/moderation/class-akismet.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
+			count: 1
+			path: includes/permissions/class-permission-engine.php
 
 		-
 			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
@@ -569,17 +619,3 @@ parameters:
 			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
 			path: includes/seo/class-sitemap.php
-
-		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
-			count: 1
-			path: includes/permissions/class-permission-engine.php
-
-		# BuddyPress dynamic properties — work at runtime but PHPStan can't resolve.
-		-
-			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
-			path: includes/integrations/class-buddy-press.php
-
-		-
-			message: "#^Property BP_Groups_Group\\:\\:\\$description \\(string\\) in isset\\(\\) is not nullable\\.$#"
-			path: includes/integrations/class-buddy-press.php
