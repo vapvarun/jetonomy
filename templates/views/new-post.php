@@ -81,17 +81,16 @@ $type_label     = $type_defaults['label'];
 
 		<div class="jt-form-group">
 			<label for="jt-post-title" class="jt-label"><?php esc_html_e( 'Title', 'jetonomy' ); ?></label>
+			<?php
+			$title_placeholders = [
+				'question' => __( 'What is your question?', 'jetonomy' ),
+				'idea'     => __( 'Describe your idea', 'jetonomy' ),
+				'status'   => __( "What's on your mind?", 'jetonomy' ),
+			];
+			$title_placeholder = esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
+			?>
 			<input type="text" id="jt-post-title" name="title" class="jt-input"
-					placeholder="
-					<?php
-					$title_placeholders = [
-						'question' => __( 'What is your question?', 'jetonomy' ),
-						'idea'     => __( 'Describe your idea', 'jetonomy' ),
-						'status'   => __( "What's on your mind?", 'jetonomy' ),
-					];
-					echo esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
-					?>
-				"
+					placeholder="<?php echo $title_placeholder; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped above ?>"
 					required maxlength="255" autofocus>
 		</div>
 
