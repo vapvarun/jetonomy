@@ -25,6 +25,7 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 
 		new Ajax\Categories_Handler();
 		new Ajax\Spaces_Handler();
@@ -288,6 +289,40 @@ class Admin {
 	}
 
 	// ── Assets ──
+
+	/**
+	 * Hide third-party admin notices on Jetonomy pages.
+	 */
+	public function hide_third_party_notices(): void {
+		$screen = get_current_screen();
+		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
+			return;
+		}
+
+		// Remove all notice hooks except our own.
+		global $wp_filter;
+		foreach ( array( 'admin_notices', 'all_admin_notices' ) as $hook_name ) {
+			if ( empty( $wp_filter[ $hook_name ] ) ) {
+				continue;
+			}
+			foreach ( $wp_filter[ $hook_name ]->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $key => $callback ) {
+					$fn = $callback['function'] ?? null;
+					// Keep our own notices and WordPress core settings errors.
+					if ( is_array( $fn ) && is_object( $fn[0] ) ) {
+						$class = get_class( $fn[0] );
+						if ( str_contains( $class, 'Jetonomy' ) || str_contains( $class, 'Wbcom' ) ) {
+							continue;
+						}
+					}
+					if ( is_string( $fn ) && ( 'settings_errors' === $fn || str_contains( $fn, 'jetonomy' ) || str_contains( $fn, 'wbcom' ) ) ) {
+						continue;
+					}
+					unset( $wp_filter[ $hook_name ]->callbacks[ $priority ][ $key ] );
+				}
+			}
+		}
+	}
 
 	public function enqueue_assets( string $hook ): void {
 		if ( false === strpos( $hook, 'jetonomy' ) ) {
