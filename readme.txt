@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,6 +261,23 @@ Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.2.0 — April 2026 =
+
+* New: BuddyPress integration — Groups linked to Jetonomy Spaces with full member sync
+* New: Forum tab in BP Group pages with topic listing and "+ New Topic" button
+* New: Forum tab on BP Member profiles with Posts, Replies, and Bookmarks sub-tabs
+* New: Discussion Forum settings in group creation wizard and manage screen
+* New: Linked group shown in sidebar About section on Jetonomy space pages
+* New: jetonomy_after_create_post hook now passes $request for Pro extension integration
+* New: jetonomy_sidebar_about_after_meta hook for sidebar extensions
+* New: Custom Pro extension tabs on space edit page (SEO, Custom Fields, etc.)
+* Improvement: Third-party admin notices hidden on Jetonomy pages
+* Improvement: Space privacy auto-syncs with linked BP group status changes
+* Fix: Title placeholder left-aligned (was centered due to whitespace in HTML attribute)
+* Fix: "+ New Topic" hidden for logged-out users on group forum tab
+* Fix: Only user's own spaces shown in group forum linking dropdown (non-admins)
+* Fix: One space can only be linked to one group (enforced both directions)
 
 = 1.1.0 — March 2026 =
 
