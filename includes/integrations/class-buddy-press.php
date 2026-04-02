@@ -591,6 +591,11 @@ class BuddyPress {
 		if ( 0 === strpos( $action, 'link_' ) ) {
 			$target_space = absint( substr( $action, 5 ) );
 			if ( $target_space && Space::find( $target_space ) ) {
+				// Prevent linking a space already linked to another group.
+				$already_linked = self::find_group_by_space( $target_space );
+				if ( $already_linked && $already_linked !== $group_id ) {
+					return;
+				}
 				if ( $current_space && $current_space !== $target_space ) {
 					self::unlink_group( $group_id );
 				}
