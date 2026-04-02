@@ -302,7 +302,7 @@ class BuddyPress {
 	 */
 	public function group_forum_screen(): void {
 		add_action( 'bp_template_content', array( $this, 'group_forum_content' ) );
-		bp_core_load_template( 'groups/single/plugins' );
+		bp_core_load_template( array( 'groups/single/plugins' ) );
 	}
 
 	/**
@@ -443,17 +443,17 @@ class BuddyPress {
 
 	public function profile_posts_screen(): void {
 		add_action( 'bp_template_content', array( $this, 'render_profile_posts' ) );
-		bp_core_load_template( 'members/single/plugins' );
+		bp_core_load_template( array( 'members/single/plugins' ) );
 	}
 
 	public function profile_replies_screen(): void {
 		add_action( 'bp_template_content', array( $this, 'render_profile_replies' ) );
-		bp_core_load_template( 'members/single/plugins' );
+		bp_core_load_template( array( 'members/single/plugins' ) );
 	}
 
 	public function profile_bookmarks_screen(): void {
 		add_action( 'bp_template_content', array( $this, 'render_profile_bookmarks' ) );
-		bp_core_load_template( 'members/single/plugins' );
+		bp_core_load_template( array( 'members/single/plugins' ) );
 	}
 
 	/* ── Profile Sub-Tab: Posts ── */

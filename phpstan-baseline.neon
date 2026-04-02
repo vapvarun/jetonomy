@@ -574,3 +574,12 @@ parameters:
 			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
 			count: 1
 			path: includes/permissions/class-permission-engine.php
+
+		# BuddyPress dynamic properties — work at runtime but PHPStan can't resolve.
+		-
+			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
+			path: includes/integrations/class-buddy-press.php
+
+		-
+			message: "#^Property BP_Groups_Group\\:\\:\\$description \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			path: includes/integrations/class-buddy-press.php
