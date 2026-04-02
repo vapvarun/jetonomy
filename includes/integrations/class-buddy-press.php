@@ -54,9 +54,12 @@ class BuddyPress {
 		// BP Member profile: Forum summary tab.
 		add_action( 'bp_setup_nav', array( $this, 'register_profile_forum_tab' ), 20 );
 
-		// Forum settings in group creation wizard + group manage screen.
+		// Forum settings in group manage screen (Manage > Details).
 		add_action( 'groups_custom_group_fields_editable', array( $this, 'render_group_forum_settings' ) );
 		add_action( 'groups_group_details_edited', array( $this, 'save_group_forum_settings' ), 10, 1 );
+
+		// Forum settings in group creation wizard (Details step).
+		add_action( 'bp_after_group_details_creation_step', array( $this, 'render_group_forum_settings' ) );
 		add_action( 'groups_created_group', array( $this, 'save_group_forum_settings_on_create' ), 20, 1 );
 	}
 
