@@ -17,6 +17,20 @@ $time_ago    = human_time_diff( strtotime( $post->created_at ), time() );
 $tags        = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $viewer_id   = get_current_user_id();
 $viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
+
+// Resolve prefix color from space settings.
+$prefix_name  = $post->prefix ?? null;
+$prefix_color = null;
+if ( $prefix_name && $space ) {
+	$space_settings_pf = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+	$prefix_list       = $space_settings_pf['prefixes'] ?? array();
+	foreach ( $prefix_list as $pfx ) {
+		if ( ( $pfx['name'] ?? '' ) === $prefix_name ) {
+			$prefix_color = $pfx['color'] ?? null;
+			break;
+		}
+	}
+}
 ?>
 <a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
@@ -29,6 +43,12 @@ $viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'p
 		<div class="jt-row-title">
 			<?php if ( $post->is_sticky ) : ?>
 				<span aria-hidden="true"><?php jetonomy_echo_icon( 'pin', 14 ); ?></span>
+			<?php endif; ?>
+			<?php if ( ! empty( $post->is_private ) ) : ?>
+				<span class="jt-badge-private"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
+			<?php endif; ?>
+			<?php if ( $prefix_name ) : ?>
+				<span class="jt-prefix" <?php echo $prefix_color ? 'style="--jt-pfx:' . esc_attr( $prefix_color ) . '"' : ''; ?>><?php echo esc_html( $prefix_name ); ?></span>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
 		</div>

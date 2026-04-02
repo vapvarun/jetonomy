@@ -422,6 +422,22 @@
 				});
 			});
 
+			// ── Topic Prefix Repeater ──
+			$(document).on('change', '#ss-enable-prefixes', function() {
+				$('#jt-prefixes-config').toggle(this.checked);
+			});
+			$(document).on('click', '#jt-add-prefix', function() {
+				var row = '<div class="jt-prefix-row">' +
+					'<input type="text" class="jt-prefix-name" placeholder="Label" maxlength="50">' +
+					'<input type="color" class="jt-prefix-color" value="#3B82F6">' +
+					'<button type="button" class="button jt-prefix-remove" title="Remove">&times;</button>' +
+					'</div>';
+				$('#jt-prefixes-list').append(row);
+			});
+			$(document).on('click', '.jt-prefix-remove', function() {
+				$(this).closest('.jt-prefix-row').remove();
+			});
+
 			// Space Settings Form
 			$(document).on('submit', '#jetonomy-space-settings-form', function(e) {
 				e.preventDefault();
@@ -441,6 +457,21 @@
 				settings.require_approval = requireApproval ? '1' : '0';
 				settings.allow_voting = allowVoting ? '1' : '0';
 				settings.posts_per_page = Math.max(1, parseInt(postsPerPage, 10) || 20);
+
+				// Collect topic prefixes.
+				var enablePrefixes = $('#ss-enable-prefixes').is(':checked');
+				settings.enable_prefixes = enablePrefixes ? '1' : '0';
+				var prefixes = [];
+				if (enablePrefixes) {
+					$('#jt-prefixes-list .jt-prefix-row').each(function() {
+						var name = $(this).find('.jt-prefix-name').val().trim();
+						var color = $(this).find('.jt-prefix-color').val();
+						if (name) {
+							prefixes.push({ name: name, color: color });
+						}
+					});
+				}
+				settings.prefixes = prefixes;
 
 				// BuddyPress group linking.
 				var $bpGroup = $('#ss-bp-group');

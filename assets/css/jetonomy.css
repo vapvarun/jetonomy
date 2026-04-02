@@ -509,7 +509,33 @@
   .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-danger { background: var(--jt-danger); color: var(--jt-white); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
+  .jt-badge-private { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
+
+  /* ── Private toggle on new post form ── */
+  .jt-private-toggle { display: flex; align-items: center; }
+  .jt-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
+  .jt-checkbox-label input[type="checkbox"] { width: 1rem; height: 1rem; accent-color: var(--jt-accent); }
+
+  /* ── Similar Topics panel ── */
+  .jt-similar { margin-top: 8px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
+  .jt-similar[hidden] { display: none; }
+  .jt-similar-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--jt-bg-subtle); border-bottom: 1px solid var(--jt-border); }
+  .jt-similar-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
+  .jt-similar-toggle { font-size: 0.8125rem; color: var(--jt-text-tertiary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .jt-similar-toggle input { width: 0.875rem; height: 0.875rem; accent-color: var(--jt-accent); }
+  .jt-similar-item { display: block; padding: 8px 12px; text-decoration: none; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; }
+  .jt-similar-item:last-child { border-bottom: none; }
+  .jt-similar-item:hover { background: var(--jt-bg-hover); }
+  .jt-similar-title { display: block; font-size: 0.875rem; font-weight: 500; color: var(--jt-text); }
+  .jt-similar-meta { display: block; font-size: 0.75rem; color: var(--jt-text-tertiary); margin-top: 2px; }
+
+  /* ── Quote blockquote ── */
+  .jt-quote { border-left: 3px solid var(--jt-accent); background: var(--jt-bg-subtle); padding: 10px 14px; border-radius: 0 var(--jt-radius-sm) var(--jt-radius-sm) 0; margin: 0 0 12px; font-size: 0.9375rem; }
+  .jt-quote cite { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent); font-style: normal; margin-bottom: 4px; }
+  .jt-quote cite::before { content: '\2014 '; }
+  .jt-quote p { margin: 0; color: var(--jt-text-secondary); line-height: 1.5; }
 
   /* ── Inline notices (pending, spam, etc.) ── */
   .jt-notice { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; margin-bottom: 16px; }
@@ -641,6 +667,8 @@
   .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: left; }
   .jt-input:focus { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
   .jt-input::placeholder { color: var(--jt-text-secondary); }
+  .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
+  .jt-select:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }

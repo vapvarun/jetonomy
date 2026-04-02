@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Cache;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
+use Jetonomy\Models\Post;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\UserProfile;
@@ -233,6 +234,60 @@ class Permission_Engine {
 		}
 
 		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? array(), true );
+	}
+
+	/**
+	 * Check if a user can read a specific post, considering private visibility.
+	 *
+	 * @param int    $user_id  WP user ID (0 for guest).
+	 * @param object $post     Post row object (must have is_private, author_id, space_id).
+	 * @return bool
+	 */
+	public static function can_read_post( int $user_id, object $post ): bool {
+		$space_id = (int) $post->space_id;
+
+		// Space-level check first.
+		if ( ! self::can( $user_id, 'read', $space_id ) ) {
+			return false;
+		}
+
+		// Public posts are readable by anyone with space access.
+		if ( empty( $post->is_private ) ) {
+			return true;
+		}
+
+		// Private post: author always sees it.
+		if ( $user_id > 0 && (int) $post->author_id === $user_id ) {
+			return true;
+		}
+
+		// WP admin bypass.
+		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
+		// Space moderators/admins can see all private posts.
+		return self::is_space_privileged( $user_id, $space_id );
+	}
+
+	/**
+	 * Check if a user has moderator or admin role in a space.
+	 *
+	 * @param int $user_id  WP user ID.
+	 * @param int $space_id Space ID.
+	 * @return bool
+	 */
+	public static function is_space_privileged( int $user_id, int $space_id ): bool {
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
+		$role = SpaceMember::get_role( $space_id, $user_id );
+		return in_array( $role, array( 'moderator', 'admin' ), true );
 	}
 
 	/**

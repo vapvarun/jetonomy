@@ -51,6 +51,20 @@ $time_ago  = human_time_diff( strtotime( $post->created_at ), time() );
 $base      = \Jetonomy\base_url();
 $post_url  = $base . '/s/' . ( $space ? $space->slug : '' ) . '/t/' . $post->slug . '/';
 
+// Resolve prefix color from space settings.
+$prefix_name  = $post->prefix ?? null;
+$prefix_color = null;
+if ( $prefix_name && $space ) {
+	$sp_settings_pf = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+	$prefix_list    = $sp_settings_pf['prefixes'] ?? array();
+	foreach ( $prefix_list as $pfx ) {
+		if ( ( $pfx['name'] ?? '' ) === $prefix_name ) {
+			$prefix_color = $pfx['color'] ?? null;
+			break;
+		}
+	}
+}
+
 // Replies sort.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest';
@@ -188,7 +202,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<!-- Post -->
 			<article class="jt-post" data-wp-interactive="jetonomy">
 				<div class="jt-post-head">
-					<h1><?php echo esc_html( $post->title ); ?></h1>
+					<h1>
+						<?php if ( $prefix_name ) : ?>
+							<span class="jt-prefix" <?php echo $prefix_color ? 'style="--jt-pfx:' . esc_attr( $prefix_color ) . '"' : ''; ?>><?php echo esc_html( $prefix_name ); ?></span>
+						<?php endif; ?>
+						<?php echo esc_html( $post->title ); ?>
+					</h1>
 					<div class="jt-meta">
 						<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) ); ?>
 						<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
@@ -198,6 +217,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
 							?>
 						</span>
+						<?php if ( ! empty( $post->is_private ) ) : ?>
+							<span class="jt-badge-private">
+								<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?>
+							</span>
+						<?php endif; ?>
 						<?php if ( $post->is_resolved ) : ?>
 							<span class="jt-badge-resolved">
 								<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Resolved', 'jetonomy' ); ?>
@@ -299,6 +323,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo (int) $post->id; ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
+								<button class="jt-more-item"
+									data-wp-on--click="actions.togglePrivate"
+									data-post-id="<?php echo (int) $post->id; ?>"
+									data-private="<?php echo ! empty( $post->is_private ) ? '1' : '0'; ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"

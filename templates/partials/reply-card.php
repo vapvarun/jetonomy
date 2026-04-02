@@ -57,6 +57,10 @@ $is_accepted = (int) $reply->is_accepted;
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
+			<button class="jt-act"
+				data-wp-on--click="actions.quoteReply"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?> <?php esc_html_e( 'Quote', 'jetonomy' ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
 			<div class="jt-more-menu">

@@ -132,10 +132,15 @@ class Abilities {
 							'description' => 'Post type.',
 							'enum'        => [ 'topic', 'question', 'discussion', 'announcement' ],
 						],
-						'tags'     => [
+						'tags'       => [
 							'type'        => 'array',
 							'description' => 'Tag names to attach.',
 							'items'       => [ 'type' => 'string' ],
+						],
+						'is_private' => [
+							'type'        => 'boolean',
+							'description' => 'Mark post as private (only author + moderators can see it).',
+							'default'     => false,
 						],
 					],
 				],
@@ -143,12 +148,16 @@ class Abilities {
 					'type'       => 'object',
 					'required'   => true,
 					'properties' => [
-						'id'    => [
+						'id'         => [
 							'type'        => 'integer',
 							'description' => 'Created post ID.',
 						],
-						'title' => [ 'type' => 'string' ],
-						'url'   => [
+						'title'      => [ 'type' => 'string' ],
+						'is_private' => [
+							'type'        => 'boolean',
+							'description' => 'Whether the post is private.',
+						],
+						'url'        => [
 							'type'        => 'string',
 							'description' => 'Permalink to the post.',
 						],
@@ -1160,8 +1169,9 @@ class Abilities {
 			$type  = ( $space && 'qa' === ( $space->type ?? '' ) ) ? 'question' : 'topic';
 		}
 
-		$slug    = sanitize_title( $title );
-		$post_id = Post::create(
+		$slug       = sanitize_title( $title );
+		$is_private = ! empty( $input['is_private'] ) ? 1 : 0;
+		$post_id    = Post::create(
 			[
 				'space_id'      => $space_id,
 				'author_id'     => $user_id,
@@ -1170,6 +1180,7 @@ class Abilities {
 				'content'       => $content,
 				'content_plain' => wp_strip_all_tags( $content ),
 				'type'          => $type,
+				'is_private'    => $is_private,
 			]
 		);
 
@@ -1197,9 +1208,10 @@ class Abilities {
 		$post      = Post::find( $post_id );
 
 		return [
-			'id'    => $post_id,
-			'title' => $title,
-			'url'   => home_url( "/{$base_slug}/s/" . ( $space->slug ?? '' ) . '/t/' . ( $post->slug ?? $slug ) . '/' ),
+			'id'         => $post_id,
+			'title'      => $title,
+			'is_private' => (bool) $is_private,
+			'url'        => home_url( "/{$base_slug}/s/" . ( $space->slug ?? '' ) . '/t/' . ( $post->slug ?? $slug ) . '/' ),
 		];
 	}
 

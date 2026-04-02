@@ -160,6 +160,21 @@ class Spaces_Handler {
 			if ( is_string( $settings_raw ) ) {
 				$decoded = json_decode( wp_unslash( $settings_raw ), true );
 				if ( is_array( $decoded ) ) {
+					// Sanitize topic prefixes if present.
+					if ( isset( $decoded['prefixes'] ) && is_array( $decoded['prefixes'] ) ) {
+						$sanitized_prefixes = array();
+						foreach ( $decoded['prefixes'] as $pfx ) {
+							$name  = sanitize_text_field( $pfx['name'] ?? '' );
+							$color = sanitize_hex_color( $pfx['color'] ?? '' );
+							if ( $name && $color ) {
+								$sanitized_prefixes[] = array(
+									'name'  => $name,
+									'color' => $color,
+								);
+							}
+						}
+						$decoded['prefixes'] = $sanitized_prefixes;
+					}
 					// Handle BuddyPress group linking (stored in group meta, not space settings).
 					if ( isset( $decoded['bp_group_id'] ) && function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
 						$bp_gid = absint( $decoded['bp_group_id'] );

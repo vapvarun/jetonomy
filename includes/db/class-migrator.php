@@ -35,8 +35,10 @@ class Migrator {
 	 * @return array<string,string>
 	 */
 	private static function get_migrations(): array {
-		// Pre-release: all schema changes go in class-schema.php.
-		// Post-release migrations will be added here as '1.1.0' => '1_1_0', etc.
-		return [];
+		return [
+			'1.2.0' => '1_2_0',
+			'1.2.1' => '1_2_1',
+			'1.2.2' => '1_2_2',
+		];
 	}
 }

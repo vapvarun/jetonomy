@@ -145,6 +145,7 @@ class Schema {
   space_id bigint(20) unsigned NOT NULL DEFAULT 0,
   author_id bigint(20) unsigned NOT NULL DEFAULT 0,
   type ENUM('topic','question','idea','status') NOT NULL DEFAULT 'topic',
+  prefix varchar(100) DEFAULT NULL,
   title varchar(255) NOT NULL DEFAULT '',
   slug varchar(255) DEFAULT NULL,
   content longtext,
@@ -152,6 +153,7 @@ class Schema {
   status ENUM('publish','pending','draft','spam','trash') NOT NULL DEFAULT 'publish',
   published_at datetime DEFAULT NULL,
   is_sticky tinyint(1) NOT NULL DEFAULT 0,
+  is_private tinyint(1) NOT NULL DEFAULT 0,
   is_closed tinyint(1) NOT NULL DEFAULT 0,
   is_resolved tinyint(1) NOT NULL DEFAULT 0,
   idea_status ENUM('submitted','under_review','planned','in_progress','completed','declined') DEFAULT NULL,
@@ -167,6 +169,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY space_sticky_reply (space_id,is_sticky,last_reply_at),
+  KEY space_private_reply (space_id,is_private,last_reply_at),
   KEY space_votes (space_id,vote_score),
   KEY author_created (author_id,created_at),
   FULLTEXT KEY ft_title_content (title,content_plain)

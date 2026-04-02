@@ -88,6 +88,15 @@ add_action(
 			$body = json_decode( wp_remote_retrieve_body( $response ), true );
 			if ( 'valid' === ( $body['license'] ?? '' ) ) {
 				update_option( $activated, 1, false );
+				// Auto-enable usage tracking checkbox.
+				update_option(
+					$option . '_allow_tracking',
+					array(
+						'allowed'   => true,
+						'timestamp' => time(),
+					),
+					false
+				);
 			}
 		}
 	}

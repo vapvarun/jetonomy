@@ -91,13 +91,40 @@ $type_label     = $type_defaults['label'];
 			?>
 			<input type="text" id="jt-post-title" name="title" class="jt-input"
 					placeholder="<?php echo $title_placeholder; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped above ?>"
+					data-space-id="<?php echo (int) $space->id; ?>"
 					required maxlength="255" autofocus>
+			<div id="jt-similar-topics" class="jt-similar" hidden>
+				<div class="jt-similar-head">
+					<span class="jt-similar-label"><?php esc_html_e( 'Similar topics', 'jetonomy' ); ?></span>
+					<label class="jt-similar-toggle">
+						<input type="checkbox" id="jt-similar-all-spaces">
+						<?php esc_html_e( 'Search all spaces', 'jetonomy' ); ?>
+					</label>
+				</div>
+				<div id="jt-similar-results"></div>
+			</div>
 		</div>
 
 		<div class="jt-form-group">
 			<label for="jt-post-tags" class="jt-label"><?php esc_html_e( 'Tags', 'jetonomy' ); ?> <span class="jt-label-hint"><?php esc_html_e( '(optional, comma-separated)', 'jetonomy' ); ?></span></label>
 			<input type="text" id="jt-post-tags" name="tags" class="jt-input" placeholder="<?php esc_attr_e( 'e.g. python, django, architecture', 'jetonomy' ); ?>">
 		</div>
+
+		<?php
+		$space_settings_np = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+		$available_pfx     = ( ! empty( $space_settings_np['enable_prefixes'] ) && ! empty( $space_settings_np['prefixes'] ) ) ? $space_settings_np['prefixes'] : array();
+		if ( ! empty( $available_pfx ) ) :
+			?>
+		<div class="jt-form-group">
+			<label for="jt-post-prefix" class="jt-label"><?php esc_html_e( 'Prefix', 'jetonomy' ); ?> <span class="jt-label-hint"><?php esc_html_e( '(optional)', 'jetonomy' ); ?></span></label>
+			<select id="jt-post-prefix" name="prefix" class="jt-select">
+				<option value=""><?php esc_html_e( 'None', 'jetonomy' ); ?></option>
+				<?php foreach ( $available_pfx as $avpfx ) : ?>
+					<option value="<?php echo esc_attr( $avpfx['name'] ); ?>"><?php echo esc_html( $avpfx['name'] ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<?php endif; ?>
 
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Content', 'jetonomy' ); ?></label>
@@ -123,6 +150,16 @@ $type_label     = $type_defaults['label'];
 		 */
 		do_action( 'jetonomy_new_post_fields', $space );
 		?>
+
+		<?php if ( is_user_logged_in() ) : ?>
+		<div class="jt-form-group jt-private-toggle">
+			<label class="jt-checkbox-label">
+				<input type="checkbox" name="is_private" value="1" id="jt-post-private">
+				<?php jetonomy_echo_icon( 'lock', 14 ); ?>
+				<?php esc_html_e( 'Private — only you and moderators can see this topic', 'jetonomy' ); ?>
+			</label>
+		</div>
+		<?php endif; ?>
 
 		<!-- Scheduler panel — shown when "Schedule" is selected -->
 		<div class="jt-schedule-panel" data-wp-bind--hidden="!context.showScheduler">

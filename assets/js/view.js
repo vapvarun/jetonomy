@@ -279,6 +279,7 @@ function jetonomyBuildReplyHtml( reply ) {
                 <button class="jt-act" data-wp-on--click="actions.voteReplyUp" data-reply-id="${ reply.id }">&#9650; <span class="n">${ reply.vote_score || 0 }</span></button>
                 <button class="jt-act" data-wp-on--click="actions.voteReplyDown" data-reply-id="${ reply.id }">&#9660;</button>
                 <button class="jt-act jt-reply-to-btn" data-wp-on--click="actions.setReplyTo" data-reply-id="${ reply.id }" data-reply-author="${ author }">Reply</button>
+                <button class="jt-act" data-wp-on--click="actions.quoteReply" data-reply-id="${ reply.id }" data-reply-author="${ author }">Quote</button>
             </div>
         </div>`;
 }
@@ -956,6 +957,42 @@ const { state, actions } = store( 'jetonomy', {
                 }
             }
         },
+        // ── Toggle private visibility ──
+        *togglePrivate( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            const isPrivate = el.ref.dataset.private === '1';
+            if ( ! postId ) return;
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( { is_private: ! isPrivate } ),
+                } );
+
+                if ( res.ok ) {
+                    const data = yield res.json();
+                    if ( window.bnToast ) {
+                        window.bnToast( data.is_private ? ( state.i18n?.madePrivate || 'Topic is now private' ) : ( state.i18n?.madePublic || 'Topic is now public' ) );
+                    }
+                    setTimeout( () => window.location.reload(), 600 );
+                } else {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) {
+                        window.bnToast( err.message || state.i18n?.failedTogglePrivate || 'Failed to change visibility.' );
+                    }
+                }
+            } catch {
+                if ( window.bnToast ) {
+                    window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                }
+            }
+        },
         // ── Move post (topic) to another space ──
         *movePost( event ) {
             const el = getElement();
@@ -1280,6 +1317,66 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Quote reply into composer ──
+        quoteReply() {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            const authorName = el.ref.dataset.replyAuthor || 'Someone';
+
+            // Find the reply body text.
+            const replyEl = el.ref.closest( '.jt-reply' );
+            if ( ! replyEl ) return;
+            const bodyEl = replyEl.querySelector( '.jt-reply-body' );
+            if ( ! bodyEl ) return;
+
+            // Get plain text, trimmed to ~300 chars.
+            let text = ( bodyEl.textContent || '' ).trim();
+            if ( text.length > 300 ) {
+                text = text.substring( 0, 297 ) + '...';
+            }
+
+            // Build blockquote HTML.
+            const cite = document.createElement( 'cite' );
+            cite.textContent = authorName;
+            const blockquote = document.createElement( 'blockquote' );
+            blockquote.className = 'jt-quote';
+            blockquote.appendChild( cite );
+            const p = document.createElement( 'p' );
+            p.textContent = text;
+            blockquote.appendChild( p );
+
+            // Insert into composer.
+            const composer = document.getElementById( 'jt-composer' );
+            if ( ! composer ) return;
+            const input = composer.querySelector( '[contenteditable]' );
+            if ( ! input ) return;
+
+            // Prepend the blockquote + a blank line for the user's reply.
+            input.focus();
+            input.insertBefore( blockquote, input.firstChild );
+            const br = document.createElement( 'br' );
+            if ( blockquote.nextSibling ) {
+                input.insertBefore( br, blockquote.nextSibling );
+            } else {
+                input.appendChild( br );
+            }
+
+            // Also set reply-to parent for threading.
+            state.replyToId = replyId ? parseInt( replyId, 10 ) : null;
+            state.replyToAuthor = authorName;
+            state.composerReplyTo = replyId || null;
+
+            composer.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+
+            // Place cursor after the blockquote.
+            const sel = window.getSelection();
+            const range = document.createRange();
+            range.setStartAfter( br );
+            range.collapse( true );
+            sel.removeAllRanges();
+            sel.addRange( range );
+        },
+
         // ── Load gap replies (in-between) ──
         *loadGapReplies() {
             const ctx = getContext();
@@ -1510,6 +1607,8 @@ const { state, actions } = store( 'jetonomy', {
                             type: ctx.postType,
                             tags: tags ? tags.split( ',' ).map( t => t.trim() ) : [],
                             status: postStatus,
+                            prefix: form.querySelector('[name="prefix"]')?.value || '',
+                            is_private: !! form.querySelector('[name="is_private"]')?.checked,
                             ...( publishedAt && { published_at: publishedAt } ),
                             ...( captchaToken && { captcha_token: captchaToken } ),
                         } ),
@@ -1795,5 +1894,88 @@ const { state, actions } = store( 'jetonomy', {
                     .catch( function() {} );
             } );
         } );
+
+        // ── Similar Topics — debounced FULLTEXT search on new-post title ──
+        const titleInput = document.getElementById( 'jt-post-title' );
+        const similarPanel = document.getElementById( 'jt-similar-topics' );
+        const similarResults = document.getElementById( 'jt-similar-results' );
+        const allSpacesCheck = document.getElementById( 'jt-similar-all-spaces' );
+
+        if ( titleInput && similarPanel && similarResults ) {
+            let debounceTimer = null;
+            const spaceId = titleInput.dataset.spaceId;
+            const SIMILAR_API = API_BASE;
+            // Derive community base from breadcrumb or form context.
+            const formEl = document.getElementById( 'jt-new-post-form' );
+            const ctxData = formEl ? JSON.parse( formEl.dataset.wpContext || '{}' ) : {};
+            const spaceSlug = ctxData.spaceSlug || '';
+            const SIMILAR_COMMUNITY = ( document.querySelector( '.jt-crumb a' )?.getAttribute( 'href' ) || '/community/' ).replace( /\/$/, '' );
+
+            function buildSimilarItem( p ) {
+                const spaceName = p.space_title || p.space_slug || '';
+                const replies = p.reply_count || 0;
+                const href = SIMILAR_COMMUNITY + '/s/' + ( p.space_slug || '' ) + '/t/' + ( p.slug || p.post_slug || '' ) + '/';
+
+                const a = document.createElement( 'a' );
+                a.href = href;
+                a.className = 'jt-similar-item';
+                a.target = '_blank';
+                a.rel = 'noopener';
+
+                const titleSpan = document.createElement( 'span' );
+                titleSpan.className = 'jt-similar-title';
+                titleSpan.textContent = p.title || '';
+                a.appendChild( titleSpan );
+
+                const metaSpan = document.createElement( 'span' );
+                metaSpan.className = 'jt-similar-meta';
+                metaSpan.textContent = ( spaceName ? spaceName + ' \u00b7 ' : '' ) + replies + ' ' + ( replies === 1 ? 'reply' : 'replies' );
+                a.appendChild( metaSpan );
+
+                return a;
+            }
+
+            function searchSimilar() {
+                const q = titleInput.value.trim();
+                if ( q.length < 4 ) {
+                    similarPanel.hidden = true;
+                    similarResults.textContent = '';
+                    return;
+                }
+
+                const useAllSpaces = allSpacesCheck && allSpacesCheck.checked;
+                let url = SIMILAR_API + '/search?q=' + encodeURIComponent( q ) + '&type=post';
+                if ( ! useAllSpaces && spaceId ) {
+                    url += '&space_id=' + spaceId;
+                }
+
+                fetch( url, { credentials: 'same-origin' } )
+                    .then( function( r ) { return r.json(); } )
+                    .then( function( res ) {
+                        const posts = res.data || [];
+                        similarResults.textContent = '';
+
+                        if ( ! posts.length ) {
+                            similarPanel.hidden = true;
+                            return;
+                        }
+
+                        posts.slice( 0, 5 ).forEach( function( p ) {
+                            similarResults.appendChild( buildSimilarItem( p ) );
+                        } );
+                        similarPanel.hidden = false;
+                    } )
+                    .catch( function() {} );
+            }
+
+            titleInput.addEventListener( 'input', function() {
+                clearTimeout( debounceTimer );
+                debounceTimer = setTimeout( searchSimilar, 400 );
+            } );
+
+            if ( allSpacesCheck ) {
+                allSpacesCheck.addEventListener( 'change', searchSimilar );
+            }
+        }
     } );
 } )();

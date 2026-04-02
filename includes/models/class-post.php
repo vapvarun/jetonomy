@@ -158,6 +158,94 @@ class Post extends Model {
 	}
 
 	/**
+	 * List published posts in a space, filtering private posts by visibility.
+	 *
+	 * Moderators and admins see all posts. Regular members only see public
+	 * posts plus their own private posts.
+	 *
+	 * @param int    $space_id       Space ID.
+	 * @param int    $user_id        Current viewer's user ID (0 for guest).
+	 * @param bool   $is_privileged  True if viewer is moderator/admin/WP-admin.
+	 * @param string $sort           Sort order.
+	 * @param int    $limit          Max rows.
+	 * @param int    $offset         Legacy offset; ignored when $after > 0.
+	 * @param int    $after          Cursor: return items after this post ID.
+	 * @return object[]
+	 */
+	public static function list_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
+		if ( -1 === $limit ) {
+			$space_settings = Space::get_settings( $space_id );
+			$limit          = ! empty( $space_settings['posts_per_page'] ) ? (int) $space_settings['posts_per_page'] : 0;
+			if ( $limit <= 0 ) {
+				$global = get_option( 'jetonomy_settings', array() );
+				$limit  = (int) ( $global['posts_per_page'] ?? 20 );
+			}
+		}
+		$table = static::table();
+
+		$extra_where = '';
+
+		switch ( $sort ) {
+			case 'popular':
+				$order_by = 'vote_score DESC';
+				break;
+
+			case 'unanswered':
+				$order_by    = 'created_at DESC';
+				$extra_where = ' AND reply_count = 0';
+				break;
+
+			case 'latest':
+			default:
+				$order_by = 'is_sticky DESC, last_reply_at DESC';
+				break;
+		}
+
+		// Visibility filter: privileged users see everything, others see public + own private.
+		if ( ! $is_privileged ) {
+			if ( $user_id > 0 ) {
+				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
+			} else {
+				$extra_where .= ' AND is_private = 0';
+			}
+		}
+
+		if ( $after > 0 ) {
+			$params  = array( $space_id, $after, $limit );
+			$results = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
+					...$params
+				)
+			);
+			return $results ? $results : array();
+		}
+
+		$results = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+				$space_id,
+				$limit,
+				$offset
+			)
+		);
+		return $results ? $results : array();
+	}
+
+	/**
+	 * Toggle private visibility on a post.
+	 *
+	 * @param int  $id         Post ID.
+	 * @param bool $is_private True to make private, false to make public.
+	 * @return bool
+	 */
+	public static function set_private( int $id, bool $is_private = true ): bool {
+		return static::update( $id, array( 'is_private' => $is_private ? 1 : 0 ) );
+	}
+
+	/**
 	 * Adjust reply_count and update last_reply_at and updated_at.
 	 *
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent

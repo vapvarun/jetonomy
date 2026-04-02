@@ -264,20 +264,21 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.2.0 — April 2026 =
 
-* New: BuddyPress integration — Groups linked to Jetonomy Spaces with full member sync
-* New: Forum tab in BP Group pages with topic listing and "+ New Topic" button
+* New: Private Topics — mark individual topics as private so only you and moderators can see them
+* New: Topic Prefixes — colored labels (Bug, Suggestion, Solved) configurable per space
+* New: Similar Topics — see related topics as you type your title, before posting duplicates
+* New: Quote Replies — click Quote on any reply to insert a styled blockquote in your response
+* New: BuddyPress Integration — link BP Groups to forum spaces with automatic member sync
+* New: Forum tab in BP Group pages showing topics and a New Topic button
 * New: Forum tab on BP Member profiles with Posts, Replies, and Bookmarks sub-tabs
-* New: Discussion Forum settings in group creation wizard and manage screen
-* New: Linked group shown in sidebar About section on Jetonomy space pages
-* New: jetonomy_after_create_post hook now passes $request for Pro extension integration
-* New: jetonomy_sidebar_about_after_meta hook for sidebar extensions
-* New: Custom Pro extension tabs on space edit page (SEO, Custom Fields, etc.)
+* New: Discussion Forum settings in group creation wizard and group manage screen
+* New: Linked group shown in the sidebar About section
 * Improvement: Third-party admin notices hidden on Jetonomy pages
-* Improvement: Space privacy auto-syncs with linked BP group status changes
-* Fix: Title placeholder left-aligned (was centered due to whitespace in HTML attribute)
-* Fix: "+ New Topic" hidden for logged-out users on group forum tab
-* Fix: Only user's own spaces shown in group forum linking dropdown (non-admins)
-* Fix: One space can only be linked to one group (enforced both directions)
+* Improvement: Space privacy automatically syncs with BP group privacy changes
+* Improvement: wpForo multi-board import support
+* Fix: Topic title placeholder alignment on all themes
+* Fix: New Topic button hidden for logged-out visitors
+* Fix: Spaces can only be linked to one group at a time
 
 = 1.1.0 — March 2026 =
 
