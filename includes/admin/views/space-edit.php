@@ -415,6 +415,17 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		do_action( 'jetonomy_admin_space_edit_tab_content', $active_tab, $space );
 		?>
 
+	<?php elseif ( ! in_array( $active_tab, array( 'general', 'members', 'access', 'settings', 'join_requests' ), true ) ) : ?>
+		<?php
+		/**
+		 * Fires for custom tabs registered by Pro extensions (SEO, Custom Fields, etc.).
+		 *
+		 * @param string $active_tab Current active tab slug.
+		 * @param object $space      The space being edited.
+		 */
+		do_action( 'jetonomy_admin_space_edit_tab_content', $active_tab, $space );
+		?>
+
 	<?php elseif ( 'join_requests' === $active_tab ) : ?>
 		<!-- Join Requests Tab -->
 		<div class="jetonomy-tab-content">

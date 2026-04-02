@@ -104,6 +104,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 					<span class="jt-tag"><?php echo esc_html( ucfirst( $space->visibility ) ); ?></span>
 				<?php endif; ?>
 			</div>
+			<?php
+			/**
+			 * Fires inside the sidebar About card, after the meta tags.
+			 * Used by BuddyPress integration to show linked group.
+			 *
+			 * @param object $space The current space object.
+			 */
+			do_action( 'jetonomy_sidebar_about_after_meta', $space );
+			?>
 			<?php if ( is_user_logged_in() ) : ?>
 				<div style="margin-top:12px;">
 					<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">

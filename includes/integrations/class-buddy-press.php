@@ -48,8 +48,11 @@ class BuddyPress {
 		// Enqueue BP-specific styles on frontend.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
 
-		// "Back to Group" banner on Jetonomy pages when space is linked to a BP group.
+		// "Back to Group" link on Jetonomy pages when space is linked to a BP group.
 		add_action( 'jetonomy_before_content', array( $this, 'render_back_to_group_banner' ) );
+
+		// Show linked group in sidebar About section.
+		add_action( 'jetonomy_sidebar_about_after_meta', array( $this, 'render_sidebar_group_link' ) );
 
 		// BP Group nav: Forum tab.
 		add_action( 'bp_setup_nav', array( $this, 'register_group_forum_tab' ), 20 );
@@ -764,6 +767,42 @@ class BuddyPress {
 				self::link_group_to_space( $group_id, $target_space );
 			}
 		}
+	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Sidebar — Linked Group
+	 * ══════════════════════════════════════════════
+	 */
+
+	/**
+	 * Show the linked BP group in the sidebar About card.
+	 *
+	 * @param object $space The current space object.
+	 */
+	public function render_sidebar_group_link( $space ): void {
+		if ( ! isset( $space->id ) ) {
+			return;
+		}
+
+		$group_id = self::find_group_by_space( (int) $space->id );
+		if ( ! $group_id ) {
+			return;
+		}
+
+		$group = groups_get_group( $group_id );
+		if ( ! $group || empty( $group->name ) ) {
+			return;
+		}
+
+		$group_url = bp_get_group_url( $group );
+		?>
+		<div class="jt-sidebar-meta" style="margin-top: 8px;">
+			<a href="<?php echo esc_url( $group_url ); ?>" class="jt-tag" style="text-decoration: none;">
+				<?php echo esc_html( $group->name ); ?> &rarr;
+			</a>
+		</div>
+		<?php
 	}
 
 	/*
