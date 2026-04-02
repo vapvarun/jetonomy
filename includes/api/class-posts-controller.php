@@ -469,7 +469,7 @@ class Posts_Controller extends Base_Controller {
 		// Fire action for Activity_Tracker, Notifier, and other listeners.
 		// Skip for draft posts — they are not visible yet.
 		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
-			do_action( 'jetonomy_after_create_post', $post_id, $space_id );
+			do_action( 'jetonomy_after_create_post', $post_id, $space_id, $request );
 		}
 
 		// Note: UserProfile::increment_post_count is handled inside Post::create() for published
