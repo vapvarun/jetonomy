@@ -99,6 +99,10 @@
 	white-space: nowrap;
 }
 
+/* Topic row (group forum list) */
+.jt-bp-topic-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.jt-bp-topic-meta { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; }
+
 .jt-bp-view-all {
 	margin-top: 16px;
 	padding-top: 16px;

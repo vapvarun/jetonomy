@@ -304,12 +304,15 @@ class BuddyPress {
 			return;
 		}
 
-		$posts = Post::list_by_space( $space_id, 'latest', 20 );
+		$posts         = Post::list_by_space( $space_id, 'latest', 20 );
 		$base          = \Jetonomy\base_url();
 		$space_url     = $base . '/s/' . $space->slug . '/';
 		$new_post_url  = $space_url . 'new/';
+		$post_count    = count( $posts );
 
 		echo '<div class="jt-bp-forum">';
+
+		// Stats + action bar.
 		echo '<div class="jt-bp-forum-head">';
 		echo '<strong>' . esc_html( $space->title ) . '</strong>';
 		echo ' <a href="' . esc_url( $new_post_url ) . '" class="button bp-primary-action">' . esc_html__( '+ New Topic', 'jetonomy' ) . '</a>';
@@ -318,26 +321,30 @@ class BuddyPress {
 		if ( empty( $posts ) ) {
 			echo '<p class="jt-bp-empty">' . esc_html__( 'No topics yet. Start a discussion!', 'jetonomy' ) . '</p>';
 		} else {
-			echo '<table class="jt-bp-topics"><thead><tr>';
-			echo '<th>' . esc_html__( 'Topic', 'jetonomy' ) . '</th>';
-			echo '<th>' . esc_html__( 'Replies', 'jetonomy' ) . '</th>';
-			echo '<th>' . esc_html__( 'Last Activity', 'jetonomy' ) . '</th>';
-			echo '</tr></thead><tbody>';
-
+			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
 				$post_url = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
 				$author   = get_userdata( (int) $post->author_id );
 				$time_ago = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
-				echo '<tr>';
-				echo '<td><a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
-				echo '<br><small>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</small></td>';
-				echo '<td class="jt-bp-replies">' . (int) $post->reply_count . '</td>';
-				// translators: %s: human-readable time difference.
-				echo '<td class="jt-bp-activity">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</td>';
-				echo '</tr>';
-			}
+				$replies  = (int) $post->reply_count;
 
-			echo '</tbody></table>';
+				echo '<li>';
+				echo '<div class="jt-bp-topic-row">';
+				echo '<a href="' . esc_url( $post_url ) . '">' . esc_html( $post->title ) . '</a>';
+				if ( $replies > 0 ) {
+					// translators: %d: number of replies.
+					echo ' <span class="jt-bp-space-tag">' . esc_html( sprintf( _n( '%d reply', '%d replies', $replies, 'jetonomy' ), $replies ) ) . '</span>';
+				}
+				echo '</div>';
+				echo '<div class="jt-bp-topic-meta">';
+				echo '<span>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</span>';
+				// translators: %s: human-readable time difference.
+				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
+				echo '</div>';
+				echo '</li>';
+			}
+			echo '</ul>';
+
 			echo '<p class="jt-bp-view-all"><a href="' . esc_url( $space_url ) . '">' . esc_html__( 'View all topics', 'jetonomy' ) . ' &rarr;</a></p>';
 		}
 
