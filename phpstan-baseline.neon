@@ -569,3 +569,24 @@ parameters:
 			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
 			path: includes/seo/class-sitemap.php
+
+		-
+			message: "#^Function (bp_|groups_|buddypress|is_buddypress).*not found\\.$#"
+			path: includes/integrations/class-buddy-press.php
+
+		-
+			message: "#^Class BP_Groups_Group not found\\.$#"
+			path: includes/integrations/class-buddy-press.php
+
+		-
+			message: "#^Class BP_Groups_Group not found\\.$#"
+			path: includes/admin/views/space-edit.php
+
+		-
+			message: "#^Function (bp_|groups_).*not found\\.$#"
+			path: includes/admin/views/space-edit.php
+
+		-
+			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
+			count: 1
+			path: includes/permissions/class-permission-engine.php
