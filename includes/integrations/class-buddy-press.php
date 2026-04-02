@@ -448,10 +448,12 @@ class BuddyPress {
 		$linked_space   = $group_id ? $this->get_linked_space( $group_id ) : null;
 		$existing_space = $linked_space ? Space::find( $linked_space ) : null;
 
-		// Get all unlinked spaces for the dropdown.
+		// Get unlinked spaces that the current user owns or moderates.
 		global $wpdb;
-		$p     = $wpdb->prefix;
-		$bp    = buddypress();
+		$p       = $wpdb->prefix;
+		$bp      = buddypress();
+		$user_id = get_current_user_id();
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$linked_ids = $wpdb->get_col(
 			"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = '" . self::META_KEY . "' AND meta_value != ''"
@@ -459,10 +461,24 @@ class BuddyPress {
 		$exclude    = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
 		$exclude_in = implode( ',', $exclude );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$available_spaces = $wpdb->get_results(
-			"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_in}) ORDER BY title ASC"
-		);
+		// Only show spaces the user is admin/moderator of, or site admins see all.
+		if ( current_user_can( 'manage_options' ) ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$available_spaces = $wpdb->get_results(
+				"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_in}) ORDER BY title ASC"
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$available_spaces = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT s.id, s.title, s.slug FROM {$p}jt_spaces s
+					INNER JOIN {$p}jt_space_members sm ON sm.space_id = s.id AND sm.user_id = %d AND sm.role IN ('admin', 'moderator')
+					WHERE s.id NOT IN ({$exclude_in})
+					ORDER BY s.title ASC",
+					$user_id
+				)
+			);
+		}
 
 		// Re-include the currently linked space so it shows as selected.
 		if ( $existing_space && ! in_array( (int) $existing_space->id, array_column( $available_spaces, 'id' ), true ) ) {
