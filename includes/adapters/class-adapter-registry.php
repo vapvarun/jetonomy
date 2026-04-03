@@ -15,6 +15,7 @@ class Adapter_Registry {
 	private static array $search     = [];
 	private static array $realtime   = [];
 	private static array $email      = [];
+	private static array $ai         = [];
 
 	public static function register_membership( string $id, Membership_Adapter $adapter ): void {
 		self::$membership[ $id ] = $adapter;
@@ -74,6 +75,26 @@ class Adapter_Registry {
 
 	public static function get_all_membership(): array {
 		return self::$membership;
+	}
+
+	public static function register_ai( string $id, AI_Adapter $adapter ): void {
+		self::$ai[ $id ] = $adapter;
+	}
+
+	public static function get_ai( string $id = '' ): ?AI_Adapter {
+		if ( $id ) {
+			return self::$ai[ $id ] ?? null;
+		}
+		foreach ( self::$ai as $adapter ) {
+			if ( $adapter->is_active() ) {
+				return $adapter;
+			}
+		}
+		return null;
+	}
+
+	public static function get_all_ai(): array {
+		return self::$ai;
 	}
 
 	/**

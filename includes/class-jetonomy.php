@@ -209,6 +209,15 @@ final class Jetonomy {
 			$mepr->register_hooks();
 		}
 
+		// Ollama AI adapter (conditional — self-hosted, free).
+		$ai_settings = $settings['ai']['providers']['ollama'] ?? [];
+		if ( ! empty( $ai_settings['enabled'] ) ) {
+			Adapters\Adapter_Registry::register_ai( 'ollama', new Adapters\Ollama_AI_Adapter() );
+		}
+
+		// AI spam detection (free version — Ollama only).
+		new Moderation\AI_Spam_Detector();
+
 		// PMPro adapter (conditional)
 		if ( defined( 'PMPRO_VERSION' ) ) {
 			$pmpro = new Adapters\PMPro_Adapter();
