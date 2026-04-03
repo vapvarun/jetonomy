@@ -125,6 +125,15 @@ $crumbs = [
 								<?php esc_html_e( 'Message', 'jetonomy' ); ?>
 							</a>
 						<?php endif; ?>
+						<?php if ( is_user_logged_in() && get_current_user_id() !== $profile_user_id ) : ?>
+							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
+								data-wp-on--click="actions.flagUser"
+								data-user-id="<?php echo (int) $profile_user_id; ?>"
+								title="<?php esc_attr_e( 'Report User', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'flag', 14 ); ?>
+								<?php esc_html_e( 'Report', 'jetonomy' ); ?>
+							</button>
+						<?php endif; ?>
 					</div>
 
 					<?php if ( ! empty( $profile->bio ) ) : ?>

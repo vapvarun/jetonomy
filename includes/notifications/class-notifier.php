@@ -567,30 +567,55 @@ HTML;
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
 		$space      = Space::find( $space_id );
 		$space_name = $space ? $space->title : __( 'a space', 'jetonomy' );
+		$space_url  = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/members/' : '';
 
-		$moderators = get_users(
+		// Collect recipients: space-level admins/moderators + WP-level admins.
+		$recipient_ids = [];
+
+		// 1. Space-level admins and moderators from jt_space_members.
+		global $wpdb;
+		$members_table = \Jetonomy\table( 'space_members' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$space_admins = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT user_id FROM {$members_table} WHERE space_id = %d AND role IN ('admin', 'moderator')",
+				$space_id
+			)
+		);
+		foreach ( $space_admins as $admin_id ) {
+			$recipient_ids[ (int) $admin_id ] = true;
+		}
+
+		// 2. WP-level admins who can manage spaces globally.
+		$wp_admins = get_users(
 			[
 				'capability__in' => [ 'jetonomy_manage_spaces', 'manage_options' ],
 				'fields'         => 'ID',
 			]
 		);
+		foreach ( $wp_admins as $admin_id ) {
+			$recipient_ids[ (int) $admin_id ] = true;
+		}
 
-		foreach ( $moderators as $mod_id ) {
-			if ( (int) $mod_id === $user_id ) {
+		$notify_message = sprintf(
+			/* translators: 1: user display name, 2: space name */
+			__( '%1$s requested to join %2$s', 'jetonomy' ),
+			$this->get_display_name( $user_id ),
+			$space_name
+		);
+
+		foreach ( array_keys( $recipient_ids ) as $mod_id ) {
+			if ( $mod_id === $user_id ) {
 				continue;
 			}
 			$this->create_and_maybe_email(
-				(int) $mod_id,
+				$mod_id,
 				$user_id,
 				'join_request',
 				'space',
 				$space_id,
-				sprintf(
-					/* translators: 1: user display name, 2: space name */
-					__( '%1$s requested to join %2$s', 'jetonomy' ),
-					$this->get_display_name( $user_id ),
-					$space_name
-				)
+				$notify_message,
+				$space_url
 			);
 		}
 	}

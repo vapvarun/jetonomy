@@ -277,15 +277,32 @@ class Posts_Controller extends Base_Controller {
 		$is_privileged = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
 
 		$pagination = $this->get_pagination( $request );
-		$posts      = Post::list_by_space_visible(
+
+		// Pass -1 when client didn't send a limit so the model resolves from space/global settings.
+		$limit = null !== $request->get_param( 'limit' ) ? (int) $pagination['limit'] : -1;
+
+		$posts = Post::list_by_space_visible(
 			$space_id,
 			$user_id,
 			$is_privileged,
 			$pagination['sort'],
-			(int) $pagination['limit'],
+			$limit,
 			(int) $pagination['offset'],
 			(int) $pagination['after']
 		);
+
+		// Resolve effective limit for pagination metadata.
+		$effective_limit = count( $posts );
+		if ( -1 === $limit ) {
+			$space_settings  = Space::get_settings( $space_id );
+			$effective_limit = ! empty( $space_settings['posts_per_page'] ) ? (int) $space_settings['posts_per_page'] : 0;
+			if ( $effective_limit <= 0 ) {
+				$global          = get_option( 'jetonomy_settings', array() );
+				$effective_limit = (int) ( $global['posts_per_page'] ?? 20 );
+			}
+		} else {
+			$effective_limit = (int) $pagination['limit'];
+		}
 
 		// Eager-load all author data in a single batch before preparing items.
 		$posts = $this->enrich_with_author( $posts );
@@ -296,7 +313,7 @@ class Posts_Controller extends Base_Controller {
 			$items,
 			array(
 				'total'    => (int) ( $space->post_count ?? 0 ),
-				'has_more' => count( $items ) === (int) $pagination['limit'],
+				'has_more' => count( $items ) === $effective_limit,
 			)
 		);
 	}

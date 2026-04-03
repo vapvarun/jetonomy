@@ -82,5 +82,6 @@ class Adapter_Registry {
 	public static function init_defaults(): void {
 		self::register_membership( 'wp-roles', new WP_Roles_Adapter() );
 		self::register_realtime( 'polling', new Polling_Adapter() );
+		self::register_email( 'wp-mail', new WP_Mail_Adapter() );
 	}
 }

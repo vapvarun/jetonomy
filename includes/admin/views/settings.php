@@ -713,7 +713,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 			</div>
 
-		<?php elseif ( 'license' === $active_tab ) : ?>
+		<?php elseif ( 'license' === $active_tab && defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
