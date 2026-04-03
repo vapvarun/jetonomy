@@ -142,7 +142,7 @@ $crumbs[] = [
 						$_jt_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
 						if ( $_jt_pending ) :
 							?>
-							<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;">
+							<span class="jt-btn jt-btn-sm jt-btn-ghost" style="cursor:default;opacity:.7;text-align:center;">
 								<?php esc_html_e( 'Awaiting Approval', 'jetonomy' ); ?>
 							</span>
 							<?php
