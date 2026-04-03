@@ -19,11 +19,13 @@
 </p>
 
 <p align="center">
+  <a href="https://app.instawp.io/launch?s=jetonomy&d=v2"><img src="https://img.shields.io/badge/Try%20Live%20Demo-Launch%20Sandbox-FF6B35?style=for-the-badge" alt="Try Live Demo"></a>
+  &nbsp;
   <a href="https://store.wbcomdesigns.com/jetonomy/"><img src="https://img.shields.io/badge/Download-Free-brightgreen?style=for-the-badge&logo=wordpress&logoColor=white" alt="Download Free"></a>
   &nbsp;
-  <a href="https://store.wbcomdesigns.com/jetonomy/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
-  &nbsp;
   <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-13%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro"></a>
+  &nbsp;
+  <a href="https://store.wbcomdesigns.com/jetonomy/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </p>
 
 ---
@@ -49,6 +51,29 @@ Jetonomy adds a fast, self-moderating discussion platform to any WordPress site.
 - @mentions with notifications
 - Post and reply subscriptions
 - Flag/report system with moderation queue
+- **Private topics** -- visible only to author and moderators
+- **Topic prefixes** -- colored labels (Bug, Suggestion, Solved) configurable per space
+- **Similar topic detection** -- see related topics as you type, before posting duplicates
+- **Quote replies** -- click Quote on any reply for attributed blockquotes
+- **Polls** -- add polls to any topic with real-time voting
+
+### BuddyPress Integration (v1.2+)
+- Link BuddyPress groups to forum spaces with automatic member sync
+- Forum tab on BP group pages with topics and New Topic button
+- Forum tab on BP member profiles with Posts, Replies, and Bookmarks sub-tabs
+- Discussion Forum settings in group creation wizard and manage screen
+- Space privacy auto-syncs with BP group privacy changes
+- Linked group shown in forum sidebar About section
+
+### LMS Integration (v1.1+)
+- **LearnDash** -- course enrollment sync (supports LearnDash 5.x)
+- **Tutor LMS** -- course enrollment sync with space access
+- **LifterLMS** -- course and membership enrollment sync
+- **Sensei LMS** -- enrollment status change sync
+- **MasterStudy LMS** -- course enrollment sync
+- Auto-create discussion space when a new course is published
+- Course author assigned as space admin on auto-create
+- Searchable autocomplete for 1000+ courses in access rules
 
 ### Moderation
 - Trust-based behavior gates (rate limits, link blocks for new accounts)
@@ -56,22 +81,27 @@ Jetonomy adds a fast, self-moderating discussion platform to any WordPress site.
 - Banned users management
 - Space-level access rules and join policies
 
+### GDPR Compliance
+- Personal data export for messages, reactions, badges, polls, and custom fields
+- Personal data erasure through WordPress privacy tools
+
 ### Search & SEO
 - Full-text search with type filtering
 - Schema.org structured data (DiscussionForumPosting, QAPage)
 - Open Graph and Twitter Cards
 - XML sitemap inclusion
+- Configurable community H1 heading for SEO
 
 ### Developer
-- 48+ REST API endpoints with cursor-based pagination
+- 61+ REST API endpoints with cursor-based pagination
 - Template override system (`theme/jetonomy/` directory)
 - Adapter pattern for search, email, membership, and real-time
 - WordPress Interactivity API for real-time UI updates
-- MemberPress and Paid Memberships Pro integration included
+- MemberPress, Paid Memberships Pro, and 5 LMS adapters included
 
 ### Migration
 - bbPress importer with dry-run and resume
-- wpForo importer with dry-run and resume
+- wpForo importer with dry-run and resume (multi-board support)
 - Live progress tracking, no record limit
 
 ## Requirements
@@ -129,14 +159,40 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 
 ## Changelog
 
+### 1.2.0 (April 2026)
+- New: Private Topics -- mark topics visible only to author and moderators
+- New: Topic Prefixes -- colored labels (Bug, Suggestion, Solved) configurable per space
+- New: Similar Topics -- see related topics as you type, before posting duplicates
+- New: Quote Replies -- click Quote on any reply for attributed blockquotes
+- New: BuddyPress Integration -- link BP Groups to forum spaces with automatic member sync
+- New: Forum tab in BP Group pages with topics and New Topic button
+- New: Forum tab on BP Member profiles with Posts, Replies, and Bookmarks sub-tabs
+- New: Discussion Forum settings in group creation wizard and manage screen
+- New: Linked group shown in sidebar About section
+- Improvement: Third-party admin notices hidden on Jetonomy pages
+- Improvement: Space privacy auto-syncs with BP group privacy changes
+- Improvement: wpForo multi-board import support
+- Fix: Topic title placeholder alignment on all themes
+- Fix: New Topic button hidden for logged-out visitors
+- Fix: Spaces can only be linked to one group at a time
+
+### 1.1.0 (March 2026)
+- New: Configurable Community Title setting for H1 on community home page
+- New: Adapter-specific rule type options in Access Rules (e.g. "Tutor Course", "LearnDash Course")
+- New: Searchable autocomplete for membership levels -- scales to 1000+ courses
+- New: Human-readable labels in access rules table -- shows course names instead of raw IDs
+- New: Sync Members button to pull in existing enrolled users when creating a rule
+- Fix: H1 heading added to community home page for SEO and accessibility
+- Fix: Membership deactivation now fully removes space access instead of downgrading to viewer
+- Improvement: Priority column hidden from access rules UI for cleaner admin experience
+- Improvement: Action buttons with icons (Sync Members, Delete) in access rules table
+
 ### 1.0.1
-- Fix: Renamed internal `.container` to `.jt-container` to prevent CSS class collisions with theme frameworks (Astra, GeneratePress, Bootstrap, etc.)
-- Fix: Community app wrapper now fills theme flex/grid parents correctly — resolves blank sidebar space on Astra and similar themes
-- Fix: Container width auto-detects from theme settings (theme.json wideSize → $content_width → 1200px fallback) via `--jt-container-width` CSS variable
-- Fix: Community sub-nav moved inside content container for proper alignment with theme wrapper
-- Fix: Hide theme page title bars ("Recent Posts", "Blog") that leaked through on community pages (OceanWP, etc.)
-- Fix: Improved spacing — 24px gap below sub-nav, reduced top container padding
-- Tested with 12 popular themes: Astra, GeneratePress, Kadence, Neve, OceanWP, Storefront, Hestia, Hello Elementor, Blocksy, Twenty Twenty-Five, Twenty Twenty-Four, Twenty Twenty-Three
+- Fix: Renamed internal `.container` to `.jt-container` to prevent CSS class collisions
+- Fix: Community app wrapper fills theme flex/grid parents correctly
+- Fix: Container width auto-detects from theme settings
+- Fix: Hide theme page title bars on community pages
+- Tested with 12 popular themes
 
 ### 1.0.0
 - Initial release
