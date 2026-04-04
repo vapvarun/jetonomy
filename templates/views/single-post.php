@@ -12,6 +12,7 @@ $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
 if ( ! $post ) {
 	status_header( 404 );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
 	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
@@ -23,7 +24,8 @@ if ( 'publish' !== $post->status ) {
 
 	if ( ! $is_author && ! $is_mod ) {
 		status_header( 404 );
-		echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 		return;
 	}
 }
@@ -204,7 +206,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-post-head">
 					<h1>
 						<?php if ( $prefix_name ) : ?>
-							<span class="jt-prefix" <?php echo $prefix_color ? 'style="--jt-pfx:' . esc_attr( $prefix_color ) . '"' : ''; ?>><?php echo esc_html( $prefix_name ); ?></span>
+							<span class="jt-prefix" <?php if ( $prefix_color ) : ?>style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 						<?php endif; ?>
 						<?php echo esc_html( $post->title ); ?>
 					</h1>
@@ -245,14 +247,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-on--click="actions.followPost"
 							data-post-id="<?php echo (int) $post->id; ?>"
-							data-following="<?php echo $is_following ? '1' : '0'; ?>">
+							data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
 							<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
 						</button>
 					<?php endif; ?>
 				</div>
 
 				<div class="jt-post-body">
-					<?php echo \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $post->content ) ) ); ?>
+					<?php echo wp_kses_post( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $post->content ) ) ) ); ?>
 				</div>
 
 				<?php
@@ -264,7 +266,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				do_action( 'jetonomy_post_meta_fields', $post );
 				?>
 
-				<?php echo apply_filters( 'jetonomy_after_post_content', '', $post ); ?>
+				<?php echo wp_kses_post( apply_filters( 'jetonomy_after_post_content', '', $post ) ); ?>
 
 				<div class="jt-post-foot">
 					<?php if ( is_user_logged_in() ) : ?>
@@ -305,7 +307,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? esc_attr( 'bookmarked' ) : ''; ?>"
 						data-wp-on--click="actions.toggleBookmark"
 						data-post-id="<?php echo (int) $post->id; ?>"
-						data-bookmarked="<?php echo $is_bookmarked ? '1' : '0'; ?>"
+						data-bookmarked="<?php echo esc_attr( $is_bookmarked ? '1' : '0' ); ?>"
 						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
 					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
 						<button class="jt-act"
@@ -326,7 +328,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<button class="jt-more-item"
 									data-wp-on--click="actions.togglePrivate"
 									data-post-id="<?php echo (int) $post->id; ?>"
-									data-private="<?php echo ! empty( $post->is_private ) ? '1' : '0'; ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
+									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"

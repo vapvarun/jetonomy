@@ -48,7 +48,7 @@ if ( $prefix_name && $space ) {
 				<span class="jt-badge-private"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
 			<?php endif; ?>
 			<?php if ( $prefix_name ) : ?>
-				<span class="jt-prefix" <?php echo $prefix_color ? 'style="--jt-pfx:' . esc_attr( $prefix_color ) . '"' : ''; ?>><?php echo esc_html( $prefix_name ); ?></span>
+				<span class="jt-prefix" <?php if ( $prefix_color ) : ?>style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
 		</div>

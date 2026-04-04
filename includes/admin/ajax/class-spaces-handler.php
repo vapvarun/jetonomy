@@ -42,16 +42,16 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$title       = sanitize_text_field( $_POST['title'] ?? '' );
-		$slug        = sanitize_title( $_POST['slug'] ?? $title );
-		$description = wp_kses_post( $_POST['description'] ?? '' );
+		$title       = sanitize_text_field( wp_unslash( $_POST['title'] ?? '' ) );
+		$slug        = sanitize_title( wp_unslash( $_POST['slug'] ?? $title ) );
+		$description = wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) );
 		$category_id = absint( $_POST['category_id'] ?? 0 );
-		$type        = sanitize_text_field( $_POST['type'] ?? 'forum' );
-		$visibility  = sanitize_text_field( $_POST['visibility'] ?? 'public' );
-		$join_policy = sanitize_text_field( $_POST['join_policy'] ?? 'open' );
-		$icon        = sanitize_text_field( $_POST['icon'] ?? '' );
-		$cover_image = esc_url_raw( $_POST['cover_image'] ?? '' );
-		$status      = sanitize_text_field( $_POST['status'] ?? 'active' );
+		$type        = sanitize_text_field( wp_unslash( $_POST['type'] ?? 'forum' ) );
+		$visibility  = sanitize_text_field( wp_unslash( $_POST['visibility'] ?? 'public' ) );
+		$join_policy = sanitize_text_field( wp_unslash( $_POST['join_policy'] ?? 'open' ) );
+		$icon        = sanitize_text_field( wp_unslash( $_POST['icon'] ?? '' ) );
+		$cover_image = esc_url_raw( wp_unslash( $_POST['cover_image'] ?? '' ) );
+		$status      = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'active' ) );
 
 		if ( empty( $title ) ) {
 			wp_send_json_error( __( 'Title is required.', 'jetonomy' ) );
@@ -118,42 +118,42 @@ class Spaces_Handler {
 
 		foreach ( $allowed_fields as $field => $sanitizer ) {
 			if ( isset( $_POST[ $field ] ) ) {
-				$data[ $field ] = $sanitizer( $_POST[ $field ] );
+				$data[ $field ] = $sanitizer( wp_unslash( $_POST[ $field ] ) );
 			}
 		}
 
 		if ( isset( $_POST['slug'] ) ) {
-			$data['slug'] = sanitize_title( $_POST['slug'] );
+			$data['slug'] = sanitize_title( wp_unslash( $_POST['slug'] ) );
 		}
 		if ( isset( $_POST['category_id'] ) ) {
 			$data['category_id'] = absint( $_POST['category_id'] );
 		}
 		if ( isset( $_POST['type'] ) ) {
-			$type = sanitize_text_field( $_POST['type'] );
+			$type = sanitize_text_field( wp_unslash( $_POST['type'] ) );
 			if ( in_array( $type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
 				$data['type'] = $type;
 			}
 		}
 		if ( isset( $_POST['visibility'] ) ) {
-			$visibility = sanitize_text_field( $_POST['visibility'] );
+			$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ) );
 			if ( in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
 				$data['visibility'] = $visibility;
 			}
 		}
 		if ( isset( $_POST['join_policy'] ) ) {
-			$join_policy = sanitize_text_field( $_POST['join_policy'] );
+			$join_policy = sanitize_text_field( wp_unslash( $_POST['join_policy'] ) );
 			if ( in_array( $join_policy, array( 'open', 'approval', 'invite' ), true ) ) {
 				$data['join_policy'] = $join_policy;
 			}
 		}
 		if ( isset( $_POST['status'] ) ) {
-			$status = sanitize_text_field( $_POST['status'] );
+			$status = sanitize_text_field( wp_unslash( $_POST['status'] ) );
 			if ( in_array( $status, array( 'active', 'archived', 'locked' ), true ) ) {
 				$data['status'] = $status;
 			}
 		}
 		if ( isset( $_POST['cover_image'] ) ) {
-			$data['cover_image'] = esc_url_raw( $_POST['cover_image'] ) ?: null;
+			$data['cover_image'] = esc_url_raw( wp_unslash( $_POST['cover_image'] ) ) ?: null;
 		}
 		if ( isset( $_POST['settings'] ) ) {
 			$settings_raw = $_POST['settings'];
@@ -253,7 +253,7 @@ class Spaces_Handler {
 
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 		$user_id  = absint( $_POST['user_id'] ?? 0 );
-		$role     = sanitize_text_field( $_POST['role'] ?? 'member' );
+		$role     = sanitize_text_field( wp_unslash( $_POST['role'] ?? 'member' ) );
 
 		if ( ! $space_id || ! $user_id ) {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
@@ -307,7 +307,7 @@ class Spaces_Handler {
 
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 		$user_id  = absint( $_POST['user_id'] ?? 0 );
-		$role     = sanitize_text_field( $_POST['role'] ?? '' );
+		$role     = sanitize_text_field( wp_unslash( $_POST['role'] ?? '' ) );
 
 		if ( ! $space_id || ! $user_id || ! $role ) {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
@@ -329,10 +329,10 @@ class Spaces_Handler {
 		}
 
 		$space_id   = absint( $_POST['space_id'] ?? 0 );
-		$rule_type  = sanitize_text_field( $_POST['rule_type'] ?? '' );
-		$rule_value = sanitize_text_field( $_POST['rule_value'] ?? '' );
-		$grants     = sanitize_text_field( $_POST['grants'] ?? 'read' );
-		$space_role = sanitize_text_field( $_POST['space_role'] ?? 'viewer' );
+		$rule_type  = sanitize_text_field( wp_unslash( $_POST['rule_type'] ?? '' ) );
+		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
+		$grants     = sanitize_text_field( wp_unslash( $_POST['grants'] ?? 'read' ) );
+		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'viewer' ) );
 		$priority   = absint( $_POST['priority'] ?? 0 );
 
 		if ( ! $space_id ) {
@@ -409,8 +409,8 @@ class Spaces_Handler {
 		}
 
 		$space_id   = absint( $_POST['space_id'] ?? 0 );
-		$rule_value = sanitize_text_field( $_POST['rule_value'] ?? '' );
-		$space_role = sanitize_text_field( $_POST['space_role'] ?? 'member' );
+		$rule_value = sanitize_text_field( wp_unslash( $_POST['rule_value'] ?? '' ) );
+		$space_role = sanitize_text_field( wp_unslash( $_POST['space_role'] ?? 'member' ) );
 
 		if ( ! $space_id || ! $rule_value ) {
 			wp_send_json_error( __( 'Missing parameters.', 'jetonomy' ) );

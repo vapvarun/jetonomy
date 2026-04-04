@@ -49,8 +49,6 @@ class WPForo_Importer extends Importer {
 	}
 
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
-		// TODO: implement batched import for wpForo.
-		// For now, fall through to run() via a single-shot batch.
 		if ( 'forums' === $phase && 0 === $offset ) {
 			$this->run();
 			return [
@@ -71,12 +69,10 @@ class WPForo_Importer extends Importer {
 	public function run( array $options = [] ): array {
 		global $wpdb;
 
-		// Discover all wpForo boards (multi-board support).
 		$boards_table = $wpdb->prefix . 'wpforo_boards';
 		$boards       = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
 
 		if ( empty( $boards ) ) {
-			// Fallback: single board with default prefix.
 			$boards = [ (object) [ 'boardid' => 0, 'title' => 'Forums' ] ];
 		}
 
@@ -84,14 +80,13 @@ class WPForo_Importer extends Importer {
 			$board_id = (int) $board->boardid;
 			$prefix   = $wpdb->prefix . 'wpforo' . ( $board_id ? $board_id . '_' : '_' );
 
-			// Verify this board's tables exist.
 			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $prefix . 'forums' ) ) ) {
 				continue;
 			}
 
 			$cat_name = count( $boards ) > 1
 				/* translators: %s: wpForo board name */
-				? sprintf( __( 'Imported from wpForo — %s', 'jetonomy' ), $board->title )
+				? sprintf( __( 'Imported from wpForo -- %s', 'jetonomy' ), $board->title )
 				: __( 'Imported from wpForo', 'jetonomy' );
 
 			$cat_slug = count( $boards ) > 1
@@ -157,6 +152,30 @@ class WPForo_Importer extends Importer {
 
 		$topics = $wpdb->get_results( "SELECT * FROM {$p}topics ORDER BY topicid ASC" );
 
+		if ( empty( $topics ) ) {
+			return;
+		}
+
+		$topic_ids    = wp_list_pluck( $topics, 'topicid' );
+		$placeholders = implode( ',', array_fill( 0, count( $topic_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$first_posts_raw = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT fp.* FROM {$p}posts fp
+				 INNER JOIN (
+				     SELECT topicid, MIN(postid) AS first_postid
+				     FROM {$p}posts
+				     WHERE topicid IN ({$placeholders})
+				     GROUP BY topicid
+				 ) f ON fp.postid = f.first_postid",
+				...$topic_ids
+			)
+		);
+		$first_posts_map = [];
+		foreach ( $first_posts_raw as $fp ) {
+			$first_posts_map[ (int) $fp->topicid ] = $fp;
+		}
+
 		foreach ( $topics as $topic ) {
 			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
 			if ( ! $space_id ) {
@@ -164,18 +183,13 @@ class WPForo_Importer extends Importer {
 				continue;
 			}
 
-			// Determine type based on wpForo topic type
 			$is_sticky = 0;
-			if ( isset( $topic->type ) && (int) $topic->type === 1 ) {
+			if ( isset( $topic->type ) && 1 === (int) $topic->type ) {
 				$is_sticky = 1;
 			}
 
-			// Get first post content for the topic
-			$first_post = $wpdb->get_row(
-				$wpdb->prepare( "SELECT * FROM {$p}posts WHERE topicid = %d ORDER BY postid ASC LIMIT 1", $topic->topicid )
-			);
-
-			$content = $first_post ? $first_post->body : '';
+			$first_post = $first_posts_map[ (int) $topic->topicid ] ?? null;
+			$content    = $first_post ? $first_post->body : '';
 
 			$post_id = JtPost::create(
 				[
@@ -186,7 +200,7 @@ class WPForo_Importer extends Importer {
 					'slug'          => $topic->slug ?: sanitize_title( $topic->title ),
 					'content'       => wp_kses_post( $content ),
 					'content_plain' => wp_strip_all_tags( $content ),
-					'status'        => ( (int) ( $topic->status ?? 0 ) === 0 ) ? 'publish' : 'pending',
+					'status'        => ( 0 === (int) ( $topic->status ?? 0 ) ) ? 'publish' : 'pending',
 					'is_sticky'     => $is_sticky,
 					'is_closed'     => (int) ( $topic->closed ?? 0 ),
 					'created_at'    => $topic->created ?? now(),
@@ -196,7 +210,7 @@ class WPForo_Importer extends Importer {
 			if ( $post_id ) {
 				$this->map_id( 'topic', $topic->topicid, $post_id );
 				if ( $first_post ) {
-					$this->map_id( 'wpforo_post', $first_post->postid, 0 ); // Mark first post as imported (it's the topic body)
+					$this->map_id( 'wpforo_post', $first_post->postid, 0 );
 				}
 				++$this->imported;
 			} else {
@@ -211,7 +225,6 @@ class WPForo_Importer extends Importer {
 			$p = $wpdb->prefix . 'wpforo_';
 		}
 
-		// Get all posts that aren't the first post of a topic
 		$posts = $wpdb->get_results(
 			"SELECT p.* FROM {$p}posts p
 			 INNER JOIN (
@@ -228,7 +241,6 @@ class WPForo_Importer extends Importer {
 				continue;
 			}
 
-			// Check for parent reply (threaded)
 			$parent_id = null;
 			if ( ! empty( $wf_post->parentid ) && (int) $wf_post->parentid > 0 ) {
 				$parent_id = $this->get_mapped_id( 'wpforo_reply', $wf_post->parentid );

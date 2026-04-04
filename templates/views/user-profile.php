@@ -12,6 +12,7 @@ $user       = get_user_by( 'login', $user_login );
 
 if ( ! $user ) {
 	status_header( 404 );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
 	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'User not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
@@ -25,9 +26,12 @@ $profile_user_id = (int) $user->ID;
 $base            = \Jetonomy\base_url();
 $initials        = strtoupper( substr( $user->display_name, 0, 2 ) );
 
+$wp_date_format = get_option( 'date_format' );
+$wp_time_format = get_option( 'time_format' );
+
 $joined = $profile && $profile->created_at
-	? date_i18n( get_option( 'date_format' ), strtotime( $profile->created_at ) )
-	: date_i18n( get_option( 'date_format' ), strtotime( $user->user_registered ) );
+	? date_i18n( $wp_date_format, strtotime( $profile->created_at ) )
+	: date_i18n( $wp_date_format, strtotime( $user->user_registered ) );
 
 // Recent posts by this user (paginated).
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -199,20 +203,20 @@ $crumbs = [
 
 			<!-- Profile tabs -->
 			<div class="jt-profile-tabs">
-				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/' ); ?>" class="jt-profile-tab <?php echo empty( $current_tab ) ? 'active' : ''; ?>">
+				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/' ); ?>" class="jt-profile-tab <?php echo esc_attr( empty( $current_tab ) ? 'active' : '' ); ?>">
 					<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
 				</a>
-				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/replies/' ); ?>" class="jt-profile-tab <?php echo 'replies' === $current_tab ? 'active' : ''; ?>">
+				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/replies/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'replies' === $current_tab ? 'active' : '' ); ?>">
 					<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
 				</a>
-				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/votes/' ); ?>" class="jt-profile-tab <?php echo 'votes' === $current_tab ? 'active' : ''; ?>">
+				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/votes/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'votes' === $current_tab ? 'active' : '' ); ?>">
 					<?php esc_html_e( 'Votes', 'jetonomy' ); ?>
 				</a>
 				<?php if ( $is_own ) : ?>
-					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/bookmarks/' ); ?>" class="jt-profile-tab <?php echo 'bookmarks' === $current_tab ? 'active' : ''; ?>">
+					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/bookmarks/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'bookmarks' === $current_tab ? 'active' : '' ); ?>">
 						<?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?>
 					</a>
-					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/drafts/' ); ?>" class="jt-profile-tab <?php echo 'drafts' === $current_tab ? 'active' : ''; ?>">
+					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/drafts/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'drafts' === $current_tab ? 'active' : '' ); ?>">
 						<?php esc_html_e( 'Drafts', 'jetonomy' ); ?>
 					</a>
 				<?php endif; ?>
@@ -305,6 +309,7 @@ $crumbs = [
 					<div class="jt-empty-text"><?php esc_html_e( 'No drafts yet. Save a post as draft and it will appear here.', 'jetonomy' ); ?></div>
 				</div>
 			<?php else : ?>
+				<?php $datetime_format = $wp_date_format . ' ' . $wp_time_format; ?>
 				<div class="jt-topics">
 					<?php foreach ( $user_drafts as $dr_post ) : ?>
 						<?php
@@ -319,7 +324,7 @@ $crumbs = [
 									<?php if ( $is_scheduled ) : ?>
 										<span class="jt-badge jt-badge--scheduled">
 											<?php
-											$sched_date = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dr_post->published_at ) );
+											$sched_date = date_i18n( $datetime_format, strtotime( $dr_post->published_at ) );
 											/* translators: %s: scheduled date/time */
 											echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), $sched_date ) );
 											?>
@@ -356,9 +361,19 @@ $crumbs = [
 					</div>
 				<?php else : ?>
 					<div class="jt-topics">
+						<?php
+						// Batch-fetch all spaces for bookmarks to avoid N+1.
+						$bk_space_ids = array_unique( array_filter( array_map( function ( $p ) { return (int) $p->space_id; }, $bookmarks ) ) );
+						$bk_spaces    = array();
+						if ( $bk_space_ids ) {
+							foreach ( $bk_space_ids as $sid ) {
+								$bk_spaces[ $sid ] = \Jetonomy\Models\Space::find( $sid );
+							}
+						}
+						?>
 						<?php foreach ( $bookmarks as $bk_post ) : ?>
 							<?php
-							$bk_space = \Jetonomy\Models\Space::find( (int) $bk_post->space_id );
+							$bk_space = $bk_spaces[ (int) $bk_post->space_id ] ?? null;
 							$bk_url   = $base . '/s/' . ( $bk_space->slug ?? '' ) . '/t/' . $bk_post->slug . '/';
 							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
 							?>

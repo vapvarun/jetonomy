@@ -12,6 +12,7 @@ $category      = \Jetonomy\Models\Category::find_by_slug( $category_slug );
 
 if ( ! $category ) {
 	status_header( 404 );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
 	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Category not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }

@@ -186,9 +186,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 		if ( ! empty( $missing ) ) {
 			global $wpdb;
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$in   = implode( ',', $missing );
-			$rows = $wpdb->get_results( "SELECT * FROM {$wpdb->users} WHERE ID IN ({$in})" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$placeholders = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->users} WHERE ID IN ({$placeholders})", ...$missing ) );
 			foreach ( $rows as $row ) {
 				$cached[ (int) $row->ID ] = $row;
 				Cache::set( "user:{$row->ID}", $row, 300 );
@@ -211,9 +211,9 @@ abstract class Base_Controller extends WP_REST_Controller {
 		$ids = array_unique( array_map( 'intval', $ids ) );
 
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$in   = implode( ',', $ids );
-		$rows = $wpdb->get_results( 'SELECT * FROM ' . \Jetonomy\table( 'user_profiles' ) . " WHERE user_id IN ({$in})" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . \Jetonomy\table( 'user_profiles' ) . " WHERE user_id IN ({$placeholders})", ...$ids ) );
 
 		$map = [];
 		foreach ( $rows as $row ) {

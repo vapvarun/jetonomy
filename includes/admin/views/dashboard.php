@@ -49,7 +49,7 @@ $stat_cards = [
 	<!-- Stat Cards -->
 	<div class="jetonomy-stat-cards">
 		<?php foreach ( $stat_cards as $key => $card ) : ?>
-			<div class="jetonomy-stat-card<?php echo 'pending_flags' === $key && $stats[ $key ] > 0 ? ' jetonomy-stat-card--warning' : ''; ?>">
+			<div class="jetonomy-stat-card<?php echo esc_attr( 'pending_flags' === $key && $stats[ $key ] > 0 ? ' jetonomy-stat-card--warning' : '' ); ?>">
 				<div class="jetonomy-stat-card__icon">
 					<span class="dashicons <?php echo esc_attr( $card['icon'] ); ?>"></span>
 				</div>

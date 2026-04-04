@@ -678,7 +678,7 @@ class Demo_Seeder {
 				$option_ids[] = (int) $wpdb->insert_id;
 			}
 
-			// admin→1, alice→0, bob→1, carol→0, david→2. Eve doesn't vote.
+			$vote_counts = [];
 			foreach ( [
 				$admin_id => 1,
 				$alice    => 0,
@@ -699,8 +699,11 @@ class Demo_Seeder {
 						'created_at' => $now,
 					]
 				);
+				$vote_counts[ $opt_id ] = ( $vote_counts[ $opt_id ] ?? 0 ) + 1;
+			}
+			foreach ( $vote_counts as $opt_id => $count ) {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->query( $wpdb->prepare( "UPDATE {$options_t} SET vote_count = vote_count + 1 WHERE id = %d", $opt_id ) );
+				$wpdb->query( $wpdb->prepare( "UPDATE {$options_t} SET vote_count = vote_count + %d WHERE id = %d", $count, $opt_id ) );
 			}
 		}
 

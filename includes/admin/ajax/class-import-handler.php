@@ -27,7 +27,7 @@ class Import_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$source = sanitize_text_field( $_POST['source'] ?? '' );
+		$source = sanitize_text_field( wp_unslash( $_POST['source'] ?? '' ) );
 		Import_Manager::init();
 		$result = Import_Manager::run( $source );
 
@@ -48,8 +48,8 @@ class Import_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$source     = sanitize_text_field( $_POST['source'] ?? '' );
-		$phase      = sanitize_text_field( $_POST['phase'] ?? 'forums' );
+		$source     = sanitize_text_field( wp_unslash( $_POST['source'] ?? '' ) );
+		$phase      = sanitize_text_field( wp_unslash( $_POST['phase'] ?? 'forums' ) );
 		$offset     = absint( $_POST['offset'] ?? 0 );
 		$batch_size = absint( $_POST['batch_size'] ?? 500 );
 
@@ -119,7 +119,7 @@ class Import_Handler {
 				'source'       => $source,
 				'source_name'  => $importers[ $source ]->get_source_name(),
 			];
-			update_option( 'jetonomy_import_history', $history );
+			update_option( 'jetonomy_import_history', $history, false );
 
 			// Clear transient state.
 			delete_option( 'jetonomy_import_resume' );

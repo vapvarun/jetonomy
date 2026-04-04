@@ -187,7 +187,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 				}
 				?>
 				<div class="jt-leader">
-					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $leader->user_id ) ? 'is-online' : ''; ?>">
+					<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $leader->user_id ) ? esc_attr( 'is-online' ) : ''; ?>">
 						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0"><?php echo esc_html( strtoupper( substr( $lu->display_name, 0, 2 ) ) ); ?></span>
 					</span>
 					<span class="jt-leader-name">

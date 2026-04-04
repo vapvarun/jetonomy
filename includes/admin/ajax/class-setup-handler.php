@@ -29,14 +29,14 @@ class Setup_Handler {
 		}
 
 		$settings                 = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']    = sanitize_title( $_POST['base_slug'] ?? 'community' );
-		$settings['default_type'] = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
+		$settings['base_slug']    = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
+		$settings['default_type'] = sanitize_text_field( wp_unslash( $_POST['default_type'] ?? 'forum' ) );
 		$settings['guest_read']   = true;
 		update_option( 'jetonomy_settings', $settings );
 
-		$cat_name   = sanitize_text_field( $_POST['category_name'] ?? 'General' );
-		$space_name = sanitize_text_field( $_POST['space_name'] ?? 'Community Discussion' );
-		$space_desc = sanitize_textarea_field( $_POST['space_description'] ?? '' );
+		$cat_name   = sanitize_text_field( wp_unslash( $_POST['category_name'] ?? 'General' ) );
+		$space_name = sanitize_text_field( wp_unslash( $_POST['space_name'] ?? 'Community Discussion' ) );
+		$space_desc = sanitize_textarea_field( wp_unslash( $_POST['space_description'] ?? '' ) );
 
 		$cat_id = Category::create(
 			[
@@ -83,8 +83,8 @@ class Setup_Handler {
 		UserProfile::find_or_create( $uid );
 
 		$settings                 = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']    = sanitize_title( $_POST['base_slug'] ?? 'community' );
-		$settings['default_type'] = sanitize_text_field( $_POST['default_type'] ?? 'forum' );
+		$settings['base_slug']    = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
+		$settings['default_type'] = sanitize_text_field( wp_unslash( $_POST['default_type'] ?? 'forum' ) );
 		$settings['guest_read']   = true;
 		update_option( 'jetonomy_settings', $settings );
 
@@ -95,7 +95,7 @@ class Setup_Handler {
 		}
 
 		$demo = Demo_Seeder::seed( $uid );
-		update_option( 'jetonomy_demo_data', $demo );
+		update_option( 'jetonomy_demo_data', $demo, false );
 
 		flush_rewrite_rules();
 		update_option( 'jetonomy_setup_complete', true );

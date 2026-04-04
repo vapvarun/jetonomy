@@ -108,14 +108,14 @@ class CLI {
 				'post_count'       => (int) $profile->post_count,
 				'days_active'      => $days_active,
 				'reputation'       => (int) $profile->reputation,
-				'replies_received' => 0, // Would need a join to count — simplified
+				'replies_received' => 0, // Would need a join to count -- simplified
 			];
 
 			$new_level = Trust_Evaluator::evaluate_level( $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
 				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
-				\WP_CLI::log( sprintf( 'User %d: Level %d → %d', $profile->user_id, $profile->trust_level, $new_level ) );
+				\WP_CLI::log( sprintf( 'User %d: Level %d -> %d', $profile->user_id, $profile->trust_level, $new_level ) );
 				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
 				++$promoted;
 			}
@@ -152,7 +152,7 @@ class CLI {
 		}
 
 		if ( $dry_run ) {
-			\WP_CLI::log( 'DRY RUN — no data will be written.' );
+			\WP_CLI::log( 'DRY RUN -- no data will be written.' );
 		}
 
 		$result = Import_Manager::run( $source, [ 'dry_run' => $dry_run ] );
@@ -339,7 +339,7 @@ class CLI {
 
 		\WP_CLI::log( 'Seeding demo users...' );
 		$demo = Demo_Seeder::seed( $admin_id );
-		update_option( 'jetonomy_demo_data', $demo );
+		update_option( 'jetonomy_demo_data', $demo, false );
 		flush_rewrite_rules();
 
 		\WP_CLI::log( sprintf( '  Users created:     %d', count( $demo['users'] ) ) );
@@ -362,7 +362,7 @@ class CLI {
 	 * Remove all demo data created by demo-seed or the setup wizard.
 	 *
 	 * Deletes demo users, their content, votes, reactions, polls, badges, flags,
-	 * spaces, and categories — everything tracked in the jetonomy_demo_data option.
+	 * spaces, and categories -- everything tracked in the jetonomy_demo_data option.
 	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy demo-cleanup
@@ -387,7 +387,7 @@ class CLI {
 	/**
 	 * Run discovery-based pre-release QA checks.
 	 *
-	 * Scans the actual codebase to discover what to test — DB tables, REST routes,
+	 * Scans the actual codebase to discover what to test -- DB tables, REST routes,
 	 * notification types, permissions, templates, rewrite rules, settings, Pro extensions,
 	 * and JS-to-REST alignment. New code is picked up automatically on the next run.
 	 *
@@ -409,20 +409,8 @@ class CLI {
 		$version      = defined( 'JETONOMY_VERSION' ) ? JETONOMY_VERSION : '?';
 		$pro_version  = defined( 'JETONOMY_PRO_VERSION' ) ? JETONOMY_PRO_VERSION : null;
 
-		// ── Shared state ──────────────────────────────────────────────────────
-		// Each section records its checks into $sections[key]['checks'] array.
-		// Each check: [ 'label', 'status' => 'pass'|'fail'|'warn', 'detail' => '' ]
 		$sections = [];
 
-		/**
-		 * Record a single check result into a section bucket.
-		 *
-		 * @param string $section  Section key (e.g. 'database').
-		 * @param string $label    Human-readable check description.
-		 * @param bool   $ok       Whether the check passed.
-		 * @param string $detail   Optional extra detail shown on failure.
-		 * @param bool   $warning  When true, a false $ok is a warning not a failure.
-		 */
 		$record = function (
 			string $section,
 			string $label,
@@ -442,38 +430,51 @@ class CLI {
 		};
 
 		// ── Section 1: Database Tables ────────────────────────────────────────
-		// Discover tables by reading Schema::get_table_names() — self-maintaining.
 		$schema_tables = \Jetonomy\DB\Schema::get_table_names();
 
-		foreach ( $schema_tables as $table_suffix ) {
-			$full = $wpdb->prefix . $table_suffix;
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$full}'" ) === $full;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$existing_tables_raw = $wpdb->get_col( "SHOW TABLES LIKE '{$wpdb->prefix}jt_%'" );
+		$existing_tables_set = array_flip( $existing_tables_raw );
 
-			// Warn on empty core content tables rather than failing — they may
-			// be intentionally empty on a fresh install.
-			$empty_warn_tables = [ 'jt_categories', 'jt_spaces', 'jt_posts', 'jt_replies', 'jt_user_profiles' ];
+		$empty_warn_tables = [ 'jt_categories', 'jt_spaces', 'jt_posts', 'jt_replies', 'jt_user_profiles' ];
+		$tables_to_count   = [];
+
+		foreach ( $schema_tables as $table_suffix ) {
+			$full   = $wpdb->prefix . $table_suffix;
+			$exists = isset( $existing_tables_set[ $full ] );
+
 			if ( $exists && in_array( $table_suffix, $empty_warn_tables, true ) ) {
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$count  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM `{$full}`" );
-				$detail = $count > 0 ? "{$count} rows" : 'table exists but is empty';
-				$record( 'database', "Table {$table_suffix}", $exists, $detail, $count === 0 );
+				$tables_to_count[ $table_suffix ] = $full;
 			} else {
 				$record( 'database', "Table {$table_suffix}", $exists, $exists ? '' : 'table missing' );
 			}
 		}
 
+		if ( ! empty( $tables_to_count ) ) {
+			$union_parts = [];
+			foreach ( $tables_to_count as $suffix => $full ) {
+				$union_parts[] = "SELECT '{$suffix}' AS tbl, COUNT(*) AS cnt FROM `{$full}`";
+			}
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$count_rows = $wpdb->get_results( implode( ' UNION ALL ', $union_parts ) );
+			$count_map  = [];
+			foreach ( $count_rows as $row ) {
+				$count_map[ $row->tbl ] = (int) $row->cnt;
+			}
+			foreach ( $tables_to_count as $suffix => $full ) {
+				$count  = $count_map[ $suffix ] ?? 0;
+				$detail = $count > 0 ? "{$count} rows" : 'table exists but is empty';
+				$record( 'database', "Table {$suffix}", true, $detail, 0 === $count );
+			}
+		}
+
 		// ── Section 2: REST Routes (Discovery) ───────────────────────────────
-		// Discover all routes registered under jetonomy/v1 at runtime.
-		// This automatically captures any new controller added to class-api.php.
 		$server       = rest_get_server();
 		$all_routes   = $server->get_routes( 'jetonomy/v1' );
 		$namespace_ok = count( $all_routes ) > 0;
 
 		$record( 'rest_routes', 'Namespace jetonomy/v1 registered', $namespace_ok, count( $all_routes ) . ' routes found' );
 
-		// For every registered route, check that mutating methods (POST/PATCH/DELETE/PUT)
-		// do NOT use __return_true as the permission_callback (security requirement).
 		$mutating_methods = [ 'POST', 'PATCH', 'DELETE', 'PUT' ];
 
 		foreach ( $all_routes as $route_path => $route_handlers ) {
@@ -486,30 +487,24 @@ class CLI {
 				}
 
 				$perm_cb     = $handler['permission_callback'] ?? null;
-				$is_open     = $perm_cb === '__return_true'
+				$is_open     = '__return_true' === $perm_cb
 					|| ( is_array( $perm_cb ) && in_array( '__return_true', $perm_cb, true ) );
 				$methods_str = implode( '|', array_intersect( $methods, $mutating_methods ) );
 				$route_label = "{$route_path} [{$methods_str}]";
 
-				// Webhook/inbound endpoints are legitimately public — external services
-				// (SendGrid, Mailgun) call them without WP auth. Auth is via HMAC signature.
 				$is_webhook = str_contains( $route_path, 'inbound' ) || str_contains( $route_path, 'webhook' );
 
-				$record( 'rest_routes', "Permission gate: {$route_label}", ! $is_open || $is_webhook, $is_open && ! $is_webhook ? 'permission_callback is __return_true — OPEN WRITE' : '' );
+				$record( 'rest_routes', "Permission gate: {$route_label}", ! $is_open || $is_webhook, $is_open && ! $is_webhook ? 'permission_callback is __return_true -- OPEN WRITE' : '' );
 			}
 		}
 
 		// ── Section 3: Notification Type Keys (Discovery) ─────────────────────
-		// Ground truth: the $type_labels array in notifications.php.
-		// We parse the file to extract the keys — no hardcoding.
 		$notif_template = JETONOMY_DIR . 'templates/views/notifications.php';
 		$template_keys  = [];
 
 		if ( file_exists( $notif_template ) ) {
 			$src = file_get_contents( $notif_template ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-			// Extract keys from: 'reply_to_post' => __( ...
 			preg_match_all( "/['\"]([a-z_]+)['\"]\s*=>/", $src, $matches );
-			// Filter to keys that look like notification type keys (contain underscore, no PHP prefix noise).
 			$template_keys = array_filter( $matches[1], fn( $k ) => str_contains( $k, '_' ) );
 			$template_keys = array_values( array_unique( $template_keys ) );
 		}
@@ -520,13 +515,11 @@ class CLI {
 		if ( empty( $template_keys ) ) {
 			$record( 'notification_keys', 'notifications.php $type_labels parseable', false, 'Could not parse template or file missing' );
 		} else {
-			// Every key in $type_labels must exist in notification_defaults.
 			foreach ( $template_keys as $key ) {
 				$in_settings = array_key_exists( $key, $notif_defs );
 				$record( 'notification_keys', "Type '{$key}' in notification_defaults", $in_settings, $in_settings ? '' : 'key exists in template but missing from settings' );
 			}
 
-			// Every key in notification_defaults must have a label in the template.
 			foreach ( array_keys( $notif_defs ) as $key ) {
 				$in_template = in_array( $key, $template_keys, true );
 				$record( 'notification_keys', "Type '{$key}' has template label", $in_template, $in_template ? '' : 'key in settings but no label in notifications.php', true );
@@ -542,7 +535,6 @@ class CLI {
 			]
 		)[0] ?? 1 );
 
-		// All actions a space member can perform — from Permission_Engine::SPACE_ROLE_PERMS.
 		$member_actions = [ 'read', 'create_posts', 'create_replies', 'vote', 'flag' ];
 		$mod_actions    = [ 'edit_others_posts', 'delete_others_posts', 'close_posts', 'pin_posts', 'move_posts' ];
 		$admin_actions  = [ 'manage_spaces' ];
@@ -552,22 +544,18 @@ class CLI {
 			$record( 'permissions', "Admin can '{$action}'", $can );
 		}
 
-		// Rate limiter: admin must bypass all limits.
 		$rate_ok = \Jetonomy\Permissions\Rate_Limiter::check( $admin_id, 'vote', 0 );
 		$record( 'permissions', 'Rate limiter: admin bypasses vote limit', $rate_ok );
 
 		$rate_ok_posts = \Jetonomy\Permissions\Rate_Limiter::check( $admin_id, 'create_posts', 0 );
 		$record( 'permissions', 'Rate limiter: admin bypasses create_posts limit', $rate_ok_posts );
 
-		// Create a transient-based TL0 user simulation: set a fake counter above the limit.
-		// We do NOT create a real WP user — just check the logic path.
 		$fake_tl0_user_id = 999999;
 		set_transient( "jetonomy_rate_{$fake_tl0_user_id}_create_posts", 9999, 60 );
 		$tl0_blocked = ! \Jetonomy\Permissions\Rate_Limiter::check( $fake_tl0_user_id, 'create_posts', 0 );
 		delete_transient( "jetonomy_rate_{$fake_tl0_user_id}_create_posts" );
 		$record( 'permissions', 'Rate limiter: TL0 user is blocked when over limit', $tl0_blocked );
 
-		// Banned user check: create a temporary restriction and verify the engine blocks them.
 		$restrictions_table = table( 'restrictions' );
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$restrictions_table,
@@ -582,12 +570,10 @@ class CLI {
 		);
 		$ban_id      = $wpdb->insert_id;
 		$ban_blocked = ! \Jetonomy\Permissions\Permission_Engine::can( $fake_tl0_user_id, 'create_posts' );
-		// Clean up the test restriction immediately.
 		$wpdb->delete( $restrictions_table, [ 'id' => $ban_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$record( 'permissions', 'Banned user blocked from create_posts', $ban_blocked );
 
 		// ── Section 5: Template Integrity ────────────────────────────────────
-		// Discover all PHP templates under templates/ — picks up new views automatically.
 		$template_dirs = [
 			JETONOMY_DIR . 'templates/views/',
 			JETONOMY_DIR . 'templates/partials/',
@@ -606,14 +592,10 @@ class CLI {
 			}
 
 			foreach ( $files as $file ) {
-				$name = basename( $file );
-
-				// Syntax check via token_get_all() — if it throws ParseError, syntax is broken.
 				$ok     = true;
 				$detail = '';
 				try {
-					$src = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-					// Suppress the error handler so token_get_all triggers ParseError instead.
+					$src    = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 					$tokens = @token_get_all( $src, TOKEN_PARSE ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 					$ok     = is_array( $tokens );
 				} catch ( \ParseError $e ) {
@@ -621,24 +603,19 @@ class CLI {
 					$detail = $e->getMessage();
 				}
 
-				// Relative path for clean output.
 				$rel = str_replace( JETONOMY_DIR, '', $file );
 				$record( 'templates', "Syntax OK: {$rel}", $ok, $detail );
 			}
 		}
 
 		// ── Section 6: Rewrite Rules ──────────────────────────────────────────
-		// Discover expected patterns from Router::add_rewrite_rules() by reading the source.
-		// This is static analysis — we check the compiled rules in the DB match what the Router
-		// registers. Dynamic base_slug is resolved at runtime.
 		$_jt_settings = get_option( 'jetonomy_settings', [] );
 		$base         = ! empty( $_jt_settings['base_slug'] ) ? $_jt_settings['base_slug'] : 'community';
 		$rules        = get_option( 'rewrite_rules', [] ) ?: [];
 
-		$record( 'rewrite_rules', 'Rewrite rules option is populated', ! empty( $rules ), empty( $rules ) ? 'No rules found — run wp rewrite flush' : '' );
+		$record( 'rewrite_rules', 'Rewrite rules option is populated', ! empty( $rules ), empty( $rules ) ? 'No rules found -- run wp rewrite flush' : '' );
 		$record( 'rewrite_rules', "Base slug '{$base}' is non-empty", ! empty( $base ) );
 
-		// Expected URL pattern fragments based on the Router source.
 		$expected_patterns = [
 			"^{$base}/?$"                       => 'Community home',
 			"^{$base}/category/([^/]+)/?$"      => 'Category view',
@@ -660,7 +637,7 @@ class CLI {
 
 		foreach ( $expected_patterns as $pattern => $label ) {
 			$found = isset( $rules[ $pattern ] );
-			$record( 'rewrite_rules', "Rule: {$label}", $found, $found ? '' : "Pattern '{$pattern}' not in rewrite_rules — run wp rewrite flush" );
+			$record( 'rewrite_rules', "Rule: {$label}", $found, $found ? '' : "Pattern '{$pattern}' not in rewrite_rules -- run wp rewrite flush" );
 		}
 
 		// ── Section 7: Settings Integrity ────────────────────────────────────
@@ -672,7 +649,6 @@ class CLI {
 		$record( 'settings', 'rate_limits is set', ! empty( $jt['rate_limits'] ) );
 		$record( 'settings', 'notification_defaults is set', ! empty( $jt['notification_defaults'] ) );
 
-		// Check DB version matches current schema.
 		$installed_db = get_option( 'jetonomy_db_version', '' );
 		$schema_ver   = defined( 'JETONOMY_DB_VERSION' ) ? JETONOMY_DB_VERSION : '';
 		$record( 'settings', 'DB version matches schema', $installed_db === $schema_ver, "installed={$installed_db} schema={$schema_ver}" );
@@ -681,7 +657,6 @@ class CLI {
 		if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
 			$record( 'pro_extensions', 'Jetonomy Pro is active', true, 'v' . JETONOMY_PRO_VERSION );
 
-			// Discover extensions by scanning the filesystem — self-maintaining.
 			$ext_dir        = defined( 'JETONOMY_PRO_DIR' ) ? JETONOMY_PRO_DIR . 'includes/extensions/' : '';
 			$enabled_exts   = get_option( 'jetonomy_pro_extensions', [] );
 			$discovered_ids = [];
@@ -695,16 +670,10 @@ class CLI {
 					$is_enabled = in_array( $ext_id, $enabled_exts, true );
 					$record( 'pro_extensions', "Extension '{$ext_id}' discovered", true, $is_enabled ? 'enabled' : 'disabled', false );
 
-					// If the extension registers REST routes, extract the literal route
-					// path fragments from register_rest_route() calls in the source and
-					// verify each one appears in the live route registry.
-					// This is pure static analysis — no hardcoded map needed.
 					$src        = file_get_contents( $ext_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 					$has_routes = str_contains( $src, 'register_routes' );
 
 					if ( $has_routes && $is_enabled ) {
-						// Extract route path literals from register_rest_route( $ns, '/path', ...
-						// Matches single or double-quoted second arg, handles variable $ns.
 						preg_match_all(
 							"/register_rest_route\s*\([^,]+,\s*['\"]([^'\"]+)['\"]/",
 							$src,
@@ -714,24 +683,19 @@ class CLI {
 						$ext_route_paths = $route_matches[1] ?? [];
 
 						if ( empty( $ext_route_paths ) ) {
-							// register_routes defined but no extractable paths — report as warning.
 							$record( 'pro_extensions', "Extension '{$ext_id}' REST routes registered", true, 'has register_routes() but no static paths found (may be dynamic)', false );
 						} else {
-							// For each path, check the live registry contains a matching route.
-							// The live route key format: /jetonomy/v1{path}
 							foreach ( $ext_route_paths as $ext_path ) {
-								$expected_key = '/jetonomy/v1' . $ext_path;
-								// Match against route keys — allow pattern matching for (?P<id>) segments.
+								$expected_key      = '/jetonomy/v1' . $ext_path;
 								$found_in_registry = false;
 								foreach ( array_keys( $all_routes ) as $rk ) {
-									// Exact match OR the static prefix of the path appears in the key.
 									$static_prefix = rtrim( explode( '(', $ext_path )[0], '/' );
 									if ( $rk === $expected_key || str_starts_with( $rk, '/jetonomy/v1' . $static_prefix ) ) {
 										$found_in_registry = true;
 										break;
 									}
 								}
-								$short_path = strlen( $ext_path ) > 40 ? substr( $ext_path, 0, 40 ) . '…' : $ext_path;
+								$short_path = strlen( $ext_path ) > 40 ? substr( $ext_path, 0, 40 ) . '...' : $ext_path;
 								$record( 'pro_extensions', "Extension '{$ext_id}': route '{$short_path}' registered", $found_in_registry, $found_in_registry ? '' : "Route '{$ext_path}' not found in live registry" );
 							}
 						}
@@ -743,7 +707,6 @@ class CLI {
 				$record( 'pro_extensions', 'Pro extensions directory accessible', false, 'JETONOMY_PRO_DIR not defined or dir missing' );
 			}
 
-			// Pro DB tables — only private-messaging creates them.
 			$pro_tables = [
 				'jt_pro_conversations'             => 'Conversations',
 				'jt_pro_conversation_participants' => 'Conversation participants',
@@ -751,22 +714,22 @@ class CLI {
 			];
 			$pm_enabled = in_array( 'private-messaging', $enabled_exts, true );
 
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$existing_pro_tables_raw = $wpdb->get_col( "SHOW TABLES LIKE '{$wpdb->prefix}jt_pro_%'" );
+			$existing_pro_tables_set = array_flip( $existing_pro_tables_raw );
+
 			foreach ( $pro_tables as $tbl => $label ) {
-				$full = $wpdb->prefix . $tbl;
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$exists = $wpdb->get_var( "SHOW TABLES LIKE '{$full}'" ) === $full;
-				// These tables only exist when private-messaging is enabled.
+				$full   = $wpdb->prefix . $tbl;
+				$exists = isset( $existing_pro_tables_set[ $full ] );
 				if ( ! $pm_enabled ) {
-					$record( 'pro_tables', "Pro table {$label} ({$tbl})", $exists, 'private-messaging disabled — table optional', true );
+					$record( 'pro_tables', "Pro table {$label} ({$tbl})", $exists, 'private-messaging disabled -- table optional', true );
 				} else {
-					$record( 'pro_tables', "Pro table {$label} ({$tbl})", $exists, $exists ? '' : 'table missing — run wp jetonomy recount to trigger activation' );
+					$record( 'pro_tables', "Pro table {$label} ({$tbl})", $exists, $exists ? '' : 'table missing -- run wp jetonomy recount to trigger activation' );
 				}
 			}
 		}
 
 		// ── Section 9: JS-REST Alignment (Static Analysis) ───────────────────
-		// Parse view.js for all fetch() calls and extract the URL fragments.
-		// Verify each maps to a registered REST route pattern.
 		$view_js = JETONOMY_DIR . 'assets/js/view.js';
 
 		if ( ! file_exists( $view_js ) ) {
@@ -774,8 +737,6 @@ class CLI {
 		} else {
 			$js_src = file_get_contents( $view_js ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 
-			// Extract URL path segments from fetch() calls.
-			// Patterns: fetch(`${apiBase}/segment`, ...) or fetch(apiBase + '/segment', ...)
 			preg_match_all(
 				'/fetch\s*\(\s*[`\'"]?\$\{[^}]+\}\/([a-z0-9_\-\/]+)/i',
 				$js_src,
@@ -787,7 +748,6 @@ class CLI {
 				$concat_matches
 			);
 
-			// Combine and deduplicate segments.
 			$js_segments = array_unique(
 				array_merge(
 					$template_literal_matches[1] ?? [],
@@ -795,15 +755,12 @@ class CLI {
 				)
 			);
 
-			// Strip query-string fragments (everything after ?) so we match path only.
 			$js_segments = array_map( fn( $s ) => explode( '?', $s )[0], $js_segments );
 			$js_segments = array_filter( $js_segments, fn( $s ) => ! empty( trim( $s ) ) );
 			$js_segments = array_values( array_unique( $js_segments ) );
 
-			// Build a flat list of route paths for matching (strip namespace prefix).
 			$route_slugs = [];
 			foreach ( array_keys( $all_routes ) as $rp ) {
-				// /jetonomy/v1/spaces/(?P<id>[\d]+) → spaces
 				$slug          = preg_replace( '#^/jetonomy/v1/#', '', $rp );
 				$slug          = preg_replace( '#/\(\?P<[^>]+>[^)]+\)#', '/{id}', $slug );
 				$slug          = trim( $slug, '/' );
@@ -814,11 +771,9 @@ class CLI {
 				$record( 'js_rest', 'Fetch calls extracted from view.js', false, 'regex found no fetch() URL segments', true );
 			} else {
 				foreach ( $js_segments as $seg ) {
-					// Normalize: remove dynamic parts like ${postId}, replace with placeholder.
 					$normalized = preg_replace( '/\$\{[^}]+\}/', '{id}', $seg );
 					$normalized = trim( $normalized, '/' );
 
-					// Look for a route slug that starts with the normalized segment's first path component.
 					$first_part = explode( '/', $normalized )[0];
 					$matched    = false;
 					foreach ( $route_slugs as $rs ) {
@@ -834,7 +789,6 @@ class CLI {
 
 		// ── Aggregate & Output ────────────────────────────────────────────────
 
-		// Section display labels for the summary table.
 		$section_labels = [
 			'database'          => 'Database Tables',
 			'rest_routes'       => 'REST Routes',
@@ -853,12 +807,11 @@ class CLI {
 		$total_fail   = 0;
 		$total_warn   = 0;
 
-		// Pre-compute per-section counts.
 		foreach ( $sections as $key => &$section ) {
 			$section['total']  = count( $section['checks'] );
-			$section['passed'] = count( array_filter( $section['checks'], fn( $c ) => $c['status'] === 'pass' ) );
-			$section['failed'] = count( array_filter( $section['checks'], fn( $c ) => $c['status'] === 'fail' ) );
-			$section['warned'] = count( array_filter( $section['checks'], fn( $c ) => $c['status'] === 'warn' ) );
+			$section['passed'] = count( array_filter( $section['checks'], fn( $c ) => 'pass' === $c['status'] ) );
+			$section['failed'] = count( array_filter( $section['checks'], fn( $c ) => 'fail' === $c['status'] ) );
+			$section['warned'] = count( array_filter( $section['checks'], fn( $c ) => 'warn' === $c['status'] ) );
 
 			$total_checks += $section['total'];
 			$total_pass   += $section['passed'];
@@ -867,11 +820,10 @@ class CLI {
 		}
 		unset( $section );
 
-		// Console output: summary table.
-		$line = str_repeat( '─', 44 );
+		$line = str_repeat( '-', 44 );
 		\WP_CLI::log( '' );
 		\WP_CLI::log( $line );
-		\WP_CLI::log( sprintf( '  Jetonomy QA Report — v%s', $version . ( $pro_version ? " / Pro v{$pro_version}" : '' ) ) );
+		\WP_CLI::log( sprintf( '  Jetonomy QA Report -- v%s', $version . ( $pro_version ? " / Pro v{$pro_version}" : '' ) ) );
 		\WP_CLI::log( $line );
 
 		$col_label_width = 22;
@@ -896,7 +848,7 @@ class CLI {
 
 		\WP_CLI::log( $line );
 		$total_fraction = "{$total_pass}/{$total_checks}";
-		$release_status = $total_fail === 0 ? 'RELEASE READY' : 'RELEASE BLOCKED';
+		$release_status = 0 === $total_fail ? 'RELEASE READY' : 'RELEASE BLOCKED';
 		\WP_CLI::log(
 			sprintf(
 				'  %-' . $col_label_width . 's %' . $col_count_width . 's  %s%s',
@@ -909,23 +861,22 @@ class CLI {
 		\WP_CLI::log( $line );
 		\WP_CLI::log( '' );
 
-		// Detail output: print failures and warnings.
 		$print_details = $total_fail > 0 || $total_warn > 0;
 		if ( $print_details ) {
 			\WP_CLI::log( 'Details:' );
 			foreach ( $sections as $key => $section ) {
 				$label = $section_labels[ $key ] ?? $key;
 				foreach ( $section['checks'] as $check ) {
-					if ( $check['status'] === 'fail' ) {
+					if ( 'fail' === $check['status'] ) {
 						$msg = "  FAIL  [{$label}] {$check['label']}";
 						if ( $check['detail'] ) {
-							$msg .= " — {$check['detail']}";
+							$msg .= " -- {$check['detail']}";
 						}
 						\WP_CLI::warning( $msg );
-					} elseif ( $check['status'] === 'warn' ) {
+					} elseif ( 'warn' === $check['status'] ) {
 						$msg = "  WARN  [{$label}] {$check['label']}";
 						if ( $check['detail'] ) {
-							$msg .= " — {$check['detail']}";
+							$msg .= " -- {$check['detail']}";
 						}
 						\WP_CLI::log( $msg );
 					}
@@ -953,7 +904,7 @@ class CLI {
 				'passed'        => $total_pass,
 				'failed'        => $total_fail,
 				'warnings'      => $total_warn,
-				'release_ready' => $total_fail === 0,
+				'release_ready' => 0 === $total_fail,
 				'sections'      => array_combine(
 					array_keys( $sections ),
 					array_map(
@@ -980,18 +931,17 @@ class CLI {
 			}
 		}
 
-		// Final status line.
 		if ( $total_fail > 0 ) {
-			\WP_CLI::error( sprintf( '%d check(s) failed — RELEASE BLOCKED', $total_fail ), false );
+			\WP_CLI::error( sprintf( '%d check(s) failed -- RELEASE BLOCKED', $total_fail ), false );
 		} else {
-			\WP_CLI::success( sprintf( 'All %d checks passed%s — RELEASE READY', $total_checks, $total_warn > 0 ? " ({$total_warn} warnings)" : '' ) );
+			\WP_CLI::success( sprintf( 'All %d checks passed%s -- RELEASE READY', $total_checks, $total_warn > 0 ? " ({$total_warn} warnings)" : '' ) );
 		}
 	}
 
 	/**
 	 * Run end-to-end REST round-trip and model unit tests.
 	 *
-	 * Phase 1 exercises every core action via rest_do_request() — the same code
+	 * Phase 1 exercises every core action via rest_do_request() -- the same code
 	 * path the browser uses. Phase 2 validates the model and permission layer
 	 * directly. All test fixtures are created then cleaned up automatically.
 	 *
@@ -1002,40 +952,36 @@ class CLI {
 	 */
 	public function qa_actions( $args, $assoc_args ): void {
 		\WP_CLI::log( '' );
-		\WP_CLI::log( '━━━ Jetonomy Action Tests ━━━' );
+		\WP_CLI::log( '--- Jetonomy Action Tests ---' );
 
-		// Phase 1: REST round-trip tests.
 		\WP_CLI::log( '' );
 		\WP_CLI::log( 'Phase 1: REST Round-Trip Tests' );
 		$rest = new \Jetonomy\QA\REST_Tests();
 		$r1   = $rest->run();
 
-		// Phase 2: Model unit tests.
 		\WP_CLI::log( '' );
 		\WP_CLI::log( 'Phase 2: Model Unit Tests' );
 		$model = new \Jetonomy\QA\Model_Tests();
 		$r2    = $model->run();
 
-		// Phase 3: Pro extension tests.
 		\WP_CLI::log( '' );
 		\WP_CLI::log( 'Phase 3: Pro Extension Tests' );
 		$pro = new \Jetonomy\QA\Pro_Tests();
 		$r3  = $pro->run();
 
-		// Summary.
 		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'];
 		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'];
 
 		\WP_CLI::log( '' );
-		\WP_CLI::log( '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' );
+		\WP_CLI::log( '--------------------------------------' );
 		\WP_CLI::log( sprintf( '  REST Tests:  %d/%d', $r1['pass'], $r1['pass'] + $r1['fail'] ) );
 		\WP_CLI::log( sprintf( '  Model Tests: %d/%d', $r2['pass'], $r2['pass'] + $r2['fail'] ) );
 		\WP_CLI::log( sprintf( '  Pro Tests:   %d/%d', $r3['pass'], $r3['pass'] + $r3['fail'] ) );
 		\WP_CLI::log( sprintf( '  TOTAL:       %d/%d', $total_pass, $total_pass + $total_fail ) );
-		\WP_CLI::log( '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' );
+		\WP_CLI::log( '--------------------------------------' );
 
 		if ( $total_fail > 0 ) {
-			\WP_CLI::error( sprintf( '%d test(s) failed — ACTION TESTS FAILED', $total_fail ) );
+			\WP_CLI::error( sprintf( '%d test(s) failed -- ACTION TESTS FAILED', $total_fail ) );
 		} else {
 			\WP_CLI::success( sprintf( 'All %d action tests passed. Full stack verified.', $total_pass ) );
 		}
@@ -1066,9 +1012,19 @@ class CLI {
 			'flags'         => table( 'flags' ),
 		];
 
+		$union_parts = [];
 		foreach ( $tables as $label => $t ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$t}" );
+			$union_parts[] = "SELECT '{$label}' AS tbl, COUNT(*) AS cnt FROM {$t}";
+		}
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$count_rows = $wpdb->get_results( implode( ' UNION ALL ', $union_parts ) );
+		$count_map  = [];
+		foreach ( $count_rows as $row ) {
+			$count_map[ $row->tbl ] = (int) $row->cnt;
+		}
+
+		foreach ( $tables as $label => $t ) {
+			$count = $count_map[ $label ] ?? 0;
 			\WP_CLI::log( sprintf( '  %-15s %s', $label, number_format( $count ) ) );
 		}
 	}

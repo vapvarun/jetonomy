@@ -13,17 +13,17 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 	<h1><?php esc_html_e( 'Moderation', 'jetonomy' ); ?></h1>
 
 	<nav class="nav-tab-wrapper">
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo 'posts' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), $total_posts ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo esc_attr( 'posts' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), (int) $total_posts ); ?>
 		</a>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo 'replies' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), $total_replies ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo esc_attr( 'replies' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), (int) $total_replies ); ?>
 		</a>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo 'flags' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), $total_flags ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo esc_attr( 'flags' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), (int) $total_flags ); ?>
 		</a>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo 'banned' === $active_tab ? 'nav-tab-active' : ''; ?>">
-			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), $total_banned ); ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo esc_attr( 'banned' === $active_tab ? 'nav-tab-active' : '' ); ?>">
+			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), (int) $total_banned ); ?>
 		</a>
 		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
@@ -110,7 +110,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							]
 						);
 						if ( $plinks ) {
-							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
 						?>
 					</div>
 				</div>
@@ -186,7 +186,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							]
 						);
 						if ( $plinks ) {
-							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
 						?>
 					</div>
 				</div>
@@ -265,7 +265,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							]
 						);
 						if ( $plinks ) {
-							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
 						?>
 					</div>
 				</div>
@@ -349,7 +349,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							]
 						);
 						if ( $plinks ) {
-							echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>'; }
+							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
 						?>
 					</div>
 				</div>

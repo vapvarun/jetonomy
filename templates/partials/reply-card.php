@@ -35,7 +35,7 @@ $is_accepted = (int) $reply->is_accepted;
 		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
-		<?php echo \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- processed through wp_kses_post ?>
+		<?php echo wp_kses_post( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ) ); ?>
 	</div>
 	<?php
 	$reply_viewer_id   = get_current_user_id();

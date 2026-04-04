@@ -36,14 +36,14 @@ class Content_Handler {
 
 		$data = [];
 		if ( isset( $_POST['title'] ) ) {
-			$data['title'] = sanitize_text_field( $_POST['title'] );
+			$data['title'] = sanitize_text_field( wp_unslash( $_POST['title'] ) );
 		}
 		if ( isset( $_POST['content'] ) ) {
-			$data['content']       = wp_kses_post( $_POST['content'] );
+			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
 			$data['content_plain'] = wp_strip_all_tags( $data['content'] );
 		}
 		if ( isset( $_POST['status'] ) ) {
-			$data['status'] = sanitize_text_field( $_POST['status'] );
+			$data['status'] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
 		}
 
 		if ( empty( $data ) ) {
@@ -64,7 +64,7 @@ class Content_Handler {
 		}
 
 		$id     = absint( $_POST['post_id'] ?? 0 );
-		$status = sanitize_text_field( $_POST['status'] ?? 'trash' );
+		$status = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'trash' ) );
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
 		}
@@ -89,11 +89,11 @@ class Content_Handler {
 
 		$data = [];
 		if ( isset( $_POST['content'] ) ) {
-			$data['content']       = wp_kses_post( $_POST['content'] );
+			$data['content']       = wp_kses_post( wp_unslash( $_POST['content'] ) );
 			$data['content_plain'] = wp_strip_all_tags( $data['content'] );
 		}
 		if ( isset( $_POST['status'] ) ) {
-			$data['status'] = sanitize_text_field( $_POST['status'] );
+			$data['status'] = sanitize_text_field( wp_unslash( $_POST['status'] ) );
 		}
 
 		if ( empty( $data ) ) {
@@ -114,7 +114,7 @@ class Content_Handler {
 		}
 
 		$id     = absint( $_POST['reply_id'] ?? 0 );
-		$status = sanitize_text_field( $_POST['status'] ?? 'trash' );
+		$status = sanitize_text_field( wp_unslash( $_POST['status'] ?? 'trash' ) );
 		if ( ! $id ) {
 			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
 		}
@@ -156,9 +156,9 @@ class Content_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$action = sanitize_text_field( $_POST['bulk_action'] ?? '' );
-		$ids    = array_map( 'absint', (array) ( $_POST['ids'] ?? [] ) );
-		$type   = sanitize_text_field( $_POST['type'] ?? 'post' );
+		$action = sanitize_text_field( wp_unslash( $_POST['bulk_action'] ?? '' ) );
+		$ids    = array_map( 'absint', wp_unslash( $_POST['ids'] ?? [] ) );
+		$type   = sanitize_text_field( wp_unslash( $_POST['type'] ?? 'post' ) );
 
 		if ( empty( $ids ) || ! in_array( $action, [ 'trash', 'spam', 'publish' ], true ) ) {
 			wp_send_json_error( __( 'Invalid bulk action.', 'jetonomy' ) );

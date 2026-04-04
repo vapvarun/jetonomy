@@ -28,7 +28,7 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$object_type = sanitize_text_field( $_POST['object_type'] ?? '' );
+		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? '' ) );
 		$object_id   = absint( $_POST['object_id'] ?? 0 );
 
 		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
@@ -50,7 +50,7 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$object_type = sanitize_text_field( $_POST['object_type'] ?? '' );
+		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? '' ) );
 		$object_id   = absint( $_POST['object_id'] ?? 0 );
 
 		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
@@ -72,7 +72,7 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$object_type = sanitize_text_field( $_POST['object_type'] ?? '' );
+		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? '' ) );
 		$object_id   = absint( $_POST['object_id'] ?? 0 );
 
 		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
@@ -95,7 +95,7 @@ class Moderation_Handler {
 		}
 
 		$flag_id    = absint( $_POST['flag_id'] ?? 0 );
-		$resolution = sanitize_text_field( $_POST['resolution'] ?? '' );
+		$resolution = sanitize_text_field( wp_unslash( $_POST['resolution'] ?? '' ) );
 
 		if ( ! $flag_id || ! in_array( $resolution, [ 'valid', 'dismissed' ], true ) ) {
 			wp_send_json_error( __( 'Invalid flag data.', 'jetonomy' ) );

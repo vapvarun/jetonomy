@@ -54,13 +54,15 @@ if ( ! is_user_logged_in() ) {
 $user_id = get_current_user_id();
 
 if ( \Jetonomy\Models\SpaceMember::is_member( (int) $invite->space_id, $user_id ) ) {
-	echo '<script>window.location.href = ' . wp_json_encode( $space_url ) . ';</script>';
-	return;
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe
+	echo '<script>window.location=' . wp_json_encode( $space_url ) . ';</script>';
+	exit;
 }
 
 // Accept the invite.
 \Jetonomy\Models\SpaceMember::add( (int) $invite->space_id, $user_id, 'member' );
 \Jetonomy\Models\InviteLink::use_invite( (int) $invite->id );
 
-echo '<script>window.location.href = ' . wp_json_encode( $space_url ) . ';</script>';
-return;
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe
+echo '<script>window.location=' . wp_json_encode( $space_url ) . ';</script>';
+exit;

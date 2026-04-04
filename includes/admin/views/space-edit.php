@@ -21,15 +21,15 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 
 	<!-- Tabs -->
 	<nav class="nav-tab-wrapper">
-		<a href="<?php echo esc_url( $edit_url . '&tab=general' ); ?>" class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'General', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $edit_url . '&tab=members' ); ?>" class="nav-tab <?php echo 'members' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Members', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $edit_url . '&tab=access' ); ?>" class="nav-tab <?php echo 'access' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Access Rules', 'jetonomy' ); ?></a>
-		<a href="<?php echo esc_url( $edit_url . '&tab=settings' ); ?>" class="nav-tab <?php echo 'settings' === $active_tab ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></a>
+		<a href="<?php echo esc_url( $edit_url . '&tab=general' ); ?>" class="nav-tab <?php echo esc_attr( 'general' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'General', 'jetonomy' ); ?></a>
+		<a href="<?php echo esc_url( $edit_url . '&tab=members' ); ?>" class="nav-tab <?php echo esc_attr( 'members' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Members', 'jetonomy' ); ?></a>
+		<a href="<?php echo esc_url( $edit_url . '&tab=access' ); ?>" class="nav-tab <?php echo esc_attr( 'access' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Access Rules', 'jetonomy' ); ?></a>
+		<a href="<?php echo esc_url( $edit_url . '&tab=settings' ); ?>" class="nav-tab <?php echo esc_attr( 'settings' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></a>
 		<?php if ( 'approval' === ( $space->join_policy ?? 'open' ) ) : ?>
-			<a href="<?php echo esc_url( $edit_url . '&tab=join_requests' ); ?>" class="nav-tab <?php echo 'join_requests' === $active_tab ? 'nav-tab-active' : ''; ?>">
+			<a href="<?php echo esc_url( $edit_url . '&tab=join_requests' ); ?>" class="nav-tab <?php echo esc_attr( 'join_requests' === $active_tab ? 'nav-tab-active' : '' ); ?>">
 				<?php esc_html_e( 'Join Requests', 'jetonomy' ); ?>
 				<?php if ( ! empty( $join_requests ) ) : ?>
-					<span class="count">(<?php echo count( $join_requests ); ?>)</span>
+					<span class="count">(<?php echo (int) count( $join_requests ); ?>)</span>
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
@@ -170,7 +170,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php /* translators: %d: number of members */ ?>
-		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), count( $members ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Members (%d)', 'jetonomy' ), (int) count( $members ) ); ?></h2>
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-members-table">
 				<thead>
 					<tr>
@@ -253,7 +253,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 			</div>
 
 			<?php /* translators: %d: number of access rules */ ?>
-		<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), count( $access_rules ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Access Rules (%d)', 'jetonomy' ), (int) count( $access_rules ) ); ?></h2>
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-rules-table">
 				<thead>
 					<tr>
@@ -459,7 +459,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<!-- Join Requests Tab -->
 		<div class="jetonomy-tab-content">
 			<?php /* translators: %d: number of pending join requests */ ?>
-		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), count( $join_requests ) ); ?></h2>
+		<h2><?php printf( esc_html__( 'Pending Join Requests (%d)', 'jetonomy' ), (int) count( $join_requests ) ); ?></h2>
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-join-requests-table">
 				<thead>
 					<tr>

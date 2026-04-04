@@ -57,7 +57,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	<?php settings_errors(); ?>
 	<?php
 	if ( $jt_ext_notices ) {
-		echo $jt_ext_notices;} // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension 
+		echo $jt_ext_notices;} // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by each extension
 	?>
 
 	<div class="jt-settings-layout">
@@ -73,7 +73,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<nav class="jt-settings-sidebar-nav" aria-label="<?php esc_attr_e( 'Settings navigation', 'jetonomy' ); ?>">
 				<?php foreach ( $tab_labels as $slug => $label ) : ?>
 				<a href="<?php echo esc_url( $settings_url . '&tab=' . $slug ); ?>"
-					class="jt-snav-link<?php echo $active_tab === $slug ? ' jt-snav-link--active' : ''; ?>">
+					class="jt-snav-link<?php echo esc_attr( $active_tab === $slug ? ' jt-snav-link--active' : '' ); ?>">
 					<span class="dashicons <?php echo esc_attr( $tab_icons[ $slug ] ); ?>" aria-hidden="true"></span>
 					<?php echo esc_html( $label ); ?>
 				</a>
@@ -82,7 +82,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
 				<a href="<?php echo esc_url( $settings_url . '&tab=free-vs-pro' ); ?>"
-					class="jt-snav-link<?php echo 'free-vs-pro' === $active_tab ? ' jt-snav-link--active' : ''; ?>"
+					class="jt-snav-link<?php echo esc_attr( 'free-vs-pro' === $active_tab ? ' jt-snav-link--active' : '' ); ?>"
 					style="<?php echo 'free-vs-pro' !== $active_tab ? 'color: var(--jt-admin-pro, #7C3AED);' : ''; ?>">
 					<span class="dashicons dashicons-star-filled" aria-hidden="true"></span>
 					<?php esc_html_e( 'Free vs Pro', 'jetonomy' ); ?>
@@ -92,7 +92,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php if ( defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-snav-divider" role="separator"></div>
 				<a href="<?php echo esc_url( $settings_url . '&tab=license' ); ?>"
-					class="jt-snav-link<?php echo 'license' === $active_tab ? ' jt-snav-link--active' : ''; ?>">
+					class="jt-snav-link<?php echo esc_attr( 'license' === $active_tab ? ' jt-snav-link--active' : '' ); ?>">
 					<span class="dashicons dashicons-shield-alt" aria-hidden="true"></span>
 					<?php esc_html_e( 'License', 'jetonomy' ); ?>
 				</a>
@@ -251,10 +251,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							?>
 							<tr>
 								<td><strong><?php echo esc_html( $level_names[ $level ] ); ?></strong></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
-								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo $level; ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo (int) $level; ?>][posts]" value="<?php echo absint( $thresholds[ $level ]['posts'] ?? $td['posts'] ); ?>" min="0" class="small-text"></td>
+								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo (int) $level; ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
+								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo (int) $level; ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
+								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo (int) $level; ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
 							</tr>
 						<?php endfor; ?>
 					</tbody>
@@ -318,6 +318,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			</div>
 
 		<?php elseif ( 'email' === $active_tab ) : ?>
+			<?php $admin_email = get_option( 'admin_email' ); ?>
 
 			<!-- Email Sender -->
 			<div class="jt-settings-card">
@@ -335,7 +336,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><label for="email_from_email"><?php esc_html_e( 'From Email', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="email" id="email_from_email" name="jetonomy_settings[email_from_email]" value="<?php echo esc_attr( $settings['email_from_email'] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
+							<input type="email" id="email_from_email" name="jetonomy_settings[email_from_email]" value="<?php echo esc_attr( $settings['email_from_email'] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr( $admin_email ); ?>">
 						</td>
 					</tr>
 					<tr>
@@ -365,7 +366,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<p class="description">
 								<?php
 								/* translators: %s: admin email */
-								printf( esc_html__( 'Sends a test email to %s', 'jetonomy' ), esc_html( get_option( 'admin_email' ) ) );
+								printf( esc_html__( 'Sends a test email to %s', 'jetonomy' ), esc_html( $admin_email ) );
 								?>
 							</p>
 						</td>
@@ -668,7 +669,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p style="margin: 8px 0 0; font-size: 12px; color: #6B7280;">
 						<?php
 						/* translators: %s: coupon code */
-						printf( esc_html__( 'Use code %s for 30%% off lifetime plans.', 'jetonomy' ), '<strong>Jetonomy30</strong>' );
+						printf( esc_html__( 'Use code %s for 30%% off lifetime plans.', 'jetonomy' ), '<strong>Jetonomy30</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static trusted HTML tag.
 						?>
 					</p>
 				</div>

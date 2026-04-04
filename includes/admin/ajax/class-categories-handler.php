@@ -27,13 +27,13 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$name       = sanitize_text_field( $_POST['name'] ?? '' );
-		$slug       = sanitize_title( $_POST['slug'] ?? $name );
-		$desc       = wp_kses_post( $_POST['description'] ?? '' );
+		$name       = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+		$slug       = sanitize_title( wp_unslash( $_POST['slug'] ?? $name ) );
+		$desc       = wp_kses_post( wp_unslash( $_POST['description'] ?? '' ) );
 		$parent_id  = absint( $_POST['parent_id'] ?? 0 );
-		$icon       = sanitize_text_field( $_POST['icon'] ?? '' );
+		$icon       = sanitize_text_field( wp_unslash( $_POST['icon'] ?? '' ) );
 		$color      = sanitize_hex_color( $_POST['color'] ?? '' );
-		$visibility = sanitize_text_field( $_POST['visibility'] ?? 'public' );
+		$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ?? 'public' ) );
 
 		if ( empty( $name ) ) {
 			wp_send_json_error( __( 'Name is required.', 'jetonomy' ) );
@@ -82,25 +82,25 @@ class Categories_Handler {
 
 		$data = [];
 		if ( isset( $_POST['name'] ) ) {
-			$data['name'] = sanitize_text_field( $_POST['name'] );
+			$data['name'] = sanitize_text_field( wp_unslash( $_POST['name'] ) );
 		}
 		if ( isset( $_POST['slug'] ) ) {
-			$data['slug'] = sanitize_title( $_POST['slug'] );
+			$data['slug'] = sanitize_title( wp_unslash( $_POST['slug'] ) );
 		}
 		if ( isset( $_POST['description'] ) ) {
-			$data['description'] = wp_kses_post( $_POST['description'] );
+			$data['description'] = wp_kses_post( wp_unslash( $_POST['description'] ) );
 		}
 		if ( isset( $_POST['parent_id'] ) ) {
 			$data['parent_id'] = absint( $_POST['parent_id'] );
 		}
 		if ( isset( $_POST['icon'] ) ) {
-			$data['icon'] = sanitize_text_field( $_POST['icon'] ) ?: null;
+			$data['icon'] = sanitize_text_field( wp_unslash( $_POST['icon'] ) ) ?: null;
 		}
 		if ( isset( $_POST['color'] ) ) {
 			$data['color'] = sanitize_hex_color( $_POST['color'] ) ?: null;
 		}
 		if ( isset( $_POST['visibility'] ) ) {
-			$visibility = sanitize_text_field( $_POST['visibility'] );
+			$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ) );
 			if ( in_array( $visibility, [ 'public', 'private', 'hidden' ], true ) ) {
 				$data['visibility'] = $visibility;
 			}
@@ -161,7 +161,7 @@ class Categories_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$order = $_POST['order'] ?? [];
+		$order = array_map( 'absint', wp_unslash( $_POST['order'] ?? [] ) );
 		if ( ! is_array( $order ) ) {
 			wp_send_json_error( __( 'Invalid order data.', 'jetonomy' ) );
 		}

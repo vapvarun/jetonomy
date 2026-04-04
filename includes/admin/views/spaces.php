@@ -242,7 +242,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 						]
 					);
 					if ( $page_links ) {
-						echo '<span class="pagination-links">' . implode( ' ', $page_links ) . '</span>';
+						echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $page_links ) ) . '</span>';
 					}
 					?>
 				</div>

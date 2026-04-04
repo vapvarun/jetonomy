@@ -28,7 +28,7 @@ $trust_labels = [
 				<select name="trust_level">
 					<option value=""><?php esc_html_e( 'All Trust Levels', 'jetonomy' ); ?></option>
 					<?php for ( $i = 0; $i <= 5; $i++ ) : ?>
-						<option value="<?php echo $i; ?>" <?php selected( $filter_trust, (string) $i ); ?>><?php printf( '%d - %s', $i, esc_html( $trust_labels[ $i ] ) ); ?></option>
+						<option value="<?php echo (int) $i; ?>" <?php selected( $filter_trust, (string) $i ); ?>><?php printf( '%d - %s', $i, esc_html( $trust_labels[ $i ] ) ); ?></option>
 					<?php endfor; ?>
 				</select>
 				<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
@@ -111,7 +111,7 @@ $trust_labels = [
 					]
 				);
 				if ( $pagination ) {
-					echo '<span class="pagination-links">' . implode( ' ', $pagination ) . '</span>';
+					echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $pagination ) ) . '</span>';
 				}
 				?>
 			</div>
@@ -122,7 +122,7 @@ $trust_labels = [
 	<div id="jetonomy-trust-dropdown" class="jetonomy-dropdown" style="display:none;">
 		<select id="trust-level-select">
 			<?php for ( $i = 0; $i <= 5; $i++ ) : ?>
-				<option value="<?php echo $i; ?>"><?php printf( '%d - %s', $i, esc_html( $trust_labels[ $i ] ) ); ?></option>
+				<option value="<?php echo (int) $i; ?>"><?php printf( '%d - %s', $i, esc_html( $trust_labels[ $i ] ) ); ?></option>
 			<?php endfor; ?>
 		</select>
 		<button type="button" class="button button-small button-primary" id="jetonomy-save-trust"><?php esc_html_e( 'Save', 'jetonomy' ); ?></button>

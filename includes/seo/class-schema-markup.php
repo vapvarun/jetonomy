@@ -68,17 +68,14 @@ class Schema_Markup {
 
 		$settings = get_option( 'jetonomy_settings', [] );
 
-		// Respect seo_schema toggle — if disabled, skip JSON-LD output.
 		if ( empty( $settings['seo_schema'] ) ) {
 			return;
 		}
 
-		// SEO noindex for profiles.
 		if ( 'profile' === $route && ! empty( $settings['seo_noindex_profiles'] ) ) {
 			echo '<meta name="robots" content="noindex, follow">' . "\n";
 		}
 
-		// SEO noindex for search.
 		if ( 'search' === $route && ! empty( $settings['seo_noindex_search'] ) ) {
 			echo '<meta name="robots" content="noindex, follow">' . "\n";
 		}
@@ -97,7 +94,6 @@ class Schema_Markup {
 				break;
 		}
 
-		// Always add breadcrumb schema.
 		$breadcrumb = $this->get_breadcrumb_schema();
 		if ( $breadcrumb ) {
 			$this->print_jsonld( $breadcrumb );
@@ -124,7 +120,6 @@ class Schema_Markup {
 		$author_name = $author ? $author->display_name : 'Anonymous';
 		$base        = \Jetonomy\base_url() . '/s/' . $space_slug . '/t/' . $slug . '/';
 
-		// Q&A type gets QAPage schema (rich results in Google).
 		if ( 'question' === $post->type && $post->accepted_reply_id ) {
 			$accepted      = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
 			$answer_author = $accepted ? get_userdata( (int) $accepted->author_id ) : null;
@@ -158,7 +153,6 @@ class Schema_Markup {
 			];
 		}
 
-		// Forum post gets DiscussionForumPosting.
 		return [
 			'@context'             => 'https://schema.org',
 			'@type'                => 'DiscussionForumPosting',
@@ -278,9 +272,11 @@ class Schema_Markup {
 	}
 
 	private function print_jsonld( array $data ): void {
-		// Remove null values recursively.
 		$data = $this->array_filter_recursive( $data );
-		echo '<script type="application/ld+json">' . wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . '</script>' . "\n";
+		wp_print_inline_script_tag(
+			wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
+			[ 'type' => 'application/ld+json' ]
+		);
 	}
 
 	private function to_iso8601( ?string $mysql_date ): string {

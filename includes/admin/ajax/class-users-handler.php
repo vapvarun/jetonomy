@@ -28,9 +28,9 @@ class Users_Handler {
 		}
 
 		$user_id  = absint( $_POST['user_id'] ?? 0 );
-		$type     = sanitize_text_field( $_POST['type'] ?? 'global_ban' );
-		$reason   = sanitize_text_field( $_POST['reason'] ?? '' );
-		$duration = sanitize_text_field( $_POST['duration'] ?? 'permanent' );
+		$type     = sanitize_text_field( wp_unslash( $_POST['type'] ?? 'global_ban' ) );
+		$reason   = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+		$duration = sanitize_text_field( wp_unslash( $_POST['duration'] ?? 'permanent' ) );
 		$space_id = absint( $_POST['space_id'] ?? 0 );
 
 		if ( ! $user_id ) {
@@ -144,7 +144,7 @@ class Users_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$search = sanitize_text_field( $_POST['search'] ?? '' );
+		$search = sanitize_text_field( wp_unslash( $_POST['search'] ?? '' ) );
 		if ( strlen( $search ) < 2 ) {
 			wp_send_json_success( [ 'users' => [] ] );
 		}

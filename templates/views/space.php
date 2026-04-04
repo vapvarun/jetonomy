@@ -12,6 +12,7 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
 	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
 	return;
 }
@@ -164,7 +165,7 @@ $crumbs[] = [
 							data-wp-interactive="jetonomy"
 							data-wp-on--click="actions.followSpace"
 							data-space-id="<?php echo (int) $space->id; ?>"
-							data-following="<?php echo $is_following_space ? '1' : '0'; ?>">
+							data-following="<?php echo esc_attr( $is_following_space ? '1' : '0' ); ?>">
 							<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
 						</button>
 					<?php endif; ?>

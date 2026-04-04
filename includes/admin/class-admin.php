@@ -537,9 +537,12 @@ class Admin {
 		$total_replies = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'pending'" );
 		$total_flags   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" );
 		$total_banned  = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$restrictions_t}
-			 WHERE type IN ('global_ban','space_ban','silence')
-			 AND (expires_at IS NULL OR expires_at > '" . now() . "')"
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$restrictions_t}
+				 WHERE type IN ('global_ban','space_ban','silence')
+				 AND (expires_at IS NULL OR expires_at > %s)",
+				now()
+			)
 		);
 
 		$pending_posts = $wpdb->get_results(
@@ -585,9 +588,10 @@ class Admin {
 				 FROM {$restrictions_t} r
 				 LEFT JOIN {$wpdb->users} u ON u.ID = r.user_id
 				 WHERE r.type IN ('global_ban','space_ban','silence')
-				 AND (r.expires_at IS NULL OR r.expires_at > '" . now() . "')
+				 AND (r.expires_at IS NULL OR r.expires_at > %s)
 				 ORDER BY r.created_at DESC
 				 LIMIT %d OFFSET %d",
+				now(),
 				$per_page,
 				( $paged_banned - 1 ) * $per_page
 			)

@@ -10,6 +10,7 @@ defined( 'ABSPATH' ) || exit;
 $import_history   = get_option( 'jetonomy_import_history', [] );
 $resume_state     = get_option( 'jetonomy_import_resume', [] );
 $current_progress = \Jetonomy\Import\Importer::get_progress();
+$datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 ?>
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Import Forums', 'jetonomy' ); ?></h1>
@@ -47,8 +48,8 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 				?>
 				<div class="jetonomy-import-source" id="import-source-<?php echo esc_attr( $id ); ?>"
 					data-source="<?php echo esc_attr( $id ); ?>"
-					data-was-imported="<?php echo $was_imported ? '1' : '0'; ?>"
-					data-has-resume="<?php echo $has_resume ? '1' : '0'; ?>"
+					data-was-imported="<?php echo esc_attr( $was_imported ? '1' : '0' ); ?>"
+					data-has-resume="<?php echo esc_attr( $has_resume ? '1' : '0' ); ?>"
 					data-resume-phase="<?php echo esc_attr( $resume_state['phase'] ?? '' ); ?>"
 					data-resume-offset="<?php echo absint( $resume_state['offset'] ?? 0 ); ?>">
 
@@ -72,7 +73,7 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 									esc_html__( 'Last imported: %s', 'jetonomy' ),
 									esc_html(
 										date_i18n(
-											get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+											$datetime_format,
 											strtotime( $import_history[ $id ]['completed_at'] )
 										)
 									)
@@ -105,7 +106,7 @@ $current_progress = \Jetonomy\Import\Importer::get_progress();
 									esc_html( number_format_i18n( $resume_state['offset'] ?? 0 ) ),
 									esc_html(
 										date_i18n(
-											get_option( 'date_format' ) . ' ' . get_option( 'time_format' ),
+											$datetime_format,
 											strtotime( $resume_state['started_at'] ?? '' )
 										)
 									)

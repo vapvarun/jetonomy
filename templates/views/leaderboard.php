@@ -84,7 +84,7 @@ $crumbs = [
 						<span class="jt-leader-rank">
 							<?php
 							if ( $medal ) {
-								echo $medal; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- emoji literal.
+								echo $medal; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hardcoded SVG
 							} else {
 								echo (int) ( $rank + 1 );
 							}

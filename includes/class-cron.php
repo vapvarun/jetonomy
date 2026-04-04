@@ -96,18 +96,38 @@ class Cron {
 			"SELECT user_id, post_count, reply_count, reputation, trust_level, created_at FROM {$profiles_t} WHERE trust_level < 4"
 		);
 
+		if ( empty( $profiles ) ) {
+			return;
+		}
+
+		$user_ids = wp_list_pluck( $profiles, 'user_id' );
+		$id_placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$replies_received_rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT p.author_id, COUNT(*) AS cnt
+				 FROM {$replies_t} r
+				 INNER JOIN {$posts_t} p ON r.post_id = p.id
+				 WHERE p.author_id IN ({$id_placeholders})
+				   AND r.author_id != p.author_id
+				   AND r.status = 'publish'
+				 GROUP BY p.author_id",
+				...$user_ids
+			)
+		);
+
+		$replies_received_map = [];
+		foreach ( $replies_received_rows as $row ) {
+			$replies_received_map[ (int) $row->author_id ] = (int) $row->cnt;
+		}
+
 		foreach ( $profiles as $profile ) {
 			$days_active = $profile->created_at
 				? (int) ( ( time() - strtotime( $profile->created_at ) ) / DAY_IN_SECONDS )
 				: 0;
 
-			$replies_received = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$replies_t} r INNER JOIN {$posts_t} p ON r.post_id = p.id WHERE p.author_id = %d AND r.author_id != %d AND r.status = 'publish'",
-					$profile->user_id,
-					$profile->user_id
-				)
-			);
+			$replies_received = $replies_received_map[ (int) $profile->user_id ] ?? 0;
 
 			$new_level = Trust_Evaluator::evaluate_level(
 				[

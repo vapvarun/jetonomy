@@ -328,7 +328,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 					]
 				);
 				if ( $plinks ) {
-					echo '<span class="pagination-links">' . implode( ' ', $plinks ) . '</span>';
+					echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>';
 				}
 				?>
 			</div>

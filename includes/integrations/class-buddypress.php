@@ -620,18 +620,24 @@ class BuddyPress {
 		$bp      = buddypress();
 		$user_id = get_current_user_id();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$linked_ids = $wpdb->get_col(
-			"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = '" . self::META_KEY . "' AND meta_value != ''"
+			$wpdb->prepare(
+				"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = %s AND meta_value != ''",
+				self::META_KEY
+			)
 		);
-		$exclude    = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
-		$exclude_in = implode( ',', $exclude );
+		$exclude             = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
+		$exclude_placeholders = implode( ',', array_fill( 0, count( $exclude ), '%d' ) );
 
 		// Only show spaces the user is admin/moderator of, or site admins see all.
 		if ( current_user_can( 'manage_options' ) ) {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$available_spaces = $wpdb->get_results(
-				"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_in}) ORDER BY title ASC"
+				$wpdb->prepare(
+					"SELECT id, title, slug FROM {$p}jt_spaces WHERE id NOT IN ({$exclude_placeholders}) ORDER BY title ASC",
+					...$exclude
+				)
 			);
 		} else {
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -639,9 +645,10 @@ class BuddyPress {
 				$wpdb->prepare(
 					"SELECT s.id, s.title, s.slug FROM {$p}jt_spaces s
 					INNER JOIN {$p}jt_space_members sm ON sm.space_id = s.id AND sm.user_id = %d AND sm.role IN ('admin', 'moderator')
-					WHERE s.id NOT IN ({$exclude_in})
+					WHERE s.id NOT IN ({$exclude_placeholders})
 					ORDER BY s.title ASC",
-					$user_id
+					$user_id,
+					...$exclude
 				)
 			);
 		}

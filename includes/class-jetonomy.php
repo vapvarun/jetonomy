@@ -314,7 +314,7 @@ final class Jetonomy {
 
 		$token   = sanitize_text_field( wp_unslash( $_GET['jetonomy_unsubscribe'] ) );
 		$user_id = absint( $_GET['uid'] );
-		$type    = sanitize_key( $_GET['type'] ?? '' );
+		$type    = sanitize_key( wp_unslash( $_GET['type'] ?? '' ) );
 
 		if ( ! $user_id || ! $type ) {
 			return;

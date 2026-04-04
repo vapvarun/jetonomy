@@ -89,20 +89,13 @@ class Asgaros_Importer extends Importer {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
-		// Fetch all forums ordered by sort position then ID
 		$forums = $wpdb->get_results(
 			"SELECT * FROM {$p}forum_forums ORDER BY sort ASC, id ASC"
 		);
 
-		// Two-pass: first pass creates all spaces; second pass would wire up parent_id.
-		// Because Asgaros stores parent_id references to other forum rows, we need
-		// to process parents before children. Sort guarantees top-level (parent_id=0)
-		// come first in typical installs, but we do a dependency-safe ordered insert.
 		$ordered = $this->sort_by_dependency( $forums );
 
 		foreach ( $ordered as $forum ) {
-			// parent_forum = parent forum ID for sub-forums (0 = top-level).
-			// parent_id = WordPress page ID where Asgaros is embedded (not a forum parent).
 			$parent_space_id = 0;
 			if ( (int) $forum->parent_forum > 0 ) {
 				$mapped = $this->get_mapped_id( 'forum', (int) $forum->parent_forum );
@@ -148,7 +141,7 @@ class Asgaros_Importer extends Importer {
 
 		foreach ( $forums as $forum ) {
 			$indexed[ $forum->id ] = $forum;
-			if ( (int) $forum->parent_forum === 0 ) {
+			if ( 0 === (int) $forum->parent_forum ) {
 				$children[0][] = $forum->id;
 			} else {
 				$children[ $forum->parent_forum ][] = $forum->id;
@@ -162,14 +155,12 @@ class Asgaros_Importer extends Importer {
 			$id = array_shift( $queue );
 			if ( isset( $indexed[ $id ] ) ) {
 				$ordered[] = $indexed[ $id ];
-				// Enqueue children of this node
 				if ( ! empty( $children[ $id ] ) ) {
 					array_splice( $queue, 0, 0, $children[ $id ] );
 				}
 			}
 		}
 
-		// Append any orphaned forums not reached by the walk
 		foreach ( $forums as $forum ) {
 			if ( ! in_array( $forum, $ordered, true ) ) {
 				$ordered[] = $forum;
@@ -187,8 +178,31 @@ class Asgaros_Importer extends Importer {
 			"SELECT * FROM {$p}forum_topics ORDER BY id ASC"
 		);
 
+		if ( empty( $topics ) ) {
+			return;
+		}
+
+		$topic_ids      = wp_list_pluck( $topics, 'id' );
+		$placeholders   = implode( ',', array_fill( 0, count( $topic_ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$first_posts_raw = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT fp.* FROM {$p}forum_posts fp
+				 INNER JOIN (
+				     SELECT parent_id, MIN(id) AS first_id
+				     FROM {$p}forum_posts
+				     WHERE parent_id IN ({$placeholders})
+				     GROUP BY parent_id
+				 ) f ON fp.id = f.first_id",
+				...$topic_ids
+			)
+		);
+		$first_posts_map = [];
+		foreach ( $first_posts_raw as $fp ) {
+			$first_posts_map[ (int) $fp->parent_id ] = $fp;
+		}
+
 		foreach ( $topics as $topic ) {
-			// Asgaros uses parent_id to reference the forum (not a parent topic).
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( ! $space_id ) {
 				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->parent_id} not imported" );
@@ -196,18 +210,10 @@ class Asgaros_Importer extends Importer {
 				continue;
 			}
 
-			// Asgaros links posts to topics via forum_posts.parent_id = topic.id.
-			$first_post = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT * FROM {$p}forum_posts WHERE parent_id = %d ORDER BY id ASC LIMIT 1",
-					$topic->id
-				)
-			);
+			$first_post = $first_posts_map[ (int) $topic->id ] ?? null;
+			$content    = $first_post ? $first_post->text : '';
 
-			$content = $first_post ? $first_post->text : '';
-
-			// Asgaros uses 'approved' column: 1 = approved, 0 = pending.
-			$status = ( isset( $topic->approved ) && (int) $topic->approved === 1 ) ? 'publish' : 'pending';
+			$status = ( isset( $topic->approved ) && 1 === (int) $topic->approved ) ? 'publish' : 'pending';
 
 			$post_id = JtPost::create(
 				[
@@ -228,7 +234,6 @@ class Asgaros_Importer extends Importer {
 			if ( $post_id ) {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
 				if ( $first_post ) {
-					// Record the first post's Asgaros ID so we skip it during reply import
 					$this->map_id( 'asgaros_post_skip', (int) $first_post->id, 0 );
 				}
 				++$this->imported;
@@ -243,8 +248,6 @@ class Asgaros_Importer extends Importer {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
-		// In Asgaros, forum_posts.parent_id = topic ID (not a parent reply).
-		// First post per topic is the topic body (already imported). Skip it.
 		$posts = $wpdb->get_results(
 			"SELECT p.* FROM {$p}forum_posts p
 			 INNER JOIN (
@@ -257,14 +260,12 @@ class Asgaros_Importer extends Importer {
 		);
 
 		foreach ( $posts as $asgaros_post ) {
-			// parent_id in forum_posts = topic ID in Asgaros.
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
 				++$this->skipped;
 				continue;
 			}
 
-			// Asgaros has no threaded replies — all replies are flat.
 			$reply_id = JtReply::create(
 				[
 					'post_id'       => $post_id,
