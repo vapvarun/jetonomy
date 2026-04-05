@@ -164,6 +164,8 @@ jobs:
         run: |
           ln -s "$GITHUB_WORKSPACE" /tmp/wp/wp-content/plugins/jetonomy
           wp plugin activate jetonomy --path=/tmp/wp
+          wp option update jetonomy_setup_complete 1 --path=/tmp/wp
+          wp rewrite flush --path=/tmp/wp
           wp plugin install plugin-check --activate --path=/tmp/wp
 
       - name: Clean non-dist files for PCP
