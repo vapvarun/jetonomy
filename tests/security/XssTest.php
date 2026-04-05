@@ -17,9 +17,9 @@ class XssTest extends WP_UnitTestCase {
         parent::set_up();
         Schema::create_tables();
         $this->admin_id = self::factory()->user->create(['role' => 'administrator']);
-        $cat_id = Category::create(['name' => 'XSS Cat', 'slug' => 'xss-cat']);
+        $cat_id = Category::create(['name' => 'XSS Cat', 'slug' => 'xss-cat-' . uniqid()]);
         $this->space_id = Space::create([
-            'title' => 'XSS Space', 'slug' => 'xss-space',
+            'title' => 'XSS Space', 'slug' => 'xss-space-' . uniqid(),
             'category_id' => $cat_id, 'visibility' => 'public',
         ]);
     }
@@ -54,7 +54,7 @@ class XssTest extends WP_UnitTestCase {
         wp_set_current_user($this->admin_id);
         $post_id = Post::create([
             'space_id' => $this->space_id, 'author_id' => $this->admin_id,
-            'title' => 'XSS Test', 'slug' => 'xss-test-post',
+            'title' => 'XSS Test', 'slug' => 'xss-test-post-' . uniqid(),
             'content' => '<p>safe</p>', 'content_plain' => 'safe',
             'type' => 'discussion', 'status' => 'publish',
         ]);

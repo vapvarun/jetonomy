@@ -47,10 +47,10 @@ class MissingObjectTest extends WP_UnitTestCase {
 		$this->admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$this->grant_jetonomy_caps( $this->admin_id );
 
-		$cat_id         = Category::create( array( 'name' => 'Missing Obj Cat', 'slug' => 'missing-obj-cat' ) );
+		$cat_id         = Category::create( array( 'name' => 'Missing Obj Cat', 'slug' => 'missing-obj-cat-' . uniqid() ) );
 		$this->space_id = Space::create( array(
 			'title'       => 'Missing Obj Space',
-			'slug'        => 'missing-obj-space',
+			'slug'        => 'missing-obj-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		) );

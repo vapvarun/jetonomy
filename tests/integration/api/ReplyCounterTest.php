@@ -30,10 +30,10 @@ class ReplyCounterTest extends WP_UnitTestCase {
 		parent::set_up();
 		Schema::create_tables();
 
-		$cat_id         = Category::create( array( 'name' => 'Counter Test', 'slug' => 'counter-test' ) );
+		$cat_id         = Category::create( array( 'name' => 'Counter Test', 'slug' => 'counter-test-' . uniqid() ) );
 		$this->space_id = Space::create( array(
 			'title'       => 'Counter Space',
-			'slug'        => 'counter-space',
+			'slug'        => 'counter-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		) );
@@ -47,7 +47,7 @@ class ReplyCounterTest extends WP_UnitTestCase {
 			'space_id'  => $this->space_id,
 			'author_id' => $this->user_id,
 			'title'     => 'Counter Post',
-			'slug'      => 'counter-post',
+			'slug'      => 'counter-post-' . uniqid(),
 			'content'   => '<p>Post for counter tests.</p>',
 		) );
 	}

@@ -16,17 +16,17 @@ class ReplyTest extends WP_UnitTestCase {
 		parent::set_up();
 		Schema::create_tables();
 
-		$cat_id   = Category::create( [ 'name' => 'General', 'slug' => 'general-reply-test' ] );
+		$cat_id   = Category::create( [ 'name' => 'General', 'slug' => 'general-reply-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Test Space',
-			'slug'        => 'test-space-reply',
+			'slug'        => 'test-space-reply-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
 		$this->post_id = Post::create( [
 			'space_id' => $space_id,
 			'title'    => 'Test Post',
-			'slug'     => 'test-post-reply',
+			'slug'     => 'test-post-reply-' . uniqid(),
 			'content'  => '<p>Post body.</p>',
 		] );
 	}

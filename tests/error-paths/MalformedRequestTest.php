@@ -50,10 +50,10 @@ class MalformedRequestTest extends WP_UnitTestCase {
 		$this->admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$this->grant_jetonomy_caps( $this->admin_id );
 
-		$cat_id         = Category::create( array( 'name' => 'Malformed Cat', 'slug' => 'malformed-cat' ) );
+		$cat_id         = Category::create( array( 'name' => 'Malformed Cat', 'slug' => 'malformed-cat-' . uniqid() ) );
 		$this->space_id = Space::create( array(
 			'title'       => 'Malformed Request Space',
-			'slug'        => 'malformed-request-space',
+			'slug'        => 'malformed-request-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 			'join_policy' => 'open',
@@ -64,7 +64,7 @@ class MalformedRequestTest extends WP_UnitTestCase {
 			'space_id'      => $this->space_id,
 			'author_id'     => $this->admin_id,
 			'title'         => 'Malformed Test Post',
-			'slug'          => 'malformed-test-post',
+			'slug'          => 'malformed-test-post-' . uniqid(),
 			'content'       => '<p>Content.</p>',
 			'content_plain' => 'Content.',
 			'type'          => 'discussion',

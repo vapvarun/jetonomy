@@ -15,10 +15,10 @@ class PostTest extends WP_UnitTestCase {
 		parent::set_up();
 		Schema::create_tables();
 
-		$cat_id         = Category::create( [ 'name' => 'General', 'slug' => 'general-post-test' ] );
+		$cat_id         = Category::create( [ 'name' => 'General', 'slug' => 'general-post-' . uniqid() ] );
 		$this->space_id = Space::create( [
 			'title'       => 'Test Space',
-			'slug'        => 'test-space-post',
+			'slug'        => 'test-space-post-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );

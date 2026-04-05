@@ -19,9 +19,9 @@ class SqlInjectionTest extends WP_UnitTestCase {
         parent::set_up();
         Schema::create_tables();
         $this->admin_id = self::factory()->user->create(['role' => 'administrator']);
-        $cat_id = Category::create(['name' => 'SQL Cat', 'slug' => 'sql-cat']);
+        $cat_id = Category::create(['name' => 'SQL Cat', 'slug' => 'sql-cat-' . uniqid()]);
         $this->space_id = Space::create([
-            'title' => 'SQL Space', 'slug' => 'sql-space',
+            'title' => 'SQL Space', 'slug' => 'sql-space-' . uniqid(),
             'category_id' => $cat_id, 'visibility' => 'public',
         ]);
     }
@@ -30,7 +30,7 @@ class SqlInjectionTest extends WP_UnitTestCase {
         $malicious = "Test'; DROP TABLE wp_jt_posts; --";
         $id = Post::create([
             'space_id' => $this->space_id, 'author_id' => $this->admin_id,
-            'title' => $malicious, 'slug' => 'sql-test',
+            'title' => $malicious, 'slug' => 'sql-test-' . uniqid(),
             'content' => '<p>safe</p>', 'content_plain' => 'safe',
             'type' => 'discussion', 'status' => 'publish',
         ]);
@@ -49,7 +49,7 @@ class SqlInjectionTest extends WP_UnitTestCase {
     public function test_reply_content_with_sql_injection(): void {
         $post_id = Post::create([
             'space_id' => $this->space_id, 'author_id' => $this->admin_id,
-            'title' => 'Safe Post', 'slug' => 'safe-post-sql',
+            'title' => 'Safe Post', 'slug' => 'safe-post-sql-' . uniqid(),
             'content' => '<p>safe</p>', 'content_plain' => 'safe',
             'type' => 'discussion', 'status' => 'publish',
         ]);

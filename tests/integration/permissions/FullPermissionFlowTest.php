@@ -49,10 +49,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 
 	public function test_complete_private_space_flow(): void {
 		// 1. Create a private space.
-		$cat_id   = Category::create( [ 'name' => 'Flow Cat', 'slug' => 'flow-cat' ] );
+		$cat_id   = Category::create( [ 'name' => 'Flow Cat', 'slug' => 'flow-cat-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Private Forum',
-			'slug'        => 'private-forum-flow',
+			'slug'        => 'private-forum-flow-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'private',
 		] );
@@ -94,10 +94,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_public_space_visibility_rules(): void {
-		$cat_id   = Category::create( [ 'name' => 'Public Cat', 'slug' => 'public-cat-flow' ] );
+		$cat_id   = Category::create( [ 'name' => 'Public Cat', 'slug' => 'public-cat-flow-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Public Forum',
-			'slug'        => 'public-forum-flow',
+			'slug'        => 'public-forum-flow-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
@@ -119,10 +119,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_moderator_role_grants_moderation_actions(): void {
-		$cat_id   = Category::create( [ 'name' => 'Mod Cat', 'slug' => 'mod-cat-flow' ] );
+		$cat_id   = Category::create( [ 'name' => 'Mod Cat', 'slug' => 'mod-cat-flow-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Mod Space',
-			'slug'        => 'mod-space-flow',
+			'slug'        => 'mod-space-flow-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
@@ -140,10 +140,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_wp_admin_has_full_access_everywhere(): void {
-		$cat_id   = Category::create( [ 'name' => 'Admin Cat', 'slug' => 'admin-cat-flow' ] );
+		$cat_id   = Category::create( [ 'name' => 'Admin Cat', 'slug' => 'admin-cat-flow-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Admin Space',
-			'slug'        => 'admin-space-flow',
+			'slug'        => 'admin-space-flow-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'private',
 		] );
@@ -157,10 +157,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_trust_level_gates_apply_to_members(): void {
-		$cat_id   = Category::create( [ 'name' => 'Trust Cat', 'slug' => 'trust-cat-flow' ] );
+		$cat_id   = Category::create( [ 'name' => 'Trust Cat', 'slug' => 'trust-cat-flow-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Trust Space',
-			'slug'        => 'trust-space-flow',
+			'slug'        => 'trust-space-flow-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
@@ -180,10 +180,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_hidden_space_requires_membership(): void {
-		$cat_id   = Category::create( [ 'name' => 'Hidden Cat', 'slug' => 'hidden-cat-flow' ] );
+		$cat_id   = Category::create( [ 'name' => 'Hidden Cat', 'slug' => 'hidden-cat-flow-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Hidden Space',
-			'slug'        => 'hidden-space-flow',
+			'slug'        => 'hidden-space-flow-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'hidden',
 		] );
@@ -207,10 +207,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 
 		Restriction::ban( $admin_id, 'global_ban', $issuer );
 
-		$cat_id   = Category::create( [ 'name' => 'BanAdmin Cat', 'slug' => 'banadmin-cat' ] );
+		$cat_id   = Category::create( [ 'name' => 'BanAdmin Cat', 'slug' => 'banadmin-cat-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'BanAdmin Space',
-			'slug'        => 'banadmin-space',
+			'slug'        => 'banadmin-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
@@ -219,10 +219,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_space_member_count_increments_on_add(): void {
-		$cat_id   = Category::create( [ 'name' => 'Member Count Cat', 'slug' => 'member-count-cat' ] );
+		$cat_id   = Category::create( [ 'name' => 'Member Count Cat', 'slug' => 'member-count-cat-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Member Count Space',
-			'slug'        => 'member-count-space',
+			'slug'        => 'member-count-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
@@ -238,10 +238,10 @@ class FullPermissionFlowTest extends WP_UnitTestCase {
 	}
 
 	public function test_space_member_count_decrements_on_remove(): void {
-		$cat_id   = Category::create( [ 'name' => 'Remove Member Cat', 'slug' => 'remove-member-cat' ] );
+		$cat_id   = Category::create( [ 'name' => 'Remove Member Cat', 'slug' => 'remove-member-cat-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Remove Member Space',
-			'slug'        => 'remove-member-space',
+			'slug'        => 'remove-member-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );

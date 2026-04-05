@@ -20,17 +20,17 @@ class VoteTest extends WP_UnitTestCase {
 		parent::set_up();
 		Schema::create_tables();
 
-		$cat_id         = Category::create( [ 'name' => 'General', 'slug' => 'general-vote-test' ] );
+		$cat_id         = Category::create( [ 'name' => 'General', 'slug' => 'general-vote-' . uniqid() ] );
 		$this->space_id = Space::create( [
 			'title'       => 'Vote Space',
-			'slug'        => 'vote-space',
+			'slug'        => 'vote-space-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
 		$this->post_id  = Post::create( [
 			'space_id' => $this->space_id,
 			'title'    => 'Vote Test Post',
-			'slug'     => 'vote-test-post',
+			'slug'     => 'vote-test-post-' . uniqid(),
 			'content'  => '<p>Content.</p>',
 		] );
 		$this->reply_id = Reply::create( [

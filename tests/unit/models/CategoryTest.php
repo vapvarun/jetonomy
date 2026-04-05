@@ -13,7 +13,7 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_create_returns_id(): void {
-		$id = Category::create( [ 'name' => 'Test', 'slug' => 'test', 'visibility' => 'public' ] );
+		$id = Category::create( [ 'name' => 'Test', 'slug' => 'test-' . uniqid(), 'visibility' => 'public' ] );
 		$this->assertGreaterThan( 0, $id );
 	}
 
@@ -41,9 +41,9 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_top_level_excludes_children(): void {
-		$parent = Category::create( [ 'name' => 'Parent', 'slug' => 'parent' ] );
-		Category::create( [ 'name' => 'Child', 'slug' => 'child', 'parent_id' => $parent ] );
-		Category::create( [ 'name' => 'Other', 'slug' => 'other' ] );
+		$parent = Category::create( [ 'name' => 'Parent', 'slug' => 'parent-' . uniqid() ] );
+		Category::create( [ 'name' => 'Child', 'slug' => 'child-' . uniqid(), 'parent_id' => $parent ] );
+		Category::create( [ 'name' => 'Other', 'slug' => 'other-' . uniqid() ] );
 
 		$top   = Category::list_top_level();
 		$names = array_map( fn( $c ) => $c->name, $top );
@@ -53,18 +53,18 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_top_level_sorts_by_sort_order(): void {
-		Category::create( [ 'name' => 'B', 'slug' => 'b', 'sort_order' => 2 ] );
-		Category::create( [ 'name' => 'A', 'slug' => 'a', 'sort_order' => 1 ] );
+		Category::create( [ 'name' => 'B', 'slug' => 'b-' . uniqid(), 'sort_order' => 2 ] );
+		Category::create( [ 'name' => 'A', 'slug' => 'a-' . uniqid(), 'sort_order' => 1 ] );
 		$top = Category::list_top_level();
 		$this->assertEquals( 'A', $top[0]->name );
 		$this->assertEquals( 'B', $top[1]->name );
 	}
 
 	public function test_list_children_returns_correct_children(): void {
-		$parent = Category::create( [ 'name' => 'Root', 'slug' => 'root' ] );
-		Category::create( [ 'name' => 'Child1', 'slug' => 'child1', 'parent_id' => $parent ] );
-		Category::create( [ 'name' => 'Child2', 'slug' => 'child2', 'parent_id' => $parent ] );
-		Category::create( [ 'name' => 'Other', 'slug' => 'other2' ] );
+		$parent = Category::create( [ 'name' => 'Root', 'slug' => 'root-' . uniqid() ] );
+		Category::create( [ 'name' => 'Child1', 'slug' => 'child1-' . uniqid(), 'parent_id' => $parent ] );
+		Category::create( [ 'name' => 'Child2', 'slug' => 'child2-' . uniqid(), 'parent_id' => $parent ] );
+		Category::create( [ 'name' => 'Other', 'slug' => 'other2-' . uniqid() ] );
 
 		$children = Category::list_children( $parent );
 		$this->assertCount( 2, $children );
@@ -74,7 +74,7 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_increment_space_count(): void {
-		$id = Category::create( [ 'name' => 'T', 'slug' => 't' ] );
+		$id = Category::create( [ 'name' => 'T', 'slug' => 't-' . uniqid() ] );
 		Category::increment_space_count( $id );
 		Category::increment_space_count( $id );
 		$cat = Category::find( $id );
@@ -82,7 +82,7 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_increment_space_count_decrement(): void {
-		$id = Category::create( [ 'name' => 'Dec', 'slug' => 'dec' ] );
+		$id = Category::create( [ 'name' => 'Dec', 'slug' => 'dec-' . uniqid() ] );
 		Category::increment_space_count( $id, 3 );
 		Category::increment_space_count( $id, -1 );
 		$cat = Category::find( $id );
@@ -90,14 +90,14 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_update(): void {
-		$id = Category::create( [ 'name' => 'Old', 'slug' => 'old' ] );
+		$id = Category::create( [ 'name' => 'Old', 'slug' => 'old-' . uniqid() ] );
 		Category::update( $id, [ 'name' => 'New' ] );
 		$cat = Category::find( $id );
 		$this->assertEquals( 'New', $cat->name );
 	}
 
 	public function test_delete(): void {
-		$id = Category::create( [ 'name' => 'Del', 'slug' => 'del' ] );
+		$id = Category::create( [ 'name' => 'Del', 'slug' => 'del-' . uniqid() ] );
 		Category::delete( $id );
 		$this->assertNull( Category::find( $id ) );
 	}

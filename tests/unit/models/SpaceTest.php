@@ -13,7 +13,7 @@ class SpaceTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 		Schema::create_tables();
-		$this->category_id = Category::create( [ 'name' => 'General', 'slug' => 'general' ] );
+		$this->category_id = Category::create( [ 'name' => 'General', 'slug' => 'general-' . uniqid() ] );
 	}
 
 	private function make_space( array $overrides = [] ): int {

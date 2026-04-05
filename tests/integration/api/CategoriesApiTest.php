@@ -61,8 +61,8 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_categories_returns_array(): void {
-		Category::create( [ 'name' => 'API Cat 1', 'slug' => 'api-cat-1' ] );
-		Category::create( [ 'name' => 'API Cat 2', 'slug' => 'api-cat-2' ] );
+		Category::create( [ 'name' => 'API Cat 1', 'slug' => 'api-cat-1-' . uniqid() ] );
+		Category::create( [ 'name' => 'API Cat 2', 'slug' => 'api-cat-2-' . uniqid() ] );
 
 		$response = $this->do_request( 'GET', '/categories' );
 		$data     = $response->get_data();
@@ -71,8 +71,8 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_categories_returns_only_top_level(): void {
-		$parent_id = Category::create( [ 'name' => 'Parent', 'slug' => 'parent-api' ] );
-		Category::create( [ 'name' => 'Child', 'slug' => 'child-api', 'parent_id' => $parent_id ] );
+		$parent_id = Category::create( [ 'name' => 'Parent', 'slug' => 'parent-api-' . uniqid() ] );
+		Category::create( [ 'name' => 'Child', 'slug' => 'child-api-' . uniqid(), 'parent_id' => $parent_id ] );
 
 		$response = $this->do_request( 'GET', '/categories' );
 		$data     = $response->get_data();
@@ -122,7 +122,7 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_single_category_returns_200(): void {
-		$id = Category::create( [ 'name' => 'Single', 'slug' => 'single-api' ] );
+		$id = Category::create( [ 'name' => 'Single', 'slug' => 'single-api-' . uniqid() ] );
 
 		$response = $this->do_request( 'GET', "/categories/{$id}" );
 		$this->assertEquals( 200, $response->get_status() );
@@ -137,10 +137,10 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_get_single_category_includes_spaces(): void {
-		$cat_id = Category::create( [ 'name' => 'With Spaces', 'slug' => 'with-spaces-api' ] );
+		$cat_id = Category::create( [ 'name' => 'With Spaces', 'slug' => 'with-spaces-api-' . uniqid() ] );
 		Space::create( [
 			'title'       => 'Space One',
-			'slug'        => 'space-one-api',
+			'slug'        => 'space-one-api-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );

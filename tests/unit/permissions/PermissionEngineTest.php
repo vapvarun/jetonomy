@@ -22,18 +22,18 @@ class PermissionEngineTest extends WP_UnitTestCase {
 		parent::set_up();
 		Schema::create_tables();
 
-		$cat_id = Category::create( [ 'name' => 'Perm Cat', 'slug' => 'perm-cat' ] );
+		$cat_id = Category::create( [ 'name' => 'Perm Cat', 'slug' => 'perm-cat-' . uniqid() ] );
 
 		$this->public_space_id = Space::create( [
 			'title'       => 'Public Space',
-			'slug'        => 'public-space-perm',
+			'slug'        => 'public-space-perm-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 		] );
 
 		$this->private_space_id = Space::create( [
 			'title'       => 'Private Space',
-			'slug'        => 'private-space-perm',
+			'slug'        => 'private-space-perm-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'private',
 		] );
@@ -158,10 +158,10 @@ class PermissionEngineTest extends WP_UnitTestCase {
 	public function test_non_member_of_public_space_can_only_read(): void {
 		// Use a public space with approval-required join policy so non-members
 		// cannot participate (open-policy spaces allow any logged-in user to post).
-		$cat_id   = Category::create( [ 'name' => 'Approval Cat', 'slug' => 'approval-cat' ] );
+		$cat_id   = Category::create( [ 'name' => 'Approval Cat', 'slug' => 'approval-cat-' . uniqid() ] );
 		$space_id = Space::create( [
 			'title'       => 'Approval Space',
-			'slug'        => 'approval-space-perm',
+			'slug'        => 'approval-space-perm-' . uniqid(),
 			'category_id' => $cat_id,
 			'visibility'  => 'public',
 			'join_policy' => 'approval',

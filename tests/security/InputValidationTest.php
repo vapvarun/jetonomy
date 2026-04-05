@@ -17,9 +17,9 @@ class InputValidationTest extends WP_UnitTestCase {
         Schema::create_tables();
         $this->admin_id = self::factory()->user->create(['role' => 'administrator']);
         wp_set_current_user($this->admin_id);
-        $cat_id = Category::create(['name' => 'Val Cat', 'slug' => 'val-cat']);
+        $cat_id = Category::create(['name' => 'Val Cat', 'slug' => 'val-cat-' . uniqid()]);
         $this->space_id = Space::create([
-            'title' => 'Val Space', 'slug' => 'val-space',
+            'title' => 'Val Space', 'slug' => 'val-space-' . uniqid(),
             'category_id' => $cat_id, 'visibility' => 'public',
         ]);
     }
@@ -47,7 +47,7 @@ class InputValidationTest extends WP_UnitTestCase {
     public function test_vote_with_invalid_value(): void {
         $post_id = Post::create([
             'space_id' => $this->space_id, 'author_id' => $this->admin_id,
-            'title' => 'Vote Test', 'slug' => 'vote-val-test',
+            'title' => 'Vote Test', 'slug' => 'vote-val-test-' . uniqid(),
             'content' => 'x', 'content_plain' => 'x',
             'type' => 'discussion', 'status' => 'publish',
         ]);
@@ -60,7 +60,7 @@ class InputValidationTest extends WP_UnitTestCase {
     public function test_vote_with_string_value(): void {
         $post_id = Post::create([
             'space_id' => $this->space_id, 'author_id' => $this->admin_id,
-            'title' => 'Vote Str Test', 'slug' => 'vote-str-test',
+            'title' => 'Vote Str Test', 'slug' => 'vote-str-test-' . uniqid(),
             'content' => 'x', 'content_plain' => 'x',
             'type' => 'discussion', 'status' => 'publish',
         ]);

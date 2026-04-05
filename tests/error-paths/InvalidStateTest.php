@@ -60,10 +60,10 @@ class InvalidStateTest extends WP_UnitTestCase {
 		$this->member_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		$this->grant_jetonomy_caps( $this->member_id );
 
-		$this->cat_id   = Category::create( array( 'name' => 'Invalid State Cat', 'slug' => 'invalid-state-cat' ) );
+		$this->cat_id   = Category::create( array( 'name' => 'Invalid State Cat', 'slug' => 'invalid-state-cat-' . uniqid() ) );
 		$this->space_id = Space::create( array(
 			'title'       => 'Invalid State Space',
-			'slug'        => 'invalid-state-space',
+			'slug'        => 'invalid-state-space-' . uniqid(),
 			'category_id' => $this->cat_id,
 			'visibility'  => 'public',
 			'join_policy' => 'open',
