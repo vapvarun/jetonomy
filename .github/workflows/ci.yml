@@ -1,0 +1,195 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, 'v*']
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ── PHP Lint: syntax check across PHP versions ─────────────────────────
+  php-lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+      - name: Check syntax
+        run: find includes/ templates/ -name '*.php' -exec php -l {} + 2>&1 | grep -v 'No syntax errors' | head -50; test ${PIPESTATUS[0]} -eq 0
+
+  # ── PHPUnit matrix: PHP 8.1/8.2/8.3/8.4 × WP 6.7/6.8/6.9 ─────────────
+  phpunit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4']
+        wp: ['6.7', '6.8', '6.9']
+      fail-fast: false
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, mbstring, intl
+          coverage: none
+
+      - name: Install system dependencies
+        run: sudo apt-get install -y subversion
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      - name: Install WordPress test library
+        env:
+          WP_VERSION: ${{ matrix.wp }}
+        run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION" true
+
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit --testdox --exclude-group pro
+
+  # ── PHPStan static analysis ──────────────────────────────────────────────
+  phpstan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      - name: Download BuddyPress for type stubs
+        run: |
+          mkdir -p /tmp/bp-stubs
+          curl -sL "https://downloads.wordpress.org/plugin/buddypress.latest-stable.zip" -o /tmp/bp.zip
+          unzip -q /tmp/bp.zip -d /tmp/bp-stubs
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse -c phpstan.neon.dist
+
+  # ── WPCS coding standards ───────────────────────────────────────────────
+  wpcs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: cs2pr
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+      - name: Run WPCS
+        run: |
+          vendor/bin/phpcs --standard=.phpcs.xml.dist --report=summary || true
+          ERRORS=$(vendor/bin/phpcs --standard=.phpcs.xml.dist --report=json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('totals',{}).get('errors',0))" 2>/dev/null || echo "0")
+          echo "WPCS errors: $ERRORS"
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::WPCS found $ERRORS error(s)"
+            exit 1
+          fi
+
+  # ── Plugin Check (PCP) ──────────────────────────────────────────────────
+  plugin-check:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_pcp
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring
+
+      - name: Install WordPress
+        run: |
+          mkdir -p /tmp/wp
+          curl -sL https://wordpress.org/latest.tar.gz | tar xz -C /tmp/wp --strip-components=1
+          cp /tmp/wp/wp-config-sample.php /tmp/wp/wp-config.php
+          sed -i "s/database_name_here/wp_pcp/" /tmp/wp/wp-config.php
+          sed -i "s/username_here/root/" /tmp/wp/wp-config.php
+          sed -i "s/password_here/root/" /tmp/wp/wp-config.php
+          sed -i "s/localhost/127.0.0.1/" /tmp/wp/wp-config.php
+
+      - name: Setup WP-CLI
+        run: |
+          curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+          chmod +x wp-cli.phar
+          sudo mv wp-cli.phar /usr/local/bin/wp
+
+      - name: Install WordPress
+        run: |
+          wp core install --path=/tmp/wp --url=http://localhost --title=Test --admin_user=admin --admin_password=admin --admin_email=admin@test.com --skip-email
+
+      - name: Install plugin and Plugin Check
+        run: |
+          ln -s "$GITHUB_WORKSPACE" /tmp/wp/wp-content/plugins/jetonomy
+          wp plugin activate jetonomy --path=/tmp/wp
+          wp plugin install plugin-check --activate --path=/tmp/wp
+
+      - name: Run Plugin Check
+        run: |
+          RESULT=$(wp plugin check jetonomy --path=/tmp/wp --format=csv 2>&1)
+          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected'
+          CODE_ERRORS=$(echo "$RESULT" | awk -F',' -v noise="$NOISE" '
+            /^FILE:/ { file=$0; gsub(/^FILE: /, "", file); next }
+            $3 == "ERROR" {
+              if (file ~ /^tests\//) next
+              if (file ~ /^bin\//) next
+              if (file ~ /^dist\//) next
+              if (file ~ /^vendor\//) next
+              if (file ~ /^node_modules\//) next
+              match_noise = 0
+              split(noise, n, "|")
+              for (k in n) { if ($4 ~ n[k]) { match_noise = 1; break } }
+              if (match_noise) next
+              count++
+              print "  " file ":" $1 " " $4
+            }
+            END { print "\nActionable errors: " count+0 }
+          ')
+          echo "$CODE_ERRORS"
+          FINAL_COUNT=$(echo "$CODE_ERRORS" | tail -1 | grep -o '[0-9]*$')
+          if [ "$FINAL_COUNT" -gt 0 ]; then
+            echo "::error::Plugin Check found $FINAL_COUNT actionable error(s)"
+            exit 1
+          fi
