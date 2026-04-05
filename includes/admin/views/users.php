@@ -28,7 +28,7 @@ $trust_labels = [
 				<select name="trust_level">
 					<option value=""><?php esc_html_e( 'All Trust Levels', 'jetonomy' ); ?></option>
 					<?php for ( $i = 0; $i <= 5; $i++ ) : ?>
-						<option value="<?php echo (int) $i; ?>" <?php selected( $filter_trust, (string) $i ); ?>><?php printf( '%d - %s', $i, esc_html( $trust_labels[ $i ] ) ); ?></option>
+						<option value="<?php echo absint( $i ); ?>" <?php selected( $filter_trust, (string) $i ); ?>><?php echo esc_html( $i . ' - ' . $trust_labels[ $i ] ); ?></option>
 					<?php endfor; ?>
 				</select>
 				<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
@@ -38,7 +38,7 @@ $trust_labels = [
 			<span class="displaying-num">
 				<?php
 				/* translators: %s: number of users */
-				printf( esc_html( _n( '%s user', '%s users', $total, 'jetonomy' ) ), number_format_i18n( $total ) );
+				printf( esc_html( _n( '%s user', '%s users', $total, 'jetonomy' ) ), esc_html( number_format_i18n( $total ) ) );
 				?>
 			</span>
 		</div>
@@ -81,8 +81,8 @@ $trust_labels = [
 							</span>
 						</td>
 						<td><?php echo esc_html( number_format_i18n( $u->reputation ) ); ?></td>
-						<td><?php echo absint( $u->post_count ); ?></td>
-						<td><?php echo absint( $u->reply_count ); ?></td>
+						<td><?php echo esc_html( absint( $u->post_count ) ); ?></td>
+						<td><?php echo esc_html( absint( $u->reply_count ) ); ?></td>
 						<td>
 							<?php echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '&mdash;' ); ?>
 						</td>
@@ -122,7 +122,7 @@ $trust_labels = [
 	<div id="jetonomy-trust-dropdown" class="jetonomy-dropdown" style="display:none;">
 		<select id="trust-level-select">
 			<?php for ( $i = 0; $i <= 5; $i++ ) : ?>
-				<option value="<?php echo (int) $i; ?>"><?php printf( '%d - %s', $i, esc_html( $trust_labels[ $i ] ) ); ?></option>
+				<option value="<?php echo absint( $i ); ?>"><?php echo esc_html( $i . ' - ' . $trust_labels[ $i ] ); ?></option>
 			<?php endfor; ?>
 		</select>
 		<button type="button" class="button button-small button-primary" id="jetonomy-save-trust"><?php esc_html_e( 'Save', 'jetonomy' ); ?></button>

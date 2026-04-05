@@ -110,7 +110,7 @@ $crumbs[] = [
 					<span class="jt-col-title" style="color:<?php echo esc_attr( $col['color'] ); ?>;">
 						<?php echo esc_html( $col['label'] ); ?>
 					</span>
-					<span class="jt-col-n"><?php echo (int) count( $col['posts'] ); ?></span>
+					<span class="jt-col-n"><?php echo esc_html( count( $col['posts'] ) ); ?></span>
 				</div>
 				<?php if ( empty( $col['posts'] ) ) : ?>
 					<p class="jt-kanban-empty"><?php esc_html_e( 'None', 'jetonomy' ); ?></p>
@@ -123,8 +123,8 @@ $crumbs[] = [
 								<?php echo esc_html( wp_strip_all_tags( $idea->content ) ); ?>
 							</div>
 							<div class="jt-idea-meta">
-								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo (int) $idea->vote_score; ?></span>
-								<span><?php echo (int) $idea->reply_count; ?> <?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
+								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
+								<span><?php echo esc_html( (int) $idea->reply_count ); ?> <?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
 							</div>
 						</div>
 					<?php endforeach; ?>

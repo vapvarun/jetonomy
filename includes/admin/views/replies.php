@@ -83,7 +83,7 @@ $status_labels = [
 			printf(
 				/* translators: %s: number of replies */
 				esc_html( _n( '%s reply total', '%s replies total', (int) $post->reply_count, 'jetonomy' ) ),
-				number_format_i18n( (int) $post->reply_count )
+				esc_html( number_format_i18n( (int) $post->reply_count ) )
 			);
 			?>
 		</span>
@@ -145,9 +145,9 @@ $status_labels = [
 					$_last  = min( $paged * $per_page, $total );
 					printf(
 						esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
-						number_format_i18n( $_first ),
-						number_format_i18n( $_last ),
-						number_format_i18n( $total )
+						esc_html( number_format_i18n( $_first ) ),
+						esc_html( number_format_i18n( $_last ) ),
+						esc_html( number_format_i18n( $total ) )
 					);
 					?>
 				</span>

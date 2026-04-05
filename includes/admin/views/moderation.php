@@ -14,16 +14,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 
 	<nav class="nav-tab-wrapper">
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=posts' ) ); ?>" class="nav-tab <?php echo esc_attr( 'posts' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), (int) $total_posts ); ?>
+			<?php printf( esc_html__( 'Pending Posts (%d)', 'jetonomy' ), absint( $total_posts ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=replies' ) ); ?>" class="nav-tab <?php echo esc_attr( 'replies' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), (int) $total_replies ); ?>
+			<?php printf( esc_html__( 'Pending Replies (%d)', 'jetonomy' ), absint( $total_replies ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=flags' ) ); ?>" class="nav-tab <?php echo esc_attr( 'flags' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), (int) $total_flags ); ?>
+			<?php printf( esc_html__( 'Flags (%d)', 'jetonomy' ), absint( $total_flags ) ); ?>
 		</a>
 		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation&tab=banned' ) ); ?>" class="nav-tab <?php echo esc_attr( 'banned' === $active_tab ? 'nav-tab-active' : '' ); ?>">
-			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), (int) $total_banned ); ?>
+			<?php printf( esc_html__( 'Banned Users (%d)', 'jetonomy' ), absint( $total_banned ) ); ?>
 		</a>
 		<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 			<a class="nav-tab disabled" title="<?php esc_attr_e( 'Pro required', 'jetonomy' ); ?>"><?php esc_html_e( 'Auto-Rules', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></a>
@@ -91,7 +91,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_posts - 1 ) * $per_page + 1;
 							$_last  = min( $paged_posts * $per_page, $total_posts );
-							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_posts ) );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_posts ) ) );
 							?>
 						</span>
 						<?php
@@ -167,7 +167,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_replies - 1 ) * $per_page + 1;
 							$_last  = min( $paged_replies * $per_page, $total_replies );
-							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_replies ) );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_replies ) ) );
 							?>
 						</span>
 						<?php
@@ -246,7 +246,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_flags - 1 ) * $per_page + 1;
 							$_last  = min( $paged_flags * $per_page, $total_flags );
-							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_flags ) );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_flags ) ) );
 							?>
 						</span>
 						<?php
@@ -330,7 +330,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 							<?php
 							$_first = ( $paged_banned - 1 ) * $per_page + 1;
 							$_last  = min( $paged_banned * $per_page, $total_banned );
-							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), number_format_i18n( $_first ), number_format_i18n( $_last ), number_format_i18n( $total_banned ) );
+							printf( esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ), esc_html( number_format_i18n( $_first ) ), esc_html( number_format_i18n( $_last ) ), esc_html( number_format_i18n( $total_banned ) ) );
 							?>
 						</span>
 						<?php

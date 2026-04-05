@@ -83,9 +83,9 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 				$_last  = min( $paged * $per_page, $total );
 				printf(
 					esc_html__( '%1$s&#8211;%2$s of %3$s', 'jetonomy' ),
-					number_format_i18n( $_first ),
-					number_format_i18n( $_last ),
-					number_format_i18n( $total )
+					esc_html( number_format_i18n( $_first ) ),
+					esc_html( number_format_i18n( $_last ) ),
+					esc_html( number_format_i18n( $total ) )
 				);
 				?>
 			</span>
@@ -275,7 +275,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							<?php endif; ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Views', 'jetonomy' ); ?>">
-							<?php echo absint( $p->view_count ?? 0 ); ?>
+							<?php echo esc_html( absint( $p->view_count ?? 0 ) ); ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Date', 'jetonomy' ); ?>">
 							<span title="<?php echo esc_attr( $p->created_at ?? '' ); ?>">

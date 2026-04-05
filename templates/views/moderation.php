@@ -138,14 +138,14 @@ $crumbs = [
 							<?php endif; ?>
 							<button type="button" class="jt-btn jt-btn-fill jt-btn-danger"
 								data-wp-on--click="actions.dismissFlag"
-								data-flag-id="<?php echo (int) $flag->id; ?>"
+								data-flag-id="<?php echo absint( $flag->id ); ?>"
 
 								data-action="approved">
 								<?php esc_html_e( 'Remove Content', 'jetonomy' ); ?>
 							</button>
 							<button type="button" class="jt-btn jt-btn-ghost"
 								data-wp-on--click="actions.dismissFlag"
-								data-flag-id="<?php echo (int) $flag->id; ?>"
+								data-flag-id="<?php echo absint( $flag->id ); ?>"
 
 								data-action="dismissed">
 								<?php esc_html_e( 'Dismiss', 'jetonomy' ); ?>

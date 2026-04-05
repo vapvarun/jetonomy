@@ -65,8 +65,8 @@ $crumbs = [
 										</div>
 									<?php endif; ?>
 									<div class="jt-space-card-stats">
-										<span class="jt-space-card-stat"><strong><?php echo (int) $space->post_count; ?></strong> <?php esc_html_e( 'posts', 'jetonomy' ); ?></span>
-										<span class="jt-space-card-stat"><strong><?php echo (int) $space->member_count; ?></strong> <?php esc_html_e( 'members', 'jetonomy' ); ?></span>
+										<span class="jt-space-card-stat"><strong><?php echo esc_html( (int) $space->post_count ); ?></strong> <?php esc_html_e( 'posts', 'jetonomy' ); ?></span>
+										<span class="jt-space-card-stat"><strong><?php echo esc_html( (int) $space->member_count ); ?></strong> <?php esc_html_e( 'members', 'jetonomy' ); ?></span>
 									</div>
 								</div>
 							</div>

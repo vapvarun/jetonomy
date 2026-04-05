@@ -163,7 +163,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 		?>
 		<?php if ( $depth === 0 && ! empty( $reply->children ) ) : ?>
 			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
-				data-wp-context='{"collapsed": false, "childCount": <?php echo count( $reply->children ); ?>}'>
+				data-wp-context='{"collapsed": false, "childCount": <?php echo (int) count( $reply->children ); ?>}'>
 				<button class="jt-thread-toggle-btn" data-wp-on--click="actions.toggleThread"
 					data-wp-text="context.collapsed ? '+ Show ' + context.childCount + ' replies' : '&minus; Hide replies'">
 					&minus; Hide replies
@@ -212,7 +212,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					</h1>
 					<div class="jt-meta">
 						<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) ); ?>
-						<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
+						<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference */
@@ -246,7 +246,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						?>
 						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-on--click="actions.followPost"
-							data-post-id="<?php echo (int) $post->id; ?>"
+							data-post-id="<?php echo absint( $post->id ); ?>"
 							data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
 							<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
 						</button>
@@ -272,21 +272,21 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<?php if ( is_user_logged_in() ) : ?>
 					<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteUp"
-						data-post-id="<?php echo (int) $post->id; ?>"
+						data-post-id="<?php echo absint( $post->id ); ?>"
 						aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-						<span class="n" data-wp-text="state.postScores.<?php echo (int) $post->id; ?>"><?php echo (int) $post->vote_score; ?></span>
+						<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</button>
 					<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteDown"
-						data-post-id="<?php echo (int) $post->id; ?>"
+						data-post-id="<?php echo absint( $post->id ); ?>"
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 					</button>
 					<?php else : ?>
 					<span class="jt-act">
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-						<span class="n"><?php echo (int) $post->vote_score; ?></span>
+						<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</span>
 					<?php endif; ?>
 					<span class="jt-view-count">
@@ -306,13 +306,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 					<button class="jt-act jt-bookmark-btn <?php echo $is_bookmarked ? esc_attr( 'bookmarked' ) : ''; ?>"
 						data-wp-on--click="actions.toggleBookmark"
-						data-post-id="<?php echo (int) $post->id; ?>"
+						data-post-id="<?php echo absint( $post->id ); ?>"
 						data-bookmarked="<?php echo esc_attr( $is_bookmarked ? '1' : '0' ); ?>"
 						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
 					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
 						<button class="jt-act"
 							data-wp-on--click="actions.flagPost"
-							data-post-id="<?php echo (int) $post->id; ?>"
+							data-post-id="<?php echo absint( $post->id ); ?>"
 							title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
 					<?php endif; ?>
 				<?php endif; ?>
@@ -324,31 +324,31 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
-									data-post-id="<?php echo (int) $post->id; ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.togglePrivate"
-									data-post-id="<?php echo (int) $post->id; ?>"
+									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
-									data-post-id="<?php echo (int) $post->id; ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.movePost"
-									data-post-id="<?php echo (int) $post->id; ?>"
-									data-space-id="<?php echo (int) $post->space_id; ?>"><?php jetonomy_echo_icon( 'move', 14 ); ?> <?php esc_html_e( 'Move', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"
+									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'move', 14 ); ?> <?php esc_html_e( 'Move', 'jetonomy' ); ?></button>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.mergePost"
-									data-post-id="<?php echo (int) $post->id; ?>"
-									data-space-id="<?php echo (int) $post->space_id; ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
+									data-post-id="<?php echo absint( $post->id ); ?>"
+									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
-									data-post-id="<?php echo (int) $post->id; ?>"
+									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
@@ -384,7 +384,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-replies-head">
 					<h3>
 						<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
-						<span class="jt-count-pill"><?php echo (int) $total_replies; ?></span>
+						<span class="jt-count-pill"><?php echo esc_html( (int) $total_replies ); ?></span>
 					</h3>
 					<div class="jt-replies-controls">
 						<div class="jt-pills">

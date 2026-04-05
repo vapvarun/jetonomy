@@ -89,7 +89,7 @@ $role_labels = [
 									class="jt-member-name">
 									<?php echo esc_html( $mu->display_name ); ?>
 								</a>
-								<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
+								<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
 								<div class="jt-member-joined">
 									<?php
 									/* translators: %s: joined date */
@@ -104,7 +104,7 @@ $role_labels = [
 							<?php endif; ?>
 							<?php if ( $mp ) : ?>
 								<span class="jt-member-rep">
-									<?php echo (int) $mp->reputation; ?> <span class="jt-member-rep-label"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
+									<?php echo esc_html( (int) $mp->reputation ); ?> <span class="jt-member-rep-label"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
 								</span>
 							<?php endif; ?>
 						</div>

@@ -17,6 +17,7 @@
 // WordPress sets this constant before calling uninstall.php.
 // Bail immediately if this file is accessed directly.
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 global $wpdb;
 

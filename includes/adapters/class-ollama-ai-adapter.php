@@ -155,13 +155,15 @@ class Ollama_AI_Adapter implements AI_Adapter {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new \RuntimeException( 'Ollama request failed: ' . $response->get_error_message() );
+			throw new \RuntimeException( 'Ollama request failed: ' . esc_html( $response->get_error_message() ) );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( $code >= 400 ) {
 			$error_body = wp_remote_retrieve_body( $response );
-			throw new \RuntimeException( "Ollama returned HTTP {$code}: {$error_body}" );
+			throw new \RuntimeException(
+				'Ollama returned HTTP ' . esc_html( (string) $code ) . ': ' . esc_html( $error_body )
+			);
 		}
 
 		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );

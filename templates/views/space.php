@@ -48,7 +48,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		$join_nonce = wp_create_nonce( 'wp_rest' );
 		echo '<div class="jt-empty jt-space-gate">';
 		echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
-		echo '<form class="jt-join-request-form" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
+		echo '<form class="jt-join-request-form" data-space-id="' . absint( $space->id ) . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
 		echo '<textarea class="jt-input" name="message" rows="3" placeholder="' . esc_attr__( 'Optional: why do you want to join?', 'jetonomy' ) . '"></textarea>';
 		echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Join', 'jetonomy' ) . '</button>';
 		echo '</form>';
@@ -59,7 +59,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		$join_nonce = wp_create_nonce( 'wp_rest' );
 		echo '<div class="jt-empty jt-space-gate">';
 		echo '<p>' . esc_html__( 'This space is private. Join to access posts and discussions.', 'jetonomy' ) . '</p>';
-		echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . (int) $space->id . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
+		echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . absint( $space->id ) . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
 		echo '</div>';
 		return;
 	}
@@ -121,11 +121,11 @@ $crumbs[] = [
 				</div>
 				<div class="jt-space-nums">
 					<div class="jt-num">
-						<div class="jt-num-val"><?php echo (int) $space->post_count; ?></div>
+						<div class="jt-num-val"><?php echo esc_html( (int) $space->post_count ); ?></div>
 						<div class="jt-num-lbl"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
 					</div>
 					<div class="jt-num">
-						<div class="jt-num-val"><?php echo (int) $space->member_count; ?></div>
+						<div class="jt-num-val"><?php echo esc_html( (int) $space->member_count ); ?></div>
 						<div class="jt-num-lbl"><?php esc_html_e( 'Members', 'jetonomy' ); ?></div>
 					</div>
 				</div>
@@ -151,7 +151,7 @@ $crumbs[] = [
 							$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
 							?>
 							<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-request-btn"
-								data-space-id="<?php echo (int) $space->id; ?>"
+								data-space-id="<?php echo absint( $space->id ); ?>"
 								data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
 								<?php esc_html_e( 'Join', 'jetonomy' ); ?>
 							</button>
@@ -164,7 +164,7 @@ $crumbs[] = [
 						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following_space ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 							data-wp-interactive="jetonomy"
 							data-wp-on--click="actions.followSpace"
-							data-space-id="<?php echo (int) $space->id; ?>"
+							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-following="<?php echo esc_attr( $is_following_space ? '1' : '0' ); ?>">
 							<?php echo $is_following_space ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
 						</button>

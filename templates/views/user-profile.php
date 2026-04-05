@@ -116,7 +116,7 @@ $crumbs = [
 					<div class="jt-flex jt-items-start jt-justify-between jt-w-full">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
-							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
+							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
 							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
 						</h1>
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
@@ -132,7 +132,7 @@ $crumbs = [
 						<?php if ( is_user_logged_in() && get_current_user_id() !== $profile_user_id ) : ?>
 							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
 								data-wp-on--click="actions.flagUser"
-								data-user-id="<?php echo (int) $profile_user_id; ?>"
+								data-user-id="<?php echo absint( $profile_user_id ); ?>"
 								title="<?php esc_attr_e( 'Report User', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'flag', 14 ); ?>
 								<?php esc_html_e( 'Report', 'jetonomy' ); ?>
@@ -162,19 +162,19 @@ $crumbs = [
 
 					<div class="jt-stats-bar">
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo (int) $rep; ?></div>
+							<div class="jt-stat-n"><?php echo esc_html( (int) $rep ); ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo (int) $p_count; ?></div>
+							<div class="jt-stat-n"><?php echo esc_html( (int) $p_count ); ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo (int) $r_count; ?></div>
+							<div class="jt-stat-n"><?php echo esc_html( (int) $r_count ); ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></div>
 						</div>
 						<div class="jt-stat">
-							<div class="jt-stat-n"><?php echo (int) $trust; ?></div>
+							<div class="jt-stat-n"><?php echo esc_html( (int) $trust ); ?></div>
 							<div class="jt-stat-l"><?php esc_html_e( 'Trust', 'jetonomy' ); ?></div>
 						</div>
 					</div>
@@ -236,7 +236,7 @@ $crumbs = [
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $ur_url ); ?>'">
 								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo (int) $ur->vote_score; ?></span>
+									<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
 								</div>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
@@ -277,7 +277,7 @@ $crumbs = [
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $uv_url ); ?>'">
 								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo (int) $uv->vote_score; ?></span>
+									<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
 								</div>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( $uv->title ); ?></div>
@@ -286,7 +286,7 @@ $crumbs = [
 									</div>
 								</div>
 								<div class="jt-row-stat">
-									<div class="jt-row-stat-n"><?php echo (int) $uv->reply_count; ?></div>
+									<div class="jt-row-stat-n"><?php echo esc_html( (int) $uv->reply_count ); ?></div>
 									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 								</div>
 								<div class="jt-row-stat">
@@ -379,7 +379,7 @@ $crumbs = [
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $bk_url ); ?>'">
 								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo (int) $bk_post->vote_score; ?></span>
+									<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
 								</div>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( $bk_post->title ); ?></div>
@@ -388,7 +388,7 @@ $crumbs = [
 									</div>
 								</div>
 								<div class="jt-row-stat">
-									<div class="jt-row-stat-n"><?php echo (int) $bk_post->reply_count; ?></div>
+									<div class="jt-row-stat-n"><?php echo esc_html( (int) $bk_post->reply_count ); ?></div>
 									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 								</div>
 								<div class="jt-row-stat">
@@ -418,7 +418,7 @@ $crumbs = [
 							?>
 							<div class="jt-row" onclick="window.location='<?php echo esc_url( $post_url ); ?>'">
 								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo (int) $r_post->vote_score; ?></span>
+									<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
 								</div>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( $r_post->title ); ?></div>
@@ -430,7 +430,7 @@ $crumbs = [
 									</div>
 								</div>
 								<div class="jt-row-stat">
-									<div class="jt-row-stat-n"><?php echo (int) $r_post->reply_count; ?></div>
+									<div class="jt-row-stat-n"><?php echo esc_html( (int) $r_post->reply_count ); ?></div>
 									<div class="jt-row-stat-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></div>
 								</div>
 								<div class="jt-row-stat">

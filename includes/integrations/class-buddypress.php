@@ -583,10 +583,10 @@ class BuddyPress {
 		$trust_level = $profile ? (int) $profile->trust_level : 0;
 
 		echo '<div class="jt-bp-stats">';
-		echo '<div class="jt-bp-stat"><strong>' . $post_count . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . $reply_count . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . $reputation . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
-		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . $trust_level . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html( $post_count ) . '</strong> ' . esc_html__( 'Topics', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html( $reply_count ) . '</strong> ' . esc_html__( 'Replies', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html( $reputation ) . '</strong> ' . esc_html__( 'Reputation', 'jetonomy' ) . '</div>';
+		echo '<div class="jt-bp-stat"><strong>' . esc_html__( 'Level', 'jetonomy' ) . ' ' . esc_html( $trust_level ) . '</strong> ' . esc_html__( 'Trust', 'jetonomy' ) . '</div>';
 		echo '</div>';
 	}
 
