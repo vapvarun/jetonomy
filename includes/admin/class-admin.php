@@ -167,6 +167,12 @@ class Admin {
 			if ( $new_slug !== ( $existing['base_slug'] ?? '' ) ) {
 				// Delete the versioned flush key so Router re-registers rules on next load.
 				delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
+
+				// Store the old slug so Router can 301-redirect old URLs.
+				$old_base = $existing['base_slug'] ?? '';
+				if ( ! empty( $old_base ) ) {
+					update_option( 'jetonomy_old_base_slug', $old_base, false );
+				}
 			}
 			$clean['base_slug']          = $new_slug;
 			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );

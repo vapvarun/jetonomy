@@ -66,6 +66,24 @@ class Leaderboards_Controller extends Base_Controller {
 
 		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
 
+		/**
+		 * Filter user/leaderboard query parameters before execution.
+		 *
+		 * @param array $args Query parameters: order_by, limit, offset.
+		 */
+		$args = apply_filters(
+			'jetonomy_users_query_args',
+			array(
+				'order_by' => 'reputation DESC',
+				'limit'    => $limit,
+				'offset'   => $offset,
+			)
+		);
+
+		$order_by_sql = $args['order_by'];
+		$limit        = (int) $args['limit'];
+		$offset       = (int) $args['offset'];
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}" );
 
@@ -73,7 +91,7 @@ class Leaderboards_Controller extends Base_Controller {
 		$leaders = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$profiles_tbl} ORDER BY reputation DESC LIMIT %d OFFSET %d",
+				"SELECT * FROM {$profiles_tbl} ORDER BY {$order_by_sql} LIMIT %d OFFSET %d",
 				$limit,
 				$offset
 			)

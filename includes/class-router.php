@@ -16,6 +16,7 @@ class Router {
 	public function __construct() {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
+		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
 	}
 
@@ -85,6 +86,33 @@ class Router {
 		$vars[] = 'jetonomy_space_slug';
 		$vars[] = 'jetonomy_tab';
 		return $vars;
+	}
+
+	/**
+	 * 301-redirect requests from the old base slug to the current one.
+	 *
+	 * When an admin changes the base slug (e.g. "community" → "forum"),
+	 * the old URL is stored in the `jetonomy_old_base_slug` option.
+	 * This handler performs a permanent redirect so search engines and
+	 * bookmarks update.
+	 */
+	public function redirect_old_base_slug(): void {
+		$old_slug = get_option( 'jetonomy_old_base_slug', '' );
+		if ( empty( $old_slug ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$request_uri = wp_unslash( $_SERVER['REQUEST_URI'] ?? '' );
+		$path        = wp_parse_url( $request_uri, PHP_URL_PATH ) ?? '';
+
+		// Match /old-slug or /old-slug/anything.
+		if ( strpos( $path, '/' . $old_slug . '/' ) === 0 || $path === '/' . $old_slug ) {
+			$new_slug = $this->get_base_slug();
+			$new_uri  = str_replace( '/' . $old_slug, '/' . $new_slug, $request_uri );
+			wp_safe_redirect( home_url( $new_uri ), 301 );
+			exit;
+		}
 	}
 
 	public function handle_request(): void {

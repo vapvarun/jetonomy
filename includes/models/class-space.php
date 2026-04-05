@@ -253,6 +253,30 @@ class Space extends Model {
 			}
 		}
 
+		/**
+		 * Filter space query parameters before execution.
+		 *
+		 * @param array    $args    Query parameters: where (clauses), values, order_by, per_page, offset.
+		 * @param int      $user_id Current user ID (0 for guests).
+		 */
+		$args = apply_filters(
+			'jetonomy_spaces_query_args',
+			array(
+				'where'    => $where,
+				'values'   => $values,
+				'order_by' => $order_by,
+				'per_page' => $per_page,
+				'offset'   => $offset,
+			),
+			$user_id
+		);
+
+		$where    = $args['where'];
+		$values   = $args['values'];
+		$order_by = $args['order_by'];
+		$per_page = (int) $args['per_page'];
+		$offset   = (int) $args['offset'];
+
 		$where_sql = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
 
 		// Use LEFT JOIN for logged-in non-admins (even when not needed for admins/guests,

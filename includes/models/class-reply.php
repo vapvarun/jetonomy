@@ -62,6 +62,30 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Delete a reply by ID.
+	 *
+	 * Fires `jetonomy_before_delete_reply` before deletion. Return WP_Error
+	 * from the filter to abort.
+	 *
+	 * @param int $id Reply ID.
+	 * @return bool|\WP_Error
+	 */
+	public static function delete( int $id ): bool|\WP_Error {
+		/**
+		 * Filter whether a reply deletion should proceed. Return WP_Error to abort.
+		 *
+		 * @param bool $proceed Whether to proceed with deletion.
+		 * @param int  $id      Reply ID.
+		 */
+		$proceed = apply_filters( 'jetonomy_before_delete_reply', true, $id );
+		if ( is_wp_error( $proceed ) ) {
+			return $proceed;
+		}
+
+		return parent::delete( $id );
+	}
+
+	/**
 	 * List published replies for a post with sorting and cursor-based pagination.
 	 *
 	 * Sort options:
@@ -100,6 +124,28 @@ class Reply extends Model {
 				$order_by = 'created_at ASC, id ASC';
 				break;
 		}
+
+		/**
+		 * Filter reply query parameters before execution.
+		 *
+		 * @param array $args    Query parameters: order_by, limit, offset, after.
+		 * @param int   $post_id Parent post ID being queried.
+		 */
+		$args = apply_filters(
+			'jetonomy_replies_query_args',
+			array(
+				'order_by' => $order_by,
+				'limit'    => $limit,
+				'offset'   => $offset,
+				'after'    => $after,
+			),
+			$post_id
+		);
+
+		$order_by = $args['order_by'];
+		$limit    = (int) $args['limit'];
+		$offset   = (int) $args['offset'];
+		$after    = (int) $args['after'];
 
 		// Cursor: prefer id-based over offset when $after is provided.
 		if ( $after > 0 ) {
