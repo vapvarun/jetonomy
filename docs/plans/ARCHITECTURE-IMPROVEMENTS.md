@@ -131,12 +131,20 @@ Vote insert + score update are not atomic. Crash between them desynchronizes the
 
 ---
 
-## Execution Order
+## Execution Status (completed 2026-04-05)
 
-1. **Hooks** (Priority 1a-1d) — do first, unblocks app platform + LMS
-2. **has_more bug** (Priority 2a) — quick fix, user-facing bug
-3. **Hook signature** (Priority 2b) — quick fix, prevents future listener bugs
-4. **InnoDB + activity pruning** (Priority 3a, 3b) — do before any large deployment
-5. **Base slug redirect** (Priority 3c) — do before any customer changes their slug
-6. **Vote transaction** (Priority 3d) — low frequency but correct to fix
-7. **Template data assembly** (Priority 4a) — do when working on single-post performance
+| Item | Status | Commit |
+|------|--------|--------|
+| 1a. before_ hooks (create + delete) | Done | `283c0c3`, `2b4cc94` |
+| 1b. REST response filters (5 controllers) | Done | `283c0c3` |
+| 1c. Query args filters (4 models) | Done | `2b4cc94` |
+| 1d. Permission role extensibility | Done | `283c0c3` |
+| 2a. has_more pagination fix (all locations) | Done | `e4b93ce`, `69ffee5` |
+| 2b. Hook signature consistency | Done | `e4b93ce` |
+| 3a. InnoDB on all 23 tables | Done | `e4b93ce` |
+| 3b. Activity log daily pruning (loop + configurable) | Done | `e4b93ce`, `69ffee5` |
+| 3c. Base slug 301 redirect | Done | `2b4cc94` |
+| 3d. Vote transaction safety | Done | `e4b93ce`, `69ffee5` |
+| WP_Error caller checks (15 files) | Done | `3e496f8` |
+| 4a. Template data assembly | Deferred — do when working on performance |
+| 4b. Modal refactor | Deferred — low urgency |
