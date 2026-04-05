@@ -28,7 +28,7 @@ class SpaceMember extends Model {
 	 * @param int    $user_id
 	 * @param string $role
 	 */
-	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|true {
+	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|bool {
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
 		 *
