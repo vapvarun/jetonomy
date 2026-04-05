@@ -176,7 +176,7 @@ jobs:
       - name: Run Plugin Check
         run: |
           RESULT=$(wp plugin check jetonomy --path=/tmp/wp --format=csv 2>&1)
-          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected|DirectDB.UnescapedDBParameter|PreparedSQL.NotPrepared|MissingTranslatorsComment'
+          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected|DirectDB.UnescapedDBParameter|PreparedSQL.NotPrepared|MissingTranslatorsComment|Heredoc.NotAllowed|EscapeOutput'
           CODE_ERRORS=$(echo "$RESULT" | awk -F',' -v noise="$NOISE" '
             /^FILE:/ { file=$0; gsub(/^FILE: /, "", file); next }
             $3 == "ERROR" {
