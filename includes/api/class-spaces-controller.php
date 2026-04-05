@@ -206,63 +206,42 @@ class Spaces_Controller extends Base_Controller {
 
 	/**
 	 * GET /spaces — List spaces with optional filters.
+	 *
+	 * Visibility filtering is handled entirely in SQL via Space::list_visible()
+	 * so that pagination totals are accurate and there is no N+1 membership check.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
 		$user_id     = get_current_user_id();
 		$category_id = $request->get_param( 'category_id' ) ? absint( $request->get_param( 'category_id' ) ) : null;
 		$type        = $request->get_param( 'type' ) ? sanitize_text_field( $request->get_param( 'type' ) ) : null;
 		$visibility  = $request->get_param( 'visibility' ) ? sanitize_text_field( $request->get_param( 'visibility' ) ) : null;
+		$pagination  = $this->get_pagination( $request );
 
-		global $wpdb;
-		$table  = $this->spaces_table();
-		$where  = [];
-		$values = [];
+		$result = Space::list_visible(
+			$user_id,
+			$category_id,
+			$type,
+			$visibility,
+			$pagination['limit'],
+			$pagination['offset'],
+			'sort_order ASC, title ASC'
+		);
 
-		if ( $category_id ) {
-			$where[]  = 'category_id = %d';
-			$values[] = $category_id;
-		}
+		$items       = array_map( [ $this, 'prepare_space' ], $result['spaces'] );
+		$total       = $result['total'];
+		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
-		if ( $type ) {
-			$where[]  = 'type = %s';
-			$values[] = $type;
-		}
+		$response = $this->paginated_response(
+			$items,
+			[
+				'total'    => $total,
+				'has_more' => ( $pagination['offset'] + $pagination['limit'] ) < $total,
+			]
+		);
 
-		// Build visibility filter: always show public; show private/hidden only if member.
-		if ( $visibility ) {
-			$where[]  = 'visibility = %s';
-			$values[] = $visibility;
-		}
+		$response->header( 'X-WP-TotalPages', (string) $total_pages );
 
-		$sql = 'SELECT * FROM ' . $table;
-
-		if ( ! empty( $where ) ) {
-			$sql .= ' WHERE ' . implode( ' AND ', $where );
-		}
-
-		$sql .= ' ORDER BY sort_order ASC, title ASC';
-
-		if ( ! empty( $values ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$results = $wpdb->get_results( $wpdb->prepare( $sql, ...$values ) ) ?: [];
-		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$results = $wpdb->get_results( $sql ) ?: [];
-		}
-
-		// Filter out private/hidden spaces the user cannot see.
-		$filtered = [];
-		foreach ( $results as $space ) {
-			if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
-				if ( $user_id && SpaceMember::is_member( (int) $space->id, $user_id ) ) {
-					$filtered[] = $this->prepare_space( $space );
-				}
-			} else {
-				$filtered[] = $this->prepare_space( $space );
-			}
-		}
-
-		return $this->paginated_response( $filtered, [ 'total' => count( $filtered ) ] );
+		return $response;
 	}
 
 	/**

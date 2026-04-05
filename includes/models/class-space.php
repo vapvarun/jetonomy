@@ -190,6 +190,113 @@ class Space extends Model {
 	}
 
 	/**
+	 * List spaces visible to a given user, with pagination.
+	 *
+	 * Visibility rules (all resolved in SQL — no PHP-side filtering):
+	 * - Logged-out users: only public spaces.
+	 * - Logged-in non-admins: public spaces + private/hidden spaces where the user
+	 *   is a member (LEFT JOIN on space_members).
+	 * - WP admins (manage_options): all spaces regardless of visibility.
+	 *
+	 * @param int         $user_id     Current user ID (0 for guests).
+	 * @param int|null    $category_id Optional category filter.
+	 * @param string|null $type        Optional type filter (e.g. 'forum', 'qa').
+	 * @param string|null $visibility  Optional explicit visibility filter.
+	 * @param int         $per_page    Items per page.
+	 * @param int         $offset      SQL OFFSET.
+	 * @param string      $order_by    ORDER BY clause (pre-sanitised).
+	 * @return array{spaces: object[], total: int}
+	 */
+	public static function list_visible(
+		int $user_id,
+		?int $category_id = null,
+		?string $type = null,
+		?string $visibility = null,
+		int $per_page = 20,
+		int $offset = 0,
+		string $order_by = 'sort_order ASC, title ASC'
+	): array {
+		$db            = static::db();
+		$spaces_table  = static::table();
+		$members_table = \Jetonomy\table( 'space_members' );
+		$is_admin      = $user_id && user_can( $user_id, 'manage_options' );
+
+		$where  = [];
+		$values = [];
+
+		// Category filter.
+		if ( $category_id ) {
+			$where[]  = 's.category_id = %d';
+			$values[] = $category_id;
+		}
+
+		// Type filter.
+		if ( $type ) {
+			$where[]  = 's.type = %s';
+			$values[] = $type;
+		}
+
+		// Explicit visibility filter.
+		if ( $visibility ) {
+			$where[]  = 's.visibility = %s';
+			$values[] = $visibility;
+		}
+
+		// Visibility rules — only when no explicit visibility filter is set.
+		if ( ! $visibility && ! $is_admin ) {
+			if ( ! $user_id ) {
+				// Guests see only public spaces.
+				$where[] = "s.visibility = 'public'";
+			} else {
+				// Logged-in non-admin: public OR member of the space.
+				$where[] = "(s.visibility = 'public' OR sm.user_id IS NOT NULL)";
+			}
+		}
+
+		$where_sql = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
+
+		// Use LEFT JOIN for logged-in non-admins (even when not needed for admins/guests,
+		// the JOIN is harmless and keeps the query simple). We use DISTINCT because
+		// the join is 1:1 (unique on space_id + user_id), but DISTINCT guards against
+		// unexpected duplicates.
+		$join_sql = '';
+		if ( $user_id && ! $is_admin ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$join_sql = $db->prepare(
+				"LEFT JOIN {$members_table} sm ON sm.space_id = s.id AND sm.user_id = %d",
+				$user_id
+			);
+		}
+
+		// Count query.
+		$count_sql = "SELECT COUNT(DISTINCT s.id) FROM {$spaces_table} s {$join_sql} {$where_sql}";
+
+		if ( ! empty( $values ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$total = (int) $db->get_var( $db->prepare( $count_sql, ...$values ) );
+		} else {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$total = (int) $db->get_var( $count_sql );
+		}
+
+		// Data query.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$data_sql = "SELECT DISTINCT s.* FROM {$spaces_table} s {$join_sql} {$where_sql} ORDER BY s.{$order_by} LIMIT %d OFFSET %d";
+
+		$all_values   = $values;
+		$all_values[] = $per_page;
+		$all_values[] = $offset;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$spaces = $db->get_results( $db->prepare( $data_sql, ...$all_values ) ) ?: [];
+
+		return [
+			'spaces' => $spaces,
+			'total'  => $total,
+		];
+	}
+
+	/**
 	 * Return the decoded settings array for a space.
 	 *
 	 * @param int $id Space ID.
