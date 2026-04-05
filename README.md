@@ -159,6 +159,15 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 
 ## Changelog
 
+### 1.3.0 (April 2026)
+- New: AI adapter layer — pluggable interface for AI providers (Ollama self-hosted included free)
+- New: Basic AI spam detection using Ollama (local, free, no API key needed)
+- New: Adapter Registry extended with AI provider slot
+- New: WPCS ruleset (.phpcs.xml.dist) for consistent code quality checks
+- Fix: 9 Basecamp bugs — fatal BP compat, notification defaults, report UI, pagination
+- Fix: Security hardening — SQL prepare, N+1 query fixes, output escaping audit
+- Fix: Asgaros and wpForo importer improvements
+
 ### 1.2.0 (April 2026)
 - New: Private Topics -- mark topics visible only to author and moderators
 - New: Topic Prefixes -- colored labels (Bug, Suggestion, Solved) configurable per space
