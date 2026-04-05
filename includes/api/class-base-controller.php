@@ -126,7 +126,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 *
 	 * @return bool|\WP_Error
 	 */
-	protected function login_permission_check(): bool|\WP_Error {
+	public function login_permission_check(): bool|\WP_Error {
 		if ( is_user_logged_in() ) {
 			return true;
 		}
