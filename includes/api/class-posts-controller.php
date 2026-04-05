@@ -52,8 +52,7 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => [ $this, 'login_permission_check' ],
 					'args'                => $this->get_create_args(),
 				),
 			)
@@ -83,15 +82,13 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => [ $this, 'login_permission_check' ],
 					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => [ $this, 'login_permission_check' ],
 				),
 			)
 		);
@@ -103,8 +100,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'close_post' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 			)
 		);
 
@@ -114,8 +110,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'pin_post' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 			)
 		);
 
@@ -125,8 +120,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'move_post' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 				'args'                => array(
 					'target_space_id' => array(
 						'type'     => 'integer',
@@ -143,8 +137,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'merge_post' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 				'args'                => array(
 					'target_post_id' => array(
 						'type'     => 'integer',
@@ -162,8 +155,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'link_preview' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 				'args'                => array(
 					'url' => array(
 						'type'              => 'string',

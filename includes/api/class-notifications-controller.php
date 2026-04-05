@@ -57,8 +57,7 @@ class Notifications_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'mark_all_read' ],
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 			]
 		);
 
@@ -69,8 +68,7 @@ class Notifications_Controller extends Base_Controller {
 			[
 				'methods'             => 'PATCH',
 				'callback'            => [ $this, 'mark_read' ],
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 			]
 		);
 	}

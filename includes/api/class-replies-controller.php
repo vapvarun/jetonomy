@@ -61,8 +61,7 @@ class Replies_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => [ $this, 'login_permission_check' ],
 					'args'                => $this->get_create_args(),
 				),
 			)
@@ -76,15 +75,13 @@ class Replies_Controller extends Base_Controller {
 				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => [ $this, 'login_permission_check' ],
 					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => [ $this, 'login_permission_check' ],
 				),
 			)
 		);
@@ -96,8 +93,7 @@ class Replies_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'accept_reply' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 			)
 		);
 
@@ -107,8 +103,7 @@ class Replies_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'split_reply' ),
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => [ $this, 'login_permission_check' ],
 				'args'                => array(
 					'title'    => array(
 						'type'     => 'string',
@@ -297,9 +292,6 @@ class Replies_Controller extends Base_Controller {
 				array( 'status' => 500 )
 			);
 		}
-
-		// Update user profile reply count.
-		UserProfile::increment_reply_count( $user_id );
 
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );

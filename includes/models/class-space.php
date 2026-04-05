@@ -196,13 +196,7 @@ class Space extends Model {
 	 * @return array Settings key/value pairs, or empty array if none.
 	 */
 	public static function get_settings( int $id ): array {
-		$row = static::db()->get_row(
-			static::db()->prepare(
-				'SELECT settings FROM ' . static::table() . ' WHERE id = %d',
-				$id
-			)
-		);
-
+		$row = static::find( $id );
 		if ( ! $row || empty( $row->settings ) ) {
 			return [];
 		}
