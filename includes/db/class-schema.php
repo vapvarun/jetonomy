@@ -109,7 +109,7 @@ class Schema {
   PRIMARY KEY  (id),
   UNIQUE KEY slug (slug),
   KEY parent_sort (parent_id,sort_order)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 2. jt_spaces
 		$sqls[] = "CREATE TABLE {$p}jt_spaces (
@@ -137,7 +137,7 @@ class Schema {
   UNIQUE KEY slug (slug),
   KEY category_sort (category_id,sort_order),
   KEY parent_sort (parent_id,sort_order)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 3. jt_posts
 		$sqls[] = "CREATE TABLE {$p}jt_posts (
@@ -206,7 +206,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   UNIQUE KEY user_object (user_id,object_type,object_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 6. jt_user_profiles
 		$sqls[] = "CREATE TABLE {$p}jt_user_profiles (
@@ -226,7 +226,7 @@ class Schema {
   updated_at datetime DEFAULT NULL,
   PRIMARY KEY  (user_id),
   KEY trust_reputation (trust_level,reputation)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 7. jt_notifications
 		$sqls[] = "CREATE TABLE {$p}jt_notifications (
@@ -241,7 +241,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY user_read_created (user_id,is_read,created_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 8. jt_subscriptions
 		$sqls[] = "CREATE TABLE {$p}jt_subscriptions (
@@ -253,7 +253,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   UNIQUE KEY user_object (user_id,object_type,object_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 9. jt_read_status
 		$sqls[] = "CREATE TABLE {$p}jt_read_status (
@@ -262,7 +262,7 @@ class Schema {
   last_read_reply_id bigint(20) unsigned NOT NULL DEFAULT 0,
   updated_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (user_id,post_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 10. jt_space_members
 		$sqls[] = "CREATE TABLE {$p}jt_space_members (
@@ -272,7 +272,7 @@ class Schema {
   joined_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (space_id,user_id),
   KEY user_joined (user_id,joined_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 11. jt_tags
 		$sqls[] = "CREATE TABLE {$p}jt_tags (
@@ -282,7 +282,7 @@ class Schema {
   post_count int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY  (id),
   UNIQUE KEY slug (slug)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 12. jt_post_tags
 		$sqls[] = "CREATE TABLE {$p}jt_post_tags (
@@ -290,7 +290,7 @@ class Schema {
   tag_id bigint(20) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY  (post_id,tag_id),
   KEY tag_post (tag_id,post_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 13. jt_space_tags
 		$sqls[] = "CREATE TABLE {$p}jt_space_tags (
@@ -300,14 +300,14 @@ class Schema {
   space_count int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY  (id),
   UNIQUE KEY slug (slug)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 14. jt_space_tag_map
 		$sqls[] = "CREATE TABLE {$p}jt_space_tag_map (
   space_id bigint(20) unsigned NOT NULL DEFAULT 0,
   tag_id bigint(20) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY  (space_id,tag_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 15. jt_user_interests
 		$sqls[] = "CREATE TABLE {$p}jt_user_interests (
@@ -315,7 +315,7 @@ class Schema {
   tag_id bigint(20) unsigned NOT NULL DEFAULT 0,
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (user_id,tag_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 16. jt_activity_log
 		$sqls[] = "CREATE TABLE {$p}jt_activity_log (
@@ -329,7 +329,7 @@ class Schema {
   PRIMARY KEY  (id),
   KEY user_created (user_id,created_at),
   KEY created (created_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 17. jt_restrictions
 		$sqls[] = "CREATE TABLE {$p}jt_restrictions (
@@ -344,7 +344,7 @@ class Schema {
   PRIMARY KEY  (id),
   KEY user_type_space (user_id,type,space_id),
   KEY expires (expires_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 18. jt_access_rules
 		$sqls[] = "CREATE TABLE {$p}jt_access_rules (
@@ -358,7 +358,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY space_priority (space_id,priority)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 19. jt_flags
 		$sqls[] = "CREATE TABLE {$p}jt_flags (
@@ -376,7 +376,7 @@ class Schema {
   KEY status_created (status,created_at),
   KEY object (object_type,object_id),
   KEY reporter (reporter_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 20. jt_revisions
 		$sqls[] = "CREATE TABLE {$p}jt_revisions (
@@ -390,7 +390,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
   KEY object_created (object_type,object_id,created_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 21. jt_join_requests
 		$sqls[] = "CREATE TABLE {$p}jt_join_requests (
@@ -405,7 +405,7 @@ class Schema {
   PRIMARY KEY  (id),
   UNIQUE KEY space_user_status (space_id,user_id,status),
   KEY space_status_created (space_id,status,created_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 22. jt_invite_links
 		$sqls[] = "CREATE TABLE {$p}jt_invite_links (
@@ -420,7 +420,7 @@ class Schema {
   PRIMARY KEY  (id),
   UNIQUE KEY token (token),
   KEY idx_space (space_id)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		// 23. jt_bookmarks
 		$sqls[] = "CREATE TABLE {$p}jt_bookmarks (
@@ -429,7 +429,7 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (user_id, post_id),
   KEY user_created (user_id, created_at)
-) $charset_collate;";
+) ENGINE=InnoDB $charset_collate;";
 
 		return $sqls;
 	}

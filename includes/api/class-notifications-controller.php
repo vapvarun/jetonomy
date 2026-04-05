@@ -171,7 +171,7 @@ class Notifications_Controller extends Base_Controller {
 		$object_type = $notification->object_type ?? '';
 		$object_id   = $notification->object_id ? (int) $notification->object_id : 0;
 
-		return [
+		$data = [
 			'id'           => (int) $notification->id,
 			'user_id'      => (int) $notification->user_id,
 			'type'         => $notification->type ?? '',
@@ -189,6 +189,17 @@ class Notifications_Controller extends Base_Controller {
 			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
 			'object_url'   => $this->resolve_notification_url( $notification, $object_type, $object_id ),
 		];
+
+		/**
+		 * Filter the REST response data for a single notification.
+		 *
+		 * @param array  $data         Prepared response data.
+		 * @param object $notification Raw notification row object.
+		 * @param null   $request      WP_REST_Request (null in non-request contexts).
+		 */
+		$data = apply_filters( 'jetonomy_rest_prepare_notification', $data, $notification, null );
+
+		return $data;
 	}
 
 	/**

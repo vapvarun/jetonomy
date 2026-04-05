@@ -153,8 +153,8 @@ class Replies_Controller extends Base_Controller {
 		return $this->paginated_response(
 			$items,
 			array(
-				'total'    => Reply::count_by_post( $post_id ),
-				'has_more' => count( $items ) === (int) $pagination['limit'],
+				'total'  => Reply::count_by_post( $post_id ),
+				'offset' => (int) $pagination['offset'],
 			)
 		);
 	}
@@ -572,7 +572,7 @@ class Replies_Controller extends Base_Controller {
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		}
 
-		return array(
+		$data = array(
 			'id'            => (int) $reply->id,
 			'post_id'       => (int) $reply->post_id,
 			'parent_id'     => $reply->parent_id ? (int) $reply->parent_id : null,
@@ -594,6 +594,17 @@ class Replies_Controller extends Base_Controller {
 			'time_ago'      => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'   => $profile_url,
 		);
+
+		/**
+		 * Filter the REST response data for a single reply.
+		 *
+		 * @param array  $data    Prepared response data.
+		 * @param object $reply   Raw reply row object.
+		 * @param null   $request WP_REST_Request (null in non-request contexts).
+		 */
+		$data = apply_filters( 'jetonomy_rest_prepare_reply', $data, $reply, null );
+
+		return $data;
 	}
 
 	/**

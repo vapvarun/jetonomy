@@ -1200,7 +1200,7 @@ class Abilities {
 
 		UserProfile::increment_post_count( $user_id );
 		Subscription::subscribe( $user_id, 'post', $post_id );
-		do_action( 'jetonomy_after_create_post', $post_id, $space_id );
+		do_action( 'jetonomy_after_create_post', $post_id, $space_id, null );
 
 		$settings  = get_option( 'jetonomy_settings', [] );
 		$base_slug = $settings['base_slug'] ?? 'community';

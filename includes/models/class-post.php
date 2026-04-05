@@ -35,7 +35,19 @@ class Post extends Model {
 	 * @param array $data Column data.
 	 * @return int Inserted row ID.
 	 */
-	public static function create( array $data ): int {
+	public static function create( array $data ): int|\WP_Error {
+		/**
+		 * Filter post data before creation. Return WP_Error to abort.
+		 *
+		 * @param array $data      Column data.
+		 * @param int   $author_id Author user ID.
+		 * @param int   $space_id  Space ID.
+		 */
+		$data = apply_filters( 'jetonomy_before_create_post', $data, $data['author_id'] ?? 0, $data['space_id'] ?? 0 );
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
 		$now  = now();
 		$data = array_merge(
 			array(

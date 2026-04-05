@@ -100,8 +100,8 @@ class Subscriptions_Controller extends Base_Controller {
 		return $this->paginated_response(
 			$items,
 			[
-				'total'    => $total,
-				'has_more' => count( $items ) === $limit,
+				'total'  => $total,
+				'offset' => $offset,
 			]
 		);
 	}

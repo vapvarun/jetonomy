@@ -144,6 +144,15 @@ class Users_Controller extends Base_Controller {
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];
 
+		/**
+		 * Filter the REST response data for a single user.
+		 *
+		 * @param array    $data    Prepared response data.
+		 * @param \WP_User $wp_user WordPress user object.
+		 * @param mixed    $request WP_REST_Request or null.
+		 */
+		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request ?? null );
+
 		return new WP_REST_Response( $data, 200 );
 	}
 
@@ -175,6 +184,9 @@ class Users_Controller extends Base_Controller {
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];
+
+		/** This filter is documented in includes/api/class-users-controller.php */
+		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request ?? null );
 
 		return new WP_REST_Response( $data, 200 );
 	}
@@ -310,8 +322,8 @@ class Users_Controller extends Base_Controller {
 		return $this->paginated_response(
 			$items,
 			[
-				'total'    => $total,
-				'has_more' => count( $items ) === $limit,
+				'total'  => $total,
+				'offset' => $offset,
 			]
 		);
 	}

@@ -233,7 +233,16 @@ class Permission_Engine {
 			}
 		}
 
-		return in_array( $action, self::SPACE_ROLE_PERMS[ $role ] ?? array(), true );
+		/**
+		 * Filter the permissions granted to a space role.
+		 *
+		 * @param array  $permissions Default permissions for the role.
+		 * @param string $role        Space role (viewer, member, moderator, admin).
+		 * @param int    $space_id    Space ID.
+		 */
+		$role_perms = apply_filters( 'jetonomy_space_role_permissions', self::SPACE_ROLE_PERMS[ $role ] ?? array(), $role, $space_id );
+
+		return in_array( $action, $role_perms, true );
 	}
 
 	/**

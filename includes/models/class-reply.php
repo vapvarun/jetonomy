@@ -26,7 +26,19 @@ class Reply extends Model {
 	 * @param array $data Column data.
 	 * @return int Inserted row ID.
 	 */
-	public static function create( array $data ): int {
+	public static function create( array $data ): int|\WP_Error {
+		/**
+		 * Filter reply data before creation. Return WP_Error to abort.
+		 *
+		 * @param array $data      Column data.
+		 * @param int   $author_id Author user ID.
+		 * @param int   $post_id   Parent post ID.
+		 */
+		$data = apply_filters( 'jetonomy_before_create_reply', $data, $data['author_id'] ?? 0, $data['post_id'] ?? 0 );
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
 		$data = array_merge(
 			array(
 				'status'     => 'publish',

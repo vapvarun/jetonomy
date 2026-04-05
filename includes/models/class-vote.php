@@ -32,7 +32,21 @@ class Vote extends Model {
 	 * @param int    $value       Vote value (e.g. 1 or -1).
 	 * @return array{action: string, old_value: int|null}
 	 */
-	public static function cast( int $user_id, string $object_type, int $object_id, int $value ): array {
+	public static function cast( int $user_id, string $object_type, int $object_id, int $value ): array|\WP_Error {
+		/**
+		 * Filter whether a vote should proceed. Return WP_Error to abort.
+		 *
+		 * @param bool   $proceed     Whether to proceed (default true).
+		 * @param int    $user_id     Voting user.
+		 * @param string $object_type 'post' or 'reply'.
+		 * @param int    $object_id   Target object ID.
+		 * @param int    $value       Vote value (e.g. 1 or -1).
+		 */
+		$proceed = apply_filters( 'jetonomy_before_vote', true, $user_id, $object_type, $object_id, $value );
+		if ( is_wp_error( $proceed ) ) {
+			return $proceed;
+		}
+
 		$existing = static::db()->get_row(
 			static::db()->prepare(
 				'SELECT * FROM ' . static::table() . ' WHERE user_id = %d AND object_type = %s AND object_id = %d',
@@ -42,46 +56,68 @@ class Vote extends Model {
 			)
 		);
 
-		if ( ! $existing ) {
-			static::insert(
-				[
-					'user_id'     => $user_id,
-					'object_type' => $object_type,
-					'object_id'   => $object_id,
-					'value'       => $value,
-					'created_at'  => now(),
-				]
+		static::db()->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+		try {
+			if ( ! $existing ) {
+				$result = static::insert(
+					[
+						'user_id'     => $user_id,
+						'object_type' => $object_type,
+						'object_id'   => $object_id,
+						'value'       => $value,
+						'created_at'  => now(),
+					]
+				);
+				if ( false === $result ) {
+					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), [ 'status' => 500 ] );
+				}
+				static::update_target_score( $object_type, $object_id, $value );
+				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+				return [
+					'action'    => 'created',
+					'old_value' => null,
+				];
+			}
+
+			$old_value = (int) $existing->value;
+
+			if ( $old_value === $value ) {
+				$result = static::delete( (int) $existing->id );
+				if ( false === $result ) {
+					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to remove vote.', 'jetonomy' ), [ 'status' => 500 ] );
+				}
+				static::update_target_score( $object_type, $object_id, -$value );
+				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+				return [
+					'action'    => 'removed',
+					'old_value' => $old_value,
+				];
+			}
+
+			$result = static::update(
+				(int) $existing->id,
+				[ 'value' => $value ]
 			);
-			static::update_target_score( $object_type, $object_id, $value );
+			if ( false === $result ) {
+				static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update vote.', 'jetonomy' ), [ 'status' => 500 ] );
+			}
+			static::update_target_score( $object_type, $object_id, -$old_value + $value );
+			static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 
 			return [
-				'action'    => 'created',
-				'old_value' => null,
-			];
-		}
-
-		$old_value = (int) $existing->value;
-
-		if ( $old_value === $value ) {
-			static::delete( (int) $existing->id );
-			static::update_target_score( $object_type, $object_id, -$value );
-
-			return [
-				'action'    => 'removed',
+				'action'    => 'updated',
 				'old_value' => $old_value,
 			];
+		} catch ( \Throwable $e ) {
+			static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			return new \WP_Error( 'jetonomy_vote_failed', $e->getMessage(), [ 'status' => 500 ] );
 		}
-
-		static::update(
-			(int) $existing->id,
-			[ 'value' => $value ]
-		);
-		static::update_target_score( $object_type, $object_id, -$old_value + $value );
-
-		return [
-			'action'    => 'updated',
-			'old_value' => $old_value,
-		];
 	}
 
 	/**

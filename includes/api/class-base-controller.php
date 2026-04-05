@@ -78,7 +78,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 				'meta' => array_merge(
 					[
 						'count'       => count( $items ),
-						'has_more'    => false,
+						'has_more'    => isset( $meta['total'] ) ? ( ( $meta['offset'] ?? 0 ) + count( $items ) ) < (int) $meta['total'] : false,
 						'cursor_next' => $cursor_next,
 					],
 					$meta

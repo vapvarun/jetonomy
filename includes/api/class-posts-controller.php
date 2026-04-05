@@ -304,8 +304,8 @@ class Posts_Controller extends Base_Controller {
 		return $this->paginated_response(
 			$items,
 			array(
-				'total'    => (int) ( $space->post_count ?? 0 ),
-				'has_more' => count( $items ) === $effective_limit,
+				'total'  => (int) ( $space->post_count ?? 0 ),
+				'offset' => (int) $pagination['offset'],
 			)
 		);
 	}
@@ -418,8 +418,8 @@ class Posts_Controller extends Base_Controller {
 		// Validate prefix against space settings.
 		$prefix = sanitize_text_field( (string) $request->get_param( 'prefix' ) );
 		if ( ! empty( $prefix ) ) {
-			$space_settings    = Space::get_settings( $space_id );
-			$allowed_prefixes  = ! empty( $space_settings['prefixes'] ) ? array_column( $space_settings['prefixes'], 'name' ) : array();
+			$space_settings   = Space::get_settings( $space_id );
+			$allowed_prefixes = ! empty( $space_settings['prefixes'] ) ? array_column( $space_settings['prefixes'], 'name' ) : array();
 			if ( ! in_array( $prefix, $allowed_prefixes, true ) ) {
 				$prefix = '';
 			}
@@ -879,7 +879,7 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		return array(
+		$data = array(
 			'id'                => (int) $post->id,
 			'space_id'          => (int) $post->space_id,
 			'author_id'         => $author_id,
@@ -917,6 +917,17 @@ class Posts_Controller extends Base_Controller {
 			'space_title'       => $space ? $space->title : '',
 			'space_slug'        => $space ? $space->slug : '',
 		);
+
+		/**
+		 * Filter the REST response data for a single post.
+		 *
+		 * @param array  $data    Prepared response data.
+		 * @param object $post    Raw post row object.
+		 * @param null   $request WP_REST_Request (null in non-request contexts).
+		 */
+		$data = apply_filters( 'jetonomy_rest_prepare_post', $data, $post, null );
+
+		return $data;
 	}
 
 	/**

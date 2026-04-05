@@ -28,7 +28,20 @@ class SpaceMember extends Model {
 	 * @param int    $user_id
 	 * @param string $role
 	 */
-	public static function add( int $space_id, int $user_id, string $role = 'member' ): void {
+	public static function add( int $space_id, int $user_id, string $role = 'member' ): void|\WP_Error {
+		/**
+		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
+		 *
+		 * @param bool   $proceed  Whether to proceed (default true).
+		 * @param int    $user_id  User ID.
+		 * @param int    $space_id Space ID.
+		 * @param string $role     Role being assigned.
+		 */
+		$proceed = apply_filters( 'jetonomy_before_join_space', true, $user_id, $space_id, $role );
+		if ( is_wp_error( $proceed ) ) {
+			return $proceed;
+		}
+
 		$exists = self::is_member( $space_id, $user_id );
 
 		static::db()->query(

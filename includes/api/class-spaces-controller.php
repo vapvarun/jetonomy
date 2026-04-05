@@ -234,8 +234,8 @@ class Spaces_Controller extends Base_Controller {
 		$response = $this->paginated_response(
 			$items,
 			[
-				'total'    => $total,
-				'has_more' => ( $pagination['offset'] + $pagination['limit'] ) < $total,
+				'total'  => $total,
+				'offset' => $pagination['offset'],
 			]
 		);
 
@@ -739,7 +739,7 @@ class Spaces_Controller extends Base_Controller {
 	 * Format a space object for API output.
 	 */
 	private function prepare_space( object $space ): array {
-		return [
+		$data = [
 			'id'               => (int) $space->id,
 			'category_id'      => $space->category_id ? (int) $space->category_id : null,
 			'title'            => $space->title,
@@ -759,6 +759,17 @@ class Spaces_Controller extends Base_Controller {
 			'updated_at'       => $space->updated_at ?? null,
 			'last_activity_at' => $space->last_activity_at ?? null,
 		];
+
+		/**
+		 * Filter the REST response data for a single space.
+		 *
+		 * @param array  $data    Prepared response data.
+		 * @param object $space   Raw space row object.
+		 * @param null   $request WP_REST_Request (null in non-request contexts).
+		 */
+		$data = apply_filters( 'jetonomy_rest_prepare_space', $data, $space, null );
+
+		return $data;
 	}
 
 	/**

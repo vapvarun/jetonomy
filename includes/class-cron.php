@@ -159,14 +159,25 @@ class Cron {
 	}
 
 	/**
-	 * Prune old activity log entries (runs weekly, keeps 90 days).
+	 * Prune old activity log entries (runs weekly).
+	 *
+	 * Retention period is configurable via jetonomy_settings['activity_log_retention_days'].
+	 * Defaults to 90 days. Set to 0 to keep forever.
+	 * Deletes in batches of 5 000 to avoid lock contention.
 	 */
 	public function prune_activity_log(): void {
 		global $wpdb;
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 90 * DAY_IN_SECONDS ) );
-		$wpdb->query(
+		$table    = table( 'activity_log' );
+		$settings = get_option( 'jetonomy_settings', [] );
+		$days     = (int) ( $settings['activity_log_retention_days'] ?? 90 );
+		if ( $days <= 0 ) {
+			return; // 0 = keep forever.
+		}
+		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+		// Delete in batches to avoid lock contention.
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$wpdb->prepare(
-				'DELETE FROM ' . table( 'activity_log' ) . ' WHERE created_at < %s',
+				"DELETE FROM {$table} WHERE created_at < %s LIMIT 5000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$cutoff
 			)
 		);
