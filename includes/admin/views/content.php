@@ -275,7 +275,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 							<?php endif; ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Views', 'jetonomy' ); ?>">
-							<?php echo esc_html( absint( $p->view_count ?? 0 ) ); ?>
+							<?php echo absint( $p->view_count ?? 0 ); ?>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Date', 'jetonomy' ); ?>">
 							<span title="<?php echo esc_attr( $p->created_at ?? '' ); ?>">

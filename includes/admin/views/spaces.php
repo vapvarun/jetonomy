@@ -212,8 +212,8 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 								<span class="jetonomy-type-badge jetonomy-type-badge--<?php echo esc_attr( $space->type ); ?>"><?php echo esc_html( $type_labels[ $space->type ] ?? ucfirst( $space->type ) ); ?></span>
 							</td>
 							<td class="column-category"><?php echo esc_html( $cat_name ?: '&mdash;' ); ?></td>
-							<td class="column-members"><?php echo esc_html( absint( $space->member_count ) ); ?></td>
-							<td class="column-posts"><?php echo esc_html( absint( $space->post_count ) ); ?></td>
+							<td class="column-members"><?php echo absint( $space->member_count ); ?></td>
+							<td class="column-posts"><?php echo absint( $space->post_count ); ?></td>
 							<td class="column-status">
 								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $space->status ); ?>"><?php echo esc_html( ucfirst( $space->status ) ); ?></span>
 							</td>

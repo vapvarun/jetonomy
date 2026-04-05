@@ -81,8 +81,8 @@ $trust_labels = [
 							</span>
 						</td>
 						<td><?php echo esc_html( number_format_i18n( $u->reputation ) ); ?></td>
-						<td><?php echo esc_html( absint( $u->post_count ) ); ?></td>
-						<td><?php echo esc_html( absint( $u->reply_count ) ); ?></td>
+						<td><?php echo absint( $u->post_count ); ?></td>
+						<td><?php echo absint( $u->reply_count ); ?></td>
 						<td>
 							<?php echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '&mdash;' ); ?>
 						</td>
