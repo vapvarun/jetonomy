@@ -832,13 +832,6 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Return the fully-qualified spaces table name.
-	 */
-	private function spaces_table(): string {
-		return \Jetonomy\table( 'spaces' );
-	}
-
-	/**
 	 * Query args for list_items.
 	 */
 	private function get_list_args(): array {

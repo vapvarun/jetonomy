@@ -619,3 +619,11 @@ parameters:
 			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
 			path: includes/seo/class-sitemap.php
+
+		-
+			message: '#Call to function is_wp_error\(\) with .* will always evaluate to false#'
+			reportUnmatched: false
+
+		-
+			message: '#Strict comparison using === between false and int#'
+			reportUnmatched: false

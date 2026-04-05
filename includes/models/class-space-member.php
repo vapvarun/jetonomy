@@ -28,7 +28,7 @@ class SpaceMember extends Model {
 	 * @param int    $user_id
 	 * @param string $role
 	 */
-	public static function add( int $space_id, int $user_id, string $role = 'member' ): void|\WP_Error {
+	public static function add( int $space_id, int $user_id, string $role = 'member' ): \WP_Error|true {
 		/**
 		 * Filter whether a user should be allowed to join a space. Return WP_Error to abort.
 		 *
@@ -58,6 +58,8 @@ class SpaceMember extends Model {
 			Space::increment_member_count( $space_id );
 			do_action( 'jetonomy_user_joined_space', $space_id, $user_id, $role );
 		}
+
+		return true;
 	}
 
 	/**

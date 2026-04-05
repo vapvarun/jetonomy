@@ -151,7 +151,7 @@ class Users_Controller extends Base_Controller {
 		 * @param \WP_User $wp_user WordPress user object.
 		 * @param mixed    $request WP_REST_Request or null.
 		 */
-		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request ?? null );
+		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request );
 
 		return new WP_REST_Response( $data, 200 );
 	}
@@ -186,7 +186,7 @@ class Users_Controller extends Base_Controller {
 		];
 
 		/** This filter is documented in includes/api/class-users-controller.php */
-		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request ?? null );
+		$data = apply_filters( 'jetonomy_rest_prepare_user', $data, $wp_user, $request );
 
 		return new WP_REST_Response( $data, 200 );
 	}

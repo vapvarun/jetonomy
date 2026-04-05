@@ -43,7 +43,7 @@ abstract class Model {
 		return false !== static::db()->update( static::table(), $data, [ 'id' => $id ] );
 	}
 
-	public static function delete( int $id ): bool {
+	public static function delete( int $id ): bool|\WP_Error {
 		return false !== static::db()->delete( static::table(), [ 'id' => $id ] );
 	}
 
