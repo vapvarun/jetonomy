@@ -67,6 +67,9 @@ class Leaderboards_Controller extends Base_Controller {
 		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}" );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$leaders = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -108,8 +111,9 @@ class Leaderboards_Controller extends Base_Controller {
 		return $this->paginated_response(
 			$items,
 			[
-				'has_more' => count( $leaders ) === $limit,
-				'period'   => $period,
+				'total'  => $total,
+				'offset' => $offset,
+				'period' => $period,
 			]
 		);
 	}

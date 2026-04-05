@@ -1184,6 +1184,10 @@ class Abilities {
 			]
 		);
 
+		if ( is_wp_error( $post_id ) ) {
+			return $post_id;
+		}
+
 		if ( ! $post_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create post.', 'jetonomy' ) );
 		}
@@ -1251,6 +1255,7 @@ class Abilities {
 				'created_at'  => $p->created_at ?? '',
 			];
 		}
+		// TODO: compute accurate total via COUNT query for cursor-based pagination.
 		return [
 			'posts'    => $items,
 			'has_more' => count( $items ) === $limit,
@@ -1274,6 +1279,9 @@ class Abilities {
 		}
 
 		$reply_id = Reply::create( $data );
+		if ( is_wp_error( $reply_id ) ) {
+			return $reply_id;
+		}
 		if ( ! $reply_id ) {
 			return new WP_Error( 'create_failed', __( 'Failed to create reply.', 'jetonomy' ) );
 		}
@@ -1306,6 +1314,7 @@ class Abilities {
 				'created_at'  => $r->created_at ?? '',
 			];
 		}
+		// TODO: compute accurate total via COUNT query for cursor-based pagination.
 		return [
 			'replies'  => $items,
 			'has_more' => count( $items ) === $limit,
@@ -1319,6 +1328,9 @@ class Abilities {
 		$value       = (int) $input['value'];
 
 		$result = Vote::cast( $user_id, $object_type, $object_id, $value );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		// Get updated score.
 		$score = 0;

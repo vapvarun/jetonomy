@@ -86,13 +86,15 @@ class Notifications_Controller extends Base_Controller {
 		$limit         = (int) $pagination['limit'];
 		$offset        = (int) $pagination['offset'];
 		$notifications = Notification::list_for_user( $user_id, $limit, $offset );
+		$total         = Notification::count( [ 'user_id' => $user_id ] );
 
 		$items = array_map( [ $this, 'prepare_notification' ], $notifications );
 
 		return $this->paginated_response(
 			$items,
 			[
-				'has_more' => count( $items ) === $limit,
+				'total'  => $total,
+				'offset' => $offset,
 			]
 		);
 	}

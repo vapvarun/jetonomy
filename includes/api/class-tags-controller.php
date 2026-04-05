@@ -81,9 +81,10 @@ class Tags_Controller extends Base_Controller {
 		$limit = absint( $request->get_param( 'limit' ) ?? 30 );
 		$sort  = $request->get_param( 'sort' ) ?? 'popular';
 
+		global $wpdb;
+		$tags_table = table( 'tags' );
+
 		if ( 'alphabetical' === $sort ) {
-			global $wpdb;
-			$tags_table = table( 'tags' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$tags = $wpdb->get_results(
 				$wpdb->prepare(
@@ -95,11 +96,14 @@ class Tags_Controller extends Base_Controller {
 			$tags = Tag::list_popular( $limit );
 		}
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$tags_table}" );
+
 		return $this->paginated_response(
 			$tags,
 			[
-				'total'    => count( $tags ),
-				'has_more' => count( $tags ) === $limit,
+				'total'  => $total,
+				'offset' => 0,
 			]
 		);
 	}
@@ -128,11 +132,14 @@ class Tags_Controller extends Base_Controller {
 			)
 		) ?: [];
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$space_tags_table}" );
+
 		return $this->paginated_response(
 			$tags,
 			[
-				'total'    => count( $tags ),
-				'has_more' => count( $tags ) === $limit,
+				'total'  => $total,
+				'offset' => 0,
 			]
 		);
 	}

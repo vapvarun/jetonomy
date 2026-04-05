@@ -56,7 +56,11 @@ class Vote extends Model {
 			)
 		);
 
-		static::db()->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$started = static::db()->query( 'START TRANSACTION' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		if ( false === $started ) {
+			// Proceed without transaction — graceful degradation.
+			$started = null;
+		}
 
 		try {
 			if ( ! $existing ) {
@@ -70,11 +74,21 @@ class Vote extends Model {
 					]
 				);
 				if ( false === $result ) {
-					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					if ( null !== $started ) {
+						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					}
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to record vote.', 'jetonomy' ), [ 'status' => 500 ] );
 				}
 				static::update_target_score( $object_type, $object_id, $value );
-				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				if ( static::db()->last_error ) {
+					if ( null !== $started ) {
+						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					}
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), [ 'status' => 500 ] );
+				}
+				if ( null !== $started ) {
+					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				}
 
 				return [
 					'action'    => 'created',
@@ -87,11 +101,21 @@ class Vote extends Model {
 			if ( $old_value === $value ) {
 				$result = static::delete( (int) $existing->id );
 				if ( false === $result ) {
-					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					if ( null !== $started ) {
+						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					}
 					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to remove vote.', 'jetonomy' ), [ 'status' => 500 ] );
 				}
 				static::update_target_score( $object_type, $object_id, -$value );
-				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				if ( static::db()->last_error ) {
+					if ( null !== $started ) {
+						static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+					}
+					return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), [ 'status' => 500 ] );
+				}
+				if ( null !== $started ) {
+					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				}
 
 				return [
 					'action'    => 'removed',
@@ -104,18 +128,30 @@ class Vote extends Model {
 				[ 'value' => $value ]
 			);
 			if ( false === $result ) {
-				static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				if ( null !== $started ) {
+					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				}
 				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update vote.', 'jetonomy' ), [ 'status' => 500 ] );
 			}
 			static::update_target_score( $object_type, $object_id, -$old_value + $value );
-			static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			if ( static::db()->last_error ) {
+				if ( null !== $started ) {
+					static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				}
+				return new \WP_Error( 'jetonomy_vote_failed', __( 'Failed to update score.', 'jetonomy' ), [ 'status' => 500 ] );
+			}
+			if ( null !== $started ) {
+				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			}
 
 			return [
 				'action'    => 'updated',
 				'old_value' => $old_value,
 			];
 		} catch ( \Throwable $e ) {
-			static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			if ( null !== $started ) {
+				static::db()->query( 'ROLLBACK' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			}
 			return new \WP_Error( 'jetonomy_vote_failed', $e->getMessage(), [ 'status' => 500 ] );
 		}
 	}

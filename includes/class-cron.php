@@ -52,7 +52,7 @@ class Cron {
 			wp_schedule_event( time(), 'hourly', 'jetonomy_cleanup_expired' );
 		}
 		if ( ! wp_next_scheduled( 'jetonomy_prune_activity' ) ) {
-			wp_schedule_event( time(), 'weekly', 'jetonomy_prune_activity' );
+			wp_schedule_event( time(), 'daily', 'jetonomy_prune_activity' );
 		}
 		if ( ! wp_next_scheduled( 'jetonomy_cleanup_notifications' ) ) {
 			wp_schedule_event( time(), 'weekly', 'jetonomy_cleanup_notifications' );
@@ -159,11 +159,11 @@ class Cron {
 	}
 
 	/**
-	 * Prune old activity log entries (runs weekly).
+	 * Prune old activity log entries (runs daily).
 	 *
 	 * Retention period is configurable via jetonomy_settings['activity_log_retention_days'].
 	 * Defaults to 90 days. Set to 0 to keep forever.
-	 * Deletes in batches of 5 000 to avoid lock contention.
+	 * Deletes in batches of 5 000 to avoid lock contention, looping until all expired rows are removed.
 	 */
 	public function prune_activity_log(): void {
 		global $wpdb;
@@ -174,13 +174,15 @@ class Cron {
 			return; // 0 = keep forever.
 		}
 		$cutoff = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
-		// Delete in batches to avoid lock contention.
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE created_at < %s LIMIT 5000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$cutoff
-			)
-		);
+		// Delete in batches to avoid lock contention, loop until done.
+		do {
+			$deleted = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$wpdb->prepare(
+					"DELETE FROM {$table} WHERE created_at < %s LIMIT 5000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$cutoff
+				)
+			);
+		} while ( $deleted >= 5000 );
 	}
 
 	/**

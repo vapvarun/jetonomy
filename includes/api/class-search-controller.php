@@ -148,11 +148,12 @@ class Search_Controller extends Base_Controller {
 			$results
 		);
 
+		// TODO: implement proper search pagination with COUNT query for accurate total.
 		return $this->paginated_response(
 			$items,
 			[
 				'total'    => count( $items ),
-				'has_more' => count( $items ) === 20,
+				'has_more' => count( $items ) >= 20,
 			]
 		);
 	}
