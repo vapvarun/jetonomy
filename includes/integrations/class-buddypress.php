@@ -135,7 +135,10 @@ class BuddyPress {
 			// Add group creator as space admin.
 			$creator_id = (int) ( (int) $group->creator_id ?: get_current_user_id() );
 			if ( $creator_id ) {
-				SpaceMember::add( $space_id, $creator_id, 'admin' );
+				$result = SpaceMember::add( $space_id, $creator_id, 'admin' );
+				if ( is_wp_error( $result ) ) {
+					error_log( '[Jetonomy] BP group sync: failed to add creator to space — ' . $result->get_error_message() );
+				}
 			}
 		}
 	}
@@ -206,7 +209,10 @@ class BuddyPress {
 		}
 
 		if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
-			SpaceMember::add( $space_id, $user_id, 'member' );
+			$result = SpaceMember::add( $space_id, $user_id, 'member' );
+			if ( is_wp_error( $result ) ) {
+				error_log( '[Jetonomy] BP member join sync: ' . $result->get_error_message() );
+			}
 		}
 	}
 
@@ -245,7 +251,10 @@ class BuddyPress {
 		$role     = $role_map[ $status ] ?? 'member';
 
 		// SpaceMember::add with REPLACE semantics updates the role.
-		SpaceMember::add( $space_id, $user_id, $role );
+		$result = SpaceMember::add( $space_id, $user_id, $role );
+		if ( is_wp_error( $result ) ) {
+			error_log( '[Jetonomy] BP member promote sync: ' . $result->get_error_message() );
+		}
 	}
 
 	/**
@@ -260,7 +269,10 @@ class BuddyPress {
 			return;
 		}
 
-		SpaceMember::add( $space_id, $user_id, 'member' );
+		$result = SpaceMember::add( $space_id, $user_id, 'member' );
+		if ( is_wp_error( $result ) ) {
+			error_log( '[Jetonomy] BP member demote sync: ' . $result->get_error_message() );
+		}
 	}
 
 	/*
@@ -760,7 +772,10 @@ class BuddyPress {
 				self::link_group_to_space( $group_id, $space_id );
 				$creator = (int) ( (int) $group->creator_id ?: get_current_user_id() );
 				if ( $creator ) {
-					SpaceMember::add( $space_id, $creator, 'admin' );
+					$add_res = SpaceMember::add( $space_id, $creator, 'admin' );
+					if ( is_wp_error( $add_res ) ) {
+						error_log( '[Jetonomy] BP group link: failed to add creator — ' . $add_res->get_error_message() );
+					}
 				}
 			}
 			return;

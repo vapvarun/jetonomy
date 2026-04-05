@@ -268,7 +268,10 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'User not found.', 'jetonomy' ) );
 		}
 
-		SpaceMember::add( $space_id, $user_id, $role );
+		$result = SpaceMember::add( $space_id, $user_id, $role );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
 
 		wp_send_json_success(
 			array(
@@ -317,7 +320,10 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Invalid role.', 'jetonomy' ) );
 		}
 
-		SpaceMember::add( $space_id, $user_id, $role );
+		$result = SpaceMember::add( $space_id, $user_id, $role );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Role updated.', 'jetonomy' ) ) );
 	}
@@ -428,7 +434,10 @@ class Spaces_Handler {
 			foreach ( $adapters as $adapter ) {
 				if ( $adapter->is_active() && $adapter->user_has_level( $user_id, $rule_value ) ) {
 					if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
-						SpaceMember::add( $space_id, $user_id, $space_role );
+						$add_result = SpaceMember::add( $space_id, $user_id, $space_role );
+						if ( is_wp_error( $add_result ) ) {
+							continue;
+						}
 						++$synced;
 					}
 					break;
@@ -467,7 +476,10 @@ class Spaces_Handler {
 		}
 
 		JoinRequest::approve( $request_id, get_current_user_id() );
-		SpaceMember::add( $space_id, (int) $request->user_id, 'member' );
+		$add_result = SpaceMember::add( $space_id, (int) $request->user_id, 'member' );
+		if ( is_wp_error( $add_result ) ) {
+			wp_send_json_error( $add_result->get_error_message() );
+		}
 
 		wp_send_json_success( array( 'message' => __( 'Join request approved.', 'jetonomy' ) ) );
 	}

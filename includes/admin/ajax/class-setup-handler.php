@@ -59,7 +59,10 @@ class Setup_Handler {
 			]
 		);
 
-		SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
+		$add_result = SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
+		if ( is_wp_error( $add_result ) ) {
+			wp_send_json_error( $add_result->get_error_message() );
+		}
 		UserProfile::find_or_create( get_current_user_id() );
 
 		flush_rewrite_rules();

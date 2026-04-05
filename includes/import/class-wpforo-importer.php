@@ -207,6 +207,11 @@ class WPForo_Importer extends Importer {
 				]
 			);
 
+			if ( is_wp_error( $post_id ) ) {
+				++$this->skipped;
+				continue;
+			}
+
 			if ( $post_id ) {
 				$this->map_id( 'topic', $topic->topicid, $post_id );
 				if ( $first_post ) {
@@ -257,6 +262,11 @@ class WPForo_Importer extends Importer {
 					'created_at'    => $wf_post->created ?? now(),
 				]
 			);
+
+			if ( is_wp_error( $reply_id ) ) {
+				++$this->skipped;
+				continue;
+			}
 
 			if ( $reply_id ) {
 				$this->map_id( 'wpforo_reply', $wf_post->postid, $reply_id );

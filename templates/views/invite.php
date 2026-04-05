@@ -60,7 +60,11 @@ if ( \Jetonomy\Models\SpaceMember::is_member( (int) $invite->space_id, $user_id 
 }
 
 // Accept the invite.
-\Jetonomy\Models\SpaceMember::add( (int) $invite->space_id, $user_id, 'member' );
+$add_result = \Jetonomy\Models\SpaceMember::add( (int) $invite->space_id, $user_id, 'member' );
+if ( is_wp_error( $add_result ) ) {
+	echo '<div class="jt-narrow" style="text-align:center;padding:48px 0;"><p>' . esc_html( $add_result->get_error_message() ) . '</p></div>';
+	return;
+}
 \Jetonomy\Models\InviteLink::use_invite( (int) $invite->id );
 
 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe

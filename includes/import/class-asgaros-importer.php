@@ -231,6 +231,12 @@ class Asgaros_Importer extends Importer {
 				]
 			);
 
+			if ( is_wp_error( $post_id ) ) {
+				$this->log_error( 'topic', $topic->id, $post_id->get_error_message() );
+				++$this->skipped;
+				continue;
+			}
+
 			if ( $post_id ) {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
 				if ( $first_post ) {
@@ -277,6 +283,12 @@ class Asgaros_Importer extends Importer {
 					'created_at'    => $asgaros_post->date ?? now(),
 				]
 			);
+
+			if ( is_wp_error( $reply_id ) ) {
+				$this->log_error( 'reply', $asgaros_post->id, $reply_id->get_error_message() );
+				++$this->skipped;
+				continue;
+			}
 
 			if ( $reply_id ) {
 				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );

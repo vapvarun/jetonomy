@@ -158,6 +158,11 @@ class BBPress_Importer extends Importer {
 						]
 					);
 
+					if ( is_wp_error( $post_id ) ) {
+						++$this->skipped;
+						continue;
+					}
+
 					if ( $post_id ) {
 						$this->map_id( 'topic', $topic->ID, $post_id );
 						++$this->imported;
@@ -212,6 +217,11 @@ class BBPress_Importer extends Importer {
 							'created_at'    => $reply->post_date_gmt ?: now(),
 						]
 					);
+
+					if ( is_wp_error( $reply_id ) ) {
+						++$this->skipped;
+						continue;
+					}
 
 					if ( $reply_id ) {
 						++$this->imported;
@@ -367,6 +377,12 @@ class BBPress_Importer extends Importer {
 						'created_at'    => $topic->post_date_gmt ?: now(),
 					]
 				);
+
+				if ( is_wp_error( $post_id ) ) {
+					$this->log_error( 'topic', $topic->ID, $post_id->get_error_message() );
+					++$this->skipped;
+					continue;
+				}
 			} else {
 				$post_id = 0; // Simulate
 			}
@@ -410,6 +426,11 @@ class BBPress_Importer extends Importer {
 						'created_at'    => $reply->post_date_gmt ?: now(),
 					]
 				);
+
+				if ( is_wp_error( $reply_id ) ) {
+					++$this->skipped;
+					continue;
+				}
 			} else {
 				$reply_id = 0; // Simulate
 			}

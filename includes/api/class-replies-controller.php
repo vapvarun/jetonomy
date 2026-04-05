@@ -285,6 +285,10 @@ class Replies_Controller extends Base_Controller {
 
 		$reply_id = Reply::create( $reply_data );
 
+		if ( is_wp_error( $reply_id ) ) {
+			return $reply_id;
+		}
+
 		if ( ! $reply_id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',

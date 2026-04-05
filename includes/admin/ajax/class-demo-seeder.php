@@ -161,9 +161,15 @@ class Demo_Seeder {
 
 		// All demo users join every space.
 		foreach ( $demo['spaces'] as $sid ) {
-			SpaceMember::add( $sid, $admin_id, 'admin' );
+			$result = SpaceMember::add( $sid, $admin_id, 'admin' );
+			if ( is_wp_error( $result ) ) {
+				continue; // Skip this space in demo data.
+			}
 			foreach ( array_values( $u ) as $uid ) {
-				SpaceMember::add( $sid, $uid, 'member' );
+				$result = SpaceMember::add( $sid, $uid, 'member' );
+				if ( is_wp_error( $result ) ) {
+					continue; // Skip this member in demo data.
+				}
 			}
 		}
 
@@ -250,7 +256,7 @@ class Demo_Seeder {
 		];
 
 		foreach ( $posts_raw as $p ) {
-			$pid             = Post::create(
+			$pid = Post::create(
 				[
 					'space_id'      => $p['space'],
 					'author_id'     => $p['author'],
@@ -262,6 +268,9 @@ class Demo_Seeder {
 					'status'        => 'publish',
 				]
 			);
+			if ( is_wp_error( $pid ) ) {
+				$pid = 0; // Skip this post in demo data.
+			}
 			$demo['posts'][] = $pid;
 		}
 
@@ -382,7 +391,7 @@ class Demo_Seeder {
 			if ( ! $post_id ) {
 				continue;
 			}
-			$rid               = Reply::create(
+			$rid = Reply::create(
 				[
 					'post_id'       => $post_id,
 					'author_id'     => $rd['author'],
@@ -391,9 +400,12 @@ class Demo_Seeder {
 					'status'        => 'publish',
 				]
 			);
+			if ( is_wp_error( $rid ) ) {
+				$rid = 0; // Skip this reply in demo data.
+			}
 			$demo['replies'][] = $rid;
 
-			if ( ! empty( $rd['accepted'] ) ) {
+			if ( $rid && ! empty( $rd['accepted'] ) ) {
 				$wpdb->update( $replies_t, [ 'is_accepted' => 1 ], [ 'id' => $rid ] );
 			}
 		}
@@ -906,7 +918,10 @@ class Demo_Seeder {
 		}
 		foreach ( $user_ids as $uid ) {
 			if ( $uid ) {
-				Vote::cast( $uid, $type, $object_id, $value );
+				$result = Vote::cast( $uid, $type, $object_id, $value );
+				if ( is_wp_error( $result ) ) {
+					continue; // Skip this vote in demo data.
+				}
 			}
 		}
 	}

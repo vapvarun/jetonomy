@@ -490,6 +490,10 @@ class Posts_Controller extends Base_Controller {
 
 		$post_id = Post::create( $post_data );
 
+		if ( is_wp_error( $post_id ) ) {
+			return $post_id;
+		}
+
 		if ( ! $post_id ) {
 			return new WP_Error(
 				'jetonomy_create_failed',

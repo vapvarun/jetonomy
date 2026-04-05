@@ -321,7 +321,7 @@ class Reply extends Model {
 			)
 		);
 
-		if ( ! $new_post_id ) {
+		if ( is_wp_error( $new_post_id ) || ! $new_post_id ) {
 			return 0;
 		}
 

@@ -136,7 +136,11 @@ class MemberPress_Adapter implements Membership_Adapter {
 
 		foreach ( $rules as $rule ) {
 			if ( $activate ) {
-				SpaceMember::add( (int) $rule->space_id, $user_id, $rule->space_role ?? 'member' );
+				$result = SpaceMember::add( (int) $rule->space_id, $user_id, $rule->space_role ?? 'member' );
+				if ( is_wp_error( $result ) ) {
+					error_log( '[Jetonomy] MemberPress adapter: failed to add user ' . $user_id . ' to space ' . $rule->space_id . ' — ' . $result->get_error_message() );
+					continue;
+				}
 			} else {
 				SpaceMember::remove( (int) $rule->space_id, $user_id );
 			}

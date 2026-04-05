@@ -136,6 +136,9 @@ class Votes_Controller extends Base_Controller {
 		}
 
 		$result = Vote::cast( $user_id, $type, $id, $value );
+		if ( is_wp_error( $result ) ) {
+			return new WP_REST_Response( [ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ], 403 );
+		}
 
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
@@ -198,6 +201,9 @@ class Votes_Controller extends Base_Controller {
 
 		// Re-casting the same value toggles the vote off (handled in Vote::cast).
 		$result = Vote::cast( $user_id, $type, $id, $existing );
+		if ( is_wp_error( $result ) ) {
+			return new WP_REST_Response( [ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ], 403 );
+		}
 
 		$updated = $this->load_object( $type, $id );
 		$score   = is_wp_error( $updated ) ? 0 : (int) ( $updated->vote_score ?? 0 );

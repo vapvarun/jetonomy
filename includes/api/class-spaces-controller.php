@@ -323,7 +323,10 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		// Auto-add creator as admin.
-		SpaceMember::add( $id, get_current_user_id(), 'admin' );
+		$add_result = SpaceMember::add( $id, get_current_user_id(), 'admin' );
+		if ( is_wp_error( $add_result ) ) {
+			return $add_result;
+		}
 
 		$space = Space::find( $id );
 
@@ -529,7 +532,10 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		// open policy: add immediately.
-		SpaceMember::add( $id, $user_id, 'member' );
+		$add_result = SpaceMember::add( $id, $user_id, 'member' );
+		if ( is_wp_error( $add_result ) ) {
+			return $add_result;
+		}
 
 		return new WP_REST_Response(
 			[
@@ -722,7 +728,10 @@ class Spaces_Controller extends Base_Controller {
 		}
 
 		// Add user as member and increment usage.
-		SpaceMember::add( $space_id, $user_id, 'member' );
+		$add_result = SpaceMember::add( $space_id, $user_id, 'member' );
+		if ( is_wp_error( $add_result ) ) {
+			return $add_result;
+		}
 		InviteLink::use_invite( (int) $invite->id );
 
 		return new WP_REST_Response(
