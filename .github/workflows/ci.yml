@@ -166,6 +166,11 @@ jobs:
           wp plugin activate jetonomy --path=/tmp/wp
           wp plugin install plugin-check --activate --path=/tmp/wp
 
+      - name: Clean non-dist files for PCP
+        run: |
+          cd /tmp/wp/wp-content/plugins/jetonomy
+          rm -rf node_modules vendor dist .git .github tests bin
+
       - name: Run Plugin Check
         run: |
           RESULT=$(wp plugin check jetonomy --path=/tmp/wp --format=csv 2>&1)
