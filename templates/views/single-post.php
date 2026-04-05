@@ -440,7 +440,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									<span data-wp-text="context.loading ? '<?php echo esc_js( __( 'Loading…', 'jetonomy' ) ); ?>' : '<?php echo esc_js( sprintf( /* translators: %d: number of hidden replies */ __( 'Show %d more replies', 'jetonomy' ), $gap_count ) ); ?>'">
 										<?php
 										/* translators: %d: number of hidden replies */
-										printf( esc_html__( 'Show %d more replies', 'jetonomy' ), $gap_count );
+										printf( esc_html__( 'Show %d more replies', 'jetonomy' ), absint( $gap_count ) );
 										?>
 									</span>
 								</button>
