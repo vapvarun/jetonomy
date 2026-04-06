@@ -90,7 +90,7 @@ class AI_Spam_Detector {
 			if ( $is_spam && $confidence >= $hold_at ) {
 				return 'hold';
 			}
-		} catch ( \RuntimeException $e ) {
+		} catch ( \Throwable $e ) {
 			// AI unavailable — don't block content.
 		}
 

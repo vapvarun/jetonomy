@@ -300,7 +300,7 @@ class BuddyPress {
 				'name'            => __( 'Forum', 'jetonomy' ),
 				'slug'            => 'forum',
 				'parent_slug'     => bp_get_current_group_slug(),
-				'parent_url'      => function_exists( 'bp_get_group_url' ) ? bp_get_group_url( groups_get_current_group() ) : bp_get_group_permalink( groups_get_current_group() ),
+				'parent_url'      => function_exists( 'bp_get_group_url' ) ? bp_get_group_url( groups_get_current_group() ) : ( function_exists( 'bp_get_group_permalink' ) ? bp_get_group_permalink( groups_get_current_group() ) : '' ),
 				'position'        => 30,
 				'screen_function' => array( $this, 'group_forum_screen' ),
 				'user_has_access' => true,
@@ -824,7 +824,7 @@ class BuddyPress {
 			return;
 		}
 
-		$group_url = function_exists( 'bp_get_group_url' ) ? bp_get_group_url( $group ) : bp_get_group_permalink( $group );
+		$group_url = function_exists( 'bp_get_group_url' ) ? bp_get_group_url( $group ) : ( function_exists( 'bp_get_group_permalink' ) ? bp_get_group_permalink( $group ) : '' );
 		?>
 		<div class="jt-sidebar-meta" style="margin-top: 8px;">
 			<a href="<?php echo esc_url( $group_url ); ?>" class="jt-tag" style="text-decoration: none;">
@@ -866,7 +866,7 @@ class BuddyPress {
 			return;
 		}
 
-		$group_url = function_exists( 'bp_get_group_url' ) ? bp_get_group_url( $group ) : bp_get_group_permalink( $group );
+		$group_url = function_exists( 'bp_get_group_url' ) ? bp_get_group_url( $group ) : ( function_exists( 'bp_get_group_permalink' ) ? bp_get_group_permalink( $group ) : '' );
 		?>
 		<div class="jt-bp-back-banner">
 			<a href="<?php echo esc_url( $group_url ); ?>">

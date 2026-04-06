@@ -270,8 +270,17 @@ class Posts_Controller extends Base_Controller {
 
 		$pagination = $this->get_pagination( $request );
 
-		// Pass -1 when client didn't send a limit so the model resolves from space/global settings.
-		$limit = null !== $request->get_param( 'limit' ) ? (int) $pagination['limit'] : -1;
+		// Resolve limit: explicit param → space setting → global setting → 20.
+		if ( null !== $request->get_param( 'limit' ) ) {
+			$limit = (int) $pagination['limit'];
+		} else {
+			$space_settings = Space::get_settings( $space_id );
+			$limit          = ! empty( $space_settings['posts_per_page'] ) ? (int) $space_settings['posts_per_page'] : 0;
+			if ( $limit <= 0 ) {
+				$global = get_option( 'jetonomy_settings', array() );
+				$limit  = (int) ( $global['posts_per_page'] ?? 20 );
+			}
+		}
 
 		$posts = Post::list_by_space_visible(
 			$space_id,
@@ -282,19 +291,6 @@ class Posts_Controller extends Base_Controller {
 			(int) $pagination['offset'],
 			(int) $pagination['after']
 		);
-
-		// Resolve effective limit for pagination metadata.
-		$effective_limit = count( $posts );
-		if ( -1 === $limit ) {
-			$space_settings  = Space::get_settings( $space_id );
-			$effective_limit = ! empty( $space_settings['posts_per_page'] ) ? (int) $space_settings['posts_per_page'] : 0;
-			if ( $effective_limit <= 0 ) {
-				$global          = get_option( 'jetonomy_settings', array() );
-				$effective_limit = (int) ( $global['posts_per_page'] ?? 20 );
-			}
-		} else {
-			$effective_limit = (int) $pagination['limit'];
-		}
 
 		// Eager-load all author data in a single batch before preparing items.
 		$posts = $this->enrich_with_author( $posts );

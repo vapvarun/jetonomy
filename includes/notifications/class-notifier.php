@@ -347,6 +347,10 @@ class Notifier {
 	 * Notify moderators when a flag is created.
 	 */
 	public function on_flag_created( int $flag_id, string $object_type ): void {
+		// Resolve the flagged content's real object ID from the flag row.
+		$flag      = \Jetonomy\Models\Flag::find( $flag_id );
+		$object_id = $flag ? (int) $flag->object_id : $flag_id;
+
 		$moderators = get_users(
 			[
 				'capability__in' => [ 'jetonomy_moderate', 'manage_options' ],
@@ -360,7 +364,7 @@ class Notifier {
 				0,
 				'moderation',
 				$object_type,
-				$flag_id,
+				$object_id,
 				__( 'New content flag requires review', 'jetonomy' )
 			);
 		}
