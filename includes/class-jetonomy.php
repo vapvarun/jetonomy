@@ -216,7 +216,8 @@ final class Jetonomy {
 		}
 
 		// AI spam detection (free version — Ollama only).
-		new Moderation\AI_Spam_Detector();
+		// Instance stored so Pro can reliably remove the filter via jetonomy()->ai_spam_detector.
+		$this->ai_spam_detector = new Moderation\AI_Spam_Detector();
 
 		// PMPro adapter (conditional)
 		if ( defined( 'PMPRO_VERSION' ) ) {
