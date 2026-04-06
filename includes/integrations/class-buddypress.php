@@ -28,6 +28,38 @@ class BuddyPress {
 	const META_KEY = 'jetonomy_space_id';
 
 	/**
+	 * Get the URL for a BP group, compatible with all BP versions.
+	 *
+	 * @param \BP_Groups_Group $group Group object.
+	 * @return string Group URL or empty string.
+	 */
+	public static function get_group_url( $group ): string {
+		if ( function_exists( 'bp_get_group_url' ) ) {
+			return (string) bp_get_group_url( $group );
+		}
+		if ( function_exists( 'bp_get_group_permalink' ) ) {
+			return (string) bp_get_group_permalink( $group );
+		}
+		return '';
+	}
+
+	/**
+	 * Get the profile URL for a BP member, compatible with all BP versions.
+	 *
+	 * @param int $user_id User ID.
+	 * @return string Member profile URL or empty string.
+	 */
+	public static function get_member_url( int $user_id ): string {
+		if ( function_exists( 'bp_members_get_user_url' ) ) {
+			return (string) bp_members_get_user_url( $user_id );
+		}
+		if ( function_exists( 'bp_core_get_user_domain' ) ) {
+			return (string) bp_core_get_user_domain( $user_id );
+		}
+		return '';
+	}
+
+	/**
 	 * Boot the integration.
 	 */
 	public function __construct() {
@@ -300,7 +332,7 @@ class BuddyPress {
 				'name'            => __( 'Forum', 'jetonomy' ),
 				'slug'            => 'forum',
 				'parent_slug'     => bp_get_current_group_slug(),
-				'parent_url'      => function_exists( 'bp_get_group_url' ) ? bp_get_group_url( groups_get_current_group() ) : ( function_exists( 'bp_get_group_permalink' ) ? bp_get_group_permalink( groups_get_current_group() ) : '' ),
+				'parent_url'      => self::get_group_url( groups_get_current_group() ),
 				'position'        => 30,
 				'screen_function' => array( $this, 'group_forum_screen' ),
 				'user_has_access' => true,
@@ -396,14 +428,7 @@ class BuddyPress {
 		}
 
 		$user   = bp_is_my_profile() ? wp_get_current_user() : get_userdata( bp_displayed_user_id() );
-		$bp_url = '';
-		if ( $user ) {
-			if ( function_exists( 'bp_members_get_user_url' ) ) {
-				$bp_url = bp_members_get_user_url( $user->ID );
-			} elseif ( function_exists( 'bp_core_get_user_domain' ) ) {
-				$bp_url = bp_core_get_user_domain( $user->ID );
-			}
-		}
+		$bp_url = $user ? self::get_member_url( $user->ID ) : '';
 		$jt_base = \Jetonomy\base_url();
 		$jt_url  = $user ? $jt_base . '/u/' . $user->user_login . '/' : $jt_base;
 
@@ -824,7 +849,7 @@ class BuddyPress {
 			return;
 		}
 
-		$group_url = function_exists( 'bp_get_group_url' ) ? bp_get_group_url( $group ) : ( function_exists( 'bp_get_group_permalink' ) ? bp_get_group_permalink( $group ) : '' );
+		$group_url = self::get_group_url( $group );
 		?>
 		<div class="jt-sidebar-meta" style="margin-top: 8px;">
 			<a href="<?php echo esc_url( $group_url ); ?>" class="jt-tag" style="text-decoration: none;">
@@ -866,7 +891,7 @@ class BuddyPress {
 			return;
 		}
 
-		$group_url = function_exists( 'bp_get_group_url' ) ? bp_get_group_url( $group ) : ( function_exists( 'bp_get_group_permalink' ) ? bp_get_group_permalink( $group ) : '' );
+		$group_url = self::get_group_url( $group );
 		?>
 		<div class="jt-bp-back-banner">
 			<a href="<?php echo esc_url( $group_url ); ?>">

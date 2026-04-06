@@ -335,4 +335,20 @@ class Space extends Model {
 		$decoded = json_decode( $row->settings, true );
 		return is_array( $decoded ) ? $decoded : [];
 	}
+
+	/**
+	 * Resolve posts_per_page for a space: space setting → global setting → 20.
+	 *
+	 * @param int $space_id Space ID.
+	 * @return int Resolved posts per page.
+	 */
+	public static function get_posts_per_page( int $space_id ): int {
+		$space_settings = self::get_settings( $space_id );
+		if ( ! empty( $space_settings['posts_per_page'] ) ) {
+			return (int) $space_settings['posts_per_page'];
+		}
+
+		$global = get_option( 'jetonomy_settings', [] );
+		return (int) ( $global['posts_per_page'] ?? 20 );
+	}
 }

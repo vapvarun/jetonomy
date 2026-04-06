@@ -270,17 +270,10 @@ class Posts_Controller extends Base_Controller {
 
 		$pagination = $this->get_pagination( $request );
 
-		// Resolve limit: explicit param → space setting → global setting → 20.
-		if ( null !== $request->get_param( 'limit' ) ) {
-			$limit = (int) $pagination['limit'];
-		} else {
-			$space_settings = Space::get_settings( $space_id );
-			$limit          = ! empty( $space_settings['posts_per_page'] ) ? (int) $space_settings['posts_per_page'] : 0;
-			if ( $limit <= 0 ) {
-				$global = get_option( 'jetonomy_settings', array() );
-				$limit  = (int) ( $global['posts_per_page'] ?? 20 );
-			}
-		}
+		// Resolve limit: explicit param → Space::get_posts_per_page() (space → global → 20).
+		$limit = null !== $request->get_param( 'limit' )
+			? (int) $pagination['limit']
+			: Space::get_posts_per_page( $space_id );
 
 		$posts = Post::list_by_space_visible(
 			$space_id,
