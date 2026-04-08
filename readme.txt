@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,6 +261,29 @@ Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.3.0 — April 2026 =
+
+* New: AI Adapter Layer — pluggable interface for AI providers with built-in Ollama support
+* New: AI-powered spam detection for posts and replies
+* New: GitHub Actions CI pipeline — PHP lint, WPCS, PHPStan, Plugin Check
+* New: before_delete hooks on all models for extensibility
+* New: Query args filters on all model list methods
+* New: Base slug 301 redirect for SEO
+* Improvement: WP_Error checks at all model caller sites — prevents fatal errors from hook rejections
+* Improvement: has_more pagination accuracy across all endpoints
+* Improvement: InnoDB engine enforced on all custom tables
+* Improvement: Daily activity log pruning with safe batch loop
+* Improvement: Vote operations wrapped in DB transactions
+* Improvement: Spaces N+1 query eliminated — visibility filter moved to SQL JOIN
+* Improvement: Eliminated patch code — BP helpers and Space::get_posts_per_page() cleaned up
+* Improvement: Plugin Check compliance — all output properly escaped
+* Improvement: PHPStan level 5 with zero errors
+* Fix: Double reply counter increment on new reply
+* Fix: Space settings cache invalidation
+* Fix: Permission callback consolidation
+* Fix: PHP 8.1 compatibility — bool return type
+* Fix: 9 Basecamp bug fixes — fatal BP compat, notifications, report UI, pagination
 
 = 1.2.0 — April 2026 =
 
