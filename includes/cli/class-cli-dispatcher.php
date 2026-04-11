@@ -43,6 +43,7 @@ final class CLI_Dispatcher {
 		'config'       => Commands\Config_Command::class,
 		'category'     => Commands\Category_Command::class,
 		'tag'          => Commands\Tag_Command::class,
+		'user'         => Commands\User_Command::class,
 	];
 
 	public static function register(): void {
