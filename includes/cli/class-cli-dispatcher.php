@@ -32,11 +32,12 @@ final class CLI_Dispatcher {
 	 * @var array<string,class-string>
 	 */
 	private const COMMANDS = [
-		'post'  => Commands\Post_Command::class,
-		'reply' => Commands\Reply_Command::class,
-		'vote'  => Commands\Vote_Command::class,
-		'flag'  => Commands\Flag_Command::class,
-		'space' => Commands\Space_Command::class,
+		'post'   => Commands\Post_Command::class,
+		'reply'  => Commands\Reply_Command::class,
+		'vote'   => Commands\Vote_Command::class,
+		'flag'   => Commands\Flag_Command::class,
+		'space'  => Commands\Space_Command::class,
+		'member' => Commands\Member_Command::class,
 	];
 
 	public static function register(): void {
