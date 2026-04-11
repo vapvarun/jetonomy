@@ -24,5 +24,22 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
+    },
+    "scripts": {
+        "test": "@test:combo",
+        "test:free": "JETONOMY_TEST_SKIP_PRO=1 phpunit --testdox --testsuite=unit",
+        "test:combo": "phpunit --testdox",
+        "test:pro": "phpunit --testdox --testsuite=pro",
+        "test:unit": "phpunit --testdox --testsuite=unit",
+        "phpcs": "phpcs --standard=phpcs.xml",
+        "phpcbf": "phpcbf --standard=phpcs.xml",
+        "phpstan": "phpstan analyse --memory-limit=1G"
+    },
+    "scripts-descriptions": {
+        "test": "Run the default test suite (free + pro combo when Pro is present).",
+        "test:free": "Run free plugin in isolation — Pro is not loaded even if checked out.",
+        "test:combo": "Run the full testsuite with Pro loaded (tests/unit + tests/pro).",
+        "test:pro": "Run only tests/pro/* — requires Pro to be loaded.",
+        "test:unit": "Run only tests/unit/* without skipping Pro."
     }
 }
