@@ -57,6 +57,23 @@ class Rate_Limiter {
 	}
 
 	/**
+	 * Return the built-in default per-day rate limits for Level 0 users.
+	 *
+	 * Single source of truth consumed by the runtime reader, the admin
+	 * sanitizer/view, and the activation seeder. Keys match the storage
+	 * format in `jetonomy_settings[rate_limits]`.
+	 *
+	 * @return array<string,int>
+	 */
+	public static function defaults(): array {
+		return [
+			'posts'   => 3,
+			'replies' => 10,
+			'votes'   => 5,
+		];
+	}
+
+	/**
 	 * Return the rate-limit map for a given trust level.
 	 *
 	 * Trust Level 1+ users have no rate limits. Level 0 users are restricted
@@ -72,11 +89,12 @@ class Rate_Limiter {
 
 		$settings = get_option( 'jetonomy_settings', [] );
 		$limits   = $settings['rate_limits'] ?? [];
+		$defaults = self::defaults();
 
 		return [
-			'create_posts'   => (int) ( $limits['posts'] ?? 3 ),
-			'create_replies' => (int) ( $limits['replies'] ?? 10 ),
-			'vote'           => (int) ( $limits['votes'] ?? 5 ),
+			'create_posts'   => (int) ( $limits['posts'] ?? $defaults['posts'] ),
+			'create_replies' => (int) ( $limits['replies'] ?? $defaults['replies'] ),
+			'vote'           => (int) ( $limits['votes'] ?? $defaults['votes'] ),
 		];
 	}
 }

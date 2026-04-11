@@ -187,26 +187,7 @@ class Admin {
 		// Only process if trust_thresholds is present (Permissions tab was submitted).
 		if ( isset( $input['trust_thresholds'] ) ) {
 			$raw_thresholds = is_array( $input['trust_thresholds'] ) ? $input['trust_thresholds'] : array();
-			$tl_defaults    = array(
-				1 => array(
-					'posts'            => 5,
-					'days_active'      => 3,
-					'reputation'       => 0,
-					'replies_received' => 10,
-				),
-				2 => array(
-					'posts'            => 30,
-					'days_active'      => 20,
-					'reputation'       => 50,
-					'replies_received' => 0,
-				),
-				3 => array(
-					'posts'            => 100,
-					'days_active'      => 60,
-					'reputation'       => 200,
-					'replies_received' => 0,
-				),
-			);
+			$tl_defaults    = \Jetonomy\Trust\Trust_Levels::defaults();
 			foreach ( array( 1, 2, 3 ) as $level ) {
 				$td                                  = $tl_defaults[ $level ];
 				$lv                                  = is_array( $raw_thresholds[ $level ] ?? null ) ? $raw_thresholds[ $level ] : array();
@@ -222,10 +203,11 @@ class Admin {
 		// Only process if rate_limits is present (Permissions tab was submitted).
 		if ( isset( $input['rate_limits'] ) ) {
 			$raw_limits           = is_array( $input['rate_limits'] ) ? $input['rate_limits'] : array();
+			$rl_defaults          = \Jetonomy\Permissions\Rate_Limiter::defaults();
 			$clean['rate_limits'] = array(
-				'posts'   => absint( $raw_limits['posts'] ?? 3 ),
-				'replies' => absint( $raw_limits['replies'] ?? 10 ),
-				'votes'   => absint( $raw_limits['votes'] ?? 5 ),
+				'posts'   => absint( $raw_limits['posts'] ?? $rl_defaults['posts'] ),
+				'replies' => absint( $raw_limits['replies'] ?? $rl_defaults['replies'] ),
+				'votes'   => absint( $raw_limits['votes'] ?? $rl_defaults['votes'] ),
 			);
 		}
 
@@ -404,7 +386,7 @@ class Admin {
 				'ajaxUrl'            => admin_url( 'admin-ajax.php' ),
 				'nonce'              => wp_create_nonce( 'jetonomy_admin' ),
 				'membershipAdapters' => $membership_adapters,
-				'i18n'             => array(
+				'i18n'               => array(
 					'confirmDelete'   => __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
 					'confirmBan'      => __( 'Are you sure you want to ban this user?', 'jetonomy' ),
 					'saving'          => __( 'Saving...', 'jetonomy' ),

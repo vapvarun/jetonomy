@@ -67,8 +67,11 @@ final class Jetonomy {
 			update_option( 'jetonomy_license_key', 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11' );
 		}
 
-		// Set sensible notification defaults on fresh install.
+		// Set sensible defaults on fresh install. Each block is individually
+		// guarded so re-activation never overwrites admin-customized values.
 		$settings = get_option( 'jetonomy_settings', array() );
+		$changed  = false;
+
 		if ( empty( $settings['notification_defaults'] ) ) {
 			$settings['notification_defaults'] = array(
 				'reply_to_post'   => array(
@@ -108,6 +111,20 @@ final class Jetonomy {
 					'email' => true,
 				),
 			);
+			$changed                           = true;
+		}
+
+		if ( empty( $settings['trust_thresholds'] ) ) {
+			$settings['trust_thresholds'] = \Jetonomy\Trust\Trust_Levels::defaults();
+			$changed                      = true;
+		}
+
+		if ( empty( $settings['rate_limits'] ) ) {
+			$settings['rate_limits'] = \Jetonomy\Permissions\Rate_Limiter::defaults();
+			$changed                 = true;
+		}
+
+		if ( $changed ) {
 			update_option( 'jetonomy_settings', $settings );
 		}
 
