@@ -31,19 +31,22 @@ final class CLI_Dispatcher {
 	 *
 	 * @var array<string,class-string>
 	 */
-	private const COMMANDS = [];
+	private const COMMANDS = [
+		'post'  => Commands\Post_Command::class,
+		'reply' => Commands\Reply_Command::class,
+		'vote'  => Commands\Vote_Command::class,
+		'flag'  => Commands\Flag_Command::class,
+	];
 
 	public static function register(): void {
 		if ( ! defined( 'WP_CLI' ) || ! \WP_CLI ) {
 			return;
 		}
 
-		/** @phpstan-ignore foreach.emptyArray */
 		foreach ( self::COMMANDS as $slug => $class ) {
 			if ( ! class_exists( $class ) ) {
 				continue;
 			}
-			/** @phpstan-ignore class.notFound */
 			\WP_CLI::add_command( 'jetonomy ' . $slug, $class );
 		}
 	}
