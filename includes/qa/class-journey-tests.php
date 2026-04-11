@@ -60,6 +60,18 @@ class Journey_Tests {
 			$this->test_pro_extension_journey();
 			$this->test_pro_messaging_journey();
 			$this->test_pro_ai_journey();
+			$this->test_pro_reactions_journey();
+			$this->test_pro_polls_journey();
+			$this->test_pro_custom_badges_journey();
+			$this->test_pro_custom_fields_journey();
+			$this->test_pro_email_digest_journey();
+			$this->test_pro_web_push_journey();
+			$this->test_pro_analytics_journey();
+			$this->test_pro_advanced_moderation_journey();
+			$this->test_pro_webhooks_journey();
+			$this->test_pro_seo_pro_journey();
+			$this->test_pro_white_label_journey();
+			$this->test_pro_reply_by_email_journey();
 		} catch ( \Throwable $e ) {
 			$this->record( 'Journey_Tests uncaught', false, $e->getMessage() );
 		} finally {
@@ -293,6 +305,134 @@ class Journey_Tests {
 		$journey = new $class();
 		$this->record_result( 'pro.ai: is_enabled', $journey->is_enabled() );
 		$this->record_result( 'pro.ai: list_providers', $journey->list_providers() );
+	}
+
+	private function test_pro_reactions_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Reactions_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.reactions: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.reactions: list_available_emojis', $journey->list_available_emojis() );
+		$this->record_result( 'pro.reactions: count_reactions', $journey->count_reactions( 1, 'post' ) );
+	}
+
+	private function test_pro_polls_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Polls_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.polls: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		// Read-only probe: a missing poll returns a failing result which is the expected shape.
+		$result = $journey->get_poll( 1 );
+		$this->record( 'pro.polls: get_poll returns journey result', $result instanceof \Jetonomy\CLI\Journey_Result, '' );
+	}
+
+	private function test_pro_custom_badges_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Custom_Badges_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.badges: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.badges: list_badges', $journey->list_badges() );
+	}
+
+	private function test_pro_custom_fields_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Custom_Fields_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.fields: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.fields: list_fields', $journey->list_fields() );
+	}
+
+	private function test_pro_email_digest_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Email_Digest_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.email-digest: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.email-digest: get_preferences', $journey->get_preferences( $this->discover_user() ) );
+		$this->record_result( 'pro.email-digest: get_stats', $journey->get_stats() );
+	}
+
+	private function test_pro_web_push_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Web_Push_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.web-push: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.web-push: get_vapid_public_key', $journey->get_vapid_public_key() );
+		$this->record_result( 'pro.web-push: count_subscribers', $journey->count_subscribers() );
+	}
+
+	private function test_pro_analytics_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Analytics_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.analytics: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.analytics: overview', $journey->overview( '7d', null, null ) );
+		$this->record_result( 'pro.analytics: engagement', $journey->engagement( '7d' ) );
+	}
+
+	private function test_pro_advanced_moderation_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Advanced_Moderation_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.advanced-moderation: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.advanced-moderation: list_rules', $journey->list_rules() );
+	}
+
+	private function test_pro_webhooks_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Webhooks_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.webhooks: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.webhooks: list_webhooks', $journey->list_webhooks() );
+		$this->record_result( 'pro.webhooks: list_supported_events', $journey->list_supported_events() );
+	}
+
+	private function test_pro_seo_pro_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Seo_Pro_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.seo-pro: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.seo-pro: get_global_defaults', $journey->get_global_defaults() );
+	}
+
+	private function test_pro_white_label_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\White_Label_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.white-label: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.white-label: get_settings', $journey->get_settings() );
+		$this->record_result( 'pro.white-label: preview_branding', $journey->preview_branding() );
+	}
+
+	private function test_pro_reply_by_email_journey(): void {
+		$class = 'Jetonomy_Pro\\CLI\\Journeys\\Reply_By_Email_Journey';
+		if ( ! class_exists( $class ) ) {
+			$this->record( 'pro.reply-by-email: class available', true, 'skipped — Pro not loaded' );
+			return;
+		}
+		$journey = new $class();
+		$this->record_result( 'pro.reply-by-email: get_config', $journey->get_config() );
 	}
 
 	/**
