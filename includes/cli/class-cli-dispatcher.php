@@ -38,6 +38,7 @@ final class CLI_Dispatcher {
 		'flag'   => Commands\Flag_Command::class,
 		'space'  => Commands\Space_Command::class,
 		'member' => Commands\Member_Command::class,
+		'mod'    => Commands\Mod_Command::class,
 	];
 
 	public static function register(): void {
