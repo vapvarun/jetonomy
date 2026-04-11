@@ -30,6 +30,10 @@ class Autoloader {
 		'Jetonomy\\DB\\'             => 'includes/db/',
 		'Jetonomy\\DB\\Migrations\\' => 'includes/db/migrations/',
 		'Jetonomy\\QA\\'             => 'includes/qa/',
+		'Jetonomy\\CLI\\Commands\\'  => 'includes/cli/commands/',
+		'Jetonomy\\CLI\\Journeys\\'  => 'includes/cli/journeys/',
+		'Jetonomy\\CLI\\Scenarios\\' => 'includes/cli/scenarios/',
+		'Jetonomy\\CLI\\'            => 'includes/cli/',
 		'Jetonomy\\'                 => 'includes/',
 	];
 
