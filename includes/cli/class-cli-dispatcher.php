@@ -40,6 +40,7 @@ final class CLI_Dispatcher {
 		'member'       => Commands\Member_Command::class,
 		'mod'          => Commands\Mod_Command::class,
 		'notification' => Commands\Notification_Command::class,
+		'config'       => Commands\Config_Command::class,
 	];
 
 	public static function register(): void {
