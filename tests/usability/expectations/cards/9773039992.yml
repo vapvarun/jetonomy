@@ -1,0 +1,33 @@
+card_id: "9773039992"
+title: "Non-Members in Open Spaces See 'Follow' Instead of 'Join Space'"
+basecamp_url: "https://3.basecamp.com/5798509/buckets/46596502/card_tables/cards/9773039992"
+fixed_in_commit: "6c1c9ce"
+
+user_story: |
+  As a logged-in user visiting a space with join_policy='open' where I am
+  NOT yet a member, I expect to see a 'Join Space' button so I can become
+  a member with posting rights. I should NOT see 'Follow' because that
+  only adds a subscription — it does not make me a member.
+
+reported_symptom: |
+  "The space page shows a 'Follow' button instead of a 'Join Space' button.
+  Clicking 'Follow' only adds a subscription, does NOT make them a member.
+  User tries to post and may or may not work depending on the permission
+  engine's public+open shortcut."
+
+root_cause: |
+  templates/views/space.php had an if/elseif/else chain covering invite
+  and approval policies but no explicit branch for open && !member. The
+  catch-all else showed the Follow toggle for both members and non-members
+  in open spaces. Fix added an elseif for open && !member && !admin that
+  renders a .jt-join-btn button bound to the existing composer.js handler.
+
+expectations:
+  join_space_button_visible: true
+  follow_button_hidden: true
+  clicking_join_creates_membership: true
+  page_reloads_with_member_state: true
+  max_clicks_to_join: 1
+  max_time_to_goal_seconds: 5
+  no_console_errors: true
+  no_failed_network_requests: true
