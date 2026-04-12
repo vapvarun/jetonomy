@@ -65,9 +65,98 @@
 ## Database Tables
 Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscriptions, ReadStatus, SpaceMembers, Tags, PostTags, SpaceTags, SpaceTagMap, UserInterests, ActivityLog, Restrictions, AccessRules, Flags, Revisions, JoinRequests, InviteLinks
 
+## CLI Module (shipped 2026-04-11)
+
+Journey-based CLI architecture for headless testing + automation. Every user/admin action is driveable from the terminal AND unit-testable via PHPUnit.
+
+```
+wp jetonomy <subject> <subcommand>       # 13 free command roots
+wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
+wp jetonomy qa-actions                   # 210/210 smoke tests (4 phases)
+wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
+```
+
+**Key files:**
+- `includes/cli/class-journey-result.php` — shared DTO (ok/fail/from_wp_error)
+- `includes/cli/class-cli-dispatcher.php` — registers 13 free command slugs
+- `includes/cli/journeys/` — 8 journey classes (pure PHP, no WP_CLI coupling)
+- `includes/cli/commands/` — 13 command classes (thin WP_CLI wrappers extending Base_Command)
+- `includes/cli/scenarios/` — Scenario_Runner + 5 bundled scenarios
+- `includes/qa/class-journey-tests.php` — Phase 4 of qa-actions, smoke-tests every journey
+- `tests/unit/cli/journeys/` — 8 journey unit test files
+- `tests/unit/cli/scenarios/ScenarioRunnerTest.php` — 11 scenario runner tests
+- `tests/pro/cli/journeys/` — 14 Pro journey unit test files (in free plugin's tests/pro/ dir)
+
+**Pro CLI (in jetonomy-pro plugin):**
+- `jetonomy-pro/includes/cli/class-pro-cli-dispatcher.php` — 15 Pro command slugs
+- `jetonomy-pro/includes/cli/journeys/` — 14 journey classes (one per extension)
+- `jetonomy-pro/includes/cli/commands/` — 15 command classes
+- Pro CLI loads via `Jetonomy_Pro::maybe_load_cli()` — guarded by `is_dir()` for dist safety
+
+**Test commands:**
+```bash
+composer test              # PHPUnit (free + pro combo)
+composer test:free         # PHPUnit free-only (JETONOMY_TEST_SKIP_PRO=1)
+composer test:combo        # PHPUnit with Pro loaded
+composer test:usability    # Playwright browser tests (250 flows)
+```
+
+## Usability Test Suite (shipped 2026-04-12)
+
+250 Playwright flow files testing what users actually experience, not just what the code does. 5-layer architecture:
+
+1. **Usability flow** — end-to-end user story
+2. **Data flow** — click → REST → DB → notification → email
+3. **UX flow** — Playwright click-by-click browser assertions
+4. **Ease metrics** — clicks-to-goal, time-to-goal, error count
+5. **Expectation vs delivery** — YAML user stories compared against delivered outcomes
+
+**Key files:**
+- `tests/usability/playwright.config.js` — Chromium desktop + mobile projects
+- `tests/usability/helpers/` — wp-cli.js, data-flow.js, email-capture.js, ease-metrics.js, expectation-matcher.js, auto-login.js
+- `tests/usability/flows/` — 250 flow files organized by actor (anonymous/member/moderator/admin) and Pro extension
+- `tests/usability/expectations/cards/` — 5 Basecamp-locked YAMLs
+- `tests/usability/expectations/specs/` — 245 spec-based YAMLs
+- `tests/usability/fixtures/scenarios.js` — wraps the CLI scenario runner for test fixtures
+- `tests/usability/mu-plugins/jetonomy-test-mail-capture.php` — intercepts wp_mail for email assertions
+- `docs/plans/2026-04-11-usability-test-plan.md` — full 274-flow inventory + architecture plan
+
+**Current state (2026-04-12):**
+- 72 free flows pass on desktop (all data-flow verified, matchDelivery connected)
+- 127 Pro flows need CLI argument correction (arguments don't match actual `wp help` signatures — see next session note below)
+- 10 composite flows need Pro flow fixes before they can run
+- 21 test.fixme for features not yet shipped (split-reply, merge-posts, etc.)
+
+## Next Session — Pick Up Here
+
+**Priority 1: Fix 127 Pro usability flow CLI arguments.**
+The Pro flows use `proJourney(['advanced-moderation', 'create', '--type=word_filter', ...])` but the actual command expects `--type=keyword --name=...`. Every Pro flow file in `tests/usability/flows/pro/` needs its `proJourney()` and `wp()` calls corrected against the real `wp help jetonomy-pro <ext> <subcommand>` output.
+
+Approach: dispatch 3 parallel agents, each covering ~4-5 extensions. Give each agent the actual `wp help` output as reference. The test body logic is correct — only the argument names/values need fixing.
+
+**Priority 2: Run full 250-flow suite end-to-end.**
+After fixing Pro CLI arguments, run `npx playwright test --project=chromium-desktop` and target 200+ passing flows.
+
+**Priority 3: Add CI usability-tests GitHub Actions job.**
+~60 lines of YAML to spin up WP + Pro + Playwright and run `npm test`.
+
+**Priority 4: Check Basecamp In Testing column (13+ cards).**
+These were there at session start and never triaged.
+
+**Priority 5: Remove test.fixme from Pro flows where UI works.**
+All 14 Pro extensions are enabled on forums.local. Many test.fixme flows should be activatable.
+
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-04-12 | `bf1a1a8` | Usability test suite complete — 250 flows, 250 YAMLs, all layers connected, zero TODO |
+| 2026-04-12 | `7f205b2` | 66 free flows implemented (trusted + moderator + admin + cross-cutting) |
+| 2026-04-12 | `7e45d40` | 52 free flows implemented (anonymous + registered + member) |
+| 2026-04-12 | `159f8fe` | Phase 4 qa-actions extended to all 14 Pro journeys (51/51 checks) |
+| 2026-04-12 | multiple | Pro CLI — 14 extension journeys + commands + tests across both plugins |
+| 2026-04-11 | `06db47c` | Scenario runner + 5 bundled scenarios |
+| 2026-04-11 | `32968a9`→`d61b49b` | CLI module foundation through qa-actions Phase 4 (10 commits) |
+| 2026-04-11 | 5 commits | 5 Basecamp bug fixes (notification click, Join Space, email URL, tab visibility, settings defaults) |
 | 2026-04-05 | v1.3.0 | AI adapter layer (interface, Ollama provider, registry, spam detector), 9 Basecamp bug fixes, security/code quality audit, WPCS ruleset |
 | 2026-03-29 | v1.0.1 | Theme compat: .container→.jt-container rename, dynamic --jt-container-width from theme settings, flex parent fix, sub-nav inside container, page title suppression, tested 12 themes |
 | 2026-03-27 | `e42b7ec` | Fix: space settings merge (not replace), join request state persists on refresh, join request email notification to admins |
