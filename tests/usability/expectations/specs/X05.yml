@@ -1,13 +1,14 @@
 flow_id: "X05"
-title: "Emoji picker in reply editor"
+title: "Emoji picker — fixme if not rendered"
 source: "design-spec"
 priority: P2
 actor: cross-cutting
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a community member writing a reply, I expect an emoji picker
+  trigger button near the editor so I can insert emojis. Fixme if
+  the emoji picker feature is not yet enabled.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  emoji_trigger_visible_or_fixme: true

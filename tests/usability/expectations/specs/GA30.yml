@@ -1,13 +1,16 @@
 flow_id: "GA30"
-title: "REST API via application password"
+title: "REST API — namespace registered, index returns 200"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin or integrator, when I query the Jetonomy REST API
+  namespace, I expect it to be registered and the index endpoint to
+  return a 200 status with route information.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  namespace_registered: true
+  index_status_200: true
+  has_routes: true

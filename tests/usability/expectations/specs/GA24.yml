@@ -1,13 +1,15 @@
 flow_id: "GA24"
-title: "Resume failed import"
+title: "Resume failed import — shows resume option when state exists"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin whose previous import was interrupted, when I visit
+  the import page, I expect to see a resume option so I can continue
+  from where the import left off instead of starting over.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  resume_option_visible_when_state_exists: true

@@ -1,13 +1,16 @@
 flow_id: "GA29"
-title: "WP-CLI operations"
+title: "WP-CLI operations — status + qa commands"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin using WP-CLI, when I run wp jetonomy status, I
+  expect to see the plugin version and table row counts. When I run
+  wp jetonomy qa, I expect structured output with no fatals.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  status_contains_version: true
+  status_contains_numbers: true
+  qa_no_fatal: true

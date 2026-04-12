@@ -5,9 +5,12 @@ priority: P1
 actor: space-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space admin, I visit the space edit page invite links tab, click
+  "Create" to generate a new invite link, and expect a DB row to be
+  written in wp_jt_invite_links for my space.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  invite_link_db_row_created: true
+  max_clicks_to_goal: 3

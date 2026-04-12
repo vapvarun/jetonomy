@@ -1,13 +1,16 @@
 flow_id: "X09"
-title: "Privacy Policy exporter/eraser"
+title: "GDPR exporter/eraser — privacy hooks registered"
 source: "design-spec"
 priority: P1
 actor: cross-cutting
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin complying with GDPR, I expect Jetonomy to register
+  personal data exporters and erasers with WordPress so user data
+  requests include forum content.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  exporter_filter_registered: true
+  eraser_filter_registered: true
+  jetonomy_exporter_in_list: true

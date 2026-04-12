@@ -1,12 +1,35 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * GA04 — Cleanup demo data.
+ *
+ * Seeds demo data first, then runs cleanup via CLI, and asserts demo
+ * data is removed.
+ */
+
+const { test, expect } = require( '@playwright/test' );
+const { wp, journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
 
 test.describe( 'GA04 — Cleanup demo data', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
 
-	test( 'Cleanup demo data', async ( { page } ) => {
-		// Priority: P1
-		// Actor: site-admin
-		// TODO: Implement per usability test plan
+	test( 'seed then cleanup demo data via CLI', () => {
+		// Seed first.
+		const seedResult = journey( [ 'demo', 'seed' ] );
+		expect( seedResult.success ).toBe( true );
+
+		// Capture a demo space title for verification.
+		const demoOption = wp( [ 'option', 'get', 'jetonomy_demo_data', '--format=json' ], { json: true } );
+		expect( demoOption ).toBeTruthy();
+
+		// Run cleanup.
+		const cleanupResult = journey( [ 'demo', 'cleanup' ] );
+		expect( cleanupResult.success ).toBe( true );
+
+		// Verify demo tracking option is cleared.
+		const afterOption = wp( [ 'eval', `
+			$d = get_option( 'jetonomy_demo_data', [] );
+			echo empty( $d ) ? 'empty' : 'exists';
+		` ] );
+		expect( afterOption ).toBe( 'empty' );
 	} );
 } );

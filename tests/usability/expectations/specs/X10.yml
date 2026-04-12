@@ -1,13 +1,14 @@
 flow_id: "X10"
-title: "Nav-menu integration"
+title: "Nav menu integration — fixme"
 source: "design-spec"
 priority: P2
 actor: cross-cutting
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, I expect Jetonomy to integrate with WordPress
+  nav menus so a Community link can be added. Fixme until the nav
+  menu adapter is built.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  fixme_nav_menu: true

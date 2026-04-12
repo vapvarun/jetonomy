@@ -5,9 +5,30 @@ priority: P0
 actor: moderator
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a moderator, I want to approve a flagged post from the moderation
+  queue so that the content remains published and the flag is marked as
+  resolved, signaling that the report was reviewed but no action needed.
+
+preconditions:
+  - A post by bob (user 4) with an active flag by alice (user 3)
+
+steps:
+  - Seed a post and flag via journey CLI
+  - Login as admin and navigate to /community/mod/
+  - Find the flagged item in the queue
+  - Click the Approve/Keep button
+  - Assert the item is removed from queue or shows resolved state
+  - Verify flag status is 'resolved' in wp_jt_flags
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  flagged_item_visible_in_queue: true
+  flag_resolved_after_approve: true
+  db_flag_status_resolved: true
+  max_clicks: 2
+  max_time_seconds: 10
+
+cleanup:
+  - Delete flag rows for the post
+  - Delete the seeded post

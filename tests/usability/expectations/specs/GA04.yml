@@ -5,9 +5,11 @@ priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, after seeding demo data, I run wp jetonomy demo
+  cleanup and expect all demo data to be removed and the
+  jetonomy_demo_data tracking option to be cleared.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  demo_data_removed: true
+  tracking_option_cleared: true

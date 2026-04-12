@@ -5,9 +5,37 @@ priority: P2
 actor: trusted
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a trusted member at TL3, I want to downvote posts without being
+  subject to rate limiting so that I can freely curate content quality
+  through voting.
+
+preconditions:
+  - alice (user 3) at TL3
+  - A post by bob (user 4) in the welcome space
+  - No existing vote by alice on the post
+
+steps:
+  - Set alice to TL3 via DB
+  - Seed a post by bob
+  - Clear existing votes by alice on the post
+  - Login as alice and navigate to the post
+  - Click the downvote button
+  - Assert the vote score decrements
+  - Assert the downvote button shows voted state
+  - Assert no rate limit error toast appears
+  - Verify vote row in DB with value=-1
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  vote_score_decremented: true
+  voted_class_applied: true
+  no_rate_limit_error: true
+  db_vote_row_exists: true
+  max_clicks: 1
+  max_time_seconds: 10
+
+cleanup:
+  - Delete vote rows for the post
+  - Delete the seeded post
+  - Reset alice trust_level to 1

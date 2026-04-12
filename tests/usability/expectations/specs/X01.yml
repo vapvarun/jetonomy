@@ -1,13 +1,14 @@
 flow_id: "X01"
-title: "BuddyPress profile tab merge"
+title: "BuddyPress profile tab — fixme if BP not active"
 source: "design-spec"
 priority: P2
 actor: cross-cutting
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a community member on a site with BuddyPress active, when I view
+  a member profile, I expect to see a Jetonomy tab showing their
+  forum activity. Fixme if BuddyPress is not active.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  bp_nav_item_registered_or_fixme: true

@@ -1,13 +1,15 @@
 flow_id: "GA20"
-title: "Flush rewrite rules manually"
+title: "Flush rewrite rules via CLI"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, when I run wp rewrite flush, I expect the command
+  to succeed and the Jetonomy /community/* rewrite rules to be present
+  in the rules list afterward.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  rewrite_flush_success: true
+  community_rules_present: true

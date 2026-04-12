@@ -1,13 +1,16 @@
 flow_id: "GA27"
-title: "Plugin deactivation"
+title: "Plugin deactivation — no fatal, reactivate succeeds"
 source: "design-spec"
 priority: P0
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, when I deactivate and reactivate Jetonomy via
+  WP-CLI, I expect no fatal errors and the plugin to return to
+  active status cleanly.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  deactivate_success: true
+  no_fatal_on_deactivation: true
+  reactivate_success: true

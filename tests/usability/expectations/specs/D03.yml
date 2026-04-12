@@ -3,11 +3,37 @@ title: "Create new tags inline"
 source: "design-spec"
 priority: P2
 actor: trusted
+status: fixme
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a trusted member at TL3, I want to create new tags inline while
+  editing a post so that I can categorize content more precisely without
+  needing to ask an admin to create tags first.
+
+preconditions:
+  - alice (user 3) at TL3
+  - A post by alice in the welcome space
+  - Tag creation UI present in the post editor
+
+steps:
+  - Set alice to TL3 via DB
+  - Seed a post by alice
+  - Login as alice and navigate to the post
+  - Open edit mode
+  - Type a new tag name in the tag input
+  - Press Enter to add the tag
+  - Save the edit
+  - Verify the tag was created in wp_jt_tags
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  tag_input_visible_in_editor: true
+  new_tag_created_in_db: true
+  max_clicks: 7
+  max_time_seconds: 20
+
+cleanup:
+  - Delete the seeded post
+  - Delete test tags from wp_jt_tags
+  - Reset alice trust_level to 1

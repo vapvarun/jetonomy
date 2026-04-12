@@ -5,9 +5,14 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, I visit /wp-admin/admin.php?page=jetonomy-users and
+  expect the user list table to render with trust level badges/selectors
+  and ban/suspend controls for each user.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  user_list_visible: true
+  trust_controls_visible: true
+  ban_controls_visible: true
+  no_php_fatal: true

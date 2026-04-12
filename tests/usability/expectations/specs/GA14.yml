@@ -1,13 +1,17 @@
 flow_id: "GA14"
-title: "Edit email settings tab"
+title: "Settings email tab — from_name / from_email / notification defaults"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, when I visit the Jetonomy Settings > Email tab,
+  I expect to see from_name, from_email, and notification default
+  fields so I can configure outgoing email appearance and behavior.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  from_name_field_visible: true
+  from_email_field_visible: true
+  notification_defaults_visible: true

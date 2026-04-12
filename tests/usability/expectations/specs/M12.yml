@@ -5,9 +5,29 @@ priority: P1
 actor: moderator
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a moderator, I want to silence a user so that they cannot create
+  new posts or replies but can still browse and read content, giving
+  them a cooling-off period without a full ban.
+
+preconditions:
+  - bob (user 4) exists and is not silenced
+  - No existing silence restriction row for bob
+
+steps:
+  - Clear any existing silence for bob
+  - Login as admin and navigate to bob's profile (/community/u/bob/)
+  - Find and click the Silence/Mute button
+  - Confirm if a dialog appears
+  - Verify a restriction row with type='silence' exists in wp_jt_restrictions
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  silence_button_visible: true
+  silence_confirmed: true
+  db_silence_restriction_created: true
+  max_clicks: 4
+  max_time_seconds: 10
+
+cleanup:
+  - Delete silence restriction row for bob

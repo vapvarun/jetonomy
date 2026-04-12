@@ -1,12 +1,21 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * X12 — Activity backfill (P2)
+ *
+ * Run `wp jetonomy backfill-activity` and assert success output.
+ * Pure CLI test.
+ */
 
-test.describe( 'X12 — Cron: activity backfill', () => {
-	test.skip( true, 'Not yet implemented — Phase 7' );
+const { test, expect } = require( '@playwright/test' );
+const { wp } = require( '../../helpers/wp-cli' );
 
-	test( 'Cron: activity backfill', async ( { page } ) => {
-		// Priority: P2
-		// Actor: cross-cutting
-		// TODO: Implement per usability test plan
+test.describe( 'X12 — Activity backfill CLI command', () => {
+
+	test( 'wp jetonomy backfill-activity runs without fatal', () => {
+		const output = wp( [ 'jetonomy', 'backfill-activity' ] );
+
+		// Command should complete and not contain a fatal error.
+		expect( output ).not.toMatch( /fatal/i );
+		expect( output.length ).toBeGreaterThan( 0 );
 	} );
 } );

@@ -1,12 +1,26 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * GA22 — Import from wpForo
+ *
+ * Visit the Jetonomy import page and assert the wpForo import option renders.
+ */
 
-test.describe( 'GA22 — Import from wpForo', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
+const { test, expect } = require( '@playwright/test' );
+const { autoLogin } = require( '../../helpers/auto-login' );
+const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 
-	test( 'Import from wpForo', async ( { page } ) => {
-		// Priority: P1
-		// Actor: site-admin
-		// TODO: Implement per usability test plan
+test.describe( 'GA22 — Import page shows wpForo import option', () => {
+
+	test( 'wpForo import option is visible on import page', async ( { page } ) => {
+		const metrics = new EaseMetrics( page );
+
+		await autoLogin( page, 1, '/wp-admin/admin.php?page=jetonomy-import' );
+		metrics.start();
+
+		// The import page should show a wpForo option.
+		const wpForoOption = page.locator( 'text=/wpforo/i' ).first();
+		await expect( wpForoOption ).toBeVisible( { timeout: 5000 } );
+
+		metrics.assertErrorCount( 0 );
 	} );
 } );

@@ -3,11 +3,34 @@ title: "Move post to another space"
 source: "design-spec"
 priority: P1
 actor: moderator
+status: fixme
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a moderator, I want to move a post from one space to another so
+  that misplaced content can be relocated to the correct space without
+  requiring the author to repost.
+
+preconditions:
+  - A post by bob (user 4) in the welcome space
+  - At least one other space exists
+
+steps:
+  - Seed a post by bob in the welcome space
+  - Login as admin and navigate to the post
+  - Open more-menu and click Move
+  - Select a target space from the picker
+  - Confirm the move
+  - Verify space_id changed in wp_jt_posts
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  move_button_visible: true
+  space_picker_appears: true
+  post_space_id_changed: true
+  max_clicks: 6
+  max_time_seconds: 15
+
+cleanup:
+  - Reset post space_id to original
+  - Delete the seeded post

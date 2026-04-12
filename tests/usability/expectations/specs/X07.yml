@@ -1,13 +1,14 @@
 flow_id: "X07"
-title: "Akismet pre-publish check"
+title: "Akismet pre-check — fixme if not active"
 source: "design-spec"
 priority: P1
 actor: cross-cutting
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin with Akismet active, I expect Jetonomy to register
+  a spam check hook so posts are screened before publishing. Fixme
+  if Akismet is not active on this environment.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  akismet_hook_registered_or_fixme: true

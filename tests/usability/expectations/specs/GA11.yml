@@ -5,9 +5,12 @@ priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, I visit the users page, find the trust level control
+  for a specific user, change their trust level, and expect the change
+  to persist in the database.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  trust_level_updated: true
+  max_clicks_to_goal: 3

@@ -5,9 +5,11 @@ priority: P2
 actor: space-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space admin of an ideas-type space, I visit the roadmap tab on
+  the space edit page and expect to see roadmap column configuration UI.
+  If no ideas space exists, this test is skipped with a FIXME.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  roadmap_tab_visible: true

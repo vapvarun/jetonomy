@@ -5,9 +5,33 @@ priority: P1
 actor: moderator
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a moderator, I want to dismiss a flag without taking any action on
+  the content so that false reports are resolved while the post remains
+  published and untouched.
+
+preconditions:
+  - A post by bob (user 4) with an active flag by alice (user 3)
+
+steps:
+  - Seed a post and flag via journey CLI
+  - Login as admin and navigate to /community/mod/
+  - Find the flagged item in the queue
+  - Click the Dismiss/Resolve button
+  - Assert the item is removed or shows resolved state
+  - Verify flag status is 'resolved' in wp_jt_flags
+  - Verify post status remains 'published' in wp_jt_posts
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  flagged_item_visible_in_queue: true
+  flag_resolved: true
+  post_still_published: true
+  db_flag_status_resolved: true
+  db_post_status_published: true
+  max_clicks: 2
+  max_time_seconds: 10
+
+cleanup:
+  - Delete flag rows for the post
+  - Delete the seeded post

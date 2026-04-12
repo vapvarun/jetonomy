@@ -5,9 +5,11 @@ priority: P1
 actor: space-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space admin, I create a sub-space with a parent_id referencing
+  an existing space. The new space should have its parent_id column
+  set correctly in wp_jt_spaces.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  sub_space_created: true
+  parent_id_correct: true

@@ -1,13 +1,16 @@
 flow_id: "GA16"
-title: "Edit Appearance tab"
+title: "Settings appearance tab — accent color + container width"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, when I visit the Jetonomy Settings > Appearance tab,
+  I expect to see accent color and container width fields so I can
+  customize the community look and feel to match my site design.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  accent_color_field_visible: true
+  container_width_field_visible: true

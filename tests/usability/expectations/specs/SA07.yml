@@ -5,9 +5,12 @@ priority: P1
 actor: space-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space admin, I visit the space edit page access rules tab and
+  expect to see the access rules form. If an Add Rule button exists,
+  I can create a rule with a trust level requirement and save it.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  access_rules_form_visible: true
+  max_clicks_to_goal: 5

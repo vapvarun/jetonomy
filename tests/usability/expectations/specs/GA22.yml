@@ -1,13 +1,15 @@
 flow_id: "GA22"
-title: "Import from wpForo"
+title: "Import page — wpForo option renders"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin migrating from wpForo, when I visit the Jetonomy
+  import page, I expect to see a wpForo import option so I can
+  begin migrating my existing forum data.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  wpforo_option_visible: true

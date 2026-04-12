@@ -5,9 +5,12 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, I visit /wp-admin/admin.php?page=jetonomy-moderation
+  and expect the flag queue table to render (or an empty-state message
+  if no flags exist) without errors.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  flag_queue_or_empty_state_visible: true
+  no_php_fatal: true

@@ -3,11 +3,32 @@ title: "IP ban"
 source: "design-spec"
 priority: P2
 actor: moderator
+status: fixme
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a moderator, I want to ban a specific IP address so that persistent
+  bad actors who create new accounts are blocked at the network level
+  from accessing the community.
+
+preconditions:
+  - IP ban management UI exists at /community/mod/
+  - No existing ban for the test IP (192.0.2.99)
+
+steps:
+  - Login as admin and navigate to /community/mod/
+  - Open the IP Bans tab or section
+  - Enter the IP address (192.0.2.99)
+  - Click Ban IP / Add button
+  - Verify a restriction row with type='ip_ban' and the IP exists in wp_jt_restrictions
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  ip_ban_ui_visible: true
+  ip_ban_created: true
+  db_ip_restriction_row_created: true
+  max_clicks: 4
+  max_time_seconds: 10
+
+cleanup:
+  - Delete ip_ban restriction row for test IP

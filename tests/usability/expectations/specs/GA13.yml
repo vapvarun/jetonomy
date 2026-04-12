@@ -1,13 +1,18 @@
 flow_id: "GA13"
-title: "Edit permissions tab"
+title: "Settings permissions tab — trust thresholds + rate limits"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, when I visit the Jetonomy Settings > Permissions tab,
+  I expect to see trust threshold fields and rate limit forms rendered
+  so I can configure who can do what based on trust levels.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  trust_threshold_section_visible: true
+  rate_limit_section_visible: true
+  threshold_inputs_present: true
+  rate_limit_inputs_present: true

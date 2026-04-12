@@ -1,12 +1,56 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * SA08 — Create a sub-space (P1).
+ *
+ * Creates a space with a parent_id via the journey CLI, then verifies the
+ * parent-child relationship is correct in the DB.
+ */
+
+const { test, expect } = require( '@playwright/test' );
+const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { assertDbRowExists } = require( '../../helpers/data-flow' );
 
 test.describe( 'SA08 — Create sub-space', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
 
-	test( 'Create sub-space', async ( { page } ) => {
-		// Priority: P1
-		// Actor: space-admin
-		// TODO: Implement per usability test plan
+	let parentSpaceId;
+	let childSpaceId;
+
+	test.beforeAll( () => {
+		const result = journey( [ 'space', 'list', '--limit=1' ] );
+		parentSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
+	} );
+
+	test.afterEach( () => {
+		if ( childSpaceId ) {
+			try {
+				journey( [ 'space', 'delete', String( childSpaceId ) ] );
+			} catch ( e ) { /* best effort */ }
+			childSpaceId = null;
+		}
+	} );
+
+	test( 'create a sub-space with parent_id via journey CLI', () => {
+		const title = `SA08 Sub-Space ${ Date.now() }`;
+
+		const result = journey( [
+			'space', 'create',
+			`--title=${ title }`,
+			'--type=forum',
+			`--parent_id=${ parentSpaceId }`,
+			'--category_id=1',
+		] );
+
+		expect( result.success ).toBe( true );
+		childSpaceId = result.data?.id ?? result.data?.space_id;
+		expect( childSpaceId ).toBeTruthy();
+
+		// Assert parent-child relationship in DB.
+		const rows = dbQuery(
+			`SELECT parent_id FROM wp_jt_spaces WHERE id = ${ childSpaceId }`
+		);
+		expect( rows[ 0 ] ).toBe( String( parentSpaceId ) );
+
+		// Assert row exists.
+		assertDbRowExists( 'wp_jt_spaces', `id = ${ childSpaceId } AND parent_id = ${ parentSpaceId }` );
 	} );
 } );

@@ -1,12 +1,24 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * GA28 — Plugin uninstall (P1)
+ *
+ * Destructive operation — skip actual uninstall. Instead, verify that
+ * uninstall.php exists so the plugin has a clean removal path.
+ */
 
-test.describe( 'GA28 — Plugin uninstall', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
+const { test, expect } = require( '@playwright/test' );
+const fs = require( 'fs' );
+const path = require( 'path' );
+const { WP_PATH } = require( '../../helpers/wp-cli' );
 
-	test( 'Plugin uninstall', async ( { page } ) => {
-		// Priority: P1
-		// Actor: site-admin
-		// TODO: Implement per usability test plan
+test.describe( 'GA28 — Plugin uninstall file exists', () => {
+
+	test( 'uninstall.php exists in the jetonomy plugin directory', () => {
+		const uninstallFile = path.join( WP_PATH, 'wp-content', 'plugins', 'jetonomy', 'uninstall.php' );
+		expect( fs.existsSync( uninstallFile ) ).toBe( true );
+	} );
+
+	test( 'actual uninstall is destructive — fixme', () => {
+		test.fixme( true, 'Actual uninstall is destructive — only file existence is verified' );
 	} );
 } );

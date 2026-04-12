@@ -1,12 +1,23 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * GA20 — Flush rewrite rules
+ *
+ * Use WP-CLI to flush rewrite rules and assert success. Pure CLI test.
+ */
 
-test.describe( 'GA20 — Flush rewrite rules manually', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
+const { test, expect } = require( '@playwright/test' );
+const { wp } = require( '../../helpers/wp-cli' );
 
-	test( 'Flush rewrite rules manually', async ( { page } ) => {
-		// Priority: P1
-		// Actor: site-admin
-		// TODO: Implement per usability test plan
+test.describe( 'GA20 — Flush rewrite rules via CLI', () => {
+
+	test( 'wp rewrite flush completes without error', () => {
+		const output = wp( [ 'rewrite', 'flush' ] );
+		expect( output ).toContain( 'Success' );
+	} );
+
+	test( 'community rewrite rules exist after flush', () => {
+		const rules = wp( [ 'rewrite', 'list', '--format=csv' ] );
+		// Jetonomy registers /community/* rewrite rules.
+		expect( rules ).toContain( 'community' );
 	} );
 } );

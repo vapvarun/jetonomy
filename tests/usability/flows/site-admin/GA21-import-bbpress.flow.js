@@ -1,12 +1,26 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * GA21 — Import from bbPress
+ *
+ * Visit the Jetonomy import page and assert the bbPress import option renders.
+ */
 
-test.describe( 'GA21 — Import from bbPress', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
+const { test, expect } = require( '@playwright/test' );
+const { autoLogin } = require( '../../helpers/auto-login' );
+const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 
-	test( 'Import from bbPress', async ( { page } ) => {
-		// Priority: P1
-		// Actor: site-admin
-		// TODO: Implement per usability test plan
+test.describe( 'GA21 — Import page shows bbPress import option', () => {
+
+	test( 'bbPress import option is visible on import page', async ( { page } ) => {
+		const metrics = new EaseMetrics( page );
+
+		await autoLogin( page, 1, '/wp-admin/admin.php?page=jetonomy-import' );
+		metrics.start();
+
+		// The import page should show a bbPress option (card, button, or heading).
+		const bbPressOption = page.locator( 'text=/bbpress/i' ).first();
+		await expect( bbPressOption ).toBeVisible( { timeout: 5000 } );
+
+		metrics.assertErrorCount( 0 );
 	} );
 } );

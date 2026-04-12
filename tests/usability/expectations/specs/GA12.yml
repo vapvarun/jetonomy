@@ -5,9 +5,14 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, I visit /wp-admin/admin.php?page=jetonomy-settings
+  and expect the General tab to be active with form fields for base_slug
+  and posts_per_page visible and editable.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  general_tab_visible: true
+  base_slug_field_visible: true
+  posts_per_page_field_visible: true
+  no_php_fatal: true

@@ -1,13 +1,17 @@
 flow_id: "GA19"
-title: "Configure rate limits"
+title: "Rate limits — values display on permissions tab"
 source: "design-spec"
 priority: P1
 actor: site-admin
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a site admin, when I visit the permissions tab, I expect to see
+  rate limit values for posts, replies, and votes with numeric inputs
+  pre-populated from the saved settings (or seeded defaults).
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  rate_limit_section_visible: true
+  rate_limit_inputs_count_greater_than_zero: true
+  rate_limits_exist_in_db: true

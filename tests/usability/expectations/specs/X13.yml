@@ -1,13 +1,15 @@
 flow_id: "X13"
-title: "Real-time updates (polling)"
+title: "Realtime polling — JS loads without errors"
 source: "design-spec"
 priority: P1
 actor: cross-cutting
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a community member visiting the community page, I expect the
+  Jetonomy polling/interactivity JavaScript to load without console
+  errors so real-time updates work.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  polling_js_loaded: true
