@@ -90,8 +90,9 @@ test.describe( 'Basecamp 9721640432 — posts per page setting', () => {
 		await autoLogin( page, 1, `/community/s/${ spaceSlug }/` );
 		metrics.start();
 
-		// Layer 3 — count the post cards on the page.
-		const postCards = page.locator( '.jt-post-row, .jt-post-card, [class*="jt-topic"], tr[data-post-id]' );
+		// Layer 3 — count the post cards on the page. The actual template
+		// class is `.jt-row` inside `.jt-topics` (see post-card.php:35).
+		const postCards = page.locator( '.jt-topics > .jt-row' );
 		const visibleCount = await postCards.count();
 
 		// Layer 5 — the visible count MUST equal the per-space setting,
@@ -109,7 +110,7 @@ test.describe( 'Basecamp 9721640432 — posts per page setting', () => {
 			space_setting_respected: visibleCount === postsPerPage,
 			global_default_does_not_override: visibleCount !== 20,
 			pagination_controls_visible_when_posts_exceed_limit: hasPagination > 0,
-			max_posts_displayed_equals_setting: visibleCount === postsPerPage,
+			posts_displayed_matches_setting: visibleCount === postsPerPage,
 			setting_change_reflects_on_next_page_load: true,
 			no_console_errors: metrics.consoleErrors.length === 0,
 		} );

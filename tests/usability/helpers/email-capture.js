@@ -100,10 +100,17 @@ function assertNoMailSent() {
  * Extract the first URL matching a pattern from a captured mail body.
  * Useful for verifying join-request emails point at admin.php, not the
  * frontend members page (the original bug in card 9725048839).
+ *
+ * Automatically decodes HTML entities (&#038; → &, &amp; → &) so the
+ * returned URL is usable as a raw page.goto() argument without the
+ * broken parameter separators that appear in HTML-formatted emails.
  */
 function extractUrl( mail, pattern ) {
 	const matches = mail.message.match( /https?:\/\/[^"\s<>]+/g ) || [];
-	return matches.find( ( url ) => {
+	const decoded = matches.map( ( url ) =>
+		url.replace( /&#0?38;/g, '&' ).replace( /&amp;/g, '&' )
+	);
+	return decoded.find( ( url ) => {
 		if ( typeof pattern === 'string' ) {
 			return url.includes( pattern );
 		}

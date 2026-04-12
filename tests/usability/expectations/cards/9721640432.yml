@@ -25,6 +25,6 @@ expectations:
   space_setting_respected: true
   global_default_does_not_override: true
   pagination_controls_visible_when_posts_exceed_limit: true
-  max_posts_displayed_equals_setting: true
+  posts_displayed_matches_setting: true
   setting_change_reflects_on_next_page_load: true
   no_console_errors: true
