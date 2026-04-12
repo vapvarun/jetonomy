@@ -1,0 +1,13 @@
+flow_id: "D05"
+title: "Edit others' replies"
+source: "design-spec"
+priority: P1
+actor: trusted
+
+user_story: |
+  TODO: Write the user story for this flow based on the design spec
+  and/or Basecamp cards.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true

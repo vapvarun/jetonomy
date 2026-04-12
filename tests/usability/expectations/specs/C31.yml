@@ -1,0 +1,13 @@
+flow_id: "C31"
+title: "Flag a post (all reasons)"
+source: "design-spec"
+priority: P0
+actor: member
+
+user_story: |
+  TODO: Write the user story for this flow based on the design spec
+  and/or Basecamp cards.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true

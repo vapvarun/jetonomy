@@ -1,0 +1,13 @@
+flow_id: "SA04"
+title: "Create an invite link"
+source: "design-spec"
+priority: P1
+actor: space-admin
+
+user_story: |
+  TODO: Write the user story for this flow based on the design spec
+  and/or Basecamp cards.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true

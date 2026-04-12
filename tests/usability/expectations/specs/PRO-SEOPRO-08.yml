@@ -1,0 +1,13 @@
+flow_id: "PRO-SEOPRO-08"
+title: "Admin SEO tab on space edit"
+source: "design-spec"
+priority: P1
+actor: pro-seo-pro
+
+user_story: |
+  TODO: Write the user story for this flow based on the design spec
+  and/or Basecamp cards.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true

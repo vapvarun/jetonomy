@@ -1,0 +1,13 @@
+flow_id: "SA09"
+title: "Configure roadmap columns"
+source: "design-spec"
+priority: P2
+actor: space-admin
+
+user_story: |
+  TODO: Write the user story for this flow based on the design spec
+  and/or Basecamp cards.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true

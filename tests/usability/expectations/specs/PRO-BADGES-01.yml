@@ -1,0 +1,13 @@
+flow_id: "PRO-BADGES-01"
+title: "Admin create badge"
+source: "design-spec"
+priority: P0
+actor: pro-badges
+
+user_story: |
+  TODO: Write the user story for this flow based on the design spec
+  and/or Basecamp cards.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
