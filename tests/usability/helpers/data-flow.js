@@ -1,6 +1,6 @@
 // @ts-check
 const { expect } = require( '@playwright/test' );
-const { wp, journey, proJourney, dbQuery } = require( './wp-cli' );
+const { wp, journey, proJourney, dbQuery, dbWrite } = require( './wp-cli' );
 
 /**
  * Layer 2 — Data Flow assertion helpers.

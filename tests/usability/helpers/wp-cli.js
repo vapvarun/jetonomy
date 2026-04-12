@@ -44,7 +44,21 @@ function wp( args, options = {} ) {
 		try {
 			return JSON.parse( stdout );
 		} catch ( parseErr ) {
-			throw new Error( `wp-cli returned non-JSON output for: wp ${ allArgs.join( ' ' ) }\n${ stdout }` );
+			// wp-cli commands often append "Success: ..." or "Warning: ..."
+			// after the JSON line. Extract the JSON portion by finding the
+			// first { or [ and the matching last } or ].
+			const first = stdout.search( /[{\[]/ );
+			const lastCurly = stdout.lastIndexOf( '}' );
+			const lastBracket = stdout.lastIndexOf( ']' );
+			const last = Math.max( lastCurly, lastBracket );
+			if ( first >= 0 && last > first ) {
+				try {
+					return JSON.parse( stdout.substring( first, last + 1 ) );
+				} catch ( innerErr ) {
+					// Fall through to the original error.
+				}
+			}
+			throw new Error( `wp-cli returned non-JSON output for: wp ${ allArgs.join( ' ' ) }\n${ stdout.substring( 0, 500 ) }` );
 		}
 	}
 	return stdout;
@@ -71,16 +85,30 @@ function proJourney( commandArgs ) {
 }
 
 /**
- * Execute a SELECT via `wp db query` and return stdout lines as an array.
- * Every argument is passed as a single argv entry so SQL strings with
- * spaces, quotes, and special characters round-trip safely.
+ * Execute a SELECT via `wp eval` using $wpdb, which knows the correct
+ * MySQL socket on Local by Flywheel (unlike `wp db query` which calls the
+ * raw mysql CLI binary and defaults to /tmp/mysql.sock).
  *
  * @param {string} sql
  * @returns {Array<string>}
  */
 function dbQuery( sql ) {
-	const output = wp( [ 'db', 'query', sql, '--skip-column-names' ] );
+	const escaped = sql.replace( /'/g, "\\'" );
+	const code = `global $wpdb; $rows = $wpdb->get_col( '${escaped}' ); echo implode( "\\n", $rows );`;
+	const output = wp( [ 'eval', code ] );
 	return output.split( '\n' ).filter( Boolean );
 }
 
-module.exports = { wp, journey, proJourney, dbQuery, WP_PATH };
+/**
+ * Execute a write statement (INSERT/UPDATE/DELETE) via `wp eval` + $wpdb.
+ *
+ * @param {string} sql
+ * @returns {string} stdout from wp eval
+ */
+function dbWrite( sql ) {
+	const escaped = sql.replace( /'/g, "\\'" );
+	const code = `global $wpdb; $wpdb->query( '${escaped}' ); echo $wpdb->rows_affected;`;
+	return wp( [ 'eval', code ] );
+}
+
+module.exports = { wp, journey, proJourney, dbQuery, dbWrite, WP_PATH };

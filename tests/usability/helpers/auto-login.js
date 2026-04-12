@@ -13,7 +13,8 @@
  * @param {string} [landingPath='/community/'] - Where to land after login.
  */
 async function autoLogin( page, userIdOrLogin, landingPath = '/community/' ) {
-	const urlWithAutoLogin = `${ landingPath }?autologin=${ userIdOrLogin }`;
+	const separator = landingPath.includes( '?' ) ? '&' : '?';
+	const urlWithAutoLogin = `${ landingPath }${ separator }autologin=${ userIdOrLogin }`;
 	await page.goto( urlWithAutoLogin );
 	// Wait for the redirect to strip the autologin param so we land on the
 	// canonical URL. This also guarantees the cookie is set.

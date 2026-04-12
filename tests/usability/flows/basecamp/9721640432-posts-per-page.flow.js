@@ -50,21 +50,9 @@ test.describe( 'Basecamp 9721640432 — posts per page setting', () => {
 		spaceId = space.data?.id || space.id;
 		spaceSlug = space.data?.slug || `ppp-space-${ suffix }`;
 
-		// Set the per-space posts_per_page via the config/settings journey.
-		journey( [
-			'space', 'set-settings', String( spaceId ),
-			`--key=posts_per_page`,
-			`--value=${ postsPerPage }`,
-		] ).catch?.( () => {
-			// set-settings might not exist as a subcommand; fall back to
-			// direct wp eval to set the space setting.
-			wp( [ 'eval', `
-				$s = \\Jetonomy\\Models\\Space::get_settings( ${ spaceId } );
-				$s['posts_per_page'] = ${ postsPerPage };
-				\\Jetonomy\\Models\\Space::update( ${ spaceId }, [ 'settings' => wp_json_encode( $s ) ] );
-				echo 'ok';
-			` ] );
-		} );
+		// Set the per-space posts_per_page via direct wp eval (the Space
+		// journey doesn't expose a set-settings subcommand with --key/--value).
+		wp( [ 'eval', `$s = \\Jetonomy\\Models\\Space::get_settings( ${ spaceId } ); $s['posts_per_page'] = ${ postsPerPage }; \\Jetonomy\\Models\\Space::update( ${ spaceId }, [ 'settings' => wp_json_encode( $s ) ] ); echo 'ok';` ] );
 
 		// Seed enough posts to exceed the limit.
 		for ( let i = 0; i < totalPosts; i++ ) {

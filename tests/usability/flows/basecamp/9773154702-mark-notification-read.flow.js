@@ -17,7 +17,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbColumn } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { loadExpectation, matchDelivery } = require( '../../helpers/expectation-matcher' );
@@ -54,12 +54,9 @@ test.describe( 'Basecamp 9773154702 — mark individual notification as read on 
 	} );
 
 	test.afterEach( () => {
-		// Reset every row the scenario created so the next test run starts
-		// clean. Scenario cleanup would also work but this is faster for a
-		// single targeted test.
 		if ( seededNotifIds.length > 0 ) {
 			const idList = seededNotifIds.map( ( id ) => parseInt( id, 10 ) ).join( ',' );
-			dbQuery( `DELETE FROM wp_jt_notifications WHERE id IN (${ idList })` );
+			dbWrite( `DELETE FROM wp_jt_notifications WHERE id IN (${ idList })` );
 		}
 		seededNotifIds = [];
 	} );
@@ -125,7 +122,11 @@ test.describe( 'Basecamp 9773154702 — mark individual notification as read on 
 		assertDbColumn( 'wp_jt_notifications', notifId, 'is_read', 1 );
 
 		// Layer 3 — clicked item should no longer have .unread class.
-		await expect( firstUnread ).not.toHaveClass( /\bunread\b/, { timeout: 5000 } );
+		// Use the ID-pinned locator, NOT the live `firstUnread` locator,
+		// because the original .unread:first re-resolves to the NEXT item
+		// after the class is removed from the clicked one.
+		const clickedItem = page.locator( `[data-jt-notif-id="${ notifId }"]` );
+		await expect( clickedItem ).not.toHaveClass( /\bunread\b/, { timeout: 5000 } );
 
 		// Layer 3 — badge count should have decremented by exactly 1.
 		const badgeAfterText = ( await badge.textContent() )?.trim() ?? '0';
