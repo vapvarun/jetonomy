@@ -5,9 +5,13 @@ priority: P2
 actor: registered
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a registered user (bob) who is not a member of an invite-only space,
+  when I visit that space, I expect to see an "Invite Only" badge or an
+  access-denied message. I should not be able to view the space's content
+  without an invitation.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  invite_only_indicator_visible: true
+  content_access_denied: true

@@ -5,9 +5,13 @@ priority: P1
 actor: anonymous
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an anonymous visitor, when I navigate to /wp-login.php?action=lostpassword,
+  I expect to see the lost password form with a username/email input field
+  and a submit button.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  lost_password_form_visible: true
+  user_input_present: true
+  submit_button_present: true

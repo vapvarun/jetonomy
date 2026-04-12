@@ -5,9 +5,12 @@ priority: P0
 actor: anonymous
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an anonymous visitor, when I navigate to a single post URL, I expect
+  to see the post body rendered along with any replies. The page should
+  not return a 404 and should have no JavaScript errors.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  post_body_visible: true
+  page_not_404: true

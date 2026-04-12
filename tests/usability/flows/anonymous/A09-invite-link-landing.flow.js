@@ -1,12 +1,42 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * A09 — Invite link landing page (anonymous).
+ *
+ * Checks if an invite link exists in the DB. If so, visits it and asserts
+ * the invite landing page renders. If no invites exist, the test is skipped.
+ */
+
+const { test, expect } = require( '@playwright/test' );
+const { dbQuery } = require( '../../helpers/wp-cli' );
+const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+
+const SITE = 'http://forums.local';
 
 test.describe( 'A09 — Land on invite link', () => {
-	test.skip( true, 'Not yet implemented — Phase 5' );
 
-	test( 'Land on invite link', async ( { page } ) => {
-		// Priority: P1
-		// Actor: anonymous
-		// TODO: Implement per usability test plan
+	let inviteCode;
+
+	test.beforeAll( () => {
+		const codes = dbQuery( 'SELECT code FROM wp_jt_invite_links WHERE is_active = 1 LIMIT 1' );
+		inviteCode = ( codes.length > 0 && codes[ 0 ] ) ? codes[ 0 ] : null;
+	} );
+
+	test( 'anonymous visitor sees invite landing page', async ( { page } ) => {
+		test.skip( ! inviteCode, 'No active invite links in the database' );
+
+		const metrics = new EaseMetrics( page );
+		metrics.start();
+
+		await page.goto( `${ SITE }/community/invite/${ inviteCode }/` );
+
+		// Page renders without a 404.
+		const title = await page.title();
+		expect( title ).not.toContain( '404' );
+
+		// The invite landing page has some call to action or info.
+		const container = page.locator( '.jt-app, .jt-container, .jt-invite, .jt-invite-landing' );
+		await expect( container.first() ).toBeVisible( { timeout: 8000 } );
+
+		metrics.assertErrorCount( 0 );
 	} );
 } );

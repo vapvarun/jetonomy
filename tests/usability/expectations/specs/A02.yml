@@ -5,9 +5,12 @@ priority: P0
 actor: anonymous
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an anonymous visitor, when I navigate to /community/category/community/,
+  I expect to see the category page with space cards rendered inside it.
+  The page should not be a 404 and should have at least one space listed.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  community_container_visible: true
+  space_cards_present: true

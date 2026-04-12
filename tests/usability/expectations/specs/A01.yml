@@ -5,9 +5,14 @@ priority: P0
 actor: anonymous
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an anonymous visitor, when I navigate to /community/, I expect to see
+  the community home page with a two-column layout, space listings, and
+  no JavaScript errors. The page should render correctly on both desktop
+  and 390px mobile viewports.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  community_container_visible: true
+  space_listings_present: true
+  renders_at_390px: true

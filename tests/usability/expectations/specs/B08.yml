@@ -5,9 +5,13 @@ priority: P2
 actor: registered
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a registered user (bob), when I view a post, I expect to find a
+  bookmark/save button that lets me save the post for later reference.
+  The button should be visible and enabled. If the bookmark feature is
+  not yet implemented, the test is marked as fixme.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  bookmark_button_visible: true
+  bookmark_button_enabled: true

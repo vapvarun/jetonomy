@@ -5,9 +5,12 @@ priority: P1
 actor: anonymous
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an anonymous visitor, when I navigate to /community/u/admin/, I expect
+  to see the user's public profile with their display name, avatar image,
+  and activity stats visible.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  profile_info_visible: true
+  avatar_visible: true

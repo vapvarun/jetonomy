@@ -1,13 +1,17 @@
 flow_id: "A10"
-title: "Attempt gated action → login wall"
+title: "Attempt gated action -> login wall"
 source: "design-spec"
 priority: P0
 actor: anonymous
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an anonymous visitor viewing a space, when I attempt a write action
+  (vote, reply, create post), I expect the UI to show a login prompt or
+  redirect me to the WordPress login page. Write actions should not be
+  available to unauthenticated users.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  write_actions_gated: true
+  login_prompt_or_redirect: true

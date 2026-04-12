@@ -1,13 +1,16 @@
 flow_id: "B01"
-title: "First login → community redirect"
+title: "First login -> community redirect"
 source: "design-spec"
 priority: P0
 actor: registered
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a registered user (bob), when I log in and visit /wp-admin/, I expect
+  to see the admin bar and find a community navigation link that lets me
+  access the forum without manually typing URLs.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  admin_bar_visible: true
+  community_link_accessible: true
