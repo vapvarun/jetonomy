@@ -1,0 +1,34 @@
+card_id: "9725048839"
+title: "No Admin Screen or Email Notification for Space Join Requests"
+basecamp_url: "https://3.basecamp.com/5798509/buckets/46596502/card_tables/cards/9725048839"
+fixed_in_commit: "90a3f12, e48216a"
+
+user_story: |
+  As a space admin, when a user submits a join request to my approval-
+  policy space, I expect to receive an email whose link takes me directly
+  to the admin Join Requests tab where I can approve or deny. I should
+  NOT be sent to the frontend members page. Also, if I change the space
+  from approval to open while pending requests still exist, the Join
+  Requests tab must remain visible so I can resolve the orphaned requests.
+
+reported_symptom: |
+  "Email link points at /community/s/{slug}/members/ (frontend). Admin
+  lands there and sees only current members — no way to approve/deny.
+  Also, if join_policy is changed from approval to open, the Join Requests
+  tab disappears entirely even when pending rows still exist in the DB."
+
+root_cause: |
+  class-notifier.php:574 built the URL from base_url + /s/ + slug +
+  /members/ instead of admin_url(). space-edit.php:28 only showed the
+  tab when join_policy === 'approval' with no fallback for !empty($join_requests).
+
+expectations:
+  email_url_points_to_admin: true
+  email_url_contains_tab_join_requests: true
+  email_url_does_not_contain_members_frontend: true
+  admin_tab_visible_when_policy_approval: true
+  admin_tab_visible_when_policy_changed_but_pending_exist: true
+  approve_button_works_on_admin_page: true
+  max_clicks_from_email_to_approve: 2
+  max_time_to_goal_seconds: 10
+  no_console_errors: true
