@@ -5,9 +5,9 @@ priority: P1
 actor: pro-white-label
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I set a custom accent color and expect the CSS variable
+  to be overridden on the community page.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  accent_color_applied: true

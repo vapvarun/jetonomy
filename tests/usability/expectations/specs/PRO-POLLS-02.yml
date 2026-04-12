@@ -5,9 +5,13 @@ priority: P0
 actor: pro-polls
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member viewing a post with a single-choice poll, I can select one
+  option, click vote, and see the results with my vote persisted.
 
 expectations:
-  flow_completes_without_error: true
+  poll_widget_visible: true
+  vote_persisted_to_db: true
+  results_displayed_after_vote: true
   no_console_errors: true
+  max_clicks_to_goal: 2
+  max_time_to_goal_seconds: 10

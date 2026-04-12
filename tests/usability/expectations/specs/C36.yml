@@ -5,9 +5,12 @@ priority: P2
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member browsing a thread, when I hover over a user's name or
+  avatar, I expect a hover card to appear showing their display name,
+  avatar, trust level, and a summary of their community activity.
+  (Currently fixme: conditional on user links existing.)
 
 expectations:
-  flow_completes_without_error: true
+  user_link_found: true
+  hover_card_appears: true
   no_console_errors: true

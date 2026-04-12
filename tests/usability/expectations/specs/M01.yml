@@ -5,19 +5,14 @@ priority: P0
 actor: moderator
 
 user_story: |
-  As a moderator (admin), I want to open the moderation queue at
-  /community/mod/ so that I can review flagged content, pending items,
-  and take action on reported posts and replies.
+  As a moderator, I navigate to /community/mod/ and expect to see all
+  pending flags listed in the queue. The number of displayed flag items
+  must match the count of pending flags in wp_jt_flags. If the queue shows
+  fewer items than exist in the database, flagged content could go
+  unreviewed. I should reach the queue in zero clicks from the URL.
 
 preconditions:
   - Admin user (id=1) exists
-
-steps:
-  - Login as admin (user 1)
-  - Navigate to /community/mod/
-  - Assert the mod queue container renders
-  - Assert a heading is visible
-  - Assert no Access Denied or 404 message
 
 expectations:
   flow_completes_without_error: true
@@ -25,5 +20,6 @@ expectations:
   queue_container_visible: true
   no_access_denied: true
   no_404: true
+  flag_count_consistent_with_db: true
   max_clicks: 0
   max_time_seconds: 5

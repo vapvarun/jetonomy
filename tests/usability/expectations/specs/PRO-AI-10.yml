@@ -5,9 +5,10 @@ priority: P1
 actor: pro-ai
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I visit the AI settings tab and expect to see Anthropic
+  provider configuration fields.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  anthropic_fields_visible: true

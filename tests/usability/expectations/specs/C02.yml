@@ -5,9 +5,16 @@ priority: P0
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member of a Q&A space, when I fill in the question title and body
+  on the new-post form and submit, I expect the question to be saved in
+  the database, the browser to redirect to the new question page, and the
+  form heading to confirm I am asking a question (not a discussion post).
 
 expectations:
-  flow_completes_without_error: true
+  question_created_in_db: true
+  navigated_to_question_url: true
+  form_heading_says_question: true
+  title_visible_on_page: true
   no_console_errors: true
+  max_clicks_to_publish: 5
+  max_time_to_goal_seconds: 15

@@ -11,6 +11,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C08 — Reply to a post (flat)', () => {
 
@@ -78,6 +79,15 @@ test.describe( 'C08 — Reply to a post (flat)', () => {
 		}
 
 		assertDbRowExists( 'wp_jt_replies', `post_id = ${ postId } AND author_id = 3` );
+
+		const expectation = loadSpec( 'C08' );
+		matchDelivery( expectation, {
+			reply_visible_in_thread: true,
+			reply_created_in_db: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_reply: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

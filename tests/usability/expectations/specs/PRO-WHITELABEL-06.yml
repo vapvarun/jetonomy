@@ -5,9 +5,10 @@ priority: P2
 actor: pro-white-label
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I set a custom admin menu label and expect the WordPress
+  sidebar to show the custom label instead of "Jetonomy".
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  custom_menu_label_visible: true

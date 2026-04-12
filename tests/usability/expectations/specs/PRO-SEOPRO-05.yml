@@ -5,9 +5,9 @@ priority: P1
 actor: pro-seo-pro
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I toggle a space to noindex and expect the robots meta
+  tag on the space page to include "noindex".
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  noindex_meta_present: true

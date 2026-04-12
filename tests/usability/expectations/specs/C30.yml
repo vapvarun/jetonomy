@@ -5,9 +5,11 @@ priority: P2
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member who has bookmarked a post, when I click the Remove Bookmark
+  button on the post page, I expect the bookmark to be deleted from the
+  database and the post to no longer appear on my Bookmarks tab.
+  (Currently fixme: bookmark button not found.)
 
 expectations:
-  flow_completes_without_error: true
+  bookmark_removed_from_db: true
   no_console_errors: true

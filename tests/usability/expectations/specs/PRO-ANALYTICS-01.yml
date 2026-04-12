@@ -5,9 +5,14 @@ priority: P0
 actor: pro-analytics
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I navigate to the analytics dashboard page and expect
+  to see an overview widget with stats cards and chart containers
+  rendering without error.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  dashboard_renders: true
+  stats_widget_visible: true
+  max_clicks_to_goal: 0
+  max_time_to_goal_seconds: 5

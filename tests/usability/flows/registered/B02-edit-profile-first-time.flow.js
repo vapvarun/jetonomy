@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -34,6 +35,13 @@ test.describe( 'B02 — Edit own profile first time', () => {
 		const textInput = page.locator( 'form input[type="text"], form textarea' );
 		const count = await textInput.count();
 		expect( count ).toBeGreaterThanOrEqual( 1 );
+
+		const expectation = loadSpec( 'B02' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			form_fields_visible: count >= 1,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

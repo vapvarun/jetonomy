@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -39,6 +40,12 @@ test.describe( 'A11 — Register new account', () => {
 			const emailField = page.locator( '#user_email' );
 			await expect( emailField ).toBeVisible();
 		}
+
+		const expectation = loadSpec( 'A11' );
+		matchDelivery( expectation, {
+			page_renders: formVisible || messageVisible,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

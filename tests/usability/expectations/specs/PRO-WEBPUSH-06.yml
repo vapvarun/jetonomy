@@ -5,9 +5,10 @@ priority: P1
 actor: pro-web-push
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  A single user can have multiple push subscriptions (one per device).
+  Both subscriptions should coexist in the database.
 
 expectations:
-  flow_completes_without_error: true
+  multiple_subscriptions_allowed: true
+  both_subscriptions_in_db: true
   no_console_errors: true

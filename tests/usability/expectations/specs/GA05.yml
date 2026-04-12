@@ -5,9 +5,10 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  As a site admin, I visit /wp-admin/admin.php?page=jetonomy and expect
-  the dashboard to render with at least one widget/stat card and no
-  PHP fatals or console errors.
+  As a site admin, I visit the Jetonomy dashboard and expect to see stat
+  cards showing post, reply, user, and space counts. These numbers must
+  reflect the actual database row counts so I can trust the dashboard as
+  a source of truth for community health at a glance.
 
 expectations:
   flow_completes_without_error: true
@@ -15,3 +16,5 @@ expectations:
   dashboard_renders: true
   widgets_visible: true
   no_php_fatal: true
+  db_counts_valid: true
+  stat_values_numeric: true

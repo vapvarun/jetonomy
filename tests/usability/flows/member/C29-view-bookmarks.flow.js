@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C29 — View own bookmarks', () => {
 
@@ -61,6 +62,15 @@ test.describe( 'C29 — View own bookmarks', () => {
 
 		// The seeded post title should appear.
 		await expect( page.locator( '.jt-topics' ) ).toContainText( 'C29 Bookmarked Post' );
+
+		const expectation = loadSpec( 'C29' );
+		matchDelivery( expectation, {
+			bookmarks_tab_active: true,
+			bookmarked_posts_listed: rowCount > 0,
+			seeded_post_title_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );
 		metrics.assertErrorCount( 0 );

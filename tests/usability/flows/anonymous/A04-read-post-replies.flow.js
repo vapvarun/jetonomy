@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { wp } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -48,6 +49,13 @@ test.describe( 'A04 — Read a single post + replies', () => {
 		const hasReplies = await repliesSection.count() > 0;
 		// We don't fail if there are no replies — the post may not have any.
 		// But the page itself must load cleanly.
+
+		const expectation = loadSpec( 'A04' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			post_body_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

@@ -5,9 +5,12 @@ priority: P0
 actor: composite
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a visitor, loading a space page should render SEO meta tags,
+  white-label branding, and custom fields from their respective
+  extensions.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  seo_meta_rendered: true
+  branding_rendered: true

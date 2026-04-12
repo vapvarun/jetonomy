@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { wp } = require( '../../helpers/wp-cli' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'X08 — Shortcode [jetonomy_home] renders', () => {
 
@@ -62,6 +63,12 @@ test.describe( 'X08 — Shortcode [jetonomy_home] renders', () => {
 		// The shortcode output should contain Jetonomy markup.
 		const jtContent = page.locator( '.jt-app, .jetonomy-home, [class*="jetonomy"], [class*="jt-"]' ).first();
 		await expect( jtContent ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'X08' );
+		matchDelivery( expectation, {
+			shortcode_renders_content: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

@@ -7,6 +7,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -29,6 +30,12 @@ test.describe( 'A07 — View leaderboard', () => {
 		// Leaderboard content — a table, list, or user rows.
 		const leaderboard = page.locator( '.jt-leaderboard, table, .jt-user-row, .jt-lb-row, .jt-row' );
 		await expect( leaderboard.first() ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'A07' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C26 — Subscribe to a post', () => {
 
@@ -71,6 +72,15 @@ test.describe( 'C26 — Subscribe to a post', () => {
 			);
 			return parseInt( rows[ 0 ], 10 );
 		}, { timeout: 5000, intervals: [ 100, 200, 500 ] } ).toBeGreaterThan( 0 );
+
+		const expectation = loadSpec( 'C26' );
+		matchDelivery( expectation, {
+			button_toggles_to_following: true,
+			subscription_row_created: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_subscribe: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 1 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

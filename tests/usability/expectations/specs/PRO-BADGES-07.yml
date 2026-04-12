@@ -5,9 +5,10 @@ priority: P2
 actor: pro-badges
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  A repeatable badge can be awarded to the same user multiple times.
+  Each award creates a new row in wp_jt_pro_user_badges.
 
 expectations:
-  flow_completes_without_error: true
+  multiple_award_rows: true
+  count_matches_awards: true
   no_console_errors: true

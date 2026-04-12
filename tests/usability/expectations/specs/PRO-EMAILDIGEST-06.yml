@@ -5,9 +5,12 @@ priority: P1
 actor: pro-email-digest
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I can click "Send Test Digest" on the settings page to
+  receive a sample digest email for verification purposes.
 
 expectations:
-  flow_completes_without_error: true
+  test_button_visible: true
+  test_email_sent: true
+  success_notice_shown: true
   no_console_errors: true
+  max_clicks_to_goal: 1

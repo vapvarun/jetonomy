@@ -37,6 +37,7 @@ const yaml = require( 'js-yaml' );
  */
 
 const EXPECTATIONS_DIR = path.resolve( __dirname, '../expectations/cards' );
+const SPECS_DIR = path.resolve( __dirname, '../expectations/specs' );
 
 /**
  * Load an expectation YAML by card ID.
@@ -45,6 +46,22 @@ function loadExpectation( cardId ) {
 	const file = path.join( EXPECTATIONS_DIR, `${ cardId }.yml` );
 	if ( ! fs.existsSync( file ) ) {
 		throw new Error( `ExpectationMatcher: no expectation file at ${ file }` );
+	}
+	const content = fs.readFileSync( file, 'utf8' );
+	const parsed = yaml.load( content );
+	if ( ! parsed || typeof parsed !== 'object' ) {
+		throw new Error( `ExpectationMatcher: failed to parse ${ file }` );
+	}
+	return parsed;
+}
+
+/**
+ * Load a spec expectation YAML by flow ID (e.g. 'GA02', 'C24', 'M01').
+ */
+function loadSpec( flowId ) {
+	const file = path.join( SPECS_DIR, `${ flowId }.yml` );
+	if ( ! fs.existsSync( file ) ) {
+		throw new Error( `ExpectationMatcher: no spec file at ${ file }` );
 	}
 	const content = fs.readFileSync( file, 'utf8' );
 	const parsed = yaml.load( content );
@@ -96,7 +113,9 @@ function matchDelivery( expectation, delivered ) {
 	}
 
 	if ( mismatches.length > 0 ) {
-		const cardRef = expectation.card_id ? `Basecamp ${ expectation.card_id }` : '(no card id)';
+		const cardRef = expectation.card_id
+			? `Basecamp ${ expectation.card_id }`
+			: ( expectation.flow_id ? `Flow ${ expectation.flow_id }` : '(no id)' );
 		const title = expectation.title || '(untitled)';
 		throw new Error(
 			`ExpectationMatcher: user expectation not met for ${ cardRef }: "${ title }"\n\n`
@@ -106,4 +125,4 @@ function matchDelivery( expectation, delivered ) {
 	}
 }
 
-module.exports = { loadExpectation, matchDelivery, EXPECTATIONS_DIR };
+module.exports = { loadExpectation, loadSpec, matchDelivery, EXPECTATIONS_DIR, SPECS_DIR };

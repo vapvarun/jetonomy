@@ -5,9 +5,12 @@ priority: P1
 actor: pro-reactions
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I can navigate to the reactions settings page and customize
+  which emojis are available for reactions. Changes persist after save.
 
 expectations:
-  flow_completes_without_error: true
+  config_page_visible: true
+  emoji_toggles_work: true
+  settings_persist_after_save: true
   no_console_errors: true
+  max_clicks_to_goal: 3

@@ -5,9 +5,14 @@ priority: P0
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As the author of a post, when I open the more-menu and click Edit, I
+  expect an inline editor to appear where I can change the title. After
+  saving, the updated title should immediately appear on the page without
+  requiring a manual refresh.
 
 expectations:
-  flow_completes_without_error: true
+  edit_mode_opens: true
+  updated_title_visible: true
   no_console_errors: true
+  max_clicks_to_save: 6
+  max_time_to_goal_seconds: 15

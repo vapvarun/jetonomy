@@ -5,9 +5,13 @@ priority: P0
 actor: pro-email-digest
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  Each digest email contains an unsubscribe link. Clicking it navigates
+  to a page that confirms the digest is disabled, and the user's frequency
+  is set to 'none'.
 
 expectations:
-  flow_completes_without_error: true
+  unsubscribe_link_present: true
+  clicking_link_disables_digest: true
+  frequency_set_to_none: true
   no_console_errors: true
+  max_clicks_to_goal: 0

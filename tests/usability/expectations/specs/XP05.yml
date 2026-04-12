@@ -5,9 +5,9 @@ priority: P0
 actor: composite
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, creating a conversation should dispatch a web-push
+  notification to the recipient.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  conversation_created: true

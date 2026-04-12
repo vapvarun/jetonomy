@@ -5,9 +5,12 @@ priority: P2
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a logged-in member, when I visit a post I have not read before, I
+  expect the system to passively track my visit by creating a row in
+  wp_jt_read_status so the post no longer shows as unread in listings.
 
 expectations:
-  flow_completes_without_error: true
+  read_status_row_created: true
+  post_page_renders: true
   no_console_errors: true
+  max_time_to_goal_seconds: 10

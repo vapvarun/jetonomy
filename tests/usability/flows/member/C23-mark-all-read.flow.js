@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C23 — Mark all notifications read', () => {
 
@@ -80,6 +81,16 @@ test.describe( 'C23 — Mark all notifications read', () => {
 			const rows = dbQuery( 'SELECT COUNT(*) FROM wp_jt_notifications WHERE user_id = 1 AND is_read = 0' );
 			return parseInt( rows[ 0 ], 10 );
 		}, { timeout: 5000, intervals: [ 100, 200, 500 ] } ).toBe( 0 );
+
+		const expectation = loadSpec( 'C23' );
+		matchDelivery( expectation, {
+			badge_removed: true,
+			all_items_marked_read_in_ui: true,
+			all_rows_marked_read_in_db: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_mark_all: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		// Ease metrics.
 		metrics.assertClickCount( { lessThanOrEqual: 2 } );

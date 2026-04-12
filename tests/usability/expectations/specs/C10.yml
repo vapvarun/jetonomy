@@ -5,9 +5,14 @@ priority: P2
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member reading a reply, when I click the "Quote" button, I expect
+  the reply text to be inserted as a blockquote into the composer. After
+  I type additional text and submit, the new reply should contain both
+  the quoted text and my response.
 
 expectations:
-  flow_completes_without_error: true
+  composer_populated_with_quote: true
+  quoted_reply_submitted: true
   no_console_errors: true
+  max_clicks_to_reply: 5
+  max_time_to_goal_seconds: 15

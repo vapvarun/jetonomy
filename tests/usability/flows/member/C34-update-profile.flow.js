@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C34 — Update own bio/avatar', () => {
 
@@ -72,6 +73,16 @@ test.describe( 'C34 — Update own bio/avatar', () => {
 		// Data flow: verify in DB.
 		const dbBio = dbQuery( `SELECT bio FROM wp_jt_user_profiles WHERE user_id = ${ testUserId }` );
 		expect( dbBio[ 0 ] ).toContain( 'C34 test bio' );
+
+		const expectation = loadSpec( 'C34' );
+		matchDelivery( expectation, {
+			bio_form_visible: true,
+			bio_saved_in_db: true,
+			bio_visible_on_profile: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_save: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

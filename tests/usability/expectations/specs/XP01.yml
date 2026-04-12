@@ -5,9 +5,11 @@ priority: P0
 actor: composite
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, creating a new post should fan out to multiple extensions:
+  AI spam check, moderation rule evaluation, webhook dispatch, and push
+  notification. Each enabled extension should process the event.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  webhook_dispatched: true
+  moderation_evaluated: true

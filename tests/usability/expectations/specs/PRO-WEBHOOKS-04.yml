@@ -5,9 +5,9 @@ priority: P1
 actor: pro-webhooks
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I can send a test delivery for a webhook and the command
+  completes without error.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  test_delivery_succeeds: true

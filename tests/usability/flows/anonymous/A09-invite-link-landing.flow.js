@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -36,6 +37,12 @@ test.describe( 'A09 — Land on invite link', () => {
 		// The invite landing page has some call to action or info.
 		const container = page.locator( '.jt-app, .jt-container, .jt-invite, .jt-invite-landing' );
 		await expect( container.first() ).toBeVisible( { timeout: 8000 } );
+
+		const expectation = loadSpec( 'A09' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

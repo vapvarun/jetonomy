@@ -5,9 +5,11 @@ priority: P1
 actor: pro-fields
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  When a user has custom profile field values, they display on their
+  public profile page with label and value.
 
 expectations:
-  flow_completes_without_error: true
+  profile_field_label_visible: true
+  profile_field_value_visible: true
   no_console_errors: true
+  max_clicks_to_goal: 0

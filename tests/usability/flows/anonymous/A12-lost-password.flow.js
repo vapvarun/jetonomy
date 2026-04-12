@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -30,6 +31,13 @@ test.describe( 'A12 — Lost password flow', () => {
 		// Submit button is present.
 		const submitButton = page.locator( '#wp-submit, input[type="submit"]' );
 		await expect( submitButton.first() ).toBeVisible();
+
+		const expectation = loadSpec( 'A12' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			form_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

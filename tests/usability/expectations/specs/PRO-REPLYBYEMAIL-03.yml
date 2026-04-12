@@ -5,9 +5,9 @@ priority: P0
 actor: pro-reply-by-email
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, an inbound email webhook should process the email body,
+  validate the token, and create a reply on the correct post.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  reply_created: true

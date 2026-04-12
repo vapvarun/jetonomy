@@ -5,9 +5,11 @@ priority: P0
 actor: pro-fields
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member creating a new post, custom fields defined for posts appear
+  in the form. I can fill them and the values are stored in wp_jt_pro_field_values.
 
 expectations:
-  flow_completes_without_error: true
+  custom_field_visible_on_form: true
+  field_value_persisted: true
   no_console_errors: true
+  max_clicks_to_goal: 2

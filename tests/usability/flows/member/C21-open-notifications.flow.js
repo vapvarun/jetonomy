@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C21 — Open in-app notifications', () => {
 
@@ -78,6 +79,18 @@ test.describe( 'C21 — Open in-app notifications', () => {
 		// The "Mark all read" button should be present.
 		const markAllBtn = panel.locator( '.jt-notif-mark-read' );
 		await expect( markAllBtn ).toBeVisible();
+
+		const expectation = loadSpec( 'C21' );
+		matchDelivery( expectation, {
+			bell_icon_visible: true,
+			panel_opens_on_click: true,
+			notification_items_loaded: itemCount > 0,
+			view_all_link_present: true,
+			mark_all_read_button_present: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_open: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		// Ease metrics.
 		metrics.assertClickCount( { lessThanOrEqual: 1 } );

@@ -5,9 +5,13 @@ priority: P1
 actor: pro-polls
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As the post author, I can manually close a poll. Once closed, other
+  members can no longer vote, the DB status flips to 'closed', and a
+  "Closed" label is displayed.
 
 expectations:
-  flow_completes_without_error: true
+  poll_status_closed_in_db: true
+  vote_button_hidden_for_others: true
+  closed_label_visible: true
   no_console_errors: true
+  max_clicks_to_goal: 1

@@ -5,9 +5,11 @@ priority: P1
 actor: pro-fields
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  A select-type custom field should only show the allowed options defined
+  by the admin. No additional options should appear in the dropdown.
 
 expectations:
-  flow_completes_without_error: true
+  dropdown_shows_allowed_options: true
+  option_count_matches_config: true
   no_console_errors: true
+  max_clicks_to_goal: 0

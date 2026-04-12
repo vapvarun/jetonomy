@@ -5,9 +5,12 @@ priority: P1
 actor: pro-messaging
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member, I can compose a message to multiple recipients (bob and admin)
+  to create a group conversation. All participants should appear in the
+  conversation thread.
 
 expectations:
-  flow_completes_without_error: true
+  group_conversation_created: true
+  all_participants_present: true
   no_console_errors: true
+  max_clicks_to_goal: 5

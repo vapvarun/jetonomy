@@ -11,6 +11,7 @@ const { wp, journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C27 — Unsubscribe from space/post', () => {
 
@@ -63,6 +64,16 @@ test.describe( 'C27 — Unsubscribe from space/post', () => {
 			);
 			return parseInt( rows[ 0 ], 10 );
 		}, { timeout: 5000, intervals: [ 100, 200, 500 ] } ).toBe( 0 );
+
+		const expectation = loadSpec( 'C27' );
+		matchDelivery( expectation, {
+			button_reverts_to_follow: true,
+			following_class_removed: true,
+			subscription_row_removed: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_unsubscribe: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 1 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

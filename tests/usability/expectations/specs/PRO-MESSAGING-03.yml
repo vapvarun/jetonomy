@@ -5,9 +5,12 @@ priority: P0
 actor: pro-messaging
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member who already has an existing conversation with bob, when I
+  compose a new DM to bob, the system should redirect me to the existing
+  conversation rather than creating a duplicate thread.
 
 expectations:
-  flow_completes_without_error: true
+  no_duplicate_conversations: true
+  redirect_to_existing_thread: true
   no_console_errors: true
+  max_clicks_to_goal: 4

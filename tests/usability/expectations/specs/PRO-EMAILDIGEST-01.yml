@@ -5,9 +5,11 @@ priority: P0
 actor: pro-email-digest
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member, I can visit my profile edit page and set my digest frequency
+  to daily, weekly, or none. The preference persists in user meta.
 
 expectations:
-  flow_completes_without_error: true
+  frequency_selector_visible: true
+  preference_persisted: true
   no_console_errors: true
+  max_clicks_to_goal: 2

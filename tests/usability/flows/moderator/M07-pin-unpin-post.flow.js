@@ -11,6 +11,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M07 — Pin/unpin a post', () => {
 
@@ -96,6 +97,15 @@ test.describe( 'M07 — Pin/unpin a post', () => {
 			const rows = dbQuery( `SELECT is_pinned FROM wp_jt_posts WHERE id = ${ postId }` );
 			return rows[ 0 ];
 		}, { timeout: 8000, intervals: [ 200, 500, 1000 ] } ).toBe( '0' );
+
+		const expectation = loadSpec( 'M07' );
+		matchDelivery( expectation, {
+			pin_indicator_appears: true,
+			unpin_removes_indicator: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 6 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

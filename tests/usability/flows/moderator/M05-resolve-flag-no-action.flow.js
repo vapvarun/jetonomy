@@ -11,6 +11,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M05 — Resolve flag without content action', () => {
 
@@ -78,6 +79,15 @@ test.describe( 'M05 — Resolve flag without content action', () => {
 		// DB: post should still be published (not trashed/spam).
 		const postStatus = dbQuery( `SELECT status FROM wp_jt_posts WHERE id = ${ postId }` );
 		expect( postStatus[ 0 ] ).toBe( 'published' );
+
+		const expectation = loadSpec( 'M05' );
+		matchDelivery( expectation, {
+			flag_resolved_without_content_action: true,
+			post_still_published: postStatus[ 0 ] === 'published',
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 2 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

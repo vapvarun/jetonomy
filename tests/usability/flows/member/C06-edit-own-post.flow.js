@@ -11,6 +11,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C06 — Edit own post', () => {
 
@@ -73,6 +74,15 @@ test.describe( 'C06 — Edit own post', () => {
 
 		// Wait for the page to update and verify the new title.
 		await expect( page.locator( 'h1' ) ).toContainText( newTitle, { timeout: 10000 } );
+
+		const expectation = loadSpec( 'C06' );
+		matchDelivery( expectation, {
+			edit_mode_opens: true,
+			updated_title_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_save: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 6 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

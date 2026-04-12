@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'SA06 — Manage space members', () => {
 
@@ -41,6 +42,14 @@ test.describe( 'SA06 — Manage space members', () => {
 		// Assert kick/remove button is present.
 		const kickBtn = page.locator( 'button:has-text("Remove"), button:has-text("Kick"), a:has-text("Remove"), .jetonomy-kick-member' );
 		await expect( kickBtn.first() ).toBeVisible( { timeout: 3000 } );
+
+		const expectation = loadSpec( 'SA06' );
+		matchDelivery( expectation, {
+			member_list_renders: true,
+			role_controls_visible: true,
+			kick_button_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

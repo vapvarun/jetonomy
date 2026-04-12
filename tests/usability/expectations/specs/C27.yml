@@ -5,9 +5,15 @@ priority: P1
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space member who is already following a space, when I click the
+  "Following" button again, I expect it to toggle back to "Follow", the
+  .jt-following class to be removed, and the subscription row to be
+  deleted from wp_jt_subscriptions.
 
 expectations:
-  flow_completes_without_error: true
+  button_reverts_to_follow: true
+  following_class_removed: true
+  subscription_row_removed: true
   no_console_errors: true
+  max_clicks_to_unsubscribe: 1
+  max_time_to_goal_seconds: 10

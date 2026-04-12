@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { clear: clearMail, assertMailSent } = require( '../../helpers/email-capture' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'GA25 — Send test email from settings', () => {
 
@@ -35,6 +36,15 @@ test.describe( 'GA25 — Send test email from settings', () => {
 
 		// Verify mail was captured.
 		assertMailSent( /test/i );
+
+		const expectation = loadSpec( 'GA25' );
+		matchDelivery( expectation, {
+			test_email_button_visible: true,
+			success_notice_shown: true,
+			email_captured: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 2 } );
 		metrics.assertErrorCount( 0 );

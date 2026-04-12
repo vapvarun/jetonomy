@@ -5,9 +5,14 @@ priority: P0
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As the author of a post, when I open the more-menu, click Delete, and
+  confirm the dialog, I expect the post to be removed from the database
+  and the browser to redirect me back to the space page so I do not land
+  on a 404.
 
 expectations:
-  flow_completes_without_error: true
+  post_removed_from_db: true
+  redirected_to_space: true
   no_console_errors: true
+  max_clicks_to_delete: 3
+  max_time_to_goal_seconds: 10

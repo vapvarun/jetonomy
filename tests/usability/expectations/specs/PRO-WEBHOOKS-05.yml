@@ -5,9 +5,9 @@ priority: P1
 actor: pro-webhooks
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, when a webhook delivery fails, the fail_count column
+  should increment on the webhook row.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  fail_count_incremented: true

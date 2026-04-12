@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { wp, journey } = require( '../../helpers/wp-cli' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'X03 — oEmbed rendering in post body', () => {
 
@@ -73,6 +74,12 @@ test.describe( 'X03 — oEmbed rendering in post body', () => {
 		// Look for an iframe (YouTube embed) or an embed/object element.
 		const embed = page.locator( 'iframe[src*="youtube"], iframe[src*="youtu.be"], .wp-embedded-content, oembed' ).first();
 		await expect( embed ).toBeVisible( { timeout: 10000 } );
+
+		const expectation = loadSpec( 'X03' );
+		matchDelivery( expectation, {
+			embed_iframe_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

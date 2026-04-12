@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -28,6 +29,13 @@ test.describe( 'A02 — Browse a public category', () => {
 		await expect( spaceCards.first() ).toBeVisible( { timeout: 5000 } );
 		const count = await spaceCards.count();
 		expect( count ).toBeGreaterThanOrEqual( 1 );
+
+		const expectation = loadSpec( 'A02' );
+		matchDelivery( expectation, {
+			community_container_visible: true,
+			space_cards_present: count >= 1,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

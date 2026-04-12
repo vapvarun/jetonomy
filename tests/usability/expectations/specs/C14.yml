@@ -5,9 +5,15 @@ priority: P0
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space member, when I upvote a post, I expect the vote score to
+  increment by 1, the upvote button to show a .voted active state, and
+  a vote row to be persisted in wp_jt_votes so I see my vote when I
+  return to the page.
 
 expectations:
-  flow_completes_without_error: true
+  score_incremented: true
+  upvote_button_active: true
+  vote_persisted_in_db: true
   no_console_errors: true
+  max_clicks_to_vote: 1
+  max_time_to_goal_seconds: 10

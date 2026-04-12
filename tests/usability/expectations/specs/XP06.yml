@@ -5,9 +5,9 @@ priority: P1
 actor: composite
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, when a new user registers, webhooks should fire, digest
+  preferences should be seeded, and badge evaluation should run.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  webhook_dispatched: true

@@ -9,6 +9,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -62,6 +63,13 @@ test.describe( 'A10 — Attempt gated action -> login wall', () => {
 			const count = await newPostLink.count();
 			expect( count ).toBe( 0 );
 		}
+
+		const expectation = loadSpec( 'A10' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			gated_action_blocked: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

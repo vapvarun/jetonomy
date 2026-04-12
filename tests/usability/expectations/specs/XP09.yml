@@ -5,9 +5,10 @@ priority: P1
 actor: composite
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, changing a user's trust level should trigger webhook
+  dispatch, badge re-evaluation, and messaging gate update.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  trust_level_updated: true
+  webhook_dispatched: true

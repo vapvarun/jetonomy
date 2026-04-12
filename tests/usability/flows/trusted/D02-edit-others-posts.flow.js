@@ -11,6 +11,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'D02 — Edit other users\' posts (TL3+)', () => {
 
@@ -78,6 +79,15 @@ test.describe( 'D02 — Edit other users\' posts (TL3+)', () => {
 
 		// Verify the new title appears.
 		await expect( page.locator( 'h1' ) ).toContainText( newTitle, { timeout: 10000 } );
+
+		const expectation = loadSpec( 'D02' );
+		matchDelivery( expectation, {
+			edit_button_visible_for_tl3: true,
+			updated_title_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 6 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

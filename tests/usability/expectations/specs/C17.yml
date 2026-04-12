@@ -5,9 +5,15 @@ priority: P1
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member reading a thread, when I upvote a reply, I expect the
+  reply's vote score to increment by 1, the upvote button to gain a
+  .voted class, and a vote row for the reply to be created in
+  wp_jt_votes.
 
 expectations:
-  flow_completes_without_error: true
+  reply_score_incremented: true
+  reply_upvote_button_active: true
+  reply_vote_persisted_in_db: true
   no_console_errors: true
+  max_clicks_to_vote: 1
+  max_time_to_goal_seconds: 10

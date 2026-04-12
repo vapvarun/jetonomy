@@ -11,6 +11,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C11 — Edit own reply', () => {
 
@@ -89,6 +90,15 @@ test.describe( 'C11 — Edit own reply', () => {
 
 		// Assert the edited text appears.
 		await expect( page.locator( '.jt-reply-body', { hasText: editedText } ) ).toBeVisible( { timeout: 10000 } );
+
+		const expectation = loadSpec( 'C11' );
+		matchDelivery( expectation, {
+			edit_mode_opens: true,
+			updated_content_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_save: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 6 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

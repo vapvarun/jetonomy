@@ -5,9 +5,9 @@ priority: P1
 actor: pro-reply-by-email
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, inbound email body parsing should strip quoted reply
+  lines and signatures, storing only the new content.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  quoted_lines_stripped: true

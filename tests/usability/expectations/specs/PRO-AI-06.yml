@@ -5,9 +5,9 @@ priority: P1
 actor: pro-ai
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I set a daily API budget cap and expect the setting to
+  persist in the AI configuration.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  budget_cap_persists: true

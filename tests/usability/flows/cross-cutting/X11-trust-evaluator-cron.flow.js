@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { wp } = require( '../../helpers/wp-cli' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'X11 — Trust evaluator CLI command', () => {
 
@@ -27,5 +28,11 @@ test.describe( 'X11 — Trust evaluator CLI command', () => {
 		// If the cron event is not scheduled, the CLI command may have run it
 		// on-demand instead. Either outcome is acceptable.
 		expect( [ 'yes', 'no' ] ).toContain( scheduled );
+
+		const expectation = loadSpec( 'X11' );
+		matchDelivery( expectation, {
+			trust_evaluator_runs_without_fatal: true,
+			cron_event_checked: true,
+		} );
 	} );
 } );

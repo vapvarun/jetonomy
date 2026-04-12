@@ -12,6 +12,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbColumn } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C13 — Accept an answer (Q&A)', () => {
 
@@ -110,6 +111,16 @@ test.describe( 'C13 — Accept an answer (Q&A)', () => {
 		}, { timeout: 5000 } ).toBe( true );
 
 		assertDbColumn( 'wp_jt_replies', replyId, 'is_accepted', 1 );
+
+		const expectation = loadSpec( 'C13' );
+		matchDelivery( expectation, {
+			accepted_badge_visible: true,
+			reply_has_accepted_class: true,
+			db_is_accepted_equals_1: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_accept: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 2 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

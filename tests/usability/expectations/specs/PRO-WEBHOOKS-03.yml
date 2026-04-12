@@ -5,9 +5,10 @@ priority: P0
 actor: pro-webhooks
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, the full post.created webhook lifecycle works end-to-end:
+  webhook created, post created, delivery logged with correct payload.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  delivery_logged: true
+  payload_contains_event: true

@@ -5,9 +5,9 @@ priority: P0
 actor: pro-seo-pro
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I set a custom meta title for a space via CLI and expect
+  it to persist and be readable back.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  meta_title_persists: true

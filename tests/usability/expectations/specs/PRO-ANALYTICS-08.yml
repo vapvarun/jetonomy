@@ -5,9 +5,10 @@ priority: P0
 actor: pro-analytics
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a non-admin user, when I try to access the analytics dashboard,
+  I expect to be denied access with a permission error.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  access_denied: true

@@ -5,9 +5,11 @@ priority: P1
 actor: site-admin
 
 user_story: |
-  As a site admin, when I visit the Jetonomy Settings > Anti-Spam tab,
-  I expect to see CAPTCHA configuration, rate limit options, and
-  honeypot field toggles so I can protect the community from spam.
+  As a site admin protecting my community from spam, I visit the Anti-Spam
+  tab and expect CAPTCHA, rate limit, and honeypot sections to render with
+  their current values from the database. Rate limit numeric inputs must
+  be pre-populated so I can review and adjust them without guessing what
+  the current limits are.
 
 expectations:
   flow_completes_without_error: true
@@ -15,3 +17,5 @@ expectations:
   captcha_section_visible: true
   rate_limit_section_visible: true
   honeypot_section_visible: true
+  rate_limit_values_populated: true
+  rate_limits_exist_in_db: true

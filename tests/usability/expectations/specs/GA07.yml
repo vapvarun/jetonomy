@@ -5,8 +5,11 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  As a site admin, I visit /wp-admin/admin.php?page=jetonomy-spaces and
-  expect the space list table and "Add New" link to render without errors.
+  As a site admin managing forum spaces, I visit the spaces admin page and
+  expect to see every space currently in the database listed in the table,
+  along with an "Add New" button. The row count in the table must match the
+  actual wp_jt_spaces row count so I can trust that no spaces are hidden or
+  duplicated in the admin view.
 
 expectations:
   flow_completes_without_error: true
@@ -14,3 +17,4 @@ expectations:
   space_list_visible: true
   add_link_visible: true
   no_php_fatal: true
+  space_count_matches_db: true

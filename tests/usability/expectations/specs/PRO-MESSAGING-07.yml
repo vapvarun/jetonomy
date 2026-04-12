@@ -5,9 +5,10 @@ priority: P1
 actor: pro-messaging
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member in a long conversation with 30+ messages, when I scroll up,
+  older messages load via cursor-based pagination without a full page reload.
 
 expectations:
-  flow_completes_without_error: true
+  pagination_loads_older_messages: true
+  no_full_page_reload: true
   no_console_errors: true

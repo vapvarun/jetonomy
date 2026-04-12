@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { wp } = require( '../../helpers/wp-cli' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'X12 — Activity backfill CLI command', () => {
 
@@ -17,5 +18,11 @@ test.describe( 'X12 — Activity backfill CLI command', () => {
 		// Command should complete and not contain a fatal error.
 		expect( output ).not.toMatch( /fatal/i );
 		expect( output.length ).toBeGreaterThan( 0 );
+
+		const expectation = loadSpec( 'X12' );
+		matchDelivery( expectation, {
+			backfill_runs_without_fatal: true,
+			produces_output: output.length > 0,
+		} );
 	} );
 } );

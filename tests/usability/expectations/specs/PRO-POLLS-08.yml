@@ -5,9 +5,10 @@ priority: P1
 actor: pro-polls
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  When a poll has a closes_at timestamp in the past, the auto-close cron
+  should flip its status to 'closed' automatically.
 
 expectations:
-  flow_completes_without_error: true
+  cron_closes_expired_poll: true
+  status_flipped_to_closed: true
   no_console_errors: true

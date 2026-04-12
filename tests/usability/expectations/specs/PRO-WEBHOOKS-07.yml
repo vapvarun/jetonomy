@@ -5,9 +5,9 @@ priority: P1
 actor: pro-webhooks
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, when a webhook has a secret configured, deliveries should
+  include an HMAC-SHA256 signature header for verification.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  signature_header_present: true

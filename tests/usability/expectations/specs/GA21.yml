@@ -5,11 +5,14 @@ priority: P1
 actor: site-admin
 
 user_story: |
-  As a site admin migrating from bbPress, when I visit the Jetonomy
-  import page, I expect to see a bbPress import option so I can
-  begin migrating my existing forum data.
+  As a site admin migrating from bbPress, I visit the Jetonomy import page
+  and expect to see a bbPress import option with a functional form or button
+  that includes a security nonce. Without a nonce, the import action would
+  fail or be vulnerable to CSRF attacks.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
   bbpress_option_visible: true
+  import_form_or_button_present: true
+  nonce_present: true

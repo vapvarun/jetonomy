@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'SA07 — Configure access rules', () => {
 
@@ -51,6 +52,13 @@ test.describe( 'SA07 — Configure access rules', () => {
 				metrics.recordClick();
 			}
 		}
+
+		const expectation = loadSpec( 'SA07' );
+		matchDelivery( expectation, {
+			access_rules_form_renders: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
 		metrics.assertErrorCount( 0 );

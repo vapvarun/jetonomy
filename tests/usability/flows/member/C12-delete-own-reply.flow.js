@@ -11,6 +11,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C12 — Delete own reply', () => {
 
@@ -86,6 +87,15 @@ test.describe( 'C12 — Delete own reply', () => {
 
 		// Mark cleaned.
 		replyId = null;
+
+		const expectation = loadSpec( 'C12' );
+		matchDelivery( expectation, {
+			reply_removed_from_dom: true,
+			reply_removed_from_db: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_delete: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

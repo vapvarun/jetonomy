@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M06 — Close/lock a post', () => {
 
@@ -70,6 +71,15 @@ test.describe( 'M06 — Close/lock a post', () => {
 			const rows = dbQuery( `SELECT is_closed FROM wp_jt_posts WHERE id = ${ postId }` );
 			return rows[ 0 ];
 		}, { timeout: 8000, intervals: [ 200, 500, 1000 ] } ).toBe( '1' );
+
+		const expectation = loadSpec( 'M06' );
+		matchDelivery( expectation, {
+			closed_indicator_visible: true,
+			db_is_closed_equals_1: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

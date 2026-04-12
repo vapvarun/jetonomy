@@ -5,9 +5,13 @@ priority: P0
 actor: pro-messaging
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member viewing a conversation thread, I can type a message in the
+  composer, click send, and see the message appear in the thread immediately.
+  The message is persisted to the database.
 
 expectations:
-  flow_completes_without_error: true
+  message_appears_in_thread: true
+  message_persisted_to_db: true
   no_console_errors: true
+  max_clicks_to_goal: 2
+  max_time_to_goal_seconds: 10

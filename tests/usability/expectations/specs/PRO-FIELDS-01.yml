@@ -5,9 +5,13 @@ priority: P0
 actor: pro-fields
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I can create a custom field (text, select, etc.) via the
+  admin page, specifying name, type, and context (post or profile).
+  The field is stored in wp_jt_pro_fields.
 
 expectations:
-  flow_completes_without_error: true
+  field_form_visible: true
+  field_persisted_to_db: true
+  success_notice_shown: true
   no_console_errors: true
+  max_clicks_to_goal: 3

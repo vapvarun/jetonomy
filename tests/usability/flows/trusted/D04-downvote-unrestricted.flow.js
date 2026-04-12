@@ -11,6 +11,7 @@ const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'D04 — Downvote without restriction', () => {
 
@@ -80,6 +81,17 @@ test.describe( 'D04 — Downvote without restriction', () => {
 		// Assert no rate limit error appeared on the page.
 		const errorToast = page.locator( '.jt-toast-error, .jt-rate-limit-error' );
 		await expect( errorToast ).toHaveCount( 0 );
+
+		const expectation = loadSpec( 'D04' );
+		matchDelivery( expectation, {
+			score_decremented: true,
+			downvote_active: true,
+			vote_in_db: true,
+			no_rate_limit_error: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 1 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

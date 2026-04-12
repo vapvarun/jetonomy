@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -44,6 +45,12 @@ test.describe( 'A05 — Browse tag page', () => {
 		// Either tagged results show or a "no results" message is displayed.
 		const content = page.locator( '.jt-row, .jt-topics, .jt-empty-state, .jt-no-results' );
 		await expect( content.first() ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'A05' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

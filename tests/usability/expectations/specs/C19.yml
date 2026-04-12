@@ -5,9 +5,11 @@ priority: P2
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member browsing a space with multiple posts, when I press the j/k
+  keyboard shortcuts, I expect the active highlight to move between post
+  rows so I can navigate without a mouse.
 
 expectations:
-  flow_completes_without_error: true
+  j_moves_highlight_down: true
+  k_moves_highlight_up: true
   no_console_errors: true

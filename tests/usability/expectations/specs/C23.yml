@@ -5,9 +5,15 @@ priority: P0
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a user with unread notifications, when I open the notification
+  panel and click "Mark all read", I expect the unread badge to
+  disappear, all notification items to lose their .unread highlight,
+  and every notification row in the database to be flipped to is_read=1.
 
 expectations:
-  flow_completes_without_error: true
+  badge_removed: true
+  all_items_marked_read_in_ui: true
+  all_rows_marked_read_in_db: true
   no_console_errors: true
+  max_clicks_to_mark_all: 2
+  max_time_to_goal_seconds: 10

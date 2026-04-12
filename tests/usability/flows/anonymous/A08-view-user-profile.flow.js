@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -34,6 +35,14 @@ test.describe( 'A08 — View user profile', () => {
 		// Avatar image is present.
 		const avatar = page.locator( '.jt-profile img, .jt-avatar, .jt-user-profile img' );
 		await expect( avatar.first() ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'A08' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			profile_info_visible: true,
+			avatar_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

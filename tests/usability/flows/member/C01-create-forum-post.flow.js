@@ -12,6 +12,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C01 — Create a forum post', () => {
 
@@ -71,6 +72,17 @@ test.describe( 'C01 — Create a forum post', () => {
 
 		// Data flow: confirm DB row exists.
 		assertDbRowExists( 'wp_jt_posts', `title = '${ title.replace( /'/g, "\\'" ) }' AND author_id = ${ authorId } AND space_id = ${ spaceId }` );
+
+		// Layer 5 — expectation vs delivery.
+		const expectation = loadSpec( 'C01' );
+		matchDelivery( expectation, {
+			post_created_in_db: true,
+			navigated_to_post_url: true,
+			title_visible_on_page: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_publish: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		// Ease metrics.
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );

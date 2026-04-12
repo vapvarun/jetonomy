@@ -11,6 +11,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'SA04 — Create an invite link', () => {
 
@@ -43,6 +44,13 @@ test.describe( 'SA04 — Create an invite link', () => {
 
 		// Assert DB row exists for invite link.
 		assertDbRowExists( 'wp_jt_invite_links', `space_id = ${ fixtureSpaceId }` );
+
+		const expectation = loadSpec( 'SA04' );
+		matchDelivery( expectation, {
+			invite_link_db_row_created: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_goal: metrics.clicks,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );
 		metrics.assertErrorCount( 0 );

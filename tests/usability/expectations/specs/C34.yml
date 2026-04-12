@@ -5,9 +5,14 @@ priority: P1
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member on my profile edit page, when I update my bio text and
+  click Save, I expect the new bio to be persisted in
+  wp_jt_user_profiles and to appear on my public profile view page.
 
 expectations:
-  flow_completes_without_error: true
+  bio_form_visible: true
+  bio_saved_in_db: true
+  bio_visible_on_profile: true
   no_console_errors: true
+  max_clicks_to_save: 3
+  max_time_to_goal_seconds: 15

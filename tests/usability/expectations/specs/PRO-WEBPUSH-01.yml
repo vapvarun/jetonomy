@@ -5,9 +5,13 @@ priority: P0
 actor: pro-web-push
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member, I can click "Enable Push Notifications" on my profile
+  settings. The browser asks for permission, subscribes via the Push API,
+  and the subscription is stored in wp_jt_pro_push_subscriptions.
 
 expectations:
-  flow_completes_without_error: true
+  subscribe_button_visible: true
+  subscription_persisted_to_db: true
+  success_indicator_shown: true
   no_console_errors: true
+  max_clicks_to_goal: 1

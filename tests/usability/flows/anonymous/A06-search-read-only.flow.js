@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -30,6 +31,12 @@ test.describe( 'A06 — Search read-only', () => {
 		// Either search results or a "no results" empty state is visible.
 		const results = page.locator( '.jt-row, .jt-search-results, .jt-topics, .jt-empty-state, .jt-no-results' );
 		await expect( results.first() ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'A06' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

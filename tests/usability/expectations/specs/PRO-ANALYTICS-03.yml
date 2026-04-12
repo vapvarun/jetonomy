@@ -5,9 +5,10 @@ priority: P1
 actor: pro-analytics
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin on the analytics dashboard, I expect to see a top
+  contributors widget listing the most active users.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  top_contributors_widget_visible: true

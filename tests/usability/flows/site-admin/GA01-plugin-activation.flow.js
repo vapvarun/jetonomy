@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { wp, dbQuery } = require( '../../helpers/wp-cli' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'GA01 — Plugin activation', () => {
 
@@ -40,5 +41,13 @@ test.describe( 'GA01 — Plugin activation', () => {
 		// Verify plugin is active.
 		const status = wp( [ 'plugin', 'get', 'jetonomy', '--field=status' ] );
 		expect( status ).toBe( 'active' );
+
+		const expectation = loadSpec( 'GA01' );
+		matchDelivery( expectation, {
+			no_fatal_on_deactivate: true,
+			no_fatal_on_activate: true,
+			core_tables_exist: true,
+			plugin_status_active: status === 'active',
+		} );
 	} );
 } );

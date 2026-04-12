@@ -5,9 +5,12 @@ priority: P1
 actor: pro-seo-pro
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin editing a space, I expect an SEO tab with meta title and
+  description fields.
 
 expectations:
   flow_completes_without_error: true
   no_console_errors: true
+  seo_tab_visible: true
+  meta_title_field_visible: true
+  meta_description_field_visible: true

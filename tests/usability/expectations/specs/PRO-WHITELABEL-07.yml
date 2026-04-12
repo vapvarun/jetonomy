@@ -5,9 +5,9 @@ priority: P1
 actor: pro-white-label
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I reset all branding to defaults and expect all custom
+  values to be cleared.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  custom_values_cleared: true

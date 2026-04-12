@@ -5,9 +5,10 @@ priority: P1
 actor: pro-badges
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  Awarding the same non-repeatable badge to the same user twice should
+  be idempotent -- only one row exists in wp_jt_pro_user_badges.
 
 expectations:
-  flow_completes_without_error: true
+  only_one_award_row: true
+  no_duplicate_awards: true
   no_console_errors: true

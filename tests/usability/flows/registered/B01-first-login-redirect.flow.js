@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -31,6 +32,13 @@ test.describe( 'B01 — First login -> community redirect', () => {
 			'a[href*="/community/"], .jt-community-nav, a:has-text("Community")'
 		);
 		await expect( communityLink.first() ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'B01' );
+		matchDelivery( expectation, {
+			admin_bar_visible: true,
+			community_link_accessible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

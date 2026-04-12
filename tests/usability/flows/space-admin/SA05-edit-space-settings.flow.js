@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'SA05 — Edit space settings', () => {
 
@@ -63,6 +64,13 @@ test.describe( 'SA05 — Edit space settings', () => {
 		// Assert title was persisted in DB.
 		const rows = dbQuery( `SELECT title FROM wp_jt_spaces WHERE id = ${ fixtureSpaceId }` );
 		expect( rows[ 0 ] ).toBe( newTitle );
+
+		const expectation = loadSpec( 'SA05' );
+		matchDelivery( expectation, {
+			title_persisted_in_db: rows[ 0 ] === newTitle,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
 		metrics.assertErrorCount( 0 );

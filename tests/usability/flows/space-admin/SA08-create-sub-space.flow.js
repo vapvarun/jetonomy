@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'SA08 — Create sub-space', () => {
 
@@ -52,5 +53,11 @@ test.describe( 'SA08 — Create sub-space', () => {
 
 		// Assert row exists.
 		assertDbRowExists( 'wp_jt_spaces', `id = ${ childSpaceId } AND parent_id = ${ parentSpaceId }` );
+
+		const expectation = loadSpec( 'SA08' );
+		matchDelivery( expectation, {
+			sub_space_created: true,
+			parent_child_relationship_correct: rows[ 0 ] === String( parentSpaceId ),
+		} );
 	} );
 } );

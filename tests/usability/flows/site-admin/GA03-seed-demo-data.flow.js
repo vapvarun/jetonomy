@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { wp, journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'GA03 — Seed demo data', () => {
 
@@ -37,5 +38,14 @@ test.describe( 'GA03 — Seed demo data', () => {
 		// Verify demo posts exist.
 		const postCount = dbQuery( 'SELECT COUNT(*) FROM wp_jt_posts' );
 		expect( parseInt( postCount[ 0 ], 10 ) ).toBeGreaterThan( 0 );
+
+		const expectation = loadSpec( 'GA03' );
+		matchDelivery( expectation, {
+			seed_command_succeeds: result.success,
+			demo_tracking_option_exists: !! demoOption,
+			categories_created: parseInt( catCount[ 0 ], 10 ) > 0,
+			spaces_created: parseInt( spaceCount[ 0 ], 10 ) > 0,
+			posts_created: parseInt( postCount[ 0 ], 10 ) > 0,
+		} );
 	} );
 } );

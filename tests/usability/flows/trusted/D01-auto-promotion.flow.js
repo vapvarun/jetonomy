@@ -12,6 +12,7 @@ const { test, expect } = require( '@playwright/test' );
 const { wp, journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'D01 — Auto-promotion to TL2/TL3', () => {
 
@@ -57,6 +58,15 @@ test.describe( 'D01 — Auto-promotion to TL2/TL3', () => {
 
 		const profileEl = page.locator( '.jt-profile, .jt-user-card, .jt-user-profile' ).first();
 		await expect( profileEl ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'D01' );
+		matchDelivery( expectation, {
+			trust_evaluator_runs: ! cliError,
+			user_profile_has_valid_trust_level: level >= 0 && level <= 5,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: 0,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

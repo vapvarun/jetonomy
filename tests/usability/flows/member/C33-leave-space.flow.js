@@ -11,6 +11,7 @@ const { wp, journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists, assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C33 — Leave a space', () => {
 
@@ -81,6 +82,13 @@ test.describe( 'C33 — Leave a space', () => {
 		const joinBtn = page.locator( 'button.jt-join-btn, button:has-text("Join Space")' );
 		const joinVisible = await joinBtn.first().isVisible( { timeout: 5000 } ).catch( () => false );
 		expect( joinVisible ).toBe( true );
+
+		const expectation = loadSpec( 'C33' );
+		matchDelivery( expectation, {
+			membership_removed_from_db: true,
+			join_button_visible_after_leave: joinVisible,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );
 	} );

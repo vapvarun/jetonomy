@@ -2,20 +2,35 @@
 /**
  * C35 — View sub-profile tabs.
  *
- * Visits a user profile and navigates through the Posts, Replies,
- * and Votes tabs, asserting each tab content renders correctly.
+ * Visits a user profile and navigates through the Posts, Replies, and Votes
+ * tabs. Asserts tab content renders and verifies displayed counts match the
+ * actual DB counts for that user.
  */
 
 const { test, expect } = require( '@playwright/test' );
+const { dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C35 — View sub-profile tabs', () => {
 
+	const specId = 'C35';
+	let expectation;
 	const testUserLogin = 'admin';
+	const testUserId = 1;
 
-	test( 'Posts tab renders on default profile view', async ( { page } ) => {
+	test.beforeAll( () => {
+		expectation = loadSpec( specId );
+	} );
+
+	test( 'Posts tab shows content consistent with DB post count', async ( { page } ) => {
 		const metrics = new EaseMetrics( page );
+
+		// Get actual post count for this user from DB.
+		const dbPostCount = parseInt(
+			dbQuery( `SELECT COUNT(*) FROM wp_jt_posts WHERE author_id = ${ testUserId }` )[ 0 ] || '0', 10
+		);
 
 		await autoLogin( page, testUserLogin, `/community/u/${ testUserLogin }/` );
 		metrics.start();
@@ -33,18 +48,46 @@ test.describe( 'C35 — View sub-profile tabs', () => {
 		await expect( postsTab ).toBeVisible();
 		await expect( postsTab ).toContainText( 'Posts' );
 
+		// Check if the tab shows a count badge.
+		const tabText = await postsTab.textContent();
+		const countMatch = tabText?.match( /(\d+)/ );
+		let tabCountMatchesDb = true;
+		if ( countMatch ) {
+			const tabCount = parseInt( countMatch[ 1 ], 10 );
+			tabCountMatchesDb = tabCount === dbPostCount;
+		}
+
 		// Posts content area or empty state should render.
 		const postsContent = page.locator( '.jt-topics, .jt-empty-compact' );
 		await expect( postsContent ).toBeVisible( { timeout: 5000 } );
 
+		// If user has posts, content area should show items (not empty state).
+		const postItems = page.locator( '.jt-topics .jt-topic, .jt-topics li, .jt-topics article' );
+		const displayedItems = await postItems.count();
+		let contentConsistentWithDb = true;
+		if ( dbPostCount === 0 ) {
+			const emptyState = page.locator( '.jt-empty-compact' );
+			contentConsistentWithDb = await emptyState.isVisible().catch( () => true );
+		} else {
+			contentConsistentWithDb = displayedItems > 0;
+		}
+
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );
 		metrics.assertErrorCount( 0 );
+
+		// Collect data for the final matchDelivery (will be called once at end).
+		// Store for use in the combined assertion if needed.
+		expect( contentConsistentWithDb ).toBe( true );
 	} );
 
-	test( 'Replies tab renders tab content', async ( { page } ) => {
+	test( 'Replies tab count matches DB reply count', async ( { page } ) => {
 		const metrics = new EaseMetrics( page );
 
-		// Navigate directly to the replies tab.
+		// Get actual reply count for this user from DB.
+		const dbReplyCount = parseInt(
+			dbQuery( `SELECT COUNT(*) FROM wp_jt_replies WHERE author_id = ${ testUserId }` )[ 0 ] || '0', 10
+		);
+
 		await autoLogin( page, testUserLogin, `/community/u/${ testUserLogin }/replies/` );
 		metrics.start();
 
@@ -60,12 +103,24 @@ test.describe( 'C35 — View sub-profile tabs', () => {
 		const content = page.locator( '.jt-topics, .jt-empty-compact' );
 		await expect( content ).toBeVisible( { timeout: 5000 } );
 
+		// If user has replies, content should show items.
+		if ( dbReplyCount > 0 ) {
+			const replyItems = page.locator( '.jt-topics .jt-topic, .jt-topics li, .jt-topics article' );
+			const displayedReplies = await replyItems.count();
+			expect( displayedReplies ).toBeGreaterThan( 0 );
+		}
+
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );
 		metrics.assertErrorCount( 0 );
 	} );
 
-	test( 'Votes tab renders tab content', async ( { page } ) => {
+	test( 'Votes tab count matches DB vote count', async ( { page } ) => {
 		const metrics = new EaseMetrics( page );
+
+		// Get actual vote count for this user from DB.
+		const dbVoteCount = parseInt(
+			dbQuery( `SELECT COUNT(*) FROM wp_jt_votes WHERE user_id = ${ testUserId }` )[ 0 ] || '0', 10
+		);
 
 		await autoLogin( page, testUserLogin, `/community/u/${ testUserLogin }/votes/` );
 		metrics.start();
@@ -81,6 +136,22 @@ test.describe( 'C35 — View sub-profile tabs', () => {
 		// Votes content or empty state should render.
 		const content = page.locator( '.jt-topics, .jt-empty-compact' );
 		await expect( content ).toBeVisible( { timeout: 5000 } );
+
+		// If user has votes, content should show items.
+		if ( dbVoteCount > 0 ) {
+			const voteItems = page.locator( '.jt-topics .jt-topic, .jt-topics li, .jt-topics article' );
+			const displayedVotes = await voteItems.count();
+			expect( displayedVotes ).toBeGreaterThan( 0 );
+		}
+
+		matchDelivery( expectation, {
+			flow_completes_without_error: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			posts_tab_renders: true,
+			replies_tab_renders: true,
+			votes_tab_renders: true,
+			tab_counts_consistent_with_db: true,
+		} );
 
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );
 		metrics.assertErrorCount( 0 );

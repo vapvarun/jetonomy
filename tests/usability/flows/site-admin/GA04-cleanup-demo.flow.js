@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { wp, journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'GA04 — Cleanup demo data', () => {
 
@@ -31,5 +32,12 @@ test.describe( 'GA04 — Cleanup demo data', () => {
 			echo empty( $d ) ? 'empty' : 'exists';
 		` ] );
 		expect( afterOption ).toBe( 'empty' );
+
+		const expectation = loadSpec( 'GA04' );
+		matchDelivery( expectation, {
+			seed_succeeds: seedResult.success,
+			cleanup_succeeds: cleanupResult.success,
+			demo_data_cleared: afterOption === 'empty',
+		} );
 	} );
 } );

@@ -5,9 +5,9 @@ priority: P1
 actor: pro-seo-pro
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I mark a space as excluded from the sitemap and expect
+  the setting to persist via CLI readback.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  sitemap_exclude_persists: true

@@ -12,6 +12,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C03 — Create an idea post', () => {
 
@@ -92,6 +93,17 @@ test.describe( 'C03 — Create an idea post', () => {
 		}
 
 		assertDbRowExists( 'wp_jt_posts', `title = '${ title.replace( /'/g, "\\'" ) }' AND author_id = ${ authorId }` );
+
+		const expectation = loadSpec( 'C03' );
+		matchDelivery( expectation, {
+			idea_created_in_db: true,
+			navigated_to_idea_url: true,
+			form_heading_says_idea: true,
+			title_visible_on_page: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_publish: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

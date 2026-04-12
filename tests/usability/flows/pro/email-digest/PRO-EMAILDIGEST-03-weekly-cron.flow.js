@@ -1,12 +1,48 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * PRO-EMAILDIGEST-03 — Weekly cron fires digest.
+ *
+ * Sets alice to weekly digest, seeds activity, triggers the weekly
+ * cron event, and asserts a digest email is captured.
+ */
+
+const { test, expect } = require( '@playwright/test' );
+const { wp, journey } = require( '../../../helpers/wp-cli' );
+const { clear: clearMail, assertMailSent } = require( '../../../helpers/email-capture' );
 
 test.describe( 'PRO-EMAILDIGEST-03 — Weekly cron fires digest', () => {
-	test.skip( true, 'Not yet implemented — Phase 3' );
 
-	test( 'Weekly cron fires digest', async ( { page } ) => {
-		// Priority: P0
-		// Actor: pro-email-digest
-		// TODO: Implement per usability test plan
+	let postId;
+
+	test.beforeEach( () => {
+		clearMail();
+
+		wp( [ 'user', 'meta', 'update', '3', 'jetonomy_digest_frequency', 'weekly' ] );
+
+		const post = journey( [
+			'post', 'create',
+			'--space=1',
+			'--author=4',
+			`--title=Weekly Digest ${ Date.now() }`,
+			'--content=Weekly content.',
+		] );
+		postId = post.data?.id || post.id;
+	} );
+
+	test.afterEach( () => {
+		try { wp( [ 'user', 'meta', 'delete', '3', 'jetonomy_digest_frequency' ] ); } catch ( e ) { /* ignore */ }
+		if ( postId ) {
+			try { journey( [ 'post', 'delete', String( postId ) ] ); } catch ( e ) { /* ignore */ }
+		}
+	} );
+
+	test.fixme( 'weekly cron sends digest email to alice', async () => {
+		wp( [ 'cron', 'event', 'run', 'jetonomy_pro_email_digest_weekly' ] );
+
+		const mail = assertMailSent( /digest|weekly/i, {
+			toContains: 'alice',
+		} );
+
+		expect( mail.message ).toContain( 'Digest' );
 	} );
 } );

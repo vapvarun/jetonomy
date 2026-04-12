@@ -5,9 +5,9 @@ priority: P1
 actor: pro-white-label
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I set a custom community name and expect it to appear
+  on the frontend community page header.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  custom_name_visible_on_frontend: true

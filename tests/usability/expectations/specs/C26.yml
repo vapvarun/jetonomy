@@ -5,9 +5,14 @@ priority: P1
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member viewing a post, when I click the "Follow" button on the
+  post, I expect the button to toggle to "Following" and a subscription
+  row to be created in wp_jt_subscriptions for that post so I receive
+  notifications on new replies.
 
 expectations:
-  flow_completes_without_error: true
+  button_toggles_to_following: true
+  subscription_row_created: true
   no_console_errors: true
+  max_clicks_to_subscribe: 1
+  max_time_to_goal_seconds: 10

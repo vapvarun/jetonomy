@@ -12,6 +12,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C14 — Upvote a post', () => {
 
@@ -70,6 +71,16 @@ test.describe( 'C14 — Upvote a post', () => {
 
 		// DB: vote row exists.
 		assertDbRowExists( 'wp_jt_votes', `user_id = 3 AND target_type = 'post' AND target_id = ${ postId } AND value = 1` );
+
+		const expectation = loadSpec( 'C14' );
+		matchDelivery( expectation, {
+			score_incremented: true,
+			upvote_button_active: true,
+			vote_persisted_in_db: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_vote: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 1 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

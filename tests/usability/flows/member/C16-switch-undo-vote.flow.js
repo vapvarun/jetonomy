@@ -12,6 +12,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C16 — Switch / undo vote', () => {
 
@@ -69,6 +70,16 @@ test.describe( 'C16 — Switch / undo vote', () => {
 		metrics.recordClick();
 		await expect( scoreEl ).toHaveText( String( baseScore - 1 ), { timeout: 5000 } );
 		await expect( downvoteBtn ).toHaveClass( /voted/, { timeout: 3000 } );
+
+		const expectation = loadSpec( 'C16' );
+		matchDelivery( expectation, {
+			upvote_increments_score: true,
+			second_upvote_undoes_vote: true,
+			downvote_decrements_score: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_complete: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

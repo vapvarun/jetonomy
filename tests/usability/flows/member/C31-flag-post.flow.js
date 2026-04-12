@@ -12,6 +12,7 @@ const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C31 — Flag a post (all reasons)', () => {
 
@@ -100,6 +101,15 @@ test.describe( 'C31 — Flag a post (all reasons)', () => {
 			'wp_jt_flags',
 			`object_type = 'post' AND object_id = ${ createdPostId } AND user_id = ${ testUserId }`
 		);
+
+		const expectation = loadSpec( 'C31' );
+		matchDelivery( expectation, {
+			flag_button_visible: true,
+			flag_prompt_opens: true,
+			flag_row_created_in_db: true,
+			max_clicks_to_flag: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 4 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

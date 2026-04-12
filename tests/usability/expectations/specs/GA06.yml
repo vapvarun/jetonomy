@@ -5,9 +5,11 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  As a site admin, I visit /wp-admin/admin.php?page=jetonomy-categories
-  and expect the category list table and add-category form to render
-  without errors.
+  As a site admin managing forum categories, I visit the categories admin
+  page and expect to see a list of all existing categories with an add-new
+  form. The number of rows displayed in the table must match the actual
+  count of categories in wp_jt_categories so I know no categories are
+  silently missing or duplicated.
 
 expectations:
   flow_completes_without_error: true
@@ -15,3 +17,4 @@ expectations:
   category_list_visible: true
   add_form_visible: true
   no_php_fatal: true
+  category_count_matches_db: true

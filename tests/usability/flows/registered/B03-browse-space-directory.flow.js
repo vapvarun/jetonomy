@@ -9,6 +9,7 @@
 const { test, expect } = require( '@playwright/test' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -29,6 +30,13 @@ test.describe( 'B03 — Browse space directory', () => {
 		await expect( spaceLinks.first() ).toBeVisible( { timeout: 5000 } );
 		const count = await spaceLinks.count();
 		expect( count ).toBeGreaterThanOrEqual( 1 );
+
+		const expectation = loadSpec( 'B03' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			space_listings_visible: count >= 1,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

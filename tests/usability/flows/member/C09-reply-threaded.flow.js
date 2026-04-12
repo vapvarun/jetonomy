@@ -12,6 +12,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C09 — Reply to a reply (threaded)', () => {
 
@@ -100,6 +101,16 @@ test.describe( 'C09 — Reply to a reply (threaded)', () => {
 		}
 
 		assertDbRowExists( 'wp_jt_replies', `post_id = ${ postId } AND author_id = 3 AND parent_id = ${ parentReplyId }` );
+
+		const expectation = loadSpec( 'C09' );
+		matchDelivery( expectation, {
+			nested_reply_visible: true,
+			nesting_indentation_present: hasNesting > 0,
+			reply_has_correct_parent_id: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_reply: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

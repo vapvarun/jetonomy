@@ -12,6 +12,7 @@ const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M10 — Ban a user (global)', () => {
 
@@ -80,6 +81,14 @@ test.describe( 'M10 — Ban a user (global)', () => {
 			);
 			return parseInt( rows[ 0 ], 10 );
 		}, { timeout: 8000, intervals: [ 200, 500, 1000 ] } ).toBeGreaterThan( 0 );
+
+		const expectation = loadSpec( 'M10' );
+		matchDelivery( expectation, {
+			ban_restriction_created: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 4 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

@@ -5,9 +5,11 @@ priority: P1
 actor: pro-reactions
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a member with an existing reaction, picking a different emoji replaces
+  the old one. Only one reaction per user per target should exist in the DB.
 
 expectations:
-  flow_completes_without_error: true
+  old_reaction_replaced: true
+  only_one_reaction_in_db: true
   no_console_errors: true
+  max_clicks_to_goal: 2

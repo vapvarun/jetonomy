@@ -11,6 +11,7 @@ const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M11 — Unban a user', () => {
 
@@ -79,6 +80,14 @@ test.describe( 'M11 — Unban a user', () => {
 			);
 			return parseInt( rows[ 0 ], 10 );
 		}, { timeout: 8000, intervals: [ 200, 500, 1000 ] } ).toBe( 0 );
+
+		const expectation = loadSpec( 'M11' );
+		matchDelivery( expectation, {
+			ban_restriction_removed: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 4 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

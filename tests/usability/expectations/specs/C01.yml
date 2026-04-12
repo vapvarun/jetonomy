@@ -5,9 +5,15 @@ priority: P0
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space member, when I fill in the title and body on the new-post
+  form and click submit, I expect the post to be created in the database,
+  the browser to navigate to my new post's URL, and the title I typed to
+  appear as the page heading.
 
 expectations:
-  flow_completes_without_error: true
+  post_created_in_db: true
+  navigated_to_post_url: true
+  title_visible_on_page: true
   no_console_errors: true
+  max_clicks_to_publish: 5
+  max_time_to_goal_seconds: 15

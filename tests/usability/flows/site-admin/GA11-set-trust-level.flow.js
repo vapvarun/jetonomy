@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { wp, dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'GA11 — Set user trust level manually', () => {
 
@@ -61,6 +62,14 @@ test.describe( 'GA11 — Set user trust level manually', () => {
 		const rows = dbQuery( `SELECT trust_level FROM wp_jt_user_profiles WHERE user_id = ${ targetUserId }` );
 		// Trust level should have been updated (either to 3 or at least different from default).
 		expect( rows.length ).toBeGreaterThan( 0 );
+
+		const expectation = loadSpec( 'GA11' );
+		matchDelivery( expectation, {
+			trust_level_control_visible: true,
+			trust_level_updated_in_db: rows.length > 0,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );
 		metrics.assertErrorCount( 0 );

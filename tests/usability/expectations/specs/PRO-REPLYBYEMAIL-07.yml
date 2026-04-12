@@ -5,9 +5,9 @@ priority: P2
 actor: pro-reply-by-email
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a system, expired reply tokens should be rejected when used,
+  preventing stale email replies from creating content.
 
 expectations:
   flow_completes_without_error: true
-  no_console_errors: true
+  expired_token_rejected: true

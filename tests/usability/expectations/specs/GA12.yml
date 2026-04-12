@@ -5,9 +5,11 @@ priority: P0
 actor: site-admin
 
 user_story: |
-  As a site admin, I visit /wp-admin/admin.php?page=jetonomy-settings
-  and expect the General tab to be active with form fields for base_slug
-  and posts_per_page visible and editable.
+  As a site admin, I visit the general settings tab and expect the base_slug
+  and posts_per_page input fields to be pre-populated with the values stored
+  in the jetonomy_settings option. If the rendered value does not match the
+  database, I would unknowingly save stale or default values, corrupting my
+  configuration.
 
 expectations:
   flow_completes_without_error: true
@@ -16,3 +18,5 @@ expectations:
   base_slug_field_visible: true
   posts_per_page_field_visible: true
   no_php_fatal: true
+  base_slug_matches_db: true
+  posts_per_page_matches_db: true

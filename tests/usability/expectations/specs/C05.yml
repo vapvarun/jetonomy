@@ -5,9 +5,14 @@ priority: P2
 actor: member
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As a space member, when I write a post and choose "Save as draft" from
+  the publish menu instead of publishing, I expect the post to be saved
+  with a draft status in the database so I can return and finish it later,
+  without it being visible to other members.
 
 expectations:
-  flow_completes_without_error: true
+  draft_saved_in_db: true
+  db_status_is_draft: true
   no_console_errors: true
+  max_clicks_to_save_draft: 7
+  max_time_to_goal_seconds: 15

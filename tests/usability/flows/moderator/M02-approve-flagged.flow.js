@@ -11,6 +11,7 @@ const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M02 — Approve flagged content', () => {
 
@@ -79,6 +80,16 @@ test.describe( 'M02 — Approve flagged content', () => {
 			);
 			return rows[ 0 ];
 		}, { timeout: 8000, intervals: [ 200, 500, 1000 ] } ).toBe( 'resolved' );
+
+		const expectation = loadSpec( 'M02' );
+		matchDelivery( expectation, {
+			flagged_item_visible_in_queue: true,
+			flag_resolved_after_approve: true,
+			db_flag_status_resolved: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 2 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

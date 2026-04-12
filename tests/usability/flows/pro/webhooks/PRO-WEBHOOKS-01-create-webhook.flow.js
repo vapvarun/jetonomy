@@ -1,12 +1,50 @@
 // @ts-check
-const { test } = require( '@playwright/test' );
+/**
+ * PRO-WEBHOOKS-01 — Admin create webhook.
+ *
+ * Creates a webhook subscription via proJourney CLI and verifies
+ * it is stored in wp_jt_pro_webhooks.
+ */
+
+const { test, expect } = require( '@playwright/test' );
+const { proJourney, dbQuery, dbWrite } = require( '../../../helpers/wp-cli' );
+const { assertDbRowExists } = require( '../../../helpers/data-flow' );
 
 test.describe( 'PRO-WEBHOOKS-01 — Admin create webhook', () => {
-	test.skip( true, 'Not yet implemented — Phase 3' );
 
-	test( 'Admin create webhook', async ( { page } ) => {
-		// Priority: P0
-		// Actor: pro-webhooks
-		// TODO: Implement per usability test plan
+	let webhookId;
+
+	test.beforeEach( () => {
+		const status = proJourney( [ 'extension', 'status', 'webhooks' ] );
+		if ( ! status.success ) {
+			proJourney( [ 'extension', 'enable', 'webhooks' ] );
+		}
+	} );
+
+	test.afterEach( () => {
+		if ( webhookId ) {
+			try { dbWrite( `DELETE FROM wp_jt_pro_webhooks WHERE id = ${ webhookId }` ); } catch ( e ) { /* */ }
+		}
+	} );
+
+	test( 'create a webhook via CLI and verify DB row', () => {
+		const result = proJourney( [
+			'webhooks', 'create',
+			'--url=https://httpbin.org/post',
+			'--event=post.created',
+			'--enabled=1',
+		] );
+
+		expect( result.success ).toBe( true );
+		webhookId = result.data?.id;
+		expect( webhookId ).toBeTruthy();
+
+		// Verify row in DB.
+		assertDbRowExists( 'wp_jt_pro_webhooks', `id = ${ webhookId }` );
+
+		// Read back.
+		const readback = proJourney( [ 'webhooks', 'get', String( webhookId ) ] );
+		expect( readback.success ).toBe( true );
+		expect( readback.data?.event ).toBe( 'post.created' );
 	} );
 } );

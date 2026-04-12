@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 const SITE = 'http://forums.local';
 
@@ -32,6 +33,14 @@ test.describe( 'A03 — Browse a public space', () => {
 		// Sort tabs are visible (e.g. Latest, Popular, etc.).
 		const sortTabs = page.locator( '.jt-sort-tabs, .jt-sub-nav, [data-wp-on--click*="sort"]' );
 		await expect( sortTabs.first() ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'A03' );
+		matchDelivery( expectation, {
+			page_renders: true,
+			post_rows_visible: count >= 1,
+			sort_tabs_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

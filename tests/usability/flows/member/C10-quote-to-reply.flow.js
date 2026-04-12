@@ -13,6 +13,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C10 — Quote-to-reply', () => {
 
@@ -95,6 +96,15 @@ test.describe( 'C10 — Quote-to-reply', () => {
 		if ( ids.length > 0 ) {
 			quotedReplyId = parseInt( ids[ 0 ], 10 );
 		}
+
+		const expectation = loadSpec( 'C10' );
+		matchDelivery( expectation, {
+			composer_populated_with_quote: editorHTML.length > 0,
+			quoted_reply_submitted: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_reply: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

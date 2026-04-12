@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { wp, journey } = require( '../../helpers/wp-cli' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'X06 — Code syntax highlighting in post body', () => {
 
@@ -71,6 +72,12 @@ test.describe( 'X06 — Code syntax highlighting in post body', () => {
 		// Look for a pre>code block with a language class or highlight spans.
 		const codeBlock = page.locator( 'pre code, .hljs, .highlight, [class*="language-"]' ).first();
 		await expect( codeBlock ).toBeVisible( { timeout: 5000 } );
+
+		const expectation = loadSpec( 'X06' );
+		matchDelivery( expectation, {
+			code_block_visible: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+		} );
 
 		metrics.assertErrorCount( 0 );
 	} );

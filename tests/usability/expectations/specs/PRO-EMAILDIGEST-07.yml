@@ -5,9 +5,13 @@ priority: P1
 actor: pro-email-digest
 
 user_story: |
-  TODO: Write the user story for this flow based on the design spec
-  and/or Basecamp cards.
+  As an admin, I can view digest statistics including total digests sent
+  and subscriber count on the email digest settings page.
 
 expectations:
-  flow_completes_without_error: true
+  stats_section_visible: true
+  total_sent_displayed: true
+  subscriber_count_displayed: true
   no_console_errors: true
+  max_clicks_to_goal: 0
+  max_time_to_goal_seconds: 5

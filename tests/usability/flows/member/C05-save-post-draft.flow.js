@@ -12,6 +12,7 @@ const { journey, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C05 — Save post as draft', () => {
 
@@ -73,6 +74,15 @@ test.describe( 'C05 — Save post as draft', () => {
 		createdPostId = parseInt( ids[ 0 ], 10 );
 
 		assertDbRowExists( 'wp_jt_posts', `id = ${ createdPostId } AND status = 'draft' AND author_id = ${ authorId }` );
+
+		const expectation = loadSpec( 'C05' );
+		matchDelivery( expectation, {
+			draft_saved_in_db: true,
+			db_status_is_draft: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks_to_save_draft: metrics.clicks,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 7 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 15 } );

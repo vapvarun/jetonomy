@@ -10,6 +10,7 @@ const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'M03 — Mark content as spam', () => {
 
@@ -73,6 +74,15 @@ test.describe( 'M03 — Mark content as spam', () => {
 			);
 			return rows[ 0 ];
 		}, { timeout: 8000, intervals: [ 200, 500, 1000 ] } ).toBe( 'spam' );
+
+		const expectation = loadSpec( 'M03' );
+		matchDelivery( expectation, {
+			flagged_item_visible: true,
+			post_status_changed_to_spam: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_clicks: metrics.clicks,
+			max_time_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 2 } );
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );

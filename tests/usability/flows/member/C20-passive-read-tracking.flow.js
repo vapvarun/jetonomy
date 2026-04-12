@@ -11,6 +11,7 @@ const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
+const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C20 — Mark post as read (passive)', () => {
 
@@ -62,6 +63,14 @@ test.describe( 'C20 — Mark post as read (passive)', () => {
 
 		// Data flow assertion.
 		assertDbRowExists( 'wp_jt_read_status', `user_id = ${ testUserId } AND post_id = ${ createdPostId }` );
+
+		const expectation = loadSpec( 'C20' );
+		matchDelivery( expectation, {
+			read_status_row_created: true,
+			post_page_renders: true,
+			no_console_errors: metrics.consoleErrors.length === 0,
+			max_time_to_goal_seconds: metrics.getElapsedMs() / 1000,
+		} );
 
 		metrics.assertTimeToGoal( { lessThanSeconds: 10 } );
 		metrics.assertErrorCount( 0 );
