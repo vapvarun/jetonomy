@@ -55,6 +55,16 @@ See the [Moderation Queue](03-moderation-queue.md) guide for how to review Akism
 
 Akismet and CAPTCHA work independently. You can run both at the same time for maximum protection, or use either one alone.
 
+## AI-Powered Spam Detection (Pro)
+
+Jetonomy Pro's AI extension adds a third layer: a language model reads every new post and reply and scores it for spam probability before it is published. Posts above the configured threshold go to the moderation queue with a reason the model generated. Posts below it are published as normal.
+
+This catches the kinds of spam that pattern matching and Akismet miss — subtly rewritten affiliate spam, contextually wrong replies designed to pad posting history, and coordinated attacks that use clean accounts.
+
+Run the detection through any supported provider — OpenAI, Anthropic, a custom endpoint, or self-hosted **Ollama** (which keeps all content on your own server). See [AI Integration](../pro-features/13-ai.md) for setup.
+
+AI spam detection stacks on top of CAPTCHA, Akismet, and rate limits — not instead of them. Each layer catches different threats.
+
 ## Rate Limiting for New Members
 
 Trust Level 0 members (brand-new accounts) are subject to posting rate limits regardless of CAPTCHA:

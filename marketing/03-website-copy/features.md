@@ -1,7 +1,7 @@
 # Jetonomy — Feature Highlights
 
-**Version:** 1.0.0 Launch
-**Last updated:** March 2026
+**Version:** 1.3.0
+**Last updated:** April 2026
 
 ---
 
@@ -274,3 +274,43 @@
 **What it does:** Gate spaces by WooCommerce product purchase, LearnDash course enrollment, or Restrict Content Pro membership level. Access rules sync automatically with subscription status.
 
 **Why it matters:** The free plugin supports MemberPress and Paid Memberships Pro. Pro expands this to three additional membership and LMS systems — covering the majority of WordPress membership and course setups.
+
+---
+
+## NEW IN 1.3.0 — AI INTEGRATION (PRO)
+
+### AI-Powered Spam Detection, Moderation, and Summaries (Pro)
+
+**What it does:** Every new post and reply is scored by a language model before it is published. AI spam detection catches subtly rewritten affiliate spam and context-aware abuse that pattern matching misses. AI content moderation flags content against a rule set you describe in plain English. Reply suggestions draft answers for knowledge-base communities. Thread summaries pin a short summary at the top of long topics so new readers do not have to scroll.
+
+**Providers:** OpenAI, Anthropic, any OpenAI-compatible endpoint, or self-hosted **Ollama** running on the same server as WordPress.
+
+**Why it matters:** Moderation is the single biggest burden on community owners. Trust levels handle most of the work, Akismet handles known spam, and now AI handles the gray zone — context-aware spam, subtle abuse, and the long tail of judgment calls. With the Ollama provider, everything runs on your own server — no content leaves your machine, and there is no per-request API bill. For communities that cannot send content to a third-party API (legal, health, enterprise internal), this is the difference between shipping AI moderation and not shipping it at all.
+
+---
+
+## NEW IN 1.2.0 — DISCUSSION CONTROLS (FREE)
+
+### Private Topics
+
+**What it does:** Mark individual topics as private so only the author and space moderators can see them. Other members of the space cannot find or open the topic.
+
+**Why it matters:** Support communities often have sensitive one-off conversations — account details, abuse reports, billing questions — that should not sit in a public space but do not warrant a full private message thread. Private topics handle this case without moving the conversation off-platform.
+
+### Topic Prefixes
+
+**What it does:** Space owners define colored labels like `Bug`, `Question`, `Solved`, or `Announcement`. Members pick a prefix when creating a topic and it appears as a colored tag in the space listing. Click any prefix to filter the listing.
+
+**Why it matters:** Prefixes turn a wall of topic titles into a scannable, classifiable list. A support space with `Bug` in red, `Solved` in green, and `Discussion` in grey becomes instantly navigable for moderators and readers alike.
+
+### Similar Topics Detection
+
+**What it does:** As members type a new topic title, Jetonomy searches for existing topics with similar titles in the same space and shows up to five matches inline below the title field.
+
+**Why it matters:** Most duplicate topics are created because the author did not know an existing topic already covered their question. Catching duplicates at composition time reduces cleanup work for moderators and surfaces existing answers to the author before they write.
+
+### Quote Replies
+
+**What it does:** Select any passage in a reply and click Quote to insert a styled blockquote into your reply composer with attribution linked back to the source. Or click Quote in a reply's `...` menu to quote the full body.
+
+**Why it matters:** Long threads stay readable when each reply quotes the specific passage it is responding to. Quote Replies gives readers the context without forcing them to scroll back up a thousand replies.

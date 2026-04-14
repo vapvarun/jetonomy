@@ -7,7 +7,7 @@ Launch date: March 27, 2026
 - **Headline:** The Modern Forum Plugin for WordPress
 - **Tagline:** Forums, Q&A, and idea boards — built for communities that grow.
 - **Value prop:** Jetonomy adds a fast, self-moderating discussion platform to any WordPress site — custom database tables, trust levels, and a design that adapts to your theme.
-- **Proof point:** 22 custom tables, 6 trust levels, 61+ REST endpoints, sub-200ms at 50K topics.
+- **Proof point:** 24 custom tables, 6 trust levels, 48+ REST endpoints (90+ with Pro), sub-200ms at 50K topics.
 
 ## Content Index
 

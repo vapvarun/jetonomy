@@ -132,3 +132,56 @@ If this sounds like something your community needs — link to the free plugin i
 What's your current go-to for async support questions? Curious what's working for other communities.
 
 #WordPress #CustomerSupport #CommunityManagement #ForumPlugin
+
+---
+
+## POST-LAUNCH / v1.3.0 REFRESH — April 2026
+
+Two community-focused Facebook posts for v1.3 AI launch. Conversational tone.
+
+---
+
+### Post 6 — Jetonomy 1.3 is Out — AI Moderation, Your Way
+
+Quick update for anyone running a community on Jetonomy:
+
+**Jetonomy 1.3 is live** and the big change is AI integration in Pro. I know "AI moderation" can sound vague, so here is what it actually does:
+
+- Reads every new post and reply before publish and scores it for spam probability
+- Flags content against rules you describe in plain English ("no political attacks, no personal insults")
+- Drafts reply suggestions for knowledge-base spaces
+- Generates summaries on long threads so new readers don't scroll forever
+
+**The part I'm most proud of:** it supports self-hosted Ollama. That means you can run everything on your own server — no data leaves your machine, no API keys, no per-request bill. For communities with privacy-sensitive members, this is a real option for the first time.
+
+We also support OpenAI and Anthropic if you prefer to pay for the best model quality.
+
+If you're running Jetonomy Pro already, update to 1.3 and find **Jetonomy → Settings → AI Integration** to configure your provider. If you're on free, this is the release that makes Pro worth considering.
+
+Free: https://wbcomdesigns.com/downloads/jetonomy/
+Pro: https://wbcomdesigns.com/downloads/jetonomy-pro/
+
+#WordPress #Community #AI
+
+---
+
+### Post 7 — A Note On Shipping Velocity
+
+When we launched Jetonomy 1.0 two weeks ago, a few people messaged us privately with the same question: is this a "launch and then silence" plugin, or are you going to keep working on it?
+
+Fair question. The WordPress plugin world is full of abandoned projects.
+
+Here is what we've shipped in 14 days:
+
+- 1.1: theme compatibility polish across 12 themes
+- 1.2: Private Topics, Topic Prefixes, Similar Topics, Quote Replies (all in free)
+- 1.3: full AI integration for Pro (with self-hosted Ollama support)
+- Plus: GitHub Actions CI, nine bug fixes from early users, onboarding docs
+
+And behind the scenes: the Basecamp board where we track every issue is public to paying customers. You can see what we're working on and what's next.
+
+We're in this for the long haul. If you were waiting for momentum proof before trying Jetonomy — you have it now.
+
+https://wbcomdesigns.com/downloads/jetonomy/
+
+#WordPress #Community #ForumPlugin
