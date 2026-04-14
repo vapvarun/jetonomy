@@ -140,7 +140,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 		return [
 			'limit'  => [
 				'type'    => 'integer',
-				'default' => 20,
 				'minimum' => 1,
 				'maximum' => 100,
 			],

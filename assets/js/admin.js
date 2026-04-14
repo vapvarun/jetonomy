@@ -456,7 +456,13 @@
 				settings.who_can_reply = whoCanReply || 'members';
 				settings.require_approval = requireApproval ? '1' : '0';
 				settings.allow_voting = allowVoting ? '1' : '0';
-				settings.posts_per_page = Math.max(1, parseInt(postsPerPage, 10) || 20);
+				// Save null when empty so Space::get_posts_per_page() can resolve via the
+				// space → global → 20 fallback chain. Coercing empty to 20 here would
+				// poison the per-space settings JSON and override the global default.
+				var ppNum = parseInt(postsPerPage, 10);
+				settings.posts_per_page = (postsPerPage === '' || isNaN(ppNum) || ppNum <= 0)
+					? null
+					: Math.max(1, Math.min(100, ppNum));
 
 				// Collect topic prefixes.
 				var enablePrefixes = $('#ss-enable-prefixes').is(':checked');

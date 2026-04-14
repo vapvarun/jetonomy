@@ -372,7 +372,14 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<tr>
 						<th scope="row"><label for="ss-posts-per-page"><?php esc_html_e( 'Posts Per Page', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="number" id="ss-posts-per-page" value="<?php echo absint( $space_settings['posts_per_page'] ?? '' ); ?>" min="0" max="100" class="small-text" placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
+							<?php
+							// Render empty (not 0) when no per-space override, so the "Default"
+							// placeholder surfaces and admin.js can save null on save.
+							$ss_posts_per_page = isset( $space_settings['posts_per_page'] ) && '' !== $space_settings['posts_per_page'] && (int) $space_settings['posts_per_page'] > 0
+								? absint( $space_settings['posts_per_page'] )
+								: '';
+							?>
+							<input type="number" id="ss-posts-per-page" value="<?php echo esc_attr( $ss_posts_per_page ); ?>" min="1" max="100" class="small-text" placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
 						</td>
 					</tr>
 					<tr>
