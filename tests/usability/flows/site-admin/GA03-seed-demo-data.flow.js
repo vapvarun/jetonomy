@@ -15,12 +15,12 @@ test.describe( 'GA03 — Seed demo data', () => {
 	test.afterEach( () => {
 		// Clean up demo data.
 		try {
-			journey( [ 'demo', 'cleanup' ] );
+			journey( [ 'demo-cleanup' ] );
 		} catch ( e ) { /* best effort */ }
 	} );
 
 	test( 'seed demo data via CLI and verify rows created', () => {
-		const result = journey( [ 'demo', 'seed' ] );
+		const result = journey( [ 'demo-seed' ] );
 		expect( result.success ).toBe( true );
 
 		// Verify demo data tracking option exists.

@@ -17,7 +17,7 @@ test.describe( 'SA08 — Create sub-space', () => {
 	let childSpaceId;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--limit=1' ] );
+		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
 		parentSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
 	} );
 

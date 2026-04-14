@@ -18,7 +18,7 @@ test.describe( 'SA05 — Edit space settings', () => {
 	let originalTitle;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--limit=1' ] );
+		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
 		fixtureSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
 		originalTitle = result.data?.items?.[ 0 ]?.title ?? 'Welcome';
 	} );

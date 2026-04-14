@@ -18,7 +18,7 @@ test.describe( 'SA04 — Create an invite link', () => {
 	let fixtureSpaceId;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--limit=1' ] );
+		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
 		fixtureSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
 	} );
 

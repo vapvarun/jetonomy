@@ -15,7 +15,7 @@ test.describe( 'GA04 — Cleanup demo data', () => {
 
 	test( 'seed then cleanup demo data via CLI', () => {
 		// Seed first.
-		const seedResult = journey( [ 'demo', 'seed' ] );
+		const seedResult = journey( [ 'demo-seed' ] );
 		expect( seedResult.success ).toBe( true );
 
 		// Capture a demo space title for verification.
@@ -23,7 +23,7 @@ test.describe( 'GA04 — Cleanup demo data', () => {
 		expect( demoOption ).toBeTruthy();
 
 		// Run cleanup.
-		const cleanupResult = journey( [ 'demo', 'cleanup' ] );
+		const cleanupResult = journey( [ 'demo-cleanup' ] );
 		expect( cleanupResult.success ).toBe( true );
 
 		// Verify demo tracking option is cleared.

@@ -17,7 +17,7 @@ test.describe( 'SA06 — Manage space members', () => {
 	let fixtureSpaceId;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--limit=1' ] );
+		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
 		fixtureSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
 	} );
 
