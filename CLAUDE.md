@@ -121,11 +121,17 @@ composer test:usability    # Playwright browser tests (250 flows)
 - `tests/usability/mu-plugins/jetonomy-test-mail-capture.php` — intercepts wp_mail for email assertions
 - `docs/plans/2026-04-11-usability-test-plan.md` — full 274-flow inventory + architecture plan
 
-**Current state (2026-04-12):**
-- 72 free flows pass on desktop (all data-flow verified, matchDelivery connected)
-- 127 Pro flows need CLI argument correction (arguments don't match actual `wp help` signatures — see next session note below)
+**Current state (2026-04-14):**
+- **71 free flows pass** on chromium-desktop (was 29 at session start — +42 in 2026-04-14 session)
+- 33 free flows still failing (mostly member UX gaps: reply composer DOM not updating, `.jt-more-trigger` permission-gated on own content, shortcut modal, passive read tracking; plus 8 anonymous, 4 trusted, 3 cross-cutting)
+- 34 skipped (legit `test.fixme` for unshipped UI)
+- 127 Pro flows need CLI argument correction (arguments don't match actual `wp help` signatures)
 - 10 composite flows need Pro flow fixes before they can run
-- 21 test.fixme for features not yet shipped (split-reply, merge-posts, etc.)
+
+**Suite invariants discovered 2026-04-14:**
+- Demo user & space IDs drift each run → never hardcode. Use `getUserId(login)` / `getSpaceId(slug)` from `tests/usability/helpers/wp-cli.js`, or `users.id()` / `users.spaceId()` from `tests/usability/helpers/users.js`.
+- `journey([...])` auto-appends `--format=json`. Commands that don't declare `[--format=<format>]` with `: description` before the `---` enum block reject it. Fix the command docblock, not the flow.
+- Seeder canonical slugs: category `community`; users `alice/bob/carol/david/eve`; spaces `welcome/general-discussion/help-support/feature-requests/tips-best-practices`.
 
 ## Next Session — Pick Up Here
 
@@ -149,6 +155,11 @@ All 14 Pro extensions are enabled on forums.local. Many test.fixme flows should 
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-04-14 | `9b242b3` | fix(cli): reply create docblock — `[--status]` and `[--format]` missing `: description` before `---` enum, so WP-CLI rejected `--format=json` |
+| 2026-04-14 | `8745756` | test(usability): id-lookup helpers + member/admin/moderator fixes — free-flow pass rate 29 → 67 |
+| 2026-04-14 | `1a89088` | test(usability): fix CLI arg signatures in 7 flows (`demo-seed`, `demo-cleanup`, `space list --category=<id>`) |
+| 2026-04-14 | `f1106a2` | test(usability): align demo seeder (friendly user logins, category slug `community`) + matcher implicit `flow_completes_without_error` |
+| 2026-04-14 | `1cfeae6` | fix: jt_notifications `object_type` ENUM adds `'message'` (migration 1.2.3) + declare `$ai_spam_detector` to remove PHP 8.2 deprecation; DB_VERSION → 1.2.3 |
 | 2026-04-12 | `bf1a1a8` | Usability test suite complete — 250 flows, 250 YAMLs, all layers connected, zero TODO |
 | 2026-04-12 | `7f205b2` | 66 free flows implemented (trusted + moderator + admin + cross-cutting) |
 | 2026-04-12 | `7e45d40` | 52 free flows implemented (anonymous + registered + member) |
