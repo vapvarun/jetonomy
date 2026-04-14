@@ -24,10 +24,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-05 — Flag action creates flag row', () 
 
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=flag-me-word',
 			'--action=flag',
-			'--enabled=1',
+			
 		] );
 		ruleId = rule.data?.id;
 

@@ -26,9 +26,9 @@ test.describe( 'PRO-WEBHOOKS-03 — Event: post.created end-to-end', () => {
 
 		const wh = proJourney( [
 			'webhooks', 'create',
-			'--url=https://httpbin.org/post',
-			'--event=post.created',
-			'--enabled=1',
+			'--target-url=https://httpbin.org/post',
+			'--events=post.created',
+			
 		] );
 		webhookId = wh.data?.id;
 	} );

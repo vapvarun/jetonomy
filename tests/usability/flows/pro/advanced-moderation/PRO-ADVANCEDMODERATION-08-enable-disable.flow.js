@@ -26,10 +26,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-08 — Enable/disable rule', () => {
 
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=toggle-test-word',
 			'--action=hold',
-			'--enabled=1',
+			
 		] );
 		ruleId = rule.data?.id;
 	} );

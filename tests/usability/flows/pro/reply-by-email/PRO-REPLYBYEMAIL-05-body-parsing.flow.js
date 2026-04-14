@@ -43,7 +43,7 @@ test.describe( 'PRO-REPLYBYEMAIL-05 — Body parsing strips quoted lines', () =>
 		const tokenResult = proJourney( [
 			'reply-by-email', 'generate-token',
 			`--post_id=${ postId }`,
-			'--user_id=1',
+			'--user-id=1',
 		] );
 		const token = tokenResult.data?.token;
 

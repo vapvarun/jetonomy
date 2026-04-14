@@ -30,9 +30,9 @@ test.describe( 'PRO-WEBHOOKS-01 — Admin create webhook', () => {
 	test( 'create a webhook via CLI and verify DB row', () => {
 		const result = proJourney( [
 			'webhooks', 'create',
-			'--url=https://httpbin.org/post',
-			'--event=post.created',
-			'--enabled=1',
+			'--target-url=https://httpbin.org/post',
+			'--events=post.created',
+			
 		] );
 
 		expect( result.success ).toBe( true );

@@ -24,10 +24,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-02 — Content submission triggers evalua
 		// Seed a rule that holds content containing "blocked-word".
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=blocked-word',
 			'--action=hold',
-			'--enabled=1',
+			
 		] );
 		ruleId = rule.data?.id;
 

@@ -22,9 +22,9 @@ test.describe( 'PRO-WEBHOOKS-05 — Failure increments fail_count', () => {
 		// Create a webhook pointing to an invalid URL that will fail.
 		const wh = proJourney( [
 			'webhooks', 'create',
-			'--url=https://invalid.test.local/webhook',
-			'--event=post.created',
-			'--enabled=1',
+			'--target-url=https://invalid.test.local/webhook',
+			'--events=post.created',
+			
 		] );
 		webhookId = wh.data?.id;
 	} );

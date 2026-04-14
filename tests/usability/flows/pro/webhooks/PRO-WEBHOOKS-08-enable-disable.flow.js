@@ -21,9 +21,9 @@ test.describe( 'PRO-WEBHOOKS-08 — Enable/disable webhook', () => {
 
 		const wh = proJourney( [
 			'webhooks', 'create',
-			'--url=https://httpbin.org/post',
-			'--event=post.created',
-			'--enabled=1',
+			'--target-url=https://httpbin.org/post',
+			'--events=post.created',
+			
 		] );
 		webhookId = wh.data?.id;
 	} );

@@ -31,10 +31,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-07 — Space-scoped rule fires only in ta
 		// Create a space-scoped hold rule.
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=scoped-word',
 			'--action=hold',
-			'--enabled=1',
+			
 			`--space_id=${ targetSpaceId }`,
 		] );
 		ruleId = rule.data?.id;

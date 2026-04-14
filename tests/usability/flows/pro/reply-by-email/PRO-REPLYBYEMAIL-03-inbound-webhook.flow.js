@@ -45,7 +45,7 @@ test.describe( 'PRO-REPLYBYEMAIL-03 — Inbound webhook receives email', () => {
 		const tokenResult = proJourney( [
 			'reply-by-email', 'generate-token',
 			`--post_id=${ postId }`,
-			'--user_id=1',
+			'--user-id=1',
 		] );
 		expect( tokenResult.success ).toBe( true );
 		const token = tokenResult.data?.token;

@@ -21,10 +21,10 @@ test.describe( 'PRO-WEBHOOKS-07 — HMAC-SHA256 signature', () => {
 
 		const wh = proJourney( [
 			'webhooks', 'create',
-			'--url=https://httpbin.org/post',
-			'--event=post.created',
+			'--target-url=https://httpbin.org/post',
+			'--events=post.created',
 			'--secret=test-hmac-secret-key',
-			'--enabled=1',
+			
 		] );
 		webhookId = wh.data?.id;
 	} );

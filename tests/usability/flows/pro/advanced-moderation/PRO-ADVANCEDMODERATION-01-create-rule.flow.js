@@ -32,10 +32,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-01 — Admin create moderation rule', () 
 	test( 'create a word-filter rule via CLI and verify DB row', () => {
 		const result = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=spam-keyword',
 			'--action=hold',
-			'--enabled=1',
+			
 		] );
 
 		expect( result.success ).toBe( true );
@@ -48,7 +49,7 @@ test.describe( 'PRO-ADVANCEDMODERATION-01 — Admin create moderation rule', () 
 		// Verify the rule can be read back.
 		const readback = proJourney( [ 'advanced-moderation', 'get', String( ruleId ) ] );
 		expect( readback.success ).toBe( true );
-		expect( readback.data?.type ).toBe( 'word_filter' );
+		expect( readback.data?.type ).toBe( 'keyword' );
 		expect( readback.data?.action ).toBe( 'hold' );
 	} );
 } );

@@ -21,9 +21,9 @@ test.describe( 'PRO-WEBHOOKS-06 — Auto-disable at threshold', () => {
 
 		const wh = proJourney( [
 			'webhooks', 'create',
-			'--url=https://invalid.test.local/webhook',
-			'--event=post.created',
-			'--enabled=1',
+			'--target-url=https://invalid.test.local/webhook',
+			'--events=post.created',
+			
 		] );
 		webhookId = wh.data?.id;
 

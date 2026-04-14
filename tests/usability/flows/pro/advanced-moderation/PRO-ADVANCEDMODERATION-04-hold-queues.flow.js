@@ -24,10 +24,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-04 — Hold action queues for moderation'
 
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=hold-me-word',
 			'--action=hold',
-			'--enabled=1',
+			
 		] );
 		ruleId = rule.data?.id;
 

@@ -23,10 +23,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-06 — Spam action silent-drops', () => {
 
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=spam-trigger-xyz',
 			'--action=spam',
-			'--enabled=1',
+			
 		] );
 		ruleId = rule.data?.id;
 

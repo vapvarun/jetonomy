@@ -23,10 +23,11 @@ test.describe( 'PRO-ADVANCEDMODERATION-03 — Block action prevents post', () =>
 		// Seed a block rule.
 		const rule = proJourney( [
 			'advanced-moderation', 'create',
-			'--type=word_filter',
+			'--name=TestRule',
+			'--type=keyword',
 			'--pattern=totally-blocked',
 			'--action=block',
-			'--enabled=1',
+			
 		] );
 		ruleId = rule.data?.id;
 
