@@ -31,6 +31,10 @@
         "test:combo": "phpunit --testdox",
         "test:pro": "phpunit --testdox --testsuite=pro",
         "test:unit": "phpunit --testdox --testsuite=unit",
+        "test:docker": "npx wp-env run tests-cli --env-cwd=wp-content/plugins/jetonomy vendor/bin/phpunit --testdox",
+        "test:docker:unit": "npx wp-env run tests-cli --env-cwd=wp-content/plugins/jetonomy vendor/bin/phpunit --testdox --testsuite=unit",
+        "test:docker:start": "npx wp-env start",
+        "test:docker:stop": "npx wp-env stop",
         "phpcs": "phpcs --standard=phpcs.xml",
         "phpcbf": "phpcbf --standard=phpcs.xml",
         "phpstan": "phpstan analyse --memory-limit=1G"
@@ -40,6 +44,10 @@
         "test:free": "Run free plugin in isolation — Pro is not loaded even if checked out.",
         "test:combo": "Run the full testsuite with Pro loaded (tests/unit + tests/pro).",
         "test:pro": "Run only tests/pro/* — requires Pro to be loaded.",
-        "test:unit": "Run only tests/unit/* without skipping Pro."
+        "test:unit": "Run only tests/unit/* without skipping Pro.",
+        "test:docker": "Run the full PHPUnit suite inside the wp-env Docker container (requires `composer test:docker:start` first).",
+        "test:docker:unit": "Run only tests/unit/* inside the wp-env Docker container.",
+        "test:docker:start": "Bring up the wp-env Docker stack (dev on :8888, tests on :8889).",
+        "test:docker:stop": "Stop the wp-env Docker stack."
     }
 }
