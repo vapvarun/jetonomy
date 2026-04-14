@@ -7,7 +7,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { wp, journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
+const { wp, journey, dbQuery, dbWrite, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists, assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -15,9 +16,9 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C33 — Leave a space', () => {
 
-	const spaceId = 1; // Welcome space.
+	const spaceId = users.spaceId( 'welcome' );
 	const testUserLogin = 'bob';
-	const testUserId = 4;
+	const testUserId = users.id( 'bob' );
 
 	test.beforeEach( () => {
 		// Ensure bob is a member of the space.

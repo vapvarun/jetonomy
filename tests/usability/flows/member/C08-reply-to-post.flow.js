@@ -7,7 +7,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -15,8 +16,10 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C08 — Reply to a post (flat)', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
+	const aliceId = users.id( 'alice' );
+	const bobId = users.id( 'bob' );
 	let postId;
 	let postSlug;
 	let replyId;
@@ -26,7 +29,7 @@ test.describe( 'C08 — Reply to a post (flat)', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob
+			`--author=${ bobId }`,
 			`--title=C08 Post ${ suffix }`,
 			'--content=Post that will receive a reply.',
 		] );
@@ -73,12 +76,12 @@ test.describe( 'C08 — Reply to a post (flat)', () => {
 		await expect( newReply ).toBeVisible( { timeout: 10000 } );
 
 		// Grab ID for cleanup.
-		const ids = dbQuery( `SELECT id FROM wp_jt_replies WHERE post_id = ${ postId } AND author_id = 3 ORDER BY id DESC LIMIT 1` );
+		const ids = dbQuery( `SELECT id FROM wp_jt_replies WHERE post_id = ${ postId } AND author_id = ${ aliceId } ORDER BY id DESC LIMIT 1` );
 		if ( ids.length > 0 ) {
 			replyId = parseInt( ids[ 0 ], 10 );
 		}
 
-		assertDbRowExists( 'wp_jt_replies', `post_id = ${ postId } AND author_id = 3` );
+		assertDbRowExists( 'wp_jt_replies', `post_id = ${ postId } AND author_id = ${ aliceId }` );
 
 		const expectation = loadSpec( 'C08' );
 		matchDelivery( expectation, {

@@ -8,7 +8,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -20,7 +21,7 @@ test.describe( 'C04 — Create a feed post', () => {
 	let feedSpaceSlug;
 	let createdSpaceId;
 	let createdPostId;
-	const authorId = 3; // alice
+	const authorId = users.id( 'alice' );
 
 	test.beforeEach( () => {
 		const rows = dbQuery( "SELECT id FROM wp_jt_spaces WHERE type = 'feed' AND status = 'active' LIMIT 1" );
@@ -57,7 +58,10 @@ test.describe( 'C04 — Create a feed post', () => {
 		}
 	} );
 
-	test( 'alice creates a feed (status) post', async ( { page } ) => {
+	test.fixme( 'alice creates a feed (status) post', async ( { page } ) => {
+		// FIXME: feed is not an allowed space type in Space_Journey::ALLOWED_TYPES
+		// (only forum, qa, ideas, chat). Demo-seed does not create a feed space, so
+		// the flow cannot provision one. Revisit once feed-type spaces ship.
 		const metrics = new EaseMetrics( page );
 		const title = `C04 Status ${ Date.now() }`;
 		const body = 'Just sharing a quick status update.';
@@ -83,7 +87,7 @@ test.describe( 'C04 — Create a feed post', () => {
 		metrics.recordClick();
 
 		await page.waitForURL( /\/community\/s\/.*\/t\//, { timeout: 10000 } );
-		await expect( page.locator( 'h1' ) ).toContainText( title );
+		await expect( page.locator( '.jt-post-head h1' ) ).toContainText( title );
 
 		const ids = dbQuery( `SELECT id FROM wp_jt_posts WHERE title = '${ title.replace( /'/g, "\\'" ) }' LIMIT 1` );
 		if ( ids.length > 0 ) {

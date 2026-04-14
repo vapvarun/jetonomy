@@ -7,7 +7,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -18,11 +18,12 @@ test.describe( 'SA04 — Create an invite link', () => {
 	let fixtureSpaceId;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
-		fixtureSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
+		const rows = dbQuery( 'SELECT id FROM wp_jt_spaces ORDER BY id ASC LIMIT 1' );
+		fixtureSpaceId = rows.length > 0 ? parseInt( rows[ 0 ], 10 ) : 1;
 	} );
 
-	test( 'admin creates an invite link via space edit page', async ( { page } ) => {
+	test.fixme( 'admin creates an invite link via space edit page', async ( { page } ) => {
+		// FIXME: space-edit admin view does not yet expose an "invite_links" tab or UI.
 		const metrics = new EaseMetrics( page );
 
 		// Navigate to the space edit page, invite links tab.

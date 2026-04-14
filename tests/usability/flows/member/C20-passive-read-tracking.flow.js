@@ -8,6 +8,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -15,7 +16,7 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C20 — Mark post as read (passive)', () => {
 
-	const testUserId = 3; // alice
+	const testUserId = users.id( 'alice' );
 	let createdPostId;
 
 	test.afterEach( () => {
@@ -33,7 +34,7 @@ test.describe( 'C20 — Mark post as read (passive)', () => {
 		const metrics = new EaseMetrics( page );
 
 		// Seed a fresh post.
-		const seedResult = journey( [ 'post', 'create', '--space=1', '--author=1', '--title=C20 Read Tracking Test', '--content=Passive read test body' ] );
+		const seedResult = journey( [ 'post', 'create', `--space=${ users.spaceId( 'welcome' ) }`, `--author=${ users.id( 'admin' ) }`, '--title=C20 Read Tracking Test', '--content=Passive read test body' ] );
 		if ( seedResult.success && seedResult.data?.id ) {
 			createdPostId = seedResult.data.id;
 		}
@@ -53,7 +54,7 @@ test.describe( 'C20 — Mark post as read (passive)', () => {
 		metrics.start();
 
 		// Confirm the post page loaded.
-		await expect( page.locator( 'h1' ) ).toContainText( 'C20 Read Tracking Test', { timeout: 5000 } );
+		await expect( page.locator( '.jt-post-head h1' ) ).toContainText( 'C20 Read Tracking Test', { timeout: 5000 } );
 
 		// Wait for the read tracking to propagate (background fetch or inline).
 		await expect.poll( () => {

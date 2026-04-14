@@ -8,7 +8,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,17 +16,19 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C14 — Upvote a post', () => {
 
-	const spaceId = 1;
+	const spaceId = getSpaceId( 'welcome' );
 	const spaceSlug = 'welcome';
 	let postId;
 	let postSlug;
+	const aliceId = getUserId( 'alice' );
+	const bobId = getUserId( 'bob' );
 
 	test.beforeEach( () => {
 		const suffix = Date.now();
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob
+			`--author=${ bobId }`,
 			`--title=C14 Upvote Post ${ suffix }`,
 			'--content=Post to upvote.',
 		] );
@@ -35,8 +37,8 @@ test.describe( 'C14 — Upvote a post', () => {
 
 		// Clear any existing vote by alice on this post.
 		try {
-			journey( [ 'vote', 'cast', '--voter=3', '--type=post', `--id=${ postId }`, '--value=1' ] );
-			journey( [ 'vote', 'cast', '--voter=3', '--type=post', `--id=${ postId }`, '--value=1' ] );
+			journey( [ 'vote', 'cast', `--voter=${ aliceId }`, '--type=post', `--id=${ postId }`, '--value=1' ] );
+			journey( [ 'vote', 'cast', `--voter=${ aliceId }`, '--type=post', `--id=${ postId }`, '--value=1' ] );
 		} catch ( e ) { /* ignore — ensures no existing vote */ }
 	} );
 
@@ -70,7 +72,7 @@ test.describe( 'C14 — Upvote a post', () => {
 		await expect( upvoteBtn ).toHaveClass( /voted/, { timeout: 5000 } );
 
 		// DB: vote row exists.
-		assertDbRowExists( 'wp_jt_votes', `user_id = 3 AND target_type = 'post' AND target_id = ${ postId } AND value = 1` );
+		assertDbRowExists( 'wp_jt_votes', `user_id = ${ aliceId } AND target_type = 'post' AND target_id = ${ postId } AND value = 1` );
 
 		const expectation = loadSpec( 'C14' );
 		matchDelivery( expectation, {

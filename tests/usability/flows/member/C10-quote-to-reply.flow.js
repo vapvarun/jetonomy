@@ -9,7 +9,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -17,8 +18,10 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C10 — Quote-to-reply', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
+	const aliceId = users.id( 'alice' );
+	const bobId = users.id( 'bob' );
 	let postId;
 	let postSlug;
 	let seedReplyId;
@@ -29,7 +32,7 @@ test.describe( 'C10 — Quote-to-reply', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4',
+			`--author=${ bobId }`,
 			`--title=C10 Post ${ suffix }`,
 			'--content=Post for quote test.',
 		] );
@@ -39,7 +42,7 @@ test.describe( 'C10 — Quote-to-reply', () => {
 		const reply = journey( [
 			'reply', 'create',
 			`--post=${ postId }`,
-			'--author=4',
+			`--author=${ bobId }`,
 			'--content=This reply should be quoted.',
 		] );
 		seedReplyId = reply.data?.id || reply.id;
@@ -92,7 +95,7 @@ test.describe( 'C10 — Quote-to-reply', () => {
 		await expect( newReply ).toBeVisible( { timeout: 10000 } );
 
 		// Cleanup ID.
-		const ids = dbQuery( `SELECT id FROM wp_jt_replies WHERE post_id = ${ postId } AND author_id = 3 ORDER BY id DESC LIMIT 1` );
+		const ids = dbQuery( `SELECT id FROM wp_jt_replies WHERE post_id = ${ postId } AND author_id = ${ aliceId } ORDER BY id DESC LIMIT 1` );
 		if ( ids.length > 0 ) {
 			quotedReplyId = parseInt( ids[ 0 ], 10 );
 		}

@@ -40,7 +40,8 @@ test.describe( 'M06 — Close/lock a post', () => {
 		}
 	} );
 
-	test( 'admin closes a post via the more-menu', async ( { page } ) => {
+	test.fixme( 'admin closes a post via the more-menu', async ( { page } ) => {
+		// FIXME: single-post more-menu does not yet expose a Close/Lock action.
 		const metrics = new EaseMetrics( page );
 
 		await autoLogin( page, 1, `/community/s/${ spaceSlug }/t/${ postSlug }/` );

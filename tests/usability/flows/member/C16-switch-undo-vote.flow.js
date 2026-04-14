@@ -9,14 +9,15 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C16 — Switch / undo vote', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
 	let postId;
 	let postSlug;
@@ -26,7 +27,7 @@ test.describe( 'C16 — Switch / undo vote', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob
+			`--author=${ users.id( 'bob' ) }`,
 			`--title=C16 Vote Toggle ${ suffix }`,
 			'--content=Post for vote toggle test.',
 		] );

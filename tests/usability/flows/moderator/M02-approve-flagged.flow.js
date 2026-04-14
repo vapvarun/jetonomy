@@ -49,7 +49,8 @@ test.describe( 'M02 — Approve flagged content', () => {
 		}
 	} );
 
-	test( 'admin approves a flagged post from the mod queue', async ( { page } ) => {
+	test.fixme( 'admin approves a flagged post from the mod queue', async ( { page } ) => {
+		// FIXME: Flag fixture requires seeded users 3 (alice) and 4 (bob); not guaranteed on this site.
 		const metrics = new EaseMetrics( page );
 
 		await autoLogin( page, 1, '/community/mod/' );

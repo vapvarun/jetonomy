@@ -9,6 +9,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 
@@ -30,7 +31,7 @@ test.describe( 'C18 — @mention another user', () => {
 		const metrics = new EaseMetrics( page );
 
 		// Seed a post so we have a reply composer visible.
-		const seedResult = journey( [ 'post', 'create', '--space=1', '--author=1', '--title=C18 Mention Test', '--content=Testing mentions' ] );
+		const seedResult = journey( [ 'post', 'create', `--space=${ users.spaceId( 'welcome' ) }`, `--author=${ users.id( 'admin' ) }`, '--title=C18 Mention Test', '--content=Testing mentions' ] );
 		if ( seedResult.success && seedResult.data?.id ) {
 			createdPostId = seedResult.data.id;
 		}

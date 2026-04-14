@@ -8,7 +8,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,8 +16,10 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C15 — Downvote a post', () => {
 
-	const spaceId = 1;
+	const spaceId = getSpaceId( 'welcome' );
 	const spaceSlug = 'welcome';
+	const aliceId = getUserId( 'alice' );
+	const bobId = getUserId( 'bob' );
 	let postId;
 	let postSlug;
 
@@ -26,7 +28,7 @@ test.describe( 'C15 — Downvote a post', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob
+			`--author=${ bobId }`,
 			`--title=C15 Downvote Post ${ suffix }`,
 			'--content=Post to downvote.',
 		] );
@@ -64,7 +66,7 @@ test.describe( 'C15 — Downvote a post', () => {
 		await expect( downvoteBtn ).toHaveClass( /voted/, { timeout: 5000 } );
 
 		// DB: vote row exists with value = -1.
-		assertDbRowExists( 'wp_jt_votes', `user_id = 3 AND target_type = 'post' AND target_id = ${ postId } AND value = -1` );
+		assertDbRowExists( 'wp_jt_votes', `user_id = ${ aliceId } AND target_type = 'post' AND target_id = ${ postId } AND value = -1` );
 
 		const expectation = loadSpec( 'C15' );
 		matchDelivery( expectation, {

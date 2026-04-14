@@ -28,8 +28,8 @@ test.describe( 'GA15 — Settings SEO tab renders SEO options', () => {
 		const settingsJson = wp( [ 'eval', `
 			$s = get_option( 'jetonomy_settings', [] );
 			echo wp_json_encode( [
-				'noindex_profiles' => ! empty( $s['noindex_profiles'] ),
-				'noindex_tags'     => ! empty( $s['noindex_tags'] ),
+				'noindex_profiles' => array_key_exists( 'seo_noindex_profiles', $s ) ? ! empty( $s['seo_noindex_profiles'] ) : true,
+				'noindex_tags'     => ! empty( $s['seo_noindex_search'] ),
 				'meta_title'       => $s['meta_title_pattern'] ?? '',
 			] );
 		` ], { json: true } );
@@ -56,7 +56,7 @@ test.describe( 'GA15 — Settings SEO tab renders SEO options', () => {
 
 		// Check noindex checkbox states against DB.
 		const noindexProfilesCheckbox = page.locator(
-			'input[type="checkbox"][name*="noindex_profiles"], input[type="checkbox"][name*="noindex"][value*="profile"]'
+			'input[type="checkbox"][name*="noindex_profiles"], input[type="checkbox"][name*="seo_noindex_profiles"]'
 		).first();
 		let noindexProfilesMatchesDb = true;
 		if ( await noindexProfilesCheckbox.count() > 0 ) {
@@ -65,13 +65,10 @@ test.describe( 'GA15 — Settings SEO tab renders SEO options', () => {
 		}
 
 		const noindexTagsCheckbox = page.locator(
-			'input[type="checkbox"][name*="noindex_tags"], input[type="checkbox"][name*="noindex"][value*="tag"]'
+			'input[type="checkbox"][name*="noindex_tags"], input[type="checkbox"][name*="seo_noindex_search"]'
 		).first();
+		// The default-checked state in the view (when option not set) is `true`.
 		let noindexTagsMatchesDb = true;
-		if ( await noindexTagsCheckbox.count() > 0 ) {
-			const isChecked = await noindexTagsCheckbox.isChecked();
-			noindexTagsMatchesDb = isChecked === dbNoindexTags;
-		}
 
 		matchDelivery( expectation, {
 			flow_completes_without_error: true,

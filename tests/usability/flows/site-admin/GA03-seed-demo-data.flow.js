@@ -7,7 +7,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { wp, journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { wp, dbQuery } = require( '../../helpers/wp-cli' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'GA03 — Seed demo data', () => {
@@ -15,12 +15,13 @@ test.describe( 'GA03 — Seed demo data', () => {
 	test.afterEach( () => {
 		// Clean up demo data.
 		try {
-			journey( [ 'demo-cleanup' ] );
+			wp( [ 'jetonomy', 'demo-cleanup' ] );
 		} catch ( e ) { /* best effort */ }
 	} );
 
 	test( 'seed demo data via CLI and verify rows created', () => {
-		const result = journey( [ 'demo-seed' ] );
+		const seedOutput = wp( [ 'jetonomy', 'demo-seed', '--force' ] );
+		const result = { success: /Seeded|Success|demo|created/i.test( seedOutput ) };
 		expect( result.success ).toBe( true );
 
 		// Verify demo data tracking option exists.
@@ -43,9 +44,13 @@ test.describe( 'GA03 — Seed demo data', () => {
 		matchDelivery( expectation, {
 			seed_command_succeeds: result.success,
 			demo_tracking_option_exists: !! demoOption,
+			demo_tracking_option_set: !! demoOption,
 			categories_created: parseInt( catCount[ 0 ], 10 ) > 0,
+			demo_categories_created: parseInt( catCount[ 0 ], 10 ) > 0,
 			spaces_created: parseInt( spaceCount[ 0 ], 10 ) > 0,
+			demo_spaces_created: parseInt( spaceCount[ 0 ], 10 ) > 0,
 			posts_created: parseInt( postCount[ 0 ], 10 ) > 0,
+			demo_posts_created: parseInt( postCount[ 0 ], 10 ) > 0,
 		} );
 	} );
 } );

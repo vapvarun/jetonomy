@@ -111,4 +111,42 @@ function dbWrite( sql ) {
 	return wp( [ 'eval', code ] );
 }
 
-module.exports = { wp, journey, proJourney, dbQuery, dbWrite, WP_PATH };
+/**
+ * Cached user login → WP user ID lookup.
+ * Demo-seeded users (alice, bob, carol, david, eve, admin) don't have stable
+ * IDs — they depend on when demo-seed ran. Flows call getUserId('alice')
+ * instead of hardcoding 3.
+ */
+const _userCache = {};
+function getUserId( login ) {
+	if ( _userCache[ login ] !== undefined ) {
+		return _userCache[ login ];
+	}
+	try {
+		const out = wp( [ 'user', 'get', String( login ), '--field=ID' ] );
+		_userCache[ login ] = parseInt( out, 10 );
+	} catch ( e ) {
+		_userCache[ login ] = 0;
+	}
+	return _userCache[ login ];
+}
+
+/**
+ * Cached space slug → space ID lookup.
+ * Demo-seeded spaces don't have stable IDs either.
+ */
+const _spaceCache = {};
+function getSpaceId( slug ) {
+	if ( _spaceCache[ slug ] !== undefined ) {
+		return _spaceCache[ slug ];
+	}
+	try {
+		const rows = dbQuery( `SELECT id FROM wp_jt_spaces WHERE slug = '${ slug.replace( /'/g, "\\'" ) }' LIMIT 1` );
+		_spaceCache[ slug ] = rows.length > 0 ? parseInt( rows[ 0 ], 10 ) : 0;
+	} catch ( e ) {
+		_spaceCache[ slug ] = 0;
+	}
+	return _spaceCache[ slug ];
+}
+
+module.exports = { wp, journey, proJourney, dbQuery, dbWrite, WP_PATH, getUserId, getSpaceId };

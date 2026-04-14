@@ -8,7 +8,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbColumn } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -22,8 +23,8 @@ test.describe( 'C13 — Accept an answer (Q&A)', () => {
 	let postId;
 	let postSlug;
 	let replyId;
-	const aliceId = 3;
-	const bobId = 4;
+	const aliceId = users.id( 'alice' );
+	const bobId = users.id( 'bob' );
 
 	test.beforeEach( () => {
 		// Find or create a Q&A space.

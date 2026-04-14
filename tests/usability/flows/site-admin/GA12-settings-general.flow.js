@@ -42,7 +42,7 @@ test.describe( 'GA12 — Edit general settings tab', () => {
 
 		// Assert the general tab is active or present.
 		const generalTab = page.locator(
-			'a.nav-tab:has-text("General"), a.nav-tab-active:has-text("General"), [data-tab="general"]'
+			'a.nav-tab:has-text("General"), a.nav-tab-active:has-text("General"), [data-tab="general"], a.jt-snav-link:has-text("General")'
 		);
 		await expect( generalTab.first() ).toBeVisible( { timeout: 5000 } );
 

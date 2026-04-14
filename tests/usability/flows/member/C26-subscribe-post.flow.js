@@ -8,18 +8,19 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C26 — Subscribe to a post', () => {
 
-	const testUserId = 3; // alice
+	const testUserId = users.id( 'alice' );
 	let createdPostId;
 
 	test.beforeEach( () => {
 		// Seed a post for testing.
-		const seedResult = journey( [ 'post', 'create', '--space=1', '--author=1', '--title=C26 Subscribe Post Test', '--content=Testing post subscription' ] );
+		const seedResult = journey( [ 'post', 'create', `--space=${ users.spaceId( 'welcome' ) }`, `--author=${ users.id( 'admin' ) }`, '--title=C26 Subscribe Post Test', '--content=Testing post subscription' ] );
 		if ( seedResult.success && seedResult.data?.id ) {
 			createdPostId = seedResult.data.id;
 		}

@@ -8,17 +8,18 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 
 test.describe( 'C28 — Bookmark a post', () => {
 
-	const testUserId = 3; // alice
+	const testUserId = users.id( 'alice' );
 	let createdPostId;
 
 	test.beforeEach( () => {
-		const seedResult = journey( [ 'post', 'create', '--space=1', '--author=1', '--title=C28 Bookmark Test', '--content=Testing bookmark' ] );
+		const seedResult = journey( [ 'post', 'create', `--space=${ users.spaceId( 'welcome' ) }`, `--author=${ users.id( 'admin' ) }`, '--title=C28 Bookmark Test', '--content=Testing bookmark' ] );
 		if ( seedResult.success && seedResult.data?.id ) {
 			createdPostId = seedResult.data.id;
 		}

@@ -8,7 +8,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,8 +17,10 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C09 — Reply to a reply (threaded)', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
+	const aliceId = users.id( 'alice' );
+	const bobId = users.id( 'bob' );
 	let postId;
 	let postSlug;
 	let parentReplyId;
@@ -28,7 +31,7 @@ test.describe( 'C09 — Reply to a reply (threaded)', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob
+			`--author=${ bobId }`,
 			`--title=C09 Post ${ suffix }`,
 			'--content=Post for threaded reply test.',
 		] );
@@ -39,7 +42,7 @@ test.describe( 'C09 — Reply to a reply (threaded)', () => {
 		const reply = journey( [
 			'reply', 'create',
 			`--post=${ postId }`,
-			'--author=4',
+			`--author=${ bobId }`,
 			`--content=Top-level reply from bob ${ suffix }`,
 		] );
 		parentReplyId = reply.data?.id || reply.id;
@@ -95,12 +98,12 @@ test.describe( 'C09 — Reply to a reply (threaded)', () => {
 		expect( hasNesting ).toBeGreaterThan( 0 );
 
 		// Grab ID for cleanup.
-		const ids = dbQuery( `SELECT id FROM wp_jt_replies WHERE post_id = ${ postId } AND author_id = 3 AND parent_id = ${ parentReplyId } ORDER BY id DESC LIMIT 1` );
+		const ids = dbQuery( `SELECT id FROM wp_jt_replies WHERE post_id = ${ postId } AND author_id = ${ aliceId } AND parent_id = ${ parentReplyId } ORDER BY id DESC LIMIT 1` );
 		if ( ids.length > 0 ) {
 			nestedReplyId = parseInt( ids[ 0 ], 10 );
 		}
 
-		assertDbRowExists( 'wp_jt_replies', `post_id = ${ postId } AND author_id = 3 AND parent_id = ${ parentReplyId }` );
+		assertDbRowExists( 'wp_jt_replies', `post_id = ${ postId } AND author_id = ${ aliceId } AND parent_id = ${ parentReplyId }` );
 
 		const expectation = loadSpec( 'C09' );
 		matchDelivery( expectation, {

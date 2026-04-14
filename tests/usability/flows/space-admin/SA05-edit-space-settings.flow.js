@@ -18,9 +18,10 @@ test.describe( 'SA05 — Edit space settings', () => {
 	let originalTitle;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
-		fixtureSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
-		originalTitle = result.data?.items?.[ 0 ]?.title ?? 'Welcome';
+		const rows = dbQuery( 'SELECT id FROM wp_jt_spaces ORDER BY id ASC LIMIT 1' );
+		fixtureSpaceId = rows.length > 0 ? parseInt( rows[ 0 ], 10 ) : 1;
+		const titleRows = dbQuery( `SELECT title FROM wp_jt_spaces WHERE id = ${ fixtureSpaceId }` );
+		originalTitle = titleRows[ 0 ] || 'Welcome';
 	} );
 
 	test.afterEach( () => {
@@ -53,7 +54,7 @@ test.describe( 'SA05 — Edit space settings', () => {
 		}
 
 		// Click save.
-		const saveBtn = page.locator( 'button:has-text("Save"), input[type="submit"]' );
+		const saveBtn = page.locator( 'button:has-text("Save"), button:has-text("Update"), button[type="submit"], input[type="submit"]' );
 		await expect( saveBtn.first() ).toBeVisible();
 		await saveBtn.first().click();
 		metrics.recordClick();
@@ -70,6 +71,7 @@ test.describe( 'SA05 — Edit space settings', () => {
 			title_persisted_in_db: rows[ 0 ] === newTitle,
 			no_console_errors: metrics.consoleErrors.length === 0,
 			max_clicks: metrics.clicks,
+			max_clicks_to_goal: metrics.clicks,
 		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );

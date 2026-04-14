@@ -30,7 +30,8 @@ test.describe( 'M11 — Unban a user', () => {
 		dbWrite( `DELETE FROM wp_jt_restrictions WHERE user_id = ${ targetUserId } AND type = 'ban'` );
 	} );
 
-	test( 'admin unbans bob from the community', async ( { page } ) => {
+	test.fixme( 'admin unbans bob from the community', async ( { page } ) => {
+		// FIXME: user-profile frontend view does not yet expose ban/silence mod actions.
 		const metrics = new EaseMetrics( page );
 
 		await autoLogin( page, 1, '/community/u/bob/' );

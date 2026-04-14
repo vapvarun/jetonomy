@@ -8,16 +8,17 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C11 — Edit own reply', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
-	const authorId = 3; // alice
+	const authorId = users.id( 'alice' );
 	let postId;
 	let postSlug;
 	let replyId;
@@ -27,7 +28,7 @@ test.describe( 'C11 — Edit own reply', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob owns the post
+			`--author=${ users.id( 'bob' ) }`,
 			`--title=C11 Post ${ suffix }`,
 			'--content=Post for reply edit test.',
 		] );

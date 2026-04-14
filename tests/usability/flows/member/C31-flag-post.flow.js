@@ -9,6 +9,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,12 +17,12 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C31 — Flag a post (all reasons)', () => {
 
-	const testUserId = 3; // alice — not the post author
+	const testUserId = users.id( 'alice' );
 	let createdPostId;
 
 	test.beforeEach( () => {
 		// Seed a post by admin (user 1) so alice (user 3) can flag it.
-		const seedResult = journey( [ 'post', 'create', '--space=1', '--author=1', '--title=C31 Flag Post Test', '--content=This post should be flagged' ] );
+		const seedResult = journey( [ 'post', 'create', `--space=${ users.spaceId( 'welcome' ) }`, `--author=${ users.id( 'admin' ) }`, '--title=C31 Flag Post Test', '--content=This post should be flagged' ] );
 		if ( seedResult.success && seedResult.data?.id ) {
 			createdPostId = seedResult.data.id;
 		}

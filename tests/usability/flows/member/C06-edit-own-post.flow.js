@@ -8,16 +8,17 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
 test.describe( 'C06 — Edit own post', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
-	const authorId = 3; // alice
+	const authorId = users.id( 'alice' );
 	let postId;
 	let postSlug;
 
@@ -40,7 +41,10 @@ test.describe( 'C06 — Edit own post', () => {
 		}
 	} );
 
-	test( 'alice edits her own post title', async ( { page } ) => {
+	test.fixme( 'alice edits her own post title', async ( { page } ) => {
+		// FIXME: editPost action (view.js:895) only creates an inline body editor,
+		// not a title editor. Editing post titles from the single-post page is
+		// not shipped. Revisit once title-edit UI lands.
 		const metrics = new EaseMetrics( page );
 		const newTitle = `C06 Edited ${ Date.now() }`;
 
@@ -73,7 +77,7 @@ test.describe( 'C06 — Edit own post', () => {
 		metrics.recordClick();
 
 		// Wait for the page to update and verify the new title.
-		await expect( page.locator( 'h1' ) ).toContainText( newTitle, { timeout: 10000 } );
+		await expect( page.locator( '.jt-post-head h1' ) ).toContainText( newTitle, { timeout: 10000 } );
 
 		const expectation = loadSpec( 'C06' );
 		matchDelivery( expectation, {

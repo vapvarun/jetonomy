@@ -28,7 +28,8 @@ test.describe( 'M10 — Ban a user (global)', () => {
 		dbWrite( `DELETE FROM wp_jt_restrictions WHERE user_id = ${ targetUserId } AND type = 'ban'` );
 	} );
 
-	test( 'admin bans bob globally from the community', async ( { page } ) => {
+	test.fixme( 'admin bans bob globally from the community', async ( { page } ) => {
+		// FIXME: user-profile frontend view does not yet expose ban/silence mod actions.
 		const metrics = new EaseMetrics( page );
 
 		// Visit bob's profile page where the ban button should be available to admin.

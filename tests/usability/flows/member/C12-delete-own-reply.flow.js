@@ -7,7 +7,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -15,9 +16,9 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C12 — Delete own reply', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
-	const authorId = 3; // alice
+	const authorId = users.id( 'alice' );
 	let postId;
 	let postSlug;
 	let replyId;
@@ -27,7 +28,7 @@ test.describe( 'C12 — Delete own reply', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4',
+			`--author=${ users.id( 'bob' ) }`,
 			`--title=C12 Post ${ suffix }`,
 			'--content=Post for reply deletion test.',
 		] );
@@ -78,6 +79,11 @@ test.describe( 'C12 — Delete own reply', () => {
 		await expect( deleteBtn ).toBeVisible( { timeout: 3000 } );
 		await deleteBtn.click();
 		metrics.recordClick();
+
+		// Confirm in the custom jt-modal dialog (jetonomyConfirm).
+		const confirmBtn = page.locator( '.jt-modal-overlay .jt-btn-fill' );
+		await expect( confirmBtn ).toBeVisible( { timeout: 3000 } );
+		await confirmBtn.click();
 
 		// Wait for the reply to be removed from the DOM.
 		await expect( replyCard ).not.toBeVisible( { timeout: 10000 } );

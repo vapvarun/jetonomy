@@ -8,7 +8,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,8 +17,10 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C17 — Vote on a reply', () => {
 
-	const spaceId = 1;
+	const spaceId = users.spaceId( 'welcome' );
 	const spaceSlug = 'welcome';
+	const aliceId = users.id( 'alice' );
+	const bobId = users.id( 'bob' );
 	let postId;
 	let postSlug;
 	let replyId;
@@ -27,7 +30,7 @@ test.describe( 'C17 — Vote on a reply', () => {
 		const post = journey( [
 			'post', 'create',
 			`--space=${ spaceId }`,
-			'--author=4', // bob
+			`--author=${ bobId }`,
 			`--title=C17 Reply Vote Post ${ suffix }`,
 			'--content=Post with a reply to vote on.',
 		] );
@@ -37,7 +40,7 @@ test.describe( 'C17 — Vote on a reply', () => {
 		const reply = journey( [
 			'reply', 'create',
 			`--post=${ postId }`,
-			'--author=4',
+			`--author=${ bobId }`,
 			`--content=Reply to upvote ${ suffix }`,
 		] );
 		replyId = reply.data?.id || reply.id;
@@ -80,7 +83,7 @@ test.describe( 'C17 — Vote on a reply', () => {
 		await expect( upvoteBtn ).toHaveClass( /voted/, { timeout: 5000 } );
 
 		// DB: vote row exists for the reply.
-		assertDbRowExists( 'wp_jt_votes', `user_id = 3 AND target_type = 'reply' AND target_id = ${ replyId } AND value = 1` );
+		assertDbRowExists( 'wp_jt_votes', `user_id = ${ aliceId } AND target_type = 'reply' AND target_id = ${ replyId } AND value = 1` );
 
 		const expectation = loadSpec( 'C17' );
 		matchDelivery( expectation, {

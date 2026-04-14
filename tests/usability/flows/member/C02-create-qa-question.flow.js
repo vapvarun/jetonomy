@@ -7,7 +7,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -19,7 +20,7 @@ test.describe( 'C02 — Create a Q&A question', () => {
 	let qaSpaceSlug;
 	let createdSpaceId;
 	let createdPostId;
-	const authorId = 3; // alice
+	const authorId = users.id( 'alice' );
 
 	test.beforeEach( () => {
 		// Look for an existing Q&A space.
@@ -84,7 +85,7 @@ test.describe( 'C02 — Create a Q&A question', () => {
 		metrics.recordClick();
 
 		await page.waitForURL( /\/community\/s\/.*\/t\//, { timeout: 10000 } );
-		await expect( page.locator( 'h1' ) ).toContainText( title );
+		await expect( page.locator( '.jt-post-head h1' ) ).toContainText( title );
 
 		// Grab ID for cleanup.
 		const ids = dbQuery( `SELECT id FROM wp_jt_posts WHERE title = '${ title.replace( /'/g, "\\'" ) }' LIMIT 1` );

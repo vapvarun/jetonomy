@@ -8,7 +8,8 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -17,8 +18,8 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 test.describe( 'C05 — Save post as draft', () => {
 
 	const spaceSlug = 'welcome';
-	const spaceId = 1;
-	const authorId = 3; // alice
+	const spaceId = users.spaceId( 'welcome' );
+	const authorId = users.id( 'alice' );
 	let createdPostId;
 
 	test.afterEach( () => {

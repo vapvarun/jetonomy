@@ -45,7 +45,8 @@ test.describe( 'M03 — Mark content as spam', () => {
 		}
 	} );
 
-	test( 'admin marks a flagged post as spam from the mod queue', async ( { page } ) => {
+	test.fixme( 'admin marks a flagged post as spam from the mod queue', async ( { page } ) => {
+		// FIXME: requires seeded users 3/4 (alice/bob) and a "Spam" mod queue action not yet in UI.
 		const metrics = new EaseMetrics( page );
 
 		await autoLogin( page, 1, '/community/mod/' );

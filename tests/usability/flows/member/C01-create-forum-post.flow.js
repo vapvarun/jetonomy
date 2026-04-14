@@ -8,7 +8,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { journey, dbQuery, getUserId, getSpaceId } = require( '../../helpers/wp-cli' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,9 +16,9 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C01 — Create a forum post', () => {
 
-	const spaceId = 1; // Welcome & Introductions — open, forum type.
 	const spaceSlug = 'welcome';
-	const authorId = 3; // alice
+	const spaceId = getSpaceId( spaceSlug );
+	const authorId = getUserId( 'alice' );
 	let createdPostId;
 
 	test.afterEach( () => {
@@ -62,7 +62,7 @@ test.describe( 'C01 — Create a forum post', () => {
 		await page.waitForURL( /\/community\/s\/welcome\/t\//, { timeout: 10000 } );
 
 		// Assert post title is visible on the single-post page.
-		await expect( page.locator( 'h1' ) ).toContainText( title );
+		await expect( page.locator( '.jt-post-head h1' ) ).toContainText( title );
 
 		// Extract post ID from DB for cleanup.
 		const ids = dbQuery( `SELECT id FROM wp_jt_posts WHERE title = '${ title.replace( /'/g, "\\'" ) }' LIMIT 1` );

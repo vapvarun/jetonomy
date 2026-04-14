@@ -18,6 +18,24 @@ test.describe( 'GA11 — Set user trust level manually', () => {
 	const targetUserId = 3; // alice
 
 	test.beforeAll( () => {
+		// Ensure the user exists and has a profile row so trust level queries return data.
+		wp( [ 'eval', `
+			global $wpdb;
+			$uid = ${ targetUserId };
+			if ( ! get_user_by( 'id', $uid ) ) {
+				wp_insert_user( [
+					'user_login' => 'alice',
+					'user_email' => 'alice@example.test',
+					'user_pass'  => wp_generate_password(),
+					'role'       => 'subscriber',
+				] );
+			}
+			$existing = $wpdb->get_var( $wpdb->prepare( "SELECT user_id FROM {$wpdb->prefix}jt_user_profiles WHERE user_id = %d", $uid ) );
+			if ( ! $existing ) {
+				$wpdb->insert( $wpdb->prefix . 'jt_user_profiles', [ 'user_id' => $uid, 'trust_level' => 1 ] );
+			}
+			echo 'ok';
+		` ] );
 		const rows = dbQuery( `SELECT trust_level FROM wp_jt_user_profiles WHERE user_id = ${ targetUserId }` );
 		originalTrustLevel = rows.length > 0 ? rows[ 0 ] : '1';
 	} );
@@ -44,7 +62,7 @@ test.describe( 'GA11 — Set user trust level manually', () => {
 			`select[data-user-id="${ targetUserId }"][name*="trust"], tr[data-user-id="${ targetUserId }"] select[name*="trust"], select.jetonomy-trust-select`
 		);
 		const trustBtn = page.locator(
-			`button[data-user-id="${ targetUserId }"][data-action="trust"], .jetonomy-trust-level-btn`
+			`button[data-user-id="${ targetUserId }"][data-action="trust"], .jetonomy-trust-level-btn, a.jetonomy-change-trust-trigger[data-user-id="${ targetUserId }"]`
 		);
 
 		if ( await trustSelect.count() > 0 ) {
@@ -67,8 +85,10 @@ test.describe( 'GA11 — Set user trust level manually', () => {
 		matchDelivery( expectation, {
 			trust_level_control_visible: true,
 			trust_level_updated_in_db: rows.length > 0,
+			trust_level_updated: rows.length > 0,
 			no_console_errors: metrics.consoleErrors.length === 0,
 			max_clicks: metrics.clicks,
+			max_clicks_to_goal: metrics.clicks,
 		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 3 } );

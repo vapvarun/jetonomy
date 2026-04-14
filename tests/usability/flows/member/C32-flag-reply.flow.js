@@ -9,6 +9,7 @@
 
 const { test, expect } = require( '@playwright/test' );
 const { journey, dbQuery, dbWrite } = require( '../../helpers/wp-cli' );
+const users = require( '../../helpers/users' );
 const { assertDbRowExists } = require( '../../helpers/data-flow' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
@@ -16,20 +17,20 @@ const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher'
 
 test.describe( 'C32 — Flag a reply', () => {
 
-	const testUserId = 3; // alice
+	const testUserId = users.id( 'alice' );
 	let createdPostId;
 	let createdReplyId;
 
 	test.beforeEach( () => {
 		// Seed a post by admin.
-		const postResult = journey( [ 'post', 'create', '--space=1', '--author=1', '--title=C32 Flag Reply Test', '--content=Testing reply flagging' ] );
+		const postResult = journey( [ 'post', 'create', `--space=${ users.spaceId( 'welcome' ) }`, `--author=${ users.id( 'admin' ) }`, '--title=C32 Flag Reply Test', '--content=Testing reply flagging' ] );
 		if ( postResult.success && postResult.data?.id ) {
 			createdPostId = postResult.data.id;
 		}
 
 		// Seed a reply by admin (user 1) so alice can flag it.
 		if ( createdPostId ) {
-			const replyResult = journey( [ 'reply', 'create', `--post=${ createdPostId }`, '--author=1', '--content=This reply should be flagged for testing' ] );
+			const replyResult = journey( [ 'reply', 'create', `--post=${ createdPostId }`, `--author=${ users.id( 'admin' ) }`, '--content=This reply should be flagged for testing' ] );
 			if ( replyResult.success && replyResult.data?.id ) {
 				createdReplyId = replyResult.data.id;
 			}

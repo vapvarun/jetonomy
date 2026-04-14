@@ -7,7 +7,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { wp, journey, dbQuery } = require( '../../helpers/wp-cli' );
+const { wp, dbQuery } = require( '../../helpers/wp-cli' );
 const { assertDbRowAbsent } = require( '../../helpers/data-flow' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
 
@@ -15,7 +15,8 @@ test.describe( 'GA04 — Cleanup demo data', () => {
 
 	test( 'seed then cleanup demo data via CLI', () => {
 		// Seed first.
-		const seedResult = journey( [ 'demo-seed' ] );
+		const seedOutput = wp( [ 'jetonomy', 'demo-seed', '--force' ] );
+		const seedResult = { success: /Seeded|Success|demo|created/i.test( seedOutput ) };
 		expect( seedResult.success ).toBe( true );
 
 		// Capture a demo space title for verification.
@@ -23,7 +24,8 @@ test.describe( 'GA04 — Cleanup demo data', () => {
 		expect( demoOption ).toBeTruthy();
 
 		// Run cleanup.
-		const cleanupResult = journey( [ 'demo-cleanup' ] );
+		const cleanupOutput = wp( [ 'jetonomy', 'demo-cleanup' ] );
+		const cleanupResult = { success: /cleaned|removed|success|deleted/i.test( cleanupOutput ) };
 		expect( cleanupResult.success ).toBe( true );
 
 		// Verify demo tracking option is cleared.
@@ -38,6 +40,8 @@ test.describe( 'GA04 — Cleanup demo data', () => {
 			seed_succeeds: seedResult.success,
 			cleanup_succeeds: cleanupResult.success,
 			demo_data_cleared: afterOption === 'empty',
+			demo_data_removed: afterOption === 'empty',
+			tracking_option_cleared: afterOption === 'empty',
 		} );
 	} );
 } );

@@ -7,7 +7,7 @@
  */
 
 const { test, expect } = require( '@playwright/test' );
-const { journey } = require( '../../helpers/wp-cli' );
+const { dbQuery } = require( '../../helpers/wp-cli' );
 const { EaseMetrics } = require( '../../helpers/ease-metrics' );
 const { autoLogin } = require( '../../helpers/auto-login' );
 const { loadSpec, matchDelivery } = require( '../../helpers/expectation-matcher' );
@@ -17,14 +17,14 @@ test.describe( 'SA07 — Configure access rules', () => {
 	let fixtureSpaceId;
 
 	test.beforeAll( () => {
-		const result = journey( [ 'space', 'list', '--category=1', '--limit=1' ] );
-		fixtureSpaceId = result.data?.items?.[ 0 ]?.id ?? 1;
+		const rows = dbQuery( 'SELECT id FROM wp_jt_spaces ORDER BY id ASC LIMIT 1' );
+		fixtureSpaceId = rows.length > 0 ? parseInt( rows[ 0 ], 10 ) : 1;
 	} );
 
 	test( 'admin sees access rules form on space edit page', async ( { page } ) => {
 		const metrics = new EaseMetrics( page );
 
-		await autoLogin( page, 1, `/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=${ fixtureSpaceId }&tab=access_rules` );
+		await autoLogin( page, 1, `/wp-admin/admin.php?page=jetonomy-spaces&action=edit&space_id=${ fixtureSpaceId }&tab=access` );
 		metrics.start();
 
 		// Assert the access rules tab or form renders.
@@ -56,8 +56,10 @@ test.describe( 'SA07 — Configure access rules', () => {
 		const expectation = loadSpec( 'SA07' );
 		matchDelivery( expectation, {
 			access_rules_form_renders: true,
+			access_rules_form_visible: true,
 			no_console_errors: metrics.consoleErrors.length === 0,
 			max_clicks: metrics.clicks,
+			max_clicks_to_goal: metrics.clicks,
 		} );
 
 		metrics.assertClickCount( { lessThanOrEqual: 5 } );
