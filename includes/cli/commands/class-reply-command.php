@@ -34,6 +34,7 @@ final class Reply_Command extends Base_Command {
 	 * : Parent reply ID for threaded replies.
 	 *
 	 * [--status=<status>]
+	 * : Reply status.
 	 * ---
 	 * default: publish
 	 * options:
@@ -42,6 +43,7 @@ final class Reply_Command extends Base_Command {
 	 * ---
 	 *
 	 * [--format=<format>]
+	 * : Output format.
 	 * ---
 	 * default: table
 	 * options:
