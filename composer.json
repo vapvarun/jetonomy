@@ -31,9 +31,6 @@
         "test:combo": "phpunit --testdox",
         "test:pro": "phpunit --testdox --testsuite=pro",
         "test:unit": "phpunit --testdox --testsuite=unit",
-        "test:usability": "cd tests/usability && npm test",
-        "test:usability:headed": "cd tests/usability && npm run test:headed",
-        "test:usability:basecamp": "cd tests/usability && npm run test:basecamp",
         "phpcs": "phpcs --standard=phpcs.xml",
         "phpcbf": "phpcbf --standard=phpcs.xml",
         "phpstan": "phpstan analyse --memory-limit=1G"
@@ -43,9 +40,6 @@
         "test:free": "Run free plugin in isolation — Pro is not loaded even if checked out.",
         "test:combo": "Run the full testsuite with Pro loaded (tests/unit + tests/pro).",
         "test:pro": "Run only tests/pro/* — requires Pro to be loaded.",
-        "test:unit": "Run only tests/unit/* without skipping Pro.",
-        "test:usability": "Run browser-level usability tests (Playwright) against the running WP install.",
-        "test:usability:headed": "Run usability tests in headed mode so you can watch the browser drive itself.",
-        "test:usability:basecamp": "Run only the previously-fixed Basecamp bug flows — fastest signal that fixes are locked in."
+        "test:unit": "Run only tests/unit/* without skipping Pro."
     }
 }

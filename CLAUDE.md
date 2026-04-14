@@ -101,56 +101,24 @@ composer test:combo        # PHPUnit with Pro loaded
 composer test:usability    # Playwright browser tests (250 flows)
 ```
 
-## Usability Test Suite (shipped 2026-04-12)
+## Testing strategy (2026-04-14)
 
-250 Playwright flow files testing what users actually experience, not just what the code does. 5-layer architecture:
+**Removed: browser-level Playwright usability suite** (`tests/usability/`).
+After evaluation it surfaced zero product UX bugs and primarily exposed
+test-infrastructure drift (hardcoded IDs, CLI arg mismatches, selector
+drift). The grind-to-signal ratio was too poor to justify continued
+investment. Real UX validation moved back to manual browser testing +
+Basecamp triage.
 
-1. **Usability flow** — end-to-end user story
-2. **Data flow** — click → REST → DB → notification → email
-3. **UX flow** — Playwright click-by-click browser assertions
-4. **Ease metrics** — clicks-to-goal, time-to-goal, error count
-5. **Expectation vs delivery** — YAML user stories compared against delivered outcomes
+**Kept — the layers that actually find bugs:**
+1. **PHPUnit** — 226 tests across unit/integration/security/concurrency/error-paths/pro. Runs via `composer test`. Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
+2. **`wp jetonomy qa-actions`** — 210 live-stack smoke checks (74 REST + 23 Model + 62 Pro + 51 Journey). Runs in ~30s, surfaces config gaps (e.g. missing `trust_thresholds` defaults).
+3. **`wp jetonomy scenario run <name>`** — 5 bundled end-to-end scenarios.
 
-**Key files:**
-- `tests/usability/playwright.config.js` — Chromium desktop + mobile projects
-- `tests/usability/helpers/` — wp-cli.js, data-flow.js, email-capture.js, ease-metrics.js, expectation-matcher.js, auto-login.js
-- `tests/usability/flows/` — 250 flow files organized by actor (anonymous/member/moderator/admin) and Pro extension
-- `tests/usability/expectations/cards/` — 5 Basecamp-locked YAMLs
-- `tests/usability/expectations/specs/` — 245 spec-based YAMLs
-- `tests/usability/fixtures/scenarios.js` — wraps the CLI scenario runner for test fixtures
-- `tests/usability/mu-plugins/jetonomy-test-mail-capture.php` — intercepts wp_mail for email assertions
-- `docs/plans/2026-04-11-usability-test-plan.md` — full 274-flow inventory + architecture plan
-
-**Current state (2026-04-14):**
-- **71 free flows pass** on chromium-desktop (was 29 at session start — +42 in 2026-04-14 session)
-- 33 free flows still failing (mostly member UX gaps: reply composer DOM not updating, `.jt-more-trigger` permission-gated on own content, shortcut modal, passive read tracking; plus 8 anonymous, 4 trusted, 3 cross-cutting)
-- 34 skipped (legit `test.fixme` for unshipped UI)
-- 127 Pro flows need CLI argument correction (arguments don't match actual `wp help` signatures)
-- 10 composite flows need Pro flow fixes before they can run
-
-**Suite invariants discovered 2026-04-14:**
-- Demo user & space IDs drift each run → never hardcode. Use `getUserId(login)` / `getSpaceId(slug)` from `tests/usability/helpers/wp-cli.js`, or `users.id()` / `users.spaceId()` from `tests/usability/helpers/users.js`.
-- `journey([...])` auto-appends `--format=json`. Commands that don't declare `[--format=<format>]` with `: description` before the `---` enum block reject it. Fix the command docblock, not the flow.
-- Seeder canonical slugs: category `community`; users `alice/bob/carol/david/eve`; spaces `welcome/general-discussion/help-support/feature-requests/tips-best-practices`.
-
-## Next Session — Pick Up Here
-
-**Priority 1: Fix 127 Pro usability flow CLI arguments.**
-The Pro flows use `proJourney(['advanced-moderation', 'create', '--type=word_filter', ...])` but the actual command expects `--type=keyword --name=...`. Every Pro flow file in `tests/usability/flows/pro/` needs its `proJourney()` and `wp()` calls corrected against the real `wp help jetonomy-pro <ext> <subcommand>` output.
-
-Approach: dispatch 3 parallel agents, each covering ~4-5 extensions. Give each agent the actual `wp help` output as reference. The test body logic is correct — only the argument names/values need fixing.
-
-**Priority 2: Run full 250-flow suite end-to-end.**
-After fixing Pro CLI arguments, run `npx playwright test --project=chromium-desktop` and target 200+ passing flows.
-
-**Priority 3: Add CI usability-tests GitHub Actions job.**
-~60 lines of YAML to spin up WP + Pro + Playwright and run `npm test`.
-
-**Priority 4: Check Basecamp In Testing column (13+ cards).**
-These were there at session start and never triaged.
-
-**Priority 5: Remove test.fixme from Pro flows where UI works.**
-All 14 Pro extensions are enabled on forums.local. Many test.fixme flows should be activatable.
+**Next session priorities:**
+- Triage Basecamp "In Testing" column (13+ cards never triaged)
+- Customer ticket triage (`/autovap support`)
+- Add `composer test` + `wp jetonomy qa-actions` to CI if not already wired
 
 ## Recent Changes
 | Date | Commit | Summary |
