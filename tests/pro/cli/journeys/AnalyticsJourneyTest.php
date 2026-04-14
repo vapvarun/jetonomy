@@ -7,6 +7,7 @@ use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\UserProfile;
 use Jetonomy_Pro\CLI\Journeys\Analytics_Journey;
 
 // Proactively load the Pro journey file. Pro's maybe_load_cli() only runs
@@ -53,6 +54,11 @@ class AnalyticsJourneyTest extends WP_UnitTestCase {
 		$this->journey = new Analytics_Journey();
 
 		$this->user_id = (int) self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		// Ensure jt_user_profiles row exists — top_contributors INNER JOINs on it
+		// and would otherwise exclude factory-created users that never touched
+		// the profile model.
+		UserProfile::find_or_create( $this->user_id );
 
 		$cat_id = Category::create(
 			array(
@@ -136,7 +142,10 @@ class AnalyticsJourneyTest extends WP_UnitTestCase {
 	}
 
 	public function test_top_spaces_returns_items_and_columns(): void {
-		$result = $this->journey->top_spaces( '30d', 10 );
+		// Request a large limit so the fixture is found regardless of how many
+		// other spaces exist in the test DB (wp-env's persisted state can hold
+		// dozens of fixtures from prior runs that out-rank our 1-post seed).
+		$result = $this->journey->top_spaces( '30d', 100 );
 
 		$this->assertTrue( $result->is_success(), implode( '; ', $result->errors ) );
 		$this->assertIsArray( $result->data['items'] );
@@ -144,9 +153,9 @@ class AnalyticsJourneyTest extends WP_UnitTestCase {
 		$this->assertContains( 'id', $result->data['columns'] );
 		$this->assertContains( 'period_posts', $result->data['columns'] );
 
-		// At least one space (the fixture we just seeded) should be present.
-		$space_ids = array_column( $result->data['items'], 'id' );
-		$this->assertContains( $this->space_id, array_map( 'intval', $space_ids ) );
+		// The fixture we just seeded should be present.
+		$space_ids = array_map( 'intval', array_column( $result->data['items'], 'id' ) );
+		$this->assertContains( $this->space_id, $space_ids );
 	}
 
 	public function test_top_spaces_respects_limit(): void {
@@ -188,7 +197,10 @@ class AnalyticsJourneyTest extends WP_UnitTestCase {
 	}
 
 	public function test_top_contributors_returns_items_and_columns(): void {
-		$result = $this->journey->top_contributors( '30d', 10 );
+		// Bump limit for the same reason as test_top_spaces_returns_items_and_columns:
+		// the fresh fixture user has 1 post + 1 reply and gets out-ranked by
+		// long-lived fixtures persisted across wp-env test runs.
+		$result = $this->journey->top_contributors( '30d', 100 );
 
 		$this->assertTrue( $result->is_success(), implode( '; ', $result->errors ) );
 		$this->assertIsArray( $result->data['items'] );

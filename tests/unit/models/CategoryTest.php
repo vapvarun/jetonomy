@@ -53,11 +53,18 @@ class CategoryTest extends WP_UnitTestCase {
 	}
 
 	public function test_list_top_level_sorts_by_sort_order(): void {
-		Category::create( [ 'name' => 'B', 'slug' => 'b-' . uniqid(), 'sort_order' => 2 ] );
-		Category::create( [ 'name' => 'A', 'slug' => 'a-' . uniqid(), 'sort_order' => 1 ] );
-		$top = Category::list_top_level();
-		$this->assertEquals( 'A', $top[0]->name );
-		$this->assertEquals( 'B', $top[1]->name );
+		// Use unique names so this test is robust against rows leaked from other
+		// tests (custom jt_* tables aren't covered by WP_UnitTestCase transactions).
+		$suffix = uniqid();
+		Category::create( [ 'name' => "B-$suffix", 'slug' => "b-$suffix", 'sort_order' => 2 ] );
+		Category::create( [ 'name' => "A-$suffix", 'slug' => "a-$suffix", 'sort_order' => 1 ] );
+		$top   = Category::list_top_level();
+		$names = array_map( fn( $c ) => $c->name, $top );
+		$idx_a = array_search( "A-$suffix", $names, true );
+		$idx_b = array_search( "B-$suffix", $names, true );
+		$this->assertNotFalse( $idx_a, 'A category not found in top level' );
+		$this->assertNotFalse( $idx_b, 'B category not found in top level' );
+		$this->assertLessThan( $idx_b, $idx_a, 'A (sort_order=1) should come before B (sort_order=2)' );
 	}
 
 	public function test_list_children_returns_correct_children(): void {
