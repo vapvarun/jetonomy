@@ -79,7 +79,10 @@ jobs:
   # any indirect workflow injection via branch name manipulation.
   phpunit-with-pro:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    # Skip when PRO_PAT secret isn't configured — checkout step would otherwise
+    # fail with "Input required and not supplied: token" and turn CI red for an
+    # infra reason. Also skip on cross-repo PRs (forks never receive secrets).
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && vars.PRO_PAT_CONFIGURED == 'true' }}
     strategy:
       matrix:
         php: ['8.2', '8.4']
