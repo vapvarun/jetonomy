@@ -1,0 +1,14 @@
+flow_id: "PRO-ADVANCEDMODERATION-07"
+title: "Space-scoped rule fires only in target"
+source: "design-spec"
+priority: P1
+actor: pro-advanced-moderation
+
+user_story: |
+  As an admin, when I create a rule scoped to a specific space, it should
+  only fire for content in that space and not in other spaces.
+
+expectations:
+  flow_completes_without_error: true
+  rule_fires_in_target_space: true
+  rule_does_not_fire_in_other_space: true

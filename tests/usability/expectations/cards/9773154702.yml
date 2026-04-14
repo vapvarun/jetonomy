@@ -1,0 +1,35 @@
+card_id: "9773154702"
+title: "Clicking Individual Notification Does Not Mark as Read"
+basecamp_url: "https://3.basecamp.com/5798509/buckets/46596502/card_tables/cards/9773154702"
+fixed_in_commit: "6adb2ff"
+
+user_story: |
+  As a user with unread notifications, when I click a single item in the
+  notification dropdown, I expect that notification to be marked as read
+  immediately and the badge count to decrement by one, so I can triage
+  notifications one at a time without opening the full notifications page.
+
+reported_symptom: |
+  "The notification badge count remains unchanged, and the notification
+  stays visually 'unread' in the panel. User has no way to selectively
+  mark individual notifications as read."
+
+root_cause: |
+  The header dropdown JS rendered items as plain <a> tags with no click
+  handler to call PATCH /notifications/{id}. Only `jtMarkAllRead` fired
+  the API. Fix added a delegated click handler that calls the PATCH
+  endpoint (fire-and-forget, does not block navigation) and updates the
+  DOM + badge count client-side.
+
+expectations:
+  # Every one of these is asserted by the matching flow file.
+  badge_decremented: true
+  row_flipped_to_read: true
+  unread_item_count_decremented: true
+  clicked_item_no_longer_highlighted: true
+  navigation_to_target_url_succeeded: true
+  no_full_page_reload_required: true
+  max_clicks_to_goal: 2
+  max_time_to_goal_seconds: 10
+  no_console_errors: true
+  no_failed_network_requests: true

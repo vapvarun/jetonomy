@@ -1,0 +1,17 @@
+flow_id: "PRO-POLLS-06"
+title: "Close poll"
+source: "design-spec"
+priority: P1
+actor: pro-polls
+
+user_story: |
+  As the post author, I can manually close a poll. Once closed, other
+  members can no longer vote, the DB status flips to 'closed', and a
+  "Closed" label is displayed.
+
+expectations:
+  poll_status_closed_in_db: true
+  vote_button_hidden_for_others: true
+  closed_label_visible: true
+  no_console_errors: true
+  max_clicks_to_goal: 1

@@ -969,15 +969,21 @@ class CLI {
 		$pro = new \Jetonomy\QA\Pro_Tests();
 		$r3  = $pro->run();
 
-		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'];
-		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'];
+		\WP_CLI::log( '' );
+		\WP_CLI::log( 'Phase 4: Journey Smoke Tests (C1-C12)' );
+		$journey = new \Jetonomy\QA\Journey_Tests();
+		$r4      = $journey->run();
+
+		$total_pass = $r1['pass'] + $r2['pass'] + $r3['pass'] + $r4['pass'];
+		$total_fail = $r1['fail'] + $r2['fail'] + $r3['fail'] + $r4['fail'];
 
 		\WP_CLI::log( '' );
 		\WP_CLI::log( '--------------------------------------' );
-		\WP_CLI::log( sprintf( '  REST Tests:  %d/%d', $r1['pass'], $r1['pass'] + $r1['fail'] ) );
-		\WP_CLI::log( sprintf( '  Model Tests: %d/%d', $r2['pass'], $r2['pass'] + $r2['fail'] ) );
-		\WP_CLI::log( sprintf( '  Pro Tests:   %d/%d', $r3['pass'], $r3['pass'] + $r3['fail'] ) );
-		\WP_CLI::log( sprintf( '  TOTAL:       %d/%d', $total_pass, $total_pass + $total_fail ) );
+		\WP_CLI::log( sprintf( '  REST Tests:     %d/%d', $r1['pass'], $r1['pass'] + $r1['fail'] ) );
+		\WP_CLI::log( sprintf( '  Model Tests:    %d/%d', $r2['pass'], $r2['pass'] + $r2['fail'] ) );
+		\WP_CLI::log( sprintf( '  Pro Tests:      %d/%d', $r3['pass'], $r3['pass'] + $r3['fail'] ) );
+		\WP_CLI::log( sprintf( '  Journey Tests:  %d/%d', $r4['pass'], $r4['pass'] + $r4['fail'] ) );
+		\WP_CLI::log( sprintf( '  TOTAL:          %d/%d', $total_pass, $total_pass + $total_fail ) );
 		\WP_CLI::log( '--------------------------------------' );
 
 		if ( $total_fail > 0 ) {

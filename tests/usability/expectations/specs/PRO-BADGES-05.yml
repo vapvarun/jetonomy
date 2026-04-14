@@ -1,0 +1,15 @@
+flow_id: "PRO-BADGES-05"
+title: "View another user badges"
+source: "design-spec"
+priority: P1
+actor: pro-badges
+
+user_story: |
+  As a member, when I visit another user's profile, I can see their
+  earned badges displayed in the badges section.
+
+expectations:
+  badges_section_visible: true
+  other_user_badges_displayed: true
+  no_console_errors: true
+  max_clicks_to_goal: 0

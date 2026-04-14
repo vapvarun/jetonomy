@@ -1,0 +1,14 @@
+flow_id: "X04"
+title: "Image upload — fixme (requires file upload interaction)"
+source: "design-spec"
+priority: P1
+actor: cross-cutting
+
+user_story: |
+  As a community member creating a post, when I drag-drop or select
+  an image, I expect to see a preview and the image to appear in
+  the published post. Fixme until file upload helper is implemented.
+
+expectations:
+  flow_completes_without_error: true
+  fixme_file_upload: true

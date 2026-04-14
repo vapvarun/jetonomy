@@ -1,0 +1,19 @@
+flow_id: "C13"
+title: "Accept an answer (Q&A)"
+source: "design-spec"
+priority: P0
+actor: member
+
+user_story: |
+  As the author of a Q&A question, when I click the "Accept" button on a
+  reply, I expect that reply to be highlighted with an "Accepted" badge,
+  the reply card to gain the .accepted class, and the is_accepted column
+  in wp_jt_replies to be set to 1.
+
+expectations:
+  accepted_badge_visible: true
+  reply_has_accepted_class: true
+  db_is_accepted_equals_1: true
+  no_console_errors: true
+  max_clicks_to_accept: 2
+  max_time_to_goal_seconds: 10

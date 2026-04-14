@@ -1,0 +1,14 @@
+flow_id: "PRO-AI-11"
+title: "Configure Ollama"
+source: "design-spec"
+priority: P1
+actor: pro-ai
+
+user_story: |
+  As an admin, I visit the AI settings tab and expect to see Ollama
+  provider configuration fields (host URL, model).
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  ollama_fields_visible: true

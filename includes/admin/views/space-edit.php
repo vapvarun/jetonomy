@@ -25,7 +25,10 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 		<a href="<?php echo esc_url( $edit_url . '&tab=members' ); ?>" class="nav-tab <?php echo esc_attr( 'members' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Members', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url . '&tab=access' ); ?>" class="nav-tab <?php echo esc_attr( 'access' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Access Rules', 'jetonomy' ); ?></a>
 		<a href="<?php echo esc_url( $edit_url . '&tab=settings' ); ?>" class="nav-tab <?php echo esc_attr( 'settings' === $active_tab ? 'nav-tab-active' : '' ); ?>"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></a>
-		<?php if ( 'approval' === ( $space->join_policy ?? 'open' ) ) : ?>
+		<?php
+		$show_join_requests_tab = 'approval' === ( $space->join_policy ?? 'open' ) || ! empty( $join_requests );
+		if ( $show_join_requests_tab ) :
+			?>
 			<a href="<?php echo esc_url( $edit_url . '&tab=join_requests' ); ?>" class="nav-tab <?php echo esc_attr( 'join_requests' === $active_tab ? 'nav-tab-active' : '' ); ?>">
 				<?php esc_html_e( 'Join Requests', 'jetonomy' ); ?>
 				<?php if ( ! empty( $join_requests ) ) : ?>
@@ -407,11 +410,13 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<?php
 							$linked_group_id = \Jetonomy\Integrations\BuddyPress::find_group_by_space( (int) $space->id );
-							$bp_groups       = \BP_Groups_Group::get( array(
-								'per_page'          => 100,
-								'show_hidden'       => true,
-								'update_meta_cache' => false,
-							) );
+							$bp_groups       = \BP_Groups_Group::get(
+								array(
+									'per_page'          => 100,
+									'show_hidden'       => true,
+									'update_meta_cache' => false,
+								)
+							);
 							$groups_list     = $bp_groups['groups'] ?? array();
 							?>
 							<select id="ss-bp-group">

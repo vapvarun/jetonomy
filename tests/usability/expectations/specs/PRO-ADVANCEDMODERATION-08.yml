@@ -1,0 +1,14 @@
+flow_id: "PRO-ADVANCEDMODERATION-08"
+title: "Enable/disable rule"
+source: "design-spec"
+priority: P2
+actor: pro-advanced-moderation
+
+user_story: |
+  As an admin, I can disable a moderation rule so it stops firing, and
+  re-enable it so it resumes evaluation.
+
+expectations:
+  flow_completes_without_error: true
+  disabled_rule_does_not_fire: true
+  re_enabled_rule_fires: true

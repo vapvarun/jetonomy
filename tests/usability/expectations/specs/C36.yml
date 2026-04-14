@@ -1,0 +1,16 @@
+flow_id: "C36"
+title: "See someone else's hover card"
+source: "design-spec"
+priority: P2
+actor: member
+
+user_story: |
+  As a member browsing a thread, when I hover over a user's name or
+  avatar, I expect a hover card to appear showing their display name,
+  avatar, trust level, and a summary of their community activity.
+  (Currently fixme: conditional on user links existing.)
+
+expectations:
+  user_link_found: true
+  hover_card_appears: true
+  no_console_errors: true

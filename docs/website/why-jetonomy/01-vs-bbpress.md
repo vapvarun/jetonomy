@@ -12,7 +12,7 @@ How Jetonomy compares to bbPress — and why communities are switching to a mode
 
 | Feature | bbPress | Jetonomy |
 |---------|---------|----------|
-| Data storage | WordPress custom post types | Custom database tables (22 tables) |
+| Data storage | WordPress custom post types | Custom database tables (24 tables) |
 | Threaded replies | 1 level | 3 levels |
 | Voting | Not built-in (requires add-on) | Built-in upvote/downvote |
 | Q&A with accepted answers | Not available | Built-in (per-space type) |
@@ -22,7 +22,7 @@ How Jetonomy compares to bbPress — and why communities are switching to a mode
 | Real-time interactions | Page reload required | WordPress Interactivity API |
 | Moderation queue | Basic | Flag system + queue + auto-rules (Pro) |
 | Anti-spam | Akismet only | Akismet + reCAPTCHA + Turnstile |
-| REST API | Limited | 61+ endpoints |
+| REST API | Limited | 48+ endpoints (90+ with Pro) |
 | Private messaging | Not built-in | Built-in (Pro) |
 | Polls | Not built-in | Built-in (Pro) |
 | Analytics | Not available | Dashboard with export (Pro) |

@@ -1,0 +1,36 @@
+flow_id: "D05"
+title: "Edit others' replies"
+source: "design-spec"
+priority: P1
+actor: trusted
+
+user_story: |
+  As a trusted member at TL3, I want to edit replies authored by other
+  users so that I can fix typos, improve formatting, and maintain reply
+  quality without moderator involvement.
+
+preconditions:
+  - alice (user 3) at TL3
+  - A post by alice with a reply by bob (user 4)
+
+steps:
+  - Set alice to TL3 via DB
+  - Seed a post by alice and a reply by bob
+  - Login as alice and navigate to the post
+  - Locate bob's reply
+  - Open more-menu on the reply and click Edit
+  - Change the reply content and save
+  - Assert the updated content appears in the reply
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  edit_button_visible_on_others_reply: true
+  reply_content_updated_in_ui: true
+  max_clicks: 6
+  max_time_seconds: 15
+
+cleanup:
+  - Delete the seeded reply
+  - Delete the seeded post
+  - Reset alice trust_level to 1

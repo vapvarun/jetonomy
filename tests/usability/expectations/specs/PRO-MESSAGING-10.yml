@@ -1,0 +1,15 @@
+flow_id: "PRO-MESSAGING-10"
+title: "Unread badge count in header"
+source: "design-spec"
+priority: P0
+actor: pro-messaging
+
+user_story: |
+  As a member with unread messages, when I visit any community page, the
+  header messages icon shows a badge with the count of unread conversations.
+
+expectations:
+  header_badge_visible: true
+  badge_count_matches_unread: true
+  no_console_errors: true
+  max_clicks_to_goal: 0

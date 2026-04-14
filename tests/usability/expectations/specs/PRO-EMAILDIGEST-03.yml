@@ -1,0 +1,14 @@
+flow_id: "PRO-EMAILDIGEST-03"
+title: "Weekly cron fires digest"
+source: "design-spec"
+priority: P0
+actor: pro-email-digest
+
+user_story: |
+  When the weekly digest cron fires, users with weekly frequency set
+  receive a digest email containing the past week's activity.
+
+expectations:
+  digest_email_sent: true
+  email_contains_activity: true
+  no_console_errors: true

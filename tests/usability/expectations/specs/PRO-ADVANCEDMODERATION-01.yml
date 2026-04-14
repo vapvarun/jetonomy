@@ -1,0 +1,14 @@
+flow_id: "PRO-ADVANCEDMODERATION-01"
+title: "Admin create moderation rule"
+source: "design-spec"
+priority: P0
+actor: pro-advanced-moderation
+
+user_story: |
+  As an admin, I create a word-filter moderation rule via CLI and expect
+  it to be stored in the mod_rules table and readable back.
+
+expectations:
+  flow_completes_without_error: true
+  rule_created_in_db: true
+  rule_readable_via_cli: true

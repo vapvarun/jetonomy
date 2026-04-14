@@ -1,0 +1,22 @@
+flow_id: "GA27"
+title: "Plugin deactivation — tables and options preserved"
+source: "design-spec"
+priority: P0
+actor: site-admin
+
+user_story: |
+  As a site admin, when I deactivate and reactivate Jetonomy, I expect all
+  custom database tables (wp_jt_*) to remain intact and the jetonomy_settings
+  option to be preserved exactly as it was. A deactivation must never destroy
+  data -- only uninstallation should do that. This protects users who
+  temporarily deactivate during troubleshooting.
+
+expectations:
+  flow_completes_without_error: true
+  deactivate_success: true
+  no_fatal_on_deactivation: true
+  reactivate_success: true
+  tables_preserved_during_deactivation: true
+  options_preserved_during_deactivation: true
+  tables_preserved_after_reactivation: true
+  options_preserved_after_reactivation: true

@@ -1,0 +1,16 @@
+flow_id: "SA05"
+title: "Edit space settings"
+source: "design-spec"
+priority: P0
+actor: space-admin
+
+user_story: |
+  As a space admin, I visit the space edit page, change the title and
+  description, click Save, and expect the new values to persist in the
+  database after the AJAX save completes.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  title_persisted_in_db: true
+  max_clicks_to_goal: 5

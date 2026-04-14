@@ -1,0 +1,30 @@
+card_id: "9721640432"
+title: "Posts Per Page Setting Not Applying in Space"
+basecamp_url: "https://3.basecamp.com/5798509/buckets/46596502/card_tables/cards/9721640432"
+fixed_in_commit: "v1.3.0 (multiple commits)"
+
+user_story: |
+  As a space admin, when I set "Posts Per Page" to 5 for a specific space,
+  I expect only 5 posts to appear on the first page of that space, with
+  proper pagination controls for the rest. The global default should NOT
+  override my per-space setting.
+
+reported_symptom: |
+  "The Posts Per Page option in Jetonomy space settings does not work.
+  Updating the value in the space admin UI does not change the number of
+  posts displayed per page on the frontend."
+
+root_cause: |
+  Four layers were broken: (1) space.php template read global setting
+  only, (2) REST controller had 'default' => 20 which overrode Space::
+  get_posts_per_page(), (3) admin.js saved empty input as 20 which
+  poisoned the fallback chain, (4) space.php fallback chain didn't
+  handle null/0.
+
+expectations:
+  space_setting_respected: true
+  global_default_does_not_override: true
+  pagination_controls_visible_when_posts_exceed_limit: true
+  posts_displayed_matches_setting: true
+  setting_change_reflects_on_next_page_load: true
+  no_console_errors: true

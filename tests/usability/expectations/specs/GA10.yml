@@ -1,0 +1,21 @@
+flow_id: "GA10"
+title: "User list + ban/trust control"
+source: "design-spec"
+priority: P0
+actor: site-admin
+
+user_story: |
+  As a site admin, I visit the users management page and expect to see a
+  list of community users with trust level badges and ban/suspend controls.
+  The number of user rows displayed must be consistent with the
+  wp_jt_user_profiles table so I can manage the full user base without
+  wondering if some users are invisible in the admin view.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  user_list_visible: true
+  trust_controls_visible: true
+  ban_controls_visible: true
+  no_php_fatal: true
+  user_count_consistent_with_db: true

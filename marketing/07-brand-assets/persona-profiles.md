@@ -57,7 +57,7 @@
 - Client wants a forum that looks native to their theme, not bolted on
 
 ### Why Jetonomy Appeals
-- 61+ REST API endpoints — build custom frontends, mobile apps, integrations
+- 48+ REST API endpoints free, 90+ with Pro — build custom frontends, mobile apps, integrations
 - Template override system — full control without touching plugin code
 - Adapter pattern — swap search, email, membership providers
 - Custom database tables — does not bloat wp_posts

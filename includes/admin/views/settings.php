@@ -201,26 +201,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<?php
 			$thresholds  = $settings['trust_thresholds'] ?? [];
 			$rate_limits = $settings['rate_limits'] ?? [];
-			$tl_defaults = [
-				1 => [
-					'posts'            => 5,
-					'days_active'      => 3,
-					'reputation'       => 0,
-					'replies_received' => 10,
-				],
-				2 => [
-					'posts'            => 30,
-					'days_active'      => 20,
-					'reputation'       => 50,
-					'replies_received' => 0,
-				],
-				3 => [
-					'posts'            => 100,
-					'days_active'      => 60,
-					'reputation'       => 200,
-					'replies_received' => 0,
-				],
-			];
+			$tl_defaults = \Jetonomy\Trust\Trust_Levels::defaults();
+			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
 			$level_names = [
 				1 => __( 'Level 1 — Member', 'jetonomy' ),
 				2 => __( 'Level 2 — Regular', 'jetonomy' ),
@@ -270,15 +252,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label><?php esc_html_e( 'Posts per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? 3 ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" name="jetonomy_settings[rate_limits][posts]" value="<?php echo absint( $rate_limits['posts'] ?? $rl_defaults['posts'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 					<tr>
 						<th scope="row"><label><?php esc_html_e( 'Replies per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? 10 ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" name="jetonomy_settings[rate_limits][replies]" value="<?php echo absint( $rate_limits['replies'] ?? $rl_defaults['replies'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 					<tr>
 						<th scope="row"><label><?php esc_html_e( 'Votes per Day', 'jetonomy' ); ?></label></th>
-						<td><input type="number" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? 5 ); ?>" min="1" class="small-text"></td>
+						<td><input type="number" name="jetonomy_settings[rate_limits][votes]" value="<?php echo absint( $rate_limits['votes'] ?? $rl_defaults['votes'] ); ?>" min="1" class="small-text"></td>
 					</tr>
 				</table>
 			</div>
@@ -683,19 +665,84 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 				<?php
 				$jt_pro_exts = [
-					[ 'name' => __( 'Emoji Reactions', 'jetonomy' ), 'icon' => 'dashicons-heart', 'desc' => __( 'Like, love, celebrate — Slack-style reactions on posts and replies.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Private Messaging', 'jetonomy' ), 'icon' => 'dashicons-format-chat', 'desc' => __( 'One-on-one and group conversations between community members.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Polls', 'jetonomy' ), 'icon' => 'dashicons-chart-bar', 'desc' => __( 'Create polls within posts for community voting and decision-making.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Analytics Dashboard', 'jetonomy' ), 'icon' => 'dashicons-chart-area', 'desc' => __( 'Engagement graphs, user growth, top spaces, post trends, and CSV export.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Email Digests', 'jetonomy' ), 'icon' => 'dashicons-email', 'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Web Push', 'jetonomy' ), 'icon' => 'dashicons-bell', 'desc' => __( 'Browser push notifications for replies, mentions, and forum events.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Webhooks', 'jetonomy' ), 'icon' => 'dashicons-rest-api', 'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Reply by Email', 'jetonomy' ), 'icon' => 'dashicons-email-alt2', 'desc' => __( 'Members reply to notifications by email — no login required.', 'jetonomy' ), 'tier' => 'Starter' ],
-					[ 'name' => __( 'Custom Badges', 'jetonomy' ), 'icon' => 'dashicons-awards', 'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ), 'tier' => 'Growth' ],
-					[ 'name' => __( 'Custom Fields', 'jetonomy' ), 'icon' => 'dashicons-forms', 'desc' => __( 'Add custom fields to posts and user profiles — text, select, checkbox, date, and more.', 'jetonomy' ), 'tier' => 'Growth' ],
-					[ 'name' => __( 'Advanced Moderation', 'jetonomy' ), 'icon' => 'dashicons-shield', 'desc' => __( 'Auto-moderation rules engine — keyword filters, regex, link limits, spam scoring.', 'jetonomy' ), 'tier' => 'Growth' ],
-					[ 'name' => __( 'SEO Pro', 'jetonomy' ), 'icon' => 'dashicons-search', 'desc' => __( 'Per-space meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), 'tier' => 'Growth' ],
-					[ 'name' => __( 'White Label', 'jetonomy' ), 'icon' => 'dashicons-admin-appearance', 'desc' => __( 'Replace all Jetonomy branding — custom logo, name, footer, accent color, CSS.', 'jetonomy' ), 'tier' => 'Agency' ],
+					[
+						'name' => __( 'Emoji Reactions', 'jetonomy' ),
+						'icon' => 'dashicons-heart',
+						'desc' => __( 'Like, love, celebrate — Slack-style reactions on posts and replies.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Private Messaging', 'jetonomy' ),
+						'icon' => 'dashicons-format-chat',
+						'desc' => __( 'One-on-one and group conversations between community members.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Polls', 'jetonomy' ),
+						'icon' => 'dashicons-chart-bar',
+						'desc' => __( 'Create polls within posts for community voting and decision-making.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Analytics Dashboard', 'jetonomy' ),
+						'icon' => 'dashicons-chart-area',
+						'desc' => __( 'Engagement graphs, user growth, top spaces, post trends, and CSV export.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Email Digests', 'jetonomy' ),
+						'icon' => 'dashicons-email',
+						'desc' => __( 'Daily and weekly email digests of community activity for subscribed users.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Web Push', 'jetonomy' ),
+						'icon' => 'dashicons-bell',
+						'desc' => __( 'Browser push notifications for replies, mentions, and forum events.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Webhooks', 'jetonomy' ),
+						'icon' => 'dashicons-rest-api',
+						'desc' => __( 'Fire HTTP POST requests to Zapier, Slack, n8n, or any endpoint on forum events.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Reply by Email', 'jetonomy' ),
+						'icon' => 'dashicons-email-alt2',
+						'desc' => __( 'Members reply to notifications by email — no login required.', 'jetonomy' ),
+						'tier' => 'Starter',
+					],
+					[
+						'name' => __( 'Custom Badges', 'jetonomy' ),
+						'icon' => 'dashicons-awards',
+						'desc' => __( 'Create and auto-award custom badges based on community activity criteria.', 'jetonomy' ),
+						'tier' => 'Growth',
+					],
+					[
+						'name' => __( 'Custom Fields', 'jetonomy' ),
+						'icon' => 'dashicons-forms',
+						'desc' => __( 'Add custom fields to posts and user profiles — text, select, checkbox, date, and more.', 'jetonomy' ),
+						'tier' => 'Growth',
+					],
+					[
+						'name' => __( 'Advanced Moderation', 'jetonomy' ),
+						'icon' => 'dashicons-shield',
+						'desc' => __( 'Auto-moderation rules engine — keyword filters, regex, link limits, spam scoring.', 'jetonomy' ),
+						'tier' => 'Growth',
+					],
+					[
+						'name' => __( 'SEO Pro', 'jetonomy' ),
+						'icon' => 'dashicons-search',
+						'desc' => __( 'Per-space meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ),
+						'tier' => 'Growth',
+					],
+					[
+						'name' => __( 'White Label', 'jetonomy' ),
+						'icon' => 'dashicons-admin-appearance',
+						'desc' => __( 'Replace all Jetonomy branding — custom logo, name, footer, accent color, CSS.', 'jetonomy' ),
+						'tier' => 'Agency',
+					],
 				];
 				?>
 				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 16px;">

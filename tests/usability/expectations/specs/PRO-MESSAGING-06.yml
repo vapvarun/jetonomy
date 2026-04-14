@@ -1,0 +1,17 @@
+flow_id: "PRO-MESSAGING-06"
+title: "Send message in conversation"
+source: "design-spec"
+priority: P0
+actor: pro-messaging
+
+user_story: |
+  As a member viewing a conversation thread, I can type a message in the
+  composer, click send, and see the message appear in the thread immediately.
+  The message is persisted to the database.
+
+expectations:
+  message_appears_in_thread: true
+  message_persisted_to_db: true
+  no_console_errors: true
+  max_clicks_to_goal: 2
+  max_time_to_goal_seconds: 10

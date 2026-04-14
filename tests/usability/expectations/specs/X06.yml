@@ -1,0 +1,15 @@
+flow_id: "X06"
+title: "Code syntax highlighting — pre>code block styled"
+source: "design-spec"
+priority: P2
+actor: cross-cutting
+
+user_story: |
+  As a community member viewing a post containing a code block,
+  I expect to see syntax-highlighted code (colored keywords, proper
+  formatting) rather than plain monospace text.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  code_block_visible: true

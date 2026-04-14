@@ -1,0 +1,13 @@
+flow_id: "PRO-AI-04"
+title: "Test provider with probe"
+source: "design-spec"
+priority: P1
+actor: pro-ai
+
+user_story: |
+  As an admin, I send a test probe to the configured AI provider to
+  verify connectivity (skips if no provider configured).
+
+expectations:
+  flow_completes_without_error: true
+  probe_returns_reachable: true

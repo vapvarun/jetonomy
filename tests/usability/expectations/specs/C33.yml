@@ -1,0 +1,15 @@
+flow_id: "C33"
+title: "Leave a space"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a space member, when I leave a space, I expect my membership row to
+  be removed from wp_jt_space_members and the space page to show a "Join
+  Space" button instead of "Following" on my next visit.
+
+expectations:
+  membership_removed_from_db: true
+  join_button_visible_after_leave: true
+  max_time_to_goal_seconds: 15

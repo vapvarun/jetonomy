@@ -1,0 +1,15 @@
+flow_id: "PRO-FIELDS-05"
+title: "Select option allowlist"
+source: "design-spec"
+priority: P1
+actor: pro-fields
+
+user_story: |
+  A select-type custom field should only show the allowed options defined
+  by the admin. No additional options should appear in the dropdown.
+
+expectations:
+  dropdown_shows_allowed_options: true
+  option_count_matches_config: true
+  no_console_errors: true
+  max_clicks_to_goal: 0

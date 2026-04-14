@@ -1,0 +1,13 @@
+flow_id: "PRO-ADVANCEDMODERATION-06"
+title: "Spam action silent-drops"
+source: "design-spec"
+priority: P1
+actor: pro-advanced-moderation
+
+user_story: |
+  As a system, when content matches a spam rule, the content should be
+  silently dropped or marked as spam without notifying the author.
+
+expectations:
+  flow_completes_without_error: true
+  post_marked_spam_or_rejected: true

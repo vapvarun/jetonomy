@@ -1,0 +1,16 @@
+flow_id: "PRO-REACTIONS-06"
+title: "Admin configure emojis"
+source: "design-spec"
+priority: P1
+actor: pro-reactions
+
+user_story: |
+  As an admin, I can navigate to the reactions settings page and customize
+  which emojis are available for reactions. Changes persist after save.
+
+expectations:
+  config_page_visible: true
+  emoji_toggles_work: true
+  settings_persist_after_save: true
+  no_console_errors: true
+  max_clicks_to_goal: 3

@@ -1,0 +1,21 @@
+flow_id: "C35"
+title: "View sub-profile tabs"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a community member viewing my profile, I expect to see tabbed navigation
+  (Posts, Replies, Votes, Bookmarks, Drafts) where each tab shows content
+  consistent with my actual database activity. If I have 5 posts in
+  wp_jt_posts, the Posts tab must show items -- not an empty state. The tab
+  counts and displayed items must match the database so I can trust that my
+  contributions are accurately represented on my profile.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  posts_tab_renders: true
+  replies_tab_renders: true
+  votes_tab_renders: true
+  tab_counts_consistent_with_db: true

@@ -99,17 +99,15 @@ class Trust_Levels {
 	}
 
 	/**
-	 * Return the promotion requirements for a trust level, merging admin-
-	 * configured thresholds over the built-in defaults.
+	 * Return the built-in default promotion thresholds for levels 1–3.
 	 *
-	 * @param int $level Trust level (1–3).
-	 * @return array Threshold key/value pairs, or empty array if not applicable.
+	 * Single source of truth consumed by the runtime reader, the admin
+	 * sanitizer/view, and the activation seeder.
+	 *
+	 * @return array<int,array<string,int>>
 	 */
-	public static function get_requirements( int $level ): array {
-		$settings   = get_option( 'jetonomy_settings', [] );
-		$thresholds = $settings['trust_thresholds'] ?? [];
-
-		$defaults = [
+	public static function defaults(): array {
+		return [
 			1 => [
 				'posts'            => 5,
 				'days_active'      => 3,
@@ -129,6 +127,19 @@ class Trust_Levels {
 				'replies_received' => 0,
 			],
 		];
+	}
+
+	/**
+	 * Return the promotion requirements for a trust level, merging admin-
+	 * configured thresholds over the built-in defaults.
+	 *
+	 * @param int $level Trust level (1–3).
+	 * @return array Threshold key/value pairs, or empty array if not applicable.
+	 */
+	public static function get_requirements( int $level ): array {
+		$settings   = get_option( 'jetonomy_settings', [] );
+		$thresholds = $settings['trust_thresholds'] ?? [];
+		$defaults   = self::defaults();
 
 		return $thresholds[ $level ] ?? $defaults[ $level ] ?? [];
 	}

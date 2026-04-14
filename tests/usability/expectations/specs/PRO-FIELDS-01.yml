@@ -1,0 +1,17 @@
+flow_id: "PRO-FIELDS-01"
+title: "Admin create field"
+source: "design-spec"
+priority: P0
+actor: pro-fields
+
+user_story: |
+  As an admin, I can create a custom field (text, select, etc.) via the
+  admin page, specifying name, type, and context (post or profile).
+  The field is stored in wp_jt_pro_fields.
+
+expectations:
+  field_form_visible: true
+  field_persisted_to_db: true
+  success_notice_shown: true
+  no_console_errors: true
+  max_clicks_to_goal: 3

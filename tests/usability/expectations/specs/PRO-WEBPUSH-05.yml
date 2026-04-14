@@ -1,0 +1,16 @@
+flow_id: "PRO-WEBPUSH-05"
+title: "Unsubscribe device"
+source: "design-spec"
+priority: P1
+actor: pro-web-push
+
+user_story: |
+  As a member, I can click "Disable Push" to unsubscribe my device.
+  The subscription row is removed from wp_jt_pro_push_subscriptions.
+
+expectations:
+  unsubscribe_button_visible: true
+  subscription_removed_from_db: true
+  success_indicator_shown: true
+  no_console_errors: true
+  max_clicks_to_goal: 1

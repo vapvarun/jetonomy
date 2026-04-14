@@ -1,0 +1,13 @@
+flow_id: "PRO-AI-06"
+title: "Daily budget cap enforcement"
+source: "design-spec"
+priority: P1
+actor: pro-ai
+
+user_story: |
+  As an admin, I set a daily API budget cap and expect the setting to
+  persist in the AI configuration.
+
+expectations:
+  flow_completes_without_error: true
+  budget_cap_persists: true

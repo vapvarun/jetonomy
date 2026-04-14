@@ -1,0 +1,15 @@
+flow_id: "XP01"
+title: "New post submit fans out to 8 extensions"
+source: "design-spec"
+priority: P0
+actor: composite
+
+user_story: |
+  As a system, creating a new post should fan out to multiple extensions:
+  AI spam check, moderation rule evaluation, webhook dispatch, and push
+  notification. Each enabled extension should process the event.
+
+expectations:
+  flow_completes_without_error: true
+  webhook_dispatched: true
+  moderation_evaluated: true

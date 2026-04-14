@@ -1,0 +1,14 @@
+flow_id: "PRO-WEBPUSH-04"
+title: "Click push notification lands on target"
+source: "design-spec"
+priority: P1
+actor: pro-web-push
+
+user_story: |
+  The push notification payload contains the correct target URL so that
+  clicking the notification navigates the user to the relevant post/thread.
+
+expectations:
+  payload_contains_target_url: true
+  url_points_to_correct_post: true
+  no_console_errors: true

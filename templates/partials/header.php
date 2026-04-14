@@ -235,6 +235,7 @@ $jt_js_data = [
 					var a = document.createElement('a');
 					a.href = n.object_url || n.url || (D.base + '/notifications/');
 					a.className = 'jt-notif-panel-item' + (n.is_read ? '' : ' unread');
+					if (n.id) { a.setAttribute('data-jt-notif-id', n.id); }
 					var txt = document.createElement('span');
 					txt.className = 'jt-notif-panel-text';
 					txt.textContent = n.message || '';
@@ -263,6 +264,29 @@ $jt_js_data = [
 			});
 		});
 	};
+	/* Mark single notification as read on click — fire-and-forget so navigation is not blocked */
+	document.addEventListener('click', function(e) {
+		if (!e.target || !e.target.closest) return;
+		var item = e.target.closest('.jt-notif-panel-item.unread');
+		if (!item) return;
+		var id = item.getAttribute('data-jt-notif-id');
+		if (!id) return;
+		item.classList.remove('unread');
+		fetch(D.restNotif + '/' + encodeURIComponent(id), {
+			method: 'PATCH',
+			headers: { 'X-WP-Nonce': D.nonce },
+			credentials: 'same-origin'
+		}).catch(function() { /* UI already updated; server-side sync on next load */ });
+		var badge = document.querySelector('.jt-community-nav-badge');
+		if (badge) {
+			var next = parseInt(badge.textContent, 10) - 1;
+			if (next > 0) {
+				badge.textContent = String(next);
+			} else {
+				badge.remove();
+			}
+		}
+	});
 	/* Close dropdown on outside click */
 	document.addEventListener('click', function(e) {
 		if (!e.target || !e.target.closest) return;

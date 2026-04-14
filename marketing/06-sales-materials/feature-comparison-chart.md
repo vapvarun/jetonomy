@@ -1,7 +1,7 @@
 # Jetonomy vs bbPress vs wpForo — Feature Comparison
 
-**Version:** 1.0.0 Launch
-**Last updated:** March 2026
+**Version:** 1.3.0
+**Last updated:** April 2026
 
 ---
 
@@ -17,7 +17,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Data storage | 22 custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
+| Data storage | 24 custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
 | Avoids wp_postmeta bloat | Yes | No — heavy wp_postmeta use | Yes |
 | Denormalized counters (no COUNT on load) | Yes | No | Partial |
 | Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial |
@@ -95,6 +95,8 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Automatic spam reputation penalty | Yes | No | No |
 | Revision history for edits | Yes | No | Yes |
 | Auto-moderation rules | Jetonomy Pro | No | Add-on required |
+| AI spam detection + content moderation | Jetonomy Pro (self-hosted Ollama or OpenAI/Anthropic) | No | No |
+| AI reply suggestions and thread summaries | Jetonomy Pro | No | No |
 
 ---
 
@@ -144,13 +146,13 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| REST API | Yes — 61+ endpoints (jetonomy/v1) | No | Partial |
+| REST API | Yes — 48+ endpoints (90+ with Pro) | No | Partial |
 | Cursor-based pagination on API | Yes | No | No |
 | JSON schema validation on API | Yes | No | No |
 | Template override system | Yes — theme/jetonomy/ | Yes — theme/bbpress/ | Partial |
 | Action and filter hooks | Yes — throughout | Yes — throughout | Yes |
 | Adapter pattern for integrations | Yes (search, email, realtime, membership) | No | No |
-| WordPress Abilities API support | Yes — 18 abilities | No | No |
+| WordPress Abilities API support | Yes — 19 abilities | No | No |
 | Clean uninstall (removes all data) | Yes | Partial | Yes |
 | Composer autoloader | No | No | No |
 
@@ -206,7 +208,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Pro pricing | See wbcomdesigns.com | Add-ons sold separately | Paid plans available |
 | Lifetime license available | Yes (Pro) | N/A | No |
 
-**Honest note:** bbPress itself is free and the add-on ecosystem is broad, but individual add-ons from third parties cost money and add maintenance overhead. wpForo's paid plans bundle add-ons at a set price. Jetonomy Pro bundles all 13 modules in a single license.
+**Honest note:** bbPress itself is free and the add-on ecosystem is broad, but individual add-ons from third parties cost money and add maintenance overhead. wpForo's paid plans bundle add-ons at a set price. Jetonomy Pro bundles all 14 modules (including AI Integration) in a single license.
 
 ---
 

@@ -1,0 +1,17 @@
+flow_id: "GA03"
+title: "Seed demo data"
+source: "design-spec"
+priority: P1
+actor: site-admin
+
+user_story: |
+  As a site admin, I run wp jetonomy demo seed and expect demo
+  categories, spaces, and posts to be created. The jetonomy_demo_data
+  option should track what was seeded for later cleanup.
+
+expectations:
+  flow_completes_without_error: true
+  demo_categories_created: true
+  demo_spaces_created: true
+  demo_posts_created: true
+  demo_tracking_option_set: true

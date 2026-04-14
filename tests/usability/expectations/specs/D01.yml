@@ -1,0 +1,32 @@
+flow_id: "D01"
+title: "Auto-promotion to TL2/TL3"
+source: "design-spec"
+priority: P1
+actor: trusted
+
+user_story: |
+  As a community member with sufficient activity, I want the trust
+  evaluation system to automatically assess my contributions and promote
+  me to a higher trust level (TL2 or TL3) so that I gain elevated
+  privileges without manual admin intervention.
+
+preconditions:
+  - alice (user 3) exists with a user_profiles row
+  - alice starts at TL1
+
+steps:
+  - Run `wp jetonomy trust-evaluate --format=json` via CLI
+  - Verify the command exits without error
+  - Query wp_jt_user_profiles to confirm alice has a valid trust_level (0-5)
+  - Navigate to alice's profile page and confirm it renders
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  trust_evaluator_runs: true
+  user_profile_has_valid_trust_level: true
+  max_clicks: 0
+  max_time_seconds: 5
+
+cleanup:
+  - Reset alice trust_level back to 1

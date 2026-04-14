@@ -277,3 +277,82 @@ Pro: https://wbcomdesigns.com/downloads/jetonomy-pro/
 #WordPress #ForumPlugin #Community
 
 **Suggested image:** Split card — left side "Free" with a short bulleted list of core features, right side "Pro" with Pro module names. Clean two-column layout. Jetonomy logo at top.
+
+---
+
+## POST-LAUNCH / v1.3.0 REFRESH — April 2026
+
+Five tweets to announce v1.3.0 AI features two weeks after the 1.0.0 launch. Momentum angle: we shipped three releases (1.0 → 1.2 → 1.3) in 14 days, and the biggest one is about AI moderation on your own server.
+
+---
+
+### Tweet 16 — AI Launch Announcement
+
+Jetonomy 1.3 is live.
+
+The biggest change: Pro now includes an AI layer that reads every new post for spam, abuse, and rule violations — and you can run it entirely on your own server with Ollama.
+
+No API keys. No per-request bill. No data leaves your machine.
+
+https://wbcomdesigns.com/downloads/jetonomy-pro/
+
+#WordPress #AI #SelfHosted
+
+---
+
+### Tweet 17 — Ollama Hook
+
+Most "AI moderation" features mean "we send your members' content to OpenAI."
+
+Jetonomy 1.3 supports OpenAI, Anthropic, custom endpoints — and **Ollama on your own server**.
+
+Run llama3.1:8b locally. Localhost only. Compliance-friendly. Free of per-request fees.
+
+https://wbcomdesigns.com/downloads/jetonomy-pro/
+
+#Ollama #OpenSource #WordPress
+
+---
+
+### Tweet 18 — Velocity Proof
+
+Two weeks after Jetonomy 1.0 launched, we have shipped:
+
+- 1.1: theme compat polish
+- 1.2: Private Topics, Topic Prefixes, Similar Topics, Quote Replies
+- 1.3: AI spam detection, content moderation, reply suggestions, thread summaries
+
+If you were waiting to see if we would keep shipping — we are.
+
+https://wbcomdesigns.com/downloads/jetonomy/
+
+#WordPress #ForumPlugin #BuildInPublic
+
+---
+
+### Tweet 19 — Technical Deep-Dive Hook
+
+Three Pro DB tables, pluggable adapter interface, dashboard for token usage and cost, audit log for every decision.
+
+Jetonomy 1.3's AI extension is built to production standards — not a thin wrapper around an OpenAI call.
+
+Self-hosted Ollama means zero cost at scale.
+
+https://wbcomdesigns.com/downloads/jetonomy-pro/
+
+#WordPress #AI #Development
+
+---
+
+### Tweet 20 — v1.2 Free Features Callout
+
+Missed it? Jetonomy 1.2 added four discussion controls to the free plugin:
+
+- Private Topics — sensitive topics only you and mods can see
+- Topic Prefixes — colored [Bug] [Solved] labels per space
+- Similar Topics — duplicates caught at compose time
+- Quote Replies — styled blockquotes in long threads
+
+All in free. https://wbcomdesigns.com/downloads/jetonomy/
+
+#WordPress #ForumPlugin #Community

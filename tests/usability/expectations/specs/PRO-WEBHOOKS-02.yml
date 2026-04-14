@@ -1,0 +1,13 @@
+flow_id: "PRO-WEBHOOKS-02"
+title: "Event fires → webhook dispatches"
+source: "design-spec"
+priority: P0
+actor: pro-webhooks
+
+user_story: |
+  As a system, when a post.created event fires, the webhook subscription
+  should dispatch and record the delivery attempt.
+
+expectations:
+  flow_completes_without_error: true
+  webhook_dispatched: true

@@ -1,0 +1,18 @@
+flow_id: "A11"
+title: "Register new account"
+source: "design-spec"
+priority: P0
+actor: anonymous
+
+user_story: |
+  As an anonymous visitor, when I navigate to /wp-login.php?action=register,
+  I expect to see the WordPress registration form with username and email
+  fields. The form should render without errors. (The test does not submit
+  the form to avoid creating accounts.)
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  registration_form_visible: true
+  username_field_present: true
+  email_field_present: true

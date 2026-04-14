@@ -1,0 +1,16 @@
+flow_id: "SA04"
+title: "Create an invite link"
+source: "design-spec"
+priority: P1
+actor: space-admin
+
+user_story: |
+  As a space admin, I visit the space edit page invite links tab, click
+  "Create" to generate a new invite link, and expect a DB row to be
+  written in wp_jt_invite_links for my space.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  invite_link_db_row_created: true
+  max_clicks_to_goal: 3

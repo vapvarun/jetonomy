@@ -1,7 +1,7 @@
 # Jetonomy — FAQ Content
 
-**Version:** 1.0.0 Launch
-**Last updated:** March 2026
+**Version:** 1.3.0
+**Last updated:** April 2026
 
 For use on the website FAQ page and support documentation.
 
@@ -21,9 +21,9 @@ For the WordPress Abilities API features (AI agent integration), WordPress 6.9+ 
 
 ## Q2 — How much does Jetonomy cost?
 
-**The core plugin is free.** Download it from wbcomdesigns.com. It includes forums, Q&A spaces, ideas boards, voting, trust levels, moderation, full-text search, notifications, SEO markup, 61+ REST API endpoints, and built-in importers for bbPress and wpForo.
+**The core plugin is free.** Download it from wbcomdesigns.com. It includes forums, Q&A spaces, ideas boards, voting, trust levels, moderation, full-text search, notifications, SEO markup, 48+ REST API endpoints, and built-in importers for bbPress and wpForo.
 
-**Jetonomy Pro** is a paid add-on that unlocks 13 additional modules: private messaging, emoji reactions, polls, analytics, email digest, custom badges, advanced auto-moderation, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+**Jetonomy Pro** is a paid add-on that unlocks 14 additional modules: AI integration (spam detection, content moderation, reply suggestions, and thread summaries via OpenAI, Anthropic, or self-hosted Ollama), private messaging, emoji reactions, polls, analytics, email digest, custom badges, advanced auto-moderation, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 Pro pricing is available at wbcomdesigns.com/downloads/jetonomy-pro/.
 
@@ -61,7 +61,7 @@ If your theme doesn't publish theme.json values, Jetonomy falls back to sensible
 
 ## Q5 — How does Jetonomy perform at scale?
 
-**Community data lives in 22 custom MySQL tables, not in WordPress posts.**
+**Community data lives in 24 custom MySQL tables, not in WordPress posts.**
 
 The short version of why that matters: wp_postmeta is a key-value table. At scale, joining it to retrieve forum content creates slow queries that get worse as the table grows. Jetonomy sidesteps this entirely with dedicated tables designed for forum query patterns.
 
@@ -80,9 +80,9 @@ Tested scale path: sub-200ms page loads at 50,000 topics with Redis. The archite
 
 **Free gives you a complete community platform. Pro adds tools for larger or more sophisticated communities.**
 
-Free includes: Forum, Q&A, and Ideas spaces; voting and reputation; 6 trust levels with automatic promotion; moderation queue and flagging; full-text search; in-community and email notifications; subscriptions; leaderboard and user profiles; SEO markup (Schema.org, sitemaps, Open Graph); 61+ REST API endpoints; template overrides; bbPress and wpForo importers; MemberPress and Paid Memberships Pro integration; WordPress Abilities API support.
+Free includes: Forum, Q&A, and Ideas spaces; voting and reputation; 6 trust levels with automatic promotion; moderation queue and flagging; full-text search; in-community and email notifications; subscriptions; leaderboard and user profiles; SEO markup (Schema.org, sitemaps, Open Graph); 48+ REST API endpoints; template overrides; bbPress and wpForo importers; MemberPress and Paid Memberships Pro integration; WordPress Abilities API support.
 
-Pro adds 13 modules: private messaging, emoji reactions, polls, analytics dashboard, email digest, custom badges with criteria engine, advanced auto-moderation rules, custom fields for posts and profiles, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+Pro adds 14 modules: AI integration (spam detection, content moderation, reply suggestions, and thread summaries — with OpenAI, Anthropic, and self-hosted Ollama support), private messaging, emoji reactions, polls, analytics dashboard, email digest, custom badges with criteria engine, advanced auto-moderation rules, custom fields for posts and profiles, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 The free plugin will stay free and fully functional. It is not a limited trial. Pro exists for communities that need the additional modules — not to lock features that should be free.
 

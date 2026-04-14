@@ -1,0 +1,17 @@
+flow_id: "GA01"
+title: "Plugin activation"
+source: "design-spec"
+priority: P0
+actor: site-admin
+
+user_story: |
+  As a site admin, I deactivate and reactivate Jetonomy via WP-CLI and
+  expect no fatal errors. After reactivation, all core database tables
+  (categories, spaces, posts, replies, votes, user_profiles) must exist.
+
+expectations:
+  flow_completes_without_error: true
+  no_fatal_on_deactivate: true
+  no_fatal_on_activate: true
+  core_tables_exist: true
+  plugin_status_active: true

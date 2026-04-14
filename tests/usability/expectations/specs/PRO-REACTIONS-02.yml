@@ -1,0 +1,15 @@
+flow_id: "PRO-REACTIONS-02"
+title: "Toggle off reaction"
+source: "design-spec"
+priority: P0
+actor: pro-reactions
+
+user_story: |
+  As a member who already reacted to a post, clicking my active reaction
+  chip toggles it off, removing it from the DB and the UI.
+
+expectations:
+  reaction_removed_from_db: true
+  chip_loses_active_state: true
+  no_console_errors: true
+  max_clicks_to_goal: 1

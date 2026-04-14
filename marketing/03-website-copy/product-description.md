@@ -1,7 +1,7 @@
 # Jetonomy — Product Descriptions
 
-**Version:** 1.0.0 Launch
-**Last updated:** March 2026
+**Version:** 1.3.0
+**Last updated:** April 2026
 
 ---
 
@@ -9,7 +9,7 @@
 
 ### Character limit: 150 characters
 
-Forums, Q&A boards, and idea trackers for WordPress. Custom database tables, 6 trust levels, 61+ REST endpoints, and a design that fits any theme.
+Forums, Q&A boards, and idea trackers for WordPress. Custom database tables, 6 trust levels, 90+ REST endpoints, and a design that fits any theme.
 
 *(145 characters)*
 
@@ -21,7 +21,7 @@ Forums, Q&A boards, and idea trackers for WordPress. Custom database tables, 6 t
 
 Jetonomy adds a complete community platform to any WordPress site. Create discussion forums, Q&A boards where the best answers surface automatically, or idea trackers where members vote on what gets built next.
 
-Unlike older forum plugins, Jetonomy stores community data in 22 dedicated MySQL tables — not in wp_posts. That means your site stays fast, WordPress stays clean, and your community scales without architectural changes.
+Unlike older forum plugins, Jetonomy stores community data in 24 dedicated MySQL tables — not in wp_posts. That means your site stays fast, WordPress stays clean, and your community scales without architectural changes.
 
 **Three types of community spaces**
 
@@ -35,9 +35,13 @@ Jetonomy includes 6 trust levels: Newcomer, Member, Regular, Trusted, Leader, an
 
 There is nothing to configure. It works from day one.
 
+**AI-powered moderation — on your own server**
+
+New in Pro 1.3.0: an AI layer that reads every new post and reply for spam, abuse, and rule violations before publish. Four providers supported (OpenAI, Anthropic, custom endpoint, and self-hosted Ollama). For privacy-sensitive communities, run Ollama on the same server as WordPress — no data leaves your machine, no per-request API bill, and every decision is logged for compliance review.
+
 **Performance built in**
 
-- 22 custom MySQL tables with proper indexes for forum query patterns
+- 24 custom MySQL tables with proper indexes for forum query patterns
 - Denormalized counters — reply counts and vote scores are on each record, not computed on load
 - Object cache support — works with Redis and Memcached when available
 - Cursor-based pagination on all list endpoints — consistent results on active communities
@@ -45,9 +49,9 @@ There is nothing to configure. It works from day one.
 
 **Full REST API**
 
-61+ endpoints under the jetonomy/v1 namespace. Cursor-based pagination, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
+48+ endpoints in the free plugin under the jetonomy/v1 namespace, 90+ endpoints with Pro. Cursor-based pagination, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
 
-Jetonomy also registers 18 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
+Jetonomy also registers 19 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
 
 **Works with your theme**
 
@@ -71,17 +75,17 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 - In-community and email notifications, subscriptions
 - Leaderboard and user profiles
 - Schema.org markup, sitemaps, Open Graph, and clean URLs
-- 61+ REST API endpoints with cursor-based pagination
+- 48+ REST API endpoints with cursor-based pagination
 - Template overrides via your-theme/jetonomy/ directory
 - bbPress and wpForo importers with dry run and progress tracking
-- WordPress Abilities API support (18 abilities)
+- WordPress Abilities API support (19 abilities)
 - Three-layer permissions (WP capabilities, space roles, trust levels)
 - MemberPress and Paid Memberships Pro integration for space gating
 - Clean uninstall — removes all tables, options, capabilities, and cron jobs
 
 **Jetonomy Pro (sold separately)**
 
-Pro adds 13 modules on top of the free core: private messaging, emoji reactions, polls, community analytics dashboard, email digest, custom badges with a criteria engine, advanced auto-moderation rules, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+Pro adds 14 modules on top of the free core: AI integration (spam detection, content moderation, reply suggestions, thread summaries — with OpenAI, Anthropic, and self-hosted Ollama support), private messaging, emoji reactions, polls, community analytics dashboard, email digest, custom badges with a criteria engine, advanced auto-moderation rules, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 **Requirements**
 
@@ -101,7 +105,7 @@ Jetonomy takes a different approach.
 
 **Custom tables, not CPTs**
 
-Community content lives in 22 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record — no COUNT queries. At 50,000 topics with object caching, pages load in under 200ms.
+Community content lives in 24 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record — no COUNT queries. At 50,000 topics with object caching, pages load in under 200ms.
 
 **Three community modes**
 
@@ -117,9 +121,9 @@ The frontend uses CSS custom properties that pull values from your theme's theme
 
 **Full REST API and developer tools**
 
-61+ endpoints under the jetonomy/v1 namespace with cursor-based pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
+48+ endpoints in free (90+ with Pro) under the jetonomy/v1 namespace with cursor-based pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
 
-For sites running WordPress 6.9+, Jetonomy registers 18 abilities via the WordPress Abilities API — so AI agents and automation tools can discover and interact with your community without custom code.
+For sites running WordPress 6.9+, Jetonomy registers 19 abilities via the WordPress Abilities API — so AI agents and automation tools can discover and interact with your community without custom code.
 
 **Migration included**
 
@@ -127,6 +131,6 @@ Built-in importers for bbPress and wpForo. Auto-detection, dry run mode, and pro
 
 **Free, with a clear upgrade path**
 
-The free plugin at wbcomdesigns.com includes everything described above — spaces, voting, trust levels, moderation, search, notifications, SEO, REST API, and importers. Jetonomy Pro adds 13 additional modules including private messaging, polls, analytics, badges, webhooks, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+The free plugin at wbcomdesigns.com includes everything described above — spaces, voting, trust levels, moderation, search, notifications, SEO, REST API, and importers. Jetonomy Pro adds 14 additional modules including AI integration (self-hosted Ollama-powered moderation), private messaging, polls, analytics, badges, webhooks, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 **Requirements:** PHP 8.1+, WordPress 6.7+, MySQL 5.7+.

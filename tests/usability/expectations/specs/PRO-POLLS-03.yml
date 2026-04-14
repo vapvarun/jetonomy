@@ -1,0 +1,16 @@
+flow_id: "PRO-POLLS-03"
+title: "Vote multi-choice poll"
+source: "design-spec"
+priority: P0
+actor: pro-polls
+
+user_story: |
+  As a member viewing a multi-choice poll, I can select multiple options
+  via checkboxes, submit my vote, and see all selections persisted.
+
+expectations:
+  multiple_selections_allowed: true
+  all_votes_persisted: true
+  results_displayed: true
+  no_console_errors: true
+  max_clicks_to_goal: 3

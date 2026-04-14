@@ -1,0 +1,15 @@
+flow_id: "PRO-ANALYTICS-07"
+title: "Custom date range"
+source: "design-spec"
+priority: P1
+actor: pro-analytics
+
+user_story: |
+  As an admin on the analytics dashboard, I expect a date range picker
+  that filters the displayed data to a custom window.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  date_picker_visible: true
+  max_clicks_to_goal: 3

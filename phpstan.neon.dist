@@ -15,3 +15,19 @@ parameters:
         -
             message: '#(Mepr|MeprUser|MeprCptModel)#'
             reportUnmatched: false
+        # WP-CLI stubs aren't installed in CI. The CLI module (commands +
+        # dispatcher) and the qa-actions journey harness use
+        # WP_CLI::log/success/error/warning and the WP_CLI\Utils helpers;
+        # they only run inside `wp` where the class is always defined.
+        -
+            message: '#Call to static method (log|success|error|warning|add_command)\(\) on an unknown class WP_CLI\.#'
+            paths:
+                - includes/cli/*
+                - includes/qa/class-journey-tests.php
+            reportUnmatched: false
+        -
+            message: '#Function WP_CLI\\Utils\\\w+ not found\.#'
+            paths:
+                - includes/cli/*
+                - includes/qa/class-journey-tests.php
+            reportUnmatched: false

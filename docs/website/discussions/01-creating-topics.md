@@ -63,6 +63,28 @@ Add up to five tags to help members find your topic through search and tag filte
 
 Tags are space-scoped by default. A "bug" tag in your Support space and a "bug" tag in your Dev space are the same tag in the database, but the tag page at `/community/tag/bug/` will show posts from all spaces.
 
+### Similar Topics Detection
+
+As you type the title, Jetonomy searches for existing topics with similar titles in the current space and shows up to five matches inline below the title field. This is the single best defense against duplicate topics — most duplicates happen because the author simply did not know an existing topic already covered their question.
+
+If you see your question already answered in the list, click the match to jump to the existing topic instead of submitting a duplicate. If none of the matches fit, keep typing — the search re-runs after every few characters.
+
+Similar Topics detection runs entirely on the client against the search index — no additional page load.
+
+### Prefix Selector
+
+If the space has topic prefixes enabled, a **Prefix** selector appears next to the title field. Pick a prefix (for example, `Bug`, `Suggestion`, `Solved`) from the list and it appears as a colored label in front of your topic in the space listing.
+
+Prefixes are configured per space by the space owner — see the [Topic Prefixes](07-private-and-prefixes.md#topic-prefixes) guide.
+
+### Private Topic Toggle
+
+If your space allows it, a **Private** toggle appears at the bottom of the composer. Enabling it restricts the topic to you and space moderators only — other space members cannot see it. Use this for sensitive support issues, personal requests, or anything that should stay between you and the moderators.
+
+Not every space allows private topics. If you do not see the toggle, the space owner has disabled the feature.
+
+See [Private Topics and Topic Prefixes](07-private-and-prefixes.md) for the full guide.
+
 ## Post Type Is Derived Automatically
 
 You do not select the post type — Jetonomy determines it from the space type:

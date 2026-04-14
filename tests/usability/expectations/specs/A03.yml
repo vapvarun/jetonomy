@@ -1,0 +1,17 @@
+flow_id: "A03"
+title: "Browse a public space"
+source: "design-spec"
+priority: P0
+actor: anonymous
+
+user_story: |
+  As an anonymous visitor, when I navigate to /community/s/welcome/, I expect
+  to see the space's post listing inside .jt-topics with .jt-row cards and
+  sort tabs (Latest, Popular, etc.) visible above the listing.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  topics_container_visible: true
+  post_rows_present: true
+  sort_tabs_visible: true

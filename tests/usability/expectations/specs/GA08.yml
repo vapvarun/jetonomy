@@ -1,0 +1,21 @@
+flow_id: "GA08"
+title: "Content management"
+source: "design-spec"
+priority: P0
+actor: site-admin
+
+user_story: |
+  As a site admin, I visit the content management page and expect to see a
+  tabbed view of posts and replies. The number of post rows displayed must
+  be consistent with the wp_jt_posts table, and any total count indicator
+  must match the database exactly, so I can trust the admin content view
+  as an accurate reflection of community activity.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  content_list_visible: true
+  tab_navigation_visible: true
+  no_php_fatal: true
+  post_rows_consistent_with_db: true
+  total_count_matches_db: true

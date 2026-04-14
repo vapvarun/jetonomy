@@ -1,0 +1,16 @@
+flow_id: "B02"
+title: "Edit own profile first time"
+source: "design-spec"
+priority: P1
+actor: registered
+
+user_story: |
+  As a registered user (bob), when I visit /community/u/bob/edit/, I expect
+  to see a profile edit form with editable fields (text inputs, textareas)
+  so I can customize my community profile.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  profile_form_visible: true
+  editable_fields_present: true

@@ -1,0 +1,15 @@
+flow_id: "PRO-FIELDS-07"
+title: "Display fields in profile"
+source: "design-spec"
+priority: P1
+actor: pro-fields
+
+user_story: |
+  When a user has custom profile field values, they display on their
+  public profile page with label and value.
+
+expectations:
+  profile_field_label_visible: true
+  profile_field_value_visible: true
+  no_console_errors: true
+  max_clicks_to_goal: 0

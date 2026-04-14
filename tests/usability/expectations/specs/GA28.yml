@@ -1,0 +1,14 @@
+flow_id: "GA28"
+title: "Plugin uninstall — uninstall.php exists (destructive, fixme)"
+source: "design-spec"
+priority: P1
+actor: site-admin
+
+user_story: |
+  As a site admin, when I uninstall Jetonomy, I expect the plugin to
+  have a clean removal path via uninstall.php. This test only verifies
+  the file exists — actual uninstall is destructive and skipped.
+
+expectations:
+  flow_completes_without_error: true
+  uninstall_php_exists: true

@@ -157,6 +157,16 @@ $crumbs[] = [
 							</button>
 						<?php endif; ?>
 						<?php
+					elseif ( 'open' === $_jt_join_policy && ! $_jt_is_member && ! $_jt_is_admin ) :
+						// Open space, non-member: show Join Space button (instant membership).
+						$_jt_join_nonce = wp_create_nonce( 'wp_rest' );
+						?>
+						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
+							data-space-id="<?php echo absint( $space->id ); ?>"
+							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
+							<?php esc_html_e( 'Join Space', 'jetonomy' ); ?>
+						</button>
+						<?php
 					else :
 						// Member or open space: show Follow/Following toggle.
 						$is_following_space = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'space', (int) $space->id );

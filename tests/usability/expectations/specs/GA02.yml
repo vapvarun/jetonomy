@@ -1,0 +1,20 @@
+flow_id: "GA02"
+title: "Run setup wizard"
+source: "design-spec"
+priority: P0
+actor: site-admin
+
+user_story: |
+  As a site admin activating Jetonomy for the first time, I visit the setup
+  wizard page and expect to see clearly numbered steps guiding me through
+  initial configuration. The wizard should render without PHP fatals, the
+  jetonomy_settings option should exist in the database, and the page should
+  reflect whether setup has already been completed.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  wizard_page_renders: true
+  no_php_fatal: true
+  setup_settings_exist_in_db: true
+  wizard_steps_render: true

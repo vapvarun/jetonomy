@@ -1,0 +1,13 @@
+flow_id: "PRO-AI-09"
+title: "Thread summaries feature"
+source: "design-spec"
+priority: P1
+actor: pro-ai
+
+user_story: |
+  As a user, I expect AI-generated thread summaries for posts with
+  multiple replies (requires provider configured).
+
+expectations:
+  flow_completes_without_error: true
+  summary_generated: true

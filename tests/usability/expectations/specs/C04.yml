@@ -1,0 +1,20 @@
+flow_id: "C04"
+title: "Create a feed post"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a member of a feed-type space, when I fill in a title and body for
+  a status update and submit, I expect the status post to be saved in the
+  database, the browser to redirect to the new post page, and the form
+  heading to indicate I am posting a status update.
+
+expectations:
+  status_created_in_db: true
+  navigated_to_status_url: true
+  form_heading_says_status: true
+  title_visible_on_page: true
+  no_console_errors: true
+  max_clicks_to_publish: 5
+  max_time_to_goal_seconds: 15

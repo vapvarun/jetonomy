@@ -1,0 +1,13 @@
+flow_id: "PRO-AI-08"
+title: "Provider fallback on error"
+source: "design-spec"
+priority: P1
+actor: pro-ai
+
+user_story: |
+  As a system, when the primary AI provider fails, the fallback provider
+  should be tried automatically.
+
+expectations:
+  flow_completes_without_error: true
+  fallback_provider_used: true

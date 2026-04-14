@@ -34,7 +34,7 @@ If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-cli
 
 ### Built to Be Fast at Scale
 
-Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 21 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
+Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 24 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
 
 Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). Frequently accessed data is automatically cached with Redis or Memcached if you have them. Batch queries everywhere — no N+1 problems.
 
@@ -126,7 +126,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 **Developer Tools**
 - 48+ REST API endpoints at `/wp-json/jetonomy/v1/`
-- 18 abilities registered with the WordPress Abilities API (WP 6.9+)
+- 19 abilities registered with the WordPress Abilities API (WP 6.9+)
 - 20+ action hooks and filters for customization
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
@@ -151,6 +151,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 Jetonomy Pro extends the free plugin with power-user and enterprise features:
 
+* **AI Integration** — Language-model-powered spam detection, content moderation, reply suggestions, and thread summaries. Pluggable providers including OpenAI, Anthropic, custom endpoints, and self-hosted Ollama (privacy-first).
 * **Private Messaging** — Direct messages between members
 * **Emoji Reactions** — React to posts and replies with custom emoji sets
 * **Polls** — Run polls inside posts and spaces
@@ -158,10 +159,11 @@ Jetonomy Pro extends the free plugin with power-user and enterprise features:
 * **Analytics Dashboard** — See what your community talks about most, top contributors, growth trends
 * **Email Digests** — Weekly/daily community digest emails
 * **Advanced Auto-Moderation** — Rule-based moderation (keyword filters, rate limits, user score gates)
-* **WooCommerce, Restrict Content Pro, LearnDash adapters** — Gate spaces behind courses or purchases
-* **Meilisearch / Elasticsearch integration** — Lightning-fast search for large communities
-* **Real-time push** — Live reply updates via Mercure or Pusher (no page refresh needed)
-* **Slack & Discord bridge** — Mirror community activity into your Slack/Discord server
+* **WooCommerce, Restrict Content Pro, LearnDash, Tutor LMS adapters** — Gate spaces behind courses or purchases
+* **SEO Pro** — Per-space meta titles, Open Graph images, schema controls, and sitemap rules
+* **Reply by Email** — Members reply to notification emails and the reply posts automatically
+* **Web Push Notifications** — Browser push for replies, mentions, and moderation events
+* **Webhooks** — Send HTTP POSTs to external services on community events
 * **White-label branding** — Remove Jetonomy branding, use your own logo
 * **Custom badge builder** — Design badges and award them manually or automatically
 
@@ -222,7 +224,7 @@ The result: new spammers can't immediately flood your community, and your most t
 
 = Does it have full-text search? =
 
-Yes. Jetonomy uses MySQL's native FULLTEXT indexes for fast, relevant search results. Typing in the search bar shows instant results as you type. For communities with 100,000+ posts, Jetonomy Pro supports Meilisearch and Elasticsearch integration.
+Yes. Jetonomy uses MySQL's native FULLTEXT indexes for fast, relevant search results. Typing in the search bar shows instant results as you type. The search system is built on a swappable adapter pattern — developers can write custom adapters for services like Meilisearch, Elasticsearch, or Algolia without touching the plugin core.
 
 = Can my community members moderate their own spaces? =
 
@@ -254,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
@@ -332,7 +334,7 @@ Each site in a Multisite network gets its own independent community. Network act
 - Custom MySQL tables (21 tables) — no `wp_posts` bottleneck
 - 3-layer permission engine: WP Capabilities + Space Roles + Trust Levels 0–5
 - WordPress Interactivity API frontend — no jQuery, no React bundle
-- 18 abilities registered with the WordPress Abilities API (WP 6.9+)
+- 19 abilities registered with the WordPress Abilities API (WP 6.9+)
 - Rich text editor with drag-drop image upload and paste-to-upload
 - @mention notifications with autocomplete
 - Auto-embed for YouTube, Twitter/X, Vimeo, and other oEmbed providers

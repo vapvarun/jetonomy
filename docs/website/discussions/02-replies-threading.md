@@ -19,6 +19,12 @@ Click **Reply** to submit. The reply appears immediately without a page reload.
 
 If the space has "Require Post Approval" enabled, your reply is held for moderator review before appearing to other members. A confirmation message tells you it is pending.
 
+### Quote Replies
+
+To reply while quoting a specific passage from an existing reply, select the text you want to quote and click the **Quote** button that appears. Jetonomy inserts the quoted text as a styled blockquote in your reply composer, with the author attribution linked back to the source reply.
+
+You can also click **Quote** in the `...` menu on any reply to quote its full body without selecting text first. This is the quickest way to address a specific point from a long reply — the quoted passage gives readers the context without forcing them to scroll back up.
+
 ## Threading: Replies to Replies
 
 You can reply to any existing reply by clicking the **Reply** link that appears when you hover over a reply. This creates a threaded sub-reply nested visually under the parent.

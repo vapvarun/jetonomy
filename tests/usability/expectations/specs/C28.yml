@@ -1,0 +1,15 @@
+flow_id: "C28"
+title: "Bookmark a post"
+source: "design-spec"
+priority: P2
+actor: member
+
+user_story: |
+  As a member viewing a post, when I click the Bookmark button, I expect
+  the post to be saved to my bookmarks so I can find it later on my
+  profile Bookmarks tab. (Currently fixme: bookmark button not found.)
+
+expectations:
+  bookmark_button_visible: true
+  bookmark_saved_in_db: true
+  no_console_errors: true

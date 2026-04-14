@@ -1,0 +1,16 @@
+flow_id: "PRO-EMAILDIGEST-06"
+title: "Admin sends test digest"
+source: "design-spec"
+priority: P1
+actor: pro-email-digest
+
+user_story: |
+  As an admin, I can click "Send Test Digest" on the settings page to
+  receive a sample digest email for verification purposes.
+
+expectations:
+  test_button_visible: true
+  test_email_sent: true
+  success_notice_shown: true
+  no_console_errors: true
+  max_clicks_to_goal: 1

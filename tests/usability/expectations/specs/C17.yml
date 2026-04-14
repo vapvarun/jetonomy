@@ -1,0 +1,19 @@
+flow_id: "C17"
+title: "Vote on a reply"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a member reading a thread, when I upvote a reply, I expect the
+  reply's vote score to increment by 1, the upvote button to gain a
+  .voted class, and a vote row for the reply to be created in
+  wp_jt_votes.
+
+expectations:
+  reply_score_incremented: true
+  reply_upvote_button_active: true
+  reply_vote_persisted_in_db: true
+  no_console_errors: true
+  max_clicks_to_vote: 1
+  max_time_to_goal_seconds: 10

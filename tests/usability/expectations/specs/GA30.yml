@@ -1,0 +1,20 @@
+flow_id: "GA30"
+title: "REST API — namespace registered, index returns 200, data endpoint works"
+source: "design-spec"
+priority: P1
+actor: site-admin
+
+user_story: |
+  As a site admin or third-party integrator, I need the Jetonomy REST API
+  to be fully functional. The jetonomy/v1 namespace must be registered, the
+  index endpoint must return 200 with a list of routes, and a data endpoint
+  like /spaces must return a 200 response with an array of results. This
+  ensures external tools, mobile apps, and automation can rely on the API.
+
+expectations:
+  flow_completes_without_error: true
+  namespace_registered: true
+  index_status_200: true
+  has_routes: true
+  spaces_endpoint_returns_200: true
+  spaces_endpoint_returns_array: true

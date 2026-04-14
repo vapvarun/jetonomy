@@ -1,0 +1,13 @@
+flow_id: "PRO-AI-03"
+title: "Enable spam_detection feature"
+source: "design-spec"
+priority: P0
+actor: pro-ai
+
+user_story: |
+  As an admin, I can enable and disable the spam_detection AI feature
+  and the setting should persist.
+
+expectations:
+  flow_completes_without_error: true
+  feature_toggle_persists: true

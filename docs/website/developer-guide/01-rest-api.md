@@ -1,4 +1,4 @@
-Jetonomy exposes a full REST API under the `jetonomy/v1` namespace — 61 endpoints in the free plugin, plus 13 additional endpoints when Jetonomy Pro is active. All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
+Jetonomy exposes a full REST API under the `jetonomy/v1` namespace — 48+ endpoints in the free plugin, plus 40+ additional endpoints when Jetonomy Pro is active (90+ total). All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
 
 **Base URL:** `https://example.com/wp-json/jetonomy/v1/`
 

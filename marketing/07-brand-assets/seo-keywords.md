@@ -51,7 +51,7 @@
 
 ### Landing Page
 **Title:** Jetonomy | The Modern Forum Plugin for WordPress
-**Meta Description:** Forums, Q&A, and idea boards with custom database tables, trust levels, and 61+ REST API endpoints. Free plugin. Pro adds reactions, messaging, polls, and analytics.
+**Meta Description:** Forums, Q&A, and idea boards with custom database tables, trust levels, and 90+ REST API endpoints. Free plugin. Pro adds AI moderation, reactions, messaging, polls, and analytics.
 
 ### Feature Pages
 **Title pattern:** [Feature Name] — Jetonomy WordPress Forum Plugin

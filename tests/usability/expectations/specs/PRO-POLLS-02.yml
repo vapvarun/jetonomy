@@ -1,0 +1,17 @@
+flow_id: "PRO-POLLS-02"
+title: "Vote single-choice poll"
+source: "design-spec"
+priority: P0
+actor: pro-polls
+
+user_story: |
+  As a member viewing a post with a single-choice poll, I can select one
+  option, click vote, and see the results with my vote persisted.
+
+expectations:
+  poll_widget_visible: true
+  vote_persisted_to_db: true
+  results_displayed_after_vote: true
+  no_console_errors: true
+  max_clicks_to_goal: 2
+  max_time_to_goal_seconds: 10

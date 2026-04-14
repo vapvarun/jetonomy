@@ -1,0 +1,13 @@
+flow_id: "PRO-SEOPRO-06"
+title: "Exclude space from sitemap"
+source: "design-spec"
+priority: P1
+actor: pro-seo-pro
+
+user_story: |
+  As an admin, I mark a space as excluded from the sitemap and expect
+  the setting to persist via CLI readback.
+
+expectations:
+  flow_completes_without_error: true
+  sitemap_exclude_persists: true

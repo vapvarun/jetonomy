@@ -1,0 +1,15 @@
+flow_id: "PRO-FIELDS-06"
+title: "Display fields in post view"
+source: "design-spec"
+priority: P1
+actor: pro-fields
+
+user_story: |
+  When a post has custom field values, they display on the single post
+  view with their label and value.
+
+expectations:
+  field_label_visible: true
+  field_value_visible: true
+  no_console_errors: true
+  max_clicks_to_goal: 0

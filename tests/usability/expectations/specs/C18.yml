@@ -1,0 +1,16 @@
+flow_id: "C18"
+title: "@mention another user"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a member composing a reply, when I type @ followed by a username, I
+  expect an autocomplete dropdown to appear with matching users. Selecting
+  a user should insert a mention link into the editor. (Currently fixme:
+  autocomplete UI not yet implemented.)
+
+expectations:
+  mention_autocomplete_renders: true
+  mention_link_inserted: true
+  no_console_errors: true

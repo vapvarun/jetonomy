@@ -1,0 +1,15 @@
+flow_id: "C19"
+title: "Keyboard shortcuts"
+source: "design-spec"
+priority: P2
+actor: member
+
+user_story: |
+  As a member browsing a space with multiple posts, when I press the j/k
+  keyboard shortcuts, I expect the active highlight to move between post
+  rows so I can navigate without a mouse.
+
+expectations:
+  j_moves_highlight_down: true
+  k_moves_highlight_up: true
+  no_console_errors: true

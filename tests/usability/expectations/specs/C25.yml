@@ -1,0 +1,19 @@
+flow_id: "C25"
+title: "Subscribe to a space"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a space member, when I click the "Follow" button on the space page,
+  I expect the button text to toggle to "Following", the button to gain
+  a .jt-following class, and a subscription row to be created in
+  wp_jt_subscriptions so I receive notifications for new posts.
+
+expectations:
+  button_toggles_to_following: true
+  following_class_applied: true
+  subscription_row_created: true
+  no_console_errors: true
+  max_clicks_to_subscribe: 1
+  max_time_to_goal_seconds: 10

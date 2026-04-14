@@ -1,0 +1,39 @@
+flow_id: "D06"
+title: "Split reply into new topic"
+source: "design-spec"
+priority: P2
+actor: trusted
+status: fixme
+
+user_story: |
+  As a trusted member at TL3, I want to split a reply into a new
+  standalone topic so that off-topic but valuable discussions can be
+  moved to their own thread without losing context.
+
+preconditions:
+  - alice (user 3) at TL3
+  - A post by alice with a reply by bob (user 4)
+  - Split-to-topic UI exists in the reply more-menu
+
+steps:
+  - Set alice to TL3 via DB
+  - Seed a post by alice and a reply by bob
+  - Login as alice and navigate to the post
+  - Open more-menu on bob's reply
+  - Click "Split to topic"
+  - Confirm the split action
+  - Assert a success message appears
+  - Verify a new post was created in wp_jt_posts
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  split_button_visible: true
+  new_post_created_from_reply: true
+  max_clicks: 5
+  max_time_seconds: 15
+
+cleanup:
+  - Delete the seeded reply and post
+  - Delete any split-created posts
+  - Reset alice trust_level to 1

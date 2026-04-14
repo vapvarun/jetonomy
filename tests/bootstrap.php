@@ -17,7 +17,15 @@ require_once $_tests_dir . '/includes/functions.php';
 tests_add_filter( 'muplugins_loaded', function () {
     require dirname( __DIR__ ) . '/jetonomy.php';
 
-    // Load Pro plugin if present (needed for tests/pro/ suite).
+    // Load Pro plugin if present so tests/pro/* runs against a real Pro
+    // stack. Set JETONOMY_TEST_SKIP_PRO=1 to force "free standalone" mode
+    // even when Pro is checked out — used by `composer test:free` and the
+    // matching CI job so the free plugin's behavior is verified in
+    // isolation without having to move directories around.
+    if ( getenv( 'JETONOMY_TEST_SKIP_PRO' ) ) {
+        return;
+    }
+
     $pro_path = dirname( __DIR__, 2 ) . '/jetonomy-pro/jetonomy-pro.php';
     if ( file_exists( $pro_path ) ) {
         require $pro_path;

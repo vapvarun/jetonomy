@@ -1,0 +1,13 @@
+flow_id: "PRO-REPLYBYEMAIL-01"
+title: "Outbound email gets Reply-To token"
+source: "design-spec"
+priority: P0
+actor: pro-reply-by-email
+
+user_story: |
+  As a system, outbound notification emails should include a Reply-To
+  header with a unique token address for email-based replies.
+
+expectations:
+  flow_completes_without_error: true
+  reply_to_token_present: true

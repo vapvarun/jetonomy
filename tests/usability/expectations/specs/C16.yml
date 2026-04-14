@@ -1,0 +1,19 @@
+flow_id: "C16"
+title: "Switch / undo vote"
+source: "design-spec"
+priority: P1
+actor: member
+
+user_story: |
+  As a space member, when I upvote a post and then upvote again, I expect
+  the vote to be undone and the score to return to its original value.
+  When I then downvote, the score should switch to -1 from the base. All
+  three transitions should happen without page reloads.
+
+expectations:
+  upvote_increments_score: true
+  second_upvote_undoes_vote: true
+  downvote_decrements_score: true
+  no_console_errors: true
+  max_clicks_to_complete: 5
+  max_time_to_goal_seconds: 15

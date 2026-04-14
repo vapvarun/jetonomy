@@ -1,0 +1,13 @@
+flow_id: "PRO-SEOPRO-04"
+title: "Set OG image"
+source: "design-spec"
+priority: P1
+actor: pro-seo-pro
+
+user_story: |
+  As an admin, I set a custom OG image URL for a space and expect the
+  og:image meta tag to render on the space page.
+
+expectations:
+  flow_completes_without_error: true
+  og_image_tag_present: true

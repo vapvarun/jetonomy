@@ -1,0 +1,15 @@
+flow_id: "PRO-REACTIONS-04"
+title: "React to a reply"
+source: "design-spec"
+priority: P0
+actor: pro-reactions
+
+user_story: |
+  As a member, I can react to a reply (not just the post). The reaction
+  targets the reply specifically in the database.
+
+expectations:
+  reaction_targets_reply: true
+  reaction_chip_on_reply: true
+  no_console_errors: true
+  max_clicks_to_goal: 2

@@ -1,0 +1,14 @@
+flow_id: "X02"
+title: "Login auto-redirect to /community/"
+source: "design-spec"
+priority: P1
+actor: cross-cutting
+
+user_story: |
+  As a subscriber logging in, I expect to be redirected to /community/
+  after login so I land directly in the forum area.
+
+expectations:
+  flow_completes_without_error: true
+  no_console_errors: true
+  landing_url_contains_community: true

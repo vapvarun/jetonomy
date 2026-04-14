@@ -1,0 +1,14 @@
+flow_id: "PRO-WEBPUSH-07"
+title: "410 Gone endpoint cleanup"
+source: "design-spec"
+priority: P1
+actor: pro-web-push
+
+user_story: |
+  When a push endpoint returns 410 Gone (device unregistered), the cleanup
+  cron should remove the stale subscription from the database.
+
+expectations:
+  stale_subscription_removed: true
+  cron_runs_cleanup: true
+  no_console_errors: true

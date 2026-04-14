@@ -1,0 +1,14 @@
+flow_id: "XP09"
+title: "Trust level → webhooks + badges + messaging gate"
+source: "design-spec"
+priority: P1
+actor: composite
+
+user_story: |
+  As a system, changing a user's trust level should trigger webhook
+  dispatch, badge re-evaluation, and messaging gate update.
+
+expectations:
+  flow_completes_without_error: true
+  trust_level_updated: true
+  webhook_dispatched: true

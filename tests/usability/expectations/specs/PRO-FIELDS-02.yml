@@ -1,0 +1,15 @@
+flow_id: "PRO-FIELDS-02"
+title: "Fill custom field on new post"
+source: "design-spec"
+priority: P0
+actor: pro-fields
+
+user_story: |
+  As a member creating a new post, custom fields defined for posts appear
+  in the form. I can fill them and the values are stored in wp_jt_pro_field_values.
+
+expectations:
+  custom_field_visible_on_form: true
+  field_value_persisted: true
+  no_console_errors: true
+  max_clicks_to_goal: 2

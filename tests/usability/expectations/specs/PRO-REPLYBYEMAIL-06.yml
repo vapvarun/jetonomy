@@ -1,0 +1,13 @@
+flow_id: "PRO-REPLYBYEMAIL-06"
+title: "Rate limit enforcement"
+source: "design-spec"
+priority: P1
+actor: pro-reply-by-email
+
+user_story: |
+  As a system, rapid inbound emails from the same user should be
+  rate-limited after exceeding the configured threshold.
+
+expectations:
+  flow_completes_without_error: true
+  rate_limit_enforced: true
