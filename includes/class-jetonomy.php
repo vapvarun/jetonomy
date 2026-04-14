@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 final class Jetonomy {
 	private static ?self $instance = null;
 
+	public ?Moderation\AI_Spam_Detector $ai_spam_detector = null;
+
 	public static function instance(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
