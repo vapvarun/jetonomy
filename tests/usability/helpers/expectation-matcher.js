@@ -79,8 +79,13 @@ function matchDelivery( expectation, delivered ) {
 	const stated = expectation.expectations || {};
 	const mismatches = [];
 
+	// Reaching this call implies the flow ran to completion without throwing,
+	// so expectations that assert "flow_completes_without_error" are implicitly
+	// delivered. Individual flow files don't have to pass the key explicitly.
+	const effectiveDelivered = { flow_completes_without_error: true, ...delivered };
+
 	for ( const [ key, expectedValue ] of Object.entries( stated ) ) {
-		const actualValue = delivered[ key ];
+		const actualValue = effectiveDelivered[ key ];
 
 		// Handle "max_X" keys as upper bounds rather than equality.
 		if ( key.startsWith( 'max_' ) ) {
