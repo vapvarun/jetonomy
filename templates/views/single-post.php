@@ -298,11 +298,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</span>
 					<?php endif; ?>
-					<span class="jt-view-count">
-						<?php
+					<span class="jt-view-count" title="<?php
 						/* translators: %d: number of views */
-						echo esc_html( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
-						?>
+						echo esc_attr( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
+					?>" aria-label="<?php
+						echo esc_attr( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
+					?>">
+						<?php jetonomy_echo_icon( 'eye', 14 ); ?>
+						<span class="n"><?php echo esc_html( (int) $post->view_count ); ?></span>
 					</span>
 				<button class="jt-act jt-share-btn"
 					data-wp-on--click="actions.sharePost"

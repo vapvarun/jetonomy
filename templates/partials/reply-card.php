@@ -63,7 +63,7 @@ $is_accepted = (int) $reply->is_accepted;
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"
 				title="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"
-				aria-label="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
+				aria-label="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></span></button>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -121,8 +121,9 @@ $is_accepted = (int) $reply->is_accepted;
 			data-wp-on--click="actions.acceptReply"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			data-post-id="<?php echo (int) $post->id; ?>"
+			title="<?php esc_attr_e( 'Accept as best answer', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Accept as best answer', 'jetonomy' ); ?>">
-			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accept', 'jetonomy' ); ?>
+			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Accept', 'jetonomy' ); ?></span>
 		</button>
 	<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
