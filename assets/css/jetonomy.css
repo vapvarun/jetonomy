@@ -59,11 +59,44 @@
     --jt-badge-silver: #9ca3af;
     --jt-badge-gold: #f59e0b;
 
-    /* Spacing — BuddyNext first, then WP custom, then hardcoded */
+    /* Radius — BuddyNext first, then WP custom, then hardcoded */
     --jt-radius: var(--r-md, var(--wp--custom--border-radius, 8px));
     --jt-radius-sm: var(--r-sm, calc(var(--jt-radius) * 0.5));
     --jt-radius-lg: var(--r-lg, calc(var(--jt-radius) * 1.5));
     --jt-radius-full: var(--r-full, 9999px);
+
+    /* Spacing scale — used across every component for uniform rhythm.
+       Do not add `px` values directly to components; pick a token. */
+    --jt-space-1: 4px;
+    --jt-space-2: 8px;
+    --jt-space-3: 12px;
+    --jt-space-4: 16px;
+    --jt-space-5: 20px;
+    --jt-space-6: 24px;
+    --jt-space-8: 32px;
+    --jt-space-10: 40px;
+    --jt-space-12: 48px;
+
+    /* Typography scale — rem-based so OS/theme zoom is respected.
+       Components pick a token, never a literal rem value.
+       Mobile breakpoint adjusts the visible size via the `fluid` vars. */
+    --jt-text-2xs: 0.6875rem;   /* 11px — pill, caption */
+    --jt-text-xs:  0.75rem;     /* 12px — meta, tag */
+    --jt-text-sm:  0.8125rem;   /* 13px — secondary */
+    --jt-text-base: 0.9375rem;  /* 15px — body, card title mobile */
+    --jt-text-md:  1rem;        /* 16px — body desktop */
+    --jt-text-lg:  1.0625rem;   /* 17px — card title desktop */
+    --jt-text-xl:  1.125rem;    /* 18px — section title mobile */
+    --jt-text-2xl: 1.25rem;     /* 20px — section title desktop, page title mobile */
+    --jt-text-3xl: 1.75rem;     /* 28px — page title desktop */
+
+    /* Line heights */
+    --jt-leading-tight: 1.2;
+    --jt-leading-snug:  1.35;
+    --jt-leading-normal: 1.5;
+
+    /* Tap target minimum — apply via min-height on interactive elements */
+    --jt-tap: 40px;
 
     /* Transitions */
     --jt-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -265,15 +298,12 @@
   .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); position: relative; }
   .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; padding-right: 6rem; }
   .jt-post-head > .jt-btn-sm { position: absolute; top: 20px; right: 20px; }
-  /* Allow wrapping between items but never within them — otherwise
-     on narrow mobile viewports "3 weeks ago" breaks into three lines
-     because the flex items shrink and word-wrap individually. Row
-     gap matches column gap so interactive children (profile link,
-     tag pills) always have at least 10px separation in both axes
-     for accessible tap targets per WCAG 2.5.8 (Target Size). */
-  .jt-meta { display: flex; align-items: center; gap: 10px 12px; color: var(--jt-text-secondary); flex-wrap: wrap; }
+  /* Meta row — author + trust + time + tags. Flex-wraps atomically
+     so individual items never break mid-word on narrow viewports.
+     See docs/DESIGN-SYSTEM.md §9 "Meta line". */
+  .jt-meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2) var(--jt-space-3); color: var(--jt-text-secondary); }
   .jt-meta > * { white-space: nowrap; flex-shrink: 0; }
-  .jt-meta > a { min-height: 32px; display: inline-flex; align-items: center; }
+  .jt-meta > a { min-height: var(--jt-space-8); display: inline-flex; align-items: center; }
   .jt-meta strong { color: var(--jt-text); }
   .jt-post-body { padding: 24px; font-size: 1rem; line-height: 1.8; }
   .jt-post-body p { margin: 0 0 12px; }
@@ -429,81 +459,81 @@
     .jt-search { display: none; }
     .jt-nav.open .jt-mobile-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--jt-text-secondary); background: none; border: none; cursor: pointer; }
   }
-  /* ── Tablet + mobile nav rules (≤1024px) ────────────────────────────
-     The community nav fits 6 links + notification bell + 3 font-scale
-     buttons at desktop widths. On iPad portrait (768px) and below, the
-     font-scale widget wrapped "My Profile" to 2 lines and pushed later
-     links off-screen. Fix: scroll the links row horizontally (hidden
-     scrollbar for native feel) and hide the font-scale widget since
-     OS-level pinch-zoom covers the same use case on touch devices. */
+  /* ═══════════════════════════════════════════════════════════════════
+     RESPONSIVE OVERRIDES — see docs/DESIGN-SYSTEM.md for rules.
+     Exactly two breakpoints, consolidated into two blocks below.
+     Do NOT add new `@media` queries elsewhere in this file.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* ── Tablet + below (≤1024px) ──────────────────────────────────────
+     Nav row affordances: scroll fallback, hide font-scale. Typography
+     and layout stay desktop-sized. Applies to phones too via cascade. */
   @media (max-width: 1024px) {
-    .jt-community-nav-inner { gap: 8px; }
+    .jt-community-nav-inner { gap: var(--jt-space-2); }
     .jt-community-nav-links { flex: 1 1 0; min-width: 0; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .jt-community-nav-links::-webkit-scrollbar { display: none; }
-    .jt-community-nav-links a { white-space: nowrap; flex: 0 0 auto; padding: 10px 12px; font-size: 0.9375rem; }
+    .jt-community-nav-links a { white-space: nowrap; flex: 0 0 auto; padding: var(--jt-space-3) var(--jt-space-3); font-size: var(--jt-text-base); min-height: var(--jt-tap); }
     .jt-community-nav-actions { flex: 0 0 auto; }
     .jt-community-nav-actions .jt-font-scale { display: none; }
   }
 
+  /* ── Phone (≤640px) ────────────────────────────────────────────────
+     Layout density drops one level. Typography scales down one step
+     per the design system's mobile column. All interactive elements
+     keep ≥40px tap targets via --jt-tap. */
   @media (max-width: 640px) {
-    .jt-container { padding: 16px; }
-    /* Both `div.jt-row` and `a.jt-row` must match — the desktop rule
-       `a.jt-row` has higher specificity (0,1,1) than plain `.jt-row`
-       (0,1,0), so the override must also use the same selector combo
-       or the mobile grid won't apply to anchor-wrapped topic rows. */
-    .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: 8px; padding: 10px 12px; }
+    /* Container + app wrapper */
+    .jt-container { padding: var(--jt-space-4); }
+    /* Leave room for theme mobile bottom tab bar (Reign/BuddyNext/BuddyX). */
+    .jt-app { padding-bottom: calc(var(--jt-space-12) + var(--jt-space-8)); }
+
+    /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
+       load-bearing (desktop `a.jt-row` is 0,1,1). */
+    .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-3); }
     .jt-row .jt-votes { width: 36px; }
-    /* Mobile visual hierarchy — title is the anchor; author meta and
-       tag pills drop a step in size so the title has room to breathe. */
-    .jt-row-title { font-size: 0.9375rem; line-height: 1.35; }
-    .jt-row-sub { font-size: 0.75rem; gap: 6px; margin-top: 2px; }
-    .jt-row-sub .jt-tag { font-size: 0.6875rem; padding: 2px 6px; }
+    .jt-row-title { font-size: var(--jt-text-base); line-height: var(--jt-leading-snug); }
+    .jt-row-sub { font-size: var(--jt-text-xs); gap: var(--jt-space-2); margin-top: var(--jt-space-1); }
+    .jt-row-sub .jt-tag { font-size: var(--jt-text-2xs); padding: 2px var(--jt-space-2); }
     .jt-row-sub .jt-tl { width: 16px; height: 16px; font-size: 0.625rem; }
     .jt-row-stat { text-align: right; }
-    .jt-row-stat-n { font-size: 0.875rem; }
-    .jt-row-stat-l { font-size: 0.6875rem; }
+    .jt-row-stat-n { font-size: var(--jt-text-sm); }
+    .jt-row-stat-l { font-size: var(--jt-text-2xs); }
     .jt-row-stat:last-child { display: none; }
 
-    /* Icon-only nav on phones — labels hide, titles provide the
-       accessible name (tooltip on long-press). Each tap target stays
-       >=40px wide for WCAG 2.5.5 compliance. */
-    .jt-community-nav-links a { padding: 10px 12px; gap: 0; }
+    /* Community nav: icon-only with title tooltip. Labels hide
+       entirely; `title` + `aria-label` provide the accessible name. */
+    .jt-community-nav-links a { padding: var(--jt-space-3) var(--jt-space-3); gap: 0; min-width: var(--jt-tap); justify-content: center; }
     .jt-community-nav-links a > .jt-nav-label { display: none; }
 
-    /* Leave room under Jetonomy content on mobile so themes that inject
-       a fixed bottom tab bar (Reign, BuddyNext, BuddyX mobile nav) don't
-       cover the last row of content. 80px matches the common tab-bar
-       height + safe-area. */
-    .jt-app { padding-bottom: 80px; }
+    /* Profile header — allow wrap, keep badges atomic */
+    .jt-profile-name > .jt-level-tag { margin-left: var(--jt-space-2); }
 
-    /* Keep the "Level X" profile badge from visually touching the
-       trust-level circle next to the user name. */
-    .jt-profile-name > .jt-level-tag { margin-left: 6px; }
-
+    /* Multi-column grids collapse to single column on phones */
     .jt-kanban { grid-template-columns: 1fr; }
     .jt-badges { grid-template-columns: repeat(2, 1fr); }
     .jt-stats-bar { grid-template-columns: repeat(2, 1fr); }
-    .jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-left: 12px; }
+    .jt-nested, .jt-nested-1, .jt-nested-2, .jt-nested-3 { margin-left: var(--jt-space-3); }
 
-    /* Mobile: toolbar bar wraps — new post goes full width */
-    .jt-bar { flex-wrap: wrap; gap: 8px; }
+    /* Action bar — primary CTA goes full width */
+    .jt-bar { flex-wrap: wrap; gap: var(--jt-space-2); }
     .jt-bar > .jt-btn-fill,
     .jt-bar > a.jt-btn-fill { order: 10; width: 100%; text-align: center; justify-content: center; }
 
-    /* Mobile: breadcrumb truncation */
+    /* Breadcrumb truncation */
     .jt-crumb { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
     .jt-crumb a, .jt-crumb span { display: inline; }
 
-    /* Mobile: post title size */
-    .jt-post-head h1 { font-size: 1.125rem; padding-right: 0; }
-    .jt-post-head > .jt-btn-sm { position: static; margin-top: 8px; }
+    /* Post head — smaller title, follow button flows inline below meta */
+    .jt-post-head { padding: var(--jt-space-4); }
+    .jt-post-head h1 { font-size: var(--jt-text-xl); padding-right: 0; }
+    .jt-post-head > .jt-btn-sm { position: static; display: inline-flex; align-items: center; margin-top: var(--jt-space-4); min-height: var(--jt-tap); padding: var(--jt-space-2) var(--jt-space-5); }
 
-    /* Mobile: action bar wrap */
-    .jt-post-foot { flex-wrap: wrap; gap: 6px; }
-    .jt-reply-foot { flex-wrap: wrap; gap: 6px; }
+    /* Post / reply foot — vote+action row wraps cleanly */
+    .jt-post-foot { flex-wrap: wrap; gap: var(--jt-space-2); }
+    .jt-reply-foot { flex-wrap: wrap; gap: var(--jt-space-2); }
 
-    /* Mobile: reply composer */
-    .jt-editor-foot { flex-direction: column; gap: 6px; align-items: stretch; }
+    /* Reply composer footer stacks vertically */
+    .jt-editor-foot { flex-direction: column; gap: var(--jt-space-2); align-items: stretch; }
     .jt-editor-foot .jt-btn { width: 100%; justify-content: center; }
   }
 
