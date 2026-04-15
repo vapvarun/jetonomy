@@ -160,13 +160,57 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 ## Changelog
 
 ### 1.3.0 (April 2026)
-- New: AI adapter layer — pluggable interface for AI providers (Ollama self-hosted included free)
-- New: Basic AI spam detection using Ollama (local, free, no API key needed)
-- New: Adapter Registry extended with AI provider slot
-- New: WPCS ruleset (.phpcs.xml.dist) for consistent code quality checks
-- Fix: 9 Basecamp bugs — fatal BP compat, notification defaults, report UI, pagination
-- Fix: Security hardening — SQL prepare, N+1 query fixes, output escaping audit
-- Fix: Asgaros and wpForo importer improvements
+
+**Share forum threads anywhere**
+- New: Outbound oEmbed — thread URLs unfurl in Slack, Twitter/X, Discord, Facebook, and other WordPress sites with a rich preview card (title, author, excerpt, thumbnail)
+- New: Inbound embed expansion — pasted YouTube, Vimeo, SoundCloud, Spotify, TED Talks and other supported links in posts or replies render as embedded players instead of plain URLs
+- New: Richer Open Graph + Twitter Card meta on every thread page — `og:type=article`, `article:author`, `article:published_time`, `article:section`, first-inline-image as `og:image`
+
+**Theme compatibility**
+- New: BuddyX, BuddyX Pro, and Reign theme color + dark mode bridge — forum accent and dark scheme automatically match the active theme with zero custom CSS
+- New: Unified Design Token Bridge — `--jt-*` tokens reference BuddyNext, then theme.json, then hardcoded fallbacks
+
+**AI moderation**
+- New: AI Adapter Layer — pluggable interface for AI providers with built-in self-hosted Ollama support
+- New: AI-powered spam detection for new posts and replies (free, local, no API costs)
+
+**Mobile UX pass**
+- New: `docs/DESIGN-SYSTEM.md` — long-term UI/UX source of truth (breakpoints, typography scale, spacing scale, component patterns, anti-patterns)
+- New: Token scale — `--jt-space-1..12`, `--jt-text-2xs..3xl`, `--jt-tap` (40px)
+- New: Community nav uses Lucide icons with `title` tooltips on mobile, icon+label on desktop/tablet
+- New: Post + reply action bars are uniformly icon-only on mobile (vote / share / bookmark / quote / report / more / react)
+- Fix: Topic listing title/count column rebalance on mobile so titles get 76% of the row width
+- Fix: Post meta row (`.jt-meta`) — "3 weeks ago" no longer breaks mid-word on narrow viewports
+- Fix: Firefox time picker on scheduled publish form — split `datetime-local` into separate `date` + `time` inputs so Firefox shows proper native pickers
+- Fix: Publish mode menu flash-of-visible-content on the new topic form
+- Fix: Preact/Interactivity API hydration console warnings from inline `onclick` attributes — replaced with delegated handlers using `data-jt-href`
+- Fix: More menu 3-dots dropdown now visible on touch devices (hover-reveal was hiding it)
+
+**Extensibility**
+- New: 6 ad/content injection hooks for sidebar and reply flow (`jetonomy_sidebar_*`, `jetonomy_reply_*`, `jetonomy_sidebar_after_about`)
+- New: `before_delete_*` filters on every model — third-party plugins can reject deletions by returning `WP_Error`
+- New: Query args filters on every model list method (`jetonomy_posts_query_args`, `jetonomy_spaces_query_args`, etc.)
+- New: Base slug 301 redirect — changing community base in settings now permanently redirects old URLs for SEO continuity
+- New: WP-CLI command module — 13 command roots covering every user/admin journey, plus 5 bundled scenarios (`wp jetonomy scenario run <name>`)
+
+**Quality + CI**
+- New: GitHub Actions CI pipeline — PHP Lint (8.1–8.4), WPCS, PHPStan level 5, Plugin Check (PCP), PHPUnit matrix
+- New: `composer test:free` and `composer test:combo` scripts
+- Improvement: WP_Error checks at every model caller site — prevents fatal errors when `before_delete` hooks reject an operation
+- Improvement: `has_more` pagination accuracy across every list endpoint
+- Improvement: InnoDB engine enforced on all 23 custom tables (migration 1.2.3)
+- Improvement: Vote operations wrapped in DB transactions
+- Improvement: Spaces N+1 query eliminated — visibility filter moved to SQL `LEFT JOIN`
+- Improvement: `jt_notifications.object_type` ENUM extended with `'message'` so Pro private-messaging notifications persist cleanly
+
+**Bug fixes**
+- Fix: `posts_per_page` space setting now actually applies to the topic listing
+- Fix: Guarded EDD Software Licensing SDK's `plugins_api_filter` against non-object `$_data`
+- Fix: Space settings merge (not replace) on save — previously full JSON replacement dropped keys
+- Fix: 10 earlier customer-reported bugs — BP compat crash, notification defaults, vote state indicator, admin View link, join request admin UI, post scheduling defaults, settings write consistency, REST nonce handling, fetch cookie credentials
+- Fix: PHP 8.1 `bool` return type compat
+- Fix: Double reply counter increment on new reply
+- Fix: Space settings cache invalidation
 
 ### 1.2.0 (April 2026)
 - New: Private Topics -- mark topics visible only to author and moderators

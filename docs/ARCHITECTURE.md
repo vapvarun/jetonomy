@@ -76,7 +76,13 @@ WP REST dispatch
 └──────────────────┘
 ```
 
-15 controllers, 42 endpoints. All registered under `jetonomy/v1`.
+16 controllers, 43 endpoints. All registered under `jetonomy/v1`.
+
+### Outbound oEmbed (v1.3.0)
+
+Jetonomy threads live in `wp_jt_posts` — not WP CPTs — so core WP oEmbed can't resolve forum URLs. The `OEmbed_Controller` at `/wp-json/jetonomy/v1/oembed` fills the gap: parses `/community/s/{space}/t/{thread}/` URLs, looks up posts by slug with a space-slug collision guard, and returns oEmbed 1.0 JSON (default `type=rich` with a self-contained card, optional `type=link`).
+
+`wp_oembed_add_provider()` registers the pattern on `init` so the WordPress block editor auto-embeds pasted Jetonomy URLs. Social consumers (Slack, Twitter/X, Discord, Facebook) discover the endpoint via the `<link rel="alternate" type="application/json+oembed">` auto-discovery tag emitted on every thread page alongside richer OG + Twitter Card meta.
 
 ## Data Layer
 
@@ -184,10 +190,23 @@ Subscriptions control per-user delivery. Users subscribe to spaces and posts.
 ├─────────────────────────────────────────────────────┤
 │  CSS Custom Properties (assets/css/jetonomy.css)    │
 │  --jt-* tokens → inherit from theme.json            │
+│    - color (accent, text, bg, border, semantic)     │
+│    - spacing (--jt-space-1..12)                     │
+│    - typography (--jt-text-2xs..3xl, leading-*)     │
+│    - radius, motion, trust-level colors             │
 │  Dark mode via token reassignment, not per-component│
 │  color-mix() with hex fallbacks                     │
+├─────────────────────────────────────────────────────┤
+│  Theme bridge (includes/integrations/               │
+│  class-theme-integration.php)                       │
+│  Reads BuddyX / BuddyX Pro / Reign Kirki mods,      │
+│  injects --jt-accent, toggles .jt-dark via          │
+│  body_class so accent + dark mode auto-match        │
+│  the active theme.                                  │
 └─────────────────────────────────────────────────────┘
 ```
+
+**Design system source of truth**: `docs/DESIGN-SYSTEM.md` covers breakpoints, typography scale, component patterns, tap-target rules, and the 5 responsive anti-patterns review will reject. Every UI change must follow it or update it explicitly.
 
 ## Pro Integration
 
