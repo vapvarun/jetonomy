@@ -421,7 +421,16 @@
   }
   @media (max-width: 640px) {
     .jt-container { padding: 16px; }
-    .jt-row { grid-template-columns: 40px 1fr 60px; }
+    /* Both `div.jt-row` and `a.jt-row` must match — the desktop rule
+       `a.jt-row` has higher specificity (0,1,1) than plain `.jt-row`
+       (0,1,0), so the override must also use the same selector combo
+       or the mobile grid won't apply to anchor-wrapped topic rows. */
+    .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: 8px; padding: 10px 12px; }
+    .jt-row .jt-votes { width: 36px; }
+    .jt-row-title { font-size: 0.9375rem; }
+    .jt-row-stat { text-align: right; }
+    .jt-row-stat-n { font-size: 0.875rem; }
+    .jt-row-stat-l { font-size: 0.75rem; }
     .jt-row-stat:last-child { display: none; }
     .jt-kanban { grid-template-columns: 1fr; }
     .jt-badges { grid-template-columns: repeat(2, 1fr); }
