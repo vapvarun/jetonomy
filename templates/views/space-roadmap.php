@@ -117,7 +117,7 @@ $crumbs[] = [
 				<?php else : ?>
 					<?php foreach ( $col['posts'] as $idea ) : ?>
 						<?php $idea_url = $base . '/s/' . $space->slug . '/t/' . $idea->slug . '/'; ?>
-						<div class="jt-idea" onclick="window.location='<?php echo esc_url( $idea_url ); ?>'">
+						<div class="jt-idea jt-row-clickable" data-jt-href="<?php echo esc_url( $idea_url ); ?>">
 							<div class="jt-idea-title"><?php echo esc_html( $idea->title ); ?></div>
 							<div class="jt-idea-excerpt">
 								<?php echo esc_html( wp_strip_all_tags( $idea->content ) ); ?>

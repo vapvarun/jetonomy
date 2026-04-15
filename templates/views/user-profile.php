@@ -234,7 +234,7 @@ $crumbs = [
 							$ur_url = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
 							$ur_ago = human_time_diff( strtotime( $ur->created_at ), time() );
 							?>
-							<div class="jt-row" onclick="window.location='<?php echo esc_url( $ur_url ); ?>'">
+							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
 								<div class="jt-votes">
 									<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
 								</div>
@@ -275,7 +275,7 @@ $crumbs = [
 							$uv_url = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
 							$uv_ago = human_time_diff( strtotime( $uv->voted_at ), time() );
 							?>
-							<div class="jt-row" onclick="window.location='<?php echo esc_url( $uv_url ); ?>'">
+							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
 								<div class="jt-votes">
 									<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
 								</div>
@@ -335,7 +335,7 @@ $crumbs = [
 								</div>
 								<div class="jt-row-sub">
 									<a href="<?php echo esc_url( $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/' ); ?>"
-										onclick="event.stopPropagation();">
+										>
 										<?php echo esc_html( $dr_post->space_title ?? '' ); ?>
 									</a>
 								</div>
@@ -363,7 +363,16 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php
 						// Batch-fetch all spaces for bookmarks to avoid N+1.
-						$bk_space_ids = array_unique( array_filter( array_map( function ( $p ) { return (int) $p->space_id; }, $bookmarks ) ) );
+						$bk_space_ids = array_unique(
+							array_filter(
+								array_map(
+									function ( $p ) {
+										return (int) $p->space_id;
+									},
+									$bookmarks
+								)
+							)
+						);
 						$bk_spaces    = array();
 						if ( $bk_space_ids ) {
 							foreach ( $bk_space_ids as $sid ) {
@@ -377,7 +386,7 @@ $crumbs = [
 							$bk_url   = $base . '/s/' . ( $bk_space->slug ?? '' ) . '/t/' . $bk_post->slug . '/';
 							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
 							?>
-							<div class="jt-row" onclick="window.location='<?php echo esc_url( $bk_url ); ?>'">
+							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
 								<div class="jt-votes">
 									<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
 								</div>
@@ -416,7 +425,7 @@ $crumbs = [
 							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
 							$post_url = $base . '/s/' . $r_post->space_slug . '/t/' . $r_post->slug . '/';
 							?>
-							<div class="jt-row" onclick="window.location='<?php echo esc_url( $post_url ); ?>'">
+							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
 								<div class="jt-votes">
 									<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
 								</div>
@@ -424,7 +433,7 @@ $crumbs = [
 									<div class="jt-row-title"><?php echo esc_html( $r_post->title ); ?></div>
 									<div class="jt-row-sub">
 										<a href="<?php echo esc_url( $base . '/s/' . $r_post->space_slug . '/' ); ?>"
-											onclick="event.stopPropagation();">
+											>
 											<?php echo esc_html( $r_post->space_title ); ?>
 										</a>
 									</div>

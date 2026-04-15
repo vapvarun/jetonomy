@@ -1623,11 +1623,25 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
 
-            // Determine post status and optional scheduled date.
+            // Determine post status and optional scheduled date. The scheduler
+            // uses two separate native inputs (type=date + type=time) instead
+            // of a single `datetime-local` because Firefox's native
+            // datetime-local picker exposes only the date portion — see
+            // Basecamp #9788118420. Combine them into an ISO-like local
+            // datetime string here so the REST payload stays unchanged.
             const postStatus   = ctx.postStatus || 'publish';
-            const publishedAt  = ctx.showScheduler
-                ? ( form.querySelector('[name="published_at"]')?.value?.trim() || '' )
-                : '';
+            let publishedAt = '';
+            if ( ctx.showScheduler ) {
+                const dateVal = form.querySelector('[name="published_date"]')?.value?.trim() || '';
+                const timeVal = form.querySelector('[name="published_time"]')?.value?.trim() || '';
+                if ( dateVal && timeVal ) {
+                    // time input omits seconds when step >= 60; normalise to HH:MM:SS.
+                    const normalisedTime = /^\d{2}:\d{2}$/.test( timeVal ) ? timeVal + ':00' : timeVal;
+                    publishedAt = dateVal + 'T' + normalisedTime;
+                } else if ( dateVal ) {
+                    publishedAt = dateVal + 'T00:00:00';
+                }
+            }
 
             // Validate scheduler: a scheduled post needs a future date.
             if ( 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {

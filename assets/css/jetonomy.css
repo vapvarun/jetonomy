@@ -686,7 +686,16 @@
   /* ── Schedule panel ── */
   .jt-schedule-panel { margin-top: 16px; padding: 16px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); border: 1px solid var(--jt-border); }
   .jt-schedule-panel[hidden] { display: none; }
-  .jt-input--datetime { font-family: var(--jt-font); }
+  .jt-input--datetime,
+  .jt-input--date,
+  .jt-input--time { font-family: var(--jt-font); }
+  .jt-datetime-split { display: flex; gap: 12px; align-items: center; }
+  .jt-datetime-split .jt-input--date { flex: 1 1 auto; min-width: 0; }
+  .jt-datetime-split .jt-input--time { flex: 0 0 auto; width: 140px; }
+  @media (max-width: 640px) {
+    .jt-datetime-split { flex-direction: column; align-items: stretch; gap: 8px; }
+    .jt-datetime-split .jt-input--time { width: 100%; }
+  }
 
   /* ── Draft / scheduled badges on profile ── */
   .jt-badge--draft { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-block; margin-left: 8px; vertical-align: middle; }
