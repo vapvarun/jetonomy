@@ -409,14 +409,14 @@ class Template_Loader {
 					true
 				);
 
-				$desc        = '';
-				$title       = '';
-				$url         = '';
-				$image       = '';
-				$og_type     = 'website';
+				$desc         = '';
+				$title        = '';
+				$url          = '';
+				$image        = '';
+				$og_type      = 'website';
 				$twitter_card = 'summary';
 				$article_meta = array(); // author / published_time / section — only for post route.
-				$oembed_url  = '';
+				$oembed_url   = '';
 
 				switch ( $data['route'] ) {
 					case 'home':
@@ -436,13 +436,13 @@ class Template_Loader {
 					case 'post':
 						$post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
 						if ( $post ) {
-							$space  = \Jetonomy\Models\Space::find( (int) $post->space_id );
-							$title  = $post->title;
-							$desc   = ! empty( $post->content_plain )
+							$space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
+							$title        = $post->title;
+							$desc         = ! empty( $post->content_plain )
 								? wp_strip_all_tags( (string) $post->content_plain )
 								: wp_strip_all_tags( (string) $post->content );
-							$desc   = trim( preg_replace( '/\s+/', ' ', $desc ) );
-							$url    = \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+							$desc         = trim( preg_replace( '/\s+/', ' ', $desc ) );
+							$url          = \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
 							$og_type      = 'article';
 							$twitter_card = 'summary_large_image';
 
@@ -458,7 +458,7 @@ class Template_Loader {
 								if ( $profile && ! empty( $profile->display_name ) ) {
 									$author_name = $profile->display_name;
 								} else {
-									$author = get_userdata( (int) $post->author_id );
+									$author      = get_userdata( (int) $post->author_id );
 									$author_name = $author ? $author->display_name : '';
 								}
 							}

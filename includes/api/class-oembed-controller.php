@@ -121,13 +121,13 @@ class OEmbed_Controller extends Base_Controller {
 			);
 		}
 
-		$author_id   = (int) $post->author_id;
-		$author      = $author_id ? get_userdata( $author_id ) : null;
-		$profile     = $author_id ? UserProfile::find_by_user( $author_id ) : null;
-		$author_name = ( $profile && ! empty( $profile->display_name ) )
+		$author_id     = (int) $post->author_id;
+		$author        = $author_id ? get_userdata( $author_id ) : null;
+		$profile       = $author_id ? UserProfile::find_by_user( $author_id ) : null;
+		$author_name   = ( $profile && ! empty( $profile->display_name ) )
 			? $profile->display_name
 			: ( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
-		$author_url  = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
+		$author_url    = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		$author_avatar = $author_id ? get_avatar_url( $author_id, array( 'size' => 80 ) ) : '';
 
 		$title   = wp_strip_all_tags( (string) $post->title );
@@ -272,7 +272,7 @@ class OEmbed_Controller extends Base_Controller {
 	 * @return array{space_slug:string,post_slug:string}|null
 	 */
 	public static function parse_thread_url( string $url ): ?array {
-		$host = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
+		$host     = wp_parse_url( home_url( '/' ), PHP_URL_HOST );
 		$url_host = wp_parse_url( $url, PHP_URL_HOST );
 		if ( ! $host || ! $url_host || strtolower( $host ) !== strtolower( $url_host ) ) {
 			return null;

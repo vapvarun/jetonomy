@@ -25,7 +25,7 @@ if ( 'publish' !== $post->status ) {
 	if ( ! $is_author && ! $is_mod ) {
 		status_header( 404 );
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+		echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
 		return;
 	}
 }
@@ -206,7 +206,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-post-head">
 					<h1>
 						<?php if ( $prefix_name ) : ?>
-							<span class="jt-prefix" <?php if ( $prefix_color ) : ?>style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
+							<span class="jt-prefix" 
+							<?php
+							if ( $prefix_color ) :
+								?>
+								style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 						<?php endif; ?>
 						<?php echo esc_html( $post->title ); ?>
 					</h1>
@@ -254,7 +258,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</div>
 
 				<div class="jt-post-body">
-					<?php echo wp_kses_post( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $post->content ) ) ) ); ?>
+					<?php
+					// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
+					echo jetonomy_kses_embedded_content( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $post->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					?>
 				</div>
 
 				<?php

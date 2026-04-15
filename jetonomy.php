@@ -145,6 +145,40 @@ function jetonomy_echo_icon( string $name, int $size = 24 ): void {
  * @param string $content Sanitized HTML content string.
  * @return string Processed content with mention and tag links.
  */
+/**
+ * wp_kses variant for rendered post/reply content.
+ *
+ * Extends the default "post" allowed-tags list with `<iframe>` — needed so
+ * that oEmbed HTML returned by `wp_oembed_get()` (YouTube, Vimeo, etc.)
+ * survives the outer sanitization pass applied when rendering content in
+ * single-post.php and reply-card.php. The iframe attribute whitelist matches
+ * what WordPress's own oEmbed providers emit.
+ *
+ * @param string $content HTML content to sanitize.
+ * @return string
+ */
+function jetonomy_kses_embedded_content( string $content ): string {
+	$allowed = wp_kses_allowed_html( 'post' );
+
+	$allowed['iframe'] = array(
+		'src'             => true,
+		'width'           => true,
+		'height'          => true,
+		'frameborder'     => true,
+		'allow'           => true,
+		'allowfullscreen' => true,
+		'referrerpolicy'  => true,
+		'loading'         => true,
+		'title'           => true,
+		'name'            => true,
+		'class'           => true,
+		'id'              => true,
+		'style'           => true,
+	);
+
+	return wp_kses( $content, $allowed );
+}
+
 function jetonomy_format_content( string $content ): string {
 	$base = \Jetonomy\base_url();
 

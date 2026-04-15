@@ -35,7 +35,10 @@ $is_accepted = (int) $reply->is_accepted;
 		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
-		<?php echo wp_kses_post( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ) ); ?>
+		<?php
+		// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
+		echo jetonomy_kses_embedded_content( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		?>
 	</div>
 	<?php
 	$reply_viewer_id   = get_current_user_id();
