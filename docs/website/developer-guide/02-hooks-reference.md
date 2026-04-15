@@ -1,4 +1,4 @@
-Jetonomy exposes 52 hooks in the free plugin and 8 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
+Jetonomy exposes 53 hooks in the free plugin and 8 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
 
 **Hook naming prefix:** `jetonomy_`
 **Namespace:** `Jetonomy\`
@@ -542,6 +542,26 @@ Fires at the bottom of the Jetonomy sidebar, after all widgets render.
 ```php
 add_action( 'jetonomy_sidebar_after', function( $space ) {
     echo do_shortcode( '[wb_ads position="jetonomy_sidebar_bottom"]' );
+} );
+```
+
+---
+
+### `jetonomy_sidebar_after_about`
+
+Fires in the sidebar immediately after the "About" space card closes. Only fires when a space is present (i.e. on space-scoped pages). Ideal for ads, announcements, or CTAs pinned below the space intro, before Trending and other widgets.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space` | `object` | Current space object |
+
+**Source:** `templates/partials/sidebar.php`
+
+```php
+add_action( 'jetonomy_sidebar_after_about', function( $space ) {
+    echo do_shortcode( '[wbam_ad id="42"]' );
 } );
 ```
 

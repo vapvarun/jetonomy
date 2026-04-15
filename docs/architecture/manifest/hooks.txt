@@ -55,7 +55,8 @@
 [x] jetonomy_show_community_nav | templates/partials/header.php:28 | status:documented
 [x] jetonomy_after_post_content | templates/views/single-post.php:269 | status:documented
 [x] jetonomy_sidebar_before | templates/partials/sidebar.php:76 | status:documented
-[x] jetonomy_sidebar_after | templates/partials/sidebar.php:247 | status:documented
+[x] jetonomy_sidebar_after_about | templates/partials/sidebar.php:135 | status:documented
+[x] jetonomy_sidebar_after | templates/partials/sidebar.php:258 | status:documented
 [x] jetonomy_after_post_article | templates/views/single-post.php:371 | status:documented
 [x] jetonomy_before_replies | templates/views/single-post.php:427 | status:documented
 [x] jetonomy_between_replies | templates/views/single-post.php:450,487 | status:documented

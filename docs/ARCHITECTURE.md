@@ -235,6 +235,7 @@ plugins_loaded        plugins_loaded:20
 | `jetonomy_before_content` | `$data` | Before template content |
 | `jetonomy_after_content` | `$data` | After template content |
 | `jetonomy_sidebar_before` | `$space\|null` | Top of sidebar, before widgets |
+| `jetonomy_sidebar_after_about` | `$space` | After the About card (space pages only) |
 | `jetonomy_sidebar_after` | `$space\|null` | Bottom of sidebar, after widgets |
 | `jetonomy_after_post_article` | `$post` | After post `<article>`, before replies |
 | `jetonomy_before_replies` | `$post, $total_replies` | Above replies list (inside replies section) |
