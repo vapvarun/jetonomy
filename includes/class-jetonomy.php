@@ -213,6 +213,30 @@ final class Jetonomy {
 
 		new API\Api();
 
+		// Register Jetonomy thread URLs as a known oEmbed provider so other
+		// WordPress sites (and the block editor) auto-embed pasted links.
+		// Loaded here explicitly — Api::register_routes runs on rest_api_init,
+		// which only fires on REST requests, so we'd miss provider registration
+		// on regular page loads that paste an embed block.
+		add_action(
+			'init',
+			static function () {
+				if ( ! class_exists( '\\Jetonomy\\API\\OEmbed_Controller' ) ) {
+					$file = JETONOMY_DIR . 'includes/api/class-base-controller.php';
+					if ( file_exists( $file ) ) {
+						require_once $file;
+					}
+					$file = JETONOMY_DIR . 'includes/api/class-oembed-controller.php';
+					if ( file_exists( $file ) ) {
+						require_once $file;
+					}
+				}
+				if ( class_exists( '\\Jetonomy\\API\\OEmbed_Controller' ) ) {
+					\Jetonomy\API\OEmbed_Controller::register_provider();
+				}
+			}
+		);
+
 		// Handle email unsubscribe links.
 		add_action( 'init', array( $this, 'handle_email_unsubscribe' ) );
 
