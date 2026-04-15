@@ -32,23 +32,28 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 <nav class="jt-community-nav" aria-label="<?php esc_attr_e( 'Community navigation', 'jetonomy' ); ?>">
 	<div class="jt-community-nav-inner">
 		<div class="jt-community-nav-links">
-			<a href="<?php echo esc_url( $base . '/' ); ?>" class="<?php echo 'home' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-				<?php esc_html_e( 'Community', 'jetonomy' ); ?>
+			<a href="<?php echo esc_url( $base . '/' ); ?>" class="<?php echo 'home' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Community', 'jetonomy' ); ?>">
+				<?php jetonomy_echo_icon( 'home', 18 ); ?>
+				<span class="jt-nav-label"><?php esc_html_e( 'Community', 'jetonomy' ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="<?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-				<?php esc_html_e( 'Search', 'jetonomy' ); ?>
+			<a href="<?php echo esc_url( $base . '/search/' ); ?>" class="<?php echo 'search' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Search', 'jetonomy' ); ?>">
+				<?php jetonomy_echo_icon( 'search', 18 ); ?>
+				<span class="jt-nav-label"><?php esc_html_e( 'Search', 'jetonomy' ); ?></span>
 			</a>
-			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="<?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-				<?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?>
+			<a href="<?php echo esc_url( $base . '/leaderboard/' ); ?>" class="<?php echo 'leaderboard' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Leaderboard', 'jetonomy' ); ?>">
+				<?php jetonomy_echo_icon( 'award', 18 ); ?>
+				<span class="jt-nav-label"><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
 			</a>
 			<?php if ( $user_id ) : ?>
-				<a href="<?php echo esc_url( $base . '/u/' . wp_get_current_user()->user_login . '/' ); ?>" class="<?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-					<?php esc_html_e( 'My Profile', 'jetonomy' ); ?>
+				<a href="<?php echo esc_url( $base . '/u/' . wp_get_current_user()->user_login . '/' ); ?>" class="<?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'My Profile', 'jetonomy' ); ?>">
+					<?php jetonomy_echo_icon( 'user', 18 ); ?>
+					<span class="jt-nav-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 				</a>
 			<?php endif; ?>
 			<?php if ( $user_id && ( current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) ) : ?>
-				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo 'moderation' === $current_route ? esc_attr( 'active' ) : ''; ?>">
-					<?php esc_html_e( 'Moderation', 'jetonomy' ); ?>
+				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo 'moderation' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
+					<?php jetonomy_echo_icon( 'shield', 18 ); ?>
+					<span class="jt-nav-label"><?php esc_html_e( 'Moderation', 'jetonomy' ); ?></span>
 				</a>
 			<?php endif; ?>
 			<?php do_action( 'jetonomy_header_nav_items' ); ?>
