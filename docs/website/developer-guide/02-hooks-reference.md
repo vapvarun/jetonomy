@@ -1,4 +1,4 @@
-Jetonomy exposes 47 hooks in the free plugin and 8 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
+Jetonomy exposes 52 hooks in the free plugin and 8 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
 
 **Hook naming prefix:** `jetonomy_`
 **Namespace:** `Jetonomy\`
@@ -503,6 +503,139 @@ Fires inside the community header, after the built-in nav items. Add extra navig
 add_action( 'jetonomy_header_nav_items', function() {
     echo '<a href="/community/events/" class="jt-nav-link">Events</a>';
 } );
+```
+
+---
+
+### `jetonomy_sidebar_before`
+
+Fires at the top of the Jetonomy sidebar, before any widgets render. Prime slot for ad plugins, announcement banners, or custom cards.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space` | `object\|null` | Current space object, or `null` outside a space |
+
+**Source:** `templates/partials/sidebar.php`
+
+```php
+add_action( 'jetonomy_sidebar_before', function( $space ) {
+    echo do_shortcode( '[wb_ads position="jetonomy_sidebar_top"]' );
+} );
+```
+
+---
+
+### `jetonomy_sidebar_after`
+
+Fires at the bottom of the Jetonomy sidebar, after all widgets render.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space` | `object\|null` | Current space object, or `null` outside a space |
+
+**Source:** `templates/partials/sidebar.php`
+
+```php
+add_action( 'jetonomy_sidebar_after', function( $space ) {
+    echo do_shortcode( '[wb_ads position="jetonomy_sidebar_bottom"]' );
+} );
+```
+
+---
+
+### `jetonomy_after_post_article`
+
+Fires after the main post `<article>` element and before the replies section on a single post view. Ideal for ads, related-topic blocks, or CTAs between the topic body and the reply list.
+
+> ⚠️ Do not confuse with the `jetonomy_after_post_content` **filter** (below) which fires *inside* the post body. This hook is an **action** named `_article` to avoid collision.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post` | `object` | Current post object |
+
+**Source:** `templates/views/single-post.php`
+
+```php
+add_action( 'jetonomy_after_post_article', function( $post ) {
+    echo do_shortcode( '[wb_ads position="jetonomy_after_topic"]' );
+} );
+```
+
+---
+
+### `jetonomy_before_replies`
+
+Fires inside `.jt-replies-section`, immediately before the replies list (above both the empty state and the populated list).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post` | `object` | Current post object |
+| `$total_replies` | `int` | Total reply count for the post |
+
+**Source:** `templates/views/single-post.php`
+
+```php
+add_action( 'jetonomy_before_replies', function( $post, $total_replies ) {
+    if ( $total_replies > 5 ) {
+        echo do_shortcode( '[wb_ads position="jetonomy_replies_top"]' );
+    }
+}, 10, 2 );
+```
+
+---
+
+### `jetonomy_between_replies`
+
+Fires after each top-level reply in the reply list. Use the `$index` parameter to inject content every Nth reply (e.g. an ad every 5 replies).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$reply` | `object` | The reply object just rendered |
+| `$index` | `int` | Zero-based index within the current batch (first batch or last batch) |
+| `$post` | `object` | Current post object |
+
+**Source:** `templates/views/single-post.php`
+
+> The replies list renders in two batches (opening + latest). The index resets at the start of each batch — use `$reply->id` for absolute identity.
+
+```php
+add_action( 'jetonomy_between_replies', function( $reply, $index, $post ) {
+    // Inject an ad after every 5th reply.
+    if ( 4 === $index % 5 ) {
+        echo '<div class="jt-reply-ad">' . do_shortcode( '[wb_ads position="jetonomy_between_replies"]' ) . '</div>';
+    }
+}, 10, 3 );
+```
+
+---
+
+### `jetonomy_after_replies`
+
+Fires inside `.jt-replies-section`, after the replies list and before the composer.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post` | `object` | Current post object |
+| `$total_replies` | `int` | Total reply count for the post |
+
+**Source:** `templates/views/single-post.php`
+
+```php
+add_action( 'jetonomy_after_replies', function( $post, $total_replies ) {
+    echo do_shortcode( '[wb_ads position="jetonomy_replies_bottom"]' );
+}, 10, 2 );
 ```
 
 ---

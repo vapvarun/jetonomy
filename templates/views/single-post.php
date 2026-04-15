@@ -361,6 +361,20 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</div>
 			</article>
 
+			<?php
+			/**
+			 * Fires after the main post article element, before the replies section.
+			 * Prime slot for ads, related posts, or CTAs between topic and replies.
+			 *
+			 * Note: Named `_article` (not `_content`) to avoid collision with the
+			 * existing `jetonomy_after_post_content` FILTER that injects HTML inside
+			 * the post body (see single-post.php:269).
+			 *
+			 * @param object $post Current post object.
+			 */
+			do_action( 'jetonomy_after_post_article', $post );
+			?>
+
 			<!-- Replies -->
 			<div class="jt-replies-section" id="replies"
 				data-wp-interactive="jetonomy"
@@ -406,6 +420,17 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					</div>
 				</div>
 
+				<?php
+				/**
+				 * Fires before the replies list renders (above both empty state and populated list).
+				 * Ad slot / announcement injection point above replies.
+				 *
+				 * @param object $post         Current post object.
+				 * @param int    $total_replies Total reply count.
+				 */
+				do_action( 'jetonomy_before_replies', $post, $total_replies );
+				?>
+
 				<?php if ( empty( $first_batch ) && empty( $last_batch ) ) : ?>
 					<div class="jt-empty">
 						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-replies', 80 ); ?></div>
@@ -415,8 +440,19 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 
 					<div class="jt-replies-list" id="jt-replies-container">
 						<!-- First batch (opening conversation) -->
-						<?php foreach ( $first_batch as $reply ) : ?>
+						<?php foreach ( $first_batch as $index => $reply ) : ?>
 							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
+							<?php
+							/**
+							 * Fires after each top-level reply in the replies list.
+							 * Ad slot / injection between replies (e.g. every Nth reply).
+							 *
+							 * @param object $reply Reply object just rendered.
+							 * @param int    $index Zero-based index within the batch.
+							 * @param object $post  Current post object.
+							 */
+							do_action( 'jetonomy_between_replies', $reply, $index, $post );
+							?>
 						<?php endforeach; ?>
 
 						<!-- Gap loader (in-between) -->
@@ -448,12 +484,27 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php endif; ?>
 
 						<!-- Last batch (latest conversation) -->
-						<?php foreach ( $last_batch as $reply ) : ?>
+						<?php foreach ( $last_batch as $index => $reply ) : ?>
 							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
+							<?php
+							/** @see hook docblock above on jetonomy_between_replies */
+							do_action( 'jetonomy_between_replies', $reply, $index, $post );
+							?>
 						<?php endforeach; ?>
 					</div>
 
 				<?php endif; ?>
+
+				<?php
+				/**
+				 * Fires after the replies list renders.
+				 * Ad slot / CTA injection below replies, above the composer.
+				 *
+				 * @param object $post          Current post object.
+				 * @param int    $total_replies Total reply count.
+				 */
+				do_action( 'jetonomy_after_replies', $post, $total_replies );
+				?>
 			</div>
 
 			<!-- Composer -->

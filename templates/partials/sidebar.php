@@ -66,6 +66,16 @@ $bn_active = did_action( 'buddynext_loaded' );
 ?>
 <aside class="jt-sidebar">
 
+	<?php
+	/**
+	 * Fires at the top of the Jetonomy sidebar, before any widgets render.
+	 * Used by integrations (ads, announcements, banners) to inject content.
+	 *
+	 * @param object|null $space Current space object, or null outside a space.
+	 */
+	do_action( 'jetonomy_sidebar_before', $space ?? null );
+	?>
+
 	<?php if ( ! empty( $space ) && isset( $space->id ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
@@ -226,5 +236,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 	</div>
 	<?php endif; ?>
+
+	<?php
+	/**
+	 * Fires at the bottom of the Jetonomy sidebar, after all widgets render.
+	 * Used by integrations (ads, announcements, banners) to inject content.
+	 *
+	 * @param object|null $space Current space object, or null outside a space.
+	 */
+	do_action( 'jetonomy_sidebar_after', $space ?? null );
+	?>
 
 </aside>

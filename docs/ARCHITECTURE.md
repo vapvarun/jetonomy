@@ -234,6 +234,12 @@ plugins_loaded        plugins_loaded:20
 | `jetonomy_new_post_fields` | `$space` | Extra fields in new post form |
 | `jetonomy_before_content` | `$data` | Before template content |
 | `jetonomy_after_content` | `$data` | After template content |
+| `jetonomy_sidebar_before` | `$space\|null` | Top of sidebar, before widgets |
+| `jetonomy_sidebar_after` | `$space\|null` | Bottom of sidebar, after widgets |
+| `jetonomy_after_post_article` | `$post` | After post `<article>`, before replies |
+| `jetonomy_before_replies` | `$post, $total_replies` | Above replies list (inside replies section) |
+| `jetonomy_between_replies` | `$reply, $index, $post` | After each top-level reply in the list |
+| `jetonomy_after_replies` | `$post, $total_replies` | Below replies list, above composer |
 
 ### Filters
 
