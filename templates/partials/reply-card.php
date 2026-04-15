@@ -48,32 +48,42 @@ $is_accepted = (int) $reply->is_accepted;
 		<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 			data-wp-on--click="actions.voteReplyUp"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
+			title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 		</button>
 		<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 			data-wp-on--click="actions.voteReplyDown"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
+			title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 		<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
-				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
+				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"
+				title="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <?php esc_html_e( 'Reply', 'jetonomy' ); ?></button>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
-				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?> <?php esc_html_e( 'Quote', 'jetonomy' ); ?></button>
+				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"
+				title="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && get_current_user_id() !== (int) $reply->author_id ) : ?>
 			<button class="jt-act"
 				data-wp-on--click="actions.flagReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
-				title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?></button>
+				title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?></button>
 		<?php endif; ?>
 		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
 			<div class="jt-more-menu">
-				<button class="jt-act jt-more-trigger" type="button" data-wp-on--click="actions.toggleMoreMenu" title="<?php esc_attr_e( 'More', 'jetonomy' ); ?>">&hellip;</button>
+				<button class="jt-act jt-more-trigger" type="button"
+					data-wp-on--click="actions.toggleMoreMenu"
+					title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
+					aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'more-horizontal', 14 ); ?></button>
 				<div class="jt-more-dropdown" hidden>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.editReply"

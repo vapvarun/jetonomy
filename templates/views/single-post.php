@@ -280,6 +280,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteUp"
 						data-post-id="<?php echo absint( $post->id ); ?>"
+						title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
 						aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 						<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
@@ -287,6 +288,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteDown"
 						data-post-id="<?php echo absint( $post->id ); ?>"
+						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 					</button>
@@ -306,7 +308,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					data-wp-on--click="actions.sharePost"
 					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
 					data-post-title="<?php echo esc_attr( $post->title ); ?>"
-					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
+					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"
+					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<?php
 				if ( is_user_logged_in() ) :
 					$is_bookmarked = \Jetonomy\Models\Bookmark::is_bookmarked( get_current_user_id(), (int) $post->id );
@@ -315,18 +318,22 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						data-wp-on--click="actions.toggleBookmark"
 						data-post-id="<?php echo absint( $post->id ); ?>"
 						data-bookmarked="<?php echo esc_attr( $is_bookmarked ? '1' : '0' ); ?>"
-						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
+						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"
+						aria-label="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
 					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
 						<button class="jt-act"
 							data-wp-on--click="actions.flagPost"
 							data-post-id="<?php echo absint( $post->id ); ?>"
-							title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
+							title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
+							aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
 					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
 					<div class="jt-more-menu">
-						<button class="jt-act jt-more-trigger" type="button" title="<?php esc_attr_e( 'More', 'jetonomy' ); ?>"
-							data-wp-on--click="actions.toggleMoreMenu">&hellip;</button>
+						<button class="jt-act jt-more-trigger" type="button"
+							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
+							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
+							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 						<div class="jt-more-dropdown" hidden>
 							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
 								<button class="jt-more-item"
