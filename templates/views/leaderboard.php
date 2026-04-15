@@ -63,6 +63,16 @@ $crumbs = [
 			</div>
 		<?php else : ?>
 			<div class="jt-card">
+				<?php /* Mobile-only column header — hidden on desktop via .jt-leader-head CSS. */ ?>
+				<div class="jt-leader jt-leader-head" aria-hidden="true">
+					<span class="jt-leader-rank"></span>
+					<span class="jt-leader-head-spacer"></span>
+					<span class="jt-leader-name"><?php esc_html_e( 'Member', 'jetonomy' ); ?></span>
+					<div class="jt-leader-stats">
+						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'rep', 'jetonomy' ); ?></div>
+						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
+					</div>
+				</div>
 				<?php foreach ( $leaders as $rank => $leader ) : ?>
 					<?php
 					$lu = get_userdata( (int) $leader->user_id );

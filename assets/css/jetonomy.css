@@ -407,6 +407,8 @@
   /* ── Leaderboard ── */
   .jt-leader { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--jt-border); }
   .jt-leader:last-child { border-bottom: none; }
+  /* Mobile-only column header — hidden on desktop. See ≤640px block. */
+  .jt-leader-head { display: none; }
   .jt-leader-rank { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; color: var(--jt-text-tertiary); width: 20px; text-align: center; }
   .jt-leader-name { flex: 1; font-weight: 500; }
   .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
@@ -518,6 +520,53 @@
     .jt-bar { flex-wrap: wrap; gap: var(--jt-space-2); }
     .jt-bar > .jt-btn-fill,
     .jt-bar > a.jt-btn-fill { order: 10; width: 100%; text-align: center; justify-content: center; }
+
+    /* Buttons — compact on mobile without dropping below the 40px
+       tap-target floor. Base `.jt-btn` has desktop padding 8px 18px
+       and 15px font. On phones we drop to 8px 14px and 14px font so
+       three buttons (View / Remove / Dismiss) fit a moderation card
+       row without "Remove Content" wrapping to 2 lines. */
+    .jt-app .jt-btn { padding: var(--jt-space-2) var(--jt-space-4); font-size: var(--jt-text-sm); min-height: var(--jt-tap); }
+    .jt-app .jt-btn-sm { padding: 4px var(--jt-space-3); font-size: var(--jt-text-xs); min-height: 32px; }
+
+    /* Leaderboard rows — tighten stats, hide per-row rep/posts labels
+       (they repeat 20× per page) and show a single sticky header row
+       at the top of the card instead. Desktop keeps the per-row labels
+       since space isn't an issue there. */
+    .jt-leader { gap: var(--jt-space-2); padding: var(--jt-space-2) var(--jt-space-3); }
+    .jt-leader-name { font-size: var(--jt-text-sm); min-width: 0; }
+    .jt-leader-stats { gap: var(--jt-space-3); }
+    .jt-leader-stat-val,
+    .jt-leader-pts { font-size: var(--jt-text-sm); }
+    .jt-leader-rank { font-size: var(--jt-text-sm); width: 18px; }
+
+    /* Hide per-row "rep" and "posts" labels on mobile. The header row
+       added above the list serves as the column legend. */
+    .jt-leader:not(.jt-leader-head) .jt-leader-stat-lbl { display: none; }
+
+    /* Show the mobile header row. It renders as a dimmed, uppercase
+       column legend aligned with the stat values below. */
+    .jt-leader-head { display: flex; align-items: center; background: var(--jt-bg-subtle); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); font-weight: 600; padding: var(--jt-space-2) var(--jt-space-3); }
+    .jt-leader-head .jt-leader-head-spacer { width: 36px; flex-shrink: 0; }
+    .jt-leader-head .jt-leader-name { font-size: 0.625rem; font-weight: 600; color: var(--jt-text-tertiary); }
+    .jt-leader-head .jt-leader-stats { color: var(--jt-text-tertiary); }
+    .jt-leader-head .jt-leader-stats > div { min-width: 38px; text-align: right; }
+
+    /* Notifications list + trending sidebar — apply scale */
+    .jt-notif-text,
+    .jt-trend-title,
+    .jt-empty-text,
+    .jt-col-title,
+    .jt-badge-label { font-size: var(--jt-text-sm); }
+
+    /* Page sub-titles */
+    .jt-page-title-sm { font-size: var(--jt-text-xl); }
+
+    /* Reply body + post body default to 1rem (16px) — keep body at
+       15px on mobile for density without going under the iOS zoom
+       threshold on input fields. */
+    .jt-post-body { padding: var(--jt-space-4); font-size: var(--jt-text-base); }
+    .jt-reply-body { padding: var(--jt-space-3) var(--jt-space-4); font-size: var(--jt-text-base); }
 
     /* Breadcrumb truncation */
     .jt-crumb { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
@@ -693,13 +742,14 @@
 
   /* ── Moderation ── */
   /* Moderation — full width in container */
-  .jt-mod-flag { padding: 16px; border-bottom: 1px solid var(--jt-border); }
-  .jt-mod-flag-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .jt-mod-flag-type { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger); }
-  .jt-mod-flag-reason { font-size: 0.9375rem; font-weight: 500; color: var(--jt-text-secondary); }
-  .jt-mod-flag-reporter { margin-left: auto; font-size: 0.9375rem; color: var(--jt-text-tertiary); }
-  .jt-mod-flag-note { font-size: 0.875rem; color: var(--jt-text-secondary); margin-bottom: 8px; padding: 8px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
-  .jt-mod-flag-actions { display: flex; gap: 8px; align-items: center; }
+  /* Moderation queue flag cards — token-driven per DESIGN-SYSTEM.md */
+  .jt-mod-flag { padding: var(--jt-space-4); border-bottom: 1px solid var(--jt-border); }
+  .jt-mod-flag-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2); margin-bottom: var(--jt-space-2); }
+  .jt-mod-flag-type { font-size: var(--jt-text-2xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-danger-light); color: var(--jt-danger); white-space: nowrap; }
+  .jt-mod-flag-reason { font-size: var(--jt-text-sm); font-weight: 500; color: var(--jt-text-secondary); }
+  .jt-mod-flag-reporter { margin-left: auto; font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); white-space: nowrap; }
+  .jt-mod-flag-note { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-2); padding: var(--jt-space-2); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
+  .jt-mod-flag-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); align-items: center; }
   .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger); color: var(--jt-white); }
   .jt-app .jt-btn-danger:hover { color: var(--jt-white); }
 

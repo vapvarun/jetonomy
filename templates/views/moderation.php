@@ -139,9 +139,9 @@ $crumbs = [
 							<button type="button" class="jt-btn jt-btn-fill jt-btn-danger"
 								data-wp-on--click="actions.dismissFlag"
 								data-flag-id="<?php echo absint( $flag->id ); ?>"
-
 								data-action="approved">
-								<?php esc_html_e( 'Remove Content', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'trash', 14 ); ?>
+								<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
 							</button>
 							<button type="button" class="jt-btn jt-btn-ghost"
 								data-wp-on--click="actions.dismissFlag"
