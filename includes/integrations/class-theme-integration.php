@@ -1,25 +1,31 @@
 <?php
 /**
  * Theme integration — bridges BuddyX / BuddyX Pro / Reign Kirki colors
- * and dark-scheme toggle into Jetonomy's CSS variables and .jt-dark class.
+ * and dark mode into Jetonomy's CSS variables and `.jt-dark` class.
  *
  * Jetonomy's token system inherits from BuddyNext (`--brand`) and WP
  * theme.json (`--wp--preset--color--primary`), but BuddyX, BuddyX Pro, and
- * Reign store their primary color in Kirki theme mods which are not exposed
- * as CSS variables. This class reads those theme mods on `wp_enqueue_scripts`
- * and injects `--jt-accent` + `--jt-accent-hover` as an inline style on the
- * `jetonomy` handle. It also toggles the `.jt-dark` body class when the
- * active theme is in dark mode so Jetonomy's existing dark tokens engage.
+ * Reign store their colors in Kirki theme mods which are not exposed as
+ * CSS variables. This class reads the relevant theme mods on
+ * `wp_enqueue_scripts:20` and injects both a light-mode token block
+ * (scoped to `:root,.jt-app`) and a dark-mode token block (scoped to
+ * `.jt-dark .jt-app`) as inline style on the `jetonomy` handle. A small
+ * inline footer script then mirrors the theme's runtime dark class onto
+ * the `<body>` as `.jt-dark` so Jetonomy's existing dark tokens engage
+ * in sync with whatever the user actually sees.
  *
  * Supported theme mods:
  *
- * - BuddyX / BuddyX Pro: `site_primary_color` (flat). BuddyX Pro adds
- *   `site_dark_mode_switch` (bool) and `dark_site_primary_color` (flat)
- *   for dark mode.
- * - Reign: `{reign_color_scheme}-reign_accent_color` where the scheme is
- *   a preset name like `reign_clean` / `reign_dating`. Dark mode is toggled
- *   via `reign_dark_mode_option` (bool); when active, Reign reads from
- *   the `reign_dark-reign_accent_color` key instead.
+ * - BuddyX / BuddyX Pro: `site_primary_color`, `body_text_color`,
+ *   `body_background_color`, `content_background_color`,
+ *   `site_border_color`. BuddyX Pro additionally exposes a `dark_`
+ *   prefixed variant for each of these plus the `site_dark_mode_switch`
+ *   feature toggle.
+ * - Reign: `{reign_color_scheme}-reign_accent_color`,
+ *   `{reign_color_scheme}-reign_site_body_text_color`,
+ *   `{reign_color_scheme}-reign_site_body_bg_color`,
+ *   `{reign_color_scheme}-reign_site_sections_bg_color`. Dark variants
+ *   live under the `reign_dark-` prefix.
  *
  * @package Jetonomy
  */
@@ -43,12 +49,11 @@ class Theme_Integration {
 	 */
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'output_color_bridge' ), 20 );
-		add_filter( 'body_class', array( $this, 'maybe_add_dark_class' ) );
+		add_action( 'wp_footer', array( $this, 'output_dark_mode_mirror' ), 5 );
 	}
 
 	/**
-	 * Read the theme accent color and inject it as an inline style on the
-	 * `jetonomy` handle.
+	 * Read the active theme's color mods and inject light + dark token blocks.
 	 *
 	 * @return void
 	 */
@@ -57,131 +62,219 @@ class Theme_Integration {
 			return;
 		}
 
-		$color = $this->resolve_primary_color();
+		$light = $this->resolve_token_map( false );
+		$dark  = $this->resolve_token_map( true );
 
 		/**
-		 * Filter the theme-bridged accent color before it is injected.
+		 * Filter the resolved light-mode token → hex map before injection.
 		 *
-		 * Return an empty string to disable the override entirely.
+		 * Return an empty array to disable the light override.
 		 *
 		 * @since 1.3.0
 		 *
-		 * @param string $color Hex color resolved from the active theme.
+		 * @param array<string,string> $light Map of `--jt-*` token => hex color.
 		 */
-		$color = (string) apply_filters( 'jetonomy_theme_primary_color', $color );
+		$light = (array) apply_filters( 'jetonomy_theme_light_tokens', $light );
 
-		if ( '' === $color ) {
+		/**
+		 * Filter the resolved dark-mode token → hex map before injection.
+		 *
+		 * Return an empty array to disable the dark override.
+		 *
+		 * @since 1.3.0
+		 *
+		 * @param array<string,string> $dark Map of `--jt-*` token => hex color.
+		 */
+		$dark = (array) apply_filters( 'jetonomy_theme_dark_tokens', $dark );
+
+		$css = '';
+		if ( ! empty( $light ) ) {
+			$css .= ':root,.jt-app{' . $this->build_token_css( $light ) . '}';
+		}
+		if ( ! empty( $dark ) ) {
+			$css .= '.jt-dark .jt-app,.jt-app.jt-dark{' . $this->build_token_css( $dark ) . '}';
+		}
+
+		if ( '' !== $css ) {
+			wp_add_inline_style( self::STYLE_HANDLE, $css );
+		}
+	}
+
+	/**
+	 * Mirror the active theme's runtime dark-mode class onto `<body>` as
+	 * `.jt-dark` so Jetonomy's existing dark tokens engage automatically.
+	 *
+	 * Reign and BuddyX Pro manage their dark state at runtime via JS (the
+	 * customizer toggle only sets the default; the user's current state
+	 * lives in a cookie / localStorage), so a server-side `body_class`
+	 * filter can't reliably reflect what the user actually sees. This
+	 * inline observer watches both `<html>` and `<body>` class lists for
+	 * the common dark-mode classes emitted by these themes and the
+	 * wp-dark-mode script, and toggles `.jt-dark` to match.
+	 *
+	 * @return void
+	 */
+	public function output_dark_mode_mirror() {
+		if ( ! wp_style_is( self::STYLE_HANDLE, 'enqueued' ) ) {
 			return;
 		}
 
-		$hover = $this->darken( $color, 15 );
-		$css   = sprintf(
-			':root,.jt-app{--jt-accent:%1$s;--jt-accent-hover:%2$s;}',
-			$color,
-			$hover
-		);
-
-		wp_add_inline_style( self::STYLE_HANDLE, $css );
-	}
-
-	/**
-	 * Add `.jt-dark` to the body class when the active theme is in dark scheme.
-	 *
-	 * @param array $classes Existing body classes.
-	 * @return array
-	 */
-	public function maybe_add_dark_class( $classes ) {
-		if ( $this->is_theme_dark_scheme() ) {
-			$classes[] = 'jt-dark';
+		$template = get_template();
+		if ( 'reign-theme' !== $template
+			&& ! in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
+			return;
 		}
-		return $classes;
+
+		$script = <<<'JS'
+(function () {
+	var html = document.documentElement;
+	var body = document.body;
+	if ( ! body ) {
+		return;
+	}
+	var darkClasses = [ 'wp-dark-mode-active', 'dark-mode', 'theme-dark' ];
+	function sync() {
+		var isDark = false;
+		for ( var i = 0; i < darkClasses.length; i++ ) {
+			if ( html.classList.contains( darkClasses[ i ] )
+				|| body.classList.contains( darkClasses[ i ] ) ) {
+				isDark = true;
+				break;
+			}
+		}
+		body.classList.toggle( 'jt-dark', isDark );
+	}
+	sync();
+	if ( typeof MutationObserver === 'function' ) {
+		var opts = { attributes: true, attributeFilter: [ 'class' ] };
+		new MutationObserver( sync ).observe( html, opts );
+		new MutationObserver( sync ).observe( body, opts );
+	}
+})();
+JS;
+
+		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
+			wp_print_inline_script_tag( $script, array( 'id' => 'jetonomy-theme-dark-mirror' ) );
+		} else {
+			echo '<script id="jetonomy-theme-dark-mirror">' . $script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		}
 	}
 
 	/**
-	 * Resolve the primary accent color from the active theme.
+	 * Resolve a `--jt-*` token map for the current theme in light or dark mode.
 	 *
-	 * @return string Hex color with leading `#`, or empty string if unsupported / unset.
+	 * @param bool $dark Whether to read dark-mode variants.
+	 * @return array<string,string> Token name => hex color (with leading `#`).
 	 */
-	private function resolve_primary_color() {
+	private function resolve_token_map( $dark ) {
 		$template = get_template();
 
 		if ( 'reign-theme' === $template ) {
-			return $this->reign_primary_color();
+			return $this->reign_token_map( (bool) $dark );
 		}
 
 		if ( in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
-			return $this->buddyx_primary_color();
+			return $this->buddyx_token_map( (bool) $dark );
 		}
 
-		return '';
+		return array();
 	}
 
 	/**
-	 * Whether the active theme is in dark color scheme.
+	 * Read Reign's color mods and map them to Jetonomy tokens.
 	 *
-	 * @return bool
+	 * Reign scopes every color to a preset scheme (e.g. `reign_clean`,
+	 * `reign_dating`). Dark variants live under the `reign_dark-` prefix.
+	 *
+	 * @param bool $dark Whether to read the `reign_dark-` variants.
+	 * @return array<string,string>
 	 */
-	private function is_theme_dark_scheme() {
-		$template = get_template();
+	private function reign_token_map( $dark ) {
+		$prefix = $dark
+			? 'reign_dark'
+			: (string) get_theme_mod( 'reign_color_scheme', 'reign_clean' );
 
-		if ( 'reign-theme' === $template ) {
-			return (bool) get_theme_mod( 'reign_dark_mode_option', false );
-		}
+		$keys = array(
+			'--jt-accent'    => 'reign_accent_color',
+			'--jt-text'      => 'reign_site_body_text_color',
+			'--jt-bg'        => 'reign_site_body_bg_color',
+			'--jt-bg-subtle' => 'reign_site_sections_bg_color',
+		);
 
-		if ( 'buddyx-pro' === $template ) {
-			return (bool) get_theme_mod( 'site_dark_mode_switch', false );
-		}
-
-		// BuddyX Free has no dark mode.
-		return false;
-	}
-
-	/**
-	 * Read Reign's primary (accent) color.
-	 *
-	 * Reign stores colors per preset scheme: `{scheme}-reign_accent_color` where
-	 * `$scheme` is `reign_clean`, `reign_dating`, etc. When the theme's dark
-	 * mode option is on, Reign uses a dedicated `reign_dark` scheme prefix.
-	 *
-	 * @return string
-	 */
-	private function reign_primary_color() {
-		if ( (bool) get_theme_mod( 'reign_dark_mode_option', false ) ) {
-			$dark = (string) get_theme_mod( 'reign_dark-reign_accent_color', '' );
-			if ( '' !== $dark ) {
-				return $this->sanitize_color( $dark );
+		$map = array();
+		foreach ( $keys as $token => $mod ) {
+			$color = $this->sanitize_color( (string) get_theme_mod( $prefix . '-' . $mod, '' ) );
+			if ( '' !== $color ) {
+				$map[ $token ] = $color;
 			}
 		}
 
-		$scheme = (string) get_theme_mod( 'reign_color_scheme', 'reign_clean' );
-		$color  = (string) get_theme_mod( $scheme . '-reign_accent_color', '' );
-
-		if ( '' === $color ) {
-			$color = (string) get_theme_mod( 'reign_accent_color', '' );
-		}
-
-		return $this->sanitize_color( $color );
-	}
-
-	/**
-	 * Read BuddyX / BuddyX Pro primary color.
-	 *
-	 * Both themes use a flat `site_primary_color` key. BuddyX Pro adds a
-	 * `dark_site_primary_color` key that applies when `site_dark_mode_switch`
-	 * is enabled.
-	 *
-	 * @return string
-	 */
-	private function buddyx_primary_color() {
-		if ( 'buddyx-pro' === get_template()
-			&& (bool) get_theme_mod( 'site_dark_mode_switch', false ) ) {
-			$dark = (string) get_theme_mod( 'dark_site_primary_color', '' );
-			if ( '' !== $dark ) {
-				return $this->sanitize_color( $dark );
+		// Legacy single-key fallback for themes that pre-date the scheme model.
+		if ( ! isset( $map['--jt-accent'] ) ) {
+			$legacy = $this->sanitize_color( (string) get_theme_mod( 'reign_accent_color', '' ) );
+			if ( '' !== $legacy ) {
+				$map['--jt-accent'] = $legacy;
 			}
 		}
 
-		return $this->sanitize_color( (string) get_theme_mod( 'site_primary_color', '' ) );
+		if ( isset( $map['--jt-accent'] ) ) {
+			$map['--jt-accent-hover'] = $this->darken( $map['--jt-accent'], 15 );
+		}
+
+		return $map;
+	}
+
+	/**
+	 * Read BuddyX / BuddyX Pro color mods and map them to Jetonomy tokens.
+	 *
+	 * BuddyX Free has no dark mode, so the dark branch is a no-op when the
+	 * active template is `buddyx`.
+	 *
+	 * @param bool $dark Whether to read the `dark_` variants.
+	 * @return array<string,string>
+	 */
+	private function buddyx_token_map( $dark ) {
+		if ( $dark && 'buddyx-pro' !== get_template() ) {
+			return array();
+		}
+
+		$prefix = $dark ? 'dark_' : '';
+
+		$keys = array(
+			'--jt-accent'    => $prefix . 'site_primary_color',
+			'--jt-text'      => $prefix . 'body_text_color',
+			'--jt-bg'        => $prefix . 'body_background_color',
+			'--jt-bg-subtle' => $prefix . 'content_background_color',
+			'--jt-border'    => $prefix . 'site_border_color',
+		);
+
+		$map = array();
+		foreach ( $keys as $token => $mod ) {
+			$color = $this->sanitize_color( (string) get_theme_mod( $mod, '' ) );
+			if ( '' !== $color ) {
+				$map[ $token ] = $color;
+			}
+		}
+
+		if ( isset( $map['--jt-accent'] ) ) {
+			$map['--jt-accent-hover'] = $this->darken( $map['--jt-accent'], 15 );
+		}
+
+		return $map;
+	}
+
+	/**
+	 * Convert a token map to the inner body of a CSS declaration block.
+	 *
+	 * @param array<string,string> $map Token name => hex color.
+	 * @return string
+	 */
+	private function build_token_css( array $map ) {
+		$parts = array();
+		foreach ( $map as $token => $color ) {
+			$parts[] = $token . ':' . $color;
+		}
+		return implode( ';', $parts ) . ';';
 	}
 
 	/**
