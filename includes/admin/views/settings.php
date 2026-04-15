@@ -568,6 +568,97 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<!-- Social Embeds -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Social Embeds (Instagram & Facebook)', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc">
+						<?php esc_html_e( 'YouTube, Vimeo, TikTok, Twitter/X, Spotify, SoundCloud, and TED Talks embed automatically — no setup required. Instagram and Facebook require a free Meta Developer App because Meta deprecated anonymous oEmbed access in October 2020.', 'jetonomy' ); ?>
+					</p>
+				</div>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="fb_app_id"><?php esc_html_e( 'Facebook App ID', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="fb_app_id" name="jetonomy_settings[fb_app_id]" value="<?php echo esc_attr( $settings['fb_app_id'] ?? '' ); ?>" class="regular-text" autocomplete="off" placeholder="1234567890123456">
+							<p class="description"><?php esc_html_e( 'Numeric App ID from your Meta Developer dashboard.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="fb_app_secret"><?php esc_html_e( 'Facebook App Secret', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="password" id="fb_app_secret" name="jetonomy_settings[fb_app_secret]" value="<?php echo esc_attr( $settings['fb_app_secret'] ?? '' ); ?>" class="regular-text" autocomplete="new-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+							<p class="description"><?php esc_html_e( 'Secret is stored in wp_options and never exposed to the frontend.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+
+				<details class="jt-setup-guide" style="margin:12px 0 4px;padding:14px 16px;background:var(--jt-bg-subtle,#f6f7f7);border:1px solid var(--jt-border,#dcdcde);border-radius:8px;">
+					<summary style="cursor:pointer;font-weight:600;color:var(--jt-text,#1d2327);list-style:revert;">
+						<?php esc_html_e( 'How to create a Facebook App (5 minutes, free)', 'jetonomy' ); ?>
+					</summary>
+					<ol style="margin:12px 0 4px 20px;line-height:1.7;">
+						<li>
+							<?php
+							printf(
+								/* translators: 1: developers.facebook.com URL, 2: Create App button label */
+								esc_html__( 'Go to %1$s and log in with a Facebook account. Click %2$s in the top-right corner.', 'jetonomy' ),
+								'<a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer"><code>developers.facebook.com/apps</code></a>',
+								'<strong>' . esc_html__( 'Create App', 'jetonomy' ) . '</strong>'
+							);
+							?>
+						</li>
+						<li>
+							<?php
+							printf(
+								/* translators: 1: "Other" use-case label, 2: "Business" app type label */
+								esc_html__( 'When asked "What do you want your app to do?", pick %1$s. When asked for the app type, pick %2$s. Name it anything — e.g. "My Forum Embeds".', 'jetonomy' ),
+								'<strong>' . esc_html__( 'Other', 'jetonomy' ) . '</strong>',
+								'<strong>' . esc_html__( 'Business', 'jetonomy' ) . '</strong>'
+							);
+							?>
+						</li>
+						<li>
+							<?php
+							printf(
+								/* translators: %s: "oEmbed Read" product label */
+								esc_html__( 'On the new app\'s dashboard, find the %s product in the Products list and click Set Up. It\'s free.', 'jetonomy' ),
+								'<strong>' . esc_html__( 'oEmbed Read', 'jetonomy' ) . '</strong>'
+							);
+							?>
+						</li>
+						<li>
+							<?php
+							printf(
+								/* translators: 1: "Settings > Basic" breadcrumb, 2: App ID label, 3: App Secret label */
+								esc_html__( 'Open %1$s. Copy the %2$s and %3$s and paste them into the two fields above.', 'jetonomy' ),
+								'<strong>' . esc_html__( 'Settings → Basic', 'jetonomy' ) . '</strong>',
+								'<strong>' . esc_html__( 'App ID', 'jetonomy' ) . '</strong>',
+								'<strong>' . esc_html__( 'App Secret', 'jetonomy' ) . '</strong>'
+							);
+							?>
+						</li>
+						<li>
+							<?php
+							printf(
+								/* translators: 1: "App Review > Requests" breadcrumb, 2: "oembed_read" permission name */
+								esc_html__( 'Go to %1$s and request the %2$s permission. Meta typically approves in 1–3 business days. Your app stays in Development Mode until approved — embeds will work for the admin who created the app even before approval.', 'jetonomy' ),
+								'<strong>' . esc_html__( 'App Review → Requests', 'jetonomy' ) . '</strong>',
+								'<code>oembed_read</code>'
+							);
+							?>
+						</li>
+						<li>
+							<?php esc_html_e( 'Save the settings here. Instagram and Facebook URLs pasted into posts and replies will now unfurl as rich embeds.', 'jetonomy' ); ?>
+						</li>
+					</ol>
+					<p style="margin:12px 0 0;padding:10px 12px;background:var(--jt-warn-light,#fff8e5);border-left:3px solid var(--jt-warn,#dba617);border-radius:4px;font-size:13px;">
+						<strong><?php esc_html_e( 'Privacy note:', 'jetonomy' ); ?></strong>
+						<?php esc_html_e( 'Jetonomy only sends oEmbed requests to Meta when a user pastes an Instagram/Facebook URL. No tracking, no user data — just the public post URL and your app token. Leave these fields blank to skip Instagram/Facebook embeds entirely; the URL will render as a plain clickable link.', 'jetonomy' ); ?>
+					</p>
+				</details>
+			</div>
+
 			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>

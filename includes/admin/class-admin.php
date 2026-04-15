@@ -271,6 +271,11 @@ class Admin {
 			$clean['seo_sitemap']          = ! empty( $input['seo_sitemap'] );
 			$clean['seo_noindex_profiles'] = ! empty( $input['seo_noindex_profiles'] );
 			$clean['seo_noindex_search']   = ! empty( $input['seo_noindex_search'] );
+
+			// Social embeds — Meta developer app credentials for Instagram/Facebook oEmbed.
+			// App IDs are numeric; secrets are 32-char hex strings. Strip whitespace only.
+			$clean['fb_app_id']     = preg_replace( '/\D/', '', (string) ( $input['fb_app_id'] ?? '' ) );
+			$clean['fb_app_secret'] = trim( sanitize_text_field( $input['fb_app_secret'] ?? '' ) );
 		}
 
 		return $clean;

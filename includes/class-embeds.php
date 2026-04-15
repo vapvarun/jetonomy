@@ -12,6 +12,76 @@ defined( 'ABSPATH' ) || exit;
 class Embeds {
 
 	/**
+	 * Register runtime hooks — call from plugin bootstrap.
+	 *
+	 * Meta deprecated anonymous Instagram/Facebook oEmbed in October 2020. To
+	 * embed those URLs we must attach an app access token (`{app_id}|{app_secret}`)
+	 * to every outbound oEmbed HTTP request. Without the token WordPress's
+	 * `wp_oembed_get()` silently returns empty and the URL falls back to a plain
+	 * link. The admin pastes their credentials in Settings → SEO → Social Embeds.
+	 */
+	public static function register(): void {
+		add_filter( 'oembed_remote_get_args', array( __CLASS__, 'inject_fb_token' ), 10, 2 );
+		add_filter( 'oembed_providers', array( __CLASS__, 'register_fb_providers' ) );
+	}
+
+	/**
+	 * Register Instagram/Facebook as known oEmbed providers.
+	 *
+	 * Core WordPress dropped these from the default provider list after Meta's
+	 * deprecation. Re-registering them here makes `wp_oembed_get()` treat
+	 * Instagram + Facebook URLs as oembeddable again — the actual HTTP call is
+	 * still gated on whether a token is configured (see inject_fb_token).
+	 *
+	 * @param array<string, array{0:string,1:bool}> $providers Provider map.
+	 * @return array<string, array{0:string,1:bool}>
+	 */
+	public static function register_fb_providers( array $providers ): array {
+		$settings = (array) get_option( 'jetonomy_settings', array() );
+		if ( empty( $settings['fb_app_id'] ) || empty( $settings['fb_app_secret'] ) ) {
+			return $providers;
+		}
+
+		// Instagram — posts, reels, IGTV.
+		$providers['#https?://(www\.)?instagram\.com/(p|reel|tv)/.*#i'] = array( 'https://graph.facebook.com/v16.0/instagram_oembed', true );
+		// Facebook — posts, videos, photos, reels.
+		$providers['#https?://(www\.)?facebook\.com/.*/(posts|videos|photos)/.*#i'] = array( 'https://graph.facebook.com/v16.0/oembed_post', true );
+		$providers['#https?://(www\.)?facebook\.com/watch/?\?v=\d+#i']              = array( 'https://graph.facebook.com/v16.0/oembed_video', true );
+		$providers['#https?://(www\.)?facebook\.com/reel/\d+#i']                    = array( 'https://graph.facebook.com/v16.0/oembed_video', true );
+
+		return $providers;
+	}
+
+	/**
+	 * Append the Meta app access token to Instagram/Facebook oEmbed requests.
+	 *
+	 * `oembed_remote_get_args` fires for every oEmbed HTTP call. We only mutate
+	 * it when the provider URL belongs to graph.facebook.com — other providers
+	 * (YouTube, Vimeo, TikTok) pass through untouched.
+	 *
+	 * @param array<string, mixed> $args        wp_remote_get args.
+	 * @param string               $provider_url Provider endpoint the request is going to.
+	 * @return array<string, mixed>
+	 */
+	public static function inject_fb_token( $args, $provider_url ) {
+		if ( false === strpos( (string) $provider_url, 'graph.facebook.com' ) ) {
+			return $args;
+		}
+
+		$settings = (array) get_option( 'jetonomy_settings', array() );
+		$app_id   = trim( (string) ( $settings['fb_app_id'] ?? '' ) );
+		$secret   = trim( (string) ( $settings['fb_app_secret'] ?? '' ) );
+		if ( '' === $app_id || '' === $secret ) {
+			return $args;
+		}
+
+		$args['headers']                  = is_array( $args['headers'] ?? null ) ? $args['headers'] : array();
+		$args['headers']['Authorization'] = 'Bearer ' . $app_id . '|' . $secret;
+
+		return $args;
+	}
+
+	/**
 	 * Process content and convert standalone URLs to embeds.
 	 *
 	 * Normalises contenteditable artifacts (`&nbsp;`, empty `<div><br></div>`

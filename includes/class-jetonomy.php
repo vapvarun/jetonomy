@@ -288,6 +288,9 @@ final class Jetonomy {
 
 		new SEO\Sitemap();
 		new SEO\Schema_Markup();
+
+		// Social embed oEmbed hooks — Instagram/Facebook token injection + provider registration.
+		Embeds::register();
 		new Nav_Menus();
 		new Media();
 		new Activity_Tracker();
