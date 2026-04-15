@@ -260,7 +260,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-post-body">
 					<?php
 					// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
-					echo jetonomy_kses_embedded_content( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $post->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					// Embeds first so URL paths containing @username don't get mangled
+					// by jetonomy_format_content's mention matcher. See reply-card.php.
+					echo jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $post->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					?>
 				</div>
 

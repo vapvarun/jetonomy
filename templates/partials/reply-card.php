@@ -37,7 +37,11 @@ $is_accepted = (int) $reply->is_accepted;
 	<div class="jt-reply-body">
 		<?php
 		// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
-		echo jetonomy_kses_embedded_content( \Jetonomy\Embeds::process( jetonomy_format_content( wp_kses_post( $reply->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		// Embeds first so standalone URLs (including `tiktok.com/@user/video/...`)
+		// are captured as whole tokens BEFORE jetonomy_format_content runs its
+		// @mention / #hashtag matchers — otherwise a URL path's `/@name` gets
+		// eaten by the mention regex and the URL never embeds.
+		echo jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $reply->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 	</div>
 	<?php

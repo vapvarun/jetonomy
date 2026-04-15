@@ -207,9 +207,11 @@ function jetonomy_format_content( string $content ): string {
 			continue;
 		}
 
-		// @mentions → profile links.
+		// @mentions → profile links. Negative lookbehind prevents matching
+		// inside URL paths like `tiktok.com/@username/video/...` — `/` or
+		// word/email characters immediately before `@` block the match.
 		$part = preg_replace_callback(
-			'/@([a-zA-Z0-9_-]+)/u',
+			'/(?<![\w\/.:-])@([a-zA-Z0-9_-]+)/u',
 			function ( $matches ) use ( $base ) {
 				$username = $matches[1];
 				$url      = $base . '/u/' . rawurlencode( $username ) . '/';
@@ -218,9 +220,10 @@ function jetonomy_format_content( string $content ): string {
 			$part
 		);
 
-		// #hashtags → tag page links.
+		// #hashtags → tag page links. Same lookbehind so URL fragments
+		// (`foo.com#section`) don't get linkified as tags.
 		$part = preg_replace_callback(
-			'/#([a-zA-Z0-9_-]+)/u',
+			'/(?<![\w\/.:-])#([a-zA-Z0-9_-]+)/u',
 			function ( $matches ) use ( $base ) {
 				$tag  = $matches[1];
 				$slug = sanitize_title( $tag );
