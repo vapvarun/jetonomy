@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 final class Jetonomy {
 	private static ?self $instance = null;
 
+	public ?Moderation\AI_Spam_Detector $ai_spam_detector = null;
+
 	public static function instance(): self {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -67,8 +69,11 @@ final class Jetonomy {
 			update_option( 'jetonomy_license_key', 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11' );
 		}
 
-		// Set sensible notification defaults on fresh install.
+		// Set sensible defaults on fresh install. Each block is individually
+		// guarded so re-activation never overwrites admin-customized values.
 		$settings = get_option( 'jetonomy_settings', array() );
+		$changed  = false;
+
 		if ( empty( $settings['notification_defaults'] ) ) {
 			$settings['notification_defaults'] = array(
 				'reply_to_post'   => array(
@@ -108,6 +113,20 @@ final class Jetonomy {
 					'email' => true,
 				),
 			);
+			$changed                           = true;
+		}
+
+		if ( empty( $settings['trust_thresholds'] ) ) {
+			$settings['trust_thresholds'] = \Jetonomy\Trust\Trust_Levels::defaults();
+			$changed                      = true;
+		}
+
+		if ( empty( $settings['rate_limits'] ) ) {
+			$settings['rate_limits'] = \Jetonomy\Permissions\Rate_Limiter::defaults();
+			$changed                 = true;
+		}
+
+		if ( $changed ) {
 			update_option( 'jetonomy_settings', $settings );
 		}
 
@@ -194,6 +213,30 @@ final class Jetonomy {
 
 		new API\Api();
 
+		// Register Jetonomy thread URLs as a known oEmbed provider so other
+		// WordPress sites (and the block editor) auto-embed pasted links.
+		// Loaded here explicitly — Api::register_routes runs on rest_api_init,
+		// which only fires on REST requests, so we'd miss provider registration
+		// on regular page loads that paste an embed block.
+		add_action(
+			'init',
+			static function () {
+				if ( ! class_exists( '\\Jetonomy\\API\\OEmbed_Controller' ) ) {
+					$file = JETONOMY_DIR . 'includes/api/class-base-controller.php';
+					if ( file_exists( $file ) ) {
+						require_once $file;
+					}
+					$file = JETONOMY_DIR . 'includes/api/class-oembed-controller.php';
+					if ( file_exists( $file ) ) {
+						require_once $file;
+					}
+				}
+				if ( class_exists( '\\Jetonomy\\API\\OEmbed_Controller' ) ) {
+					\Jetonomy\API\OEmbed_Controller::register_provider();
+				}
+			}
+		);
+
 		// Handle email unsubscribe links.
 		add_action( 'init', array( $this, 'handle_email_unsubscribe' ) );
 
@@ -231,6 +274,10 @@ final class Jetonomy {
 			require_once JETONOMY_DIR . 'includes/integrations/class-buddypress.php';
 			new Integrations\BuddyPress();
 		}
+
+		// Theme integration — bridges BuddyX / BuddyX Pro / Reign Kirki colors
+		// and dark-scheme toggle into Jetonomy's CSS tokens.
+		new Integrations\Theme_Integration();
 
 		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
 		Captcha\Captcha_Manager::init();

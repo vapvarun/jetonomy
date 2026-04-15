@@ -35,13 +35,13 @@ $crumbs = [
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-<div class="jt-mod-wrap">
+<div class="jt-mod-wrap jt-mod-queue">
 		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 			<h1 class="jt-page-title">
 				<?php esc_html_e( 'Moderation Queue', 'jetonomy' ); ?>
 			</h1>
 			<?php if ( ! empty( $flags ) ) : ?>
-				<span class="jt-badge-danger">
+				<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( count( $flags ) ); ?>">
 					<?php
 					/* translators: %d: number of pending flags */
 					echo esc_html( sprintf( _n( '%d pending', '%d pending', count( $flags ), 'jetonomy' ), count( $flags ) ) );
@@ -105,7 +105,7 @@ $crumbs = [
 						}
 					}
 					?>
-					<div class="jt-mod-flag"
+					<div class="jt-mod-flag jt-mod-item" data-flag-id="<?php echo absint( $flag->id ); ?>"
 						data-wp-interactive="jetonomy">
 						<div class="jt-mod-flag-head">
 							<span class="jt-mod-flag-type">

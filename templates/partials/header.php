@@ -57,7 +57,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 		<div class="jt-community-nav-actions">
 			<?php if ( $user_id ) : ?>
 				<div class="jt-notif-dropdown-wrap">
-					<button type="button" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>" onclick="jtToggleNotifDropdown(this)">
+					<button type="button" class="jt-community-nav-notif" aria-label="<?php esc_attr_e( 'Notifications', 'jetonomy' ); ?>">
 						<?php jetonomy_echo_icon( 'bell', 16 ); ?>
 						<?php if ( $unread > 0 ) : ?>
 							<span class="jt-community-nav-badge"><?php echo (int) $unread; ?></span>
@@ -66,7 +66,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 					<div class="jt-notif-panel" hidden>
 						<div class="jt-notif-panel-head">
 							<strong><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></strong>
-							<button type="button" class="jt-notif-mark-read" onclick="jtMarkAllRead()"><?php esc_html_e( 'Mark all read', 'jetonomy' ); ?></button>
+							<button type="button" class="jt-notif-mark-read"><?php esc_html_e( 'Mark all read', 'jetonomy' ); ?></button>
 						</div>
 						<div class="jt-notif-panel-body">
 							<div class="jt-notif-panel-loading"><?php esc_html_e( 'Loading...', 'jetonomy' ); ?></div>
@@ -80,9 +80,9 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 
 			<?php if ( ! did_action( 'buddynext_loaded' ) ) : ?>
 			<div class="jt-font-scale" role="group" aria-label="<?php esc_attr_e( 'Font size', 'jetonomy' ); ?>">
-				<button class="jt-font-scale__btn active" type="button" data-scale="100" onclick="jtSetFontScale('100')" aria-label="<?php esc_attr_e( 'Default font size', 'jetonomy' ); ?>">A</button>
-				<button class="jt-font-scale__btn" type="button" data-scale="110" onclick="jtSetFontScale('110')" aria-label="<?php esc_attr_e( 'Large font size', 'jetonomy' ); ?>">A+</button>
-				<button class="jt-font-scale__btn" type="button" data-scale="120" onclick="jtSetFontScale('120')" aria-label="<?php esc_attr_e( 'Extra large font size', 'jetonomy' ); ?>">A++</button>
+				<button class="jt-font-scale__btn active" type="button" data-scale="100" aria-label="<?php esc_attr_e( 'Default font size', 'jetonomy' ); ?>">A</button>
+				<button class="jt-font-scale__btn" type="button" data-scale="110" aria-label="<?php esc_attr_e( 'Large font size', 'jetonomy' ); ?>">A+</button>
+				<button class="jt-font-scale__btn" type="button" data-scale="120" aria-label="<?php esc_attr_e( 'Extra large font size', 'jetonomy' ); ?>">A++</button>
 			</div>
 			<?php endif; ?>
 		</div>
@@ -170,6 +170,15 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 	if (scales.indexOf(saved) === -1) { saved = '100'; }
 	applyScale(saved);
 	window.jtSetFontScale = function (s) { if (scales.indexOf(s) !== -1) { applyScale(s); } };
+	// Event delegation — avoids inline onclick attributes that collide with the
+	// Interactivity API hydration pass inside .jt-app[data-wp-interactive].
+	document.addEventListener('click', function (e) {
+		if (!e.target || !e.target.closest) return;
+		var btn = e.target.closest('.jt-font-scale__btn');
+		if (btn && btn.dataset && btn.dataset.scale) {
+			window.jtSetFontScale(btn.dataset.scale);
+		}
+	});
 })();
 </script>
 <?php endif; ?>
@@ -235,6 +244,7 @@ $jt_js_data = [
 					var a = document.createElement('a');
 					a.href = n.object_url || n.url || (D.base + '/notifications/');
 					a.className = 'jt-notif-panel-item' + (n.is_read ? '' : ' unread');
+					if (n.id) { a.setAttribute('data-jt-notif-id', n.id); }
 					var txt = document.createElement('span');
 					txt.className = 'jt-notif-panel-text';
 					txt.textContent = n.message || '';
@@ -263,6 +273,55 @@ $jt_js_data = [
 			});
 		});
 	};
+	/* Mark single notification as read on click — fire-and-forget so navigation is not blocked */
+	document.addEventListener('click', function(e) {
+		if (!e.target || !e.target.closest) return;
+		var item = e.target.closest('.jt-notif-panel-item.unread');
+		if (!item) return;
+		var id = item.getAttribute('data-jt-notif-id');
+		if (!id) return;
+		item.classList.remove('unread');
+		fetch(D.restNotif + '/' + encodeURIComponent(id), {
+			method: 'PATCH',
+			headers: { 'X-WP-Nonce': D.nonce },
+			credentials: 'same-origin'
+		}).catch(function() { /* UI already updated; server-side sync on next load */ });
+		var badge = document.querySelector('.jt-community-nav-badge');
+		if (badge) {
+			var next = parseInt(badge.textContent, 10) - 1;
+			if (next > 0) {
+				badge.textContent = String(next);
+			} else {
+				badge.remove();
+			}
+		}
+	});
+	/* Delegated click handlers — bound once on document so they keep working even
+	   when the Interactivity API hydrates .jt-app and re-renders nearby nodes. */
+	document.addEventListener('click', function(e) {
+		if (!e.target || !e.target.closest) return;
+		var notifBtn = e.target.closest('.jt-community-nav-notif');
+		if (notifBtn) {
+			e.preventDefault();
+			window.jtToggleNotifDropdown(notifBtn);
+			return;
+		}
+		var markReadBtn = e.target.closest('.jt-notif-mark-read');
+		if (markReadBtn) {
+			e.preventDefault();
+			window.jtMarkAllRead();
+			return;
+		}
+		/* Row-level navigation: make .jt-row-clickable / .jt-idea cards clickable
+		   without colliding with inner links/buttons. Skip middle-click and
+		   modifier keys so open-in-new-tab still works as expected. */
+		if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+		if (e.target.closest('a, button, input, select, textarea, label')) return;
+		var row = e.target.closest('[data-jt-href]');
+		if (row) {
+			window.location = row.getAttribute('data-jt-href');
+		}
+	});
 	/* Close dropdown on outside click */
 	document.addEventListener('click', function(e) {
 		if (!e.target || !e.target.closest) return;

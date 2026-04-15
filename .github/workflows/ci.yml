@@ -66,8 +66,89 @@ jobs:
           WP_VERSION: ${{ matrix.wp }}
         run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION" true
 
-      - name: Run PHPUnit
-        run: vendor/bin/phpunit --testdox --exclude-group pro
+      - name: Run PHPUnit (free standalone — unit testsuite)
+        run: vendor/bin/phpunit --testdox --testsuite=unit
+
+  # ── PHPUnit combo: Free + Pro loaded together ─────────────────────────────
+  # Exercises the Pro testsuite alongside the free unit testsuite so any
+  # regression that only shows up when both plugins are active (e.g. Pro
+  # hooks interfering with free journey code paths) is caught in CI.
+  #
+  # Requires a PAT with read access to jetonomy-pro stored as PRO_PAT.
+  # Pinned to a single ref (v1.3.0) rather than github.ref_name to avoid
+  # any indirect workflow injection via branch name manipulation.
+  phpunit-with-pro:
+    runs-on: ubuntu-latest
+    # Skip when PRO_PAT secret isn't configured — checkout step would otherwise
+    # fail with "Input required and not supplied: token" and turn CI red for an
+    # infra reason. Also skip on cross-repo PRs (forks never receive secrets).
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && vars.PRO_PAT_CONFIGURED == 'true' }}
+    strategy:
+      matrix:
+        php: ['8.2', '8.4']
+        wp: ['6.8', '6.9']
+      fail-fast: false
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wp_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout jetonomy (free)
+        uses: actions/checkout@v4
+        with:
+          path: jetonomy
+
+      - name: Checkout jetonomy-pro
+        uses: actions/checkout@v4
+        with:
+          repository: vapvarun/jetonomy-pro
+          token: ${{ secrets.PRO_PAT }}
+          path: jetonomy-pro
+          ref: v1.3.0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, mbstring, intl
+          coverage: none
+
+      - name: Install system dependencies
+        run: sudo apt-get install -y subversion
+
+      - name: Install Composer dependencies (free)
+        working-directory: jetonomy
+        run: composer install --no-progress --prefer-dist
+
+      - name: Install WordPress test library
+        working-directory: jetonomy
+        env:
+          WP_VERSION: ${{ matrix.wp }}
+        run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION" true
+
+      - name: Verify Pro is reachable from bootstrap
+        working-directory: jetonomy
+        run: |
+          if [ ! -f ../jetonomy-pro/jetonomy-pro.php ]; then
+            echo "::error::jetonomy-pro not found at ../jetonomy-pro/ — combo job cannot run."
+            exit 1
+          fi
+          echo "Pro plugin located at $(realpath ../jetonomy-pro/jetonomy-pro.php)"
+
+      - name: Run PHPUnit (free + pro combined)
+        working-directory: jetonomy
+        run: vendor/bin/phpunit --testdox
 
   # ── PHPStan static analysis ──────────────────────────────────────────────
   phpstan:

@@ -20,7 +20,7 @@ bbPress, the most-used forum plugin, stores topics as WordPress posts and replie
 
 We built Jetonomy to fix that at the data layer.
 
-22 custom MySQL tables, designed for the actual query patterns of forum software. Denormalized counters (reply counts, vote scores) updated on write, not computed on read. Cursor-based pagination so list endpoints stay fast regardless of dataset size. A caching layer that uses Redis when available and degrades gracefully when it isn't.
+24 custom MySQL tables, designed for the actual query patterns of forum software. Denormalized counters (reply counts, vote scores) updated on write, not computed on read. Cursor-based pagination so list endpoints stay fast regardless of dataset size. A caching layer that uses Redis when available and degrades gracefully when it isn't.
 
 On top of that:
 - WordPress Interactivity API frontend — no jQuery, server-rendered HTML that hydrates, SEO-friendly
@@ -82,7 +82,7 @@ https://wbcomdesigns.com/downloads/jetonomy/
 If you're a WordPress developer or agency building community features for clients, here's the technical picture on Jetonomy — the new forum plugin we released this week.
 
 **Database layer**
-22 custom MySQL tables — not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Cold queries against a 50,000-post community stay under 300ms. With Redis object caching, under 50ms.
+24 custom MySQL tables — not WordPress post types or post meta. Tables are designed for forum query patterns, with proper composite indexes. Counters (reply_count, vote_score, post_count) are denormalized and updated on write. Cold queries against a 50,000-post community stay under 300ms. With Redis object caching, under 50ms.
 
 **REST API**
 42 endpoints at `jetonomy/v1`. Cursor-based pagination on every list endpoint — not offset-based. Cursor pagination is stable when new content is added between page requests, which offset-based pagination is not. Full rate limiting at the API layer. Response shapes are consistent and documented.
@@ -152,7 +152,7 @@ More features than bbPress, more actively developed, more modern-looking UI. Sti
 Not really a forum plugin — it's a social network layer with activity streams, friend connections, groups, and optional discussion components. Powerful and flexible, but it's a bigger commitment than a forum plugin. Builds a parallel user layer on top of WordPress. If you want a full social community (profiles, connections, activity feed, groups, messaging), BuddyPress plus BuddyPress extensions is a reasonable path.
 
 **Jetonomy (what we built)**
-Custom MySQL tables designed specifically for forum query patterns. Trust level system that auto-moderates new users. Three space types (Forum, Q&A, Ideas). WordPress Interactivity API frontend. CSS that inherits from theme.json. 42 REST API endpoints with cursor pagination.
+Custom MySQL tables designed specifically for forum query patterns. Trust level system that auto-moderates new users. Three space types (Forum, Q&A, Ideas). WordPress Interactivity API frontend. CSS that inherits from theme.json. 48+ REST API endpoints with cursor pagination.
 
 Where we're weaker: we're brand new. bbPress and wpForo have years of community support, tutorials, and hosting-provider documentation. We have 1.0 and a commitment to maintain it seriously.
 
@@ -163,3 +163,58 @@ If you're starting fresh, or if you've been frustrated by the options above, it'
 https://wbcomdesigns.com/downloads/jetonomy/
 
 #WordPress #CommunityManagement #ForumPlugin #bbPress #WebDevelopment
+
+---
+
+## POST-LAUNCH / v1.3.0 REFRESH — April 2026
+
+Two LinkedIn posts for the v1.3 AI release. Professional tone, technical depth, aimed at developers and community operations leads.
+
+---
+
+### Post 6 — AI Moderation on Your Own Server (v1.3.0 Launch)
+
+Every "AI moderation" feature I've seen for community software sends member content to OpenAI. For regulated industries — health, legal, financial, enterprise internal — that is a non-starter.
+
+Jetonomy 1.3 ships with a pluggable AI adapter that supports four providers, and the one I care about most is **self-hosted Ollama**.
+
+Here is what it looks like in practice:
+
+1. You install Ollama on the same server as WordPress.
+2. You pull a model (llama3.1:8b is a good default — ~5GB).
+3. In **Jetonomy → Settings → AI Integration**, you enter `http://localhost:11434` as the base URL.
+4. You turn on AI spam detection, content moderation, reply suggestions, or thread summaries — each can use a different provider if you want.
+
+Every new post and reply is scored by the model before publish. Low-confidence results go to the moderation queue with a reason the model generated. High-confidence clean posts are published as normal. High-confidence spam is rejected.
+
+No content leaves your server. No API keys. No per-request bill. Every decision is logged to `wp_jt_pro_ai_log` for compliance review.
+
+We ship OpenAI, Anthropic, and a Custom adapter as well — use them if you want quality over privacy. But Ollama is why I think this release matters for the WordPress community.
+
+Two weeks after launch. Jetonomy 1.3.0.
+
+https://wbcomdesigns.com/downloads/jetonomy-pro/
+
+#WordPress #AI #Ollama #Privacy #CommunityManagement
+
+---
+
+### Post 7 — Post-Launch Velocity Note
+
+14 days after shipping Jetonomy 1.0, we have three point releases out:
+
+- **1.1** — theme compatibility polish across 12 themes, design token bridge
+- **1.2** — Private Topics, Topic Prefixes, Similar Topics detection, Quote Replies (all free)
+- **1.3** — AI adapter layer, Ollama support, AI spam detection, content moderation, reply suggestions, thread summaries (Pro)
+
+Plus two supporting things nobody saw:
+- GitHub Actions CI pipeline (PHP lint, WPCS, PHPStan level 5, Plugin Check)
+- Nine Basecamp bug fixes from early users
+
+One of the concerns I heard in the week after launch was: "Will you keep shipping, or is this another plugin that peaks at 1.0?" I understand why people ask — the WordPress plugin graveyard is deep. The answer is: we ship, we have CI that blocks regressions, and we have an open Basecamp board that tracks every issue.
+
+If you were waiting to see whether Jetonomy would prove it was a serious project before recommending it — this is the moment.
+
+https://wbcomdesigns.com/downloads/jetonomy/
+
+#WordPress #OpenSource #BuildInPublic #ForumPlugin

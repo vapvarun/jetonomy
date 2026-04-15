@@ -270,9 +270,13 @@ class Posts_Controller extends Base_Controller {
 
 		$pagination = $this->get_pagination( $request );
 
-		// Resolve limit: explicit param → Space::get_posts_per_page() (space → global → 20).
-		$limit = null !== $request->get_param( 'limit' )
-			? (int) $pagination['limit']
+		// Resolve limit: explicit query-param from client → Space::get_posts_per_page()
+		// (space → global → 20). Use raw query params, NOT get_param(), because route
+		// schemas auto-fill defaults and would mask the "not provided" case.
+		$raw_limit = $request->get_query_params()['limit'] ?? null;
+		$has_limit = null !== $raw_limit && '' !== $raw_limit;
+		$limit     = $has_limit
+			? max( 1, min( 100, (int) $pagination['limit'] ) )
 			: Space::get_posts_per_page( $space_id );
 
 		$posts = Post::list_by_space_visible(

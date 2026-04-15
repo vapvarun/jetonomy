@@ -59,11 +59,11 @@ class Demo_Seeder {
 		$u             = self::create_users( $now );
 		$demo['users'] = array_values( $u );
 
-		$alice = $u['jt_demo_alice'] ?? $admin_id;
-		$bob   = $u['jt_demo_bob'] ?? $admin_id;
-		$carol = $u['jt_demo_carol'] ?? $admin_id;
-		$david = $u['jt_demo_david'] ?? $admin_id;
-		$eve   = $u['jt_demo_eve'] ?? $admin_id;
+		$alice = $u['alice'] ?? $admin_id;
+		$bob   = $u['bob'] ?? $admin_id;
+		$carol = $u['carol'] ?? $admin_id;
+		$david = $u['david'] ?? $admin_id;
+		$eve   = $u['eve'] ?? $admin_id;
 
 		// ── Categories ─────────────────────────────────────────────────────────
 
@@ -80,7 +80,7 @@ class Demo_Seeder {
 		$cat2                 = Category::create(
 			[
 				'name'        => 'Community',
-				'slug'        => 'community-hub',
+				'slug'        => 'community',
 				'description' => 'Everything about our community — introductions, events, and general chat.',
 				'visibility'  => 'public',
 			]
@@ -589,10 +589,10 @@ class Demo_Seeder {
 	private static function seed_pro( int $admin_id, array $u, array $demo, string $now ): array {
 		global $wpdb;
 
-		$alice = $u['jt_demo_alice'] ?? $admin_id;
-		$bob   = $u['jt_demo_bob'] ?? $admin_id;
-		$carol = $u['jt_demo_carol'] ?? $admin_id;
-		$david = $u['jt_demo_david'] ?? $admin_id;
+		$alice = $u['alice'] ?? $admin_id;
+		$bob   = $u['bob'] ?? $admin_id;
+		$carol = $u['carol'] ?? $admin_id;
+		$david = $u['david'] ?? $admin_id;
 
 		$pro = [ 'polls' => [] ];
 
@@ -832,7 +832,7 @@ class Demo_Seeder {
 
 		$defs = [
 			[
-				'login'       => 'jt_demo_alice',
+				'login'       => 'alice',
 				'display'     => 'Alice Chen',
 				'email'       => 'alice.demo@jetonomy.local',
 				'trust_level' => 3,
@@ -840,7 +840,7 @@ class Demo_Seeder {
 				'bio'         => 'Community manager and content strategist. I help online communities grow.',
 			],
 			[
-				'login'       => 'jt_demo_bob',
+				'login'       => 'bob',
 				'display'     => 'Bob Martinez',
 				'email'       => 'bob.demo@jetonomy.local',
 				'trust_level' => 2,
@@ -848,7 +848,7 @@ class Demo_Seeder {
 				'bio'         => 'Full-stack developer. Love building tools that connect people.',
 			],
 			[
-				'login'       => 'jt_demo_carol',
+				'login'       => 'carol',
 				'display'     => 'Carol Thompson',
 				'email'       => 'carol.demo@jetonomy.local',
 				'trust_level' => 1,
@@ -856,7 +856,7 @@ class Demo_Seeder {
 				'bio'         => 'Product designer. Obsessed with good UX and accessible interfaces.',
 			],
 			[
-				'login'       => 'jt_demo_david',
+				'login'       => 'david',
 				'display'     => 'David Kim',
 				'email'       => 'david.demo@jetonomy.local',
 				'trust_level' => 1,
@@ -864,7 +864,7 @@ class Demo_Seeder {
 				'bio'         => 'WordPress consultant. I migrate communities for a living.',
 			],
 			[
-				'login'       => 'jt_demo_eve',
+				'login'       => 'eve',
 				'display'     => 'Eve Johnson',
 				'email'       => 'eve.demo@jetonomy.local',
 				'trust_level' => 0,

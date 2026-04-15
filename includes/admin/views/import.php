@@ -25,15 +25,22 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 		<div class="jetonomy-empty-state">
 			<span class="dashicons dashicons-database-import"></span>
 			<h2><?php esc_html_e( 'No Forum Data Detected', 'jetonomy' ); ?></h2>
-			<p><?php esc_html_e( 'Jetonomy can import from bbPress and wpForo. Install one of these plugins and create some content, then come back here to import.', 'jetonomy' ); ?></p>
+			<p><?php esc_html_e( 'Jetonomy can import from bbPress, wpForo, and Asgaros. Install one of these plugins and create some content, then come back here to import.', 'jetonomy' ); ?></p>
 			<div class="jetonomy-import-sources">
-				<div class="jetonomy-import-source jetonomy-import-source--unavailable">
+				<div class="jetonomy-import-source jetonomy-import-source--unavailable" data-source="bbpress">
 					<h3><?php esc_html_e( 'bbPress', 'jetonomy' ); ?></h3>
 					<p><?php esc_html_e( 'Not detected', 'jetonomy' ); ?></p>
+					<button type="button" class="button jetonomy-import-btn" data-source="bbpress" disabled><?php esc_html_e( 'Import from bbPress', 'jetonomy' ); ?></button>
 				</div>
-				<div class="jetonomy-import-source jetonomy-import-source--unavailable">
+				<div class="jetonomy-import-source jetonomy-import-source--unavailable" data-source="wpforo">
 					<h3><?php esc_html_e( 'wpForo', 'jetonomy' ); ?></h3>
 					<p><?php esc_html_e( 'Not detected', 'jetonomy' ); ?></p>
+					<button type="button" class="button jetonomy-import-btn" data-source="wpforo" disabled><?php esc_html_e( 'Import from wpForo', 'jetonomy' ); ?></button>
+				</div>
+				<div class="jetonomy-import-source jetonomy-import-source--unavailable" data-source="asgaros">
+					<h3><?php esc_html_e( 'Asgaros', 'jetonomy' ); ?></h3>
+					<p><?php esc_html_e( 'Not detected', 'jetonomy' ); ?></p>
+					<button type="button" class="button jetonomy-import-btn" data-source="asgaros" disabled><?php esc_html_e( 'Import from Asgaros', 'jetonomy' ); ?></button>
 				</div>
 			</div>
 		</div>

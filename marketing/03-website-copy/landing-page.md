@@ -1,7 +1,7 @@
 # Jetonomy — Landing Page Copy
 
-**Version:** 1.0.0 Launch
-**Last updated:** March 2026
+**Version:** 1.3.0
+**Last updated:** April 2026
 
 ---
 
@@ -25,7 +25,7 @@ See Pro Features
 
 ## SOCIAL PROOF BAR
 
-**22** custom database tables &nbsp;&nbsp; | &nbsp;&nbsp; **6** trust levels &nbsp;&nbsp; | &nbsp;&nbsp; **61+** REST API endpoints &nbsp;&nbsp; | &nbsp;&nbsp; Sub-200ms at 50K topics
+**24** custom database tables &nbsp;&nbsp; | &nbsp;&nbsp; **6** trust levels &nbsp;&nbsp; | &nbsp;&nbsp; **90+** REST API endpoints &nbsp;&nbsp; | &nbsp;&nbsp; Sub-200ms at 50K topics
 
 ---
 
@@ -33,7 +33,7 @@ See Pro Features
 
 ### Built for performance, not just features
 
-Jetonomy stores community data in 22 dedicated MySQL tables with proper indexes — not in wp_posts and wp_postmeta. Reply counts, vote scores, and post counts are stored directly on each record, so there are no slow COUNT queries on page load. At 50,000 topics with Redis, pages load in under 200ms.
+Jetonomy stores community data in 24 dedicated MySQL tables with proper indexes — not in wp_posts and wp_postmeta. Reply counts, vote scores, and post counts are stored directly on each record, so there are no slow COUNT queries on page load. At 50,000 topics with Redis, pages load in under 200ms.
 
 ### A community that moderates itself
 
@@ -67,17 +67,25 @@ The importer auto-detects your existing installation, shows you a dry-run summar
 
 Every community page gets Schema.org structured data (DiscussionForumPosting, QAPage with acceptedAnswer, BreadcrumbList), Open Graph tags, Twitter card tags, and clean human-readable URLs. All pages render server-side — search engines see complete content, not a loading spinner.
 
-### 61+ REST API endpoints
+### 48+ REST API endpoints (90+ with Pro)
 
 Everything Jetonomy does is available via REST API under the jetonomy/v1 namespace. Cursor-based pagination on every list endpoint. JSON schema validation on every input. Build custom frontends, mobile apps, or integrations without touching PHP.
 
 ### WordPress Abilities API support
 
-Jetonomy registers 18 abilities across 5 categories — content, spaces, users, moderation, and engagement. AI agents and automation tools can discover and operate your community programmatically without custom integration code. No other WordPress forum plugin supports this today.
+Jetonomy registers 19 abilities across 5 categories — content, spaces, users, moderation, and engagement. AI agents and automation tools can discover and operate your community programmatically without custom integration code. No other WordPress forum plugin supports this today.
 
 ### Membership plugin integration
 
 Gate spaces by MemberPress or Paid Memberships Pro membership level. Access rules automatically adjust when a membership activates, upgrades, or expires. No manual syncing, no custom code.
+
+### Self-hosted AI moderation (Pro, new in 1.3.0)
+
+Jetonomy Pro now includes an AI layer that reads every new post and reply for spam, abuse, and rule violations before it is published. Four providers supported out of the box: OpenAI, Anthropic, any OpenAI-compatible endpoint, and — for communities that cannot send content to a third-party API — **self-hosted Ollama** running on the same server as WordPress. No network hop, no API key, no data leaves your machine. Every model decision is logged for compliance review.
+
+### Quote replies, topic prefixes, private topics (new in 1.2.0)
+
+Fine-grained controls for how members post. Select any passage and click Quote to insert a styled blockquote linked back to the source. Space owners define colored prefixes like Bug, Question, or Solved to classify topics at a glance in the listing. Mark sensitive topics as private so only you and space moderators can see them. And as members type a new topic title, Jetonomy shows similar existing topics inline to cut duplicates before they happen.
 
 ---
 
@@ -107,9 +115,10 @@ Top answers surface automatically in Q&A spaces. Flagged content goes to a moder
 | Email notifications | Yes | Yes |
 | bbPress and wpForo importer | Yes | Yes |
 | Schema.org and SEO markup | Yes | Yes |
-| 61+ REST API endpoints | Yes | Yes |
+| 48+ REST API endpoints (90+ with Pro) | Yes | Yes |
 | Template overrides | Yes | Yes |
-| WordPress Abilities API (18 abilities) | Yes | Yes |
+| WordPress Abilities API (19 abilities) | Yes | Yes |
+| AI integration (spam, moderation, summaries — with self-hosted Ollama) | — | Yes |
 | Private messaging | — | Yes |
 | Emoji reactions | — | Yes |
 | Polls | — | Yes |
@@ -132,10 +141,10 @@ The free plugin covers everything a real community needs. Pro adds the tools tha
 ## FAQ
 
 ### Is Jetonomy really free?
-Yes. The free plugin is available at wbcomdesigns.com and includes forums, Q&A, ideas, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 13 additional modules.
+Yes. The free plugin is available at wbcomdesigns.com and includes forums, Q&A, ideas, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 14 additional modules, including AI integration with self-hosted Ollama support.
 
 ### Will it slow down my WordPress site?
-Jetonomy does not use wp_posts or wp_postmeta for community content. It uses 22 custom MySQL tables with indexes designed for forum query patterns. Reply counts and vote scores are stored as denormalized counters — no COUNT queries on page load. With Redis, pages load in under 200ms at 50,000 topics.
+Jetonomy does not use wp_posts or wp_postmeta for community content. It uses 24 custom MySQL tables with indexes designed for forum query patterns. Reply counts and vote scores are stored as denormalized counters — no COUNT queries on page load. With Redis, pages load in under 200ms at 50,000 topics.
 
 ### Does it work with my theme?
 Jetonomy uses CSS custom properties that pull values from your theme's theme.json — fonts, colors, border radius, and spacing. It works with any theme that follows the WordPress standard. If your theme doesn't use theme.json, Jetonomy falls back to sensible defaults.

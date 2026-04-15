@@ -399,10 +399,24 @@ class Template_Loader {
 		add_action(
 			'wp_head',
 			function () use ( $data ) {
-				$desc  = '';
-				$title = '';
-				$url   = '';
-				$image = '';
+				// When the Pro seo-pro extension is active, it emits richer
+				// OG/Twitter/canonical tags at priority 0 and owns that output
+				// completely. We must not duplicate those tags — but we still
+				// emit the oEmbed discovery <link> since that lives only here.
+				$seo_pro_active = in_array(
+					'seo-pro',
+					(array) get_option( 'jetonomy_pro_extensions', array() ),
+					true
+				);
+
+				$desc         = '';
+				$title        = '';
+				$url          = '';
+				$image        = '';
+				$og_type      = 'website';
+				$twitter_card = 'summary';
+				$article_meta = array(); // author / published_time / section — only for post route.
+				$oembed_url   = '';
 
 				switch ( $data['route'] ) {
 					case 'home':
@@ -422,10 +436,49 @@ class Template_Loader {
 					case 'post':
 						$post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
 						if ( $post ) {
-							$title = $post->title;
-							$desc  = mb_substr( wp_strip_all_tags( $post->content ), 0, 160 );
-							$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
-							$url   = \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+							$space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
+							$title        = $post->title;
+							$desc         = ! empty( $post->content_plain )
+								? wp_strip_all_tags( (string) $post->content_plain )
+								: wp_strip_all_tags( (string) $post->content );
+							$desc         = trim( preg_replace( '/\s+/', ' ', $desc ) );
+							$url          = \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+							$og_type      = 'article';
+							$twitter_card = 'summary_large_image';
+
+							// First inline image → OG/Twitter image.
+							if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', (string) $post->content, $m ) ) {
+								$image = esc_url_raw( $m[1] );
+							}
+
+							// article:* meta — author, published time, section.
+							$author_name = '';
+							if ( ! empty( $post->author_id ) ) {
+								$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
+								if ( $profile && ! empty( $profile->display_name ) ) {
+									$author_name = $profile->display_name;
+								} else {
+									$author      = get_userdata( (int) $post->author_id );
+									$author_name = $author ? $author->display_name : '';
+								}
+							}
+							$article_meta['article:author']         = $author_name;
+							$article_meta['article:published_time'] = ! empty( $post->created_at )
+								? gmdate( 'c', strtotime( (string) $post->created_at ) )
+								: '';
+							$article_meta['article:modified_time']  = ! empty( $post->updated_at )
+								? gmdate( 'c', strtotime( (string) $post->updated_at ) )
+								: '';
+							$article_meta['article:section']        = $space->title ?? '';
+
+							// oEmbed JSON discovery link — consumers hit our custom endpoint.
+							$oembed_url = add_query_arg(
+								array(
+									'url'    => rawurlencode( $url ),
+									'format' => 'json',
+								),
+								rest_url( 'jetonomy/v1/oembed' )
+							);
 						}
 						break;
 					case 'profile':
@@ -438,25 +491,39 @@ class Template_Loader {
 						break;
 				}
 
-				if ( $desc ) {
-					echo '<meta name="description" content="' . esc_attr( mb_substr( $desc, 0, 160 ) ) . '">' . "\n";
-				}
-				if ( $title ) {
-					echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
-					echo '<meta property="og:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
-					echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
-					echo '<meta property="og:type" content="website">' . "\n";
-					echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '">' . "\n";
-					if ( $image ) {
-						echo '<meta property="og:image" content="' . esc_url( $image ) . '">' . "\n";
+				if ( ! $seo_pro_active ) {
+					if ( $desc ) {
+						echo '<meta name="description" content="' . esc_attr( mb_substr( $desc, 0, 160 ) ) . '">' . "\n";
 					}
-					echo '<meta name="twitter:card" content="summary">' . "\n";
-					echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
-					echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
+					if ( $title ) {
+						echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
+						echo '<meta property="og:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
+						echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
+						echo '<meta property="og:type" content="' . esc_attr( $og_type ) . '">' . "\n";
+						echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '">' . "\n";
+						if ( $image ) {
+							echo '<meta property="og:image" content="' . esc_url( $image ) . '">' . "\n";
+						}
+						foreach ( $article_meta as $prop => $value ) {
+							if ( '' !== $value ) {
+								echo '<meta property="' . esc_attr( $prop ) . '" content="' . esc_attr( $value ) . '">' . "\n";
+							}
+						}
+						echo '<meta name="twitter:card" content="' . esc_attr( $twitter_card ) . '">' . "\n";
+						echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
+						echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
+						if ( $image ) {
+							echo '<meta name="twitter:image" content="' . esc_url( $image ) . '">' . "\n";
+						}
+					}
+
+					if ( $url ) {
+						echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+					}
 				}
 
-				if ( $url ) {
-					echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+				if ( $oembed_url ) {
+					echo '<link rel="alternate" type="application/json+oembed" href="' . esc_url( $oembed_url ) . '" title="' . esc_attr( $title ) . '">' . "\n";
 				}
 			},
 			1

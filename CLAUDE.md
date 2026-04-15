@@ -65,9 +65,79 @@
 ## Database Tables
 Categories, Spaces, Posts, Replies, Votes, UserProfiles, Notifications, Subscriptions, ReadStatus, SpaceMembers, Tags, PostTags, SpaceTags, SpaceTagMap, UserInterests, ActivityLog, Restrictions, AccessRules, Flags, Revisions, JoinRequests, InviteLinks
 
+## CLI Module (shipped 2026-04-11)
+
+Journey-based CLI architecture for headless testing + automation. Every user/admin action is driveable from the terminal AND unit-testable via PHPUnit.
+
+```
+wp jetonomy <subject> <subcommand>       # 13 free command roots
+wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
+wp jetonomy qa-actions                   # 210/210 smoke tests (4 phases)
+wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
+```
+
+**Key files:**
+- `includes/cli/class-journey-result.php` — shared DTO (ok/fail/from_wp_error)
+- `includes/cli/class-cli-dispatcher.php` — registers 13 free command slugs
+- `includes/cli/journeys/` — 8 journey classes (pure PHP, no WP_CLI coupling)
+- `includes/cli/commands/` — 13 command classes (thin WP_CLI wrappers extending Base_Command)
+- `includes/cli/scenarios/` — Scenario_Runner + 5 bundled scenarios
+- `includes/qa/class-journey-tests.php` — Phase 4 of qa-actions, smoke-tests every journey
+- `tests/unit/cli/journeys/` — 8 journey unit test files
+- `tests/unit/cli/scenarios/ScenarioRunnerTest.php` — 11 scenario runner tests
+- `tests/pro/cli/journeys/` — 14 Pro journey unit test files (in free plugin's tests/pro/ dir)
+
+**Pro CLI (in jetonomy-pro plugin):**
+- `jetonomy-pro/includes/cli/class-pro-cli-dispatcher.php` — 15 Pro command slugs
+- `jetonomy-pro/includes/cli/journeys/` — 14 journey classes (one per extension)
+- `jetonomy-pro/includes/cli/commands/` — 15 command classes
+- Pro CLI loads via `Jetonomy_Pro::maybe_load_cli()` — guarded by `is_dir()` for dist safety
+
+**Test commands:**
+```bash
+composer test              # PHPUnit (free + pro combo)
+composer test:free         # PHPUnit free-only (JETONOMY_TEST_SKIP_PRO=1)
+composer test:combo        # PHPUnit with Pro loaded
+composer test:usability    # Playwright browser tests (250 flows)
+```
+
+## Testing strategy (2026-04-14)
+
+**Removed: browser-level Playwright usability suite** (`tests/usability/`).
+After evaluation it surfaced zero product UX bugs and primarily exposed
+test-infrastructure drift (hardcoded IDs, CLI arg mismatches, selector
+drift). The grind-to-signal ratio was too poor to justify continued
+investment. Real UX validation moved back to manual browser testing +
+Basecamp triage.
+
+**Kept — the layers that actually find bugs:**
+1. **PHPUnit** — 226 tests across unit/integration/security/concurrency/error-paths/pro. Runs via `composer test`. Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
+2. **`wp jetonomy qa-actions`** — 210 live-stack smoke checks (74 REST + 23 Model + 62 Pro + 51 Journey). Runs in ~30s, surfaces config gaps (e.g. missing `trust_thresholds` defaults).
+3. **`wp jetonomy scenario run <name>`** — 5 bundled end-to-end scenarios.
+
+**Next session priorities:**
+- Triage Basecamp "In Testing" column (13+ cards never triaged)
+- Customer ticket triage (`/autovap support`)
+- Add `composer test` + `wp jetonomy qa-actions` to CI if not already wired
+
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-04-15 | feature | Theme bridge for BuddyX, BuddyX Pro, Reign — reads Kirki theme mods, injects `--jt-accent` + toggles `.jt-dark` via `body_class` (`includes/integrations/class-theme-integration.php`) |
+| 2026-04-14 | pending | fix(#9721640432): posts_per_page space setting truly applies — drop `default=>20` from REST `limit` schema (made null-check dead), use raw query params in posts controller, save `null` (not `20`) on empty admin field, render empty `value=""` (not `0`) in space-edit form, strip key in spaces handler sanitizer when null/0 |
+| 2026-04-14 | `9b242b3` | fix(cli): reply create docblock — `[--status]` and `[--format]` missing `: description` before `---` enum, so WP-CLI rejected `--format=json` |
+| 2026-04-14 | `8745756` | test(usability): id-lookup helpers + member/admin/moderator fixes — free-flow pass rate 29 → 67 |
+| 2026-04-14 | `1a89088` | test(usability): fix CLI arg signatures in 7 flows (`demo-seed`, `demo-cleanup`, `space list --category=<id>`) |
+| 2026-04-14 | `f1106a2` | test(usability): align demo seeder (friendly user logins, category slug `community`) + matcher implicit `flow_completes_without_error` |
+| 2026-04-14 | `1cfeae6` | fix: jt_notifications `object_type` ENUM adds `'message'` (migration 1.2.3) + declare `$ai_spam_detector` to remove PHP 8.2 deprecation; DB_VERSION → 1.2.3 |
+| 2026-04-12 | `bf1a1a8` | Usability test suite complete — 250 flows, 250 YAMLs, all layers connected, zero TODO |
+| 2026-04-12 | `7f205b2` | 66 free flows implemented (trusted + moderator + admin + cross-cutting) |
+| 2026-04-12 | `7e45d40` | 52 free flows implemented (anonymous + registered + member) |
+| 2026-04-12 | `159f8fe` | Phase 4 qa-actions extended to all 14 Pro journeys (51/51 checks) |
+| 2026-04-12 | multiple | Pro CLI — 14 extension journeys + commands + tests across both plugins |
+| 2026-04-11 | `06db47c` | Scenario runner + 5 bundled scenarios |
+| 2026-04-11 | `32968a9`→`d61b49b` | CLI module foundation through qa-actions Phase 4 (10 commits) |
+| 2026-04-11 | 5 commits | 5 Basecamp bug fixes (notification click, Join Space, email URL, tab visibility, settings defaults) |
 | 2026-04-05 | v1.3.0 | AI adapter layer (interface, Ollama provider, registry, spam detector), 9 Basecamp bug fixes, security/code quality audit, WPCS ruleset |
 | 2026-03-29 | v1.0.1 | Theme compat: .container→.jt-container rename, dynamic --jt-container-width from theme settings, flex parent fix, sub-nav inside container, page title suppression, tested 12 themes |
 | 2026-03-27 | `e42b7ec` | Fix: space settings merge (not replace), join request state persists on refresh, join request email notification to admins |

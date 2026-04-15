@@ -47,9 +47,9 @@ wp plugin install jetonomy --activate
 
 Jetonomy sets everything up automatically the first time you activate it. You do not need to run any SQL or configure anything manually.
 
-**Database tables created (22 total):**
+**Database tables created (24 total):**
 
-Jetonomy creates 22 custom tables under the `wp_jt_` prefix — one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, and more.
+Jetonomy creates 24 custom tables under the `wp_jt_` prefix — one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more.
 
 **WordPress capabilities registered:**
 

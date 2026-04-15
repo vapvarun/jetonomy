@@ -87,7 +87,7 @@ $type_label     = $type_defaults['label'];
 				'idea'     => __( 'Describe your idea', 'jetonomy' ),
 				'status'   => __( "What's on your mind?", 'jetonomy' ),
 			];
-			$title_placeholder = esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
+			$title_placeholder  = esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
 			?>
 			<input type="text" id="jt-post-title" name="title" class="jt-input"
 					placeholder="<?php echo $title_placeholder; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped above ?>"
@@ -161,13 +161,19 @@ $type_label     = $type_defaults['label'];
 		</div>
 		<?php endif; ?>
 
-		<!-- Scheduler panel — shown when "Schedule" is selected -->
-		<div class="jt-schedule-panel" data-wp-bind--hidden="!context.showScheduler">
+		<!-- Scheduler panel — shown when "Schedule" is selected.
+			Initial `hidden` attribute prevents a flash-of-visible-content
+			before the Interactivity API hydrates the data-wp-bind--hidden binding. -->
+		<div class="jt-schedule-panel" hidden data-wp-bind--hidden="!context.showScheduler">
 			<div class="jt-form-group">
-				<label for="jt-post-published-at" class="jt-label">
+				<label class="jt-label">
 					<?php esc_html_e( 'Publish on', 'jetonomy' ); ?>
 				</label>
-				<input type="datetime-local" id="jt-post-published-at" name="published_at" class="jt-input jt-input--datetime">
+				<div class="jt-datetime-split">
+					<input type="date" id="jt-post-published-date" name="published_date" class="jt-input jt-input--date" aria-label="<?php esc_attr_e( 'Date', 'jetonomy' ); ?>">
+					<input type="time" id="jt-post-published-time" name="published_time" class="jt-input jt-input--time" aria-label="<?php esc_attr_e( 'Time', 'jetonomy' ); ?>" step="60">
+				</div>
+				<input type="hidden" name="published_at" value="">
 				<p class="jt-label-hint">
 					<?php esc_html_e( 'Your post will be published automatically at this date and time.', 'jetonomy' ); ?>
 				</p>
@@ -197,7 +203,7 @@ $type_label     = $type_defaults['label'];
 						data-wp-on--click="actions.togglePublishMenu">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
 				</button>
-				<div class="jt-publish-mode__menu" data-wp-bind--hidden="!state.publishMenuOpen">
+				<div class="jt-publish-mode__menu" hidden data-wp-bind--hidden="!state.publishMenuOpen">
 					<button type="button" class="jt-publish-mode__option"
 							data-wp-on--click="actions.selectPublishNow">
 						<?php esc_html_e( 'Publish now', 'jetonomy' ); ?>

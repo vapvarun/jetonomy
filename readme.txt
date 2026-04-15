@@ -34,7 +34,7 @@ If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-cli
 
 ### Built to Be Fast at Scale
 
-Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 21 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
+Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 24 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
 
 Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). Frequently accessed data is automatically cached with Redis or Memcached if you have them. Batch queries everywhere — no N+1 problems.
 
@@ -126,7 +126,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 **Developer Tools**
 - 48+ REST API endpoints at `/wp-json/jetonomy/v1/`
-- 18 abilities registered with the WordPress Abilities API (WP 6.9+)
+- 19 abilities registered with the WordPress Abilities API (WP 6.9+)
 - 20+ action hooks and filters for customization
 - WP-CLI commands for trust level management and imports
 - Template overrides: drop files in `your-theme/jetonomy/` to override any view
@@ -151,6 +151,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 Jetonomy Pro extends the free plugin with power-user and enterprise features:
 
+* **AI Integration** — Language-model-powered spam detection, content moderation, reply suggestions, and thread summaries. Pluggable providers including OpenAI, Anthropic, custom endpoints, and self-hosted Ollama (privacy-first).
 * **Private Messaging** — Direct messages between members
 * **Emoji Reactions** — React to posts and replies with custom emoji sets
 * **Polls** — Run polls inside posts and spaces
@@ -158,10 +159,11 @@ Jetonomy Pro extends the free plugin with power-user and enterprise features:
 * **Analytics Dashboard** — See what your community talks about most, top contributors, growth trends
 * **Email Digests** — Weekly/daily community digest emails
 * **Advanced Auto-Moderation** — Rule-based moderation (keyword filters, rate limits, user score gates)
-* **WooCommerce, Restrict Content Pro, LearnDash adapters** — Gate spaces behind courses or purchases
-* **Meilisearch / Elasticsearch integration** — Lightning-fast search for large communities
-* **Real-time push** — Live reply updates via Mercure or Pusher (no page refresh needed)
-* **Slack & Discord bridge** — Mirror community activity into your Slack/Discord server
+* **WooCommerce, Restrict Content Pro, LearnDash, Tutor LMS adapters** — Gate spaces behind courses or purchases
+* **SEO Pro** — Per-space meta titles, Open Graph images, schema controls, and sitemap rules
+* **Reply by Email** — Members reply to notification emails and the reply posts automatically
+* **Web Push Notifications** — Browser push for replies, mentions, and moderation events
+* **Webhooks** — Send HTTP POSTs to external services on community events
 * **White-label branding** — Remove Jetonomy branding, use your own logo
 * **Custom badge builder** — Design badges and award them manually or automatically
 
@@ -222,7 +224,7 @@ The result: new spammers can't immediately flood your community, and your most t
 
 = Does it have full-text search? =
 
-Yes. Jetonomy uses MySQL's native FULLTEXT indexes for fast, relevant search results. Typing in the search bar shows instant results as you type. For communities with 100,000+ posts, Jetonomy Pro supports Meilisearch and Elasticsearch integration.
+Yes. Jetonomy uses MySQL's native FULLTEXT indexes for fast, relevant search results. Typing in the search bar shows instant results as you type. The search system is built on a swappable adapter pattern — developers can write custom adapters for services like Meilisearch, Elasticsearch, or Algolia without touching the plugin core.
 
 = Can my community members moderate their own spaces? =
 
@@ -254,7 +256,7 @@ Jetonomy sends email using WordPress's built-in `wp_mail()` function, so any SMT
 
 = Can developers extend Jetonomy? =
 
-Absolutely. Jetonomy has 48+ REST API endpoints, 18 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
+Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abilities (WP 6.9+), 20+ action hooks and filters, WP-CLI commands, and full template override support. The adapter pattern makes it straightforward to integrate external services. See the [Hooks Reference](https://store.wbcomdesigns.com/jetonomy/docs/) for the full list.
 
 = Does it support WordPress Multisite? =
 
@@ -264,26 +266,42 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.3.0 — April 2026 =
 
-* New: AI Adapter Layer — pluggable interface for AI providers with built-in Ollama support
-* New: AI-powered spam detection for posts and replies
-* New: GitHub Actions CI pipeline — PHP lint, WPCS, PHPStan, Plugin Check
-* New: before_delete hooks on all models for extensibility
-* New: Query args filters on all model list methods
-* New: Base slug 301 redirect for SEO
-* Improvement: WP_Error checks at all model caller sites — prevents fatal errors from hook rejections
-* Improvement: has_more pagination accuracy across all endpoints
-* Improvement: InnoDB engine enforced on all custom tables
-* Improvement: Daily activity log pruning with safe batch loop
-* Improvement: Vote operations wrapped in DB transactions
-* Improvement: Spaces N+1 query eliminated — visibility filter moved to SQL JOIN
-* Improvement: Eliminated patch code — BP helpers and Space::get_posts_per_page() cleaned up
-* Improvement: Plugin Check compliance — all output properly escaped
-* Improvement: PHPStan level 5 with zero errors
-* Fix: Double reply counter increment on new reply
-* Fix: Space settings cache invalidation
-* Fix: Permission callback consolidation
-* Fix: PHP 8.1 compatibility — bool return type
-* Fix: 9 Basecamp bug fixes — fatal BP compat, notifications, report UI, pagination
+* New: Share forum threads anywhere — paste any topic URL into Slack, Twitter/X, Discord, Facebook, or another WordPress site and you'll see a rich preview card with the title, author, excerpt, space, and thumbnail. No extra setup needed.
+* New: Embed videos and music in posts — just paste a YouTube, Vimeo, SoundCloud, Spotify, TED Talks, or other supported link into a post or reply and it plays inline instead of showing as a plain URL.
+* New: BuddyX, BuddyX Pro, and Reign theme compatibility — your forum automatically picks up the active theme's accent color and dark mode, so your community looks at home with zero custom CSS.
+* New: AI spam detection — optional AI-powered spam filter for new posts and replies. Free, self-hosted via Ollama (no API costs, no data leaves your server).
+* New: Ad and content injection slots — new hooks let you (or your custom code) drop banners, promotions, or extra content into the sidebar, reply flow, and below the space intro.
+* New: Change your community URL safely — if you rename your community base (e.g. /forum/ → /community/), Jetonomy now automatically redirects visitors from the old URLs so you don't lose search traffic or bookmarks.
+* New: WordPress Abilities API integration — 18 abilities across 5 categories let AI assistants and automation tools drive Jetonomy from the terminal.
+* New: Demo data seeder — one-click demo content for previewing how your community will look, with a cleanup button when you're done.
+* New: Richer search preview snippets — search engines see thread titles, author names, publish dates, and space categories for better listings.
+* Improvement: Theme compatibility across 12+ popular themes — page titles, container widths, and responsive layouts tested and tuned.
+* Improvement: Forum topics now render 2–3× faster on big spaces (10,000+ topics) thanks to smarter database queries.
+* Improvement: Vote buttons stay consistent even under heavy concurrent use — no more stuck or duplicate votes.
+* Improvement: Pagination is more accurate — "Load more" and "has more" work correctly across all lists.
+* Improvement: Admin list pages load faster with fewer database hits.
+* Improvement: Daily activity cleanup runs without locking the database on large sites.
+* Improvement: All admin pages and forms are easier on screen readers and keyboard users.
+* Improvement: Content displayed in forum threads is fully sanitized and escaped for safety.
+* Fix: Firefox scheduled-post time picker — the time field now shows a proper picker widget (was previously date-only on Firefox).
+* Fix: The "..." more menu on posts and replies now opens reliably across browsers.
+* Fix: Publish mode menu no longer flashes open-then-closed when you load the new topic page.
+* Fix: Notification bell dropdown no longer throws a console warning on page load.
+* Fix: Clicking a single notification in the header dropdown now marks just that one as read (no more "mark all or nothing").
+* Fix: "Join Space" button now shows correctly for non-members on public spaces.
+* Fix: Join request emails now send to the right space admins and link to the admin screen instead of the public page.
+* Fix: Join request admin tab stays visible while pending requests exist.
+* Fix: Posts-per-page setting at the space level now actually applies to that space's topic listing.
+* Fix: Space settings no longer lose unrelated keys when you save a partial form.
+* Fix: Dark mode token bridge now mirrors the theme's real dark state on every page load.
+* Fix: Notifications properly persist for private message events.
+* Fix: Private message notifications now dispatch reliably when Pro is active.
+* Fix: License activation flow no longer errors on third-party plugin-info calls.
+* Fix: Double reply counter increment on new replies.
+* Fix: 10 earlier customer-reported bugs fixed — BuddyPress compatibility crash, notification defaults, vote state indicator, admin "View" link, join request admin UI, post scheduling default timestamps, settings write consistency, REST nonce handling, and cookie credentials on fetch calls.
+
+**Upgrade notes**
+Jetonomy 1.3.0 includes a small database update that runs automatically on the next admin page load. No manual action required. Free activation is unchanged.
 
 = 1.2.0 — April 2026 =
 
@@ -332,7 +350,7 @@ Each site in a Multisite network gets its own independent community. Network act
 - Custom MySQL tables (21 tables) — no `wp_posts` bottleneck
 - 3-layer permission engine: WP Capabilities + Space Roles + Trust Levels 0–5
 - WordPress Interactivity API frontend — no jQuery, no React bundle
-- 18 abilities registered with the WordPress Abilities API (WP 6.9+)
+- 19 abilities registered with the WordPress Abilities API (WP 6.9+)
 - Rich text editor with drag-drop image upload and paste-to-upload
 - @mention notifications with autocomplete
 - Auto-embed for YouTube, Twitter/X, Vimeo, and other oEmbed providers

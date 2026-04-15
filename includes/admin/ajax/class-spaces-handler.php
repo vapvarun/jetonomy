@@ -190,9 +190,30 @@ class Spaces_Handler {
 						unset( $decoded['bp_group_id'] );
 					}
 
+					// Sanitize posts_per_page: clamp to [1, 100] when set, drop key when
+					// null/empty/<=0 so Space::get_posts_per_page() can fall through to
+					// global → 20 instead of being overridden by a phantom per-space value.
+					if ( array_key_exists( 'posts_per_page', $decoded ) ) {
+						$pp = $decoded['posts_per_page'];
+						if ( null === $pp || '' === $pp || (int) $pp <= 0 ) {
+							unset( $decoded['posts_per_page'] );
+							$drop_posts_per_page = true;
+						} else {
+							$decoded['posts_per_page'] = max( 1, min( 100, (int) $pp ) );
+							$drop_posts_per_page = false;
+						}
+					} else {
+						$drop_posts_per_page = false;
+					}
+
 					// Merge with existing settings so other keys are not wiped.
 					$existing = Space::get_settings( $id );
 					$merged   = array_merge( $existing, $decoded );
+					// If the user cleared the field, also strip the key from the merged
+					// result (otherwise the previous value would persist after merge).
+					if ( $drop_posts_per_page ) {
+						unset( $merged['posts_per_page'] );
+					}
 					$data['settings'] = wp_json_encode( $merged );
 				}
 			}

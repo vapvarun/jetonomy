@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress — forums, Q&A, and more.
-  * Version:     1.3.0
+ * Version:     1.3.0
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.3.0' );
-define( 'JETONOMY_DB_VERSION', '1.2.2' );
+define( 'JETONOMY_DB_VERSION', '1.2.3' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -28,7 +28,7 @@ Jetonomy\Autoloader::register();
 require_once JETONOMY_DIR . 'includes/class-jetonomy.php';
 
 function jetonomy(): Jetonomy\Jetonomy {
-    return Jetonomy\Jetonomy::instance();
+	return Jetonomy\Jetonomy::instance();
 }
 
 jetonomy();
@@ -118,7 +118,7 @@ function jetonomy_icon( string $name, int $size = 24 ): string {
 		if ( ! file_exists( $file ) ) {
 			return '';
 		}
-		$svg = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$svg            = (string) file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$cache[ $name ] = $svg;
 	}
 	$svg = str_replace( '<svg ', '<svg width="' . $size . '" height="' . $size . '" ', $svg );
@@ -145,6 +145,40 @@ function jetonomy_echo_icon( string $name, int $size = 24 ): void {
  * @param string $content Sanitized HTML content string.
  * @return string Processed content with mention and tag links.
  */
+/**
+ * wp_kses variant for rendered post/reply content.
+ *
+ * Extends the default "post" allowed-tags list with `<iframe>` — needed so
+ * that oEmbed HTML returned by `wp_oembed_get()` (YouTube, Vimeo, etc.)
+ * survives the outer sanitization pass applied when rendering content in
+ * single-post.php and reply-card.php. The iframe attribute whitelist matches
+ * what WordPress's own oEmbed providers emit.
+ *
+ * @param string $content HTML content to sanitize.
+ * @return string
+ */
+function jetonomy_kses_embedded_content( string $content ): string {
+	$allowed = wp_kses_allowed_html( 'post' );
+
+	$allowed['iframe'] = array(
+		'src'             => true,
+		'width'           => true,
+		'height'          => true,
+		'frameborder'     => true,
+		'allow'           => true,
+		'allowfullscreen' => true,
+		'referrerpolicy'  => true,
+		'loading'         => true,
+		'title'           => true,
+		'name'            => true,
+		'class'           => true,
+		'id'              => true,
+		'style'           => true,
+	);
+
+	return wp_kses( $content, $allowed );
+}
+
 function jetonomy_format_content( string $content ): string {
 	$base = \Jetonomy\base_url();
 
@@ -203,6 +237,7 @@ function jetonomy_format_content( string $content ): string {
 }
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
-    require_once JETONOMY_DIR . 'includes/class-cli.php';
-    \WP_CLI::add_command( 'jetonomy', 'Jetonomy\\CLI' );
+	require_once JETONOMY_DIR . 'includes/class-cli.php';
+	\WP_CLI::add_command( 'jetonomy', 'Jetonomy\\CLI' );
+	\Jetonomy\CLI\CLI_Dispatcher::register();
 }

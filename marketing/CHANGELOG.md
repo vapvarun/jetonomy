@@ -2,6 +2,65 @@
 
 ---
 
+## 1.3.0 — April 2026
+
+### AI Integration (Pro)
+
+The biggest addition since launch. Jetonomy Pro now ships with a full AI layer that reads every new post and reply for spam, abuse, and rule violations before it is published — and does it on whichever provider you prefer.
+
+- **Four providers supported** — OpenAI, Anthropic, any OpenAI-compatible endpoint, and **self-hosted Ollama** running on your own server.
+- **AI-powered spam detection** — catches the spam that pattern matching misses: subtly rewritten affiliate spam, context-aware abuse, posting patterns designed to pad history on clean accounts.
+- **Content moderation from plain-English rules** — describe your rules in a few sentences and the model reads every post against them. Violations go to the moderation queue with an explanation the model generated.
+- **Reply suggestions** — on knowledge-base communities, the model can draft a reply the member can accept, edit, or ignore. Nothing is ever sent without human approval.
+- **Thread summaries** — long topics (30+ replies) get an auto-generated summary pinned at the top. Cached so each summary is generated once per content state.
+- **Usage and cost tracking** — dashboard card showing requests, tokens, spend, and error rates by provider and feature.
+- **Privacy-first** — with the Ollama provider, no content leaves your server. No external network calls. No API keys. Every decision logged for compliance review.
+
+### Free plugin additions
+
+- **AI adapter layer in the free plugin** — the pluggable adapter system for AI providers ships in the free plugin so third-party extensions can register their own providers.
+- **Pattern-based AI spam detection in free** — a lightweight free spam detector uses Ollama if available.
+- **GitHub Actions CI pipeline** — every pull request runs PHP lint, WPCS, PHPStan level 5, and WordPress Plugin Check.
+
+### Reliability and quality
+
+- WP_Error checks at all model caller sites — hooks that return WP_Error no longer cascade into fatals.
+- Vote operations wrapped in DB transactions.
+- Spaces N+1 query eliminated — visibility filter moved to a SQL JOIN.
+- InnoDB engine enforced on all custom tables.
+- Daily activity log pruning with safe batch loop.
+- PHPStan level 5 with zero errors. Plugin Check compliance. All output properly escaped.
+
+### Fixes
+
+- Double reply counter increment on new reply.
+- Space settings cache invalidation.
+- Permission callback consolidation.
+- PHP 8.1 compatibility — bool return type on internal method.
+- Nine Basecamp bug fixes — fatal BP compat, notifications, report UI, pagination, and more.
+
+---
+
+## 1.2.0 — April 2026
+
+### Discussion controls (free)
+
+Four features that give members and space owners finer control over how topics are created and read.
+
+- **Private Topics** — mark a topic as private so only the author and space moderators can see it. Other members cannot find or open it.
+- **Topic Prefixes** — space owners define colored labels like Bug, Question, Solved, or Announcement. Members pick a prefix when creating a topic and it shows as a colored tag in the space listing.
+- **Similar Topics detection** — as members type a new topic title, Jetonomy searches the space for similar existing titles and shows up to five matches inline.
+- **Quote Replies** — select any passage in a reply and click Quote to insert a styled blockquote into your reply composer with attribution back to the source.
+
+### Improvements
+
+- Before-delete hooks on all models for extension authors.
+- Query args filters on all model list methods.
+- Base slug 301 redirect for SEO — changing your community base slug no longer breaks existing links.
+- Eliminated leftover patch code in BP helpers and Space::get_posts_per_page().
+
+---
+
 ## 1.0.0 — March 2026
 
 ### Initial Release
@@ -98,10 +157,10 @@ Welcome to Jetonomy. This is the first public release — a complete community p
 
 ### For Developers and Site Builders
 
-- **35+ REST API endpoints** — Complete REST API under the jetonomy/v1 namespace. Every feature is accessible programmatically with cursor-based pagination and JSON schema validation.
+- **48+ REST API endpoints** — Complete REST API under the jetonomy/v1 namespace. Every feature is accessible programmatically with cursor-based pagination and JSON schema validation.
 - **Template overrides** — Copy any template into your-theme/jetonomy/ and customize it. Theme updates don't overwrite your changes.
 - **Action and filter hooks** — Hooks throughout the plugin for extending behavior without modifying core files.
-- **WordPress Abilities API** — Jetonomy registers 18 abilities in 5 categories so that AI agents and automation tools can discover and operate the community without custom integration work. Requires WordPress 6.9+.
+- **WordPress Abilities API** — Jetonomy registers 19 abilities in 5 categories so that AI agents and automation tools can discover and operate the community without custom integration work. Requires WordPress 6.9+.
 - **Adapter architecture** — Search, email, real-time updates, and membership integrations all use a clean adapter interface. Swap components without touching the core.
 - **Clean uninstall** — Removing Jetonomy via the WordPress admin offers a complete data cleanup — all tables, options, capabilities, and scheduled jobs removed.
 
@@ -109,7 +168,7 @@ Welcome to Jetonomy. This is the first public release — a complete community p
 
 ### Performance
 
-- **Custom MySQL tables** — 21 dedicated tables with proper indexes for actual query patterns. No wp_postmeta. No global table locks on busy communities.
+- **Custom MySQL tables** — 24 dedicated tables with proper indexes for actual query patterns. No wp_postmeta. No global table locks on busy communities.
 - **Denormalized counters** — Reply counts, post counts, and vote scores are stored directly on each record. No COUNT queries on page load.
 - **Object cache support** — Jetonomy caches space data, user profiles, and permission results. Works with Redis and Memcached automatically when available.
 - **Cursor-based pagination** — List endpoints use cursor pagination instead of offset. Consistent results even when new content is posted between pages.

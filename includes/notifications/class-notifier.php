@@ -476,7 +476,7 @@ class Notifier {
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
-		$cta_labels = [
+		$cta_labels  = [
 			'reply_to_post'   => __( 'View Post', 'jetonomy' ),
 			'reply_to_reply'  => __( 'View Reply', 'jetonomy' ),
 			'mention'         => __( 'View Post', 'jetonomy' ),
@@ -492,7 +492,7 @@ class Notifier {
 
 		// Header: logo image or text fallback.
 		if ( '' !== $logo_url ) {
-			$logo_safe  = esc_url( $logo_url );
+			$logo_safe   = esc_url( $logo_url );
 			$header_html = "<a href=\"{$home_url}\" style=\"text-decoration:none;\"><img src=\"{$logo_safe}\" alt=\"{$site_name}\" style=\"max-height:40px;max-width:200px;height:auto;width:auto;\" /></a>";
 		} else {
 			$header_html = "<a href=\"{$home_url}\" style=\"text-decoration:none;color:#111827;font-size:18px;font-weight:700;letter-spacing:-0.02em;\">{$site_name}</a>";
@@ -571,7 +571,9 @@ HTML;
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
 		$space      = Space::find( $space_id );
 		$space_name = $space ? $space->title : __( 'a space', 'jetonomy' );
-		$space_url  = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/members/' : '';
+		$space_url  = $space
+			? admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' )
+			: '';
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
 		$recipient_ids = [];

@@ -40,7 +40,7 @@ Migrating from bbPress or wpForo? The importer handles it in a few clicks.
 
 [Download Free from wbcomdesigns.com] [https://wbcomdesigns.com/downloads/jetonomy/]
 
-Want polls, private messaging, analytics, and more? Jetonomy Pro adds 13 modules on top of the free core.
+Want polls, private messaging, analytics, AI-powered moderation, and more? Jetonomy Pro adds 14 modules on top of the free core.
 
 [See Jetonomy Pro] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
 
@@ -74,7 +74,7 @@ Three days in, and we want to tell you about a Jetonomy feature that most forum 
 
 WordPress 6.9 introduced a new system that lets plugins describe what they can do in a machine-readable way. Think of it as a menu of capabilities that AI agents — chatbots, assistants, automation tools — can read and act on.
 
-Jetonomy registers 18 abilities across five categories: content, spaces, users, moderation, and engagement. That means an AI agent can:
+Jetonomy registers 19 abilities across five categories: content, spaces, users, moderation, and engagement. That means an AI agent can:
 
 - Browse and search your community
 - Create posts and replies on behalf of users
@@ -98,7 +98,7 @@ Three other things in Jetonomy that competitors don't offer:
 
 3. **Trust levels that actually gate behavior.** New members (Level 0) can't post links and are rate-limited to 3 posts per day — an automatic spam buffer that requires no configuration. As members contribute, they earn higher levels and unlock more capabilities automatically.
 
-[Explore Jetonomy Pro — 13 modules] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
+[Explore Jetonomy Pro — 14 modules] [https://wbcomdesigns.com/downloads/jetonomy-pro/]
 
 Have questions? Just reply to this email.
 

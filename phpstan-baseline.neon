@@ -181,11 +181,6 @@ parameters:
 			path: includes/admin/views/space-edit.php
 
 		-
-			message: "#^Variable \\$join_requests might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/space-edit.php
-
-		-
 			message: "#^Variable \\$members might not be defined\\.$#"
 			count: 1
 			path: includes/admin/views/space-edit.php
@@ -387,7 +382,7 @@ parameters:
 
 		-
 			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 57
+			count: 60
 			path: includes/class-cli.php
 
 		-
@@ -437,7 +432,7 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 9
+			count: 11
 			path: includes/class-jetonomy.php
 
 		-
@@ -496,6 +491,11 @@ parameters:
 			path: includes/db/migrations/class-migration_1_2_2.php
 
 		-
+			message: "#^Constant DB_NAME not found\\.$#"
+			count: 1
+			path: includes/db/migrations/class-migration_1_2_3.php
+
+		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
 			count: 2
 			path: includes/integrations/class-buddypress.php
@@ -541,8 +541,73 @@ parameters:
 			path: includes/models/class-post.php
 
 		-
+			message: "#^Call to function is_wp_error\\(\\) with array will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-post.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with bool will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-post.php
+
+		-
+			message: "#^is_wp_error\\(array\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-post.php
+
+		-
+			message: "#^is_wp_error\\(bool\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-post.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with array will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-reply.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with bool will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-reply.php
+
+		-
+			message: "#^is_wp_error\\(array\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-reply.php
+
+		-
+			message: "#^is_wp_error\\(bool\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-reply.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with bool will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-space-member.php
+
+		-
+			message: "#^is_wp_error\\(bool\\) will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-space-member.php
+
+		-
+			message: "#^Call to function is_wp_error\\(\\) with bool will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-vote.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between false and int will always evaluate to false\\.$#"
+			count: 1
+			path: includes/models/class-vote.php
+
+		-
 			message: "#^Unsafe call to private method Jetonomy\\\\Models\\\\Vote\\:\\:update_target_score\\(\\) through static\\:\\:\\.$#"
 			count: 3
+			path: includes/models/class-vote.php
+
+		-
+			message: "#^is_wp_error\\(bool\\) will always evaluate to false\\.$#"
+			count: 1
 			path: includes/models/class-vote.php
 
 		-
@@ -619,15 +684,3 @@ parameters:
 			message: "#^Negated boolean expression is always false\\.$#"
 			count: 1
 			path: includes/seo/class-sitemap.php
-
-		-
-			message: '#is_wp_error.*will always evaluate to false#'
-			reportUnmatched: false
-
-		-
-			message: '#Strict comparison using === between false and int#'
-			reportUnmatched: false
-
-		-
-			message: '#Strict comparison using === between false and#'
-			reportUnmatched: false
