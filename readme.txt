@@ -266,6 +266,9 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.3.0 — April 2026 =
 
+* New: Outbound oEmbed support — forum thread URLs now unfurl in Slack, Twitter/X, Discord, Facebook, and other WordPress sites via a dedicated REST endpoint (`/wp-json/jetonomy/v1/oembed`), `wp_oembed_add_provider` registration, an auto-discovery `<link rel="alternate">` tag on thread pages, and richer Open Graph / Twitter Card meta (`og:type=article`, `article:author`, `article:published_time`, `article:section`, `og:image` from first inline image). Defaults to `type=rich` with a self-contained inline-styled card; callers can force `type=link` via query param.
+* New: Inbound embed expansion — pasted YouTube, Vimeo, SoundCloud, Spotify, TED and other oEmbed-provider URLs in post or reply content now render as embedded players instead of raw text. `Embeds::process()` rewritten to normalise contenteditable artifacts (`&nbsp;`, `<div><br></div>`), split content on HTML tags so URL detection only runs in text nodes, and strip common trailing punctuation from captured URLs.
+* New: `jetonomy_kses_embedded_content()` helper — `wp_kses()` variant that extends the default post allowed-tags list with `<iframe>` so oEmbed HTML from trusted providers survives the template-level sanitiser.
 * New: BuddyX theme color support — forum accent tracks the BuddyX primary color from the customizer
 * New: BuddyX Pro theme color and dark mode support — forum accent and dark scheme follow BuddyX Pro's color scheme
 * New: Reign theme color and dark mode support — forum accent and dark scheme follow Reign's color scheme
@@ -289,6 +292,10 @@ Each site in a Multisite network gets its own independent community. Network act
 * Fix: Permission callback consolidation
 * Fix: PHP 8.1 compatibility — bool return type
 * Fix: 9 Basecamp bug fixes — fatal BP compat, notifications, report UI, pagination
+* Fix: Preact/Interactivity API hydration console warnings from inline `onclick` attributes in the community header, user profile, and space roadmap templates — replaced with delegated click handlers using `data-jt-href` for row navigation
+* Fix: Publish mode menu flash-of-visible-content on the new topic form — initial `hidden` attribute added so the server markup already reflects the closed state before IA hydration
+* Fix: Firefox native time picker missing on the scheduled publish form — replaced `<input type="datetime-local">` (Firefox shows date only) with two separate `<input type="date">` + `<input type="time">` fields, combined into a single `published_at` ISO-local string in the submit handler so the REST payload stays unchanged
+* Fix: More menu 3-dots dropdown on posts and replies — verified working end-to-end; previous reports were silent failures caused by the Preact hydration error taking down other IA actions on the same page
 
 = 1.2.0 — April 2026 =
 
