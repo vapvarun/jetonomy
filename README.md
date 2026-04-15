@@ -164,6 +164,7 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 **Share forum threads anywhere**
 - New: Outbound oEmbed — thread URLs unfurl in Slack, Twitter/X, Discord, Facebook, and other WordPress sites with a rich preview card (title, author, excerpt, thumbnail)
 - New: Inbound embed expansion — pasted YouTube, Vimeo, SoundCloud, Spotify, TED Talks and other supported links in posts or replies render as embedded players instead of plain URLs
+- New: Instagram + Facebook embed support via optional Meta Developer App credentials — Settings → SEO → Social Embeds card with a collapsible 6-step setup guide; empty credentials = graceful plain-link fallback
 - New: Richer Open Graph + Twitter Card meta on every thread page — `og:type=article`, `article:author`, `article:published_time`, `article:section`, first-inline-image as `og:image`
 
 **Theme compatibility**

@@ -268,6 +268,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 * New: Share forum threads anywhere — paste any topic URL into Slack, Twitter/X, Discord, Facebook, or another WordPress site and you'll see a rich preview card with the title, author, excerpt, space, and thumbnail. No extra setup needed.
 * New: Embed videos and music in posts — just paste a YouTube, Vimeo, SoundCloud, Spotify, TED Talks, or other supported link into a post or reply and it plays inline instead of showing as a plain URL.
+* New: Instagram and Facebook embed support — optional free Meta Developer App integration under Settings → SEO → Social Embeds lets pasted Instagram and Facebook URLs unfurl as rich previews. Includes a 5-minute step-by-step setup guide right in the settings screen. Leave the fields blank to skip — URLs fall back to plain clickable links.
 * New: BuddyX, BuddyX Pro, and Reign theme compatibility — your forum automatically picks up the active theme's accent color and dark mode, so your community looks at home with zero custom CSS.
 * New: AI spam detection — optional AI-powered spam filter for new posts and replies. Free, self-hosted via Ollama (no API costs, no data leaves your server).
 * New: Ad and content injection slots — new hooks let you (or your custom code) drop banners, promotions, or extra content into the sidebar, reply flow, and below the space intro.
