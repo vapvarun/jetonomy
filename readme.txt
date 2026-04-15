@@ -266,6 +266,9 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.3.0 — April 2026 =
 
+* New: BuddyX theme color support — forum accent tracks the BuddyX primary color from the customizer
+* New: BuddyX Pro theme color and dark mode support — forum accent and dark scheme follow BuddyX Pro's color scheme
+* New: Reign theme color and dark mode support — forum accent and dark scheme follow Reign's color scheme
 * New: AI Adapter Layer — pluggable interface for AI providers with built-in Ollama support
 * New: AI-powered spam detection for posts and replies
 * New: GitHub Actions CI pipeline — PHP lint, WPCS, PHPStan, Plugin Check

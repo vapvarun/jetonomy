@@ -123,6 +123,7 @@ Basecamp triage.
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-04-15 | feature | Theme bridge for BuddyX, BuddyX Pro, Reign — reads Kirki theme mods, injects `--jt-accent` + toggles `.jt-dark` via `body_class` (`includes/integrations/class-theme-integration.php`) |
 | 2026-04-14 | pending | fix(#9721640432): posts_per_page space setting truly applies — drop `default=>20` from REST `limit` schema (made null-check dead), use raw query params in posts controller, save `null` (not `20`) on empty admin field, render empty `value=""` (not `0`) in space-edit form, strip key in spaces handler sanitizer when null/0 |
 | 2026-04-14 | `9b242b3` | fix(cli): reply create docblock — `[--status]` and `[--format]` missing `: description` before `---` enum, so WP-CLI rejected `--format=json` |
 | 2026-04-14 | `8745756` | test(usability): id-lookup helpers + member/admin/moderator fixes — free-flow pass rate 29 → 67 |
