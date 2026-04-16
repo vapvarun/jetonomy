@@ -1,0 +1,178 @@
+{
+  "config": {
+    "configFile": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/playwright.config.js",
+    "rootDir": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/flows",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-desktop",
+        "name": "chromium-desktop",
+        "testDir": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/flows",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.flow.js",
+          "**/*.spec.js"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-mobile",
+        "name": "chromium-mobile",
+        "testDir": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/flows",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.flow.js",
+          "**/*.spec.js"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "reports",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "reports/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "pro/advanced-moderation/PRO-ADVANCEDMODERATION-01-create-rule.flow.js",
+      "file": "pro/advanced-moderation/PRO-ADVANCEDMODERATION-01-create-rule.flow.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "PRO-ADVANCEDMODERATION-01 — Admin create moderation rule",
+          "file": "pro/advanced-moderation/PRO-ADVANCEDMODERATION-01-create-rule.flow.js",
+          "line": 13,
+          "column": 6,
+          "specs": [
+            {
+              "title": "create a word-filter rule via CLI and verify DB row",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-desktop",
+                  "projectName": "chromium-desktop",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1232,
+                      "error": {
+                        "message": "Error: wp-cli failed: wp --path=/Users/varundubey/Local Sites/forums/app/public jetonomy-pro advanced-moderation create --type=word_filter --pattern=spam-keyword --action=hold --enabled=1 --format=json\nError: Parameter errors:\n Invalid value specified for 'type' (Rule type.)\n missing --name parameter (Human-readable rule name.)\n unknown --enabled parameter\n",
+                        "stack": "Error: wp-cli failed: wp --path=/Users/varundubey/Local Sites/forums/app/public jetonomy-pro advanced-moderation create --type=word_filter --pattern=spam-keyword --action=hold --enabled=1 --format=json\nError: Parameter errors:\n Invalid value specified for 'type' (Rule type.)\n missing --name parameter (Human-readable rule name.)\n unknown --enabled parameter\n\n    at wp (/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js:41:9)\n    at proJourney (/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js:84:9)\n    at /Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/flows/pro/advanced-moderation/PRO-ADVANCEDMODERATION-01-create-rule.flow.js:33:18",
+                        "location": {
+                          "file": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js",
+                          "column": 9,
+                          "line": 41
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../helpers/wp-cli.js:41\n\n  39 | \t} catch ( err ) {\n  40 | \t\tconst message = err.stderr ? err.stderr.toString() : err.message;\n> 41 | \t\tthrow new Error( `wp-cli failed: wp ${ allArgs.join( ' ' ) }\\n${ message }` );\n     | \t\t      ^\n  42 | \t}\n  43 | \tif ( options.json ) {\n  44 | \t\ttry {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js",
+                            "column": 9,
+                            "line": 41
+                          },
+                          "message": "Error: wp-cli failed: wp --path=/Users/varundubey/Local Sites/forums/app/public jetonomy-pro advanced-moderation create --type=word_filter --pattern=spam-keyword --action=hold --enabled=1 --format=json\nError: Parameter errors:\n Invalid value specified for 'type' (Rule type.)\n missing --name parameter (Human-readable rule name.)\n unknown --enabled parameter\n\n\n   at ../helpers/wp-cli.js:41\n\n  39 | \t} catch ( err ) {\n  40 | \t\tconst message = err.stderr ? err.stderr.toString() : err.message;\n> 41 | \t\tthrow new Error( `wp-cli failed: wp ${ allArgs.join( ' ' ) }\\n${ message }` );\n     | \t\t      ^\n  42 | \t}\n  43 | \tif ( options.json ) {\n  44 | \t\ttry {\n    at wp (/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js:41:9)\n    at proJourney (/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js:84:9)\n    at /Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/flows/pro/advanced-moderation/PRO-ADVANCEDMODERATION-01-create-rule.flow.js:33:18"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-04-12T15:46:00.107Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/test-results/pro-advanced-moderation-PR-a4c78-e-via-CLI-and-verify-DB-row-chromium-desktop/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy/tests/usability/helpers/wp-cli.js",
+                        "column": 9,
+                        "line": 41
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "77b4f97b84916583a33c-b1331e694bfd1dc39ea1",
+              "file": "pro/advanced-moderation/PRO-ADVANCEDMODERATION-01-create-rule.flow.js",
+              "line": 32,
+              "column": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-12T15:45:59.630Z",
+    "duration": 1732.055,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

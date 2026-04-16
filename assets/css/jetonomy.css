@@ -155,6 +155,7 @@
   .jt-app h6 { font-size: 0.75rem; font-weight: 600; margin: 0; }
   .jt-app p { margin: 0 0 0.75em; }
   .jt-app button, .jt-app input, .jt-app select, .jt-app textarea { font-family: var(--jt-font); font-size: inherit; }
+  .jt-app button:hover, .jt-app button:focus { background: inherit; color: inherit; }
 
   /* Links inherit text color by default (Notion-style).
      Only explicit .jt-link or interactive elements use accent color. */
