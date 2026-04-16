@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,11 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.3.2 — April 2026 =
+
+* Fix: Setup wizard no longer triggers PHP deprecation warnings (strip_tags null, print_emoji_styles, wp_admin_bar_header) on WP 6.4+ with PHP 8.1+.
+* Enhancement: New-post form submit action is now filterable via `jetonomy_new_post_submit_action` for Pro extensions.
 
 = 1.3.1 — April 2026 =
 
