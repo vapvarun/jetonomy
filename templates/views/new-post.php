@@ -62,7 +62,7 @@ $type_label     = $type_defaults['label'];
 
 	<form id="jt-new-post-form" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
-			data-wp-on--submit="actions.submitNewPost"
+			data-wp-on--submit="<?php echo esc_attr( apply_filters( 'jetonomy_new_post_submit_action', 'actions.submitNewPost' ) ); ?>"
 			data-wp-context='
 			<?php
 			echo wp_json_encode(

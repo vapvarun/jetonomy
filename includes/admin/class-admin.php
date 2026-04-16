@@ -24,6 +24,7 @@ class Admin {
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 
@@ -140,6 +141,23 @@ class Admin {
 
 		// Hidden setup wizard page (no menu item).
 		add_submenu_page( '', __( 'Jetonomy Setup', 'jetonomy' ), '', 'manage_options', 'jetonomy-setup', array( $this, 'render_setup' ) );
+	}
+
+	/**
+	 * Render the setup wizard as a standalone page.
+	 *
+	 * Intercepts at admin_init and exits before admin-header.php runs,
+	 * preventing strip_tags(null) deprecation on the hidden submenu page.
+	 */
+	public function maybe_render_setup_wizard(): void {
+		if ( ! isset( $_GET['page'] ) || 'jetonomy-setup' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'jetonomy' ) );
+		}
+		include JETONOMY_DIR . 'includes/admin/views/setup-wizard.php';
+		exit;
 	}
 
 	// ── Settings API ──

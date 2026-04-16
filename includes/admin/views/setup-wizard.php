@@ -19,7 +19,17 @@ $ajax_url  = admin_url( 'admin-ajax.php' );
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?php esc_html_e( 'Jetonomy Setup', 'jetonomy' ); ?></title>
-<?php wp_head(); ?>
+<?php
+// Standalone page — set screen context and disable admin bar / deprecated hooks.
+if ( function_exists( 'set_current_screen' ) ) {
+	set_current_screen( 'jetonomy-setup' );
+}
+show_admin_bar( false );
+remove_action( 'wp_head', 'wp_admin_bar_header' );
+remove_action( 'wp_print_styles', 'print_emoji_styles' );
+remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
+wp_head();
+?>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
