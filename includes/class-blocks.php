@@ -58,7 +58,7 @@ class Blocks {
 		register_block_type(
 			'jetonomy/forum-feed',
 			array(
-				'api_version'     => 3,
+				'api_version'     => '3',
 				'attributes'      => array(
 					'count'   => array(
 						'type'    => 'number',
@@ -85,7 +85,7 @@ class Blocks {
 		register_block_type(
 			'jetonomy/space-list',
 			array(
-				'api_version'     => 3,
+				'api_version'     => '3',
 				'attributes'      => array(
 					'count'      => array(
 						'type'    => 'number',
@@ -108,7 +108,7 @@ class Blocks {
 		register_block_type(
 			'jetonomy/leaderboard',
 			array(
-				'api_version'     => 3,
+				'api_version'     => '3',
 				'attributes'      => array(
 					'count' => array(
 						'type'    => 'number',
@@ -127,7 +127,7 @@ class Blocks {
 		register_block_type(
 			'jetonomy/navigation',
 			array(
-				'api_version'     => 3,
+				'api_version'     => '3',
 				'attributes'      => array(
 					'showCategoryHeadings' => array(
 						'type'    => 'boolean',
@@ -162,7 +162,7 @@ class Blocks {
 		register_block_type(
 			'jetonomy/login',
 			array(
-				'api_version'     => 3,
+				'api_version'     => '3',
 				'attributes'      => array(
 					'title'       => array(
 						'type'    => 'string',
@@ -276,18 +276,15 @@ class Blocks {
 		$sections = array();
 
 		foreach ( $categories as $category ) {
-			$category    = is_object( $category ) ? $category : (object) $category;
-			$category_id = isset( $category->id ) ? (int) $category->id : 0;
+			$category_id = (int) ( $category->id ?? 0 );
 			if ( ! $category_id ) {
 				continue;
 			}
 			// list_visible() already filters by viewer permissions (public
 			// for guests, public + membership for members, all for admins).
-			// per_page is capped at a sane limit to avoid runaway rendering
-			// on sites with thousands of spaces in one category. The return
-			// shape is [ 'spaces' => object[], 'total' => int ].
+			// per_page capped to 200 so a single category can't run away.
 			$result = Space::list_visible( $user_id, $category_id, null, null, 200, 0 );
-			$spaces = is_array( $result ) && isset( $result['spaces'] ) ? $result['spaces'] : array();
+			$spaces = $result['spaces'];
 			if ( $hide_empty && empty( $spaces ) ) {
 				continue;
 			}
@@ -297,7 +294,7 @@ class Blocks {
 				$items_html .= self::render_space_item( $space, $active_slug, $show_count );
 			}
 
-			$category_name = isset( $category->name ) ? (string) $category->name : '';
+			$category_name = (string) ( $category->name ?? '' );
 
 			if ( $show_headings ) {
 				$heading_tag = $collapsible ? 'details' : 'div';
@@ -320,15 +317,14 @@ class Blocks {
 		// viewer can see. Renders last, un-headed, so site owners who
 		// don't use categories still get a flat tree.
 		$orphan_result = Space::list_visible( $user_id, null, null, null, 200, 0 );
-		$orphans       = is_array( $orphan_result ) && isset( $orphan_result['spaces'] ) ? $orphan_result['spaces'] : array();
+		$orphans       = $orphan_result['spaces'];
 		if ( ! empty( $orphans ) ) {
 			$orphan_items = '';
 			foreach ( $orphans as $space ) {
-				$obj = is_object( $space ) ? $space : (object) $space;
-				if ( (int) ( $obj->category_id ?? 0 ) !== 0 ) {
+				if ( (int) ( $space->category_id ?? 0 ) !== 0 ) {
 					continue;
 				}
-				$orphan_items .= self::render_space_item( $obj, $active_slug, $show_count );
+				$orphan_items .= self::render_space_item( $space, $active_slug, $show_count );
 			}
 			if ( '' !== $orphan_items ) {
 				$sections[] = '<ul class="jt-nav-spaces jt-nav-spaces-uncategorized">' . $orphan_items . '</ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

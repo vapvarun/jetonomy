@@ -12,13 +12,18 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 12
+			count: 13
 			path: includes/admin/class-admin.php
 
 		-
 			message: "#^Constant JETONOMY_URL not found\\.$#"
 			count: 2
 			path: includes/admin/class-admin.php
+
+		-
+			message: "#^Constant JETONOMY_URL not found\\.$#"
+			count: 2
+			path: includes/class-blocks.php
 
 		-
 			message: "#^Variable \\$all_categories might not be defined\\.$#"
@@ -359,21 +364,6 @@ parameters:
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
 			count: 2
 			path: includes/class-autoloader.php
-
-		-
-			message: "#^Parameter \\#2 \\$args of function register_block_type expects array\\{api_version\\?\\: string, title\\?\\: string, category\\?\\: string\\|null, parent\\?\\: array\\<string\\>\\|null, ancestor\\?\\: array\\<string\\>\\|null, allowed_blocks\\?\\: array\\<string\\>\\|null, icon\\?\\: string\\|null, description\\?\\: string, \\.\\.\\.\\}, array\\{api_version\\: 3, attributes\\: array\\{count\\: array\\{type\\: 'number', default\\: 10\\}\\}, render_callback\\: array\\{'Jetonomy\\\\\\\\Blocks', 'render_leaderboard'\\}, category\\: 'widgets', title\\: string, description\\: string, icon\\: 'awards', keywords\\: array\\{'leaderboard', 'ranking', 'reputation', 'jetonomy'\\}\\} given\\.$#"
-			count: 1
-			path: includes/class-blocks.php
-
-		-
-			message: "#^Parameter \\#2 \\$args of function register_block_type expects array\\{api_version\\?\\: string, title\\?\\: string, category\\?\\: string\\|null, parent\\?\\: array\\<string\\>\\|null, ancestor\\?\\: array\\<string\\>\\|null, allowed_blocks\\?\\: array\\<string\\>\\|null, icon\\?\\: string\\|null, description\\?\\: string, \\.\\.\\.\\}, array\\{api_version\\: 3, attributes\\: array\\{count\\: array\\{type\\: 'number', default\\: 5\\}, spaceId\\: array\\{type\\: 'number', default\\: 0\\}, sort\\: array\\{type\\: 'string', default\\: 'latest'\\}\\}, render_callback\\: array\\{'Jetonomy\\\\\\\\Blocks', 'render_forum_feed'\\}, category\\: 'widgets', title\\: string, description\\: string, icon\\: 'format\\-chat', keywords\\: array\\{'forum', 'posts', 'discussions', 'jetonomy'\\}\\} given\\.$#"
-			count: 1
-			path: includes/class-blocks.php
-
-		-
-			message: "#^Parameter \\#2 \\$args of function register_block_type expects array\\{api_version\\?\\: string, title\\?\\: string, category\\?\\: string\\|null, parent\\?\\: array\\<string\\>\\|null, ancestor\\?\\: array\\<string\\>\\|null, allowed_blocks\\?\\: array\\<string\\>\\|null, icon\\?\\: string\\|null, description\\?\\: string, \\.\\.\\.\\}, array\\{api_version\\: 3, attributes\\: array\\{count\\: array\\{type\\: 'number', default\\: 6\\}, categoryId\\: array\\{type\\: 'number', default\\: 0\\}\\}, render_callback\\: array\\{'Jetonomy\\\\\\\\Blocks', 'render_space_list'\\}, category\\: 'widgets', title\\: string, description\\: string, icon\\: 'groups', keywords\\: array\\{'spaces', 'categories', 'forum', 'jetonomy'\\}\\} given\\.$#"
-			count: 1
-			path: includes/class-blocks.php
 
 		-
 			message: "#^Call to static method error\\(\\) on an unknown class WP_CLI\\.$#"
