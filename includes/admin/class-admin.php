@@ -479,8 +479,26 @@ class Admin {
 	}
 
 	public function render_categories(): void {
-		$categories     = Category::list_top_level();
+		// Flat list of every category (for the parent-select dropdowns) —
+		// dropdown needs all values regardless of pagination.
 		$all_categories = $this->get_all_categories_nested();
+
+		// Paginated top-level categories for the main table.
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = absint( $_GET['per_page'] ?? 20 );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+		$search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'sort_order' ) );
+		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
+		$offset  = ( $paged - 1 ) * $per_page;
+
+		$result            = Category::list_paginated( $search, $orderby, $order, $per_page, $offset );
+		$categories        = $result['rows'];
+		$categories_total  = (int) $result['total'];
+		$categories_pages  = (int) ceil( $categories_total / $per_page );
+
 		include JETONOMY_DIR . 'includes/admin/views/categories.php';
 	}
 
