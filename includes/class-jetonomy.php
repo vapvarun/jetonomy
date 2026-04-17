@@ -133,7 +133,14 @@ final class Jetonomy {
 		// Flag a rewrite flush for the next init — rules are not registered yet
 		// during activation, so flushing here would be a no-op.
 		delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
-		set_transient( 'jetonomy_activation_redirect', true, 30 );
+
+		// Only redirect to the setup wizard on the FIRST activation. Plugin
+		// updates re-run activate(); without this guard every update would
+		// bounce the admin into the wizard and potentially overwrite
+		// already-customized settings (base_slug, default_space_type, etc.).
+		if ( ! get_option( 'jetonomy_setup_complete' ) ) {
+			set_transient( 'jetonomy_activation_redirect', true, 30 );
+		}
 	}
 
 	public function deactivate(): void {
@@ -164,6 +171,14 @@ final class Jetonomy {
 			return;
 		}
 		delete_transient( 'jetonomy_activation_redirect' );
+
+		// Safety net — never bounce into the wizard if setup already completed.
+		// Belt-and-braces alongside the guard in activate(); protects against
+		// any path that set the transient without consulting setup-complete.
+		if ( get_option( 'jetonomy_setup_complete' ) ) {
+			return;
+		}
+
 		if ( wp_doing_ajax() || wp_doing_cron() || is_network_admin() ) {
 			return;
 		}

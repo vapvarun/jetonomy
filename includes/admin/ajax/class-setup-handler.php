@@ -28,10 +28,27 @@ class Setup_Handler {
 			wp_send_json_error();
 		}
 
-		$settings                       = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']          = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
-		$settings['default_space_type'] = $this->sanitize_space_type( wp_unslash( $_POST['default_space_type'] ?? $_POST['default_type'] ?? 'forum' ) );
-		$settings['guest_read']         = true;
+		$settings = get_option( 'jetonomy_settings', [] );
+
+		// Preserve existing values if the field wasn't submitted. Previously
+		// we defaulted to 'community' on missing POST, which silently reverted
+		// admin-customized base_slugs after any re-trip through the wizard
+		// (e.g. accidental re-run after an update).
+		if ( isset( $_POST['base_slug'] ) ) {
+			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) );
+		} elseif ( empty( $settings['base_slug'] ) ) {
+			$settings['base_slug'] = 'community';
+		}
+
+		if ( isset( $_POST['default_space_type'] ) || isset( $_POST['default_type'] ) ) {
+			$settings['default_space_type'] = $this->sanitize_space_type( wp_unslash( $_POST['default_space_type'] ?? $_POST['default_type'] ?? 'forum' ) );
+		} elseif ( empty( $settings['default_space_type'] ) ) {
+			$settings['default_space_type'] = 'forum';
+		}
+
+		if ( ! isset( $settings['guest_read'] ) ) {
+			$settings['guest_read'] = true;
+		}
 		update_option( 'jetonomy_settings', $settings );
 
 		$cat_name   = sanitize_text_field( wp_unslash( $_POST['category_name'] ?? 'General' ) );
@@ -85,10 +102,25 @@ class Setup_Handler {
 		$uid = get_current_user_id();
 		UserProfile::find_or_create( $uid );
 
-		$settings                       = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']          = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
-		$settings['default_space_type'] = $this->sanitize_space_type( wp_unslash( $_POST['default_space_type'] ?? $_POST['default_type'] ?? 'forum' ) );
-		$settings['guest_read']         = true;
+		$settings = get_option( 'jetonomy_settings', [] );
+
+		// Same preservation rule as ajax_setup_save — never default base_slug
+		// back to 'community' on missing POST.
+		if ( isset( $_POST['base_slug'] ) ) {
+			$settings['base_slug'] = sanitize_title( wp_unslash( $_POST['base_slug'] ) );
+		} elseif ( empty( $settings['base_slug'] ) ) {
+			$settings['base_slug'] = 'community';
+		}
+
+		if ( isset( $_POST['default_space_type'] ) || isset( $_POST['default_type'] ) ) {
+			$settings['default_space_type'] = $this->sanitize_space_type( wp_unslash( $_POST['default_space_type'] ?? $_POST['default_type'] ?? 'forum' ) );
+		} elseif ( empty( $settings['default_space_type'] ) ) {
+			$settings['default_space_type'] = 'forum';
+		}
+
+		if ( ! isset( $settings['guest_read'] ) ) {
+			$settings['guest_read'] = true;
+		}
 		update_option( 'jetonomy_settings', $settings );
 
 		// Auto-cleanup any existing demo data before re-seeding.
