@@ -660,6 +660,12 @@ class Blocks {
 			wp_send_json_error( array( 'message' => $user_id->get_error_message() ), 400 );
 		}
 
+		// Intentionally NOT calling wp_send_new_user_notifications() here —
+		// Jetonomy's Notifier already owns branded welcome + admin emails
+		// through the jetonomy_user_registered hook. Triggering WP core's
+		// stock notification here would duplicate what Jetonomy sends.
+		do_action( 'jetonomy_user_registered', (int) $user_id );
+
 		wp_set_current_user( (int) $user_id );
 		wp_set_auth_cookie( (int) $user_id, false, is_ssl() );
 

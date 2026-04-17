@@ -419,6 +419,76 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<!-- Email Templates -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Email Templates', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc">
+						<?php esc_html_e( 'Customize subject and intro copy per notification type. Leave blank to use defaults.', 'jetonomy' ); ?>
+						<br>
+						<?php esc_html_e( 'Placeholders:', 'jetonomy' ); ?>
+						<code>{site}</code> <code>{user}</code> <code>{message}</code> <code>{type}</code> <code>{url}</code>
+					</p>
+				</div>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="email_footer_text"><?php esc_html_e( 'Footer Text', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="email_footer_text" name="jetonomy_settings[email_footer_text]" value="<?php echo esc_attr( $settings['email_footer_text'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'You received this because you are a member of the community.', 'jetonomy' ); ?>">
+							<p class="description"><?php esc_html_e( 'Appears at the bottom of every branded notification email.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+				<?php
+				$email_templates = get_option( 'jetonomy_email_templates', array() );
+				$tmpl_types      = array(
+					'reply_to_post'   => __( 'Reply to your post', 'jetonomy' ),
+					'reply_to_reply'  => __( 'Reply to your reply', 'jetonomy' ),
+					'mention'         => __( 'Mention (@username)', 'jetonomy' ),
+					'accepted_answer' => __( 'Your answer accepted', 'jetonomy' ),
+					'new_post_in_sub' => __( 'New post in subscribed space', 'jetonomy' ),
+					'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
+					'vote_on_post'    => __( 'Vote on your post', 'jetonomy' ),
+					'moderation'      => __( 'Moderator action', 'jetonomy' ),
+					'join_request'    => __( 'Space join request', 'jetonomy' ),
+				);
+				?>
+				<table class="widefat striped" style="margin-top:12px;">
+					<thead>
+						<tr>
+							<th style="width:220px;"><?php esc_html_e( 'Notification', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Subject', 'jetonomy' ); ?></th>
+							<th><?php esc_html_e( 'Body / Intro', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $tmpl_types as $type => $label ) :
+							$row     = isset( $email_templates[ $type ] ) && is_array( $email_templates[ $type ] ) ? $email_templates[ $type ] : array();
+							$subject = isset( $row['subject'] ) ? (string) $row['subject'] : '';
+							$body    = isset( $row['body'] ) ? (string) $row['body'] : '';
+							?>
+							<tr>
+								<td><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></td>
+								<td>
+									<input type="text"
+										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][subject]"
+										value="<?php echo esc_attr( $subject ); ?>"
+										class="large-text"
+										placeholder="[{site}] {message}">
+								</td>
+								<td>
+									<textarea
+										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][body]"
+										rows="2"
+										class="large-text"
+										placeholder="{message}"><?php echo esc_textarea( $body ); ?></textarea>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+
 			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>

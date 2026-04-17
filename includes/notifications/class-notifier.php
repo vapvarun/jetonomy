@@ -433,15 +433,65 @@ class Notifier {
 		);
 
 		$site_name = get_bloginfo( 'name' );
-		$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
-		$html      = self::render_email_template( $type, $message, $user, $unsub_url, $url );
-		$plain     = wp_strip_all_tags( $message );
+
+		// Admin overrides from Settings → Emails. Each type may define a
+		// custom subject + intro message. Placeholders: {site}, {user},
+		// {message}, {type}, {url}. If no override set, fall back to the
+		// default `[Site] message` subject and the raw $message body.
+		$templates    = get_option( 'jetonomy_email_templates', [] );
+		$tpl          = isset( $templates[ $type ] ) && is_array( $templates[ $type ] ) ? $templates[ $type ] : [];
+		$placeholders = [
+			'{site}'    => $site_name,
+			'{user}'    => $user->display_name,
+			'{message}' => wp_strip_all_tags( $message ),
+			'{type}'    => $type,
+			'{url}'     => $url,
+		];
+
+		$subject_tpl = isset( $tpl['subject'] ) && '' !== $tpl['subject'] ? (string) $tpl['subject'] : '[{site}] {message}';
+		$subject     = strtr( $subject_tpl, $placeholders );
+
+		$body_tpl = isset( $tpl['body'] ) && '' !== $tpl['body'] ? (string) $tpl['body'] : $message;
+		$body     = strtr( $body_tpl, $placeholders );
+
+		/**
+		 * Filter the email subject before sending. Use to tweak specific
+		 * types or inject routing prefixes per integration.
+		 *
+		 * @param string    $subject Computed subject after placeholder substitution.
+		 * @param string    $type    Notification type (e.g. reply_to_post).
+		 * @param \WP_User  $user    Recipient.
+		 */
+		$subject = (string) apply_filters( 'jetonomy_email_subject', $subject, $type, $user );
+
+		/**
+		 * Filter the email body/intro text. Placeholder replacement has
+		 * already happened; this is the final sentence shown above the CTA.
+		 *
+		 * @param string    $body The rendered body text.
+		 * @param string    $type Notification type.
+		 * @param \WP_User  $user Recipient.
+		 */
+		$body = (string) apply_filters( 'jetonomy_email_body', $body, $type, $user );
+
+		$html  = self::render_email_template( $type, $body, $user, $unsub_url, $url );
+		$plain = wp_strip_all_tags( $body );
 
 		// Add List-Unsubscribe headers (RFC 8058).
 		$headers = [
 			'List-Unsubscribe: <' . $unsub_url . '>',
 			'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
 		];
+
+		/**
+		 * Filter the headers before sending. Integrators can append
+		 * additional headers (tracking, tagging) here.
+		 *
+		 * @param string[]  $headers Headers array ready for wp_mail.
+		 * @param string    $type    Notification type.
+		 * @param \WP_User  $user    Recipient.
+		 */
+		$headers = (array) apply_filters( 'jetonomy_email_headers', $headers, $type, $user );
 
 		$email_adapter->send( $user->user_email, $subject, $html, $plain, $headers );
 	}
@@ -458,10 +508,26 @@ class Notifier {
 		$unsub_link    = $unsub_url ? esc_url( $unsub_url ) : '';
 		$home_url      = esc_url( home_url( '/' ) );
 
-		$settings    = get_option( 'jetonomy_settings', [] );
-		$accent      = $settings['accent_color'] ?? '#3B82F6';
+		$settings = get_option( 'jetonomy_settings', [] );
+
+		/**
+		 * Filter the accent color used in the email header accent-bar and CTA.
+		 * Default reads from settings `accent_color`, falls back to #3B82F6.
+		 *
+		 * @param string $accent Hex color.
+		 * @param string $type   Notification type.
+		 */
+		$accent      = (string) apply_filters( 'jetonomy_email_accent_color', (string) ( $settings['accent_color'] ?? '#3B82F6' ), $type );
 		$accent_safe = esc_attr( $accent );
-		$logo_url    = $settings['email_logo_url'] ?? '';
+
+		/**
+		 * Filter the logo URL shown in the email header. Return '' to fall
+		 * back to the site name text.
+		 *
+		 * @param string $logo_url URL of the logo image.
+		 * @param string $type     Notification type.
+		 */
+		$logo_url = (string) apply_filters( 'jetonomy_email_logo_url', (string) ( $settings['email_logo_url'] ?? '' ), $type );
 
 		$type_labels = [
 			'reply_to_post'   => __( 'New Reply', 'jetonomy' ),
@@ -503,7 +569,13 @@ class Notifier {
 			$footer_links .= " &nbsp;&middot;&nbsp; <a href=\"{$unsub_link}\" style=\"color:#6B7280;text-decoration:underline;\">" . esc_html__( 'Unsubscribe', 'jetonomy' ) . '</a>';
 		}
 
-		return <<<HTML
+		$footer_text = '';
+		$settings_footer = (string) ( $settings['email_footer_text'] ?? '' );
+		if ( '' !== $settings_footer ) {
+			$footer_text = '<p style="margin:0 0 6px;font-size:11px;color:#9CA3AF;">' . esc_html( $settings_footer ) . '</p>';
+		}
+
+		$html = <<<HTML
 <!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -550,6 +622,7 @@ class Notifier {
 <!-- Footer -->
 <tr><td style="background-color:#F9FAFB;padding:20px 32px;border:1px solid #E5E7EB;border-top:none;border-radius:0 0 8px 8px;">
 <p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:#6B7280;">{$footer_links}</p>
+{$footer_text}
 <p style="margin:0;font-size:11px;color:#9CA3AF;">
 	{$site_name} &middot; <a href="{$home_url}" style="color:#9CA3AF;text-decoration:none;">{$home_url}</a>
 </p>
@@ -563,6 +636,17 @@ class Notifier {
 </body>
 </html>
 HTML;
+
+		/**
+		 * Final filter on the rendered HTML. Integrators can inject tracking
+		 * pixels, rewrite links, or A/B-test templates by returning a new
+		 * HTML string.
+		 *
+		 * @param string    $html The rendered branded email HTML.
+		 * @param string    $type Notification type.
+		 * @param \WP_User  $user Recipient.
+		 */
+		return (string) apply_filters( 'jetonomy_email_html', $html, $type, $user );
 	}
 
 	/**

@@ -181,6 +181,63 @@ class Admin {
 				'sanitize_callback' => array( $this, 'sanitize_settings' ),
 			)
 		);
+
+		// Email template overrides live in their own option so they're not
+		// nuked when a different tab saves. Sanitized per-row.
+		register_setting(
+			'jetonomy_settings',
+			'jetonomy_email_templates',
+			array(
+				'type'              => 'array',
+				'sanitize_callback' => array( $this, 'sanitize_email_templates' ),
+				'default'           => array(),
+			)
+		);
+	}
+
+	/**
+	 * Sanitize the email template overrides option.
+	 * Each row: { subject: string, body: string }. Both fields are plain
+	 * text with supported placeholders — no HTML allowed here.
+	 *
+	 * @param mixed $input
+	 * @return array<string, array{subject: string, body: string}>
+	 */
+	public function sanitize_email_templates( $input ): array {
+		if ( ! is_array( $input ) ) {
+			return array();
+		}
+
+		$allowed_types = array(
+			'reply_to_post',
+			'reply_to_reply',
+			'mention',
+			'accepted_answer',
+			'new_post_in_sub',
+			'badge_earned',
+			'vote_on_post',
+			'moderation',
+			'join_request',
+		);
+
+		$clean = array();
+		foreach ( $allowed_types as $type ) {
+			if ( empty( $input[ $type ] ) || ! is_array( $input[ $type ] ) ) {
+				continue;
+			}
+			$subject = isset( $input[ $type ]['subject'] ) ? sanitize_text_field( (string) $input[ $type ]['subject'] ) : '';
+			$body    = isset( $input[ $type ]['body'] ) ? wp_kses_post( (string) $input[ $type ]['body'] ) : '';
+			// Only persist rows that actually have an override — keeps the
+			// option small and makes "fall back to default" the natural state.
+			if ( '' === $subject && '' === $body ) {
+				continue;
+			}
+			$clean[ $type ] = array(
+				'subject' => $subject,
+				'body'    => $body,
+			);
+		}
+		return $clean;
 	}
 
 	public function sanitize_settings( $input ): array {
@@ -243,9 +300,10 @@ class Admin {
 		// ── Email tab ──
 		// Only process if email_from_name is present (Email tab was submitted).
 		if ( isset( $input['email_from_name'] ) ) {
-			$clean['email_from_name']  = sanitize_text_field( $input['email_from_name'] ?? '' );
-			$clean['email_from_email'] = sanitize_email( $input['email_from_email'] ?? '' );
-			$clean['email_logo_url']   = esc_url_raw( $input['email_logo_url'] ?? '' );
+			$clean['email_from_name']   = sanitize_text_field( $input['email_from_name'] ?? '' );
+			$clean['email_from_email']  = sanitize_email( $input['email_from_email'] ?? '' );
+			$clean['email_logo_url']    = esc_url_raw( $input['email_logo_url'] ?? '' );
+			$clean['email_footer_text'] = sanitize_text_field( $input['email_footer_text'] ?? '' );
 
 			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
 			$notif_types = array(
