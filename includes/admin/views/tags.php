@@ -2,6 +2,11 @@
 /**
  * Admin tags management view.
  *
+ * Intentionally reuses the Categories split layout (.jetonomy-categories-layout)
+ * — same sticky form on the left, scrollable table on the right. Tag-specific
+ * additions over the Categories page: search, per-page picker, bulk delete,
+ * pagination (tags scale to 1000s so we can't ship the flat list pattern).
+ *
  * Scoped variables (set by Admin::render_tags):
  *
  * @var object[] $tags         Current page rows.
@@ -38,22 +43,11 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 };
 ?>
 <div class="wrap jetonomy-admin">
-	<h1 class="wp-heading-inline"><?php esc_html_e( 'Tags', 'jetonomy' ); ?></h1>
-	<span class="subtitle">
-		<?php
-		printf(
-			/* translators: %d: total number of tags */
-			esc_html( _n( '%d tag', '%d tags', (int) $tags_total, 'jetonomy' ) ),
-			(int) $tags_total
-		);
-		?>
-	</span>
+	<h1><?php esc_html_e( 'Tags', 'jetonomy' ); ?></h1>
 
-	<hr class="wp-header-end">
+	<div class="jetonomy-categories-layout">
 
-	<div class="jetonomy-tags-layout">
-
-		<!-- Add New Tag -->
+		<!-- Add New Tag Form -->
 		<div class="jt-settings-card" id="jetonomy-add-tag-form">
 			<div class="jt-settings-card__head">
 				<h2 class="jt-settings-card__title"><?php esc_html_e( 'Add New Tag', 'jetonomy' ); ?></h2>
@@ -74,39 +68,48 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 			</p>
 		</div>
 
-		<!-- Filters / Search / Bulk Actions -->
-		<form method="get" class="jetonomy-tags-filters" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
-			<input type="hidden" name="page" value="jetonomy-tags">
-
-			<div class="jetonomy-tags-bulkbar">
-				<select id="jetonomy-tags-bulk-action" aria-label="<?php esc_attr_e( 'Bulk actions', 'jetonomy' ); ?>">
-					<option value=""><?php esc_html_e( 'Bulk actions', 'jetonomy' ); ?></option>
-					<option value="delete"><?php esc_html_e( 'Delete selected', 'jetonomy' ); ?></option>
-				</select>
-				<button type="button" class="button" id="jetonomy-tags-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
-
-				<label class="screen-reader-text" for="tags-search"><?php esc_html_e( 'Search tags', 'jetonomy' ); ?></label>
-				<input type="search" id="tags-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search tags…', 'jetonomy' ); ?>">
-				<button type="submit" class="button"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
-
-				<label for="tags-per-page" class="screen-reader-text"><?php esc_html_e( 'Rows per page', 'jetonomy' ); ?></label>
-				<select id="tags-per-page" name="per_page">
-					<?php foreach ( array( 20, 50, 100 ) as $pp ) : ?>
-						<option value="<?php echo (int) $pp; ?>" <?php selected( (int) $per_page, $pp ); ?>><?php echo esc_html( $pp . '/' . __( 'page', 'jetonomy' ) ); ?></option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-		</form>
-
 		<!-- Tags Table -->
 		<div class="jt-content-table-wrap">
+
+			<!-- Tablenav top: search + bulk + per-page -->
+			<form method="get" class="tablenav top" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+				<input type="hidden" name="page" value="jetonomy-tags">
+
+				<div class="alignleft actions bulkactions">
+					<select id="jetonomy-tags-bulk-action" aria-label="<?php esc_attr_e( 'Bulk actions', 'jetonomy' ); ?>">
+						<option value=""><?php esc_html_e( 'Bulk actions', 'jetonomy' ); ?></option>
+						<option value="delete"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></option>
+					</select>
+					<button type="button" class="button action" id="jetonomy-tags-bulk-apply"><?php esc_html_e( 'Apply', 'jetonomy' ); ?></button>
+				</div>
+
+				<div class="alignleft actions">
+					<label for="tags-per-page" class="screen-reader-text"><?php esc_html_e( 'Rows per page', 'jetonomy' ); ?></label>
+					<select id="tags-per-page" name="per_page">
+						<?php foreach ( array( 20, 50, 100 ) as $pp ) : ?>
+							<option value="<?php echo (int) $pp; ?>" <?php selected( (int) $per_page, $pp ); ?>>
+								<?php
+								/* translators: %d: per-page count */
+								echo esc_html( sprintf( __( '%d per page', 'jetonomy' ), $pp ) );
+								?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+
+				<p class="search-box">
+					<label class="screen-reader-text" for="tags-search"><?php esc_html_e( 'Search tags', 'jetonomy' ); ?></label>
+					<input type="search" id="tags-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="<?php esc_attr_e( 'Search tags…', 'jetonomy' ); ?>">
+					<button type="submit" class="button"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
+				</p>
+			</form>
+
 			<table class="wp-list-table widefat fixed striped" id="jetonomy-tags-table">
 				<thead>
 					<tr>
 						<td id="cb" class="manage-column column-cb check-column">
 							<input type="checkbox" id="jetonomy-tags-cb-all" aria-label="<?php esc_attr_e( 'Select all', 'jetonomy' ); ?>">
 						</td>
-						<th class="column-id"><?php echo $sort_link( 'id', __( 'ID', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 						<th class="column-name column-primary"><?php echo $sort_link( 'name', __( 'Name', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 						<th class="column-slug"><?php echo $sort_link( 'slug', __( 'Slug', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 						<th class="column-count"><?php echo $sort_link( 'post_count', __( 'Posts', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
@@ -115,11 +118,11 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 				<tbody id="jetonomy-tags-list">
 					<?php if ( empty( $tags ) ) : ?>
 						<tr class="jetonomy-no-items">
-							<td colspan="5">
+							<td colspan="4">
 								<?php if ( '' !== $search ) : ?>
 									<?php esc_html_e( 'No tags match that search.', 'jetonomy' ); ?>
 								<?php else : ?>
-									<?php esc_html_e( 'No tags yet. Create your first one above.', 'jetonomy' ); ?>
+									<?php esc_html_e( 'No tags yet. Create your first one on the left.', 'jetonomy' ); ?>
 								<?php endif; ?>
 							</td>
 						</tr>
@@ -129,7 +132,6 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 								<th scope="row" class="check-column">
 									<input type="checkbox" class="jetonomy-tag-cb" value="<?php echo absint( $tag->id ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Select %s', 'jetonomy' ), $tag->name ) ); ?>">
 								</th>
-								<td class="column-id"><?php echo absint( $tag->id ); ?></td>
 								<td class="column-name column-primary">
 									<strong><?php echo esc_html( $tag->name ); ?></strong>
 									<div class="row-actions">
@@ -154,48 +156,51 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 					<?php endif; ?>
 				</tbody>
 			</table>
-		</div>
 
-		<?php if ( $total_pages > 1 ) : ?>
-			<div class="tablenav bottom">
-				<div class="tablenav-pages">
-					<span class="displaying-num">
+			<?php if ( $total_pages > 1 || $tags_total > 0 ) : ?>
+				<div class="tablenav bottom">
+					<div class="tablenav-pages">
+						<span class="displaying-num">
+							<?php
+							printf(
+								/* translators: %d: total items */
+								esc_html( _n( '%d item', '%d items', (int) $tags_total, 'jetonomy' ) ),
+								(int) $tags_total
+							);
+							?>
+						</span>
 						<?php
-						printf(
-							/* translators: %d: total items */
-							esc_html( _n( '%d item', '%d items', (int) $tags_total, 'jetonomy' ) ),
-							(int) $tags_total
-						);
+						if ( $total_pages > 1 ) :
+							$base_args = array(
+								'page'     => 'jetonomy-tags',
+								's'        => $search,
+								'orderby'  => $orderby,
+								'order'    => $order,
+								'per_page' => $per_page,
+							);
+							$base_url  = admin_url( 'admin.php' );
+							echo wp_kses_post(
+								paginate_links(
+									array(
+										'base'      => add_query_arg( array_merge( $base_args, array( 'paged' => '%#%' ) ), $base_url ),
+										'format'    => '',
+										'current'   => max( 1, $paged ),
+										'total'     => $total_pages,
+										'prev_text' => '&laquo;',
+										'next_text' => '&raquo;',
+										'type'      => 'plain',
+									)
+								)
+							);
+						endif;
 						?>
-					</span>
-					<?php
-					$base_args = array(
-						'page'     => 'jetonomy-tags',
-						's'        => $search,
-						'orderby'  => $orderby,
-						'order'    => $order,
-						'per_page' => $per_page,
-					);
-					$base_url  = admin_url( 'admin.php' );
-					echo wp_kses_post(
-						paginate_links(
-							array(
-								'base'      => add_query_arg( array_merge( $base_args, array( 'paged' => '%#%' ) ), $base_url ),
-								'format'    => '',
-								'current'   => max( 1, $paged ),
-								'total'     => $total_pages,
-								'prev_text' => '&laquo;',
-								'next_text' => '&raquo;',
-								'type'      => 'plain',
-							)
-						)
-					);
-					?>
+					</div>
 				</div>
-			</div>
-		<?php endif; ?>
+			<?php endif; ?>
 
-	</div>
+		</div><!-- /.jt-content-table-wrap -->
+
+	</div><!-- /.jetonomy-categories-layout -->
 
 	<!-- Edit Tag Modal -->
 	<div class="jetonomy-modal" id="jetonomy-edit-tag-modal" style="display:none;">
@@ -242,12 +247,10 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 			.then( r => r.json() );
 	}
 
-	// Auto-submit per_page on change.
 	document.getElementById( 'tags-per-page' )?.addEventListener( 'change', function () {
 		this.form.submit();
 	} );
 
-	// Create tag.
 	document.getElementById( 'jetonomy-save-tag' )?.addEventListener( 'click', function () {
 		const name = document.getElementById( 'tag-name' ).value.trim();
 		const slug = document.getElementById( 'tag-slug' ).value.trim();
@@ -261,16 +264,9 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		} );
 	} );
 
-	// Edit tag (open modal).
 	const modal = document.getElementById( 'jetonomy-edit-tag-modal' );
-
-	function openModal() {
-		// Clear inline display:none so the CSS flex centering takes effect.
-		modal.style.display = '';
-	}
-	function closeModal() {
-		modal.style.display = 'none';
-	}
+	function openModal() { modal.style.display = ''; }
+	function closeModal() { modal.style.display = 'none'; }
 
 	document.querySelectorAll( '.jetonomy-edit-tag' ).forEach( a => {
 		a.addEventListener( 'click', function ( e ) {
@@ -285,10 +281,9 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		el.addEventListener( 'click', closeModal );
 	} );
 	document.addEventListener( 'keydown', e => {
-		if ( 'Escape' === e.key && 'none' !== modal.style.display ) {
-			closeModal();
-		}
+		if ( 'Escape' === e.key && 'none' !== modal.style.display ) { closeModal(); }
 	} );
+
 	document.getElementById( 'jetonomy-update-tag' )?.addEventListener( 'click', function () {
 		const id   = document.getElementById( 'edit-tag-id' ).value;
 		const name = document.getElementById( 'edit-tag-name' ).value.trim();
@@ -299,7 +294,6 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		} );
 	} );
 
-	// Delete tag (with confirmation when attached to posts).
 	document.querySelectorAll( '.jetonomy-delete-tag' ).forEach( a => {
 		a.addEventListener( 'click', function ( e ) {
 			e.preventDefault();
@@ -317,12 +311,9 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		} );
 	} );
 
-	// Bulk select all.
 	document.getElementById( 'jetonomy-tags-cb-all' )?.addEventListener( 'change', function () {
 		document.querySelectorAll( '.jetonomy-tag-cb' ).forEach( cb => { cb.checked = this.checked; } );
 	} );
-
-	// Bulk apply.
 	document.getElementById( 'jetonomy-tags-bulk-apply' )?.addEventListener( 'click', function () {
 		const action = document.getElementById( 'jetonomy-tags-bulk-action' ).value;
 		if ( 'delete' !== action ) { return; }

@@ -30,6 +30,17 @@ class Blocks {
 	}
 
 	public static function register_block_assets(): void {
+		// Dedicated, compact stylesheet for the Navigation and Login blocks.
+		// Self-contained — uses local tokens with WP-preset fallbacks so it
+		// renders correctly on any page without depending on the main
+		// jetonomy.css (which only loads on community routes).
+		wp_register_style(
+			'jetonomy-blocks',
+			JETONOMY_URL . 'assets/css/blocks.css',
+			array(),
+			JETONOMY_VERSION
+		);
+
 		wp_register_script(
 			'jetonomy-login-block',
 			JETONOMY_URL . 'assets/js/login-block.js',
@@ -250,6 +261,8 @@ class Blocks {
 			return '';
 		}
 
+		wp_enqueue_style( 'jetonomy-blocks' );
+
 		$user_id              = get_current_user_id();
 		$show_headings        = ! empty( $attributes['showCategoryHeadings'] );
 		$collapsible          = ! empty( $attributes['collapsible'] );
@@ -346,6 +359,7 @@ class Blocks {
 
 		// Enqueue only when this block is actually rendered. Safe from duplicate
 		// enqueues: WordPress dedupes by handle.
+		wp_enqueue_style( 'jetonomy-blocks' );
 		wp_enqueue_script( 'jetonomy-login-block' );
 
 		$title              = isset( $attributes['title'] ) && '' !== $attributes['title']
