@@ -1,7 +1,7 @@
 # Jetonomy — QA Release Checklist
 
-Gate for every tagged release of `jetonomy` (free). All items must be ✅
-before merging the release branch or pushing the zip to store.
+Gate for every tagged release of `jetonomy` (free). Every row must be
+checked before merging the release branch or pushing the zip to store.
 
 ---
 
@@ -42,7 +42,7 @@ before merging the release branch or pushing the zip to store.
 
 ## 5 — Browser smoke (desktop 1440px + mobile 390px)
 
-Walk `docs/qa/UX_AUDIT.md` — every ❌ must have a Basecamp card before merge.
+Walk `docs/qa/UX_AUDIT.md` — every failed row must have a Basecamp card before merge.
 
 ## 6 — Email testing (Local mailcatcher)
 

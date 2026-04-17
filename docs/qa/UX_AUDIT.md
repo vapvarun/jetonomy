@@ -2,8 +2,8 @@
 
 How to use: walk this top-to-bottom on a real site (staging or Local) as a
 **logged-in admin**, then repeat as an **anonymous visitor** and as a
-**logged-in regular member** (trust level 1 or 2). Mark ✅ / ❌ next to
-each item. File a Basecamp card for every ❌.
+**logged-in regular member** (trust level 1 or 2). Mark `[x]` pass or
+`[ ]` fail next to each item. File a Basecamp card for every failed row.
 
 Also run at **390px viewport** and in **dark mode** — every section has a
 mobile and dark check.

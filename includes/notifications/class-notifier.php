@@ -586,6 +586,7 @@ class Notifier {
 			'vote_on_post'    => __( 'View Post', 'jetonomy' ),
 			'accepted_answer' => __( 'View Answer', 'jetonomy' ),
 			'new_post_in_sub' => __( 'View Post', 'jetonomy' ),
+			'badge_earned'    => __( 'View Your Badges', 'jetonomy' ),
 			'moderation'      => __( 'Review in Mod Queue', 'jetonomy' ),
 			'join_request'    => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'    => __( 'Open the Community', 'jetonomy' ),
