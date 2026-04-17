@@ -157,7 +157,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 				</tbody>
 			</table>
 
-			<?php if ( $total_pages > 1 || $tags_total > 0 ) : ?>
+			<?php if ( $total_pages > 1 ) : ?>
 				<div class="tablenav bottom">
 					<div class="tablenav-pages">
 						<span class="displaying-num">
@@ -170,29 +170,28 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 							?>
 						</span>
 						<?php
-						if ( $total_pages > 1 ) :
-							$base_args = array(
-								'page'     => 'jetonomy-tags',
-								's'        => $search,
-								'orderby'  => $orderby,
-								'order'    => $order,
-								'per_page' => $per_page,
-							);
-							$base_url  = admin_url( 'admin.php' );
-							echo wp_kses_post(
-								paginate_links(
-									array(
-										'base'      => add_query_arg( array_merge( $base_args, array( 'paged' => '%#%' ) ), $base_url ),
-										'format'    => '',
-										'current'   => max( 1, $paged ),
-										'total'     => $total_pages,
-										'prev_text' => '&laquo;',
-										'next_text' => '&raquo;',
-										'type'      => 'plain',
-									)
+						$base_args = array(
+							'page'     => 'jetonomy-tags',
+							's'        => $search,
+							'orderby'  => $orderby,
+							'order'    => $order,
+							'per_page' => $per_page,
+						);
+						echo wp_kses_post(
+							paginate_links(
+								array(
+									'base'      => add_query_arg( array_merge( $base_args, array( 'paged' => '%#%' ) ), admin_url( 'admin.php' ) ),
+									'format'    => '',
+									'current'   => max( 1, $paged ),
+									'total'     => $total_pages,
+									'prev_text' => '&lsaquo;',
+									'next_text' => '&rsaquo;',
+									'end_size'  => 2,
+									'mid_size'  => 2,
+									'type'      => 'plain',
 								)
-							);
-						endif;
+							)
+						);
 						?>
 					</div>
 				</div>
