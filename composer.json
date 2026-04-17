@@ -37,7 +37,10 @@
         "test:docker:stop": "npx wp-env stop",
         "phpcs": "phpcs --standard=phpcs.xml",
         "phpcbf": "phpcbf --standard=phpcs.xml",
-        "phpstan": "phpstan analyse --memory-limit=1G"
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "hooks:install": "git config core.hooksPath .githooks && echo 'pre-commit hook installed (.githooks/pre-commit)'",
+        "post-install-cmd": "@hooks:install",
+        "post-update-cmd": "@hooks:install"
     },
     "scripts-descriptions": {
         "test": "Run the default test suite (free + pro combo when Pro is present).",

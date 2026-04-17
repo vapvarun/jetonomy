@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# Pre-commit gate for Jetonomy — blocks commits that fail PHPStan or WPCS
+# on the staged PHP files. Mirrors the GitHub Actions CI so red X's never
+# reach the public commit history.
+#
+# Install (one-time, per clone): composer install  (automatic via post-install-cmd)
+# Skip (emergencies only): git commit --no-verify
+#
+# Target latency: under 30 seconds. If you need longer, split the check.
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+# Only PHP files that are actually being committed.
+STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php' | tr '\n' ' ')
+
+if [ -z "$STAGED_PHP" ]; then
+    echo "pre-commit: no staged PHP — skipping."
+    exit 0
+fi
+
+echo "pre-commit: checking $(echo $STAGED_PHP | wc -w) staged PHP file(s)..."
+
+# PHPStan uses the baseline; running the whole project is the only way to
+# honour the baseline accurately. ~20-30s cached, usually acceptable.
+if [ -x vendor/bin/phpstan ]; then
+    echo "  -> phpstan"
+    vendor/bin/phpstan analyse --memory-limit=1G --no-progress --error-format=raw
+    if [ $? -ne 0 ]; then
+        echo
+        echo "pre-commit FAILED: PHPStan errors above. Fix them or run with --no-verify (discouraged)."
+        exit 1
+    fi
+else
+    echo "  -> phpstan (SKIPPED — vendor/bin/phpstan missing. Run: composer install)"
+fi
+
+# WPCS only on the staged files — much faster than scanning the whole tree.
+if [ -x vendor/bin/phpcs ]; then
+    echo "  -> phpcs (staged files only)"
+    vendor/bin/phpcs --standard=phpcs.xml $STAGED_PHP
+    if [ $? -ne 0 ]; then
+        echo
+        echo "pre-commit FAILED: WPCS errors above. Fix manually, run 'composer phpcbf' to auto-fix many, or --no-verify (discouraged)."
+        exit 1
+    fi
+else
+    echo "  -> phpcs (SKIPPED — vendor/bin/phpcs missing. Run: composer install)"
+fi
+
+echo "pre-commit: OK"
+exit 0

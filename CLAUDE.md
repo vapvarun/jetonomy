@@ -1,5 +1,13 @@
 # Jetonomy — WordPress Forum Plugin
 
+## Pre-Commit Rule (enforced)
+
+**Every commit is locally gated by `.githooks/pre-commit`.** The hook runs PHPStan on the full tree (honours the baseline) and WPCS on staged PHP files before the commit lands. Failures block the commit so red X's never reach the public history.
+
+- Install: `composer install` auto-configures it via `post-install-cmd` (sets `core.hooksPath .githooks`). For existing clones, `composer run hooks:install` does the same.
+- Skip (emergencies only): `git commit --no-verify` — but fix it in the next commit.
+- Target latency: under 30 seconds. If the hook gets slower, split the check or move it to pre-push.
+
 ## Release Rule (enforced)
 
 **Free and Pro always ship with the same `x.y.z` version number.** No exceptions.
