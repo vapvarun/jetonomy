@@ -178,17 +178,26 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 				<table class="form-table">
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Guest Access', 'jetonomy' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Community Access', 'jetonomy' ); ?></th>
 						<td>
 							<fieldset>
-								<label>
-									<input type="checkbox" name="jetonomy_settings[guest_read]" value="1" <?php checked( ! empty( $settings['guest_read'] ) ); ?>>
-									<?php esc_html_e( 'Allow guests to read public spaces', 'jetonomy' ); ?>
+								<?php
+								// Treat a missing value as "public" — the sensible default for a new install.
+								$is_public = ! isset( $settings['guest_read'] ) || ! empty( $settings['guest_read'] );
+								?>
+								<label style="display:block;margin-bottom:8px;">
+									<input type="radio" name="jetonomy_settings[guest_read]" value="1" <?php checked( $is_public ); ?>>
+									<strong><?php esc_html_e( 'Public community', 'jetonomy' ); ?></strong>
+									<span class="description" style="display:block;margin-left:24px;">
+										<?php esc_html_e( 'Anyone can read topics and replies. Visitors must log in to post, reply, or vote.', 'jetonomy' ); ?>
+									</span>
 								</label>
-								<br>
-								<label>
-									<input type="checkbox" name="jetonomy_settings[require_login]" value="1" <?php checked( ! empty( $settings['require_login'] ) ); ?>>
-									<?php esc_html_e( 'Require login to participate (post, reply, vote)', 'jetonomy' ); ?>
+								<label style="display:block;">
+									<input type="radio" name="jetonomy_settings[guest_read]" value="0" <?php checked( ! $is_public ); ?>>
+									<strong><?php esc_html_e( 'Private community', 'jetonomy' ); ?></strong>
+									<span class="description" style="display:block;margin-left:24px;">
+										<?php esc_html_e( 'Only logged-in members can view any forum content. Everyone else is redirected to the login page.', 'jetonomy' ); ?>
+									</span>
 								</label>
 							</fieldset>
 						</td>

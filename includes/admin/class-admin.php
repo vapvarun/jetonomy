@@ -196,9 +196,10 @@ class Admin {
 			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
 			$clean['posts_per_page']     = max( 1, absint( $input['posts_per_page'] ?? 20 ) );
 			$clean['replies_per_page']   = max( 1, absint( $input['replies_per_page'] ?? 30 ) );
-			$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );
-			$clean['guest_read']         = ! empty( $input['guest_read'] );
-			$clean['require_login']      = ! empty( $input['require_login'] );
+			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
+			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
+			// Community access mode — radio stores "1" (public) or "0" (private).
+			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
 		}
 
 		// ── Permissions tab ──

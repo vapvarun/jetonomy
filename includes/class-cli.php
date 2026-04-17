@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Trust\Trust_Evaluator;
 use Jetonomy\Import\Import_Manager;
 use Jetonomy\Admin\Ajax\Demo_Seeder;
+use Jetonomy\Recount;
 use function Jetonomy\table;
 
 class CLI {
@@ -31,52 +32,11 @@ class CLI {
 	 * @subcommand recount
 	 */
 	public function recount( $args, $assoc_args ): void {
-		global $wpdb;
-		$type = $assoc_args['type'] ?? 'all';
+		$type  = isset( $assoc_args['type'] ) ? (string) $assoc_args['type'] : 'all';
+		$stats = Recount::run( $type );
 
-		$posts_t    = table( 'posts' );
-		$replies_t  = table( 'replies' );
-		$spaces_t   = table( 'spaces' );
-		$votes_t    = table( 'votes' );
-		$cats_t     = table( 'categories' );
-		$profiles_t = table( 'user_profiles' );
-
-		if ( in_array( $type, [ 'all', 'posts' ], true ) ) {
-			\WP_CLI::log( 'Recounting reply counts on posts...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$posts_t} p SET p.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" );
-
-			\WP_CLI::log( 'Updating last_reply_at on posts...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$posts_t} p SET p.last_reply_at = (SELECT MAX(r.created_at) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" );
-		}
-
-		if ( in_array( $type, [ 'all', 'spaces' ], true ) ) {
-			\WP_CLI::log( 'Recounting post counts on spaces...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$spaces_t} s SET s.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.space_id = s.id AND p.status = 'publish')" );
-
-			\WP_CLI::log( 'Recounting space counts on categories...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$cats_t} c SET c.space_count = (SELECT COUNT(*) FROM {$spaces_t} s WHERE s.category_id = c.id AND s.status = 'active')" );
-		}
-
-		if ( in_array( $type, [ 'all', 'votes' ], true ) ) {
-			\WP_CLI::log( 'Recounting vote scores on posts...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$posts_t} p SET p.vote_score = COALESCE((SELECT SUM(v.value) FROM {$votes_t} v WHERE v.object_type = 'post' AND v.object_id = p.id), 0)" );
-
-			\WP_CLI::log( 'Recounting vote scores on replies...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$replies_t} r SET r.vote_score = COALESCE((SELECT SUM(v.value) FROM {$votes_t} v WHERE v.object_type = 'reply' AND v.object_id = r.id), 0)" );
-		}
-
-		if ( 'all' === $type ) {
-			\WP_CLI::log( 'Recounting user stats...' );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$profiles_t} u SET u.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.author_id = u.user_id AND p.status = 'publish')" );
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish')" );
+		foreach ( $stats as $step => $rows ) {
+			\WP_CLI::log( sprintf( '%s: %d rows', $step, $rows ) );
 		}
 
 		\WP_CLI::success( 'Recount complete.' );

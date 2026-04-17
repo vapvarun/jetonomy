@@ -396,15 +396,20 @@ class Posts_Controller extends Base_Controller {
 		$content_plain = wp_strip_all_tags( $content );
 		$slug          = $this->unique_post_slug( sanitize_title( $title ) );
 
-		// Akismet spam check.
-		$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$user         = get_userdata( $user_id );
-		$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
-			$content,
-			$user->display_name ?? '',
-			$user->user_email ?? '',
-			$ip
-		);
+		// Akismet spam check — skip for site admins and space admins/moderators.
+		// They cannot meaningfully spam their own community and false positives
+		// (flagging legitimate staff replies) erode trust in the admin workflow.
+		$akismet_spam = false;
+		if ( ! $this->author_bypasses_spam_check( $user_id, $space_id ) ) {
+			$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+			$user         = get_userdata( $user_id );
+			$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
+				$content,
+				$user->display_name ?? '',
+				$user->user_email ?? '',
+				$ip
+			);
+		}
 
 		$is_private = ! empty( $request->get_param( 'is_private' ) ) ? 1 : 0;
 
@@ -437,13 +442,32 @@ class Posts_Controller extends Base_Controller {
 			$post_data['status'] = 'spam';
 		}
 
-		// Handle draft/schedule — must run before moderation so a draft isn't overridden to 'pending'.
+		// Handle draft status — must run before moderation so a draft isn't overridden to 'pending'.
 		$requested_status = sanitize_text_field( (string) $request->get_param( 'status' ) );
 		if ( 'draft' === $requested_status && ! isset( $post_data['status'] ) ) {
 			$post_data['status'] = 'draft';
-			$scheduled_at        = sanitize_text_field( (string) $request->get_param( 'published_at' ) );
-			if ( ! empty( $scheduled_at ) ) {
-				$post_data['published_at'] = $scheduled_at;
+		}
+
+		// Handle published_at for scheduling (draft) and backdating (publish).
+		// Backdating is gated to users with manage_options — seed/import workflows.
+		$raw_published_at = $request->get_param( 'published_at' );
+		if ( null !== $raw_published_at && '' !== $raw_published_at ) {
+			$backdate = $this->sanitize_backdate( $raw_published_at );
+			if ( is_wp_error( $backdate ) ) {
+				return $backdate;
+			}
+			if ( null !== $backdate ) {
+				$is_publishing = 'draft' !== ( $post_data['status'] ?? 'publish' );
+				if ( $is_publishing && ! current_user_can( 'manage_options' ) ) {
+					return $this->permission_error();
+				}
+				$post_data['published_at'] = $backdate;
+				if ( $is_publishing ) {
+					// For backdated publishes, sync the sort/display columns so listings order correctly.
+					$post_data['created_at']    = $backdate;
+					$post_data['updated_at']    = $backdate;
+					$post_data['last_reply_at'] = $backdate;
+				}
 			}
 		}
 
@@ -596,6 +620,23 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
+		// Backdate: accept published_at to rewrite the date. Gated to manage_options.
+		$raw_published_at = $request->get_param( 'published_at' );
+		if ( null !== $raw_published_at && '' !== $raw_published_at ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return $this->permission_error();
+			}
+			$backdate = $this->sanitize_backdate( $raw_published_at );
+			if ( is_wp_error( $backdate ) ) {
+				return $backdate;
+			}
+			if ( null !== $backdate ) {
+				$update_data['published_at']  = $backdate;
+				$update_data['created_at']    = $backdate;
+				$update_data['last_reply_at'] = $backdate;
+			}
+		}
+
 		if ( empty( $update_data ) ) {
 			return $this->validation_error( __( 'No fields provided for update.', 'jetonomy' ) );
 		}
@@ -607,19 +648,24 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
 		}
 
-		// Create a revision before updating.
-		Revision::create(
-			array(
-				'object_type' => 'post',
-				'object_id'   => $id,
-				'author_id'   => $user_id,
-				'content'     => $post->content ?? '',
-				'title'       => $post->title ?? '',
-			)
-		);
+		// Only stamp an "edited" audit trail when the user actually edited content.
+		// Pure backdates (published_at/created_at/last_reply_at only) shouldn't appear edited.
+		$content_fields = array_intersect_key( $update_data, array_flip( array( 'title', 'content', 'content_plain', 'is_private', 'prefix' ) ) );
+		if ( ! empty( $content_fields ) ) {
+			// Create a revision before updating.
+			Revision::create(
+				array(
+					'object_type' => 'post',
+					'object_id'   => $id,
+					'author_id'   => $user_id,
+					'content'     => $post->content ?? '',
+					'title'       => $post->title ?? '',
+				)
+			);
 
-		$update_data['edited_at'] = current_time( 'mysql' );
-		$update_data['edited_by'] = $user_id;
+			$update_data['edited_at'] = current_time( 'mysql' );
+			$update_data['edited_by'] = $user_id;
+		}
 
 		Post::update( $id, $update_data );
 
@@ -656,10 +702,8 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Decrement denormalized counters before soft-deleting.
-		Space::increment_post_count( $space_id, -1 );
-		UserProfile::increment_post_count( (int) $post->author_id, -1 );
-
+		// Post::update() detects the publish→trash transition and decrements
+		// space/user counters atomically — no manual pre-decrement needed.
 		Post::update( $id, array( 'status' => 'trash' ) );
 
 		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );
@@ -994,19 +1038,24 @@ class Posts_Controller extends Base_Controller {
 	 */
 	private function get_update_args(): array {
 		return array(
-			'title'      => array(
+			'title'        => array(
 				'type'     => 'string',
 				'required' => false,
 			),
-			'content'    => array(
+			'content'      => array(
 				'type'     => 'string',
 				'required' => false,
 			),
-			'is_private' => array(
+			'is_private'   => array(
 				'type'     => 'boolean',
 				'required' => false,
 			),
-			'prefix'     => array(
+			'prefix'       => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'published_at' => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',

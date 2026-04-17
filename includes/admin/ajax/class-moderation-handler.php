@@ -28,8 +28,11 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? '' ) );
-		$object_id   = absint( $_POST['object_id'] ?? 0 );
+		// Accept both the legacy `object_type`/`object_id` names (used by the
+		// moderation queue UI) and the shorter `type`/`id` names posted by the
+		// Replies admin list. Either pair is valid input from trusted admin JS.
+		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? $_POST['type'] ?? '' ) );
+		$object_id   = absint( $_POST['object_id'] ?? $_POST['id'] ?? 0 );
 
 		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
 			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
@@ -50,8 +53,11 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? '' ) );
-		$object_id   = absint( $_POST['object_id'] ?? 0 );
+		// Accept both the legacy `object_type`/`object_id` names (used by the
+		// moderation queue UI) and the shorter `type`/`id` names posted by the
+		// Replies admin list. Either pair is valid input from trusted admin JS.
+		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? $_POST['type'] ?? '' ) );
+		$object_id   = absint( $_POST['object_id'] ?? $_POST['id'] ?? 0 );
 
 		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
 			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );
@@ -72,8 +78,11 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
 		}
 
-		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? '' ) );
-		$object_id   = absint( $_POST['object_id'] ?? 0 );
+		// Accept both the legacy `object_type`/`object_id` names (used by the
+		// moderation queue UI) and the shorter `type`/`id` names posted by the
+		// Replies admin list. Either pair is valid input from trusted admin JS.
+		$object_type = sanitize_text_field( wp_unslash( $_POST['object_type'] ?? $_POST['type'] ?? '' ) );
+		$object_id   = absint( $_POST['object_id'] ?? $_POST['id'] ?? 0 );
 
 		if ( ! $object_id || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
 			wp_send_json_error( __( 'Invalid content.', 'jetonomy' ) );

@@ -36,6 +36,7 @@ class Api {
 			'leaderboards'  => 'Leaderboards_Controller',
 			'bookmarks'     => 'Bookmarks_Controller',
 			'oembed'        => 'OEmbed_Controller',
+			'admin'         => 'Admin_Controller',
 		];
 
 		require_once $dir . 'class-base-controller.php';

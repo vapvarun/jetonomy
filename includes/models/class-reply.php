@@ -56,9 +56,70 @@ class Reply extends Model {
 			if ( ! empty( $data['author_id'] ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
 			}
+
+			// Auto-join the replier to the space on their first reply — same rules
+			// as Post::create (open spaces only, no demotion of existing members).
+			$parent_post = ! empty( $data['post_id'] ) ? Post::find( (int) $data['post_id'] ) : null;
+			if ( $parent_post && ! empty( $data['author_id'] ) ) {
+				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
+			}
 		}
 
 		return $id;
+	}
+
+	/**
+	 * Status-aware update. Mirrors Post::update — any transition in/out of
+	 * `publish` adjusts the parent post's reply_count and the author's reply_count
+	 * so every caller (REST, admin AJAX, abilities, CLI) stays counter-consistent.
+	 */
+	public static function update( int $id, array $data ): bool {
+		$delta = 0;
+		$reply = null;
+
+		if ( array_key_exists( 'status', $data ) ) {
+			$reply = self::find( $id );
+			if ( $reply ) {
+				$was_publish = 'publish' === ( $reply->status ?? '' );
+				$is_publish  = 'publish' === (string) $data['status'];
+				if ( $was_publish && ! $is_publish ) {
+					$delta = -1;
+				} elseif ( ! $was_publish && $is_publish ) {
+					$delta = 1;
+				}
+			}
+		}
+
+		$result = parent::update( $id, $data );
+
+		if ( 0 !== $delta && $reply ) {
+			if ( ! empty( $reply->post_id ) ) {
+				Post::increment_reply_count( (int) $reply->post_id, $delta );
+			}
+			if ( ! empty( $reply->author_id ) ) {
+				UserProfile::increment_reply_count( (int) $reply->author_id, $delta );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Add the replier to the parent post's space as a plain member if they aren't
+	 * already a member. Only applies to open spaces.
+	 */
+	private static function maybe_auto_join_space( int $space_id, int $user_id ): void {
+		if ( $space_id <= 0 || $user_id <= 0 ) {
+			return;
+		}
+		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
+			return;
+		}
+		$space = Space::find( $space_id );
+		if ( ! $space || 'open' !== ( $space->join_policy ?? 'open' ) ) {
+			return;
+		}
+		SpaceMember::add( $space_id, $user_id, 'member' );
 	}
 
 	/**

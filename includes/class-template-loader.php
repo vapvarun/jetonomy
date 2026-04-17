@@ -25,16 +25,12 @@ class Template_Loader {
 		}
 
 		// ── Global access control from settings ──
-		$settings = get_option( 'jetonomy_settings', array() );
-
-		// require_login: redirect all non-logged-in users to login page.
-		if ( ! empty( $settings['require_login'] ) && ! is_user_logged_in() ) {
-			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
-			exit;
-		}
-
-		// guest_read: if disabled, non-logged-in users can't view any forum content.
-		if ( empty( $settings['guest_read'] ) && ! is_user_logged_in() ) {
+		// Public community (guest_read on, or unset — defaults public): anyone can read, writes
+		// still require login via the REST permission layer. Private community (guest_read off):
+		// redirect anonymous visitors to the login page.
+		$settings            = get_option( 'jetonomy_settings', array() );
+		$is_public_community = ! isset( $settings['guest_read'] ) || ! empty( $settings['guest_read'] );
+		if ( ! $is_public_community && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}

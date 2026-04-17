@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.3.2
+Stable tag: 1.3.5
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,29 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.3.5 — April 2026 =
+
+* Fixed: Editing a topic or reply no longer collapses paragraphs into a single run-on line. The inline editor now preserves blank lines between paragraphs all the way through open, save, and display. Historically broken posts also render with their paragraphs restored on the next page load.
+
+= 1.3.4 — April 2026 =
+
+* Fixed: Akismet no longer flags replies written by site admins or space admins/moderators as spam. Staff responses were getting quarantined on sites with Akismet active, hiding legitimate support answers from members.
+* New: Admins can approve a spam-flagged topic or reply in one click. The Replies and Posts admin lists now show an "Approve" / "Not Spam" action next to Trash on any row currently held for moderation.
+* Fixed: Approving, marking-as-spam, or trashing a topic or reply from the admin list now correctly updates the topic count, reply count, and member contribution totals. Previously, moving content between publish and other statuses left the denormalized totals stuck at their old values.
+* New: Admins can refresh community member counts alongside topic and reply counters — the one-click counter rebuild added in 1.3.3 now repairs member drift too.
+* New: Spaces now track their real membership. Posting a topic or replying in an open community automatically joins the author as a member, so spaces correctly show the number of people actually contributing instead of just the space creator.
+* New: A one-time upgrade routine adds every historical author to the spaces they've contributed to, so your existing communities start showing accurate member counts immediately after the update.
+* New: Admins managing moderation by API can now see spam-flagged items alongside pending ones — the moderation queue endpoint accepts `status=pending|spam|all`.
+* New: Site admins can promote many members to a trust level in one call via the admin API — useful after migrations, onboarding batches, or granting long-standing members a higher tier.
+
+= 1.3.3 — April 2026 =
+
+* New: Preserve original dates when seeding or migrating discussions. Topics and replies added by admins now keep the date they were originally written, so imported content doesn't all show up stamped with today's date.
+* New: Admins can rebuild community counters when they look off. If topic totals, reply totals, member stats, or vote scores ever drift after a bulk import or manual database change, admins can refresh them all in one go without needing command-line access.
+* Improved: Access Control settings are now a single, clearer choice — "Public community" (anyone can read, login required to post) or "Private community" (login required to view anything). Matches how most communities actually work and removes a setting whose label didn't match its behaviour.
+* Fixed: The "Default Space Type" setting now really applies to new spaces — both in the admin panel and when creating spaces through the API. Previously the choice was saved but nothing read it.
+* Upgrade: Existing installs are migrated automatically — a private-community install (everyone required to log in) keeps that behaviour, and any default space type set during setup is carried over to the new unified setting.
 
 = 1.3.2 — April 2026 =
 
