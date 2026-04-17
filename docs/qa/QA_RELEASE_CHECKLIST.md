@@ -74,14 +74,18 @@ For each of BuddyX, BuddyX Pro, Reign, Astra, GeneratePress, Twenty Twenty-Four:
 
 ## 9 — Release packaging
 
-- [ ] `composer install --no-dev --optimize-autoloader` in a clean clone
-- [ ] `dist/jetonomy.zip` built; size sanity-check vs previous release (< 20% jump without explanation)
+**Only use `./bin/build-release.sh` — never hand-build or attach a pre-existing zip.** The script runs a clean-tree check, verifies version metadata, runs `composer install --no-dev`, `php -l`s every file, and then smoke-tests the plugin by booting it through `plugins_loaded` in a minimal WP stub. This is the gate that prevents another 1.3.5-style "the zip on Desktop is stale" accident.
+
+- [ ] Working tree clean on the release branch
+- [ ] `./bin/build-release.sh` completes with "OK — jetonomy-<version>.zip is ready"
+- [ ] Zip at `dist/jetonomy-<version>.zip`; size sanity-check vs previous release (< 20% jump without explanation)
 - [ ] Install the built zip on a throwaway Local site → activates without errors
 
 ## 10 — Post-merge
 
 - [ ] Tag `v{version}` pushed
 - [ ] GitHub release drafted with copy from `readme.txt` changelog
+- [ ] **Release asset uploaded from `dist/<plugin>-<version>.zip` that was just built — NEVER a cached copy from Desktop or anywhere else**
 - [ ] `dist/` uploaded to the store / update server
 - [ ] Basecamp cards moved from **In Testing** → **Done**
 - [ ] Internal Slack #releases post with highlights + card links

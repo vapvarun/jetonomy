@@ -1,5 +1,20 @@
 # Jetonomy — WordPress Forum Plugin
 
+## Build Rule (enforced)
+
+**Every release zip must be produced by `bin/build-release.sh`.** No exceptions.
+
+- Why: on 1.3.5 a stale Desktop zip (built before the critical bootstrap fix was committed) reached the GitHub release and took a customer's live site down. The release agent trusted "zip already exists" instead of rebuilding.
+- What the script guarantees:
+  1. Clean-tree gate (`--allow-dirty` only for local dev)
+  2. Version triangulation — Version header, constant, and readme Stable tag must match
+  3. Production composer install in staging (`--no-dev --optimize-autoloader`)
+  4. `php -l` on every staged PHP file
+  5. **Smoke test** — boots the plugin through `plugins_loaded` + `init` in a minimal WP stub (`tools/wp-stubs.php` + `tools/smoke-test.php`), catching load-time fatals like the 1.3.5 `Jetonomy\table()` bug
+  6. Zip → re-extract to scratch → re-run smoke test (catches zip corruption)
+- Never attach a pre-existing zip to a release. Always rebuild from the tagged commit.
+- Pro: `bin/build-release.sh` additionally enforces the lockstep rule — fails if Pro's version doesn't match free's.
+
 ## Pre-Commit Rule (enforced)
 
 **Every commit is locally gated by `.githooks/pre-commit`.** The hook runs PHPStan on the full tree (honours the baseline) and WPCS on staged PHP files before the commit lands. Failures block the commit so red X's never reach the public history.

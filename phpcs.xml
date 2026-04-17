@@ -139,5 +139,10 @@
 	<exclude-pattern>vendor/*</exclude-pattern>
 	<exclude-pattern>node_modules/*</exclude-pattern>
 	<exclude-pattern>assets/*</exclude-pattern>
+	<!-- Dev-only harness and build scripts. WPCS rules for production
+	     code don't apply — these files mirror WP function signatures
+	     verbatim and would need 400+ silencing comments otherwise. -->
+	<exclude-pattern>tools/*</exclude-pattern>
+	<exclude-pattern>bin/*</exclude-pattern>
 
 </ruleset>
