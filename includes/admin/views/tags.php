@@ -9,7 +9,7 @@
  * @var int      $paged        Current 1-based page number.
  * @var int      $per_page     Rows per page (20|50|100).
  * @var string   $search       Current search filter.
- * @var string   $orderby      Current sort column.
+ * @var string   $orderby      Current sort column (id|name|slug|post_count).
  * @var string   $order        Current sort direction (ASC|DESC).
  * @var int      $total_pages  ceil($tags_total / $per_page).
  *
@@ -110,13 +110,12 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 						<th class="column-name column-primary"><?php echo $sort_link( 'name', __( 'Name', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 						<th class="column-slug"><?php echo $sort_link( 'slug', __( 'Slug', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 						<th class="column-count"><?php echo $sort_link( 'post_count', __( 'Posts', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
-						<th class="column-created"><?php echo $sort_link( 'created_at', __( 'Created', 'jetonomy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></th>
 					</tr>
 				</thead>
 				<tbody id="jetonomy-tags-list">
 					<?php if ( empty( $tags ) ) : ?>
 						<tr class="jetonomy-no-items">
-							<td colspan="6">
+							<td colspan="5">
 								<?php if ( '' !== $search ) : ?>
 									<?php esc_html_e( 'No tags match that search.', 'jetonomy' ); ?>
 								<?php else : ?>
@@ -149,9 +148,6 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 										echo '<span class="jetonomy-count-zero">0</span>';
 									}
 									?>
-								</td>
-								<td class="column-created">
-									<?php echo ! empty( $tag->created_at ) ? esc_html( mysql2date( get_option( 'date_format' ), $tag->created_at ) ) : '—'; ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>

@@ -1003,8 +1003,7 @@
 }
 
 .jetonomy-tags-layout .column-id { width: 70px; }
-.jetonomy-tags-layout .column-count { width: 90px; text-align: right; }
-.jetonomy-tags-layout .column-created { width: 140px; }
+.jetonomy-tags-layout .column-count { width: 120px; text-align: right; }
 .jetonomy-tags-layout .column-slug code {
 	background: var(--jt-admin-bg-subtle, #f1f1f1);
 	padding: 2px 8px;

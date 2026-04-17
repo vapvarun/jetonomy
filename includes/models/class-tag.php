@@ -225,7 +225,7 @@ class Tag extends Model {
 	 * @return array{rows: object[], total: int}
 	 */
 	public static function list_paginated( string $search = '', string $orderby = 'name', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
-		$allowed_orderby = [ 'id', 'name', 'slug', 'post_count', 'created_at' ];
+		$allowed_orderby = [ 'id', 'name', 'slug', 'post_count' ];
 		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'name';
 		$order           = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
 		$per_page        = max( 1, min( 100, $per_page ) );
