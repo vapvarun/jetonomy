@@ -209,6 +209,7 @@ class Admin {
 		}
 
 		$allowed_types = array(
+			'user_welcome',
 			'reply_to_post',
 			'reply_to_reply',
 			'mention',

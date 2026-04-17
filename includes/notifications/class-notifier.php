@@ -48,6 +48,42 @@ class Notifier {
 
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
+
+		// New user registered through the Login block — branded welcome email.
+		// Intentionally registered at priority 20 so integrators can short-
+		// circuit earlier and swap in their own welcome without double-sending.
+		add_action( 'jetonomy_user_registered', [ $this, 'on_user_registered' ], 20, 1 );
+	}
+
+	/**
+	 * Branded welcome email for members who sign up through the Login block.
+	 * Uses the `user_welcome` notification type so admins can override the
+	 * subject + body in Settings → Email → Email Templates.
+	 *
+	 * @param int $user_id
+	 */
+	public function on_user_registered( int $user_id ): void {
+		$user = get_userdata( $user_id );
+		if ( ! $user || ! $user->user_email ) {
+			return;
+		}
+
+		$site    = get_bloginfo( 'name' );
+		$message = sprintf(
+			/* translators: 1: display name, 2: site name */
+			__( 'Welcome to %2$s, %1$s — your account is ready. Jump into the community to introduce yourself, ask a question, or browse existing discussions.', 'jetonomy' ),
+			$user->display_name,
+			$site
+		);
+
+		$this->send_email_notification(
+			$user_id,
+			'user_welcome',
+			$message,
+			'user',
+			$user_id,
+			\Jetonomy\base_url() . '/'
+		);
 	}
 
 	/**
@@ -539,6 +575,7 @@ class Notifier {
 			'badge_earned'    => __( 'Achievement', 'jetonomy' ),
 			'moderation'      => __( 'Moderation', 'jetonomy' ),
 			'join_request'    => __( 'Join Request', 'jetonomy' ),
+			'user_welcome'    => __( 'Welcome', 'jetonomy' ),
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
@@ -551,6 +588,7 @@ class Notifier {
 			'new_post_in_sub' => __( 'View Post', 'jetonomy' ),
 			'moderation'      => __( 'Review in Mod Queue', 'jetonomy' ),
 			'join_request'    => __( 'Review Request', 'jetonomy' ),
+			'user_welcome'    => __( 'Open the Community', 'jetonomy' ),
 		];
 		$cta_text    = esc_html( $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' ) );
 		$cta_url     = esc_url( $community_url );

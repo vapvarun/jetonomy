@@ -442,6 +442,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php
 				$email_templates = get_option( 'jetonomy_email_templates', array() );
 				$tmpl_types      = array(
+					'user_welcome'    => __( 'Welcome — new member', 'jetonomy' ),
 					'reply_to_post'   => __( 'Reply to your post', 'jetonomy' ),
 					'reply_to_reply'  => __( 'Reply to your reply', 'jetonomy' ),
 					'mention'         => __( 'Mention (@username)', 'jetonomy' ),
@@ -453,12 +454,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'join_request'    => __( 'Space join request', 'jetonomy' ),
 				);
 				?>
-				<table class="widefat striped" style="margin-top:12px;">
+				<table class="widefat striped jetonomy-email-templates-table" style="margin-top:12px;">
 					<thead>
 						<tr>
 							<th style="width:220px;"><?php esc_html_e( 'Notification', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Subject', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Body / Intro', 'jetonomy' ); ?></th>
+							<th style="width:180px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -467,27 +469,128 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							$subject = isset( $row['subject'] ) ? (string) $row['subject'] : '';
 							$body    = isset( $row['body'] ) ? (string) $row['body'] : '';
 							?>
-							<tr>
+							<tr data-jt-email-type="<?php echo esc_attr( $type ); ?>">
 								<td><strong><?php echo esc_html( $label ); ?></strong><br><code style="font-size:11px;color:#646970;"><?php echo esc_html( $type ); ?></code></td>
 								<td>
 									<input type="text"
 										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][subject]"
 										value="<?php echo esc_attr( $subject ); ?>"
-										class="large-text"
+										class="large-text jetonomy-email-subject-input"
 										placeholder="[{site}] {message}">
 								</td>
 								<td>
 									<textarea
 										name="jetonomy_email_templates[<?php echo esc_attr( $type ); ?>][body]"
 										rows="2"
-										class="large-text"
+										class="large-text jetonomy-email-body-input"
 										placeholder="{message}"><?php echo esc_textarea( $body ); ?></textarea>
+								</td>
+								<td class="jetonomy-email-actions">
+									<button type="button" class="button button-small jetonomy-email-preview-btn" data-type="<?php echo esc_attr( $type ); ?>">
+										<?php esc_html_e( 'Preview', 'jetonomy' ); ?>
+									</button>
+									<button type="button" class="button button-small jetonomy-email-send-btn" data-type="<?php echo esc_attr( $type ); ?>" data-label="<?php esc_attr_e( 'Send test', 'jetonomy' ); ?>">
+										<?php esc_html_e( 'Send test', 'jetonomy' ); ?>
+									</button>
 								</td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
 				</table>
 			</div>
+
+			<!-- Email preview modal -->
+			<div class="jetonomy-modal" id="jetonomy-email-preview-modal" style="display:none;">
+				<div class="jetonomy-modal__overlay"></div>
+				<div class="jetonomy-modal__content" style="max-width:720px;">
+					<h2 id="jetonomy-email-preview-subject"><?php esc_html_e( 'Email Preview', 'jetonomy' ); ?></h2>
+					<p class="description" style="margin:0 0 12px;color:#646970;">
+						<?php esc_html_e( 'Preview rendered with sample data. Save the page to persist overrides.', 'jetonomy' ); ?>
+					</p>
+					<iframe id="jetonomy-email-preview-iframe" style="width:100%;height:520px;border:1px solid #dcdcde;border-radius:6px;background:#fff;" title="Email preview"></iframe>
+					<p class="jetonomy-modal__actions">
+						<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Close', 'jetonomy' ); ?></button>
+					</p>
+				</div>
+			</div>
+
+			<script>
+			( function () {
+				const nonce = ( window.jetonomyAdmin && window.jetonomyAdmin.nonce ) || '';
+				const ajax  = ( window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl ) || window.ajaxurl;
+				if ( ! nonce || ! ajax ) { return; }
+
+				const modal   = document.getElementById( 'jetonomy-email-preview-modal' );
+				const iframe  = document.getElementById( 'jetonomy-email-preview-iframe' );
+				const subjEl  = document.getElementById( 'jetonomy-email-preview-subject' );
+
+				function closeModal() { modal.style.display = 'none'; }
+				function openModal()  { modal.style.display = ''; }
+
+				modal.querySelectorAll( '.jetonomy-modal-close, .jetonomy-modal__overlay' ).forEach( el => {
+					el.addEventListener( 'click', closeModal );
+				} );
+				document.addEventListener( 'keydown', e => {
+					if ( 'Escape' === e.key && 'none' !== modal.style.display ) { closeModal(); }
+				} );
+
+				function rowFields( type ) {
+					const row = document.querySelector( '[data-jt-email-type="' + type + '"]' );
+					return {
+						subject: row ? ( row.querySelector( '.jetonomy-email-subject-input' )?.value || '' ) : '',
+						body:    row ? ( row.querySelector( '.jetonomy-email-body-input' )?.value || '' ) : ''
+					};
+				}
+
+				// Preview — modal with branded HTML in an iframe (srcdoc).
+				document.querySelectorAll( '.jetonomy-email-preview-btn' ).forEach( btn => {
+					btn.addEventListener( 'click', async () => {
+						const type = btn.dataset.type;
+						const f    = rowFields( type );
+						const body = new FormData();
+						body.append( 'action', 'jetonomy_email_preview' );
+						body.append( 'nonce', nonce );
+						body.append( 'type', type );
+						body.append( 'subject', f.subject );
+						body.append( 'body', f.body );
+
+						const res  = await fetch( ajax, { method: 'POST', credentials: 'same-origin', body } );
+						const json = await res.json();
+						if ( ! json.success ) {
+							window.alert( ( json.data && json.data.message ) || json.data || '<?php echo esc_js( __( 'Preview failed.', 'jetonomy' ) ); ?>' );
+							return;
+						}
+						subjEl.textContent = json.data.subject || '<?php echo esc_js( __( 'Email Preview', 'jetonomy' ) ); ?>';
+						// srcdoc takes a string of HTML and sandboxes it inside
+						// the iframe — safer than writing into the parent document.
+						iframe.srcdoc = json.data.html;
+						openModal();
+					} );
+				} );
+
+				// Send test — deliver a real email with this type to admin_email.
+				document.querySelectorAll( '.jetonomy-email-send-btn' ).forEach( btn => {
+					btn.addEventListener( 'click', async () => {
+						const type   = btn.dataset.type;
+						const label  = btn.dataset.label || btn.textContent;
+						btn.disabled = true;
+						btn.textContent = '<?php echo esc_js( __( 'Sending…', 'jetonomy' ) ); ?>';
+
+						const body = new FormData();
+						body.append( 'action', 'jetonomy_test_email' );
+						body.append( 'nonce', nonce );
+						body.append( 'type', type );
+
+						const res  = await fetch( ajax, { method: 'POST', credentials: 'same-origin', body } );
+						const json = await res.json();
+						btn.disabled    = false;
+						btn.textContent = label;
+						const msg = ( json.data && json.data.message ) || json.data || '';
+						window.alert( msg || ( json.success ? '<?php echo esc_js( __( 'Sent.', 'jetonomy' ) ); ?>' : '<?php echo esc_js( __( 'Failed to send.', 'jetonomy' ) ); ?>' ) );
+					} );
+				} );
+			} )();
+			</script>
 
 			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-pro-upsell">
