@@ -1589,3 +1589,215 @@
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
 .jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
+/* ── Jetonomy Navigation block — Category → Space tree ── */
+.jt-nav-block {
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius, 8px);
+	padding: 0.75rem 0.9rem;
+	font-family: var(--jt-font, inherit);
+	color: var(--jt-text);
+}
+.jt-nav-title {
+	font-size: 0.95rem;
+	font-weight: 600;
+	margin: 0 0 0.6rem;
+	color: var(--jt-text);
+	letter-spacing: 0.01em;
+}
+.jt-nav-category {
+	margin: 0.35rem 0 0.55rem;
+}
+.jt-nav-category-title {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--jt-text-tertiary, var(--jt-text-secondary));
+	margin: 0.25rem 0 0.25rem;
+	font-weight: 600;
+	cursor: default;
+}
+details.jt-nav-category > summary.jt-nav-category-title {
+	cursor: pointer;
+	list-style: none;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.2rem 0;
+}
+details.jt-nav-category > summary.jt-nav-category-title::-webkit-details-marker {
+	display: none;
+}
+details.jt-nav-category > summary.jt-nav-category-title::after {
+	content: "▸";
+	font-size: 0.7rem;
+	transition: transform var(--jt-dur, 0.15s) var(--jt-ease, ease);
+	color: var(--jt-text-tertiary, var(--jt-text-secondary));
+}
+details.jt-nav-category[open] > summary.jt-nav-category-title::after {
+	transform: rotate(90deg);
+}
+.jt-nav-spaces {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.jt-nav-space {
+	margin: 0;
+}
+.jt-nav-space > a {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.4rem 0.55rem;
+	border-radius: var(--jt-radius-sm, 6px);
+	text-decoration: none;
+	color: var(--jt-text);
+	font-size: 0.9rem;
+	line-height: 1.35;
+	transition: background var(--jt-dur, 0.15s) var(--jt-ease, ease), color var(--jt-dur, 0.15s) var(--jt-ease, ease);
+}
+.jt-nav-space > a:hover,
+.jt-nav-space > a:focus-visible {
+	background: var(--jt-bg-hover, var(--jt-bg-subtle));
+	color: var(--jt-accent, var(--jt-text));
+}
+.jt-nav-space.is-active > a,
+.jt-nav-space > a[aria-current="page"] {
+	background: var(--jt-accent-muted, var(--jt-bg-subtle));
+	color: var(--jt-accent);
+	font-weight: 600;
+}
+.jt-nav-count {
+	font-size: 0.72rem;
+	color: var(--jt-text-tertiary, var(--jt-text-secondary));
+	background: var(--jt-bg-subtle);
+	padding: 0.1rem 0.45rem;
+	border-radius: var(--jt-radius-full, 999px);
+	min-width: 1.4rem;
+	text-align: center;
+}
+.jt-nav-spaces-uncategorized {
+	margin-top: 0.5rem;
+	border-top: 1px solid var(--jt-border);
+	padding-top: 0.5rem;
+}
+@media (max-width: 640px) {
+	.jt-nav-block {
+		padding: 0.6rem;
+	}
+	.jt-nav-space > a {
+		padding: 0.55rem 0.55rem;
+		font-size: 0.95rem;
+	}
+}
+
+/* ── Jetonomy Login block — quick login / register ── */
+.jt-login-block {
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius, 8px);
+	padding: 1rem;
+	font-family: var(--jt-font, inherit);
+	color: var(--jt-text);
+}
+.jt-login-title {
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 0 0 0.75rem;
+	color: var(--jt-text);
+}
+.jt-login-tabs {
+	display: flex;
+	gap: 0.25rem;
+	margin-bottom: 0.85rem;
+	border-bottom: 1px solid var(--jt-border);
+}
+.jt-login-tab {
+	flex: 1;
+	padding: 0.5rem 0.75rem;
+	background: transparent;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	font: inherit;
+	font-size: 0.88rem;
+	font-weight: 500;
+	color: var(--jt-text-secondary);
+	cursor: pointer;
+	margin-bottom: -1px;
+	transition: color var(--jt-dur, 0.15s) var(--jt-ease, ease), border-color var(--jt-dur, 0.15s) var(--jt-ease, ease);
+}
+.jt-login-tab:hover,
+.jt-login-tab:focus-visible {
+	color: var(--jt-text);
+}
+.jt-login-tab.is-active {
+	color: var(--jt-accent);
+	border-bottom-color: var(--jt-accent);
+}
+.jt-login-form {
+	display: none;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+.jt-login-form.is-active {
+	display: flex;
+}
+.jt-login-label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.82rem;
+	color: var(--jt-text-secondary);
+}
+.jt-login-label > input {
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-sm, 6px);
+	background: var(--jt-bg);
+	color: var(--jt-text);
+	font: inherit;
+	font-size: 0.92rem;
+	transition: border-color var(--jt-dur, 0.15s) var(--jt-ease, ease), box-shadow var(--jt-dur, 0.15s) var(--jt-ease, ease);
+}
+.jt-login-label > input:focus {
+	outline: 0;
+	border-color: var(--jt-accent);
+	box-shadow: 0 0 0 3px var(--jt-accent-light, transparent);
+}
+.jt-login-remember {
+	display: flex;
+	gap: 0.45rem;
+	align-items: center;
+	font-size: 0.85rem;
+	color: var(--jt-text-secondary);
+}
+.jt-login-submit {
+	margin-top: 0.25rem;
+}
+.jt-login-lostpw {
+	font-size: 0.8rem;
+	color: var(--jt-text-secondary);
+	text-decoration: none;
+	align-self: flex-start;
+}
+.jt-login-lostpw:hover {
+	color: var(--jt-accent);
+	text-decoration: underline;
+}
+.jt-login-message {
+	font-size: 0.85rem;
+	color: var(--jt-danger);
+	margin: 0;
+	min-height: 0;
+}
+.jt-login-message.is-success {
+	color: var(--jt-success);
+}
+@media (max-width: 640px) {
+	.jt-login-block {
+		padding: 0.85rem;
+	}
+}
