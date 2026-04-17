@@ -27,6 +27,12 @@ class Blocks {
 		// Register the login-block script once; the render callback enqueues
 		// it only on pages that actually contain the block.
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_block_assets' ) );
+
+		// Auto-inject Login / User Panel at the top of the community sidebar
+		// so every theme gets a first-class auth + profile jump point
+		// without the admin having to add the block manually. Integrators
+		// can disable with `add_filter( 'jetonomy_sidebar_auth_card', '__return_false' )`.
+		add_action( 'jetonomy_sidebar_before', array( __CLASS__, 'render_sidebar_auth_card' ), 5 );
 	}
 
 	public static function register_block_assets(): void {
@@ -156,6 +162,25 @@ class Blocks {
 				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ),
 				'icon'            => 'menu-alt3',
 				'keywords'        => array( 'navigation', 'sidebar', 'spaces', 'categories', 'jetonomy' ),
+			)
+		);
+
+		register_block_type(
+			'jetonomy/user-panel',
+			array(
+				'api_version'     => '3',
+				'attributes'      => array(
+					'title' => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_user_panel' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Jetonomy User Panel', 'jetonomy' ),
+				'description'     => __( 'Logged-in profile card for the sidebar — avatar, notifications, profile, logout. Empty for logged-out viewers.', 'jetonomy' ),
+				'icon'            => 'id',
+				'keywords'        => array( 'profile', 'user', 'sidebar', 'notifications', 'jetonomy' ),
 			)
 		);
 
@@ -341,6 +366,115 @@ class Blocks {
 			. $title_html
 			. implode( '', $sections ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — sections escaped above.
 			. '</nav>';
+	}
+
+	/**
+	 * Render the User Panel block — avatar, profile/notifications/logout.
+	 * Companion to the Login block; returns empty when the viewer is
+	 * logged-out so the two blocks can sit side-by-side and self-switch.
+	 */
+	public static function render_user_panel( array $attributes ): string {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+
+		wp_enqueue_style( 'jetonomy-blocks' );
+
+		$user_id = get_current_user_id();
+		$user    = wp_get_current_user();
+		$base    = \Jetonomy\base_url();
+		$avatar  = get_avatar( $user_id, 48, '', $user->display_name, array( 'class' => 'jt-userpanel-avatar' ) );
+
+		// Trust level (cheap read from user_profiles).
+		$profile      = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
+		$trust_level  = $profile ? (int) ( $profile->trust_level ?? 0 ) : 0;
+
+		// Unread notifications count (bounded query — uses the index on
+		// user_id + is_read so it stays cheap at 10k+ notifications).
+		$unread = 0;
+		if ( class_exists( \Jetonomy\Models\Notification::class ) ) {
+			global $wpdb;
+			$notifications_tbl = \Jetonomy\table( 'notifications' );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$unread = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_tbl} WHERE user_id = %d AND is_read = 0", $user_id ) );
+		}
+
+		$profile_url   = \Jetonomy\get_profile_url( $user_id );
+		$edit_url      = $base . '/u/' . rawurlencode( $user->user_login ) . '/edit/';
+		$notifs_url    = $base . '/notifications/';
+		$messages_url  = $base . '/messages/';
+		$show_messages = defined( 'JETONOMY_PRO_VERSION' );
+		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
+		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
+			? (string) $attributes['title']
+			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), $user->display_name );
+
+		ob_start();
+		?>
+		<div class="wp-block-jetonomy-user-panel jt-user-panel jt-app">
+			<div class="jt-userpanel-head">
+				<?php echo $avatar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — get_avatar returns sanitized HTML. ?>
+				<div class="jt-userpanel-heading">
+					<h3 class="jt-userpanel-title"><?php echo esc_html( $title ); ?></h3>
+					<div class="jt-userpanel-meta">
+						<span class="jt-userpanel-username">@<?php echo esc_html( $user->user_login ); ?></span>
+						<?php if ( $trust_level > 0 ) : ?>
+							<span class="jt-userpanel-tl" data-jt-tl="<?php echo (int) $trust_level; ?>" title="<?php echo esc_attr( sprintf( /* translators: %d: trust level */ __( 'Trust Level %d', 'jetonomy' ), $trust_level ) ); ?>">
+								TL<?php echo (int) $trust_level; ?>
+							</span>
+						<?php endif; ?>
+					</div>
+				</div>
+			</div>
+
+			<nav class="jt-userpanel-links" aria-label="<?php esc_attr_e( 'Account', 'jetonomy' ); ?>">
+				<a href="<?php echo esc_url( $profile_url ); ?>" class="jt-userpanel-link">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
+				</a>
+				<a href="<?php echo esc_url( $notifs_url ); ?>" class="jt-userpanel-link">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Notifications', 'jetonomy' ); ?></span>
+					<?php if ( $unread > 0 ) : ?>
+						<span class="jt-userpanel-badge"><?php echo esc_html( (string) $unread ); ?></span>
+					<?php endif; ?>
+				</a>
+				<?php if ( $show_messages ) : ?>
+					<a href="<?php echo esc_url( $messages_url ); ?>" class="jt-userpanel-link">
+						<span class="jt-userpanel-link-label"><?php esc_html_e( 'Messages', 'jetonomy' ); ?></span>
+					</a>
+				<?php endif; ?>
+				<a href="<?php echo esc_url( $edit_url ); ?>" class="jt-userpanel-link">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></span>
+				</a>
+				<a href="<?php echo esc_url( $logout_url ); ?>" class="jt-userpanel-link jt-userpanel-link--logout">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Log out', 'jetonomy' ); ?></span>
+				</a>
+			</nav>
+		</div>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Render the matching auth card (login OR user panel) at the top of the
+	 * community sidebar. Hooks `jetonomy_sidebar_before` so every theme
+	 * gets auth + profile navigation without the admin editing the
+	 * sidebar template. Returns early if an integrator opts out via the
+	 * `jetonomy_sidebar_auth_card` filter.
+	 */
+	public static function render_sidebar_auth_card(): void {
+		/**
+		 * Allow integrations to suppress the auto-rendered auth card.
+		 *
+		 * @param bool $show Whether to render the auth card. Default true.
+		 */
+		if ( ! apply_filters( 'jetonomy_sidebar_auth_card', true ) ) {
+			return;
+		}
+		if ( is_user_logged_in() ) {
+			echo self::render_user_panel( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
+		} else {
+			echo self::render_login( array() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — method returns escaped HTML.
+		}
 	}
 
 	/**
