@@ -262,19 +262,32 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 	} );
 
 	// Edit tag (open modal).
+	const modal = document.getElementById( 'jetonomy-edit-tag-modal' );
+
+	function openModal() {
+		// Clear inline display:none so the CSS flex centering takes effect.
+		modal.style.display = '';
+	}
+	function closeModal() {
+		modal.style.display = 'none';
+	}
+
 	document.querySelectorAll( '.jetonomy-edit-tag' ).forEach( a => {
 		a.addEventListener( 'click', function ( e ) {
 			e.preventDefault();
 			document.getElementById( 'edit-tag-id' ).value   = this.dataset.id;
 			document.getElementById( 'edit-tag-name' ).value = this.dataset.name;
 			document.getElementById( 'edit-tag-slug' ).value = this.dataset.slug;
-			document.getElementById( 'jetonomy-edit-tag-modal' ).style.display = 'block';
+			openModal();
 		} );
 	} );
 	document.querySelectorAll( '.jetonomy-modal-close, #jetonomy-edit-tag-modal .jetonomy-modal__overlay' ).forEach( el => {
-		el.addEventListener( 'click', () => {
-			document.getElementById( 'jetonomy-edit-tag-modal' ).style.display = 'none';
-		} );
+		el.addEventListener( 'click', closeModal );
+	} );
+	document.addEventListener( 'keydown', e => {
+		if ( 'Escape' === e.key && 'none' !== modal.style.display ) {
+			closeModal();
+		}
 	} );
 	document.getElementById( 'jetonomy-update-tag' )?.addEventListener( 'click', function () {
 		const id   = document.getElementById( 'edit-tag-id' ).value;
