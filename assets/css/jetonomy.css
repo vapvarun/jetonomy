@@ -751,6 +751,25 @@
   .jt-mod-flag-reporter { margin-left: auto; font-size: var(--jt-text-xs); color: var(--jt-text-tertiary); white-space: nowrap; }
   .jt-mod-flag-note { font-size: var(--jt-text-sm); color: var(--jt-text-secondary); margin-bottom: var(--jt-space-2); padding: var(--jt-space-2); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-sm); }
   .jt-mod-flag-actions { display: flex; flex-wrap: wrap; gap: var(--jt-space-2); align-items: center; }
+  /* Compact buttons inside moderation rows — the base .jt-btn is hero-sized
+     (40px tall, 16.5px bold) which overpowers the flag reason/note text. */
+  .jt-app .jt-mod-flag-actions .jt-btn {
+    padding: 0.3rem 0.75rem;
+    font-size: var(--jt-text-sm, 0.85rem);
+    font-weight: 500;
+    line-height: 1.25;
+    border-radius: var(--jt-radius-sm, 6px);
+    min-height: 0;
+    gap: 4px;
+  }
+  .jt-app .jt-mod-flag-actions .jt-btn > .dashicons,
+  .jt-app .jt-mod-flag-actions .jt-btn > svg { width: 14px; height: 14px; font-size: 14px; }
+  @media (max-width: 640px) {
+    .jt-app .jt-mod-flag-actions .jt-btn {
+      padding: 0.45rem 0.75rem;
+      font-size: 0.88rem;
+    }
+  }
   .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger); color: var(--jt-white); }
   .jt-app .jt-btn-danger:hover { color: var(--jt-white); }
 
