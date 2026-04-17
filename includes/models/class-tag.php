@@ -213,4 +213,68 @@ class Tag extends Model {
 			)
 		) ?: [];
 	}
+
+	/**
+	 * Paginated list for the admin table. Supports search, sort, and limit/offset.
+	 *
+	 * @param string $search   Optional LIKE filter against name.
+	 * @param string $orderby  One of: id, name, slug, post_count, created_at. Falls back to name.
+	 * @param string $order    ASC or DESC.
+	 * @param int    $per_page Rows per page (capped 1..100).
+	 * @param int    $offset   SQL offset.
+	 * @return array{rows: object[], total: int}
+	 */
+	public static function list_paginated( string $search = '', string $orderby = 'name', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
+		$allowed_orderby = [ 'id', 'name', 'slug', 'post_count', 'created_at' ];
+		$orderby         = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'name';
+		$order           = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
+		$per_page        = max( 1, min( 100, $per_page ) );
+		$offset          = max( 0, $offset );
+
+		$where   = '';
+		$values  = [];
+		if ( '' !== $search ) {
+			$where    = 'WHERE name LIKE %s';
+			$values[] = '%' . static::db()->esc_like( $search ) . '%';
+		}
+
+		$table = static::table();
+
+		// Count query.
+		$count_sql = "SELECT COUNT(*) FROM {$table} {$where}";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$total = empty( $values ) ? (int) static::db()->get_var( $count_sql ) : (int) static::db()->get_var( static::db()->prepare( $count_sql, ...$values ) );
+
+		// Data query. $orderby / $order / $per_page / $offset are sanitized above.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$data_sql = "SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$args     = array_merge( $values, [ $per_page, $offset ] );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
+
+		return [
+			'rows'  => $rows,
+			'total' => $total,
+		];
+	}
+
+	/**
+	 * Delete a tag and detach it from every post. Also removes space tag links.
+	 *
+	 * @param int $id Tag ID.
+	 * @return bool True if the tag row was removed.
+	 */
+	public static function delete_with_relations( int $id ): bool {
+		$post_tags     = table( 'post_tags' );
+		$space_tag_map = table( 'space_tag_map' );
+		$db            = static::db();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$db->delete( $post_tags, [ 'tag_id' => $id ] );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$db->delete( $space_tag_map, [ 'tag_id' => $id ] );
+
+		$deleted = (bool) parent::delete( $id );
+		return $deleted;
+	}
 }

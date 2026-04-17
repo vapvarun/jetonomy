@@ -29,6 +29,7 @@ class Admin {
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 
 		new Ajax\Categories_Handler();
+		new Ajax\Tags_Handler();
 		new Ajax\Spaces_Handler();
 		new Ajax\Moderation_Handler();
 		new Ajax\Users_Handler();
@@ -70,6 +71,15 @@ class Admin {
 			'jetonomy_manage_settings',
 			'jetonomy-categories',
 			array( $this, 'render_categories' )
+		);
+
+		add_submenu_page(
+			'jetonomy',
+			__( 'Tags', 'jetonomy' ),
+			__( 'Tags', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-tags',
+			array( $this, 'render_tags' )
 		);
 
 		add_submenu_page(
@@ -472,6 +482,32 @@ class Admin {
 		$categories     = Category::list_top_level();
 		$all_categories = $this->get_all_categories_nested();
 		include JETONOMY_DIR . 'includes/admin/views/categories.php';
+	}
+
+	/**
+	 * Tags admin page — paginated list with search, sort, add, edit, bulk delete.
+	 *
+	 * Pagination is server-side so the page scales to 10k+ tags without
+	 * loading everything into the DOM at once.
+	 */
+	public function render_tags(): void {
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = absint( $_GET['per_page'] ?? 20 );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+		$search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'name' ) );
+		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
+
+		$offset = ( $paged - 1 ) * $per_page;
+		$result = \Jetonomy\Models\Tag::list_paginated( $search, $orderby, $order, $per_page, $offset );
+
+		$tags        = $result['rows'];
+		$tags_total  = (int) $result['total'];
+		$total_pages = (int) ceil( $tags_total / $per_page );
+
+		include JETONOMY_DIR . 'includes/admin/views/tags.php';
 	}
 
 	public function render_spaces(): void {
