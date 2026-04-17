@@ -1,5 +1,14 @@
 # Jetonomy — WordPress Forum Plugin
 
+## Release Rule (enforced)
+
+**Free and Pro always ship with the same `x.y.z` version number.** No exceptions.
+
+- Every release bumps `jetonomy` AND `jetonomy-pro` together, even if one side has no user-facing changes — the side with no changes gets a "Compatibility: Aligned with Jetonomy x.y.z" entry in its readme.
+- `JETONOMY_VERSION`, `jetonomy.php` `Version:` header, and `readme.txt` `Stable tag:` must all match the corresponding Pro constants and headers.
+- CI fails fast if the two versions drift.
+- Rationale: pairing simplifies support ("what version are you on?"), EDD updater routing, and the release checklist — no cognitive load deciding which plugins need which bump.
+
 ## Quick Reference
 - **Type**: WordPress Plugin (forum, Q&A, ideas, social feed)
 - **PHP**: 8.1+ required
