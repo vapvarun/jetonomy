@@ -133,16 +133,16 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 	</div>
 
-	<?php
-	/**
-	 * Fires in the sidebar immediately after the "About" space card closes.
-	 * Only fires when a space is present (i.e. on space-scoped pages).
-	 * Ideal slot for ads, announcements, or CTAs pinned below the space intro.
-	 *
-	 * @param object $space Current space object.
-	 */
-	do_action( 'jetonomy_sidebar_after_about', $space );
-	?>
+		<?php
+		/**
+		 * Fires in the sidebar immediately after the "About" space card closes.
+		 * Only fires when a space is present (i.e. on space-scoped pages).
+		 * Ideal slot for ads, announcements, or CTAs pinned below the space intro.
+		 *
+		 * @param object $space Current space object.
+		 */
+		do_action( 'jetonomy_sidebar_after_about', $space );
+		?>
 	<?php endif; ?>
 
 	<?php if ( ! empty( $trending ) ) : ?>
