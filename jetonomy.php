@@ -25,6 +25,11 @@ define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
 require_once JETONOMY_DIR . 'includes/class-autoloader.php';
 Jetonomy\Autoloader::register();
 
+// functions.php defines Jetonomy\table(), Jetonomy\now(), Jetonomy\base_url() — plain
+// functions that the autoloader can't pick up. Must load BEFORE class-jetonomy so
+// Migrator runs (fired on plugins_loaded -> init) can call these helpers.
+require_once JETONOMY_DIR . 'includes/functions.php';
+
 require_once JETONOMY_DIR . 'includes/class-jetonomy.php';
 
 function jetonomy(): Jetonomy\Jetonomy {

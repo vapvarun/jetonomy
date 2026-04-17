@@ -180,7 +180,8 @@ final class Jetonomy {
 	}
 
 	private function load_dependencies(): void {
-		require_once JETONOMY_DIR . 'includes/functions.php';
+		// functions.php is required at plugin bootstrap so helpers are available
+		// before check_db_version() runs migrations. Do not re-require here.
 
 		// Non-namespaced files still need explicit require
 		require_once JETONOMY_DIR . 'includes/class-router.php';
