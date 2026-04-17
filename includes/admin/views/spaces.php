@@ -41,12 +41,19 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				<tr>
 					<th scope="row"><label for="space-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label></th>
 					<td>
+						<?php
+						$jt_settings       = get_option( 'jetonomy_settings', array() );
+						$default_new_space = in_array( $jt_settings['default_space_type'] ?? 'forum', array( 'forum', 'qa', 'ideas', 'feed' ), true )
+							? $jt_settings['default_space_type']
+							: 'forum';
+						?>
 						<select id="space-type">
-							<option value="forum"><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
-							<option value="qa"><?php esc_html_e( 'Q&A', 'jetonomy' ); ?></option>
-							<option value="ideas"><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
-							<option value="feed"><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
+							<option value="forum" <?php selected( $default_new_space, 'forum' ); ?>><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
+							<option value="qa" <?php selected( $default_new_space, 'qa' ); ?>><?php esc_html_e( 'Q&A', 'jetonomy' ); ?></option>
+							<option value="ideas" <?php selected( $default_new_space, 'ideas' ); ?>><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
+							<option value="feed" <?php selected( $default_new_space, 'feed' ); ?>><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
 						</select>
+						<p class="description"><?php esc_html_e( 'Default comes from Settings → General → Default Space Type.', 'jetonomy' ); ?></p>
 					</td>
 				</tr>
 				<tr>

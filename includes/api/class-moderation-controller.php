@@ -27,7 +27,8 @@ class Moderation_Controller extends Base_Controller {
 	public function register_routes() {
 		$ns = $this->namespace;
 
-		// GET moderation queue.
+		// GET moderation queue. Accepts `status=pending|spam|all` (default: pending)
+		// so moderators can see the spam bucket without opening wp-admin.
 		register_rest_route(
 			$ns,
 			'/moderation/queue',
@@ -35,6 +36,21 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_queue' ],
 				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					'status' => [
+						'type'              => 'string',
+						'required'          => false,
+						'default'           => 'pending',
+						'enum'              => [ 'pending', 'spam', 'all' ],
+						'sanitize_callback' => 'sanitize_key',
+					],
+					'type'   => [
+						'type'              => 'string',
+						'required'          => false,
+						'enum'              => [ 'post', 'reply' ],
+						'sanitize_callback' => 'sanitize_key',
+					],
+				],
 			]
 		);
 
@@ -205,18 +221,31 @@ class Moderation_Controller extends Base_Controller {
 		$posts_table   = table( 'posts' );
 		$replies_table = table( 'replies' );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$pending_posts = $wpdb->get_results(
-			"SELECT *, 'post' AS object_type FROM {$posts_table} WHERE status = 'pending' ORDER BY created_at DESC"
-		) ?: [];
+		$status_filter = (string) $request->get_param( 'status' );
+		$type_filter   = (string) $request->get_param( 'type' );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$pending_replies = $wpdb->get_results(
-			"SELECT *, 'reply' AS object_type FROM {$replies_table} WHERE status = 'pending' ORDER BY created_at DESC"
-		) ?: [];
+		$status_clause = 'all' === $status_filter
+			? "status IN ('pending','spam')"
+			: $wpdb->prepare( 'status = %s', $status_filter );
+
+		$posts = array();
+		if ( '' === $type_filter || 'post' === $type_filter ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$posts = $wpdb->get_results(
+				"SELECT *, 'post' AS object_type FROM {$posts_table} WHERE {$status_clause} ORDER BY created_at DESC"
+			) ?: array();
+		}
+
+		$replies = array();
+		if ( '' === $type_filter || 'reply' === $type_filter ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$replies = $wpdb->get_results(
+				"SELECT *, 'reply' AS object_type FROM {$replies_table} WHERE {$status_clause} ORDER BY created_at DESC"
+			) ?: array();
+		}
 
 		// Merge and sort by created_at DESC.
-		$merged = array_merge( $pending_posts, $pending_replies );
+		$merged = array_merge( $posts, $replies );
 		usort(
 			$merged,
 			function ( $a, $b ) {
@@ -227,14 +256,16 @@ class Moderation_Controller extends Base_Controller {
 		$pending_flags_count = count( Flag::list_pending() );
 
 		return new WP_REST_Response(
-			[
+			array(
 				'data'                => $merged,
 				'pending_flags_count' => $pending_flags_count,
-				'meta'                => [
+				'meta'                => array(
 					'count'    => count( $merged ),
+					'status'   => $status_filter,
+					'type'     => $type_filter !== '' ? $type_filter : null,
 					'has_more' => false,
-				],
-			],
+				),
+			),
 			200
 		);
 	}
@@ -507,17 +538,18 @@ class Moderation_Controller extends Base_Controller {
 	 * @return bool|WP_Error
 	 */
 	private function set_status( string $type, int $id, string $status ): bool|WP_Error {
-		global $wpdb;
-		$table = table( 'post' === $type ? 'posts' : 'replies' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $id ) );
-		if ( ! $exists ) {
-			return $this->not_found( 'post' === $type ? 'Post' : 'Reply' );
+		if ( 'post' === $type ) {
+			if ( ! \Jetonomy\Models\Post::find( $id ) ) {
+				return $this->not_found( 'Post' );
+			}
+			\Jetonomy\Models\Post::update( $id, array( 'status' => $status ) );
+			return true;
 		}
 
-		$wpdb->update( $table, [ 'status' => $status ], [ 'id' => $id ] );
-
+		if ( ! \Jetonomy\Models\Reply::find( $id ) ) {
+			return $this->not_found( 'Reply' );
+		}
+		\Jetonomy\Models\Reply::update( $id, array( 'status' => $status ) );
 		return true;
 	}
 }

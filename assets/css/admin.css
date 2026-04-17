@@ -700,6 +700,160 @@
 	overflow: hidden;
 }
 
+/* Tablenav rows (search + bulk + per-page + pagination) sit inside the
+   card and align visually with the table below. Without this, WP's
+   default floats push the Search box to the right of the viewport and
+   the row has no padding relative to the card. Applied to any wrap that
+   hosts a tablenav — not scoped to a specific page. */
+.jt-content-table-wrap > form.tablenav.top,
+.jt-content-table-wrap > .tablenav.top,
+.jt-content-table-wrap > .tablenav.bottom {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	padding: 12px 16px;
+	background: var(--jt-admin-white);
+	min-height: 0;
+	height: auto;
+}
+.jt-content-table-wrap > form.tablenav.top,
+.jt-content-table-wrap > .tablenav.top {
+	border-bottom: 1px solid var(--jt-admin-border);
+}
+.jt-content-table-wrap > .tablenav.bottom {
+	border-top: 1px solid var(--jt-admin-border);
+	justify-content: flex-end;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Unified pagination — Jetonomy admin pages
+   Applies to Spaces, Tags, Content, and any future admin list.
+   Scoped to .jetonomy-admin so we never touch WP core list tables.
+   ═══════════════════════════════════════════════════════════ */
+
+.jetonomy-admin .tablenav.bottom {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	margin: 16px 0 0;
+	padding: 12px 16px;
+	background: var(--jt-admin-white, #fff);
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: var(--jt-admin-radius, 8px);
+	box-shadow: var(--jt-admin-shadow, 0 1px 2px rgba(0, 0, 0, 0.04));
+	min-height: 0;
+	height: auto;
+}
+/* When already inside the table card, no extra border/shadow/margin. */
+.jt-content-table-wrap > .tablenav.bottom {
+	margin: 0;
+	border: 0;
+	border-top: 1px solid var(--jt-admin-border);
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.jetonomy-admin .tablenav-pages {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	float: none;
+	margin: 0;
+	height: auto;
+}
+.jetonomy-admin .tablenav-pages .displaying-num {
+	color: var(--jt-admin-text-wp-3, #646970);
+	font-size: 13px;
+	margin: 0 8px 0 0;
+}
+.jetonomy-admin .tablenav-pages .pagination-links {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+.jetonomy-admin .tablenav-pages .page-numbers {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	height: 32px;
+	padding: 0 10px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	background: var(--jt-admin-white, #fff);
+	color: var(--jt-admin-text-wp, #1d2327);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	text-decoration: none;
+	margin: 0;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.jetonomy-admin .tablenav-pages a.page-numbers:hover,
+.jetonomy-admin .tablenav-pages a.page-numbers:focus {
+	background: var(--jt-admin-surface-1, #f6f7f7);
+	border-color: #8c8f94;
+	color: var(--jt-admin-text-wp, #1d2327);
+	outline: none;
+}
+.jetonomy-admin .tablenav-pages a.page-numbers:focus-visible {
+	box-shadow: 0 0 0 2px #2271b1;
+	border-color: #2271b1;
+}
+.jetonomy-admin .tablenav-pages .page-numbers.current {
+	background: #2271b1;
+	border-color: #2271b1;
+	color: #fff;
+	cursor: default;
+}
+.jetonomy-admin .tablenav-pages .page-numbers.dots {
+	border: 0;
+	background: transparent;
+	cursor: default;
+	color: var(--jt-admin-text-wp-3, #646970);
+}
+.jetonomy-admin .tablenav-pages .prev,
+.jetonomy-admin .tablenav-pages .next {
+	font-size: 18px;
+	line-height: 1;
+	padding: 0 8px;
+}
+/* Hide default WP "Previous" / "Next" text labels — we use symbols only. */
+.jetonomy-admin .tablenav-pages .prev::after,
+.jetonomy-admin .tablenav-pages .next::after { content: none; }
+.jt-content-table-wrap .tablenav .alignleft.actions {
+	float: none;
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 0;
+}
+.jt-content-table-wrap .tablenav .search-box {
+	float: none;
+	margin: 0 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	position: static;
+}
+.jt-content-table-wrap .tablenav .search-box input[type="search"] {
+	margin: 0;
+}
+.jt-content-table-wrap .tablenav select {
+	min-height: 32px;
+}
+.jt-content-table-wrap > .wp-list-table,
+.jt-content-table-wrap table.wp-list-table {
+	border: 0;
+	box-shadow: none;
+	margin: 0;
+	border-radius: 0;
+}
+
 .jt-content-table-wrap #jt-posts-table {
 	border: none;
 	box-shadow: none;
@@ -930,6 +1084,8 @@
 		max-width: 100%;
 	}
 }
+
+/* Tags page reuses the Categories split layout — no new rules needed. */
 
 /* ═══════════════════════════════════════════════════════════
    Categories - Drag & Child Indent

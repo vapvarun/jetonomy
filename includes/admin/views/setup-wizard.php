@@ -804,7 +804,7 @@ body.jt-setup-body {
 
 			doAjax( 'jetonomy_setup_save', {
 				base_slug: slug,
-				default_type: type,
+				default_space_type: type,
 				category_name: catName,
 				space_name: spaceName,
 				space_description: spaceDesc,
@@ -826,7 +826,7 @@ body.jt-setup-body {
 
 			doAjax( 'jetonomy_setup_create_sample', {
 				base_slug: slug,
-				default_type: type,
+				default_space_type: type,
 			}, sampleBtn, 'jt-error-2', function () {
 				communityUrl = siteUrl + slug + '/';
 				if ( visitBtn ) { visitBtn.href = communityUrl; }

@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress — forums, Q&A, and more.
- * Version:     1.3.2
+ * Version:     1.3.5
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,8 +16,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.3.2' );
-define( 'JETONOMY_DB_VERSION', '1.2.3' );
+define( 'JETONOMY_VERSION', '1.3.5' );
+define( 'JETONOMY_DB_VERSION', '1.2.5' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -181,6 +181,11 @@ function jetonomy_kses_embedded_content( string $content ): string {
 
 function jetonomy_format_content( string $content ): string {
 	$base = \Jetonomy\base_url();
+
+	// Normalize paragraphs: wpautop converts \n\n to <p>…</p> for plain-text
+	// storage, and is a no-op when content is already block-wrapped. This is
+	// the single display-side paragraph layer (mirrors core's `the_content`).
+	$content = wpautop( $content );
 
 	// Split content into HTML tags and text segments, process only text segments.
 	$parts = preg_split( '/(<[^>]*>)/u', $content, -1, PREG_SPLIT_DELIM_CAPTURE );

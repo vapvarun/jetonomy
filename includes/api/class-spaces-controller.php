@@ -295,12 +295,21 @@ class Spaces_Controller extends Base_Controller {
 			}
 		}
 
+		// When the client doesn't supply a type, fall back to the admin-configured default
+		// so Settings → Default Space Type actually controls new-space creation.
+		$requested_type = sanitize_key( (string) $request->get_param( 'type' ) );
+		if ( ! in_array( $requested_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
+			$jt_settings    = get_option( 'jetonomy_settings', array() );
+			$configured     = sanitize_key( (string) ( $jt_settings['default_space_type'] ?? 'forum' ) );
+			$requested_type = in_array( $configured, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $configured : 'forum';
+		}
+
 		$data = [
 			'category_id' => absint( $request->get_param( 'category_id' ) ) ?: null,
 			'title'       => $title,
 			'slug'        => $slug,
 			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
-			'type'        => sanitize_text_field( (string) $request->get_param( 'type' ) ) ?: 'forum',
+			'type'        => $requested_type,
 			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
 			'join_policy' => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
 			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),

@@ -234,6 +234,22 @@ $status_labels = [
 									<?php endif; ?>
 								</span>
 								<?php if ( 'trash' !== $r->status ) : ?>
+									<?php if ( in_array( $r->status ?? '', array( 'spam', 'pending' ), true ) ) : ?>
+										<span class="approve">
+											<a href="#"
+												class="jt-action-link"
+												data-id="<?php echo absint( $r->id ); ?>"
+												data-action="approve"
+											>
+												<?php
+												echo 'spam' === $r->status
+													? esc_html__( 'Not Spam', 'jetonomy' )
+													: esc_html__( 'Approve', 'jetonomy' );
+												?>
+											</a>
+											&nbsp;|&nbsp;
+										</span>
+									<?php endif; ?>
 									<span class="trash">
 										<a href="#"
 											class="jt-action-link"
@@ -242,17 +258,21 @@ $status_labels = [
 										>
 											<?php esc_html_e( 'Trash', 'jetonomy' ); ?>
 										</a>
-										&nbsp;|&nbsp;
+										<?php if ( 'spam' !== $r->status ) : ?>
+											&nbsp;|&nbsp;
+										<?php endif; ?>
 									</span>
-									<span class="spam">
-										<a href="#"
-											class="jt-action-link"
-											data-id="<?php echo absint( $r->id ); ?>"
-											data-action="spam"
-										>
-											<?php esc_html_e( 'Spam', 'jetonomy' ); ?>
-										</a>
-									</span>
+									<?php if ( 'spam' !== $r->status ) : ?>
+										<span class="spam">
+											<a href="#"
+												class="jt-action-link"
+												data-id="<?php echo absint( $r->id ); ?>"
+												data-action="spam"
+											>
+												<?php esc_html_e( 'Spam', 'jetonomy' ); ?>
+											</a>
+										</span>
+									<?php endif; ?>
 								<?php else : ?>
 									<span class="restore">
 										<a href="#"

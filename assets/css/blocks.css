@@ -1,0 +1,374 @@
+/**
+ * Jetonomy block styles — Navigation + Login.
+ *
+ * Self-contained. Registered as handle `jetonomy-blocks` and enqueued
+ * only when one of these blocks renders. Matches the sidebar-widget
+ * aesthetic of the community page (About / Trending / Top Members)
+ * so the block slots in visually whether it sits on the community
+ * template or any other theme page.
+ *
+ * Local token layer: each block root declares its own --jtb-* tokens
+ * with fallbacks through WP preset → BuddyNext → hard default. Works
+ * even without the main jetonomy.css being on the page.
+ */
+
+.jt-nav-block,
+.jt-login-block {
+	--jtb-font:         var(--font-body, var(--wp--preset--font-family--body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif));
+	--jtb-accent:       var(--brand, var(--wp--preset--color--primary, #4b5cff));
+	--jtb-accent-soft:  color-mix(in srgb, var(--jtb-accent) 12%, transparent);
+	--jtb-accent-hover: color-mix(in srgb, var(--jtb-accent) 85%, #000);
+	--jtb-text:         var(--text-1, var(--wp--preset--color--contrast, #1a1d29));
+	--jtb-text-2:       color-mix(in srgb, var(--jtb-text) 70%, transparent);
+	--jtb-text-3:       color-mix(in srgb, var(--jtb-text) 48%, transparent);
+	--jtb-bg:           var(--bg, var(--wp--preset--color--base, #ffffff));
+	--jtb-bg-soft:      color-mix(in srgb, var(--jtb-text) 4%, var(--jtb-bg));
+	--jtb-bg-hover:     color-mix(in srgb, var(--jtb-accent) 6%, var(--jtb-bg));
+	--jtb-border:       color-mix(in srgb, var(--jtb-text) 10%, transparent);
+	--jtb-radius-lg:    14px;
+	--jtb-radius-md:    10px;
+	--jtb-radius-sm:    6px;
+	--jtb-shadow:       0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px -8px rgba(15, 23, 42, 0.08);
+
+	font-family: var(--jtb-font);
+	color: var(--jtb-text);
+	line-height: 1.5;
+	box-sizing: border-box;
+}
+.jt-nav-block *,
+.jt-nav-block *::before,
+.jt-nav-block *::after,
+.jt-login-block *,
+.jt-login-block *::before,
+.jt-login-block *::after { box-sizing: border-box; }
+
+/* ─── Navigation block ─────────────────────────────────────────────── */
+
+.jt-nav-block {
+	background: var(--jtb-bg);
+	border: 1px solid var(--jtb-border);
+	border-radius: var(--jtb-radius-lg);
+	box-shadow: var(--jtb-shadow);
+	padding: 20px 20px 12px;
+	margin: 0 0 24px;
+}
+
+.jt-nav-title {
+	font-size: 0.95rem;
+	font-weight: 700;
+	letter-spacing: -0.005em;
+	color: var(--jtb-text);
+	margin: 0 0 12px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--jtb-border);
+}
+
+.jt-nav-category {
+	margin: 0;
+	padding: 0;
+}
+.jt-nav-category + .jt-nav-category {
+	margin-top: 4px;
+	padding-top: 12px;
+	border-top: 1px solid var(--jtb-border);
+}
+
+.jt-nav-category-title {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--jtb-text-3);
+	margin: 0 0 6px;
+	padding: 2px 0;
+}
+
+/* Collapsible <details> version */
+details.jt-nav-category > summary.jt-nav-category-title {
+	list-style: none;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	user-select: none;
+	transition: color 0.15s ease;
+}
+details.jt-nav-category > summary.jt-nav-category-title:hover {
+	color: var(--jtb-text-2);
+}
+details.jt-nav-category > summary.jt-nav-category-title::-webkit-details-marker { display: none; }
+details.jt-nav-category > summary.jt-nav-category-title::after {
+	content: "";
+	width: 8px;
+	height: 8px;
+	border-right: 1.5px solid currentColor;
+	border-bottom: 1.5px solid currentColor;
+	transform: rotate(-45deg);
+	transition: transform 0.2s ease;
+	opacity: 0.55;
+	margin-right: 4px;
+}
+details.jt-nav-category[open] > summary.jt-nav-category-title::after {
+	transform: rotate(45deg);
+}
+
+.jt-nav-spaces {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.jt-nav-space { margin: 0; padding: 0; }
+.jt-nav-space > a {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 7px 10px;
+	border-radius: var(--jtb-radius-sm);
+	text-decoration: none;
+	color: var(--jtb-text);
+	font-size: 0.9rem;
+	font-weight: 500;
+	line-height: 1.35;
+	transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.jt-nav-space > a:hover,
+.jt-nav-space > a:focus-visible {
+	background: var(--jtb-bg-hover);
+	color: var(--jtb-accent);
+	text-decoration: none;
+	outline: none;
+}
+.jt-nav-space.is-active > a,
+.jt-nav-space > a[aria-current="page"] {
+	background: var(--jtb-accent-soft);
+	color: var(--jtb-accent);
+	font-weight: 600;
+}
+.jt-nav-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 20px;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: var(--jtb-bg-soft);
+	color: var(--jtb-text-3);
+	font-size: 0.7rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+.jt-nav-space.is-active .jt-nav-count,
+.jt-nav-space > a[aria-current="page"] .jt-nav-count {
+	background: var(--jtb-accent);
+	color: var(--jtb-bg);
+}
+
+.jt-nav-spaces-uncategorized {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--jtb-border);
+}
+
+/* ─── Login block ──────────────────────────────────────────────────── */
+
+.jt-login-block {
+	background: var(--jtb-bg);
+	border: 1px solid var(--jtb-border);
+	border-radius: var(--jtb-radius-lg);
+	box-shadow: var(--jtb-shadow);
+	padding: 20px;
+	margin: 0 0 24px;
+	position: relative;
+	overflow: hidden;
+}
+.jt-login-block::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 3px;
+	background: linear-gradient(90deg, var(--jtb-accent) 0%, color-mix(in srgb, var(--jtb-accent) 45%, transparent) 100%);
+}
+
+.jt-login-title {
+	font-size: 1rem;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--jtb-text);
+	margin: 2px 0 14px;
+}
+
+.jt-login-tabs {
+	display: flex;
+	gap: 2px;
+	padding: 3px;
+	margin-bottom: 16px;
+	background: var(--jtb-bg-soft);
+	border-radius: var(--jtb-radius-md);
+}
+.jt-login-tab {
+	flex: 1;
+	padding: 7px 10px;
+	background: transparent;
+	border: 0;
+	border-radius: calc(var(--jtb-radius-md) - 3px);
+	font: inherit;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--jtb-text-2);
+	cursor: pointer;
+	transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.jt-login-tab:hover,
+.jt-login-tab:focus-visible {
+	color: var(--jtb-text);
+	outline: none;
+}
+.jt-login-tab.is-active {
+	background: var(--jtb-bg);
+	color: var(--jtb-text);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.jt-login-form {
+	display: none;
+	flex-direction: column;
+	gap: 12px;
+}
+.jt-login-form.is-active { display: flex; }
+
+.jt-login-label {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: var(--jtb-text-2);
+	letter-spacing: 0.005em;
+}
+.jt-login-label > input {
+	padding: 9px 12px;
+	border: 1px solid var(--jtb-border);
+	border-radius: var(--jtb-radius-md);
+	background: var(--jtb-bg);
+	color: var(--jtb-text);
+	font: inherit;
+	font-size: 0.9rem;
+	font-weight: 400;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.jt-login-label > input:hover { background: var(--jtb-bg-soft); }
+.jt-login-label > input:focus {
+	outline: 0;
+	border-color: var(--jtb-accent);
+	background: var(--jtb-bg);
+	box-shadow: 0 0 0 3px var(--jtb-accent-soft);
+}
+.jt-login-remember {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 0.82rem;
+	color: var(--jtb-text-2);
+	cursor: pointer;
+}
+.jt-login-remember > input[type="checkbox"] {
+	width: 15px;
+	height: 15px;
+	accent-color: var(--jtb-accent);
+	margin: 0;
+}
+
+.jt-login-submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 10px 16px;
+	background: var(--jtb-accent);
+	color: var(--jtb-bg);
+	border: 0;
+	border-radius: var(--jtb-radius-md);
+	font: inherit;
+	font-size: 0.9rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color 0.15s ease, transform 0.1s ease;
+	margin-top: 4px;
+}
+.jt-login-submit:hover,
+.jt-login-submit:focus-visible {
+	background: var(--jtb-accent-hover);
+	color: var(--jtb-bg);
+	outline: none;
+}
+.jt-login-submit:active { transform: scale(0.98); }
+.jt-login-submit:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.jt-login-lostpw {
+	align-self: flex-start;
+	font-size: 0.78rem;
+	color: var(--jtb-text-3);
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+.jt-login-lostpw:hover {
+	color: var(--jtb-accent);
+	text-decoration: underline;
+}
+
+.jt-login-message {
+	font-size: 0.82rem;
+	color: color-mix(in srgb, #dc2626 80%, var(--jtb-text));
+	margin: 0;
+	min-height: 0;
+	line-height: 1.35;
+}
+.jt-login-message:empty { display: none; }
+.jt-login-message.is-success {
+	color: color-mix(in srgb, #16a34a 80%, var(--jtb-text));
+}
+
+/* ─── Responsive (390px) ───────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.jt-nav-block,
+	.jt-login-block {
+		padding: 16px;
+		border-radius: var(--jtb-radius-md);
+	}
+	.jt-nav-space > a {
+		padding: 9px 10px;
+		font-size: 0.95rem;
+	}
+	.jt-login-tab { font-size: 0.88rem; padding: 9px 10px; }
+	.jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
+}
+
+/* ─── Dark mode (system + .jt-dark ancestor) ───────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+	.jt-nav-block,
+	.jt-login-block {
+		--jtb-bg:      var(--bg, #0b0f1a);
+		--jtb-text:    var(--text-1, #e7ebf3);
+		--jtb-border:  color-mix(in srgb, var(--jtb-text) 16%, transparent);
+		--jtb-shadow:  0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+	}
+}
+.jt-dark .jt-nav-block,
+.jt-dark .jt-login-block,
+[data-theme="dark"] .jt-nav-block,
+[data-theme="dark"] .jt-login-block {
+	--jtb-bg:      var(--bg, #0b0f1a);
+	--jtb-text:    var(--text-1, #e7ebf3);
+	--jtb-border:  color-mix(in srgb, var(--jtb-text) 16%, transparent);
+	--jtb-shadow:  0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+}

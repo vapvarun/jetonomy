@@ -225,15 +225,19 @@ class Replies_Controller extends Base_Controller {
 
 		$content_plain = wp_strip_all_tags( $content );
 
-		// Akismet spam check.
-		$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-		$user         = get_userdata( $user_id );
-		$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
-			$content,
-			$user->display_name ?? '',
-			$user->user_email ?? '',
-			$ip
-		);
+		// Akismet spam check — skip for site admins and space admins/moderators.
+		// Staff replies should never be quarantined by the automatic filter.
+		$akismet_spam = false;
+		if ( ! $this->author_bypasses_spam_check( $user_id, $space_id ) ) {
+			$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+			$user         = get_userdata( $user_id );
+			$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
+				$content,
+				$user->display_name ?? '',
+				$user->user_email ?? '',
+				$ip
+			);
+		}
 
 		$reply_data = array(
 			'post_id'       => $post_id,
@@ -250,6 +254,27 @@ class Replies_Controller extends Base_Controller {
 		$parent_id = absint( $request->get_param( 'parent_id' ) );
 		if ( $parent_id ) {
 			$reply_data['parent_id'] = $parent_id;
+		}
+
+		// Backdate via published_at — maps to created_at since jt_replies has no separate column.
+		// Gated to manage_options; reply date must not precede parent post's published_at/created_at.
+		$raw_published_at = $request->get_param( 'published_at' );
+		$backdate         = null;
+		if ( null !== $raw_published_at && '' !== $raw_published_at ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return $this->permission_error();
+			}
+			$backdate = $this->sanitize_backdate( $raw_published_at );
+			if ( is_wp_error( $backdate ) ) {
+				return $backdate;
+			}
+			if ( null !== $backdate ) {
+				$parent_date = $post->published_at ?? $post->created_at ?? null;
+				if ( $parent_date && strtotime( $backdate ) < strtotime( $parent_date ) ) {
+					return $this->validation_error( __( 'Reply published_at cannot precede the parent post date.', 'jetonomy' ) );
+				}
+				$reply_data['created_at'] = $backdate;
+			}
 		}
 
 		/**
@@ -300,6 +325,12 @@ class Replies_Controller extends Base_Controller {
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );
 
+		// For backdated replies, roll the parent's last_reply_at back to the reply's
+		// date so stale "just now" stamps don't surface on historical topics.
+		if ( null !== $backdate ) {
+			Post::update( $post_id, array( 'last_reply_at' => $backdate ) );
+		}
+
 		// Fire action for Notifier and other listeners (handles all notifications).
 		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
 
@@ -345,36 +376,65 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		$content = wp_kses_post( (string) $request->get_param( 'content' ) );
-		if ( empty( $content ) ) {
-			return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
+		$update_data = array();
+
+		$raw_content = $request->get_param( 'content' );
+		if ( null !== $raw_content ) {
+			$content = wp_kses_post( (string) $raw_content );
+			if ( empty( $content ) ) {
+				return $this->validation_error( __( 'Reply content is required.', 'jetonomy' ) );
+			}
+
+			$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
+			if ( 'block' === $moderation_action ) {
+				return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+			}
+
+			// Create a revision before updating.
+			Revision::create(
+				array(
+					'object_type' => 'reply',
+					'object_id'   => $id,
+					'author_id'   => $user_id,
+					'content'     => $reply->content ?? '',
+				)
+			);
+
+			$update_data['content']       = $content;
+			$update_data['content_plain'] = wp_strip_all_tags( $content );
+			$update_data['edited_at']     = current_time( 'mysql' );
+			$update_data['edited_by']     = $user_id;
 		}
 
-		// Advanced Moderation: check updated content.
-		$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
-		if ( 'block' === $moderation_action ) {
-			return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+		// Backdate: accept published_at to rewrite created_at. Gated to manage_options.
+		$raw_published_at = $request->get_param( 'published_at' );
+		if ( null !== $raw_published_at && '' !== $raw_published_at ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return $this->permission_error();
+			}
+			$backdate = $this->sanitize_backdate( $raw_published_at );
+			if ( is_wp_error( $backdate ) ) {
+				return $backdate;
+			}
+			if ( null !== $backdate ) {
+				$parent_date = $post->published_at ?? $post->created_at ?? null;
+				if ( $parent_date && strtotime( $backdate ) < strtotime( $parent_date ) ) {
+					return $this->validation_error( __( 'Reply published_at cannot precede the parent post date.', 'jetonomy' ) );
+				}
+				$update_data['created_at'] = $backdate;
+			}
 		}
 
-		// Create a revision before updating.
-		Revision::create(
-			array(
-				'object_type' => 'reply',
-				'object_id'   => $id,
-				'author_id'   => $user_id,
-				'content'     => $reply->content ?? '',
-			)
-		);
+		if ( empty( $update_data ) ) {
+			return $this->validation_error( __( 'No fields provided for update.', 'jetonomy' ) );
+		}
 
-		Reply::update(
-			$id,
-			array(
-				'content'       => $content,
-				'content_plain' => wp_strip_all_tags( $content ),
-				'edited_at'     => current_time( 'mysql' ),
-				'edited_by'     => $user_id,
-			)
-		);
+		Reply::update( $id, $update_data );
+
+		// Keep parent's last_reply_at consistent when we backdated.
+		if ( isset( $update_data['created_at'] ) ) {
+			Post::update( (int) $post->id, array( 'last_reply_at' => $update_data['created_at'] ) );
+		}
 
 		do_action( 'jetonomy_reply_updated', $id, $space_id, $user_id );
 
@@ -414,10 +474,8 @@ class Replies_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		// Decrement denormalized counters before soft-deleting.
-		Post::increment_reply_count( (int) $reply->post_id, -1 );
-		UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
-
+		// Reply::update() detects the publish→trash transition and decrements
+		// post/user counters atomically — no manual pre-decrement needed.
 		Reply::update( $id, array( 'status' => 'trash' ) );
 
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
@@ -589,6 +647,8 @@ class Replies_Controller extends Base_Controller {
 			'edited_at'     => $reply->edited_at ?? null,
 			'edited_by'     => $reply->edited_by ? (int) $reply->edited_by : null,
 			'created_at'    => $reply->created_at ?? null,
+			// Aliased from created_at since jt_replies has no separate published_at column.
+			'published_at'  => $reply->created_at ?? null,
 			// Enriched author data (for app clients + JS rendering)
 			'author_name'   => $author_name,
 			'author_avatar' => $author_avatar,
@@ -616,14 +676,19 @@ class Replies_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return array(
-			'content'   => array(
+			'content'      => array(
 				'type'     => 'string',
 				'required' => true,
 			),
-			'parent_id' => array(
+			'parent_id'    => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 1,
+			),
+			'published_at' => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
 			),
 		);
 	}
@@ -633,9 +698,14 @@ class Replies_Controller extends Base_Controller {
 	 */
 	private function get_update_args(): array {
 		return array(
-			'content' => array(
+			'content'      => array(
 				'type'     => 'string',
-				'required' => true,
+				'required' => false,
+			),
+			'published_at' => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
 			),
 		);
 	}

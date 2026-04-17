@@ -29,6 +29,7 @@ class Admin {
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 
 		new Ajax\Categories_Handler();
+		new Ajax\Tags_Handler();
 		new Ajax\Spaces_Handler();
 		new Ajax\Moderation_Handler();
 		new Ajax\Users_Handler();
@@ -70,6 +71,15 @@ class Admin {
 			'jetonomy_manage_settings',
 			'jetonomy-categories',
 			array( $this, 'render_categories' )
+		);
+
+		add_submenu_page(
+			'jetonomy',
+			__( 'Tags', 'jetonomy' ),
+			__( 'Tags', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-tags',
+			array( $this, 'render_tags' )
 		);
 
 		add_submenu_page(
@@ -196,9 +206,10 @@ class Admin {
 			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
 			$clean['posts_per_page']     = max( 1, absint( $input['posts_per_page'] ?? 20 ) );
 			$clean['replies_per_page']   = max( 1, absint( $input['replies_per_page'] ?? 30 ) );
-			$clean['default_space_type'] = sanitize_text_field( $input['default_space_type'] ?? 'forum' );
-			$clean['guest_read']         = ! empty( $input['guest_read'] );
-			$clean['require_login']      = ! empty( $input['require_login'] );
+			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
+			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
+			// Community access mode — radio stores "1" (public) or "0" (private).
+			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
 		}
 
 		// ── Permissions tab ──
@@ -468,9 +479,53 @@ class Admin {
 	}
 
 	public function render_categories(): void {
-		$categories     = Category::list_top_level();
+		// Flat list of every category (for the parent-select dropdowns) —
+		// dropdown needs all values regardless of pagination.
 		$all_categories = $this->get_all_categories_nested();
+
+		// Paginated top-level categories for the main table.
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = absint( $_GET['per_page'] ?? 20 );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+		$search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'sort_order' ) );
+		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
+		$offset  = ( $paged - 1 ) * $per_page;
+
+		$result            = Category::list_paginated( $search, $orderby, $order, $per_page, $offset );
+		$categories        = $result['rows'];
+		$categories_total  = (int) $result['total'];
+		$categories_pages  = (int) ceil( $categories_total / $per_page );
+
 		include JETONOMY_DIR . 'includes/admin/views/categories.php';
+	}
+
+	/**
+	 * Tags admin page — paginated list with search, sort, add, edit, bulk delete.
+	 *
+	 * Pagination is server-side so the page scales to 10k+ tags without
+	 * loading everything into the DOM at once.
+	 */
+	public function render_tags(): void {
+		$paged    = max( 1, absint( $_GET['paged'] ?? 1 ) );
+		$per_page = absint( $_GET['per_page'] ?? 20 );
+		if ( ! in_array( $per_page, array( 20, 50, 100 ), true ) ) {
+			$per_page = 20;
+		}
+		$search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
+		$orderby = sanitize_key( wp_unslash( $_GET['orderby'] ?? 'name' ) );
+		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
+
+		$offset = ( $paged - 1 ) * $per_page;
+		$result = \Jetonomy\Models\Tag::list_paginated( $search, $orderby, $order, $per_page, $offset );
+
+		$tags        = $result['rows'];
+		$tags_total  = (int) $result['total'];
+		$total_pages = (int) ceil( $tags_total / $per_page );
+
+		include JETONOMY_DIR . 'includes/admin/views/tags.php';
 	}
 
 	public function render_spaces(): void {

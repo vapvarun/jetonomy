@@ -78,6 +78,56 @@ class Category extends Model {
 	}
 
 	/**
+	 * Paginated list of top-level categories for the admin page.
+	 *
+	 * @param string $search   Optional LIKE filter against name.
+	 * @param string $orderby  One of: id, name, slug, sort_order. Falls back to sort_order.
+	 * @param string $order    ASC|DESC.
+	 * @param int    $per_page Rows per page (capped 1..100).
+	 * @param int    $offset   SQL offset.
+	 * @return array{rows: object[], total: int}
+	 */
+	public static function list_paginated( string $search = '', string $orderby = 'sort_order', string $order = 'ASC', int $per_page = 20, int $offset = 0 ): array {
+		$allowed  = [ 'id', 'name', 'slug', 'sort_order' ];
+		$orderby  = in_array( $orderby, $allowed, true ) ? $orderby : 'sort_order';
+		$order    = strtoupper( $order ) === 'DESC' ? 'DESC' : 'ASC';
+		$per_page = max( 1, min( 100, $per_page ) );
+		$offset   = max( 0, $offset );
+
+		$where  = 'WHERE (parent_id IS NULL OR parent_id = 0)';
+		$values = [];
+		if ( '' !== $search ) {
+			$where   .= ' AND name LIKE %s';
+			$values[] = '%' . static::db()->esc_like( $search ) . '%';
+		}
+
+		$table     = static::table();
+		$secondary = 'sort_order' === $orderby ? ', name ASC' : '';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$count_sql = "SELECT COUNT(*) FROM {$table} {$where}";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$total = empty( $values ) ? (int) static::db()->get_var( $count_sql ) : (int) static::db()->get_var( static::db()->prepare( $count_sql, ...$values ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$data_sql = "SELECT * FROM {$table} {$where} ORDER BY {$orderby} {$order}{$secondary} LIMIT %d OFFSET %d";
+		$args     = array_merge( $values, [ $per_page, $offset ] );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$rows = static::db()->get_results( static::db()->prepare( $data_sql, ...$args ) ) ?: [];
+
+		// Hydrate children inline (children share parent's page; usually a small
+		// number per parent, no need to paginate those).
+		foreach ( $rows as $row ) {
+			$row->children = self::list_children( (int) $row->id );
+		}
+
+		return [
+			'rows'  => $rows,
+			'total' => $total,
+		];
+	}
+
+	/**
 	 * Increment (or decrement) the space_count for a category.
 	 *
 	 * @param int $id Category ID.

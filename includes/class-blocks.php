@@ -7,6 +7,9 @@
 
 namespace Jetonomy;
 
+use Jetonomy\Models\Category;
+use Jetonomy\Models\Space;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -19,6 +22,32 @@ class Blocks {
 
 	public static function register(): void {
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
+		add_action( 'wp_ajax_nopriv_jetonomy_quick_login', array( __CLASS__, 'ajax_quick_login' ) );
+		add_action( 'wp_ajax_nopriv_jetonomy_quick_register', array( __CLASS__, 'ajax_quick_register' ) );
+		// Register the login-block script once; the render callback enqueues
+		// it only on pages that actually contain the block.
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_block_assets' ) );
+	}
+
+	public static function register_block_assets(): void {
+		// Dedicated, compact stylesheet for the Navigation and Login blocks.
+		// Self-contained — uses local tokens with WP-preset fallbacks so it
+		// renders correctly on any page without depending on the main
+		// jetonomy.css (which only loads on community routes).
+		wp_register_style(
+			'jetonomy-blocks',
+			JETONOMY_URL . 'assets/css/blocks.css',
+			array(),
+			JETONOMY_VERSION
+		);
+
+		wp_register_script(
+			'jetonomy-login-block',
+			JETONOMY_URL . 'assets/js/login-block.js',
+			array(),
+			JETONOMY_VERSION,
+			true
+		);
 	}
 
 	public static function register_blocks(): void {
@@ -94,6 +123,64 @@ class Blocks {
 				'keywords'        => array( 'leaderboard', 'ranking', 'reputation', 'jetonomy' ),
 			)
 		);
+
+		register_block_type(
+			'jetonomy/navigation',
+			array(
+				'api_version'     => 3,
+				'attributes'      => array(
+					'showCategoryHeadings' => array(
+						'type'    => 'boolean',
+						'default' => true,
+					),
+					'collapsible'          => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+					'showPostCount'        => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+					'hideEmptyCategories'  => array(
+						'type'    => 'boolean',
+						'default' => true,
+					),
+					'title'                => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_navigation' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Jetonomy Navigation', 'jetonomy' ),
+				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ),
+				'icon'            => 'menu-alt3',
+				'keywords'        => array( 'navigation', 'sidebar', 'spaces', 'categories', 'jetonomy' ),
+			)
+		);
+
+		register_block_type(
+			'jetonomy/login',
+			array(
+				'api_version'     => 3,
+				'attributes'      => array(
+					'title'       => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'showRegister' => array(
+						'type'    => 'boolean',
+						'default' => true,
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_login' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Jetonomy Login', 'jetonomy' ),
+				'description'     => __( 'Quick login and register form for the Jetonomy sidebar. Renders empty for logged-in viewers.', 'jetonomy' ),
+				'icon'            => 'admin-users',
+				'keywords'        => array( 'login', 'register', 'signin', 'jetonomy' ),
+			)
+		);
 	}
 
 	public static function render_forum_feed( array $attributes ): string {
@@ -117,5 +204,335 @@ class Blocks {
 
 	public static function render_leaderboard( array $attributes ): string {
 		return '<div class="wp-block-jetonomy-leaderboard">' . do_shortcode( '[jetonomy_leaderboard count="' . absint( $attributes['count'] ) . '"]' ) . '</div>';
+	}
+
+	/**
+	 * Resolve the currently active space slug from the URL, if any, so the
+	 * Navigation block can mark the active row with aria-current.
+	 */
+	private static function current_space_slug(): string {
+		$slug = get_query_var( 'jetonomy_space' );
+		if ( is_string( $slug ) && '' !== $slug ) {
+			return $slug;
+		}
+		// Fallback for early requests where query vars aren't populated.
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( (string) wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+		if ( ! $uri || ! preg_match( '#/s/([^/]+)/#', (string) $uri, $m ) ) {
+			return '';
+		}
+		return sanitize_title( $m[1] );
+	}
+
+	/**
+	 * Build one <li> for a space. Accepts either object or array shape because
+	 * Space::list_visible() hydrates rows as associative arrays when callers
+	 * have filtered through jetonomy_spaces_query_args.
+	 */
+	private static function render_space_item( $space, string $active_slug, bool $show_count ): string {
+		$space       = is_object( $space ) ? $space : (object) ( is_array( $space ) ? $space : array() );
+		$slug        = isset( $space->slug ) ? (string) $space->slug : '';
+		$title       = isset( $space->title ) ? (string) $space->title : '';
+		if ( '' === $slug || '' === $title ) {
+			return '';
+		}
+		$url         = \Jetonomy\base_url() . '/s/' . rawurlencode( $slug ) . '/';
+		$is_active   = $slug === $active_slug;
+		$aria_attr   = $is_active ? ' aria-current="page"' : '';
+		$active_cls  = $is_active ? ' is-active' : '';
+		$count_html  = '';
+		if ( $show_count && isset( $space->post_count ) ) {
+			$count_html = ' <span class="jt-nav-count">' . (int) $space->post_count . '</span>';
+		}
+		return sprintf(
+			'<li class="jt-nav-space%s"><a href="%s"%s>%s%s</a></li>',
+			esc_attr( $active_cls ),
+			esc_url( $url ),
+			$aria_attr,
+			esc_html( $title ),
+			$count_html // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — assembled from escaped parts above.
+		);
+	}
+
+	/**
+	 * Render the Navigation block — categories → spaces tree.
+	 */
+	public static function render_navigation( array $attributes ): string {
+		if ( ! class_exists( Category::class ) || ! class_exists( Space::class ) ) {
+			return '';
+		}
+
+		wp_enqueue_style( 'jetonomy-blocks' );
+
+		$user_id              = get_current_user_id();
+		$show_headings        = ! empty( $attributes['showCategoryHeadings'] );
+		$collapsible          = ! empty( $attributes['collapsible'] );
+		$show_count           = ! empty( $attributes['showPostCount'] ) && $user_id > 0;
+		$hide_empty           = ! empty( $attributes['hideEmptyCategories'] );
+		$title                = isset( $attributes['title'] ) ? (string) $attributes['title'] : '';
+		$active_slug          = self::current_space_slug();
+
+		$categories = Category::list_top_level();
+
+		$sections = array();
+
+		foreach ( $categories as $category ) {
+			$category    = is_object( $category ) ? $category : (object) $category;
+			$category_id = isset( $category->id ) ? (int) $category->id : 0;
+			if ( ! $category_id ) {
+				continue;
+			}
+			// list_visible() already filters by viewer permissions (public
+			// for guests, public + membership for members, all for admins).
+			// per_page is capped at a sane limit to avoid runaway rendering
+			// on sites with thousands of spaces in one category. The return
+			// shape is [ 'spaces' => object[], 'total' => int ].
+			$result = Space::list_visible( $user_id, $category_id, null, null, 200, 0 );
+			$spaces = is_array( $result ) && isset( $result['spaces'] ) ? $result['spaces'] : array();
+			if ( $hide_empty && empty( $spaces ) ) {
+				continue;
+			}
+
+			$items_html = '';
+			foreach ( $spaces as $space ) {
+				$items_html .= self::render_space_item( $space, $active_slug, $show_count );
+			}
+
+			$category_name = isset( $category->name ) ? (string) $category->name : '';
+
+			if ( $show_headings ) {
+				$heading_tag = $collapsible ? 'details' : 'div';
+				$summary_tag = $collapsible ? 'summary' : 'h3';
+				$open_attr   = $collapsible ? ' open' : '';
+				$sections[]  = sprintf(
+					'<%1$s class="jt-nav-category"%2$s><%3$s class="jt-nav-category-title">%4$s</%3$s><ul class="jt-nav-spaces">%5$s</ul></%1$s>',
+					$heading_tag,
+					$open_attr,
+					$summary_tag,
+					esc_html( $category_name ),
+					$items_html // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — per-item HTML escaped in render_space_item().
+				);
+			} else {
+				$sections[] = '<ul class="jt-nav-spaces">' . $items_html . '</ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+		}
+
+		// "Uncategorized" bucket — any spaces with category_id = 0 that the
+		// viewer can see. Renders last, un-headed, so site owners who
+		// don't use categories still get a flat tree.
+		$orphan_result = Space::list_visible( $user_id, null, null, null, 200, 0 );
+		$orphans       = is_array( $orphan_result ) && isset( $orphan_result['spaces'] ) ? $orphan_result['spaces'] : array();
+		if ( ! empty( $orphans ) ) {
+			$orphan_items = '';
+			foreach ( $orphans as $space ) {
+				$obj = is_object( $space ) ? $space : (object) $space;
+				if ( (int) ( $obj->category_id ?? 0 ) !== 0 ) {
+					continue;
+				}
+				$orphan_items .= self::render_space_item( $obj, $active_slug, $show_count );
+			}
+			if ( '' !== $orphan_items ) {
+				$sections[] = '<ul class="jt-nav-spaces jt-nav-spaces-uncategorized">' . $orphan_items . '</ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+		}
+
+		if ( empty( $sections ) ) {
+			return '';
+		}
+
+		$title_html = '' !== $title ? '<h2 class="jt-nav-title">' . esc_html( $title ) . '</h2>' : '';
+
+		return '<nav class="wp-block-jetonomy-navigation jt-nav-block jt-app" aria-label="' . esc_attr__( 'Community', 'jetonomy' ) . '">'
+			. $title_html
+			. implode( '', $sections ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — sections escaped above.
+			. '</nav>';
+	}
+
+	/**
+	 * Render the Login block — quick login/register for the Jetonomy sidebar.
+	 * Returns empty output for logged-in viewers so the sidebar has no
+	 * layout shift after login.
+	 */
+	public static function render_login( array $attributes ): string {
+		if ( is_user_logged_in() ) {
+			return '';
+		}
+
+		// Enqueue only when this block is actually rendered. Safe from duplicate
+		// enqueues: WordPress dedupes by handle.
+		wp_enqueue_style( 'jetonomy-blocks' );
+		wp_enqueue_script( 'jetonomy-login-block' );
+
+		$title              = isset( $attributes['title'] ) && '' !== $attributes['title']
+			? (string) $attributes['title']
+			: __( 'Join the conversation', 'jetonomy' );
+		$show_register_tab  = ! empty( $attributes['showRegister'] ) && (bool) get_option( 'users_can_register' );
+		$login_nonce        = wp_create_nonce( 'jetonomy_quick_login' );
+		$register_nonce     = wp_create_nonce( 'jetonomy_quick_register' );
+		$ajax_url           = esc_url( admin_url( 'admin-ajax.php' ) );
+
+		ob_start();
+		?>
+		<div class="wp-block-jetonomy-login jt-login-block jt-app"
+			data-ajax-url="<?php echo esc_attr( $ajax_url ); ?>"
+			data-login-nonce="<?php echo esc_attr( $login_nonce ); ?>"
+			data-register-nonce="<?php echo esc_attr( $register_nonce ); ?>">
+			<h3 class="jt-login-title"><?php echo esc_html( $title ); ?></h3>
+
+			<?php if ( $show_register_tab ) : ?>
+				<div class="jt-login-tabs" role="tablist">
+					<button type="button" class="jt-login-tab is-active" data-jt-tab="login" role="tab" aria-selected="true">
+						<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
+					</button>
+					<button type="button" class="jt-login-tab" data-jt-tab="register" role="tab" aria-selected="false">
+						<?php esc_html_e( 'Register', 'jetonomy' ); ?>
+					</button>
+				</div>
+			<?php endif; ?>
+
+			<form class="jt-login-form is-active" data-jt-panel="login" novalidate>
+				<label class="jt-login-label">
+					<span><?php esc_html_e( 'Username or Email', 'jetonomy' ); ?></span>
+					<input type="text" name="login" autocomplete="username" required />
+				</label>
+				<label class="jt-login-label">
+					<span><?php esc_html_e( 'Password', 'jetonomy' ); ?></span>
+					<input type="password" name="password" autocomplete="current-password" required />
+				</label>
+				<label class="jt-login-remember">
+					<input type="checkbox" name="remember" value="1" />
+					<span><?php esc_html_e( 'Remember me', 'jetonomy' ); ?></span>
+				</label>
+				<p class="jt-login-message" role="alert" aria-live="polite"></p>
+				<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
+					<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
+				</button>
+				<a class="jt-login-lostpw" href="<?php echo esc_url( wp_lostpassword_url() ); ?>">
+					<?php esc_html_e( 'Forgot password?', 'jetonomy' ); ?>
+				</a>
+			</form>
+
+			<?php if ( $show_register_tab ) : ?>
+				<form class="jt-login-form" data-jt-panel="register" novalidate>
+					<label class="jt-login-label">
+						<span><?php esc_html_e( 'Username', 'jetonomy' ); ?></span>
+						<input type="text" name="username" autocomplete="username" required minlength="3" />
+					</label>
+					<label class="jt-login-label">
+						<span><?php esc_html_e( 'Email', 'jetonomy' ); ?></span>
+						<input type="email" name="email" autocomplete="email" required />
+					</label>
+					<label class="jt-login-label">
+						<span><?php esc_html_e( 'Password', 'jetonomy' ); ?></span>
+						<input type="password" name="password" autocomplete="new-password" required minlength="8" />
+					</label>
+					<p class="jt-login-message" role="alert" aria-live="polite"></p>
+					<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
+						<?php esc_html_e( 'Create account', 'jetonomy' ); ?>
+					</button>
+				</form>
+			<?php endif; ?>
+		</div>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Simple per-IP rate limit for anonymous auth endpoints. 5 attempts per
+	 * minute per IP is generous enough for humans, tight enough to discourage
+	 * credential stuffing.
+	 */
+	private static function check_rate_limit( string $bucket ): bool {
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
+		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
+		$hits = (int) get_transient( $key );
+		if ( $hits >= 5 ) {
+			return false;
+		}
+		set_transient( $key, $hits + 1, MINUTE_IN_SECONDS );
+		return true;
+	}
+
+	/**
+	 * AJAX handler: quick login via admin-ajax.
+	 * Nonce-gated. Generic error message so failures don't leak account existence.
+	 */
+	public static function ajax_quick_login(): void {
+		check_ajax_referer( 'jetonomy_quick_login', 'nonce' );
+
+		if ( ! self::check_rate_limit( 'login' ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Too many attempts. Please wait a minute and try again.', 'jetonomy' ) ),
+				429
+			);
+		}
+
+		$login    = isset( $_POST['login'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['login'] ) ) : '';
+		$password = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
+		$remember = ! empty( $_POST['remember'] );
+
+		if ( '' === $login || '' === $password ) {
+			wp_send_json_error( array( 'message' => __( 'Enter your username and password.', 'jetonomy' ) ), 400 );
+		}
+
+		$user = wp_signon(
+			array(
+				'user_login'    => $login,
+				'user_password' => $password,
+				'remember'      => $remember,
+			),
+			is_ssl()
+		);
+
+		if ( is_wp_error( $user ) ) {
+			wp_send_json_error( array( 'message' => __( 'Incorrect username or password.', 'jetonomy' ) ), 401 );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Signed in. Reloading…', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * AJAX handler: quick register via admin-ajax.
+	 * Honours users_can_register; falls back to WP core validators.
+	 */
+	public static function ajax_quick_register(): void {
+		check_ajax_referer( 'jetonomy_quick_register', 'nonce' );
+
+		if ( ! (bool) get_option( 'users_can_register' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Registration is disabled on this site.', 'jetonomy' ) ), 403 );
+		}
+
+		if ( ! self::check_rate_limit( 'register' ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Too many attempts. Please wait a minute and try again.', 'jetonomy' ) ),
+				429
+			);
+		}
+
+		$username = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( (string) $_POST['username'] ), true ) : '';
+		$email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( (string) $_POST['email'] ) ) : '';
+		$password = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
+
+		if ( '' === $username || '' === $email || '' === $password ) {
+			wp_send_json_error( array( 'message' => __( 'All fields are required.', 'jetonomy' ) ), 400 );
+		}
+		if ( ! validate_username( $username ) || username_exists( $username ) ) {
+			wp_send_json_error( array( 'message' => __( 'That username is unavailable.', 'jetonomy' ) ), 400 );
+		}
+		if ( ! is_email( $email ) || email_exists( $email ) ) {
+			wp_send_json_error( array( 'message' => __( 'That email is unavailable.', 'jetonomy' ) ), 400 );
+		}
+		if ( strlen( $password ) < 8 ) {
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'jetonomy' ) ), 400 );
+		}
+
+		$user_id = wp_create_user( $username, $password, $email );
+		if ( is_wp_error( $user_id ) ) {
+			wp_send_json_error( array( 'message' => $user_id->get_error_message() ), 400 );
+		}
+
+		wp_set_current_user( (int) $user_id );
+		wp_set_auth_cookie( (int) $user_id, false, is_ssl() );
+
+		wp_send_json_success( array( 'message' => __( 'Account created. Reloading…', 'jetonomy' ) ) );
 	}
 }

@@ -64,6 +64,66 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Is this user trusted enough that we should skip Akismet / content spam checks?
+	 *
+	 * Site admins (manage_options) and space admins/moderators are whitelisted:
+	 * they own the moderation workflow, so running their writes through Akismet
+	 * creates false positives and blocks staff responses. Lower-trust members
+	 * still get the full spam pipeline.
+	 */
+	protected function author_bypasses_spam_check( int $user_id, int $space_id ): bool {
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
+		$role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
+		return in_array( $role, array( 'admin', 'moderator' ), true );
+	}
+
+	/**
+	 * Validate and normalize a backdate string (e.g. `published_at`) to `Y-m-d H:i:s`.
+	 *
+	 * Accepts anything PHP's `DateTimeImmutable::createFromFormat` understands (ISO 8601
+	 * with or without a trailing `Z`, MySQL datetime, or `DateTime::__construct` fallback).
+	 * Returns `null` when the input is empty (treat as "use default"), or `WP_Error` when
+	 * non-empty but unparsable.
+	 *
+	 * Gated to users who can `manage_options` — normal authors cannot forge dates via
+	 * the public API. Moderators with `edit_others_posts` also pass via the caller check.
+	 */
+	protected function sanitize_backdate( $raw ): string|null|WP_Error {
+		$raw = is_string( $raw ) ? trim( $raw ) : '';
+		if ( '' === $raw ) {
+			return null;
+		}
+
+		$formats = array(
+			'Y-m-d H:i:s',
+			'Y-m-d\TH:i:s',
+			'Y-m-d\TH:i:sP',
+			'Y-m-d\TH:i:s\Z',
+			'Y-m-d',
+		);
+		foreach ( $formats as $format ) {
+			$dt = \DateTimeImmutable::createFromFormat( $format, $raw, new \DateTimeZone( 'UTC' ) );
+			if ( $dt instanceof \DateTimeImmutable ) {
+				return $dt->format( 'Y-m-d H:i:s' );
+			}
+		}
+
+		try {
+			$dt = new \DateTimeImmutable( $raw, new \DateTimeZone( 'UTC' ) );
+			return $dt->format( 'Y-m-d H:i:s' );
+		} catch ( \Exception $e ) {
+			return new WP_Error(
+				'jetonomy_invalid_published_at',
+				__( 'Invalid published_at — expected Y-m-d H:i:s or ISO 8601.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+	}
+
+	/**
 	 * Build a paginated response with cursor support.
 	 */
 	protected function paginated_response( array $items, array $meta = [] ): WP_REST_Response {

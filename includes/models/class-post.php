@@ -74,10 +74,79 @@ class Post extends Model {
 				if ( ! empty( $data['author_id'] ) ) {
 					UserProfile::increment_post_count( (int) $data['author_id'] );
 				}
+
+				// Auto-join the author to the space on their first post.
+				// Only applies to open spaces — approval/invite-only spaces manage
+				// membership through their own workflows, and demoting an existing
+				// admin/moderator back to 'member' would be a footgun.
+				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
 			}
 		}
 
 		return $id;
+	}
+
+	/**
+	 * Status-aware update.
+	 *
+	 * When a post transitions between `publish` and any other status the
+	 * denormalized counters on the parent space and the author profile must
+	 * track that transition. Centralizing it here means every caller — REST,
+	 * admin AJAX, abilities, WP-CLI, migrations — stays consistent without
+	 * repeating increment/decrement logic.
+	 *
+	 * Transitions that update counters:
+	 *   publish → non-publish     : -1 space.post_count, -1 user.post_count
+	 *   non-publish → publish     : +1 space.post_count, +1 user.post_count
+	 *   everything else           : no-op
+	 */
+	public static function update( int $id, array $data ): bool {
+		$delta = 0;
+		$post  = null;
+
+		if ( array_key_exists( 'status', $data ) ) {
+			$post = self::find( $id );
+			if ( $post ) {
+				$was_publish = 'publish' === ( $post->status ?? '' );
+				$is_publish  = 'publish' === (string) $data['status'];
+				if ( $was_publish && ! $is_publish ) {
+					$delta = -1;
+				} elseif ( ! $was_publish && $is_publish ) {
+					$delta = 1;
+				}
+			}
+		}
+
+		$result = parent::update( $id, $data );
+
+		if ( 0 !== $delta && $post ) {
+			if ( ! empty( $post->space_id ) ) {
+				Space::increment_post_count( (int) $post->space_id, $delta );
+			}
+			if ( ! empty( $post->author_id ) ) {
+				UserProfile::increment_post_count( (int) $post->author_id, $delta );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Add the author to a space as a plain member if they aren't already a member.
+	 * Skips non-open spaces so role/gating workflows aren't bypassed.
+	 */
+	private static function maybe_auto_join_space( int $space_id, int $user_id ): void {
+		if ( $space_id <= 0 || $user_id <= 0 ) {
+			return;
+		}
+		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
+			return;
+		}
+		$space = Space::find( $space_id );
+		if ( ! $space || 'open' !== ( $space->join_policy ?? 'open' ) ) {
+			return;
+		}
+		SpaceMember::add( $space_id, $user_id, 'member' );
 	}
 
 	/**

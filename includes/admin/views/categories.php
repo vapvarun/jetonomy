@@ -64,6 +64,32 @@ defined( 'ABSPATH' ) || exit;
 
 	<!-- Categories Table -->
 	<div class="jt-content-table-wrap">
+
+		<!-- Toolbar: search + per-page -->
+		<form method="get" class="tablenav top" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
+			<input type="hidden" name="page" value="jetonomy-categories">
+
+			<div class="alignleft actions">
+				<label for="cats-per-page" class="screen-reader-text"><?php esc_html_e( 'Rows per page', 'jetonomy' ); ?></label>
+				<select id="cats-per-page" name="per_page" onchange="this.form.submit()">
+					<?php
+					$current_per_page = isset( $per_page ) ? (int) $per_page : 20;
+					foreach ( array( 20, 50, 100 ) as $pp ) :
+						?>
+						<option value="<?php echo (int) $pp; ?>" <?php selected( $current_per_page, $pp ); ?>>
+							<?php /* translators: %d per-page count */ echo esc_html( sprintf( __( '%d per page', 'jetonomy' ), $pp ) ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+
+			<p class="search-box">
+				<label class="screen-reader-text" for="cats-search"><?php esc_html_e( 'Search categories', 'jetonomy' ); ?></label>
+				<input type="search" id="cats-search" name="s" value="<?php echo esc_attr( isset( $search ) ? $search : '' ); ?>" placeholder="<?php esc_attr_e( 'Search categories…', 'jetonomy' ); ?>">
+				<button type="submit" class="button"><?php esc_html_e( 'Search', 'jetonomy' ); ?></button>
+			</p>
+		</form>
+
 		<table class="wp-list-table widefat fixed striped" id="jetonomy-categories-table">
 		<thead>
 			<tr>
@@ -75,10 +101,18 @@ defined( 'ABSPATH' ) || exit;
 			</tr>
 		</thead>
 		<tbody id="jetonomy-categories-list">
-			<?php if ( empty( $all_categories ) ) : ?>
-				<tr class="jetonomy-no-items"><td colspan="5"><?php esc_html_e( 'No categories yet. Create your first one above.', 'jetonomy' ); ?></td></tr>
+			<?php if ( empty( $categories ) ) : ?>
+				<tr class="jetonomy-no-items">
+					<td colspan="5">
+						<?php if ( ! empty( $search ) ) : ?>
+							<?php esc_html_e( 'No categories match that search.', 'jetonomy' ); ?>
+						<?php else : ?>
+							<?php esc_html_e( 'No categories yet. Create your first one above.', 'jetonomy' ); ?>
+						<?php endif; ?>
+					</td>
+				</tr>
 			<?php else : ?>
-				<?php foreach ( $all_categories as $cat ) : ?>
+				<?php foreach ( $categories as $cat ) : ?>
 					<tr data-id="<?php echo absint( $cat->id ); ?>" class="jetonomy-category-row">
 						<td class="column-drag"><span class="dashicons dashicons-menu jetonomy-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'jetonomy' ); ?>"></span></td>
 						<td class="column-name">
@@ -125,6 +159,53 @@ endif;
 			<?php endif; ?>
 		</tbody>
 	</table>
+
+	<?php
+	$_cats_pages = isset( $categories_pages ) ? (int) $categories_pages : 0;
+	$_cats_total = isset( $categories_total ) ? (int) $categories_total : 0;
+	if ( $_cats_pages > 1 ) :
+		?>
+		<div class="tablenav bottom">
+			<div class="tablenav-pages">
+				<span class="displaying-num">
+					<?php
+					printf(
+						/* translators: %d: total items */
+						esc_html( _n( '%d item', '%d items', $_cats_total, 'jetonomy' ) ),
+						$_cats_total
+					);
+					?>
+				</span>
+				<?php
+				echo wp_kses_post(
+					paginate_links(
+						array(
+							'base'      => add_query_arg(
+								array(
+									'page'     => 'jetonomy-categories',
+									's'        => isset( $search ) ? $search : '',
+									'orderby'  => isset( $orderby ) ? $orderby : '',
+									'order'    => isset( $order ) ? $order : '',
+									'per_page' => isset( $per_page ) ? $per_page : 20,
+									'paged'    => '%#%',
+								),
+								admin_url( 'admin.php' )
+							),
+							'format'    => '',
+							'current'   => max( 1, isset( $paged ) ? (int) $paged : 1 ),
+							'total'     => $_cats_pages,
+							'prev_text' => '&lsaquo;',
+							'next_text' => '&rsaquo;',
+							'end_size'  => 2,
+							'mid_size'  => 2,
+							'type'      => 'plain',
+						)
+					)
+				);
+				?>
+			</div>
+		</div>
+	<?php endif; ?>
 	</div><!-- /.jt-content-table-wrap -->
 
 	</div><!-- /.jetonomy-categories-layout -->

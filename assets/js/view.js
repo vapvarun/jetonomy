@@ -550,7 +550,10 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyCard.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            const plainText = bodyEl.textContent.trim();
+            // innerText (not textContent) preserves paragraph breaks between
+            // block elements as \n\n, so the textarea mirrors what the user
+            // sees. The display filter re-wraps on save via wpautop.
+            const plainText = bodyEl.innerText.trim();
             bodyEl.style.display = 'none';
 
             const editor = document.createElement( 'div' );
@@ -605,10 +608,8 @@ const { state, actions } = store( 'jetonomy', {
                     } );
 
                     if ( res.ok ) {
-                        // Show edited plain text; server-rendered version loads on reload.
-                        bodyEl.textContent = content;
-                        editor.remove();
-                        bodyEl.style.display = '';
+                        // Reload so the display filter (wpautop) renders paragraphs.
+                        window.location.reload();
                     } else {
                         const err = await res.json().catch( () => ( {} ) );
                         if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
@@ -904,7 +905,8 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = article.querySelector( '.jt-post-body' );
             if ( ! bodyEl ) return;
 
-            const plainText = bodyEl.textContent.trim();
+            // See reply editor above — innerText preserves \n\n between paragraphs.
+            const plainText = bodyEl.innerText.trim();
             bodyEl.style.display = 'none';
 
             const editor = document.createElement( 'div' );
@@ -959,9 +961,7 @@ const { state, actions } = store( 'jetonomy', {
                     } );
 
                     if ( res.ok ) {
-                        bodyEl.textContent = content;
-                        editor.remove();
-                        bodyEl.style.display = '';
+                        window.location.reload();
                     } else {
                         const err = await res.json().catch( () => ( {} ) );
                         if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );

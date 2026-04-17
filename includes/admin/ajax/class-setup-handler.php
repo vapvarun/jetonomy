@@ -28,10 +28,10 @@ class Setup_Handler {
 			wp_send_json_error();
 		}
 
-		$settings                 = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']    = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
-		$settings['default_type'] = sanitize_text_field( wp_unslash( $_POST['default_type'] ?? 'forum' ) );
-		$settings['guest_read']   = true;
+		$settings                       = get_option( 'jetonomy_settings', [] );
+		$settings['base_slug']          = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
+		$settings['default_space_type'] = $this->sanitize_space_type( wp_unslash( $_POST['default_space_type'] ?? $_POST['default_type'] ?? 'forum' ) );
+		$settings['guest_read']         = true;
 		update_option( 'jetonomy_settings', $settings );
 
 		$cat_name   = sanitize_text_field( wp_unslash( $_POST['category_name'] ?? 'General' ) );
@@ -50,7 +50,7 @@ class Setup_Handler {
 			[
 				'category_id' => $cat_id,
 				'author_id'   => get_current_user_id(),
-				'type'        => $settings['default_type'],
+				'type'        => $settings['default_space_type'],
 				'title'       => $space_name,
 				'slug'        => sanitize_title( $space_name ),
 				'description' => $space_desc,
@@ -85,10 +85,10 @@ class Setup_Handler {
 		$uid = get_current_user_id();
 		UserProfile::find_or_create( $uid );
 
-		$settings                 = get_option( 'jetonomy_settings', [] );
-		$settings['base_slug']    = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
-		$settings['default_type'] = sanitize_text_field( wp_unslash( $_POST['default_type'] ?? 'forum' ) );
-		$settings['guest_read']   = true;
+		$settings                       = get_option( 'jetonomy_settings', [] );
+		$settings['base_slug']          = sanitize_title( wp_unslash( $_POST['base_slug'] ?? 'community' ) );
+		$settings['default_space_type'] = $this->sanitize_space_type( wp_unslash( $_POST['default_space_type'] ?? $_POST['default_type'] ?? 'forum' ) );
+		$settings['guest_read']         = true;
 		update_option( 'jetonomy_settings', $settings );
 
 		// Auto-cleanup any existing demo data before re-seeding.
@@ -121,5 +121,14 @@ class Setup_Handler {
 		delete_option( 'jetonomy_demo_data' );
 
 		wp_send_json_success( [ 'message' => __( 'All demo data has been removed.', 'jetonomy' ) ] );
+	}
+
+	/**
+	 * Restrict the saved space type to the four supported values. Anything else
+	 * falls back to 'forum' so the dropdown can never persist a bogus option.
+	 */
+	private function sanitize_space_type( $value ): string {
+		$value = sanitize_key( (string) $value );
+		return in_array( $value, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $value : 'forum';
 	}
 }
