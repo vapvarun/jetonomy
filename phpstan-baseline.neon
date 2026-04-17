@@ -422,7 +422,7 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 11
+			count: 10
 			path: includes/class-jetonomy.php
 
 		-
