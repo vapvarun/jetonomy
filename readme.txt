@@ -267,6 +267,8 @@ Each site in a Multisite network gets its own independent community. Network act
 = 1.3.5 — April 2026 =
 
 * Fixed: Editing a topic or reply no longer collapses paragraphs into a single run-on line. The inline editor now preserves blank lines between paragraphs all the way through open, save, and display. Historically broken posts also render with their paragraphs restored on the next page load.
+* New: Jetonomy Navigation block — a drop-in Gutenberg block that renders the Category → Space tree as sidebar navigation. Permission-aware (private spaces stay hidden from anonymous viewers), highlights the current space, and scales to sites with thousands of spaces.
+* New: Jetonomy Login block — a quick login and register panel built for the community sidebar. Logged-out viewers see inline Login and Register tabs without leaving the page; logged-in viewers see nothing, so there is no layout shift. Rate-limited and nonce-protected.
 
 = 1.3.4 — April 2026 =
 
