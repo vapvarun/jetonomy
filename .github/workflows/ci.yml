@@ -252,7 +252,7 @@ jobs:
       - name: Clean non-dist files for PCP
         run: |
           cd /tmp/wp/wp-content/plugins/jetonomy
-          rm -rf node_modules vendor dist .git .github tests bin
+          rm -rf node_modules vendor dist .git .github tests bin tools .githooks plans docs marketing
 
       - name: Run Plugin Check
         run: |
