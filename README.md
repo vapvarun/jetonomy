@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PHPUnit-194%20tests-brightgreen?logo=testing-library&logoColor=white" alt="194 Tests">
+  <img src="https://img.shields.io/badge/PHPUnit-226%20tests-brightgreen?logo=testing-library&logoColor=white" alt="226 Tests">
   <img src="https://img.shields.io/badge/PHPStan-Level%205-brightgreen?logo=php&logoColor=white" alt="PHPStan Level 5">
   <img src="https://img.shields.io/badge/REST%20API-61%2B%20endpoints-blue?logo=json&logoColor=white" alt="61+ REST API Endpoints">
   <img src="https://img.shields.io/badge/Security-OWASP%20tested-blue?logo=owasp&logoColor=white" alt="Security Tested">
@@ -23,7 +23,7 @@
   &nbsp;
   <a href="https://store.wbcomdesigns.com/jetonomy/"><img src="https://img.shields.io/badge/Download-Free-brightgreen?style=for-the-badge&logo=wordpress&logoColor=white" alt="Download Free"></a>
   &nbsp;
-  <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-13%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro"></a>
+  <a href="https://store.wbcomdesigns.com/jetonomy-pro/"><img src="https://img.shields.io/badge/Pro-14%20Extensions-7C3AED?style=for-the-badge" alt="Jetonomy Pro"></a>
   &nbsp;
   <a href="https://store.wbcomdesigns.com/jetonomy/docs/"><img src="https://img.shields.io/badge/Docs-Read%20the%20Docs-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
 </p>
@@ -121,10 +121,11 @@ Your community will be live at `yoursite.com/community/`.
 
 ## Jetonomy Pro
 
-For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesigns.com/jetonomy-pro/) adds 13 modular extensions:
+For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesigns.com/jetonomy-pro/) adds 14 modular extensions:
 
 | Extension | What it does |
 |-----------|-------------|
+| AI Integration | Spam detection, auto-moderation, reply suggestions, thread summaries — OpenAI, Anthropic, or self-hosted Ollama |
 | Emoji Reactions | Slack-style reactions on posts and replies |
 | Private Messaging | 1:1 and group conversations |
 | Polls | Community voting within posts |
@@ -158,6 +159,34 @@ Full documentation is available at [store.wbcomdesigns.com/jetonomy/docs/](https
 Contributions are welcome. Please open an issue first to discuss what you'd like to change.
 
 ## Changelog
+
+### 1.3.5 (April 2026)
+- New: Jetonomy Navigation block — permission-aware Category/Space tree for sidebars, scales to thousands of spaces
+- New: Jetonomy Login block — inline login/register panel with rate limiting and nonce protection (renders nothing for logged-in users — no layout shift)
+- Fix: Inline editor no longer collapses paragraphs into a single run-on line on save; historical flattened posts render with paragraphs restored on next page load
+- Release hygiene: `bin/build-release.sh` is now the only path to a release zip — enforces clean-tree gate, version triangulation (Version header + constant + readme Stable tag), production composer install, `php -l` on every staged file, smoke test through `plugins_loaded` + `init`, zip/re-extract/re-smoke-test
+
+### 1.3.4 (April 2026)
+- New: Akismet bypass for admin/space-admin/moderator replies — staff answers no longer quarantined on support communities
+- New: One-click "Approve" / "Not Spam" action in Replies and Posts admin lists for content held for moderation
+- New: Moderation queue REST endpoint accepts `status=pending|spam|all`
+- New: Bulk trust-level promotion via admin API — useful after migrations and onboarding batches
+- New: Spaces now track real membership — posting or replying in an open space auto-joins the author; one-time upgrade back-fills historical authors
+- Fix: Approve/spam/trash actions from the admin list now correctly update denormalized topic, reply, and member counters
+- New: Admin counter-rebuild tool extended to repair member-count drift (the 1.3.3 tool now covers members too)
+
+### 1.3.3 (April 2026)
+- New: Access Control collapsed from three options to two — "Public community" and "Private community"; existing installs migrated automatically
+- New: Admin counter rebuild button — refresh topic, reply, and vote counters when they drift after a bulk import or manual DB change (no WP-CLI required)
+- New: Imported/seeded topics preserve their original `created_at` timestamp instead of being stamped with today's date
+- Fix: "Default Space Type" setting now actually applies when creating new spaces (both admin UI and REST API); previously defaulted to Forum regardless
+
+### 1.3.2 (April 2026)
+- Fix: Setup wizard PHP deprecation warnings under PHP 8.1+ with WordPress 6.4+ (`strip_tags(null)`, `print_emoji_styles`, `wp_admin_bar_header`)
+- New: `jetonomy_new_post_submit_action` filter — Pro extensions can intercept the new-post form submit URL without mutating DOM after hydration
+
+### 1.3.1 (April 2026)
+- Fix: Theme button hover styles no longer bleed into Jetonomy button states — scoped CSS reset for BuddyX/Reign compatibility
 
 ### 1.3.0 (April 2026)
 

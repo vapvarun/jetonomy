@@ -8,6 +8,8 @@ Get Jetonomy running on your WordPress site in under five minutes. This guide co
 - Three ways to install Jetonomy
 - What Jetonomy sets up automatically on first activation
 
+> **See it running first** — [community.wbcomdesigns.com](https://community.wbcomdesigns.com/) is Wbcom's own support community, running Jetonomy in production. Browse the spaces, read the threads, and see how topics, replies, voting, trust levels, and moderation feel on a live site before you install. Public registration is open — you can sign up and ask a question there if you have one.
+
 ## Requirements
 
 Jetonomy requires a modern WordPress stack. Check these before installing.
