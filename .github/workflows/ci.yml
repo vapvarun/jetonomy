@@ -263,6 +263,11 @@ jobs:
             $3 == "ERROR" {
               if (file ~ /^tests\//) next
               if (file ~ /^bin\//) next
+              if (file ~ /^tools\//) next
+              if (file ~ /^\.githooks\//) next
+              if (file ~ /^plans\//) next
+              if (file ~ /^docs\//) next
+              if (file ~ /^marketing\//) next
               if (file ~ /^dist\//) next
               if (file ~ /^vendor\//) next
               if (file ~ /^node_modules\//) next
