@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.3.5
+Stable tag: 1.3.6
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,22 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.3.6 - April 2026 =
+
+* New: Trending Topics block — a Gutenberg block that ranks community posts by recent engagement (votes + replies over a trailing window, with time decay) so the list surfaces what's hot right now rather than what's popular all-time. Drop it on the homepage, a landing page, or any WordPress page outside the community routes.
+* New: Forum Feed block can now be scoped to a single space with a styled header and "View all" link — a drop-in "Topics from this space" widget for marketing pages, sidebars, and FSE templates.
+* New: Rich link previews — topics and replies that include a URL now render a preview card with title, description, and favicon, using a local unfurling service so sites stay fast and privacy-preserving.
+* New: Per-type email templates — welcome, mention, reply, digest, moderation, and system notifications each have their own template file, and themes can override any of them from a `jetonomy/emails/` directory. The context passed to each template is now richer (actor name, space, post excerpt, action URL).
+* New: External plugins and extensions can now open the community message composer programmatically via the shared `msgComposeOpen` state — used by Pro Messages to wire in the "Message" action from Top Members and elsewhere.
+* Fixed: The three-dot dropdown on topic and reply cards no longer gets trapped or clipped inside the card. Opening, closing, and clicking menu items now behaves consistently on every theme.
+* Fixed: Users can no longer downvote their own posts or replies — the REST vote endpoint now rejects self-downvotes and the vote button on the author's own content reflects that.
+* Fixed: Private (is_private) topics are now truly private across every read surface — archives, search, tag pages, and REST listings now honour the private flag so draft or sensitive content can't be enumerated.
+* Fixed: TikTok, Instagram, and Twitter/X links now embed as real video/post players instead of falling back to oEmbed blockquotes.
+* Fixed: Invite-only space journey — visiting `/new/` without an invite now returns users to the space with a clear inline error, REST errors surface inline on the invite form, and stale "Join" CTAs are hidden when the viewer has already joined or has a pending request.
+* Fixed: Spacing between the Post Topic button and the publish-options dropdown on the composer — no more visual collision.
+* Fixed: Tags admin page now writes nonce-protected requests; invalid nonces are rejected cleanly instead of silently failing.
+* Improvement: `wp jetonomy config get` dotted-path lookups (e.g. `trust_thresholds.1.posts`) now return the effective runtime value when the admin has not explicitly saved that block — defaults fill the gap so automation scripts don't trip on "Key not found".
 
 = 1.3.5 - April 2026 =
 

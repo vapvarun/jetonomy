@@ -383,9 +383,17 @@ class REST_Tests {
 
 		// 14. Downvote post (should change or toggle score).
 		// We first DELETE the existing vote so we can test a fresh downvote.
+		// Self-downvotes are blocked (commit 826b9f8), so switch to the TL0
+		// test user for this step and restore admin after.
 		$this->rest( 'DELETE', "/posts/{$this->post_id}/vote" );
-		$r = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => -1 ] );
+		if ( $this->test_user_id ) {
+			wp_set_current_user( $this->test_user_id );
+		}
+		$r    = $this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => -1 ] );
 		$data = $r->get_data();
+		if ( $this->test_user_id ) {
+			wp_set_current_user( $this->admin_id );
+		}
 		$this->check( 'C14: POST /posts/{id}/vote (down) → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'C14: response has score', array_key_exists( 'score', $data ), 'missing score key' );
 
