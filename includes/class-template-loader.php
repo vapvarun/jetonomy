@@ -42,6 +42,25 @@ class Template_Loader {
 			exit;
 		}
 
+		// ── /new/ route membership guard ──
+		// REST POST /posts returns 403 for non-members on invite/approval spaces, but
+		// without this guard the user still reaches the composer, fills it, submits, and
+		// sees a silent failure. Redirect to the space page where the invite-only /
+		// request-to-join empty state surfaces the correct next action.
+		if ( 'new-post' === $data['route'] && ! empty( $data['slug'] ) && ! current_user_can( 'manage_options' ) ) {
+			$jt_space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
+			if ( $jt_space ) {
+				$jt_join_policy = $jt_space->join_policy ?? 'open';
+				$jt_is_member   = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() );
+				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
+					$jt_settings  = get_option( 'jetonomy_settings', array() );
+					$jt_base_slug = $jt_settings['base_slug'] ?? 'community';
+					wp_safe_redirect( home_url( '/' . $jt_base_slug . '/s/' . $jt_space->slug . '/' ) );
+					exit;
+				}
+			}
+		}
+
 		// Update last_seen_at for online status tracking.
 		$current_user_id = get_current_user_id();
 		if ( $current_user_id ) {
@@ -195,6 +214,7 @@ class Template_Loader {
 			'unreadCount'       => 0,
 			'isSubmitting'      => false,
 			'submitLabel'       => __( 'Post Topic', 'jetonomy' ),
+			'submitError'       => '',
 			'i18n'              => array(
 				'voteRecorded'       => __( 'Vote recorded', 'jetonomy' ),
 				'accepted'           => __( 'Accepted', 'jetonomy' ),

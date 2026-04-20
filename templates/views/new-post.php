@@ -60,6 +60,13 @@ $type_label     = $type_defaults['label'];
 		<?php printf( esc_html__( 'Posting in %s', 'jetonomy' ), '<strong>' . esc_html( $space->title ) . '</strong>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- %s contains esc_html() output wrapped in static tag. ?>
 	</p>
 
+	<div class="jt-form-error"
+		role="alert"
+		data-wp-interactive="jetonomy"
+		data-wp-bind--hidden="!state.submitError"
+		data-wp-text="state.submitError"
+		hidden></div>
+
 	<form id="jt-new-post-form" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="<?php echo esc_attr( apply_filters( 'jetonomy_new_post_submit_action', 'actions.submitNewPost' ) ); ?>"

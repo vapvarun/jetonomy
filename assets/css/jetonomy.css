@@ -1218,6 +1218,25 @@
 .jt-editor-dragover { border-color: var(--jt-accent) !important; background: var(--jt-accent-muted); }
 .jt-upload-placeholder { padding: 12px; text-align: center; color: var(--jt-text-tertiary); background: var(--jt-bg-muted); border-radius: var(--jt-radius); margin: 8px 0; animation: jt-pulse 1.5s ease infinite; }
 
+/* ── Inline form error (composer, etc.) ──
+   Surfaces REST errors (e.g. 403 on invite-only new-post submit) inline above
+   the form, independent of any third-party toast library. */
+.jt-form-error {
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	background: var(--jt-danger-light);
+	color: var(--jt-danger);
+	border: 1px solid var(--jt-danger);
+	border-radius: var(--jt-radius);
+	font-size: 0.9375rem;
+	line-height: 1.4;
+}
+.jt-form-error[hidden] { display: none; }
+
+@media (max-width: 640px) {
+	.jt-form-error { padding: 8px 12px; font-size: 0.875rem; }
+}
+
 /* ── oEmbed wrappers ── */
 .jt-embed { margin: 12px 0; border-radius: var(--jt-radius); overflow: hidden; }
 .jt-embed iframe { max-width: 100%; border-radius: var(--jt-radius); }

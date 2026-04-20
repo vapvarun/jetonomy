@@ -1608,6 +1608,8 @@ const { state, actions } = store( 'jetonomy', {
             const ctx = getContext();
             state.isSubmitting = true;
             state.submitLabel = state.i18n?.posting || 'Posting...';
+            // Clear any prior inline error surfaced from a previous attempt.
+            state.submitError = '';
 
             // Close publish menu if open.
             state.publishMenuOpen = false;
@@ -1684,7 +1686,13 @@ const { state, actions } = store( 'jetonomy', {
                 );
                 if ( ! response.ok ) {
                     const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to create post.' );
+                    const errMsg = err.message || state.i18n?.failedSave || 'Failed to create post.';
+                    // Surface inline above the composer — does not rely on
+                    // window.bnToast, which is only present when BuddyNext is
+                    // active. Without this, a REST 403 / 400 on this endpoint
+                    // left the composer with no feedback at all.
+                    state.submitError = errMsg;
+                    if ( window.bnToast ) window.bnToast( errMsg );
                     return;
                 }
                 const data = yield response.json();
@@ -1706,7 +1714,9 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.href = `${ state.communityBase }/s/${ ctx.spaceSlug }/t/${ slug }/`;
                 }
             } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                const errMsg = state.i18n?.networkError || 'Network error. Please try again.';
+                state.submitError = errMsg;
+                if ( window.bnToast ) window.bnToast( errMsg );
             } finally {
                 state.isSubmitting = false;
                 state.submitLabel = state.i18n?.postTopic || 'Post Topic';
