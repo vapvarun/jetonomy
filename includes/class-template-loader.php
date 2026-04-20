@@ -215,6 +215,7 @@ class Template_Loader {
 			'isSubmitting'      => false,
 			'submitLabel'       => __( 'Post Topic', 'jetonomy' ),
 			'submitError'       => '',
+			'msgComposeOpen'    => false,
 			'i18n'              => array(
 				'voteRecorded'       => __( 'Vote recorded', 'jetonomy' ),
 				'accepted'           => __( 'Accepted', 'jetonomy' ),
