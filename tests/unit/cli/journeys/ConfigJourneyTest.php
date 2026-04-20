@@ -71,7 +71,18 @@ class ConfigJourneyTest extends WP_UnitTestCase {
 		$this->assertInstanceOf( Journey_Result::class, $result );
 		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
 		$this->assertNull( $result->data['path'] );
-		$this->assertSame( $this->seed, $result->data['value'] );
+
+		// read_settings() merges canonical defaults into the three resettable
+		// blocks (raw values win, defaults fill the gaps), so the returned
+		// value is the seed with trust_thresholds + notification_defaults
+		// back-filled from their default helpers. rate_limits already has
+		// every default key in the seed, so nothing is merged in there.
+		$expected                          = $this->seed;
+		$expected['trust_thresholds']      = $this->seed['trust_thresholds'] + Trust_Levels::defaults();
+		$expected['rate_limits']           = $this->seed['rate_limits'] + Rate_Limiter::defaults();
+		$expected['notification_defaults'] = $this->seed['notification_defaults'] + Config_Journey::notification_defaults();
+
+		$this->assertSame( $expected, $result->data['value'] );
 	}
 
 	public function test_get_single_top_level_key(): void {
