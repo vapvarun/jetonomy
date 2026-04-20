@@ -830,9 +830,8 @@
   .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
 
   /* ── Publish mode split-button ── */
-  .jt-publish-mode { position: relative; display: inline-flex; }
-  .jt-publish-mode__submit { border-radius: 0 var(--jt-radius) var(--jt-radius) 0; }
-  .jt-publish-mode__toggle { border-radius: var(--jt-radius) 0 0 var(--jt-radius); border-right: 1px solid rgba(255,255,255,0.25); min-width: 34px; padding-right: 8px; padding-left: 8px; }
+  .jt-publish-mode { position: relative; display: inline-flex; gap: 6px; align-items: center; }
+  .jt-publish-mode__toggle { min-width: 34px; padding-right: 8px; padding-left: 8px; }
   .jt-publish-mode__menu { position: absolute; bottom: calc(100% + 6px); left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
   .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: right; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
@@ -860,7 +859,7 @@
   @media (max-width: 640px) {
     .jt-form-actions { flex-wrap: wrap; }
     .jt-publish-mode { width: 100%; }
-    .jt-publish-mode__submit { flex: 1; border-radius: 0 var(--jt-radius) var(--jt-radius) 0; }
+    .jt-publish-mode__submit { flex: 1; }
     .jt-publish-mode__menu { left: 0; right: 0; min-width: unset; }
   }
 

@@ -848,10 +848,16 @@
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
   .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
 
-  /* ── Publish mode split-button ── */
-  .jt-publish-mode { position: relative; display: inline-flex; }
-  .jt-publish-mode__submit { border-radius: var(--jt-radius) 0 0 var(--jt-radius); }
-  .jt-publish-mode__toggle { border-radius: 0 var(--jt-radius) var(--jt-radius) 0; border-left: 1px solid rgba(255,255,255,0.25); min-width: 34px; padding-left: 8px; padding-right: 8px; }
+  /* ── Publish mode split-button ──
+     The buttons pick up `.jt-btn { border-radius: var(--jt-radius-full) }`
+     from the base rule (higher specificity, `.jt-app .jt-btn`), so the
+     joined-split-button shape that lived here before 1.3.6 never actually
+     rendered — they always drew as two pills. Instead of fighting the
+     base button shape we lean into it: two pills with a visible gap.
+     Matches Basecamp 9803889865 ("Post Topic button and dropdown touching
+     without proper spacing"). */
+  .jt-publish-mode { position: relative; display: inline-flex; gap: 6px; align-items: center; }
+  .jt-publish-mode__toggle { min-width: 34px; padding-left: 8px; padding-right: 8px; }
   .jt-publish-mode__menu { position: absolute; bottom: calc(100% + 6px); right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
   .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
@@ -879,7 +885,7 @@
   @media (max-width: 640px) {
     .jt-form-actions { flex-wrap: wrap; }
     .jt-publish-mode { width: 100%; }
-    .jt-publish-mode__submit { flex: 1; border-radius: var(--jt-radius) 0 0 var(--jt-radius); }
+    .jt-publish-mode__submit { flex: 1; }
     .jt-publish-mode__menu { right: 0; left: 0; min-width: unset; }
   }
 
