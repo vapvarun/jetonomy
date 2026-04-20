@@ -12,16 +12,18 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Shortcodes for embedding Jetonomy content anywhere.
  *
- * [jetonomy_recent_posts]  — Recent forum posts.
- * [jetonomy_spaces]        — Space directory grid.
- * [jetonomy_leaderboard]   — Top members by reputation.
- * [jetonomy_user_profile]  — Single user profile card.
- * [jetonomy_space_members] — Member list for a space.
+ * [jetonomy_recent_posts]   — Recent forum posts.
+ * [jetonomy_trending_posts] — Trending posts (time-decayed hot score).
+ * [jetonomy_spaces]         — Space directory grid.
+ * [jetonomy_leaderboard]    — Top members by reputation.
+ * [jetonomy_user_profile]   — Single user profile card.
+ * [jetonomy_space_members]  — Member list for a space.
  */
 class Shortcodes {
 
 	public static function register(): void {
 		add_shortcode( 'jetonomy_recent_posts', array( __CLASS__, 'recent_posts' ) );
+		add_shortcode( 'jetonomy_trending_posts', array( __CLASS__, 'trending_posts' ) );
 		add_shortcode( 'jetonomy_spaces', array( __CLASS__, 'spaces' ) );
 		add_shortcode( 'jetonomy_leaderboard', array( __CLASS__, 'leaderboard' ) );
 		add_shortcode( 'jetonomy_user_profile', array( __CLASS__, 'user_profile' ) );
@@ -92,6 +94,60 @@ class Shortcodes {
 			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
 			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
 			$out .= '</div></div>';
+		}
+		$out .= '</div>';
+
+		return $out;
+	}
+
+	/**
+	 * [jetonomy_trending_posts count="5" space_id="" window="7"]
+	 *
+	 * Trending = time-decayed hot score over the last N days (default 7).
+	 * Recent engagement outranks lifetime score.
+	 */
+	public static function trending_posts( $atts ): string {
+		$atts = shortcode_atts(
+			array(
+				'count'    => 5,
+				'space_id' => 0,
+				'window'   => 7,
+			),
+			$atts,
+			'jetonomy_trending_posts'
+		);
+
+		$limit    = absint( $atts['count'] ) ?: 5;
+		$window   = absint( $atts['window'] ) ?: 7;
+		$space_id = absint( $atts['space_id'] );
+		$base     = base_url();
+
+		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
+
+		if ( empty( $posts ) ) {
+			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet — check back soon.', 'jetonomy' ) . '</div>';
+		}
+
+		$rank = 0;
+		$out  = '<div class="jt-shortcode jt-shortcode-trending-posts">';
+		foreach ( $posts as $post ) {
+			++$rank;
+			$url    = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+			$author = get_userdata( (int) $post->author_id );
+			$out   .= '<div class="jt-shortcode-post jt-shortcode-trending-post">';
+			$out   .= '<span class="jt-shortcode-trending-rank" aria-hidden="true">' . (int) $rank . '</span>';
+			$out   .= '<div class="jt-shortcode-trending-body">';
+			$out   .= '<a href="' . esc_url( $url ) . '" class="jt-shortcode-post-title">' . esc_html( $post->title ) . '</a>';
+			$out   .= '<div class="jt-shortcode-post-meta">';
+			$out   .= esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) );
+			if ( ! empty( $post->space_title ) ) {
+				$out .= ' · ' . esc_html( $post->space_title );
+			}
+			$out .= '</div>';
+			$out .= '<div class="jt-shortcode-post-stats">';
+			$out .= '<span>' . (int) $post->vote_score . ' ' . esc_html( _n( 'vote', 'votes', (int) $post->vote_score, 'jetonomy' ) ) . '</span>';
+			$out .= '<span>' . (int) $post->reply_count . ' ' . esc_html( _n( 'reply', 'replies', (int) $post->reply_count, 'jetonomy' ) ) . '</span>';
+			$out .= '</div></div></div>';
 		}
 		$out .= '</div>';
 

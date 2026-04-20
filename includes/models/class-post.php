@@ -422,6 +422,53 @@ class Post extends Model {
 	}
 
 	/**
+	 * List trending posts using a time-decayed hot score.
+	 *
+	 * Score = (vote_score + reply_count * 2) / (hours_since_created + 2)^1.5
+	 *
+	 * This is the classic Reddit-style ranking: recent engagement wins over
+	 * lifetime score so a post with 20 votes from today outranks a post with
+	 * 200 votes from last year. The query restricts to a trailing window
+	 * (default 7 days) so the math stays bounded and the index on created_at
+	 * keeps it fast even at 10k+ posts per space.
+	 *
+	 * @param int      $limit      Max rows (default 5).
+	 * @param int|null $space_id   Optional space filter. Null = site-wide.
+	 * @param int      $window_days Trailing window in days (default 7).
+	 * @return object[] Post rows with space_slug and space_title joined.
+	 */
+	public static function list_trending( int $limit = 5, ?int $space_id = null, int $window_days = 7 ): array {
+		$limit       = max( 1, $limit );
+		$window_days = max( 1, $window_days );
+		$table       = static::table();
+		$spaces_tbl  = \Jetonomy\table( 'spaces' );
+
+		$where = "p.status = 'publish' AND p.created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)";
+		$args  = array( $window_days );
+
+		if ( null !== $space_id && $space_id > 0 ) {
+			$where .= ' AND p.space_id = %d';
+			$args[] = $space_id;
+		}
+
+		$args[] = $limit;
+
+		$query = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title,
+				(p.vote_score + p.reply_count * 2) / POW(TIMESTAMPDIFF(HOUR, p.created_at, NOW()) + 2, 1.5) AS hot_score
+			FROM {$table} p
+			LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+			WHERE {$where}
+			ORDER BY hot_score DESC, p.created_at DESC
+			LIMIT %d";
+
+		$results = static::db()->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			static::db()->prepare( $query, ...$args )
+		);
+		return $results ? $results : array();
+	}
+
+	/**
 	 * Close a post (prevent new replies).
 	 *
 	 * @param int $id Post ID.
