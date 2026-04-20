@@ -41,7 +41,9 @@ $is_accepted = (int) $reply->is_accepted;
 		// are captured as whole tokens BEFORE jetonomy_format_content runs its
 		// @mention / #hashtag matchers — otherwise a URL path's `/@name` gets
 		// eaten by the mention regex and the URL never embeds.
-		echo jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $reply->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$jt_reply_rendered = jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $reply->content ) ) ) );
+		jetonomy_maybe_enqueue_embed_scripts( $jt_reply_rendered );
+		echo $jt_reply_rendered; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 	</div>
 	<?php

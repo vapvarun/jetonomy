@@ -153,11 +153,19 @@ function jetonomy_echo_icon( string $name, int $size = 24 ): void {
 /**
  * wp_kses variant for rendered post/reply content.
  *
- * Extends the default "post" allowed-tags list with `<iframe>` — needed so
- * that oEmbed HTML returned by `wp_oembed_get()` (YouTube, Vimeo, etc.)
- * survives the outer sanitization pass applied when rendering content in
- * single-post.php and reply-card.php. The iframe attribute whitelist matches
- * what WordPress's own oEmbed providers emit.
+ * Extends the default "post" allowed-tags list with the attributes that
+ * oEmbed HTML needs to survive the outer sanitization pass in single-post.php
+ * and reply-card.php:
+ *
+ * - `<iframe>` for YouTube/Vimeo/Spotify/SoundCloud embeds.
+ * - `<blockquote class=... data-*>` + inner `<section>` / `<p>` / `<a target>`
+ *   for TikTok, Instagram, and Twitter embeds. These providers ship a
+ *   blockquote fallback plus a hydration script (see
+ *   jetonomy_maybe_enqueue_embed_scripts()) that swaps the blockquote for
+ *   the real player at runtime. If we strip the blockquote's `class`
+ *   (`tiktok-embed` / `instagram-media` / `twitter-tweet`) or its
+ *   `data-video-id` / `data-instgrm-permalink` attributes, the script has no
+ *   hook to attach to and the visitor only sees the plain caption fallback.
  *
  * @param string $content HTML content to sanitize.
  * @return string
@@ -181,7 +189,77 @@ function jetonomy_kses_embedded_content( string $content ): string {
 		'style'           => true,
 	);
 
+	// Provider embed blockquote — TikTok, Instagram, Twitter. Keep the
+	// class hook and the data-* attributes the hydration script reads.
+	$allowed['blockquote'] = array_merge(
+		$allowed['blockquote'] ?? array(),
+		array(
+			'class'                  => true,
+			'cite'                   => true,
+			'style'                  => true,
+			'data-video-id'          => true,
+			'data-embed-from'        => true,
+			'data-instgrm-permalink' => true,
+			'data-instgrm-version'   => true,
+			'data-instgrm-captioned' => true,
+			'data-lang'              => true,
+			'data-theme'             => true,
+		)
+	);
+
+	// TikTok wraps the fallback caption in <section>; also allow the
+	// attributes Instagram/Twitter put on inner links.
+	$allowed['section'] = array(
+		'class' => true,
+		'style' => true,
+	);
+
+	foreach ( array( 'a', 'p' ) as $tag ) {
+		if ( isset( $allowed[ $tag ] ) && is_array( $allowed[ $tag ] ) ) {
+			$allowed[ $tag ]['target'] = true;
+			$allowed[ $tag ]['rel']    = true;
+		}
+	}
+
 	return wp_kses( $content, $allowed );
+}
+
+/**
+ * Enqueue provider hydration scripts when content contains a TikTok,
+ * Instagram, or Twitter embed blockquote.
+ *
+ * These providers return oEmbed HTML as `<blockquote class="..." …>` plus a
+ * `<script async src="…">` tag. `wp_filter_oembed_result()` strips the
+ * script (only iframes survive core's oEmbed sanitizer), so the blockquote
+ * renders as a plain caption without the script loading — visitors see the
+ * fallback text but no video player.
+ *
+ * We detect the blockquote marker in the sanitized, ready-to-echo content
+ * and enqueue the corresponding provider script server-side. The script
+ * runs once per page and rewrites every matching blockquote to an iframe
+ * player.
+ *
+ * Safe to call multiple times per request — wp_enqueue_script() dedupes by
+ * handle. Does nothing on feed / REST / admin contexts.
+ *
+ * @param string $content Rendered content about to be echoed.
+ */
+function jetonomy_maybe_enqueue_embed_scripts( string $content ): void {
+	if ( is_admin() || is_feed() || wp_doing_ajax() ) {
+		return;
+	}
+
+	if ( false !== strpos( $content, 'class="tiktok-embed"' ) || false !== strpos( $content, "class='tiktok-embed'" ) ) {
+		wp_enqueue_script( 'jetonomy-tiktok-embed', 'https://www.tiktok.com/embed.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+	}
+
+	if ( false !== strpos( $content, 'class="instagram-media"' ) || false !== strpos( $content, "class='instagram-media'" ) ) {
+		wp_enqueue_script( 'jetonomy-instagram-embed', 'https://www.instagram.com/embed.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+	}
+
+	if ( false !== strpos( $content, 'class="twitter-tweet"' ) || false !== strpos( $content, "class='twitter-tweet'" ) ) {
+		wp_enqueue_script( 'jetonomy-twitter-embed', 'https://platform.twitter.com/widgets.js', array(), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+	}
 }
 
 function jetonomy_format_content( string $content ): string {

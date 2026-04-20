@@ -262,7 +262,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
 					// Embeds first so URL paths containing @username don't get mangled
 					// by jetonomy_format_content's mention matcher. See reply-card.php.
-					echo jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $post->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					$jt_post_rendered = jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $post->content ) ) ) );
+					jetonomy_maybe_enqueue_embed_scripts( $jt_post_rendered );
+					echo $jt_post_rendered; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					?>
 				</div>
 
@@ -300,12 +302,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</span>
 					<?php endif; ?>
-					<span class="jt-view-count" title="<?php
-						/* translators: %d: number of views */
-						echo esc_attr( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
-					?>" aria-label="<?php
-						echo esc_attr( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
-					?>">
+					<?php
+					/* translators: %d: number of views */
+					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );
+					?>
+					<span class="jt-view-count" title="<?php echo esc_attr( $jt_view_count_label ); ?>" aria-label="<?php echo esc_attr( $jt_view_count_label ); ?>">
 						<?php jetonomy_echo_icon( 'eye', 14 ); ?>
 						<span class="n"><?php echo esc_html( (int) $post->view_count ); ?></span>
 					</span>
