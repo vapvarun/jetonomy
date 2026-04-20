@@ -135,6 +135,21 @@ class Notifier {
 		$actor_id = (int) $reply->author_id;
 		$post_url = $this->get_post_url( $post );
 
+		// Build enriched context so the reply-to-post template (and any
+		// admin-customised subject/body) can reference post_title /
+		// actor_display_name / reply_excerpt / space_title directly.
+		$space         = $post->space_id ? Space::find( (int) $post->space_id ) : null;
+		$reply_plain   = isset( $reply->content_plain ) && '' !== (string) $reply->content_plain
+			? (string) $reply->content_plain
+			: wp_strip_all_tags( (string) ( $reply->content ?? '' ) );
+		$reply_excerpt = wp_trim_words( $reply_plain, 30, '…' );
+		$ctx_extra     = array(
+			'post_title'         => (string) $post->title,
+			'actor_display_name' => $this->get_display_name( $actor_id ),
+			'reply_excerpt'      => $reply_excerpt,
+			'space_title'        => $space ? (string) $space->title : '',
+		);
+
 		// 1. Notify post author (if not the replier)
 		if ( (int) $post->author_id !== $actor_id ) {
 			$this->create_and_maybe_email(
@@ -148,7 +163,8 @@ class Notifier {
 					$this->get_display_name( $actor_id ),
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url
+				$post_url,
+				$ctx_extra
 			);
 		}
 
@@ -169,7 +185,8 @@ class Notifier {
 					$this->get_display_name( $actor_id ),
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url
+				$post_url,
+				$ctx_extra
 			);
 		}
 
@@ -188,7 +205,8 @@ class Notifier {
 						$this->get_display_name( $actor_id ),
 						mb_substr( $post->title, 0, 50 )
 					),
-					$post_url
+					$post_url,
+					$ctx_extra
 				);
 			}
 		}
@@ -408,8 +426,21 @@ class Notifier {
 
 	/**
 	 * Create notification and optionally send email.
+	 *
+	 * $extra lets callers pass richer context (post_title, actor_display_name,
+	 * reply_excerpt, space_title) that the email template and the admin-
+	 * configured subject/body overrides can consume as placeholders.
+	 *
+	 * @param int    $user_id     Recipient.
+	 * @param int    $actor_id    Who triggered the notification (0 for system).
+	 * @param string $type        Notification type key.
+	 * @param string $object_type 'post' | 'reply' | 'user' | 'space' | '' .
+	 * @param int    $object_id   Target object ID.
+	 * @param string $message     Short notification sentence.
+	 * @param string $url         Deep-link for the CTA.
+	 * @param array  $extra       Optional enriched context; see render_email_template().
 	 */
-	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '' ): void {
+	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array() ): void {
 		// Load user preferences and global defaults.
 		$profile         = UserProfile::find_by_user( $user_id );
 		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
@@ -442,11 +473,11 @@ class Notifier {
 		}
 
 		if ( $send_email ) {
-			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url );
+			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
 	}
 
-	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '' ): void {
+	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
 		$user = get_userdata( $user_id );
 		if ( ! $user || ! $user->user_email ) {
 			return;
@@ -471,17 +502,25 @@ class Notifier {
 		$site_name = get_bloginfo( 'name' );
 
 		// Admin overrides from Settings → Emails. Each type may define a
-		// custom subject + intro message. Placeholders: {site}, {user},
-		// {message}, {type}, {url}. If no override set, fall back to the
-		// default `[Site] message` subject and the raw $message body.
+		// custom subject + intro message. Placeholders below — the legacy
+		// five are still supported; 1.3.6 adds richer per-notification
+		// context so admin templates can reference post titles, excerpts,
+		// etc. without needing a code override.
 		$templates    = get_option( 'jetonomy_email_templates', [] );
 		$tpl          = isset( $templates[ $type ] ) && is_array( $templates[ $type ] ) ? $templates[ $type ] : [];
 		$placeholders = [
-			'{site}'    => $site_name,
-			'{user}'    => $user->display_name,
-			'{message}' => wp_strip_all_tags( $message ),
-			'{type}'    => $type,
-			'{url}'     => $url,
+			'{site}'               => $site_name,
+			'{user}'               => $user->display_name,
+			'{message}'            => wp_strip_all_tags( $message ),
+			'{type}'               => $type,
+			'{url}'                => $url,
+			// Enriched placeholders (1.3.6 — Basecamp 9725671512). Safe
+			// fallback to empty string when the caller didn't provide them,
+			// so existing templates don't render literal "{post_title}" text.
+			'{post_title}'         => (string) ( $extra['post_title'] ?? '' ),
+			'{actor_display_name}' => (string) ( $extra['actor_display_name'] ?? '' ),
+			'{reply_excerpt}'      => (string) ( $extra['reply_excerpt'] ?? '' ),
+			'{space_title}'        => (string) ( $extra['space_title'] ?? '' ),
 		];
 
 		$subject_tpl = isset( $tpl['subject'] ) && '' !== $tpl['subject'] ? (string) $tpl['subject'] : '[{site}] {message}';
@@ -510,7 +549,7 @@ class Notifier {
 		 */
 		$body = (string) apply_filters( 'jetonomy_email_body', $body, $type, $user );
 
-		$html  = self::render_email_template( $type, $body, $user, $unsub_url, $url );
+		$html  = self::render_email_template( $type, $body, $user, $unsub_url, $url, $extra );
 		$plain = wp_strip_all_tags( $body );
 
 		// Add List-Unsubscribe headers (RFC 8058).
@@ -533,11 +572,77 @@ class Notifier {
 	}
 
 	/**
+	 * Resolve an email template file for a given notification type.
+	 *
+	 * Lookup order:
+	 *   1. Active (child) theme: `yourtheme/jetonomy/emails/{type}.php`
+	 *   2. Plugin per-type override: `plugin/templates/emails/{type}.php`
+	 *   3. Active theme base: `yourtheme/jetonomy/emails/base.php`
+	 *   4. Plugin base: `plugin/templates/emails/base.php`
+	 *
+	 * Type is sanitized to `[a-z0-9_-]+` before joining the path, so it can
+	 * never traverse outside the templates directory.
+	 *
+	 * Filter `jetonomy_email_template_path` receives the resolved path and
+	 * the type — integrators can swap in a fully custom template.
+	 *
+	 * @param string $type Notification type key (e.g. reply_to_post).
+	 * @return string Absolute filesystem path to the template to include.
+	 */
+	public static function locate_email_template( string $type ): string {
+		$safe_type = preg_replace( '/[^a-z0-9_-]/i', '', $type );
+		// Type keys use snake_case (reply_to_post); convention for template
+		// filenames is hyphen-case (reply-to-post.php). Try both so site
+		// builders can use either style.
+		$hyphen_type = '' !== $safe_type ? str_replace( '_', '-', $safe_type ) : '';
+
+		$theme_dir  = get_stylesheet_directory() . '/jetonomy/emails/';
+		$plugin_dir = JETONOMY_DIR . 'templates/emails/';
+
+		$candidates = array();
+		if ( '' !== $hyphen_type ) {
+			$candidates[] = $theme_dir . $hyphen_type . '.php';
+			$candidates[] = $plugin_dir . $hyphen_type . '.php';
+		}
+		if ( '' !== $safe_type && $safe_type !== $hyphen_type ) {
+			$candidates[] = $theme_dir . $safe_type . '.php';
+			$candidates[] = $plugin_dir . $safe_type . '.php';
+		}
+		$candidates[] = $theme_dir . 'base.php';
+		$candidates[] = $plugin_dir . 'base.php';
+
+		$resolved = $plugin_dir . 'base.php'; // last-resort default.
+		foreach ( $candidates as $candidate ) {
+			if ( file_exists( $candidate ) ) {
+				$resolved = $candidate;
+				break;
+			}
+		}
+
+		/**
+		 * Filter the resolved email template path.
+		 *
+		 * @param string $resolved Absolute path to the template file about to be loaded.
+		 * @param string $type     Notification type key.
+		 */
+		return (string) apply_filters( 'jetonomy_email_template_path', $resolved, $type );
+	}
+
+	/**
 	 * Render a branded notification email.
 	 *
 	 * Static so Mentions::notify() and other callers can reuse the same template.
+	 *
+	 * @param string   $type        Notification type key.
+	 * @param string   $message     Sentence shown above the CTA (plain text).
+	 * @param \WP_User $user        Recipient.
+	 * @param string   $unsub_url   One-click unsubscribe URL (optional).
+	 * @param string   $content_url Deep-link URL for the CTA (optional, falls back to community home).
+	 * @param array    $extra       Optional extra context:
+	 *                              - post_title, actor_display_name, reply_excerpt, space_title
+	 *                              - any additional keys — forwarded to templates + filter hooks.
 	 */
-	public static function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '', string $content_url = '' ): string {
+	public static function render_email_template( string $type, string $message, \WP_User $user, string $unsub_url = '', string $content_url = '', array $extra = array() ): string {
 		$site_name     = esc_html( get_bloginfo( 'name' ) );
 		$community_url = '' !== $content_url ? esc_url( $content_url ) : esc_url( \Jetonomy\base_url() . '/' );
 		$notif_url     = esc_url( \Jetonomy\base_url() . '/notifications/' );
@@ -579,7 +684,7 @@ class Notifier {
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
-		$cta_labels  = [
+		$cta_labels = [
 			'reply_to_post'   => __( 'View Post', 'jetonomy' ),
 			'reply_to_reply'  => __( 'View Reply', 'jetonomy' ),
 			'mention'         => __( 'View Post', 'jetonomy' ),
@@ -591,90 +696,50 @@ class Notifier {
 			'join_request'    => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'    => __( 'Open the Community', 'jetonomy' ),
 		];
-		$cta_text    = esc_html( $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' ) );
-		$cta_url     = esc_url( $community_url );
-		$message_esc = esc_html( $message );
+		$cta_text   = $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' );
 
-		// Header: logo image or text fallback.
-		if ( '' !== $logo_url ) {
-			$logo_safe   = esc_url( $logo_url );
-			$header_html = "<a href=\"{$home_url}\" style=\"text-decoration:none;\"><img src=\"{$logo_safe}\" alt=\"{$site_name}\" style=\"max-height:40px;max-width:200px;height:auto;width:auto;\" /></a>";
-		} else {
-			$header_html = "<a href=\"{$home_url}\" style=\"text-decoration:none;color:#111827;font-size:18px;font-weight:700;letter-spacing:-0.02em;\">{$site_name}</a>";
-		}
+		// Build the $ctx array passed into the template file. Each template
+		// (base.php + optional per-type overrides) reads from this. Keys
+		// are documented in templates/emails/base.php.
+		$ctx = array(
+			'type'               => $type,
+			'type_label'         => $type_label,
+			'site_name'          => $site_name,        // already esc_html'd, safe inside attribute-less nodes.
+			'site_name_text'     => get_bloginfo( 'name' ), // raw for esc_html() at print site.
+			'home_url'           => $home_url,         // already esc_url'd.
+			'home_url_text'      => home_url( '/' ),   // raw, re-escape at print site.
+			'community_url'      => $community_url,
+			'notif_url'          => $notif_url,        // already esc_url'd.
+			'unsub_url'          => $unsub_link,       // already esc_url'd, or '' when missing.
+			'accent'             => $accent,           // raw hex (attribute-escaped in template).
+			'logo_url'           => '' !== $logo_url ? esc_url( $logo_url ) : '',
+			'cta_text'           => $cta_text,
+			'cta_url'            => $community_url,
+			'message'            => $message,          // raw — template esc_html's it.
+			'footer_text'        => (string) ( $settings['email_footer_text'] ?? '' ),
+			'post_title'         => (string) ( $extra['post_title'] ?? '' ),
+			'actor_display_name' => (string) ( $extra['actor_display_name'] ?? '' ),
+			'reply_excerpt'      => (string) ( $extra['reply_excerpt'] ?? '' ),
+			'space_title'        => (string) ( $extra['space_title'] ?? '' ),
+			'user'               => $user,
+		);
 
-		$footer_links = "<a href=\"{$notif_url}\" style=\"color:#6B7280;text-decoration:underline;\">" . esc_html__( 'Notification preferences', 'jetonomy' ) . '</a>';
-		if ( $unsub_link ) {
-			$footer_links .= " &nbsp;&middot;&nbsp; <a href=\"{$unsub_link}\" style=\"color:#6B7280;text-decoration:underline;\">" . esc_html__( 'Unsubscribe', 'jetonomy' ) . '</a>';
-		}
+		/**
+		 * Filter the full context passed into email templates. Add new keys
+		 * here to make them available inside base.php and type-specific
+		 * templates. Don't drop required keys — templates expect them.
+		 *
+		 * @param array    $ctx  Template context.
+		 * @param string   $type Notification type.
+		 * @param \WP_User $user Recipient.
+		 */
+		$ctx = (array) apply_filters( 'jetonomy_email_template_context', $ctx, $type, $user );
 
-		$footer_text = '';
-		$settings_footer = (string) ( $settings['email_footer_text'] ?? '' );
-		if ( '' !== $settings_footer ) {
-			$footer_text = '<p style="margin:0 0 6px;font-size:11px;color:#9CA3AF;">' . esc_html( $settings_footer ) . '</p>';
-		}
+		$template_file = self::locate_email_template( $type );
 
-		$html = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background-color:#F3F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F4F6;">
-<tr><td align="center" style="padding:32px 16px;">
-
-<!-- Container -->
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-
-<!-- Accent bar -->
-<tr><td style="height:4px;background-color:{$accent_safe};border-radius:8px 8px 0 0;font-size:0;line-height:0;">&nbsp;</td></tr>
-
-<!-- Main card -->
-<tr><td style="background-color:#FFFFFF;padding:32px 32px 24px;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;">
-
-<!-- Header -->
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr>
-<td style="padding-bottom:24px;">
-	{$header_html}
-</td>
-<td align="right" style="padding-bottom:24px;">
-	<span style="display:inline-block;padding:3px 10px;background-color:{$accent_safe}1A;color:{$accent_safe};font-size:11px;font-weight:600;border-radius:12px;letter-spacing:0.04em;text-transform:uppercase;">{$type_label}</span>
-</td>
-</tr>
-</table>
-
-<!-- Divider -->
-<div style="border-top:1px solid #E5E7EB;margin-bottom:24px;"></div>
-
-<!-- Message -->
-<p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#374151;">{$message_esc}</p>
-
-<!-- CTA Button -->
-<table role="presentation" cellpadding="0" cellspacing="0">
-<tr><td style="border-radius:6px;background-color:{$accent_safe};">
-	<a href="{$cta_url}" style="display:inline-block;padding:12px 28px;color:#FFFFFF;font-size:14px;font-weight:600;text-decoration:none;border-radius:6px;">{$cta_text}</a>
-</td></tr>
-</table>
-
-</td></tr>
-
-<!-- Footer -->
-<tr><td style="background-color:#F9FAFB;padding:20px 32px;border:1px solid #E5E7EB;border-top:none;border-radius:0 0 8px 8px;">
-<p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:#6B7280;">{$footer_links}</p>
-{$footer_text}
-<p style="margin:0;font-size:11px;color:#9CA3AF;">
-	{$site_name} &middot; <a href="{$home_url}" style="color:#9CA3AF;text-decoration:none;">{$home_url}</a>
-</p>
-</td></tr>
-
-</table>
-<!-- /Container -->
-
-</td></tr>
-</table>
-</body>
-</html>
-HTML;
+		ob_start();
+		include $template_file;
+		$html = (string) ob_get_clean();
 
 		/**
 		 * Final filter on the rendered HTML. Integrators can inject tracking
