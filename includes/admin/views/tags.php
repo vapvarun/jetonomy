@@ -35,7 +35,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		),
 		admin_url( 'admin.php' )
 	);
-	$indicator = '';
+	$indicator  = '';
 	if ( $orderby === $col ) {
 		$indicator = 'ASC' === $order ? ' <span class="dashicons dashicons-arrow-up"></span>' : ' <span class="dashicons dashicons-arrow-down"></span>';
 	}
@@ -228,11 +228,13 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 
 <script>
 ( function () {
-	const ajax   = window.ajaxurl;
-	const nonce  = window.jetonomyAdmin && window.jetonomyAdmin.nonce;
-
+	// Inline body script runs BEFORE the admin.js localize in the footer, so we
+	// resolve both ajaxurl and the nonce lazily at call time rather than capturing
+	// them at module-load time (undefined at that point).
 	function post( action, data ) {
-		const body = new FormData();
+		const ajax  = window.ajaxurl;
+		const nonce = window.jetonomyAdmin && window.jetonomyAdmin.nonce;
+		const body  = new FormData();
 		body.append( 'action', action );
 		body.append( 'nonce', nonce );
 		Object.keys( data || {} ).forEach( k => {

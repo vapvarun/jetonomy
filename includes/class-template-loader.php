@@ -272,6 +272,25 @@ class Template_Loader {
 			JETONOMY_VERSION
 		);
 
+		// Shared global for non-Interactivity JS on community pages (link preview
+		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
+		// one place so the same contract works for the future native app.
+		// The dummy `jetonomy-data` handle exists solely to give wp_localize_script
+		// a target — actual behaviour lives in view.js.
+		if ( ! wp_script_is( 'jetonomy-data', 'registered' ) ) {
+			wp_register_script( 'jetonomy-data', '', array(), JETONOMY_VERSION, false );
+		}
+		wp_enqueue_script( 'jetonomy-data' );
+		wp_localize_script(
+			'jetonomy-data',
+			'jetonomyData',
+			array(
+				'restBase'      => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
+				'restNonce'     => wp_create_nonce( 'wp_rest' ),
+				'communityBase' => \Jetonomy\base_url(),
+			)
+		);
+
 		// Enqueue composer enhancement script
 		wp_enqueue_script(
 			'jetonomy-composer',

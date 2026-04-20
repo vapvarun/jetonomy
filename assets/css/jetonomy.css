@@ -1442,40 +1442,87 @@
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
 
-/* ── Link Preview Cards ── */
+/* ── Link Preview Cards ──
+   LinkedIn / Twitter / Facebook style rich card. Media sits on top, metadata
+   below — same layout scales from desktop (560px wide) down to mobile (full
+   width). Hero media hides automatically when .jt-link-preview--no-media is
+   set (image failed to load or provider didn't expose one). */
 .jt-link-preview {
-  display: flex; gap: 12px; align-items: stretch;
+  display: flex; flex-direction: column;
   border: 1px solid var(--jt-border); border-radius: var(--jt-radius);
-  overflow: hidden; margin: 8px 0; text-decoration: none; color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  max-width: 520px;
+  background: var(--jt-bg);
+  overflow: hidden; margin: 12px 0; max-width: 560px;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
-.jt-link-preview:hover {
-  border-color: var(--jt-border-strong);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  color: inherit;
+.jt-link-preview:hover,
+.jt-link-preview:focus-visible {
+  border-color: var(--jt-accent);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  color: inherit; text-decoration: none;
+}
+.jt-link-preview-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.91 / 1;         /* og:image spec: 1.91:1 */
+  overflow: hidden; background: var(--jt-bg-subtle);
+}
+.jt-link-preview-img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
 }
 .jt-link-preview-body {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 12px 14px; min-width: 0; flex: 1;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 16px; min-width: 0;
 }
+.jt-link-preview-meta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: var(--jt-text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.02em;
+}
+.jt-link-preview-favicon {
+  width: 14px; height: 14px; object-fit: contain; flex-shrink: 0;
+  border-radius: 2px;
+}
+.jt-link-preview-domain { color: var(--jt-text-tertiary); font-weight: 500; }
 .jt-link-preview-title {
-  font-size: 0.875rem; font-weight: 600; line-height: 1.3;
+  font-size: 0.9375rem; font-weight: 600; line-height: 1.35; color: var(--jt-text);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .jt-link-preview-desc {
-  font-size: 0.8125rem; color: var(--jt-text-secondary); line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin: 0; font-size: 0.8125rem; color: var(--jt-text-secondary); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-.jt-link-preview-domain {
-  font-size: 0.75rem; color: var(--jt-text-tertiary); margin-top: auto;
+.jt-link-preview-foot {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 4px; font-size: 0.75rem; color: var(--jt-text-tertiary);
 }
-.jt-link-preview-img {
-  width: 120px; min-height: 80px; object-fit: cover; flex-shrink: 0;
+.jt-link-preview-author { font-weight: 500; }
+.jt-link-preview-date::before { content: "·"; margin-right: 8px; }
+
+/* Compact, side-by-side layout when there's no hero media — feels closer to
+   LinkedIn's small-card and avoids the giant empty box. */
+.jt-link-preview--no-media .jt-link-preview-body { padding: 14px 16px; }
+
+/* Third-party embed container (TikTok/Twitter/Instagram blockquote, YouTube
+   iframe). The provider's own stylesheet handles internal layout; we only own
+   the outer spacing + max-width for mobile. */
+.jt-link-embed {
+  margin: 12px 0; max-width: 560px;
 }
+.jt-link-embed iframe,
+.jt-link-embed blockquote {
+  max-width: 100% !important;
+}
+.jt-link-embed[data-provider="youtube"] iframe,
+.jt-link-embed[data-provider="vimeo"] iframe {
+  width: 100%; aspect-ratio: 16 / 9; height: auto;
+}
+
 @media (max-width: 640px) {
-  .jt-link-preview { flex-direction: column; }
-  .jt-link-preview-img { width: 100%; height: 140px; }
+  .jt-link-preview { max-width: 100%; margin: 10px 0; }
+  .jt-link-preview-media { aspect-ratio: 16 / 9; }
+  .jt-link-preview-title { font-size: 0.9375rem; }
+  .jt-link-embed { max-width: 100%; }
 }
 
 /* ── Notification Dropdown Panel ── */
