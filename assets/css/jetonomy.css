@@ -330,10 +330,16 @@
   .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); }
 
-  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; overflow: hidden; transition: border-color var(--jt-dur); }
+  /* Reply card: must NOT clip overflow, otherwise the three-dot menu dropdown
+     (absolute-positioned on the actions row) gets hidden the moment it extends
+     past the card boundary. Border-radius is applied to the direct children
+     (head + body + footer) instead of the wrapper so corners still round. */
+  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
   .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); }
+  .jt-reply > :first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
+  .jt-reply > :last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-reply-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--jt-bg-subtle); }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
@@ -949,13 +955,21 @@
     margin: 0;
   }
 
-  /* ── Reply entrance animation ── */
+  /* ── Reply entrance animation ──
+     Final keyframe deliberately OMITS `transform` — if we write
+     `transform: translateY(0)` here, `animation-fill-mode: both` leaves
+     that value stuck on the element forever, and *any* non-`none`
+     transform creates a CSS stacking context. That would trap the
+     three-dot dropdown below sibling replies and the reply composer
+     regardless of z-index. Ending without a transform lets the element
+     revert to `transform: none` after the animation, so no stacking
+     context is left behind. */
   .jt-reply {
     animation: jt-slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
   @keyframes jt-slideUp {
     from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; }
   }
 
   /* Stagger animation for server-rendered replies */
