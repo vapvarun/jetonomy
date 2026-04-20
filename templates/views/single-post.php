@@ -42,6 +42,18 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	}
 }
 
+// Per-post privacy gate. Before 1.3.6 a subscriber with space access could
+// reach a private topic via direct URL because neither the template nor the
+// status/visibility checks above looked at is_private on the post itself
+// (Basecamp 9803998504). Permission_Engine::can_read_post() is the single
+// source of truth — author + manage_options + space mod/admin only.
+if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+	status_header( 404 );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	return;
+}
+
 $author   = get_userdata( (int) $post->author_id );
 $profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );

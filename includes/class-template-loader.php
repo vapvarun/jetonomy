@@ -452,6 +452,13 @@ class Template_Loader {
 						break;
 					case 'post':
 						$post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
+						// Same permission gate as single-post.php — without this, the meta
+						// description, OG tags, article:* metadata, and oEmbed discovery URL
+						// for a private topic leak into every non-author response's <head>
+						// (Basecamp 9803998504).
+						if ( $post && ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+							$post = null;
+						}
 						if ( $post ) {
 							$space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
 							$title        = $post->title;

@@ -110,24 +110,24 @@ class Abilities {
 					'type'       => 'object',
 					'required'   => true,
 					'properties' => [
-						'space_id' => [
+						'space_id'   => [
 							'type'        => 'integer',
 							'description' => 'Target space ID.',
 							'required'    => true,
 						],
-						'title'    => [
+						'title'      => [
 							'type'        => 'string',
 							'description' => 'Post title.',
 							'required'    => true,
 							'minLength'   => 1,
 						],
-						'content'  => [
+						'content'    => [
 							'type'        => 'string',
 							'description' => 'Post body (HTML).',
 							'required'    => true,
 							'minLength'   => 1,
 						],
-						'type'     => [
+						'type'       => [
 							'type'        => 'string',
 							'description' => 'Post type.',
 							'enum'        => [ 'topic', 'question', 'discussion', 'announcement' ],
@@ -1243,8 +1243,15 @@ class Abilities {
 		$after    = (int) ( $input['after'] ?? 0 );
 		$sort     = $input['sort'] ?? 'latest';
 
-		$posts = Post::list_by_space( $space_id, $sort, $limit, 0, $after );
-		$items = [];
+		// Filter is_private topics for non-privileged callers (Basecamp 9803998504).
+		// Permission_Engine::is_space_privileged() covers space mods/admins; site
+		// admins bypass via the manage_options clause inside list_by_space_visible.
+		$user_id       = get_current_user_id();
+		$is_privileged = $user_id
+			&& ( user_can( $user_id, 'manage_options' )
+				|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id ) );
+		$posts         = Post::list_by_space_visible( $space_id, (int) $user_id, (bool) $is_privileged, $sort, $limit, 0, $after );
+		$items         = [];
 		foreach ( $posts as $p ) {
 			$items[] = [
 				'id'          => (int) $p->id,

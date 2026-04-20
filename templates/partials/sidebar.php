@@ -25,6 +25,21 @@ $spaces_tbl   = \Jetonomy\table( 'spaces' );
 $profiles_tbl = \Jetonomy\table( 'user_profiles' );
 
 // Trending: top voted published posts, optionally scoped to the current space.
+// Before 1.3.6 this widget ignored is_private entirely and leaked private
+// topics into the sidebar for anyone with space access (Basecamp 9803998504).
+// Non-privileged viewers now see only public topics + their own private ones;
+// admin / space-mod / space-admin callers still see everything.
+$_jt_trend_user    = get_current_user_id();
+$_jt_trend_is_priv = $_jt_trend_user && user_can( $_jt_trend_user, 'manage_options' );
+if ( ! $_jt_trend_is_priv && $_jt_trend_user && ! empty( $space ) && isset( $space->id ) ) {
+	$_jt_trend_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $_jt_trend_user, (int) $space->id );
+}
+$_jt_trend_priv_clause = $_jt_trend_is_priv
+	? ''
+	: ( $_jt_trend_user
+		? $wpdb->prepare( ' AND (p.is_private = 0 OR p.author_id = %d)', $_jt_trend_user )
+		: ' AND p.is_private = 0' );
+
 if ( ! empty( $space ) && isset( $space->id ) ) {
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$trending = $wpdb->get_results(
@@ -32,9 +47,9 @@ if ( ! empty( $space ) && isset( $space->id ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 			 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-			 WHERE p.space_id = %d AND p.status = 'publish'
+			 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . '
 			 ORDER BY p.vote_score DESC, p.reply_count DESC
-			 LIMIT 5",
+			 LIMIT 5',
 			(int) $space->id
 		)
 	) ?: [];
@@ -44,9 +59,9 @@ if ( ! empty( $space ) && isset( $space->id ) ) {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 		 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.status = 'publish'
+		 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . '
 		 ORDER BY p.vote_score DESC, p.reply_count DESC
-		 LIMIT 5"
+		 LIMIT 5'
 	) ?: [];
 }
 
