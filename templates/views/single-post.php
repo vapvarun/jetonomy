@@ -301,13 +301,19 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 						<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</button>
+						<?php
+						// Hide downvote on own content — authors can only upvote
+						// their own post (Basecamp 9803889865, self-downvote lands at -1).
+						if ( (int) $post->author_id !== get_current_user_id() ) :
+							?>
 					<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteDown"
 						data-post-id="<?php echo absint( $post->id ); ?>"
 						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
-						<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+							<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 					</button>
+						<?php endif; ?>
 					<?php else : ?>
 					<span class="jt-act">
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>

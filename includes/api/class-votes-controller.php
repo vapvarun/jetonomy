@@ -135,9 +135,24 @@ class Votes_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
 		}
 
+		// Self-downvote block: an author downvoting their own post or reply
+		// drives the displayed score negative in a way that contradicts "I'm
+		// posting my view" (see Basecamp 9803889865 — admin voting down own
+		// topic left it at −1). Self-upvote stays allowed — that's a valid
+		// "I stand behind this" gesture.
+		if ( -1 === $value && (int) ( $object->author_id ?? 0 ) === $user_id ) {
+			return $this->validation_error( __( 'You cannot downvote your own content.', 'jetonomy' ) );
+		}
+
 		$result = Vote::cast( $user_id, $type, $id, $value );
 		if ( is_wp_error( $result ) ) {
-			return new WP_REST_Response( [ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ], 403 );
+			return new WP_REST_Response(
+				[
+					'code'    => $result->get_error_code(),
+					'message' => $result->get_error_message(),
+				],
+				403
+			);
 		}
 
 		// Increment rate limit counter.
@@ -202,7 +217,13 @@ class Votes_Controller extends Base_Controller {
 		// Re-casting the same value toggles the vote off (handled in Vote::cast).
 		$result = Vote::cast( $user_id, $type, $id, $existing );
 		if ( is_wp_error( $result ) ) {
-			return new WP_REST_Response( [ 'code' => $result->get_error_code(), 'message' => $result->get_error_message() ], 403 );
+			return new WP_REST_Response(
+				[
+					'code'    => $result->get_error_code(),
+					'message' => $result->get_error_message(),
+				],
+				403
+			);
 		}
 
 		$updated = $this->load_object( $type, $id );

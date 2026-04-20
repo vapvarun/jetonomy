@@ -58,11 +58,17 @@ $is_accepted = (int) $reply->is_accepted;
 			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 		</button>
+		<?php
+		// Hide downvote on own replies — same rule as single-post.php
+		// (Basecamp 9803889865).
+		if ( (int) $reply->author_id !== get_current_user_id() ) :
+			?>
 		<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 			data-wp-on--click="actions.voteReplyDown"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+		<?php endif; ?>
 		<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
