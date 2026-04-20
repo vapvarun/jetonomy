@@ -295,7 +295,15 @@
   .jt-tl[data-jt-tl="5"] { background: var(--jt-tl5); }
 
   /* ── Post ── */
-  .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
+  /* Note: we dropped `overflow: hidden` from this rule — it was clipping
+     the three-dot action dropdown to a thin sliver under the action bar
+     (Basecamp 9803818273). Border-radius clipping for the rare
+     first-child (cover image) is enforced below via a scoped rule that
+     only targets direct children inside the rounded top-left/right
+     corners, so we don't pay the clipping tax on the whole card. */
+  .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 20px; }
+  .jt-post > *:first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
+  .jt-post > *:last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); position: relative; }
   .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; padding-right: 6rem; }
   .jt-post-head > .jt-btn-sm { position: absolute; top: 20px; right: 20px; }
@@ -1363,7 +1371,10 @@
 /* More-trigger button — was styled for a text `…` character, now
    uses a Lucide more-horizontal SVG. Keep the min tap-target only. */
 .jt-more-trigger { min-width: var(--jt-tap); min-height: var(--jt-tap); justify-content: center; }
-.jt-more-dropdown { position: absolute; bottom: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-bottom: 0.25rem; }
+/* Opens downward from the trigger. Was `bottom: 100%` which flipped the
+   menu upward; with 5+ items (Pin/Move/Merge/Delete/Admin) it pushed the
+   list onto the post title and looked misaligned (Basecamp 9803818273). */
+.jt-more-dropdown { position: absolute; top: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-top: 0.25rem; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger); }

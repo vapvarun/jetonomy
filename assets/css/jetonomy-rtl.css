@@ -1330,7 +1330,8 @@
 /* More-trigger button — was styled for a text `…` character, now
    uses a Lucide more-horizontal SVG. Keep the min tap-target only. */
 .jt-more-trigger { min-width: var(--jt-tap); min-height: var(--jt-tap); justify-content: center; }
-.jt-more-dropdown { position: absolute; bottom: 100%; left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-bottom: 0.25rem; }
+/* Opens downward — see LTR stylesheet for rationale (Basecamp 9803818273). */
+.jt-more-dropdown { position: absolute; top: 100%; left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-top: 0.25rem; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: right; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger); }
