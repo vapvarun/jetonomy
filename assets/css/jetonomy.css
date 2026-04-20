@@ -955,29 +955,15 @@
     margin: 0;
   }
 
-  /* ── Reply entrance animation ──
-     Final keyframe deliberately OMITS `transform` — if we write
-     `transform: translateY(0)` here, `animation-fill-mode: both` leaves
-     that value stuck on the element forever, and *any* non-`none`
-     transform creates a CSS stacking context. That would trap the
-     three-dot dropdown below sibling replies and the reply composer
-     regardless of z-index. Ending without a transform lets the element
-     revert to `transform: none` after the animation, so no stacking
-     context is left behind. */
-  .jt-reply {
-    animation: jt-slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  @keyframes jt-slideUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; }
-  }
-
-  /* Stagger animation for server-rendered replies */
-  .jt-replies-list > :nth-child(1) .jt-reply { animation-delay: 0s; }
-  .jt-replies-list > :nth-child(2) .jt-reply { animation-delay: 0.03s; }
-  .jt-replies-list > :nth-child(3) .jt-reply { animation-delay: 0.06s; }
-  .jt-replies-list > :nth-child(4) .jt-reply { animation-delay: 0.09s; }
-  .jt-replies-list > :nth-child(5) .jt-reply { animation-delay: 0.12s; }
+  /* ── Reply entrance animation — removed intentionally.
+     A `transform` animation with fill-mode: both leaves a retained
+     identity-matrix on the computed style (visually `none` but still
+     a CSS stacking context), trapping the three-dot dropdown behind
+     sibling reply cards. Animating `opacity` alone would still create
+     a stacking context while <1. No CSS-only solution avoids the
+     stacking trap without losing the entrance polish, so we drop the
+     polish — the dropdown behaviour is functional, the animation was
+     nice-to-have. Revisit with JS animationend cleanup if reintroduced. */
 
   /* ── Voting micro-interaction ── */
   .jt-v-btn:active { transform: scale(1.3); }
