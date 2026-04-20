@@ -81,10 +81,23 @@ $_space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
 $limit           = max( 1, (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 ) );
 $offset          = ( $paged - 1 ) * $limit;
 
-$posts     = \Jetonomy\Models\Post::list_by_space( (int) $space->id, $sort, $limit, $offset );
-$category  = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base      = \Jetonomy\base_url();
-$space_url = $base . '/s/' . $space->slug . '/';
+// Use the visibility-aware listing so private topics (is_private = 1) are
+// filtered out for non-author, non-privileged viewers — before 1.3.6 this
+// called list_by_space() which returned them to everyone with space access,
+// including subscribers who were never supposed to see them (Basecamp 9803998504).
+$_jt_is_priv = $_jt_user_id
+	&& ( $_jt_is_admin || \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $_jt_user_id, (int) $space->id ) );
+$posts       = \Jetonomy\Models\Post::list_by_space_visible(
+	(int) $space->id,
+	(int) $_jt_user_id,
+	(bool) $_jt_is_priv,
+	$sort,
+	$limit,
+	$offset
+);
+$category    = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$base        = \Jetonomy\base_url();
+$space_url   = $base . '/s/' . $space->slug . '/';
 
 $crumbs = [];
 if ( $category ) {

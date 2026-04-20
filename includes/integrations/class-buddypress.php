@@ -169,6 +169,7 @@ class BuddyPress {
 			if ( $creator_id ) {
 				$result = SpaceMember::add( $space_id, $creator_id, 'admin' );
 				if ( is_wp_error( $result ) ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( '[Jetonomy] BP group sync: failed to add creator to space — ' . $result->get_error_message() );
 				}
 			}
@@ -243,6 +244,7 @@ class BuddyPress {
 		if ( ! SpaceMember::is_member( $space_id, $user_id ) ) {
 			$result = SpaceMember::add( $space_id, $user_id, 'member' );
 			if ( is_wp_error( $result ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( '[Jetonomy] BP member join sync: ' . $result->get_error_message() );
 			}
 		}
@@ -285,6 +287,7 @@ class BuddyPress {
 		// SpaceMember::add with REPLACE semantics updates the role.
 		$result = SpaceMember::add( $space_id, $user_id, $role );
 		if ( is_wp_error( $result ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[Jetonomy] BP member promote sync: ' . $result->get_error_message() );
 		}
 	}
@@ -303,6 +306,7 @@ class BuddyPress {
 
 		$result = SpaceMember::add( $space_id, $user_id, 'member' );
 		if ( is_wp_error( $result ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( '[Jetonomy] BP member demote sync: ' . $result->get_error_message() );
 		}
 	}
@@ -364,11 +368,18 @@ class BuddyPress {
 			return;
 		}
 
-		$posts         = Post::list_by_space( $space_id, 'latest', 20 );
-		$base          = \Jetonomy\base_url();
-		$space_url     = $base . '/s/' . $space->slug . '/';
-		$new_post_url  = $space_url . 'new/';
-		$post_count    = count( $posts );
+		// Visibility-aware listing so BuddyPress activity-stream widgets don't
+		// surface private topics to non-author, non-privileged viewers
+		// (Basecamp 9803998504). Uses the same gate as the space template.
+		$bp_user_id       = get_current_user_id();
+		$bp_is_privileged = $bp_user_id
+			&& ( user_can( $bp_user_id, 'manage_options' )
+				|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $bp_user_id, $space_id ) );
+		$posts            = Post::list_by_space_visible( $space_id, (int) $bp_user_id, (bool) $bp_is_privileged, 'latest', 20 );
+		$base             = \Jetonomy\base_url();
+		$space_url        = $base . '/s/' . $space->slug . '/';
+		$new_post_url     = $space_url . 'new/';
+		$post_count       = count( $posts );
 
 		echo '<div class="jt-bp-forum">';
 
@@ -427,8 +438,8 @@ class BuddyPress {
 			return;
 		}
 
-		$user   = bp_is_my_profile() ? wp_get_current_user() : get_userdata( bp_displayed_user_id() );
-		$bp_url = $user ? self::get_member_url( $user->ID ) : '';
+		$user    = bp_is_my_profile() ? wp_get_current_user() : get_userdata( bp_displayed_user_id() );
+		$bp_url  = $user ? self::get_member_url( $user->ID ) : '';
 		$jt_base = \Jetonomy\base_url();
 		$jt_url  = $user ? $jt_base . '/u/' . $user->user_login . '/' : $jt_base;
 
@@ -539,8 +550,8 @@ class BuddyPress {
 		$this->render_profile_stats( $user_id );
 
 		global $wpdb;
-		$base    = \Jetonomy\base_url();
-		$p       = $wpdb->prefix;
+		$base = \Jetonomy\base_url();
+		$p    = $wpdb->prefix;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$replies = $wpdb->get_results(
 			$wpdb->prepare(
@@ -658,13 +669,13 @@ class BuddyPress {
 		$user_id = get_current_user_id();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$linked_ids = $wpdb->get_col(
+		$linked_ids           = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT meta_value FROM {$bp->groups->table_name_groupmeta} WHERE meta_key = %s AND meta_value != ''",
 				self::META_KEY
 			)
 		);
-		$exclude             = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
+		$exclude              = ! empty( $linked_ids ) ? array_map( 'absint', $linked_ids ) : array( 0 );
 		$exclude_placeholders = implode( ',', array_fill( 0, count( $exclude ), '%d' ) );
 
 		// Only show spaces the user is admin/moderator of, or site admins see all.
@@ -799,6 +810,7 @@ class BuddyPress {
 				if ( $creator ) {
 					$add_res = SpaceMember::add( $space_id, $creator, 'admin' );
 					if ( is_wp_error( $add_res ) ) {
+						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 						error_log( '[Jetonomy] BP group link: failed to add creator — ' . $add_res->get_error_message() );
 					}
 				}

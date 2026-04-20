@@ -1608,6 +1608,8 @@ const { state, actions } = store( 'jetonomy', {
             const ctx = getContext();
             state.isSubmitting = true;
             state.submitLabel = state.i18n?.posting || 'Posting...';
+            // Clear any prior inline error surfaced from a previous attempt.
+            state.submitError = '';
 
             // Close publish menu if open.
             state.publishMenuOpen = false;
@@ -1684,7 +1686,13 @@ const { state, actions } = store( 'jetonomy', {
                 );
                 if ( ! response.ok ) {
                     const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to create post.' );
+                    const errMsg = err.message || state.i18n?.failedSave || 'Failed to create post.';
+                    // Surface inline above the composer — does not rely on
+                    // window.bnToast, which is only present when BuddyNext is
+                    // active. Without this, a REST 403 / 400 on this endpoint
+                    // left the composer with no feedback at all.
+                    state.submitError = errMsg;
+                    if ( window.bnToast ) window.bnToast( errMsg );
                     return;
                 }
                 const data = yield response.json();
@@ -1706,7 +1714,9 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.href = `${ state.communityBase }/s/${ ctx.spaceSlug }/t/${ slug }/`;
                 }
             } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                const errMsg = state.i18n?.networkError || 'Network error. Please try again.';
+                state.submitError = errMsg;
+                if ( window.bnToast ) window.bnToast( errMsg );
             } finally {
                 state.isSubmitting = false;
                 state.submitLabel = state.i18n?.postTopic || 'Post Topic';
@@ -1902,64 +1912,188 @@ const { state, actions } = store( 'jetonomy', {
 } );
 
 /* ── Link Preview Cards ──
-   Scans .jt-post-body and .jt-reply-body for standalone links (only child of a <p>)
-   and fetches OG metadata to render a preview card below the link. */
+   Renders a LinkedIn / Twitter / Facebook style rich card beneath any standalone
+   link inside .jt-post-body / .jt-reply-body. Response shape comes from
+   GET /jetonomy/v1/link-preview (Jetonomy\Services\Links\Preview_Data) so the
+   same endpoint drives the native mobile app. */
 ( function() {
-    const API_BASE = ( window.jetonomyData && window.jetonomyData.restBase )
-        ? window.jetonomyData.restBase
-        : '/wp-json/jetonomy/v1';
+    const DATA     = window.jetonomyData || {};
+    const API_BASE = DATA.restBase || '/wp-json/jetonomy/v1';
+    const NONCE    = DATA.restNonce || '';
+
+    const MAX_PER_CONTAINER = 3;
+    const DESC_MAX          = 200;
+    // Embed HTML comes from the REST response, which is kses-sanitised on the
+    // server (see OEmbed_Provider::sanitize_embed — iframe/blockquote/p/a/br
+    // only, no script, no on* attrs). We further restrict to this tag allowlist
+    // client-side as a belt-and-braces measure before attaching to the DOM.
+    const EMBED_ALLOWED_TAGS = new Set( [ 'IFRAME', 'BLOCKQUOTE', 'P', 'A', 'BR' ] );
+
+    function shouldPreview( a ) {
+        if ( ! a.parentElement || a.parentElement.tagName !== 'P' ) return false;
+        if ( a.parentElement.children.length !== 1 )                return false;
+        if ( a.classList.contains( 'jt-mention' ) )                 return false;
+        if ( a.classList.contains( 'jt-tag-link' ) )                return false;
+        if ( a.closest( '.jt-link-preview' ) )                      return false;
+        const href = a.getAttribute( 'href' ) || '';
+        if ( ! /^https?:\/\//i.test( href ) )                       return false;
+        const text = ( a.textContent || '' ).trim();
+        return /^https?:\/\//i.test( text );
+    }
+
+    function fetchPreview( href ) {
+        const headers = { 'Accept': 'application/json' };
+        if ( NONCE ) headers[ 'X-WP-Nonce' ] = NONCE;
+        return fetch( API_BASE + '/link-preview?url=' + encodeURIComponent( href ), {
+            headers,
+            credentials: 'same-origin',
+        } ).then( r => r.ok ? r.json() : null );
+    }
+
+    function el( tag, cls, text ) {
+        const node = document.createElement( tag );
+        if ( cls ) node.className = cls;
+        if ( text !== undefined && text !== null && text !== '' ) node.textContent = text;
+        return node;
+    }
+
+    function renderCard( data, href ) {
+        const card = el( 'a', 'jt-link-preview' );
+        card.href = href;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.setAttribute( 'data-provider', data.provider || 'generic' );
+
+        if ( data.image ) {
+            const media = el( 'div', 'jt-link-preview-media' );
+            const img = new Image();
+            img.src = data.image;
+            img.alt = data.image_alt || '';
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.className = 'jt-link-preview-img';
+            img.onerror = function() { media.remove(); card.classList.add( 'jt-link-preview--no-media' ); };
+            media.appendChild( img );
+            card.appendChild( media );
+        } else {
+            card.classList.add( 'jt-link-preview--no-media' );
+        }
+
+        const body = el( 'div', 'jt-link-preview-body' );
+
+        const meta = el( 'div', 'jt-link-preview-meta' );
+        if ( data.favicon ) {
+            const fav = new Image();
+            fav.src = data.favicon;
+            fav.alt = '';
+            fav.loading = 'lazy';
+            fav.className = 'jt-link-preview-favicon';
+            fav.onerror = function() { fav.remove(); };
+            meta.appendChild( fav );
+        }
+        meta.appendChild( el( 'span', 'jt-link-preview-domain', data.site_name || data.domain ) );
+        body.appendChild( meta );
+
+        if ( data.title ) {
+            body.appendChild( el( 'strong', 'jt-link-preview-title', data.title ) );
+        }
+        if ( data.description ) {
+            const desc = data.description.length > DESC_MAX
+                ? data.description.slice( 0, DESC_MAX ).trim() + '…'
+                : data.description;
+            body.appendChild( el( 'p', 'jt-link-preview-desc', desc ) );
+        }
+        if ( data.author || data.published_at ) {
+            const foot = el( 'div', 'jt-link-preview-foot' );
+            if ( data.author ) foot.appendChild( el( 'span', 'jt-link-preview-author', data.author ) );
+            if ( data.published_at ) {
+                const d = new Date( data.published_at );
+                if ( ! isNaN( d.getTime() ) ) {
+                    foot.appendChild( el( 'time', 'jt-link-preview-date', d.toLocaleDateString() ) );
+                }
+            }
+            body.appendChild( foot );
+        }
+
+        card.appendChild( body );
+        return card;
+    }
+
+    function renderEmbed( data ) {
+        // Parse the server-sanitised embed HTML into an isolated DOMParser
+        // document, then copy over only allowlisted elements. This defends
+        // against the hypothetical case where the server allowlist was loosened
+        // without updating the client.
+        const wrap = document.createElement( 'div' );
+        wrap.className = 'jt-link-embed';
+        wrap.setAttribute( 'data-provider', data.provider || 'generic' );
+
+        const parsed = new DOMParser().parseFromString( data.embed_html || '', 'text/html' );
+        parsed.body.querySelectorAll( '*' ).forEach( function( node ) {
+            if ( ! EMBED_ALLOWED_TAGS.has( node.tagName ) ) node.remove();
+        } );
+        Array.from( parsed.body.childNodes ).forEach( function( node ) {
+            wrap.appendChild( node );
+        } );
+        return wrap;
+    }
+
+    // Mirror of jetonomy_maybe_enqueue_embed_scripts() for the client-side
+    // insertion path — when we inject a TikTok/Instagram/Twitter blockquote
+    // after page load, we still need the provider hydration script to run.
+    // Each provider is loaded once per document; rescan calls are safe to
+    // repeat and cheap after the first.
+    const EMBED_SCRIPT_SOURCES = {
+        tiktok:    'https://www.tiktok.com/embed.js',
+        instagram: 'https://www.instagram.com/embed.js',
+        twitter:   'https://platform.twitter.com/widgets.js',
+        facebook:  'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v19.0',
+    };
+    const loadedEmbedScripts = new Set();
+
+    function ensureEmbedScript( provider ) {
+        if ( ! EMBED_SCRIPT_SOURCES[ provider ] ) return Promise.resolve();
+        if ( loadedEmbedScripts.has( provider ) ) return Promise.resolve();
+        loadedEmbedScripts.add( provider );
+        return new Promise( function( resolve ) {
+            const s = document.createElement( 'script' );
+            s.async = true;
+            s.src = EMBED_SCRIPT_SOURCES[ provider ];
+            s.onload = s.onerror = resolve;
+            document.body.appendChild( s );
+        } );
+    }
+
+    function rescanEmbed( provider ) {
+        if ( provider === 'instagram' && window.instgrm && window.instgrm.Embeds ) {
+            window.instgrm.Embeds.process();
+        } else if ( provider === 'twitter' && window.twttr && window.twttr.widgets ) {
+            window.twttr.widgets.load();
+        } else if ( provider === 'facebook' && window.FB && window.FB.XFBML ) {
+            window.FB.XFBML.parse();
+        }
+        // TikTok's embed.js auto-rescans; nothing to call.
+    }
 
     document.addEventListener( 'DOMContentLoaded', function() {
-        const bodies = document.querySelectorAll( '.jt-post-body, .jt-reply-body' );
-        bodies.forEach( function( body ) {
-            const links = body.querySelectorAll( 'p > a:only-child' );
-            links.forEach( function( a ) {
+        document.querySelectorAll( '.jt-post-body, .jt-reply-body' ).forEach( function( body ) {
+            const candidates = Array.from( body.querySelectorAll( 'p > a' ) )
+                .filter( shouldPreview )
+                .slice( 0, MAX_PER_CONTAINER );
+            candidates.forEach( function( a ) {
                 const href = a.getAttribute( 'href' );
-                if ( ! href || href.startsWith( '#' ) || href.startsWith( '/' ) ) return;
-                // Skip internal links (mentions, tags).
-                if ( a.classList.contains( 'jt-mention' ) || a.classList.contains( 'jt-tag-link' ) ) return;
-                // Only process if the link text IS the URL (bare link).
-                const text = ( a.textContent || '' ).trim();
-                if ( ! text.startsWith( 'http' ) ) return;
-
-                fetch( API_BASE + '/link-preview?url=' + encodeURIComponent( href ) )
-                    .then( function( r ) { return r.json(); } )
-                    .then( function( data ) {
-                        if ( ! data.title ) return;
-                        var card = document.createElement( 'a' );
-                        card.href = href;
-                        card.className = 'jt-link-preview';
-                        card.target = '_blank';
-                        card.rel = 'noopener';
-                        var cardBody = document.createElement( 'div' );
-                        cardBody.className = 'jt-link-preview-body';
-                        var title = document.createElement( 'strong' );
-                        title.className = 'jt-link-preview-title';
-                        title.textContent = data.title;
-                        cardBody.appendChild( title );
-                        if ( data.description ) {
-                            var desc = document.createElement( 'span' );
-                            desc.className = 'jt-link-preview-desc';
-                            desc.textContent = data.description.substring( 0, 120 );
-                            cardBody.appendChild( desc );
-                        }
-                        var domain = document.createElement( 'span' );
-                        domain.className = 'jt-link-preview-domain';
-                        domain.textContent = data.domain;
-                        cardBody.appendChild( domain );
-                        card.appendChild( cardBody );
-                        if ( data.image ) {
-                            var img = document.createElement( 'img' );
-                            img.src = data.image;
-                            img.className = 'jt-link-preview-img';
-                            img.alt = '';
-                            img.loading = 'lazy';
-                            card.appendChild( img );
-                        }
-                        // Insert card after the parent <p>.
-                        a.parentElement.insertAdjacentElement( 'afterend', card );
-                    } )
-                    .catch( function() {} );
+                fetchPreview( href ).then( function( data ) {
+                    if ( ! data ) return;
+                    if ( data.embed_html ) {
+                        a.parentElement.insertAdjacentElement( 'afterend', renderEmbed( data ) );
+                        ensureEmbedScript( data.provider ).then( function() {
+                            rescanEmbed( data.provider );
+                        } );
+                        return;
+                    }
+                    if ( ! data.title && ! data.description && ! data.image ) return;
+                    a.parentElement.insertAdjacentElement( 'afterend', renderCard( data, href ) );
+                } ).catch( function() { /* preview is best-effort */ } );
             } );
         } );
 

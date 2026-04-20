@@ -42,6 +42,18 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	}
 }
 
+// Per-post privacy gate. Before 1.3.6 a subscriber with space access could
+// reach a private topic via direct URL because neither the template nor the
+// status/visibility checks above looked at is_private on the post itself
+// (Basecamp 9803998504). Permission_Engine::can_read_post() is the single
+// source of truth — author + manage_options + space mod/admin only.
+if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+	status_header( 404 );
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
+	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	return;
+}
+
 $author   = get_userdata( (int) $post->author_id );
 $profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
@@ -262,7 +274,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// jetonomy_kses_embedded_content() is a wp_kses() wrapper with an extended iframe allowlist — safe to echo.
 					// Embeds first so URL paths containing @username don't get mangled
 					// by jetonomy_format_content's mention matcher. See reply-card.php.
-					echo jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $post->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					$jt_post_rendered = jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $post->content ) ) ) );
+					jetonomy_maybe_enqueue_embed_scripts( $jt_post_rendered );
+					echo $jt_post_rendered; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					?>
 				</div>
 
@@ -287,25 +301,30 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 						<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</button>
+						<?php
+						// Hide downvote on own content — authors can only upvote
+						// their own post (Basecamp 9803889865, self-downvote lands at -1).
+						if ( (int) $post->author_id !== get_current_user_id() ) :
+							?>
 					<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
 						data-wp-on--click="actions.voteDown"
 						data-post-id="<?php echo absint( $post->id ); ?>"
 						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
-						<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+							<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 					</button>
+						<?php endif; ?>
 					<?php else : ?>
 					<span class="jt-act">
 						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 						<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 					</span>
 					<?php endif; ?>
-					<span class="jt-view-count" title="<?php
-						/* translators: %d: number of views */
-						echo esc_attr( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
-					?>" aria-label="<?php
-						echo esc_attr( sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count ) );
-					?>">
+					<?php
+					/* translators: %d: number of views */
+					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );
+					?>
+					<span class="jt-view-count" title="<?php echo esc_attr( $jt_view_count_label ); ?>" aria-label="<?php echo esc_attr( $jt_view_count_label ); ?>">
 						<?php jetonomy_echo_icon( 'eye', 14 ); ?>
 						<span class="n"><?php echo esc_html( (int) $post->view_count ); ?></span>
 					</span>

@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.3.5
+Stable tag: 1.3.6
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -264,13 +264,29 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= 1.3.5 — April 2026 =
+= 1.3.6 - April 2026 =
+
+* New: Trending Topics block — a Gutenberg block that ranks community posts by recent engagement (votes + replies over a trailing window, with time decay) so the list surfaces what's hot right now rather than what's popular all-time. Drop it on the homepage, a landing page, or any WordPress page outside the community routes.
+* New: Forum Feed block can now be scoped to a single space with a styled header and "View all" link — a drop-in "Topics from this space" widget for marketing pages, sidebars, and FSE templates.
+* New: Rich link previews — topics and replies that include a URL now render a preview card with title, description, and favicon, using a local unfurling service so sites stay fast and privacy-preserving.
+* New: Per-type email templates — welcome, mention, reply, digest, moderation, and system notifications each have their own template file, and themes can override any of them from a `jetonomy/emails/` directory. The context passed to each template is now richer (actor name, space, post excerpt, action URL).
+* New: External plugins and extensions can now open the community message composer programmatically via the shared `msgComposeOpen` state — used by Pro Messages to wire in the "Message" action from Top Members and elsewhere.
+* Fixed: The three-dot dropdown on topic and reply cards no longer gets trapped or clipped inside the card. Opening, closing, and clicking menu items now behaves consistently on every theme.
+* Fixed: Users can no longer downvote their own posts or replies — the REST vote endpoint now rejects self-downvotes and the vote button on the author's own content reflects that.
+* Fixed: Private (is_private) topics are now truly private across every read surface — archives, search, tag pages, and REST listings now honour the private flag so draft or sensitive content can't be enumerated.
+* Fixed: TikTok, Instagram, and Twitter/X links now embed as real video/post players instead of falling back to oEmbed blockquotes.
+* Fixed: Invite-only space journey — visiting `/new/` without an invite now returns users to the space with a clear inline error, REST errors surface inline on the invite form, and stale "Join" CTAs are hidden when the viewer has already joined or has a pending request.
+* Fixed: Spacing between the Post Topic button and the publish-options dropdown on the composer — no more visual collision.
+* Fixed: Tags admin page now writes nonce-protected requests; invalid nonces are rejected cleanly instead of silently failing.
+* Improvement: `wp jetonomy config get` dotted-path lookups (e.g. `trust_thresholds.1.posts`) now return the effective runtime value when the admin has not explicitly saved that block — defaults fill the gap so automation scripts don't trip on "Key not found".
+
+= 1.3.5 - April 2026 =
 
 * Fixed: Editing a topic or reply no longer collapses paragraphs into a single run-on line. The inline editor now preserves blank lines between paragraphs all the way through open, save, and display. Historically broken posts also render with their paragraphs restored on the next page load.
 * New: Jetonomy Navigation block — a drop-in Gutenberg block that renders the Category → Space tree as sidebar navigation. Permission-aware (private spaces stay hidden from anonymous viewers), highlights the current space, and scales to sites with thousands of spaces.
 * New: Jetonomy Login block — a quick login and register panel built for the community sidebar. Logged-out viewers see inline Login and Register tabs without leaving the page; logged-in viewers see nothing, so there is no layout shift. Rate-limited and nonce-protected.
 
-= 1.3.4 — April 2026 =
+= 1.3.4 - April 2026 =
 
 * Fixed: Akismet no longer flags replies written by site admins or space admins/moderators as spam. Staff responses were getting quarantined on sites with Akismet active, hiding legitimate support answers from members.
 * New: Admins can approve a spam-flagged topic or reply in one click. The Replies and Posts admin lists now show an "Approve" / "Not Spam" action next to Trash on any row currently held for moderation.
@@ -281,7 +297,7 @@ Each site in a Multisite network gets its own independent community. Network act
 * New: Admins managing moderation by API can now see spam-flagged items alongside pending ones — the moderation queue endpoint accepts `status=pending|spam|all`.
 * New: Site admins can promote many members to a trust level in one call via the admin API — useful after migrations, onboarding batches, or granting long-standing members a higher tier.
 
-= 1.3.3 — April 2026 =
+= 1.3.3 - April 2026 =
 
 * New: Preserve original dates when seeding or migrating discussions. Topics and replies added by admins now keep the date they were originally written, so imported content doesn't all show up stamped with today's date.
 * New: Admins can rebuild community counters when they look off. If topic totals, reply totals, member stats, or vote scores ever drift after a bulk import or manual database change, admins can refresh them all in one go without needing command-line access.
@@ -289,16 +305,16 @@ Each site in a Multisite network gets its own independent community. Network act
 * Fixed: The "Default Space Type" setting now really applies to new spaces — both in the admin panel and when creating spaces through the API. Previously the choice was saved but nothing read it.
 * Upgrade: Existing installs are migrated automatically — a private-community install (everyone required to log in) keeps that behaviour, and any default space type set during setup is carried over to the new unified setting.
 
-= 1.3.2 — April 2026 =
+= 1.3.2 - April 2026 =
 
 * Fix: Setup wizard no longer triggers PHP deprecation warnings (strip_tags null, print_emoji_styles, wp_admin_bar_header) on WP 6.4+ with PHP 8.1+.
 * Enhancement: New-post form submit action is now filterable via `jetonomy_new_post_submit_action` for Pro extensions.
 
-= 1.3.1 — April 2026 =
+= 1.3.1 - April 2026 =
 
 * Fix: Theme button hover styles no longer override Jetonomy button states — scoped CSS reset for BuddyX/Reign compatibility.
 
-= 1.3.0 — April 2026 =
+= 1.3.0 - April 2026 =
 
 * New: Share forum threads anywhere — paste any topic URL into Slack, Twitter/X, Discord, Facebook, or another WordPress site and you'll see a rich preview card with the title, author, excerpt, space, and thumbnail. No extra setup needed.
 * New: Embed videos and music in posts — just paste a YouTube, Vimeo, SoundCloud, Spotify, TED Talks, or other supported link into a post or reply and it plays inline instead of showing as a plain URL.
@@ -338,7 +354,7 @@ Each site in a Multisite network gets its own independent community. Network act
 **Upgrade notes**
 Jetonomy 1.3.0 includes a small database update that runs automatically on the next admin page load. No manual action required. Free activation is unchanged.
 
-= 1.2.0 — April 2026 =
+= 1.2.0 - April 2026 =
 
 * New: Private Topics — mark individual topics as private so only you and moderators can see them
 * New: Topic Prefixes — colored labels (Bug, Suggestion, Solved) configurable per space
@@ -356,7 +372,7 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 * Fix: New Topic button hidden for logged-out visitors
 * Fix: Spaces can only be linked to one group at a time
 
-= 1.1.0 — March 2026 =
+= 1.1.0 - March 2026 =
 
 * New: Configurable Community Title setting — displayed as H1 on the community home page
 * New: Adapter-specific rule type options in Access Rules (e.g. "Tutor Course", "LearnDash Course" instead of generic "Membership")
@@ -368,7 +384,7 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 * Improvement: Priority column hidden from access rules UI for cleaner admin experience
 * Improvement: Action buttons with icons (Sync Members, Delete) in access rules table
 
-= 1.0.1 — March 2026 =
+= 1.0.1 - March 2026 =
 
 * Fix: Renamed internal `.container` to `.jt-container` to prevent CSS class collisions with theme frameworks
 * Fix: Community app wrapper fills theme flex/grid parents correctly — resolves blank sidebar space
@@ -378,7 +394,7 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 * Fix: Improved spacing between sub-nav and content
 * Tested with 12 popular themes: Astra, GeneratePress, Kadence, Neve, OceanWP, Storefront, Hestia, Hello Elementor, Blocksy, TT5, TT4, TT3
 
-= 1.0.0 — March 2026 =
+= 1.0.0 - March 2026 =
 
 ### Added
 - Forum, Q&A, Ideas, and Social discussion types

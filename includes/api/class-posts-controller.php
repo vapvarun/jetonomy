@@ -168,71 +168,29 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
-	 * GET /link-preview?url= — Fetch OG metadata for a URL.
+	 * GET /link-preview?url= — Rich LinkedIn-style preview metadata for a URL.
+	 *
+	 * Returns the full Preview_Data shape (title/description/image/site_name/
+	 * favicon/embed_html/provider…) — the web card and the mobile app consume
+	 * the same response.
+	 *
+	 * @see \Jetonomy\Services\Links\Preview_Service
+	 * @see \Jetonomy\Services\Links\Preview_Data
 	 */
 	public function link_preview( \WP_REST_Request $request ): \WP_REST_Response|\WP_Error {
-		$url = $request->get_param( 'url' );
-		if ( empty( $url ) || ! wp_http_validate_url( $url ) ) {
-			return new \WP_Error( 'invalid_url', 'Invalid URL.', array( 'status' => 400 ) );
+		$url = (string) $request->get_param( 'url' );
+		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
+			return new \WP_Error( 'invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
 
-		// Check transient cache first.
-		$cache_key = 'jetonomy_og_' . md5( $url );
-		$cached    = get_transient( $cache_key );
-		if ( false !== $cached ) {
-			return new \WP_REST_Response( $cached, 200 );
-		}
+		$service = new \Jetonomy\Services\Links\Preview_Service();
+		$preview = $service->fetch( $url );
 
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout'   => 5,
-				'sslverify' => false,
-				'headers'   => array( 'Accept' => 'text/html' ),
-			)
-		);
-
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new \WP_REST_Response(
-				array(
-					'title'       => '',
-					'description' => '',
-					'image'       => '',
-					'domain'      => '',
-				),
-				200
-			);
-		}
-
-		$body = wp_remote_retrieve_body( $response );
-		$data = array(
-			'title'       => '',
-			'description' => '',
-			'image'       => '',
-			'domain'      => wp_parse_url( $url, PHP_URL_HOST ) ?: '',
-		);
-
-		// Parse OG tags.
-		if ( preg_match( '/<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
-			$data['title'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
-		} elseif ( preg_match( '/<title[^>]*>([^<]+)/i', $body, $m ) ) {
-			$data['title'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
-		}
-
-		if ( preg_match( '/<meta[^>]+property=["\']og:description["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
-			$data['description'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
-		} elseif ( preg_match( '/<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
-			$data['description'] = wp_strip_all_tags( html_entity_decode( $m[1], ENT_QUOTES, 'UTF-8' ) );
-		}
-
-		if ( preg_match( '/<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)/i', $body, $m ) ) {
-			$data['image'] = esc_url_raw( $m[1] );
-		}
-
-		// Cache for 24 hours.
-		set_transient( $cache_key, $data, DAY_IN_SECONDS );
-
-		return new \WP_REST_Response( $data, 200 );
+		$response = new \WP_REST_Response( $preview->to_array(), 200 );
+		// Clients (web + mobile) can layer their own cache; 10-minute
+		// Cache-Control keeps repeat renders cheap without blocking refresh.
+		$response->header( 'Cache-Control', 'private, max-age=600' );
+		return $response;
 	}
 
 	/**

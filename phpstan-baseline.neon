@@ -16,6 +16,11 @@ parameters:
 			path: includes/admin/class-admin.php
 
 		-
+			message: "#^Constant JETONOMY_DIR not found\\.$#"
+			count: 1
+			path: includes/notifications/class-notifier.php
+
+		-
 			message: "#^Constant JETONOMY_URL not found\\.$#"
 			count: 2
 			path: includes/admin/class-admin.php

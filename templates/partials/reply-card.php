@@ -41,7 +41,9 @@ $is_accepted = (int) $reply->is_accepted;
 		// are captured as whole tokens BEFORE jetonomy_format_content runs its
 		// @mention / #hashtag matchers — otherwise a URL path's `/@name` gets
 		// eaten by the mention regex and the URL never embeds.
-		echo jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $reply->content ) ) ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$jt_reply_rendered = jetonomy_kses_embedded_content( jetonomy_format_content( \Jetonomy\Embeds::process( wp_kses_post( $reply->content ) ) ) );
+		jetonomy_maybe_enqueue_embed_scripts( $jt_reply_rendered );
+		echo $jt_reply_rendered; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 	</div>
 	<?php
@@ -56,11 +58,17 @@ $is_accepted = (int) $reply->is_accepted;
 			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 		</button>
+		<?php
+		// Hide downvote on own replies — same rule as single-post.php
+		// (Basecamp 9803889865).
+		if ( (int) $reply->author_id !== get_current_user_id() ) :
+			?>
 		<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 			data-wp-on--click="actions.voteReplyDown"
 			data-reply-id="<?php echo (int) $reply->id; ?>"
 			title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+		<?php endif; ?>
 		<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"

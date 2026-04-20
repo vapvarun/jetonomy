@@ -295,7 +295,15 @@
   .jt-tl[data-jt-tl="5"] { background: var(--jt-tl5); }
 
   /* ── Post ── */
-  .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
+  /* Note: we dropped `overflow: hidden` from this rule — it was clipping
+     the three-dot action dropdown to a thin sliver under the action bar
+     (Basecamp 9803818273). Border-radius clipping for the rare
+     first-child (cover image) is enforced below via a scoped rule that
+     only targets direct children inside the rounded top-left/right
+     corners, so we don't pay the clipping tax on the whole card. */
+  .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 20px; }
+  .jt-post > *:first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
+  .jt-post > *:last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); position: relative; }
   .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; padding-right: 6rem; }
   .jt-post-head > .jt-btn-sm { position: absolute; top: 20px; right: 20px; }
@@ -322,10 +330,16 @@
   .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: 8px; }
   .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); }
 
-  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; overflow: hidden; transition: border-color var(--jt-dur); }
+  /* Reply card: must NOT clip overflow, otherwise the three-dot menu dropdown
+     (absolute-positioned on the actions row) gets hidden the moment it extends
+     past the card boundary. Border-radius is applied to the direct children
+     (head + body + footer) instead of the wrapper so corners still round. */
+  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
   .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); }
+  .jt-reply > :first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
+  .jt-reply > :last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-reply-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--jt-bg-subtle); }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
@@ -848,10 +862,16 @@
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
   .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
 
-  /* ── Publish mode split-button ── */
-  .jt-publish-mode { position: relative; display: inline-flex; }
-  .jt-publish-mode__submit { border-radius: var(--jt-radius) 0 0 var(--jt-radius); }
-  .jt-publish-mode__toggle { border-radius: 0 var(--jt-radius) var(--jt-radius) 0; border-left: 1px solid rgba(255,255,255,0.25); min-width: 34px; padding-left: 8px; padding-right: 8px; }
+  /* ── Publish mode split-button ──
+     The buttons pick up `.jt-btn { border-radius: var(--jt-radius-full) }`
+     from the base rule (higher specificity, `.jt-app .jt-btn`), so the
+     joined-split-button shape that lived here before 1.3.6 never actually
+     rendered — they always drew as two pills. Instead of fighting the
+     base button shape we lean into it: two pills with a visible gap.
+     Matches Basecamp 9803889865 ("Post Topic button and dropdown touching
+     without proper spacing"). */
+  .jt-publish-mode { position: relative; display: inline-flex; gap: 6px; align-items: center; }
+  .jt-publish-mode__toggle { min-width: 34px; padding-left: 8px; padding-right: 8px; }
   .jt-publish-mode__menu { position: absolute; bottom: calc(100% + 6px); right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
   .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
@@ -879,7 +899,7 @@
   @media (max-width: 640px) {
     .jt-form-actions { flex-wrap: wrap; }
     .jt-publish-mode { width: 100%; }
-    .jt-publish-mode__submit { flex: 1; border-radius: var(--jt-radius) 0 0 var(--jt-radius); }
+    .jt-publish-mode__submit { flex: 1; }
     .jt-publish-mode__menu { right: 0; left: 0; min-width: unset; }
   }
 
@@ -935,29 +955,28 @@
     margin: 0;
   }
 
-  /* ── Reply entrance animation ── */
-  .jt-reply {
-    animation: jt-slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  @keyframes jt-slideUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Stagger animation for server-rendered replies */
-  .jt-replies-list > :nth-child(1) .jt-reply { animation-delay: 0s; }
-  .jt-replies-list > :nth-child(2) .jt-reply { animation-delay: 0.03s; }
-  .jt-replies-list > :nth-child(3) .jt-reply { animation-delay: 0.06s; }
-  .jt-replies-list > :nth-child(4) .jt-reply { animation-delay: 0.09s; }
-  .jt-replies-list > :nth-child(5) .jt-reply { animation-delay: 0.12s; }
+  /* ── Reply entrance animation — removed intentionally.
+     A `transform` animation with fill-mode: both leaves a retained
+     identity-matrix on the computed style (visually `none` but still
+     a CSS stacking context), trapping the three-dot dropdown behind
+     sibling reply cards. Animating `opacity` alone would still create
+     a stacking context while <1. No CSS-only solution avoids the
+     stacking trap without losing the entrance polish, so we drop the
+     polish — the dropdown behaviour is functional, the animation was
+     nice-to-have. Revisit with JS animationend cleanup if reintroduced. */
 
   /* ── Voting micro-interaction ── */
   .jt-v-btn:active { transform: scale(1.3); }
   .jt-v-num { transition: transform 0.2s ease; }
 
-  /* ── Reply card hover — subtle shift ── */
-  .jt-reply { transition: border-color 0.2s, transform 0.15s ease; }
-  .jt-reply:hover { transform: translateX(2px); }
+  /* ── Reply card hover — subtle left accent ──
+     Deliberately NOT a `transform`: any non-none transform creates a
+     stacking context, which would trap the three-dot dropdown behind
+     the next reply card in DOM order (post dropdown works because posts
+     don't have a hover transform). Left border change is visually
+     similar and keeps the card at z-index: auto. */
+  .jt-reply { transition: border-color 0.2s, box-shadow 0.15s ease; }
+  .jt-reply:hover { box-shadow: inset 2px 0 0 var(--jt-accent); }
 
   /* ── New replies indicator banner ── */
   .jt-new-replies-banner {
@@ -1218,10 +1237,63 @@
 .jt-editor-dragover { border-color: var(--jt-accent) !important; background: var(--jt-accent-muted); }
 .jt-upload-placeholder { padding: 12px; text-align: center; color: var(--jt-text-tertiary); background: var(--jt-bg-muted); border-radius: var(--jt-radius); margin: 8px 0; animation: jt-pulse 1.5s ease infinite; }
 
+/* ── Inline form error (composer, etc.) ──
+   Surfaces REST errors (e.g. 403 on invite-only new-post submit) inline above
+   the form, independent of any third-party toast library. */
+.jt-form-error {
+	margin: 0 0 12px;
+	padding: 10px 14px;
+	background: var(--jt-danger-light);
+	color: var(--jt-danger);
+	border: 1px solid var(--jt-danger);
+	border-radius: var(--jt-radius);
+	font-size: 0.9375rem;
+	line-height: 1.4;
+}
+.jt-form-error[hidden] { display: none; }
+
+@media (max-width: 640px) {
+	.jt-form-error { padding: 8px 12px; font-size: 0.875rem; }
+}
+
 /* ── oEmbed wrappers ── */
 .jt-embed { margin: 12px 0; border-radius: var(--jt-radius); overflow: hidden; }
 .jt-embed iframe { max-width: 100%; border-radius: var(--jt-radius); }
 .jt-embed .twitter-tweet { margin: 0 !important; }
+
+/* Provider blockquote fallbacks — these render while the provider's
+   embed.js hydrates the real player, and remain the final state when the
+   script is blocked. Keep them centered, capped to the provider's native
+   width, and visually distinct from a plain quote. */
+.jt-embed .tiktok-embed,
+.jt-embed .instagram-media,
+.jt-embed .twitter-tweet {
+	margin-left: auto !important;
+	margin-right: auto !important;
+	background: var(--jt-bg-subtle);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius);
+	padding: 12px;
+}
+.jt-embed .tiktok-embed { min-width: 0; max-width: 605px; }
+.jt-embed .instagram-media { max-width: 540px; }
+.jt-embed .twitter-tweet { max-width: 550px; }
+.jt-embed .tiktok-embed iframe,
+.jt-embed .instagram-media iframe,
+.jt-embed .twitter-tweet iframe {
+	max-width: 100%;
+	width: 100% !important;
+}
+
+@media (max-width: 640px) {
+	.jt-embed .tiktok-embed,
+	.jt-embed .instagram-media,
+	.jt-embed .twitter-tweet {
+		max-width: 100%;
+		min-width: 0 !important;
+		padding: 8px;
+	}
+}
 
 /* ── Instant Search Dropdown ── */
 .jt-search-page-form { position: relative; }
@@ -1304,7 +1376,10 @@
 /* More-trigger button — was styled for a text `…` character, now
    uses a Lucide more-horizontal SVG. Keep the min tap-target only. */
 .jt-more-trigger { min-width: var(--jt-tap); min-height: var(--jt-tap); justify-content: center; }
-.jt-more-dropdown { position: absolute; bottom: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-bottom: 0.25rem; }
+/* Opens downward from the trigger. Was `bottom: 100%` which flipped the
+   menu upward; with 5+ items (Pin/Move/Merge/Delete/Admin) it pushed the
+   list onto the post title and looked misaligned (Basecamp 9803818273). */
+.jt-more-dropdown { position: absolute; top: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-top: 0.25rem; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger); }
@@ -1372,40 +1447,87 @@
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
 
-/* ── Link Preview Cards ── */
+/* ── Link Preview Cards ──
+   LinkedIn / Twitter / Facebook style rich card. Media sits on top, metadata
+   below — same layout scales from desktop (560px wide) down to mobile (full
+   width). Hero media hides automatically when .jt-link-preview--no-media is
+   set (image failed to load or provider didn't expose one). */
 .jt-link-preview {
-  display: flex; gap: 12px; align-items: stretch;
+  display: flex; flex-direction: column;
   border: 1px solid var(--jt-border); border-radius: var(--jt-radius);
-  overflow: hidden; margin: 8px 0; text-decoration: none; color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  max-width: 520px;
+  background: var(--jt-bg);
+  overflow: hidden; margin: 12px 0; max-width: 560px;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
-.jt-link-preview:hover {
-  border-color: var(--jt-border-strong);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  color: inherit;
+.jt-link-preview:hover,
+.jt-link-preview:focus-visible {
+  border-color: var(--jt-accent);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  color: inherit; text-decoration: none;
+}
+.jt-link-preview-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.91 / 1;         /* og:image spec: 1.91:1 */
+  overflow: hidden; background: var(--jt-bg-subtle);
+}
+.jt-link-preview-img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
 }
 .jt-link-preview-body {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 12px 14px; min-width: 0; flex: 1;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 16px; min-width: 0;
 }
+.jt-link-preview-meta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: var(--jt-text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.02em;
+}
+.jt-link-preview-favicon {
+  width: 14px; height: 14px; object-fit: contain; flex-shrink: 0;
+  border-radius: 2px;
+}
+.jt-link-preview-domain { color: var(--jt-text-tertiary); font-weight: 500; }
 .jt-link-preview-title {
-  font-size: 0.875rem; font-weight: 600; line-height: 1.3;
+  font-size: 0.9375rem; font-weight: 600; line-height: 1.35; color: var(--jt-text);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .jt-link-preview-desc {
-  font-size: 0.8125rem; color: var(--jt-text-secondary); line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin: 0; font-size: 0.8125rem; color: var(--jt-text-secondary); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-.jt-link-preview-domain {
-  font-size: 0.75rem; color: var(--jt-text-tertiary); margin-top: auto;
+.jt-link-preview-foot {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 4px; font-size: 0.75rem; color: var(--jt-text-tertiary);
 }
-.jt-link-preview-img {
-  width: 120px; min-height: 80px; object-fit: cover; flex-shrink: 0;
+.jt-link-preview-author { font-weight: 500; }
+.jt-link-preview-date::before { content: "·"; margin-right: 8px; }
+
+/* Compact, side-by-side layout when there's no hero media — feels closer to
+   LinkedIn's small-card and avoids the giant empty box. */
+.jt-link-preview--no-media .jt-link-preview-body { padding: 14px 16px; }
+
+/* Third-party embed container (TikTok/Twitter/Instagram blockquote, YouTube
+   iframe). The provider's own stylesheet handles internal layout; we only own
+   the outer spacing + max-width for mobile. */
+.jt-link-embed {
+  margin: 12px 0; max-width: 560px;
 }
+.jt-link-embed iframe,
+.jt-link-embed blockquote {
+  max-width: 100% !important;
+}
+.jt-link-embed[data-provider="youtube"] iframe,
+.jt-link-embed[data-provider="vimeo"] iframe {
+  width: 100%; aspect-ratio: 16 / 9; height: auto;
+}
+
 @media (max-width: 640px) {
-  .jt-link-preview { flex-direction: column; }
-  .jt-link-preview-img { width: 100%; height: 140px; }
+  .jt-link-preview { max-width: 100%; margin: 10px 0; }
+  .jt-link-preview-media { aspect-ratio: 16 / 9; }
+  .jt-link-preview-title { font-size: 0.9375rem; }
+  .jt-link-embed { max-width: 100%; }
 }
 
 /* ── Notification Dropdown Panel ── */

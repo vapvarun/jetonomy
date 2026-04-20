@@ -8,6 +8,8 @@ How Jetonomy compares to bbPress — and why communities are switching to a mode
 - Where Jetonomy excels for growing communities
 - What bbPress still does well
 
+> **Try a live Jetonomy community before you commit** — Wbcom runs its own public support community on Jetonomy at [community.wbcomdesigns.com](https://community.wbcomdesigns.com/). Browse spaces, read real support threads, and get a feel for the voting, trust-level badges, reply threading, and moderation flow on a production site.
+
 ## Feature Comparison
 
 | Feature | bbPress | Jetonomy |

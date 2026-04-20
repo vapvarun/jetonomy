@@ -271,13 +271,26 @@ final class Config_Journey {
 	}
 
 	/**
-	 * Read the raw option as an array, coercing missing/non-array to [].
+	 * Read the effective settings — raw option merged with canonical defaults
+	 * for each resettable block, so a dotted-path getter returns the value
+	 * the runtime actually uses rather than failing with "Key not found" when
+	 * the admin has not explicitly saved that block. Raw values win; defaults
+	 * only fill the gap for blocks/keys the admin never touched.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private function read_settings(): array {
-		$settings = get_option( self::OPTION_KEY, [] );
-		return is_array( $settings ) ? $settings : [];
+		$raw      = get_option( self::OPTION_KEY, [] );
+		$settings = is_array( $raw ) ? $raw : [];
+		foreach ( self::RESETTABLE_BLOCKS as $block ) {
+			$defaults = $this->default_for_block( $block );
+			if ( empty( $defaults ) ) {
+				continue;
+			}
+			$existing           = isset( $settings[ $block ] ) && is_array( $settings[ $block ] ) ? $settings[ $block ] : [];
+			$settings[ $block ] = $existing + $defaults;
+		}
+		return $settings;
 	}
 
 	/**

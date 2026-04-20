@@ -31,6 +31,33 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
         if ( ! toolbar || ! body ) return;
 
+        // Track the selection range inside the composer body while the user
+        // is interacting with it. Saved on every selectionchange that lands
+        // within `body` so we can restore it after `prompt()` / `confirm()`
+        // steals focus (Basecamp 9803832443: Link button did nothing because
+        // prompt blurred the composer and createLink had nothing to wrap).
+        let savedRange = null;
+        document.addEventListener( 'selectionchange', () => {
+            const sel = window.getSelection();
+            if ( ! sel || sel.rangeCount === 0 ) return;
+            const range = sel.getRangeAt( 0 );
+            if ( body.contains( range.commonAncestorContainer ) ) {
+                savedRange = range.cloneRange();
+            }
+        } );
+
+        const restoreSelection = () => {
+            body.focus();
+            if ( ! savedRange ) return;
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange( savedRange );
+        };
+
+        const escapeHtml = ( s ) => String( s ).replace( /[&<>"']/g, ( c ) => ( {
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        }[ c ] ) );
+
         // Toolbar button actions
         toolbar.addEventListener( 'click', ( e ) => {
             const btn = e.target.closest( 'button' );
@@ -53,12 +80,34 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     document.execCommand( 'italic' );
                     break;
                 case 'code':
-                    document.execCommand( 'insertHTML', false, '<code>' + window.getSelection().toString() + '</code>' );
+                    document.execCommand( 'insertHTML', false, '<code>' + escapeHtml( window.getSelection().toString() ) + '</code>' );
                     break;
-                case 'link':
-                    const url = prompt( 'Enter URL:' );
-                    if ( url ) document.execCommand( 'createLink', false, url );
+                case 'link': {
+                    // prompt() steals focus — capture the current range first
+                    // so we can re-anchor the insert point after the dialog closes.
+                    const sel = window.getSelection();
+                    if ( sel.rangeCount && body.contains( sel.getRangeAt( 0 ).commonAncestorContainer ) ) {
+                        savedRange = sel.getRangeAt( 0 ).cloneRange();
+                    }
+                    const selectedText = sel.toString();
+
+                    const raw = prompt( 'Enter URL:' );
+                    if ( ! raw ) break;
+                    const trimmed = raw.trim();
+                    if ( ! trimmed ) break;
+
+                    // Accept bare domains (example.com) and force https:// when
+                    // no scheme is present so the resulting <a href> is valid.
+                    const url = /^(https?:|mailto:|\/)/i.test( trimmed ) ? trimmed : 'https://' + trimmed;
+
+                    // Put the caret back where it was before the prompt opened.
+                    restoreSelection();
+
+                    const label = selectedText || trimmed;
+                    const html  = '<a href="' + escapeHtml( url ) + '" rel="noopener noreferrer" target="_blank">' + escapeHtml( label ) + '</a>';
+                    document.execCommand( 'insertHTML', false, html );
                     break;
+                }
                 case 'quote':
                     document.execCommand( 'formatBlock', false, 'blockquote' );
                     break;

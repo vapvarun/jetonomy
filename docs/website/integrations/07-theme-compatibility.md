@@ -28,6 +28,27 @@ BuddyX is Jetonomy's reference theme. With BuddyX active, Jetonomy requires zero
 
 > **Tip:** If you are building a new community site from scratch, start with BuddyX. You can always switch themes later — Jetonomy will adapt.
 
+## BuddyX Pro, Reign, and the Theme Bridge (1.3.0+)
+
+Starting in 1.3.0, Jetonomy ships a dedicated bridge for the three Kirki-based themes most of our customers run: **BuddyX**, **BuddyX Pro**, and **Reign**.
+
+**What the bridge does**
+
+- Reads the theme's Kirki mods on every render (accent color, dark mode state, container width).
+- Injects `--jt-accent` directly so the community picks up the exact color the customer chose in the Customizer — not a hardcoded fallback.
+- Toggles `.jt-dark` on the page `<body>` via `body_class` whenever the theme is in dark mode, so the community's dark overrides activate automatically without requiring custom CSS.
+- No configuration screen. If the theme is active, the bridge runs. If you switch to a non-Kirki theme, the bridge silently bows out and the standard `theme.json` path takes over.
+
+**Where it lives**
+
+`includes/integrations/class-theme-integration.php` — guarded by `class_exists( 'Kirki' )` and a per-theme check against the theme template slug.
+
+**Why this matters**
+
+On BuddyX/BuddyX Pro/Reign, flipping the theme's dark-mode toggle in the Customizer now flips the entire community sidebar, nav, post cards, and reply editor in the same render. No custom-CSS bridge required.
+
+If you build a custom Kirki theme and want to hook into the same bridge, the integration is extensible via the `jetonomy_theme_integration_accent` and `jetonomy_theme_integration_dark_mode` filters — return your own values and Jetonomy will use them.
+
 ## Using Other Themes
 
 Jetonomy works with any well-built WordPress theme. Compatibility level depends on how fully the theme uses theme.json:

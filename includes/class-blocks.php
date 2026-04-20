@@ -66,25 +66,68 @@ class Blocks {
 			array(
 				'api_version'     => '3',
 				'attributes'      => array(
-					'count'   => array(
+					'count'      => array(
 						'type'    => 'number',
 						'default' => 5,
 					),
-					'spaceId' => array(
+					'spaceId'    => array(
 						'type'    => 'number',
 						'default' => 0,
 					),
-					'sort'    => array(
+					'sort'       => array(
 						'type'    => 'string',
 						'default' => 'latest',
+					),
+					'showHeader' => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+					'title'      => array(
+						'type'    => 'string',
+						'default' => '',
 					),
 				),
 				'render_callback' => array( __CLASS__, 'render_forum_feed' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Forum Feed', 'jetonomy' ),
-				'description'     => __( 'Display recent forum discussions.', 'jetonomy' ),
+				'description'     => __( 'Display recent forum discussions. Optionally scope to a single space with a header.', 'jetonomy' ),
 				'icon'            => 'format-chat',
-				'keywords'        => array( 'forum', 'posts', 'discussions', 'jetonomy' ),
+				'keywords'        => array( 'forum', 'posts', 'discussions', 'space', 'topics', 'jetonomy' ),
+			)
+		);
+
+		register_block_type(
+			'jetonomy/trending',
+			array(
+				'api_version'     => '3',
+				'attributes'      => array(
+					'count'      => array(
+						'type'    => 'number',
+						'default' => 5,
+					),
+					'spaceId'    => array(
+						'type'    => 'number',
+						'default' => 0,
+					),
+					'window'     => array(
+						'type'    => 'number',
+						'default' => 7,
+					),
+					'showHeader' => array(
+						'type'    => 'boolean',
+						'default' => true,
+					),
+					'title'      => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_trending' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Trending Topics', 'jetonomy' ),
+				'description'     => __( 'Display trending forum topics ranked by recent engagement (votes + replies over the last 7 days).', 'jetonomy' ),
+				'icon'            => 'chart-line',
+				'keywords'        => array( 'trending', 'hot', 'popular', 'topics', 'posts', 'jetonomy' ),
 			)
 		);
 
@@ -189,7 +232,7 @@ class Blocks {
 			array(
 				'api_version'     => '3',
 				'attributes'      => array(
-					'title'       => array(
+					'title'        => array(
 						'type'    => 'string',
 						'default' => '',
 					),
@@ -209,13 +252,82 @@ class Blocks {
 	}
 
 	public static function render_forum_feed( array $attributes ): string {
+		wp_enqueue_style( 'jetonomy-blocks' );
+
+		$space_id   = isset( $attributes['spaceId'] ) ? absint( $attributes['spaceId'] ) : 0;
+		$show_hdr   = ! empty( $attributes['showHeader'] );
+		$title_attr = isset( $attributes['title'] ) ? (string) $attributes['title'] : '';
+
 		$atts = 'count="' . absint( $attributes['count'] ) . '"';
-		if ( ! empty( $attributes['spaceId'] ) ) {
-			$atts .= ' space_id="' . absint( $attributes['spaceId'] ) . '"';
+		if ( $space_id ) {
+			$atts .= ' space_id="' . $space_id . '"';
 		}
 		$atts .= ' sort="' . esc_attr( $attributes['sort'] ?? 'latest' ) . '"';
 
-		return '<div class="wp-block-jetonomy-forum-feed">' . do_shortcode( '[jetonomy_recent_posts ' . $atts . ']' ) . '</div>';
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, __( 'Recent topics', 'jetonomy' ) ) : '';
+
+		return '<div class="wp-block-jetonomy-forum-feed jt-feed-block jt-app">'
+			. $header
+			. do_shortcode( '[jetonomy_recent_posts ' . $atts . ']' )
+			. '</div>';
+	}
+
+	/**
+	 * Render the Trending Topics block.
+	 *
+	 * Self-contained — enqueues jetonomy-blocks styles so it works on any
+	 * page without depending on the main community stylesheet.
+	 */
+	public static function render_trending( array $attributes ): string {
+		wp_enqueue_style( 'jetonomy-blocks' );
+
+		$space_id   = isset( $attributes['spaceId'] ) ? absint( $attributes['spaceId'] ) : 0;
+		$show_hdr   = ! empty( $attributes['showHeader'] );
+		$title_attr = isset( $attributes['title'] ) ? (string) $attributes['title'] : '';
+		$window     = isset( $attributes['window'] ) ? absint( $attributes['window'] ) : 7;
+
+		$atts = 'count="' . absint( $attributes['count'] ) . '"';
+		if ( $space_id ) {
+			$atts .= ' space_id="' . $space_id . '"';
+		}
+		if ( $window ) {
+			$atts .= ' window="' . $window . '"';
+		}
+
+		$header = $show_hdr ? self::render_space_header( $space_id, $title_attr, __( 'Trending topics', 'jetonomy' ) ) : '';
+
+		return '<div class="wp-block-jetonomy-trending jt-feed-block jt-trending-block jt-app">'
+			. $header
+			. do_shortcode( '[jetonomy_trending_posts ' . $atts . ']' )
+			. '</div>';
+	}
+
+	/**
+	 * Render a block header — space-aware when a space_id is set, generic title otherwise.
+	 * Output includes a "View all" link back to the space or community home.
+	 */
+	private static function render_space_header( int $space_id, string $custom_title, string $default_title ): string {
+		$base         = \Jetonomy\base_url();
+		$link         = $base;
+		$heading_text = '' !== $custom_title ? $custom_title : $default_title;
+
+		if ( $space_id > 0 && class_exists( Space::class ) ) {
+			$space = Space::find( $space_id );
+			if ( $space && ! empty( $space->slug ) ) {
+				$link = $base . '/s/' . rawurlencode( (string) $space->slug ) . '/';
+				if ( '' === $custom_title ) {
+					/* translators: %s: space title */
+					$heading_text = sprintf( __( '%s · Topics', 'jetonomy' ), (string) ( $space->title ?? '' ) );
+				}
+			}
+		}
+
+		return sprintf(
+			'<header class="jt-feed-header"><h3 class="jt-feed-title">%1$s</h3><a class="jt-feed-viewall" href="%2$s">%3$s<span aria-hidden="true"> →</span></a></header>',
+			esc_html( $heading_text ),
+			esc_url( $link ),
+			esc_html__( 'View all', 'jetonomy' )
+		);
 	}
 
 	public static function render_space_list( array $attributes ): string {
@@ -254,17 +366,17 @@ class Blocks {
 	 * have filtered through jetonomy_spaces_query_args.
 	 */
 	private static function render_space_item( $space, string $active_slug, bool $show_count ): string {
-		$space       = is_object( $space ) ? $space : (object) ( is_array( $space ) ? $space : array() );
-		$slug        = isset( $space->slug ) ? (string) $space->slug : '';
-		$title       = isset( $space->title ) ? (string) $space->title : '';
+		$space = is_object( $space ) ? $space : (object) ( is_array( $space ) ? $space : array() );
+		$slug  = isset( $space->slug ) ? (string) $space->slug : '';
+		$title = isset( $space->title ) ? (string) $space->title : '';
 		if ( '' === $slug || '' === $title ) {
 			return '';
 		}
-		$url         = \Jetonomy\base_url() . '/s/' . rawurlencode( $slug ) . '/';
-		$is_active   = $slug === $active_slug;
-		$aria_attr   = $is_active ? ' aria-current="page"' : '';
-		$active_cls  = $is_active ? ' is-active' : '';
-		$count_html  = '';
+		$url        = \Jetonomy\base_url() . '/s/' . rawurlencode( $slug ) . '/';
+		$is_active  = $slug === $active_slug;
+		$aria_attr  = $is_active ? ' aria-current="page"' : '';
+		$active_cls = $is_active ? ' is-active' : '';
+		$count_html = '';
 		if ( $show_count && isset( $space->post_count ) ) {
 			$count_html = ' <span class="jt-nav-count">' . (int) $space->post_count . '</span>';
 		}
@@ -288,13 +400,13 @@ class Blocks {
 
 		wp_enqueue_style( 'jetonomy-blocks' );
 
-		$user_id              = get_current_user_id();
-		$show_headings        = ! empty( $attributes['showCategoryHeadings'] );
-		$collapsible          = ! empty( $attributes['collapsible'] );
-		$show_count           = ! empty( $attributes['showPostCount'] ) && $user_id > 0;
-		$hide_empty           = ! empty( $attributes['hideEmptyCategories'] );
-		$title                = isset( $attributes['title'] ) ? (string) $attributes['title'] : '';
-		$active_slug          = self::current_space_slug();
+		$user_id       = get_current_user_id();
+		$show_headings = ! empty( $attributes['showCategoryHeadings'] );
+		$collapsible   = ! empty( $attributes['collapsible'] );
+		$show_count    = ! empty( $attributes['showPostCount'] ) && $user_id > 0;
+		$hide_empty    = ! empty( $attributes['hideEmptyCategories'] );
+		$title         = isset( $attributes['title'] ) ? (string) $attributes['title'] : '';
+		$active_slug   = self::current_space_slug();
 
 		$categories = Category::list_top_level();
 
@@ -386,8 +498,8 @@ class Blocks {
 		$avatar  = get_avatar( $user_id, 48, '', $user->display_name, array( 'class' => 'jt-userpanel-avatar' ) );
 
 		// Trust level (cheap read from user_profiles).
-		$profile      = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
-		$trust_level  = $profile ? (int) ( $profile->trust_level ?? 0 ) : 0;
+		$profile     = class_exists( \Jetonomy\Models\UserProfile::class ) ? \Jetonomy\Models\UserProfile::find_by_user( $user_id ) : null;
+		$trust_level = $profile ? (int) ( $profile->trust_level ?? 0 ) : 0;
 
 		// Unread notifications count (bounded query — uses the index on
 		// user_id + is_read so it stays cheap at 10k+ notifications).
@@ -492,13 +604,13 @@ class Blocks {
 		wp_enqueue_style( 'jetonomy-blocks' );
 		wp_enqueue_script( 'jetonomy-login-block' );
 
-		$title              = isset( $attributes['title'] ) && '' !== $attributes['title']
+		$title             = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
 			: __( 'Join the conversation', 'jetonomy' );
-		$show_register_tab  = ! empty( $attributes['showRegister'] ) && (bool) get_option( 'users_can_register' );
-		$login_nonce        = wp_create_nonce( 'jetonomy_quick_login' );
-		$register_nonce     = wp_create_nonce( 'jetonomy_quick_register' );
-		$ajax_url           = esc_url( admin_url( 'admin-ajax.php' ) );
+		$show_register_tab = ! empty( $attributes['showRegister'] ) && (bool) get_option( 'users_can_register' );
+		$login_nonce       = wp_create_nonce( 'jetonomy_quick_login' );
+		$register_nonce    = wp_create_nonce( 'jetonomy_quick_register' );
+		$ajax_url          = esc_url( admin_url( 'admin-ajax.php' ) );
 
 		ob_start();
 		?>
@@ -572,8 +684,8 @@ class Blocks {
 	 * credential stuffing.
 	 */
 	private static function check_rate_limit( string $bucket ): bool {
-		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
-		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
+		$ip   = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
+		$key  = 'jt_auth_' . $bucket . '_' . md5( $ip );
 		$hits = (int) get_transient( $key );
 		if ( $hits >= 5 ) {
 			return false;

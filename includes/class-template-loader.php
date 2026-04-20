@@ -42,6 +42,25 @@ class Template_Loader {
 			exit;
 		}
 
+		// ── /new/ route membership guard ──
+		// REST POST /posts returns 403 for non-members on invite/approval spaces, but
+		// without this guard the user still reaches the composer, fills it, submits, and
+		// sees a silent failure. Redirect to the space page where the invite-only /
+		// request-to-join empty state surfaces the correct next action.
+		if ( 'new-post' === $data['route'] && ! empty( $data['slug'] ) && ! current_user_can( 'manage_options' ) ) {
+			$jt_space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
+			if ( $jt_space ) {
+				$jt_join_policy = $jt_space->join_policy ?? 'open';
+				$jt_is_member   = \Jetonomy\Models\SpaceMember::is_member( (int) $jt_space->id, get_current_user_id() );
+				if ( ! $jt_is_member && in_array( $jt_join_policy, array( 'invite', 'approval' ), true ) ) {
+					$jt_settings  = get_option( 'jetonomy_settings', array() );
+					$jt_base_slug = $jt_settings['base_slug'] ?? 'community';
+					wp_safe_redirect( home_url( '/' . $jt_base_slug . '/s/' . $jt_space->slug . '/' ) );
+					exit;
+				}
+			}
+		}
+
 		// Update last_seen_at for online status tracking.
 		$current_user_id = get_current_user_id();
 		if ( $current_user_id ) {
@@ -195,6 +214,8 @@ class Template_Loader {
 			'unreadCount'       => 0,
 			'isSubmitting'      => false,
 			'submitLabel'       => __( 'Post Topic', 'jetonomy' ),
+			'submitError'       => '',
+			'msgComposeOpen'    => false,
 			'i18n'              => array(
 				'voteRecorded'       => __( 'Vote recorded', 'jetonomy' ),
 				'accepted'           => __( 'Accepted', 'jetonomy' ),
@@ -249,6 +270,25 @@ class Template_Loader {
 			JETONOMY_URL . 'assets/js/view.js',
 			array( '@wordpress/interactivity' ),
 			JETONOMY_VERSION
+		);
+
+		// Shared global for non-Interactivity JS on community pages (link preview
+		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
+		// one place so the same contract works for the future native app.
+		// The dummy `jetonomy-data` handle exists solely to give wp_localize_script
+		// a target — actual behaviour lives in view.js.
+		if ( ! wp_script_is( 'jetonomy-data', 'registered' ) ) {
+			wp_register_script( 'jetonomy-data', '', array(), JETONOMY_VERSION, false );
+		}
+		wp_enqueue_script( 'jetonomy-data' );
+		wp_localize_script(
+			'jetonomy-data',
+			'jetonomyData',
+			array(
+				'restBase'      => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
+				'restNonce'     => wp_create_nonce( 'wp_rest' ),
+				'communityBase' => \Jetonomy\base_url(),
+			)
 		);
 
 		// Enqueue composer enhancement script
@@ -431,6 +471,13 @@ class Template_Loader {
 						break;
 					case 'post':
 						$post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
+						// Same permission gate as single-post.php — without this, the meta
+						// description, OG tags, article:* metadata, and oEmbed discovery URL
+						// for a private topic leak into every non-author response's <head>
+						// (Basecamp 9803998504).
+						if ( $post && ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+							$post = null;
+						}
 						if ( $post ) {
 							$space        = \Jetonomy\Models\Space::find( (int) $post->space_id );
 							$title        = $post->title;
