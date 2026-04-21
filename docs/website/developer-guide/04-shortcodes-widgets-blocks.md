@@ -1,11 +1,31 @@
-Jetonomy includes five shortcodes, four classic widgets, and five Gutenberg blocks so you can embed community content anywhere on your WordPress site — sidebars, pages, posts, or block-based layouts.
+Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site — sidebars, pages, posts, or block-based layouts.
 
 ## What You Will Learn
 
-- How to use the five built-in shortcodes and their attributes
+- How to use the seven built-in shortcodes and their attributes
 - How to add the four classic widgets to sidebar areas
-- How to insert the five Gutenberg blocks in the block editor
+- How to insert the eight Gutenberg blocks in the block editor
 - How shortcodes and blocks share the same rendering logic
+
+## At a Glance
+
+| Type | Slug | Purpose | Since |
+|------|------|---------|-------|
+| Shortcode | `[jetonomy_recent_posts]` | Recent posts feed | 1.0 |
+| Shortcode | `[jetonomy_trending_posts]` | Hot-scored trending posts | 1.3.0 |
+| Shortcode | `[jetonomy_spaces]` | Space directory grid | 1.0 |
+| Shortcode | `[jetonomy_leaderboard]` | Top members by reputation | 1.0 |
+| Shortcode | `[jetonomy_user_profile]` | Single user profile card | 1.2 |
+| Shortcode | `[jetonomy_space_members]` | Members of one space | 1.2 |
+| Shortcode | `[jetonomy_compose_topic]` | **New in 1.3.7** — inline topic composer (fixed space or member picker) | 1.3.7 |
+| Block | `jetonomy/forum-feed` | Live post feed | 1.3.0 |
+| Block | `jetonomy/trending` | Trending topics with time-decayed hot score | 1.3.6 |
+| Block | `jetonomy/space-list` | Space grid | 1.3.0 |
+| Block | `jetonomy/leaderboard` | Top members | 1.3.0 |
+| Block | `jetonomy/navigation` | Permission-aware category + space tree | 1.3.5 |
+| Block | `jetonomy/user-panel` | Logged-in sidebar profile card | 1.3.5 |
+| Block | `jetonomy/login` | Inline login/register panel | 1.3.5 |
+| Block | `jetonomy/compose-topic` | **New in 1.3.7** — topic composer embeddable anywhere | 1.3.7 |
 
 ## Shortcodes
 
@@ -30,6 +50,24 @@ Displays a list of the most recent published posts across your community or with
 ```
 
 Each post card shows the title, author name, space name, time ago, vote score, and reply count.
+
+---
+
+### `[jetonomy_trending_posts]`
+
+Displays a ranked list of "hot" posts using a time-decayed score of recent votes + replies.
+
+**Attributes**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `count` | int | `5` | Number of posts to display |
+| `space_id` | int | `0` | Restrict to a space. `0` = all spaces |
+| `window` | int | `7` | Days of history used for the hot score |
+
+```
+[jetonomy_trending_posts count="10" window="14"]
+```
 
 ---
 
@@ -103,6 +141,40 @@ Displays a list of members for a specific space, ordered by reputation.
 
 ---
 
+### `[jetonomy_compose_topic]` *(new in 1.3.7)*
+
+Lets signed-in members start a new topic from **any** WordPress page, post, or page-builder canvas. Two modes: lock to one space, or show a picker of spaces the current user is a member of.
+
+**Attributes**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mode` | string | `picker` | `picker` (show a space select) or `fixed` (post to one space) |
+| `space_id` | int | `0` | Space ID to post into. Only used when `mode="fixed"`. Invalid IDs degrade to picker at render time. |
+| `types` | CSV | `topic,question,idea` | Allowed post types for this embed |
+
+```
+[jetonomy_compose_topic mode="picker"]
+[jetonomy_compose_topic mode="fixed" space_id="5"]
+```
+
+![Compose Topic shortcode rendered on a regular WordPress page](../images/developer-guide/compose-topic-frontend.png)
+
+**Behavior**
+
+- **Logged-out viewers** see a "Sign in to start a new topic" CTA that redirects back to the current URL after login — no form exposure, no wasted scroll.
+- **Picker mode** queries `Permission_Engine::can($uid, 'create_posts', $space_id)` against every space the user is a member of. Only spaces where they actually have posting rights appear.
+- **Fixed mode** hides the picker entirely. If the hardcoded `space_id` is missing or the user cannot post in it, the embed silently degrades to picker mode rather than breaking.
+- Assets (`blocks.css` + the Interactivity API bundle) enqueue on-demand at render time so pages that don't use the shortcode carry no overhead. Works inside page builders that render shortcodes outside `the_content` (Elementor, Divi, Bricks, WPBakery).
+
+Companion REST endpoint: `GET /jetonomy/v1/spaces?postable_by_me=1` returns the user's postable spaces.
+
+When the title is filled but the body is empty, an inline error banner appears above the title — no silent failures, no lost input:
+
+![Inline validation banner when the body is empty](../images/developer-guide/compose-topic-validation.png)
+
+---
+
 ## Classic Widgets
 
 Jetonomy registers four classic widgets for use in any theme widget area. Each widget is configured through the standard WordPress widget admin screen or the Customizer.
@@ -135,7 +207,9 @@ Displays the currently logged-in user's stats: reputation, post count, reply cou
 
 ## Gutenberg Blocks
 
-Jetonomy registers five server-side rendered blocks. All blocks use `render_callback` functions that call the same shortcode logic internally (for the three list blocks) or dedicated rendering components (for Navigation and Login), so output is consistent wherever they appear.
+Jetonomy registers eight server-side rendered blocks. Each block uses a `render_callback` that delegates to the matching shortcode (for most) or a dedicated render component (for Navigation, User Panel, and Login). Output is consistent wherever they appear.
+
+All blocks live in the **Widgets** category of the block inserter.
 
 ### `jetonomy/forum-feed`
 
@@ -148,6 +222,22 @@ Renders a live post feed from a selected space or all spaces.
 | `count` | number | `5` | Posts to show |
 | `spaceId` | number | `0` | Space ID (0 = all spaces) |
 | `sort` | string | `latest` | `latest` or `votes` |
+| `showHeader` | boolean | `false` | Render a space header above the feed |
+| `title` | string | `''` | Custom title when `showHeader` is on |
+
+### `jetonomy/trending` *(1.3.6+)*
+
+Renders a ranked list of hot topics using a time-decayed score of recent engagement. Same `render_callback` plumbing as `[jetonomy_trending_posts]`.
+
+**Block Attributes**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `count` | number | `5` | Posts to show |
+| `spaceId` | number | `0` | Restrict to a space (0 = all) |
+| `window` | number | `7` | Days of history for the hot score |
+| `showHeader` | boolean | `true` | Render a "Trending" header |
+| `title` | string | `''` | Custom title |
 
 ### `jetonomy/space-list`
 
@@ -184,12 +274,27 @@ Most community themes render the space list with a hand-maintained nav menu. Tha
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `showCategories` | boolean | `true` | Group spaces by parent category |
-| `showCounts` | boolean | `true` | Show topic count next to each space |
-| `highlightCurrent` | boolean | `true` | Add `is-current` class to the current space |
-| `maxDepth` | number | `2` | How deep to render sub-spaces. Max 3. |
+| `showCategoryHeadings` | boolean | `true` | Group spaces by parent category |
+| `collapsible` | boolean | `false` | Collapsible category headings |
+| `showPostCount` | boolean | `false` | Show topic count next to each space |
+| `hideEmptyCategories` | boolean | `true` | Hide categories that have no visible spaces |
+| `title` | string | `''` | Optional wrapper title |
 
 Scales to sites with thousands of spaces — the rendered tree uses Jetonomy's cached category/space index, not a per-request DB scan.
+
+---
+
+### `jetonomy/user-panel` *(1.3.5+)*
+
+Renders a compact profile card for logged-in viewers — avatar, display name, notifications count, quick links to Profile / Notifications / Messages / Edit Profile / Logout. Empty for logged-out viewers so the sidebar layout doesn't shift.
+
+**Block Attributes**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `title` | string | `''` | Optional wrapper title above the card |
+
+Auto-injects at the top of the community sidebar for logged-in viewers so admins don't need to add it by hand (disable with `add_filter( 'jetonomy_sidebar_auth_card', '__return_false' )`).
 
 ---
 
@@ -201,16 +306,42 @@ Renders an inline login and register panel for the community sidebar. Logged-out
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `showRegister` | boolean | `true` | Show the Register tab alongside Login |
-| `redirectTo` | string | current URL | Where to send the user after successful login |
-| `labelLogin` | string | `Log in` | Tab label for the Login form |
-| `labelRegister` | string | `Register` | Tab label for the Register form |
+| `title` | string | `''` | Header above the tabs |
+| `showRegister` | boolean | `true` | Show the Register tab alongside Login (honours `users_can_register`) |
 
 **Security**
 
-- Both forms are nonce-protected
+- Both forms are nonce-protected (`wp_ajax_jetonomy_quick_login` / `wp_ajax_jetonomy_quick_register`)
 - Failed login attempts are rate-limited via `Jetonomy\Security\Rate_Limiter` (5 attempts / 15 minutes per IP)
 - Registration respects whatever `users_can_register` is set to in your WP admin and any anti-spam adapter you have active (Akismet, AI spam detection)
+
+---
+
+### `jetonomy/compose-topic` *(new in 1.3.7)*
+
+Gutenberg equivalent of `[jetonomy_compose_topic]`. Drop it on any page, post, or template part and signed-in members can start a topic without leaving the page.
+
+**Block Attributes**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mode` | string | `picker` | `picker` or `fixed` |
+| `spaceId` | number | `0` | Space ID (fixed mode only) |
+| `types` | string | `topic,question,idea` | Allowed post types |
+
+**Editor experience**
+
+![Compose Topic block in the Gutenberg editor](../images/developer-guide/compose-topic-block-editor.png)
+
+- The block editor shows a **static preview** (no live REST calls) — safe to drop into any page without hitting the server.
+- Inspector controls: Mode select (picker / fixed), Space ID (visible only when Mode is fixed), Allowed types (comma-separated).
+- Falls back to picker mode at render time if the fixed `spaceId` doesn't resolve to a space the viewer can post in — so themes/pages that were built before a space was deleted keep working instead of 500'ing.
+
+**Rendering**
+
+- Server render delegates to `[jetonomy_compose_topic]`, so the block + shortcode output are pixel-identical.
+- Styles come from `assets/css/blocks.css` — self-contained, inherits theme tokens through `--wp--preset--*` fallbacks so it looks correct outside Jetonomy templates.
+- Built-in mobile breakpoint at 640px — submit button spans the column width, actions stack vertically.
 
 ---
 
@@ -232,6 +363,15 @@ All shortcode and block output uses the `jt-shortcode` CSS class prefix so you c
 | `.jt-shortcode-profile-card` | User profile card |
 | `.jt-shortcode-members` | Members list container |
 | `.jt-shortcode-empty` | Empty state message |
+| `.jt-compose-topic-embed` | Compose-topic shortcode/block wrapper |
+| `.jt-compose-topic-embed.jt-compose-topic-login` | Logged-out sign-in CTA variant |
+| `.jt-compose-topic-field` | Label + input group |
+| `.jt-compose-topic-space` | Space picker `<select>` |
+| `.jt-compose-topic-title` | Title `<input>` |
+| `.jt-compose-topic-body` | Details `<textarea>` |
+| `.jt-compose-topic-submit` | Post topic button |
+| `.jt-compose-topic-error` | Inline error banner (shown via `state.submitError`) |
+| `.jt-compose-topic-posting-to` | "Posting in …" line in fixed mode |
 
 ---
 
