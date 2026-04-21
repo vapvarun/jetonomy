@@ -33,14 +33,43 @@ $_types        = ! empty( $_types_raw ) ? $_types_raw : array( 'topic', 'questio
 $_default_type = $_types[0];
 
 if ( ! is_user_logged_in() ) {
-	$_redirect = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : home_url( '/' );
-	$_login    = wp_login_url( $_redirect );
+	$_redirect     = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : home_url( '/' );
+	$_login        = wp_login_url( $_redirect );
+	$_can_register = (bool) get_option( 'users_can_register' );
+	$_register_url = $_can_register ? wp_registration_url() : '';
+
+	if ( 'fixed' === $_mode && $_space ) {
+		/* translators: %s: space title. */
+		$_lede = sprintf( __( 'Sign in to start a discussion in %s. Share what you\'re thinking, ask the community a question, or float an idea.', 'jetonomy' ), '<strong>' . esc_html( $_space->title ) . '</strong>' );
+	} else {
+		$_lede = __( 'Sign in to start a discussion. Ask a question, share an idea, or kick off a topic. Replies and reactions arrive in real time.', 'jetonomy' );
+	}
 	?>
-	<div class="jt-compose-topic-embed jt-compose-topic-login">
-		<p><?php esc_html_e( 'Sign in to start a new topic.', 'jetonomy' ); ?></p>
-		<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( $_login ); ?>">
-			<?php esc_html_e( 'Sign in', 'jetonomy' ); ?>
-		</a>
+	<div class="jt-compose-topic-embed jt-compose-topic-login" role="region" aria-label="<?php esc_attr_e( 'Start a new discussion', 'jetonomy' ); ?>">
+		<div class="jt-compose-topic-login-icon" aria-hidden="true">
+			<?php jetonomy_echo_icon( 'message-circle', 28 ); ?>
+		</div>
+		<div class="jt-compose-topic-login-body">
+			<h3 class="jt-compose-topic-login-title"><?php esc_html_e( 'Join the conversation', 'jetonomy' ); ?></h3>
+			<p class="jt-compose-topic-login-lede">
+				<?php
+				echo wp_kses(
+					$_lede,
+					array( 'strong' => array() )
+				);
+				?>
+			</p>
+			<div class="jt-compose-topic-login-actions">
+				<a class="jt-btn jt-btn-fill jt-compose-topic-login-primary" href="<?php echo esc_url( $_login ); ?>">
+					<?php esc_html_e( 'Sign in to post', 'jetonomy' ); ?>
+				</a>
+				<?php if ( $_register_url ) : ?>
+					<a class="jt-compose-topic-login-secondary" href="<?php echo esc_url( $_register_url ); ?>">
+						<?php esc_html_e( 'New here? Create an account', 'jetonomy' ); ?>
+					</a>
+				<?php endif; ?>
+			</div>
+		</div>
 	</div>
 	<?php
 	return;
