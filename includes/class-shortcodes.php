@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * [jetonomy_leaderboard]    — Top members by reputation.
  * [jetonomy_user_profile]   — Single user profile card.
  * [jetonomy_space_members]  — Member list for a space.
+ * [jetonomy_compose_topic]  — Inline topic composer (fixed space or member picker).
  */
 class Shortcodes {
 
@@ -28,6 +29,7 @@ class Shortcodes {
 		add_shortcode( 'jetonomy_leaderboard', array( __CLASS__, 'leaderboard' ) );
 		add_shortcode( 'jetonomy_user_profile', array( __CLASS__, 'user_profile' ) );
 		add_shortcode( 'jetonomy_space_members', array( __CLASS__, 'space_members' ) );
+		add_shortcode( 'jetonomy_compose_topic', array( __CLASS__, 'compose_topic' ) );
 	}
 
 	/**
@@ -347,5 +349,110 @@ class Shortcodes {
 		$out .= '</div>';
 
 		return $out;
+	}
+
+	/**
+	 * [jetonomy_compose_topic mode="picker|fixed" space_id="" types="topic,question,idea"]
+	 *
+	 * Inline topic composer usable on any WordPress page or page-builder canvas.
+	 * In `picker` mode shows a <select> of spaces the current user is a member
+	 * of and can post in. In `fixed` mode posts directly to the given space;
+	 * invalid/missing space IDs degrade to picker so the block never silently
+	 * breaks when a space is renumbered or deleted.
+	 */
+	public static function compose_topic( $atts ): string {
+		$atts = shortcode_atts(
+			array(
+				'mode'     => 'picker',
+				'space_id' => 0,
+				'types'    => 'topic,question,idea',
+			),
+			$atts,
+			'jetonomy_compose_topic'
+		);
+
+		$mode     = in_array( $atts['mode'], array( 'fixed', 'picker' ), true ) ? $atts['mode'] : 'picker';
+		$space_id = absint( $atts['space_id'] );
+		$types    = array_values(
+			array_filter(
+				array_map( 'trim', explode( ',', (string) $atts['types'] ) )
+			)
+		);
+		if ( empty( $types ) ) {
+			$types = array( 'topic', 'question', 'idea' );
+		}
+
+		$space    = null;
+		$postable = array();
+
+		if ( 'fixed' === $mode && $space_id ) {
+			$space = \Jetonomy\Models\Space::find( $space_id );
+			// If the fixed space is invalid, fall through to picker-mode data.
+			if ( ! $space ) {
+				$mode = 'picker';
+			}
+		}
+
+		if ( 'picker' === $mode ) {
+			$postable = self::postable_spaces_for_current_user();
+		}
+
+		// Shortcode can be rendered in any context (page builders, widgets,
+		// custom post types) so enqueue on-demand here rather than relying on
+		// has_shortcode() in wp_head — that misses builders that call
+		// do_shortcode() directly outside the_content.
+		wp_enqueue_style( 'jetonomy-blocks' );
+		wp_enqueue_script( 'jetonomy-compose-topic' );
+
+		ob_start();
+		Template_Loader::partial(
+			'compose-topic-embed',
+			array(
+				'mode'     => $mode,
+				'space_id' => $space_id,
+				'space'    => $space,
+				'postable' => $postable,
+				'types'    => $types,
+			)
+		);
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Spaces the current user is a member of AND can create posts in.
+	 *
+	 * @return \stdClass[] Space rows (id, slug, title, visibility, etc.).
+	 */
+	private static function postable_spaces_for_current_user(): array {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return array();
+		}
+
+		$memberships = \Jetonomy\Models\SpaceMember::list_user_spaces( $user_id );
+		if ( empty( $memberships ) ) {
+			return array();
+		}
+
+		$spaces = array();
+		foreach ( $memberships as $m ) {
+			$sid = (int) $m->space_id;
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid ) ) {
+				continue;
+			}
+			$space = \Jetonomy\Models\Space::find( $sid );
+			if ( $space ) {
+				$spaces[] = $space;
+			}
+		}
+
+		usort(
+			$spaces,
+			static function ( $a, $b ) {
+				return strcasecmp( (string) $a->title, (string) $b->title );
+			}
+		);
+
+		return $spaces;
 	}
 }

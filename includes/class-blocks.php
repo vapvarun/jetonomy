@@ -54,6 +54,18 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
+
+		// Compose-topic block/shortcode piggybacks on the main view bundle —
+		// that's where the Interactivity API `jetonomy` store lives. Registering
+		// it here (not on community routes only) lets the block/shortcode work
+		// on any page or page-builder canvas.
+		wp_register_script(
+			'jetonomy-compose-topic',
+			JETONOMY_URL . 'assets/js/view.min.js',
+			array( 'wp-interactivity' ),
+			JETONOMY_VERSION,
+			true
+		);
 	}
 
 	public static function register_blocks(): void {
