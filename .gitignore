@@ -4,3 +4,8 @@ node_modules/
 node_modules/
 .DS_Store
 dist/
+
+# QA / verification artefacts are temp data — not part of the repo.
+# Per-release screenshots and verification logs both fall here.
+docs/website/images/developer-guide/v[0-9]*/
+docs/plans/v*-verification.md
