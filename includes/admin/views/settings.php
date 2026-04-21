@@ -213,9 +213,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			$tl_defaults = \Jetonomy\Trust\Trust_Levels::defaults();
 			$rl_defaults = \Jetonomy\Permissions\Rate_Limiter::defaults();
 			$level_names = [
-				1 => __( 'Level 1 — Member', 'jetonomy' ),
-				2 => __( 'Level 2 — Regular', 'jetonomy' ),
-				3 => __( 'Level 3 — Trusted', 'jetonomy' ),
+				1 => __( 'Level 1: Member', 'jetonomy' ),
+				2 => __( 'Level 2: Regular', 'jetonomy' ),
+				3 => __( 'Level 3: Trusted', 'jetonomy' ),
 			];
 			?>
 
@@ -442,7 +442,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php
 				$email_templates = get_option( 'jetonomy_email_templates', array() );
 				$tmpl_types      = array(
-					'user_welcome'    => __( 'Welcome — new member', 'jetonomy' ),
+					'user_welcome'    => __( 'Welcome: new member', 'jetonomy' ),
 					'reply_to_post'   => __( 'Reply to your post', 'jetonomy' ),
 					'reply_to_reply'  => __( 'Reply to your reply', 'jetonomy' ),
 					'mention'         => __( 'Mention (@username)', 'jetonomy' ),
@@ -464,7 +464,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $tmpl_types as $type => $label ) :
+						<?php
+						foreach ( $tmpl_types as $type => $label ) :
 							$row     = isset( $email_templates[ $type ] ) && is_array( $email_templates[ $type ] ) ? $email_templates[ $type ] : array();
 							$subject = isset( $row['subject'] ) ? (string) $row['subject'] : '';
 							$body    = isset( $row['body'] ) ? (string) $row['body'] : '';
@@ -755,7 +756,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Social Embeds (Instagram & Facebook)', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'YouTube, Vimeo, TikTok, Twitter/X, Spotify, SoundCloud, and TED Talks embed automatically — no setup required. Instagram and Facebook require a free Meta Developer App because Meta deprecated anonymous oEmbed access in October 2020.', 'jetonomy' ); ?>
+						<?php esc_html_e( 'YouTube, Vimeo, TikTok, Twitter/X, Spotify, SoundCloud, and TED Talks embed automatically with no setup required. Instagram and Facebook require a free Meta Developer App because Meta deprecated anonymous oEmbed access in October 2020.', 'jetonomy' ); ?>
 					</p>
 				</div>
 				<table class="form-table">
@@ -794,7 +795,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<?php
 							printf(
 								/* translators: 1: "Other" use-case label, 2: "Business" app type label */
-								esc_html__( 'When asked "What do you want your app to do?", pick %1$s. When asked for the app type, pick %2$s. Name it anything — e.g. "My Forum Embeds".', 'jetonomy' ),
+								esc_html__( 'When asked "What do you want your app to do?", pick %1$s. When asked for the app type, pick %2$s. Name it anything, e.g. "My Forum Embeds".', 'jetonomy' ),
 								'<strong>' . esc_html__( 'Other', 'jetonomy' ) . '</strong>',
 								'<strong>' . esc_html__( 'Business', 'jetonomy' ) . '</strong>'
 							);
@@ -824,7 +825,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<?php
 							printf(
 								/* translators: 1: "App Review > Requests" breadcrumb, 2: "oembed_read" permission name */
-								esc_html__( 'Go to %1$s and request the %2$s permission. Meta typically approves in 1–3 business days. Your app stays in Development Mode until approved — embeds will work for the admin who created the app even before approval.', 'jetonomy' ),
+								esc_html__( 'Go to %1$s and request the %2$s permission. Meta typically approves in 1–3 business days. Your app stays in Development Mode until approved; embeds will work for the admin who created the app even before approval.', 'jetonomy' ),
 								'<strong>' . esc_html__( 'App Review → Requests', 'jetonomy' ) . '</strong>',
 								'<code>oembed_read</code>'
 							);
@@ -836,7 +837,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</ol>
 					<p style="margin:12px 0 0;padding:10px 12px;background:var(--jt-warn-light,#fff8e5);border-left:3px solid var(--jt-warn,#dba617);border-radius:4px;font-size:13px;">
 						<strong><?php esc_html_e( 'Privacy note:', 'jetonomy' ); ?></strong>
-						<?php esc_html_e( 'Jetonomy only sends oEmbed requests to Meta when a user pastes an Instagram/Facebook URL. No tracking, no user data — just the public post URL and your app token. Leave these fields blank to skip Instagram/Facebook embeds entirely; the URL will render as a plain clickable link.', 'jetonomy' ); ?>
+						<?php esc_html_e( 'Jetonomy only sends oEmbed requests to Meta when a user pastes an Instagram/Facebook URL. No tracking, no user data: just the public post URL and your app token. Leave these fields blank to skip Instagram/Facebook embeds entirely; the URL will render as a plain clickable link.', 'jetonomy' ); ?>
 					</p>
 				</details>
 			</div>
@@ -916,10 +917,10 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div style="text-align: center; padding: 12px 0;">
 					<h2 style="margin: 0 0 8px; font-size: 22px; color: #1F2937;"><?php esc_html_e( 'Unlock 13 Pro Extensions', 'jetonomy' ); ?></h2>
 					<p style="margin: 0 0 16px; color: #4B5563; font-size: 14px; max-width: 520px; margin-left: auto; margin-right: auto;">
-						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more — as independent modules you enable only when you need them.', 'jetonomy' ); ?>
+						<?php esc_html_e( 'Your community is growing. Give it reactions, messaging, polls, analytics, badges, webhooks, and more. Each feature is an independent module you enable only when you need it.', 'jetonomy' ); ?>
 					</p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary button-hero" target="_blank" style="font-size: 14px; padding: 8px 28px;">
-						<?php esc_html_e( 'Get Jetonomy Pro — Starting at $69/yr', 'jetonomy' ); ?>
+						<?php esc_html_e( 'Get Jetonomy Pro. Starting at $69/yr.', 'jetonomy' ); ?>
 					</a>
 					<p style="margin: 8px 0 0; font-size: 12px; color: #6B7280;">
 						<?php
@@ -934,14 +935,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Pro Extensions', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Each extension is independent — enable only what you need. Disabled extensions load zero code.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Each extension is independent. Enable only what you need. Disabled extensions load zero code.', 'jetonomy' ); ?></p>
 				</div>
 				<?php
 				$jt_pro_exts = [
 					[
 						'name' => __( 'Emoji Reactions', 'jetonomy' ),
 						'icon' => 'dashicons-heart',
-						'desc' => __( 'Like, love, celebrate — Slack-style reactions on posts and replies.', 'jetonomy' ),
+						'desc' => __( 'Like, love, and celebrate with Slack-style reactions on posts and replies.', 'jetonomy' ),
 						'tier' => 'Starter',
 					],
 					[
@@ -983,7 +984,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'Reply by Email', 'jetonomy' ),
 						'icon' => 'dashicons-email-alt2',
-						'desc' => __( 'Members reply to notifications by email — no login required.', 'jetonomy' ),
+						'desc' => __( 'Members reply to notifications by email. No login required.', 'jetonomy' ),
 						'tier' => 'Starter',
 					],
 					[
@@ -995,13 +996,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'Custom Fields', 'jetonomy' ),
 						'icon' => 'dashicons-forms',
-						'desc' => __( 'Add custom fields to posts and user profiles — text, select, checkbox, date, and more.', 'jetonomy' ),
+						'desc' => __( 'Add custom fields to posts and user profiles: text, select, checkbox, date, and more.', 'jetonomy' ),
 						'tier' => 'Growth',
 					],
 					[
 						'name' => __( 'Advanced Moderation', 'jetonomy' ),
 						'icon' => 'dashicons-shield',
-						'desc' => __( 'Auto-moderation rules engine — keyword filters, regex, link limits, spam scoring.', 'jetonomy' ),
+						'desc' => __( 'Auto-moderation rules engine: keyword filters, regex, link limits, and spam scoring.', 'jetonomy' ),
 						'tier' => 'Growth',
 					],
 					[
@@ -1013,7 +1014,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'White Label', 'jetonomy' ),
 						'icon' => 'dashicons-admin-appearance',
-						'desc' => __( 'Replace all Jetonomy branding — custom logo, name, footer, accent color, CSS.', 'jetonomy' ),
+						'desc' => __( 'Replace all Jetonomy branding: custom logo, name, footer, accent color, and CSS.', 'jetonomy' ),
 						'tier' => 'Agency',
 					],
 				];

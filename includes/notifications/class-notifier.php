@@ -71,7 +71,7 @@ class Notifier {
 		$site    = get_bloginfo( 'name' );
 		$message = sprintf(
 			/* translators: 1: display name, 2: site name */
-			__( 'Welcome to %2$s, %1$s — your account is ready. Jump into the community to introduce yourself, ask a question, or browse existing discussions.', 'jetonomy' ),
+			__( 'Welcome to %2$s, %1$s. Your account is ready. Jump into the community to introduce yourself, ask a question, or browse existing discussions.', 'jetonomy' ),
 			$user->display_name,
 			$site
 		);

@@ -235,7 +235,7 @@ class Template_Loader {
 				'bookmarked'         => __( 'Bookmarked', 'jetonomy' ),
 				'bookmarkRemoved'    => __( 'Bookmark removed', 'jetonomy' ),
 				'reportPrompt'       => __( 'Why are you reporting this post?', 'jetonomy' ),
-				'reportedThankYou'   => __( 'Reported — thank you', 'jetonomy' ),
+				'reportedThankYou'   => __( 'Reported. Thank you.', 'jetonomy' ),
 				'failedReport'       => __( 'Failed to submit report.', 'jetonomy' ),
 				'postPinned'         => __( 'Post pinned', 'jetonomy' ),
 				'postUnpinned'       => __( 'Post unpinned', 'jetonomy' ),
@@ -257,9 +257,11 @@ class Template_Loader {
 				'cancelReply'        => __( 'Cancel reply', 'jetonomy' ),
 				'posting'            => __( 'Posting...', 'jetonomy' ),
 				'postTopic'          => __( 'Post Topic', 'jetonomy' ),
-				'newReply'           => __( '%d new reply — click to refresh', 'jetonomy' ),
-				'newReplies'         => __( '%d new replies — click to refresh', 'jetonomy' ),
+				'newReply'           => __( '%d new reply. Click to refresh.', 'jetonomy' ),
+				'newReplies'         => __( '%d new replies. Click to refresh.', 'jetonomy' ),
 				'linkCopied'         => __( 'Link copied', 'jetonomy' ),
+				'titleRequired'      => __( 'Please enter a title for your topic.', 'jetonomy' ),
+				'bodyRequired'       => __( 'Please add some details before posting.', 'jetonomy' ),
 			),
 			)
 		);

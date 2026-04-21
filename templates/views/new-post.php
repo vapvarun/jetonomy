@@ -163,7 +163,7 @@ $type_label     = $type_defaults['label'];
 			<label class="jt-checkbox-label">
 				<input type="checkbox" name="is_private" value="1" id="jt-post-private">
 				<?php jetonomy_echo_icon( 'lock', 14 ); ?>
-				<?php esc_html_e( 'Private — only you and moderators can see this topic', 'jetonomy' ); ?>
+				<?php esc_html_e( 'Private: only you and moderators can see this topic', 'jetonomy' ); ?>
 			</label>
 		</div>
 		<?php endif; ?>

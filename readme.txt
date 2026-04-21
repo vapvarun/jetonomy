@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.3.6
+Stable tag: 1.3.7
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,21 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.3.7 - April 2026 =
+
+* New: Members can now start a new topic from any page on your site. Drop the new "Jetonomy Compose Topic" block onto a landing page, sidebar, or footer (or use the [jetonomy_compose_topic] shortcode if you prefer) and signed-in members get a clean composer right where they are. Works in the Site Editor, Elementor, Divi, Bricks, WPBakery, and any other page builder. Choose between a single fixed space or a picker that shows only the spaces the member can actually post in. Visitors who aren't signed in see a friendly "Join the conversation" prompt with sign-in and register links instead of a broken form.
+* New: Sign-in prompt on the compose-topic block welcomes visitors with a Lucide chat icon, a one-line invitation that mentions the target space by name, and side-by-side "Sign in to post" and "Create an account" buttons. The register link only appears when registration is open in your WP settings.
+* Fixed: Share button on a single topic now opens a share menu in the right place. Previously it was rendering off-screen on most themes — clicking it appeared to do nothing. The dropdown also picks up crisp icons for Copy link, Twitter/X, Facebook, and LinkedIn, and auto-flips above the button when there's no room below.
+* Fixed: Posting a topic without filling in the body used to silently reset the form with no feedback. You now see a clear inline message asking for the missing field, and Pro Polls topics get the same protection.
+* Fixed: Editing a topic that contained an uploaded image no longer wipes the image when you save. Same fix lands for replies, so embeds, images, and formatting all survive an edit cleanly.
+* Fixed: TikTok video previews and embedded players now work everywhere. Pasting a TikTok URL from the mobile Share button (the short tiktok.com/t/... links) used to leave you with just a hyperlink and a generic "TikTok – Make Your Day" card instead of the actual video. The same fix covers Twitter (t.co), Reddit (redd.it and the new mobile share links), Facebook (fb.watch), and Spotify (spoti.fi), so paste-from-app flows across all major platforms now produce the proper rich preview or embedded player. Also fixes x.com tweets that previously fell back to a plain link.
+* Fixed: Embedded TikTok, Instagram, and Twitter posts no longer pick up your theme's blockquote styling — no more out-of-place blue or grey side borders, italic text, or tinted backgrounds on social embeds. Tested across BuddyX, Reign, and Twenty Twenty-* themes.
+* Improved: Reaction picker no longer disappears on sites with emoji rendering disabled. Reactions are now drawn as crisp colour SVG icons that look identical on every browser, operating system, and host configuration.
+* Improved: Block inserter now reliably finds every Jetonomy block. Some users reported having to refresh repeatedly to make blocks appear in the inserter — that's fixed for all blocks with an editor script.
+* Improved: The compose-topic block's CSS and JavaScript only load on pages that actually use the block, so pages without it pay no overhead.
+
+Upgrading from 1.3.6 does not require any migration; nothing in your database changes.
 
 = 1.3.6 - April 2026 =
 

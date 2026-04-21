@@ -144,5 +144,9 @@
 	     verbatim and would need 400+ silencing comments otherwise. -->
 	<exclude-pattern>tools/*</exclude-pattern>
 	<exclude-pattern>bin/*</exclude-pattern>
+	<!-- Test files are under their own conventions (PHPUnit naming, factory
+	     fixtures, intentionally global constants like ABSPATH). The pre-commit
+	     hook still runs PHPStan against tests/ for type safety. -->
+	<exclude-pattern>tests/*</exclude-pattern>
 
 </ruleset>

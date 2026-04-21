@@ -27,6 +27,11 @@ class Blocks {
 		// Register the login-block script once; the render callback enqueues
 		// it only on pages that actually contain the block.
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_block_assets' ) );
+		// Also register on the editor side so `editor_script` handles
+		// resolve inside /wp-admin/ (otherwise the inserter never learns
+		// about our blocks — the 1.3.7 compose-topic regression test surfaced
+		// this latent issue).
+		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'register_block_assets' ) );
 
 		// Auto-inject Login / User Panel at the top of the community sidebar
 		// so every theme gets a first-class auth + profile jump point
@@ -51,6 +56,35 @@ class Blocks {
 			'jetonomy-login-block',
 			JETONOMY_URL . 'assets/js/login-block.js',
 			array(),
+			JETONOMY_VERSION,
+			true
+		);
+
+		// Compose-topic block/shortcode piggybacks on the main view bundle —
+		// that's where the Interactivity API `jetonomy` store lives. Registering
+		// it here (not on community routes only) lets the block/shortcode work
+		// on any page or page-builder canvas.
+		//
+		// NOTE: view.js uses ES module imports (`import { store } from
+		// '@wordpress/interactivity'`) so it MUST be registered as a JS module,
+		// not a traditional script — otherwise the browser rejects the file.
+		// The main template loader also enqueues this module on community
+		// routes; WordPress dedupes by handle so registering here is safe.
+		if ( function_exists( 'wp_register_script_module' ) ) {
+			wp_register_script_module(
+				'jetonomy-compose-topic',
+				JETONOMY_URL . 'assets/js/view.js',
+				array( '@wordpress/interactivity' ),
+				JETONOMY_VERSION
+			);
+		}
+
+		// Block-editor preview (no live REST — pure static mock so dropping
+		// the block is safe and fast inside the editor).
+		wp_register_script(
+			'jetonomy-compose-topic-block',
+			JETONOMY_URL . 'assets/js/compose-topic-block.js',
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-block-editor', 'wp-components' ),
 			JETONOMY_VERSION,
 			true
 		);
@@ -221,7 +255,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_user_panel' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Jetonomy User Panel', 'jetonomy' ),
-				'description'     => __( 'Logged-in profile card for the sidebar — avatar, notifications, profile, logout. Empty for logged-out viewers.', 'jetonomy' ),
+				'description'     => __( 'Logged-in profile card for the sidebar: avatar, notifications, profile, and logout. Empty for logged-out viewers.', 'jetonomy' ),
 				'icon'            => 'id',
 				'keywords'        => array( 'profile', 'user', 'sidebar', 'notifications', 'jetonomy' ),
 			)
@@ -247,6 +281,35 @@ class Blocks {
 				'description'     => __( 'Quick login and register form for the Jetonomy sidebar. Renders empty for logged-in viewers.', 'jetonomy' ),
 				'icon'            => 'admin-users',
 				'keywords'        => array( 'login', 'register', 'signin', 'jetonomy' ),
+			)
+		);
+
+		register_block_type(
+			'jetonomy/compose-topic',
+			array(
+				'api_version'     => '3',
+				'attributes'      => array(
+					'mode'    => array(
+						'type'    => 'string',
+						'enum'    => array( 'picker', 'fixed' ),
+						'default' => 'picker',
+					),
+					'spaceId' => array(
+						'type'    => 'number',
+						'default' => 0,
+					),
+					'types'   => array(
+						'type'    => 'string',
+						'default' => 'topic,question,idea',
+					),
+				),
+				'render_callback' => array( __CLASS__, 'render_compose_topic' ),
+				'category'        => 'widgets',
+				'title'           => __( 'Jetonomy Compose Topic', 'jetonomy' ),
+				'description'     => __( 'Let signed-in members start a new topic from any page. Fixed-space mode or member-only picker.', 'jetonomy' ),
+				'icon'            => 'edit-page',
+				'keywords'        => array( 'compose', 'topic', 'post', 'form', 'new', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-compose-topic-block',
 			)
 		);
 	}
@@ -782,5 +845,28 @@ class Blocks {
 		wp_set_auth_cookie( (int) $user_id, false, is_ssl() );
 
 		wp_send_json_success( array( 'message' => __( 'Account created. Reloading…', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * Render the Compose Topic block.
+	 *
+	 * Delegates straight to the shortcode so both entry points share one
+	 * codepath and stay in lockstep — the shortcode owns the partial render,
+	 * asset enqueue, and logged-out CTA.
+	 */
+	public static function render_compose_topic( array $attributes ): string {
+		$mode     = isset( $attributes['mode'] ) && in_array( $attributes['mode'], array( 'picker', 'fixed' ), true )
+			? $attributes['mode']
+			: 'picker';
+		$space_id = isset( $attributes['spaceId'] ) ? absint( $attributes['spaceId'] ) : 0;
+		$types    = isset( $attributes['types'] ) ? (string) $attributes['types'] : 'topic,question,idea';
+
+		$sc = '[jetonomy_compose_topic'
+			. ' mode="' . esc_attr( $mode ) . '"'
+			. ' space_id="' . $space_id . '"'
+			. ' types="' . esc_attr( $types ) . '"'
+			. ']';
+
+		return '<div class="wp-block-jetonomy-compose-topic">' . do_shortcode( $sc ) . '</div>';
 	}
 }

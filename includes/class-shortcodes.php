@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * [jetonomy_leaderboard]    — Top members by reputation.
  * [jetonomy_user_profile]   — Single user profile card.
  * [jetonomy_space_members]  — Member list for a space.
+ * [jetonomy_compose_topic]  — Inline topic composer (fixed space or member picker).
  */
 class Shortcodes {
 
@@ -28,6 +29,7 @@ class Shortcodes {
 		add_shortcode( 'jetonomy_leaderboard', array( __CLASS__, 'leaderboard' ) );
 		add_shortcode( 'jetonomy_user_profile', array( __CLASS__, 'user_profile' ) );
 		add_shortcode( 'jetonomy_space_members', array( __CLASS__, 'space_members' ) );
+		add_shortcode( 'jetonomy_compose_topic', array( __CLASS__, 'compose_topic' ) );
 	}
 
 	/**
@@ -125,7 +127,7 @@ class Shortcodes {
 		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet — check back soon.', 'jetonomy' ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet. Check back soon.', 'jetonomy' ) . '</div>';
 		}
 
 		$rank = 0;
@@ -347,5 +349,139 @@ class Shortcodes {
 		$out .= '</div>';
 
 		return $out;
+	}
+
+	/**
+	 * [jetonomy_compose_topic mode="picker|fixed" space_id="" types="topic,question,idea"]
+	 *
+	 * Inline topic composer usable on any WordPress page or page-builder canvas.
+	 * In `picker` mode shows a <select> of spaces the current user is a member
+	 * of and can post in. In `fixed` mode posts directly to the given space;
+	 * invalid/missing space IDs degrade to picker so the block never silently
+	 * breaks when a space is renumbered or deleted.
+	 */
+	public static function compose_topic( $atts ): string {
+		$atts = shortcode_atts(
+			array(
+				'mode'     => 'picker',
+				'space_id' => 0,
+				'types'    => 'topic,question,idea',
+			),
+			$atts,
+			'jetonomy_compose_topic'
+		);
+
+		$mode     = in_array( $atts['mode'], array( 'fixed', 'picker' ), true ) ? $atts['mode'] : 'picker';
+		$space_id = absint( $atts['space_id'] );
+		$types    = array_values(
+			array_filter(
+				array_map( 'trim', explode( ',', (string) $atts['types'] ) )
+			)
+		);
+		if ( empty( $types ) ) {
+			$types = array( 'topic', 'question', 'idea' );
+		}
+
+		$space    = null;
+		$postable = array();
+
+		if ( 'fixed' === $mode && $space_id ) {
+			$space = \Jetonomy\Models\Space::find( $space_id );
+			// If the fixed space is invalid, fall through to picker-mode data.
+			if ( ! $space ) {
+				$mode = 'picker';
+			}
+		}
+
+		if ( 'picker' === $mode ) {
+			$postable = self::postable_spaces_for_current_user();
+		}
+
+		// Shortcode can be rendered in any context (page builders, widgets,
+		// custom post types). Register the CSS handle defensively here in case
+		// we beat `wp_enqueue_scripts`. The JS module is registered in
+		// Blocks::register_block_assets() — WordPress dedupes by handle.
+		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
+			wp_register_style( 'jetonomy-blocks', JETONOMY_URL . 'assets/css/blocks.css', array(), JETONOMY_VERSION );
+		}
+		wp_enqueue_style( 'jetonomy-blocks' );
+		if ( function_exists( 'wp_enqueue_script_module' ) ) {
+			wp_enqueue_script_module( 'jetonomy-compose-topic' );
+		}
+
+		// Seed the Interactivity API state with the REST base + nonce.
+		// Template_Loader seeds the full state on community pages; here we
+		// need the minimum needed for submit (apiBase, nonce, communityBase,
+		// i18n.*) so the embed works on any WP page. wp_interactivity_state
+		// merges keys across callers, so this is additive.
+		if ( function_exists( 'wp_interactivity_state' ) ) {
+			$settings = (array) get_option( 'jetonomy_settings', array() );
+			wp_interactivity_state(
+				'jetonomy',
+				array(
+					'apiBase'       => rest_url( 'jetonomy/v1' ),
+					'_nonce'        => wp_create_nonce( 'wp_rest' ),
+					'nonce'         => wp_create_nonce( 'wp_rest' ),
+					'communityBase' => home_url( '/' . ( isset( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community' ) ),
+					'i18n'          => array(
+						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
+						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
+						'couldNotCreate' => __( 'Could not create the topic.', 'jetonomy' ),
+						'networkError'   => __( 'Network error. Please try again.', 'jetonomy' ),
+					),
+				)
+			);
+		}
+
+		ob_start();
+		Template_Loader::partial(
+			'compose-topic-embed',
+			array(
+				'mode'     => $mode,
+				'space_id' => $space_id,
+				'space'    => $space,
+				'postable' => $postable,
+				'types'    => $types,
+			)
+		);
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Spaces the current user is a member of AND can create posts in.
+	 *
+	 * @return \stdClass[] Space rows (id, slug, title, visibility, etc.).
+	 */
+	private static function postable_spaces_for_current_user(): array {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return array();
+		}
+
+		$memberships = \Jetonomy\Models\SpaceMember::list_user_spaces( $user_id );
+		if ( empty( $memberships ) ) {
+			return array();
+		}
+
+		$spaces = array();
+		foreach ( $memberships as $m ) {
+			$sid = (int) $m->space_id;
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid ) ) {
+				continue;
+			}
+			$space = \Jetonomy\Models\Space::find( $sid );
+			if ( $space ) {
+				$spaces[] = $space;
+			}
+		}
+
+		usort(
+			$spaces,
+			static function ( $a, $b ) {
+				return strcasecmp( (string) $a->title, (string) $b->title );
+			}
+		);
+
+		return $spaces;
 	}
 }

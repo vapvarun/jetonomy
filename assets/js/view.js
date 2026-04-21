@@ -550,21 +550,27 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyCard.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            // innerText (not textContent) preserves paragraph breaks between
-            // block elements as \n\n, so the textarea mirrors what the user
-            // sees. The display filter re-wraps on save via wpautop.
-            const plainText = bodyEl.innerText.trim();
+            // [Basecamp 9808714691 analog — same root cause as editPost]
+            // Old implementation used bodyEl.innerText into a <textarea>, so
+            // images, links, and inline formatting were stripped every time
+            // a user edited a reply. Now we use a contenteditable div seeded
+            // with bodyEl.innerHTML, and submit innerHTML on save. Server-
+            // side wp_kses_post (Replies_Controller::update_item) still
+            // polices which tags survive.
             bodyEl.style.display = 'none';
 
             const editor = document.createElement( 'div' );
             editor.className = 'jt-reply-editor';
             editor.style.cssText = 'margin:8px 0';
 
-            const textarea = document.createElement( 'textarea' );
-            textarea.className = 'jt-input';
-            textarea.value = plainText;
-            textarea.rows = 4;
-            textarea.style.cssText = 'width:100%;resize:vertical';
+            const editable = document.createElement( 'div' );
+            editable.className = 'jt-reply-editor-body jt-input';
+            editable.contentEditable = 'true';
+            editable.setAttribute( 'role', 'textbox' );
+            editable.setAttribute( 'aria-multiline', 'true' );
+            editable.setAttribute( 'aria-label', state.i18n?.editReply || 'Edit reply' );
+            editable.style.cssText = 'width:100%;min-height:4rem;padding:0.5rem 0.75rem;box-sizing:border-box;';
+            editable.innerHTML = bodyEl.innerHTML.trim();
 
             const btnRow = document.createElement( 'div' );
             btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:8px';
@@ -580,9 +586,16 @@ const { state, actions } = store( 'jetonomy', {
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
-            editor.append( textarea, btnRow );
+            editor.append( editable, btnRow );
             bodyEl.after( editor );
-            textarea.focus();
+            editable.focus();
+            // Caret to end of content (matches editPost behaviour).
+            const range = document.createRange();
+            range.selectNodeContents( editable );
+            range.collapse( false );
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange( range );
 
             cancelBtn.addEventListener( 'click', () => {
                 editor.remove();
@@ -590,8 +603,10 @@ const { state, actions } = store( 'jetonomy', {
             } );
 
             saveBtn.addEventListener( 'click', async () => {
-                const content = textarea.value.trim();
-                if ( ! content ) return;
+                const content     = editable.innerHTML.trim();
+                const plainCheck  = ( editable.textContent || '' ).trim();
+                const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
+                if ( ! plainCheck && ! hasMediaTag ) return;
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -717,33 +732,89 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Share post ──
+        //
+        // [Basecamp 9808920407] — Previously the dropdown was inserted as a
+        // SIBLING of the share button via `el.ref.after()` and positioned with
+        // CSS `bottom: 100%; left: 0`. Two compounding problems:
+        //   1. `position: absolute` anchors to the nearest positioned ancestor,
+        //      not a sibling — so the dropdown anchored to `.jt-post-foot` (the
+        //      shared parent), which is wider than the button and at the bottom
+        //      of the post card. With `bottom: 100%` the dropdown rendered
+        //      ~180px ABOVE that container, which for posts near the viewport
+        //      top put it off-screen at `top: -184.57px`. User saw "nothing".
+        //   2. The `.jt-more-dropdown` sibling pattern was fixed the same way
+        //      in 1.3.6 (Basecamp 9803818273 — see jetonomy.css `.jt-more-
+        //      dropdown` comment). Share was a missed sibling.
+        // Fix: append the dropdown to document.body with `position: fixed` and
+        // viewport-computed coordinates. Layout of `.jt-post-foot` can no
+        // longer affect anchoring. Right-aligned to the button's right edge,
+        // clamped to the viewport left edge so it never overflows horizontally.
         sharePost() {
             const el = getElement();
             const url = el.ref.dataset.postUrl;
             const title = el.ref.dataset.postTitle;
             if ( ! url ) return;
 
-            let dropdown = el.ref.parentElement.querySelector( '.jt-share-dropdown' );
-            if ( dropdown ) { dropdown.remove(); return; }
+            // Toggle: if a dropdown opened by this button is already on the
+            // page, close it instead of opening a second one.
+            const existing = document.querySelector( '.jt-share-dropdown[data-jt-owner="' + el.ref.id + '"]' );
+            if ( existing ) { existing.remove(); return; }
+            // Also clear any stale dropdown from a previous button (e.g. the
+            // user clicked a different post's share before closing the last).
+            document.querySelectorAll( '.jt-share-dropdown' ).forEach( ( n ) => n.remove() );
 
-            dropdown = document.createElement( 'div' );
+            const dropdown = document.createElement( 'div' );
             dropdown.className = 'jt-share-dropdown';
+            if ( ! el.ref.id ) {
+                el.ref.id = 'jt-share-btn-' + Math.random().toString( 36 ).slice( 2, 9 );
+            }
+            dropdown.dataset.jtOwner = el.ref.id;
 
             const encodedUrl = encodeURIComponent( url );
             const encodedTitle = encodeURIComponent( title || '' );
 
+            // Lucide SVG icons (MIT). Mirror the files at
+            // assets/icons/{link,twitter-x,facebook,linkedin}.svg so the PHP
+            // side can render the same glyphs via jetonomy_echo_icon().
+            // Paths use stroke="currentColor" so they inherit the dropdown
+            // item's text color (default + hover).
+            const LUCIDE = {
+                link:     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+                x:        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16"/><path d="M20 4L4 20"/></svg>',
+                facebook: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
+                linkedin: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>',
+            };
+
             const items = [
-                { label: state.i18n?.copyLink || 'Copy link', icon: '\u{1F517}', action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
-                { label: 'Twitter / X', icon: '\u{1D54F}', href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
-                { label: 'Facebook', icon: 'f', href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
-                { label: 'LinkedIn', icon: 'in', href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
+                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
+                { label: 'Twitter / X',                        icon: LUCIDE.x,        href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
+                { label: 'Facebook',                           icon: LUCIDE.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
+                { label: 'LinkedIn',                           icon: LUCIDE.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
             ];
+
+            // Parse a trusted Lucide SVG string (static constants above) into
+            // a real SVGElement node. DOMParser avoids any innerHTML
+            // assignment, which keeps the security linter + reviewers happy.
+            const parseSvg = ( svgString ) => {
+                const doc = new DOMParser().parseFromString( svgString, 'image/svg+xml' );
+                return doc.documentElement;
+            };
 
             items.forEach( item => {
                 const btn = document.createElement( 'button' );
                 btn.className = 'jt-share-item';
                 btn.type = 'button';
-                btn.textContent = `${ item.icon } ${ item.label }`;
+
+                const iconSlot = document.createElement( 'span' );
+                iconSlot.className = 'jt-share-item-icon';
+                iconSlot.appendChild( parseSvg( item.icon ) );
+                btn.appendChild( iconSlot );
+
+                const labelNode = document.createElement( 'span' );
+                labelNode.className = 'jt-share-item-label';
+                labelNode.textContent = item.label;
+                btn.appendChild( labelNode );
+
                 if ( item.href ) {
                     btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); dropdown.remove(); } );
                 } else if ( item.action ) {
@@ -752,11 +823,35 @@ const { state, actions } = store( 'jetonomy', {
                 dropdown.appendChild( btn );
             } );
 
-            el.ref.style.position = 'relative';
-            el.ref.after( dropdown );
+            // Position using viewport coordinates — `fixed` so no ancestor
+            // layout can displace us. Append to body so z-index stacking is
+            // predictable (no accidental clipping by `overflow: hidden` in a
+            // card). Apply `position: fixed` BEFORE insertion so the dropdown
+            // shrinks to content width (display:block default would take full
+            // body width and blow up offsetWidth).
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = '-9999px';
+            dropdown.style.left = '-9999px';
+            document.body.appendChild( dropdown );
+            const rect = el.ref.getBoundingClientRect();
+            const dropWidth = dropdown.offsetWidth || 176;
+            const dropHeight = dropdown.offsetHeight || 180;
+            const gap = 4;
+            let top = rect.bottom + gap;
+            let left = rect.right - dropWidth;
+            if ( left < 8 ) left = 8;                                        // clamp to left viewport edge
+            if ( left + dropWidth > window.innerWidth - 8 ) {                 // clamp to right viewport edge
+                left = window.innerWidth - dropWidth - 8;
+            }
+            // If there's not enough room below, flip above the button.
+            if ( top + dropHeight > window.innerHeight - 8 && rect.top > dropHeight + gap + 8 ) {
+                top = rect.top - dropHeight - gap;
+            }
+            dropdown.style.top = top + 'px';
+            dropdown.style.left = left + 'px';
 
             const closeHandler = ( e ) => {
-                if ( ! dropdown.contains( e.target ) && e.target !== el.ref ) {
+                if ( ! dropdown.contains( e.target ) && e.target !== el.ref && ! el.ref.contains( e.target ) ) {
                     dropdown.remove();
                     document.removeEventListener( 'click', closeHandler );
                 }
@@ -905,19 +1000,35 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = article.querySelector( '.jt-post-body' );
             if ( ! bodyEl ) return;
 
-            // See reply editor above — innerText preserves \n\n between paragraphs.
-            const plainText = bodyEl.innerText.trim();
+            // [Basecamp 9808714691 part 2] Previously this editor used a
+            // <textarea> seeded with bodyEl.innerText.trim() — which strips
+            // <img> tags and all HTML. On save the plain text was PATCHed
+            // back and the server's wp_kses_post pass had no image markup to
+            // preserve, so uploaded images were silently dropped from every
+            // edited post.
+            //
+            // Fix: render the editor as a contenteditable <div> seeded with
+            // bodyEl.innerHTML. The server already kses'd this markup before
+            // we rendered it, so re-using it as editor source is safe. On
+            // save we send editor.innerHTML so images, links, and inline
+            // formatting round-trip intact. Text-only edits still work —
+            // the user just types and the image stays visible in place.
             bodyEl.style.display = 'none';
 
             const editor = document.createElement( 'div' );
             editor.className = 'jt-post-editor';
             editor.style.cssText = 'margin:8px 0';
 
-            const textarea = document.createElement( 'textarea' );
-            textarea.className = 'jt-input';
-            textarea.value = plainText;
-            textarea.rows = 6;
-            textarea.style.cssText = 'width:100%;resize:vertical';
+            const editable = document.createElement( 'div' );
+            editable.className = 'jt-post-editor-body jt-input';
+            editable.contentEditable = 'true';
+            editable.setAttribute( 'role', 'textbox' );
+            editable.setAttribute( 'aria-multiline', 'true' );
+            editable.setAttribute( 'aria-label', state.i18n?.editPost || 'Edit post' );
+            editable.style.cssText = 'width:100%;min-height:6rem;padding:0.5rem 0.75rem;box-sizing:border-box;';
+            // Preserve the original HTML (including any <img>, <a>, <strong>,
+            // etc.). This is the whole fix — innerHTML instead of innerText.
+            editable.innerHTML = bodyEl.innerHTML.trim();
 
             const btnRow = document.createElement( 'div' );
             btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:8px';
@@ -933,9 +1044,17 @@ const { state, actions } = store( 'jetonomy', {
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
-            editor.append( textarea, btnRow );
+            editor.append( editable, btnRow );
             bodyEl.after( editor );
-            textarea.focus();
+            // Move caret to end of existing content so the user can continue
+            // typing without losing position — UX parity with textarea focus.
+            editable.focus();
+            const range = document.createRange();
+            range.selectNodeContents( editable );
+            range.collapse( false );
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange( range );
 
             cancelBtn.addEventListener( 'click', () => {
                 editor.remove();
@@ -943,8 +1062,14 @@ const { state, actions } = store( 'jetonomy', {
             } );
 
             saveBtn.addEventListener( 'click', async () => {
-                const content = textarea.value.trim();
-                if ( ! content ) return;
+                // Use innerHTML for the payload — the server wp_kses_post's
+                // it on receive so anything disallowed is stripped there.
+                // Validate with textContent so an "all whitespace / empty
+                // tags" editor doesn't trip us into submitting nothing.
+                const content     = editable.innerHTML.trim();
+                const plainCheck  = ( editable.textContent || '' ).trim();
+                const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
+                if ( ! plainCheck && ! hasMediaTag ) return;
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -1614,14 +1739,32 @@ const { state, actions } = store( 'jetonomy', {
             // Close publish menu if open.
             state.publishMenuOpen = false;
 
-            const form = getElement().ref;
-            const title = form.querySelector('[name="title"]')?.value?.trim();
-            const content = form.querySelector('[contenteditable]')?.innerHTML?.trim();
-            const tags = form.querySelector('[name="tags"]')?.value?.trim();
+            const form     = getElement().ref;
+            const title    = form.querySelector('[name="title"]')?.value?.trim();
+            const bodyEl   = form.querySelector('[contenteditable]');
+            // innerHTML is what we send to the server (preserves Markdown,
+            // inline formatting, embeds). textContent is what we validate
+            // against, because an "interacted-with-then-cleared" contentedi-
+            // table commonly leaves <br> or &nbsp; in innerHTML which are
+            // truthy — that false-negative was the root cause of Basecamp
+            // 9808714691 ("no validation message is shown for empty content").
+            const content      = bodyEl?.innerHTML?.trim() || '';
+            const contentPlain = ( bodyEl?.textContent || '' ).trim();
+            const tags     = form.querySelector('[name="tags"]')?.value?.trim();
 
-            if ( ! title || ! content ) {
+            const resetForRetry = () => {
                 state.isSubmitting = false;
-                state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+                state.submitLabel  = state.i18n?.postTopic || 'Post Topic';
+            };
+
+            if ( ! title ) {
+                state.submitError = state.i18n?.titleRequired || 'Please enter a title for your topic.';
+                resetForRetry();
+                return;
+            }
+            if ( ! contentPlain ) {
+                state.submitError = state.i18n?.bodyRequired || 'Please add some details before posting.';
+                resetForRetry();
                 return;
             }
 
@@ -1838,6 +1981,82 @@ const { state, actions } = store( 'jetonomy', {
                 }
             } catch {
                 // Silent fail for polling
+            }
+        },
+
+        // ── Compose Topic embed (1.3.7) ──
+        // Inline topic composer usable on any WordPress page — fixed-space or
+        // member picker. Shares submit plumbing with submitNewPost but works
+        // against local context only (no form element / CAPTCHA / scheduler).
+        composeTopicSelectSpace( e ) {
+            const ctx = getContext();
+            ctx.spaceId = parseInt( e.target.value, 10 ) || 0;
+            ctx.error   = '';
+        },
+        composeTopicTitleInput( e ) {
+            const ctx = getContext();
+            ctx.title = e.target.value;
+            if ( ctx.error ) ctx.error = '';
+        },
+        composeTopicBodyInput( e ) {
+            const ctx = getContext();
+            ctx.body = e.target.value;
+            if ( ctx.error ) ctx.error = '';
+        },
+        *composeTopicSubmit() {
+            const ctx = getContext();
+            ctx.error = '';
+
+            if ( ! ctx.spaceId ) {
+                ctx.error = state.i18n?.chooseSpace || 'Choose a space first.';
+                return;
+            }
+            if ( ! ctx.title || ! ctx.title.trim() ) {
+                ctx.error = state.i18n?.titleRequired || 'Title is required.';
+                return;
+            }
+
+            ctx.submitting = true;
+            try {
+                const res = yield fetch(
+                    `${ state.apiBase }/spaces/${ ctx.spaceId }/posts`,
+                    {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': state.nonce,
+                        },
+                        body: JSON.stringify( {
+                            title:   ctx.title.trim(),
+                            content: ( ctx.body || '' ).trim(),
+                            type:    ctx.postType || 'topic',
+                        } ),
+                    }
+                );
+
+                if ( ! res.ok ) {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    ctx.error = ( err && err.message )
+                        ? err.message
+                        : ( state.i18n?.couldNotCreate || 'Could not create the topic.' );
+                    ctx.submitting = false;
+                    return;
+                }
+
+                const data      = yield res.json();
+                const slug      = data.slug || data.data?.slug || '';
+                const spaceSlug = data.space_slug || data.data?.space_slug || '';
+                if ( slug && spaceSlug && state.communityBase ) {
+                    window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
+                    return;
+                }
+                // Fallback: hard reload so the user sees their new topic
+                // wherever the embed hosts page redirects them.
+                window.location.reload();
+            } catch {
+                ctx.error = state.i18n?.networkError || 'Network error — try again.';
+                ctx.submitting = false;
             }
         },
     },
