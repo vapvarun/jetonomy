@@ -260,6 +260,8 @@ class Template_Loader {
 				'newReply'           => __( '%d new reply — click to refresh', 'jetonomy' ),
 				'newReplies'         => __( '%d new replies — click to refresh', 'jetonomy' ),
 				'linkCopied'         => __( 'Link copied', 'jetonomy' ),
+				'titleRequired'      => __( 'Please enter a title for your topic.', 'jetonomy' ),
+				'bodyRequired'       => __( 'Please add some details before posting.', 'jetonomy' ),
 			),
 			)
 		);

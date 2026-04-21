@@ -1694,14 +1694,32 @@ const { state, actions } = store( 'jetonomy', {
             // Close publish menu if open.
             state.publishMenuOpen = false;
 
-            const form = getElement().ref;
-            const title = form.querySelector('[name="title"]')?.value?.trim();
-            const content = form.querySelector('[contenteditable]')?.innerHTML?.trim();
-            const tags = form.querySelector('[name="tags"]')?.value?.trim();
+            const form     = getElement().ref;
+            const title    = form.querySelector('[name="title"]')?.value?.trim();
+            const bodyEl   = form.querySelector('[contenteditable]');
+            // innerHTML is what we send to the server (preserves Markdown,
+            // inline formatting, embeds). textContent is what we validate
+            // against, because an "interacted-with-then-cleared" contentedi-
+            // table commonly leaves <br> or &nbsp; in innerHTML which are
+            // truthy — that false-negative was the root cause of Basecamp
+            // 9808714691 ("no validation message is shown for empty content").
+            const content      = bodyEl?.innerHTML?.trim() || '';
+            const contentPlain = ( bodyEl?.textContent || '' ).trim();
+            const tags     = form.querySelector('[name="tags"]')?.value?.trim();
 
-            if ( ! title || ! content ) {
+            const resetForRetry = () => {
                 state.isSubmitting = false;
-                state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+                state.submitLabel  = state.i18n?.postTopic || 'Post Topic';
+            };
+
+            if ( ! title ) {
+                state.submitError = state.i18n?.titleRequired || 'Please enter a title for your topic.';
+                resetForRetry();
+                return;
+            }
+            if ( ! contentPlain ) {
+                state.submitError = state.i18n?.bodyRequired || 'Please add some details before posting.';
+                resetForRetry();
                 return;
             }
 
