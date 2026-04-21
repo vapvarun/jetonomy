@@ -71,11 +71,17 @@ class Blocks {
 		// The main template loader also enqueues this module on community
 		// routes; WordPress dedupes by handle so registering here is safe.
 		if ( function_exists( 'wp_register_script_module' ) ) {
+			// Asset version uses filemtime() (with the plugin version as a
+			// fallback) so any in-place hotfix shipped under the same plugin
+			// version still busts browser + CDN caches.
+			$view_file    = JETONOMY_DIR . 'assets/js/view.js';
+			$view_mtime   = file_exists( $view_file ) ? (string) filemtime( $view_file ) : '';
+			$view_version = '' !== $view_mtime ? JETONOMY_VERSION . '+' . $view_mtime : JETONOMY_VERSION;
 			wp_register_script_module(
 				'jetonomy-compose-topic',
 				JETONOMY_URL . 'assets/js/view.js',
 				array( '@wordpress/interactivity' ),
-				JETONOMY_VERSION
+				$view_version
 			);
 		}
 

@@ -266,12 +266,19 @@ class Template_Loader {
 			)
 		);
 
-		// Enqueue Interactivity API module
+		// Enqueue Interactivity API module. Asset version uses filemtime()
+		// (with the plugin version as a fallback) so any in-place hotfix
+		// shipped under the same plugin version still busts browser + CDN
+		// caches — a site stuck on a cached view.js?ver=x.y.z would
+		// otherwise never pick up an x.y.z hotfix.
+		$view_file    = JETONOMY_DIR . 'assets/js/view.js';
+		$view_mtime   = file_exists( $view_file ) ? (string) filemtime( $view_file ) : '';
+		$view_version = '' !== $view_mtime ? JETONOMY_VERSION . '+' . $view_mtime : JETONOMY_VERSION;
 		wp_enqueue_script_module(
 			'jetonomy-view',
 			JETONOMY_URL . 'assets/js/view.js',
 			array( '@wordpress/interactivity' ),
-			JETONOMY_VERSION
+			$view_version
 		);
 
 		// Shared global for non-Interactivity JS on community pages (link preview
