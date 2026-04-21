@@ -550,21 +550,27 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = replyCard.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
 
-            // innerText (not textContent) preserves paragraph breaks between
-            // block elements as \n\n, so the textarea mirrors what the user
-            // sees. The display filter re-wraps on save via wpautop.
-            const plainText = bodyEl.innerText.trim();
+            // [Basecamp 9808714691 analog — same root cause as editPost]
+            // Old implementation used bodyEl.innerText into a <textarea>, so
+            // images, links, and inline formatting were stripped every time
+            // a user edited a reply. Now we use a contenteditable div seeded
+            // with bodyEl.innerHTML, and submit innerHTML on save. Server-
+            // side wp_kses_post (Replies_Controller::update_item) still
+            // polices which tags survive.
             bodyEl.style.display = 'none';
 
             const editor = document.createElement( 'div' );
             editor.className = 'jt-reply-editor';
             editor.style.cssText = 'margin:8px 0';
 
-            const textarea = document.createElement( 'textarea' );
-            textarea.className = 'jt-input';
-            textarea.value = plainText;
-            textarea.rows = 4;
-            textarea.style.cssText = 'width:100%;resize:vertical';
+            const editable = document.createElement( 'div' );
+            editable.className = 'jt-reply-editor-body jt-input';
+            editable.contentEditable = 'true';
+            editable.setAttribute( 'role', 'textbox' );
+            editable.setAttribute( 'aria-multiline', 'true' );
+            editable.setAttribute( 'aria-label', state.i18n?.editReply || 'Edit reply' );
+            editable.style.cssText = 'width:100%;min-height:4rem;padding:0.5rem 0.75rem;box-sizing:border-box;';
+            editable.innerHTML = bodyEl.innerHTML.trim();
 
             const btnRow = document.createElement( 'div' );
             btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:8px';
@@ -580,9 +586,16 @@ const { state, actions } = store( 'jetonomy', {
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
-            editor.append( textarea, btnRow );
+            editor.append( editable, btnRow );
             bodyEl.after( editor );
-            textarea.focus();
+            editable.focus();
+            // Caret to end of content (matches editPost behaviour).
+            const range = document.createRange();
+            range.selectNodeContents( editable );
+            range.collapse( false );
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange( range );
 
             cancelBtn.addEventListener( 'click', () => {
                 editor.remove();
@@ -590,8 +603,10 @@ const { state, actions } = store( 'jetonomy', {
             } );
 
             saveBtn.addEventListener( 'click', async () => {
-                const content = textarea.value.trim();
-                if ( ! content ) return;
+                const content     = editable.innerHTML.trim();
+                const plainCheck  = ( editable.textContent || '' ).trim();
+                const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
+                if ( ! plainCheck && ! hasMediaTag ) return;
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
@@ -985,19 +1000,35 @@ const { state, actions } = store( 'jetonomy', {
             const bodyEl = article.querySelector( '.jt-post-body' );
             if ( ! bodyEl ) return;
 
-            // See reply editor above — innerText preserves \n\n between paragraphs.
-            const plainText = bodyEl.innerText.trim();
+            // [Basecamp 9808714691 part 2] Previously this editor used a
+            // <textarea> seeded with bodyEl.innerText.trim() — which strips
+            // <img> tags and all HTML. On save the plain text was PATCHed
+            // back and the server's wp_kses_post pass had no image markup to
+            // preserve, so uploaded images were silently dropped from every
+            // edited post.
+            //
+            // Fix: render the editor as a contenteditable <div> seeded with
+            // bodyEl.innerHTML. The server already kses'd this markup before
+            // we rendered it, so re-using it as editor source is safe. On
+            // save we send editor.innerHTML so images, links, and inline
+            // formatting round-trip intact. Text-only edits still work —
+            // the user just types and the image stays visible in place.
             bodyEl.style.display = 'none';
 
             const editor = document.createElement( 'div' );
             editor.className = 'jt-post-editor';
             editor.style.cssText = 'margin:8px 0';
 
-            const textarea = document.createElement( 'textarea' );
-            textarea.className = 'jt-input';
-            textarea.value = plainText;
-            textarea.rows = 6;
-            textarea.style.cssText = 'width:100%;resize:vertical';
+            const editable = document.createElement( 'div' );
+            editable.className = 'jt-post-editor-body jt-input';
+            editable.contentEditable = 'true';
+            editable.setAttribute( 'role', 'textbox' );
+            editable.setAttribute( 'aria-multiline', 'true' );
+            editable.setAttribute( 'aria-label', state.i18n?.editPost || 'Edit post' );
+            editable.style.cssText = 'width:100%;min-height:6rem;padding:0.5rem 0.75rem;box-sizing:border-box;';
+            // Preserve the original HTML (including any <img>, <a>, <strong>,
+            // etc.). This is the whole fix — innerHTML instead of innerText.
+            editable.innerHTML = bodyEl.innerHTML.trim();
 
             const btnRow = document.createElement( 'div' );
             btnRow.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-top:8px';
@@ -1013,9 +1044,17 @@ const { state, actions } = store( 'jetonomy', {
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
-            editor.append( textarea, btnRow );
+            editor.append( editable, btnRow );
             bodyEl.after( editor );
-            textarea.focus();
+            // Move caret to end of existing content so the user can continue
+            // typing without losing position — UX parity with textarea focus.
+            editable.focus();
+            const range = document.createRange();
+            range.selectNodeContents( editable );
+            range.collapse( false );
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange( range );
 
             cancelBtn.addEventListener( 'click', () => {
                 editor.remove();
@@ -1023,8 +1062,14 @@ const { state, actions } = store( 'jetonomy', {
             } );
 
             saveBtn.addEventListener( 'click', async () => {
-                const content = textarea.value.trim();
-                if ( ! content ) return;
+                // Use innerHTML for the payload — the server wp_kses_post's
+                // it on receive so anything disallowed is stripped there.
+                // Validate with textContent so an "all whitespace / empty
+                // tags" editor doesn't trip us into submitting nothing.
+                const content     = editable.innerHTML.trim();
+                const plainCheck  = ( editable.textContent || '' ).trim();
+                const hasMediaTag = /<(?:img|video|audio|iframe|embed)\b/i.test( content );
+                if ( ! plainCheck && ! hasMediaTag ) return;
 
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
