@@ -211,24 +211,50 @@ class Spaces_Controller extends Base_Controller {
 	 * so that pagination totals are accurate and there is no N+1 membership check.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {
-		$user_id     = get_current_user_id();
-		$category_id = $request->get_param( 'category_id' ) ? absint( $request->get_param( 'category_id' ) ) : null;
-		$type        = $request->get_param( 'type' ) ? sanitize_text_field( $request->get_param( 'type' ) ) : null;
-		$visibility  = $request->get_param( 'visibility' ) ? sanitize_text_field( $request->get_param( 'visibility' ) ) : null;
-		$pagination  = $this->get_pagination( $request );
+		$user_id        = get_current_user_id();
+		$category_id    = $request->get_param( 'category_id' ) ? absint( $request->get_param( 'category_id' ) ) : null;
+		$type           = $request->get_param( 'type' ) ? sanitize_text_field( $request->get_param( 'type' ) ) : null;
+		$visibility     = $request->get_param( 'visibility' ) ? sanitize_text_field( $request->get_param( 'visibility' ) ) : null;
+		$postable_by_me = (bool) $request->get_param( 'postable_by_me' );
+		$pagination     = $this->get_pagination( $request );
+
+		// Compose UI wants every postable space in the picker (no pagination UX there);
+		// widen the fetch window so the post-filter doesn't discard members on later pages.
+		$fetch_limit = $postable_by_me ? max( $pagination['limit'], 200 ) : $pagination['limit'];
 
 		$result = Space::list_visible(
 			$user_id,
 			$category_id,
 			$type,
 			$visibility,
-			$pagination['limit'],
+			$fetch_limit,
 			$pagination['offset'],
 			'sort_order ASC, title ASC'
 		);
 
-		$items       = array_map( [ $this, 'prepare_space' ], $result['spaces'] );
-		$total       = $result['total'];
+		$spaces = $result['spaces'];
+		$total  = $result['total'];
+
+		if ( $postable_by_me ) {
+			if ( ! $user_id ) {
+				$spaces = array();
+				$total  = 0;
+			} else {
+				$spaces = array_values(
+					array_filter(
+						$spaces,
+						static function ( $space ) use ( $user_id ): bool {
+							$sid = (int) $space->id;
+							return \Jetonomy\Models\SpaceMember::is_member( $sid, $user_id )
+								&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid );
+						}
+					)
+				);
+				$total  = count( $spaces );
+			}
+		}
+
+		$items       = array_map( [ $this, 'prepare_space' ], $spaces );
 		$total_pages = (int) ceil( $total / max( 1, $pagination['limit'] ) );
 
 		$response = $this->paginated_response(
@@ -847,14 +873,20 @@ class Spaces_Controller extends Base_Controller {
 		return array_merge(
 			$this->get_collection_params(),
 			[
-				'category_id' => [
+				'category_id'    => [
 					'type'    => 'integer',
 					'minimum' => 1,
 				],
-				'type'        => [ 'type' => 'string' ],
-				'visibility'  => [
+				'type'           => [ 'type' => 'string' ],
+				'visibility'     => [
 					'type' => 'string',
 					'enum' => [ 'public', 'private', 'hidden' ],
+				],
+				'postable_by_me' => [
+					'type'              => 'boolean',
+					'default'           => false,
+					'description'       => __( 'Return only spaces the current user is a member of AND can create posts in. Logged-out callers receive an empty array.', 'jetonomy' ),
+					'sanitize_callback' => 'rest_sanitize_boolean',
 				],
 			]
 		);
