@@ -23,7 +23,7 @@ class Settings_Handler {
 	private static function sample_fixtures(): array {
 		return array(
 			'user_welcome'    => array(
-				'message'  => __( 'Welcome to the community — your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
+				'message'  => __( 'Welcome to the community. Your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
 				'url_path' => '/',
 			),
 			'reply_to_post'   => array(

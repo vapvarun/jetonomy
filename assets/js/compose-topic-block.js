@@ -58,8 +58,8 @@
 				createElement( 'div', { className: 'jt-compose-topic-preview-frame' },
 					createElement( 'p', { className: 'jt-compose-topic-preview-badge' },
 						'fixed' === mode
-							? __( 'Compose Topic — fixed space', 'jetonomy' ) + ( spaceId ? ' #' + spaceId : '' )
-							: __( 'Compose Topic — space picker', 'jetonomy' )
+							? __( 'Compose Topic: fixed space', 'jetonomy' ) + ( spaceId ? ' #' + spaceId : '' )
+							: __( 'Compose Topic: space picker', 'jetonomy' )
 					),
 					createElement( 'div', { className: 'jt-compose-topic-preview-mock' },
 						createElement( 'div', { className: 'jt-compose-topic-preview-field' } ),

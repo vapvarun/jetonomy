@@ -255,7 +255,7 @@ class Blocks {
 				'render_callback' => array( __CLASS__, 'render_user_panel' ),
 				'category'        => 'widgets',
 				'title'           => __( 'Jetonomy User Panel', 'jetonomy' ),
-				'description'     => __( 'Logged-in profile card for the sidebar — avatar, notifications, profile, logout. Empty for logged-out viewers.', 'jetonomy' ),
+				'description'     => __( 'Logged-in profile card for the sidebar: avatar, notifications, profile, and logout. Empty for logged-out viewers.', 'jetonomy' ),
 				'icon'            => 'id',
 				'keywords'        => array( 'profile', 'user', 'sidebar', 'notifications', 'jetonomy' ),
 			)

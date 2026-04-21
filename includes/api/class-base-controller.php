@@ -117,7 +117,7 @@ abstract class Base_Controller extends WP_REST_Controller {
 		} catch ( \Exception $e ) {
 			return new WP_Error(
 				'jetonomy_invalid_published_at',
-				__( 'Invalid published_at — expected Y-m-d H:i:s or ISO 8601.', 'jetonomy' ),
+				__( 'Invalid published_at: expected Y-m-d H:i:s or ISO 8601.', 'jetonomy' ),
 				array( 'status' => 400 )
 			);
 		}

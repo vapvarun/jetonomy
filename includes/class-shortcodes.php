@@ -127,7 +127,7 @@ class Shortcodes {
 		$posts = Models\Post::list_trending( $limit, $space_id ?: null, $window );
 
 		if ( empty( $posts ) ) {
-			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet — check back soon.', 'jetonomy' ) . '</div>';
+			return '<div class="jt-shortcode-empty">' . esc_html__( 'No trending discussions yet. Check back soon.', 'jetonomy' ) . '</div>';
 		}
 
 		$rank = 0;
@@ -427,7 +427,7 @@ class Shortcodes {
 						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
 						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
 						'couldNotCreate' => __( 'Could not create the topic.', 'jetonomy' ),
-						'networkError'   => __( 'Network error — try again.', 'jetonomy' ),
+						'networkError'   => __( 'Network error. Please try again.', 'jetonomy' ),
 					),
 				)
 			);
