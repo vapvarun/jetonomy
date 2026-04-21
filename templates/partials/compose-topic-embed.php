@@ -128,8 +128,9 @@ $_context = array(
 		<button type="button"
 			class="jt-btn jt-btn-fill jt-compose-topic-submit"
 			data-wp-on--click="actions.composeTopicSubmit"
-			data-wp-bind--disabled="context.submitting">
-			<span data-wp-text="state.composeTopicSubmitLabel"><?php esc_html_e( 'Post topic', 'jetonomy' ); ?></span>
+			data-wp-bind--disabled="context.submitting"
+			data-wp-class--is-submitting="context.submitting">
+			<?php esc_html_e( 'Post topic', 'jetonomy' ); ?>
 		</button>
 	</div>
 </div>

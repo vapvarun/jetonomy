@@ -1840,6 +1840,82 @@ const { state, actions } = store( 'jetonomy', {
                 // Silent fail for polling
             }
         },
+
+        // ── Compose Topic embed (1.3.7) ──
+        // Inline topic composer usable on any WordPress page — fixed-space or
+        // member picker. Shares submit plumbing with submitNewPost but works
+        // against local context only (no form element / CAPTCHA / scheduler).
+        composeTopicSelectSpace( e ) {
+            const ctx = getContext();
+            ctx.spaceId = parseInt( e.target.value, 10 ) || 0;
+            ctx.error   = '';
+        },
+        composeTopicTitleInput( e ) {
+            const ctx = getContext();
+            ctx.title = e.target.value;
+            if ( ctx.error ) ctx.error = '';
+        },
+        composeTopicBodyInput( e ) {
+            const ctx = getContext();
+            ctx.body = e.target.value;
+            if ( ctx.error ) ctx.error = '';
+        },
+        *composeTopicSubmit() {
+            const ctx = getContext();
+            ctx.error = '';
+
+            if ( ! ctx.spaceId ) {
+                ctx.error = state.i18n?.chooseSpace || 'Choose a space first.';
+                return;
+            }
+            if ( ! ctx.title || ! ctx.title.trim() ) {
+                ctx.error = state.i18n?.titleRequired || 'Title is required.';
+                return;
+            }
+
+            ctx.submitting = true;
+            try {
+                const res = yield fetch(
+                    `${ state.apiBase }/spaces/${ ctx.spaceId }/posts`,
+                    {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-WP-Nonce': state.nonce,
+                        },
+                        body: JSON.stringify( {
+                            title:   ctx.title.trim(),
+                            content: ( ctx.body || '' ).trim(),
+                            type:    ctx.postType || 'topic',
+                        } ),
+                    }
+                );
+
+                if ( ! res.ok ) {
+                    const err = yield res.json().catch( () => ( {} ) );
+                    ctx.error = ( err && err.message )
+                        ? err.message
+                        : ( state.i18n?.couldNotCreate || 'Could not create the topic.' );
+                    ctx.submitting = false;
+                    return;
+                }
+
+                const data      = yield res.json();
+                const slug      = data.slug || data.data?.slug || '';
+                const spaceSlug = data.space_slug || data.data?.space_slug || '';
+                if ( slug && spaceSlug && state.communityBase ) {
+                    window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
+                    return;
+                }
+                // Fallback: hard reload so the user sees their new topic
+                // wherever the embed hosts page redirects them.
+                window.location.reload();
+            } catch {
+                ctx.error = state.i18n?.networkError || 'Network error — try again.';
+                ctx.submitting = false;
+            }
+        },
     },
 
     callbacks: {

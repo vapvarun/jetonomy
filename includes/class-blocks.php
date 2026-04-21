@@ -64,13 +64,20 @@ class Blocks {
 		// that's where the Interactivity API `jetonomy` store lives. Registering
 		// it here (not on community routes only) lets the block/shortcode work
 		// on any page or page-builder canvas.
-		wp_register_script(
-			'jetonomy-compose-topic',
-			JETONOMY_URL . 'assets/js/view.min.js',
-			array( 'wp-interactivity' ),
-			JETONOMY_VERSION,
-			true
-		);
+		//
+		// NOTE: view.js uses ES module imports (`import { store } from
+		// '@wordpress/interactivity'`) so it MUST be registered as a JS module,
+		// not a traditional script — otherwise the browser rejects the file.
+		// The main template loader also enqueues this module on community
+		// routes; WordPress dedupes by handle so registering here is safe.
+		if ( function_exists( 'wp_register_script_module' ) ) {
+			wp_register_script_module(
+				'jetonomy-compose-topic',
+				JETONOMY_URL . 'assets/js/view.js',
+				array( '@wordpress/interactivity' ),
+				JETONOMY_VERSION
+			);
+		}
 
 		// Block-editor preview (no live REST — pure static mock so dropping
 		// the block is safe and fast inside the editor).

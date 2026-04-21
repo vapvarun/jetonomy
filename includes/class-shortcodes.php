@@ -398,11 +398,40 @@ class Shortcodes {
 		}
 
 		// Shortcode can be rendered in any context (page builders, widgets,
-		// custom post types) so enqueue on-demand here rather than relying on
-		// has_shortcode() in wp_head — that misses builders that call
-		// do_shortcode() directly outside the_content.
+		// custom post types). Register the CSS handle defensively here in case
+		// we beat `wp_enqueue_scripts`. The JS module is registered in
+		// Blocks::register_block_assets() — WordPress dedupes by handle.
+		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
+			wp_register_style( 'jetonomy-blocks', JETONOMY_URL . 'assets/css/blocks.css', array(), JETONOMY_VERSION );
+		}
 		wp_enqueue_style( 'jetonomy-blocks' );
-		wp_enqueue_script( 'jetonomy-compose-topic' );
+		if ( function_exists( 'wp_enqueue_script_module' ) ) {
+			wp_enqueue_script_module( 'jetonomy-compose-topic' );
+		}
+
+		// Seed the Interactivity API state with the REST base + nonce.
+		// Template_Loader seeds the full state on community pages; here we
+		// need the minimum needed for submit (apiBase, nonce, communityBase,
+		// i18n.*) so the embed works on any WP page. wp_interactivity_state
+		// merges keys across callers, so this is additive.
+		if ( function_exists( 'wp_interactivity_state' ) ) {
+			$settings = (array) get_option( 'jetonomy_settings', array() );
+			wp_interactivity_state(
+				'jetonomy',
+				array(
+					'apiBase'       => rest_url( 'jetonomy/v1' ),
+					'_nonce'        => wp_create_nonce( 'wp_rest' ),
+					'nonce'         => wp_create_nonce( 'wp_rest' ),
+					'communityBase' => home_url( '/' . ( isset( $settings['base_slug'] ) ? (string) $settings['base_slug'] : 'community' ) ),
+					'i18n'          => array(
+						'chooseSpace'    => __( 'Choose a space first.', 'jetonomy' ),
+						'titleRequired'  => __( 'Title is required.', 'jetonomy' ),
+						'couldNotCreate' => __( 'Could not create the topic.', 'jetonomy' ),
+						'networkError'   => __( 'Network error — try again.', 'jetonomy' ),
+					),
+				)
+			);
+		}
 
 		ob_start();
 		Template_Loader::partial(
