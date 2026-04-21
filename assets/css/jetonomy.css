@@ -1257,30 +1257,89 @@
 }
 
 /* ── oEmbed wrappers ── */
-.jt-embed { margin: 12px 0; border-radius: var(--jt-radius); overflow: hidden; }
-.jt-embed iframe { max-width: 100%; border-radius: var(--jt-radius); }
-.jt-embed .twitter-tweet { margin: 0 !important; }
+.jt-embed,
+.jt-link-embed { margin: 12px 0; border-radius: var(--jt-radius); overflow: hidden; }
+.jt-embed iframe,
+.jt-link-embed iframe { max-width: 100%; border-radius: var(--jt-radius); }
+.jt-embed .twitter-tweet,
+.jt-link-embed .twitter-tweet { margin: 0 !important; }
 
-/* Provider blockquote fallbacks — these render while the provider's
-   embed.js hydrates the real player, and remain the final state when the
-   script is blocked. Keep them centered, capped to the provider's native
-   width, and visually distinct from a plain quote. */
+/* Provider blockquote reset — themes (BuddyX, Reign, Twenty Twenty-*, etc.)
+   apply a default <blockquote> treatment with a left border, italic text,
+   and a tinted background. TikTok / Instagram / Twitter use a <blockquote>
+   container as their SEO fallback before the embed script hydrates, so the
+   theme's quote chrome bleeds onto the embed. Reset hard inside our content
+   wrappers AND on the bare element so it works regardless of which wrapper
+   the renderer chose (.jt-embed, .jt-link-embed, .jt-post-body, .jt-reply-body). */
 .jt-embed .tiktok-embed,
 .jt-embed .instagram-media,
-.jt-embed .twitter-tweet {
+.jt-embed .twitter-tweet,
+.jt-link-embed .tiktok-embed,
+.jt-link-embed .instagram-media,
+.jt-link-embed .twitter-tweet,
+.jt-post-body blockquote.tiktok-embed,
+.jt-post-body blockquote.instagram-media,
+.jt-post-body blockquote.twitter-tweet,
+.jt-reply-body blockquote.tiktok-embed,
+.jt-reply-body blockquote.instagram-media,
+.jt-reply-body blockquote.twitter-tweet {
+	border: 0 !important;
+	border-left: 0 !important;
+	background: transparent !important;
+	padding: 0 !important;
+	font-style: normal !important;
+	color: inherit !important;
+	quotes: none !important;
 	margin-left: auto !important;
 	margin-right: auto !important;
-	background: var(--jt-bg-subtle);
-	border: 1px solid var(--jt-border);
-	border-radius: var(--jt-radius);
-	padding: 12px;
+	box-shadow: none !important;
 }
-.jt-embed .tiktok-embed { min-width: 0; max-width: 605px; }
-.jt-embed .instagram-media { max-width: 540px; }
-.jt-embed .twitter-tweet { max-width: 550px; }
+.jt-embed .tiktok-embed::before,
+.jt-embed .tiktok-embed::after,
+.jt-embed .instagram-media::before,
+.jt-embed .instagram-media::after,
+.jt-embed .twitter-tweet::before,
+.jt-embed .twitter-tweet::after,
+.jt-link-embed .tiktok-embed::before,
+.jt-link-embed .tiktok-embed::after,
+.jt-link-embed .instagram-media::before,
+.jt-link-embed .instagram-media::after,
+.jt-link-embed .twitter-tweet::before,
+.jt-link-embed .twitter-tweet::after,
+.jt-post-body blockquote.tiktok-embed::before,
+.jt-post-body blockquote.tiktok-embed::after,
+.jt-post-body blockquote.instagram-media::before,
+.jt-post-body blockquote.instagram-media::after,
+.jt-post-body blockquote.twitter-tweet::before,
+.jt-post-body blockquote.twitter-tweet::after,
+.jt-reply-body blockquote.tiktok-embed::before,
+.jt-reply-body blockquote.tiktok-embed::after,
+.jt-reply-body blockquote.instagram-media::before,
+.jt-reply-body blockquote.instagram-media::after,
+.jt-reply-body blockquote.twitter-tweet::before,
+.jt-reply-body blockquote.twitter-tweet::after {
+	content: none !important;
+}
+
+.jt-embed .tiktok-embed,
+.jt-link-embed .tiktok-embed,
+.jt-post-body blockquote.tiktok-embed,
+.jt-reply-body blockquote.tiktok-embed { min-width: 0; max-width: 605px; }
+.jt-embed .instagram-media,
+.jt-link-embed .instagram-media,
+.jt-post-body blockquote.instagram-media,
+.jt-reply-body blockquote.instagram-media { max-width: 540px; }
+.jt-embed .twitter-tweet,
+.jt-link-embed .twitter-tweet,
+.jt-post-body blockquote.twitter-tweet,
+.jt-reply-body blockquote.twitter-tweet { max-width: 550px; }
+
 .jt-embed .tiktok-embed iframe,
 .jt-embed .instagram-media iframe,
-.jt-embed .twitter-tweet iframe {
+.jt-embed .twitter-tweet iframe,
+.jt-link-embed .tiktok-embed iframe,
+.jt-link-embed .instagram-media iframe,
+.jt-link-embed .twitter-tweet iframe {
 	max-width: 100%;
 	width: 100% !important;
 }
@@ -1288,10 +1347,15 @@
 @media (max-width: 640px) {
 	.jt-embed .tiktok-embed,
 	.jt-embed .instagram-media,
-	.jt-embed .twitter-tweet {
+	.jt-embed .twitter-tweet,
+	.jt-link-embed .tiktok-embed,
+	.jt-link-embed .instagram-media,
+	.jt-link-embed .twitter-tweet,
+	.jt-post-body blockquote.tiktok-embed,
+	.jt-post-body blockquote.instagram-media,
+	.jt-post-body blockquote.twitter-tweet {
 		max-width: 100%;
 		min-width: 0 !important;
-		padding: 8px;
 	}
 }
 
