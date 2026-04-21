@@ -1344,10 +1344,22 @@
 .jt-following:hover { background: var(--jt-danger); border-color: var(--jt-danger); }
 
 /* ── Share dropdown ── */
-.jt-share-btn { position: relative; }
-.jt-share-dropdown { position: absolute; bottom: 100%; left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-bottom: 0.25rem; }
-.jt-share-item { display: block; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; }
-.jt-share-item:hover { background: var(--jt-bg-hover); }
+/* [Basecamp 9808920407] Positioning is owned by view.js::sharePost which
+   appends the dropdown to document.body with `position: fixed` and viewport-
+   computed top/left. The previous CSS had `position: absolute; bottom: 100%;
+   left: 0` which anchored to the dropdown's DOM parent (`.jt-post-foot`)
+   instead of the share button itself — so the dropdown rendered ~180px above
+   .jt-post-foot, off-screen for posts near the viewport top. Leave only
+   visual styling here. */
+.jt-share-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 11rem; padding: 0.25rem 0; }
+.jt-share-item { display: flex; align-items: center; gap: 0.625rem; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; font-family: inherit; cursor: pointer; white-space: nowrap; transition: background-color var(--jt-dur, 150ms) var(--jt-ease, ease-out), color var(--jt-dur, 150ms) var(--jt-ease, ease-out); }
+.jt-share-item-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex: 0 0 16px; color: var(--jt-text-secondary); }
+.jt-share-item-icon svg { width: 16px; height: 16px; display: block; }
+.jt-share-item-label { display: inline-block; }
+.jt-share-item:hover,
+.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent); outline: none; }
+.jt-share-item:hover .jt-share-item-icon,
+.jt-share-item:focus-visible .jt-share-item-icon { color: var(--jt-accent); }
 
 /* ── Bookmark button ── */
 .jt-bookmark-btn.bookmarked { color: var(--jt-accent); }

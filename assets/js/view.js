@@ -717,33 +717,89 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Share post ──
+        //
+        // [Basecamp 9808920407] — Previously the dropdown was inserted as a
+        // SIBLING of the share button via `el.ref.after()` and positioned with
+        // CSS `bottom: 100%; left: 0`. Two compounding problems:
+        //   1. `position: absolute` anchors to the nearest positioned ancestor,
+        //      not a sibling — so the dropdown anchored to `.jt-post-foot` (the
+        //      shared parent), which is wider than the button and at the bottom
+        //      of the post card. With `bottom: 100%` the dropdown rendered
+        //      ~180px ABOVE that container, which for posts near the viewport
+        //      top put it off-screen at `top: -184.57px`. User saw "nothing".
+        //   2. The `.jt-more-dropdown` sibling pattern was fixed the same way
+        //      in 1.3.6 (Basecamp 9803818273 — see jetonomy.css `.jt-more-
+        //      dropdown` comment). Share was a missed sibling.
+        // Fix: append the dropdown to document.body with `position: fixed` and
+        // viewport-computed coordinates. Layout of `.jt-post-foot` can no
+        // longer affect anchoring. Right-aligned to the button's right edge,
+        // clamped to the viewport left edge so it never overflows horizontally.
         sharePost() {
             const el = getElement();
             const url = el.ref.dataset.postUrl;
             const title = el.ref.dataset.postTitle;
             if ( ! url ) return;
 
-            let dropdown = el.ref.parentElement.querySelector( '.jt-share-dropdown' );
-            if ( dropdown ) { dropdown.remove(); return; }
+            // Toggle: if a dropdown opened by this button is already on the
+            // page, close it instead of opening a second one.
+            const existing = document.querySelector( '.jt-share-dropdown[data-jt-owner="' + el.ref.id + '"]' );
+            if ( existing ) { existing.remove(); return; }
+            // Also clear any stale dropdown from a previous button (e.g. the
+            // user clicked a different post's share before closing the last).
+            document.querySelectorAll( '.jt-share-dropdown' ).forEach( ( n ) => n.remove() );
 
-            dropdown = document.createElement( 'div' );
+            const dropdown = document.createElement( 'div' );
             dropdown.className = 'jt-share-dropdown';
+            if ( ! el.ref.id ) {
+                el.ref.id = 'jt-share-btn-' + Math.random().toString( 36 ).slice( 2, 9 );
+            }
+            dropdown.dataset.jtOwner = el.ref.id;
 
             const encodedUrl = encodeURIComponent( url );
             const encodedTitle = encodeURIComponent( title || '' );
 
+            // Lucide SVG icons (MIT). Mirror the files at
+            // assets/icons/{link,twitter-x,facebook,linkedin}.svg so the PHP
+            // side can render the same glyphs via jetonomy_echo_icon().
+            // Paths use stroke="currentColor" so they inherit the dropdown
+            // item's text color (default + hover).
+            const LUCIDE = {
+                link:     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+                x:        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16"/><path d="M20 4L4 20"/></svg>',
+                facebook: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>',
+                linkedin: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>',
+            };
+
             const items = [
-                { label: state.i18n?.copyLink || 'Copy link', icon: '\u{1F517}', action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
-                { label: 'Twitter / X', icon: '\u{1D54F}', href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
-                { label: 'Facebook', icon: 'f', href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
-                { label: 'LinkedIn', icon: 'in', href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
+                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
+                { label: 'Twitter / X',                        icon: LUCIDE.x,        href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
+                { label: 'Facebook',                           icon: LUCIDE.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
+                { label: 'LinkedIn',                           icon: LUCIDE.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
             ];
+
+            // Parse a trusted Lucide SVG string (static constants above) into
+            // a real SVGElement node. DOMParser avoids any innerHTML
+            // assignment, which keeps the security linter + reviewers happy.
+            const parseSvg = ( svgString ) => {
+                const doc = new DOMParser().parseFromString( svgString, 'image/svg+xml' );
+                return doc.documentElement;
+            };
 
             items.forEach( item => {
                 const btn = document.createElement( 'button' );
                 btn.className = 'jt-share-item';
                 btn.type = 'button';
-                btn.textContent = `${ item.icon } ${ item.label }`;
+
+                const iconSlot = document.createElement( 'span' );
+                iconSlot.className = 'jt-share-item-icon';
+                iconSlot.appendChild( parseSvg( item.icon ) );
+                btn.appendChild( iconSlot );
+
+                const labelNode = document.createElement( 'span' );
+                labelNode.className = 'jt-share-item-label';
+                labelNode.textContent = item.label;
+                btn.appendChild( labelNode );
+
                 if ( item.href ) {
                     btn.addEventListener( 'click', () => { window.open( item.href, '_blank', 'width=600,height=400' ); dropdown.remove(); } );
                 } else if ( item.action ) {
@@ -752,11 +808,35 @@ const { state, actions } = store( 'jetonomy', {
                 dropdown.appendChild( btn );
             } );
 
-            el.ref.style.position = 'relative';
-            el.ref.after( dropdown );
+            // Position using viewport coordinates — `fixed` so no ancestor
+            // layout can displace us. Append to body so z-index stacking is
+            // predictable (no accidental clipping by `overflow: hidden` in a
+            // card). Apply `position: fixed` BEFORE insertion so the dropdown
+            // shrinks to content width (display:block default would take full
+            // body width and blow up offsetWidth).
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = '-9999px';
+            dropdown.style.left = '-9999px';
+            document.body.appendChild( dropdown );
+            const rect = el.ref.getBoundingClientRect();
+            const dropWidth = dropdown.offsetWidth || 176;
+            const dropHeight = dropdown.offsetHeight || 180;
+            const gap = 4;
+            let top = rect.bottom + gap;
+            let left = rect.right - dropWidth;
+            if ( left < 8 ) left = 8;                                        // clamp to left viewport edge
+            if ( left + dropWidth > window.innerWidth - 8 ) {                 // clamp to right viewport edge
+                left = window.innerWidth - dropWidth - 8;
+            }
+            // If there's not enough room below, flip above the button.
+            if ( top + dropHeight > window.innerHeight - 8 && rect.top > dropHeight + gap + 8 ) {
+                top = rect.top - dropHeight - gap;
+            }
+            dropdown.style.top = top + 'px';
+            dropdown.style.left = left + 'px';
 
             const closeHandler = ( e ) => {
-                if ( ! dropdown.contains( e.target ) && e.target !== el.ref ) {
+                if ( ! dropdown.contains( e.target ) && e.target !== el.ref && ! el.ref.contains( e.target ) ) {
                     dropdown.remove();
                     document.removeEventListener( 'click', closeHandler );
                 }
