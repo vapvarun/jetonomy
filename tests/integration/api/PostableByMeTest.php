@@ -65,12 +65,21 @@ class PostableByMeTest extends WP_UnitTestCase {
 		);
 	}
 
+	/**
+	 * Extract the `data` array from the paginated_response envelope.
+	 * The /spaces endpoint returns { data: [...], meta: { count, total, ... } }.
+	 */
+	private function envelope_data( $response ): array {
+		$payload = (array) $response->get_data();
+		return isset( $payload['data'] ) && is_array( $payload['data'] ) ? $payload['data'] : array();
+	}
+
 	private function list_postable(): array {
 		$req = new WP_REST_Request( 'GET', '/jetonomy/v1/spaces' );
 		$req->set_param( 'postable_by_me', 1 );
 		$res = $this->server->dispatch( $req );
 		$this->assertSame( 200, $res->get_status() );
-		return (array) $res->get_data();
+		return $this->envelope_data( $res );
 	}
 
 	public function test_logged_out_returns_empty_array(): void {
@@ -111,7 +120,7 @@ class PostableByMeTest extends WP_UnitTestCase {
 		// No postable_by_me param.
 		$res = $this->server->dispatch( $req );
 		$this->assertSame( 200, $res->get_status() );
-		$data = (array) $res->get_data();
+		$data = $this->envelope_data( $res );
 		$ids  = array_map( static fn ( $s ) => (int) ( is_array( $s ) ? $s['id'] : $s->id ), $data );
 
 		$this->assertContains( $space, $ids, 'Without postable_by_me, all visible spaces are returned (existing behaviour preserved).' );
