@@ -578,10 +578,15 @@ class Fluent_Community {
 			return;
 		}
 		$fc_url = home_url( '/portal/u/' . $fc_username . '/' );
+		$title  = $this->fc_site_title();
 		?>
 		<p class="jt-fc-profile-cta" style="margin:12px 0 0;">
 			<a href="<?php echo esc_url( $fc_url ); ?>" class="jt-btn jt-btn-sm jt-btn-ghost">
-				<?php esc_html_e( 'View on FluentCommunity', 'jetonomy' ); ?> &rarr;
+				<?php
+				/* translators: %s: FluentCommunity-configured site title (e.g. "Acme Community"). */
+				printf( esc_html__( 'View on %s', 'jetonomy' ), esc_html( $title ) );
+				?>
+				&rarr;
 			</a>
 		</p>
 		<?php
@@ -696,7 +701,11 @@ class Fluent_Community {
 		$wrap_class = $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md';
 		$head_class = $bn_active ? 'bn-sidebar-card__header' : '';
 		$body_class = $bn_active ? 'bn-sidebar-card__body' : '';
-		$head_label = esc_html__( 'Also on FluentCommunity', 'jetonomy' );
+		$fc_title   = $this->fc_site_title();
+		/* translators: %s: FluentCommunity-configured site title. */
+		$head_label = sprintf( __( 'Also on %s', 'jetonomy' ), $fc_title );
+		/* translators: %s: FluentCommunity-configured site title. */
+		$desc_label = sprintf( __( 'This space has a matching feed on %s.', 'jetonomy' ), $fc_title );
 		?>
 		<div class="<?php echo esc_attr( $wrap_class ); ?>">
 			<div class="<?php echo esc_attr( $head_class ); ?>">
@@ -709,7 +718,7 @@ class Fluent_Community {
 			<div class="<?php echo esc_attr( $body_class ); ?>">
 				<p class="jt-fc-side-desc" style="margin:0 0 12px;">
 					<strong><?php echo esc_html( $fc_space->title ); ?></strong><br>
-					<?php esc_html_e( 'This space has a matching feed on FluentCommunity.', 'jetonomy' ); ?>
+					<?php echo esc_html( $desc_label ); ?>
 				</p>
 				<a href="<?php echo esc_url( $fc_url ); ?>" class="jt-btn jt-btn-sm jt-btn-fill" style="width:100%;text-align:center;">
 					<?php esc_html_e( 'Open Feed', 'jetonomy' ); ?>
@@ -893,6 +902,32 @@ class Fluent_Community {
 		$label = get_option( self::OPT_LABEL, '' );
 		$label = is_string( $label ) ? trim( $label ) : '';
 		return '' !== $label ? $label : __( 'Discussions', 'jetonomy' );
+	}
+
+	/**
+	 * FC-configured community title, used for user-facing labels.
+	 *
+	 * Reads `site_title` from FC's `fluent_community_settings` option so
+	 * the cross-link labels match the name the FC admin has branded the
+	 * community with ("Also on Acme Community" instead of the generic
+	 * "FluentCommunity"). Falls back to the WP site name, then to the
+	 * translated string "Community".
+	 *
+	 * @return string
+	 */
+	public function fc_site_title(): string {
+		$settings = get_option( 'fluent_community_settings', array() );
+		if ( is_array( $settings ) && ! empty( $settings['site_title'] ) && is_string( $settings['site_title'] ) ) {
+			$title = trim( $settings['site_title'] );
+			if ( '' !== $title ) {
+				return $title;
+			}
+		}
+		$wp_title = get_bloginfo( 'name' );
+		if ( is_string( $wp_title ) && '' !== trim( $wp_title ) ) {
+			return trim( $wp_title );
+		}
+		return __( 'Community', 'jetonomy' );
 	}
 
 	/**
