@@ -211,6 +211,8 @@ class Template_Loader {
 				'postScores'    => new \stdClass(),
 				'replyScores'   => new \stdClass(),
 				'currentSort'   => sanitize_text_field( $_GET['sort'] ?? 'latest' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'isLoggedIn'        => is_user_logged_in(),
+			'loginUrl'          => wp_login_url( home_url( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) ),
 			'unreadCount'       => 0,
 			'isSubmitting'      => false,
 			'submitLabel'       => __( 'Post Topic', 'jetonomy' ),
@@ -260,8 +262,10 @@ class Template_Loader {
 				'newReply'           => __( '%d new reply. Click to refresh.', 'jetonomy' ),
 				'newReplies'         => __( '%d new replies. Click to refresh.', 'jetonomy' ),
 				'linkCopied'         => __( 'Link copied', 'jetonomy' ),
+				'linkCopyFailed'     => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
 				'titleRequired'      => __( 'Please enter a title for your topic.', 'jetonomy' ),
 				'bodyRequired'       => __( 'Please add some details before posting.', 'jetonomy' ),
+				'loginRequired'      => __( 'Please sign in to use this.', 'jetonomy' ),
 			),
 			)
 		);
