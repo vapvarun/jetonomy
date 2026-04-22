@@ -268,11 +268,20 @@ class Fluent_Community {
 
 		// Generous excerpt — we want the FC feed post to read as a
 		// standalone preview, not a bait-and-switch that forces a click.
+		// Jetonomy stores content as sanitized HTML (wp_kses_post). Convert
+		// block-level boundaries to double newlines BEFORE stripping tags
+		// so paragraph shape survives into the plain-text excerpt.
 		$excerpt = '';
 		if ( ! empty( $post->content ) ) {
-			// Preserve paragraph breaks so the rendered version keeps its shape.
-			$clean   = wp_strip_all_tags( (string) $post->content );
-			$excerpt = trim( preg_replace( '/[ \t]+/', ' ', $clean ) );
+			$html    = (string) $post->content;
+			$html    = preg_replace( '#</(p|div|blockquote|li|h[1-6])\s*>\s*<\1[^>]*>#i', "\n\n", $html );
+			$html    = preg_replace( '#</(p|div|blockquote|h[1-6])\s*>#i', "\n\n", $html );
+			$html    = preg_replace( '#<br\s*/?>#i', "\n", $html );
+			$clean   = wp_strip_all_tags( $html );
+			$clean   = preg_replace( '/[ \t]+/', ' ', $clean );
+			$clean   = preg_replace( "/\n[ \t]+/", "\n", $clean );
+			$clean   = preg_replace( "/\n{3,}/", "\n\n", $clean );
+			$excerpt = trim( $clean );
 		}
 
 		// Plain-text message: used by FC for search, activity log, email
