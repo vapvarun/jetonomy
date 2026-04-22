@@ -37,6 +37,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Models\Bookmark;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
 
@@ -83,6 +84,11 @@ class Fluent_Community {
 	private ?array $pair_map = null;
 
 	public function __construct() {
+		// Stylesheet: loads on both JT template pages and FC portal pages so
+		// every render surface (back banner, sidebar card, profile block) is
+		// styled by a single token-based stylesheet, not inline attributes.
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_styles' ) );
+
 		// Avatar: use FC's xprofile avatar everywhere if set.
 		add_filter( 'get_avatar_url', array( $this, 'filter_avatar_url' ), 20, 2 );
 
@@ -98,6 +104,11 @@ class Fluent_Community {
 		// `jetonomy_sidebar_after_about` fires inside the sidebar About card on
 		// space views and receives the space object (or null on non-space pages).
 		add_action( 'jetonomy_sidebar_after_about', array( $this, 'render_sidebar_fc_link' ) );
+
+		// Jetonomy space/topic pages: render a "back to FC" banner when the
+		// space is paired. Mirrors the BuddyPress back-to-group pattern so
+		// users keep a visible path back to where they came from.
+		add_action( 'jetonomy_before_content', array( $this, 'render_back_to_fc_banner' ) );
 
 		// FC profile page: append a Discussions block to the user's activity view
 		// showing topics started + topics followed on the Jetonomy side.
@@ -124,6 +135,25 @@ class Fluent_Community {
 			// announcement, not a shared message thread).
 			add_action( 'fluent_community/comment_added', array( $this, 'on_fc_comment_added' ), 20, 3 );
 		}
+	}
+
+	/**
+	 * Enqueue the integration stylesheet on the frontend.
+	 *
+	 * Loads the single `jetonomy-fluent-community` stylesheet that drives
+	 * every surface shared between Jetonomy and FluentCommunity: the back
+	 * banner on JT pages, the "Also on" sidebar card, the profile CTA, and
+	 * the Discussions block rendered inside FC's REST responses. The file
+	 * supplies hex fallbacks so it stands alone on FC portal pages where
+	 * the main `jetonomy.css` is not enqueued.
+	 */
+	public function enqueue_styles(): void {
+		wp_enqueue_style(
+			'jetonomy-fluent-community',
+			JETONOMY_URL . 'assets/css/fluent-community.css',
+			array(),
+			JETONOMY_VERSION
+		);
 	}
 
 	/**
@@ -580,7 +610,7 @@ class Fluent_Community {
 		$fc_url = home_url( '/portal/u/' . $fc_username . '/' );
 		$title  = $this->fc_site_title();
 		?>
-		<p class="jt-fc-profile-cta" style="margin:12px 0 0;">
+		<p class="jt-fc-profile-cta">
 			<a href="<?php echo esc_url( $fc_url ); ?>" class="jt-btn jt-btn-sm jt-btn-ghost">
 				<?php
 				/* translators: %s: FluentCommunity-configured site title (e.g. "Acme Community"). */
@@ -716,14 +746,67 @@ class Fluent_Community {
 				<?php endif; ?>
 			</div>
 			<div class="<?php echo esc_attr( $body_class ); ?>">
-				<p class="jt-fc-side-desc" style="margin:0 0 12px;">
+				<p class="jt-fc-side-desc">
 					<strong><?php echo esc_html( $fc_space->title ); ?></strong><br>
 					<?php echo esc_html( $desc_label ); ?>
 				</p>
-				<a href="<?php echo esc_url( $fc_url ); ?>" class="jt-btn jt-btn-sm jt-btn-fill" style="width:100%;text-align:center;">
+				<a href="<?php echo esc_url( $fc_url ); ?>" class="jt-btn jt-btn-sm jt-btn-fill jt-fc-open-feed">
 					<?php esc_html_e( 'Open Feed', 'jetonomy' ); ?>
 				</a>
 			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render a "back to {community}" banner at the top of Jetonomy space and
+	 * topic pages when the viewed space is paired with a FluentCommunity
+	 * space. Keeps users oriented when they click through from the FC side.
+	 *
+	 * Fired by `jetonomy_before_content`. Receives a `$data` array with a
+	 * 'slug' key for the current space (mirrors the BuddyPress banner).
+	 *
+	 * @param array<string,mixed> $data Template context.
+	 */
+	public function render_back_to_fc_banner( $data = array() ): void {
+		$slug = is_array( $data ) && ! empty( $data['slug'] ) ? (string) $data['slug'] : '';
+		if ( '' === $slug ) {
+			return;
+		}
+
+		$jt_space = Space::find_by_slug( $slug );
+		if ( ! $jt_space || empty( $jt_space->id ) ) {
+			return;
+		}
+
+		$pairs = $this->get_pair_map();
+		$fc_id = 0;
+		foreach ( $pairs as $fc_space_id => $jt_space_id ) {
+			if ( (int) $jt_space_id === (int) $jt_space->id ) {
+				$fc_id = (int) $fc_space_id;
+				break;
+			}
+		}
+		if ( $fc_id <= 0 ) {
+			return;
+		}
+
+		$fc_space = $this->fc_space_by_id( $fc_id );
+		if ( ! $fc_space ) {
+			return;
+		}
+
+		$fc_url  = home_url( '/portal/space/' . $fc_space->slug );
+		$fc_name = ! empty( $fc_space->title ) ? (string) $fc_space->title : $this->fc_site_title();
+		?>
+		<div class="jt-fc-back-banner">
+			<a href="<?php echo esc_url( $fc_url ); ?>">
+				&larr;
+				<?php
+				/* translators: %s: paired FluentCommunity space title. */
+				printf( esc_html__( 'Back to %s', 'jetonomy' ), esc_html( $fc_name ) );
+				?>
+			</a>
 		</div>
 		<?php
 	}
@@ -747,10 +830,13 @@ class Fluent_Community {
 			return $html;
 		}
 
-		$started  = Post::list_by_author( $user_id, 5, 0 );
-		$followed = $this->list_followed_posts( $user_id, 5 );
+		$started   = Post::list_by_author( $user_id, 5, 0 );
+		$followed  = $this->list_followed_posts( $user_id, 5 );
+		$replies   = Reply::list_by_user( $user_id, 5, 0 );
+		$is_own    = (int) get_current_user_id() === $user_id;
+		$bookmarks = $is_own ? Bookmark::list_by_user( $user_id, 5, 0 ) : array();
 
-		if ( empty( $started ) && empty( $followed ) ) {
+		if ( empty( $started ) && empty( $followed ) && empty( $replies ) && empty( $bookmarks ) ) {
 			return $html;
 		}
 
@@ -761,19 +847,6 @@ class Fluent_Community {
 
 		ob_start();
 		?>
-		<style>
-			.jt-fc-profile-disc { margin-top:24px;padding:16px;background:#fff;border:1px solid #e5e7eb;border-radius:8px; }
-			.jt-fc-profile-disc h3 { margin:0 0 12px;font-size:16px;font-weight:600; }
-			.jt-fc-profile-disc h4 { margin:12px 0 6px;font-size:13px;font-weight:600;color:#4b5563;text-transform:uppercase;letter-spacing:0.04em; }
-			.jt-fc-profile-disc ul { margin:0 0 8px;padding:0;list-style:none; }
-			.jt-fc-profile-disc li { padding:6px 0;border-bottom:1px solid #f3f4f6; }
-			.jt-fc-profile-disc a { color:inherit;text-decoration:none; }
-			.jt-fc-profile-disc .jt-fc-viewall { margin:12px 0 0;font-size:13px; }
-			@media (max-width: 640px) {
-				.jt-fc-profile-disc { padding:12px; }
-				.jt-fc-profile-disc h3 { font-size:15px; }
-			}
-		</style>
 		<div class="jt-fc-profile-disc">
 			<h3><?php echo esc_html( $label ); ?></h3>
 
@@ -796,10 +869,53 @@ class Fluent_Community {
 				</ul>
 			<?php endif; ?>
 
+			<?php if ( ! empty( $replies ) ) : ?>
+				<h4><?php esc_html_e( 'Recent replies', 'jetonomy' ); ?></h4>
+				<ul>
+					<?php foreach ( $replies as $r ) : ?>
+						<?php
+						$slug_space = isset( $r->space_slug ) ? (string) $r->space_slug : '';
+						$slug_post  = isset( $r->post_slug ) ? (string) $r->post_slug : '';
+						$title_post = isset( $r->post_title ) && '' !== $r->post_title ? (string) $r->post_title : __( 'Untitled topic', 'jetonomy' );
+						$reply_id   = isset( $r->id ) ? (int) $r->id : 0;
+						$purl       = ( '' !== $slug_space && '' !== $slug_post )
+							? home_url( '/' . $base . '/s/' . $slug_space . '/t/' . $slug_post . '/' . ( $reply_id ? '#reply-' . $reply_id : '' ) )
+							: '';
+						?>
+						<li>
+							<?php if ( '' !== $purl ) : ?>
+								<a href="<?php echo esc_url( $purl ); ?>"><?php echo esc_html( $title_post ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( $title_post ); ?>
+							<?php endif; ?>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+
 			<?php if ( ! empty( $followed ) ) : ?>
 				<h4><?php esc_html_e( 'Topics followed', 'jetonomy' ); ?></h4>
 				<ul>
 					<?php foreach ( $followed as $p ) : ?>
+						<?php
+						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
+						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
+						?>
+						<li>
+							<?php if ( $purl ) : ?>
+								<a href="<?php echo esc_url( $purl ); ?>"><?php echo esc_html( $p->title ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( $p->title ); ?>
+							<?php endif; ?>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $bookmarks ) ) : ?>
+				<h4><?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?></h4>
+				<ul>
+					<?php foreach ( $bookmarks as $p ) : ?>
 						<?php
 						$space = isset( $p->space_id ) ? Space::find( (int) $p->space_id ) : null;
 						$purl  = $space ? home_url( '/' . $base . '/s/' . $space->slug . '/t/' . $p->slug . '/' ) : '';
@@ -981,12 +1097,12 @@ class Fluent_Community {
 		$action_url = admin_url( 'admin-post.php' );
 		?>
 		<?php if ( $saved_flash ) : ?>
-			<div class="notice notice-success is-dismissible" style="margin-bottom:16px;">
+			<div class="notice notice-success is-dismissible jt-fc-admin-notice">
 				<p><?php esc_html_e( 'FluentCommunity settings saved.', 'jetonomy' ); ?></p>
 			</div>
 		<?php endif; ?>
 		<?php if ( $bf_stats ) : ?>
-			<div class="notice notice-success is-dismissible" style="margin-bottom:16px;">
+			<div class="notice notice-success is-dismissible jt-fc-admin-notice">
 				<p>
 					<?php
 					printf(
@@ -1041,11 +1157,11 @@ class Fluent_Community {
 					</p>
 				</div>
 				<?php if ( empty( $fc_spaces ) ) : ?>
-					<p style="padding:0 12px 12px;">
+					<p class="jt-fc-admin-hint">
 						<?php esc_html_e( 'No FluentCommunity spaces found. Create a space in FluentCommunity first.', 'jetonomy' ); ?>
 					</p>
 				<?php else : ?>
-					<table class="wp-list-table widefat striped" style="margin:0 12px 12px;width:calc(100% - 24px);">
+					<table class="wp-list-table widefat striped jt-fc-admin-table">
 						<thead>
 							<tr>
 								<th scope="col"><?php esc_html_e( 'FluentCommunity Space', 'jetonomy' ); ?></th>
@@ -1058,11 +1174,11 @@ class Fluent_Community {
 								<tr>
 									<td>
 										<strong><?php echo esc_html( $fc->title ); ?></strong><br>
-										<code style="font-size:11px;color:#646970;">/<?php echo esc_html( $fc->slug ); ?>/</code>
+										<code class="jt-fc-admin-slug">/<?php echo esc_html( $fc->slug ); ?>/</code>
 									</td>
 									<td>
 										<select name="jt_fc_pairs[<?php echo esc_attr( (string) (int) $fc->id ); ?>]" class="regular-text">
-											<option value="0"><?php esc_html_e( '— Not paired —', 'jetonomy' ); ?></option>
+											<option value="0"><?php esc_html_e( '(Not paired)', 'jetonomy' ); ?></option>
 											<?php foreach ( $jt_spaces as $jt ) : ?>
 												<option value="<?php echo esc_attr( (string) (int) $jt->id ); ?>"
 													<?php selected( $current, (int) $jt->id ); ?>>
@@ -1086,7 +1202,7 @@ class Fluent_Community {
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Sync Behavior', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'Controls what happens across paired spaces. Member sync is add-only — joins on either side add the member to both; leaves stay on the side they happened. This keeps behavior predictable and prevents accidental removal from both at once.', 'jetonomy' ); ?>
+						<?php esc_html_e( 'Controls what happens across paired spaces. Member sync is add-only: joins on either side add the member to both; leaves stay on the side they happened. This keeps behavior predictable and prevents accidental removal from both at once.', 'jetonomy' ); ?>
 					</p>
 				</div>
 				<table class="form-table">
@@ -1115,10 +1231,10 @@ class Fluent_Community {
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Backfill existing members', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc">
-						<?php esc_html_e( 'After pairing spaces, run this once to sync members who already belong to one side but not the other. Safe to run multiple times — members already in both sides are skipped. Large spaces are capped at 5,000 members per run; re-run to continue.', 'jetonomy' ); ?>
+						<?php esc_html_e( 'After pairing spaces, run this once to sync members who already belong to one side but not the other. Safe to run multiple times; members already in both sides are skipped. Large spaces are capped at 5,000 members per run; re-run to continue.', 'jetonomy' ); ?>
 					</p>
 				</div>
-				<p class="submit" style="margin-left:12px;">
+				<p class="submit jt-fc-admin-submit">
 					<button type="submit" name="jt_fc_run_backfill" value="1" class="button">
 						<?php esc_html_e( 'Sync existing members now', 'jetonomy' ); ?>
 					</button>

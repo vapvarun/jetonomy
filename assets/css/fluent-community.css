@@ -1,0 +1,154 @@
+/**
+ * FluentCommunity integration styles.
+ *
+ * Loads on Jetonomy template pages AND on FluentCommunity portal pages
+ * (/portal/*). On JT pages the root `--jt-*` tokens defined in
+ * jetonomy.css drive colors/sizing. On FC pages those tokens are absent,
+ * so every rule supplies a hex fallback via var().
+ *
+ * @package Jetonomy
+ */
+
+/* Scope tokens so both contexts resolve cleanly. Hex fallbacks used on
+   FC portal pages where jetonomy.css root tokens are not loaded. */
+.jt-fc-back-banner,
+.jt-fc-profile-disc,
+.jt-fc-profile-cta,
+.jt-fc-side-desc {
+	--jt-fc-bg: var(--jt-bg, #ffffff);
+	--jt-fc-border: var(--jt-border, #e5e7eb);
+	--jt-fc-border-soft: var(--jt-border, #f3f4f6);
+	--jt-fc-text: var(--jt-text, #1a1a1a);
+	--jt-fc-text-secondary: var(--jt-text-secondary, #64748b);
+	--jt-fc-text-tertiary: var(--jt-text-tertiary, #4b5563);
+	--jt-fc-accent: var(--jt-accent, #3b82f6);
+	--jt-fc-radius: var(--jt-radius, 8px);
+	--jt-fc-radius-sm: var(--jt-radius-sm, 6px);
+}
+
+/* ------------------------------------------------------------------ */
+/* Back-to-FC banner on JT space + topic pages                         */
+/* ------------------------------------------------------------------ */
+
+.jt-fc-back-banner {
+	font-size: 0.8125rem;
+	margin: 0 0 12px;
+}
+
+.jt-fc-back-banner a {
+	color: var(--jt-fc-text-secondary);
+	text-decoration: none;
+}
+
+.jt-fc-back-banner a:hover,
+.jt-fc-back-banner a:focus {
+	color: var(--jt-fc-accent);
+	text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/* Jetonomy profile: "View on {community}" CTA                         */
+/* ------------------------------------------------------------------ */
+
+.jt-fc-profile-cta {
+	margin: 12px 0 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Jetonomy space sidebar: "Also on {community}" card description      */
+/* ------------------------------------------------------------------ */
+
+.jt-fc-side-desc {
+	margin: 0 0 12px;
+}
+
+/* "Open Feed" CTA fills the sidebar card width. */
+.jt-fc-open-feed {
+	display: block;
+	width: 100%;
+	text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* FluentCommunity profile: Discussions block (via REST filter)        */
+/* Renders inside FC's Vue SPA HTML. Uses its own surface tokens so    */
+/* the card sits cleanly inside FC's portal chrome.                    */
+/* ------------------------------------------------------------------ */
+
+.jt-fc-profile-disc {
+	margin-top: 24px;
+	padding: 16px;
+	background: var(--jt-fc-bg);
+	border: 1px solid var(--jt-fc-border);
+	border-radius: var(--jt-fc-radius);
+}
+
+.jt-fc-profile-disc h3 {
+	margin: 0 0 12px;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--jt-fc-text);
+}
+
+.jt-fc-profile-disc h4 {
+	margin: 12px 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--jt-fc-text-tertiary);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.jt-fc-profile-disc h4:first-of-type {
+	margin-top: 0;
+}
+
+.jt-fc-profile-disc ul {
+	margin: 0 0 8px;
+	padding: 0;
+	list-style: none;
+}
+
+.jt-fc-profile-disc li {
+	padding: 6px 0;
+	border-bottom: 1px solid var(--jt-fc-border-soft);
+}
+
+.jt-fc-profile-disc li:last-child {
+	border-bottom: none;
+}
+
+.jt-fc-profile-disc a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.jt-fc-profile-disc a:hover,
+.jt-fc-profile-disc a:focus {
+	color: var(--jt-fc-accent);
+}
+
+.jt-fc-profile-disc .jt-fc-viewall {
+	margin: 12px 0 0;
+	font-size: 13px;
+}
+
+.jt-fc-profile-disc .jt-fc-viewall a:hover,
+.jt-fc-profile-disc .jt-fc-viewall a:focus {
+	text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mobile                                                              */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+
+	.jt-fc-profile-disc {
+		padding: 12px;
+	}
+
+	.jt-fc-profile-disc h3 {
+		font-size: 15px;
+	}
+}

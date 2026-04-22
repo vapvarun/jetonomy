@@ -6,6 +6,11 @@ parameters:
 			path: includes/adapters/class-pmpro-adapter.php
 
 		-
+			message: "#^Constant JETONOMY_URL not found\\.$#"
+			count: 1
+			path: includes/integrations/class-fluent-community.php
+
+		-
 			message: "#^Offset 'badges' on array\\{users\\: array\\<int, int\\>, categories\\: array\\{int, int\\}, spaces\\: array\\{int, int, int, int, int\\}, posts\\: non\\-empty\\-array\\<int\\<0, max\\>, int\\>, replies\\: array\\<int\\<0, max\\>, int\\>, flags\\: array\\{\\}\\|array\\{0\\: int, 1\\?\\: int\\}, polls\\: array\\{\\}, badges\\: non\\-empty\\-array\\<int\\<0, max\\>, int\\>\\} in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
 			path: includes/admin/ajax/class-demo-seeder.php
