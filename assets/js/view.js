@@ -825,8 +825,41 @@ const { state, actions } = store( 'jetonomy', {
                 linkedin: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>',
             };
 
+            // Copy-link handler. navigator.clipboard.writeText returns a
+            // Promise that rejects when the browser blocks the write (HTTP
+            // pages, iframe permissions, permission-policy deny, or an older
+            // browser that exposes the API behind a flag). Without handling
+            // the rejection the user sees nothing happen and assumes the
+            // button is broken. Fall back to document.execCommand('copy')
+            // via a hidden textarea for older engines, and surface a toast
+            // in either outcome.
+            const copyLink = async () => {
+                const okMsg = state.i18n?.linkCopied || 'Link copied';
+                const failMsg = state.i18n?.linkCopyFailed || 'Could not copy the link. Copy it from the address bar.';
+                try {
+                    if ( navigator.clipboard && navigator.clipboard.writeText ) {
+                        await navigator.clipboard.writeText( url );
+                        if ( window.bnToast ) window.bnToast( okMsg );
+                        return;
+                    }
+                    // Legacy fallback: hidden textarea + execCommand.
+                    const ta = document.createElement( 'textarea' );
+                    ta.value = url;
+                    ta.setAttribute( 'readonly', '' );
+                    ta.style.position = 'absolute';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild( ta );
+                    ta.select();
+                    const ok = document.execCommand && document.execCommand( 'copy' );
+                    document.body.removeChild( ta );
+                    if ( window.bnToast ) window.bnToast( ok ? okMsg : failMsg, ok ? undefined : 'error' );
+                } catch ( _err ) {
+                    if ( window.bnToast ) window.bnToast( failMsg, 'error' );
+                }
+            };
+
             const items = [
-                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
+                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { copyLink(); dropdown.remove(); } },
                 { label: 'Twitter / X',                        icon: LUCIDE.x,        href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
                 { label: 'Facebook',                           icon: LUCIDE.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
                 { label: 'LinkedIn',                           icon: LUCIDE.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
