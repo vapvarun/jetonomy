@@ -36,6 +36,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
 
@@ -117,6 +118,11 @@ class Fluent_Community {
 		// in the paired FC space's feed.
 		if ( $this->broadcast_enabled() ) {
 			add_action( 'jetonomy_after_create_post', array( $this, 'on_jt_post_created' ), 20, 3 );
+			// Comment bridge — FC comments on a broadcast feed post round-trip
+			// back to the original Jetonomy topic as a reply. One-way only;
+			// JT replies do not post FC comments (the broadcast is an
+			// announcement, not a shared message thread).
+			add_action( 'fluent_community/comment_added', array( $this, 'on_fc_comment_added' ), 20, 3 );
 		}
 	}
 
@@ -347,6 +353,111 @@ class Fluent_Community {
 		do_action( 'fluent_community/feed/created', $feed );
 		do_action( 'fluent_community/space_feed/created', $feed );
 		// phpcs:enable
+	}
+
+	/**
+	 * FC comment-added handler: mirror the comment into the Jetonomy topic
+	 * that produced the broadcast feed post.
+	 *
+	 * Only fires when the parent FC feed carries our broadcast marker
+	 * (meta.source = 'jetonomy' + meta.jetonomy_post_id). Unrelated FC
+	 * comments are untouched.
+	 *
+	 * One-way: JT replies do NOT post FC comments. We already broadcast
+	 * JT topics as announcements; rebroadcasting every reply would
+	 * flood the feed and the comment threads would fork.
+	 *
+	 * Add-only: edits and deletes on the FC side do not propagate. If
+	 * someone deletes the FC comment the JT reply stays, preserving the
+	 * forum thread. This is the same add-only principle that governs
+	 * member sync.
+	 *
+	 * Signature per FC: do_action('fluent_community/comment_added', $comment, $feed, $mentions).
+	 *
+	 * @param mixed $comment FC comment model.
+	 * @param mixed $feed    FC feed the comment was posted on.
+	 * @param mixed $mentions Unused mentions context.
+	 */
+	public function on_fc_comment_added( $comment, $feed, $mentions ): void {
+		unset( $mentions );
+		if ( self::$syncing ) {
+			return;
+		}
+		if ( ! is_object( $comment ) || ! is_object( $feed ) ) {
+			return;
+		}
+
+		// The feed has to be one of our broadcast announcements. Anything
+		// else is an FC-native comment that belongs only on FC.
+		$jt_post_id = $this->jetonomy_post_id_from_feed( $feed );
+		if ( $jt_post_id <= 0 ) {
+			return;
+		}
+
+		$parent_post = Post::find( $jt_post_id );
+		if ( ! $parent_post ) {
+			return;
+		}
+
+		$author_id = isset( $comment->user_id ) ? (int) $comment->user_id : 0;
+		if ( $author_id <= 0 ) {
+			return;
+		}
+
+		$message = isset( $comment->message ) ? (string) $comment->message : '';
+		$message = trim( $message );
+		if ( '' === $message ) {
+			return;
+		}
+
+		// Prefer FC's pre-rendered HTML; fall back to wpautop for plain input.
+		$rendered = isset( $comment->message_rendered ) ? (string) $comment->message_rendered : '';
+		$rendered = trim( $rendered );
+		if ( '' === $rendered ) {
+			$rendered = wpautop( wp_kses_post( $message ) );
+		} else {
+			$rendered = wp_kses_post( $rendered );
+		}
+
+		$plain = trim( wp_strip_all_tags( $rendered ) );
+
+		self::$syncing = true;
+		Reply::create(
+			array(
+				'post_id'       => $jt_post_id,
+				'author_id'     => $author_id,
+				'content'       => $rendered,
+				'content_plain' => $plain,
+				'status'        => 'publish',
+			)
+		);
+		self::$syncing = false;
+	}
+
+	/**
+	 * Extract the Jetonomy post ID from a FC feed's meta, if this feed
+	 * was created by our broadcast path. Returns 0 when the feed is not
+	 * one of ours.
+	 *
+	 * @param object $feed FC feed model.
+	 * @return int
+	 */
+	private function jetonomy_post_id_from_feed( $feed ): int {
+		if ( ! is_object( $feed ) || empty( $feed->meta ) ) {
+			return 0;
+		}
+		$meta = $feed->meta;
+		if ( is_string( $meta ) ) {
+			$decoded = json_decode( $meta, true );
+			$meta    = is_array( $decoded ) ? $decoded : array();
+		}
+		if ( ! is_array( $meta ) ) {
+			return 0;
+		}
+		if ( ( $meta['source'] ?? '' ) !== 'jetonomy' ) {
+			return 0;
+		}
+		return isset( $meta['jetonomy_post_id'] ) ? (int) $meta['jetonomy_post_id'] : 0;
 	}
 
 	/**
