@@ -291,6 +291,12 @@ final class Jetonomy {
 			new Integrations\BuddyPress();
 		}
 
+		// FluentCommunity integration — read-only navigational bridge.
+		if ( class_exists( '\\FluentCommunity\\App\\App' ) ) {
+			require_once JETONOMY_DIR . 'includes/integrations/class-fluent-community.php';
+			new Integrations\Fluent_Community();
+		}
+
 		// Theme integration — bridges BuddyX / BuddyX Pro / Reign Kirki colors
 		// and dark-scheme toggle into Jetonomy's CSS tokens.
 		new Integrations\Theme_Integration();

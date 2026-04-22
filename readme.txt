@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.3.7
+Stable tag: 1.3.8
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,18 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.3.8 - April 2026 =
+
+* New: FluentCommunity integration. If you run both Jetonomy and FluentCommunity on the same site, they now feel like one product instead of two. Auto-enables when FluentCommunity is detected, no toggle needed.
+* New: Pair FluentCommunity spaces with Jetonomy spaces from a new Settings > FluentCommunity admin page. Each pair renders a "Discussions" tab on the FC space header linking to the Jetonomy forum, plus an "Also on FluentCommunity" sidebar card on the Jetonomy space linking back to the FC feed.
+* New: Configurable tab label on the integration settings page (default "Discussions"). Rename it to "Forum", "Q and A", or whatever fits your community's language — it updates everywhere the tab appears.
+* New: FluentCommunity profile pages now show a Discussions block listing the member's five most recent topics started and the five topics they follow on the Jetonomy side, with a "View all on forum" link to their Jetonomy profile.
+* New: Jetonomy profile pages show a "View on FluentCommunity" link so members can jump from the forum profile to their FC profile. Paired with the existing "View all on forum" link on FC profiles, navigation between the two profile pages now works both ways.
+* New: Member avatars are unified. When a FluentCommunity user has a custom avatar on their FC profile, it is used everywhere on the site including Jetonomy pages. One identity, one avatar, one bio — no "two versions of me" effect.
+* Note: All integration features are read-only against FluentCommunity data. Nothing in the FluentCommunity database is written by Jetonomy. Deactivating FluentCommunity leaves both plugins working independently.
+
+Upgrading from 1.3.7 does not require any migration; nothing in your database changes.
 
 = 1.3.7 - April 2026 =
 
