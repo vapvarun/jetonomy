@@ -124,6 +124,8 @@
 				<element value="jetonomy_moderate"/>
 				<element value="jetonomy_create_spaces"/>
 				<element value="jetonomy_create_posts"/>
+				<element value="jetonomy_create_replies"/>
+				<element value="jetonomy_upload_media"/>
 				<element value="jetonomy_view_content"/>
 				<element value="jetonomy_ban_users"/>
 				<element value="jetonomy_manage_users"/>

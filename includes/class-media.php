@@ -22,7 +22,18 @@ class Media {
 			wp_send_json_error( __( 'You must be logged in to upload images.', 'jetonomy' ) );
 		}
 
-		if ( ! current_user_can( 'upload_files' ) ) {
+		// Anyone allowed to post a topic or reply in the community should be
+		// able to attach an image while writing it. WordPress's global
+		// `upload_files` cap is Author+ only by default, which would block
+		// a Subscriber who can otherwise participate in the forum. Fall back
+		// to Jetonomy's own posting capabilities so the forum experience is
+		// consistent with what the user is already allowed to do.
+		$can_upload = current_user_can( 'upload_files' )
+			|| current_user_can( 'jetonomy_upload_media' )
+			|| current_user_can( 'jetonomy_create_posts' )
+			|| current_user_can( 'jetonomy_create_replies' );
+
+		if ( ! $can_upload ) {
 			wp_send_json_error( __( 'You do not have permission to upload files.', 'jetonomy' ) );
 		}
 
