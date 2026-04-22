@@ -141,6 +141,13 @@ class BuddyPress {
 		// Broadcast: new JT topic -> activity item in the paired BP group.
 		if ( $this->broadcast_enabled() ) {
 			add_action( 'jetonomy_after_create_post', array( $this, 'on_jt_post_created_for_bp' ), 20, 3 );
+
+			// BP strips <br>/<p> from activity content via kses both on save
+			// AND on display, so paragraph breaks in our broadcast would
+			// collapse when rendered. Whitelist these two tags (no XSS
+			// surface) so broadcast rows keep their paragraph shape in the
+			// group activity stream.
+			add_filter( 'bp_activity_allowed_tags', array( $this, 'filter_broadcast_allowed_tags' ) );
 		}
 
 		// Comment bridge: BP activity comment on a broadcast item -> JT reply.
@@ -261,23 +268,50 @@ class BuddyPress {
 		$base      = \Jetonomy\base_url();
 		$topic_url = $space ? $base . '/s/' . $space->slug . '/t/' . $post->slug . '/' : '';
 
-		$plain   = isset( $post->content_plain ) && '' !== $post->content_plain
-			? (string) $post->content_plain
-			: wp_strip_all_tags( (string) ( $post->content ?? '' ) );
-		$excerpt = wp_trim_words( $plain, 40, '&hellip;' );
+		// Jetonomy stores `content_plain` with block-level breaks already
+		// stripped, so paragraphs run together. Re-derive a paragraph-aware
+		// excerpt from the raw HTML (same approach as the FC broadcast) by
+		// converting block-level tag boundaries to double newlines BEFORE
+		// stripping tags.
+		$excerpt = '';
+		if ( ! empty( $post->content ) ) {
+			$html    = (string) $post->content;
+			$html    = (string) preg_replace( '#</(p|div|blockquote|li|h[1-6])\s*>\s*<\1[^>]*>#i', "\n\n", $html );
+			$html    = (string) preg_replace( '#</(p|div|blockquote|h[1-6])\s*>#i', "\n\n", $html );
+			$html    = (string) preg_replace( '#<br\s*/?>#i', "\n", $html );
+			$clean   = wp_strip_all_tags( $html );
+			$clean   = (string) preg_replace( '/[ \t]+/', ' ', $clean );
+			$clean   = (string) preg_replace( "/\n[ \t]+/", "\n", $clean );
+			$clean   = (string) preg_replace( "/\n{3,}/", "\n\n", $clean );
+			$excerpt = trim( $clean );
+		}
 
-		// Full rendered body: excerpt + discreet attribution link. The
-		// activity type action line already shows "X started a topic in Y".
+		// Build the rendered body with real <p> tags per paragraph plus a
+		// discreet attribution line at the end (reads as a byline, not a
+		// shouty CTA). The `bp_activity_allowed_tags` filter registered in
+		// the constructor keeps <p> + <br> on BP's kses whitelist during
+		// both save and display so paragraph shape survives.
 		$rendered = '';
 		if ( '' !== $excerpt ) {
-			$rendered .= '<p>' . esc_html( $excerpt ) . '</p>';
+			$paras = (array) preg_split( '/\n{2,}/', $excerpt );
+			foreach ( $paras as $para ) {
+				$para = trim( (string) $para );
+				if ( '' !== $para ) {
+					$rendered .= '<p>' . esc_html( $para ) . '</p>';
+				}
+			}
 		}
 		if ( '' !== $topic_url ) {
+			// Attribution line: reads as a discreet byline rather than a
+			// hard CTA. BP's kses strips `class` / `id` from activity
+			// tags, so no custom styling class here. Theme paragraph
+			// margins are enough to separate the attribution line from
+			// the preceding excerpt.
 			$rendered .= '<p>';
+			$rendered .= esc_html__( 'Shared from the forum', 'jetonomy' ) . ' &middot; ';
 			$rendered .= '<a href="' . esc_url( $topic_url ) . '" rel="noopener">';
-			$rendered .= esc_html__( 'View discussion', 'jetonomy' ) . ' &rarr;';
-			$rendered .= '</a>';
-			$rendered .= '</p>';
+			$rendered .= esc_html__( 'View discussion', 'jetonomy' );
+			$rendered .= '</a></p>';
 		}
 
 		self::$syncing = true;
@@ -297,6 +331,28 @@ class BuddyPress {
 			bp_activity_update_meta( (int) $activity_id, self::ACTIVITY_META_POST, $post_id );
 		}
 		self::$syncing = false;
+	}
+
+	/**
+	 * Add `<br>` and `<p>` to BuddyPress's activity content allowedtags
+	 * map so our broadcast row can keep its paragraph breaks. Only added
+	 * for the duration of a single `bp_activity_add` call; removed again
+	 * right after so other activities stay on BP's strict default.
+	 *
+	 * @param array $tags Allowed tags map passed by `bp_activity_allowed_tags`.
+	 * @return array
+	 */
+	public function filter_broadcast_allowed_tags( $tags ): array {
+		if ( ! is_array( $tags ) ) {
+			$tags = array();
+		}
+		if ( ! isset( $tags['br'] ) ) {
+			$tags['br'] = array();
+		}
+		if ( ! isset( $tags['p'] ) ) {
+			$tags['p'] = array();
+		}
+		return $tags;
 	}
 
 	/**
