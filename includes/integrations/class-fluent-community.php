@@ -2,22 +2,30 @@
 /**
  * FluentCommunity integration.
  *
- * Read-only bridge between Jetonomy and FluentCommunity (FC). Ships seven
- * navigational and identity-level features so both plugins can coexist on
- * one site without friction.
+ * Navigational + add-only sync bridge between Jetonomy and FluentCommunity
+ * (FC) so both plugins feel like one product when installed together.
  *
  * Design notes:
  * - Loads only when FluentCommunity is active (class_exists gate).
  * - Keys everything on user_id. FC `xprofile.username` and WP `user_login`
  *   can diverge (e.g. this dev site has `admin` vs `admin2`) so username
  *   is never used as a join key.
- * - No writes to FC tables. The integration can be removed and FC is
- *   untouched.
- * - One WordPress option (`jetonomy_fc_space_pairs`) is the entire data
- *   footprint. Uninstall deletes one row.
- * - Stale pair handling: at render time, if either side of a pair no
- *   longer resolves to an existing space, the tab silently disappears.
- *   No admin cleanup required.
+ * - Member sync is add-only. Joins propagate both ways; leaves do NOT.
+ *   This avoids the "leave one side, silently lose the other" footgun.
+ *   Members must leave each side explicitly.
+ * - Loop prevention: a static $syncing flag is set while we cross-call
+ *   the other plugin's join API, so the join hook on that side sees it
+ *   and no-ops.
+ * - Activity broadcast is one-way: new Jetonomy topics post an
+ *   announcement feed item in the paired FC space. FC feeds do NOT
+ *   auto-create Jetonomy topics (too invasive; JT topics have structured
+ *   metadata FC feed posts don't carry).
+ * - Writes to FC tables happen only through FC's own `Helper::addToSpace`
+ *   helper and the public `Feed` model, not direct SQL. Deactivating FC
+ *   leaves Jetonomy untouched.
+ * - Stale pair handling: at render time and at sync time, if either side
+ *   of a pair no longer resolves, the action silently skips. No admin
+ *   cleanup required.
  *
  * @package Jetonomy
  */
@@ -28,6 +36,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
+use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
 
 /**
@@ -44,6 +53,26 @@ class Fluent_Community {
 	 * Option key storing the tab label used on both sides.
 	 */
 	const OPT_LABEL = 'jetonomy_fc_tab_label';
+
+	/**
+	 * Option key: enable member sync on join events (both directions).
+	 * Values: '1' (on, default), '0' (off).
+	 */
+	const OPT_SYNC_MEMBERS = 'jetonomy_fc_sync_members';
+
+	/**
+	 * Option key: broadcast new Jetonomy topics to the paired FC space feed.
+	 * Values: '1' (on, default), '0' (off).
+	 */
+	const OPT_BROADCAST = 'jetonomy_fc_broadcast';
+
+	/**
+	 * Loop-prevention flag set while we cross-call the other plugin's
+	 * join API so the reciprocal hook no-ops on the return trip.
+	 *
+	 * @var bool
+	 */
+	private static bool $syncing = false;
 
 	/**
 	 * Runtime cache of the pair map, keyed by FC space ID (int).
@@ -76,6 +105,333 @@ class Fluent_Community {
 		// Jetonomy profile page: render a "View on FluentCommunity" link so
 		// members can jump from the forum profile to their FC profile.
 		add_action( 'jetonomy_profile_after_stats', array( $this, 'render_jt_profile_fc_link' ) );
+
+		// Member sync (add-only, both directions). Idempotent at both
+		// sides' `::add` helpers; loop-prevented by self::$syncing.
+		if ( $this->member_sync_enabled() ) {
+			add_action( 'fluent_community/space/joined', array( $this, 'on_fc_space_joined' ), 20, 2 );
+			add_action( 'jetonomy_user_joined_space', array( $this, 'on_jt_space_joined' ), 20, 3 );
+		}
+
+		// Activity broadcast — new Jetonomy topic posts an announcement
+		// in the paired FC space's feed.
+		if ( $this->broadcast_enabled() ) {
+			add_action( 'jetonomy_after_create_post', array( $this, 'on_jt_post_created' ), 20, 3 );
+		}
+	}
+
+	/**
+	 * Whether member sync is enabled. Defaults to on.
+	 */
+	public function member_sync_enabled(): bool {
+		return '0' !== (string) get_option( self::OPT_SYNC_MEMBERS, '1' );
+	}
+
+	/**
+	 * Whether activity broadcast is enabled. Defaults to on.
+	 */
+	public function broadcast_enabled(): bool {
+		return '0' !== (string) get_option( self::OPT_BROADCAST, '1' );
+	}
+
+	/**
+	 * FC join event handler: mirror the join into the paired Jetonomy space.
+	 *
+	 * Signature per FC: do_action('fluent_community/space/joined', $space, $userId, $by, $created?).
+	 *
+	 * @param mixed $space   FC space model.
+	 * @param mixed $user_id User ID.
+	 */
+	public function on_fc_space_joined( $space, $user_id ): void {
+		if ( self::$syncing ) {
+			return;
+		}
+		if ( ! is_object( $space ) || empty( $space->id ) ) {
+			return;
+		}
+		$user_id = (int) $user_id;
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		$pairs = $this->get_pair_map();
+		$jt_id = $pairs[ (int) $space->id ] ?? 0;
+		if ( $jt_id <= 0 ) {
+			return;
+		}
+
+		$jt_space = Space::find( $jt_id );
+		if ( ! $jt_space ) {
+			return;
+		}
+
+		// Idempotent: skip if already a member.
+		if ( SpaceMember::is_member( $jt_id, $user_id ) ) {
+			return;
+		}
+
+		self::$syncing = true;
+		SpaceMember::add( $jt_id, $user_id );
+		self::$syncing = false;
+	}
+
+	/**
+	 * Jetonomy join event handler: mirror the join into the paired FC space.
+	 *
+	 * Signature per Jetonomy: do_action('jetonomy_user_joined_space', $space_id, $user_id, $role).
+	 *
+	 * @param int|mixed $space_id Jetonomy space ID.
+	 * @param int|mixed $user_id  User ID.
+	 * @param mixed     $role     Role assigned on the Jetonomy side (unused here; FC adds as 'member').
+	 */
+	public function on_jt_space_joined( $space_id, $user_id, $role ): void {
+		unset( $role );
+		if ( self::$syncing ) {
+			return;
+		}
+		$space_id = (int) $space_id;
+		$user_id  = (int) $user_id;
+		if ( $space_id <= 0 || $user_id <= 0 ) {
+			return;
+		}
+
+		$fc_id = $this->fc_id_for_jt_id( $space_id );
+		if ( $fc_id <= 0 ) {
+			return;
+		}
+
+		// FC space must exist. Use a lightweight DB check (no autoload dance).
+		if ( ! $this->fc_space_by_id( $fc_id ) ) {
+			return;
+		}
+
+		$helper = '\\FluentCommunity\\App\\Services\\Helper';
+		if ( ! class_exists( $helper ) || ! is_callable( array( $helper, 'addToSpace' ) ) ) {
+			return;
+		}
+
+		self::$syncing = true;
+		// FC's addToSpace is idempotent and fires `fluent_community/space/joined`
+		// internally if it actually enrolls the user. The self::$syncing guard
+		// above keeps that fired hook from bouncing back.
+		call_user_func( array( $helper, 'addToSpace' ), $fc_id, $user_id, 'member', 'jetonomy_sync' );
+		self::$syncing = false;
+	}
+
+	/**
+	 * Jetonomy post-created handler: broadcast an announcement feed in
+	 * the paired FC space.
+	 *
+	 * @param int|mixed $post_id  New Jetonomy post ID.
+	 * @param int|mixed $space_id Space the post was created in.
+	 * @param mixed     $request  Unused request context.
+	 */
+	public function on_jt_post_created( $post_id, $space_id, $request ): void {
+		unset( $request );
+		$post_id  = (int) $post_id;
+		$space_id = (int) $space_id;
+		if ( $post_id <= 0 || $space_id <= 0 ) {
+			return;
+		}
+
+		$fc_id = $this->fc_id_for_jt_id( $space_id );
+		if ( $fc_id <= 0 ) {
+			return;
+		}
+
+		$post = Post::find( $post_id );
+		if ( ! $post || empty( $post->slug ) || empty( $post->title ) ) {
+			return;
+		}
+		if ( isset( $post->status ) && 'publish' !== $post->status ) {
+			return;
+		}
+
+		$jt_space = Space::find( $space_id );
+		if ( ! $jt_space || empty( $jt_space->slug ) ) {
+			return;
+		}
+
+		// FC space must exist.
+		if ( ! $this->fc_space_by_id( $fc_id ) ) {
+			return;
+		}
+
+		$base      = $this->jetonomy_base_slug();
+		$topic_url = home_url( '/' . $base . '/s/' . $jt_space->slug . '/t/' . $post->slug . '/' );
+
+		// Generous excerpt — we want the FC feed post to read as a
+		// standalone preview, not a bait-and-switch that forces a click.
+		$excerpt = '';
+		if ( ! empty( $post->content ) ) {
+			// Preserve paragraph breaks so the rendered version keeps its shape.
+			$clean   = wp_strip_all_tags( (string) $post->content );
+			$excerpt = trim( preg_replace( '/[ \t]+/', ' ', $clean ) );
+		}
+
+		// Plain-text message: used by FC for search, activity log, email
+		// digests. No title — FC renders $feed->title as the post heading.
+		$message = $excerpt ? $excerpt . "\n\n" . $topic_url : $topic_url;
+
+		// Rendered HTML body. Excerpt first, then a discreet attribution
+		// line at the end that reads as a byline rather than a hard CTA.
+		$rendered = '';
+		if ( $excerpt ) {
+			// Split on double newlines to preserve paragraph structure.
+			$paras = preg_split( '/\n{2,}/', $excerpt );
+			foreach ( $paras as $para ) {
+				$para = trim( $para );
+				if ( '' !== $para ) {
+					$rendered .= '<p>' . esc_html( $para ) . '</p>';
+				}
+			}
+		}
+		$rendered .= '<p style="margin-top:16px;color:var(--fcom-text-2,#6b7280);font-size:14px;">';
+		$rendered .= esc_html__( 'Shared from the forum', 'jetonomy' ) . ' &middot; ';
+		$rendered .= '<a href="' . esc_url( $topic_url ) . '" rel="noopener" style="color:inherit;text-decoration:underline;">';
+		$rendered .= esc_html__( 'View discussion', 'jetonomy' );
+		$rendered .= '</a></p>';
+
+		$feed_class = '\\FluentCommunity\\App\\Models\\Feed';
+		if ( ! class_exists( $feed_class ) ) {
+			return;
+		}
+
+		$author_id = isset( $post->author_id ) ? (int) $post->author_id : 0;
+
+		// Feed::$scopeType = 'text' — FC's Feed model applies a global
+		// scope filtering all queries to type='text', so every visible
+		// feed row must use that value (confirmed at
+		// app/Http/Controllers/FeedsController.php line 829 where FC's
+		// own store() sets $data['type'] = 'text').
+		$feed                   = new $feed_class();
+		$feed->user_id          = $author_id;
+		$feed->space_id         = $fc_id;
+		$feed->type             = 'text';
+		$feed->content_type     = 'text';
+		$feed->title            = (string) $post->title;
+		$feed->message          = $message;
+		$feed->message_rendered = $rendered;
+		$feed->status           = 'published';
+		$feed->privacy          = 'public';
+		$feed->meta             = wp_json_encode(
+			array(
+				'jetonomy_post_id' => $post_id,
+				'source'           => 'jetonomy',
+			)
+		);
+		try {
+			$feed->save();
+		} catch ( \Throwable $e ) {
+			return;
+		}
+
+		// Fire FC's downstream hooks so notifications / activity log / search
+		// pick the row up just as if a user had posted it via FC's UI.
+		// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound, WordPress.NamingConventions.ValidHookName.UseUnderscores -- FC hook names, not ours.
+		do_action( 'fluent_community/feed/created', $feed );
+		do_action( 'fluent_community/space_feed/created', $feed );
+		// phpcs:enable
+	}
+
+	/**
+	 * Reverse-lookup: Jetonomy space ID -> FC space ID.
+	 *
+	 * @param int $jt_id Jetonomy space ID.
+	 * @return int FC space ID, or 0 if not paired.
+	 */
+	private function fc_id_for_jt_id( int $jt_id ): int {
+		if ( $jt_id <= 0 ) {
+			return 0;
+		}
+		foreach ( $this->get_pair_map() as $fc_id => $jt_sid ) {
+			if ( (int) $jt_sid === $jt_id ) {
+				return (int) $fc_id;
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * One-click backfill: enroll each side's existing members into the paired side.
+	 *
+	 * Capped at 5000 members per pair per run to keep synchronous request
+	 * times bounded. Admins can re-run to continue.
+	 *
+	 * @return array{pairs:int, added_to_jt:int, added_to_fc:int, capped:bool}
+	 */
+	public function run_backfill(): array {
+		$stats = array(
+			'pairs'       => 0,
+			'added_to_jt' => 0,
+			'added_to_fc' => 0,
+			'capped'      => false,
+		);
+		$pairs = $this->get_pair_map();
+		if ( empty( $pairs ) ) {
+			return $stats;
+		}
+
+		global $wpdb;
+		$cap    = 5000;
+		$helper = '\\FluentCommunity\\App\\Services\\Helper';
+
+		foreach ( $pairs as $fc_id => $jt_id ) {
+			$fc_id = (int) $fc_id;
+			$jt_id = (int) $jt_id;
+			if ( $fc_id <= 0 || $jt_id <= 0 ) {
+				continue;
+			}
+			if ( ! Space::find( $jt_id ) || ! $this->fc_space_by_id( $fc_id ) ) {
+				continue;
+			}
+
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$fc_members = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT user_id FROM {$wpdb->prefix}fcom_space_user WHERE space_id = %d AND status = 'active' LIMIT %d",
+					$fc_id,
+					$cap + 1
+				)
+			);
+			$jt_members = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT user_id FROM {$wpdb->prefix}jt_space_members WHERE space_id = %d LIMIT %d",
+					$jt_id,
+					$cap + 1
+				)
+			);
+			// phpcs:enable
+
+			if ( count( $fc_members ) > $cap || count( $jt_members ) > $cap ) {
+				$stats['capped'] = true;
+			}
+			$fc_members = array_slice( array_map( 'intval', (array) $fc_members ), 0, $cap );
+			$jt_members = array_slice( array_map( 'intval', (array) $jt_members ), 0, $cap );
+
+			$only_in_fc = array_diff( $fc_members, $jt_members );
+			$only_in_jt = array_diff( $jt_members, $fc_members );
+
+			self::$syncing = true;
+			foreach ( $only_in_fc as $uid ) {
+				if ( $uid > 0 && ! SpaceMember::is_member( $jt_id, $uid ) ) {
+					SpaceMember::add( $jt_id, $uid );
+					++$stats['added_to_jt'];
+				}
+			}
+			if ( class_exists( $helper ) && is_callable( array( $helper, 'addToSpace' ) ) ) {
+				foreach ( $only_in_jt as $uid ) {
+					if ( $uid > 0 ) {
+						call_user_func( array( $helper, 'addToSpace' ), $fc_id, $uid, 'member', 'backfill' );
+						++$stats['added_to_fc'];
+					}
+				}
+			}
+			self::$syncing = false;
+
+			++$stats['pairs'];
+		}
+		return $stats;
 	}
 
 	/**
@@ -449,12 +805,41 @@ class Fluent_Community {
 		$jt_spaces   = Space::list_all( 'active' );
 		$fc_spaces   = $this->list_fc_spaces();
 		$label       = $this->get_tab_label();
+		$sync_on     = $this->member_sync_enabled();
+		$broadcast   = $this->broadcast_enabled();
 		$saved_flash = isset( $_GET['fc_saved'] ) && '1' === $_GET['fc_saved']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$action_url  = admin_url( 'admin-post.php' );
+		$bf_stats    = null;
+		if ( isset( $_GET['fc_backfill'] ) && '1' === $_GET['fc_backfill'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$bf_stats = array(
+				'pairs'       => isset( $_GET['bf_p'] ) ? (int) $_GET['bf_p'] : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'added_to_jt' => isset( $_GET['bf_jt'] ) ? (int) $_GET['bf_jt'] : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'added_to_fc' => isset( $_GET['bf_fc'] ) ? (int) $_GET['bf_fc'] : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'capped'      => isset( $_GET['bf_c'] ) && '1' === $_GET['bf_c'], // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			);
+		}
+		$action_url = admin_url( 'admin-post.php' );
 		?>
 		<?php if ( $saved_flash ) : ?>
 			<div class="notice notice-success is-dismissible" style="margin-bottom:16px;">
 				<p><?php esc_html_e( 'FluentCommunity settings saved.', 'jetonomy' ); ?></p>
+			</div>
+		<?php endif; ?>
+		<?php if ( $bf_stats ) : ?>
+			<div class="notice notice-success is-dismissible" style="margin-bottom:16px;">
+				<p>
+					<?php
+					printf(
+						/* translators: 1: pair count, 2: members added to Jetonomy, 3: members added to FluentCommunity */
+						esc_html__( 'Backfill complete. Pairs processed: %1$d, members added to Jetonomy: %2$d, members added to FluentCommunity: %3$d.', 'jetonomy' ),
+						(int) $bf_stats['pairs'],
+						(int) $bf_stats['added_to_jt'],
+						(int) $bf_stats['added_to_fc']
+					);
+					?>
+					<?php if ( ! empty( $bf_stats['capped'] ) ) : ?>
+						<br><em><?php esc_html_e( 'Some spaces had more than 5,000 members. Re-run the backfill to continue.', 'jetonomy' ); ?></em>
+					<?php endif; ?>
+				</p>
 			</div>
 		<?php endif; ?>
 
@@ -536,6 +921,49 @@ class Fluent_Community {
 				<?php endif; ?>
 			</div>
 
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Sync Behavior', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc">
+						<?php esc_html_e( 'Controls what happens across paired spaces. Member sync is add-only — joins on either side add the member to both; leaves stay on the side they happened. This keeps behavior predictable and prevents accidental removal from both at once.', 'jetonomy' ); ?>
+					</p>
+				</div>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Member sync', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jt_fc_sync_members" value="1" <?php checked( $sync_on ); ?>>
+								<?php esc_html_e( 'When a member joins one side, add them to the paired space on the other side.', 'jetonomy' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Activity broadcast', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jt_fc_broadcast" value="1" <?php checked( $broadcast ); ?>>
+								<?php esc_html_e( 'When a new topic is created in a paired Jetonomy space, post an announcement in the paired FluentCommunity feed with a link back to the topic.', 'jetonomy' ); ?>
+							</label>
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Backfill existing members', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc">
+						<?php esc_html_e( 'After pairing spaces, run this once to sync members who already belong to one side but not the other. Safe to run multiple times — members already in both sides are skipped. Large spaces are capped at 5,000 members per run; re-run to continue.', 'jetonomy' ); ?>
+					</p>
+				</div>
+				<p class="submit" style="margin-left:12px;">
+					<button type="submit" name="jt_fc_run_backfill" value="1" class="button">
+						<?php esc_html_e( 'Sync existing members now', 'jetonomy' ); ?>
+					</button>
+				</p>
+			</div>
+
 			<p class="submit">
 				<?php submit_button( __( 'Save FluentCommunity Settings', 'jetonomy' ), 'primary', 'submit', false ); ?>
 			</p>
@@ -564,6 +992,10 @@ class Fluent_Community {
 			update_option( self::OPT_LABEL, mb_substr( $raw_label, 0, 40 ) );
 		}
 
+		// Sync toggles (checkbox absence = off).
+		update_option( self::OPT_SYNC_MEMBERS, isset( $_POST['jt_fc_sync_members'] ) ? '1' : '0' );
+		update_option( self::OPT_BROADCAST, isset( $_POST['jt_fc_broadcast'] ) ? '1' : '0' );
+
 		// Pairs come in as [fc_id => jt_id]; cast both to int and drop
 		// zero/negative values. Casting to int is the canonical sanitizer
 		// for integer input (no string form survives the cast).
@@ -580,15 +1012,25 @@ class Fluent_Community {
 		update_option( self::OPT_PAIRS, $clean );
 		$this->pair_map = null; // Force re-read on next access.
 
-		$redirect = add_query_arg(
-			array(
-				'page'     => 'jetonomy-settings',
-				'tab'      => 'fluent-community',
-				'fc_saved' => '1',
-			),
-			admin_url( 'admin.php' )
+		$query_args = array(
+			'page' => 'jetonomy-settings',
+			'tab'  => 'fluent-community',
 		);
-		wp_safe_redirect( $redirect );
+
+		// Backfill button — runs synchronously, caps at 5000 per pair per run.
+		$run_backfill = isset( $_POST['jt_fc_run_backfill'] ) ? sanitize_text_field( wp_unslash( $_POST['jt_fc_run_backfill'] ) ) : '';
+		if ( '1' === $run_backfill ) {
+			$stats                     = $this->run_backfill();
+			$query_args['fc_backfill'] = '1';
+			$query_args['bf_p']        = (int) $stats['pairs'];
+			$query_args['bf_jt']       = (int) $stats['added_to_jt'];
+			$query_args['bf_fc']       = (int) $stats['added_to_fc'];
+			$query_args['bf_c']        = $stats['capped'] ? '1' : '0';
+		} else {
+			$query_args['fc_saved'] = '1';
+		}
+
+		wp_safe_redirect( add_query_arg( $query_args, admin_url( 'admin.php' ) ) );
 		exit;
 	}
 

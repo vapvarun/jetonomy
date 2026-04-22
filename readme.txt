@@ -272,7 +272,10 @@ Each site in a Multisite network gets its own independent community. Network act
 * New: FluentCommunity profile pages now show a Discussions block listing the member's five most recent topics started and the five topics they follow on the Jetonomy side, with a "View all on forum" link to their Jetonomy profile.
 * New: Jetonomy profile pages show a "View on FluentCommunity" link so members can jump from the forum profile to their FC profile. Paired with the existing "View all on forum" link on FC profiles, navigation between the two profile pages now works both ways.
 * New: Member avatars are unified. When a FluentCommunity user has a custom avatar on their FC profile, it is used everywhere on the site including Jetonomy pages. One identity, one avatar, one bio — no "two versions of me" effect.
-* Note: All integration features are read-only against FluentCommunity data. Nothing in the FluentCommunity database is written by Jetonomy. Deactivating FluentCommunity leaves both plugins working independently.
+* New: Member sync across paired spaces. When someone joins a paired FluentCommunity space they are automatically added to the paired Jetonomy space, and vice versa. Sync is add-only on purpose — leaves do not propagate so nobody is accidentally removed from both sides at once. Toggle on the settings page; defaults to on.
+* New: Activity broadcast. When a new topic is created in a paired Jetonomy space, an announcement feed post appears in the paired FluentCommunity space with the topic title, excerpt, and a discreet "Shared from the forum" attribution link. No duplicated titles, no shouty CTA — reads like a normal feed post. Toggle on the settings page; defaults to on.
+* New: "Sync existing members now" button on the settings page. One-click backfill that enrols each side's existing members into the paired side. Safe to re-run, capped at 5,000 members per space per run, reports pairs processed and members added in both directions.
+* Note: Writes to FluentCommunity happen only through FluentCommunity's own public helpers (addToSpace) and Feed model, never by direct SQL. Deactivating FluentCommunity leaves both plugins working independently.
 
 Upgrading from 1.3.7 does not require any migration; nothing in your database changes.
 
