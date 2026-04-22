@@ -313,11 +313,26 @@ $crumbs = [
 				<div class="jt-topics">
 					<?php foreach ( $user_drafts as $dr_post ) : ?>
 						<?php
-						$dr_ago       = human_time_diff( strtotime( $dr_post->created_at ), time() );
-						$dr_edit_url  = $base . '/s/' . ( $dr_post->space_slug ?? '' ) . '/new/?draft=' . (int) $dr_post->id;
+						$dr_ago   = human_time_diff( strtotime( $dr_post->created_at ), time() );
+						$dr_space = (string) ( $dr_post->space_slug ?? '' );
+						$dr_slug  = (string) ( $dr_post->slug ?? '' );
+						// Drafts and scheduled posts are viewable at the single-post
+						// URL for their author; single-post.php serves them with the
+						// Edit controls already attached (only renders a 404 to non-
+						// authors). Route the row click there so the flow matches the
+						// Posts/Replies/Votes tabs above — click a row, land on the
+						// thing itself. Fall back to a non-clickable row if the draft
+						// has no slug yet (edge case) rather than emit a broken link.
+						$dr_url       = ( '' !== $dr_space && '' !== $dr_slug )
+							? $base . '/s/' . $dr_space . '/t/' . $dr_slug . '/'
+							: '';
 						$is_scheduled = ! empty( $dr_post->published_at );
+						$dr_row_class = 'jt-row jt-row--draft' . ( '' !== $dr_url ? ' jt-row-clickable' : '' );
 						?>
-						<div class="jt-row jt-row--draft">
+						<div class="<?php echo esc_attr( $dr_row_class ); ?>"
+							<?php if ( '' !== $dr_url ) : ?>
+								data-jt-href="<?php echo esc_url( $dr_url ); ?>"
+							<?php endif; ?>>
 							<div class="jt-row-main">
 								<div class="jt-row-title">
 									<?php echo esc_html( $dr_post->title ); ?>
