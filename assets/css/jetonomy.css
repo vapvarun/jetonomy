@@ -2018,3 +2018,49 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 		padding: 0.85rem;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Mobile overflow safeguards
+   Defensive rules so user-supplied content (long URLs, large
+   images, wide tables / code blocks) cannot push the Jetonomy
+   app wider than the viewport. Covers customer reports of
+   horizontal scroll on small screens (390px / 414px) and is
+   theme-agnostic: works regardless of which parent theme
+   wraps the community.
+   ═══════════════════════════════════════════════════════════ */
+
+.jt-app {
+	/* A wide child must not widen the forum. Themes that want
+	   a floating element to escape can opt out on their own. */
+	max-width: 100vw;
+	overflow-x: clip;
+}
+
+.jt-post-body,
+.jt-reply-body {
+	/* Long URLs and unspaced strings (e.g. transaction hashes)
+	   must wrap instead of stretching the container. */
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.jt-post-body img,
+.jt-reply-body img {
+	max-width: 100%;
+	height: auto;
+}
+
+.jt-post-body table,
+.jt-reply-body table {
+	/* Tables with many columns get their own horizontal scroll
+	   inside the post body; the rest of the page stays put. */
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.jt-post-body iframe,
+.jt-reply-body iframe,
+.jt-embed iframe {
+	max-width: 100%;
+}
