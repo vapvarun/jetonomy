@@ -101,46 +101,6 @@ Kept out of the first release on purpose:
 
 Open a request if one of these is the feature you need. We ship what customers actually use.
 
-## Developer Reference
+---
 
-The entire integration lives in one file: `includes/integrations/class-fluent-community.php`. It loads only when `FluentCommunity\App\App` exists.
-
-### Options
-
-| Option | Type | Default | Purpose |
-|--------|------|---------|---------|
-| `jetonomy_fc_space_pairs` | array `{fc_id: jt_id}` | `[]` | Space pairing map. One row stores every pair. |
-| `jetonomy_fc_tab_label` | string | `Discussions` | Label used on the FC tab, Jetonomy sidebar card, and FC profile Discussions block. |
-| `jetonomy_fc_sync_members` | `'1'` / `'0'` | `'1'` | Toggle for bidirectional member sync. |
-| `jetonomy_fc_broadcast` | `'1'` / `'0'` | `'1'` | Toggle for topic broadcast to the paired FC feed. |
-
-On uninstall, both options are removed by Jetonomy's standard `jetonomy_*` sweep.
-
-### FluentCommunity hooks consumed
-
-| Hook | Surface |
-|------|---------|
-| `get_avatar_url` (core WP) | Unifies the avatar across both sides |
-| `fluent_community/space_header_links` | Adds the Discussions tab on the FC space header |
-| `fluent_community/activity/after_contents_user` | Adds the Discussions block on the FC profile |
-| `fluent_community/space/joined` | Triggers member sync FC to Jetonomy |
-| `fluent_community/comment_added` | Triggers the comment-to-reply bridge |
-
-### Jetonomy hooks consumed
-
-| Hook | Surface |
-|------|---------|
-| `jetonomy_admin_settings_tabs` + `jetonomy_admin_settings_tab_content` | Registers the FluentCommunity settings tab |
-| `jetonomy_sidebar_after_about` | Renders the "Also on {community}" sidebar card |
-| `jetonomy_profile_after_stats` | Renders the cross-link to the member's FC profile |
-| `jetonomy_user_joined_space` | Triggers member sync Jetonomy to FC |
-| `jetonomy_after_create_post` | Triggers the broadcast to the paired FC feed |
-
-### Identity helpers
-
-- `fc_username_for_user( int $user_id ): ?string`: maps a WP user ID to the FC xprofile username.
-- `fc_site_title(): string`: returns the FC-configured community name (falls back to WP site name, then `Community`).
-
-### Loop protection
-
-Member sync and broadcast use a static `$syncing` flag so a join on one side never triggers a boomerang join back. Broadcast feed rows are tagged with meta so only those feeds round-trip their comments as replies; native FC feeds are left alone.
+Building on top of the integration? See the [FluentCommunity integration reference](../developer-guide/06-fluent-community-integration.md) in the Developer Guide for options, hooks, and extension points.
