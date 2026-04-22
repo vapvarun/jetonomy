@@ -246,6 +246,12 @@ class Fluent_Community {
 		if ( isset( $post->status ) && 'publish' !== $post->status ) {
 			return;
 		}
+		// Private topics must never leak into the FC feed. FC feed rows are
+		// visible to anyone who can see the FC space, which may be a wider
+		// audience than the private-topic scope on the Jetonomy side.
+		if ( ! empty( $post->is_private ) ) {
+			return;
+		}
 
 		$jt_space = Space::find( $space_id );
 		if ( ! $jt_space || empty( $jt_space->slug ) ) {
