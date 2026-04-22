@@ -326,7 +326,7 @@ const { state, actions } = store( 'jetonomy', {
             // add +1); clicking the same up button again toggles off (-1);
             // no prior vote is a straight +1. Without this, a user flipping
             // down → up saw an intermediate 'wrong' score for a beat before
-            // the server reply corrected it (Basecamp 9809276277).
+            // the server reply corrected it.
             const current = state.postScores[ postId ] || 0;
             const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
             let delta = 1;
