@@ -321,9 +321,21 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
-            // Optimistic update
+            // Optimistic update. Delta depends on the user's existing vote,
+            // not a naïve +1: flipping from a prior downvote is +2 (remove -1,
+            // add +1); clicking the same up button again toggles off (-1);
+            // no prior vote is a straight +1. Without this, a user flipping
+            // down → up saw an intermediate 'wrong' score for a beat before
+            // the server reply corrected it (Basecamp 9809276277).
             const current = state.postScores[ postId ] || 0;
-            state.postScores[ postId ] = current + 1;
+            const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
+            let delta = 1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = -1;
+            } else if ( downSibling?.classList.contains( 'voted' ) ) {
+                delta = 2;
+            }
+            state.postScores[ postId ] = current + delta;
 
             // Visual feedback — vote pop
             const scoreEl = el.ref.querySelector( '.n' );
@@ -378,8 +390,18 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
+            // Optimistic delta mirrors voteUp: flipping up → down is -2,
+            // clicking the same down again toggles off (+1), no prior vote
+            // is a straight -1. See voteUp comment for the full rationale.
             const current = state.postScores[ postId ] || 0;
-            state.postScores[ postId ] = current - 1;
+            const upSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteUp"], [data-wp-on--click="actions.voteUp"]' );
+            let delta = -1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = 1;
+            } else if ( upSibling?.classList.contains( 'voted' ) ) {
+                delta = -2;
+            }
+            state.postScores[ postId ] = current + delta;
 
             // Visual feedback — vote pop
             const scoreEl = el.ref.querySelector( '.n' );
@@ -436,9 +458,18 @@ const { state, actions } = store( 'jetonomy', {
             const scoreEl = el.ref.querySelector( '.n' );
             const current = parseInt( scoreEl?.textContent || '0', 10 );
 
-            state.replyScores[ replyId ] = current + 1;
+            // Delta accounts for a previous vote: same-button click toggles
+            // off (-1); flipping from a prior downvote is +2; first vote is +1.
+            const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyDown"], [data-wp-on--click="actions.voteReplyDown"]' );
+            let delta = 1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = -1;
+            } else if ( downSibling?.classList.contains( 'voted' ) ) {
+                delta = 2;
+            }
+            state.replyScores[ replyId ] = current + delta;
             if ( scoreEl ) {
-                scoreEl.textContent = current + 1;
+                scoreEl.textContent = current + delta;
                 scoreEl.style.transform = 'scale(1.3)';
                 setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
             }
@@ -491,9 +522,18 @@ const { state, actions } = store( 'jetonomy', {
             const scoreEl = el.ref.querySelector( '.n' );
             const current = parseInt( scoreEl?.textContent || '0', 10 );
 
-            state.replyScores[ replyId ] = current - 1;
+            // Delta mirrors voteReplyUp: flipping up → down is -2, same-button
+            // toggle-off is +1, first vote is -1.
+            const upSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
+            let delta = -1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = 1;
+            } else if ( upSibling?.classList.contains( 'voted' ) ) {
+                delta = -2;
+            }
+            state.replyScores[ replyId ] = current + delta;
             if ( scoreEl ) {
-                scoreEl.textContent = current - 1;
+                scoreEl.textContent = current + delta;
                 scoreEl.style.transform = 'scale(1.3)';
                 setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
             }
