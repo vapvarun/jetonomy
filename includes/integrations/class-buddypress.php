@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\UserProfile;
 
 /**
@@ -26,6 +27,40 @@ class BuddyPress {
 	 * Group meta key for the linked Jetonomy space ID.
 	 */
 	const META_KEY = 'jetonomy_space_id';
+
+	/**
+	 * Option key controlling whether new Jetonomy topics broadcast to the
+	 * paired BuddyPress group's activity stream. Defaults to '1' (on).
+	 */
+	const OPT_BROADCAST = 'jetonomy_bp_broadcast';
+
+	/**
+	 * Option key controlling whether BuddyPress activity comments on a
+	 * broadcast item round-trip back to the Jetonomy topic as replies.
+	 * Defaults to '1' (on).
+	 */
+	const OPT_COMMENT_BRIDGE = 'jetonomy_bp_comment_bridge';
+
+	/**
+	 * BP activity meta key used to tag broadcast activities with their
+	 * originating Jetonomy post ID. The comment bridge reads this to
+	 * decide which activity comments should round-trip as JT replies.
+	 */
+	const ACTIVITY_META_POST = 'jetonomy_post_id';
+
+	/**
+	 * BP activity type for broadcast items. Custom so existing BP themes
+	 * and integrations can filter or style these rows distinctly.
+	 */
+	const ACTIVITY_TYPE = 'jetonomy_topic';
+
+	/**
+	 * Loop guard shared between the JT->BP broadcast and the BP->JT reply
+	 * bridge so a write on one side cannot trigger a boomerang write back.
+	 *
+	 * @var bool
+	 */
+	private static bool $syncing = false;
 
 	/**
 	 * Get the URL for a BP group, compatible with all BP versions.
@@ -99,6 +134,230 @@ class BuddyPress {
 		// Forum settings in group creation wizard (Details step).
 		add_action( 'bp_after_group_details_creation_step', array( $this, 'render_group_forum_settings' ) );
 		add_action( 'groups_created_group', array( $this, 'save_group_forum_settings_on_create' ), 20, 1 );
+
+		// Register our custom activity type so BP renders it in group streams.
+		add_action( 'bp_register_activity_actions', array( $this, 'register_activity_type' ) );
+
+		// Broadcast: new JT topic -> activity item in the paired BP group.
+		if ( $this->broadcast_enabled() ) {
+			add_action( 'jetonomy_after_create_post', array( $this, 'on_jt_post_created_for_bp' ), 20, 3 );
+		}
+
+		// Comment bridge: BP activity comment on a broadcast item -> JT reply.
+		if ( $this->comment_bridge_enabled() ) {
+			add_action( 'bp_activity_comment_posted', array( $this, 'on_bp_activity_comment_posted' ), 20, 3 );
+		}
+	}
+
+	/**
+	 * Whether JT topics broadcast to the paired BP group activity stream.
+	 * Defaults on.
+	 */
+	public function broadcast_enabled(): bool {
+		return '0' !== (string) get_option( self::OPT_BROADCAST, '1' );
+	}
+
+	/**
+	 * Whether BP activity comments on broadcast items round-trip as JT
+	 * replies. Defaults on.
+	 */
+	public function comment_bridge_enabled(): bool {
+		return '0' !== (string) get_option( self::OPT_COMMENT_BRIDGE, '1' );
+	}
+
+	/**
+	 * Register the `jetonomy_topic` activity type with BuddyPress so the
+	 * activity stream renders our broadcast rows with a meaningful label
+	 * and filters them alongside native BP activity types.
+	 */
+	public function register_activity_type(): void {
+		if ( ! function_exists( 'bp_activity_set_action' ) ) {
+			return;
+		}
+		bp_activity_set_action(
+			'groups',
+			self::ACTIVITY_TYPE,
+			__( 'New forum topic', 'jetonomy' ),
+			array( $this, 'format_activity_action' ),
+			__( 'Forum Topics', 'jetonomy' ),
+			array( 'activity', 'group', 'member', 'member_groups' )
+		);
+	}
+
+	/**
+	 * Render the human-readable action string for a broadcast activity
+	 * row. Called by BuddyPress when listing the activity stream.
+	 *
+	 * @param string $action   Default action string.
+	 * @param object $activity BP activity item.
+	 * @return string
+	 */
+	public function format_activity_action( $action, $activity ): string {
+		unset( $action );
+		$user_link  = bp_core_get_userlink( (int) $activity->user_id );
+		$group      = groups_get_group( (int) $activity->item_id );
+		$group_name = is_object( $group ) && ! empty( $group->name ) ? (string) $group->name : '';
+		$group_link = '' !== $group_name
+			? '<a href="' . esc_url( self::get_group_url( $group ) ) . '">' . esc_html( $group_name ) . '</a>'
+			: '';
+
+		if ( '' === $group_link ) {
+			/* translators: %s: user link. */
+			return sprintf( esc_html__( '%s started a new forum topic', 'jetonomy' ), $user_link );
+		}
+		/* translators: 1: user link, 2: group link. */
+		return sprintf( esc_html__( '%1$s started a new forum topic in %2$s', 'jetonomy' ), $user_link, $group_link );
+	}
+
+	/**
+	 * Broadcast a new Jetonomy topic into the paired BP group's activity
+	 * stream. Skips private topics and unpaired spaces. Tags the activity
+	 * row with `jetonomy_post_id` meta so the comment bridge can detect
+	 * ours and round-trip replies back.
+	 *
+	 * Signature: do_action('jetonomy_after_create_post', $post_id, $space_id, $request).
+	 *
+	 * @param int|mixed $post_id  Jetonomy post ID.
+	 * @param int|mixed $space_id Jetonomy space ID.
+	 * @param mixed     $request  REST request (unused).
+	 */
+	public function on_jt_post_created_for_bp( $post_id, $space_id, $request ): void {
+		unset( $request );
+		if ( self::$syncing ) {
+			return;
+		}
+		if ( ! function_exists( 'bp_activity_add' ) || ! bp_is_active( 'activity' ) ) {
+			return;
+		}
+
+		$post_id  = (int) $post_id;
+		$space_id = (int) $space_id;
+		if ( $post_id <= 0 || $space_id <= 0 ) {
+			return;
+		}
+
+		$group_id = self::find_group_by_space( $space_id );
+		if ( ! $group_id ) {
+			return;
+		}
+
+		$post = Post::find( $post_id );
+		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
+			return;
+		}
+
+		// Privacy guard: private topics never broadcast. Group audience
+		// can be broader than the private-topic scope.
+		if ( ! empty( $post->is_private ) ) {
+			return;
+		}
+
+		$space = Space::find( $space_id );
+		$group = groups_get_group( $group_id );
+		if ( ! $group ) {
+			return;
+		}
+
+		$base      = \Jetonomy\base_url();
+		$topic_url = $space ? $base . '/s/' . $space->slug . '/t/' . $post->slug . '/' : '';
+
+		$plain   = isset( $post->content_plain ) && '' !== $post->content_plain
+			? (string) $post->content_plain
+			: wp_strip_all_tags( (string) ( $post->content ?? '' ) );
+		$excerpt = wp_trim_words( $plain, 40, '&hellip;' );
+
+		// Full rendered body: excerpt + discreet attribution link. The
+		// activity type action line already shows "X started a topic in Y".
+		$rendered = '';
+		if ( '' !== $excerpt ) {
+			$rendered .= '<p>' . esc_html( $excerpt ) . '</p>';
+		}
+		if ( '' !== $topic_url ) {
+			$rendered .= '<p>';
+			$rendered .= '<a href="' . esc_url( $topic_url ) . '" rel="noopener">';
+			$rendered .= esc_html__( 'View discussion', 'jetonomy' ) . ' &rarr;';
+			$rendered .= '</a>';
+			$rendered .= '</p>';
+		}
+
+		self::$syncing = true;
+		$activity_id   = bp_activity_add(
+			array(
+				'user_id'           => (int) $post->author_id,
+				'component'         => 'groups',
+				'type'              => self::ACTIVITY_TYPE,
+				'item_id'           => $group_id,
+				'secondary_item_id' => $post_id,
+				'content'           => $rendered,
+				'primary_link'      => $topic_url,
+				'hide_sitewide'     => ( 'public' !== (string) ( $group->status ?? 'public' ) ),
+			)
+		);
+		if ( $activity_id && function_exists( 'bp_activity_update_meta' ) ) {
+			bp_activity_update_meta( (int) $activity_id, self::ACTIVITY_META_POST, $post_id );
+		}
+		self::$syncing = false;
+	}
+
+	/**
+	 * Mirror a BP activity comment back to the originating Jetonomy topic
+	 * as a reply, but only when the top-level activity was one of our
+	 * broadcast rows (identified by `jetonomy_post_id` activity meta).
+	 * Native BP activity comments are untouched.
+	 *
+	 * Signature: do_action('bp_activity_comment_posted', $comment_id, $r, $activity).
+	 *
+	 * @param int   $comment_id Newly created BP activity comment ID (unused).
+	 * @param array $r          Comment args: content, user_id, activity_id, parent_id, skip_notification.
+	 * @param mixed $activity   Top-level BP_Activity_Activity being commented on.
+	 */
+	public function on_bp_activity_comment_posted( $comment_id, $r, $activity ): void {
+		unset( $comment_id );
+		if ( self::$syncing ) {
+			return;
+		}
+		if ( ! function_exists( 'bp_activity_get_meta' ) ) {
+			return;
+		}
+
+		$top_activity_id = is_object( $activity ) && isset( $activity->id ) ? (int) $activity->id : 0;
+		if ( $top_activity_id <= 0 ) {
+			return;
+		}
+
+		$jt_post_id = (int) bp_activity_get_meta( $top_activity_id, self::ACTIVITY_META_POST, true );
+		if ( $jt_post_id <= 0 ) {
+			return;
+		}
+
+		$jt_post = Post::find( $jt_post_id );
+		if ( ! $jt_post || 'publish' !== ( $jt_post->status ?? '' ) ) {
+			return;
+		}
+
+		$content = isset( $r['content'] ) ? (string) $r['content'] : '';
+		$user_id = isset( $r['user_id'] ) ? (int) $r['user_id'] : 0;
+		if ( '' === trim( $content ) || $user_id <= 0 ) {
+			return;
+		}
+
+		$html  = wp_kses_post( $content );
+		$plain = trim( wp_strip_all_tags( $content ) );
+		if ( '' === $plain ) {
+			return;
+		}
+
+		self::$syncing = true;
+		Reply::create(
+			array(
+				'post_id'       => $jt_post_id,
+				'author_id'     => $user_id,
+				'content'       => $html,
+				'content_plain' => $plain,
+				'status'        => 'publish',
+			)
+		);
+		self::$syncing = false;
 	}
 
 	/**

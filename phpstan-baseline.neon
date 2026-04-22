@@ -517,7 +517,7 @@ parameters:
 
 		-
 			message: "#^Negated boolean expression is always false\\.$#"
-			count: 3
+			count: 4
 			path: includes/integrations/class-buddypress.php
 
 		-
@@ -532,7 +532,7 @@ parameters:
 
 		-
 			message: "#^Property BP_Groups_Group\\:\\:\\$status \\(string\\) on left side of \\?\\? is not nullable\\.$#"
-			count: 1
+			count: 2
 			path: includes/integrations/class-buddypress.php
 
 		-
