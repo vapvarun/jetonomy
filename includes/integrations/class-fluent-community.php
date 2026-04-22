@@ -156,6 +156,12 @@ class Fluent_Community {
 		);
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Feature Toggles
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * Whether member sync is enabled. Defaults to on.
 	 */
@@ -169,6 +175,12 @@ class Fluent_Community {
 	public function broadcast_enabled(): bool {
 		return '0' !== (string) get_option( self::OPT_BROADCAST, '1' );
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Member Sync  (add-only, both directions)
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * FC join event handler: mirror the join into the paired Jetonomy space.
@@ -253,6 +265,12 @@ class Fluent_Community {
 		call_user_func( array( $helper, 'addToSpace' ), $fc_id, $user_id, 'member', 'jetonomy_sync' );
 		self::$syncing = false;
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Activity Broadcast  (JT topic → FC feed)
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * Jetonomy post-created handler: broadcast an announcement feed in
@@ -385,6 +403,12 @@ class Fluent_Community {
 		// phpcs:enable
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Comment-to-Reply Bridge  (FC comment → JT reply)
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * FC comment-added handler: mirror the comment into the Jetonomy topic
 	 * that produced the broadcast feed post.
@@ -508,6 +532,12 @@ class Fluent_Community {
 		return 0;
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Backfill Tool  (sync existing members)
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * One-click backfill: enroll each side's existing members into the paired side.
 	 *
@@ -590,6 +620,12 @@ class Fluent_Community {
 		return $stats;
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Render: Jetonomy-side surfaces
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * Render a link on the Jetonomy profile page pointing to the user's FC profile.
 	 *
@@ -651,6 +687,12 @@ class Fluent_Community {
 		$cache[ $user_id ] = $username;
 		return $username;
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Render: FluentCommunity-side surfaces
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * Append a "Discussions" tab to a paired FC space's header.
@@ -998,6 +1040,12 @@ class Fluent_Community {
 		return $row ?: null;
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Helpers  (pair map, URL/slug, space lookups)
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * Resolve the Jetonomy base URL slug (defaults to "community").
 	 *
@@ -1045,6 +1093,12 @@ class Fluent_Community {
 		}
 		return __( 'Community', 'jetonomy' );
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Admin Settings  (Integrations > FluentCommunity tab)
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * Add the FluentCommunity tab to the Jetonomy settings sidebar.
@@ -1364,6 +1418,12 @@ class Fluent_Community {
 		}
 		return $this->pair_map;
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Avatar Unification
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * FC avatar URL for a given WP user, or null if none.

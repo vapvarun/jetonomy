@@ -156,6 +156,12 @@ class BuddyPress {
 		}
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Feature Toggles
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * Whether JT topics broadcast to the paired BP group activity stream.
 	 * Defaults on.
@@ -171,6 +177,12 @@ class BuddyPress {
 	public function comment_bridge_enabled(): bool {
 		return '0' !== (string) get_option( self::OPT_COMMENT_BRIDGE, '1' );
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Activity Broadcast  (JT topic → BP group stream)
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * Register the `jetonomy_topic` activity type with BuddyPress so the
@@ -355,6 +367,12 @@ class BuddyPress {
 		return $tags;
 	}
 
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Comment-to-Reply Bridge  (BP comment → JT reply)
+	 * ══════════════════════════════════════════════
+	 */
+
 	/**
 	 * Mirror a BP activity comment back to the originating Jetonomy topic
 	 * as a reply, but only when the top-level activity was one of our
@@ -415,6 +433,12 @@ class BuddyPress {
 		);
 		self::$syncing = false;
 	}
+
+	/*
+	 * ══════════════════════════════════════════════
+	 *  Assets
+	 * ══════════════════════════════════════════════
+	 */
 
 	/**
 	 * Enqueue BuddyPress integration stylesheet on BP pages.

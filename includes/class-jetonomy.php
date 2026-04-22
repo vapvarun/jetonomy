@@ -285,13 +285,22 @@ final class Jetonomy {
 			$pmpro->register_hooks();
 		}
 
-		// BuddyPress integration — Groups ↔ Spaces sync.
+		// BuddyPress integration: Groups ↔ Spaces sync, group activity
+		// broadcast, and comment-to-reply bridge. Gated on BP Groups being
+		// active so the file is not parsed on sites without BP. The
+		// broadcast + bridge inside the class further gate themselves on
+		// the Activity component at runtime so a BP-without-Activity
+		// install stays fatal-free.
 		if ( function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
 			require_once JETONOMY_DIR . 'includes/integrations/class-buddypress.php';
 			new Integrations\BuddyPress();
 		}
 
-		// FluentCommunity integration — read-only navigational bridge.
+		// FluentCommunity integration: navigational bridge plus member
+		// sync, topic broadcast, and comment-to-reply bridge. Gated on
+		// FC's bootstrap class so the file is not parsed on sites without
+		// FluentCommunity. Writes to FC go through FC's own models
+		// (Feed, Helper) with class_exists checks at the call site.
 		if ( class_exists( '\\FluentCommunity\\App\\App' ) ) {
 			require_once JETONOMY_DIR . 'includes/integrations/class-fluent-community.php';
 			new Integrations\Fluent_Community();
