@@ -1,359 +1,375 @@
-# Agent Smoke Runbook — Jetonomy Pre-Release
+# Agent Smoke Runbook - Jetonomy Pre-Release
 
-**Audience: a browser-capable agent (Claude Sonnet / equivalent) with Playwright MCP + WP-CLI Bash access.**
+**Audience:** a browser-capable agent (Claude Sonnet or equivalent) with Playwright MCP + WP-CLI Bash access, OR a human QA person with the same access. Both should be able to execute every step of this runbook.
 
-This runbook is deterministic: each step has an exact action and exact assertion. A successful walk ends with a JSON summary: `{ "passed": N, "failed": 0, ... }`. Any failure halts and emits a Basecamp-ready bug report.
+## How to read this runbook
+
+Each C and E step describes a **customer contract**: what the feature promises, why it matters, the surfaces it touches, and what "working" looks like in customer terms. It does NOT prescribe the exact Playwright calls, selectors, REST paths, or DB queries. Read the relevant plugin code, pick the right mechanism, and verify the contract. This freedom is the point: the verifier is expected to notice bugs we did not pre-imagine.
+
+D (regression guards) stays specific - those are repros of past incidents; the exact fixture is the contract.
+
+Infrastructure sections (preconditions, output contract, debug-log protocol, fixture cleanup, failure protocol) stay specific because they are the stable machinery the walk rides on.
 
 ## Global preconditions
 
 - Working directory: `/Users/varundubey/Local Sites/forums/app/public`
-- WP-CLI command template: `wp --path="$WP_PATH" <cmd>` where `$WP_PATH` is the working directory
 - Site URL: `http://forums.local`
-- Admin auto-login: append `?autologin=1` to any front-end URL to log in as admin (user ID 1)
-- Per-user auto-login: `?autologin=<user_login>` logs in as that user
-- Playwright browser: reuse one Chromium session throughout. Reopen with `browser_navigate` after any `browser_close`.
+- WP-CLI template: `wp --path="$WP_PATH" <cmd>`
+- Admin auto-login: `?autologin=1` on any front-end URL
+- Per-user auto-login: `?autologin=<user_login>`
+- Playwright: reuse one Chromium session. Restart with `browser_close` + `browser_navigate` if it dies.
 - Debug log: `wp-content/debug.log`
+- Release target: value of the `JETONOMY_VERSION` constant
 
 ## Agent output contract
 
-At the end of the walk, emit exactly one JSON object of shape:
+At the end of the walk, write exactly one JSON file to
+`wp-content/plugins/jetonomy/docs/qa/.last-smoke-pass.json`:
 
 ```json
 {
-  "release_version": "<read from JETONOMY_VERSION constant>",
-  "ran_at": "<ISO timestamp>",
+  "release_version": "<JETONOMY_VERSION>",
+  "ran_at": "<ISO 8601 UTC>",
   "sections": {
-    "A_fresh_install": { "pass": N, "fail": N, "skipped": N },
-    "B_upgrade": { ... },
-    "C_core_flows": { ... },
-    "D_regression_guards": { ... },
-    "E_pro_smoke": { ... },
-    "F_cross_browser": { ... }
+    "A_fresh_install":     { "pass": N, "fail": N, "skipped": N },
+    "B_upgrade":           { "pass": N, "fail": N, "skipped": N },
+    "C_core_flows":        { "pass": N, "fail": N, "skipped": N },
+    "D_regression_guards": { "pass": N, "fail": N, "skipped": N },
+    "E_pro_smoke":         { "pass": N, "fail": N, "skipped": N },
+    "F_cross_browser":     { "pass": N, "fail": N, "skipped": N }
   },
   "failures": [
-    { "id": "D1.profile-av", "expected": "...", "actual": "...", "url": "...", "screenshot": "<path>" }
+    {
+      "id": "C.member.post-create",
+      "origin": "from | for",
+      "triage_note": "one line on why you classified it that way",
+      "expected": "...",
+      "actual": "...",
+      "url": "...",
+      "screenshot": "..."
+    }
+  ],
+  "debug_log_issues": [
+    { "section": "...", "level": "fatal|warning|notice|deprecated", "line": "...", "file": "..." }
+  ],
+  "manual_required": [
+    "Firefox Desktop: ...",
+    "Safari iOS 390px: ..."
   ]
 }
 ```
 
-If `failed > 0`, also emit a Basecamp card draft:
+Also emit a Basecamp draft for every failure using the template in the Failure protocol.
 
-```
-### Bug: <failed step id>
-**Environment:** Jetonomy <version>, Chromium, <viewport>px
-**Expected:** <from runbook>
-**Actual:** <measured value / error>
-**URL:** <tested URL>
-**Screenshot:** <attached file path>
-**Steps:** <runbook step reference>
-```
+## Fixture cleanup (before every walk)
 
----
-
-## Setup fixtures (run before Section A)
+Delete any leftover test data from prior runs. Exact WP-CLI eval script is permitted here because this is infrastructure, not a feature check.
 
 ```bash
-# Ensure a known starting state — reset any prior test fixtures
 wp --path="$WP_PATH" eval '
 global $wpdb;
-// Delete any E2E test posts from prior runs
 $wpdb->query("DELETE FROM wp_jt_posts WHERE title LIKE \"E2E %\" OR title LIKE \"Smoke %\"");
 $wpdb->query("DELETE FROM wp_jt_replies WHERE content_plain LIKE \"smoke-%\" OR content_plain LIKE \"e2e-%\"");
+$wpdb->query("DELETE FROM wp_jt_flags WHERE reason LIKE \"smoke-%\"");
+$wpdb->query("DELETE FROM wp_jt_subscriptions WHERE user_id IN (3, 16) AND object_type IN (\"post\", \"space\")");
 wp_cache_flush();
 echo "fixtures cleaned\n";
 '
 ```
 
-## Debug log monitoring (enable BEFORE Section A, check AFTER every section)
+## Debug log protocol
 
-WP_DEBUG + WP_DEBUG_LOG must be ON for the entire walk. Any new warning,
-notice, or fatal written to `wp-content/debug.log` during a section counts
-as a FAILURE — even if the UI looks fine. Silent errors are the ones that
-ship and break customer sites.
-
-### Pre-walk — enable debug, baseline the log
+Enable WP_DEBUG + WP_DEBUG_LOG + WP_DEBUG_DISPLAY=false for the entire walk. Baseline `wp-content/debug.log` byte count. After every section, diff new lines and record `Fatal error:` / `Warning:` / `Notice:` / `Deprecated:` entries into `debug_log_issues[]`. Silent warnings are the bugs that ship, so treat any new non-info line as a failure unless explicitly whitelisted.
 
 ```bash
-# 1. Turn WP_DEBUG on if not already. Snapshot current state first so we can restore.
-wp --path="$WP_PATH" eval '
-$wp_config = file_get_contents(ABSPATH . "wp-config.php");
-$had_debug_true = strpos($wp_config, "define( \"WP_DEBUG\", true );") !== false;
-echo "wp_debug_was_on:" . ($had_debug_true ? "yes" : "no") . "\n";
-'
-
-# 2. Ensure WP_DEBUG + WP_DEBUG_LOG + WP_DEBUG_DISPLAY=false are set.
-# If the site-specific Local mu-plugin already does this, skip.
-# Otherwise use the following search-replace pattern:
-wp --path="$WP_PATH" eval '
-$file = ABSPATH . "wp-config.php";
-$contents = file_get_contents($file);
-$needs_write = false;
-foreach (["WP_DEBUG" => "true", "WP_DEBUG_LOG" => "true", "WP_DEBUG_DISPLAY" => "false"] as $k => $v) {
-  if (!preg_match("/define\\(\\s*[\"\']" . $k . "[\"\'].*?\\);/s", $contents)) {
-    $contents = preg_replace("/\\/\\* That\\'s all, stop editing!/", "define( \"$k\", $v );\n/* That\\\"s all, stop editing!", $contents);
-    $needs_write = true;
-  } else if (!preg_match("/define\\(\\s*[\"\']" . $k . "[\"\']\\s*,\\s*" . preg_quote($v, "/") . "\\s*\\);/", $contents)) {
-    $contents = preg_replace("/define\\(\\s*[\"\']" . $k . "[\"\'].*?\\);/s", "define( \"$k\", $v );", $contents);
-    $needs_write = true;
-  }
-}
-if ($needs_write) { file_put_contents($file, $contents); echo "wp-config updated\n"; }
-else { echo "wp-config already ok\n"; }
-'
-
-# 3. Baseline the debug log — size before the walk starts.
 BASELINE_SIZE=$(wc -c < "$WP_PATH/wp-content/debug.log" 2>/dev/null || echo 0)
-echo "debug_log_baseline_bytes:$BASELINE_SIZE"
+# after each section:
+tail -c +$((BASELINE_SIZE + 1)) "$WP_PATH/wp-content/debug.log" 2>/dev/null | grep -vE "^\s*$|^\[cli\]"
 ```
 
-### After each section — diff new entries
-
-```bash
-# Run after every numbered section. Any new warning/error/fatal = FAILURE.
-tail -c +$((BASELINE_SIZE + 1)) "$WP_PATH/wp-content/debug.log" 2>/dev/null \
-  | grep -vE "^\s*$|^\[cli\]" \
-  | tee "/tmp/smoke-new-log-section-<SECTION>.txt"
-
-# Classify any non-empty diff into failures:
-# - "Fatal error:" → critical, blocks release
-# - "Warning:" / "Notice:" / "Deprecated:" → failure unless whitelisted
-# - Anything else (info, cron debug prints) → warn only, don't block
-```
-
-### Post-walk — restore debug state (only if it wasn't already on)
-
-```bash
-# Restore debug if we turned it on ourselves (don't touch if the dev had it on)
-# and archive the section of the log that belongs to this walk.
-ARCHIVE="$WP_PATH/wp-content/plugins/jetonomy/docs/qa/.debug-log-<release_version>-<ran_at>.txt"
-tail -c +$((BASELINE_SIZE + 1)) "$WP_PATH/wp-content/debug.log" > "$ARCHIVE"
-echo "archived walk-window log to $ARCHIVE"
-```
-
-### Report shape addition
-
-Add `debug_log_issues` to the output JSON:
-
-```json
-{
-  "debug_log_issues": [
-    { "section": "C5", "level": "fatal", "line": "PHP Fatal error:  Uncaught TypeError ...", "file": "class-foo.php:123" },
-    { "section": "G4", "level": "warning", "line": "PHP Warning: Undefined array key 'x'", "file": "class-bar.php:45" }
-  ]
-}
-```
-
-If `debug_log_issues` has any entry of level `fatal`, block the release.
-If only `warning` / `notice` / `deprecated`, block unless explicitly whitelisted in this repo.
+At walk end, archive the diff window to `docs/qa/.debug-log-<release_version>-<ran_at>.txt`.
 
 ---
 
-## A — Fresh install (skip if tests on existing install)
+## A - Fresh install (skip on live dev sites)
 
-**Skip this section if the site is a live dev environment. Run only on a dedicated fresh-install test site.**
+### A1 - Activation and first-request routing
+**What to verify:** after a clean activation, the plugin's front-end routes respond 200 on the very first request, without the user having to hit Settings > Permalinks.
+**Why it matters:** rewrite-flush-on-activation regressions have broken customer sites before (1.3.5 incident).
+**Acceptance:** any `/community/*` route returns HTTP 200 on the first request after activating, and `rewrite_rules` option contains the plugin's routes.
 
-### A1 — Activation rewrite flush
-1. Via WP-CLI: `wp plugin deactivate jetonomy && wp option delete rewrite_rules && wp option delete jetonomy_permalinks_flushed_<VERSION> && wp plugin activate jetonomy`
-2. Via Playwright: `browser_navigate("http://forums.local/community/s/welcome/?_cb=freshA1")`
-3. Read response status via `browser_network_requests` — the main document request must be **200**.
-4. Read `wp option get rewrite_rules` — must contain a pattern with `jetonomy_route=`.
+### A2 - Database schema is in place
+**What to verify:** all expected custom tables exist and the stored db-version option matches the constant.
+**Acceptance:** `wp_jt_*` tables count matches the schema class; `jetonomy_db_version` option equals `JETONOMY_DB_VERSION`.
 
-**Pass:** HTTP 200 + rewrite_rules contains jetonomy routes. **Fail:** 404 on the first request.
-
-### A2 — DB version bumped on activation
-1. Run `wp option get jetonomy_db_version`.
-2. Run `wp eval 'echo JETONOMY_DB_VERSION;'`.
-
-**Pass:** both values equal.
+### A3 - Pro pairs cleanly (if Pro is also being installed)
+**What to verify:** activating Pro on top of free does not fatal, adds Pro-only tables, and both version constants agree.
 
 ---
 
-## B — Upgrade from previous version
+## B - Upgrade from previous version (skip if no prior version)
 
-**Skip if no previous version is installed.** This requires a site that was already on `<previous stable>` before the new zip was activated.
-
-### B1 — Migration runs silently
-1. `wp option get jetonomy_db_version` should equal new `JETONOMY_DB_VERSION`.
-2. `wp db query "SELECT COUNT(*) FROM wp_jt_space_members"` must be ≥ 1.
-3. `wp db query "SELECT id, member_count FROM wp_jt_spaces WHERE member_count > 0 LIMIT 5"` — each space with posts should show member_count ≥ 1, not stuck at 1 across all.
-
-**Pass:** migration completed, space_members populated, member_count realistic.
+### B1 - Migration runs quietly, existing data still works
+**What to verify:** bumping from the prior stable version to this build completes with no debug.log entries during the activation HTTP request; pre-existing posts, spaces, users, and settings still render and function; denormalized counters remain in sync.
 
 ---
 
-## C — Core user flows (as admin via `?autologin=1`)
+## C - Core customer flows
 
-### C1 — Anonymous visitor smoke
-1. `browser_evaluate("() => document.cookie.split(';').forEach(c => document.cookie = c.split('=')[0].trim() + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;'); location.reload();")` to clear cookies
-2. `browser_navigate("http://forums.local/community/")` (no autologin)
-3. `browser_evaluate("() => ({ postLinks: document.querySelectorAll('a[href*=\"/community/s/\"]').length, errors: (window.console?.errors || []).length }))")`
+Persona ladder in this section: **Anonymous > Member > Moderator > Admin**. Pick a real test user from each persona (admin is user 1; create a subscriber-role user with a generated login if none exists). Cover both desktop 1280px and mobile 390px where relevant.
 
-**Pass:** postLinks > 0, no console errors.
+Each step below is a contract, not a script. When you verify it, exercise the UI as a user would AND confirm the server-side effect (DB row, REST response, email queued) to rule out a "looks right, didn't actually save" bug.
 
-### C2 — Login block OS-dark respect
-1. `browser_run_code("async (page) => { await page.emulateMedia({ colorScheme: 'dark' }); }")` to force OS-dark
-2. Create a test page with login block: `wp post create --post_title='Smoke login' --post_content='<!-- wp:jetonomy/login /-->' --post_status=publish --porcelain` → capture `<pageId>`
-3. `browser_navigate("http://forums.local/?p=<pageId>")` (no autologin so we stay logged-out)
-4. `browser_evaluate("() => getComputedStyle(document.querySelector('.jt-login-block')).backgroundColor")`
+### C.anon.home
+**What to verify:** the community home page renders for a logged-out visitor, shows real content (posts or spaces), and offers a clear way in (login/register/join).
+**Why it matters:** first impression surface; a broken home means no acquisition.
 
-**Pass:** returns `rgb(255, 255, 255)` (light). **Fail:** returns a dark color.
+### C.anon.category
+**What to verify:** a category page renders its child spaces, with working links into each space.
 
-**Teardown:** `wp post delete <pageId> --force`. Restore color scheme: `browser_run_code("async (page) => { await page.emulateMedia({ colorScheme: 'light' }); }")`.
+### C.anon.space-listing
+**What to verify:** a space page shows its topics in the configured order, with pagination that actually advances, and a visible "new post" invitation for authed users.
 
-### C3 — Share dropdown lifecycle
-1. `browser_navigate("http://forums.local/community/s/welcome/t/welcome-to-our-community-heres-how-it-works/?autologin=1")`
-2. Click `.jt-share-btn`, wait 300ms.
-3. Assert `.jt-share-dropdown` exists and its top is within 10px of `(.jt-share-btn.getBoundingClientRect().bottom + 4)`.
-4. `window.scrollBy(0, 200)` + wait 500ms.
-5. Assert `.jt-share-dropdown` is no longer in DOM.
+### C.anon.single-post
+**What to verify:** a topic renders with its title, body, author, replies, and vote counts; auth-gated actions (reply, vote, subscribe) cleanly redirect a logged-out visitor to login rather than failing silently with 403.
 
-**Pass:** dropdown opens anchored, closes on scroll.
+### C.anon.user-profile
+**What to verify:** any user's public profile is viewable by anonymous visitors and shows their posts/replies/badges without leaking private data (email, settings, drafts).
 
-### C4 — Scheduled post with HH:MM select picker
-1. Navigate to `/community/s/welcome/new/?autologin=1`, wait for composer
-2. Click `.jt-publish-mode__toggle`, then click the option whose text matches `/schedule/i`
-3. Verify `select[name="published_hour"]` has 25 options (including placeholder)
-4. Verify `select[name="published_minute"]` has 13 options (placeholder + 00,05,10,...,55)
-5. Via REST (not UI, to avoid IAPI click complexities):
-   ```
-   wp eval 'wp_set_current_user(1); $r = new WP_REST_Request("POST","/jetonomy/v1/spaces/1/posts"); $r->set_param("title","Smoke scheduled " . time()); $r->set_param("content","<p>body</p>"); $r->set_param("type","topic"); $r->set_param("status","draft"); $r->set_param("published_at","2026-04-25T09:45:00"); $resp = rest_do_request($r); echo $resp->get_status() . " | " . json_encode($resp->get_data()["published_at"] ?? null);'
-   ```
-6. Parse output, expect status `201` and published_at stored as `2026-04-25 09:45:00` (with space, not T).
-7. Cleanup: `wp db query "DELETE FROM wp_jt_posts WHERE title LIKE 'Smoke scheduled%'"`
+### C.anon.tag
+**What to verify:** the tag page lists topics carrying that tag, or shows a clean empty state; no fatal on unknown tag slug.
 
-**Pass:** selects have correct options + REST accepts ISO + stores in MySQL datetime format.
+### C.anon.leaderboard
+**What to verify:** the leaderboard page renders a ranking, not an error; period selector (if present) switches the dataset.
 
-### C5 — posts_per_page = 1
-1. `wp eval '$r=$GLOBALS["wpdb"]->get_var("SELECT settings FROM wp_jt_spaces WHERE id=1"); echo base64_encode($r);'` → capture `$ORIG_B64`
-2. `wp eval '$m = array_merge((array) json_decode($GLOBALS["wpdb"]->get_var("SELECT settings FROM wp_jt_spaces WHERE id=1"),true), ["posts_per_page"=>1]); \Jetonomy\Models\Space::update(1,["settings"=>wp_json_encode($m)]); wp_cache_delete("jetonomy_space_settings_1","jetonomy");'`
-3. `browser_navigate("http://forums.local/community/s/welcome/?autologin=1&_cb=ppg1")`, wait 1500ms
-4. `browser_evaluate("() => document.querySelectorAll('.jt-topics .jt-row').length")` — **expect 1**
-5. `browser_evaluate("() => !!document.querySelector('.jt-load-more-trigger')")` — expect `true`
-6. `browser_evaluate("async () => { window.scrollBy(0, 200); await new Promise(r => setTimeout(r, 1500)); return document.querySelectorAll('.jt-topics .jt-row').length; }")` — **expect 2**
-7. Teardown: `wp eval '\Jetonomy\Models\Space::update(1,["settings"=>base64_decode("$ORIG_B64")]); wp_cache_delete("jetonomy_space_settings_1","jetonomy");'`
+### C.anon.search
+**What to verify:** searching for a known-present term returns matching topics with relevance that actually looks relevant (share ≥ 1 meaningful token with the query). Searching for gibberish returns a clean empty state.
+**Why it matters:** this is how customers find existing answers; a broken search drives support tickets.
 
-**Pass:** 1 on load, 2 after scroll.
+### C.anon.invite-landing
+**What to verify:** an invite link lands on the correct space context, clearly states what the visitor is being invited to, and offers signup. Invalid/expired invite codes get a clean error, not a fatal.
 
-### C6 — Messaging reply as low-trust participant
-1. Seed: admin creates conversation with user 3 (or any low-trust user)
-2. As user 3 with trust_level=0, POST reply via REST
-3. Expect HTTP 201
+### C.member.post-create
+**What to verify:** a logged-in member can compose a new post with title + content, pick a visibility / schedule / tags, submit, and land on the new topic. The post is persisted, appears in the space listing, and fires any expected notifications (subscribers notified, activity log updated).
 
-Full fixture script:
-```bash
-wp eval '
-global $wpdb;
-$wpdb->update("wp_jt_user_profiles", ["trust_level" => 0], ["user_id" => 3]);
-$wpdb->insert("wp_jt_pro_conversations", ["title"=>"Smoke","type"=>"direct","created_by"=>1,"last_message_at"=>current_time("mysql",true),"message_count"=>1]);
-$conv = $wpdb->insert_id;
-$wpdb->insert("wp_jt_pro_conversation_participants",["conversation_id"=>$conv,"user_id"=>1,"joined_at"=>current_time("mysql",true)]);
-$wpdb->insert("wp_jt_pro_conversation_participants",["conversation_id"=>$conv,"user_id"=>3,"joined_at"=>current_time("mysql",true)]);
-$wpdb->insert("wp_jt_pro_messages",["conversation_id"=>$conv,"sender_id"=>1,"content"=>"hi","content_plain"=>"hi","created_at"=>current_time("mysql",true)]);
+### C.member.post-edit
+**What to verify:** a post author can edit their own post; changes persist and are reflected everywhere the post is referenced (home feed, space list, search).
 
-wp_set_current_user(3);
-$r = new WP_REST_Request("POST","/jetonomy/v1/conversations/$conv/messages");
-$r->set_param("id",$conv); $r->set_param("content","reply from author-role");
-$resp = rest_do_request($r);
-echo "status:" . $resp->get_status() . "\n";
+### C.member.post-delete
+**What to verify:** a post author can delete their own post; it disappears from all listings and its single-post URL no longer serves the body (either 404 or "trashed" state per plugin contract); replies are handled consistently (cascaded or orphaned per contract).
 
-$wpdb->delete("wp_jt_pro_messages",["conversation_id"=>$conv]);
-$wpdb->delete("wp_jt_pro_conversation_participants",["conversation_id"=>$conv]);
-$wpdb->delete("wp_jt_pro_conversations",["id"=>$conv]);
-'
-```
+### C.member.reply-create
+**What to verify:** a member can post a reply on any topic they can see; the reply appears inline, increments the topic's reply count, and triggers a notification to the OP (unless OP unsubscribed).
 
-**Pass:** output contains `status:201`.
+### C.member.reply-quote
+**What to verify:** a member can quote an existing reply and the quoted content is visually preserved as a blockquote in the new reply.
 
-### C7 — Profile tabs mobile scroll
-1. `browser_resize(390, 844)`
-2. `browser_navigate("http://forums.local/community/u/admin/drafts/?autologin=1")`
-3. Wait 500ms.
-4. `browser_evaluate("() => { const c = document.querySelector('.jt-profile-tabs'); return { scrollLeft: c.scrollLeft, canScroll: c.scrollWidth > c.clientWidth }; }")`
+### C.member.mention
+**What to verify:** using `@username` in a post or reply produces a notification for that user AND renders as a link to their profile in the saved content.
 
-**Pass:** `canScroll === true` and `scrollLeft > 0` (active Drafts tab was auto-scrolled into view).
+### C.member.vote
+**What to verify:** a member can vote up/down on posts and replies, the score updates on screen, the vote persists across page reloads, and re-clicking the same vote toggles it off.
 
-### C8 — is-online dot across all avatar contexts
-Seed: `wp eval '$wpdb = $GLOBALS["wpdb"]; $wpdb->query("UPDATE wp_jt_user_profiles SET last_seen_at = NOW() WHERE user_id IN (1, 2, 3, 16)"); wp_cache_flush(); echo "seeded\n";'`
+### C.member.flag
+**What to verify:** a member can flag a post or reply as inappropriate, pick a reason, submit, and the flag reaches moderation (a moderator sees it in the queue). The flagging member gets acknowledgment, not a silent submit.
 
-Then walk:
+### C.member.subscribe-thread-and-space
+**What to verify:** a member can subscribe to a thread and to a space; a subsequent reply (thread) or new post (space) produces a notification; unsubscribing stops new notifications.
 
-1. `browser_resize(1280, 900)` then `browser_navigate("http://forums.local/community/s/welcome/t/welcome-to-our-community-heres-how-it-works/?autologin=1&_cb=is8a")`
-2. `browser_evaluate` — for every `.jt-avatar-wrap.is-online`, verify dot center is within 12px of avatar's top-right corner. Script:
+### C.member.accept-answer
+**What to verify:** on Q&A-typed spaces, the OP can mark a reply as the accepted answer, the reply is visibly promoted, and a second acceptance replaces the first per contract.
 
-```js
-() => {
-  const onlines = Array.from(document.querySelectorAll('.jt-avatar-wrap.is-online'));
-  return onlines.map(w => {
-    const a = w.querySelector('.jt-avatar, img');
-    if (!a) return { aligned: false, reason: 'no avatar' };
-    const aRect = a.getBoundingClientRect();
-    const wrap = w.getBoundingClientRect();
-    const st = getComputedStyle(w, '::after');
-    const dw = parseFloat(st.width) + 2 * parseFloat(st.borderWidth || '0');
-    const dcx = wrap.x + parseFloat(st.left === 'auto' ? '0' : st.left) + dw / 2;
-    const dcy = wrap.y + parseFloat(st.top === 'auto' ? '0' : st.top) + dw / 2;
-    return { avatarClass: a.className, aligned: Math.abs(dcx - aRect.right) < 12 && Math.abs(dcy - aRect.top) < 12 };
-  });
-}
-```
+### C.member.profile-edit
+**What to verify:** a member can edit their display name, bio, avatar, social links, and notification preferences; changes save, reload cleanly, and reflect across the site.
 
-3. Repeat on `/community/u/admin/?autologin=1` and `/community/?autologin=1`.
+### C.member.bookmarks
+**What to verify:** a member can bookmark a post, find it in their bookmarks view, and unbookmark it; count reflects the change.
 
-**Pass:** every entry `.aligned === true`.
+### C.member.share
+**What to verify:** the Share control on a topic opens a dropdown anchored to the button, offers Copy Link + X + Facebook + LinkedIn, Copy Link actually writes the URL to the clipboard, external links open on the right platform, and the dropdown closes when the user scrolls or clicks outside.
 
-### C9 — Akismet staff bypass
-1. `wp eval 'wp_set_current_user(1); $ref = new ReflectionMethod(\Jetonomy\API\Base_Controller::class, "author_bypasses_spam_check"); $ref->setAccessible(true); $ctrl = new \Jetonomy\API\Replies_Controller(); echo "admin:" . ($ref->invoke($ctrl, 1, 1) ? "bypass" : "check") . "\n";'`
+### C.member.scheduled-post
+**What to verify:** a member can schedule a post for a future date/time using the composer's schedule mode, picking both hour and minute; the scheduled post is stored with the correct `published_at`, does not appear on public listings before that time, and appears automatically when the time arrives. The HH:MM picker works in every supported browser (Chromium proven here; Firefox + Safari iOS in `manual_required`).
 
-**Pass:** output contains `admin:bypass`.
+### C.member.space-pagination
+**What to verify:** on a space page, `posts_per_page` controls how many topics load initially; scroll-to-load reveals additional batches without doubling up on first load; the load-more behavior does not re-trigger until the user actually scrolls.
 
-### C10 — Moderation queue spam visibility
-1. Fixture: seed one spam reply (see existing C10 pattern in runbook section below)
-2. REST: `GET /jetonomy/v1/moderation/queue?type=reply&status=spam` as admin
-3. Expect returned data array to include the seeded spam reply's id.
+### C.member.profile-mobile-tabs
+**What to verify:** on mobile (390px), the profile tabs bar is fully usable - no tab falls unreachable off-screen, the active tab is visible on load.
+
+### C.member.online-indicator
+**What to verify:** a user who is active within the threshold shows an online dot on every avatar context (topic page, profile header, home feed). The dot is visually attached to the avatar's top-right corner across all avatar sizes.
+
+### C.mod.queue-and-actions
+**What to verify:** a user with moderator capability sees the moderation queue, can filter by type (post/reply) and status (pending/spam/trash/resolved-flag), and can approve / trash / mark-spam from the queue. Every action updates the underlying record, disappears from its source tab, and appears in the destination tab. Silenced users cannot post until unsilenced.
+
+### C.mod.flag-resolution
+**What to verify:** a moderator sees flagged content with the flagging user's reason, can resolve the flag with an action (ignore / trash / spam / silence author), and the resolution is recorded and reflected on the reporter's side.
+
+### C.admin.plugin-pages
+**What to verify:** every Jetonomy admin page (overview, spaces, categories, content, users, moderation, settings, plus any Pro extension pages) renders without PHP Notice / Warning / Fatal. Every tab on those pages loads its content without AJAX errors.
+
+### C.admin.category-and-space-crud
+**What to verify:** an admin can create, edit, reorder, and delete categories and spaces. Deleting a non-empty category handles its spaces per contract (cascade or refuse). Space settings edits persist and MERGE with existing settings (editing one key does not drop others - this is a hard contract).
+
+### C.admin.user-management
+**What to verify:** an admin can search users, promote trust level, ban / unban, and see the correct state in the listing; bans prevent access to gated actions as expected.
+
+### C.admin.invite-links
+**What to verify:** an admin can mint an invite link for a space, copy it, and the link works through the full accept flow (sign up if needed > land in space with correct membership).
+
+### C.admin.recount
+**What to verify:** running the manual recount tool fixes any drift in denormalized counters (member_count, reply_count, vote_score); a deliberately corrupted counter is restored to the correct value.
+
+### C.admin.akismet-staff-bypass
+**What to verify:** staff-role submissions are NOT routed through Akismet; they post instantly with no spam-check lag. This is a customer-experience contract, not an optimization.
+
+### C.notifications
+**What to verify:** every notification-triggering event (reply to subscribed thread, mention, flag resolution, badge award, admin announcement) produces a new notification for the correct recipient; the bell badge count updates; clicking through takes the user to the correct destination. Unread count endpoint is accurate; mark-all-read zeroes it out.
+
+### C.notifications.email
+**What to verify:** notifications that should email (per user preferences) actually arrive in Mailpit / configured trap. Respect the user's digest/instant preference. Unsubscribe links in email work.
+
+### C.search
+**What to verify:** the full search page handles query, space-scoped filter, date filter, author filter, and sort (relevance / newest / votes) without breakage; relevance sort actually ranks by relevance, not just recency.
+
+### C.cron
+**What to verify:** after plugin activation, every expected cron event (digest, reminders, reputation recalc, etc.) is scheduled; none are orphaned after deactivation; cron actually executes when triggered manually.
 
 ---
 
-## D — Known-regression guards (covered inline in C via seed/assert cycles)
+## D - Known-regression guards
 
-All D-class guards are expressed as C steps above. Re-run any that failed after fixing.
+Each row is a repro of a past bug that caused customer pain. These rows stay specific on purpose: the exact fixture IS the contract.
+
+| ID | Bug | Fixture + assertion |
+|----|-----|---------------------|
+| D.rewrite-flush | 1.3.5 rewrite rules not flushed on activation | Clean reactivate; first `/community/s/<slug>/` request returns 200 |
+| D.ppg-stacking | IntersectionObserver loaded page 2 when trigger already visible | With `posts_per_page=1`, page loads 1 row; scroll triggers load of 1 more row, not 2 |
+| D.share-scroll-detach | Share dropdown stayed in place while page scrolled | After opening share dropdown, scrollBy(0, 200) removes the dropdown from DOM |
+| D.login-dark-leak | Login block went dark under `prefers-color-scheme: dark` | With `emulateMedia({ colorScheme: 'dark' })`, login block background stays light |
+| D.profile-tabs-clipped | Profile tabs fell off-screen at 390px | At 390px on /community/u/admin/drafts/, the active Drafts tab is scrolled into view |
+| D.is-online-misaligned | Dot rendered under the avatar name text | Dot center within 12px of avatar's top-right corner on all 4 avatar sizes, all 3 contexts (topic, profile, home) |
+| D.firefox-time-picker | `<input type="time">` had no native popup in Firefox | Composer uses `<select name="published_hour">` + `<select name="published_minute">`; REST accepts ISO and stores as MySQL datetime |
+| D.messaging-trust-asymmetry | TL0 participant could not reply to their own DM | Seed a conversation with a TL0 member, POST a reply from that member, expect HTTP 201 |
+| D.akismet-staff-block | Admin posts routed through Akismet causing lag | `Base_Controller::author_bypasses_spam_check(admin, admin)` returns true |
+| D.mod-queue-spam-filter | `status=spam` filter returned pending too | Seed a spam reply; GET moderation queue with `status=spam` includes only spam, not pending |
+| D.space-titles-entity-encoded | Legacy rows had `&amp;` stored in title | No row in `wp_jt_spaces.title` / `wp_jt_categories.title` / `wp_jt_posts.title` matches `%&amp;%`, `%&quot;%`, `%&#039;%`, `%&lt;%`, `%&gt;%` |
+| D.search-or-mode-relevance | Similar-topics typeahead returned unrelated posts | Type "E2E time picker test" in new-post title; no returned title's only overlap is "test"; all suggestions share ≥ 2 tokens of length ≥ 4 with the query |
+| D.space-settings-merge | PATCH /spaces/:id replaced settings JSON instead of merging | Pre-fill settings with two keys; PATCH with one key; re-read confirms both keys present |
+| D.custom-fields-fatal-on-create | sanitize_title() received WP_REST_Request object | POST /jetonomy/v1/fields without a slug body param; expect HTTP 201 and no new fatal in debug.log |
+
+Every customer-visible fix ships a matching D row in the same PR. After 2 clean releases of a D row, promote it into the main C/E flow.
 
 ---
 
-## E — Pro extension smoke (if Pro active)
+## E - Pro extensions
 
-Navigate to `/community/messages/?autologin=1`, verify:
-- `document.querySelector('.jt-messages-list')` exists
-- No `.jt-error` or PHP fatal toasts
-- At least the conversation list OR the empty state renders
+Every active Pro extension gets a check here. Each contract covers the customer-visible promise, not the implementation.
 
-Walk `jetonomy-pro/plans/PRO-EXTENSION-QA-CHECKLIST.md` at a minimum for: Private Messaging, Reactions, Polls, Custom Badges, Analytics (dashboard loads), White Label (settings save).
+### E.private-messaging
+**What to verify:** a user can start a DM with another user, send a message, receive a reply, see read receipts, and block/mute. A TL0 user in an existing conversation can still reply. Unread count endpoint tracks correctly.
+
+### E.polls
+**What to verify:** an author can attach a poll to a new topic, multiple options render on the topic page, a member can vote once, vote counts update, results display honors the "hide results until vote" mode if set.
+
+### E.reactions
+**What to verify:** a member can add and remove a reaction on any post or reply they can see; per-reaction counts are accurate; the reactor's avatar appears in the hover-card listing reactors.
+
+### E.analytics
+**What to verify:** an admin sees a dashboard with non-zero metrics on a site with demo data, can switch date range, and can export the underlying data as CSV. Widget values are internally consistent (total posts ≥ posts in last 30d, etc.).
+
+### E.custom-badges
+**What to verify:** an admin can create a badge (name, icon, description, criteria), award it manually to a user, and that badge appears on the recipient's profile AND in the public badge list.
+
+### E.white-label
+**What to verify:** when an admin changes the brand color, the change actually flows through to the front-end (the `--jt-accent` token reflects the new color on public pages). Logo replacement works similarly.
+
+### E.advanced-moderation
+**What to verify:** an admin can create a moderation rule (pattern + action), posting content matching the rule triggers the action (hold / spam / auto-delete), and rule stats reflect hits over time.
+
+### E.ai
+**What to verify:** with an AI provider configured, obviously spammy content is correctly flagged; AI usage endpoint reports consistent numbers. With no provider configured, the extension silently no-ops (no fatals, no false positives).
+
+### E.custom-fields
+**What to verify:** an admin can define a custom field (text / select / url / etc.), a user can set a value in their profile, and the value is publicly visible where the field is marked public. Creating a field via REST must not fatal when optional params (like `slug`) are omitted.
+
+### E.email-digest
+**What to verify:** users subscribed to the digest actually receive one at the configured cadence; a manual test-send from admin dispatches within 30s; the stats endpoint reports sends without error.
+
+### E.reply-by-email
+**What to verify:** an inbound email matching a reply token produces a new reply on the correct post with the correct author; an inbound email without a valid token is rejected cleanly.
+
+### E.seo-pro
+**What to verify:** space-level SEO overrides (meta description, og:image) appear in the rendered HTML `<head>` on that space's pages. Defaults apply when overrides are absent.
+
+### E.web-push
+**What to verify:** the browser push subscription flow completes end-to-end, a test push reaches the subscribed browser. VAPID keys and service worker endpoints respond correctly.
+
+### E.webhooks
+**What to verify:** an admin can create a webhook bound to one or more events; triggering one of those events actually fires a request to the configured URL; the test-fire button delivers a payload the receiver can parse.
 
 ---
 
-## F — Cross-browser spot pass
+## F - Cross-browser, RTL, accessibility
 
-**Chromium:** already covered by sections A-E.
+### F.chromium
+Already covered by Sections A-E. Chromium is the default engine.
 
-**Firefox Desktop:** (Playwright MCP default here is Chromium-only; log a WARN row but don't fail the run.) Produce a manual-check reminder in the output JSON:
+### F.firefox-desktop and F.safari-ios
+Playwright MCP is Chromium-only. These cannot be walked by the agent. Populate `manual_required[]` with the critical flows a human must spot-check:
+- Composer time picker in Firefox (native select behavior)
+- Share dropdown on Safari iOS at 390px
+- Profile tabs horizontal scroll on Safari iOS
+- Messages list pane scrolling independently on Safari iOS
+- Any flow that relies on a browser-native control whose behavior diverges between engines.
 
-```json
-"manual_required": [
-  "Firefox Desktop: verify HH:MM selects in /community/s/<space>/new/ open on click",
-  "Safari iOS 390px: verify share dropdown + profile tabs scroll"
-]
-```
+### F.rtl
+**What to verify:** on an RTL locale (e.g. `ar`), the primary templates render right-to-left without horizontal overflow, text flows correctly, icons mirror where appropriate and stay fixed where they should not (brand logos, directional glyphs).
+
+### F.a11y
+**What to verify:** the main interactive surfaces have a visible keyboard focus ring (not suppressed by theme), tab order is logical, main content is reachable within a reasonable number of tabs from the top of the page, and icon-only buttons have `aria-label`. Screen-reader critical labels are present on composers, voting controls, share controls, and moderation actions.
+
+---
+
+## G - Post-release monitoring (first 24h after tag)
+
+Runs on the production host, not this runbook. Watch for new debug.log entries, orphaned cron events, "broke after update" support tickets, and activity-signal drops. Any red signal opens a `<version>.1` patch cycle.
 
 ---
 
 ## Failure protocol
 
-On ANY failure:
-1. `browser_take_screenshot({ filename: "fail-<section>-<step>.png", fullPage: false })`
-2. Add a `failures[]` entry to the output JSON with: id, expected, actual, url, screenshot path
-3. Continue running subsequent steps (collect ALL failures in one pass) — do NOT halt mid-run
-4. At the end, if `failed > 0`, emit the Basecamp card template for each failure
-5. Exit non-zero
+1. On ANY failure, `browser_take_screenshot({ filename: "fail-<id>.png", fullPage: false })`.
+2. **Triage origin: `from` vs `for` our plugin.**
+   - `from` = our code is at fault (our REST, our JS, our SQL, our CSS, our template). Always ours to fix.
+   - `for` = failure surfaces while our plugin runs but root cause is elsewhere (theme override, other-plugin conflict, browser limitation, legacy imported data, hosting quirk). Warrants a judgement call.
+3. Record in `failures[]` with `{ id, origin, triage_note, expected, actual, url, screenshot }`.
+4. **Never halt.** Collect all failures in one pass.
+5. Emit a Basecamp draft per failure:
+   ```
+   ### Bug: <id>
+   **Origin:** from | for our plugin
+   **Environment:** Jetonomy <version>, Chromium, <viewport>px
+   **Expected:** <contract from the runbook>
+   **Actual:** <measured behavior>
+   **URL:** <tested URL>
+   **Screenshot:** <filename>
+   **Steps to reproduce:** <minimal repro>
+   **Triage note:** <one line on the from/for call>
+   ```
 
-## Step ID conventions
+Triage is Sonnet's job; the fix/no-fix decision is Opus's (the calling session's) job.
 
-Every step above is identified as `<Section><Number>` e.g. `C5`, `D1.profile-av`. Use these as the `id` in the output JSON.
+## Step ID format
+
+`<Section>.<persona>.<feature>` e.g. `C.member.post-create`. D rows use `D.<descriptor>`. E rows use `E.<extension>`.
+
+## Maintenance rule
+
+Every customer-visible bug fix ships with:
+1. A matching **D** row in this runbook (fixture + assertion).
+2. If the flow was not already covered, a **C** or **E** contract in this runbook.
+3. Both land in the same PR as the fix.
+
+After 2 clean releases of a D row, the row graduates into C/E and the D row is marked `graduated`.

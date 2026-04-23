@@ -90,6 +90,7 @@ cat > "$EXCLUDES_FILE" <<'EOF'
 .githooks/
 .gitignore
 .gitattributes
+.claude/
 node_modules/
 tests/
 plans/
