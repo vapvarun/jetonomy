@@ -62,6 +62,15 @@ final class Jetonomy {
 
 		Cron::schedule();
 
+		// Register rewrite rules synchronously and flush so /community/* URLs resolve
+		// on the very first request after activation — no reliance on a deferred init
+		// callback firing before the user visits a community URL. The deferred
+		// init:99 flush in load_dependencies() still covers version bumps afterwards.
+		require_once JETONOMY_DIR . 'includes/class-router.php';
+		( new Router() )->add_rewrite_rules();
+		flush_rewrite_rules();
+		update_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION, true );
+
 		update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 
 		// Preset EDD license key for free plugin auto-updates.
@@ -129,10 +138,6 @@ final class Jetonomy {
 		if ( $changed ) {
 			update_option( 'jetonomy_settings', $settings );
 		}
-
-		// Flag a rewrite flush for the next init — rules are not registered yet
-		// during activation, so flushing here would be a no-op.
-		delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 
 		// Only redirect to the setup wizard on the FIRST activation. Plugin
 		// updates re-run activate(); without this guard every update would
