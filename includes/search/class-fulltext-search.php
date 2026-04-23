@@ -29,8 +29,8 @@ class Fulltext_Search implements Search_Adapter {
 			return [];
 		}
 
-		// Prepare boolean mode query (add + prefix for required terms)
-		$search_term = $this->prepare_boolean_query( $query );
+		// Prepare boolean mode query (AND-required prefix tokens >= 4 chars).
+		$search_term = self::build_boolean_query( $query );
 
 		switch ( $type ) {
 			case 'post':
@@ -116,17 +116,30 @@ class Fulltext_Search implements Search_Adapter {
 	}
 
 	/**
-	 * Prepare a boolean mode query from user input.
-	 * Adds + prefix for required terms, handles quoted phrases.
+	 * Turn a free-text query into a BOOLEAN MODE expression where each
+	 * token of length >= 4 is AND-required with a prefix wildcard. Strips
+	 * FULLTEXT operators from user input so an accidental "+" / "-" / quote
+	 * cannot silently change the semantics. Short or stop-word-only queries
+	 * fall back to the raw string to preserve prior behavior rather than
+	 * returning an empty set.
+	 *
+	 * Shared helper: both Fulltext_Search::search() and the REST
+	 * Search_Controller use this so posts + replies + Abilities API
+	 * adapters all apply the same AND-required ranking semantics.
 	 */
-	private function prepare_boolean_query( string $query ): string {
-		// If user already used boolean operators, pass through
-		if ( preg_match( '/[+\-~<>*"]/', $query ) ) {
-			return $query;
+	public static function build_boolean_query( string $query ): string {
+		$cleaned = preg_replace( '/[+\-<>()~*"@]/', ' ', $query );
+		$tokens  = preg_split( '/\s+/', (string) $cleaned, -1, PREG_SPLIT_NO_EMPTY ) ?: [];
+
+		$required = [];
+		foreach ( $tokens as $t ) {
+			$len = function_exists( 'mb_strlen' ) ? mb_strlen( $t ) : strlen( $t );
+			if ( $len < 4 ) {
+				continue;
+			}
+			$required[] = '+' . $t . '*';
 		}
 
-		// Split into words, make each required with +
-		$words = preg_split( '/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY );
-		return implode( ' ', array_map( fn( $w ) => '+' . $w . '*', $words ) );
+		return $required ? implode( ' ', $required ) : $query;
 	}
 }

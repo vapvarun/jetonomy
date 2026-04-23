@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.3.8' );
-define( 'JETONOMY_DB_VERSION', '1.2.5' );
+define( 'JETONOMY_DB_VERSION', '1.2.6' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );

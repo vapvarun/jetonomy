@@ -174,12 +174,26 @@ class Search_Controller extends Base_Controller {
 	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null, string $sort = 'relevance' ): array {
 		$posts_table = table( 'posts' );
 
+		// Build a BOOLEAN-MODE query string that treats each meaningful token
+		// as required with a prefix wildcard. Without the leading `+` each
+		// token is OR'd, which matches any post sharing a single word with the
+		// query ("test" bringing back every post with "test" anywhere). The
+		// user-visible symptom was the new-post similar-topics typeahead
+		// returning unrelated rows; fixing it here also fixes the general
+		// search page, where the old natural-mode fallback was equally loose.
+		//
+		// Tokens shorter than 4 chars are dropped: they are below typical
+		// innodb_ft_min_token_size AND dominated by stop words. If all tokens
+		// drop out the raw query is passed through, preserving the old
+		// behavior for short queries that would otherwise return nothing.
+		$boolean_q = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
+
 		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
-		$params = [ $q ];
+		$params = [ $boolean_q ];
 
 		// Private post visibility: exclude private posts unless viewer is author or privileged.
-		$viewer_id      = get_current_user_id();
-		$is_privileged  = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		$viewer_id     = get_current_user_id();
+		$is_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
 		if ( ! $is_privileged ) {
 			if ( $viewer_id > 0 ) {
 				$where[]  = '(p.is_private = 0 OR p.author_id = %d)';
@@ -206,7 +220,25 @@ class Search_Controller extends Base_Controller {
 			$params[] = $author_id;
 		}
 
-		$order_by = 'votes' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
+		// Order:
+		// - relevance: the MATCH score against the same boolean query (previously
+		// defaulted to created_at DESC, which meant relevance sort was never
+		// actually sorting by relevance).
+		// - newest:    created_at DESC.
+		// - votes:     vote_score DESC.
+		switch ( $sort ) {
+			case 'votes':
+				$order_by = 'p.vote_score DESC';
+				break;
+			case 'newest':
+				$order_by = 'p.created_at DESC';
+				break;
+			case 'relevance':
+			default:
+				$order_by    = 'match_score DESC, p.created_at DESC';
+				$order_match = true;
+				break;
+		}
 
 		/**
 		 * Filters the search query args before the query is built.
@@ -221,20 +253,31 @@ class Search_Controller extends Base_Controller {
 
 		$spaces_table = table( 'spaces' );
 
+		// When ordering by relevance we need the MATCH score as a selectable
+		// column. Repeat the same AGAINST(...) expression so MySQL can reuse
+		// the index; the extra params slot is prepended before $params.
+		$select_extra  = '';
+		$select_params = [];
+		if ( ! empty( $order_match ) ) {
+			$select_extra  = ', MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score';
+			$select_params = [ $boolean_q ];
+		}
+
 		if ( $tag_slug ) {
 			$tags_table      = table( 'tags' );
 			$post_tags_table = table( 'post_tags' );
+			$all_params      = array_merge( $select_params, [ $tag_slug ], $params );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
-				$tag_slug,
-				...$params
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				...$all_params
 			);
 		} else {
+			$all_params = array_merge( $select_params, $params );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
-				...$params
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				...$all_params
 			);
 		}
 
@@ -256,13 +299,18 @@ class Search_Controller extends Base_Controller {
 		$replies_table = table( 'replies' );
 		$posts_table   = table( 'posts' );
 
+		// Same AND-required prefix boolean as search_posts so the reply
+		// search widget and the Abilities API adapter rank replies by
+		// topical overlap instead of OR-matching every shared word.
+		$boolean_q = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
+
 		// Always JOIN posts to filter out replies on private posts.
 		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
-		$r_params = [ $q ];
+		$r_params = [ $boolean_q ];
 
 		// Private post visibility for replies.
-		$viewer_id     = get_current_user_id();
-		$r_privileged  = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		$viewer_id    = get_current_user_id();
+		$r_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
 		if ( ! $r_privileged ) {
 			if ( $viewer_id > 0 ) {
 				$r_where[]  = '(p.is_private = 0 OR p.author_id = %d)';
@@ -291,10 +339,15 @@ class Search_Controller extends Base_Controller {
 		}
 
 		$where_sql = implode( ' AND ', $r_where );
+		// Order by the same boolean MATCH score so the best topical matches
+		// surface first instead of the most recent replies regardless of
+		// overlap.
+		$score_params = [ $boolean_q ];
+		$all_params   = array_merge( $score_params, $r_params );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
-			"SELECT r.* FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql} LIMIT 20",
-			...$r_params
+			"SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql} ORDER BY match_score DESC, r.created_at DESC LIMIT 20",
+			...$all_params
 		);
 
 		return $wpdb->get_results( $sql ) ?: []; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
