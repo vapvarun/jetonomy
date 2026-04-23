@@ -1867,11 +1867,17 @@ const { state, actions } = store( 'jetonomy', {
             let publishedAt = '';
             if ( ctx.showScheduler ) {
                 const dateVal = form.querySelector('[name="published_date"]')?.value?.trim() || '';
-                const timeVal = form.querySelector('[name="published_time"]')?.value?.trim() || '';
+                // Scheduler uses native hour + minute selects so every desktop
+                // browser (Firefox included, where <input type="time"> has no
+                // popup picker) gets a consistent click-to-pick UX. Mobile
+                // browsers render native select as a scroll wheel. Combine the
+                // two selects into HH:MM:SS here so the REST payload (and the
+                // server-side scheduling logic) stays unchanged.
+                const hourVal = form.querySelector('[name="published_hour"]')?.value?.trim() || '';
+                const minuteVal = form.querySelector('[name="published_minute"]')?.value?.trim() || '';
+                const timeVal = hourVal && minuteVal ? `${hourVal}:${minuteVal}` : '';
                 if ( dateVal && timeVal ) {
-                    // time input omits seconds when step >= 60; normalise to HH:MM:SS.
-                    const normalisedTime = /^\d{2}:\d{2}$/.test( timeVal ) ? timeVal + ':00' : timeVal;
-                    publishedAt = dateVal + 'T' + normalisedTime;
+                    publishedAt = dateVal + 'T' + timeVal + ':00';
                 } else if ( dateVal ) {
                     publishedAt = dateVal + 'T00:00:00';
                 }
