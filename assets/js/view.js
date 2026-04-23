@@ -923,13 +923,29 @@ const { state, actions } = store( 'jetonomy', {
             dropdown.style.top = top + 'px';
             dropdown.style.left = left + 'px';
 
+            // Close on scroll or resize. The dropdown uses position: fixed so
+            // scrolling the page would otherwise let the dropdown visibly
+            // detach from its post (reproduced: 200px scroll moves the button
+            // up, dropdown stays in place, gap grows to 204px). Matching the
+            // pattern on Twitter / Reddit / GitHub: dismiss on scroll rather
+            // than reposition-tracking. Click-outside still applies.
+            const cleanup = () => {
+                dropdown.remove();
+                document.removeEventListener( 'click', closeHandler );
+                window.removeEventListener( 'scroll', scrollHandler, true );
+                window.removeEventListener( 'resize', scrollHandler );
+            };
             const closeHandler = ( e ) => {
                 if ( ! dropdown.contains( e.target ) && e.target !== el.ref && ! el.ref.contains( e.target ) ) {
-                    dropdown.remove();
-                    document.removeEventListener( 'click', closeHandler );
+                    cleanup();
                 }
             };
-            setTimeout( () => document.addEventListener( 'click', closeHandler ), 0 );
+            const scrollHandler = () => { cleanup(); };
+            setTimeout( () => {
+                document.addEventListener( 'click', closeHandler );
+                window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
+                window.addEventListener( 'resize', scrollHandler, { passive: true } );
+            }, 0 );
         },
 
         // ── Toggle bookmark ──
