@@ -64,6 +64,88 @@ echo "fixtures cleaned\n";
 '
 ```
 
+## Debug log monitoring (enable BEFORE Section A, check AFTER every section)
+
+WP_DEBUG + WP_DEBUG_LOG must be ON for the entire walk. Any new warning,
+notice, or fatal written to `wp-content/debug.log` during a section counts
+as a FAILURE — even if the UI looks fine. Silent errors are the ones that
+ship and break customer sites.
+
+### Pre-walk — enable debug, baseline the log
+
+```bash
+# 1. Turn WP_DEBUG on if not already. Snapshot current state first so we can restore.
+wp --path="$WP_PATH" eval '
+$wp_config = file_get_contents(ABSPATH . "wp-config.php");
+$had_debug_true = strpos($wp_config, "define( \"WP_DEBUG\", true );") !== false;
+echo "wp_debug_was_on:" . ($had_debug_true ? "yes" : "no") . "\n";
+'
+
+# 2. Ensure WP_DEBUG + WP_DEBUG_LOG + WP_DEBUG_DISPLAY=false are set.
+# If the site-specific Local mu-plugin already does this, skip.
+# Otherwise use the following search-replace pattern:
+wp --path="$WP_PATH" eval '
+$file = ABSPATH . "wp-config.php";
+$contents = file_get_contents($file);
+$needs_write = false;
+foreach (["WP_DEBUG" => "true", "WP_DEBUG_LOG" => "true", "WP_DEBUG_DISPLAY" => "false"] as $k => $v) {
+  if (!preg_match("/define\\(\\s*[\"\']" . $k . "[\"\'].*?\\);/s", $contents)) {
+    $contents = preg_replace("/\\/\\* That\\'s all, stop editing!/", "define( \"$k\", $v );\n/* That\\\"s all, stop editing!", $contents);
+    $needs_write = true;
+  } else if (!preg_match("/define\\(\\s*[\"\']" . $k . "[\"\']\\s*,\\s*" . preg_quote($v, "/") . "\\s*\\);/", $contents)) {
+    $contents = preg_replace("/define\\(\\s*[\"\']" . $k . "[\"\'].*?\\);/s", "define( \"$k\", $v );", $contents);
+    $needs_write = true;
+  }
+}
+if ($needs_write) { file_put_contents($file, $contents); echo "wp-config updated\n"; }
+else { echo "wp-config already ok\n"; }
+'
+
+# 3. Baseline the debug log — size before the walk starts.
+BASELINE_SIZE=$(wc -c < "$WP_PATH/wp-content/debug.log" 2>/dev/null || echo 0)
+echo "debug_log_baseline_bytes:$BASELINE_SIZE"
+```
+
+### After each section — diff new entries
+
+```bash
+# Run after every numbered section. Any new warning/error/fatal = FAILURE.
+tail -c +$((BASELINE_SIZE + 1)) "$WP_PATH/wp-content/debug.log" 2>/dev/null \
+  | grep -vE "^\s*$|^\[cli\]" \
+  | tee "/tmp/smoke-new-log-section-<SECTION>.txt"
+
+# Classify any non-empty diff into failures:
+# - "Fatal error:" → critical, blocks release
+# - "Warning:" / "Notice:" / "Deprecated:" → failure unless whitelisted
+# - Anything else (info, cron debug prints) → warn only, don't block
+```
+
+### Post-walk — restore debug state (only if it wasn't already on)
+
+```bash
+# Restore debug if we turned it on ourselves (don't touch if the dev had it on)
+# and archive the section of the log that belongs to this walk.
+ARCHIVE="$WP_PATH/wp-content/plugins/jetonomy/docs/qa/.debug-log-<release_version>-<ran_at>.txt"
+tail -c +$((BASELINE_SIZE + 1)) "$WP_PATH/wp-content/debug.log" > "$ARCHIVE"
+echo "archived walk-window log to $ARCHIVE"
+```
+
+### Report shape addition
+
+Add `debug_log_issues` to the output JSON:
+
+```json
+{
+  "debug_log_issues": [
+    { "section": "C5", "level": "fatal", "line": "PHP Fatal error:  Uncaught TypeError ...", "file": "class-foo.php:123" },
+    { "section": "G4", "level": "warning", "line": "PHP Warning: Undefined array key 'x'", "file": "class-bar.php:45" }
+  ]
+}
+```
+
+If `debug_log_issues` has any entry of level `fatal`, block the release.
+If only `warning` / `notice` / `deprecated`, block unless explicitly whitelisted in this repo.
+
 ---
 
 ## A — Fresh install (skip if tests on existing install)
