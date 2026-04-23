@@ -903,15 +903,17 @@
   /* ── Schedule panel ── */
   .jt-schedule-panel { margin-top: 16px; padding: 16px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); border: 1px solid var(--jt-border); }
   .jt-schedule-panel[hidden] { display: none; }
-  .jt-input--datetime,
-  .jt-input--date,
-  .jt-input--time {
+  /* Restore native appearance so date/time inputs open their browser
+     picker on click. The base .jt-input rule sets -webkit-appearance: none
+     for consistent text-input styling; for date/time inputs that kills the
+     native picker affordance on Chromium and leaves Firefox with an inert
+     field that never opens on click. Double-class selector (specificity
+     0,0,2,0) beats theme/reset stylesheets that target
+     `input[type="time"]` directly (specificity 0,0,1,1). */
+  .jt-input.jt-input--datetime,
+  .jt-input.jt-input--date,
+  .jt-input.jt-input--time {
     font-family: var(--jt-font);
-    /* Restore native appearance so date/time inputs open their browser
-       picker on click. The base .jt-input rule sets -webkit-appearance: none
-       for consistent text-input styling; for date/time inputs that kills the
-       native picker affordance on Chromium and leaves Firefox with an inert
-       field that never opens on click. */
     -webkit-appearance: auto;
     -moz-appearance: auto;
     appearance: auto;
