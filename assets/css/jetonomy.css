@@ -211,6 +211,11 @@
   }
   .jt-avatar-wrap.is-online:has(.jt-avatar-md)::after { left: 24px; }
   .jt-avatar-wrap.is-online:has(.jt-avatar-lg)::after { left: 36px; }
+  /* The user-profile header avatar uses .jt-profile-av (64x64 with a 3px
+     border). Offset matches the visible rim: 64px + 3px border = 67px
+     outer edge, dot is 14px wide → left = 67 - 14 + 2 = 55; top sits
+     level with the border. */
+  .jt-avatar-wrap.is-online:has(.jt-profile-av)::after { top: 1px; left: 55px; }
 
   /* ── Layout ── */
   /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */

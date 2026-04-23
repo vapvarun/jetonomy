@@ -203,6 +203,7 @@
   }
   .jt-avatar-wrap.is-online:has(.jt-avatar-md)::after { right: 24px; }
   .jt-avatar-wrap.is-online:has(.jt-avatar-lg)::after { right: 36px; }
+  .jt-avatar-wrap.is-online:has(.jt-profile-av)::after { top: 1px; right: 55px; }
 
   /* ── Layout ── */
   /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */
