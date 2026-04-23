@@ -187,7 +187,22 @@
 
   /* ── Online status indicator ── */
   .jt-avatar-wrap { position: relative; display: inline-block; }
-  .jt-avatar-wrap.is-online::after { content: ''; position: absolute; bottom: 0; left: 0; width: 10px; height: 10px; background: var(--jt-success); border-radius: var(--jt-radius-full); border: 2px solid var(--jt-bg); box-sizing: content-box; }
+  .jt-avatar-wrap.is-online::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: 18px;
+    width: 10px;
+    height: 10px;
+    background: var(--jt-success);
+    border-radius: var(--jt-radius-full);
+    border: 2px solid var(--jt-bg);
+    box-sizing: content-box;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .jt-avatar-wrap.is-online:has(.jt-avatar-md)::after { right: 24px; }
+  .jt-avatar-wrap.is-online:has(.jt-avatar-lg)::after { right: 36px; }
 
   /* ── Layout ── */
   /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */

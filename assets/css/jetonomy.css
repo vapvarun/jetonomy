@@ -187,7 +187,30 @@
 
   /* ── Online status indicator ── */
   .jt-avatar-wrap { position: relative; display: inline-block; }
-  .jt-avatar-wrap.is-online::after { content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--jt-success); border-radius: var(--jt-radius-full); border: 2px solid var(--jt-bg); box-sizing: content-box; }
+  /* Online indicator sits at the top-right of the avatar image. The wrap
+     may also contain the user's name link (reply-card, user profile), so
+     the wrap's bounding box extends far to the right and downward. We
+     can't anchor to the wrap's bottom-right — that lands under the name
+     text. Instead, the avatar image is always the first inline child and
+     starts at the wrap's top-left, so we position the dot using `top`
+     and a `left` offset equal to the avatar size minus the dot size.
+     Per-size rules via :has() keep the dot aligned across sm/md/lg. */
+  .jt-avatar-wrap.is-online::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 18px;
+    width: 10px;
+    height: 10px;
+    background: var(--jt-success);
+    border-radius: var(--jt-radius-full);
+    border: 2px solid var(--jt-bg);
+    box-sizing: content-box;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .jt-avatar-wrap.is-online:has(.jt-avatar-md)::after { left: 24px; }
+  .jt-avatar-wrap.is-online:has(.jt-avatar-lg)::after { left: 36px; }
 
   /* ── Layout ── */
   /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */
