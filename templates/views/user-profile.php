@@ -202,7 +202,7 @@ $crumbs = [
 			</div>
 
 			<!-- Profile tabs -->
-			<div class="jt-profile-tabs">
+			<div class="jt-profile-tabs" data-wp-interactive="jetonomy" data-wp-init--active-tab="callbacks.initProfileTabsActive">
 				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/' ); ?>" class="jt-profile-tab <?php echo esc_attr( empty( $current_tab ) ? 'active' : '' ); ?>">
 					<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
 				</a>

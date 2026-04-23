@@ -2175,6 +2175,20 @@ const { state, actions } = store( 'jetonomy', {
             gaps.forEach( ( gap ) => observer.observe( gap ) );
         },
 
+        // On mobile, the profile tabs row is horizontally scrollable to fit
+        // all five tabs. When the viewer lands on a sub-page whose tab sits
+        // off-screen (e.g. /drafts/ at 390px), they can't see the active
+        // underline without scrolling the tab row manually. Scroll the
+        // active tab into view once on load so the indicator is visible.
+        initProfileTabsActive() {
+            const container = document.querySelector( '.jt-profile-tabs' );
+            if ( ! container ) return;
+            if ( container.scrollWidth <= container.clientWidth ) return;
+            const active = container.querySelector( '.jt-profile-tab.active' );
+            if ( ! active ) return;
+            active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
+        },
+
         // Poll for new replies and show a sticky banner
         initReplyPolling() {
             const repliesSection = document.getElementById( 'jt-replies-container' );

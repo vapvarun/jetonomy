@@ -1457,6 +1457,24 @@
 .jt-profile-tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
 .jt-profile-tab:hover { color: var(--jt-text); }
 .jt-profile-tab.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); }
+/* Mobile: the five-tab row (Posts, Replies, Votes, Bookmarks, Drafts)
+   overflows the viewport at ≤390px, clipping the last tab (Drafts) off
+   the right edge. Make the row horizontally scrollable instead of
+   clipping — tabs stay legible, the Drafts tab is reachable by swipe,
+   and the underline nav paradigm is preserved. */
+@media (max-width: 640px) {
+  .jt-profile-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .jt-profile-tabs::-webkit-scrollbar { display: none; }
+  .jt-profile-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
 
 /* ── More menu (post action overflow) ── */
 .jt-more-menu { position: relative; display: inline-flex; margin-left: 8px; }
