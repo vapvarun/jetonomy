@@ -2143,12 +2143,24 @@ const { state, actions } = store( 'jetonomy', {
             }, 30000 );
         },
 
-        // Auto-trigger gap loading when user scrolls to it (infinite scroll)
+        // Auto-trigger gap loading when the user scrolls to it (infinite scroll).
+        // Gated on a real scroll event so a trigger that is already inside the
+        // initial viewport (e.g. when posts_per_page=1 on a short space) does
+        // not auto-fire on page load. The Load More button stays clickable either
+        // way, so users who want more without scrolling can still request it.
         initInfiniteScroll() {
             const gaps = document.querySelectorAll( '.jt-load-gap' );
             if ( ! gaps.length ) return;
 
+            let userHasScrolled = false;
+            const markScrolled = () => {
+                userHasScrolled = true;
+                window.removeEventListener( 'scroll', markScrolled );
+            };
+            window.addEventListener( 'scroll', markScrolled, { passive: true } );
+
             const observer = new IntersectionObserver( ( entries ) => {
+                if ( ! userHasScrolled ) return;
                 entries.forEach( ( entry ) => {
                     if ( entry.isIntersecting ) {
                         const btn = entry.target.querySelector( '.jt-load-gap-btn' );
