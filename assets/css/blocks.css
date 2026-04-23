@@ -645,18 +645,12 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-shortcode-trending-rank { width: 26px; height: 26px; flex-basis: 26px; font-size: 0.78rem; }
 }
 
-/* ─── Dark mode (system + .jt-dark ancestor) ───────────────────────── */
-
-@media (prefers-color-scheme: dark) {
-	.jt-nav-block,
-	.jt-login-block,
-	.jt-feed-block {
-		--jtb-bg:      var(--bg, #0b0f1a);
-		--jtb-text:    var(--text-1, #e7ebf3);
-		--jtb-border:  color-mix(in srgb, var(--jtb-text) 16%, transparent);
-		--jtb-shadow:  0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-	}
-}
+/* ─── Dark mode — explicit opt-in only ──────────────────────────────
+ * Driven by `.jt-dark` / `[data-theme="dark"]` on an ancestor, which the
+ * theme integration (class-theme-integration.php) sets in response to the
+ * site's dark-mode toggle. OS-level prefers-color-scheme is intentionally
+ * NOT used so logged-out viewers never land on a dark login just because
+ * their OS happens to be in dark mode. */
 .jt-dark .jt-nav-block,
 .jt-dark .jt-login-block,
 .jt-dark .jt-feed-block,
