@@ -882,7 +882,18 @@
   .jt-schedule-panel[hidden] { display: none; }
   .jt-input--datetime,
   .jt-input--date,
-  .jt-input--time { font-family: var(--jt-font); }
+  .jt-input--time {
+    font-family: var(--jt-font);
+    /* Restore native appearance so date/time inputs open their browser
+       picker on click. The base .jt-input rule sets -webkit-appearance: none
+       for consistent text-input styling; for date/time inputs that kills the
+       native picker affordance on Chromium and leaves Firefox with an inert
+       field that never opens on click. */
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    appearance: auto;
+    cursor: pointer;
+  }
   .jt-datetime-split { display: flex; gap: 12px; align-items: center; }
   .jt-datetime-split .jt-input--date { flex: 1 1 auto; min-width: 0; }
   .jt-datetime-split .jt-input--time { flex: 0 0 auto; width: 140px; }
