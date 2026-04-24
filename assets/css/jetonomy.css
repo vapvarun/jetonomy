@@ -130,6 +130,16 @@
     --jt-success-light: #052e16;
     --jt-warn-light: #422006;
     --jt-danger-light: #450a0a;
+    /* Accent tints must invert in dark mode: the default light-mode
+       recipe mixes accent with white, producing a near-white/mint wash
+       (--jt-accent-muted ≈ #DBEAFE). On a dark panel that lands as a
+       jarringly bright patch for unread notifications, pinned rows,
+       vote hover, composer focus ring, tag hover, and accent badges.
+       Re-derive both tints against the dark surface so they stay subtle
+       tinted backgrounds that only a little lighter than the panel,
+       not patches that scream. */
+    --jt-accent-light: color-mix(in srgb, var(--jt-accent) 12%, #171717);
+    --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 18%, #171717);
   }
 
   /* Dark-mode heading contrast override. Reign (and some other BuddyX-
