@@ -42,6 +42,29 @@ class Template_Loader {
 			exit;
 		}
 
+		// ── /mod/ route: redirect space-level mods into their first moderated
+		// space. The aggregate dashboard at /community/mod/ is admin-only, but
+		// space mods who click it from a stale bookmark or a shared link should
+		// land on something useful instead of a 403.
+		if ( 'moderation' === $data['route'] && is_user_logged_in() ) {
+			$mod_user_id = get_current_user_id();
+			if (
+				! \Jetonomy\Moderation\Moderation_Permissions::can_view_admin_dashboard( $mod_user_id )
+				&& \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $mod_user_id )
+			) {
+				$mod_space_ids = \Jetonomy\Models\SpaceMember::moderated_space_ids( $mod_user_id );
+				if ( ! empty( $mod_space_ids ) ) {
+					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
+					if ( $mod_first ) {
+						$mod_settings  = get_option( 'jetonomy_settings', array() );
+						$mod_base_slug = $mod_settings['base_slug'] ?? 'community';
+						wp_safe_redirect( home_url( '/' . $mod_base_slug . '/s/' . $mod_first->slug . '/mod/' ) );
+						exit;
+					}
+				}
+			}
+		}
+
 		// ── /new/ route membership guard ──
 		// REST POST /posts returns 403 for non-members on invite/approval spaces, but
 		// without this guard the user still reaches the composer, fills it, submits, and

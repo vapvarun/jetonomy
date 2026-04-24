@@ -849,6 +849,21 @@
   .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger); color: var(--jt-white); }
   .jt-app .jt-btn-danger:hover { color: var(--jt-white); }
 
+  /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
+  .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
+
+  /* Admin cross-space dashboard at /community/mod/. */
+  .jt-mod-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--jt-space-4); }
+  .jt-mod-dashboard-card { display: flex; flex-direction: column; gap: var(--jt-space-3); padding: var(--jt-space-4); text-decoration: none; color: inherit; border: 1px solid var(--jt-border); transition: border-color .15s ease, transform .15s ease; }
+  .jt-mod-dashboard-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
+  .jt-mod-dashboard-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); }
+  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); }
+  .jt-mod-dashboard-card-cta { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: var(--jt-text-sm); color: var(--jt-accent); }
+
+  /* Sidebar links column — moderation link sits below "View all members". */
+  .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
+  .jt-sidebar-link-mod { display: inline-flex; align-items: center; gap: var(--jt-space-1); }
+
   /* ── Search ── */
   /* ── Search page form (separate from header search) ── */
   .jt-search-page-form { margin-bottom: 24px; }
