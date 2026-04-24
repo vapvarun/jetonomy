@@ -881,7 +881,11 @@
   .jt-member-role-error { flex-basis: 100%; color: var(--jt-danger); font-size: var(--jt-text-xs); margin-top: var(--jt-space-1); }
 
   @media (max-width: 640px) {
-    .jt-member-role-select { max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
+    /* Let dropdown + badges wrap onto a second line on mobile. The row
+       keeps avatar + name + trust on line 1; dropdown + badge + rep on
+       line 2, full-width select so the truncation stops squeezing. */
+    .jt-app .jt-member-item { flex-wrap: wrap; }
+    .jt-member-role-select { flex-basis: 100%; max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
   }
 
   /* ── Search ── */
