@@ -258,6 +258,7 @@ Each row is a repro of a past bug that caused customer pain. These rows stay spe
 | D.search-or-mode-relevance | Similar-topics typeahead returned unrelated posts | Type "E2E time picker test" in new-post title; no returned title's only overlap is "test"; all suggestions share ≥ 2 tokens of length ≥ 4 with the query |
 | D.space-settings-merge | PATCH /spaces/:id replaced settings JSON instead of merging | Pre-fill settings with two keys; PATCH with one key; re-read confirms both keys present |
 | D.custom-fields-fatal-on-create | sanitize_title() received WP_REST_Request object | POST /jetonomy/v1/fields without a slug body param; expect HTTP 201 and no new fatal in debug.log |
+| D.sort-enum-oldest-newest | REST schema advertised sort=oldest/newest, model silently no-op'd them | GET /jetonomy/v1/spaces/1/posts?sort=oldest and ...?sort=newest return distinct id orders from sort=latest; GET ...?sort=unanswered returns HTTP 200 (previously 400 - enum blocked a valid filter); GET /jetonomy/v1/bookmarks?sort=unanswered still returns HTTP 400 (scope-limited override on posts route only) |
 
 Every customer-visible fix ships a matching D row in the same PR. After 2 clean releases of a D row, promote it into the main C/E flow.
 

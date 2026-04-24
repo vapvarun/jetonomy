@@ -195,6 +195,8 @@ class Post extends Model {
 	 * Sort options:
 	 *   'latest'      — sticky posts first, then last_reply_at DESC
 	 *   'popular'     — vote_score DESC
+	 *   'oldest'      — created_at ASC
+	 *   'newest'      — created_at DESC
 	 *   'unanswered'  — reply_count = 0, created_at DESC
 	 *
 	 * Cursor param:
@@ -218,6 +220,14 @@ class Post extends Model {
 		switch ( $sort ) {
 			case 'popular':
 				$order_by = 'vote_score DESC';
+				break;
+
+			case 'oldest':
+				$order_by = 'created_at ASC';
+				break;
+
+			case 'newest':
+				$order_by = 'created_at DESC';
 				break;
 
 			case 'unanswered':
@@ -306,6 +316,14 @@ class Post extends Model {
 		switch ( $sort ) {
 			case 'popular':
 				$order_by = 'vote_score DESC';
+				break;
+
+			case 'oldest':
+				$order_by = 'created_at ASC';
+				break;
+
+			case 'newest':
+				$order_by = 'created_at DESC';
 				break;
 
 			case 'unanswered':
