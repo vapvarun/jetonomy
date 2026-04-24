@@ -266,6 +266,16 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.3.8 - April 2026 =
 
+Space moderation, front-end member management, BuddyPress and FluentCommunity integrations, dark-mode polish, and a long tail of bug fixes.
+
+**Moderation**
+
+* New: Space admins and space moderators now have their own moderation queue at /community/s/:slug/mod/, showing only the flagged posts and replies inside that space. Before 1.3.8 the queue was restricted to site editors, so a community owner had no way to police their own space without handing out WP-editor roles.
+* New: Site admins land on a cross-space moderation dashboard at /community/mod/ that summarises pending flags per space and links straight into each space's queue. If you admin multiple communities, you see them all at once; if you moderate a single space, the header link takes you straight to that space's queue.
+* New: Space admins can promote members to moderator or admin from the front-end members page (/community/s/:slug/members/). A role dropdown on each member row PATCHes the change live with inline success and error feedback. No more wp-admin round-trip to add a moderator.
+
+**Integrations**
+
 * New: FluentCommunity integration. If you run both Jetonomy and FluentCommunity on the same site, they now feel like one product instead of two. Auto-enables when FluentCommunity is detected, no toggle needed.
 * New: Pair FluentCommunity spaces with Jetonomy spaces from a new Settings > FluentCommunity admin page. Each pair renders a "Discussions" tab on the FC space header linking to the Jetonomy forum, plus a sidebar card on the Jetonomy space linking back to the FC feed.
 * New: Configurable tab label on the integration settings page (default "Discussions"). Rename it to "Forum", "Q and A", or whatever fits your community's language. It updates everywhere the tab appears.
@@ -278,6 +288,39 @@ Each site in a Multisite network gets its own independent community. Network act
 * New: Comment-to-reply bridge. When a member comments on one of the broadcast feed posts on FluentCommunity, the comment is automatically mirrored back as a reply on the original Jetonomy topic, preserving author attribution. Only comments on broadcast feeds round-trip; native FC feed posts are untouched. Add-only like member sync: edits and deletes on FC do not propagate, so your forum thread is always the durable record.
 * New: "Sync existing members now" button on the settings page. One-click backfill that enrols each side's existing members into the paired side. Safe to re-run, capped at 5,000 members per space per run, reports pairs processed and members added in both directions.
 * Note: Writes to FluentCommunity happen only through FluentCommunity's own public helpers (addToSpace) and Feed model, never by direct SQL. Deactivating FluentCommunity leaves both plugins working independently.
+* New: BuddyPress integration broadcasts new Jetonomy topics into the paired BuddyPress group's activity stream, and comments on that activity round-trip back as replies on the forum topic. Uses real HTML paragraphs and a discreet attribution footer so the activity feed reads naturally.
+
+**Dark mode and theme polish**
+
+* Fixed: Plugin headings stay readable when the Reign theme (or any theme that renders the forum inside a dark panel) is in dark mode. The contrast bug only surfaced on dark-panel themes and had nothing to do with the OS-level dark mode setting.
+* Fixed: Accent tints (--jt-accent-light and --jt-accent-muted) are now re-derived against the panel background in dark mode, so hover states and muted backgrounds look right on dark themes instead of washing out to near-invisible.
+* Fixed: Locked-space banner and warning notices are legible against dark panels instead of disappearing.
+* Fixed: Jetonomy no longer auto-applies dark mode based on the visitor's OS preference. Dark mode now follows the theme only, which is less surprising when your theme is in light mode but the visitor's system is set to dark.
+
+**Bug fixes**
+
+* Fixed: Sort modes (oldest, newest, unanswered) now return the right set of topics. The earlier query merged them into latest.
+* Fixed: Space settings are merged on save instead of overwritten, so editing one field no longer clears the others.
+* Fixed: Similar-topics widget no longer leaks HTML entities into the titles, and sitewide search now ranks results by relevance instead of flat creation order.
+* Fixed: Time picker on scheduled posts now uses cross-browser hour and minute selects when the browser does not provide a native picker, and the native date/time picker is restored on browsers that do.
+* Fixed: Online indicator sits on the avatar's top-right corner, including on the 64px profile-header avatar where it used to drift.
+* Fixed: Space listing Load More no longer auto-preloads the next page on first render; it waits for a real scroll.
+* Fixed: Share dropdown now closes when the page scrolls instead of floating free over the content.
+* Fixed: Profile tabs no longer clip the Drafts tab on mobile.
+* Fixed: Rewrite rules are flushed during activation so community URLs resolve immediately after activating the plugin, instead of 404ing until the next page load.
+* Fixed: Profile Drafts rows now navigate to the draft itself so you can edit or publish from one click.
+* Fixed: Long words in user content wrap on mobile instead of pushing the app wider than the viewport. The Jetonomy app width is also clamped to prevent overflow.
+* Fixed: TikTok videos render as proper iframes instead of falling back to a caption-only text card. Copy-link now shows visible feedback when the browser blocks clipboard writes.
+* Fixed: Forum members can attach images when creating posts. Upload permissions used to require a higher role than member.
+* Fixed: Voting optimistically shows the correct score when flipping a prior vote (for example up to down), instead of showing a stale delta until the server confirmed.
+* Fixed: FluentCommunity broadcast now preserves paragraph breaks in the excerpt so long topics read the way they were written.
+* Fixed: FluentCommunity cross-link buttons use the FC site title in their labels for a natural "View on <your community>" reading.
+
+**Polish**
+
+* Improved: Fourteen translation-ready strings were rewritten to drop em-dashes and other typography that made translations awkward. No string keys changed.
+* Improved: The Interactivity API now exposes isLoggedIn and loginUrl so blocks and embeds can render the right CTA for anonymous viewers without extra REST calls.
+* Improved: Integration settings pages got section banners and clearer loader-gate documentation.
 
 Upgrading from 1.3.7 does not require any migration; nothing in your database changes.
 
