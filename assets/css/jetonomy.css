@@ -864,6 +864,26 @@
   .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
   .jt-sidebar-link-mod { display: inline-flex; align-items: center; gap: var(--jt-space-1); }
 
+  /* Space-members role dropdown — only rendered for space admins. */
+  .jt-member-role-select {
+    appearance: auto;
+    padding: var(--jt-space-1) var(--jt-space-2);
+    border: 1px solid var(--jt-border);
+    border-radius: var(--jt-radius-sm);
+    background: var(--jt-bg);
+    color: var(--jt-text);
+    font-size: var(--jt-text-sm);
+    line-height: 1.4;
+    max-width: 8rem;
+  }
+  .jt-member-role-select:disabled { opacity: .6; cursor: progress; }
+  .jt-member-role-select:focus { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
+  .jt-member-role-error { flex-basis: 100%; color: var(--jt-danger); font-size: var(--jt-text-xs); margin-top: var(--jt-space-1); }
+
+  @media (max-width: 640px) {
+    .jt-member-role-select { max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
+  }
+
   /* ── Search ── */
   /* ── Search page form (separate from header search) ── */
   .jt-search-page-form { margin-bottom: 24px; }

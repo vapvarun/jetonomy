@@ -457,12 +457,12 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 5
+			count: 6
 			path: includes/class-template-loader.php
 
 		-
 			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 8
+			count: 9
 			path: includes/class-template-loader.php
 
 		-

@@ -326,8 +326,14 @@ class Template_Loader {
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
 				'i18n'          => array(
-					'queueClean'    => __( 'Queue cleared.', 'jetonomy' ),
-					'resolveFailed' => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'queueClean'       => __( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'    => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'roleUpdateFailed' => __( 'Could not update role. Please try again.', 'jetonomy' ),
+					'roleLabels'       => array(
+						'member'    => __( 'Member', 'jetonomy' ),
+						'moderator' => __( 'Moderator', 'jetonomy' ),
+						'admin'     => __( 'Admin', 'jetonomy' ),
+					),
 				),
 			)
 		);
@@ -352,6 +358,22 @@ class Template_Loader {
 				'communityBase' => \Jetonomy\base_url(),
 			)
 		);
+
+		// Enqueue role-dropdown handler on the space-members route (only
+		// rendered for space admins, but the JS binds via delegation and is
+		// a no-op when no select is present — safe to always enqueue here).
+		if ( 'space-members' === $data['route'] ) {
+			$sm_file    = JETONOMY_DIR . 'assets/js/space-members.js';
+			$sm_mtime   = file_exists( $sm_file ) ? (string) filemtime( $sm_file ) : '';
+			$sm_version = '' !== $sm_mtime ? JETONOMY_VERSION . '+' . $sm_mtime : JETONOMY_VERSION;
+			wp_enqueue_script(
+				'jetonomy-space-members',
+				JETONOMY_URL . 'assets/js/space-members.js',
+				array( 'jetonomy-data' ),
+				$sm_version,
+				true
+			);
+		}
 
 		// Enqueue moderation queue resolver on moderation routes.
 		if ( in_array( $data['route'], array( 'moderation', 'space-moderation' ), true ) ) {
