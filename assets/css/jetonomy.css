@@ -132,6 +132,23 @@
     --jt-danger-light: #450a0a;
   }
 
+  /* Dark-mode heading contrast override. Reign (and some other BuddyX-
+     adjacent themes) ship an inline customizer rule that hardcodes
+     `h1..h6 { color: #20262e }` and does NOT adapt when we flip the body
+     background to dark. Without this override the space title, single-
+     post h1, category headers, and every other plugin heading render
+     near-black on near-black in dark mode. Scoped to `.jt-app` so we only
+     override headings inside plugin surfaces; theme pages outside our app
+     keep whatever the theme wants. */
+  .jt-dark .jt-app h1,
+  .jt-dark .jt-app h2,
+  .jt-dark .jt-app h3,
+  .jt-dark .jt-app h4,
+  .jt-dark .jt-app h5,
+  .jt-dark .jt-app h6 {
+    color: var(--jt-text);
+  }
+
   /* ── Font size scaling (A / A+ / A++) ─────────────────────────────────────
      Uses the same data-bn-font-scale attribute and bn_font_scale localStorage
      key as BuddyNext so the preference is shared across both plugins.
