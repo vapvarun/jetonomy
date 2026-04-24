@@ -119,4 +119,89 @@ class Flag extends Model {
 			)
 		);
 	}
+
+	/**
+	 * List pending flags on content that belongs to a single space.
+	 *
+	 * Resolves each flag's owning space via a LEFT JOIN chain:
+	 *   post  flag → jt_posts
+	 *   reply flag → jt_replies → jt_posts
+	 * User flags are excluded — they have no space scope.
+	 *
+	 * @param int $space_id
+	 * @return object[]
+	 */
+	public static function list_pending_in_space( int $space_id ): array {
+		if ( $space_id <= 0 ) {
+			return [];
+		}
+
+		global $wpdb;
+		$flags_t   = \Jetonomy\table( 'flags' );
+		$posts_t   = \Jetonomy\table( 'posts' );
+		$replies_t = \Jetonomy\table( 'replies' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT f.* FROM {$flags_t} f
+				 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
+				 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
+				 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
+				 WHERE f.status = 'pending'
+				   AND (
+				     ( f.object_type = 'post'  AND p.space_id  = %d )
+				     OR ( f.object_type = 'reply' AND rp.space_id = %d )
+				   )
+				 ORDER BY f.created_at DESC",
+				$space_id,
+				$space_id
+			)
+		);
+
+		return $rows ?: [];
+	}
+
+	/**
+	 * List pending flags on content across a set of spaces.
+	 *
+	 * Used by the scoped aggregate view (space mod visiting the admin-style
+	 * queue without global cap).
+	 *
+	 * @param int[] $space_ids
+	 * @return object[]
+	 */
+	public static function list_pending_in_spaces( array $space_ids ): array {
+		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
+		if ( empty( $space_ids ) ) {
+			return [];
+		}
+
+		global $wpdb;
+		$flags_t      = \Jetonomy\table( 'flags' );
+		$posts_t      = \Jetonomy\table( 'posts' );
+		$replies_t    = \Jetonomy\table( 'replies' );
+		$placeholders = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+		$params       = array_merge( $space_ids, $space_ids );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				"SELECT f.* FROM {$flags_t} f
+				 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
+				 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
+				 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
+				 WHERE f.status = 'pending'
+				   AND (
+				     ( f.object_type = 'post'  AND p.space_id  IN ({$placeholders}) )
+				     OR ( f.object_type = 'reply' AND rp.space_id IN ({$placeholders}) )
+				   )
+				 ORDER BY f.created_at DESC",
+				...$params
+			)
+		);
+
+		return $rows ?: [];
+	}
 }

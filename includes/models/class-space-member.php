@@ -141,4 +141,50 @@ class SpaceMember extends Model {
 			)
 		) ?: [];
 	}
+
+	/**
+	 * Return the space IDs where the user holds a privileged role (moderator or admin).
+	 *
+	 * Used by the moderation queue scope: a space mod only sees flags in spaces
+	 * they moderate. Single indexed query.
+	 *
+	 * @param int $user_id
+	 * @return int[]
+	 */
+	public static function moderated_space_ids( int $user_id ): array {
+		if ( $user_id <= 0 ) {
+			return [];
+		}
+
+		$rows = static::db()->get_col(
+			static::db()->prepare(
+				'SELECT space_id FROM ' . static::table() . " WHERE user_id = %d AND role IN ('moderator','admin')",
+				$user_id
+			)
+		);
+
+		return array_map( 'intval', $rows ?: [] );
+	}
+
+	/**
+	 * Does the user hold a privileged role (moderator or admin) in at least one space?
+	 *
+	 * Cheap existence check used by the main nav to decide whether to render
+	 * a Moderation link for a non-cap user.
+	 *
+	 * @param int $user_id
+	 * @return bool
+	 */
+	public static function has_privileged_membership( int $user_id ): bool {
+		if ( $user_id <= 0 ) {
+			return false;
+		}
+
+		return (bool) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT 1 FROM ' . static::table() . " WHERE user_id = %d AND role IN ('moderator','admin') LIMIT 1",
+				$user_id
+			)
+		);
+	}
 }
