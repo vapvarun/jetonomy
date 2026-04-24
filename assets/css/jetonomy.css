@@ -140,6 +140,13 @@
        not patches that scream. */
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 12%, #171717);
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 18%, #171717);
+    /* Warn-dark flips to a warm light tint in dark mode. It is used as
+       text on the dark --jt-warn-light surface (locked-space banner,
+       .jt-notice-warning). The light-mode default (color-mix warn 80%,
+       black) stays olive and fails WCAG contrast against the dark warn
+       background; this re-derives against white so the copy stays
+       legible. */
+    --jt-warn-dark: color-mix(in srgb, var(--jt-warn) 35%, white);
   }
 
   /* Dark-mode heading contrast override. Reign (and some other BuddyX-
