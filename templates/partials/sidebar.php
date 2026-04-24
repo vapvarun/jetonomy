@@ -139,10 +139,16 @@ $bn_active = did_action( 'buddynext_loaded' );
 			do_action( 'jetonomy_sidebar_about_after_meta', $space );
 			?>
 			<?php if ( is_user_logged_in() ) : ?>
-				<div style="margin-top:12px;">
+				<div class="jt-sidebar-links">
 					<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/members/' ); ?>" class="jt-sidebar-link-text">
 						<?php esc_html_e( 'View all members', 'jetonomy' ); ?>
 					</a>
+					<?php if ( \Jetonomy\Moderation\Moderation_Permissions::can_view_space_queue( get_current_user_id(), (int) $space->id ) ) : ?>
+						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/mod/' ); ?>" class="jt-sidebar-link-text jt-sidebar-link-mod">
+							<?php jetonomy_echo_icon( 'shield', 14 ); ?>
+							<?php esc_html_e( 'Moderation queue', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 		</div>

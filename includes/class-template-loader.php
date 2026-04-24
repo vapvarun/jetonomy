@@ -73,21 +73,22 @@ class Template_Loader {
 
 		// Map routes to template files
 		$template_map = array(
-			'home'          => 'views/home.php',
-			'category'      => 'views/category.php',
-			'space'         => 'views/space.php',
-			'space-members' => 'views/space-members.php',
-			'space-roadmap' => 'views/space-roadmap.php',
-			'post'          => 'views/single-post.php',
-			'profile'       => 'views/user-profile.php',
-			'notifications' => 'views/notifications.php',
-			'search'        => 'views/search.php',
-			'leaderboard'   => 'views/leaderboard.php',
-			'moderation'    => 'views/moderation.php',
-			'tag'           => 'views/tag.php',
-			'new-post'      => 'views/new-post.php',
-			'edit-profile'  => 'views/edit-profile.php',
-			'invite'        => 'views/invite.php',
+			'home'             => 'views/home.php',
+			'category'         => 'views/category.php',
+			'space'            => 'views/space.php',
+			'space-members'    => 'views/space-members.php',
+			'space-roadmap'    => 'views/space-roadmap.php',
+			'space-moderation' => 'views/space-moderation.php',
+			'post'             => 'views/single-post.php',
+			'profile'          => 'views/user-profile.php',
+			'notifications'    => 'views/notifications.php',
+			'search'           => 'views/search.php',
+			'leaderboard'      => 'views/leaderboard.php',
+			'moderation'       => 'views/moderation.php',
+			'tag'              => 'views/tag.php',
+			'new-post'         => 'views/new-post.php',
+			'edit-profile'     => 'views/edit-profile.php',
+			'invite'           => 'views/invite.php',
 		);
 
 		/**
@@ -301,6 +302,10 @@ class Template_Loader {
 				'restBase'      => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
+				'i18n'          => array(
+					'queueClean'    => __( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed' => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+				),
 			)
 		);
 
@@ -324,6 +329,20 @@ class Template_Loader {
 				'communityBase' => \Jetonomy\base_url(),
 			)
 		);
+
+		// Enqueue moderation queue resolver on moderation routes.
+		if ( in_array( $data['route'], array( 'moderation', 'space-moderation' ), true ) ) {
+			$mod_file    = JETONOMY_DIR . 'assets/js/moderation.js';
+			$mod_mtime   = file_exists( $mod_file ) ? (string) filemtime( $mod_file ) : '';
+			$mod_version = '' !== $mod_mtime ? JETONOMY_VERSION . '+' . $mod_mtime : JETONOMY_VERSION;
+			wp_enqueue_script(
+				'jetonomy-moderation',
+				JETONOMY_URL . 'assets/js/moderation.js',
+				array( 'jetonomy-data' ),
+				$mod_version,
+				true
+			);
+		}
 
 		// Enqueue Prism.js for code syntax highlighting on post pages (only if files exist).
 		$prism_dir = JETONOMY_DIR . 'assets/vendor/prismjs/';
