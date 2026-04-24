@@ -854,15 +854,11 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * Determine whether a user has space admin privileges.
 	 *
-	 * Returns true for WP admins (manage_options) or users with
-	 * the 'admin' role in the space.
+	 * Thin backward-compat wrapper — the canonical primitive is
+	 * Permission_Engine::is_space_admin (takes user_id, space_id).
 	 */
 	private function is_space_admin( int $space_id, int $user_id ): bool {
-		if ( user_can( $user_id, 'manage_options' ) ) {
-			return true;
-		}
-		$role = SpaceMember::get_role( $space_id, $user_id );
-		return 'admin' === $role;
+		return \Jetonomy\Permissions\Permission_Engine::is_space_admin( $user_id, $space_id );
 	}
 
 	/**
