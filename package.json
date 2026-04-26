@@ -1,6 +1,6 @@
 {
   "name": "jetonomy",
-  "version": "1.3.8",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "build": "wp-scripts build",
