@@ -44,11 +44,39 @@ done
 echo "==> build-release.sh — $PLUGIN_SLUG"
 cd "$ROOT"
 
+# --- 0. asset regen (grunt build) ------------------------------------------
+# Refresh every *.min.css, *.min.js, RTL CSS, and the .pot translation file
+# from the committed source. Closes the "stale .min" gap that shipped a
+# 1.3.7 zip without minified versions of newly added 1.3.8 assets.
+if [ -f "$ROOT/Gruntfile.js" ]; then
+	echo "==> grunt build (regen .min, RTL CSS, .pot)"
+	if [ ! -x "$ROOT/node_modules/.bin/grunt" ]; then
+		echo "    installing node deps (one-time)"
+		( cd "$ROOT" && npm install --silent ) || {
+			echo "FAIL: npm install failed; cannot regenerate assets" >&2
+			exit 21
+		}
+	fi
+	( cd "$ROOT" && ./node_modules/.bin/grunt build > /dev/null ) || {
+		echo "FAIL: grunt build failed; will not ship without fresh .min / .pot" >&2
+		exit 21
+	}
+fi
+
 # --- 1. clean-tree gate -----------------------------------------------------
+# Step 0 may have regenerated build artefacts. The gate excludes
+# grunt-generated paths so the build doesn't trip on its own deterministic
+# output, while still catching any uncommitted source / template / PHP work.
 if [ "$ALLOW_DIRTY" -eq 0 ]; then
-	if [ -n "$(git status --porcelain)" ]; then
-		echo "FAIL: working tree has uncommitted changes. Commit or pass --allow-dirty." >&2
-		git status --short >&2
+	DIRTY="$(git status --porcelain \
+		':(exclude)assets/css/*.min.css' \
+		':(exclude)assets/css/*-rtl.css' \
+		':(exclude)assets/css/*-rtl.min.css' \
+		':(exclude)assets/js/*.min.js' \
+		':(exclude)languages/*.pot' || true)"
+	if [ -n "$DIRTY" ]; then
+		echo "FAIL: working tree has uncommitted changes (excluding build artefacts). Commit or pass --allow-dirty." >&2
+		echo "$DIRTY" >&2
 		exit 10
 	fi
 fi
@@ -105,8 +133,8 @@ phpcs.xml.dist
 .phpcs.xml.dist
 phpstan.neon
 phpstan.neon.dist
-phpstan-baseline.neon
-phpstan-baseline-pro.neon
+phpstan-*.neon
+phpstan-*.neon.dist
 phpstan-bootstrap.php
 phpunit.xml
 phpunit.xml.dist
@@ -125,6 +153,14 @@ CHANGELOG.md
 .DS_Store
 .vscode/
 .idea/
+.distignore
+.wp-env.json
+.playwright-mcp/
+build/
+verify-*.png
+verify-*.jpg
+verify-*.log
+*.log
 EOF
 
 rsync -a --exclude-from="$EXCLUDES_FILE" ./ "$STAGE/"
@@ -148,6 +184,59 @@ for f in "${REQUIRED_FILES[@]}"; do
 		exit 40
 	fi
 done
+
+# --- 5b. source/min pairing assertion -------------------------------------
+# Every *.css that is not already a *.min.css and not an *-rtl* generated
+# variant must have a *.min.css counterpart in staging. Same for JS. Catches
+# the "newly added source file with no minified version" gap that almost
+# shipped in 1.3.8 (fluent-community.css, moderation.js, space-members.js).
+MISSING_MINS=()
+if [ -d "$STAGE/assets/css" ]; then
+	while IFS= read -r src; do
+		base="$(basename "$src" .css)"
+		if [ ! -f "$STAGE/assets/css/${base}.min.css" ]; then
+			MISSING_MINS+=( "${src#$STAGE/} -> ${base}.min.css" )
+		fi
+	done < <(find "$STAGE/assets/css" -maxdepth 1 -type f -name '*.css' ! -name '*.min.css' ! -name '*-rtl.css' ! -name '*-rtl.min.css')
+fi
+if [ -d "$STAGE/assets/js" ]; then
+	while IFS= read -r src; do
+		base="$(basename "$src" .js)"
+		if [ ! -f "$STAGE/assets/js/${base}.min.js" ]; then
+			MISSING_MINS+=( "${src#$STAGE/} -> ${base}.min.js" )
+		fi
+	done < <(find "$STAGE/assets/js" -maxdepth 1 -type f -name '*.js' ! -name '*.min.js')
+fi
+if [ "${#MISSING_MINS[@]}" -gt 0 ]; then
+	echo "FAIL: staged tree is missing minified counterparts for source files:" >&2
+	printf '    %s\n' "${MISSING_MINS[@]}" >&2
+	echo "    Run \`./node_modules/.bin/grunt build\` and re-run." >&2
+	exit 40
+fi
+
+# --- 5c. cruft check on staged top level ----------------------------------
+# Reject the build if any obvious dev / temp file made it past the EXCLUDES
+# list. Cheaper than reading every released zip by hand.
+CRUFT=()
+for pattern in \
+	"$STAGE/.distignore" \
+	"$STAGE/.wp-env.json" \
+	"$STAGE/.playwright-mcp" \
+	"$STAGE/build" \
+	"$STAGE/Gruntfile.js" \
+	"$STAGE/package.json" \
+	"$STAGE/package-lock.json"; do
+	[ -e "$pattern" ] && CRUFT+=( "${pattern#$STAGE/}" )
+done
+while IFS= read -r f; do
+	CRUFT+=( "${f#$STAGE/}" )
+done < <(find "$STAGE" -maxdepth 1 -type f \( -name 'verify-*' -o -name '*.log' -o -name 'phpstan-*.dist' -o -name 'phpstan-*.neon' \) 2>/dev/null)
+if [ "${#CRUFT[@]}" -gt 0 ]; then
+	echo "FAIL: dev / temp files leaked into the staged tree:" >&2
+	printf '    %s\n' "${CRUFT[@]}" >&2
+	echo "    Add the matching pattern to the EXCLUDES heredoc in this script, or remove the file." >&2
+	exit 40
+fi
 
 # --- 6. syntax lint every PHP in the staging ------------------------------
 echo "==> php -l on staged PHP files"
