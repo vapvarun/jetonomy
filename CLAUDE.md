@@ -5,15 +5,20 @@
 **Every release zip must be produced by `bin/build-release.sh`.** No exceptions.
 
 - Why: on 1.3.5 a stale Desktop zip (built before the critical bootstrap fix was committed) reached the GitHub release and took a customer's live site down. The release agent trusted "zip already exists" instead of rebuilding.
-- What the script guarantees:
-  1. Clean-tree gate (`--allow-dirty` only for local dev)
-  2. Version triangulation — Version header, constant, and readme Stable tag must match
-  3. Production composer install in staging (`--no-dev --optimize-autoloader`)
-  4. `php -l` on every staged PHP file
-  5. **Smoke test** — boots the plugin through `plugins_loaded` + `init` in a minimal WP stub (`tools/wp-stubs.php` + `tools/smoke-test.php`), catching load-time fatals like the 1.3.5 `Jetonomy\table()` bug
-  6. Zip → re-extract to scratch → re-run smoke test (catches zip corruption)
+- What the script guarantees, in order:
+  1. **Step 0 — asset regen.** Auto-runs `grunt build` (after a one-time `npm install`) so every release zip ships with fresh `.min.css`, `.min.js`, RTL CSS, and `.pot`. Closes the "stale .min" gap that almost shipped in 1.3.8 (newly added source files had no minified counterpart).
+  2. Clean-tree gate (`--allow-dirty` only for local dev). Ignores grunt-regenerated paths so Step 0's deterministic output doesn't trip the gate.
+  3. Version triangulation — Version header, constant, and readme Stable tag must match.
+  4. Production composer install in staging (`--no-dev --optimize-autoloader`).
+  5. Required-files sanity check.
+  5b. **Source/min pairing assertion** — every `assets/css/*.css` (non-RTL, non-min) must have a `*.min.css` in staging; same for JS. Fails with the missing list.
+  5c. **Top-level cruft check** — rejects `verify-*.png`, `.playwright-mcp/`, `.distignore`, `.wp-env.json`, `phpstan-*.dist`, `*.log`, empty `build/` from leaking past EXCLUDES. Tonight's pro 1.3.8 zip had ~1.1 MB of these files; this gate would have failed the build before tagging.
+  6. `php -l` on every staged PHP file.
+  7. **WP-stub smoke test** — boots the plugin through `plugins_loaded` + `init` in a minimal WP stub (`tools/wp-stubs.php` + `tools/smoke-test.php`), catching load-time fatals like the 1.3.5 `Jetonomy\table()` bug.
+  7b. **Browser smoke gate** — the smoke skill writes `.last-smoke-pass-free.json`; the script triages by `origin`, only `from`-origin failures or debug-log entries block. `for`-origin entries (test harness, theme, OS) stay informational.
+  8. Zip → re-extract to scratch → re-run WP-stub smoke (catches zip corruption).
 - Never attach a pre-existing zip to a release. Always rebuild from the tagged commit.
-- Pro: `bin/build-release.sh` additionally enforces the lockstep rule — fails if Pro's version doesn't match free's.
+- Pro: `bin/build-release.sh` additionally enforces the lockstep rule — fails if Pro's version doesn't match free's. Pro does not have the browser smoke gate (uses the COMBO smoke skill for verification before tagging instead).
 
 ## Pre-Commit Rule (enforced)
 
@@ -31,6 +36,19 @@
 - `JETONOMY_VERSION`, `jetonomy.php` `Version:` header, and `readme.txt` `Stable tag:` must all match the corresponding Pro constants and headers.
 - CI fails fast if the two versions drift.
 - Rationale: pairing simplifies support ("what version are you on?"), EDD updater routing, and the release checklist — no cognitive load deciding which plugins need which bump.
+
+## Feature Acceptance Rules (enforced for every release)
+
+Three rules hard-gate every new feature. They live as memory entries (`feedback_rest_first_and_rtl_ready.md`, `feedback_frontend_rest_only_backend_ajax_ok.md`, `feedback_readme_txt_customer_facing.md`) so Claude carries them across sessions:
+
+1. **REST-first, full CRUD, with documented contract.** Every read AND every mutation is reachable via a `jetonomy/v1/*` endpoint with documented route / method / payload / response / permission_callback. Reuse an existing controller when possible; only add a new one when no endpoint can carry the operation. AJAX-only or form-post-only paths are bugs.
+2. **Frontend REST-only, backend AJAX is acceptable.** Customer-facing surfaces (frontend templates, blocks, app) call REST. wp-admin tooling can keep AJAX where it already exists. The two reasons: customer perf (`admin-ajax.php` triggers full admin bootstrap, defeats caching plugins, kills HTTP/2 multiplexing) and the upcoming app needs REST anyway. Don't refactor working admin AJAX for uniformity; do migrate any `wp_ajax_*` handler called from frontend JS.
+3. **RTL ready out of the gate.** Every new template / partial / block ships with RTL parity from the first commit. Use logical CSS properties (`margin-inline-start`, `padding-inline-end`, `inset-inline-end`, `text-align: start`) so the browser flips for free. Hand-tuned `[dir="rtl"]` overrides only for genuinely asymmetric values. `grunt rtlcss` auto-generates `*-rtl.css` but visual verification under `<html dir="rtl">` is required before marking done.
+
+Two further rules apply to every release:
+
+- **readme.txt is customer-facing**, not developer notes. Lead with what's new and what's fixed, in plain English. Internal commits/refactors stay in git history and PR descriptions.
+- **Release zip is verified by the build, not by hand.** `bin/build-release.sh` runs `grunt build` (Step 0), asserts every CSS/JS source has a `.min` pair (Step 5b), and rejects any top-level dev cruft (Step 5c). Manual extract-and-eyeball is the wrong model.
 
 ## Quick Reference
 - **Type**: WordPress Plugin (forum, Q&A, ideas, social feed)
@@ -154,6 +172,11 @@ Basecamp triage.
 ## Recent Changes
 | Date | Commit | Summary |
 |---|---|---|
+| 2026-04-26 | 1.4.0 in-flight | Branch open. Phase 0 prelude landed: `Space::create` always seeds the creator as space admin (was AJAX-vs-Abilities split). Phases A (frontend AJAX → REST migration: media upload + Login block) and B (front-end space governance, G1–G7 in `docs/plans/v1.4.0.md`) follow. REST-first + RTL-ready hard-gated for every new feature. Frontend-REST-only / backend-AJAX-OK split codified. |
+| 2026-04-26 | release process | `bin/build-release.sh` hardened with three new gates: Step 0 auto `grunt build` (regen .min/.pot/RTL), Step 5b source/min pairing assertion, Step 5c top-level cruft check. Manual zip-extract per release replaced with the build gate. Mirror landed on Pro. |
+| 2026-04-26 | v1.3.8 | Space-scoped moderation queue at `/community/s/:slug/mod/` plus cross-space dashboard at `/community/mod/`; front-end member role management on the space members page; FluentCommunity integration (paired spaces, profile cross-links, unified avatars, member sync, activity broadcast, comment-to-reply bridge); BuddyPress group activity broadcast with comment round-trip; dark-mode contrast fixes for plugin headings and accent tints; sort modes (oldest/newest/unanswered) + space-settings merge fixes; rewrite-flush on activation; long bug-fix tail. |
+| 2026-04-21 | v1.3.7 | Reaction picker bundled-SVG fix (CDN / emoji-loader resilience); Polls topic body-required inline error parity with regular posts; plain-language polish across admin labels and emails. |
+| 2026-04-20 | v1.3.6 | Private Messaging recipient typeahead with shared-space scope; `POST /conversations` enforces shared-space scope on every recipient (security); Top Members + profile-hover Message actions wired up. |
 | 2026-04-18 | v1.3.5 | Jetonomy Navigation block + Jetonomy Login block (`includes/blocks/class-navigation-block.php`, `class-login-block.php`); inline editor paragraph preservation fix; `bin/build-release.sh` as the only path to a release zip (clean-tree gate, version triangulation, prod composer install, `php -l`, smoke test, zip/re-extract/re-smoke-test) |
 | 2026-04-18 | incident | 1.3.5 stale-desktop-zip broke a customer's live site on auto-update — led to the build-release.sh hardening above. Never attach a pre-existing zip to a release; always rebuild from the tagged commit. |
 | 2026-04-17 | v1.3.4 | Akismet bypass for staff roles (`includes/moderation/class-akismet-adapter.php`); one-click Approve/Not Spam in admin lists; spaces auto-join authors on post/reply + historical back-fill upgrade routine; counter accuracy through approve/spam/trash actions; moderation queue REST supports `status=pending\|spam\|all`; bulk trust-level promotion via admin API |
