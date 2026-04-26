@@ -47,13 +47,30 @@ class Space extends Model {
 	/**
 	 * Create a new space.
 	 *
-	 * Sets created_at and updated_at if absent, then increments the parent
-	 * category's space_count after a successful insert.
+	 * Sets created_at and updated_at if absent, increments the parent
+	 * category's space_count after a successful insert, and seeds the
+	 * creator as a space admin so the new owner can run their space
+	 * from the moment it exists.
 	 *
-	 * @param array $data Column data.
+	 * The seeding step is the behaviour change in 1.4.0. Prior to this,
+	 * only the Abilities flow seeded the creator; REST POST /spaces and
+	 * the wp-admin AJAX path created spaces with no admin row, leaving
+	 * legitimate owners locked out of role management until they were
+	 * added by another admin.
+	 *
+	 * Callers that intentionally create spaces on behalf of someone
+	 * else (importers, BuddyPress group sync, demo seeders running
+	 * unattended) can pass an explicit user ID, or pass 0 to skip
+	 * seeding when the seed cannot be determined.
+	 *
+	 * @param array    $data            Column data.
+	 * @param int|null $creator_user_id Optional. User ID to seed as
+	 *                                  space admin. Defaults to the
+	 *                                  current logged-in user. Pass 0
+	 *                                  to skip seeding entirely.
 	 * @return int Inserted row ID.
 	 */
-	public static function create( array $data ): int {
+	public static function create( array $data, ?int $creator_user_id = null ): int {
 		$now  = now();
 		$data = array_merge(
 			[
@@ -65,8 +82,17 @@ class Space extends Model {
 
 		$id = static::insert( $data );
 
-		if ( $id > 0 && ! empty( $data['category_id'] ) ) {
+		if ( $id <= 0 ) {
+			return 0;
+		}
+
+		if ( ! empty( $data['category_id'] ) ) {
 			Category::increment_space_count( (int) $data['category_id'] );
+		}
+
+		$seed_user_id = $creator_user_id ?? get_current_user_id();
+		if ( $seed_user_id > 0 ) {
+			SpaceMember::add( $id, $seed_user_id, 'admin' );
 		}
 
 		return $id;

@@ -1458,8 +1458,6 @@ class Abilities {
 			return new WP_Error( 'create_failed', __( 'Failed to create space.', 'jetonomy' ) );
 		}
 
-		SpaceMember::add( $space_id, get_current_user_id(), 'admin' );
-
 		return [
 			'id'    => $space_id,
 			'title' => $title,
