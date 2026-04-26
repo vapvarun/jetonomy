@@ -321,9 +321,21 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
-            // Optimistic update
+            // Optimistic update. Delta depends on the user's existing vote,
+            // not a naïve +1: flipping from a prior downvote is +2 (remove -1,
+            // add +1); clicking the same up button again toggles off (-1);
+            // no prior vote is a straight +1. Without this, a user flipping
+            // down → up saw an intermediate 'wrong' score for a beat before
+            // the server reply corrected it.
             const current = state.postScores[ postId ] || 0;
-            state.postScores[ postId ] = current + 1;
+            const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
+            let delta = 1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = -1;
+            } else if ( downSibling?.classList.contains( 'voted' ) ) {
+                delta = 2;
+            }
+            state.postScores[ postId ] = current + delta;
 
             // Visual feedback — vote pop
             const scoreEl = el.ref.querySelector( '.n' );
@@ -378,8 +390,18 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
+            // Optimistic delta mirrors voteUp: flipping up → down is -2,
+            // clicking the same down again toggles off (+1), no prior vote
+            // is a straight -1. See voteUp comment for the full rationale.
             const current = state.postScores[ postId ] || 0;
-            state.postScores[ postId ] = current - 1;
+            const upSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteUp"], [data-wp-on--click="actions.voteUp"]' );
+            let delta = -1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = 1;
+            } else if ( upSibling?.classList.contains( 'voted' ) ) {
+                delta = -2;
+            }
+            state.postScores[ postId ] = current + delta;
 
             // Visual feedback — vote pop
             const scoreEl = el.ref.querySelector( '.n' );
@@ -436,9 +458,18 @@ const { state, actions } = store( 'jetonomy', {
             const scoreEl = el.ref.querySelector( '.n' );
             const current = parseInt( scoreEl?.textContent || '0', 10 );
 
-            state.replyScores[ replyId ] = current + 1;
+            // Delta accounts for a previous vote: same-button click toggles
+            // off (-1); flipping from a prior downvote is +2; first vote is +1.
+            const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyDown"], [data-wp-on--click="actions.voteReplyDown"]' );
+            let delta = 1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = -1;
+            } else if ( downSibling?.classList.contains( 'voted' ) ) {
+                delta = 2;
+            }
+            state.replyScores[ replyId ] = current + delta;
             if ( scoreEl ) {
-                scoreEl.textContent = current + 1;
+                scoreEl.textContent = current + delta;
                 scoreEl.style.transform = 'scale(1.3)';
                 setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
             }
@@ -491,9 +522,18 @@ const { state, actions } = store( 'jetonomy', {
             const scoreEl = el.ref.querySelector( '.n' );
             const current = parseInt( scoreEl?.textContent || '0', 10 );
 
-            state.replyScores[ replyId ] = current - 1;
+            // Delta mirrors voteReplyUp: flipping up → down is -2, same-button
+            // toggle-off is +1, first vote is -1.
+            const upSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
+            let delta = -1;
+            if ( el.ref.classList.contains( 'voted' ) ) {
+                delta = 1;
+            } else if ( upSibling?.classList.contains( 'voted' ) ) {
+                delta = -2;
+            }
+            state.replyScores[ replyId ] = current + delta;
             if ( scoreEl ) {
-                scoreEl.textContent = current - 1;
+                scoreEl.textContent = current + delta;
                 scoreEl.style.transform = 'scale(1.3)';
                 setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
             }
@@ -785,8 +825,41 @@ const { state, actions } = store( 'jetonomy', {
                 linkedin: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>',
             };
 
+            // Copy-link handler. navigator.clipboard.writeText returns a
+            // Promise that rejects when the browser blocks the write (HTTP
+            // pages, iframe permissions, permission-policy deny, or an older
+            // browser that exposes the API behind a flag). Without handling
+            // the rejection the user sees nothing happen and assumes the
+            // button is broken. Fall back to document.execCommand('copy')
+            // via a hidden textarea for older engines, and surface a toast
+            // in either outcome.
+            const copyLink = async () => {
+                const okMsg = state.i18n?.linkCopied || 'Link copied';
+                const failMsg = state.i18n?.linkCopyFailed || 'Could not copy the link. Copy it from the address bar.';
+                try {
+                    if ( navigator.clipboard && navigator.clipboard.writeText ) {
+                        await navigator.clipboard.writeText( url );
+                        if ( window.bnToast ) window.bnToast( okMsg );
+                        return;
+                    }
+                    // Legacy fallback: hidden textarea + execCommand.
+                    const ta = document.createElement( 'textarea' );
+                    ta.value = url;
+                    ta.setAttribute( 'readonly', '' );
+                    ta.style.position = 'absolute';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild( ta );
+                    ta.select();
+                    const ok = document.execCommand && document.execCommand( 'copy' );
+                    document.body.removeChild( ta );
+                    if ( window.bnToast ) window.bnToast( ok ? okMsg : failMsg, ok ? undefined : 'error' );
+                } catch ( _err ) {
+                    if ( window.bnToast ) window.bnToast( failMsg, 'error' );
+                }
+            };
+
             const items = [
-                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { navigator.clipboard.writeText( url ); if ( window.bnToast ) window.bnToast( state.i18n?.linkCopied || 'Link copied' ); dropdown.remove(); } },
+                { label: state.i18n?.copyLink || 'Copy link', icon: LUCIDE.link,     action: () => { copyLink(); dropdown.remove(); } },
                 { label: 'Twitter / X',                        icon: LUCIDE.x,        href: `https://twitter.com/intent/tweet?url=${ encodedUrl }&text=${ encodedTitle }` },
                 { label: 'Facebook',                           icon: LUCIDE.facebook, href: `https://www.facebook.com/sharer/sharer.php?u=${ encodedUrl }` },
                 { label: 'LinkedIn',                           icon: LUCIDE.linkedin, href: `https://www.linkedin.com/sharing/share-offsite/?url=${ encodedUrl }` },
@@ -850,13 +923,29 @@ const { state, actions } = store( 'jetonomy', {
             dropdown.style.top = top + 'px';
             dropdown.style.left = left + 'px';
 
+            // Close on scroll or resize. The dropdown uses position: fixed so
+            // scrolling the page would otherwise let the dropdown visibly
+            // detach from its post (reproduced: 200px scroll moves the button
+            // up, dropdown stays in place, gap grows to 204px). Matching the
+            // pattern on Twitter / Reddit / GitHub: dismiss on scroll rather
+            // than reposition-tracking. Click-outside still applies.
+            const cleanup = () => {
+                dropdown.remove();
+                document.removeEventListener( 'click', closeHandler );
+                window.removeEventListener( 'scroll', scrollHandler, true );
+                window.removeEventListener( 'resize', scrollHandler );
+            };
             const closeHandler = ( e ) => {
                 if ( ! dropdown.contains( e.target ) && e.target !== el.ref && ! el.ref.contains( e.target ) ) {
-                    dropdown.remove();
-                    document.removeEventListener( 'click', closeHandler );
+                    cleanup();
                 }
             };
-            setTimeout( () => document.addEventListener( 'click', closeHandler ), 0 );
+            const scrollHandler = () => { cleanup(); };
+            setTimeout( () => {
+                document.addEventListener( 'click', closeHandler );
+                window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
+                window.addEventListener( 'resize', scrollHandler, { passive: true } );
+            }, 0 );
         },
 
         // ── Toggle bookmark ──
@@ -1778,11 +1867,17 @@ const { state, actions } = store( 'jetonomy', {
             let publishedAt = '';
             if ( ctx.showScheduler ) {
                 const dateVal = form.querySelector('[name="published_date"]')?.value?.trim() || '';
-                const timeVal = form.querySelector('[name="published_time"]')?.value?.trim() || '';
+                // Scheduler uses native hour + minute selects so every desktop
+                // browser (Firefox included, where <input type="time"> has no
+                // popup picker) gets a consistent click-to-pick UX. Mobile
+                // browsers render native select as a scroll wheel. Combine the
+                // two selects into HH:MM:SS here so the REST payload (and the
+                // server-side scheduling logic) stays unchanged.
+                const hourVal = form.querySelector('[name="published_hour"]')?.value?.trim() || '';
+                const minuteVal = form.querySelector('[name="published_minute"]')?.value?.trim() || '';
+                const timeVal = hourVal && minuteVal ? `${hourVal}:${minuteVal}` : '';
                 if ( dateVal && timeVal ) {
-                    // time input omits seconds when step >= 60; normalise to HH:MM:SS.
-                    const normalisedTime = /^\d{2}:\d{2}$/.test( timeVal ) ? timeVal + ':00' : timeVal;
-                    publishedAt = dateVal + 'T' + normalisedTime;
+                    publishedAt = dateVal + 'T' + timeVal + ':00';
                 } else if ( dateVal ) {
                     publishedAt = dateVal + 'T00:00:00';
                 }
@@ -2070,12 +2165,24 @@ const { state, actions } = store( 'jetonomy', {
             }, 30000 );
         },
 
-        // Auto-trigger gap loading when user scrolls to it (infinite scroll)
+        // Auto-trigger gap loading when the user scrolls to it (infinite scroll).
+        // Gated on a real scroll event so a trigger that is already inside the
+        // initial viewport (e.g. when posts_per_page=1 on a short space) does
+        // not auto-fire on page load. The Load More button stays clickable either
+        // way, so users who want more without scrolling can still request it.
         initInfiniteScroll() {
             const gaps = document.querySelectorAll( '.jt-load-gap' );
             if ( ! gaps.length ) return;
 
+            let userHasScrolled = false;
+            const markScrolled = () => {
+                userHasScrolled = true;
+                window.removeEventListener( 'scroll', markScrolled );
+            };
+            window.addEventListener( 'scroll', markScrolled, { passive: true } );
+
             const observer = new IntersectionObserver( ( entries ) => {
+                if ( ! userHasScrolled ) return;
                 entries.forEach( ( entry ) => {
                     if ( entry.isIntersecting ) {
                         const btn = entry.target.querySelector( '.jt-load-gap-btn' );
@@ -2088,6 +2195,20 @@ const { state, actions } = store( 'jetonomy', {
             }, { rootMargin: '200px' } );
 
             gaps.forEach( ( gap ) => observer.observe( gap ) );
+        },
+
+        // On mobile, the profile tabs row is horizontally scrollable to fit
+        // all five tabs. When the viewer lands on a sub-page whose tab sits
+        // off-screen (e.g. /drafts/ at 390px), they can't see the active
+        // underline without scrolling the tab row manually. Scroll the
+        // active tab into view once on load so the indicator is visible.
+        initProfileTabsActive() {
+            const container = document.querySelector( '.jt-profile-tabs' );
+            if ( ! container ) return;
+            if ( container.scrollWidth <= container.clientWidth ) return;
+            const active = container.querySelector( '.jt-profile-tab.active' );
+            if ( ! active ) return;
+            active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
         },
 
         // Poll for new replies and show a sticky banner

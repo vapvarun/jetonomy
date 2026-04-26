@@ -96,6 +96,9 @@
 				<element value="jetonomy_manage"/>
 				<element value="jetonomy_moderate"/>
 				<element value="jetonomy_view_analytics"/>
+				<element value="jetonomy_create_posts"/>
+				<element value="jetonomy_create_replies"/>
+				<element value="jetonomy_upload_media"/>
 			</property>
 		</properties>
 	</rule>

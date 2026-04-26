@@ -42,6 +42,29 @@ class Template_Loader {
 			exit;
 		}
 
+		// ── /mod/ route: redirect space-level mods into their first moderated
+		// space. The aggregate dashboard at /community/mod/ is admin-only, but
+		// space mods who click it from a stale bookmark or a shared link should
+		// land on something useful instead of a 403.
+		if ( 'moderation' === $data['route'] && is_user_logged_in() ) {
+			$mod_user_id = get_current_user_id();
+			if (
+				! \Jetonomy\Moderation\Moderation_Permissions::can_view_admin_dashboard( $mod_user_id )
+				&& \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $mod_user_id )
+			) {
+				$mod_space_ids = \Jetonomy\Models\SpaceMember::moderated_space_ids( $mod_user_id );
+				if ( ! empty( $mod_space_ids ) ) {
+					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
+					if ( $mod_first ) {
+						$mod_settings  = get_option( 'jetonomy_settings', array() );
+						$mod_base_slug = $mod_settings['base_slug'] ?? 'community';
+						wp_safe_redirect( home_url( '/' . $mod_base_slug . '/s/' . $mod_first->slug . '/mod/' ) );
+						exit;
+					}
+				}
+			}
+		}
+
 		// ── /new/ route membership guard ──
 		// REST POST /posts returns 403 for non-members on invite/approval spaces, but
 		// without this guard the user still reaches the composer, fills it, submits, and
@@ -73,21 +96,22 @@ class Template_Loader {
 
 		// Map routes to template files
 		$template_map = array(
-			'home'          => 'views/home.php',
-			'category'      => 'views/category.php',
-			'space'         => 'views/space.php',
-			'space-members' => 'views/space-members.php',
-			'space-roadmap' => 'views/space-roadmap.php',
-			'post'          => 'views/single-post.php',
-			'profile'       => 'views/user-profile.php',
-			'notifications' => 'views/notifications.php',
-			'search'        => 'views/search.php',
-			'leaderboard'   => 'views/leaderboard.php',
-			'moderation'    => 'views/moderation.php',
-			'tag'           => 'views/tag.php',
-			'new-post'      => 'views/new-post.php',
-			'edit-profile'  => 'views/edit-profile.php',
-			'invite'        => 'views/invite.php',
+			'home'             => 'views/home.php',
+			'category'         => 'views/category.php',
+			'space'            => 'views/space.php',
+			'space-members'    => 'views/space-members.php',
+			'space-roadmap'    => 'views/space-roadmap.php',
+			'space-moderation' => 'views/space-moderation.php',
+			'post'             => 'views/single-post.php',
+			'profile'          => 'views/user-profile.php',
+			'notifications'    => 'views/notifications.php',
+			'search'           => 'views/search.php',
+			'leaderboard'      => 'views/leaderboard.php',
+			'moderation'       => 'views/moderation.php',
+			'tag'              => 'views/tag.php',
+			'new-post'         => 'views/new-post.php',
+			'edit-profile'     => 'views/edit-profile.php',
+			'invite'           => 'views/invite.php',
 		);
 
 		/**
@@ -211,6 +235,8 @@ class Template_Loader {
 				'postScores'    => new \stdClass(),
 				'replyScores'   => new \stdClass(),
 				'currentSort'   => sanitize_text_field( $_GET['sort'] ?? 'latest' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'isLoggedIn'        => is_user_logged_in(),
+			'loginUrl'          => wp_login_url( home_url( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) ),
 			'unreadCount'       => 0,
 			'isSubmitting'      => false,
 			'submitLabel'       => __( 'Post Topic', 'jetonomy' ),
@@ -260,8 +286,10 @@ class Template_Loader {
 				'newReply'           => __( '%d new reply. Click to refresh.', 'jetonomy' ),
 				'newReplies'         => __( '%d new replies. Click to refresh.', 'jetonomy' ),
 				'linkCopied'         => __( 'Link copied', 'jetonomy' ),
+				'linkCopyFailed'     => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
 				'titleRequired'      => __( 'Please enter a title for your topic.', 'jetonomy' ),
 				'bodyRequired'       => __( 'Please add some details before posting.', 'jetonomy' ),
+				'loginRequired'      => __( 'Please sign in to use this.', 'jetonomy' ),
 			),
 			)
 		);
@@ -297,6 +325,16 @@ class Template_Loader {
 				'restBase'      => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
+				'i18n'          => array(
+					'queueClean'       => __( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'    => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'roleUpdateFailed' => __( 'Could not update role. Please try again.', 'jetonomy' ),
+					'roleLabels'       => array(
+						'member'    => __( 'Member', 'jetonomy' ),
+						'moderator' => __( 'Moderator', 'jetonomy' ),
+						'admin'     => __( 'Admin', 'jetonomy' ),
+					),
+				),
 			)
 		);
 
@@ -320,6 +358,36 @@ class Template_Loader {
 				'communityBase' => \Jetonomy\base_url(),
 			)
 		);
+
+		// Enqueue role-dropdown handler on the space-members route (only
+		// rendered for space admins, but the JS binds via delegation and is
+		// a no-op when no select is present — safe to always enqueue here).
+		if ( 'space-members' === $data['route'] ) {
+			$sm_file    = JETONOMY_DIR . 'assets/js/space-members.js';
+			$sm_mtime   = file_exists( $sm_file ) ? (string) filemtime( $sm_file ) : '';
+			$sm_version = '' !== $sm_mtime ? JETONOMY_VERSION . '+' . $sm_mtime : JETONOMY_VERSION;
+			wp_enqueue_script(
+				'jetonomy-space-members',
+				JETONOMY_URL . 'assets/js/space-members.js',
+				array( 'jetonomy-data' ),
+				$sm_version,
+				true
+			);
+		}
+
+		// Enqueue moderation queue resolver on moderation routes.
+		if ( in_array( $data['route'], array( 'moderation', 'space-moderation' ), true ) ) {
+			$mod_file    = JETONOMY_DIR . 'assets/js/moderation.js';
+			$mod_mtime   = file_exists( $mod_file ) ? (string) filemtime( $mod_file ) : '';
+			$mod_version = '' !== $mod_mtime ? JETONOMY_VERSION . '+' . $mod_mtime : JETONOMY_VERSION;
+			wp_enqueue_script(
+				'jetonomy-moderation',
+				JETONOMY_URL . 'assets/js/moderation.js',
+				array( 'jetonomy-data' ),
+				$mod_version,
+				true
+			);
+		}
 
 		// Enqueue Prism.js for code syntax highlighting on post pages (only if files exist).
 		$prism_dir = JETONOMY_DIR . 'assets/vendor/prismjs/';

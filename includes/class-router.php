@@ -38,6 +38,9 @@ class Router {
 		// Space roadmap (ideas)
 		add_rewrite_rule( "^{$base}/s/([^/]+)/roadmap/?$", 'index.php?jetonomy_route=space-roadmap&jetonomy_slug=$matches[1]', 'top' );
 
+		// Space moderation queue (per-space, for space moderators and admins)
+		add_rewrite_rule( "^{$base}/s/([^/]+)/mod/?$", 'index.php?jetonomy_route=space-moderation&jetonomy_slug=$matches[1]', 'top' );
+
 		// New post in space
 		add_rewrite_rule( "^{$base}/s/([^/]+)/new/?$", 'index.php?jetonomy_route=new-post&jetonomy_slug=$matches[1]', 'top' );
 

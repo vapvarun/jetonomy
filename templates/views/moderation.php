@@ -1,158 +1,100 @@
 <?php
 /**
- * Moderation queue view.
+ * Admin cross-space moderation dashboard.
+ *
+ * Gated to WP admins + jetonomy_moderate cap holders. Shows a per-space
+ * summary of pending flags so a site owner can spot trouble at a glance
+ * and click into the per-space queue where the actual resolve / dismiss
+ * actions live. The dashboard itself intentionally does not embed the
+ * action surface so we have exactly one place per concern — fire drill
+ * here, action there.
+ *
+ * Space-level moderators hit this URL and get redirected into their
+ * own context (their single moderated space, or a gentle empty state
+ * if they moderate nothing).
  *
  * @package Jetonomy
  */
 
 defined( 'ABSPATH' ) || exit;
 
-// Require moderator / admin access.
-if ( ! current_user_can( 'jetonomy_moderate' ) && ! current_user_can( 'manage_options' ) ) {
+use Jetonomy\Moderation\Moderation_Permissions;
+use Jetonomy\Moderation\Moderation_Service;
+
+$user_id = get_current_user_id();
+$base    = \Jetonomy\base_url();
+
+// Template_Loader::render has already redirected space-level mods into their
+// per-space queue. Anyone reaching here without dashboard permission gets the
+// standard 403 empty state.
+if ( ! Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
 	status_header( 403 );
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
 	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'lock', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div>';
 	return;
 }
 
-$flags         = \Jetonomy\Models\Flag::list_pending();
-$base          = \Jetonomy\base_url();
-$reason_labels = [
-	'spam'           => __( 'Spam', 'jetonomy' ),
-	'abuse'          => __( 'Abuse / Harassment', 'jetonomy' ),
-	'off-topic'      => __( 'Off-topic', 'jetonomy' ),
-	'off_topic'      => __( 'Off-topic', 'jetonomy' ),
-	'misinformation' => __( 'Misinformation', 'jetonomy' ),
-	'other'          => __( 'Other', 'jetonomy' ),
-];
+$summary = Moderation_Service::dashboard_summary( $user_id );
+$total   = array_sum( array_column( $summary, 'pending' ) );
 
 $crumbs = [
 	[
-		'label' => __( 'Moderation Queue', 'jetonomy' ),
+		'label' => __( 'Moderation', 'jetonomy' ),
 		'url'   => '',
 	],
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
-<div class="jt-mod-wrap jt-mod-queue">
-		<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
+<div class="jt-mod-wrap jt-mod-dashboard">
+	<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
+		<div>
 			<h1 class="jt-page-title">
-				<?php esc_html_e( 'Moderation Queue', 'jetonomy' ); ?>
+				<?php esc_html_e( 'Moderation Overview', 'jetonomy' ); ?>
 			</h1>
-			<?php if ( ! empty( $flags ) ) : ?>
-				<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( count( $flags ) ); ?>">
-					<?php
-					/* translators: %d: number of pending flags */
-					echo esc_html( sprintf( _n( '%d pending', '%d pending', count( $flags ), 'jetonomy' ), count( $flags ) ) );
-					?>
-				</span>
-			<?php endif; ?>
+			<p class="jt-member-sub">
+				<?php
+				/* translators: %d: total pending flag count across every space */
+				echo esc_html( sprintf( _n( '%d pending flag across your community', '%d pending flags across your community', $total, 'jetonomy' ), $total ) );
+				?>
+			</p>
 		</div>
-
-		<?php if ( empty( $flags ) ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'check-circle', 48 ); ?></div>
-				<div class="jt-empty-text"><?php esc_html_e( 'No pending flags. The community is clean!', 'jetonomy' ); ?></div>
-			</div>
-		<?php else : ?>
-			<div class="jt-card jt-card-flush">
-				<?php foreach ( $flags as $flag ) : ?>
-					<?php
-					$reporter = get_userdata( (int) $flag->reporter_id );
-					$time_ago = human_time_diff( strtotime( $flag->created_at ), time() );
-					$reason   = $reason_labels[ $flag->reason ] ?? $flag->reason;
-
-					// Build link to the flagged object.
-					$object_url = '';
-					if ( 'post' === $flag->object_type ) {
-						global $wpdb;
-						$posts_tbl  = \Jetonomy\table( 'posts' );
-						$spaces_tbl = \Jetonomy\table( 'spaces' );
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-						$row = $wpdb->get_row(
-							$wpdb->prepare(
-								// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								"SELECT p.slug, sp.slug AS space_slug
-								 FROM {$posts_tbl} p
-								 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-								 WHERE p.id = %d",
-								(int) $flag->object_id
-							)
-						);
-						if ( $row ) {
-							$object_url = $base . '/s/' . $row->space_slug . '/t/' . $row->slug . '/';
-						}
-					} elseif ( 'reply' === $flag->object_type ) {
-						global $wpdb;
-						$replies_tbl = \Jetonomy\table( 'replies' );
-						$posts_tbl   = \Jetonomy\table( 'posts' );
-						$spaces_tbl  = \Jetonomy\table( 'spaces' );
-						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-						$row = $wpdb->get_row(
-							$wpdb->prepare(
-								// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-								"SELECT p.slug AS post_slug, sp.slug AS space_slug
-								 FROM {$replies_tbl} r
-								 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
-								 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-								 WHERE r.id = %d",
-								(int) $flag->object_id
-							)
-						);
-						if ( $row ) {
-							$object_url = $base . '/s/' . $row->space_slug . '/t/' . $row->post_slug . '/';
-						}
-					}
-					?>
-					<div class="jt-mod-flag jt-mod-item" data-flag-id="<?php echo absint( $flag->id ); ?>"
-						data-wp-interactive="jetonomy">
-						<div class="jt-mod-flag-head">
-							<span class="jt-mod-flag-type">
-								<?php echo esc_html( ucfirst( $flag->object_type ) ); ?>
-							</span>
-							<span class="jt-mod-flag-reason">
-								<?php echo esc_html( $reason ); ?>
-							</span>
-							<span class="jt-mod-flag-reporter">
-								<?php echo esc_html( $reporter ? $reporter->display_name : __( 'Unknown', 'jetonomy' ) ); ?>
-								&mdash;
-								<?php
-								/* translators: %s: human-readable time difference */
-								echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
-								?>
-							</span>
-						</div>
-
-						<?php if ( ! empty( $flag->description ) ) : ?>
-							<p class="jt-mod-flag-note">
-								<?php echo esc_html( $flag->description ); ?>
-							</p>
-						<?php endif; ?>
-
-						<div class="jt-mod-flag-actions">
-							<?php if ( $object_url ) : ?>
-								<a href="<?php echo esc_url( $object_url ); ?>" class="jt-btn jt-btn-ghost" target="_blank">
-									<?php esc_html_e( 'View', 'jetonomy' ); ?>
-								</a>
-							<?php endif; ?>
-							<button type="button" class="jt-btn jt-btn-fill jt-btn-danger"
-								data-wp-on--click="actions.dismissFlag"
-								data-flag-id="<?php echo absint( $flag->id ); ?>"
-								data-action="approved">
-								<?php jetonomy_echo_icon( 'trash', 14 ); ?>
-								<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
-							</button>
-							<button type="button" class="jt-btn jt-btn-ghost"
-								data-wp-on--click="actions.dismissFlag"
-								data-flag-id="<?php echo absint( $flag->id ); ?>"
-
-								data-action="dismissed">
-								<?php esc_html_e( 'Dismiss', 'jetonomy' ); ?>
-							</button>
-						</div>
-					</div>
-				<?php endforeach; ?>
-			</div>
+		<?php if ( $total > 0 ) : ?>
+			<span class="jt-badge-danger jt-flag-count" data-count="<?php echo esc_attr( (string) $total ); ?>">
+				<?php
+				/* translators: %d: total pending flag count */
+				echo esc_html( sprintf( _n( '%d pending', '%d pending', $total, 'jetonomy' ), $total ) );
+				?>
+			</span>
 		<?php endif; ?>
 	</div>
+
+	<?php if ( empty( $summary ) ) : ?>
+		<?php \Jetonomy\Template_Loader::partial( 'moderation/queue-empty', [ 'message' => __( 'No pending flags anywhere. Your community is clean.', 'jetonomy' ) ] ); ?>
+	<?php else : ?>
+		<div class="jt-mod-dashboard-grid">
+			<?php foreach ( $summary as $card ) : ?>
+				<?php
+				$space_url = $base . '/s/' . $card['slug'] . '/mod/';
+				?>
+				<a class="jt-card jt-mod-dashboard-card" href="<?php echo esc_url( $space_url ); ?>">
+					<div class="jt-mod-dashboard-card-head">
+						<h2 class="jt-mod-dashboard-card-title">
+							<?php echo esc_html( $card['title'] ); ?>
+						</h2>
+						<span class="jt-badge-danger">
+							<?php
+							/* translators: %d: pending flag count in this space */
+							echo esc_html( sprintf( _n( '%d pending', '%d pending', $card['pending'], 'jetonomy' ), $card['pending'] ) );
+							?>
+						</span>
+					</div>
+					<div class="jt-mod-dashboard-card-cta">
+						<?php esc_html_e( 'Open queue', 'jetonomy' ); ?>
+						<?php jetonomy_echo_icon( 'arrow-right', 14 ); ?>
+					</div>
+				</a>
+			<?php endforeach; ?>
+		</div>
+	<?php endif; ?>
+</div>

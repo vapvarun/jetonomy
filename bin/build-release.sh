@@ -31,10 +31,12 @@ MAIN_FILE="${PLUGIN_SLUG}.php"
 
 ALLOW_DIRTY=0
 OUTPUT_DIR=""
+SKIP_BROWSER_SMOKE=0
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--allow-dirty) ALLOW_DIRTY=1; shift ;;
 		--output) OUTPUT_DIR="$2"; shift 2 ;;
+		--skip-browser-smoke) SKIP_BROWSER_SMOKE=1; shift ;;
 		*) echo "unknown flag: $1" >&2; exit 2 ;;
 	esac
 done
@@ -88,6 +90,7 @@ cat > "$EXCLUDES_FILE" <<'EOF'
 .githooks/
 .gitignore
 .gitattributes
+.claude/
 node_modules/
 tests/
 plans/
@@ -172,6 +175,55 @@ if ! php "$ROOT/tools/smoke-test.php" "$STAGE/$MAIN_FILE"; then
 	echo "      This is the same class of error that shipped in the broken 1.3.5 zip." >&2
 	echo "      Fix the underlying bug; do not ship." >&2
 	exit 30
+fi
+
+# --- 7b. BROWSER SMOKE GATE — require a recent agent-run green report -----
+# Gates the package behind a documented browser walk of customer-facing flows.
+# Customer-first-hand-experience protection: no release ships unless a fresh
+# run of docs/qa/AGENT_SMOKE_RUNBOOK.md (dispatched to Sonnet via the
+# jetonomy-smoke skill in jetonomy-pro/.claude/skills/) reported zero failures
+# and was dated within the last 24 hours.
+#
+# Emergency bypass: --skip-browser-smoke (logs a warning to the zip manifest).
+SMOKE_REPORT="$ROOT/docs/qa/.last-smoke-pass.json"
+if [ "$SKIP_BROWSER_SMOKE" -eq 1 ]; then
+	echo "WARN: browser smoke gate skipped (--skip-browser-smoke). Not for customer releases."
+elif [ ! -f "$SMOKE_REPORT" ]; then
+	echo "FAIL: no browser smoke report at $SMOKE_REPORT" >&2
+	echo "      Run the jetonomy-smoke skill first:" >&2
+	echo "        Ask Claude Code: \"run the jetonomy pre-release smoke in combo mode\"" >&2
+	echo "      The skill dispatches Sonnet with Playwright MCP, walks every" >&2
+	echo "      customer-facing flow, and writes $SMOKE_REPORT on green pass." >&2
+	echo "      Emergency only: rerun with --skip-browser-smoke." >&2
+	exit 30
+else
+	# Validate the report: must match current VERSION, no failures, < 24h old.
+	REPORT_VERSION="$(grep -oE '"release_version"\s*:\s*"[^"]+"' "$SMOKE_REPORT" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)"
+	FAILURE_COUNT="$(grep -oE '"failures"\s*:\s*\[[^]]*\]' "$SMOKE_REPORT" | head -1 | grep -oE ',' | wc -l | tr -d ' ')"
+	RAN_AT="$(grep -oE '"ran_at"\s*:\s*"[^"]+"' "$SMOKE_REPORT" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+	if [ "$REPORT_VERSION" != "$VERSION" ]; then
+		echo "FAIL: smoke report version ($REPORT_VERSION) doesn't match release version ($VERSION)" >&2
+		echo "      Rerun the jetonomy-smoke skill against HEAD before packaging." >&2
+		exit 30
+	fi
+	# Any `[{` in failures array means at least one failure object
+	if grep -qE '"failures"\s*:\s*\[\s*\{' "$SMOKE_REPORT"; then
+		echo "FAIL: smoke report has failures. Fix them before packaging." >&2
+		grep -oE '"failures"[^]]*\]' "$SMOKE_REPORT" | head -1 >&2
+		exit 30
+	fi
+	# Same gate for debug_log_issues. A fatal during the walk is a blocker;
+	# a warning is a blocker unless explicitly whitelisted. The smoke skill
+	# classifies and only records real issues.
+	if grep -qE '"debug_log_issues"\s*:\s*\[\s*\{' "$SMOKE_REPORT"; then
+		echo "FAIL: smoke report recorded debug.log entries during the walk. Fix them before packaging." >&2
+		grep -oE '"debug_log_issues"[^]]*\]' "$SMOKE_REPORT" | head -1 >&2
+		exit 30
+	fi
+	# Age check (optional — stderr warn only, don't block)
+	if [ -n "$RAN_AT" ]; then
+		echo "    smoke report dated $RAN_AT — OK"
+	fi
 fi
 
 # --- 8. zip it ------------------------------------------------------------

@@ -417,10 +417,24 @@ class Spaces_Controller extends Base_Controller {
 		if ( null !== $request->get_param( 'settings' ) ) {
 			$settings_raw = $request->get_param( 'settings' );
 			if ( is_array( $settings_raw ) ) {
-				$data['settings'] = wp_json_encode( $settings_raw );
+				$incoming = $settings_raw;
 			} else {
-				$decoded          = json_decode( $settings_raw, true );
-				$data['settings'] = is_array( $decoded ) ? wp_json_encode( $decoded ) : '';
+				$decoded  = json_decode( (string) $settings_raw, true );
+				$incoming = is_array( $decoded ) ? $decoded : null;
+			}
+			if ( null !== $incoming ) {
+				// MERGE with the existing settings row so callers only need to
+				// send the keys they want to change. PATCHing a single key must
+				// not wipe unrelated settings (prefixes, SEO overrides, feature
+				// toggles, etc.). The admin AJAX handler and the CLI journey
+				// both merge via Space::get_settings() + array_merge; this
+				// brings the REST update path in line with them.
+				$existing         = Space::get_settings( $id );
+				$merged           = array_merge( $existing, $incoming );
+				$data['settings'] = wp_json_encode( $merged );
+			} elseif ( '' === $settings_raw ) {
+				// Explicit empty string means reset; stored as empty JSON object.
+				$data['settings'] = '';
 			}
 		}
 
@@ -840,15 +854,11 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * Determine whether a user has space admin privileges.
 	 *
-	 * Returns true for WP admins (manage_options) or users with
-	 * the 'admin' role in the space.
+	 * Thin backward-compat wrapper — the canonical primitive is
+	 * Permission_Engine::is_space_admin (takes user_id, space_id).
 	 */
 	private function is_space_admin( int $space_id, int $user_id ): bool {
-		if ( user_can( $user_id, 'manage_options' ) ) {
-			return true;
-		}
-		$role = SpaceMember::get_role( $space_id, $user_id );
-		return 'admin' === $role;
+		return \Jetonomy\Permissions\Permission_Engine::is_space_admin( $user_id, $space_id );
 	}
 
 	/**

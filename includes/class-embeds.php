@@ -103,6 +103,22 @@ class Embeds {
 		$content = preg_replace( '#\s*<div>\s*<br\s*/?>\s*</div>\s*#i', ' ', $content );
 		$content = preg_replace( '#<p>\s*</p>#i', '', $content );
 
+		// TikTok embeds need special handling. TikTok's oEmbed returns a
+		// <blockquote class="tiktok-embed"> plus a <script src="embed.js">.
+		// Jetonomy strips <script> tags (correctly), which leaves only the
+		// caption text rendering on the post. Replace the blockquote with a
+		// script-free <iframe src="https://www.tiktok.com/embed/v2/<id>">
+		// that the existing kses allowlist already permits. Covers three
+		// paste/storage shapes:
+		// - real HTML <blockquote class="tiktok-embed" cite=".../video/<id>">
+		// - the same markup encoded as entity text (&lt;blockquote ...&gt;),
+		// which is what contenteditable produces when a user pastes raw
+		// HTML into the composer
+		// - a bare tiktok.com/@user/video/<id> URL that would otherwise
+		// hit wp_oembed_get() and come back as the same script-laden HTML
+		$content = self::replace_tiktok_blockquote( $content );
+		$content = self::replace_tiktok_encoded_blockquote( $content );
+
 		// Split on HTML tags so we only match URLs in text nodes — this
 		// prevents the regex from touching href attributes or nested anchor
 		// content. Mirrors the approach in jetonomy_format_content().
@@ -143,6 +159,13 @@ class Embeds {
 						$url      = substr( $url, 0, -1 );
 					}
 
+					// TikTok video URL: skip wp_oembed_get (which returns the
+					// script-laden blockquote) and emit the iframe directly.
+					$tiktok_id = self::extract_tiktok_video_id( $url );
+					if ( '' !== $tiktok_id ) {
+						return '<div class="jt-embed">' . self::tiktok_iframe( $tiktok_id ) . '</div>' . $trailing;
+					}
+
 					$embed = wp_oembed_get( $url, array( 'width' => 680 ) );
 					if ( $embed ) {
 						return '<div class="jt-embed">' . $embed . '</div>' . $trailing;
@@ -167,5 +190,115 @@ class Embeds {
 		);
 
 		return $output;
+	}
+
+	/**
+	 * Build a script-free iframe embed for a TikTok video. Matches what
+	 * TikTok's own embed.js would have produced for the canonical URL, but
+	 * skips the script loader entirely so the embed survives our kses pass.
+	 *
+	 * @param string $video_id TikTok video ID (digits only).
+	 * @param int    $width    Player width in px. Height is derived 9:16-ish.
+	 */
+	private static function tiktok_iframe( string $video_id, int $width = 680 ): string {
+		$video_id = preg_replace( '/[^0-9]/', '', $video_id );
+		if ( '' === $video_id ) {
+			return '';
+		}
+		$height = (int) round( $width * 1.35 );
+		return sprintf(
+			'<iframe src="https://www.tiktok.com/embed/v2/%s" width="%d" height="%d" style="max-width:100%%;border:none;" allow="encrypted-media;" allowfullscreen loading="lazy"></iframe>',
+			esc_attr( $video_id ),
+			$width,
+			$height
+		);
+	}
+
+	/**
+	 * Pull a TikTok video ID from any of the URL shapes the platform uses.
+	 * Returns '' when the URL isn't a TikTok video URL we can embed.
+	 */
+	private static function extract_tiktok_video_id( string $url ): string {
+		if ( false === stripos( $url, 'tiktok.com' ) ) {
+			return '';
+		}
+		// Canonical: https://www.tiktok.com/@user/video/<id>
+		if ( preg_match( '#tiktok\.com/@[^/]+/video/(\d+)#i', $url, $m ) ) {
+			return $m[1];
+		}
+		// Already-embed URL: https://www.tiktok.com/embed/v2/<id>
+		if ( preg_match( '#tiktok\.com/embed/(?:v2/)?(\d+)#i', $url, $m ) ) {
+			return $m[1];
+		}
+		return '';
+	}
+
+	/**
+	 * Replace any `<blockquote class="tiktok-embed">` tags with the
+	 * script-free iframe form. Handles both the canonical data-video-id
+	 * attribute and the fallback of extracting the ID from `cite="..."`.
+	 */
+	private static function replace_tiktok_blockquote( string $content ): string {
+		if ( false === stripos( $content, 'tiktok-embed' ) ) {
+			return $content;
+		}
+		// Strip any adjacent TikTok <script> tag (the loader that we don't
+		// want in post content anyway). The blockquote replacement below
+		// would have left this orphaned otherwise.
+		$content = (string) preg_replace(
+			'#<script[^>]*src=["\']https?://(?:www\.)?tiktok\.com/embed\.js["\'][^>]*>\s*</script>#i',
+			'',
+			$content
+		);
+		return (string) preg_replace_callback(
+			'#<blockquote\b[^>]*\bclass=["\'][^"\']*tiktok-embed[^"\']*["\'][^>]*>.*?</blockquote>#is',
+			static function ( $matches ) {
+				$tag = $matches[0];
+				$id  = '';
+				if ( preg_match( '#\bdata-video-id=["\'](\d+)["\']#i', $tag, $m ) ) {
+					$id = $m[1];
+				} elseif ( preg_match( '#\bcite=["\'][^"\']*/video/(\d+)["\']#i', $tag, $m ) ) {
+					$id = $m[1];
+				} elseif ( preg_match( '#/video/(\d+)#i', $tag, $m ) ) {
+					$id = $m[1];
+				}
+				if ( '' === $id ) {
+					return $matches[0];
+				}
+				return '<div class="jt-embed">' . self::tiktok_iframe( $id ) . '</div>';
+			},
+			$content
+		);
+	}
+
+	/**
+	 * Paste paths that store the TikTok embed as entity-encoded text
+	 * (`&lt;blockquote ...&gt;`) need a second pass. contenteditable serialises
+	 * any pasted HTML source this way, so the real-tag replacer above never
+	 * sees the markup. Match the encoded form and emit the same iframe.
+	 */
+	private static function replace_tiktok_encoded_blockquote( string $content ): string {
+		if ( false === stripos( $content, 'tiktok-embed' ) ) {
+			return $content;
+		}
+		return (string) preg_replace_callback(
+			'#&lt;blockquote\b[^&]*?tiktok-embed.*?&lt;/blockquote&gt;(\s*&lt;script[^&]*?&gt;\s*&lt;/script&gt;)?#is',
+			static function ( $matches ) {
+				$decoded = html_entity_decode( $matches[0], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+				$id      = '';
+				if ( preg_match( '#\bdata-video-id="(\d+)"#i', $decoded, $m ) ) {
+					$id = $m[1];
+				} elseif ( preg_match( '#\bcite="[^"]*/video/(\d+)"#i', $decoded, $m ) ) {
+					$id = $m[1];
+				} elseif ( preg_match( '#/video/(\d+)#i', $decoded, $m ) ) {
+					$id = $m[1];
+				}
+				if ( '' === $id ) {
+					return $matches[0];
+				}
+				return '<div class="jt-embed">' . self::tiktok_iframe( $id ) . '</div>';
+			},
+			$content
+		);
 	}
 }

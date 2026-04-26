@@ -178,7 +178,28 @@ $type_label     = $type_defaults['label'];
 				</label>
 				<div class="jt-datetime-split">
 					<input type="date" id="jt-post-published-date" name="published_date" class="jt-input jt-input--date" aria-label="<?php esc_attr_e( 'Date', 'jetonomy' ); ?>">
-					<input type="time" id="jt-post-published-time" name="published_time" class="jt-input jt-input--time" aria-label="<?php esc_attr_e( 'Time', 'jetonomy' ); ?>" step="60">
+					<?php
+					// Two select dropdowns for the time — works consistently on every
+					// desktop browser (Firefox Desktop has no popup for <input type="time">,
+					// which previously blocked scheduling on Firefox). Mobile browsers
+					// render these as native scroll wheels. view.js combines them into
+					// the hidden published_time value before submit.
+					?>
+					<div class="jt-time-split" aria-label="<?php esc_attr_e( 'Time', 'jetonomy' ); ?>">
+						<select id="jt-post-published-hour" name="published_hour" class="jt-input jt-input--time-part" aria-label="<?php esc_attr_e( 'Hour', 'jetonomy' ); ?>">
+							<option value=""><?php esc_html_e( 'HH', 'jetonomy' ); ?></option>
+							<?php for ( $h = 0; $h < 24; $h++ ) : ?>
+								<option value="<?php echo esc_attr( str_pad( (string) $h, 2, '0', STR_PAD_LEFT ) ); ?>"><?php echo esc_html( str_pad( (string) $h, 2, '0', STR_PAD_LEFT ) ); ?></option>
+							<?php endfor; ?>
+						</select>
+						<span class="jt-time-split-sep" aria-hidden="true">:</span>
+						<select id="jt-post-published-minute" name="published_minute" class="jt-input jt-input--time-part" aria-label="<?php esc_attr_e( 'Minute', 'jetonomy' ); ?>">
+							<option value=""><?php esc_html_e( 'MM', 'jetonomy' ); ?></option>
+							<?php for ( $m = 0; $m < 60; $m += 5 ) : ?>
+								<option value="<?php echo esc_attr( str_pad( (string) $m, 2, '0', STR_PAD_LEFT ) ); ?>"><?php echo esc_html( str_pad( (string) $m, 2, '0', STR_PAD_LEFT ) ); ?></option>
+							<?php endfor; ?>
+						</select>
+					</div>
 				</div>
 				<input type="hidden" name="published_at" value="">
 				<p class="jt-label-hint">

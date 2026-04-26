@@ -17,9 +17,11 @@ if ( ! $space ) {
 	return;
 }
 
-$members  = \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id );
-$category = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base     = \Jetonomy\base_url();
+$members        = \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id );
+$category       = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$base           = \Jetonomy\base_url();
+$viewer_id      = get_current_user_id();
+$viewer_is_sadm = \Jetonomy\Permissions\Permission_Engine::is_space_admin( $viewer_id, (int) $space->id );
 
 $crumbs = [];
 if ( $category ) {
@@ -38,8 +40,10 @@ $crumbs[] = [
 ];
 
 $role_labels = [
-	'moderator' => __( 'Moderator', 'jetonomy' ),
+	'viewer'    => __( 'Viewer', 'jetonomy' ),
 	'member'    => __( 'Member', 'jetonomy' ),
+	'moderator' => __( 'Moderator', 'jetonomy' ),
+	'admin'     => __( 'Admin', 'jetonomy' ),
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
@@ -97,10 +101,30 @@ $role_labels = [
 									?>
 								</div>
 							</div>
-							<?php if ( 'moderator' === $member->role ) : ?>
-								<span class="jt-badge-accent">
+							<?php if ( in_array( $member->role, array( 'moderator', 'admin' ), true ) ) : ?>
+								<span class="jt-badge-accent jt-member-badge">
 									<?php echo esc_html( $role_label ); ?>
 								</span>
+							<?php endif; ?>
+							<?php if ( $viewer_is_sadm && (int) $member->user_id !== $viewer_id ) : ?>
+								<label class="screen-reader-text" for="jt-member-role-<?php echo absint( $member->user_id ); ?>">
+									<?php
+									/* translators: %s: member display name */
+									echo esc_html( sprintf( __( 'Change role for %s', 'jetonomy' ), $mu->display_name ) );
+									?>
+								</label>
+								<select
+									id="jt-member-role-<?php echo absint( $member->user_id ); ?>"
+									class="jt-member-role-select"
+									data-space-id="<?php echo absint( $space->id ); ?>"
+									data-user-id="<?php echo absint( $member->user_id ); ?>"
+									data-prev-role="<?php echo esc_attr( (string) $member->role ); ?>">
+									<?php foreach ( array( 'member', 'moderator', 'admin' ) as $role_option ) : ?>
+										<option value="<?php echo esc_attr( $role_option ); ?>" <?php selected( $member->role, $role_option ); ?>>
+											<?php echo esc_html( $role_labels[ $role_option ] ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
 							<?php endif; ?>
 							<?php if ( $mp ) : ?>
 								<span class="jt-member-rep">

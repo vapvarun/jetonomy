@@ -50,8 +50,8 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 					<span class="jt-nav-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 				</a>
 			<?php endif; ?>
-			<?php if ( $user_id && ( current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) ) : ?>
-				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo 'moderation' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
+			<?php if ( $user_id && \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $user_id ) ) : ?>
+				<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="<?php echo in_array( $current_route, array( 'moderation', 'space-moderation' ), true ) ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'Moderation', 'jetonomy' ); ?>">
 					<?php jetonomy_echo_icon( 'shield', 18 ); ?>
 					<span class="jt-nav-label"><?php esc_html_e( 'Moderation', 'jetonomy' ); ?></span>
 				</a>
@@ -302,7 +302,7 @@ $jt_js_data = [
 		}
 	});
 	/* Delegated click handlers — bound once on document so they keep working even
-	   when the Interactivity API hydrates .jt-app and re-renders nearby nodes. */
+		when the Interactivity API hydrates .jt-app and re-renders nearby nodes. */
 	document.addEventListener('click', function(e) {
 		if (!e.target || !e.target.closest) return;
 		var notifBtn = e.target.closest('.jt-community-nav-notif');
@@ -318,8 +318,8 @@ $jt_js_data = [
 			return;
 		}
 		/* Row-level navigation: make .jt-row-clickable / .jt-idea cards clickable
-		   without colliding with inner links/buttons. Skip middle-click and
-		   modifier keys so open-in-new-tab still works as expected. */
+			without colliding with inner links/buttons. Skip middle-click and
+			modifier keys so open-in-new-tab still works as expected. */
 		if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
 		if (e.target.closest('a, button, input, select, textarea, label')) return;
 		var row = e.target.closest('[data-jt-href]');

@@ -130,6 +130,40 @@
     --jt-success-light: #052e16;
     --jt-warn-light: #422006;
     --jt-danger-light: #450a0a;
+    /* Accent tints must invert in dark mode: the default light-mode
+       recipe mixes accent with white, producing a near-white/mint wash
+       (--jt-accent-muted ≈ #DBEAFE). On a dark panel that lands as a
+       jarringly bright patch for unread notifications, pinned rows,
+       vote hover, composer focus ring, tag hover, and accent badges.
+       Re-derive both tints against the dark surface so they stay subtle
+       tinted backgrounds that only a little lighter than the panel,
+       not patches that scream. */
+    --jt-accent-light: color-mix(in srgb, var(--jt-accent) 12%, #171717);
+    --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 18%, #171717);
+    /* Warn-dark flips to a warm light tint in dark mode. It is used as
+       text on the dark --jt-warn-light surface (locked-space banner,
+       .jt-notice-warning). The light-mode default (color-mix warn 80%,
+       black) stays olive and fails WCAG contrast against the dark warn
+       background; this re-derives against white so the copy stays
+       legible. */
+    --jt-warn-dark: color-mix(in srgb, var(--jt-warn) 35%, white);
+  }
+
+  /* Dark-mode heading contrast override. Reign (and some other BuddyX-
+     adjacent themes) ship an inline customizer rule that hardcodes
+     `h1..h6 { color: #20262e }` and does NOT adapt when we flip the body
+     background to dark. Without this override the space title, single-
+     post h1, category headers, and every other plugin heading render
+     near-black on near-black in dark mode. Scoped to `.jt-app` so we only
+     override headings inside plugin surfaces; theme pages outside our app
+     keep whatever the theme wants. */
+  .jt-dark .jt-app h1,
+  .jt-dark .jt-app h2,
+  .jt-dark .jt-app h3,
+  .jt-dark .jt-app h4,
+  .jt-dark .jt-app h5,
+  .jt-dark .jt-app h6 {
+    color: var(--jt-text);
   }
 
   /* ── Font size scaling (A / A+ / A++) ─────────────────────────────────────
@@ -187,7 +221,35 @@
 
   /* ── Online status indicator ── */
   .jt-avatar-wrap { position: relative; display: inline-block; }
-  .jt-avatar-wrap.is-online::after { content: ''; position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--jt-success); border-radius: var(--jt-radius-full); border: 2px solid var(--jt-bg); box-sizing: content-box; }
+  /* Online indicator sits at the top-right of the avatar image. The wrap
+     may also contain the user's name link (reply-card, user profile), so
+     the wrap's bounding box extends far to the right and downward. We
+     can't anchor to the wrap's bottom-right — that lands under the name
+     text. Instead, the avatar image is always the first inline child and
+     starts at the wrap's top-left, so we position the dot using `top`
+     and a `left` offset equal to the avatar size minus the dot size.
+     Per-size rules via :has() keep the dot aligned across sm/md/lg. */
+  .jt-avatar-wrap.is-online::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 18px;
+    width: 10px;
+    height: 10px;
+    background: var(--jt-success);
+    border-radius: var(--jt-radius-full);
+    border: 2px solid var(--jt-bg);
+    box-sizing: content-box;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .jt-avatar-wrap.is-online:has(.jt-avatar-md)::after { left: 24px; }
+  .jt-avatar-wrap.is-online:has(.jt-avatar-lg)::after { left: 36px; }
+  /* The user-profile header avatar uses .jt-profile-av (64x64 with a 3px
+     border). Offset matches the visible rim: 64px + 3px border = 67px
+     outer edge, dot is 14px wide → left = 67 - 14 + 2 = 55; top sits
+     level with the border. */
+  .jt-avatar-wrap.is-online:has(.jt-profile-av)::after { top: 1px; left: 55px; }
 
   /* ── Layout ── */
   /* Force the app wrapper to fill the theme's container — prevents flex/grid parents from shrinking it. */
@@ -675,7 +737,7 @@
   /* ── Status badges ── */
   .jt-badge-resolved { background: var(--jt-success-light); color: var(--jt-success); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
-  .jt-badge-danger { background: var(--jt-danger); color: var(--jt-white); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); }
+  .jt-badge-danger { display: inline-flex; align-items: center; background: var(--jt-danger); color: var(--jt-white); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); white-space: nowrap; }
   .jt-badge-private { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
   .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
@@ -787,6 +849,46 @@
   .jt-app .jt-btn-danger, .jt-app a.jt-btn-danger { background: var(--jt-danger); color: var(--jt-white); }
   .jt-app .jt-btn-danger:hover { color: var(--jt-white); }
 
+  /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
+  .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
+
+  /* Admin cross-space dashboard at /community/mod/. */
+  .jt-mod-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--jt-space-4); }
+  .jt-mod-dashboard-card { display: flex; flex-direction: column; gap: var(--jt-space-3); padding: var(--jt-space-4); text-decoration: none; color: inherit; border: 1px solid var(--jt-border); transition: border-color .15s ease, transform .15s ease; }
+  .jt-mod-dashboard-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
+  .jt-mod-dashboard-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); }
+  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); flex: 1 1 auto; min-width: 0; }
+  .jt-mod-dashboard-card-head .jt-badge-danger { flex-shrink: 0; }
+  .jt-mod-dashboard-card-cta { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: var(--jt-text-sm); color: var(--jt-accent); }
+
+  /* Sidebar links column — moderation link sits below "View all members". */
+  .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
+  .jt-sidebar-link-mod { display: inline-flex; align-items: center; gap: var(--jt-space-1); }
+
+  /* Space-members role dropdown — only rendered for space admins. */
+  .jt-member-role-select {
+    appearance: auto;
+    padding: var(--jt-space-1) var(--jt-space-2);
+    border: 1px solid var(--jt-border);
+    border-radius: var(--jt-radius-sm);
+    background: var(--jt-bg);
+    color: var(--jt-text);
+    font-size: var(--jt-text-sm);
+    line-height: 1.4;
+    max-width: 8rem;
+  }
+  .jt-member-role-select:disabled { opacity: .6; cursor: progress; }
+  .jt-member-role-select:focus { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
+  .jt-member-role-error { flex-basis: 100%; color: var(--jt-danger); font-size: var(--jt-text-xs); margin-top: var(--jt-space-1); }
+
+  @media (max-width: 640px) {
+    /* Let dropdown + badges wrap onto a second line on mobile. The row
+       keeps avatar + name + trust on line 1; dropdown + badge + rep on
+       line 2, full-width select so the truncation stops squeezing. */
+    .jt-app .jt-member-item { flex-wrap: wrap; }
+    .jt-member-role-select { flex-basis: 100%; max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
+  }
+
   /* ── Search ── */
   /* ── Search page form (separate from header search) ── */
   .jt-search-page-form { margin-bottom: 24px; }
@@ -880,15 +982,44 @@
   /* ── Schedule panel ── */
   .jt-schedule-panel { margin-top: 16px; padding: 16px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); border: 1px solid var(--jt-border); }
   .jt-schedule-panel[hidden] { display: none; }
-  .jt-input--datetime,
-  .jt-input--date,
-  .jt-input--time { font-family: var(--jt-font); }
+  /* Restore native appearance so date/time inputs open their browser
+     picker on click. The base .jt-input rule sets -webkit-appearance: none
+     for consistent text-input styling; for date/time inputs that kills the
+     native picker affordance on Chromium and leaves Firefox with an inert
+     field that never opens on click. Double-class selector (specificity
+     0,0,2,0) beats theme/reset stylesheets that target
+     `input[type="time"]` directly (specificity 0,0,1,1). */
+  .jt-input.jt-input--datetime,
+  .jt-input.jt-input--date,
+  .jt-input.jt-input--time {
+    font-family: var(--jt-font);
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
+    appearance: auto;
+    cursor: pointer;
+  }
   .jt-datetime-split { display: flex; gap: 12px; align-items: center; }
   .jt-datetime-split .jt-input--date { flex: 1 1 auto; min-width: 0; }
   .jt-datetime-split .jt-input--time { flex: 0 0 auto; width: 140px; }
+
+  /* Hour + minute select pair used in the schedule panel. Renders identically
+     on every desktop browser (Firefox included — where native <input type="time">
+     offers no popup picker) and maps to iOS/Android native scroll-wheel
+     pickers on mobile. */
+  .jt-time-split { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+  .jt-time-split .jt-input--time-part {
+    width: auto;
+    min-width: 68px;
+    padding: 11px 10px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .jt-time-split-sep { font-weight: 600; color: var(--jt-text-secondary); }
   @media (max-width: 640px) {
     .jt-datetime-split { flex-direction: column; align-items: stretch; gap: 8px; }
     .jt-datetime-split .jt-input--time { width: 100%; }
+    .jt-time-split { width: 100%; }
+    .jt-time-split .jt-input--time-part { flex: 1 1 auto; min-width: 0; }
   }
 
   /* ── Draft / scheduled badges on profile ── */
@@ -1446,6 +1577,24 @@
 .jt-profile-tab { padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; color: var(--jt-text-secondary); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
 .jt-profile-tab:hover { color: var(--jt-text); }
 .jt-profile-tab.active { color: var(--jt-accent); border-bottom-color: var(--jt-accent); }
+/* Mobile: the five-tab row (Posts, Replies, Votes, Bookmarks, Drafts)
+   overflows the viewport at ≤390px, clipping the last tab (Drafts) off
+   the right edge. Make the row horizontally scrollable instead of
+   clipping — tabs stay legible, the Drafts tab is reachable by swipe,
+   and the underline nav paradigm is preserved. */
+@media (max-width: 640px) {
+  .jt-profile-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .jt-profile-tabs::-webkit-scrollbar { display: none; }
+  .jt-profile-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
 
 /* ── More menu (post action overflow) ── */
 .jt-more-menu { position: relative; display: inline-flex; margin-left: 8px; }
@@ -2017,4 +2166,50 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-login-block {
 		padding: 0.85rem;
 	}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Mobile overflow safeguards
+   Defensive rules so user-supplied content (long URLs, large
+   images, wide tables / code blocks) cannot push the Jetonomy
+   app wider than the viewport. Covers customer reports of
+   horizontal scroll on small screens (390px / 414px) and is
+   theme-agnostic: works regardless of which parent theme
+   wraps the community.
+   ═══════════════════════════════════════════════════════════ */
+
+.jt-app {
+	/* A wide child must not widen the forum. Themes that want
+	   a floating element to escape can opt out on their own. */
+	max-width: 100vw;
+	overflow-x: clip;
+}
+
+.jt-post-body,
+.jt-reply-body {
+	/* Long URLs and unspaced strings (e.g. transaction hashes)
+	   must wrap instead of stretching the container. */
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.jt-post-body img,
+.jt-reply-body img {
+	max-width: 100%;
+	height: auto;
+}
+
+.jt-post-body table,
+.jt-reply-body table {
+	/* Tables with many columns get their own horizontal scroll
+	   inside the post body; the rest of the page stays put. */
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.jt-post-body iframe,
+.jt-reply-body iframe,
+.jt-embed iframe {
+	max-width: 100%;
 }

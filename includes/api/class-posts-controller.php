@@ -46,6 +46,16 @@ class Posts_Controller extends Base_Controller {
 								'required' => true,
 								'minimum'  => 1,
 							),
+							// Posts-specific sort enum. Overrides the shared
+							// Base_Controller default so `unanswered` (which
+							// is a posts-only filter) is advertised here
+							// without polluting Bookmarks/Users/Subscriptions
+							// list endpoints that inherit the base params.
+							'sort'     => array(
+								'type'    => 'string',
+								'default' => 'latest',
+								'enum'    => array( 'latest', 'popular', 'oldest', 'newest', 'unanswered' ),
+							),
 						)
 					),
 				),
@@ -148,14 +158,20 @@ class Posts_Controller extends Base_Controller {
 			)
 		);
 
-		// Link preview — fetch OG metadata for a URL.
+		// Link preview — fetch OG metadata for a URL. Public-readable:
+		// anonymous visitors to a public post deserve the same rich link
+		// preview cards that logged-in members see. The URL being previewed
+		// is already visible in the post body, the Preview_Service only
+		// scrapes the URL's own OG metadata, and wp_safe_remote_get blocks
+		// internal-IP SSRF. Aggressive caching in the service keeps repeated
+		// hits cheap.
 		register_rest_route(
 			$ns,
 			'/link-preview',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'link_preview' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => '__return_true',
 				'args'                => array(
 					'url' => array(
 						'type'              => 'string',

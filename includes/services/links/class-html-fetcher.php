@@ -18,12 +18,15 @@ final class HTML_Fetcher {
 	private const TIMEOUT   = 6;
 
 	/**
-	 * User-Agent: TikTok / Instagram / Twitter / LinkedIn all refuse empty or
-	 * default WP user-agents with 403. Presenting as a recent Chrome fixes all
-	 * four. The Jetonomy suffix is for logs; share-bots (Slack/Discord) present
-	 * similar strings.
+	 * User-Agent: TikTok, Instagram, Twitter, LinkedIn all refuse empty or
+	 * default WP user-agents with 403 or an SPA shell that has no OG tags.
+	 * `facebookexternalhit/1.1` is the canonical share-crawler UA that every
+	 * one of these sites pre-renders OG/Twitter-card metadata for — pretending
+	 * to be a real Chrome sometimes works but leaves us fetching the client-
+	 * rendered shell on TikTok specifically. Combine with a bot ident for
+	 * log traceability; share bots (Slack/Discord) do the same.
 	 */
-	public const USER_AGENT = 'Mozilla/5.0 (compatible; JetonomyBot/1.0; +https://wbcomdesigns.com/jetonomy/) Chrome/120.0.0.0 Safari/537.36';
+	public const USER_AGENT = 'facebookexternalhit/1.1 (+https://wbcomdesigns.com/jetonomy/) JetonomyBot/1.0';
 
 	/**
 	 * @return array{body:string,final_url:string,status:int,content_type:string}|\WP_Error

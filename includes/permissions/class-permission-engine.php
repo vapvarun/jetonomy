@@ -300,6 +300,28 @@ class Permission_Engine {
 	}
 
 	/**
+	 * Check if a user is a space admin (role='admin' on this space) or WP admin.
+	 *
+	 * Narrower than is_space_privileged — mods do not qualify. Gates actions
+	 * that manage the space itself (role changes, settings, invite links).
+	 *
+	 * @param int $user_id  WP user ID.
+	 * @param int $space_id Space ID.
+	 * @return bool
+	 */
+	public static function is_space_admin( int $user_id, int $space_id ): bool {
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
+		return 'admin' === SpaceMember::get_role( $space_id, $user_id );
+	}
+
+	/**
 	 * Check if a space role meets a restriction level.
 	 *
 	 * @param string $role        User's space role (viewer/member/moderator/admin).

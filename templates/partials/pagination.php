@@ -27,9 +27,23 @@ $unique_id    = 'jt-pagination-' . wp_unique_id();
 	if (!container || !('IntersectionObserver' in window)) return;
 	var btn = container.querySelector('.jt-load-more-trigger');
 	if (!btn) return;
+
 	var loading = false;
-	var observer = new IntersectionObserver(function(entries) {
-		if (!entries[0].isIntersecting || loading) return;
+	var observer;
+
+	/*
+	 * Gate auto-load on a real user scroll. Without this, if the Load More
+	 * trigger sits inside the initial viewport (common when posts_per_page
+	 * is small — e.g. set to 1 on a short space), the IntersectionObserver
+	 * fires on attach and stacks the next page on top of the first. Users
+	 * reported "I set posts_per_page=1 but I see 2 topics" — that was the
+	 * auto-preload. The Load More button stays clickable, so viewers who
+	 * want more content immediately can still request it explicitly.
+	 */
+	var userHasScrolled = false;
+
+	function fetchAndAppend() {
+		if (loading) return;
 		loading = true;
 		btn.textContent = <?php echo wp_json_encode( __( 'Loading...', 'jetonomy' ) ); ?>;
 		btn.style.pointerEvents = 'none';
@@ -56,6 +70,27 @@ $unique_id    = 'jt-pagination-' . wp_unique_id();
 			btn.textContent = <?php echo wp_json_encode( __( 'Load More', 'jetonomy' ) ); ?>;
 			btn.style.pointerEvents = '';
 		});
+	}
+
+	function onFirstScroll() {
+		userHasScrolled = true;
+		window.removeEventListener('scroll', onFirstScroll);
+		/*
+		 * IntersectionObserver only fires on intersection CHANGES. If the
+		 * trigger was already in the viewport on page load (static intersect
+		 * state), scrolling doesn't produce a new callback. Check directly
+		 * on first scroll so the load fires for users who started on a
+		 * short page.
+		 */
+		var rect = container.getBoundingClientRect();
+		var inView = rect.top < window.innerHeight + 200 && rect.bottom > -200;
+		if (inView) fetchAndAppend();
+	}
+	window.addEventListener('scroll', onFirstScroll, { passive: true });
+
+	observer = new IntersectionObserver(function(entries) {
+		if (!entries[0].isIntersecting || loading || !userHasScrolled) return;
+		fetchAndAppend();
 	}, { rootMargin: '200px' });
 	observer.observe(container);
 })();
