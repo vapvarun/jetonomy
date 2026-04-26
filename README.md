@@ -160,6 +160,26 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 
 ## Changelog
 
+### 1.3.8 (April 2026)
+- New: Cross-space moderation dashboard at `/community/mod/` for site admins; per-space moderation queue at `/community/s/:slug/mod/` for space admins and moderators
+- New: Front-end member role management on `/community/s/:slug/members/` so space admins can promote members to moderator or admin without going through wp-admin
+- New: FluentCommunity integration with paired spaces, two-way profile cross-links, unified avatars, member sync, activity broadcast, and a comment-to-reply bridge
+- New: BuddyPress group integration broadcasts new topics to the paired group's activity stream and round-trips comments back as forum replies
+- Fix: Plugin headings, accent tints, locked-space banner, and warning notices stay readable on dark-panel themes (Reign etc.); dark mode now follows the theme only and no longer auto-applies based on the visitor's OS preference
+- Fix: Sort modes (oldest, newest, unanswered) return the correct topic set; space settings merge on save instead of overwriting; similar-topics widget no longer leaks HTML entities; sitewide search ranks by relevance; rewrite rules flush on activation
+- Fix: Profile tabs no longer clip Drafts on mobile; share dropdown closes on scroll; long words wrap on mobile; member upload permissions; vote-flip optimistic score; TikTok oEmbed renders as an iframe; copy-link feedback when the browser blocks clipboard writes
+- Polish: Fourteen translation-ready strings rewritten for cleaner localisation; the Interactivity API exposes `isLoggedIn` and `loginUrl` so blocks and embeds can render the right CTA without extra REST calls
+
+### 1.3.7 (April 2026)
+- Fix: Reaction picker stays visible across browsers, CDNs, and security plugins that strip the WordPress emoji loader; reactions now ship as bundled colour SVG icons
+- Fix: Posting a Polls topic without a body shows the same friendly inline error as a regular topic instead of silently doing nothing
+- Improved: Plain-language polish across admin labels and emails (Pro extensions, AI provider settings, GDPR exporter, license status, email digest copy)
+
+### 1.3.6 (April 2026)
+- New: Private Messaging recipient typeahead autocompletes from members of spaces you share with the recipient
+- Fix (security): `POST /conversations` enforces shared-space scope on every recipient, matching the UI
+- Fix: "Message" actions on the Top Members widget and profile hover cards now open the working compose flow
+
 ### 1.3.5 (April 2026)
 - New: Jetonomy Navigation block — permission-aware Category/Space tree for sidebars, scales to thousands of spaces
 - New: Jetonomy Login block — inline login/register panel with rate limiting and nonce protection (renders nothing for logged-in users — no layout shift)

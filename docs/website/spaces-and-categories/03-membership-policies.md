@@ -104,6 +104,12 @@ Every member of a space has one of three roles:
 
 > **Note:** WordPress site admins can perform all admin-level actions on any space, regardless of their space role.
 
+### Promoting members from the front-end (1.3.8+)
+
+Space admins (and site admins) can change a member's space role directly from the front-end members page at `/community/s/:slug/members/`. Each member row carries a role dropdown; picking a new role saves the change live with inline success or error feedback. There is no wp-admin round-trip to add a moderator and no separate settings screen to open.
+
+The dropdown is hidden for members who cannot manage roles, and a member cannot demote themselves below the level needed to keep at least one space admin. Members visible in the list still have to be members of the space to be assigned a role; the same per-space role rules listed above apply.
+
 ## Common Visibility + Join Policy Combinations
 
 | Goal | Visibility | Join Policy |
