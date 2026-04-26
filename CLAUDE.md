@@ -69,8 +69,7 @@
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |
 
 ## Documentation
-- **Design Spec**: `docs/specs/2026-03-17-jetonomy-forum-plugin-design.md`
-- **Implementation Plans**: `docs/plans/`
+- **Implementation Plans**: `docs/plans/` (only future / unshipped plans kept; shipped ones are pruned each release)
 - **Design Prototypes**: `docs/prototype/` (open HTML files in browser)
 
 ## URL Structure

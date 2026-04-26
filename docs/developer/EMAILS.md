@@ -165,7 +165,7 @@ Local by Flywheel ships Mailpit per site. For `forums.local`:
 Note: `wp-cli` on a Local site does **not** inherit PHP-FPM's `sendmail_path`,
 so any email triggered via `wp --path=… eval …` or a CLI command will not
 reach Mailpit. Always test email flows via the web runtime (admin-ajax,
-REST, or a browser-triggered action) — this is codified in `docs/qa/QA_RELEASE_CHECKLIST.md`.
+REST, or a browser-triggered action) — this is codified in `docs/qa/AGENT_SMOKE_RUNBOOK.md`.
 
 ## 7. Default templates reference
 

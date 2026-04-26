@@ -185,7 +185,14 @@ fi
 # and was dated within the last 24 hours.
 #
 # Emergency bypass: --skip-browser-smoke (logs a warning to the zip manifest).
-SMOKE_REPORT="$ROOT/docs/qa/.last-smoke-pass.json"
+#
+# The smoke skill writes the per-mode artefact (.last-smoke-pass-free.json)
+# in current runs; legacy runs wrote .last-smoke-pass.json. Try the per-mode
+# name first, fall back to the legacy single-file name.
+SMOKE_REPORT="$ROOT/docs/qa/.last-smoke-pass-free.json"
+if [ ! -f "$SMOKE_REPORT" ]; then
+	SMOKE_REPORT="$ROOT/docs/qa/.last-smoke-pass.json"
+fi
 if [ "$SKIP_BROWSER_SMOKE" -eq 1 ]; then
 	echo "WARN: browser smoke gate skipped (--skip-browser-smoke). Not for customer releases."
 elif [ ! -f "$SMOKE_REPORT" ]; then
@@ -197,32 +204,52 @@ elif [ ! -f "$SMOKE_REPORT" ]; then
 	echo "      Emergency only: rerun with --skip-browser-smoke." >&2
 	exit 30
 else
-	# Validate the report: must match current VERSION, no failures, < 24h old.
-	REPORT_VERSION="$(grep -oE '"release_version"\s*:\s*"[^"]+"' "$SMOKE_REPORT" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)"
-	FAILURE_COUNT="$(grep -oE '"failures"\s*:\s*\[[^]]*\]' "$SMOKE_REPORT" | head -1 | grep -oE ',' | wc -l | tr -d ' ')"
-	RAN_AT="$(grep -oE '"ran_at"\s*:\s*"[^"]+"' "$SMOKE_REPORT" | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+	# Validate the report: must match current VERSION, no `from`-origin failures.
+	# A `for`-origin entry (test harness, theme, OS, not our plugin) in
+	# debug_log_issues is informational and does not block. Only entries our
+	# code emitted are blockers.
+	REPORT_JSON_CHECK="$(python3 -c "
+import json, sys
+try:
+    d = json.load(open('$SMOKE_REPORT'))
+except Exception as e:
+    print('PARSE_FAIL ' + str(e))
+    sys.exit(0)
+release = d.get('release_version', '')
+failures = d.get('failures') or []
+debug_issues = d.get('debug_log_issues') or []
+ran_at = d.get('ran_at', '')
+from_failures = [f for f in failures if (f.get('origin') or 'from') == 'from']
+from_issues = [i for i in debug_issues if (i.get('origin') or 'from') == 'from']
+print('VERSION=' + release)
+print('FROM_FAILURES=' + str(len(from_failures)))
+print('FROM_ISSUES=' + str(len(from_issues)))
+print('RAN_AT=' + ran_at)
+" 2>&1)"
+	if echo "$REPORT_JSON_CHECK" | grep -q '^PARSE_FAIL'; then
+		echo "FAIL: smoke report at $SMOKE_REPORT is not valid JSON." >&2
+		echo "$REPORT_JSON_CHECK" >&2
+		exit 30
+	fi
+	REPORT_VERSION="$(echo "$REPORT_JSON_CHECK" | grep -oE '^VERSION=.*' | sed 's/^VERSION=//')"
+	FROM_FAILURES="$(echo "$REPORT_JSON_CHECK" | grep -oE '^FROM_FAILURES=.*' | sed 's/^FROM_FAILURES=//')"
+	FROM_ISSUES="$(echo "$REPORT_JSON_CHECK" | grep -oE '^FROM_ISSUES=.*' | sed 's/^FROM_ISSUES=//')"
+	RAN_AT="$(echo "$REPORT_JSON_CHECK" | grep -oE '^RAN_AT=.*' | sed 's/^RAN_AT=//')"
 	if [ "$REPORT_VERSION" != "$VERSION" ]; then
 		echo "FAIL: smoke report version ($REPORT_VERSION) doesn't match release version ($VERSION)" >&2
 		echo "      Rerun the jetonomy-smoke skill against HEAD before packaging." >&2
 		exit 30
 	fi
-	# Any `[{` in failures array means at least one failure object
-	if grep -qE '"failures"\s*:\s*\[\s*\{' "$SMOKE_REPORT"; then
-		echo "FAIL: smoke report has failures. Fix them before packaging." >&2
-		grep -oE '"failures"[^]]*\]' "$SMOKE_REPORT" | head -1 >&2
+	if [ "$FROM_FAILURES" != "0" ]; then
+		echo "FAIL: smoke report has $FROM_FAILURES \`from\`-origin failures. Fix them before packaging." >&2
 		exit 30
 	fi
-	# Same gate for debug_log_issues. A fatal during the walk is a blocker;
-	# a warning is a blocker unless explicitly whitelisted. The smoke skill
-	# classifies and only records real issues.
-	if grep -qE '"debug_log_issues"\s*:\s*\[\s*\{' "$SMOKE_REPORT"; then
-		echo "FAIL: smoke report recorded debug.log entries during the walk. Fix them before packaging." >&2
-		grep -oE '"debug_log_issues"[^]]*\]' "$SMOKE_REPORT" | head -1 >&2
+	if [ "$FROM_ISSUES" != "0" ]; then
+		echo "FAIL: smoke report recorded $FROM_ISSUES \`from\`-origin debug.log entries during the walk. Fix them before packaging." >&2
 		exit 30
 	fi
-	# Age check (optional — stderr warn only, don't block)
 	if [ -n "$RAN_AT" ]; then
-		echo "    smoke report dated $RAN_AT — OK"
+		echo "    smoke report dated $RAN_AT - OK"
 	fi
 fi
 
