@@ -12,7 +12,7 @@ Connect MasterStudy LMS course enrollment to Jetonomy spaces — students get a 
 
 Jetonomy Pro detects MasterStudy LMS automatically when both plugins are active. A **MasterStudy Course** option appears in the Access Rules rule type dropdown.
 
-![Integrations settings showing active LMS plugins](images/integrations-settings.png)
+![Integrations settings showing active LMS plugins](../images/integrations-settings.png)
 
 ## Linking a Course to a Space
 

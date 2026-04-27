@@ -2,8 +2,7 @@ Understand what your community is doing, where it is growing, and who is driving
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Analytics dashboard showing charts and top contributor table](../images/pro-analytics-dashboard.png)
-
+![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.png)
 ## What You Will Learn
 
 - How to access the Analytics dashboard
@@ -39,8 +38,7 @@ Use the date range picker at the top right to select any custom range. Preset sh
 
 All charts and tables update instantly when you change the range.
 
-![Date range picker on the analytics page](../images/pro-analytics-date-filter.png)
-
+<!-- TODO screenshot needed: Date range picker on the analytics page (was ../images/pro-analytics-date-filter.png) -->
 ## Overview Metrics
 
 The top row shows four headline numbers for your selected range:

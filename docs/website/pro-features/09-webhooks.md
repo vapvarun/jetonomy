@@ -2,8 +2,7 @@ Automatically send community events to any external URL — connect Jetonomy to 
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Webhook management page listing configured endpoints](../images/pro-webhooks-list.png)
-
+![Webhook management page listing configured endpoints](../images/pro-webhooks.png)
 ## What You Will Learn
 
 - How to create and manage webhook endpoints
@@ -36,8 +35,7 @@ Jetonomy lives inside WordPress — but your business does not. Your team lives 
 
 4. Click **Save Webhook**.
 
-![Webhook editor with URL, events, and secret fields](../images/pro-webhooks-editor.png)
-
+<!-- TODO screenshot needed: Webhook editor with URL, events, and secret fields (was ../images/pro-webhooks-editor.png) -->
 ## Available Events
 
 Subscribe to any combination of these events:

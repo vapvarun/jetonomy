@@ -2,8 +2,7 @@ Remove all Jetonomy branding and present your community as entirely your own pro
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Community frontend with custom logo and brand colors — no Jetonomy attribution](../images/pro-white-label-frontend.png)
-
+<!-- TODO screenshot needed: Community frontend with custom logo and brand colors — no Jetonomy attribution (was ../images/pro-white-label-frontend.png) -->
 ## What You Will Learn
 
 - How to enable White Label
@@ -34,8 +33,7 @@ Go to **Jetonomy → Settings → Branding**.
 
 Upload your own logo (SVG or PNG, max 400×100 px) to replace the Jetonomy logo in the community navigation bar. Leave the logo field blank to show no logo at all.
 
-![White Label branding settings panel](../images/pro-white-label-settings.png)
-
+![White Label branding settings panel](../images/pro-white-label.png)
 > **Tip:** Use the Custom CSS injection field to apply brand-specific color overrides without editing any theme files. The CSS injects after Jetonomy's own stylesheet so your values always win.
 
 ## Admin Menu Customization
@@ -49,8 +47,7 @@ In **Jetonomy → Settings → Branding → Admin Menu**:
 
 The label change applies to the top-level menu item and the browser window title on all Jetonomy admin pages.
 
-![WordPress admin sidebar showing custom menu label and icon](../images/pro-white-label-admin-menu.png)
-
+<!-- TODO screenshot needed: WordPress admin sidebar showing custom menu label and icon (was ../images/pro-white-label-admin-menu.png) -->
 ## REST API Branding
 
 By default, Jetonomy's REST API responses include a `powered_by` key in the root namespace response:

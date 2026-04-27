@@ -14,7 +14,7 @@ Connect LearnDash course and group enrollment to Jetonomy spaces — students ge
 
 Jetonomy Pro detects LearnDash automatically when both plugins are active. A **LearnDash Course** option appears in the Access Rules rule type dropdown — no setup needed. Compatible with LearnDash 4.x and 5.x.
 
-![Integrations settings showing active LMS plugins](images/integrations-settings.png)
+![Integrations settings showing active LMS plugins](../images/integrations-settings.png)
 
 ## Gating a Space by Course Enrollment
 

@@ -2,8 +2,7 @@ Reach members with browser push notifications — even when they have closed you
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Browser push notification appearing on a desktop screen](../images/pro-web-push-notification.png)
-
+<!-- TODO screenshot needed: Browser push notification appearing on a desktop screen (was ../images/pro-web-push-notification.png) -->
 ## What You Will Learn
 
 - How to generate VAPID keys and enable Web Push
@@ -26,8 +25,7 @@ Web Push requires a VAPID key pair to authenticate your server with browsers.
 
 > **Important:** VAPID keys are generated once. If you regenerate them, all existing push subscriptions are invalidated and members must subscribe again. Only regenerate if you believe your private key has been compromised.
 
-![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push-settings.png)
-
+![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push.png)
 ## Service Worker Registration
 
 Jetonomy automatically registers a service worker (`/community/sw.js`) on every community page. You do not need to create or configure the service worker — this happens at extension activation.

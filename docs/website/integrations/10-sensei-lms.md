@@ -12,7 +12,7 @@ Connect Sensei LMS course enrollment to Jetonomy spaces — students get a dedic
 
 Jetonomy Pro detects Sensei LMS automatically when both plugins are active. A **Sensei Course** option appears in the Access Rules rule type dropdown.
 
-![Integrations settings showing active LMS plugins](images/integrations-settings.png)
+![Integrations settings showing active LMS plugins](../images/integrations-settings.png)
 
 ## Linking a Course to a Space
 

@@ -2,8 +2,7 @@ Send a curated summary of community activity to members' inboxes — daily or we
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Email digest preview showing top posts from the week](../images/pro-email-digest-preview.png)
-
+![Email digest preview showing top posts from the week](../images/pro-email-digest.png)
 ## What You Will Learn
 
 - How to enable and configure the Email Digest
@@ -45,8 +44,7 @@ The digest compiles:
 
 You can toggle each content section on or off in the digest settings. At least one section must remain on.
 
-![Email Digest settings panel](../images/pro-email-digest-settings.png)
-
+<!-- TODO screenshot needed: Email Digest settings panel (was ../images/pro-email-digest-settings.png) -->
 > **Tip:** Keeping "Replies to your topics" on is the single most effective setting. Members always care more about activity on their own posts than about the broader community.
 
 ## Member Notification Preferences

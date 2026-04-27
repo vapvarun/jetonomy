@@ -1,7 +1,6 @@
 Two features that give you finer control over individual topics — mark sensitive topics private so only you and moderators can see them, and use colored prefixes to classify topics at a glance in the space listing.
 
-![Space listing with colored topic prefixes and a private topic indicator](../images/topic-prefixes-and-private.png)
-
+<!-- TODO screenshot needed: Space listing with colored topic prefixes and a private topic indicator (was ../images/topic-prefixes-and-private.png) -->
 ## What You Will Learn
 
 - How to mark a topic as private and who can read it

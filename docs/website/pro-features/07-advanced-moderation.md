@@ -2,8 +2,7 @@ Define rules that catch bad content automatically — before it ever appears in 
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![Advanced moderation rules list in the admin panel](../images/pro-advanced-mod-rules-list.png)
-
+<!-- TODO screenshot needed: Advanced moderation rules list in the admin panel (was ../images/pro-advanced-mod-rules-list.png) -->
 ## What You Will Learn
 
 - How to enable Advanced Moderation Rules
@@ -41,8 +40,7 @@ Advanced Moderation complements the free trust level system. New members with Tr
 
 4. Click **Save Rule**.
 
-![Rule editor form](../images/pro-advanced-mod-rule-editor.png)
-
+<!-- TODO screenshot needed: Rule editor form (was ../images/pro-advanced-mod-rule-editor.png) -->
 ## Pattern Types
 
 ### Keyword
