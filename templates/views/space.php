@@ -261,6 +261,17 @@ $crumbs[] = [
 					<?php endif; ?>
 				</div>
 			<?php else : ?>
+				<?php
+				// 1.4.0 G3: warm the per-request role-label cache so each
+				// post-card partial below is O(1) instead of issuing one
+				// SpaceMember query per author. Single bulk query for the
+				// whole list. Author IDs are unique-deduped inside the
+				// model helper.
+				\Jetonomy\Models\SpaceMember::warm_role_cache(
+					(int) $space->id,
+					array_map( static fn( $p ) => (int) $p->author_id, $posts )
+				);
+				?>
 				<div class="jt-topics">
 					<?php foreach ( $posts as $post ) : ?>
 						<?php \Jetonomy\Template_Loader::partial( 'post-card', [ 'post' => $post ] ); ?>

@@ -876,6 +876,27 @@
     line-height: 1.5;
   }
 
+  /* ── Role pills on post / reply cards (1.4.0 G3) ──────────────────── */
+  .jt-role-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: var(--jt-radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    vertical-align: middle;
+  }
+  .jt-role-pill--admin {
+    background: var(--jt-accent-muted);
+    color: var(--jt-accent);
+  }
+  .jt-role-pill--moderator {
+    background: var(--jt-warn-light);
+    color: var(--jt-warn);
+  }
+
   /* ── Notification list ── */
   /* Notifications uses jt-two-col now — no max-width needed */
   .jt-notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--jt-border); text-decoration: none; color: inherit; }

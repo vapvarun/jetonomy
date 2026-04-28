@@ -112,6 +112,23 @@ if ( $top_level_count <= $batch_size * 2 ) {
 	}
 }
 
+// 1.4.0 G3: warm the role-label cache for the post author + every reply
+// author (including nested children) so each role-pill lookup downstream
+// is O(1). Without this a 200-reply thread would issue 200 SpaceMember
+// queries during render. Single bulk query covers the whole tree.
+$jt_role_warm_ids = [ (int) $post->author_id ];
+$jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_role_walker ): void {
+	foreach ( $list as $reply ) {
+		$jt_role_warm_ids[] = (int) ( $reply->author_id ?? 0 );
+		if ( ! empty( $reply->children ) ) {
+			$jt_role_walker( $reply->children );
+		}
+	}
+};
+$jt_role_walker( $first_batch );
+$jt_role_walker( $last_batch );
+\Jetonomy\Models\SpaceMember::warm_role_cache( (int) $post->space_id, $jt_role_warm_ids );
+
 // Current user vote on post.
 $user_id        = get_current_user_id();
 $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'post', (int) $post->id ) : null;

@@ -58,6 +58,20 @@ if ( $prefix_name && $space ) {
 		</div>
 		<div class="jt-row-sub">
 			<?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?>
+			<?php
+			// 1.4.0 G3: render role pill (Admin / Mod) when this user holds a
+			// privileged role IN THIS POST'S SPACE. Reads the warmed cache
+			// populated by the parent view — see space.php / single-post.php.
+			$jt_role = \Jetonomy\get_space_role_label( (int) $post->author_id, (int) $post->space_id );
+			if ( null !== $jt_role ) :
+				$jt_role_label = ( 'admin' === $jt_role )
+					? __( 'Admin', 'jetonomy' )
+					: __( 'Mod', 'jetonomy' );
+				?>
+				<span class="jt-role-pill jt-role-pill--<?php echo esc_attr( $jt_role ); ?>">
+					<?php echo esc_html( $jt_role_label ); ?>
+				</span>
+			<?php endif; ?>
 			<?php /* translators: %d: trust level number */ ?>
 			<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 			<?php foreach ( $tags as $post_tag ) : ?>

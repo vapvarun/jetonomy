@@ -99,3 +99,27 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 
 	return $avatar_html . $name_html;
 }
+
+/**
+ * Return 'admin' / 'moderator' / null for a user in a space.
+ *
+ * Thin namespaced wrapper around `Models\SpaceMember::role_label()` so
+ * templates can write `\Jetonomy\get_space_role_label( $author_id, $space_id )`
+ * without a long-form class reference. The model method is the source
+ * of truth for the per-request cache; this helper only exists for
+ * template ergonomics (1.4.0 G3).
+ *
+ * Templates that render a list of authors should call
+ * `Models\SpaceMember::warm_role_cache($space_id, $author_ids)` BEFORE
+ * the loop so each per-row call here is O(1) instead of O(N).
+ *
+ * @param int $user_id
+ * @param int $space_id
+ * @return ?string  'admin' | 'moderator' | null
+ */
+function get_space_role_label( int $user_id, int $space_id ): ?string {
+	if ( $user_id <= 0 || $space_id <= 0 ) {
+		return null;
+	}
+	return \Jetonomy\Models\SpaceMember::role_label( $space_id, $user_id );
+}

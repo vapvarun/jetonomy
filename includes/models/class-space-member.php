@@ -203,6 +203,106 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Per-request cache of role lookups, keyed `{space_id}|{user_id}`.
+	 * Holds 'admin' / 'moderator' / null. Populated via warm_role_cache()
+	 * (bulk loader) and read via role_label() (single lookup with lazy
+	 * fallback). Lifetime is one PHP request — exactly the right scope
+	 * for rendering a single page.
+	 *
+	 * @var array<string, ?string>
+	 */
+	private static array $role_label_cache = [];
+
+	/**
+	 * Bulk-fetch privileged roles for a set of users in a space.
+	 *
+	 * Powers the role-pill rendering on post / reply listings (1.4.0 G3).
+	 * One indexed query, regardless of list length — caller passes the
+	 * full set of author IDs visible on the page so the partial loop
+	 * never issues a per-row query.
+	 *
+	 * Returns ONLY admins and moderators. Members and viewers are not in
+	 * the result map (the pill template renders nothing for them, so
+	 * including them would just bloat the cache).
+	 *
+	 * @param int   $space_id
+	 * @param int[] $user_ids
+	 * @return array<int,string>  user_id => 'admin'|'moderator'
+	 */
+	public static function roles_for_users( int $space_id, array $user_ids ): array {
+		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
+		if ( $space_id <= 0 || empty( $user_ids ) ) {
+			return [];
+		}
+
+		$db           = static::db();
+		$table        = static::table();
+		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $db->get_results(
+			$db->prepare(
+				"SELECT user_id, role FROM {$table}
+				WHERE space_id = %d
+					AND user_id IN ({$placeholders})
+					AND role IN ('admin','moderator')",
+				array_merge( [ $space_id ], $user_ids )
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$out = [];
+		foreach ( $rows as $row ) {
+			$out[ (int) $row->user_id ] = (string) $row->role;
+		}
+		return $out;
+	}
+
+	/**
+	 * Pre-populate the per-request role cache for a list of users in a
+	 * space. Call BEFORE rendering a list of posts / replies so each
+	 * partial's role_label() lookup is O(1) — without this, a 200-reply
+	 * page would issue 200 separate queries.
+	 *
+	 * Users absent from the bulk-loader result are seeded as null in
+	 * the cache so subsequent role_label() calls still avoid the DB.
+	 *
+	 * @param int   $space_id
+	 * @param int[] $user_ids
+	 * @return void
+	 */
+	public static function warm_role_cache( int $space_id, array $user_ids ): void {
+		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
+		if ( $space_id <= 0 || empty( $user_ids ) ) {
+			return;
+		}
+		$found = self::roles_for_users( $space_id, $user_ids );
+		foreach ( $user_ids as $uid ) {
+			$key                            = $space_id . '|' . $uid;
+			self::$role_label_cache[ $key ] = $found[ $uid ] ?? null;
+		}
+	}
+
+	/**
+	 * Return 'admin' / 'moderator' / null for a user in a space, hitting
+	 * the warmed cache when available and falling back to a single
+	 * indexed query when not. Same per-request lifetime as
+	 * warm_role_cache.
+	 *
+	 * @param int $space_id
+	 * @param int $user_id
+	 * @return ?string
+	 */
+	public static function role_label( int $space_id, int $user_id ): ?string {
+		$key = $space_id . '|' . $user_id;
+		if ( ! array_key_exists( $key, self::$role_label_cache ) ) {
+			$role                           = self::get_role( $space_id, $user_id );
+			self::$role_label_cache[ $key ] = ( 'admin' === $role || 'moderator' === $role ) ? $role : null;
+		}
+		return self::$role_label_cache[ $key ];
+	}
+
+	/**
 	 * Count how many users currently hold the 'admin' role for a space.
 	 *
 	 * Single COUNT(*) query against the existing `(space_id, role)` index.
