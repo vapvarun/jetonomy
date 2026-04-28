@@ -32,13 +32,16 @@
 		// ── Confirm helper (1.4.0) ──
 		// Wraps the shared modal toolkit (assets/js/jetonomy-modals.js) so
 		// every wp-admin "Are you sure?" prompt uses the same dialog as
-		// the front end. Returns a Promise resolving true/false. Defensive
-		// fallback to native confirm() if the toolkit script failed to load.
+		// the front end. Returns a Promise resolving true/false. Per the
+		// no-browser-alerts rule, we NEVER fall back to native confirm()
+		// even on wp-admin — the toolkit is a hard dependency. If it's
+		// somehow absent the helper resolves false (cancel) so the
+		// destructive action never silently runs.
 		confirmAsync: function(message, opts) {
-			if (typeof window.jetonomyConfirm === 'function') {
-				return window.jetonomyConfirm(message, opts || {});
+			if (typeof window.jetonomyConfirm !== 'function') {
+				return Promise.resolve(false);
 			}
-			return Promise.resolve(window.confirm(message));
+			return window.jetonomyConfirm(message, opts || {});
 		},
 
 		// ── Toast Notification ──

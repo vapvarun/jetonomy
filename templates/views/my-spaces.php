@@ -123,6 +123,26 @@ $crumbs = array(
 									</span>
 								</span>
 							</a>
+							<?php
+							// Quick links for privileged spaces. Edit
+							// appears only for admins; Mod queue + Members
+							// for admins and moderators. Sit outside the
+							// stretched-link <a> via position: relative so
+							// they remain independently clickable.
+							?>
+							<div class="jt-space-card-actions">
+								<?php if ( 'admin' === $role ) : ?>
+									<a class="jt-space-card-action" href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $sp ) ); ?>">
+										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
+									</a>
+								<?php endif; ?>
+								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/mod/' ); ?>">
+									<?php esc_html_e( 'Mod queue', 'jetonomy' ); ?>
+								</a>
+								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/members/' ); ?>">
+									<?php esc_html_e( 'Members', 'jetonomy' ); ?>
+								</a>
+							</div>
 						</li>
 					<?php endforeach; ?>
 				</ul>

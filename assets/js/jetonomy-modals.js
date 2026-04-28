@@ -44,20 +44,26 @@
 		var titleId = 'jt-modal-title-' + dialogIdCounter;
 		var bodyId  = 'jt-modal-body-' + dialogIdCounter;
 
+		// Overlay is a backdrop only — no ARIA role, no aria-* attributes.
+		// role="dialog" + aria-modal + aria-labelledby/describedby live on
+		// the inner box (the element that receives focus), per the ARIA
+		// dialog pattern. Pre-1.4.0 these lived on the overlay, so screen
+		// readers never announced the dialog context when focus moved to
+		// the OK button inside the box.
 		var overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
-		overlay.setAttribute( 'role', 'dialog' );
-		overlay.setAttribute( 'aria-modal', 'true' );
-		if ( opts.title ) {
-			overlay.setAttribute( 'aria-labelledby', titleId );
-		}
-		if ( opts.message ) {
-			overlay.setAttribute( 'aria-describedby', bodyId );
-		}
 
 		var box = document.createElement( 'div' );
 		box.className = 'jt-modal-box';
-		box.setAttribute( 'tabindex', '-1' ); // programmatically focusable for sr fallback
+		box.setAttribute( 'role', 'dialog' );
+		box.setAttribute( 'aria-modal', 'true' );
+		box.setAttribute( 'tabindex', '-1' );
+		if ( opts.title ) {
+			box.setAttribute( 'aria-labelledby', titleId );
+		}
+		if ( opts.message ) {
+			box.setAttribute( 'aria-describedby', bodyId );
+		}
 
 		if ( opts.title ) {
 			var heading = document.createElement( 'p' );

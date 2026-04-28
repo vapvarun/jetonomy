@@ -9,17 +9,17 @@ defined( 'ABSPATH' ) || exit;
 $author  = get_userdata( $post->author_id );
 $profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $space   = \Jetonomy\Models\Space::find( (int) $post->space_id );
-// 1.4.0 C.5: caller passes `unread_count` from the bulk read-status map.
-// Defaults to 0 so single-post / direct-render contexts don't blow up.
-$unread_count = isset( $unread_count ) ? (int) $unread_count : 0;
-$initials     = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
-$trust        = $profile ? (int) $profile->trust_level : 0;
-$base         = \Jetonomy\base_url();
-$post_url     = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
-$time_ago     = human_time_diff( strtotime( $post->created_at ), time() );
-$tags         = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
-$viewer_id    = get_current_user_id();
-$viewer_vote  = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
+// 1.4.0 C.5: caller passes `has_unread` from the bulk read-status map.
+// Boolean signal — pill text reads "New" regardless of how many.
+$has_unread  = isset( $has_unread ) ? (bool) $has_unread : false;
+$initials    = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
+$trust       = $profile ? (int) $profile->trust_level : 0;
+$base        = \Jetonomy\base_url();
+$post_url    = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+$time_ago    = human_time_diff( strtotime( $post->created_at ), time() );
+$tags        = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
+$viewer_id   = get_current_user_id();
+$viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
 // Resolve prefix color from space settings.
 $prefix_name  = $post->prefix ?? null;
@@ -64,7 +64,7 @@ if ( $prefix_name && $space ) {
 					style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
-			<?php if ( $unread_count > 0 ) : ?>
+			<?php if ( $has_unread ) : ?>
 				<span class="jt-unread-pill" aria-label="<?php esc_attr_e( 'You have unread replies', 'jetonomy' ); ?>">
 					<?php esc_html_e( 'New', 'jetonomy' ); ?>
 				</span>

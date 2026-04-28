@@ -91,11 +91,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
                         savedRange = sel.getRangeAt( 0 ).cloneRange();
                     }
                     const selectedText = sel.toString();
-                    const promptFn = ( typeof window.jetonomyPrompt === 'function' )
-                        ? ( msg, opts ) => window.jetonomyPrompt( msg, opts )
-                        : ( msg ) => Promise.resolve( window.prompt( msg ) ); // defensive fallback
+                    // Per the no-browser-alerts rule, never fall back to
+                    // window.prompt. If the modal toolkit isn't loaded
+                    // (it's a hard JS dependency on the composer enqueue)
+                    // the link insert silently aborts — better UX than a
+                    // native dialog flashing on screen.
+                    if ( typeof window.jetonomyPrompt !== 'function' ) {
+                        return;
+                    }
 
-                    promptFn( 'Enter URL:', { placeholder: 'https://example.com' } ).then( ( raw ) => {
+                    window.jetonomyPrompt( 'Enter URL:', { placeholder: 'https://example.com' } ).then( ( raw ) => {
                         if ( ! raw ) return;
                         const trimmed = raw.trim();
                         if ( ! trimmed ) return;

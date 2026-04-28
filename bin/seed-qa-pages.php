@@ -27,9 +27,9 @@ $pages = array(
 	array( 'jt-qa-sc-recent-posts', 'QA · Shortcode · Recent Posts', '[jetonomy_recent_posts count="10"]', 'shortcode' ),
 	array( 'jt-qa-sc-trending-posts', 'QA · Shortcode · Trending Posts', '[jetonomy_trending_posts count="10"]', 'shortcode' ),
 	array( 'jt-qa-sc-spaces', 'QA · Shortcode · Spaces', '[jetonomy_spaces]', 'shortcode' ),
-	array( 'jt-qa-sc-leaderboard', 'QA · Shortcode · Leaderboard', '[jetonomy_leaderboard limit="10"]', 'shortcode' ),
-	array( 'jt-qa-sc-user-profile', 'QA · Shortcode · User Profile', '[jetonomy_user_profile login="admin"]', 'shortcode' ),
-	array( 'jt-qa-sc-space-members', 'QA · Shortcode · Space Members', '[jetonomy_space_members slug="announcements"]', 'shortcode' ),
+	array( 'jt-qa-sc-leaderboard', 'QA · Shortcode · Leaderboard', '[jetonomy_leaderboard count="10"]', 'shortcode' ),
+	array( 'jt-qa-sc-user-profile', 'QA · Shortcode · User Profile', '[jetonomy_user_profile user_id="1"]', 'shortcode' ),
+	array( 'jt-qa-sc-space-members', 'QA · Shortcode · Space Members', '[jetonomy_space_members space_id="1"]', 'shortcode' ),
 	array( 'jt-qa-sc-compose-topic', 'QA · Shortcode · Compose Topic', '[jetonomy_compose_topic]', 'shortcode' ),
 
 	// ── Blocks (8) — one page each, raw block markup ──────────────────────

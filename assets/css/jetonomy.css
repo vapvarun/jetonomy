@@ -420,6 +420,12 @@
   .jt-space-card-title { font-weight: 600; color: var(--jt-text); display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; }
   .jt-space-card-stats { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
+  /* Quick-action links sit below the stretched-link anchor on the
+     "Spaces I run" cards (G7). Position relative so they stay
+     interactive over the ::before of the parent .jt-space-card-link. */
+  .jt-space-card-actions { display: flex; gap: 12px; padding: 0 14px 12px; flex-wrap: wrap; position: relative; z-index: 2; }
+  .jt-space-card-action { color: var(--jt-accent); text-decoration: none; font-size: 0.8125rem; font-weight: 600; }
+  .jt-space-card-action:hover { text-decoration: underline; }
   .jt-empty-cta { margin-block-start: 16px; text-align: center; }
   @media ( max-width: 640px ) {
     .jt-space-list { grid-template-columns: 1fr; }
@@ -1876,6 +1882,11 @@
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
+@media ( max-width: 640px ) {
+	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
+	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
+	.jt-modal-actions .jt-btn { min-width: 0; width: 100%; }
+}
 
 /* ── Link Preview Cards ──
    LinkedIn / Twitter / Facebook style rich card. Media sits on top, metadata

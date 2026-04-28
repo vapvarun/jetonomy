@@ -196,12 +196,18 @@
 			return;
 		}
 
-		var promptResult = window.jetonomyConfirm
-			? window.jetonomyConfirm(
-				'Ban ' + name + ' from this space? They will lose access to its posts and replies until you lift the ban.',
-				{ title: 'Ban member', confirmLabel: 'Ban', danger: true }
-			)
-			: Promise.resolve( window.confirm( 'Ban ' + name + ' from this space?' ) );
+		// Per the no-browser-alerts rule, we never fall back to
+		// window.confirm here. window.jetonomyConfirm is a hard JS
+		// dependency — if it's absent at runtime, treat the absence as
+		// "cancel" rather than surface a native dialog on a destructive
+		// action.
+		if ( typeof window.jetonomyConfirm !== 'function' ) {
+			return;
+		}
+		var promptResult = window.jetonomyConfirm(
+			'Ban ' + name + ' from this space? They will lose access to its posts and replies until you lift the ban.',
+			{ title: 'Ban member', confirmLabel: 'Ban', danger: true }
+		);
 
 		promptResult.then( function ( ok ) {
 			if ( ! ok ) {

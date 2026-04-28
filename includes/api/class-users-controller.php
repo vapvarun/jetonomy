@@ -152,10 +152,14 @@ class Users_Controller extends Base_Controller {
 				)
 			);
 		} else {
+			// Don't search user_email — that lets a logged-in member
+			// fish for other members' email addresses by typing the
+			// address prefix and seeing them resolve. Login + display
+			// name covers every legitimate mention case.
 			$users = get_users(
 				array(
 					'search'         => '*' . $q . '*',
-					'search_columns' => array( 'user_login', 'display_name', 'user_email' ),
+					'search_columns' => array( 'user_login', 'display_name' ),
 					'number'         => 10,
 					'orderby'        => 'display_name',
 				)

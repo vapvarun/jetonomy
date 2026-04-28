@@ -13,13 +13,25 @@ class Schema_Markup {
 
 	public function __construct() {
 		add_action( 'wp_head', [ $this, 'output_schema' ] );
+		// 1.4.0: title patterns are owned by Template_Loader::set_seo_meta
+		// now. The legacy filter here was double-injecting {site_name},
+		// because WP's separator already appends the site name to
+		// $title_parts['title'] — pre-fix titles read "Topic | Site – Site".
+		// Patterns from `seo_post_title` / `seo_space_title` settings are
+		// still honoured: their {site_name} expansion is stripped here so
+		// WP only adds the site name once. When a customer wants the
+		// admin-configured title untouched, they can filter
+		// `jetonomy_seo_meta` to override `title` directly.
 		add_filter( 'document_title_parts', [ $this, 'filter_title' ] );
 	}
 
 	/**
-	 * Apply SEO title patterns from settings.
+	 * Apply admin-configured SEO title patterns. Drops the {site_name}
+	 * placeholder before substitution so WP's separator + tagline path
+	 * doesn't append the site name a second time. Empty patterns are
+	 * ignored so Template_Loader::set_seo_meta keeps owning the title.
 	 *
-	 * Supports placeholders: {post_title}, {space_name}, {site_name}
+	 * Supports placeholders: {post_title}, {space_name}.
 	 */
 	public function filter_title( array $title_parts ): array {
 		$route = get_query_var( 'jetonomy_route' );
@@ -27,18 +39,24 @@ class Schema_Markup {
 			return $title_parts;
 		}
 
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$site_name = get_bloginfo( 'name' );
+		$settings = get_option( 'jetonomy_settings', [] );
+
+		$strip_site_name = static function ( string $pattern ): string {
+			// Drop {site_name} along with any trailing/leading separator.
+			$pattern = (string) preg_replace( '/\s*[\|\-–—]?\s*\{site_name\}\s*[\|\-–—]?\s*/u', ' ', $pattern );
+			$pattern = (string) preg_replace( '/\s+/u', ' ', $pattern );
+			return trim( $pattern );
+		};
 
 		if ( 'post' === $route && ! empty( $settings['seo_post_title'] ) ) {
 			$slug  = get_query_var( 'jetonomy_slug' );
 			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
 			$space = $post ? \Jetonomy\Models\Space::find( (int) $post->space_id ) : null;
 			if ( $post ) {
-				$pattern              = $settings['seo_post_title'];
+				$pattern              = $strip_site_name( (string) $settings['seo_post_title'] );
 				$title_parts['title'] = str_replace(
-					[ '{post_title}', '{space_name}', '{site_name}' ],
-					[ $post->title, $space->title ?? '', $site_name ],
+					[ '{post_title}', '{space_name}' ],
+					[ $post->title, $space->title ?? '' ],
 					$pattern
 				);
 			}
@@ -48,10 +66,10 @@ class Schema_Markup {
 			$slug  = get_query_var( 'jetonomy_slug' );
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
 			if ( $space ) {
-				$pattern              = $settings['seo_space_title'];
+				$pattern              = $strip_site_name( (string) $settings['seo_space_title'] );
 				$title_parts['title'] = str_replace(
-					[ '{space_name}', '{site_name}' ],
-					[ $space->title, $site_name ],
+					[ '{space_name}' ],
+					[ $space->title ],
 					$pattern
 				);
 			}
@@ -128,6 +146,15 @@ class Schema_Markup {
 
 		$post = \Jetonomy\Models\Post::find_by_slug( $slug );
 		if ( ! $post ) {
+			return null;
+		}
+
+		// 1.4.0 fix: gate the schema emit on the same can_read_post()
+		// check Template_Loader applies to og:* / meta description /
+		// article:* metadata. Without this, JSON-LD leaks the full
+		// content of a private post to logged-out crawlers even though
+		// the HTML view returns 403/404 (Basecamp 9803998504 regression).
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 			return null;
 		}
 
