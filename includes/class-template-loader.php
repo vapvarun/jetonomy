@@ -348,6 +348,11 @@ class Template_Loader {
 		);
 
 		// Localize upload & API data for composer.js (image upload + instant search).
+		// `restNonce` carries the wp_rest nonce that composer.js sends as
+		// `X-WP-Nonce` for POST /jetonomy/v1/media (1.4.0 A.1). The legacy
+		// `ajaxUrl` and `nonce` keys are still emitted because A.1 commit 2 only
+		// switches the JS callsite — the underlying wp_ajax_jetonomy_upload_image
+		// handler is removed in A.1 commit 3, at which point both legacy keys go.
 		wp_localize_script(
 			'jetonomy-composer',
 			'jetonomyUpload',
@@ -355,6 +360,7 @@ class Template_Loader {
 				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 				'nonce'         => wp_create_nonce( 'jetonomy_upload' ),
 				'apiBase'       => rest_url( 'jetonomy/v1' ),
+				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
 			)
 		);

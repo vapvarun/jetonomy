@@ -205,31 +205,36 @@ document.addEventListener( 'DOMContentLoaded', () => {
         placeholder.textContent = 'Uploading\u2026';
         editor.appendChild( placeholder );
 
-        var nonce = ( typeof jetonomyUpload !== 'undefined' && jetonomyUpload.nonce )
-            ? jetonomyUpload.nonce
-            : ( document.querySelector( '[name="_wpnonce"]' ) || {} ).value || '';
-
-        var ajaxUrl = ( typeof jetonomyUpload !== 'undefined' && jetonomyUpload.ajaxUrl )
-            ? jetonomyUpload.ajaxUrl
-            : '/wp-admin/admin-ajax.php';
+        // 1.4.0 A.1: POST /jetonomy/v1/media replaces wp_ajax_jetonomy_upload_image.
+        // Response is the attachment object directly: { id, url, alt, mime, width, height }
+        // on 2xx, or { code, message, data: { status } } on 4xx/5xx.
+        var apiBase = ( typeof jetonomyUpload !== 'undefined' && jetonomyUpload.apiBase )
+            ? jetonomyUpload.apiBase
+            : '/wp-json/jetonomy/v1';
+        var restNonce = ( typeof jetonomyUpload !== 'undefined' && jetonomyUpload.restNonce )
+            ? jetonomyUpload.restNonce
+            : '';
 
         var formData = new FormData();
         formData.append( 'file', file );
-        formData.append( 'action', 'jetonomy_upload_image' );
-        formData.append( 'nonce', nonce );
 
-        fetch( ajaxUrl, {
+        fetch( apiBase + '/media', {
             method: 'POST',
+            headers: restNonce ? { 'X-WP-Nonce': restNonce } : {},
             body: formData,
             credentials: 'same-origin',
         } )
-        .then( function( r ) { return r.json(); } )
+        .then( function( r ) {
+            return r.json().then( function( body ) {
+                return { ok: r.ok, status: r.status, body: body };
+            } );
+        } )
         .then( function( res ) {
             placeholder.remove();
-            if ( res.success && res.data.url ) {
+            if ( res.ok && res.body && res.body.url ) {
                 var img = document.createElement( 'img' );
-                img.src = res.data.url;
-                img.alt = res.data.alt || file.name;
+                img.src = res.body.url;
+                img.alt = res.body.alt || file.name;
                 img.style.maxWidth = '100%';
                 img.style.height = 'auto';
                 img.style.borderRadius = '8px';
@@ -237,12 +242,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 editor.appendChild( img );
                 editor.appendChild( document.createElement( 'br' ) );
             } else {
-                (window.bnToast ? window.bnToast( res.data || 'Upload failed', 'error' ) : null);
+                var msg = ( res.body && res.body.message ) ? res.body.message : 'Upload failed';
+                if ( window.bnToast ) { window.bnToast( msg, 'error' ); }
             }
         } )
         .catch( function() {
             placeholder.remove();
-            (window.bnToast ? window.bnToast( 'Upload failed', 'error' ) : null);
+            if ( window.bnToast ) { window.bnToast( 'Upload failed', 'error' ); }
         } );
     }
 
