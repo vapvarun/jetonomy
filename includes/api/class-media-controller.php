@@ -107,6 +107,23 @@ class Media_Controller extends Base_Controller {
 			);
 		}
 
+		// 1.4.0 D.8 — accessibility + SEO: every uploaded image must carry
+		// an alt. Caller can pass an explicit `alt` form field (preferred);
+		// otherwise we synthesise a readable default from the file name so
+		// screen-readers don't see "image" and search engines have something
+		// indexable. Customers who want strict empty-alt can pass alt="".
+		$explicit_alt = $request->get_param( 'alt' );
+		if ( null !== $explicit_alt ) {
+			$alt_text = sanitize_text_field( (string) $explicit_alt );
+		} else {
+			$post     = get_post( $attachment_id );
+			$base     = $post ? pathinfo( get_attached_file( $attachment_id ) ?: $post->post_title, PATHINFO_FILENAME ) : '';
+			$base     = (string) preg_replace( '/[-_]+/', ' ', (string) $base );
+			$base     = trim( (string) preg_replace( '/\s+/', ' ', $base ) );
+			$alt_text = '' !== $base ? ucfirst( $base ) : __( 'Uploaded image', 'jetonomy' );
+		}
+		update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+
 		$meta = wp_get_attachment_metadata( $attachment_id );
 
 		return rest_ensure_response(

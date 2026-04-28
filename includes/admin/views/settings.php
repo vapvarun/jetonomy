@@ -836,6 +836,30 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<?php esc_html_e( 'Noindex search result pages', 'jetonomy' ); ?>
 								</label>
 							</fieldset>
+							<p class="description"><?php esc_html_e( 'Moderation queues, composer pages, notifications, edit profile, and invite landings always emit noindex (administrative or personal views, not for search results).', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="seo_twitter_handle"><?php esc_html_e( 'Twitter / X handle', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="seo_twitter_handle" name="jetonomy_settings[seo_twitter_handle]" value="<?php echo esc_attr( $settings['seo_twitter_handle'] ?? '' ); ?>" class="regular-text" placeholder="@yoursite">
+							<p class="description"><?php esc_html_e( 'Site handle emitted as twitter:site on every public route. Leave blank to omit.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="seo_default_og_image"><?php esc_html_e( 'Default share image', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="seo_default_og_image" name="jetonomy_settings[seo_default_og_image]" value="<?php echo esc_attr( $settings['seo_default_og_image'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/share-card.jpg">
+							<p class="description"><?php esc_html_e( 'og:image URL when a route has no image of its own. Falls back to the WordPress site logo / icon when this is empty.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Verify SEO', 'jetonomy' ); ?></th>
+						<td>
+							<a class="button" href="<?php echo esc_url( home_url( '/wp-sitemap.xml' ) ); ?>" target="_blank" rel="noopener">
+								<?php esc_html_e( 'Open XML sitemap', 'jetonomy' ); ?>
+							</a>
+							<p class="description"><?php esc_html_e( 'Confirms /wp-sitemap.xml is reachable and that community URLs (spaces + posts) are listed. New spaces can take a few minutes to appear after the next ping.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 				</table>

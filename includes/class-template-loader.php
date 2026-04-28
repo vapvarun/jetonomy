@@ -819,12 +819,20 @@ class Template_Loader {
 						break;
 				}
 
+				$jt_seo_settings = get_option( 'jetonomy_settings', array() );
+
 				/**
 				 * og:image fallback chain — when the route-specific image is
-				 * empty, fall back through site logo / site icon so social
-				 * shares always carry a card image instead of letting the
-				 * platform render a blank tile.
+				 * empty, fall back through admin-configured default → site
+				 * logo → site icon so social shares always carry a card
+				 * image instead of letting the platform render a blank tile.
 				 */
+				if ( '' === $image ) {
+					$default_og = isset( $jt_seo_settings['seo_default_og_image'] ) ? (string) $jt_seo_settings['seo_default_og_image'] : '';
+					if ( '' !== $default_og ) {
+						$image = $default_og;
+					}
+				}
 				if ( '' === $image ) {
 					$logo_id = (int) get_theme_mod( 'custom_logo' );
 					if ( $logo_id > 0 ) {
@@ -902,6 +910,13 @@ class Template_Loader {
 							}
 						}
 						echo '<meta name="twitter:card" content="' . esc_attr( $twitter_card ) . '">' . "\n";
+						$jt_twitter_handle = isset( $jt_seo_settings['seo_twitter_handle'] ) ? trim( (string) $jt_seo_settings['seo_twitter_handle'] ) : '';
+						if ( '' !== $jt_twitter_handle ) {
+							if ( '@' !== substr( $jt_twitter_handle, 0, 1 ) ) {
+								$jt_twitter_handle = '@' . $jt_twitter_handle;
+							}
+							echo '<meta name="twitter:site" content="' . esc_attr( $jt_twitter_handle ) . '">' . "\n";
+						}
 						echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
 						echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
 						if ( '' !== $image ) {
