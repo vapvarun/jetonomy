@@ -29,6 +29,25 @@ use Jetonomy\Models\UserProfile;
 class Permission_Engine {
 
 	/**
+	 * Moderation actions a space-level admin / moderator can perform on
+	 * content in their space, regardless of the WordPress capability map.
+	 * Used by the Layer 0d short-circuit so subscribers promoted to the
+	 * mod role from the front-end members page actually get the tools.
+	 */
+	private const SPACE_MOD_ACTIONS = array(
+		'moderate',
+		'edit_others_posts',
+		'edit_others_replies',
+		'delete_others_posts',
+		'delete_others_replies',
+		'close_posts',
+		'pin_posts',
+		'move_posts',
+		'merge_posts',
+		'split_replies',
+	);
+
+	/**
 	 * Actions permitted per space role.
 	 *
 	 * Each higher role includes all actions of the roles below it.
@@ -118,6 +137,20 @@ class Permission_Engine {
 		// WP admin bypass — skip all further checks.
 		if ( $user_id && user_can( $user_id, 'manage_options' ) ) {
 			return true;
+		}
+
+		// Layer 0d: Space-level mod role bypass for moderation actions.
+		// Without this, a Subscriber promoted to space admin / moderator hits
+		// Layer 1's `user_can( jetonomy_moderate )` check, fails, and is
+		// denied — the space-level role never gets a chance to grant access.
+		// Customer impact: the space owner promotes a member to moderator
+		// from the front-end members page, the inline edit / pin / move /
+		// merge / delete tools never appear on that user's screen.
+		if ( $user_id && $space_id && in_array( $action, self::SPACE_MOD_ACTIONS, true ) ) {
+			$mod_role = SpaceMember::get_role( $space_id, $user_id );
+			if ( in_array( $mod_role, array( 'admin', 'moderator' ), true ) ) {
+				return true;
+			}
 		}
 
 		// Layer 1: WordPress capability.

@@ -114,6 +114,21 @@ $type_labels = [
 							if ( $badge_user ) {
 								$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/';
 							}
+						} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
+							// Mirrors Notifier::build_join_request_url_for() so the
+							// link the customer sees on this page matches the link
+							// in their email — and routes to the right surface for
+							// who they are. Recipient with `jetonomy_manage_spaces`
+							// (or admin) lands in wp-admin → Spaces → join requests;
+							// space-level admins go to the front-end mod queue.
+							$jr_space = \Jetonomy\Models\Space::find( (int) $notif->object_id );
+							if ( $jr_space ) {
+								if ( current_user_can( 'jetonomy_manage_spaces' ) || current_user_can( 'manage_options' ) ) {
+									$notif_url = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $jr_space->id . '&tab=join_requests' );
+								} else {
+									$notif_url = $base . '/s/' . $jr_space->slug . '/mod/';
+								}
+							}
 						}
 					}
 					?>
