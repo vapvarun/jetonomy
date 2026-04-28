@@ -68,14 +68,23 @@ class Schema_Markup {
 
 		$settings = get_option( 'jetonomy_settings', [] );
 
-		if ( empty( $settings['seo_schema'] ) ) {
+		// 1.4.0 D.4: schema emission defaults to ON. Pre-1.4.0 the option was
+		// opt-in, which meant a fresh install shipped with no JSON-LD on any
+		// route. Customers who want it OFF can set seo_schema=>false explicitly.
+		$seo_schema_enabled = ! array_key_exists( 'seo_schema', $settings ) || ! empty( $settings['seo_schema'] );
+		if ( ! $seo_schema_enabled ) {
 			return;
 		}
 
+		// Robots noindex for profiles + search is now driven by the
+		// route-aware emitter in Template_Loader::set_seo_meta() (Phase D),
+		// which covers more surfaces. Schema_Markup keeps these legacy
+		// emissions for the case where an admin has the seo-pro extension
+		// disabled and Template_Loader's emit was suppressed by a customer
+		// filter — they're idempotent (browsers de-dupe identical metas).
 		if ( 'profile' === $route && ! empty( $settings['seo_noindex_profiles'] ) ) {
 			echo '<meta name="robots" content="noindex, follow">' . "\n";
 		}
-
 		if ( 'search' === $route && ! empty( $settings['seo_noindex_search'] ) ) {
 			echo '<meta name="robots" content="noindex, follow">' . "\n";
 		}
@@ -91,6 +100,12 @@ class Schema_Markup {
 				break;
 			case 'home':
 				$schema = $this->get_home_schema();
+				break;
+			case 'profile':
+				$schema = $this->get_profile_schema();
+				break;
+			case 'tag':
+				$schema = $this->get_tag_schema();
 				break;
 		}
 
@@ -180,6 +195,13 @@ class Schema_Markup {
 		];
 	}
 
+	/**
+	 * Space → CollectionPage with mainEntity → ItemList of recent threads.
+	 *
+	 * 1.4.0 D.4: switched from DiscussionForumPosting (which is for a single
+	 * thread, not a forum index) to CollectionPage so search engines model
+	 * the page as a list of discussions, not as one giant post.
+	 */
 	private function get_space_schema(): ?array {
 		$slug = get_query_var( 'jetonomy_slug' );
 		if ( ! $slug ) {
@@ -191,23 +213,154 @@ class Schema_Markup {
 			return null;
 		}
 
-		return [
+		$base      = \Jetonomy\base_url();
+		$space_url = $base . '/s/' . $space->slug . '/';
+
+		// Top 10 recent posts in this space — gives the schema a real
+		// mainEntity ItemList rather than an empty container. Stays well
+		// inside the extreme-scale rule because of the LIMIT 10.
+		$posts        = \Jetonomy\Models\Post::list_by_space( (int) $space->id, 'latest', 10 );
+		$item_entries = array();
+		foreach ( $posts as $i => $post ) {
+			$item_entries[] = array(
+				'@type'    => 'ListItem',
+				'position' => $i + 1,
+				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->slug . '/',
+				'name'     => $post->title,
+			);
+		}
+
+		return array(
 			'@context'    => 'https://schema.org',
-			'@type'       => 'DiscussionForumPosting',
+			'@type'       => 'CollectionPage',
 			'name'        => $space->title,
 			'description' => wp_strip_all_tags( $space->description ?? '' ),
-			'url'         => \Jetonomy\base_url() . '/s/' . $space->slug . '/',
-		];
+			'url'         => $space_url,
+			'mainEntity'  => array(
+				'@type'           => 'ItemList',
+				'numberOfItems'   => (int) $space->post_count,
+				'itemListElement' => $item_entries,
+			),
+		);
 	}
 
+	/**
+	 * Home → WebSite + SearchAction (Sitelinks Searchbox eligibility).
+	 *
+	 * 1.4.0 D.4: added the `potentialAction` block pointing at
+	 * /community/search/?q={search_term_string} so Google's Sitelinks
+	 * Searchbox can surface our search directly in the SERP.
+	 */
 	private function get_home_schema(): array {
-		return [
+		$base      = \Jetonomy\base_url();
+		$site_name = get_bloginfo( 'name' );
+
+		return array(
+			'@context'        => 'https://schema.org',
+			'@type'           => 'WebSite',
+			'name'            => $site_name . ' Community',
+			'description'     => __( 'Community discussion forum', 'jetonomy' ),
+			'url'             => $base . '/',
+			'inLanguage'      => str_replace( '_', '-', get_locale() ),
+			'potentialAction' => array(
+				'@type'       => 'SearchAction',
+				'target'      => array(
+					'@type'       => 'EntryPoint',
+					'urlTemplate' => $base . '/search/?q={search_term_string}',
+				),
+				'query-input' => 'required name=search_term_string',
+			),
+		);
+	}
+
+	/**
+	 * Profile → Person schema with avatar, bio, profile URL, social links.
+	 *
+	 * 1.4.0 D.4: lets search engines pull the right person card / image /
+	 * description for the profile, and links out via `sameAs` so social
+	 * presences resolve back to the community profile.
+	 */
+	private function get_profile_schema(): ?array {
+		$login = get_query_var( 'jetonomy_slug' );
+		if ( ! $login ) {
+			return null;
+		}
+
+		$user = get_user_by( 'login', $login );
+		if ( ! $user ) {
+			return null;
+		}
+
+		$profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
+		$bio         = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
+		$profile_url = \Jetonomy\base_url() . '/u/' . rawurlencode( $user->user_login ) . '/';
+		$avatar_url  = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
+
+		$same_as = array();
+		if ( $profile && ! empty( $profile->social_links ) ) {
+			$social = is_array( $profile->social_links )
+				? $profile->social_links
+				: ( json_decode( (string) $profile->social_links, true ) ?: array() );
+			foreach ( (array) $social as $link ) {
+				$url = is_array( $link ) ? ( $link['url'] ?? '' ) : (string) $link;
+				if ( $url && filter_var( $url, FILTER_VALIDATE_URL ) ) {
+					$same_as[] = $url;
+				}
+			}
+		}
+
+		$schema = array(
+			'@context' => 'https://schema.org',
+			'@type'    => 'Person',
+			'name'     => $user->display_name,
+			'url'      => $profile_url,
+			'image'    => $avatar_url,
+		);
+		if ( '' !== $bio ) {
+			$schema['description'] = $bio;
+		}
+		if ( ! empty( $same_as ) ) {
+			$schema['sameAs'] = array_values( array_unique( $same_as ) );
+		}
+		return $schema;
+	}
+
+	/**
+	 * Tag → CollectionPage (mainEntity → ItemList of tagged threads).
+	 *
+	 * 1.4.0 D.4: same pattern as space schema — search engines see the tag
+	 * page as a curated index, not a single document.
+	 */
+	private function get_tag_schema(): ?array {
+		$slug = get_query_var( 'jetonomy_slug' );
+		if ( ! $slug ) {
+			return null;
+		}
+
+		$tag = \Jetonomy\Models\Tag::find_by_slug( $slug );
+		if ( ! $tag ) {
+			return null;
+		}
+
+		$base    = \Jetonomy\base_url();
+		$tag_url = $base . '/tag/' . rawurlencode( $tag->slug ) . '/';
+
+		return array(
 			'@context'    => 'https://schema.org',
-			'@type'       => 'WebPage',
-			'name'        => get_bloginfo( 'name' ) . ' Community',
-			'description' => __( 'Community discussion forum', 'jetonomy' ),
-			'url'         => \Jetonomy\base_url() . '/',
-		];
+			'@type'       => 'CollectionPage',
+			'name'        => '#' . $tag->name,
+			'description' => sprintf(
+				/* translators: 1: tag name, 2: site name */
+				__( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ),
+				$tag->name,
+				get_bloginfo( 'name' )
+			),
+			'url'         => $tag_url,
+			'mainEntity'  => array(
+				'@type'         => 'ItemList',
+				'numberOfItems' => (int) $tag->post_count,
+			),
+		);
 	}
 
 	private function get_breadcrumb_schema(): ?array {
@@ -248,6 +401,46 @@ class Schema_Markup {
 					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',
 				];
 			}
+		}
+
+		// 1.4.0 D.4: extended breadcrumb coverage to profile / tag /
+		// leaderboard / search / moderation. Each route produces a 2-item
+		// chain (Community → page-name) so crawlers see proper hierarchy.
+		if ( 'profile' === $route && $slug ) {
+			$user = get_user_by( 'login', $slug );
+			if ( $user ) {
+				$items[] = array(
+					'name' => '@' . $user->user_login,
+					'url'  => $base . 'u/' . rawurlencode( $user->user_login ) . '/',
+				);
+			}
+		}
+		if ( 'tag' === $route && $slug ) {
+			$tag = \Jetonomy\Models\Tag::find_by_slug( $slug );
+			if ( $tag ) {
+				$items[] = array(
+					'name' => '#' . $tag->name,
+					'url'  => $base . 'tag/' . rawurlencode( $tag->slug ) . '/',
+				);
+			}
+		}
+		if ( 'leaderboard' === $route ) {
+			$items[] = array(
+				'name' => __( 'Leaderboard', 'jetonomy' ),
+				'url'  => $base . 'leaderboard/',
+			);
+		}
+		if ( 'search' === $route ) {
+			$items[] = array(
+				'name' => __( 'Search', 'jetonomy' ),
+				'url'  => $base . 'search/',
+			);
+		}
+		if ( 'moderation' === $route ) {
+			$items[] = array(
+				'name' => __( 'Moderation', 'jetonomy' ),
+				'url'  => $base . 'mod/',
+			);
 		}
 
 		if ( count( $items ) <= 1 ) {
