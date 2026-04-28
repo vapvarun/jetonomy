@@ -81,6 +81,97 @@ class Users_Controller extends Base_Controller {
 				'args'                => $this->get_collection_params(),
 			]
 		);
+
+		// 1.4.0 C.7 — mention autocomplete: GET /users/suggest?q=&space_id=
+		register_rest_route(
+			$ns,
+			'/users/suggest',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'suggest' ),
+				'permission_callback' => function () {
+					return is_user_logged_in();
+				},
+				'args'                => array(
+					'q'        => array(
+						'type'              => 'string',
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'space_id' => array(
+						'type'              => 'integer',
+						'required'          => false,
+						'default'           => 0,
+						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * GET /users/suggest — typeahead matches by login or display name.
+	 *
+	 * Permission: logged-in user. When `space_id` is supplied, suggestions
+	 * are restricted to space members so a member can only @mention people
+	 * who can actually see the post — keeps mentions inside private spaces
+	 * from leaking into outside searches.
+	 *
+	 * Returns: top 10 matches as { id, login, display_name, avatar_url }.
+	 */
+	public function suggest( WP_REST_Request $request ): WP_REST_Response {
+		$q        = trim( (string) $request->get_param( 'q' ) );
+		$space_id = (int) $request->get_param( 'space_id' );
+		// Two-letter minimum keeps the page light AND keeps the result set
+		// useful for the typeahead. Empty / one-character searches return
+		// empty so the dropdown doesn't flash on every keypress.
+		if ( strlen( $q ) < 2 ) {
+			return new WP_REST_Response( array(), 200 );
+		}
+
+		$users = array();
+		if ( $space_id > 0 ) {
+			global $wpdb;
+			$members_tbl = table( 'space_members' );
+			$ids         = (array) $wpdb->get_col(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT user_id FROM {$members_tbl} WHERE space_id = %d",
+					$space_id
+				)
+			);
+			if ( empty( $ids ) ) {
+				return new WP_REST_Response( array(), 200 );
+			}
+			$users = get_users(
+				array(
+					'include' => array_map( 'intval', $ids ),
+					'search'  => '*' . $q . '*',
+					'number'  => 10,
+					'orderby' => 'display_name',
+				)
+			);
+		} else {
+			$users = get_users(
+				array(
+					'search'         => '*' . $q . '*',
+					'search_columns' => array( 'user_login', 'display_name', 'user_email' ),
+					'number'         => 10,
+					'orderby'        => 'display_name',
+				)
+			);
+		}
+
+		$out = array();
+		foreach ( $users as $u ) {
+			$out[] = array(
+				'id'           => (int) $u->ID,
+				'login'        => $u->user_login,
+				'display_name' => $u->display_name,
+				'avatar_url'   => (string) get_avatar_url( $u->ID, array( 'size' => 48 ) ),
+			);
+		}
+		return new WP_REST_Response( $out, 200 );
 	}
 
 	/**

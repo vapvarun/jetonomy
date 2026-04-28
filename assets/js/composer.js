@@ -676,3 +676,225 @@ document.addEventListener( 'DOMContentLoaded', () => {
         });
     });
 }());
+
+/**
+ * 1.4.0 C.7 — @mention autocomplete in any contenteditable composer.
+ *
+ * Watches every `.jt-editor-body` for an `@` followed by a partial login
+ * or display-name fragment. Debounces 250ms, fetches from
+ * /jetonomy/v1/users/suggest, and renders a dropdown beside the caret.
+ * Arrow keys + Enter / Tab insert `@login `; Escape dismisses.
+ *
+ * Permission scoping: when a parent element carries data-jt-space-id,
+ * suggestions are restricted to that space's members so a member can
+ * only @mention people who can see the post.
+ *
+ * Builds DOM nodes directly (no innerHTML) to keep XSS off the table —
+ * any user-supplied display_name flows through textContent only.
+ */
+( function () {
+    'use strict';
+
+    var apiBase = ( window.jetonomyData && window.jetonomyData.restBase ) || '';
+    var nonce   = ( window.jetonomyData && window.jetonomyData.restNonce ) || '';
+    if ( ! apiBase ) {
+        return;
+    }
+
+    var dropdown = null;
+    var activeBody = null;
+    var activeRange = null;
+    var matches = [];
+    var selectedIndex = 0;
+    var debounceTimer = null;
+    var lastQuery = '';
+
+    function closeDropdown() {
+        if ( dropdown && dropdown.parentNode ) {
+            dropdown.parentNode.removeChild( dropdown );
+        }
+        dropdown = null;
+        activeBody = null;
+        activeRange = null;
+        matches = [];
+        selectedIndex = 0;
+    }
+
+    function buildDropdown( body ) {
+        closeDropdown();
+        dropdown = document.createElement( 'div' );
+        dropdown.className = 'jt-mention-dropdown';
+        dropdown.setAttribute( 'role', 'listbox' );
+        document.body.appendChild( dropdown );
+        activeBody = body;
+    }
+
+    function positionDropdown( range ) {
+        if ( ! dropdown ) {
+            return;
+        }
+        var rect = range.getBoundingClientRect();
+        if ( ! rect || ( rect.width === 0 && rect.height === 0 ) ) {
+            rect = activeBody.getBoundingClientRect();
+        }
+        dropdown.style.position = 'absolute';
+        dropdown.style.top      = ( window.scrollY + rect.bottom + 4 ) + 'px';
+        dropdown.style.left     = ( window.scrollX + rect.left ) + 'px';
+        dropdown.style.zIndex   = '9999';
+    }
+
+    function renderMatches() {
+        if ( ! dropdown ) {
+            return;
+        }
+        // Clear children safely without innerHTML.
+        while ( dropdown.firstChild ) {
+            dropdown.removeChild( dropdown.firstChild );
+        }
+        if ( ! matches.length ) {
+            var empty = document.createElement( 'div' );
+            empty.className = 'jt-mention-empty';
+            empty.textContent = 'No matches';
+            dropdown.appendChild( empty );
+            return;
+        }
+        matches.forEach( function ( m, i ) {
+            var row = document.createElement( 'div' );
+            row.className = 'jt-mention-row' + ( i === selectedIndex ? ' is-selected' : '' );
+            row.setAttribute( 'role', 'option' );
+            row.dataset.index = String( i );
+
+            var img = document.createElement( 'img' );
+            img.className = 'jt-mention-avatar';
+            img.alt = '';
+            img.src = m.avatar_url;
+            row.appendChild( img );
+
+            var name = document.createElement( 'span' );
+            name.className = 'jt-mention-name';
+            name.textContent = m.display_name || '';
+            row.appendChild( name );
+
+            var login = document.createElement( 'span' );
+            login.className = 'jt-mention-login';
+            login.textContent = '@' + ( m.login || '' );
+            row.appendChild( login );
+
+            row.addEventListener( 'mousedown', function ( e ) {
+                e.preventDefault();
+                selectedIndex = i;
+                accept();
+            } );
+            dropdown.appendChild( row );
+        } );
+    }
+
+    function findMentionTrigger( body ) {
+        var sel = window.getSelection();
+        if ( ! sel || sel.rangeCount === 0 ) { return null; }
+        var range = sel.getRangeAt( 0 );
+        if ( ! body.contains( range.startContainer ) ) { return null; }
+        if ( range.startContainer.nodeType !== Node.TEXT_NODE ) { return null; }
+        var text = range.startContainer.textContent.slice( 0, range.startOffset );
+        var match = text.match( /(?:^|\s)@([a-zA-Z0-9_\-\.]{0,30})$/ );
+        if ( ! match ) { return null; }
+        return {
+            range: range,
+            query: match[ 1 ],
+            startOffset: range.startOffset - match[ 1 ].length,
+        };
+    }
+
+    function fetchMatches( query, spaceId ) {
+        if ( query === lastQuery ) {
+            return;
+        }
+        lastQuery = query;
+        var url = apiBase + '/users/suggest?q=' + encodeURIComponent( query );
+        if ( spaceId ) {
+            url += '&space_id=' + encodeURIComponent( spaceId );
+        }
+        fetch( url, {
+            credentials: 'same-origin',
+            headers: { 'X-WP-Nonce': nonce, 'Accept': 'application/json' }
+        } ).then( function ( r ) { return r.ok ? r.json() : []; } )
+        .then( function ( data ) {
+            matches = Array.isArray( data ) ? data : [];
+            selectedIndex = 0;
+            renderMatches();
+        } ).catch( function () {
+            matches = [];
+            renderMatches();
+        } );
+    }
+
+    function accept() {
+        if ( ! dropdown || ! matches.length || ! activeBody || ! activeRange ) { return; }
+        var pick = matches[ selectedIndex ];
+        if ( ! pick ) { return; }
+        var sel = window.getSelection();
+        if ( ! sel || sel.rangeCount === 0 ) { return; }
+        var range = sel.getRangeAt( 0 );
+        if ( range.startContainer.nodeType !== Node.TEXT_NODE ) { return; }
+        var node = range.startContainer;
+        var caret = range.startOffset;
+        var before = node.textContent.slice( 0, caret );
+        var after  = node.textContent.slice( caret );
+        var stripped = before.replace( /@[a-zA-Z0-9_\-\.]{0,30}$/, '' );
+        node.textContent = stripped + '@' + pick.login + ' ' + after;
+        var newOffset = stripped.length + ( '@' + pick.login + ' ' ).length;
+        var newRange = document.createRange();
+        newRange.setStart( node, newOffset );
+        newRange.setEnd( node, newOffset );
+        sel.removeAllRanges();
+        sel.addRange( newRange );
+        closeDropdown();
+    }
+
+    function getSpaceId( body ) {
+        var ancestor = body.closest( '[data-jt-space-id]' );
+        return ancestor ? parseInt( ancestor.getAttribute( 'data-jt-space-id' ), 10 ) || 0 : 0;
+    }
+
+    document.addEventListener( 'input', function ( e ) {
+        var body = e.target && e.target.classList && e.target.classList.contains( 'jt-editor-body' ) ? e.target : null;
+        if ( ! body ) { return; }
+        var trigger = findMentionTrigger( body );
+        if ( ! trigger ) { closeDropdown(); return; }
+        if ( trigger.query.length < 2 ) { closeDropdown(); return; }
+        if ( ! dropdown ) { buildDropdown( body ); }
+        activeRange = trigger.range;
+        positionDropdown( trigger.range );
+        clearTimeout( debounceTimer );
+        debounceTimer = setTimeout( function () {
+            fetchMatches( trigger.query, getSpaceId( body ) );
+        }, 250 );
+    } );
+
+    document.addEventListener( 'keydown', function ( e ) {
+        if ( ! dropdown || ! matches.length ) { return; }
+        if ( e.key === 'ArrowDown' ) {
+            e.preventDefault();
+            selectedIndex = ( selectedIndex + 1 ) % matches.length;
+            renderMatches();
+        } else if ( e.key === 'ArrowUp' ) {
+            e.preventDefault();
+            selectedIndex = ( selectedIndex - 1 + matches.length ) % matches.length;
+            renderMatches();
+        } else if ( e.key === 'Enter' || e.key === 'Tab' ) {
+            e.preventDefault();
+            accept();
+        } else if ( e.key === 'Escape' ) {
+            closeDropdown();
+        }
+    }, true );
+
+    document.addEventListener( 'click', function ( e ) {
+        if ( dropdown && ! dropdown.contains( e.target ) && ( ! activeBody || ! activeBody.contains( e.target ) ) ) {
+            closeDropdown();
+        }
+    } );
+
+    window.addEventListener( 'scroll', closeDropdown, true );
+    window.addEventListener( 'resize', closeDropdown );
+}() );
