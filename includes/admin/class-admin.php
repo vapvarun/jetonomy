@@ -336,6 +336,16 @@ class Admin {
 			$clean['accent_color']   = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
 			$clean['layout_density'] = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
 			$clean['custom_css']     = wp_strip_all_tags( $input['custom_css'] ?? '' );
+
+			$raw_width                       = sanitize_key( (string) ( $input['container_width'] ?? 'theme' ) );
+			$clean['container_width']        = in_array( $raw_width, array( 'theme', 'full', 'custom' ), true ) ? $raw_width : 'theme';
+			$clean['container_width_custom'] = max( 600, min( 2400, absint( $input['container_width_custom'] ?? 1280 ) ) );
+
+			$raw_sidebar                 = sanitize_key( (string) ( $input['sidebar_visibility'] ?? 'theme' ) );
+			$clean['sidebar_visibility'] = in_array( $raw_sidebar, array( 'theme', 'hide' ), true ) ? $raw_sidebar : 'theme';
+
+			$raw_padding             = sanitize_key( (string) ( $input['padding_preset'] ?? 'theme' ) );
+			$clean['padding_preset'] = in_array( $raw_padding, array( 'theme', 'none', 'comfortable' ), true ) ? $raw_padding : 'theme';
 		}
 
 		// ── Anti-Spam tab ──
@@ -553,10 +563,10 @@ class Admin {
 		$order   = 'DESC' === strtoupper( sanitize_key( wp_unslash( $_GET['order'] ?? 'ASC' ) ) ) ? 'DESC' : 'ASC';
 		$offset  = ( $paged - 1 ) * $per_page;
 
-		$result            = Category::list_paginated( $search, $orderby, $order, $per_page, $offset );
-		$categories        = $result['rows'];
-		$categories_total  = (int) $result['total'];
-		$categories_pages  = (int) ceil( $categories_total / $per_page );
+		$result           = Category::list_paginated( $search, $orderby, $order, $per_page, $offset );
+		$categories       = $result['rows'];
+		$categories_total = (int) $result['total'];
+		$categories_pages = (int) ceil( $categories_total / $per_page );
 
 		include JETONOMY_DIR . 'includes/admin/views/categories.php';
 	}

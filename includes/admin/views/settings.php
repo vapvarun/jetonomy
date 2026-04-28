@@ -638,12 +638,80 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			</div>
 
 			<!-- Layout -->
+			<?php
+			$jt_container_width        = $settings['container_width'] ?? 'theme';
+			$jt_container_width_custom = absint( $settings['container_width_custom'] ?? 1280 );
+			$jt_sidebar_visibility     = $settings['sidebar_visibility'] ?? 'theme';
+			$jt_padding_preset         = $settings['padding_preset'] ?? 'theme';
+			?>
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Layout', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Adjust spacing and density across all community views.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Control how community pages fit inside your active theme. "Theme Default" leaves your theme in charge.', 'jetonomy' ); ?></p>
 				</div>
 				<table class="form-table">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Container Width', 'jetonomy' ); ?></th>
+						<td>
+							<fieldset>
+								<label>
+									<input type="radio" name="jetonomy_settings[container_width]" value="theme" <?php checked( $jt_container_width, 'theme' ); ?>>
+									<?php esc_html_e( 'Theme Default', 'jetonomy' ); ?>
+								</label>
+								<br>
+								<label>
+									<input type="radio" name="jetonomy_settings[container_width]" value="full" <?php checked( $jt_container_width, 'full' ); ?>>
+									<?php esc_html_e( 'Full Width', 'jetonomy' ); ?>
+								</label>
+								<br>
+								<label>
+									<input type="radio" name="jetonomy_settings[container_width]" value="custom" <?php checked( $jt_container_width, 'custom' ); ?>>
+									<?php esc_html_e( 'Custom width', 'jetonomy' ); ?>
+								</label>
+								<input type="number" name="jetonomy_settings[container_width_custom]" value="<?php echo esc_attr( (string) $jt_container_width_custom ); ?>" min="600" max="2400" step="10" class="small-text" style="margin-inline-start:8px;">
+								<span><?php esc_html_e( 'px', 'jetonomy' ); ?></span>
+							</fieldset>
+							<p class="description"><?php esc_html_e( 'Applies to community pages only (Spaces, Discussions, Profile, etc.).', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Theme Sidebar', 'jetonomy' ); ?></th>
+						<td>
+							<fieldset>
+								<label>
+									<input type="radio" name="jetonomy_settings[sidebar_visibility]" value="theme" <?php checked( $jt_sidebar_visibility, 'theme' ); ?>>
+									<?php esc_html_e( 'Theme Default', 'jetonomy' ); ?>
+								</label>
+								<br>
+								<label>
+									<input type="radio" name="jetonomy_settings[sidebar_visibility]" value="hide" <?php checked( $jt_sidebar_visibility, 'hide' ); ?>>
+									<?php esc_html_e( 'Hide on community pages', 'jetonomy' ); ?>
+								</label>
+							</fieldset>
+							<p class="description"><?php esc_html_e( 'Hides your theme\'s sidebar (widgets) on community pages. Does not affect Jetonomy\'s own right-rail.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Page Padding', 'jetonomy' ); ?></th>
+						<td>
+							<fieldset>
+								<label>
+									<input type="radio" name="jetonomy_settings[padding_preset]" value="theme" <?php checked( $jt_padding_preset, 'theme' ); ?>>
+									<?php esc_html_e( 'Theme Default', 'jetonomy' ); ?>
+								</label>
+								<br>
+								<label>
+									<input type="radio" name="jetonomy_settings[padding_preset]" value="none" <?php checked( $jt_padding_preset, 'none' ); ?>>
+									<?php esc_html_e( 'None (edge to edge)', 'jetonomy' ); ?>
+								</label>
+								<br>
+								<label>
+									<input type="radio" name="jetonomy_settings[padding_preset]" value="comfortable" <?php checked( $jt_padding_preset, 'comfortable' ); ?>>
+									<?php esc_html_e( 'Comfortable', 'jetonomy' ); ?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row"><label for="layout_density"><?php esc_html_e( 'Layout Density', 'jetonomy' ); ?></label></th>
 						<td>

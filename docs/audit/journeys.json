@@ -1,6 +1,6 @@
 {
   "product_name": "Jetonomy",
-  "description": "Auto-discovered from plugin manifest scanned at 2026-04-26T06:42:29.939Z. Review the journey list below: rename product_name, refine feature expectations to match your customer language, drop any surface that is not customer-facing, add anything the scanner missed. The audit method is plugin-agnostic; this list is the contract.",
+  "description": "Auto-discovered from plugin manifest scanned at 2026-04-26T12:40:03.028Z. Review the journey list below: rename product_name, refine feature expectations to match your customer language, drop any surface that is not customer-facing, add anything the scanner missed. The audit method is plugin-agnostic; this list is the contract.",
   "lenses": [
     {
       "id": "customer_expectation",
@@ -210,6 +210,11 @@
           "id": "cli-commands",
           "name": "WP-CLI commands (2)",
           "expectation": "Commands self-document via `wp help`; primary flows reachable from CLI"
+        },
+        {
+          "id": "settings",
+          "name": "Settings (2 options)",
+          "expectation": "Each option has clear copy, sane default, sanitisation callback, and a working \"settings saved\" round-trip"
         }
       ]
     },

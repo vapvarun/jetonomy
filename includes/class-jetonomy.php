@@ -314,6 +314,7 @@ final class Jetonomy {
 		// Theme integration — bridges BuddyX / BuddyX Pro / Reign Kirki colors
 		// and dark-scheme toggle into Jetonomy's CSS tokens.
 		new Integrations\Theme_Integration();
+		new Integrations\Layout_CSS();
 
 		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
 		Captcha\Captcha_Manager::init();
