@@ -330,6 +330,24 @@
   a.jt-row-title-link::before { content: ""; position: absolute; inset: 0; z-index: 0; }
   .jt-row-sub > * { position: relative; z-index: 1; }
 
+  /* My Spaces landing (G7). Two stacked sections, card per space. */
+  .jt-my-spaces-section { margin-block-end: 32px; }
+  .jt-my-spaces-section:last-child { margin-block-end: 0; }
+  .jt-section-title { font-size: 1.125rem; font-weight: 700; margin: 0 0 12px; color: var(--jt-text); }
+  .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .jt-space-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, transform 0.15s ease; }
+  .jt-space-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
+  .jt-space-card-link { display: flex; gap: 12px; padding: 14px; text-decoration: none; color: inherit; }
+  .jt-space-card-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
+  .jt-space-card-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
+  .jt-space-card-title { font-weight: 600; color: var(--jt-text); display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; }
+  .jt-space-card-stats { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
+  .jt-empty-cta { margin-block-start: 16px; text-align: center; }
+  @media ( max-width: 640px ) {
+    .jt-space-list { grid-template-columns: 1fr; }
+  }
+
   /* Tag-page + future paginated lists. */
   .jt-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-block-start: 24px; padding-block: 16px; }
   .jt-pagination-link { color: var(--jt-accent); text-decoration: none; font-weight: 600; padding: 8px 14px; border-radius: var(--jt-radius); transition: background 0.1s; }

@@ -628,6 +628,7 @@ class Blocks {
 		$edit_url      = $base . '/u/' . rawurlencode( $user->user_login ) . '/edit/';
 		$notifs_url    = $base . '/notifications/';
 		$messages_url  = $base . '/messages/';
+		$my_spaces_url = $base . '/my-spaces/';
 		$show_messages = defined( 'JETONOMY_PRO_VERSION' );
 		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
 		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
@@ -667,6 +668,9 @@ class Blocks {
 						<span class="jt-userpanel-link-label"><?php esc_html_e( 'Messages', 'jetonomy' ); ?></span>
 					</a>
 				<?php endif; ?>
+				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Spaces', 'jetonomy' ); ?></span>
+				</a>
 				<a href="<?php echo esc_url( $edit_url ); ?>" class="jt-userpanel-link">
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></span>
 				</a>

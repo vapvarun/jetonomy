@@ -365,6 +365,43 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Return space ids the user is part of, optionally filtered by role.
+	 *
+	 * Used by the My Spaces landing (G7) to render two stacked sections —
+	 * "Spaces I run" (admin / moderator) above "Spaces I'm in" (member only).
+	 * One indexed query per call; the caller hydrates Space rows from the ids.
+	 *
+	 * @param int         $user_id
+	 * @param string|null $role_filter Optional. 'admin', 'moderator', 'member',
+	 *                                 or 'privileged' (admin OR moderator).
+	 *                                 null returns every space the user is in.
+	 * @return int[]
+	 */
+	public static function spaces_for_user( int $user_id, ?string $role_filter = null ): array {
+		if ( $user_id <= 0 ) {
+			return array();
+		}
+
+		$where = 'user_id = %d';
+		$args  = array( $user_id );
+		if ( 'privileged' === $role_filter ) {
+			$where .= " AND role IN ('admin','moderator')";
+		} elseif ( in_array( $role_filter, array( 'admin', 'moderator', 'member' ), true ) ) {
+			$where .= ' AND role = %s';
+			$args[] = $role_filter;
+		}
+
+		$rows = static::db()->get_col(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT space_id FROM ' . static::table() . ' WHERE ' . $where . ' ORDER BY joined_at DESC',
+				...$args
+			)
+		);
+		return array_map( 'intval', $rows ?: array() );
+	}
+
+	/**
 	 * Does the user hold a privileged role (moderator or admin) in at least one space?
 	 *
 	 * Cheap existence check used by the main nav to decide whether to render

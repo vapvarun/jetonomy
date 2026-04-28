@@ -36,7 +36,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
@@ -112,6 +112,7 @@ class Template_Loader {
 			'new-post'         => 'views/new-post.php',
 			'edit-profile'     => 'views/edit-profile.php',
 			'invite'           => 'views/invite.php',
+			'my-spaces'        => 'views/my-spaces.php',
 		);
 
 		/**
@@ -563,6 +564,9 @@ class Template_Loader {
 					case 'invite':
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
+					case 'my-spaces':
+						$parts['title'] = __( 'My Spaces', 'jetonomy' );
+						break;
 				}
 				return $parts;
 			}
@@ -783,6 +787,13 @@ class Template_Loader {
 						$url       = $base . '/invite/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $site_name;
 						$noindex   = true; // One-shot landing.
+						break;
+					case 'my-spaces':
+						$title     = __( 'My Spaces', 'jetonomy' );
+						$desc      = sprintf( __( 'Spaces you run and spaces you are part of on %s.', 'jetonomy' ), $site_name );
+						$url       = $base . '/my-spaces/';
+						$image_alt = $site_name;
+						$noindex   = true; // Logged-in personal view.
 						break;
 				}
 

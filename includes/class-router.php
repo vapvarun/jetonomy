@@ -68,6 +68,9 @@ class Router {
 		// Moderation
 		add_rewrite_rule( "^{$base}/mod/?$", 'index.php?jetonomy_route=moderation', 'top' );
 
+		// My spaces (G7) — landing for "Spaces I run" + "Spaces I'm in"
+		add_rewrite_rule( "^{$base}/my-spaces/?$", 'index.php?jetonomy_route=my-spaces', 'top' );
+
 		// Tags
 		add_rewrite_rule( "^{$base}/tag/([^/]+)/?$", 'index.php?jetonomy_route=tag&jetonomy_slug=$matches[1]', 'top' );
 
