@@ -38,6 +38,7 @@ class Api {
 			'bookmarks'        => 'Bookmarks_Controller',
 			'oembed'           => 'OEmbed_Controller',
 			'admin'            => 'Admin_Controller',
+			'media'            => 'Media_Controller',
 		];
 
 		require_once $dir . 'class-base-controller.php';
