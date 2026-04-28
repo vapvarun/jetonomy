@@ -125,6 +125,19 @@ $role_labels = [
 										</option>
 									<?php endforeach; ?>
 								</select>
+								<?php
+								// 1.4.0 C.3 — front-end "Ban" affordance for space admins.
+								// Issues a SPACE-scope ban via POST /moderation/ban (with
+								// space_id), so the cap-vs-role gap that blocked space mods
+								// is closed. Site-wide bans / silences stay cap-only.
+								?>
+								<button type="button"
+									class="jt-btn jt-btn-sm jt-member-ban-btn"
+									data-space-id="<?php echo absint( $space->id ); ?>"
+									data-user-id="<?php echo absint( $member->user_id ); ?>"
+									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">
+									<?php esc_html_e( 'Ban from space', 'jetonomy' ); ?>
+								</button>
 							<?php endif; ?>
 							<?php if ( $mp ) : ?>
 								<span class="jt-member-rep">

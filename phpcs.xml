@@ -132,6 +132,7 @@
 				<element value="jetonomy_manage_settings"/>
 				<element value="jetonomy_view_analytics"/>
 				<element value="jetonomy_vote"/>
+				<element value="jetonomy_flag"/>
 			</property>
 		</properties>
 	</rule>

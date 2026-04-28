@@ -155,7 +155,7 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'ban_user' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => [ $this, 'require_ban_permission' ],
 				'args'                => [
 					'user_id'    => [
 						'type'     => 'integer',
@@ -193,6 +193,35 @@ class Moderation_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 		return true;
+	}
+
+	/**
+	 * Permission callback for POST /moderation/ban (1.4.0 C.3).
+	 *
+	 * Global bans + silences stay cap-only — they're sitewide actions and
+	 * should not delegate to per-space mods. Space-bans accept ANY of:
+	 * - jetonomy_moderate cap (global mod)
+	 * - manage_options (WP admin)
+	 * - space-admin role for the supplied space_id (delegated authority)
+	 *
+	 * The handler trusts these gates because $request->get_param('space_id')
+	 * is the same id the permission check used.
+	 */
+	public function require_ban_permission( WP_REST_Request $request ): bool|WP_Error {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return $this->permission_error();
+		}
+		if ( current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+		$type     = sanitize_text_field( (string) $request->get_param( 'type' ) );
+		$space_id = (int) $request->get_param( 'space_id' );
+		if ( 'space_ban' === $type && $space_id > 0
+			&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $user_id, $space_id ) ) {
+			return true;
+		}
+		return $this->permission_error();
 	}
 
 	/**

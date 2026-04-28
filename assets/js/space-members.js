@@ -180,4 +180,68 @@
 				} );
 		} );
 	} );
+
+	// 1.4.0 C.3 — Ban button. Confirms via the shared modal toolkit (no
+	// native confirm), POSTs space_ban to /moderation/ban, and visually
+	// disables the member row on success.
+	document.addEventListener( 'click', function ( e ) {
+		var btn = e.target.closest && e.target.closest( '.jt-member-ban-btn' );
+		if ( ! btn ) {
+			return;
+		}
+		var spaceId = btn.getAttribute( 'data-space-id' );
+		var userId  = btn.getAttribute( 'data-user-id' );
+		var name    = btn.getAttribute( 'data-user-name' );
+		if ( ! spaceId || ! userId ) {
+			return;
+		}
+
+		var promptResult = window.jetonomyConfirm
+			? window.jetonomyConfirm(
+				'Ban ' + name + ' from this space? They will lose access to its posts and replies until you lift the ban.',
+				{ title: 'Ban member', confirmLabel: 'Ban', danger: true }
+			)
+			: Promise.resolve( window.confirm( 'Ban ' + name + ' from this space?' ) );
+
+		promptResult.then( function ( ok ) {
+			if ( ! ok ) {
+				return;
+			}
+			btn.disabled = true;
+			fetch( data.restBase + '/moderation/ban', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'X-WP-Nonce': data.restNonce,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify( {
+					user_id: parseInt( userId, 10 ),
+					space_id: parseInt( spaceId, 10 ),
+					type: 'space_ban'
+				} )
+			} ).then( function ( r ) {
+				return r.json().then( function ( body ) { return { ok: r.ok, body: body }; } );
+			} ).then( function ( res ) {
+				if ( ! res.ok ) {
+					btn.disabled = false;
+					var msg = ( res.body && res.body.message ) || 'Ban failed. Please try again.';
+					showError( btn, msg );
+					return;
+				}
+				var row = btn.closest( '.jt-member-item' );
+				if ( row ) {
+					row.style.opacity = '0.5';
+					var note = document.createElement( 'span' );
+					note.className = 'jt-member-banned-note';
+					note.textContent = 'Banned';
+					row.appendChild( note );
+				}
+				btn.remove();
+			} ).catch( function () {
+				btn.disabled = false;
+				showError( btn, 'Network error. Please try again.' );
+			} );
+		} );
+	} );
 } )();
