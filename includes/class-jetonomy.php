@@ -34,6 +34,34 @@ final class Jetonomy {
 		// Register plugin-level theme.json for baseline typography, spacing, and colors.
 		// Active theme's theme.json always wins — this provides sensible defaults for classic themes.
 		add_filter( 'wp_theme_json_data_default', array( $this, 'register_plugin_theme_json' ) );
+
+		// 1.4.0 C.3: a globally banned user must not be able to log in. Without
+		// this filter, a banned user retained their session cookie across the
+		// ban (and could re-authenticate after logout) — Permission_Engine
+		// blocked their writes but not the login itself, so they kept showing
+		// up online and reading restricted content via stale sessions.
+		add_filter( 'authenticate', array( $this, 'reject_banned_login' ), 30, 1 );
+	}
+
+	/**
+	 * Reject login for globally-banned users with a translated message.
+	 *
+	 * Runs at priority 30, after wp_authenticate_username_password (priority 20),
+	 * so by the time we run we already have a WP_User instance for valid
+	 * credentials. Wrong passwords + unknown logins flow through unchanged
+	 * (we return them as-is) so the existing "incorrect password" message
+	 * still wins and we don't leak which logins exist.
+	 *
+	 * @param mixed $user WP_User on success, WP_Error on auth failure, null if no auth attempted yet.
+	 */
+	public function reject_banned_login( $user ) {
+		if ( $user instanceof \WP_User && Models\Restriction::is_banned( (int) $user->ID ) ) {
+			return new \WP_Error(
+				'jetonomy_user_banned',
+				__( 'Your account has been banned from this community. Contact a moderator if you believe this is a mistake.', 'jetonomy' )
+			);
+		}
+		return $user;
 	}
 
 	/**
