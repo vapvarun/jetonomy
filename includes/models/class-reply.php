@@ -242,6 +242,25 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Return the highest reply id for a post (1.4.0 C.5 fallback for posts
+	 * whose Post row didn't keep last_reply_id in sync).
+	 *
+	 * @param int $post_id
+	 * @return int 0 when the post has no replies.
+	 */
+	public static function latest_id_for_post( int $post_id ): int {
+		if ( $post_id <= 0 ) {
+			return 0;
+		}
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT MAX(id) FROM ' . static::table() . ' WHERE post_id = %d',
+				$post_id
+			)
+		);
+	}
+
+	/**
 	 * Count replies for a given post.
 	 *
 	 * @param int $post_id

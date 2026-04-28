@@ -330,6 +330,9 @@
   a.jt-row-title-link::before { content: ""; position: absolute; inset: 0; z-index: 0; }
   .jt-row-sub > * { position: relative; z-index: 1; }
 
+  /* 1.4.0 C.5: "New" pill on post cards when the viewer has unread replies. */
+  .jt-unread-pill { display: inline-block; margin-inline-start: 8px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: #fff; vertical-align: middle; }
+
   /* Front-end forms (G5 edit space, G6 new space). Token-driven so the
      same primitives work for any future REST-backed form. */
   .jt-form { padding: var(--jt-space-4); }

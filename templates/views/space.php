@@ -271,10 +271,42 @@ $crumbs[] = [
 					(int) $space->id,
 					array_map( static fn( $p ) => (int) $p->author_id, $posts )
 				);
+
+				// 1.4.0 C.5: bulk-load the viewer's last-read reply id per
+				// post so each card can render a "new replies" pill in O(1).
+				$jt_read_map = array();
+				$jt_viewer   = get_current_user_id();
+				if ( $jt_viewer > 0 ) {
+					$jt_read_map = \Jetonomy\Models\ReadStatus::last_read_for_posts(
+						$jt_viewer,
+						array_map( static fn( $p ) => (int) $p->id, $posts )
+					);
+				}
 				?>
 				<div class="jt-topics">
 					<?php foreach ( $posts as $post ) : ?>
-						<?php \Jetonomy\Template_Loader::partial( 'post-card', [ 'post' => $post ] ); ?>
+						<?php
+						$jt_unread_count = 0;
+						if ( $jt_viewer > 0 ) {
+							$jt_last_reply = (int) ( $post->last_reply_id ?? 0 );
+							$jt_last_read  = $jt_read_map[ (int) $post->id ] ?? 0;
+							if ( $jt_last_reply > $jt_last_read && (int) $post->author_id !== $jt_viewer ) {
+								// Approximate the unread count with last_reply_id - last_read:
+								// not exact (deleted replies would shift it) but cheap, and
+								// the pill says "new" when greater than zero either way.
+								$jt_unread_count = max( 0, $jt_last_reply - $jt_last_read );
+							}
+						}
+						?>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'post-card',
+							array(
+								'post'         => $post,
+								'unread_count' => $jt_unread_count,
+							)
+						);
+						?>
 					<?php endforeach; ?>
 				</div>
 

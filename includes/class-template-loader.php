@@ -943,6 +943,18 @@ class Template_Loader {
 			\Jetonomy\Models\Post::increment_view_count( (int) $post->id );
 			setcookie( $cookie, '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 		}
+
+		// 1.4.0 C.5 — wire ReadStatus::mark_read so opening a thread clears
+		// its "new replies" pill on the space view. Records the latest reply
+		// id (or 0 if no replies yet) for the current user.
+		$user_id = get_current_user_id();
+		if ( $user_id > 0 ) {
+			$latest_reply_id = (int) ( $post->last_reply_id ?? 0 );
+			if ( 0 === $latest_reply_id && (int) $post->reply_count > 0 ) {
+				$latest_reply_id = (int) \Jetonomy\Models\Reply::latest_id_for_post( (int) $post->id );
+			}
+			\Jetonomy\Models\ReadStatus::mark_read( $user_id, (int) $post->id, $latest_reply_id );
+		}
 	}
 
 	/**

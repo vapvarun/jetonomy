@@ -40,6 +40,37 @@ class ReadStatus extends Model {
 	}
 
 	/**
+	 * Bulk-load last-read reply IDs for many posts (1.4.0 C.5).
+	 *
+	 * Used by space.php to compute "new replies" pills for a 30-post page
+	 * in a single query instead of 30 round trips.
+	 *
+	 * @param int   $user_id
+	 * @param int[] $post_ids
+	 * @return array<int, int> Keyed by post id; missing rows mean "never read".
+	 */
+	public static function last_read_for_posts( int $user_id, array $post_ids ): array {
+		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
+		if ( $user_id <= 0 || empty( $post_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+		$query        = static::db()->prepare(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			'SELECT post_id, last_read_reply_id FROM ' . static::table() . " WHERE user_id = %d AND post_id IN ({$placeholders})",
+			array_merge( array( $user_id ), $post_ids )
+		);
+		$rows = static::db()->get_results( $query );
+
+		$map = array();
+		foreach ( (array) $rows as $row ) {
+			$map[ (int) $row->post_id ] = (int) $row->last_read_reply_id;
+		}
+		return $map;
+	}
+
+	/**
 	 * Return the last reply ID a user has read in a post thread, or null if never read.
 	 *
 	 * @param int $user_id
