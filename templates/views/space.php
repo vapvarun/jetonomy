@@ -119,13 +119,7 @@ $crumbs[] = [
 			<div class="jt-space-cover" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')"></div>
 		<?php endif; ?>
 		<div class="jt-space-head">
-				<?php if ( ! empty( $space->icon ) ) : ?>
-					<?php if ( str_starts_with( $space->icon, 'dashicons-' ) ) : ?>
-						<span class="jt-space-emoji dashicons <?php echo esc_attr( $space->icon ); ?>"></span>
-					<?php else : ?>
-						<span class="jt-space-emoji"><?php echo esc_html( $space->icon ); ?></span>
-					<?php endif; ?>
-				<?php endif; ?>
+				<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
 				<div>
 						<h1><?php echo esc_html( $space->title ); ?></h1>
 					<?php if ( ! empty( $space->description ) ) : ?>

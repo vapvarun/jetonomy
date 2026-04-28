@@ -362,15 +362,45 @@ class Auth_Controller extends Base_Controller {
 	 * @return bool True when within limit, false when exhausted.
 	 */
 	protected static function check_rate_limit( string $bucket, int $max = 5, int $seconds = MINUTE_IN_SECONDS ): bool {
-		$ip   = isset( $_SERVER['REMOTE_ADDR'] )
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] )
 			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
 			: 'unknown';
-		$key  = 'jt_auth_' . $bucket . '_' . md5( $ip );
-		$hits = (int) get_transient( $key );
-		if ( $hits >= $max ) {
+		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
+		$now = time();
+
+		// 1.4.0 fix: store BOTH the hit count AND a fixed expiry timestamp
+		// in the transient value, then re-`set_transient` with only the
+		// REMAINING seconds. Calling `set_transient($key, $hits+1, $seconds)`
+		// on every hit (the pre-1.4.0 pattern) extended the window every
+		// time, so an attacker pacing themselves under $max could go
+		// indefinitely. Now the TTL collapses toward $expires_at on every
+		// increment, the window is fixed once, and the throttle is real.
+		$record = get_transient( $key );
+		if ( ! is_array( $record ) || ! isset( $record['expires_at'], $record['hits'] ) || $now >= (int) $record['expires_at'] ) {
+			set_transient(
+				$key,
+				array(
+					'hits'       => 1,
+					'expires_at' => $now + $seconds,
+				),
+				$seconds
+			);
+			return true;
+		}
+
+		if ( (int) $record['hits'] >= $max ) {
 			return false;
 		}
-		set_transient( $key, $hits + 1, $seconds );
+
+		$remaining = max( 1, (int) $record['expires_at'] - $now );
+		set_transient(
+			$key,
+			array(
+				'hits'       => (int) $record['hits'] + 1,
+				'expires_at' => (int) $record['expires_at'],
+			),
+			$remaining
+		);
 		return true;
 	}
 }

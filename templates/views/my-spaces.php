@@ -57,9 +57,14 @@ $crumbs = array(
 
 <div class="jt-two-col">
 	<main>
-		<h1 class="jt-page-title jt-mb-20">
-			<?php esc_html_e( 'My Spaces', 'jetonomy' ); ?>
-		</h1>
+		<header class="jt-page-head">
+			<h1 class="jt-page-title">
+				<?php esc_html_e( 'My Spaces', 'jetonomy' ); ?>
+			</h1>
+			<p class="jt-page-subtitle">
+				<?php esc_html_e( 'Spaces you run, plus the ones you are part of.', 'jetonomy' ); ?>
+			</p>
+		</header>
 
 		<?php if ( empty( $privileged_spaces ) && empty( $member_spaces ) ) : ?>
 			<div class="jt-empty">
@@ -90,13 +95,7 @@ $crumbs = array(
 						?>
 						<li class="jt-space-card">
 							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
-								<?php if ( ! empty( $sp->icon ) ) : ?>
-									<?php if ( 0 === strpos( $sp->icon, 'dashicons-' ) ) : ?>
-										<span class="jt-space-card-icon dashicons <?php echo esc_attr( $sp->icon ); ?>"></span>
-									<?php else : ?>
-										<span class="jt-space-card-icon"><?php echo esc_html( $sp->icon ); ?></span>
-									<?php endif; ?>
-								<?php endif; ?>
+								<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon' ); ?>
 								<span class="jt-space-card-body">
 									<span class="jt-space-card-title">
 										<?php echo esc_html( $sp->title ); ?>
@@ -139,13 +138,7 @@ $crumbs = array(
 					<?php foreach ( $member_spaces as $sp ) : ?>
 						<li class="jt-space-card">
 							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
-								<?php if ( ! empty( $sp->icon ) ) : ?>
-									<?php if ( 0 === strpos( $sp->icon, 'dashicons-' ) ) : ?>
-										<span class="jt-space-card-icon dashicons <?php echo esc_attr( $sp->icon ); ?>"></span>
-									<?php else : ?>
-										<span class="jt-space-card-icon"><?php echo esc_html( $sp->icon ); ?></span>
-									<?php endif; ?>
-								<?php endif; ?>
+								<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon' ); ?>
 								<span class="jt-space-card-body">
 									<span class="jt-space-card-title">
 										<?php echo esc_html( $sp->title ); ?>

@@ -141,6 +141,51 @@ function jetonomy_echo_icon( string $name, int $size = 24 ): void {
 }
 
 /**
+ * Render a space icon (Lucide-only contract, 1.4.0).
+ *
+ * The plugin contract is "Lucide icons only — no emoji in shipped UI."
+ * Existing Space rows store whatever the admin (or the demo seeder)
+ * pasted in the icon field, including unicode emoji. This helper:
+ *
+ *   - empty / null  → renders the default `users` icon
+ *   - matches one of the SVGs in `assets/icons/`  → renders that Lucide icon
+ *   - starts with `dashicons-`  → renders the dashicon (legacy compat)
+ *   - anything else (emoji, free-text, unknown name)  → renders the
+ *     default `users` icon, NEVER the raw value
+ *
+ * Output is always wrapped in a span carrying the supplied class so
+ * existing CSS selectors keep working without changes.
+ *
+ * @param mixed  $icon       The space's `icon` column value.
+ * @param int    $size       Pixel size.
+ * @param string $class_name Wrapper class name.
+ */
+function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name = 'jt-space-card-icon' ): void {
+	$icon = is_string( $icon ) ? trim( $icon ) : '';
+
+	if ( '' !== $icon && 0 === strpos( $icon, 'dashicons-' ) ) {
+		echo '<span class="' . esc_attr( $class_name ) . ' dashicons ' . esc_attr( $icon ) . '" aria-hidden="true"></span>';
+		return;
+	}
+
+	$lucide  = '';
+	$default = 'users';
+	if ( '' !== $icon && preg_match( '/^[a-z0-9][a-z0-9-]{0,40}$/', $icon ) ) {
+		$svg_path = JETONOMY_DIR . 'assets/icons/' . $icon . '.svg';
+		if ( file_exists( $svg_path ) ) {
+			$lucide = $icon;
+		}
+	}
+	if ( '' === $lucide ) {
+		$lucide = $default;
+	}
+
+	echo '<span class="' . esc_attr( $class_name ) . '" aria-hidden="true">';
+	echo jetonomy_icon( $lucide, $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted local SVG.
+	echo '</span>';
+}
+
+/**
  * Format post/reply content with @mention and #hashtag auto-linking.
  *
  * Expects already-sanitized HTML (via wp_kses_post). Applies regex only

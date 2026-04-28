@@ -290,7 +290,11 @@
 
   /* ── Space header ── */
   .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  .jt-space-emoji { font-size: 2em; }
+  /* Space header icon — Lucide SVG container. Lands as a 40px accent
+     square so the icon reads at the same weight emoji used to. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--jt-accent); flex-shrink: 0; }
+  .jt-space-emoji svg { width: 32px; height: 32px; }
+  .jt-space-emoji.dashicons { font-size: 32px; width: auto; height: auto; }
   .jt-space-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
   .jt-space-nums { display: flex; gap: 20px; margin-left: auto; }
@@ -362,10 +366,18 @@
     .jt-form-actions .jt-btn { width: 100%; text-align: center; }
   }
 
+  /* Page-head pattern (1.4.0): h1 + muted subtitle, generous gap below. */
+  .jt-page-head { margin-block-end: 28px; }
+  .jt-page-head .jt-page-title { margin: 0 0 4px; }
+  .jt-page-head .jt-page-subtitle { margin: 0; color: var(--jt-text-secondary); font-size: 0.9375rem; }
+
   /* My Spaces landing (G7). Two stacked sections, card per space. */
-  .jt-my-spaces-section { margin-block-end: 32px; }
+  .jt-my-spaces-section { margin-block-end: 36px; }
   .jt-my-spaces-section:last-child { margin-block-end: 0; }
-  .jt-section-title { font-size: 1.125rem; font-weight: 700; margin: 0 0 12px; color: var(--jt-text); }
+  .jt-section-title { font-size: 1rem; font-weight: 700; margin: 0 0 14px; color: var(--jt-text); text-transform: uppercase; letter-spacing: 0.04em; color: var(--jt-text-secondary); }
+  .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; color: var(--jt-accent); }
+  .jt-space-card-icon svg { width: 24px; height: 24px; }
+  .jt-space-card-icon.dashicons { font-size: 24px; }
   .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
   .jt-space-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, transform 0.15s ease; }
   .jt-space-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }

@@ -97,6 +97,7 @@ class Demo_Seeder {
 				'title'       => 'Welcome & Introductions',
 				'slug'        => 'welcome',
 				'description' => 'New here? Introduce yourself and say hello to the community.',
+				'icon'        => 'hand',
 				'visibility'  => 'public',
 				'join_policy' => 'open',
 			]
@@ -111,6 +112,7 @@ class Demo_Seeder {
 				'title'       => 'General Discussion',
 				'slug'        => 'general-discussion',
 				'description' => "Off-topic conversations, industry news, and anything that doesn't fit elsewhere.",
+				'icon'        => 'message-circle',
 				'visibility'  => 'public',
 				'join_policy' => 'open',
 			]
@@ -125,6 +127,7 @@ class Demo_Seeder {
 				'title'       => 'Help & Support',
 				'slug'        => 'help-support',
 				'description' => 'Ask questions and get answers from experienced community members.',
+				'icon'        => 'help-circle',
 				'visibility'  => 'public',
 				'join_policy' => 'open',
 			]
@@ -139,6 +142,7 @@ class Demo_Seeder {
 				'title'       => 'Feature Requests',
 				'slug'        => 'feature-requests',
 				'description' => 'Submit ideas, vote on what matters, and shape our roadmap together.',
+				'icon'        => 'lightbulb',
 				'visibility'  => 'public',
 				'join_policy' => 'open',
 			]
@@ -153,6 +157,7 @@ class Demo_Seeder {
 				'title'       => 'Tips & Best Practices',
 				'slug'        => 'tips-best-practices',
 				'description' => 'Share workflows, shortcuts, and hard-won lessons with fellow members.',
+				'icon'        => 'star',
 				'visibility'  => 'public',
 				'join_policy' => 'open',
 			]

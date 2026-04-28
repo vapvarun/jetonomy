@@ -82,9 +82,17 @@ $crumbs = array(
 				</div>
 
 				<div class="jt-form-row">
-					<label for="jt-ns-icon"><?php esc_html_e( 'Icon (emoji or dashicon)', 'jetonomy' ); ?></label>
-					<input type="text" id="jt-ns-icon" name="icon" maxlength="40" class="jt-input" placeholder="🚀">
-					<p class="jt-form-help"><?php esc_html_e( 'A single emoji works. For dashicons, use the slug, e.g. dashicons-forms.', 'jetonomy' ); ?></p>
+					<label for="jt-ns-icon"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
+					<input type="text" id="jt-ns-icon" name="icon" maxlength="40" class="jt-input" placeholder="rocket" pattern="[a-z0-9-]+">
+					<p class="jt-form-help">
+						<?php
+						printf(
+							/* translators: %s: comma-separated list of available Lucide icon names */
+							esc_html__( 'Lucide icon name. Available: %s. See the full set at lucide.dev/icons.', 'jetonomy' ),
+							'<code>users</code>, <code>star</code>, <code>rocket</code>, <code>lightbulb</code>, <code>megaphone</code>, <code>help-circle</code>, <code>book-open</code>, <code>hash</code>, <code>folder</code>, <code>hand</code>, <code>message-circle</code>, <code>award</code>, <code>shield</code>'
+						);
+						?>
+					</p>
 				</div>
 
 				<div class="jt-form-actions">
