@@ -28,7 +28,17 @@ if ( ! in_array( $sort, [ 'latest', 'popular' ], true ) ) {
 	$sort = 'latest';
 }
 
+// 1.4.0 C.4 fix: classic offset pagination so popular tags don't silently
+// drop post 31+. 30/page balances density with viewport — page param via
+// `?paged=2`. Total post count comes from $tag->post_count which is kept
+// in sync by the tag denormaliser.
 $order_by = 'popular' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
+$per_page = 30;
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$paged       = max( 1, (int) ( $_GET['paged'] ?? 1 ) );
+$offset      = ( $paged - 1 ) * $per_page;
+$total_posts = (int) $tag->post_count;
+$total_pages = (int) ceil( max( 1, $total_posts ) / $per_page );
 
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $posts = $wpdb->get_results(
@@ -39,8 +49,10 @@ $posts = $wpdb->get_results(
 		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
 		 WHERE pt.tag_id = %d AND p.status = 'publish'
 		 ORDER BY {$order_by}
-		 LIMIT 30",
-		(int) $tag->id
+		 LIMIT %d OFFSET %d",
+		(int) $tag->id,
+		$per_page,
+		$offset
 	)
 ) ?: [];
 
@@ -97,6 +109,43 @@ $crumbs = [
 						<?php \Jetonomy\Template_Loader::partial( 'post-card', [ 'post' => $post ] ); ?>
 					<?php endforeach; ?>
 				</div>
+
+				<?php
+				if ( $total_pages > 1 ) :
+					$prev_url = add_query_arg(
+						array(
+							'sort'  => $sort,
+							'paged' => $paged - 1,
+						),
+						$tag_url
+					);
+					$next_url = add_query_arg(
+						array(
+							'sort'  => $sort,
+							'paged' => $paged + 1,
+						),
+						$tag_url
+					);
+					?>
+					<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Tag pagination', 'jetonomy' ); ?>">
+						<?php if ( $paged > 1 ) : ?>
+							<a class="jt-pagination-link" href="<?php echo esc_url( $prev_url ); ?>" rel="prev">
+								<?php esc_html_e( '← Previous', 'jetonomy' ); ?>
+							</a>
+						<?php endif; ?>
+						<span class="jt-pagination-status">
+							<?php
+							/* translators: 1: current page, 2: total pages */
+							echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $paged, $total_pages ) );
+							?>
+						</span>
+						<?php if ( $paged < $total_pages ) : ?>
+							<a class="jt-pagination-link" href="<?php echo esc_url( $next_url ); ?>" rel="next">
+								<?php esc_html_e( 'Next →', 'jetonomy' ); ?>
+							</a>
+						<?php endif; ?>
+					</nav>
+				<?php endif; ?>
 			<?php endif; ?>
 		</main>
 

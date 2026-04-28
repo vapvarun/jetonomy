@@ -32,7 +32,7 @@ if ( $prefix_name && $space ) {
 	}
 }
 ?>
-<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
+<div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
 	<div class="jt-votes">
 		<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
@@ -40,7 +40,13 @@ if ( $prefix_name && $space ) {
 		<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
 	</div>
 	<div class="jt-row-main">
-		<div class="jt-row-title">
+		<?php
+		// 1.4.0 C.4 fix: row is no longer one big <a>. The title link is the
+		// stretched anchor (CSS positions ::before to cover the whole row),
+		// so child <a> elements (tags, mentions) remain clickable without
+		// nested-anchor invalid markup. The whole row stays clickable.
+		?>
+		<a class="jt-row-title jt-row-title-link" href="<?php echo esc_url( $post_url ); ?>">
 			<?php if ( $post->is_sticky ) : ?>
 				<span aria-hidden="true"><?php jetonomy_echo_icon( 'pin', 14 ); ?></span>
 			<?php endif; ?>
@@ -48,14 +54,14 @@ if ( $prefix_name && $space ) {
 				<span class="jt-badge-private"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
 			<?php endif; ?>
 			<?php if ( $prefix_name ) : ?>
-				<span class="jt-prefix" 
+				<span class="jt-prefix"
 				<?php
 				if ( $prefix_color ) :
 					?>
 					style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
-		</div>
+		</a>
 		<div class="jt-row-sub">
 			<?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?>
 			<?php
@@ -75,7 +81,14 @@ if ( $prefix_name && $space ) {
 			<?php /* translators: %d: trust level number */ ?>
 			<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
 			<?php foreach ( $tags as $post_tag ) : ?>
-				<span class="jt-tag"><?php echo esc_html( $post_tag->name ); ?></span>
+				<?php
+				// 1.4.0 C.4 fix: tags are now anchors to /community/tag/:slug/
+				// instead of inert <span> elements. CSS selectors stay
+				// `.jt-tag` so existing styles still apply (the `<a>` carries
+				// the same class).
+				$jt_tag_url = \Jetonomy\base_url() . '/tag/' . rawurlencode( (string) $post_tag->slug ) . '/';
+				?>
+				<a class="jt-tag" href="<?php echo esc_url( $jt_tag_url ); ?>"><?php echo esc_html( $post_tag->name ); ?></a>
 			<?php endforeach; ?>
 		</div>
 	</div>
@@ -91,4 +104,4 @@ if ( $prefix_name && $space ) {
 			?>
 		</div>
 	</div>
-</a>
+</div>

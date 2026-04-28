@@ -322,6 +322,23 @@
   a.jt-row:hover { color: inherit; }
   .jt-row-main { min-width: 0; }
   .jt-row-title { font-weight: 600; font-size: 1rem; line-height: 1.4; color: var(--jt-text); }
+  /* 1.4.0 C.4: stretched-link pattern. Title <a> is the row's only navigation
+     anchor; a ::before pseudo covers the whole row so the row stays clickable
+     while child <a> elements (tags) keep their own click target. */
+  a.jt-row-title-link { display: block; text-decoration: none; color: inherit; position: static; }
+  .jt-row { position: relative; }
+  a.jt-row-title-link::before { content: ""; position: absolute; inset: 0; z-index: 0; }
+  .jt-row-sub > * { position: relative; z-index: 1; }
+
+  /* Tag-page + future paginated lists. */
+  .jt-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-block-start: 24px; padding-block: 16px; }
+  .jt-pagination-link { color: var(--jt-accent); text-decoration: none; font-weight: 600; padding: 8px 14px; border-radius: var(--jt-radius); transition: background 0.1s; }
+  .jt-pagination-link:hover { background: var(--jt-bg-hover); }
+  .jt-pagination-status { color: var(--jt-text-secondary); font-size: 0.875rem; }
+  @media ( max-width: 640px ) {
+    .jt-pagination { gap: 8px; flex-wrap: wrap; }
+    .jt-pagination-link { padding: 8px 10px; font-size: 0.875rem; }
+  }
   .jt-row:hover .jt-row-title { color: var(--jt-text-secondary); }
   .jt-row-sub { font-size: 0.8125rem; color: var(--jt-text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .jt-row-stat { text-align: center; }
