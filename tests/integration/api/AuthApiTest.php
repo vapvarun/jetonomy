@@ -140,4 +140,80 @@ class AuthApiTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( '/jetonomy/v1/auth/login', $routes );
 		$this->assertContains( 'POST', $routes['/jetonomy/v1/auth/login']['methods'] );
 	}
+
+	// ── Register ─────────────────────────────────────────────────────────────
+
+	private function dispatch_register( array $body = [] ): \WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', '/jetonomy/v1/auth/register' );
+		$request->set_body_params( $body );
+		return $this->server->dispatch( $request );
+	}
+
+	public function test_register_blocked_when_users_cannot_register(): void {
+		update_option( 'users_can_register', 0 );
+
+		$response = $this->dispatch_register(
+			[
+				'username' => 'whoever',
+				'email'    => 'whoever@example.com',
+				'password' => 'password123',
+			]
+		);
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'jetonomy_registration_disabled', $response->get_data()['code'] );
+	}
+
+	public function test_register_creates_user_when_open(): void {
+		update_option( 'users_can_register', 1 );
+		// Reset register rate-limit between tests.
+		delete_transient( 'jt_auth_register_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		$response = $this->dispatch_register(
+			[
+				'username' => 'jt_register_test',
+				'email'    => 'jt_register_test@example.com',
+				'password' => 'password-1234',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertTrue( $data['success'] );
+		$this->assertNotFalse( get_user_by( 'login', 'jt_register_test' ) );
+	}
+
+	public function test_register_rejects_short_password(): void {
+		update_option( 'users_can_register', 1 );
+		delete_transient( 'jt_auth_register_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		$response = $this->dispatch_register(
+			[
+				'username' => 'jt_register_short',
+				'email'    => 'jt_register_short@example.com',
+				'password' => 'short',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'jetonomy_password_too_short', $response->get_data()['code'] );
+	}
+
+	public function test_register_rejects_duplicate_username(): void {
+		update_option( 'users_can_register', 1 );
+		delete_transient( 'jt_auth_register_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		self::factory()->user->create( [ 'user_login' => 'jt_register_dupe' ] );
+
+		$response = $this->dispatch_register(
+			[
+				'username' => 'jt_register_dupe',
+				'email'    => 'jt_register_dupe2@example.com',
+				'password' => 'password-1234',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'jetonomy_username_unavailable', $response->get_data()['code'] );
+	}
 }
