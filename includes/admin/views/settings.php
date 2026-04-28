@@ -149,6 +149,28 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<p class="description"><?php esc_html_e( 'The pre-selected type when creating a new space.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Front-end space creation', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[allow_frontend_space_creation]" value="1" <?php checked( ! empty( $settings['allow_frontend_space_creation'] ) ); ?>>
+								<?php esc_html_e( 'Let qualified members create new spaces from /community/new-space/', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'When OFF, only WordPress Author-and-above users can create spaces (the default before 1.4.0). When ON, any community member at or above the trust level below can create spaces from the front end.', 'jetonomy' ); ?></p>
+							<br>
+							<label for="min_trust_level_to_create_space">
+								<?php esc_html_e( 'Minimum trust level required:', 'jetonomy' ); ?>
+								<select id="min_trust_level_to_create_space" name="jetonomy_settings[min_trust_level_to_create_space]">
+									<?php $min_tl = isset( $settings['min_trust_level_to_create_space'] ) ? (int) $settings['min_trust_level_to_create_space'] : 2; ?>
+									<option value="1" <?php selected( $min_tl, 1 ); ?>><?php esc_html_e( 'TL 1 — Basic', 'jetonomy' ); ?></option>
+									<option value="2" <?php selected( $min_tl, 2 ); ?>><?php esc_html_e( 'TL 2 — Regular (recommended)', 'jetonomy' ); ?></option>
+									<option value="3" <?php selected( $min_tl, 3 ); ?>><?php esc_html_e( 'TL 3 — Member', 'jetonomy' ); ?></option>
+									<option value="4" <?php selected( $min_tl, 4 ); ?>><?php esc_html_e( 'TL 4 — Regular Active', 'jetonomy' ); ?></option>
+									<option value="5" <?php selected( $min_tl, 5 ); ?>><?php esc_html_e( 'TL 5 — Leader', 'jetonomy' ); ?></option>
+								</select>
+							</label>
+						</td>
+					</tr>
 				</table>
 			</div>
 

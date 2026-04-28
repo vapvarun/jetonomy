@@ -103,12 +103,9 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 /**
  * Return the URL where a space admin should land to edit a space.
  *
- * Until G5 ships the front-end edit view at `/community/s/:slug/edit/`,
- * this returns the wp-admin spaces edit URL so G2's "Edit space" link
- * does something useful immediately. When G5 lands, the
- * `jetonomy_use_frontend_space_edit` filter flips to true and the helper
- * starts returning the front-end URL — every caller swaps simultaneously
- * (one-line change in the filter, no template sweep).
+ * 1.4.0 G5 shipped the front-end edit view at /community/s/:slug/edit/, so
+ * this now defaults to that URL. Integrators can flip the filter back to
+ * false to send admins to wp-admin instead, e.g. for a custom workflow.
  *
  * @param object $space Space row (must have `slug` and `id`).
  * @return string Absolute URL.
@@ -120,13 +117,13 @@ function get_space_edit_url( $space ): string {
 	/**
 	 * Filter whether to use the front-end space-edit URL (G5).
 	 *
-	 * Default false until G5 ships the rewrite rule + view. G5 commit
-	 * flips the default to true; integrators can override either way.
+	 * Default true since G5 shipped in 1.4.0. Set false to route the
+	 * sidebar Edit-space link to wp-admin instead.
 	 *
 	 * @param bool   $use_frontend Whether to return the front-end URL.
 	 * @param object $space        Space row.
 	 */
-	$use_frontend = (bool) apply_filters( 'jetonomy_use_frontend_space_edit', false, $space );
+	$use_frontend = (bool) apply_filters( 'jetonomy_use_frontend_space_edit', true, $space );
 
 	if ( $use_frontend && '' !== $slug ) {
 		return base_url() . '/s/' . rawurlencode( $slug ) . '/edit/';

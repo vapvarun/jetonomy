@@ -28,7 +28,7 @@ echo "pre-commit: checking $(echo $STAGED_PHP | wc -w) staged PHP file(s)..."
 # honour the baseline accurately. ~20-30s cached, usually acceptable.
 if [ -x vendor/bin/phpstan ]; then
     echo "  -> phpstan"
-    vendor/bin/phpstan analyse --memory-limit=1G --no-progress --error-format=raw
+    vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=raw
     if [ $? -ne 0 ]; then
         echo
         echo "pre-commit FAILED: PHPStan errors above. Fix them or run with --no-verify (discouraged)."

@@ -71,6 +71,12 @@ class Router {
 		// My spaces (G7) — landing for "Spaces I run" + "Spaces I'm in"
 		add_rewrite_rule( "^{$base}/my-spaces/?$", 'index.php?jetonomy_route=my-spaces', 'top' );
 
+		// Front-end create space (G6) — gated by admin toggle + trust level
+		add_rewrite_rule( "^{$base}/new-space/?$", 'index.php?jetonomy_route=new-space', 'top' );
+
+		// Front-end edit space (G5) — /community/s/:slug/edit/
+		add_rewrite_rule( "^{$base}/s/([^/]+)/edit/?$", 'index.php?jetonomy_route=edit-space&jetonomy_slug=$matches[1]', 'top' );
+
 		// Tags
 		add_rewrite_rule( "^{$base}/tag/([^/]+)/?$", 'index.php?jetonomy_route=tag&jetonomy_slug=$matches[1]', 'top' );
 

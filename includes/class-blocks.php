@@ -629,9 +629,17 @@ class Blocks {
 		$notifs_url    = $base . '/notifications/';
 		$messages_url  = $base . '/messages/';
 		$my_spaces_url = $base . '/my-spaces/';
-		$show_messages = defined( 'JETONOMY_PRO_VERSION' );
-		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
-		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
+		$new_space_url = $base . '/new-space/';
+
+		// 1.4.0 G6 — show "Create space" link when the viewer qualifies
+		// (cap holder OR trust-level fallback when admin enables it).
+		$jt_settings_panel = get_option( 'jetonomy_settings', array() );
+		$jt_min_trust      = isset( $jt_settings_panel['min_trust_level_to_create_space'] ) ? (int) $jt_settings_panel['min_trust_level_to_create_space'] : 2;
+		$can_create_space  = current_user_can( 'jetonomy_create_spaces' )
+			|| ( ! empty( $jt_settings_panel['allow_frontend_space_creation'] ) && (int) $trust_level >= $jt_min_trust );
+		$show_messages     = defined( 'JETONOMY_PRO_VERSION' );
+		$logout_url        = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
+		$title             = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
 			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), $user->display_name );
 
@@ -671,6 +679,11 @@ class Blocks {
 				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Spaces', 'jetonomy' ); ?></span>
 				</a>
+				<?php if ( $can_create_space ) : ?>
+					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
+						<span class="jt-userpanel-link-label"><?php esc_html_e( 'Create space', 'jetonomy' ); ?></span>
+					</a>
+				<?php endif; ?>
 				<a href="<?php echo esc_url( $edit_url ); ?>" class="jt-userpanel-link">
 					<span class="jt-userpanel-link-label"><?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?></span>
 				</a>

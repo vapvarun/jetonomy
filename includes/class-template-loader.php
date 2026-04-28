@@ -36,7 +36,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
@@ -113,6 +113,8 @@ class Template_Loader {
 			'edit-profile'     => 'views/edit-profile.php',
 			'invite'           => 'views/invite.php',
 			'my-spaces'        => 'views/my-spaces.php',
+			'new-space'        => 'views/new-space.php',
+			'edit-space'       => 'views/space-edit.php',
 		);
 
 		/**
@@ -567,6 +569,12 @@ class Template_Loader {
 					case 'my-spaces':
 						$parts['title'] = __( 'My Spaces', 'jetonomy' );
 						break;
+					case 'new-space':
+						$parts['title'] = __( 'Create a space', 'jetonomy' );
+						break;
+					case 'edit-space':
+						$parts['title'] = __( 'Edit space', 'jetonomy' );
+						break;
 				}
 				return $parts;
 			}
@@ -794,6 +802,20 @@ class Template_Loader {
 						$url       = $base . '/my-spaces/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
+						break;
+					case 'new-space':
+						$title     = __( 'Create a space', 'jetonomy' );
+						$desc      = sprintf( __( 'Start a new community space on %s.', 'jetonomy' ), $site_name );
+						$url       = $base . '/new-space/';
+						$image_alt = $site_name;
+						$noindex   = true; // Composer page.
+						break;
+					case 'edit-space':
+						$title     = __( 'Edit space', 'jetonomy' );
+						$desc      = __( 'Edit your community space settings.', 'jetonomy' );
+						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
+						$image_alt = $site_name;
+						$noindex   = true; // Logged-in editor view.
 						break;
 				}
 

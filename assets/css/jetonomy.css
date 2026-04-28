@@ -330,6 +330,25 @@
   a.jt-row-title-link::before { content: ""; position: absolute; inset: 0; z-index: 0; }
   .jt-row-sub > * { position: relative; z-index: 1; }
 
+  /* Front-end forms (G5 edit space, G6 new space). Token-driven so the
+     same primitives work for any future REST-backed form. */
+  .jt-form { padding: var(--jt-space-4); }
+  .jt-form-row { margin-block-end: 16px; }
+  .jt-form-row label { display: block; font-weight: 600; margin-block-end: 6px; color: var(--jt-text); }
+  .jt-form-row .jt-input { width: 100%; padding: 8px 12px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font: inherit; }
+  .jt-form-row .jt-input:focus { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
+  .jt-form-row textarea.jt-input { resize: vertical; }
+  .jt-form-help { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 6px 0 0; }
+  .jt-required { color: var(--jt-danger); }
+  .jt-form-actions { display: flex; align-items: center; gap: 12px; margin-block-start: 8px; flex-wrap: wrap; }
+  .jt-form-error { margin-block-start: 12px; padding: 10px 12px; border-radius: var(--jt-radius); background: var(--jt-danger-light); color: var(--jt-danger); font-size: 0.875rem; }
+  .jt-form-saved { color: var(--jt-success); font-weight: 600; font-size: 0.875rem; }
+  @media ( max-width: 640px ) {
+    .jt-form { padding: 16px; }
+    .jt-form-actions { flex-direction: column; align-items: stretch; }
+    .jt-form-actions .jt-btn { width: 100%; text-align: center; }
+  }
+
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 32px; }
   .jt-my-spaces-section:last-child { margin-block-end: 0; }

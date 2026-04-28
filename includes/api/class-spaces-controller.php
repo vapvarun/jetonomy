@@ -198,7 +198,11 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission check: requires jetonomy_create_spaces capability.
+	 * Permission check: jetonomy_create_spaces cap (Author+ WP role) OR
+	 * trust level >= admin-configured threshold when front-end space
+	 * creation is enabled. The trust-level path is what unlocks G6 — a
+	 * regular community member with TL2+ can create a space without
+	 * needing the cap.
 	 */
 	public function create_permission_check(): bool|WP_Error {
 		if ( ! is_user_logged_in() ) {
@@ -208,7 +212,22 @@ class Spaces_Controller extends Base_Controller {
 				[ 'status' => 401 ]
 			);
 		}
-		if ( ! current_user_can( 'jetonomy_create_spaces' ) ) {
+		if ( current_user_can( 'jetonomy_create_spaces' ) ) {
+			return true;
+		}
+
+		// 1.4.0 G6: trust-level fallback gated by an admin toggle.
+		$settings = get_option( 'jetonomy_settings', array() );
+		if ( empty( $settings['allow_frontend_space_creation'] ) ) {
+			return $this->permission_error();
+		}
+
+		$min_trust = isset( $settings['min_trust_level_to_create_space'] )
+			? (int) $settings['min_trust_level_to_create_space']
+			: 2;
+		$profile   = \Jetonomy\Models\UserProfile::find_by_user( get_current_user_id() );
+		$trust     = $profile ? (int) $profile->trust_level : 0;
+		if ( $trust < $min_trust ) {
 			return $this->permission_error();
 		}
 		return true;
