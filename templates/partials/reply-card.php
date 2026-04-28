@@ -13,6 +13,14 @@ $trust       = $profile ? (int) $profile->trust_level : 0;
 $time_ago    = human_time_diff( strtotime( $reply->created_at ), time() );
 $is_op       = (int) $reply->author_id === (int) $post->author_id;
 $is_accepted = (int) $reply->is_accepted;
+
+// 1.4.0 C.1 fix: space-role moderators (subscriber WP role + jt_space_members
+// admin/mod) get the same edit / split / delete affordances as WP-cap mods.
+// Permission_Engine::can() checks WP cap → space role → trust level in order.
+$jt_reply_viewer       = get_current_user_id();
+$jt_can_moderate_reply = $jt_reply_viewer
+	? \Jetonomy\Permissions\Permission_Engine::can( $jt_reply_viewer, 'moderate', (int) ( $post->space_id ?? 0 ) )
+	: false;
 ?>
 <div class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
@@ -107,7 +115,7 @@ $is_accepted = (int) $reply->is_accepted;
 				title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 14 ); ?></button>
 		<?php endif; ?>
-		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || current_user_can( 'jetonomy_moderate' ) ) ) : ?>
+		<?php if ( is_user_logged_in() && ( get_current_user_id() === (int) $reply->author_id || $jt_can_moderate_reply ) ) : ?>
 			<div class="jt-more-menu">
 				<button class="jt-act jt-more-trigger" type="button"
 					data-wp-on--click="actions.toggleMoreMenu"
@@ -119,7 +127,7 @@ $is_accepted = (int) $reply->is_accepted;
 						data-reply-id="<?php echo (int) $reply->id; ?>">
 						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
 					</button>
-					<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+					<?php if ( $jt_can_moderate_reply ) : ?>
 					<button class="jt-more-item"
 						data-wp-on--click="actions.splitReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>"

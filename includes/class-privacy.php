@@ -67,7 +67,10 @@ class Privacy {
 				'data'        => [
 					[
 						'name'  => __( 'Display Name', 'jetonomy' ),
-						'value' => $profile->display_name ?? '',
+						// jt_user_profiles has no display_name column — it lives
+						// on wp_users. Reading from $profile here returned empty
+						// for every export (Phase C audit, 1.4.0 fix).
+						'value' => (string) $user->display_name,
 					],
 					[
 						'name'  => __( 'Bio', 'jetonomy' ),

@@ -759,9 +759,6 @@ class Notifier {
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
 		$space      = Space::find( $space_id );
 		$space_name = $space ? $space->title : __( 'a space', 'jetonomy' );
-		$space_url  = $space
-			? admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' )
-			: '';
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
 		$recipient_ids = [];
@@ -802,6 +799,12 @@ class Notifier {
 			if ( $mod_id === $user_id ) {
 				continue;
 			}
+			// 1.4.0 C.2 fix: build the action URL per-recipient. Space mods
+			// without WP admin caps were getting an `admin_url(...)` link that
+			// 403'd on click — they own the space but not wp-admin. Front-end
+			// space-mod queue at /community/s/:slug/mod/ now carries the same
+			// approve / decline UI for them.
+			$space_url = $this->build_join_request_url_for( $mod_id, $space );
 			$this->create_and_maybe_email(
 				$mod_id,
 				$user_id,
@@ -812,6 +815,26 @@ class Notifier {
 				$space_url
 			);
 		}
+	}
+
+	/**
+	 * Per-recipient join-request action URL.
+	 *
+	 * WP admin / `jetonomy_manage_spaces` cap-holders go to the wp-admin
+	 * space-edit `join_requests` tab. Everyone else (space-level admins +
+	 * moderators without those caps) gets the front-end space-mod queue.
+	 *
+	 * @param int         $recipient_id Recipient WP user id.
+	 * @param object|null $space        Space row (may be null).
+	 */
+	private function build_join_request_url_for( int $recipient_id, $space ): string {
+		if ( ! $space ) {
+			return '';
+		}
+		if ( user_can( $recipient_id, 'jetonomy_manage_spaces' ) || user_can( $recipient_id, 'manage_options' ) ) {
+			return admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' );
+		}
+		return \Jetonomy\base_url() . '/s/' . $space->slug . '/mod/';
 	}
 
 	private function get_display_name( int $user_id ): string {

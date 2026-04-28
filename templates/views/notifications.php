@@ -10,9 +10,17 @@ defined( 'ABSPATH' ) || exit;
 // Auth check is handled by Template_Loader before output.
 $user_id       = get_current_user_id();
 $notifications = \Jetonomy\Models\Notification::list_for_user( $user_id, 30 );
-
-// Mark all as read on page load.
-\Jetonomy\Models\Notification::mark_all_read( $user_id );
+// 1.4.0 C.6 fix: do NOT auto mark-all-read on render — the user never got
+// to see what was unread because the page wiped their state on view.
+// The "Mark all as read" button (rendered below) calls the existing REST
+// endpoint POST /jetonomy/v1/notifications/mark-all-read on click.
+$has_unread = false;
+foreach ( $notifications as $notif ) {
+	if ( empty( $notif->is_read ) ) {
+		$has_unread = true;
+		break;
+	}
+}
 
 $base = \Jetonomy\base_url();
 
@@ -39,9 +47,18 @@ $type_labels = [
 
 <div class="jt-two-col">
 <main>
-		<h1 class="jt-page-title jt-mb-20">
-			<?php esc_html_e( 'Notifications', 'jetonomy' ); ?>
-		</h1>
+		<div class="jt-notifications-head">
+			<h1 class="jt-page-title">
+				<?php esc_html_e( 'Notifications', 'jetonomy' ); ?>
+			</h1>
+			<?php if ( $has_unread ) : ?>
+				<button type="button" class="jt-btn jt-btn-ghost jt-mark-all-read"
+					data-jt-mark-all-read
+					aria-label="<?php esc_attr_e( 'Mark all notifications as read', 'jetonomy' ); ?>">
+					<?php esc_html_e( 'Mark all as read', 'jetonomy' ); ?>
+				</button>
+			<?php endif; ?>
+		</div>
 
 		<?php if ( empty( $notifications ) ) : ?>
 			<div class="jt-empty">
@@ -132,3 +149,36 @@ $type_labels = [
 
 <?php \Jetonomy\Template_Loader::partial( 'sidebar', [ 'space' => null ] ); ?>
 </div>
+
+<?php if ( $has_unread ) : ?>
+<script>
+( function () {
+	'use strict';
+	var btn = document.querySelector( '[data-jt-mark-all-read]' );
+	if ( ! btn || ! window.jetonomyData ) {
+		return;
+	}
+	btn.addEventListener( 'click', function ( e ) {
+		e.preventDefault();
+		btn.disabled = true;
+		fetch( window.jetonomyData.restBase + '/notifications/mark-all-read', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'X-WP-Nonce': window.jetonomyData.restNonce,
+				'Content-Type': 'application/json'
+			}
+		} ).then( function ( r ) {
+			if ( ! r.ok ) {
+				throw new Error( 'mark_all_read_failed' );
+			}
+			// Drop unread dots + hide the button — no full refresh needed.
+			document.querySelectorAll( '.jt-notif-dot' ).forEach( function ( d ) { d.remove(); } );
+			btn.remove();
+		} ).catch( function () {
+			btn.disabled = false;
+		} );
+	} );
+} )();
+</script>
+<?php endif; ?>

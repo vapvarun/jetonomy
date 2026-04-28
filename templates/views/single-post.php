@@ -17,10 +17,21 @@ if ( ! $post ) {
 	return;
 }
 
+// 1.4.0 C.1 fix: every "can moderate" check below uses Permission_Engine::can()
+// so a space-role moderator (subscriber WP role with admin/moderator role on
+// jt_space_members) gets the same UI affordances as a WP-cap moderator. Before
+// this, a `current_user_can('jetonomy_moderate')` cap-only gate hid edit / pin /
+// delete / move / merge from every space mod whose WP role lacked the cap —
+// regression versus 1.3.8's promise that space mods are first-class.
+$jt_viewer_id         = get_current_user_id();
+$jt_can_moderate_here = $jt_viewer_id
+	? \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'moderate', (int) $post->space_id )
+	: false;
+
 if ( 'publish' !== $post->status ) {
-	$viewer_id = get_current_user_id();
+	$viewer_id = $jt_viewer_id;
 	$is_author = $viewer_id && (int) $post->author_id === $viewer_id;
-	$is_mod    = current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' );
+	$is_mod    = $jt_can_moderate_here || current_user_can( 'manage_options' );
 
 	if ( ! $is_author && ! $is_mod ) {
 		status_header( 404 );
@@ -369,14 +380,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
 					<?php endif; ?>
 				<?php endif; ?>
-				<?php if ( current_user_can( 'jetonomy_moderate' ) || (int) $post->author_id === get_current_user_id() ) : ?>
+				<?php if ( $jt_can_moderate_here || (int) $post->author_id === get_current_user_id() ) : ?>
 					<div class="jt-more-menu">
 						<button class="jt-act jt-more-trigger" type="button"
 							title="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'More options', 'jetonomy' ); ?>"
 							data-wp-on--click="actions.toggleMoreMenu"><?php jetonomy_echo_icon( 'more-horizontal', 16 ); ?></button>
 						<div class="jt-more-dropdown" hidden>
-							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<?php if ( (int) $post->author_id === get_current_user_id() || $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.editPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?></button>
@@ -385,12 +396,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-private="<?php echo esc_attr( ! empty( $post->is_private ) ? '1' : '0' ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_private ) ? esc_html__( 'Make Public', 'jetonomy' ) : esc_html__( 'Make Private', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<?php if ( $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<?php if ( $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item"
 									data-wp-on--click="actions.movePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
@@ -400,13 +411,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-id="<?php echo absint( $post->space_id ); ?>"><?php jetonomy_echo_icon( 'merge', 14 ); ?> <?php esc_html_e( 'Merge', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( (int) $post->author_id === get_current_user_id() || current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<?php if ( (int) $post->author_id === get_current_user_id() || $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item jt-more-item--danger"
 									data-wp-on--click="actions.deletePost"
 									data-post-id="<?php echo absint( $post->id ); ?>"
 									data-space-slug="<?php echo esc_attr( $space->slug ?? '' ); ?>"><?php jetonomy_echo_icon( 'trash', 16 ); ?> <?php esc_html_e( 'Delete', 'jetonomy' ); ?></button>
 							<?php endif; ?>
-							<?php if ( current_user_can( 'jetonomy_moderate' ) ) : ?>
+							<?php if ( $jt_can_moderate_here ) : ?>
 								<a class="jt-more-item" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $post->space_id ) ); ?>"><?php jetonomy_echo_icon( 'settings', 14 ); ?> <?php esc_html_e( 'Admin', 'jetonomy' ); ?></a>
 							<?php endif; ?>
 						</div>
