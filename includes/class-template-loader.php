@@ -510,61 +510,156 @@ class Template_Loader {
 		add_filter(
 			'document_title_parts',
 			function ( $parts ) use ( $data ) {
+				// WP appends ' – {site_name}' via the default separator + tagline,
+				// so we only set the route-specific title fragment here. Don't
+				// concatenate the site name yourself — it doubles up.
+				$slug_pretty = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
 				switch ( $data['route'] ) {
 					case 'home':
 						$parts['title'] = __( 'Community', 'jetonomy' );
 						break;
 					case 'space':
-						$parts['title'] = ucfirst( str_replace( '-', ' ', $data['slug'] ) ) . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = $slug_pretty . ' — ' . __( 'Community', 'jetonomy' );
+						break;
+					case 'space-members':
+						$parts['title'] = $slug_pretty . ' — ' . __( 'Members', 'jetonomy' );
+						break;
+					case 'space-roadmap':
+						$parts['title'] = $slug_pretty . ' — ' . __( 'Roadmap', 'jetonomy' );
+						break;
+					case 'space-moderation':
+						$parts['title'] = $slug_pretty . ' — ' . __( 'Moderation', 'jetonomy' );
 						break;
 					case 'post':
-						$parts['title'] = ucfirst( str_replace( '-', ' ', $data['slug'] ) );
+						$parts['title'] = $slug_pretty;
+						break;
+					case 'profile':
+						$parts['title'] = '@' . (string) $data['slug'];
+						break;
+					case 'tag':
+						$parts['title'] = '#' . (string) $data['slug'];
+						break;
+					case 'category':
+						$parts['title'] = $slug_pretty . ' — ' . __( 'Community', 'jetonomy' );
+						break;
+					case 'leaderboard':
+						$parts['title'] = __( 'Top members', 'jetonomy' );
+						break;
+					case 'search':
+						$parts['title'] = __( 'Search', 'jetonomy' );
+						break;
+					case 'moderation':
+						$parts['title'] = __( 'Moderation Queue', 'jetonomy' );
+						break;
+					case 'new-post':
+						$parts['title'] = __( 'Start a discussion', 'jetonomy' );
+						break;
+					case 'notifications':
+						$parts['title'] = __( 'Notifications', 'jetonomy' );
+						break;
+					case 'edit-profile':
+						$parts['title'] = __( 'Edit profile', 'jetonomy' );
+						break;
+					case 'invite':
+						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 				}
 				return $parts;
 			}
 		);
 
-		// Meta description + OG tags
+		// Meta description + canonical + OG/Twitter + robots — emitted on EVERY
+		// public route. Phase D contract (1.4.0): the free plugin alone is
+		// SEO-complete. The Pro `seo-pro` extension layers per-space overrides
+		// at priority 0, but we no longer hand it the entire emission — it
+		// only owns the routes it explicitly handles (currently `space` +
+		// `post`). All other routes are owned by free, so a community on the
+		// free plugin doesn't go invisible to crawlers on home / profile /
+		// leaderboard / search / tag / etc. (incident: 2026-04-28 SEO audit).
 		add_action(
 			'wp_head',
 			function () use ( $data ) {
-				// When the Pro seo-pro extension is active, it emits richer
-				// OG/Twitter/canonical tags at priority 0 and owns that output
-				// completely. We must not duplicate those tags — but we still
-				// emit the oEmbed discovery <link> since that lives only here.
 				$seo_pro_active = in_array(
 					'seo-pro',
 					(array) get_option( 'jetonomy_pro_extensions', array() ),
 					true
 				);
 
+				// seo-pro currently emits only for the `post` route — its
+				// get_current_context() bails when `jetonomy_space_slug` is
+				// empty, which is true on the bare `/s/:slug/` space route
+				// (the router only sets `jetonomy_space_slug` on the post
+				// rewrite). When that gap is closed in Pro, add `space`
+				// here so free skips the duplicate emit.
+				$seo_pro_handles = array( 'post' );
+				$skip_baseline   = $seo_pro_active && in_array( $data['route'], $seo_pro_handles, true );
+
+				$site_name    = get_bloginfo( 'name' );
+				$base         = \Jetonomy\base_url();
 				$desc         = '';
 				$title        = '';
 				$url          = '';
 				$image        = '';
+				$image_alt    = '';
 				$og_type      = 'website';
 				$twitter_card = 'summary';
 				$article_meta = array(); // author / published_time / section — only for post route.
 				$oembed_url   = '';
+				$noindex      = false; // Thin / private / auth-required surface.
 
 				switch ( $data['route'] ) {
 					case 'home':
-						$title = get_bloginfo( 'name' ) . ' Community';
-						$desc  = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
-						$url   = \Jetonomy\base_url() . '/';
+						$title     = $site_name . ' ' . __( 'Community', 'jetonomy' );
+						$desc      = __( 'Join our community discussions, Q&A, and more.', 'jetonomy' );
+						$url       = $base . '/';
+						$image_alt = $site_name;
+						break;
+					case 'category':
+						$title     = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
+						$desc      = sprintf( __( 'Spaces in the %1$s category on %2$s.', 'jetonomy' ), $title, $site_name );
+						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$image_alt = $title;
 						break;
 					case 'space':
-						$space = \Jetonomy\Models\Space::find_by_slug( $data['slug'] );
+					case 'space-members':
+					case 'space-roadmap':
+					case 'space-moderation':
+						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 						if ( $space ) {
-							$title = $space->title;
-							$desc  = wp_strip_all_tags( $space->description ?? '' );
-							$url   = \Jetonomy\base_url() . '/s/' . $space->slug . '/';
-							$image = $space->cover_image ?? '';
+							$is_private = ! empty( $space->visibility ) && 'public' !== $space->visibility;
+							$title      = $space->title;
+							$desc       = wp_strip_all_tags( $space->description ?? '' );
+							$image      = $space->cover_image ?? '';
+							$image_alt  = $space->title;
+
+							switch ( $data['route'] ) {
+								case 'space-members':
+									$title = $space->title . ' — ' . __( 'Members', 'jetonomy' );
+									$desc  = sprintf( __( 'Members of the %1$s space on %2$s.', 'jetonomy' ), $space->title, $site_name );
+									$url   = $base . '/s/' . $space->slug . '/members/';
+									break;
+								case 'space-roadmap':
+									$title = $space->title . ' — ' . __( 'Roadmap', 'jetonomy' );
+									$desc  = sprintf( __( 'Roadmap for the %1$s space on %2$s.', 'jetonomy' ), $space->title, $site_name );
+									$url   = $base . '/s/' . $space->slug . '/roadmap/';
+									break;
+								case 'space-moderation':
+									$title   = $space->title . ' — ' . __( 'Moderation', 'jetonomy' );
+									$desc    = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $space->title );
+									$url     = $base . '/s/' . $space->slug . '/mod/';
+									$noindex = true; // Mod tools never indexed.
+									break;
+								default:
+									$url = $base . '/s/' . $space->slug . '/';
+							}
+
+							if ( $is_private ) {
+								$noindex = true; // Private space — no public crawl.
+							}
 						}
 						break;
 					case 'post':
-						$post = \Jetonomy\Models\Post::find_by_slug( $data['slug'] );
+						$post = \Jetonomy\Models\Post::find_by_slug( (string) $data['slug'] );
 						// Same permission gate as single-post.php — without this, the meta
 						// description, OG tags, article:* metadata, and oEmbed discovery URL
 						// for a private topic leak into every non-author response's <head>
@@ -579,16 +674,15 @@ class Template_Loader {
 								? wp_strip_all_tags( (string) $post->content_plain )
 								: wp_strip_all_tags( (string) $post->content );
 							$desc         = trim( preg_replace( '/\s+/', ' ', $desc ) );
-							$url          = \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+							$url          = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
 							$og_type      = 'article';
 							$twitter_card = 'summary_large_image';
+							$image_alt    = $post->title;
 
-							// First inline image → OG/Twitter image.
 							if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/i', (string) $post->content, $m ) ) {
 								$image = esc_url_raw( $m[1] );
 							}
 
-							// article:* meta — author, published time, section.
 							$author_name = '';
 							if ( ! empty( $post->author_id ) ) {
 								$profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
@@ -608,7 +702,6 @@ class Template_Loader {
 								: '';
 							$article_meta['article:section']        = $space->title ?? '';
 
-							// oEmbed JSON discovery link — consumers hit our custom endpoint.
 							$oembed_url = add_query_arg(
 								array(
 									'url'    => rawurlencode( $url ),
@@ -616,45 +709,174 @@ class Template_Loader {
 								),
 								rest_url( 'jetonomy/v1/oembed' )
 							);
+
+							if ( $space && ! empty( $space->visibility ) && 'public' !== $space->visibility ) {
+								$noindex = true;
+							}
 						}
 						break;
 					case 'profile':
-						$user = get_user_by( 'login', $data['slug'] );
+						$user = get_user_by( 'login', (string) $data['slug'] );
 						if ( $user ) {
-							$title = $user->display_name;
-							$desc  = __( 'Community member profile', 'jetonomy' );
-							$url   = \Jetonomy\base_url() . '/u/' . $data['slug'] . '/';
+							$profile   = \Jetonomy\Models\UserProfile::find_by_user( (int) $user->ID );
+							$bio       = $profile && ! empty( $profile->bio ) ? wp_strip_all_tags( (string) $profile->bio ) : '';
+							$title     = $user->display_name;
+							$desc      = $bio !== '' ? $bio : sprintf( __( 'Community profile for @%1$s on %2$s.', 'jetonomy' ), $user->user_login, $site_name );
+							$url       = $base . '/u/' . rawurlencode( $user->user_login ) . '/';
+							$image     = (string) get_avatar_url( $user->ID, array( 'size' => 256 ) );
+							$image_alt = $user->display_name;
 						}
+						break;
+					case 'tag':
+						$title     = '#' . (string) $data['slug'];
+						$desc      = sprintf( __( 'Discussions tagged %1$s on %2$s.', 'jetonomy' ), $title, $site_name );
+						$url       = $base . '/tag/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$image_alt = $title;
+						break;
+					case 'leaderboard':
+						$title     = __( 'Top members', 'jetonomy' );
+						$desc      = sprintf( __( 'Top contributors and most-helpful members on %s.', 'jetonomy' ), $site_name );
+						$url       = $base . '/leaderboard/';
+						$image_alt = $site_name;
+						break;
+					case 'search':
+						$title     = __( 'Search the community', 'jetonomy' );
+						$desc      = sprintf( __( 'Search discussions, replies, members, and tags on %s.', 'jetonomy' ), $site_name );
+						$url       = $base . '/search/';
+						$image_alt = $site_name;
+						$noindex   = true; // Search results — duplicate / thin.
+						break;
+					case 'moderation':
+						$title     = __( 'Moderation Queue', 'jetonomy' );
+						$desc      = sprintf( __( 'Moderation queue for %s.', 'jetonomy' ), $site_name );
+						$url       = $base . '/mod/';
+						$image_alt = $site_name;
+						$noindex   = true; // Admin tooling.
+						break;
+					case 'new-post':
+						$slug      = (string) $data['slug'];
+						$title     = '' !== $slug
+							? sprintf( __( 'Start a discussion in %s', 'jetonomy' ), ucfirst( str_replace( '-', ' ', $slug ) ) )
+							: __( 'Start a discussion', 'jetonomy' );
+						$desc      = sprintf( __( 'Compose a new discussion on %s.', 'jetonomy' ), $site_name );
+						$url       = $base . ( '' !== $slug ? '/s/' . rawurlencode( $slug ) . '/new/' : '/new/' );
+						$image_alt = $site_name;
+						$noindex   = true; // Composer page.
+						break;
+					case 'notifications':
+						$title     = __( 'Notifications', 'jetonomy' );
+						$desc      = __( 'Your community notifications.', 'jetonomy' );
+						$url       = $base . '/notifications/';
+						$image_alt = $site_name;
+						$noindex   = true; // Personal logged-in view.
+						break;
+					case 'edit-profile':
+						$title     = __( 'Edit profile', 'jetonomy' );
+						$desc      = __( 'Edit your community profile.', 'jetonomy' );
+						$url       = $base . '/u/me/edit/';
+						$image_alt = $site_name;
+						$noindex   = true; // Logged-in form.
+						break;
+					case 'invite':
+						$title     = __( 'You are invited', 'jetonomy' );
+						$desc      = sprintf( __( 'Accept your community invite to %s.', 'jetonomy' ), $site_name );
+						$url       = $base . '/invite/' . rawurlencode( (string) $data['slug'] ) . '/';
+						$image_alt = $site_name;
+						$noindex   = true; // One-shot landing.
 						break;
 				}
 
-				if ( ! $seo_pro_active ) {
-					if ( $desc ) {
+				/**
+				 * og:image fallback chain — when the route-specific image is
+				 * empty, fall back through site logo / site icon so social
+				 * shares always carry a card image instead of letting the
+				 * platform render a blank tile.
+				 */
+				if ( '' === $image ) {
+					$logo_id = (int) get_theme_mod( 'custom_logo' );
+					if ( $logo_id > 0 ) {
+						$image = (string) wp_get_attachment_image_url( $logo_id, 'full' );
+					}
+					if ( '' === $image ) {
+						$icon_url = (string) get_site_icon_url( 512 );
+						if ( '' !== $icon_url ) {
+							$image = $icon_url;
+						}
+					}
+				}
+				if ( '' === $image_alt && '' !== $title ) {
+					$image_alt = $title;
+				}
+
+				/**
+				 * Filter the SEO meta payload — lets Pro extensions or themes
+				 * mutate any value before emission, e.g. swap in a per-space
+				 * og:image, force a noindex on a paginated tail, or rewrite
+				 * the canonical for sort/filter param normalisation.
+				 *
+				 * @param array $payload {
+				 *     @type string $title         OG/Twitter title.
+				 *     @type string $desc          Meta description (≤160 char clip applied at emit time).
+				 *     @type string $url           Canonical / og:url.
+				 *     @type string $image         og:image URL.
+				 *     @type string $image_alt     og:image:alt text.
+				 *     @type string $og_type       og:type (default 'website').
+				 *     @type string $twitter_card  twitter:card (default 'summary').
+				 *     @type bool   $noindex       Whether to emit robots noindex.
+				 *     @type array  $article_meta  article:* meta keyed by property.
+				 * }
+				 * @param array $data Route data (route, slug, etc.).
+				 */
+				$payload      = apply_filters(
+					'jetonomy_seo_meta',
+					compact( 'title', 'desc', 'url', 'image', 'image_alt', 'og_type', 'twitter_card', 'noindex', 'article_meta' ),
+					$data
+				);
+				$title        = (string) ( $payload['title'] ?? '' );
+				$desc         = (string) ( $payload['desc'] ?? '' );
+				$url          = (string) ( $payload['url'] ?? '' );
+				$image        = (string) ( $payload['image'] ?? '' );
+				$image_alt    = (string) ( $payload['image_alt'] ?? '' );
+				$og_type      = (string) ( $payload['og_type'] ?? 'website' );
+				$twitter_card = (string) ( $payload['twitter_card'] ?? 'summary' );
+				$noindex      = (bool) ( $payload['noindex'] ?? false );
+				$article_meta = (array) ( $payload['article_meta'] ?? array() );
+
+				// Always emit robots noindex when the route asks for it —
+				// independent of seo-pro, because seo-pro doesn't currently
+				// emit a follow-aware noindex on these surfaces.
+				if ( $noindex ) {
+					echo '<meta name="robots" content="noindex, follow">' . "\n";
+				}
+
+				if ( ! $skip_baseline ) {
+					if ( '' !== $desc ) {
 						echo '<meta name="description" content="' . esc_attr( mb_substr( $desc, 0, 160 ) ) . '">' . "\n";
 					}
-					if ( $title ) {
+					if ( '' !== $title ) {
 						echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
 						echo '<meta property="og:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
 						echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
 						echo '<meta property="og:type" content="' . esc_attr( $og_type ) . '">' . "\n";
-						echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . '">' . "\n";
-						if ( $image ) {
+						echo '<meta property="og:site_name" content="' . esc_attr( $site_name ) . '">' . "\n";
+						if ( '' !== $image ) {
 							echo '<meta property="og:image" content="' . esc_url( $image ) . '">' . "\n";
+							echo '<meta property="og:image:alt" content="' . esc_attr( $image_alt ) . '">' . "\n";
 						}
 						foreach ( $article_meta as $prop => $value ) {
-							if ( '' !== $value ) {
-								echo '<meta property="' . esc_attr( $prop ) . '" content="' . esc_attr( $value ) . '">' . "\n";
+							if ( '' !== (string) $value ) {
+								echo '<meta property="' . esc_attr( (string) $prop ) . '" content="' . esc_attr( (string) $value ) . '">' . "\n";
 							}
 						}
 						echo '<meta name="twitter:card" content="' . esc_attr( $twitter_card ) . '">' . "\n";
 						echo '<meta name="twitter:title" content="' . esc_attr( $title ) . '">' . "\n";
 						echo '<meta name="twitter:description" content="' . esc_attr( mb_substr( $desc, 0, 200 ) ) . '">' . "\n";
-						if ( $image ) {
+						if ( '' !== $image ) {
 							echo '<meta name="twitter:image" content="' . esc_url( $image ) . '">' . "\n";
+							echo '<meta name="twitter:image:alt" content="' . esc_attr( $image_alt ) . '">' . "\n";
 						}
 					}
-
-					if ( $url ) {
+					if ( '' !== $url ) {
 						echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
 					}
 				}
