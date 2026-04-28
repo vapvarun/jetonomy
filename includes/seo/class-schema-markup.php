@@ -403,7 +403,12 @@ class Schema_Markup {
 			'url'         => $tag_url,
 			'mainEntity'  => array(
 				'@type'           => 'ItemList',
-				'numberOfItems'   => (int) $tag->post_count,
+				// Use the serialized count, not $tag->post_count — the
+				// denormalized counter doesn't decrement when a tagged
+				// post's space is deleted, so trusting it leaves
+				// `numberOfItems` higher than the entries we actually
+				// emit. Schema validators flag the mismatch.
+				'numberOfItems'   => count( $item_entries ),
 				'itemListElement' => $item_entries,
 			),
 		);
