@@ -31,6 +31,8 @@ Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg bl
 
 All shortcodes are registered by `Jetonomy\Shortcodes::register()` and are available on any page or post.
 
+**Self-styling on any page** *(1.4.0+)*: every shortcode auto-enqueues `assets/css/blocks.css` at render time and ships its own `--jtb-*` token block, so a bare `[jetonomy_recent_posts]` paste on a regular WordPress page renders fully styled — no need to put it inside a Forum Feed block container. Works in classic editor, page builders (Elementor, Divi, Bricks, WPBakery), widget areas, and template parts.
+
 ---
 
 ### `[jetonomy_recent_posts]`
@@ -209,7 +211,13 @@ Displays the currently logged-in user's stats: reputation, post count, reply cou
 
 Jetonomy registers eight server-side rendered blocks. Each block uses a `render_callback` that delegates to the matching shortcode (for most) or a dedicated render component (for Navigation, User Panel, and Login). Output is consistent wherever they appear.
 
-All blocks live in the **Widgets** category of the block inserter.
+All blocks live in the **Widgets** category of the block inserter and answer to the search term `jet`.
+
+### Editor experience *(1.4.0+)*
+
+In the block editor every Jetonomy block paints a framed **preview card** with a "JETONOMY" pill badge, the block title, and an attribute-aware hint that reflects the current settings (for example `Filtered to space #3`, `7 day window`, `All public spaces`). The preview is a static mock — no REST calls — so dropping a block on a page is instant and safe.
+
+Each block exposes its settings through Inspector controls in the right sidebar, sized at the WordPress 6.7+ default (40px) with no deprecated bottom margins. The controls map one-to-one to the block attributes documented per block below.
 
 ### `jetonomy/forum-feed`
 
@@ -359,9 +367,17 @@ All shortcode and block output uses the `jt-shortcode` CSS class prefix so you c
 | `.jt-shortcode-post-stats` | Vote and reply counts |
 | `.jt-shortcode-spaces` | Spaces container |
 | `.jt-shortcode-space` | Individual space card |
+| `.jt-shortcode-space-desc` | Space description excerpt |
+| `.jt-shortcode-space-stats` | Space post-count line |
+| `.jt-shortcode-trending-post` | Trending post row |
+| `.jt-shortcode-trending-rank` | Trending rank badge (1, 2, 3 …) |
+| `.jt-shortcode-trending-body` | Trending row body (title + meta + stats) |
 | `.jt-shortcode-leaderboard` | Leaderboard container |
+| `.jt-shortcode-rep` | Reputation pill in leaderboard / member rows |
 | `.jt-shortcode-profile-card` | User profile card |
+| `.jt-shortcode-profile-stats` | Reputation + post-count line on profile card |
 | `.jt-shortcode-members` | Members list container |
+| `.jt-shortcode-member` | Individual member row |
 | `.jt-shortcode-empty` | Empty state message |
 | `.jt-compose-topic-embed` | Compose-topic shortcode/block wrapper |
 | `.jt-compose-topic-embed.jt-compose-topic-login` | Logged-out sign-in CTA variant |
