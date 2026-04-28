@@ -329,7 +329,6 @@ final class Jetonomy {
 		// Social embed oEmbed hooks — Instagram/Facebook token injection + provider registration.
 		Embeds::register();
 		new Nav_Menus();
-		new Media();
 		new Activity_Tracker();
 		new Abilities();
 
