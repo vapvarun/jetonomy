@@ -22,7 +22,9 @@ class Blocks {
 
 	public static function register(): void {
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
-		add_action( 'wp_ajax_nopriv_jetonomy_quick_login', array( __CLASS__, 'ajax_quick_login' ) );
+		// 1.4.0 A.2 commit 3: wp_ajax_nopriv_jetonomy_quick_login removed
+		// (POST /jetonomy/v1/auth/login replaces it; login-block.js switched
+		// in commit 2). The register handler stays until A.3 commit 3.
 		add_action( 'wp_ajax_nopriv_jetonomy_quick_register', array( __CLASS__, 'ajax_quick_register' ) );
 		// Register the login-block script once; the render callback enqueues
 		// it only on pages that actually contain the block.
@@ -811,44 +813,6 @@ class Blocks {
 		}
 		set_transient( $key, $hits + 1, MINUTE_IN_SECONDS );
 		return true;
-	}
-
-	/**
-	 * AJAX handler: quick login via admin-ajax.
-	 * Nonce-gated. Generic error message so failures don't leak account existence.
-	 */
-	public static function ajax_quick_login(): void {
-		check_ajax_referer( 'jetonomy_quick_login', 'nonce' );
-
-		if ( ! self::check_rate_limit( 'login' ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Too many attempts. Please wait a minute and try again.', 'jetonomy' ) ),
-				429
-			);
-		}
-
-		$login    = isset( $_POST['login'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['login'] ) ) : '';
-		$password = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
-		$remember = ! empty( $_POST['remember'] );
-
-		if ( '' === $login || '' === $password ) {
-			wp_send_json_error( array( 'message' => __( 'Enter your username and password.', 'jetonomy' ) ), 400 );
-		}
-
-		$user = wp_signon(
-			array(
-				'user_login'    => $login,
-				'user_password' => $password,
-				'remember'      => $remember,
-			),
-			is_ssl()
-		);
-
-		if ( is_wp_error( $user ) ) {
-			wp_send_json_error( array( 'message' => __( 'Incorrect username or password.', 'jetonomy' ) ), 401 );
-		}
-
-		wp_send_json_success( array( 'message' => __( 'Signed in. Reloading…', 'jetonomy' ) ) );
 	}
 
 	/**
