@@ -343,6 +343,12 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 ( function () {
 	'use strict';
 
+	/* Modal toolkit shims — prefer window.jetonomyAlert / Confirm shipped
+	 * by jetonomy-modals.js (1.4.0). Fall back to native browser dialogs
+	 * only if the toolkit failed to load (script error, CSP). */
+	var _alert   = function ( msg ) { return window.jetonomyAlert ? window.jetonomyAlert( msg ) : Promise.resolve( window.alert( msg ) ); };
+	var _confirm = function ( msg, opts ) { return window.jetonomyConfirm ? window.jetonomyConfirm( msg, opts ) : Promise.resolve( window.confirm( msg ) ); };
+
 	/* ── Config ────────────────────────────────────────────────────────── */
 	var cfg = {
 		ajaxUrl : <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>,
@@ -479,22 +485,30 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			var postId = actionLink.getAttribute( 'data-id' );
 			var type   = actionLink.getAttribute( 'data-type' );
 
+			function performAction() {
+				var ajaxAction   = 'post' === type ? 'jetonomy_delete_post' : 'jetonomy_delete_reply';
+				var idParam      = 'post' === type ? 'post_id' : 'reply_id';
+				var statusParam  = 'approve' === action ? 'publish' : action;
+
+				var data = { status: statusParam };
+				data[ idParam ] = postId;
+
+				ajax( ajaxAction, data ).then( function ( res ) {
+					if ( res.success ) {
+						var row = actionLink.closest( 'tr' );
+						row.style.opacity = '0.4';
+						setTimeout( function () { window.location.reload(); }, 600 );
+					}
+				} );
+			}
+
+			if ( 'approve' === action ) {
+				performAction();
+				return;
+			}
 			var confirmMsg = 'trash' === action ? cfg.i18n.confirmTrash : cfg.i18n.confirmSpam;
-			if ( 'approve' !== action && ! window.confirm( confirmMsg ) ) { return; }
-
-			var ajaxAction   = 'post' === type ? 'jetonomy_delete_post' : 'jetonomy_delete_reply';
-			var idParam      = 'post' === type ? 'post_id' : 'reply_id';
-			var statusParam  = 'approve' === action ? 'publish' : action;
-
-			var data = { status: statusParam };
-			data[ idParam ] = postId;
-
-			ajax( ajaxAction, data ).then( function ( res ) {
-				if ( res.success ) {
-					var row = actionLink.closest( 'tr' );
-					row.style.opacity = '0.4';
-					setTimeout( function () { window.location.reload(); }, 600 );
-				}
+			_confirm( confirmMsg, { danger: true } ).then( function ( ok ) {
+				if ( ok ) { performAction(); }
 			} );
 			return;
 		}
@@ -521,19 +535,15 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		bulkBtn.addEventListener( 'click', function () {
 			var action = bulkSelect.value;
 			if ( ! action ) {
-				window.alert( cfg.i18n.noAction );
+				_alert( cfg.i18n.noAction );
 				return;
 			}
 
 			if ( ! table ) { return; }
 			var checked = table.querySelectorAll( '.jt-row-cb:checked' );
 			if ( ! checked.length ) {
-				window.alert( cfg.i18n.noneSelected );
+				_alert( cfg.i18n.noneSelected );
 				return;
-			}
-
-			if ( 'trash' === action || 'spam' === action ) {
-				if ( ! window.confirm( cfg.i18n.confirmBulk ) ) { return; }
 			}
 
 			var ids = [];
@@ -541,21 +551,31 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 
 			var bulkAction = 'approve' === action ? 'publish' : action;
 
-			bulkBtn.disabled = true;
-			bulkSpinner.classList.add( 'is-active' );
+			function runBulk() {
+				bulkBtn.disabled = true;
+				bulkSpinner.classList.add( 'is-active' );
 
-			ajax( 'jetonomy_bulk_content_action', {
-				bulk_action : bulkAction,
-				type        : 'post',
-				ids         : ids,
-			} ).then( function () {
-				bulkBtn.disabled = false;
-				bulkSpinner.classList.remove( 'is-active' );
-				window.location.reload();
-			} ).catch( function () {
-				bulkBtn.disabled = false;
-				bulkSpinner.classList.remove( 'is-active' );
-			} );
+				ajax( 'jetonomy_bulk_content_action', {
+					bulk_action : bulkAction,
+					type        : 'post',
+					ids         : ids,
+				} ).then( function () {
+					bulkBtn.disabled = false;
+					bulkSpinner.classList.remove( 'is-active' );
+					window.location.reload();
+				} ).catch( function () {
+					bulkBtn.disabled = false;
+					bulkSpinner.classList.remove( 'is-active' );
+				} );
+			}
+
+			if ( 'trash' === action || 'spam' === action ) {
+				_confirm( cfg.i18n.confirmBulk, { danger: true } ).then( function ( ok ) {
+					if ( ok ) { runBulk(); }
+				} );
+			} else {
+				runBulk();
+			}
 		} );
 	}
 

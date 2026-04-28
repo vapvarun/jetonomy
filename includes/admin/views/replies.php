@@ -502,19 +502,10 @@ $status_labels = [
 	} );
 
 	/* ── Row action links (Trash / Spam / Restore) ── */
-	table.addEventListener( 'click', function ( e ) {
-		var link = e.target.closest( '.jt-action-link' );
-		if ( ! link ) { return; }
-		e.preventDefault();
+	var _alert   = function ( msg ) { return window.jetonomyAlert ? window.jetonomyAlert( msg ) : Promise.resolve( window.alert( msg ) ); };
+	var _confirm = function ( msg, opts ) { return window.jetonomyConfirm ? window.jetonomyConfirm( msg, opts ) : Promise.resolve( window.confirm( msg ) ); };
 
-		var action    = link.dataset.action;
-		var replyId   = link.dataset.id;
-		var confirmMsg = 'trash' === action ? cfg.i18n.confirmTrash : cfg.i18n.confirmSpam;
-
-		if ( 'trash' === action || 'spam' === action ) {
-			if ( ! window.confirm( confirmMsg ) ) { return; }
-		}
-
+	function performReplyAction( action, replyId ) {
 		var ajaxAction = 'approve' === action ? 'jetonomy_approve_content'
 			: 'spam' === action              ? 'jetonomy_spam_content'
 			: 'jetonomy_trash_content';
@@ -531,6 +522,25 @@ $status_labels = [
 					window.location.reload();
 				}
 			} );
+	}
+
+	table.addEventListener( 'click', function ( e ) {
+		var link = e.target.closest( '.jt-action-link' );
+		if ( ! link ) { return; }
+		e.preventDefault();
+
+		var action     = link.dataset.action;
+		var replyId    = link.dataset.id;
+		var confirmMsg = 'trash' === action ? cfg.i18n.confirmTrash : cfg.i18n.confirmSpam;
+
+		if ( 'trash' === action || 'spam' === action ) {
+			_confirm( confirmMsg, { danger: true } ).then( function ( ok ) {
+				if ( ok ) { performReplyAction( action, replyId ); }
+			} );
+			return;
+		}
+
+		performReplyAction( action, replyId );
 	} );
 
 	/* ── Bulk actions ── */
@@ -541,14 +551,10 @@ $status_labels = [
 	if ( bulkBtn && bulkSelect ) {
 		bulkBtn.addEventListener( 'click', function () {
 			var action = bulkSelect.value;
-			if ( ! action ) { window.alert( cfg.i18n.noAction ); return; }
+			if ( ! action ) { _alert( cfg.i18n.noAction ); return; }
 
 			var checked = table.querySelectorAll( '.jt-row-cb:checked' );
-			if ( ! checked.length ) { window.alert( cfg.i18n.noneSelected ); return; }
-
-			if ( 'trash' === action || 'spam' === action ) {
-				if ( ! window.confirm( cfg.i18n.confirmBulk ) ) { return; }
-			}
+			if ( ! checked.length ) { _alert( cfg.i18n.noneSelected ); return; }
 
 			var ids = [];
 			checked.forEach( function ( cb ) { ids.push( cb.value ); } );
@@ -557,18 +563,28 @@ $status_labels = [
 				: 'spam' === action              ? 'jetonomy_spam_content'
 				: 'jetonomy_trash_content';
 
-			bulkBtn.disabled = true;
-			bulkSpinner.classList.add( 'is-active' );
+			function runBulk() {
+				bulkBtn.disabled = true;
+				bulkSpinner.classList.add( 'is-active' );
 
-			var promises = ids.map( function ( id ) {
-				return ajax( ajaxAction, { type: 'reply', id: id } );
-			} );
+				var promises = ids.map( function ( id ) {
+					return ajax( ajaxAction, { type: 'reply', id: id } );
+				} );
 
-			Promise.allSettled( promises ).then( function () {
-				bulkBtn.disabled = false;
-				bulkSpinner.classList.remove( 'is-active' );
-				window.location.reload();
-			} );
+				return Promise.allSettled( promises ).then( function () {
+					bulkBtn.disabled = false;
+					bulkSpinner.classList.remove( 'is-active' );
+					window.location.reload();
+				} );
+			}
+
+			if ( 'trash' === action || 'spam' === action ) {
+				_confirm( cfg.i18n.confirmBulk, { danger: true } ).then( function ( ok ) {
+					if ( ok ) { runBulk(); }
+				} );
+			} else {
+				runBulk();
+			}
 		} );
 	}
 

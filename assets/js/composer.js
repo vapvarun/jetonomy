@@ -83,29 +83,34 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     document.execCommand( 'insertHTML', false, '<code>' + escapeHtml( window.getSelection().toString() ) + '</code>' );
                     break;
                 case 'link': {
-                    // prompt() steals focus — capture the current range first
-                    // so we can re-anchor the insert point after the dialog closes.
+                    // The shared modal toolkit (jetonomy-modals.js) steals focus
+                    // for the dialog — capture the current range first so we
+                    // can re-anchor the insert point after the dialog closes.
                     const sel = window.getSelection();
                     if ( sel.rangeCount && body.contains( sel.getRangeAt( 0 ).commonAncestorContainer ) ) {
                         savedRange = sel.getRangeAt( 0 ).cloneRange();
                     }
                     const selectedText = sel.toString();
+                    const promptFn = ( typeof window.jetonomyPrompt === 'function' )
+                        ? ( msg, opts ) => window.jetonomyPrompt( msg, opts )
+                        : ( msg ) => Promise.resolve( window.prompt( msg ) ); // defensive fallback
 
-                    const raw = prompt( 'Enter URL:' );
-                    if ( ! raw ) break;
-                    const trimmed = raw.trim();
-                    if ( ! trimmed ) break;
+                    promptFn( 'Enter URL:', { placeholder: 'https://example.com' } ).then( ( raw ) => {
+                        if ( ! raw ) return;
+                        const trimmed = raw.trim();
+                        if ( ! trimmed ) return;
 
-                    // Accept bare domains (example.com) and force https:// when
-                    // no scheme is present so the resulting <a href> is valid.
-                    const url = /^(https?:|mailto:|\/)/i.test( trimmed ) ? trimmed : 'https://' + trimmed;
+                        // Accept bare domains (example.com) and force https:// when
+                        // no scheme is present so the resulting <a href> is valid.
+                        const url = /^(https?:|mailto:|\/)/i.test( trimmed ) ? trimmed : 'https://' + trimmed;
 
-                    // Put the caret back where it was before the prompt opened.
-                    restoreSelection();
+                        // Put the caret back where it was before the prompt opened.
+                        restoreSelection();
 
-                    const label = selectedText || trimmed;
-                    const html  = '<a href="' + escapeHtml( url ) + '" rel="noopener noreferrer" target="_blank">' + escapeHtml( label ) + '</a>';
-                    document.execCommand( 'insertHTML', false, html );
+                        const label = selectedText || trimmed;
+                        const html  = '<a href="' + escapeHtml( url ) + '" rel="noopener noreferrer" target="_blank">' + escapeHtml( label ) + '</a>';
+                        document.execCommand( 'insertHTML', false, html );
+                    } );
                     break;
                 }
                 case 'quote':

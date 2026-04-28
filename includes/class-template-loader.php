@@ -312,6 +312,21 @@ class Template_Loader {
 		// Shared global for non-Interactivity JS on community pages (link preview
 		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
 		// one place so the same contract works for the future native app.
+		// Shared modal toolkit (1.4.0) — registers window.jetonomyConfirm /
+		// jetonomyAlert / jetonomyPrompt globally. Every JS callsite that
+		// previously used window.confirm / alert / prompt depends on this
+		// handle. Loaded BEFORE composer / space-members / etc.
+		if ( ! wp_script_is( 'jetonomy-modals', 'registered' ) ) {
+			wp_register_script(
+				'jetonomy-modals',
+				JETONOMY_URL . 'assets/js/jetonomy-modals.js',
+				array(),
+				JETONOMY_VERSION,
+				true
+			);
+		}
+		wp_enqueue_script( 'jetonomy-modals' );
+
 		// The dummy `jetonomy-data` handle exists solely to give wp_localize_script
 		// a target — actual behaviour lives in view.js.
 		if ( ! wp_script_is( 'jetonomy-data', 'registered' ) ) {
@@ -338,11 +353,12 @@ class Template_Loader {
 			)
 		);
 
-		// Enqueue composer enhancement script
+		// Enqueue composer enhancement script (depends on the shared modal
+		// toolkit for the link-insert prompt).
 		wp_enqueue_script(
 			'jetonomy-composer',
 			JETONOMY_URL . 'assets/js/composer.js',
-			array(),
+			array( 'jetonomy-modals' ),
 			JETONOMY_VERSION,
 			true
 		);
@@ -370,7 +386,7 @@ class Template_Loader {
 			wp_enqueue_script(
 				'jetonomy-space-members',
 				JETONOMY_URL . 'assets/js/space-members.js',
-				array( 'jetonomy-data' ),
+				array( 'jetonomy-data', 'jetonomy-modals' ),
 				$sm_version,
 				true
 			);

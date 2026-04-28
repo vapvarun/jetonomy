@@ -558,7 +558,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						const res  = await fetch( ajax, { method: 'POST', credentials: 'same-origin', body } );
 						const json = await res.json();
 						if ( ! json.success ) {
-							window.alert( ( json.data && json.data.message ) || json.data || '<?php echo esc_js( __( 'Preview failed.', 'jetonomy' ) ); ?>' );
+							( window.jetonomyAlert || window.alert )( ( json.data && json.data.message ) || json.data || '<?php echo esc_js( __( 'Preview failed.', 'jetonomy' ) ); ?>' );
 							return;
 						}
 						subjEl.textContent = json.data.subject || '<?php echo esc_js( __( 'Email Preview', 'jetonomy' ) ); ?>';
@@ -587,7 +587,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						btn.disabled    = false;
 						btn.textContent = label;
 						const msg = ( json.data && json.data.message ) || json.data || '';
-						window.alert( msg || ( json.success ? '<?php echo esc_js( __( 'Sent.', 'jetonomy' ) ); ?>' : '<?php echo esc_js( __( 'Failed to send.', 'jetonomy' ) ); ?>' ) );
+						( window.jetonomyAlert || window.alert )( msg || ( json.success ? '<?php echo esc_js( __( 'Sent.', 'jetonomy' ) ); ?>' : '<?php echo esc_js( __( 'Failed to send.', 'jetonomy' ) ); ?>' ) );
 					} );
 				} );
 			} )();

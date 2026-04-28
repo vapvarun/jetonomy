@@ -78,19 +78,35 @@
 		return nameEl ? nameEl.textContent.trim() : '';
 	}
 
+	/**
+	 * Inline confirmation. Uses the shared modal toolkit from
+	 * assets/js/jetonomy-modals.js (`window.jetonomyConfirm`) — every
+	 * customer-facing confirm in the plugin goes through that single
+	 * implementation so the UX stays consistent. Returns Promise<boolean>.
+	 */
 	function confirmRoleChange( prev, next, name ) {
 		var prevLabel = labels[ prev ] || prev;
 		var nextLabel = labels[ next ] || next;
 		var template  = ( data.i18n && data.i18n.confirmRoleChange )
 			|| 'Change %name% from %from% to %to%?';
-		var message = template
+		var body = template
 			.replace( '%name%', name || 'this member' )
 			.replace( '%from%', prevLabel )
 			.replace( '%to%',   nextLabel );
-		// Plain window.confirm — keyboard-accessible, screen-reader-friendly,
-		// no extra dependencies. A custom modal can replace this later
-		// without changing the surrounding flow.
-		return window.confirm( message );
+		var title  = ( data.i18n && data.i18n.confirmRoleChangeTitle ) || 'Change role';
+		var ok     = ( data.i18n && data.i18n.confirmLabel ) || 'Change role';
+		var cancel = ( data.i18n && data.i18n.cancelLabel )  || 'Cancel';
+		if ( typeof window.jetonomyConfirm !== 'function' ) {
+			// Defensive fallback — should never fire because jetonomy-modals
+			// is a hard dependency of this script's enqueue. If it does,
+			// we proceed without confirmation rather than block the action.
+			return Promise.resolve( true );
+		}
+		return window.jetonomyConfirm( body, {
+			title:        title,
+			confirmLabel: ok,
+			cancelLabel:  cancel,
+		} );
 	}
 
 	document.addEventListener( 'change', function ( event ) {
@@ -113,51 +129,55 @@
 			return;
 		}
 
-		// G4: confirm before submitting. If the admin cancels, restore the
-		// dropdown to the previous value and bail out without firing PATCH.
-		if ( ! confirmRoleChange( prev, role, memberName( select ) ) ) {
-			select.value = prev;
-			return;
-		}
+		// G4: confirm via inline modal before submitting. Returns a Promise
+		// (the modal is async) — chain off it instead of synchronous if().
+		// If the admin cancels, restore the dropdown to the previous value
+		// and bail out without firing PATCH.
+		confirmRoleChange( prev, role, memberName( select ) ).then( function ( confirmed ) {
+			if ( ! confirmed ) {
+				select.value = prev;
+				return;
+			}
 
-		clearError( select );
-		select.disabled = true;
+			clearError( select );
+			select.disabled = true;
 
-		fetch( data.restBase + '/spaces/' + spaceId + '/members/' + userId, {
-			method: 'PATCH',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-WP-Nonce':   data.restNonce
-			},
-			body: JSON.stringify( { role: role } )
-		} )
-			.then( function ( res ) {
-				return res.json().then( function ( body ) {
-					return { ok: res.ok, status: res.status, body: body };
-				} );
+			fetch( data.restBase + '/spaces/' + spaceId + '/members/' + userId, {
+				method: 'PATCH',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce':   data.restNonce
+				},
+				body: JSON.stringify( { role: role } )
 			} )
-			.then( function ( payload ) {
-				if ( ! payload.ok ) {
-					var msg = ( payload.body && payload.body.message )
-						|| ( ( data.i18n && data.i18n.roleUpdateFailed ) || 'Could not update role. Please try again.' );
+				.then( function ( res ) {
+					return res.json().then( function ( body ) {
+						return { ok: res.ok, status: res.status, body: body };
+					} );
+				} )
+				.then( function ( payload ) {
+					if ( ! payload.ok ) {
+						var msg = ( payload.body && payload.body.message )
+							|| ( ( data.i18n && data.i18n.roleUpdateFailed ) || 'Could not update role. Please try again.' );
+						select.value = prev;
+						select.disabled = false;
+						showError( select, msg );
+						return;
+					}
+					var row = select.closest( '.jt-member-item' );
+					if ( row ) {
+						setBadge( row, role );
+					}
+					select.setAttribute( 'data-prev-role', role );
+					select.disabled = false;
+					clearError( select );
+				} )
+				.catch( function () {
 					select.value = prev;
 					select.disabled = false;
-					showError( select, msg );
-					return;
-				}
-				var row = select.closest( '.jt-member-item' );
-				if ( row ) {
-					setBadge( row, role );
-				}
-				select.setAttribute( 'data-prev-role', role );
-				select.disabled = false;
-				clearError( select );
-			} )
-			.catch( function () {
-				select.value = prev;
-				select.disabled = false;
-				showError( select, ( data.i18n && data.i18n.networkError ) || 'Network error. Please try again.' );
-			} );
+					showError( select, ( data.i18n && data.i18n.networkError ) || 'Network error. Please try again.' );
+				} );
+		} );
 	} );
 } )();

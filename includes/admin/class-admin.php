@@ -427,10 +427,33 @@ class Admin {
 			JETONOMY_VERSION
 		);
 
+		// Shared modal toolkit (1.4.0) — registers window.jetonomyConfirm /
+		// jetonomyAlert / jetonomyPrompt globally for wp-admin too. Same
+		// implementation as the front-end so all confirms / prompts share
+		// the same UX.
+		if ( ! wp_script_is( 'jetonomy-modals', 'registered' ) ) {
+			wp_register_script(
+				'jetonomy-modals',
+				JETONOMY_URL . 'assets/js/jetonomy-modals.js',
+				array(),
+				JETONOMY_VERSION,
+				true
+			);
+		}
+		// Admin pages need the .jt-modal-* CSS classes the toolkit relies on,
+		// which live in the front-end stylesheet. Enqueue it on Jetonomy admin
+		// pages too — the rules are scoped + don't bleed into core wp-admin.
+		wp_enqueue_style(
+			'jetonomy',
+			JETONOMY_URL . 'assets/css/jetonomy.css',
+			array(),
+			JETONOMY_VERSION
+		);
+
 		wp_enqueue_script(
 			'jetonomy-admin',
 			JETONOMY_URL . 'assets/js/admin.js',
-			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker' ),
+			array( 'jquery', 'jquery-ui-sortable', 'wp-color-picker', 'jetonomy-modals' ),
 			JETONOMY_VERSION,
 			true
 		);

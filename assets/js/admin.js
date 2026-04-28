@@ -29,6 +29,18 @@
 			return $.post(this.ajaxUrl, data);
 		},
 
+		// ── Confirm helper (1.4.0) ──
+		// Wraps the shared modal toolkit (assets/js/jetonomy-modals.js) so
+		// every wp-admin "Are you sure?" prompt uses the same dialog as
+		// the front end. Returns a Promise resolving true/false. Defensive
+		// fallback to native confirm() if the toolkit script failed to load.
+		confirmAsync: function(message, opts) {
+			if (typeof window.jetonomyConfirm === 'function') {
+				return window.jetonomyConfirm(message, opts || {});
+			}
+			return Promise.resolve(window.confirm(message));
+		},
+
 		// ── Toast Notification ──
 
 		toast: function(message, type) {
@@ -258,20 +270,21 @@
 			// Delete Category
 			$(document).on('click', '.jetonomy-delete-category', function(e) {
 				e.preventDefault();
-				if (!confirm(self.i18n.confirmDelete)) return;
-
 				var $row = $(this).closest('tr');
 				var id = $row.data('id');
 
-				self.ajax('jetonomy_delete_category', { id: id }).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						$row.fadeOut(300, function() { $(this).remove(); });
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
+				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+					if (!ok) return;
+					self.ajax('jetonomy_delete_category', { id: id }).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.fadeOut(300, function() { $(this).remove(); });
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+						}
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
+					});
 				});
 			});
 
@@ -405,20 +418,21 @@
 			// Delete Space
 			$(document).on('click', '.jetonomy-delete-space', function(e) {
 				e.preventDefault();
-				if (!confirm(self.i18n.confirmDelete)) return;
-
 				var $row = $(this).closest('tr');
 				var id = $(this).data('id');
 
-				self.ajax('jetonomy_delete_space', { id: id }).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						$row.fadeOut(300, function() { $(this).remove(); });
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
+				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+					if (!ok) return;
+					self.ajax('jetonomy_delete_space', { id: id }).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.fadeOut(300, function() { $(this).remove(); });
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+						}
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
+					});
 				});
 			});
 
@@ -607,23 +621,24 @@
 
 			// Remove member
 			$(document).on('click', '.jetonomy-remove-member', function() {
-				if (!confirm(self.i18n.confirmDelete)) return;
-
 				var $btn = $(this);
 				var $row = $btn.closest('tr');
 				var spaceId = $btn.data('space-id');
 				var userId = $btn.data('user-id');
 
-				self.ajax('jetonomy_remove_space_member', {
-					space_id: spaceId,
-					user_id: userId
-				}).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						$row.fadeOut(300, function() { $(this).remove(); });
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
+				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+					if (!ok) return;
+					self.ajax('jetonomy_remove_space_member', {
+						space_id: spaceId,
+						user_id: userId
+					}).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.fadeOut(300, function() { $(this).remove(); });
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+						}
+					});
 				});
 			});
 
@@ -766,19 +781,20 @@
 
 			// Delete rule
 			$(document).on('click', '.jetonomy-delete-rule', function() {
-				if (!confirm(self.i18n.confirmDelete)) return;
-
 				var $btn = $(this);
 				var $row = $btn.closest('tr');
 				var id = $btn.data('id');
 
-				self.ajax('jetonomy_delete_access_rule', { id: id }).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						$row.fadeOut(300, function() { $(this).remove(); });
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
-					}
+				self.confirmAsync(self.i18n.confirmDelete, { danger: true }).then(function(ok) {
+					if (!ok) return;
+					self.ajax('jetonomy_delete_access_rule', { id: id }).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.fadeOut(300, function() { $(this).remove(); });
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+						}
+					});
 				});
 			});
 
@@ -920,38 +936,39 @@
 
 			// Unban User
 			$(document).on('click', '.jetonomy-unban-user', function() {
-				if (!confirm(self.i18n.confirmDelete)) return;
-
 				var $btn = $(this);
 				var $row = $btn.closest('tr');
 				var restrictionId = $btn.data('restriction-id');
 
-				$btn.prop('disabled', true);
+				self.confirmAsync(self.i18n.confirmDelete).then(function(ok) {
+					if (!ok) return;
+					$btn.prop('disabled', true);
 
-				self.ajax('jetonomy_unban_user', {
-					restriction_id: restrictionId
-				}).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						// On Users page: restore Ban link. On Moderation page: remove row.
-						if ($row.find('.ban').length) {
-							$row.find('.ban').html(
-								'<a href="#" class="jetonomy-ban-trigger" data-user-id="' +
-								$row.data('user-id') + '" data-username="' +
-								$row.find('strong').first().text() + '">' +
-								self.i18n.ban +
-								'</a> | '
-							);
+					self.ajax('jetonomy_unban_user', {
+						restriction_id: restrictionId
+					}).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							// On Users page: restore Ban link. On Moderation page: remove row.
+							if ($row.find('.ban').length) {
+								$row.find('.ban').html(
+									'<a href="#" class="jetonomy-ban-trigger" data-user-id="' +
+									$row.data('user-id') + '" data-username="' +
+									$row.find('strong').first().text() + '">' +
+									self.i18n.ban +
+									'</a> | '
+								);
+							} else {
+								$row.fadeOut(300, function() { $(this).remove(); });
+							}
 						} else {
-							$row.fadeOut(300, function() { $(this).remove(); });
+							self.toast(res.data || self.i18n.error, 'error');
+							$btn.prop('disabled', false);
 						}
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
 						$btn.prop('disabled', false);
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
-					$btn.prop('disabled', false);
+					});
 				});
 			});
 		},
@@ -1110,8 +1127,14 @@
 
 			// Start over — overwrite resume state then start fresh from beginning
 			$(document).on('click', '.jetonomy-import-restart-btn', function() {
-				if (!confirm('This will discard the interrupted import progress. Continue?')) return;
-				self.startImport($(this).data('source'), 'forums', 0);
+				var $btn = $(this);
+				self.confirmAsync(
+					'This will discard the interrupted import progress. Continue?',
+					{ danger: true, title: 'Restart import' }
+				).then(function(ok) {
+					if (!ok) return;
+					self.startImport($btn.data('source'), 'forums', 0);
+				});
 			});
 		},
 

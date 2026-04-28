@@ -252,16 +252,19 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		this.form.submit();
 	} );
 
+	const _alert = ( msg ) => ( window.jetonomyAlert ? window.jetonomyAlert( msg ) : Promise.resolve( window.alert( msg ) ) );
+	const _confirm = ( msg, opts ) => ( window.jetonomyConfirm ? window.jetonomyConfirm( msg, opts ) : Promise.resolve( window.confirm( msg ) ) );
+
 	document.getElementById( 'jetonomy-save-tag' )?.addEventListener( 'click', function () {
 		const name = document.getElementById( 'tag-name' ).value.trim();
 		const slug = document.getElementById( 'tag-slug' ).value.trim();
 		if ( ! name ) {
-			window.alert( '<?php echo esc_js( __( 'Name is required.', 'jetonomy' ) ); ?>' );
+			_alert( '<?php echo esc_js( __( 'Name is required.', 'jetonomy' ) ); ?>' );
 			return;
 		}
 		post( 'jetonomy_create_tag', { name, slug } ).then( res => {
 			if ( res.success ) { window.location.reload(); }
-			else { window.alert( res.data && res.data.message ? res.data.message : res.data ); }
+			else { _alert( res.data && res.data.message ? res.data.message : res.data ); }
 		} );
 	} );
 
@@ -291,7 +294,7 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		const slug = document.getElementById( 'edit-tag-slug' ).value.trim();
 		post( 'jetonomy_update_tag', { id, name, slug } ).then( res => {
 			if ( res.success ) { window.location.reload(); }
-			else { window.alert( res.data && res.data.message ? res.data.message : res.data ); }
+			else { _alert( res.data && res.data.message ? res.data.message : res.data ); }
 		} );
 	} );
 
@@ -304,10 +307,12 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 			if ( count > 0 ) {
 				msg = '<?php echo esc_js( __( 'This tag is attached to', 'jetonomy' ) ); ?> ' + count + ' <?php echo esc_js( __( 'posts. Delete it and detach from all posts?', 'jetonomy' ) ); ?>';
 			}
-			if ( ! window.confirm( msg ) ) { return; }
-			post( 'jetonomy_delete_tag', { id, force: 1 } ).then( res => {
-				if ( res.success ) { window.location.reload(); }
-				else { window.alert( res.data && res.data.message ? res.data.message : res.data ); }
+			_confirm( msg, { danger: true } ).then( ok => {
+				if ( ! ok ) { return; }
+				post( 'jetonomy_delete_tag', { id, force: 1 } ).then( res => {
+					if ( res.success ) { window.location.reload(); }
+					else { _alert( res.data && res.data.message ? res.data.message : res.data ); }
+				} );
 			} );
 		} );
 	} );
@@ -320,13 +325,15 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 		if ( 'delete' !== action ) { return; }
 		const ids = Array.from( document.querySelectorAll( '.jetonomy-tag-cb:checked' ) ).map( cb => cb.value );
 		if ( ids.length === 0 ) {
-			window.alert( '<?php echo esc_js( __( 'Select at least one tag.', 'jetonomy' ) ); ?>' );
+			_alert( '<?php echo esc_js( __( 'Select at least one tag.', 'jetonomy' ) ); ?>' );
 			return;
 		}
-		if ( ! window.confirm( '<?php echo esc_js( __( 'Delete the selected tags?', 'jetonomy' ) ); ?>' ) ) { return; }
-		post( 'jetonomy_bulk_delete_tags', { ids } ).then( res => {
-			if ( res.success ) { window.location.reload(); }
-			else { window.alert( res.data && res.data.message ? res.data.message : res.data ); }
+		_confirm( '<?php echo esc_js( __( 'Delete the selected tags?', 'jetonomy' ) ); ?>', { danger: true } ).then( ok => {
+			if ( ! ok ) { return; }
+			post( 'jetonomy_bulk_delete_tags', { ids } ).then( res => {
+				if ( res.success ) { window.location.reload(); }
+				else { _alert( res.data && res.data.message ? res.data.message : res.data ); }
+			} );
 		} );
 	} );
 } )();
