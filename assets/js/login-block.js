@@ -1,15 +1,16 @@
 /**
- * Jetonomy Login block — tab switching + login/register submit.
+ * Jetonomy Login block — tab switching + login/register/lost-password submit.
  *
  * Vanilla JS, no dependencies. Enqueued only when the Login block renders.
  *
- * Login    → POST /jetonomy/v1/auth/login    (since 1.4.0 A.2 commit 2)
- * Register → POST /jetonomy/v1/auth/register (since 1.4.0 A.3 commit 2)
+ * Login         → POST /jetonomy/v1/auth/login         (1.4.0 A.2 commit 2)
+ * Register      → POST /jetonomy/v1/auth/register      (1.4.0 A.3 commit 2)
+ * Lost-password → POST /jetonomy/v1/auth/lost-password (1.4.0 A.4 commit 2)
  *
- * Both submits flow through getCaptchaToken() which resolves to '' when no
- * provider is active, or a real reCAPTCHA v3 / Turnstile token when one is.
- * The server's `Captcha_Manager::verify_or_skip` returns null on no-adapter,
- * so an empty token still passes through.
+ * All three submits flow through getCaptchaToken() which resolves to '' when
+ * no provider is active, or a real reCAPTCHA v3 / Turnstile token when one
+ * is. The server's `Captcha_Manager::verify_or_skip` returns null on
+ * no-adapter, so an empty token still passes through.
  */
 ( function () {
 	'use strict';
@@ -191,8 +192,67 @@
 		} );
 	}
 
+	/**
+	 * REST lost-password submit (1.4.0 A.4 commit 2).
+	 *
+	 * Body: { user_login, captcha_token? }
+	 * Server always returns the same generic 200 success regardless of
+	 * whether the account exists (account-enumeration prevention). The user
+	 * stays on the panel with the success message inline; no reload.
+	 */
+	function submitLostPasswordREST( block, form ) {
+		var unlock = lockSubmit( form );
+		setMessage( form, '', false );
+
+		var restUrl = block.dataset.restUrl
+			? block.dataset.restUrl.replace( /\/+$/, '' )
+			: '/wp-json/jetonomy/v1';
+		var nonce = block.dataset.restNonce || '';
+
+		getCaptchaToken().then( function ( captchaToken ) {
+			var body = {
+				user_login: ( form.querySelector( '[name="user_login"]' ) || {} ).value || '',
+			};
+			if ( captchaToken ) {
+				body.captcha_token = captchaToken;
+			}
+
+			return fetch( restUrl + '/auth/lost-password', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: nonce
+					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
+					: { 'Content-Type': 'application/json' },
+				body: JSON.stringify( body ),
+			} );
+		} ).then( function ( res ) {
+			return res.json().then( function ( json ) {
+				return { ok: res.ok, json: json };
+			} );
+		} ).then( function ( payload ) {
+			if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
+				var msg = ( payload.json && payload.json.message )
+					|| 'Something went wrong. Please try again.';
+				setMessage( form, msg, false );
+				if ( unlock ) { unlock(); }
+				return;
+			}
+			// Success: keep the panel open, show the inline message,
+			// clear the input. No reload — the user is still anonymous
+			// and needs to wait for the email.
+			setMessage( form, payload.json.message || 'Reset link sent.', true );
+			var input = form.querySelector( '[name="user_login"]' );
+			if ( input ) { input.value = ''; }
+			if ( unlock ) { unlock(); }
+		} ).catch( function () {
+			setMessage( form, 'Network error. Please try again.', false );
+			if ( unlock ) { unlock(); }
+		} );
+	}
+
 	function init( block ) {
-		block.querySelectorAll( '.jt-login-tab' ).forEach( function ( tab ) {
+		// Tab buttons + the in-form forgot-password link both share data-jt-tab.
+		block.querySelectorAll( '[data-jt-tab]' ).forEach( function ( tab ) {
 			tab.addEventListener( 'click', function () {
 				activateTab( block, tab.dataset.jtTab );
 			} );
@@ -211,6 +271,14 @@
 			registerForm.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
 				submitRegisterREST( block, registerForm );
+			} );
+		}
+
+		var forgotForm = block.querySelector( '.jt-login-form[data-jt-panel="forgot"]' );
+		if ( forgotForm ) {
+			forgotForm.addEventListener( 'submit', function ( e ) {
+				e.preventDefault();
+				submitLostPasswordREST( block, forgotForm );
 			} );
 		}
 	}

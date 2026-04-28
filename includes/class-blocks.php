@@ -762,9 +762,9 @@ class Blocks {
 				<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
 					<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
 				</button>
-				<a class="jt-login-lostpw" href="<?php echo esc_url( wp_lostpassword_url() ); ?>">
+				<button type="button" class="jt-login-lostpw" data-jt-tab="forgot">
 					<?php esc_html_e( 'Forgot password?', 'jetonomy' ); ?>
-				</a>
+				</button>
 			</form>
 
 			<?php if ( $show_register_tab ) : ?>
@@ -787,6 +787,23 @@ class Blocks {
 					</button>
 				</form>
 			<?php endif; ?>
+
+			<form class="jt-login-form" data-jt-panel="forgot" novalidate>
+				<p class="jt-login-forgot-intro">
+					<?php esc_html_e( 'Enter your username or email and we will send a reset link if an account matches.', 'jetonomy' ); ?>
+				</p>
+				<label class="jt-login-label">
+					<span><?php esc_html_e( 'Username or Email', 'jetonomy' ); ?></span>
+					<input type="text" name="user_login" autocomplete="username" required />
+				</label>
+				<p class="jt-login-message" role="alert" aria-live="polite"></p>
+				<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
+					<?php esc_html_e( 'Send reset link', 'jetonomy' ); ?>
+				</button>
+				<button type="button" class="jt-login-lostpw" data-jt-tab="login">
+					<?php esc_html_e( 'Back to login', 'jetonomy' ); ?>
+				</button>
+			</form>
 		</div>
 		<?php
 		return (string) ob_get_clean();

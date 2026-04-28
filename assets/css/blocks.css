@@ -326,14 +326,28 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-login-lostpw {
 	align-self: flex-start;
+	background: transparent;
+	border: 0;
+	padding: 0;
+	font: inherit;
 	font-size: 0.78rem;
 	color: var(--jtb-text-3);
 	text-decoration: none;
+	cursor: pointer;
 	transition: color 0.15s ease;
 }
-.jt-login-lostpw:hover {
+.jt-login-lostpw:hover,
+.jt-login-lostpw:focus-visible {
 	color: var(--jtb-accent);
 	text-decoration: underline;
+	outline: none;
+}
+
+.jt-login-forgot-intro {
+	margin: 0 0 4px;
+	font-size: 0.86rem;
+	color: var(--jtb-text-2);
+	line-height: 1.45;
 }
 
 .jt-login-message {
