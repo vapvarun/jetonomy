@@ -372,6 +372,24 @@ class Schema_Markup {
 		$base    = \Jetonomy\base_url();
 		$tag_url = $base . '/tag/' . rawurlencode( $tag->slug ) . '/';
 
+		// Top 10 recent posts under this tag — gives the schema a real
+		// itemListElement instead of an empty container. Capped at 10 so a
+		// 50k-post tag still serializes to a reasonable JSON-LD payload.
+		$posts        = \Jetonomy\Models\Tag::list_by_tag( $tag->slug, 10 );
+		$item_entries = array();
+		foreach ( $posts as $i => $post ) {
+			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+			if ( ! $space ) {
+				continue;
+			}
+			$item_entries[] = array(
+				'@type'    => 'ListItem',
+				'position' => $i + 1,
+				'url'      => $base . '/s/' . $space->slug . '/t/' . $post->post_slug . '/',
+				'name'     => $post->title,
+			);
+		}
+
 		return array(
 			'@context'    => 'https://schema.org',
 			'@type'       => 'CollectionPage',
@@ -384,8 +402,9 @@ class Schema_Markup {
 			),
 			'url'         => $tag_url,
 			'mainEntity'  => array(
-				'@type'         => 'ItemList',
-				'numberOfItems' => (int) $tag->post_count,
+				'@type'           => 'ItemList',
+				'numberOfItems'   => (int) $tag->post_count,
+				'itemListElement' => $item_entries,
 			),
 		);
 	}

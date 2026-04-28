@@ -36,7 +36,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
@@ -591,7 +591,14 @@ class Template_Loader {
 		add_action(
 			'wp_head',
 			function () use ( $data ) {
-				$seo_pro_active = in_array(
+				// Two checks gate the "Pro owns this route" branch:
+				// (1) the seo-pro extension is enabled in the option array,
+				// AND (2) the Pro plugin is actually loaded — without #2 we
+				// can hit a state where the option still says "enabled" but
+				// Pro itself was deactivated or removed, and free silently
+				// skips emit while no one fills in for it. Result: the post
+				// route ships zero meta. Belt-and-suspenders here is cheap.
+				$seo_pro_active = defined( 'JETONOMY_PRO_VERSION' ) && in_array(
 					'seo-pro',
 					(array) get_option( 'jetonomy_pro_extensions', array() ),
 					true
