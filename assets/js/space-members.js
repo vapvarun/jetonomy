@@ -2,9 +2,18 @@
  * Space-members role dropdown handler.
  *
  * Only rendered for space admins. When they change a member's role via the
- * <select class="jt-member-role-select">, we PATCH the existing REST
- * endpoint (spaces/:id/members/:user_id) and update the in-page badge
- * without a reload. Reverts on failure.
+ * <select class="jt-member-role-select">, we:
+ *
+ *  1. Confirm the change inline (1.4.0 G4) so a slip of the mouse can't
+ *     accidentally demote the wrong person.
+ *  2. PATCH /jetonomy/v1/spaces/{id}/members/{user_id} with the new role.
+ *  3. On 400 with a `jetonomy_*` error code, render the server's i18n
+ *     message in the row's .jt-member-role-error slot — including the
+ *     two integrity-guard codes shipped in G4 commit 1:
+ *       - jetonomy_cannot_self_demote
+ *       - jetonomy_last_admin_required
+ *  4. On any failure, revert the dropdown to its previous value via
+ *     `data-prev-role`.
  */
 (function () {
 	'use strict';
@@ -41,18 +50,47 @@
 
 	function showError( select, message ) {
 		var row = select.closest( '.jt-member-item' );
-		var existing = row && row.querySelector( '.jt-member-role-error' );
-		if ( existing ) {
-			existing.remove();
-		}
 		if ( ! row ) {
 			return;
+		}
+		var existing = row.querySelector( '.jt-member-role-error' );
+		if ( existing ) {
+			existing.remove();
 		}
 		var p = document.createElement( 'p' );
 		p.className = 'jt-member-role-error';
 		p.setAttribute( 'role', 'alert' );
 		p.textContent = message;
 		row.appendChild( p );
+	}
+
+	function clearError( select ) {
+		var row = select.closest( '.jt-member-item' );
+		var existing = row && row.querySelector( '.jt-member-role-error' );
+		if ( existing ) {
+			existing.remove();
+		}
+	}
+
+	function memberName( select ) {
+		var row = select.closest( '.jt-member-item' );
+		var nameEl = row && row.querySelector( '.jt-member-name, .jt-member-display-name, [data-member-name]' );
+		return nameEl ? nameEl.textContent.trim() : '';
+	}
+
+	function confirmRoleChange( prev, next, name ) {
+		var prevLabel = labels[ prev ] || prev;
+		var nextLabel = labels[ next ] || next;
+		var template  = ( data.i18n && data.i18n.confirmRoleChange )
+			|| 'Change %name% from %from% to %to%?';
+		var message = template
+			.replace( '%name%', name || 'this member' )
+			.replace( '%from%', prevLabel )
+			.replace( '%to%',   nextLabel );
+		// Plain window.confirm — keyboard-accessible, screen-reader-friendly,
+		// no extra dependencies. A custom modal can replace this later
+		// without changing the surrounding flow.
+		return window.confirm( message );
 	}
 
 	document.addEventListener( 'change', function ( event ) {
@@ -64,12 +102,25 @@
 		var spaceId = select.getAttribute( 'data-space-id' );
 		var userId  = select.getAttribute( 'data-user-id' );
 		var role    = select.value;
-		var prev    = select.getAttribute( 'data-prev-role' ) || select.value;
+		var prev    = select.getAttribute( 'data-prev-role' ) || '';
 
 		if ( ! spaceId || ! userId || ! role ) {
 			return;
 		}
 
+		// No-op edits never reach the server.
+		if ( prev === role ) {
+			return;
+		}
+
+		// G4: confirm before submitting. If the admin cancels, restore the
+		// dropdown to the previous value and bail out without firing PATCH.
+		if ( ! confirmRoleChange( prev, role, memberName( select ) ) ) {
+			select.value = prev;
+			return;
+		}
+
+		clearError( select );
 		select.disabled = true;
 
 		fetch( data.restBase + '/spaces/' + spaceId + '/members/' + userId, {
@@ -82,27 +133,31 @@
 			body: JSON.stringify( { role: role } )
 		} )
 			.then( function ( res ) {
-				if ( ! res.ok ) {
-					throw new Error( 'HTTP ' + res.status );
-				}
-				return res.json();
+				return res.json().then( function ( body ) {
+					return { ok: res.ok, status: res.status, body: body };
+				} );
 			} )
-			.then( function () {
+			.then( function ( payload ) {
+				if ( ! payload.ok ) {
+					var msg = ( payload.body && payload.body.message )
+						|| ( ( data.i18n && data.i18n.roleUpdateFailed ) || 'Could not update role. Please try again.' );
+					select.value = prev;
+					select.disabled = false;
+					showError( select, msg );
+					return;
+				}
 				var row = select.closest( '.jt-member-item' );
 				if ( row ) {
 					setBadge( row, role );
 				}
 				select.setAttribute( 'data-prev-role', role );
 				select.disabled = false;
-				var existing = row && row.querySelector( '.jt-member-role-error' );
-				if ( existing ) {
-					existing.remove();
-				}
+				clearError( select );
 			} )
 			.catch( function () {
 				select.value = prev;
 				select.disabled = false;
-				showError( select, ( data.i18n && data.i18n.roleUpdateFailed ) || 'Could not update role. Please try again.' );
+				showError( select, ( data.i18n && data.i18n.networkError ) || 'Network error. Please try again.' );
 			} );
 	} );
 } )();
