@@ -101,6 +101,45 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 }
 
 /**
+ * Return the URL where a space admin should land to edit a space.
+ *
+ * Until G5 ships the front-end edit view at `/community/s/:slug/edit/`,
+ * this returns the wp-admin spaces edit URL so G2's "Edit space" link
+ * does something useful immediately. When G5 lands, the
+ * `jetonomy_use_frontend_space_edit` filter flips to true and the helper
+ * starts returning the front-end URL — every caller swaps simultaneously
+ * (one-line change in the filter, no template sweep).
+ *
+ * @param object $space Space row (must have `slug` and `id`).
+ * @return string Absolute URL.
+ */
+function get_space_edit_url( $space ): string {
+	$slug = isset( $space->slug ) ? (string) $space->slug : '';
+	$id   = isset( $space->id ) ? (int) $space->id : 0;
+
+	/**
+	 * Filter whether to use the front-end space-edit URL (G5).
+	 *
+	 * Default false until G5 ships the rewrite rule + view. G5 commit
+	 * flips the default to true; integrators can override either way.
+	 *
+	 * @param bool   $use_frontend Whether to return the front-end URL.
+	 * @param object $space        Space row.
+	 */
+	$use_frontend = (bool) apply_filters( 'jetonomy_use_frontend_space_edit', false, $space );
+
+	if ( $use_frontend && '' !== $slug ) {
+		return base_url() . '/s/' . rawurlencode( $slug ) . '/edit/';
+	}
+
+	if ( $id > 0 ) {
+		return admin_url( 'admin.php?page=jetonomy-spaces&edit=' . $id );
+	}
+
+	return admin_url( 'admin.php?page=jetonomy-spaces' );
+}
+
+/**
  * Return 'admin' / 'moderator' / null for a user in a space.
  *
  * Thin namespaced wrapper around `Models\SpaceMember::role_label()` so

@@ -127,7 +127,7 @@ $crumbs[] = [
 					<?php endif; ?>
 				<?php endif; ?>
 				<div>
-					<h1><?php echo esc_html( $space->title ); ?></h1>
+						<h1><?php echo esc_html( $space->title ); ?></h1>
 					<?php if ( ! empty( $space->description ) ) : ?>
 						<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
 					<?php endif; ?>

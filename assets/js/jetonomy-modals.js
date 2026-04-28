@@ -36,18 +36,33 @@
 		return;
 	}
 
+	// Per-dialog id counter for aria-labelledby / aria-describedby targets.
+	var dialogIdCounter = 0;
+
 	function buildDialog( opts ) {
+		dialogIdCounter += 1;
+		var titleId = 'jt-modal-title-' + dialogIdCounter;
+		var bodyId  = 'jt-modal-body-' + dialogIdCounter;
+
 		var overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
 		overlay.setAttribute( 'role', 'dialog' );
 		overlay.setAttribute( 'aria-modal', 'true' );
+		if ( opts.title ) {
+			overlay.setAttribute( 'aria-labelledby', titleId );
+		}
+		if ( opts.message ) {
+			overlay.setAttribute( 'aria-describedby', bodyId );
+		}
 
 		var box = document.createElement( 'div' );
 		box.className = 'jt-modal-box';
+		box.setAttribute( 'tabindex', '-1' ); // programmatically focusable for sr fallback
 
 		if ( opts.title ) {
 			var heading = document.createElement( 'p' );
 			heading.className = 'jt-modal-msg';
+			heading.id = titleId;
 			heading.style.fontWeight = '600';
 			heading.textContent = opts.title;
 			box.appendChild( heading );
@@ -56,6 +71,7 @@
 		if ( opts.message ) {
 			var msg = document.createElement( 'p' );
 			msg.className = 'jt-modal-msg';
+			msg.id = bodyId;
 			msg.textContent = opts.message;
 			box.appendChild( msg );
 		}
@@ -107,14 +123,35 @@
 		return { overlay: overlay, okBtn: okBtn, cancelBtn: cancelBtn, input: input };
 	}
 
+	// Selector covering everything reasonably tabbable inside the dialog.
+	var FOCUSABLE_SELECTOR = [
+		'a[href]',
+		'button:not([disabled])',
+		'input:not([type="hidden"]):not([disabled])',
+		'select:not([disabled])',
+		'textarea:not([disabled])',
+		'[tabindex]:not([tabindex="-1"])',
+	].join( ',' );
+
+	function getFocusable( root ) {
+		return Array.prototype.slice.call( root.querySelectorAll( FOCUSABLE_SELECTOR ) )
+			.filter( function ( el ) { return el.offsetParent !== null; } );
+	}
+
 	function open( opts ) {
 		return new Promise( function ( resolve ) {
 			var dom = buildDialog( opts );
 			var lastFocused = document.activeElement;
 
+			// WCAG 2.4.3 — prevent the page behind from scrolling AND focus
+			// can't drift into background content. Restored on close.
+			var prevBodyOverflow = document.body.style.overflow;
+			document.body.style.overflow = 'hidden';
+
 			function close( result ) {
 				document.removeEventListener( 'keydown', onKey );
 				dom.overlay.remove();
+				document.body.style.overflow = prevBodyOverflow;
 				if ( lastFocused && lastFocused.focus ) {
 					lastFocused.focus();
 				}
@@ -131,17 +168,35 @@
 					} else {
 						close( false );
 					}
+					return;
 				}
 				if ( e.key === 'Enter' && opts.kind === 'alert' ) {
 					e.preventDefault();
 					close( true );
+					return;
 				}
-				// Plain confirm: Enter on focused okBtn submits via the button's
-				// own click handler, no extra wiring needed.
 				// Prompt: Enter inside a single-line input submits.
 				if ( e.key === 'Enter' && opts.kind === 'prompt' && ! opts.multiline && document.activeElement === dom.input ) {
 					e.preventDefault();
 					close( dom.input.value );
+					return;
+				}
+				// Tab — keep focus inside the dialog (WCAG 2.1.1, 2.4.3).
+				if ( e.key === 'Tab' ) {
+					var focusable = getFocusable( dom.overlay );
+					if ( focusable.length === 0 ) {
+						e.preventDefault();
+						return;
+					}
+					var first = focusable[ 0 ];
+					var last  = focusable[ focusable.length - 1 ];
+					if ( e.shiftKey && document.activeElement === first ) {
+						e.preventDefault();
+						last.focus();
+					} else if ( ! e.shiftKey && document.activeElement === last ) {
+						e.preventDefault();
+						first.focus();
+					}
 				}
 			}
 

@@ -149,6 +149,17 @@ $bn_active = did_action( 'buddynext_loaded' );
 							<?php esc_html_e( 'Moderation queue', 'jetonomy' ); ?>
 						</a>
 					<?php endif; ?>
+					<?php
+					// 1.4.0 G2: "Edit space" link for space admins. URL flips
+					// from wp-admin to /community/s/:slug/edit/ once G5 ships
+					// (filtered via jetonomy_use_frontend_space_edit).
+					if ( \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user_id(), (int) $space->id ) ) :
+						?>
+						<a href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $space ) ); ?>" class="jt-sidebar-link-text jt-sidebar-link-edit">
+							<?php jetonomy_echo_icon( 'edit', 14 ); ?>
+							<?php esc_html_e( 'Edit space', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
 				</div>
 			<?php endif; ?>
 		</div>
