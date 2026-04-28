@@ -407,25 +407,28 @@
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 36px; }
   .jt-my-spaces-section:last-child { margin-block-end: 0; }
-  .jt-section-title { font-size: 1rem; font-weight: 700; margin: 0 0 14px; color: var(--jt-text); text-transform: uppercase; letter-spacing: 0.04em; color: var(--jt-text-secondary); }
-  .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; color: var(--jt-accent); }
-  .jt-space-card-icon svg { width: 24px; height: 24px; }
-  .jt-space-card-icon.dashicons { font-size: 24px; }
-  .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-  .jt-space-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, transform 0.15s ease; }
-  .jt-space-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
-  .jt-space-card-link { display: flex; gap: 12px; padding: 14px; text-decoration: none; color: inherit; }
-  .jt-space-card-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
-  .jt-space-card-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
-  .jt-space-card-title { font-weight: 600; color: var(--jt-text); display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; }
-  .jt-space-card-stats { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
-  /* Quick-action links sit below the stretched-link anchor on the
-     "Spaces I run" cards (G7). Position relative so they stay
-     interactive over the ::before of the parent .jt-space-card-link. */
-  .jt-space-card-actions { display: flex; gap: 12px; padding: 0 14px 12px; flex-wrap: wrap; position: relative; z-index: 2; }
-  .jt-space-card-action { color: var(--jt-accent); text-decoration: none; font-size: 0.8125rem; font-weight: 600; }
-  .jt-space-card-action:hover { text-decoration: underline; }
+  .jt-section-title { font-size: 0.8125rem; font-weight: 700; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); }
+  .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; color: var(--jt-accent); background: var(--jt-accent-muted); border-radius: var(--jt-radius); }
+  .jt-space-card-icon svg { width: 22px; height: 22px; }
+  .jt-space-card-icon.dashicons { font-size: 22px; }
+  .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .jt-space-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, box-shadow 0.15s ease; display: flex; flex-direction: column; }
+  .jt-space-card:hover { border-color: var(--jt-accent); box-shadow: 0 2px 8px rgb(0 0 0 / 0.04); }
+  .jt-space-card-link { display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 14px; text-decoration: none; color: inherit; flex: 1 1 auto; }
+  .jt-space-card-link:hover { color: inherit; }
+  .jt-space-card-head { display: flex; align-items: flex-start; gap: 12px; }
+  .jt-space-card-titlewrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+  .jt-space-card-title { font-size: 1rem; font-weight: 700; color: var(--jt-text); margin: 0; line-height: 1.3; }
+  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .jt-space-card-meta { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 0; }
+
+  /* Footer action row — pill-shaped buttons divided from the card body
+     by a top border. Each action is a real ghost button so customers
+     read them as interactive, not as muted text. */
+  .jt-space-card-actions { display: flex; gap: 6px; padding: 10px 14px; border-block-start: 1px solid var(--jt-border); background: var(--jt-bg-subtle); flex-wrap: wrap; }
+  .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
+  .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent); background: var(--jt-accent-muted); }
+  .jt-space-card-action svg { flex-shrink: 0; }
   .jt-empty-cta { margin-block-start: 16px; text-align: center; }
   @media ( max-width: 640px ) {
     .jt-space-list { grid-template-columns: 1fr; }

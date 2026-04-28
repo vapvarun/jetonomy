@@ -80,67 +80,65 @@ $crumbs = array(
 			</div>
 		<?php endif; ?>
 
+		<?php
+		// One H1 ("My Spaces") + the per-card ADMIN / MOD pill is enough
+		// to tell the viewer which spaces they run vs are just in. The
+		// section eyebrows that used to live here read as a third
+		// heading layer saying the same thing — dropped.
+		?>
+
 		<?php if ( ! empty( $privileged_spaces ) ) : ?>
 			<section class="jt-my-spaces-section">
-				<h2 class="jt-section-title">
-					<?php esc_html_e( 'Spaces I run', 'jetonomy' ); ?>
-				</h2>
 				<ul class="jt-space-list">
 					<?php foreach ( $privileged_spaces as $sp ) : ?>
 						<?php
 						$role  = \Jetonomy\Models\SpaceMember::role_label( (int) $sp->id, $user_id );
-						$label = ( 'admin' === $role )
-							? __( 'Admin', 'jetonomy' )
-							: __( 'Mod', 'jetonomy' );
+						$label = ( 'admin' === $role ) ? __( 'Admin', 'jetonomy' ) : __( 'Mod', 'jetonomy' );
 						?>
-						<li class="jt-space-card">
+						<li class="jt-space-card jt-space-card--privileged">
 							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
-								<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon' ); ?>
-								<span class="jt-space-card-body">
-									<span class="jt-space-card-title">
-										<?php echo esc_html( $sp->title ); ?>
+								<div class="jt-space-card-head">
+									<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon', $sp->type ?? '' ); ?>
+									<div class="jt-space-card-titlewrap">
+										<h3 class="jt-space-card-title"><?php echo esc_html( $sp->title ); ?></h3>
 										<?php if ( null !== $role ) : ?>
 											<span class="jt-role-pill jt-role-pill--<?php echo esc_attr( $role ); ?>">
 												<?php echo esc_html( $label ); ?>
 											</span>
 										<?php endif; ?>
-									</span>
-									<?php if ( ! empty( $sp->description ) ) : ?>
-										<span class="jt-space-card-desc">
-											<?php echo esc_html( wp_html_excerpt( $sp->description, 120, '…' ) ); ?>
-										</span>
-									<?php endif; ?>
-									<span class="jt-space-card-stats">
-										<?php
-										/* translators: %d: post count */
-										echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
-										?>
-										·
-										<?php
-										/* translators: %d: member count */
-										echo esc_html( sprintf( _n( '%d member', '%d members', (int) $sp->member_count, 'jetonomy' ), (int) $sp->member_count ) );
-										?>
-									</span>
-								</span>
+									</div>
+								</div>
+								<?php if ( ! empty( $sp->description ) ) : ?>
+									<p class="jt-space-card-desc">
+										<?php echo esc_html( wp_html_excerpt( $sp->description, 120, '…' ) ); ?>
+									</p>
+								<?php endif; ?>
+								<p class="jt-space-card-meta">
+									<?php
+									/* translators: %d: post count */
+									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
+									?>
+									·
+									<?php
+									/* translators: %d: member count */
+									echo esc_html( sprintf( _n( '%d member', '%d members', (int) $sp->member_count, 'jetonomy' ), (int) $sp->member_count ) );
+									?>
+								</p>
 							</a>
-							<?php
-							// Quick links for privileged spaces. Edit
-							// appears only for admins; Mod queue + Members
-							// for admins and moderators. Sit outside the
-							// stretched-link <a> via position: relative so
-							// they remain independently clickable.
-							?>
 							<div class="jt-space-card-actions">
 								<?php if ( 'admin' === $role ) : ?>
 									<a class="jt-space-card-action" href="<?php echo esc_url( \Jetonomy\get_space_edit_url( $sp ) ); ?>">
-										<?php esc_html_e( 'Edit', 'jetonomy' ); ?>
+										<?php jetonomy_echo_icon( 'edit', 14 ); ?>
+										<span><?php esc_html_e( 'Edit', 'jetonomy' ); ?></span>
 									</a>
 								<?php endif; ?>
 								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/mod/' ); ?>">
-									<?php esc_html_e( 'Mod queue', 'jetonomy' ); ?>
+									<?php jetonomy_echo_icon( 'shield', 14 ); ?>
+									<span><?php esc_html_e( 'Mod queue', 'jetonomy' ); ?></span>
 								</a>
 								<a class="jt-space-card-action" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/members/' ); ?>">
-									<?php esc_html_e( 'Members', 'jetonomy' ); ?>
+									<?php jetonomy_echo_icon( 'users', 14 ); ?>
+									<span><?php esc_html_e( 'Members', 'jetonomy' ); ?></span>
 								</a>
 							</div>
 						</li>
@@ -151,35 +149,32 @@ $crumbs = array(
 
 		<?php if ( ! empty( $member_spaces ) ) : ?>
 			<section class="jt-my-spaces-section">
-				<h2 class="jt-section-title">
-					<?php esc_html_e( "Spaces I'm in", 'jetonomy' ); ?>
-				</h2>
 				<ul class="jt-space-list">
 					<?php foreach ( $member_spaces as $sp ) : ?>
 						<li class="jt-space-card">
 							<a class="jt-space-card-link" href="<?php echo esc_url( $base . '/s/' . $sp->slug . '/' ); ?>">
-								<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon' ); ?>
-								<span class="jt-space-card-body">
-									<span class="jt-space-card-title">
-										<?php echo esc_html( $sp->title ); ?>
-									</span>
-									<?php if ( ! empty( $sp->description ) ) : ?>
-										<span class="jt-space-card-desc">
-											<?php echo esc_html( wp_html_excerpt( $sp->description, 120, '…' ) ); ?>
-										</span>
-									<?php endif; ?>
-									<span class="jt-space-card-stats">
-										<?php
-										/* translators: %d: post count */
-										echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
-										?>
-										·
-										<?php
-										/* translators: %d: member count */
-										echo esc_html( sprintf( _n( '%d member', '%d members', (int) $sp->member_count, 'jetonomy' ), (int) $sp->member_count ) );
-										?>
-									</span>
-								</span>
+								<div class="jt-space-card-head">
+									<?php jetonomy_render_space_icon( $sp->icon ?? '', 24, 'jt-space-card-icon', $sp->type ?? '' ); ?>
+									<div class="jt-space-card-titlewrap">
+										<h3 class="jt-space-card-title"><?php echo esc_html( $sp->title ); ?></h3>
+									</div>
+								</div>
+								<?php if ( ! empty( $sp->description ) ) : ?>
+									<p class="jt-space-card-desc">
+										<?php echo esc_html( wp_html_excerpt( $sp->description, 120, '…' ) ); ?>
+									</p>
+								<?php endif; ?>
+								<p class="jt-space-card-meta">
+									<?php
+									/* translators: %d: post count */
+									echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $sp->post_count, 'jetonomy' ), (int) $sp->post_count ) );
+									?>
+									·
+									<?php
+									/* translators: %d: member count */
+									echo esc_html( sprintf( _n( '%d member', '%d members', (int) $sp->member_count, 'jetonomy' ), (int) $sp->member_count ) );
+									?>
+								</p>
 							</a>
 						</li>
 					<?php endforeach; ?>

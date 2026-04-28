@@ -160,7 +160,7 @@ function jetonomy_echo_icon( string $name, int $size = 24 ): void {
  * @param int    $size       Pixel size.
  * @param string $class_name Wrapper class name.
  */
-function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name = 'jt-space-card-icon' ): void {
+function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name = 'jt-space-card-icon', string $type_fallback = '' ): void {
 	$icon = is_string( $icon ) ? trim( $icon ) : '';
 
 	if ( '' !== $icon && 0 === strpos( $icon, 'dashicons-' ) ) {
@@ -168,16 +168,27 @@ function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name =
 		return;
 	}
 
-	$lucide  = '';
-	$default = 'users';
+	$lucide = '';
 	if ( '' !== $icon && preg_match( '/^[a-z0-9][a-z0-9-]{0,40}$/', $icon ) ) {
 		$svg_path = JETONOMY_DIR . 'assets/icons/' . $icon . '.svg';
 		if ( file_exists( $svg_path ) ) {
 			$lucide = $icon;
 		}
 	}
+
+	// When the stored icon is missing / emoji / unknown, pick a default
+	// based on space type so customers don't see the same `users` icon
+	// on every card. Type-driven defaults are intentionally distinct so
+	// a cluster of spaces reads visually varied without explicit icon
+	// data.
 	if ( '' === $lucide ) {
-		$lucide = $default;
+		$type_defaults = array(
+			'qa'    => 'help-circle',
+			'ideas' => 'lightbulb',
+			'feed'  => 'hash',
+			'forum' => 'message-circle',
+		);
+		$lucide        = $type_defaults[ $type_fallback ] ?? 'users';
 	}
 
 	echo '<span class="' . esc_attr( $class_name ) . '" aria-hidden="true">';
