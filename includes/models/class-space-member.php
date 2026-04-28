@@ -59,6 +59,13 @@ class SpaceMember extends Model {
 			do_action( 'jetonomy_user_joined_space', $space_id, $user_id, $role );
 		}
 
+		// 1.4.0 G1: every member-row write may change the privileged set
+		// (admin / moderator role assignment OR a member promoted via add()
+		// with role='admin'). Bust the cache unconditionally — the read path
+		// rebuilds in 60s anyway, this just makes the refresh immediate when
+		// the action is taken from wp-admin / REST.
+		self::bust_privileged_cache( $space_id );
+
 		return true;
 	}
 
@@ -80,6 +87,9 @@ class SpaceMember extends Model {
 		if ( $deleted ) {
 			Space::increment_member_count( $space_id, -1 );
 		}
+
+		// G1 cache invalidation — see add() comment.
+		self::bust_privileged_cache( $space_id );
 	}
 
 	/**
@@ -125,6 +135,71 @@ class SpaceMember extends Model {
 				$space_id
 			)
 		) ?: [];
+	}
+
+	/**
+	 * List space admins + moderators, ordered admins-first then by join time.
+	 *
+	 * Powers the "Managed by" sidebar card (1.4.0 G1) so a visitor knows
+	 * who runs a space without clicking around. Result is hydrated with
+	 * `display_name` from `wp_users` and `avatar_url` so the template can
+	 * render directly without a per-row WP_User lookup.
+	 *
+	 * Cached per space for 60s via transient `jt_priv_members_{id}`. Cache
+	 * is busted automatically by `add()`, `remove()`, and role updates that
+	 * call `static::bust_privileged_cache( $space_id )`.
+	 *
+	 * @param int $space_id
+	 * @param int $limit Max rows (defaults to 20 — high enough for any real
+	 *                   moderation team, low enough to keep the sidebar card
+	 *                   visually scannable).
+	 * @return array<int, object> List of objects with user_id, role, joined_at,
+	 *                            display_name, avatar_url.
+	 */
+	public static function list_privileged( int $space_id, int $limit = 20 ): array {
+		$cache_key = 'jt_priv_members_' . $space_id;
+		$cached    = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		global $wpdb;
+		$members_table = static::table();
+		$users_table   = $wpdb->users;
+
+		// FIELD() puts admins before moderators deterministically (MySQL
+		// otherwise sorts the role ENUM lexicographically: admin, moderator,
+		// member, viewer — which happens to put admin first too, but only by
+		// accident; we make it explicit to survive an ENUM reorder).
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m.user_id, m.role, m.joined_at, u.display_name
+				FROM {$members_table} m
+				INNER JOIN {$users_table} u ON u.ID = m.user_id
+				WHERE m.space_id = %d AND m.role IN ('admin','moderator')
+				ORDER BY FIELD(m.role,'admin','moderator'), m.joined_at ASC
+				LIMIT %d",
+				$space_id,
+				$limit
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		foreach ( $rows as $row ) {
+			$row->avatar_url = (string) get_avatar_url( (int) $row->user_id, [ 'size' => 48 ] );
+		}
+
+		set_transient( $cache_key, $rows, MINUTE_IN_SECONDS );
+		return $rows;
+	}
+
+	/**
+	 * Bust the list_privileged transient for a space. Called from add(),
+	 * remove(), and role-update paths.
+	 */
+	public static function bust_privileged_cache( int $space_id ): void {
+		delete_transient( 'jt_priv_members_' . $space_id );
 	}
 
 	/**

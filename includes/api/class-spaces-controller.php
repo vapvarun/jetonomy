@@ -101,6 +101,30 @@ class Spaces_Controller extends Base_Controller {
 			]
 		);
 
+		// Privileged members read route — powers the "Managed by" sidebar
+		// card in the front-end (1.4.0 G1) and is also the canonical surface
+		// for the future mobile/native client and any third-party integrator
+		// that wants to ask "who runs this space?" without scraping the
+		// sidebar. Public read so the answer matches what an anonymous
+		// visitor sees on the page.
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/privileged-members',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_privileged_members' ],
+				'permission_callback' => '__return_true',
+				'args'                => [
+					'limit' => [
+						'type'    => 'integer',
+						'default' => 20,
+						'minimum' => 1,
+						'maximum' => 100,
+					],
+				],
+			]
+		);
+
 		// Invite link routes.
 		register_rest_route(
 			$ns,
@@ -489,6 +513,43 @@ class Spaces_Controller extends Base_Controller {
 			],
 			200
 		);
+	}
+
+	/**
+	 * GET /spaces/{id}/privileged-members — Admins + moderators of a space.
+	 *
+	 * Powers the front-end "Managed by" sidebar card (1.4.0 G1) and is the
+	 * canonical REST surface for any third-party integrator or future
+	 * mobile / native client that wants to render "who runs this space".
+	 * Publicly readable — same visibility as the About card.
+	 */
+	public function get_privileged_members( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id    = absint( $request->get_param( 'id' ) );
+		$space = Space::find( $id );
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
+		}
+
+		$limit = absint( $request->get_param( 'limit' ) );
+		if ( $limit <= 0 ) {
+			$limit = 20;
+		}
+
+		$members = SpaceMember::list_privileged( $id, $limit );
+
+		$items = array_map(
+			static function ( $row ) {
+				return [
+					'user_id'      => (int) $row->user_id,
+					'role'         => (string) $row->role,
+					'display_name' => (string) $row->display_name,
+					'avatar_url'   => (string) ( $row->avatar_url ?? '' ),
+				];
+			},
+			$members
+		);
+
+		return rest_ensure_response( $items );
 	}
 
 	/**
