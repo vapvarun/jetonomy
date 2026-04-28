@@ -82,17 +82,58 @@ $crumbs = array(
 				</div>
 
 				<div class="jt-form-row">
-					<label for="jt-ns-icon"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
-					<input type="text" id="jt-ns-icon" name="icon" maxlength="40" class="jt-input" placeholder="rocket" pattern="[a-z0-9-]+">
-					<p class="jt-form-help">
-						<?php
-						printf(
-							/* translators: %s: comma-separated list of available Lucide icon names */
-							esc_html__( 'Lucide icon name. Available: %s. See the full set at lucide.dev/icons.', 'jetonomy' ),
-							'<code>users</code>, <code>star</code>, <code>rocket</code>, <code>lightbulb</code>, <code>megaphone</code>, <code>help-circle</code>, <code>book-open</code>, <code>hash</code>, <code>folder</code>, <code>hand</code>, <code>message-circle</code>, <code>award</code>, <code>shield</code>'
-						);
-						?>
-					</p>
+					<label><?php esc_html_e( 'Cover image', 'jetonomy' ); ?></label>
+					<div class="jt-cover-uploader" data-jt-cover>
+						<div class="jt-cover-preview" data-jt-cover-preview hidden></div>
+						<div class="jt-cover-actions">
+							<label class="jt-btn jt-btn-ghost jt-cover-pick">
+								<?php esc_html_e( 'Choose image', 'jetonomy' ); ?>
+								<input type="file" accept="image/*" data-jt-cover-input hidden>
+							</label>
+							<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove hidden>
+								<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
+							</button>
+							<span class="jt-cover-status" data-jt-cover-status></span>
+						</div>
+					</div>
+					<input type="hidden" name="cover_image" value="" data-jt-cover-value>
+					<p class="jt-form-help"><?php esc_html_e( 'Wide banner shown at the top of the space page. Optional.', 'jetonomy' ); ?></p>
+				</div>
+
+				<div class="jt-form-row">
+					<label><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
+					<?php
+					$icon_palette = array(
+						'users'          => __( 'Users', 'jetonomy' ),
+						'hand'           => __( 'Welcome', 'jetonomy' ),
+						'megaphone'      => __( 'Announcements', 'jetonomy' ),
+						'message-circle' => __( 'Discussion', 'jetonomy' ),
+						'help-circle'    => __( 'Q&A', 'jetonomy' ),
+						'lightbulb'      => __( 'Ideas', 'jetonomy' ),
+						'star'           => __( 'Tips', 'jetonomy' ),
+						'rocket'         => __( 'Showcase', 'jetonomy' ),
+						'book-open'      => __( 'Tutorials', 'jetonomy' ),
+						'award'          => __( 'Achievements', 'jetonomy' ),
+						'shield'         => __( 'Moderation', 'jetonomy' ),
+						'pin'            => __( 'Pinned', 'jetonomy' ),
+						'bookmark'       => __( 'Resources', 'jetonomy' ),
+						'home'           => __( 'Home', 'jetonomy' ),
+						'hash'           => __( 'Topic', 'jetonomy' ),
+						'folder'         => __( 'Category', 'jetonomy' ),
+					);
+					?>
+					<div class="jt-icon-picker" role="radiogroup" aria-label="<?php esc_attr_e( 'Choose a space icon', 'jetonomy' ); ?>">
+						<?php foreach ( $icon_palette as $name => $label ) : ?>
+							<label class="jt-icon-option<?php echo 'users' === $name ? ' is-selected' : ''; ?>">
+								<input type="radio" name="icon" value="<?php echo esc_attr( $name ); ?>" <?php checked( $name, 'users' ); ?>>
+								<span class="jt-icon-option-svg" aria-hidden="true">
+									<?php jetonomy_echo_icon( $name, 24 ); ?>
+								</span>
+								<span class="jt-icon-option-label"><?php echo esc_html( $label ); ?></span>
+							</label>
+						<?php endforeach; ?>
+					</div>
+					<p class="jt-form-help"><?php esc_html_e( 'Pick the icon that matches what this space is about.', 'jetonomy' ); ?></p>
 				</div>
 
 				<div class="jt-form-actions">
@@ -113,6 +154,78 @@ $crumbs = array(
 				if ( ! form ) {
 					return;
 				}
+
+				// Icon picker — toggle .is-selected on radio change.
+				form.querySelectorAll( '.jt-icon-option input[type=radio]' ).forEach( function ( radio ) {
+					radio.addEventListener( 'change', function () {
+						form.querySelectorAll( '.jt-icon-option' ).forEach( function ( el ) {
+							el.classList.toggle( 'is-selected', el.contains( radio ) && radio.checked );
+						} );
+					} );
+				} );
+
+				// Cover uploader — POSTs to /jetonomy/v1/media, writes returned URL
+				// into the hidden cover_image input + renders preview.
+				var coverInput  = form.querySelector( '[data-jt-cover-input]' );
+				var coverValue  = form.querySelector( '[data-jt-cover-value]' );
+				var coverPrev   = form.querySelector( '[data-jt-cover-preview]' );
+				var coverRemove = form.querySelector( '[data-jt-cover-remove]' );
+				var coverStatus = form.querySelector( '[data-jt-cover-status]' );
+
+				function setPreview( url ) {
+					coverValue.value = url;
+					if ( url ) {
+						coverPrev.hidden = false;
+						var img = coverPrev.querySelector( 'img' );
+						if ( ! img ) {
+							img = document.createElement( 'img' );
+							img.alt = '';
+							coverPrev.appendChild( img );
+						}
+						img.src = url;
+						coverRemove.hidden = false;
+					} else {
+						coverPrev.hidden = true;
+						coverRemove.hidden = true;
+						var existing = coverPrev.querySelector( 'img' );
+						if ( existing ) { existing.remove(); }
+					}
+				}
+
+				if ( coverInput ) {
+					coverInput.addEventListener( 'change', function () {
+						var file = coverInput.files && coverInput.files[ 0 ];
+						if ( ! file ) { return; }
+						coverStatus.textContent = 'Uploading…';
+						var fd = new FormData();
+						fd.append( 'file', file );
+						fetch( form.dataset.jtRestBase + '/media', {
+							method: 'POST',
+							credentials: 'same-origin',
+							headers: { 'X-WP-Nonce': form.dataset.jtRestNonce },
+							body: fd
+						} ).then( function ( r ) {
+							return r.json().then( function ( b ) { return { ok: r.ok, body: b }; } );
+						} ).then( function ( res ) {
+							if ( ! res.ok || ! res.body || ! res.body.url ) {
+								coverStatus.textContent = ( res.body && res.body.message ) || 'Upload failed.';
+								return;
+							}
+							setPreview( res.body.url );
+							coverStatus.textContent = 'Uploaded.';
+							setTimeout( function () { coverStatus.textContent = ''; }, 2000 );
+						} ).catch( function () {
+							coverStatus.textContent = 'Network error.';
+						} );
+						coverInput.value = '';
+					} );
+				}
+				if ( coverRemove ) {
+					coverRemove.addEventListener( 'click', function () {
+						setPreview( '' );
+					} );
+				}
+
 				form.addEventListener( 'submit', function ( e ) {
 					e.preventDefault();
 					var errBox = form.querySelector( '[data-jt-error]' );

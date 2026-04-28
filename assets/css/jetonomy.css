@@ -366,6 +366,29 @@
     .jt-form-actions .jt-btn { width: 100%; text-align: center; }
   }
 
+  /* 1.4.0 G5/G6: cover-image uploader + Lucide icon picker on the
+     front-end space-edit and create-space forms. */
+  .jt-cover-uploader { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px dashed var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-cover-preview { width: 100%; max-width: 480px; aspect-ratio: 16 / 5; border-radius: var(--jt-radius); overflow: hidden; background: var(--jt-bg-subtle); }
+  .jt-cover-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .jt-cover-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .jt-cover-pick { cursor: pointer; }
+  .jt-cover-status { color: var(--jt-text-secondary); font-size: 0.875rem; }
+
+  .jt-icon-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+  .jt-icon-option { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 8px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; text-align: center; transition: border-color 0.15s ease, background 0.15s ease; background: var(--jt-bg); }
+  .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
+  .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
+  .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--jt-accent); }
+  .jt-icon-option-svg svg { width: 24px; height: 24px; }
+  .jt-icon-option-label { font-size: 0.8125rem; color: var(--jt-text-secondary); }
+  .jt-icon-option.is-selected .jt-icon-option-label { color: var(--jt-text); font-weight: 600; }
+  @media ( max-width: 640px ) {
+    .jt-icon-picker { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+    .jt-cover-preview { aspect-ratio: 16 / 6; }
+  }
+
   /* Page-head pattern (1.4.0): h1 + muted subtitle, generous gap below. */
   .jt-page-head { margin-block-end: 28px; }
   .jt-page-head .jt-page-title { margin: 0 0 4px; }
