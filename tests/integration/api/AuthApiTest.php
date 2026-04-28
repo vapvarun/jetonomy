@@ -216,4 +216,69 @@ class AuthApiTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'jetonomy_username_unavailable', $response->get_data()['code'] );
 	}
+
+	// ── Lost password ────────────────────────────────────────────────────────
+
+	private function dispatch_lost_password( array $body = [] ): \WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', '/jetonomy/v1/auth/lost-password' );
+		$request->set_body_params( $body );
+		return $this->server->dispatch( $request );
+	}
+
+	public function test_lost_password_blank_user_login_returns_400(): void {
+		delete_transient( 'jt_auth_lost_password_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		$response = $this->dispatch_lost_password( [ 'user_login' => '' ] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'jetonomy_missing_user_login', $response->get_data()['code'] );
+	}
+
+	public function test_lost_password_returns_generic_success_for_existing_user(): void {
+		delete_transient( 'jt_auth_lost_password_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		self::factory()->user->create(
+			[
+				'user_login' => 'jt_lost_pass_real',
+				'user_email' => 'jt_lost_pass_real@example.com',
+			]
+		);
+
+		$response = $this->dispatch_lost_password( [ 'user_login' => 'jt_lost_pass_real' ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['success'] );
+	}
+
+	public function test_lost_password_returns_generic_success_for_nonexistent_user(): void {
+		delete_transient( 'jt_auth_lost_password_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		// Account-enumeration prevention: same shape regardless of existence.
+		$response = $this->dispatch_lost_password( [ 'user_login' => 'no_such_user_42' ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['success'] );
+	}
+
+	public function test_lost_password_rate_limit_blocks_after_three_attempts(): void {
+		delete_transient( 'jt_auth_lost_password_' . md5( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+
+		// 3 allowed within 5 min, the 4th gets 429.
+		for ( $i = 0; $i < 3; $i++ ) {
+			$this->dispatch_lost_password( [ 'user_login' => 'whoever' ] );
+		}
+
+		$response = $this->dispatch_lost_password( [ 'user_login' => 'whoever' ] );
+
+		$this->assertSame( 429, $response->get_status() );
+		$this->assertSame( 'jetonomy_rate_limited', $response->get_data()['code'] );
+	}
+
+	public function test_lost_password_route_appears_in_namespace_index(): void {
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/jetonomy/v1' ) );
+		$routes   = $response->get_data()['routes'] ?? [];
+
+		$this->assertArrayHasKey( '/jetonomy/v1/auth/lost-password', $routes );
+		$this->assertContains( 'POST', $routes['/jetonomy/v1/auth/lost-password']['methods'] );
+	}
 }

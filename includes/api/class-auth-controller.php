@@ -81,6 +81,30 @@ class Auth_Controller extends Base_Controller {
 				],
 			]
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/lost-password',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'lost_password' ],
+					'permission_callback' => '__return_true',
+					'args'                => [
+						'user_login'    => [
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'captcha_token' => [
+							'required' => false,
+							'type'     => 'string',
+							'default'  => '',
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -249,21 +273,104 @@ class Auth_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Per-IP rate limit shared across login + register. 5 attempts per minute.
+	 * POST /jetonomy/v1/auth/lost-password — request a password-reset email.
 	 *
-	 * @param string $bucket 'login' or 'register'.
+	 * Public endpoint. Wraps WP core's `retrieve_password()` so the entry
+	 * point lives inside Jetonomy's surface (Login block) instead of bouncing
+	 * the user to the unstyled `/wp-login.php?action=lostpassword` form. The
+	 * actual reset step (clicking the email link → setting a new password)
+	 * stays on WP core's `wp-login.php?action=rp` flow because that is
+	 * one-time-token plumbing WP already owns.
+	 *
+	 * Always returns the same generic success message regardless of whether
+	 * the account exists. This matches WP core's account-enumeration policy
+	 * and prevents probes that flip "Forgot password" into a username-checker.
+	 *
+	 * Rate-limited to 3 attempts / 5 minutes per IP — tighter than login
+	 * (5 / minute) because the per-attempt cost is higher (sending email)
+	 * and the legitimate use rate is much lower (a real human asks for a
+	 * reset once or twice, never six times in a row).
+	 *
+	 * @param WP_REST_Request $request Body: user_login, captcha_token?
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function lost_password( WP_REST_Request $request ) {
+		if ( ! self::check_rate_limit( 'lost_password', 3, 5 * MINUTE_IN_SECONDS ) ) {
+			return new WP_Error(
+				'jetonomy_rate_limited',
+				__( 'Too many attempts. Please wait a few minutes and try again.', 'jetonomy' ),
+				[ 'status' => 429 ]
+			);
+		}
+
+		$user_login = (string) $request->get_param( 'user_login' );
+		$token      = (string) $request->get_param( 'captcha_token' );
+
+		if ( '' === $user_login ) {
+			// 400 here is fine because empty isn't a real account anyway —
+			// no enumeration leak.
+			return new WP_Error(
+				'jetonomy_missing_user_login',
+				__( 'Enter your username or email.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// CAPTCHA gate (parity with register). Anonymous user_id 0; verify_or_skip
+		// returns null when no adapter is configured.
+		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] )
+			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
+			: '';
+		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
+		if ( false === $captcha_result ) {
+			return new WP_Error(
+				'jetonomy_captcha_failed',
+				__( 'CAPTCHA verification failed. Please try again.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// retrieve_password() returns true on success, WP_Error on failure
+		// (invalid user / mailer error / no password reset allowed). We
+		// intentionally swallow the WP_Error and respond with the same
+		// generic success either way to keep account existence private.
+		// `retrieve_password()` lives in wp-login.php which isn't loaded on
+		// REST requests; require it explicitly.
+		if ( ! function_exists( 'retrieve_password' ) ) {
+			require_once ABSPATH . 'wp-login.php';
+		}
+		retrieve_password( $user_login );
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'message' => __( "If an account matches, a reset link is on its way to that account's email.", 'jetonomy' ),
+			]
+		);
+	}
+
+	/**
+	 * Per-IP rate limit shared across login / register / lost-password.
+	 * Defaults to 5 attempts per minute. Caller can override for tighter
+	 * buckets (lost-password uses 3 / 5 minutes per Decision 8 plug-and-play
+	 * — strict enough to discourage email-probing, loose enough that a real
+	 * person who fat-fingered their email twice still gets through).
+	 *
+	 * @param string $bucket  'login' / 'register' / 'lost_password' / future buckets.
+	 * @param int    $max     Max attempts in the window.
+	 * @param int    $seconds Window size in seconds.
 	 * @return bool True when within limit, false when exhausted.
 	 */
-	protected static function check_rate_limit( string $bucket ): bool {
+	protected static function check_rate_limit( string $bucket, int $max = 5, int $seconds = MINUTE_IN_SECONDS ): bool {
 		$ip   = isset( $_SERVER['REMOTE_ADDR'] )
 			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
 			: 'unknown';
 		$key  = 'jt_auth_' . $bucket . '_' . md5( $ip );
 		$hits = (int) get_transient( $key );
-		if ( $hits >= 5 ) {
+		if ( $hits >= $max ) {
 			return false;
 		}
-		set_transient( $key, $hits + 1, MINUTE_IN_SECONDS );
+		set_transient( $key, $hits + 1, $seconds );
 		return true;
 	}
 }
