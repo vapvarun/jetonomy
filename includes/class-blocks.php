@@ -22,10 +22,9 @@ class Blocks {
 
 	public static function register(): void {
 		add_action( 'init', array( __CLASS__, 'register_blocks' ) );
-		// 1.4.0 A.2 commit 3: wp_ajax_nopriv_jetonomy_quick_login removed
-		// (POST /jetonomy/v1/auth/login replaces it; login-block.js switched
-		// in commit 2). The register handler stays until A.3 commit 3.
-		add_action( 'wp_ajax_nopriv_jetonomy_quick_register', array( __CLASS__, 'ajax_quick_register' ) );
+		// 1.4.0 A.2 commit 3 + A.3 commit 3: both legacy quick-login /
+		// quick-register AJAX handlers were removed once login-block.js
+		// fully switched to POST /jetonomy/v1/auth/login + /register.
 		// Register the login-block script once; the render callback enqueues
 		// it only on pages that actually contain the block.
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_block_assets' ) );
@@ -722,23 +721,17 @@ class Blocks {
 			? (string) $attributes['title']
 			: __( 'Join the conversation', 'jetonomy' );
 		$show_register_tab = ! empty( $attributes['showRegister'] ) && (bool) get_option( 'users_can_register' );
-		$register_nonce    = wp_create_nonce( 'jetonomy_quick_register' );
-		$ajax_url          = esc_url( admin_url( 'admin-ajax.php' ) );
-		// 1.4.0 A.2 commit 2: login flow moves to POST /jetonomy/v1/auth/login.
-		// `data-rest-url` + `data-rest-nonce` carry the REST endpoint base + the
-		// wp_rest nonce that login-block.js sends as `X-WP-Nonce`. The legacy
-		// `data-ajax-url` + `data-register-nonce` stay because the Register tab
-		// still hits wp_ajax_nopriv_jetonomy_quick_register until A.3 commit 2.
+		// 1.4.0 A.3 commit 3: both Login and Register tabs use REST. Block
+		// only exposes the REST endpoint base + a wp_rest nonce; the legacy
+		// `data-ajax-url` + per-action nonces are gone.
 		$rest_url   = esc_url_raw( rest_url( 'jetonomy/v1' ) );
 		$rest_nonce = wp_create_nonce( 'wp_rest' );
 
 		ob_start();
 		?>
 		<div class="wp-block-jetonomy-login jt-login-block jt-app"
-			data-ajax-url="<?php echo esc_attr( $ajax_url ); ?>"
 			data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
-			data-rest-nonce="<?php echo esc_attr( $rest_nonce ); ?>"
-			data-register-nonce="<?php echo esc_attr( $register_nonce ); ?>">
+			data-rest-nonce="<?php echo esc_attr( $rest_nonce ); ?>">
 			<h3 class="jt-login-title"><?php echo esc_html( $title ); ?></h3>
 
 			<?php if ( $show_register_tab ) : ?>
@@ -799,73 +792,10 @@ class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	/**
-	 * Simple per-IP rate limit for anonymous auth endpoints. 5 attempts per
-	 * minute per IP is generous enough for humans, tight enough to discourage
-	 * credential stuffing.
-	 */
-	private static function check_rate_limit( string $bucket ): bool {
-		$ip   = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
-		$key  = 'jt_auth_' . $bucket . '_' . md5( $ip );
-		$hits = (int) get_transient( $key );
-		if ( $hits >= 5 ) {
-			return false;
-		}
-		set_transient( $key, $hits + 1, MINUTE_IN_SECONDS );
-		return true;
-	}
-
-	/**
-	 * AJAX handler: quick register via admin-ajax.
-	 * Honours users_can_register; falls back to WP core validators.
-	 */
-	public static function ajax_quick_register(): void {
-		check_ajax_referer( 'jetonomy_quick_register', 'nonce' );
-
-		if ( ! (bool) get_option( 'users_can_register' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Registration is disabled on this site.', 'jetonomy' ) ), 403 );
-		}
-
-		if ( ! self::check_rate_limit( 'register' ) ) {
-			wp_send_json_error(
-				array( 'message' => __( 'Too many attempts. Please wait a minute and try again.', 'jetonomy' ) ),
-				429
-			);
-		}
-
-		$username = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( (string) $_POST['username'] ), true ) : '';
-		$email    = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( (string) $_POST['email'] ) ) : '';
-		$password = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
-
-		if ( '' === $username || '' === $email || '' === $password ) {
-			wp_send_json_error( array( 'message' => __( 'All fields are required.', 'jetonomy' ) ), 400 );
-		}
-		if ( ! validate_username( $username ) || username_exists( $username ) ) {
-			wp_send_json_error( array( 'message' => __( 'That username is unavailable.', 'jetonomy' ) ), 400 );
-		}
-		if ( ! is_email( $email ) || email_exists( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'That email is unavailable.', 'jetonomy' ) ), 400 );
-		}
-		if ( strlen( $password ) < 8 ) {
-			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters.', 'jetonomy' ) ), 400 );
-		}
-
-		$user_id = wp_create_user( $username, $password, $email );
-		if ( is_wp_error( $user_id ) ) {
-			wp_send_json_error( array( 'message' => $user_id->get_error_message() ), 400 );
-		}
-
-		// Intentionally NOT calling wp_send_new_user_notifications() here —
-		// Jetonomy's Notifier already owns branded welcome + admin emails
-		// through the jetonomy_user_registered hook. Triggering WP core's
-		// stock notification here would duplicate what Jetonomy sends.
-		do_action( 'jetonomy_user_registered', (int) $user_id );
-
-		wp_set_current_user( (int) $user_id );
-		wp_set_auth_cookie( (int) $user_id, false, is_ssl() );
-
-		wp_send_json_success( array( 'message' => __( 'Account created. Reloading…', 'jetonomy' ) ) );
-	}
+	// 1.4.0 A.3 commit 3: ajax_quick_register and the per-IP rate-limit
+	// helper were both removed. The rate-limiter now lives in
+	// Jetonomy\API\Auth_Controller as a private static method so the only
+	// auth surface that needs it (REST) carries it.
 
 	/**
 	 * Render the Compose Topic block.
