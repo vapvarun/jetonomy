@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * [jetonomy_user_profile]   — Single user profile card.
  * [jetonomy_space_members]  — Member list for a space.
  * [jetonomy_compose_topic]  — Inline topic composer (fixed space or member picker).
+ * [jetonomy_widget]         — Render a registered Jetonomy widget anywhere.
  */
 class Shortcodes {
 
@@ -30,6 +31,58 @@ class Shortcodes {
 		add_shortcode( 'jetonomy_user_profile', array( __CLASS__, 'user_profile' ) );
 		add_shortcode( 'jetonomy_space_members', array( __CLASS__, 'space_members' ) );
 		add_shortcode( 'jetonomy_compose_topic', array( __CLASS__, 'compose_topic' ) );
+		add_shortcode( 'jetonomy_widget', array( __CLASS__, 'widget_embed' ) );
+	}
+
+	/**
+	 * [jetonomy_widget id="jetonomy_recent_posts" title="..." count="5"]
+	 *
+	 * Render a registered Jetonomy widget inline. Lets a site owner embed
+	 * "Active Spaces" / "User Stats" / etc. in a page or page-builder canvas
+	 * without dropping into the Customizer. Anything beyond `id` becomes
+	 * the widget instance settings, so per-widget options are accepted as
+	 * shortcode attributes.
+	 */
+	public static function widget_embed( $atts ): string {
+		// shortcode_atts would strip every key except those in defaults — but
+		// each widget has its own instance keys (count, title, etc.), so we
+		// take the raw user atts and only validate the dispatch key here.
+		$user_atts = is_array( $atts ) ? $atts : array();
+		$id_base   = isset( $user_atts['id'] ) ? (string) $user_atts['id'] : '';
+		if ( '' === $id_base || 0 !== strpos( $id_base, 'jetonomy_' ) ) {
+			return '';
+		}
+
+		// Class names match what `register_widget()` was called with — leading
+		// backslash would mismatch the WP_Widget_Factory key.
+		$class_map = array(
+			'jetonomy_recent_posts'  => Widgets\Recent_Posts_Widget::class,
+			'jetonomy_leaderboard'   => Widgets\Leaderboard_Widget::class,
+			'jetonomy_active_spaces' => Widgets\Active_Spaces_Widget::class,
+			'jetonomy_user_stats'    => Widgets\User_Stats_Widget::class,
+		);
+		if ( ! isset( $class_map[ $id_base ] ) || ! class_exists( $class_map[ $id_base ] ) ) {
+			return '';
+		}
+
+		// Pass everything except `id` straight through as the widget instance.
+		$instance = $user_atts;
+		unset( $instance['id'] );
+
+		self::enqueue_styles();
+
+		ob_start();
+		the_widget(
+			$class_map[ $id_base ],
+			$instance,
+			array(
+				'before_widget' => '<div class="jt-widget jt-widget--shortcode">',
+				'after_widget'  => '</div>',
+				'before_title'  => '<h4 class="jt-widget-title">',
+				'after_title'   => '</h4>',
+			)
+		);
+		return (string) ob_get_clean();
 	}
 
 	/**
