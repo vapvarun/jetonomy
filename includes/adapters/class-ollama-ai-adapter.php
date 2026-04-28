@@ -53,7 +53,7 @@ class Ollama_AI_Adapter implements AI_Adapter {
 
 		$response = $this->request( '/api/chat', $body );
 
-		$content          = $response['message']['content'] ?? '';
+		$content           = $response['message']['content'] ?? '';
 		$prompt_tokens     = $response['prompt_eval_count'] ?? 0;
 		$completion_tokens = $response['eval_count'] ?? 0;
 
@@ -70,10 +70,13 @@ class Ollama_AI_Adapter implements AI_Adapter {
 
 	public function embed( string $text, array $options = [] ): array {
 		$model    = $options['model'] ?? $this->model;
-		$response = $this->request( '/api/embeddings', [
-			'model'  => $model,
-			'prompt' => $text,
-		] );
+		$response = $this->request(
+			'/api/embeddings',
+			[
+				'model'  => $model,
+				'prompt' => $text,
+			]
+		);
 
 		if ( empty( $response['embedding'] ) ) {
 			throw new \RuntimeException( 'Ollama returned no embedding data.' );

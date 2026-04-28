@@ -73,7 +73,12 @@ class WPForo_Importer extends Importer {
 		$boards       = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
 
 		if ( empty( $boards ) ) {
-			$boards = [ (object) [ 'boardid' => 0, 'title' => 'Forums' ] ];
+			$boards = [
+				(object) [
+					'boardid' => 0,
+					'title'   => 'Forums',
+				],
+			];
 		}
 
 		foreach ( $boards as $board ) {

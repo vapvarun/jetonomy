@@ -184,7 +184,11 @@ $crumbs = [
 				</div>
 
 				<!-- Advanced filters -->
-				<details class="jt-search-filters jt-mb-20" <?php if ( $date_from || $date_to || $author_id || $tag_slug || 'relevance' !== $sort ) : ?>open<?php endif; ?>>
+				<details class="jt-search-filters jt-mb-20" 
+				<?php
+				if ( $date_from || $date_to || $author_id || $tag_slug || 'relevance' !== $sort ) :
+					?>
+					open<?php endif; ?>>
 					<summary class="jt-search-filters-toggle"><?php esc_html_e( 'Filters', 'jetonomy' ); ?> <?php jetonomy_echo_icon( 'chevron-down', 12 ); ?></summary>
 					<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-filters-form">
 						<input type="hidden" name="q" value="<?php echo esc_attr( $q ); ?>">

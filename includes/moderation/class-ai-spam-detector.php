@@ -70,10 +70,13 @@ class AI_Spam_Detector {
 		];
 
 		try {
-			$result = $adapter->chat( $messages, [
-				'json_mode'  => true,
-				'max_tokens' => 100,
-			] );
+			$result = $adapter->chat(
+				$messages,
+				[
+					'json_mode'  => true,
+					'max_tokens' => 100,
+				]
+			);
 
 			$parsed = json_decode( $result['content'], true );
 			if ( ! is_array( $parsed ) ) {
@@ -92,6 +95,7 @@ class AI_Spam_Detector {
 			}
 		} catch ( \Throwable $e ) {
 			// AI unavailable — don't block content.
+			unset( $e );
 		}
 
 		return $action;

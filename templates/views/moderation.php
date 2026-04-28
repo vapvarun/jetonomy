@@ -79,15 +79,15 @@ $crumbs = [
 				?>
 				<a class="jt-card jt-mod-dashboard-card" href="<?php echo esc_url( $space_url ); ?>">
 					<div class="jt-mod-dashboard-card-head">
-						<h2 class="jt-mod-dashboard-card-title">
-							<?php echo esc_html( $card['title'] ); ?>
-						</h2>
 						<span class="jt-badge-danger">
 							<?php
 							/* translators: %d: pending flag count in this space */
 							echo esc_html( sprintf( _n( '%d pending', '%d pending', $card['pending'], 'jetonomy' ), $card['pending'] ) );
 							?>
 						</span>
+						<h2 class="jt-mod-dashboard-card-title">
+							<?php echo esc_html( $card['title'] ); ?>
+						</h2>
 					</div>
 					<div class="jt-mod-dashboard-card-cta">
 						<?php esc_html_e( 'Open queue', 'jetonomy' ); ?>

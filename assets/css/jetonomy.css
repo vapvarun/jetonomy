@@ -962,9 +962,13 @@
   .jt-mod-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--jt-space-4); }
   .jt-mod-dashboard-card { display: flex; flex-direction: column; gap: var(--jt-space-3); padding: var(--jt-space-4); text-decoration: none; color: inherit; border: 1px solid var(--jt-border); transition: border-color .15s ease, transform .15s ease; }
   .jt-mod-dashboard-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
-  .jt-mod-dashboard-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); }
-  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); flex: 1 1 auto; min-width: 0; }
-  .jt-mod-dashboard-card-head .jt-badge-danger { flex-shrink: 0; }
+  /* 1.4.0 polish: stack badge above title so a long space title (e.g.
+     "Welcome & Introductions") never collides with the "X pending" pill.
+     Badge becomes a small chip at the top-left of the card; title wraps
+     freely on its own row beneath it. Reads cleaner at any width. */
+  .jt-mod-dashboard-card-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--jt-space-2); }
+  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+  .jt-mod-dashboard-card-head .jt-badge-danger { align-self: flex-start; flex-shrink: 0; }
   .jt-mod-dashboard-card-cta { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: var(--jt-text-sm); color: var(--jt-accent); }
 
   /* Sidebar links column — moderation link sits below "View all members". */
