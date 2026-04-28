@@ -3,9 +3,13 @@
  *
  * Vanilla JS, no dependencies. Enqueued only when the Login block renders.
  *
- * Login submits to POST /jetonomy/v1/auth/login (1.4.0 A.2 commit 2).
- * Register still hits wp_ajax_nopriv_jetonomy_quick_register and migrates to
- * REST in A.3 commit 2.
+ * Login    → POST /jetonomy/v1/auth/login    (since 1.4.0 A.2 commit 2)
+ * Register → POST /jetonomy/v1/auth/register (since 1.4.0 A.3 commit 2)
+ *
+ * Both submits flow through getCaptchaToken() which resolves to '' when no
+ * provider is active, or a real reCAPTCHA v3 / Turnstile token when one is.
+ * The server's `Captcha_Manager::verify_or_skip` returns null on no-adapter,
+ * so an empty token still passes through.
  */
 ( function () {
 	'use strict';
@@ -42,6 +46,37 @@
 			btn.disabled = false;
 			btn.textContent = original;
 		};
+	}
+
+	/**
+	 * Resolve a CAPTCHA token if a provider is active. Returns '' when no
+	 * CAPTCHA is configured (server-side `Captcha_Manager::verify_or_skip`
+	 * treats empty token + null adapter as a skip; nothing breaks).
+	 *
+	 * Mirrors the pattern in assets/js/view.js for posts/replies so all
+	 * three submit surfaces use the same CAPTCHA wiring.
+	 *
+	 * @return {Promise<string>}
+	 */
+	function getCaptchaToken() {
+		var captcha = window.jetonomyCaptcha;
+		if ( ! captcha || ! captcha.provider ) {
+			return Promise.resolve( '' );
+		}
+		if ( captcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
+			return new Promise( function ( resolve ) {
+				window.grecaptcha.ready( function () {
+					window.grecaptcha
+						.execute( captcha.siteKey, { action: 'register' } )
+						.then( resolve, function () { resolve( '' ); } );
+				} );
+			} );
+		}
+		if ( captcha.provider === 'turnstile' ) {
+			var ts = document.querySelector( '[name="cf-turnstile-response"]' );
+			return Promise.resolve( ts ? ts.value : '' );
+		}
+		return Promise.resolve( '' );
 	}
 
 	/**
@@ -97,43 +132,63 @@
 	}
 
 	/**
-	 * Legacy admin-ajax register submit. Stays here until v1.4.0 A.3 commit 2
-	 * migrates `wp_ajax_nopriv_jetonomy_quick_register` to
-	 * POST /jetonomy/v1/auth/register.
+	 * REST register submit (1.4.0 A.3 commit 2).
+	 *
+	 * Body: { username, email, password, captcha_token? }
+	 * Success: { success: true, message: '…' } (200) — server auto-signs the
+	 * new user in via wp_set_auth_cookie, JS just reloads.
+	 * Errors: 403 jetonomy_registration_disabled / 400 missing_fields /
+	 *         400 username_unavailable / 400 email_unavailable /
+	 *         400 password_too_short / 400 captcha_failed / 429 rate_limited.
+	 *
+	 * Async because the CAPTCHA token lookup may return a Promise
+	 * (reCAPTCHA v3 / Turnstile invisible widgets).
 	 */
-	function submitRegisterLegacy( block, form ) {
+	function submitRegisterREST( block, form ) {
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var fd = new FormData( form );
-		fd.append( 'action', 'jetonomy_quick_register' );
-		fd.append( 'nonce', block.dataset.registerNonce || '' );
+		var restUrl = block.dataset.restUrl
+			? block.dataset.restUrl.replace( /\/+$/, '' )
+			: '/wp-json/jetonomy/v1';
+		var nonce = block.dataset.restNonce || '';
 
-		fetch( block.dataset.ajaxUrl, {
-			method: 'POST',
-			credentials: 'same-origin',
-			body: fd,
-		} )
-			.then( function ( res ) {
-				return res.json().then( function ( json ) {
-					return { ok: res.ok, json: json };
-				} );
-			} )
-			.then( function ( payload ) {
-				if ( ! payload.ok || ! payload.json || ! payload.json.success ) {
-					var msg = ( payload.json && payload.json.data && payload.json.data.message )
-						|| 'Something went wrong. Please try again.';
-					setMessage( form, msg, false );
-					if ( unlock ) { unlock(); }
-					return;
-				}
-				setMessage( form, ( payload.json.data && payload.json.data.message ) || 'Success', true );
-				window.location.reload();
-			} )
-			.catch( function () {
-				setMessage( form, 'Network error. Please try again.', false );
-				if ( unlock ) { unlock(); }
+		getCaptchaToken().then( function ( captchaToken ) {
+			var body = {
+				username: ( form.querySelector( '[name="username"]' ) || {} ).value || '',
+				email:    ( form.querySelector( '[name="email"]' )    || {} ).value || '',
+				password: ( form.querySelector( '[name="password"]' ) || {} ).value || '',
+			};
+			if ( captchaToken ) {
+				body.captcha_token = captchaToken;
+			}
+
+			return fetch( restUrl + '/auth/register', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: nonce
+					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
+					: { 'Content-Type': 'application/json' },
+				body: JSON.stringify( body ),
 			} );
+		} ).then( function ( res ) {
+			return res.json().then( function ( json ) {
+				return { ok: res.ok, json: json };
+			} );
+		} ).then( function ( payload ) {
+			if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
+				var msg = ( payload.json && payload.json.message )
+					|| 'Something went wrong. Please try again.';
+				setMessage( form, msg, false );
+				if ( unlock ) { unlock(); }
+				return;
+			}
+			setMessage( form, payload.json.message || 'Account created.', true );
+			window.location.reload();
+		} ).catch( function () {
+			setMessage( form, 'Network error. Please try again.', false );
+			if ( unlock ) { unlock(); }
+		} );
 	}
 
 	function init( block ) {
@@ -155,7 +210,7 @@
 		if ( registerForm ) {
 			registerForm.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
-				submitRegisterLegacy( block, registerForm );
+				submitRegisterREST( block, registerForm );
 			} );
 		}
 	}
