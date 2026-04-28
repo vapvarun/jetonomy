@@ -367,7 +367,7 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 4
+			count: 6
 			path: includes/class-blocks.php
 
 		-

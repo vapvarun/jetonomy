@@ -33,6 +33,21 @@ class Shortcodes {
 	}
 
 	/**
+	 * Register + enqueue the shared blocks/shortcode stylesheet.
+	 *
+	 * Shortcodes can render in any context (page, page-builder canvas, widget),
+	 * including pages that never run `wp_enqueue_scripts` for our handles. We
+	 * register defensively in case we beat Blocks::register_block_assets(),
+	 * then enqueue. WordPress dedupes by handle.
+	 */
+	private static function enqueue_styles(): void {
+		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
+			wp_register_style( 'jetonomy-blocks', JETONOMY_URL . 'assets/css/blocks.css', array(), JETONOMY_VERSION );
+		}
+		wp_enqueue_style( 'jetonomy-blocks' );
+	}
+
+	/**
 	 * [jetonomy_recent_posts count="5" space_id="" sort="latest"]
 	 */
 	public static function recent_posts( $atts ): string {
@@ -45,6 +60,8 @@ class Shortcodes {
 			$atts,
 			'jetonomy_recent_posts'
 		);
+
+		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 5;
 		$base  = base_url();
@@ -119,6 +136,8 @@ class Shortcodes {
 			'jetonomy_trending_posts'
 		);
 
+		self::enqueue_styles();
+
 		$limit    = absint( $atts['count'] ) ?: 5;
 		$window   = absint( $atts['window'] ) ?: 7;
 		$space_id = absint( $atts['space_id'] );
@@ -168,6 +187,8 @@ class Shortcodes {
 			$atts,
 			'jetonomy_spaces'
 		);
+
+		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 6;
 		$base  = base_url();
@@ -219,6 +240,8 @@ class Shortcodes {
 	public static function leaderboard( $atts ): string {
 		$atts = shortcode_atts( array( 'count' => 10 ), $atts, 'jetonomy_leaderboard' );
 
+		self::enqueue_styles();
+
 		$limit = absint( $atts['count'] ) ?: 10;
 		$base  = base_url();
 
@@ -265,6 +288,8 @@ class Shortcodes {
 			return '';
 		}
 
+		self::enqueue_styles();
+
 		$user    = get_userdata( $user_id );
 		$profile = Models\UserProfile::find_by_user( $user_id );
 		if ( ! $user ) {
@@ -307,6 +332,8 @@ class Shortcodes {
 		if ( ! $space_id ) {
 			return '';
 		}
+
+		self::enqueue_styles();
 
 		$limit = absint( $atts['count'] ) ?: 10;
 
@@ -397,14 +424,7 @@ class Shortcodes {
 			$postable = self::postable_spaces_for_current_user();
 		}
 
-		// Shortcode can be rendered in any context (page builders, widgets,
-		// custom post types). Register the CSS handle defensively here in case
-		// we beat `wp_enqueue_scripts`. The JS module is registered in
-		// Blocks::register_block_assets() — WordPress dedupes by handle.
-		if ( ! wp_style_is( 'jetonomy-blocks', 'registered' ) ) {
-			wp_register_style( 'jetonomy-blocks', JETONOMY_URL . 'assets/css/blocks.css', array(), JETONOMY_VERSION );
-		}
-		wp_enqueue_style( 'jetonomy-blocks' );
+		self::enqueue_styles();
 		if ( function_exists( 'wp_enqueue_script_module' ) ) {
 			wp_enqueue_script_module( 'jetonomy-compose-topic' );
 		}

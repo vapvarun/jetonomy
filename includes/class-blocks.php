@@ -94,6 +94,30 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
+
+		// One editor script registers all the server-rendered blocks
+		// (forum-feed, trending, space-list, leaderboard, navigation,
+		// user-panel, login). Without a JS-side `registerBlockType()` the
+		// inserter never lists them, even though the PHP side registers
+		// them just fine — fixed 2026-04-28 after a customer report that
+		// only Compose Topic appeared in the inserter.
+		wp_register_script(
+			'jetonomy-blocks-editor',
+			JETONOMY_URL . 'assets/js/blocks-editor.js',
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-block-editor', 'wp-components' ),
+			JETONOMY_VERSION,
+			true
+		);
+
+		// Editor-only stylesheet — frames the preview cards + harmonises the
+		// Compose Topic mock so the family reads as one Jetonomy set in the
+		// inserter and on the canvas. Keeps live REST out of the editor.
+		wp_register_style(
+			'jetonomy-blocks-editor',
+			JETONOMY_URL . 'assets/css/blocks-editor.css',
+			array(),
+			JETONOMY_VERSION
+		);
 	}
 
 	public static function register_blocks(): void {
@@ -133,6 +157,8 @@ class Blocks {
 				'description'     => __( 'Display recent forum discussions. Optionally scope to a single space with a header.', 'jetonomy' ),
 				'icon'            => 'format-chat',
 				'keywords'        => array( 'forum', 'posts', 'discussions', 'space', 'topics', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -168,6 +194,8 @@ class Blocks {
 				'description'     => __( 'Display trending forum topics ranked by recent engagement (votes + replies over the last 7 days).', 'jetonomy' ),
 				'icon'            => 'chart-line',
 				'keywords'        => array( 'trending', 'hot', 'popular', 'topics', 'posts', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -191,6 +219,8 @@ class Blocks {
 				'description'     => __( 'Display forum spaces as a grid.', 'jetonomy' ),
 				'icon'            => 'groups',
 				'keywords'        => array( 'spaces', 'categories', 'forum', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -210,6 +240,8 @@ class Blocks {
 				'description'     => __( 'Display top community members by reputation.', 'jetonomy' ),
 				'icon'            => 'awards',
 				'keywords'        => array( 'leaderboard', 'ranking', 'reputation', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -245,6 +277,8 @@ class Blocks {
 				'description'     => __( 'Sidebar navigation for categories and spaces, permission-aware.', 'jetonomy' ),
 				'icon'            => 'menu-alt3',
 				'keywords'        => array( 'navigation', 'sidebar', 'spaces', 'categories', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -264,6 +298,8 @@ class Blocks {
 				'description'     => __( 'Logged-in profile card for the sidebar: avatar, notifications, profile, and logout. Empty for logged-out viewers.', 'jetonomy' ),
 				'icon'            => 'id',
 				'keywords'        => array( 'profile', 'user', 'sidebar', 'notifications', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -287,6 +323,8 @@ class Blocks {
 				'description'     => __( 'Quick login and register form for the Jetonomy sidebar. Renders empty for logged-in viewers.', 'jetonomy' ),
 				'icon'            => 'admin-users',
 				'keywords'        => array( 'login', 'register', 'signin', 'jetonomy' ),
+				'editor_script'   => 'jetonomy-blocks-editor',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 
@@ -316,6 +354,7 @@ class Blocks {
 				'icon'            => 'edit-page',
 				'keywords'        => array( 'compose', 'topic', 'post', 'form', 'new', 'jetonomy' ),
 				'editor_script'   => 'jetonomy-compose-topic-block',
+				'editor_style'    => 'jetonomy-blocks-editor',
 			)
 		);
 	}
@@ -400,6 +439,8 @@ class Blocks {
 	}
 
 	public static function render_space_list( array $attributes ): string {
+		wp_enqueue_style( 'jetonomy-blocks' );
+
 		$atts = 'count="' . absint( $attributes['count'] ) . '"';
 		if ( ! empty( $attributes['categoryId'] ) ) {
 			$atts .= ' category_id="' . absint( $attributes['categoryId'] ) . '"';
@@ -409,6 +450,8 @@ class Blocks {
 	}
 
 	public static function render_leaderboard( array $attributes ): string {
+		wp_enqueue_style( 'jetonomy-blocks' );
+
 		return '<div class="wp-block-jetonomy-leaderboard">' . do_shortcode( '[jetonomy_leaderboard count="' . absint( $attributes['count'] ) . '"]' ) . '</div>';
 	}
 
