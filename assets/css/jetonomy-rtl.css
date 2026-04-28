@@ -290,7 +290,11 @@
 
   /* ── Space header ── */
   .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  .jt-space-emoji { font-size: 2em; }
+  /* Space header icon — Lucide SVG container. Lands as a 40px accent
+     square so the icon reads at the same weight emoji used to. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--jt-accent); flex-shrink: 0; }
+  .jt-space-emoji svg { width: 32px; height: 32px; }
+  .jt-space-emoji.dashicons { font-size: 32px; width: auto; height: auto; }
   .jt-space-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
   .jt-space-nums { display: flex; gap: 20px; margin-right: auto; }
@@ -322,6 +326,135 @@
   a.jt-row:hover { color: inherit; }
   .jt-row-main { min-width: 0; }
   .jt-row-title { font-weight: 600; font-size: 1rem; line-height: 1.4; color: var(--jt-text); }
+  /* 1.4.0 C.4: stretched-link pattern. Title <a> is the row's only navigation
+     anchor; a ::before pseudo covers the whole row so the row stays clickable
+     while child <a> elements (tags) keep their own click target. */
+  a.jt-row-title-link { display: block; text-decoration: none; color: inherit; position: static; }
+  .jt-row { position: relative; }
+  a.jt-row-title-link::before { content: ""; position: absolute; inset: 0; z-index: 0; }
+  .jt-row-sub > * { position: relative; z-index: 1; }
+
+  /* 1.4.0 C.7: @mention typeahead dropdown. */
+  .jt-mention-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 14px rgb(0 0 0 / 0.08); min-width: 240px; max-width: 320px; max-height: 280px; overflow-y: auto; }
+  .jt-mention-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-block-end: 1px solid var(--jt-border); }
+  .jt-mention-row:last-child { border-block-end: none; }
+  .jt-mention-row:hover, .jt-mention-row.is-selected { background: var(--jt-bg-hover); }
+  .jt-mention-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
+  .jt-mention-name { font-weight: 600; color: var(--jt-text); flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jt-mention-login { color: var(--jt-text-tertiary); font-size: 0.8125rem; }
+  .jt-mention-empty { padding: 10px 12px; color: var(--jt-text-tertiary); font-size: 0.875rem; }
+
+  /* 1.4.0 C.5: "New" pill on post cards when the viewer has unread replies. */
+  .jt-unread-pill { display: inline-block; margin-inline-start: 8px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: #fff; vertical-align: middle; }
+
+  /* Front-end forms (G5 edit space, G6 new space). Token-driven so the
+     same primitives work for any future REST-backed form. */
+  .jt-form { padding: var(--jt-space-4); }
+  .jt-form-row { margin-block-end: 16px; }
+  .jt-form-row label { display: block; font-weight: 600; margin-block-end: 6px; color: var(--jt-text); }
+  .jt-form-row .jt-input { width: 100%; padding: 8px 12px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); font: inherit; }
+  .jt-form-row .jt-input:focus { outline: 2px solid var(--jt-accent); outline-offset: 1px; }
+  .jt-form-row textarea.jt-input { resize: vertical; }
+  .jt-form-help { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 6px 0 0; }
+  .jt-required { color: var(--jt-danger); }
+  .jt-form-actions { display: flex; align-items: center; gap: 12px; margin-block-start: 8px; flex-wrap: wrap; }
+  .jt-form-error { margin-block-start: 12px; padding: 10px 12px; border-radius: var(--jt-radius); background: var(--jt-danger-light); color: var(--jt-danger); font-size: 0.875rem; }
+  .jt-form-saved { color: var(--jt-success); font-weight: 600; font-size: 0.875rem; }
+  @media ( max-width: 640px ) {
+    .jt-form { padding: 16px; }
+    .jt-form-actions { flex-direction: column; align-items: stretch; }
+    .jt-form-actions .jt-btn { width: 100%; text-align: center; }
+  }
+
+  /* 1.4.0 G5/G6: cover-image uploader + Lucide icon picker on the
+     front-end space-edit and create-space forms. */
+  .jt-cover-uploader { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px dashed var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-cover-preview { width: 100%; max-width: 480px; aspect-ratio: 16 / 5; border-radius: var(--jt-radius); overflow: hidden; background: var(--jt-bg-subtle); }
+  .jt-cover-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .jt-cover-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .jt-cover-pick { cursor: pointer; }
+  .jt-cover-status { color: var(--jt-text-secondary); font-size: 0.875rem; }
+
+  /* Icon-only picker (1.4.0 G5/G6): 8 cols × 2 visible rows by default,
+     extended icons reveal via "Show more" or live search filter.
+     Note: rules use `.jt-icon-picker .jt-icon-option` (0,2,0) so they
+     beat the generic `.jt-form-row label { display: block }` rule
+     (0,1,1) — otherwise cells would render as block, killing the
+     square aspect-ratio and the centered icon. */
+  .jt-icon-picker-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .jt-icon-picker-search { position: relative; }
+  .jt-icon-picker-search .jt-input { padding-inline-start: 36px; }
+  .jt-icon-picker-search-icon { position: absolute; inset-inline-start: 10px; inset-block-start: 50%; transform: translateY(-50%); color: var(--jt-text-tertiary); pointer-events: none; display: inline-flex; }
+  .jt-icon-picker-search-icon svg { width: 16px; height: 16px; }
+  .jt-icon-picker { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+  .jt-icon-picker .jt-icon-option { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; background: var(--jt-bg); font-weight: 400; }
+  .jt-icon-picker .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
+  .jt-icon-picker .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .jt-icon-picker .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
+  .jt-icon-picker .jt-icon-option[hidden] { display: none; }
+  .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
+  .jt-icon-option-svg svg { width: 22px; height: 22px; }
+  .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; }
+  .jt-icon-picker-empty { color: var(--jt-text-secondary); font-size: 0.875rem; padding: 8px 4px; grid-column: 1 / -1; margin: 0; }
+
+  /* Posts-per-page narrow input + prefix editor (G5 settings). */
+  .jt-input-narrow { max-width: 120px; }
+  .jt-prefixes-row .jt-prefix-toggle { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .jt-prefix-config { margin-block-start: 12px; padding: 12px; border: 1px dashed var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-prefix-list { display: flex; flex-direction: column; gap: 8px; margin-block-end: 12px; }
+  .jt-prefix-row { display: flex; align-items: center; gap: 8px; }
+  .jt-prefix-row .jt-input { flex: 1 1 auto; }
+  .jt-prefix-color { width: 36px; height: 36px; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; flex-shrink: 0; }
+  .jt-prefix-remove { padding: 6px 12px; min-width: auto; flex-shrink: 0; font-size: 1.125rem; line-height: 1; }
+  @media ( max-width: 640px ) {
+    .jt-icon-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .jt-cover-preview { aspect-ratio: 16 / 6; }
+  }
+
+  /* Page-head pattern (1.4.0): h1 + muted subtitle, generous gap below. */
+  .jt-page-head { margin-block-end: 28px; }
+  .jt-page-head .jt-page-title { margin: 0 0 4px; }
+  .jt-page-head .jt-page-subtitle { margin: 0; color: var(--jt-text-secondary); font-size: 0.9375rem; }
+
+  /* My Spaces landing (G7). Two stacked sections, card per space. */
+  .jt-my-spaces-section { margin-block-end: 36px; }
+  .jt-my-spaces-section:last-child { margin-block-end: 0; }
+  .jt-section-title { font-size: 0.8125rem; font-weight: 700; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); }
+  .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; color: var(--jt-accent); background: var(--jt-accent-muted); border-radius: var(--jt-radius); }
+  .jt-space-card-icon svg { width: 22px; height: 22px; }
+  .jt-space-card-icon.dashicons { font-size: 22px; }
+  .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .jt-space-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, box-shadow 0.15s ease; display: flex; flex-direction: column; }
+  .jt-space-card:hover { border-color: var(--jt-accent); box-shadow: 0 2px 8px rgb(0 0 0 / 0.04); }
+  .jt-space-card-link { display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 14px; text-decoration: none; color: inherit; flex: 1 1 auto; }
+  .jt-space-card-link:hover { color: inherit; }
+  .jt-space-card-head { display: flex; align-items: flex-start; gap: 12px; }
+  .jt-space-card-titlewrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+  .jt-space-card-title { font-size: 1rem; font-weight: 700; color: var(--jt-text); margin: 0; line-height: 1.3; }
+  .jt-space-card-desc { color: var(--jt-text-secondary); font-size: 0.875rem; line-height: 1.5; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .jt-space-card-meta { color: var(--jt-text-tertiary); font-size: 0.8125rem; margin: 0; }
+
+  /* Footer action row — pill-shaped buttons divided from the card body
+     by a top border. Each action is a real ghost button so customers
+     read them as interactive, not as muted text. */
+  .jt-space-card-actions { display: flex; gap: 6px; padding: 10px 14px; border-block-start: 1px solid var(--jt-border); background: var(--jt-bg-subtle); flex-wrap: wrap; }
+  .jt-space-card-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg); border: 1px solid var(--jt-border); color: var(--jt-text); font-size: 0.8125rem; font-weight: 500; text-decoration: none; transition: border-color 0.1s ease, color 0.1s ease, background 0.1s ease; }
+  .jt-space-card-action:hover { border-color: var(--jt-accent); color: var(--jt-accent); background: var(--jt-accent-muted); }
+  .jt-space-card-action svg { flex-shrink: 0; }
+  .jt-empty-cta { margin-block-start: 16px; text-align: center; }
+  @media ( max-width: 640px ) {
+    .jt-space-list { grid-template-columns: 1fr; }
+  }
+
+  /* Tag-page + future paginated lists. */
+  .jt-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-block-start: 24px; padding-block: 16px; }
+  .jt-pagination-link { color: var(--jt-accent); text-decoration: none; font-weight: 600; padding: 8px 14px; border-radius: var(--jt-radius); transition: background 0.1s; }
+  .jt-pagination-link:hover { background: var(--jt-bg-hover); }
+  .jt-pagination-status { color: var(--jt-text-secondary); font-size: 0.875rem; }
+  @media ( max-width: 640px ) {
+    .jt-pagination { gap: 8px; flex-wrap: wrap; }
+    .jt-pagination-link { padding: 8px 10px; font-size: 0.875rem; }
+  }
   .jt-row:hover .jt-row-title { color: var(--jt-text-secondary); }
   .jt-row-sub { font-size: 0.8125rem; color: var(--jt-text-tertiary); margin-top: 3px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .jt-row-stat { text-align: center; }
@@ -808,6 +941,95 @@
   .jt-sidebar-link-text { font-size: 0.9375rem; color: var(--jt-accent); font-weight: 500; }
   .jt-tag-count { color: var(--jt-text-tertiary); font-size: 0.9375rem; margin-right: 3px; }
 
+  /* ── Managed by sidebar card (1.4.0 G1) ───────────────────────────── */
+  .jt-managed-by-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .jt-managed-by-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .jt-managed-by-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--jt-text);
+    text-decoration: none;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .jt-managed-by-link:hover .jt-managed-by-name,
+  .jt-managed-by-link:focus-visible .jt-managed-by-name {
+    color: var(--jt-accent);
+  }
+  .jt-managed-by-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--jt-radius-full);
+    object-fit: cover;
+    flex: 0 0 auto;
+  }
+  .jt-managed-by-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--jt-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+  }
+  .jt-managed-by-role {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: var(--jt-radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .jt-managed-by-role--admin {
+    background: var(--jt-accent-muted);
+    color: var(--jt-accent);
+  }
+  .jt-managed-by-role--moderator {
+    background: var(--jt-warn-light);
+    color: var(--jt-warn);
+  }
+  .jt-managed-by-empty {
+    margin: 0;
+    color: var(--jt-text-tertiary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* ── Role pills on post / reply cards (1.4.0 G3) ──────────────────── */
+  .jt-role-pill {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: var(--jt-radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    vertical-align: middle;
+  }
+  .jt-role-pill--admin {
+    background: var(--jt-accent-muted);
+    color: var(--jt-accent);
+  }
+  .jt-role-pill--moderator {
+    background: var(--jt-warn-light);
+    color: var(--jt-warn);
+  }
+
   /* ── Notification list ── */
   /* Notifications uses jt-two-col now — no max-width needed */
   .jt-notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--jt-border); text-decoration: none; color: inherit; }
@@ -856,9 +1078,13 @@
   .jt-mod-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--jt-space-4); }
   .jt-mod-dashboard-card { display: flex; flex-direction: column; gap: var(--jt-space-3); padding: var(--jt-space-4); text-decoration: none; color: inherit; border: 1px solid var(--jt-border); transition: border-color .15s ease, transform .15s ease; }
   .jt-mod-dashboard-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
-  .jt-mod-dashboard-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); }
-  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); flex: 1 1 auto; min-width: 0; }
-  .jt-mod-dashboard-card-head .jt-badge-danger { flex-shrink: 0; }
+  /* 1.4.0 polish: stack badge above title so a long space title (e.g.
+     "Welcome & Introductions") never collides with the "X pending" pill.
+     Badge becomes a small chip at the top-left of the card; title wraps
+     freely on its own row beneath it. Reads cleaner at any width. */
+  .jt-mod-dashboard-card-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--jt-space-2); }
+  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+  .jt-mod-dashboard-card-head .jt-badge-danger { align-self: flex-start; flex-shrink: 0; }
   .jt-mod-dashboard-card-cta { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: var(--jt-text-sm); color: var(--jt-accent); }
 
   /* Sidebar links column — moderation link sits below "View all members". */
@@ -1671,6 +1897,11 @@
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
+@media ( max-width: 640px ) {
+	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
+	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
+	.jt-modal-actions .jt-btn { min-width: 0; width: 100%; }
+}
 
 /* ── Link Preview Cards ──
    LinkedIn / Twitter / Facebook style rich card. Media sits on top, metadata

@@ -1025,7 +1025,7 @@ class Spaces_Controller extends Base_Controller {
 			'category_id' => [
 				'type'     => 'integer',
 				'required' => false,
-				'minimum'  => 1,
+				'minimum'  => 0,
 			],
 			'type'        => [
 				'type'     => 'string',

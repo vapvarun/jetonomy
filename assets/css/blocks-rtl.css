@@ -15,7 +15,8 @@
 .jt-nav-block,
 .jt-login-block,
 .jt-user-panel,
-.jt-feed-block {
+.jt-feed-block,
+.jt-shortcode {
 	--jtb-font:         var(--font-body, var(--wp--preset--font-family--body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif));
 	--jtb-accent:       var(--brand, var(--wp--preset--color--primary, #4b5cff));
 	--jtb-accent-soft:  color-mix(in srgb, var(--jtb-accent) 12%, transparent);
@@ -48,7 +49,10 @@
 .jt-user-panel *::after,
 .jt-feed-block *,
 .jt-feed-block *::before,
-.jt-feed-block *::after { box-sizing: border-box; }
+.jt-feed-block *::after,
+.jt-shortcode *,
+.jt-shortcode *::before,
+.jt-shortcode *::after { box-sizing: border-box; }
 
 /* ─── Navigation block ─────────────────────────────────────────────── */
 
@@ -322,14 +326,28 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 
 .jt-login-lostpw {
 	align-self: flex-start;
+	background: transparent;
+	border: 0;
+	padding: 0;
+	font: inherit;
 	font-size: 0.78rem;
 	color: var(--jtb-text-3);
 	text-decoration: none;
+	cursor: pointer;
 	transition: color 0.15s ease;
 }
-.jt-login-lostpw:hover {
+.jt-login-lostpw:hover,
+.jt-login-lostpw:focus-visible {
 	color: var(--jtb-accent);
 	text-decoration: underline;
+	outline: none;
+}
+
+.jt-login-forgot-intro {
+	margin: 0 0 4px;
+	font-size: 0.86rem;
+	color: var(--jtb-text-2);
+	line-height: 1.45;
 }
 
 .jt-login-message {
@@ -530,15 +548,21 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: linear-gradient(-90deg, var(--jtb-accent) 0%, color-mix(in srgb, var(--jtb-accent) 35%, transparent) 100%);
 }
 
-/* Shortcode output inside the feed/trending block — scoped so it works
-   on any page without the main jetonomy.css */
-.jt-feed-block .jt-shortcode {
+/* Shortcode output — works both standalone (any page / page-builder /
+   widget) and nested inside the feed/trending block. The .jt-shortcode
+   root carries the same --jtb-* token block as the parent blocks (see
+   the root selector list at the top of this file), so styles render
+   correctly without depending on the main jetonomy.css. */
+.jt-shortcode {
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
+	font-family: var(--jtb-font);
+	color: var(--jtb-text);
+	line-height: 1.5;
 }
 
-.jt-feed-block .jt-shortcode-post {
+.jt-shortcode-post {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -546,14 +570,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	border-radius: var(--jtb-radius-sm);
 	transition: background-color 0.15s ease;
 }
-.jt-feed-block .jt-shortcode-post + .jt-shortcode-post {
+.jt-shortcode-post + .jt-shortcode-post {
 	border-top: 1px solid var(--jtb-border);
 }
-.jt-feed-block .jt-shortcode-post:hover {
+.jt-shortcode-post:hover {
 	background: var(--jtb-bg-hover);
 }
 
-.jt-feed-block .jt-shortcode-post-title {
+.jt-shortcode-post-title {
 	color: var(--jtb-text);
 	font-size: 0.92rem;
 	font-weight: 600;
@@ -561,20 +585,20 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	text-decoration: none;
 	display: block;
 }
-.jt-feed-block .jt-shortcode-post-title:hover,
-.jt-feed-block .jt-shortcode-post-title:focus-visible {
+.jt-shortcode-post-title:hover,
+.jt-shortcode-post-title:focus-visible {
 	color: var(--jtb-accent);
 	text-decoration: none;
 	outline: none;
 }
 
-.jt-feed-block .jt-shortcode-post-meta {
+.jt-shortcode-post-meta {
 	font-size: 0.76rem;
 	color: var(--jtb-text-3);
 	line-height: 1.3;
 }
 
-.jt-feed-block .jt-shortcode-post-stats {
+.jt-shortcode-post-stats {
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -583,12 +607,134 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-variant-numeric: tabular-nums;
 }
 
-.jt-feed-block .jt-shortcode-empty {
+.jt-shortcode-empty {
 	padding: 18px 12px;
 	color: var(--jtb-text-3);
 	font-size: 0.88rem;
 	text-align: center;
 }
+
+/* Spaces grid */
+.jt-shortcode-spaces {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 12px;
+}
+.jt-shortcode-space {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 14px;
+	border: 1px solid var(--jtb-border);
+	border-radius: var(--jtb-radius-md);
+	background: var(--jtb-bg);
+	color: var(--jtb-text);
+	text-decoration: none;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.jt-shortcode-space:hover,
+.jt-shortcode-space:focus-visible {
+	background: var(--jtb-bg-hover);
+	border-color: var(--jtb-accent);
+	outline: none;
+}
+.jt-shortcode-space-desc {
+	font-size: 0.82rem;
+	color: var(--jtb-text-2);
+	line-height: 1.4;
+}
+.jt-shortcode-space-stats {
+	font-size: 0.74rem;
+	color: var(--jtb-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Leaderboard */
+.jt-shortcode-leaderboard ol {
+	list-style: decimal inside;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.jt-shortcode-leaderboard li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 10px;
+	border-radius: var(--jtb-radius-sm);
+}
+.jt-shortcode-leaderboard li + li {
+	border-top: 1px solid var(--jtb-border);
+}
+.jt-shortcode-leaderboard a {
+	color: var(--jtb-text);
+	text-decoration: none;
+	font-weight: 500;
+}
+.jt-shortcode-leaderboard a:hover { color: var(--jtb-accent); }
+.jt-shortcode-rep {
+	font-size: 0.78rem;
+	color: var(--jtb-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Profile card */
+.jt-shortcode-profile-card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	border: 1px solid var(--jtb-border);
+	border-radius: var(--jtb-radius-md);
+	background: var(--jtb-bg);
+}
+.jt-shortcode-profile-card a {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--jtb-text);
+	text-decoration: none;
+}
+.jt-shortcode-profile-card a:hover { color: var(--jtb-accent); }
+.jt-shortcode-profile-card p {
+	margin: 0;
+	font-size: 0.86rem;
+	color: var(--jtb-text-2);
+	line-height: 1.45;
+}
+.jt-shortcode-profile-stats {
+	display: flex;
+	gap: 12px;
+	font-size: 0.78rem;
+	color: var(--jtb-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Members list */
+.jt-shortcode-members {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.jt-shortcode-member {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px 10px;
+}
+.jt-shortcode-member + .jt-shortcode-member {
+	border-top: 1px solid var(--jtb-border);
+}
+.jt-shortcode-member a {
+	color: var(--jtb-text);
+	text-decoration: none;
+	font-weight: 500;
+}
+.jt-shortcode-member a:hover { color: var(--jtb-accent); }
 
 /* Trending — two-column layout: rank badge + body */
 .jt-shortcode-trending-post {
@@ -639,7 +785,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	}
 	.jt-login-tab { font-size: 0.88rem; padding: 9px 10px; }
 	.jt-login-label > input { font-size: 16px; } /* avoid iOS zoom */
-	.jt-feed-block .jt-shortcode-post { padding: 10px 6px; }
+	.jt-shortcode-post { padding: 10px 6px; }
+	.jt-shortcode-spaces { grid-template-columns: 1fr; gap: 10px; }
 	.jt-feed-header { margin-bottom: 12px; padding-bottom: 10px; }
 	.jt-feed-title { font-size: 0.9rem; }
 	.jt-shortcode-trending-rank { width: 26px; height: 26px; flex-basis: 26px; font-size: 0.78rem; }

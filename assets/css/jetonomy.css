@@ -375,15 +375,27 @@
   .jt-cover-pick { cursor: pointer; }
   .jt-cover-status { color: var(--jt-text-secondary); font-size: 0.875rem; }
 
-  .jt-icon-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
-  .jt-icon-option { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 8px; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; text-align: center; transition: border-color 0.15s ease, background 0.15s ease; background: var(--jt-bg); }
-  .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
-  .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
-  .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
-  .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--jt-accent); }
-  .jt-icon-option-svg svg { width: 24px; height: 24px; }
-  .jt-icon-option-label { font-size: 0.8125rem; color: var(--jt-text-secondary); }
-  .jt-icon-option.is-selected .jt-icon-option-label { color: var(--jt-text); font-weight: 600; }
+  /* Icon-only picker (1.4.0 G5/G6): 8 cols × 2 visible rows by default,
+     extended icons reveal via "Show more" or live search filter.
+     Note: rules use `.jt-icon-picker .jt-icon-option` (0,2,0) so they
+     beat the generic `.jt-form-row label { display: block }` rule
+     (0,1,1) — otherwise cells would render as block, killing the
+     square aspect-ratio and the centered icon. */
+  .jt-icon-picker-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .jt-icon-picker-search { position: relative; }
+  .jt-icon-picker-search .jt-input { padding-inline-start: 36px; }
+  .jt-icon-picker-search-icon { position: absolute; inset-inline-start: 10px; inset-block-start: 50%; transform: translateY(-50%); color: var(--jt-text-tertiary); pointer-events: none; display: inline-flex; }
+  .jt-icon-picker-search-icon svg { width: 16px; height: 16px; }
+  .jt-icon-picker { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+  .jt-icon-picker .jt-icon-option { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; background: var(--jt-bg); font-weight: 400; }
+  .jt-icon-picker .jt-icon-option:hover { border-color: var(--jt-accent); background: var(--jt-bg-hover); }
+  .jt-icon-picker .jt-icon-option input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .jt-icon-picker .jt-icon-option.is-selected { border-color: var(--jt-accent); background: var(--jt-accent-muted); }
+  .jt-icon-picker .jt-icon-option[hidden] { display: none; }
+  .jt-icon-option-svg { display: inline-flex; align-items: center; justify-content: center; color: var(--jt-accent); }
+  .jt-icon-option-svg svg { width: 22px; height: 22px; }
+  .jt-icon-picker-more { align-self: flex-start; font-size: 0.875rem; }
+  .jt-icon-picker-empty { color: var(--jt-text-secondary); font-size: 0.875rem; padding: 8px 4px; grid-column: 1 / -1; margin: 0; }
 
   /* Posts-per-page narrow input + prefix editor (G5 settings). */
   .jt-input-narrow { max-width: 120px; }
@@ -395,7 +407,7 @@
   .jt-prefix-color { width: 36px; height: 36px; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; flex-shrink: 0; }
   .jt-prefix-remove { padding: 6px 12px; min-width: auto; flex-shrink: 0; font-size: 1.125rem; line-height: 1; }
   @media ( max-width: 640px ) {
-    .jt-icon-picker { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+    .jt-icon-picker { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .jt-cover-preview { aspect-ratio: 16 / 6; }
   }
 
