@@ -2,24 +2,27 @@
 /**
  * New space view (G6).
  *
- * Front-end create-space form for qualified community members. Permission
- * mirrors the REST POST /spaces gate: jetonomy_create_spaces cap OR
- * (admin toggle ON AND trust level >= configured threshold). When the
- * viewer doesn't qualify, an empty-state explains why instead of a 403.
+ * Front-end create-space form. Permission mirrors REST POST /spaces:
+ * site admin (manage_options) + jetonomy_create_spaces cap holders + WP
+ * roles the admin allow-listed in Settings. Anyone else sees a friendly
+ * empty state instead of a 403.
  *
  * @package Jetonomy
  */
 
 defined( 'ABSPATH' ) || exit;
 
-$settings   = get_option( 'jetonomy_settings', array() );
-$allow_fe   = ! empty( $settings['allow_frontend_space_creation'] );
-$min_trust  = isset( $settings['min_trust_level_to_create_space'] ) ? (int) $settings['min_trust_level_to_create_space'] : 2;
-$user_id    = get_current_user_id();
-$has_cap    = current_user_can( 'jetonomy_create_spaces' );
-$profile    = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
-$user_trust = $profile ? (int) $profile->trust_level : 0;
-$qualifies  = $has_cap || ( $allow_fe && $user_trust >= $min_trust );
+$settings      = get_option( 'jetonomy_settings', array() );
+$user_id       = get_current_user_id();
+$is_site_admin = current_user_can( 'manage_options' );
+$has_cap       = current_user_can( 'jetonomy_create_spaces' );
+$allowed_roles = isset( $settings['frontend_space_creation_roles'] )
+	? array_filter( array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] ) )
+	: array();
+$wp_user       = wp_get_current_user();
+$user_roles    = $wp_user && ! empty( $wp_user->roles ) ? (array) $wp_user->roles : array();
+$role_match    = ! empty( $allowed_roles ) && count( array_intersect( $user_roles, $allowed_roles ) ) > 0;
+$qualifies     = $is_site_admin || $has_cap || $role_match;
 
 $default_type = sanitize_key( (string) ( $settings['default_space_type'] ?? 'forum' ) );
 if ( ! in_array( $default_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
@@ -46,14 +49,7 @@ $crumbs = array(
 			<div class="jt-empty">
 				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'lock', 64 ); ?></div>
 				<div class="jt-empty-text">
-					<?php if ( ! $allow_fe ) : ?>
-						<?php esc_html_e( 'Front-end space creation is disabled on this community.', 'jetonomy' ); ?>
-					<?php else : ?>
-						<?php
-						/* translators: 1: required trust level, 2: viewer's trust level */
-						echo esc_html( sprintf( __( 'Creating a space requires trust level %1$d. Yours is %2$d — keep contributing and you will get there.', 'jetonomy' ), $min_trust, $user_trust ) );
-						?>
-					<?php endif; ?>
+					<?php esc_html_e( 'Creating spaces is reserved for community administrators.', 'jetonomy' ); ?>
 				</div>
 				<p class="jt-empty-cta">
 					<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( $base . '/' ); ?>">

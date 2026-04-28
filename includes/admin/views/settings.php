@@ -152,23 +152,26 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Front-end space creation', 'jetonomy' ); ?></th>
 						<td>
-							<label>
-								<input type="checkbox" name="jetonomy_settings[allow_frontend_space_creation]" value="1" <?php checked( ! empty( $settings['allow_frontend_space_creation'] ) ); ?>>
-								<?php esc_html_e( 'Let qualified members create new spaces from /community/new-space/', 'jetonomy' ); ?>
-							</label>
-							<p class="description"><?php esc_html_e( 'When OFF, only WordPress Author-and-above users can create spaces (the default before 1.4.0). When ON, any community member at or above the trust level below can create spaces from the front end.', 'jetonomy' ); ?></p>
-							<br>
-							<label for="min_trust_level_to_create_space">
-								<?php esc_html_e( 'Minimum trust level required:', 'jetonomy' ); ?>
-								<select id="min_trust_level_to_create_space" name="jetonomy_settings[min_trust_level_to_create_space]">
-									<?php $min_tl = isset( $settings['min_trust_level_to_create_space'] ) ? (int) $settings['min_trust_level_to_create_space'] : 2; ?>
-									<option value="1" <?php selected( $min_tl, 1 ); ?>><?php esc_html_e( 'TL 1 — Basic', 'jetonomy' ); ?></option>
-									<option value="2" <?php selected( $min_tl, 2 ); ?>><?php esc_html_e( 'TL 2 — Regular (recommended)', 'jetonomy' ); ?></option>
-									<option value="3" <?php selected( $min_tl, 3 ); ?>><?php esc_html_e( 'TL 3 — Member', 'jetonomy' ); ?></option>
-									<option value="4" <?php selected( $min_tl, 4 ); ?>><?php esc_html_e( 'TL 4 — Regular Active', 'jetonomy' ); ?></option>
-									<option value="5" <?php selected( $min_tl, 5 ); ?>><?php esc_html_e( 'TL 5 — Leader', 'jetonomy' ); ?></option>
-								</select>
-							</label>
+							<?php
+							$selected_roles = isset( $settings['frontend_space_creation_roles'] )
+								? array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] )
+								: array();
+							$wp_roles_list  = wp_roles()->get_names();
+							?>
+							<fieldset>
+								<legend class="screen-reader-text"><?php esc_html_e( 'Roles allowed to create spaces from the front end', 'jetonomy' ); ?></legend>
+								<?php foreach ( $wp_roles_list as $role_key => $role_name ) : ?>
+									<?php
+									if ( 'administrator' === $role_key ) {
+										continue; }
+									?>
+									<label style="display:block;margin-block-end:4px;">
+										<input type="checkbox" name="jetonomy_settings[frontend_space_creation_roles][]" value="<?php echo esc_attr( $role_key ); ?>" <?php checked( in_array( $role_key, $selected_roles, true ) ); ?>>
+										<?php echo esc_html( translate_user_role( $role_name ) ); ?>
+									</label>
+								<?php endforeach; ?>
+							</fieldset>
+							<p class="description"><?php esc_html_e( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create spaces from /community/new-space/. Leave every box unticked to keep front-end space creation admin-only.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 				</table>
