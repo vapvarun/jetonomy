@@ -156,6 +156,21 @@ $bn_active = did_action( 'buddynext_loaded' );
 
 		<?php
 		/**
+		 * Managed-by sidebar card (1.4.0 G1) — admins + moderators of the
+		 * current space, ordered admins-first then by join time. Reads from
+		 * the cached `SpaceMember::list_privileged` so a sidebar render
+		 * costs one indexed query, then nothing for 60s. Same visibility as
+		 * the About card above.
+		 */
+		if ( class_exists( '\\Jetonomy\\Models\\SpaceMember' ) && isset( $space->id ) ) {
+			$members = \Jetonomy\Models\SpaceMember::list_privileged( (int) $space->id );
+			include __DIR__ . '/managed-by-card.php';
+			unset( $members );
+		}
+		?>
+
+		<?php
+		/**
 		 * Fires in the sidebar immediately after the "About" space card closes.
 		 * Only fires when a space is present (i.e. on space-scoped pages).
 		 * Ideal slot for ads, announcements, or CTAs pinned below the space intro.

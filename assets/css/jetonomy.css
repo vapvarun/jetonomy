@@ -808,6 +808,74 @@
   .jt-sidebar-link-text { font-size: 0.9375rem; color: var(--jt-accent); font-weight: 500; }
   .jt-tag-count { color: var(--jt-text-tertiary); font-size: 0.9375rem; margin-left: 3px; }
 
+  /* ── Managed by sidebar card (1.4.0 G1) ───────────────────────────── */
+  .jt-managed-by-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .jt-managed-by-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+  }
+  .jt-managed-by-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--jt-text);
+    text-decoration: none;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .jt-managed-by-link:hover .jt-managed-by-name,
+  .jt-managed-by-link:focus-visible .jt-managed-by-name {
+    color: var(--jt-accent);
+  }
+  .jt-managed-by-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--jt-radius-full);
+    object-fit: cover;
+    flex: 0 0 auto;
+  }
+  .jt-managed-by-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--jt-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+  }
+  .jt-managed-by-role {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: var(--jt-radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .jt-managed-by-role--admin {
+    background: var(--jt-accent-muted);
+    color: var(--jt-accent);
+  }
+  .jt-managed-by-role--moderator {
+    background: var(--jt-warn-light);
+    color: var(--jt-warn);
+  }
+  .jt-managed-by-empty {
+    margin: 0;
+    color: var(--jt-text-tertiary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
   /* ── Notification list ── */
   /* Notifications uses jt-two-col now — no max-width needed */
   .jt-notif-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--jt-border); text-decoration: none; color: inherit; }
