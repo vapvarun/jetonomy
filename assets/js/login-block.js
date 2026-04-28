@@ -1,8 +1,11 @@
 /**
- * Jetonomy Login block — tab switching + AJAX submit.
+ * Jetonomy Login block — tab switching + login/register submit.
  *
- * Intentionally vanilla JS, no dependencies. Enqueued only when the
- * login block is present on the page (see Blocks::enqueue_login_block).
+ * Vanilla JS, no dependencies. Enqueued only when the Login block renders.
+ *
+ * Login submits to POST /jetonomy/v1/auth/login (1.4.0 A.2 commit 2).
+ * Register still hits wp_ajax_nopriv_jetonomy_quick_register and migrates to
+ * REST in A.3 commit 2.
  */
 ( function () {
 	'use strict';
@@ -16,8 +19,7 @@
 		block.querySelectorAll( '.jt-login-form' ).forEach( function ( form ) {
 			form.classList.toggle( 'is-active', form.dataset.jtPanel === name );
 		} );
-		var messageEls = block.querySelectorAll( '.jt-login-message' );
-		messageEls.forEach( function ( el ) {
+		block.querySelectorAll( '.jt-login-message' ).forEach( function ( el ) {
 			el.textContent = '';
 			el.classList.remove( 'is-success' );
 		} );
@@ -25,28 +27,92 @@
 
 	function setMessage( form, text, isSuccess ) {
 		var el = form.querySelector( '.jt-login-message' );
-		if ( ! el ) return;
+		if ( ! el ) { return; }
 		el.textContent = text || '';
 		el.classList.toggle( 'is-success', !! isSuccess );
 	}
 
-	function submitForm( block, form, action, nonce ) {
-		var submitBtn = form.querySelector( '.jt-login-submit' );
-		var originalLabel = submitBtn ? submitBtn.textContent : '';
-		if ( submitBtn ) {
-			submitBtn.disabled = true;
-			submitBtn.textContent = '…';
-		}
+	function lockSubmit( form ) {
+		var btn = form.querySelector( '.jt-login-submit' );
+		if ( ! btn ) { return null; }
+		var original = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = '…';
+		return function unlock() {
+			btn.disabled = false;
+			btn.textContent = original;
+		};
+	}
+
+	/**
+	 * REST login submit (1.4.0 A.2 commit 2).
+	 *
+	 * Body shape: { user_login, user_password, remember? }
+	 * Success response: { success: true, message: '…' } (200)
+	 * Error response:   { code, message, data: { status } } (400 / 401 / 429)
+	 */
+	function submitLoginREST( block, form ) {
+		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var body = new FormData( form );
-		body.append( 'action', action );
-		body.append( 'nonce', nonce );
+		var restUrl = block.dataset.restUrl
+			? block.dataset.restUrl.replace( /\/+$/, '' )
+			: '/wp-json/jetonomy/v1';
+		var nonce = block.dataset.restNonce || '';
+
+		var body = {
+			user_login:    ( form.querySelector( '[name="login"]' )    || {} ).value || '',
+			user_password: ( form.querySelector( '[name="password"]' ) || {} ).value || '',
+			remember:      ( form.querySelector( '[name="remember"]' ) || {} ).checked === true,
+		};
+
+		fetch( restUrl + '/auth/login', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: nonce
+				? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
+				: { 'Content-Type': 'application/json' },
+			body: JSON.stringify( body ),
+		} )
+			.then( function ( res ) {
+				return res.json().then( function ( json ) {
+					return { ok: res.ok, json: json };
+				} );
+			} )
+			.then( function ( payload ) {
+				if ( ! payload.ok || ! payload.json || payload.json.success !== true ) {
+					var msg = ( payload.json && payload.json.message )
+						|| 'Something went wrong. Please try again.';
+					setMessage( form, msg, false );
+					if ( unlock ) { unlock(); }
+					return;
+				}
+				setMessage( form, payload.json.message || 'Signed in.', true );
+				window.location.reload();
+			} )
+			.catch( function () {
+				setMessage( form, 'Network error. Please try again.', false );
+				if ( unlock ) { unlock(); }
+			} );
+	}
+
+	/**
+	 * Legacy admin-ajax register submit. Stays here until v1.4.0 A.3 commit 2
+	 * migrates `wp_ajax_nopriv_jetonomy_quick_register` to
+	 * POST /jetonomy/v1/auth/register.
+	 */
+	function submitRegisterLegacy( block, form ) {
+		var unlock = lockSubmit( form );
+		setMessage( form, '', false );
+
+		var fd = new FormData( form );
+		fd.append( 'action', 'jetonomy_quick_register' );
+		fd.append( 'nonce', block.dataset.registerNonce || '' );
 
 		fetch( block.dataset.ajaxUrl, {
 			method: 'POST',
 			credentials: 'same-origin',
-			body: body,
+			body: fd,
 		} )
 			.then( function ( res ) {
 				return res.json().then( function ( json ) {
@@ -58,21 +124,15 @@
 					var msg = ( payload.json && payload.json.data && payload.json.data.message )
 						|| 'Something went wrong. Please try again.';
 					setMessage( form, msg, false );
-					if ( submitBtn ) {
-						submitBtn.disabled = false;
-						submitBtn.textContent = originalLabel;
-					}
+					if ( unlock ) { unlock(); }
 					return;
 				}
-				setMessage( form, payload.json.data && payload.json.data.message || 'Success', true );
+				setMessage( form, ( payload.json.data && payload.json.data.message ) || 'Success', true );
 				window.location.reload();
 			} )
 			.catch( function () {
 				setMessage( form, 'Network error. Please try again.', false );
-				if ( submitBtn ) {
-					submitBtn.disabled = false;
-					submitBtn.textContent = originalLabel;
-				}
+				if ( unlock ) { unlock(); }
 			} );
 	}
 
@@ -87,7 +147,7 @@
 		if ( loginForm ) {
 			loginForm.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
-				submitForm( block, loginForm, 'jetonomy_quick_login', block.dataset.loginNonce );
+				submitLoginREST( block, loginForm );
 			} );
 		}
 
@@ -95,7 +155,7 @@
 		if ( registerForm ) {
 			registerForm.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
-				submitForm( block, registerForm, 'jetonomy_quick_register', block.dataset.registerNonce );
+				submitRegisterLegacy( block, registerForm );
 			} );
 		}
 	}

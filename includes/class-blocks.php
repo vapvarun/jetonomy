@@ -720,15 +720,22 @@ class Blocks {
 			? (string) $attributes['title']
 			: __( 'Join the conversation', 'jetonomy' );
 		$show_register_tab = ! empty( $attributes['showRegister'] ) && (bool) get_option( 'users_can_register' );
-		$login_nonce       = wp_create_nonce( 'jetonomy_quick_login' );
 		$register_nonce    = wp_create_nonce( 'jetonomy_quick_register' );
 		$ajax_url          = esc_url( admin_url( 'admin-ajax.php' ) );
+		// 1.4.0 A.2 commit 2: login flow moves to POST /jetonomy/v1/auth/login.
+		// `data-rest-url` + `data-rest-nonce` carry the REST endpoint base + the
+		// wp_rest nonce that login-block.js sends as `X-WP-Nonce`. The legacy
+		// `data-ajax-url` + `data-register-nonce` stay because the Register tab
+		// still hits wp_ajax_nopriv_jetonomy_quick_register until A.3 commit 2.
+		$rest_url   = esc_url_raw( rest_url( 'jetonomy/v1' ) );
+		$rest_nonce = wp_create_nonce( 'wp_rest' );
 
 		ob_start();
 		?>
 		<div class="wp-block-jetonomy-login jt-login-block jt-app"
 			data-ajax-url="<?php echo esc_attr( $ajax_url ); ?>"
-			data-login-nonce="<?php echo esc_attr( $login_nonce ); ?>"
+			data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
+			data-rest-nonce="<?php echo esc_attr( $rest_nonce ); ?>"
 			data-register-nonce="<?php echo esc_attr( $register_nonce ); ?>">
 			<h3 class="jt-login-title"><?php echo esc_html( $title ); ?></h3>
 
