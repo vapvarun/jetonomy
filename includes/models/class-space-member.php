@@ -203,6 +203,29 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Count how many users currently hold the 'admin' role for a space.
+	 *
+	 * Single COUNT(*) query against the existing `(space_id, role)` index.
+	 * Used by the role-update guards (1.4.0 G4) to refuse demotion of the
+	 * last admin so a space can never end up admin-less.
+	 *
+	 * @param int $space_id
+	 * @return int
+	 */
+	public static function count_admins( int $space_id ): int {
+		$db    = static::db();
+		$table = static::table();
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $db->get_var(
+			$db->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE space_id = %d AND role = 'admin'",
+				$space_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
 	 * List all spaces a user has joined.
 	 *
 	 * @param int $user_id

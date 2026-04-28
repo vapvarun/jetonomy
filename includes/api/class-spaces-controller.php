@@ -737,6 +737,30 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
+		// 1.4.0 G4 — role-change integrity guards. Two independent checks.
+		// Self-demotion fires FIRST so the error message is the precise one
+		// (a user demoting themself when also the last admin would otherwise
+		// see the last-admin error, which is technically true but less
+		// actionable — they should be told plainly they cannot remove their
+		// own admin status).
+		$current_role = SpaceMember::get_role( $id, $user_id );
+
+		if ( $user_id === $current_user_id && 'admin' === $current_role && 'admin' !== $role ) {
+			return new WP_Error(
+				'jetonomy_cannot_self_demote',
+				__( 'You cannot remove your own admin role. Ask another admin to do it.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( 'admin' === $current_role && 'admin' !== $role && SpaceMember::count_admins( $id ) <= 1 ) {
+			return new WP_Error(
+				'jetonomy_last_admin_required',
+				__( 'A space must keep at least one admin. Promote someone else first.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
 		global $wpdb;
 		$wpdb->update(
 			\Jetonomy\table( 'space_members' ),
@@ -746,6 +770,12 @@ class Spaces_Controller extends Base_Controller {
 				'user_id'  => $user_id,
 			]
 		);
+
+		// Direct $wpdb->update bypasses the model's add()/remove() cache
+		// invalidation — bust the privileged-members cache so the
+		// "Managed by" sidebar card (G1) refreshes immediately on the
+		// next page load.
+		SpaceMember::bust_privileged_cache( $id );
 
 		return new WP_REST_Response(
 			[
