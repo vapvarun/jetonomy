@@ -264,6 +264,47 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.4.0 - April 2026 =
+
+A space-governance and SEO release. The big themes are: front-end self-service for the people who run a space, full SEO baselines on every public page, and a tighter, native-dialog-free UI.
+
+**Front-end space governance**
+
+* New: "Managed by" sidebar card. Every space page now shows the admins and moderators who run it, so a visitor can tell who's in charge without clicking around.
+* New: "Edit space" link in the sidebar for space admins. Routes to the wp-admin edit screen today, and will switch to a front-end edit form when 1.4.1 ships, with no template changes needed.
+* New: Role badges next to author names on posts and replies. An "Admin" or "Mod" pill appears beside the avatar when that user is privileged in the post's space, so readers can spot staff at a glance. Pills only render in the space the role applies to, so an admin of one space replying in another doesn't carry their badge across.
+* New: Role-change integrity guards on the front-end members page. The role dropdown can no longer accidentally orphan a space: you can't demote yourself from admin while you're the only admin, and the API blocks any change that would leave the space without a single admin. Both client and server enforce the rule, with translated inline error messages.
+
+**SEO**
+
+* New: Every public route emits a complete SEO baseline — title, meta description, canonical URL, Open Graph card, Twitter card, and structured data. Before 1.4.0, only single-thread pages had this; home, profile, leaderboard, search, tag, and space pages were silent to crawlers. Now your community can be found.
+* New: og:image fallback chain. When a route has no inline image, the card image falls back to the space cover, then the site's custom logo, then the site icon. Every og:image carries an og:image:alt for accessibility.
+* New: noindex on thin pages. Moderation queues, search results, composer pages, notifications, edit-profile, and invite landing pages now emit `noindex, follow`, so they never compete with the canonical pages in search results.
+* New: Richer JSON-LD. The home page emits WebSite + SearchAction (Sitelinks Searchbox eligibility); profiles emit Person with avatar, bio, and social links; spaces and tag pages emit CollectionPage with an ItemList of recent threads; breadcrumb schema covers every public route. Schema emission now defaults to ON.
+* New: Title and meta description now generate from a default pattern even on a fresh install — no admin SEO settings required.
+
+**Modal toolkit**
+
+* New: A shared in-product confirm/alert/prompt toolkit (window.jetonomyConfirm / Alert / Prompt). Replaces every browser-native dialog the plugin used to call. The dialogs are themeable via the same --jt-* tokens, return Promises, and respect the rest of the UI.
+* New: Dialogs ship with full WCAG 2.1 AA support — `role="dialog"`, `aria-modal="true"`, `aria-labelledby` and `aria-describedby` wired to live ids, focus trap on Tab and Shift+Tab, body scroll-lock while open, and focus restoration when the dialog closes.
+
+**Bug fixes**
+
+* Fixed: Space mods who don't have the WP "editor" capability can again use the inline edit, pin, move, merge, and delete tools on posts and replies. Before 1.4.0 the gate looked at WP capabilities only, which hid the tools from a moderator the space admin had just promoted. Now the gate also accepts the space-level mod role.
+* Fixed: Join-request notification action links no longer 403 for space admins without WP-admin caps. The link now points at the space's front-end mod queue when the recipient lacks wp-admin access, and to the wp-admin spaces tab when they have it.
+* Fixed: The notifications page no longer auto-marks-everything-read on render. It shows what's unread, with a "Mark all as read" button that only appears when there's something to mark and removes the unread dots in place when clicked.
+* Fixed: GDPR personal-data export now contains the user's display name. Pre-1.4.0 the export field was always empty because it read from the wrong table.
+* Fixed: Tags on post cards are now real links to the tag page, not inert spans. The post card markup was refactored to a stretched-link pattern so the row stays clickable while the inner tag links still navigate.
+* Fixed: The tag page no longer silently caps at 30 posts. Popular tags now paginate with a Previous / Next nav, accessible labels, and rel="prev"/"next" for SEO.
+* Security: Banned users can no longer log in. A new authentication filter rejects the login attempt with a clear message instead of letting the user re-establish a session via stale cookies.
+
+**Developer notes**
+
+* New: `[jetonomy_widget id="..."]` shortcode wraps `the_widget()`, so all four registered Jetonomy widgets can be embedded in any page or page-builder canvas without dropping into the Customizer.
+* New: `jetonomy_seo_meta` filter exposes the entire SEO emission payload (title, description, canonical, og:*, twitter:*, robots, article:*) before it lands in the page head, for themes and Pro extensions that want to tweak any value.
+* New: `jetonomy_use_frontend_space_edit` filter lets a future release swap the "Edit space" link target from wp-admin to a front-end edit URL with a one-line change.
+* New: A Phase D SEO plan (docs/plans/v1.4.0.md) and a 45-minute browser QA checklist (docs/qa/v1.4.0-browser-checklist.md) are bundled with the plugin so a tester can walk every release surface in isolation. A `bin/seed-qa-pages.php` helper upserts dedicated test pages for each shortcode, block, and widget.
+
 = 1.3.8 - April 2026 =
 
 Space moderation, front-end member management, BuddyPress and FluentCommunity integrations, dark-mode polish, and a long tail of bug fixes.
