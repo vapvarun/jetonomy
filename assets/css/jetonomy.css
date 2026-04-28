@@ -384,6 +384,16 @@
   .jt-icon-option-svg svg { width: 24px; height: 24px; }
   .jt-icon-option-label { font-size: 0.8125rem; color: var(--jt-text-secondary); }
   .jt-icon-option.is-selected .jt-icon-option-label { color: var(--jt-text); font-weight: 600; }
+
+  /* Posts-per-page narrow input + prefix editor (G5 settings). */
+  .jt-input-narrow { max-width: 120px; }
+  .jt-prefixes-row .jt-prefix-toggle { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .jt-prefix-config { margin-block-start: 12px; padding: 12px; border: 1px dashed var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-prefix-list { display: flex; flex-direction: column; gap: 8px; margin-block-end: 12px; }
+  .jt-prefix-row { display: flex; align-items: center; gap: 8px; }
+  .jt-prefix-row .jt-input { flex: 1 1 auto; }
+  .jt-prefix-color { width: 36px; height: 36px; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); cursor: pointer; flex-shrink: 0; }
+  .jt-prefix-remove { padding: 6px 12px; min-width: auto; flex-shrink: 0; font-size: 1.125rem; line-height: 1; }
   @media ( max-width: 640px ) {
     .jt-icon-picker { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
     .jt-cover-preview { aspect-ratio: 16 / 6; }

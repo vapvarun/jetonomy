@@ -68,7 +68,14 @@ $icon_palette = array(
 	'folder'         => __( 'Category', 'jetonomy' ),
 );
 
-$current_icon = (string) ( $space->icon ?? '' );
+$current_icon   = (string) ( $space->icon ?? '' );
+$space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+$categories     = \Jetonomy\Models\Category::list_paginated( '', 'sort_order', 'ASC', 200, 0 );
+$posts_per_page = isset( $space_settings['posts_per_page'] ) && '' !== $space_settings['posts_per_page'] && (int) $space_settings['posts_per_page'] > 0
+	? absint( $space_settings['posts_per_page'] )
+	: '';
+$prefixes       = ! empty( $space_settings['prefixes'] ) ? (array) $space_settings['prefixes'] : array();
+$prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', array( 'crumbs' => $crumbs ) ); ?>
 
@@ -168,6 +175,62 @@ $current_icon = (string) ( $space->icon ?? '' );
 				</select>
 			</div>
 
+			<div class="jt-form-row">
+				<label for="jt-se-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
+				<select id="jt-se-category" name="category_id" class="jt-input">
+					<option value="0"><?php esc_html_e( '— No category —', 'jetonomy' ); ?></option>
+					<?php foreach ( $categories as $cat ) : ?>
+						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( (int) ( $space->category_id ?? 0 ), (int) $cat->id ); ?>>
+							<?php echo esc_html( $cat->name ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<p class="jt-form-help"><?php esc_html_e( 'Group this space under a top-level category on the community home.', 'jetonomy' ); ?></p>
+			</div>
+
+			<div class="jt-form-row">
+				<label for="jt-se-posts-per-page"><?php esc_html_e( 'Posts per page', 'jetonomy' ); ?></label>
+				<input
+					type="number"
+					id="jt-se-posts-per-page"
+					name="posts_per_page"
+					min="1"
+					max="100"
+					class="jt-input jt-input-narrow"
+					value="<?php echo esc_attr( (string) $posts_per_page ); ?>"
+					placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
+				<p class="jt-form-help"><?php esc_html_e( 'How many topics to show per page in this space. Leave blank to use the site default.', 'jetonomy' ); ?></p>
+			</div>
+
+			<div class="jt-form-row jt-prefixes-row">
+				<label class="jt-prefix-toggle">
+					<input type="checkbox" name="enable_prefixes" value="1" <?php checked( $prefixes_on ); ?> data-jt-prefix-toggle>
+					<?php esc_html_e( 'Enable topic prefixes', 'jetonomy' ); ?>
+				</label>
+				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics — e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
+
+				<div class="jt-prefix-config" data-jt-prefix-config <?php echo $prefixes_on ? '' : 'hidden'; ?>>
+					<div class="jt-prefix-list" data-jt-prefix-list>
+						<?php
+						if ( ! empty( $prefixes ) ) :
+							foreach ( $prefixes as $pfx ) :
+								?>
+								<div class="jt-prefix-row">
+									<input type="text" class="jt-input jt-prefix-name" value="<?php echo esc_attr( $pfx['name'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Label', 'jetonomy' ); ?>" maxlength="50">
+									<input type="color" class="jt-prefix-color" value="<?php echo esc_attr( $pfx['color'] ?? '#3B82F6' ); ?>">
+									<button type="button" class="jt-btn jt-btn-ghost jt-prefix-remove" aria-label="<?php esc_attr_e( 'Remove prefix', 'jetonomy' ); ?>">&times;</button>
+								</div>
+								<?php
+							endforeach;
+						endif;
+						?>
+					</div>
+					<button type="button" class="jt-btn jt-btn-ghost" data-jt-prefix-add>
+						<?php esc_html_e( '+ Add prefix', 'jetonomy' ); ?>
+					</button>
+				</div>
+			</div>
+
 			<div class="jt-form-actions">
 				<button type="submit" class="jt-btn jt-btn-fill">
 					<?php esc_html_e( 'Save changes', 'jetonomy' ); ?>
@@ -259,6 +322,59 @@ $current_icon = (string) ( $space->icon ?? '' );
 				setPreview( '' );
 			} );
 
+			// Prefix editor — toggle visibility + add/remove rows.
+			var prefixToggle = form.querySelector( '[data-jt-prefix-toggle]' );
+			var prefixConfig = form.querySelector( '[data-jt-prefix-config]' );
+			var prefixList   = form.querySelector( '[data-jt-prefix-list]' );
+			var prefixAdd    = form.querySelector( '[data-jt-prefix-add]' );
+
+			if ( prefixToggle && prefixConfig ) {
+				prefixToggle.addEventListener( 'change', function () {
+					prefixConfig.hidden = ! prefixToggle.checked;
+				} );
+			}
+
+			function addPrefixRow( name, color ) {
+				var row = document.createElement( 'div' );
+				row.className = 'jt-prefix-row';
+
+				var nameInput = document.createElement( 'input' );
+				nameInput.type = 'text';
+				nameInput.className = 'jt-input jt-prefix-name';
+				nameInput.placeholder = 'Label';
+				nameInput.maxLength = 50;
+				nameInput.value = name || '';
+
+				var colorInput = document.createElement( 'input' );
+				colorInput.type = 'color';
+				colorInput.className = 'jt-prefix-color';
+				colorInput.value = color || '#3B82F6';
+
+				var removeBtn = document.createElement( 'button' );
+				removeBtn.type = 'button';
+				removeBtn.className = 'jt-btn jt-btn-ghost jt-prefix-remove';
+				removeBtn.setAttribute( 'aria-label', 'Remove prefix' );
+				removeBtn.textContent = '×';
+				removeBtn.addEventListener( 'click', function () { row.remove(); } );
+
+				row.appendChild( nameInput );
+				row.appendChild( colorInput );
+				row.appendChild( removeBtn );
+				prefixList.appendChild( row );
+			}
+
+			if ( prefixAdd ) {
+				prefixAdd.addEventListener( 'click', function () { addPrefixRow( '', '#3B82F6' ); } );
+			}
+
+			// Existing rows from server-side render need their remove button wired.
+			form.querySelectorAll( '.jt-prefix-row .jt-prefix-remove' ).forEach( function ( btn ) {
+				btn.addEventListener( 'click', function () {
+					var row = btn.closest( '.jt-prefix-row' );
+					if ( row ) { row.remove(); }
+				} );
+			} );
+
 			form.addEventListener( 'submit', function ( e ) {
 				e.preventDefault();
 				var errBox = form.querySelector( '[data-jt-error]' );
@@ -267,9 +383,36 @@ $current_icon = (string) ( $space->icon ?? '' );
 				savedBox.hidden = true;
 				var btn = form.querySelector( 'button[type="submit"]' );
 				btn.disabled = true;
+
+				// Collect base fields from FormData, then translate the
+				// space-settings fields (posts_per_page, enable_prefixes,
+				// prefixes[]) into a nested `settings` object that PATCH
+				// /spaces/:id stores in the JSON settings column.
 				var fd = new FormData( form );
 				var payload = {};
-				fd.forEach( function ( v, k ) { payload[ k ] = v; } );
+				fd.forEach( function ( v, k ) {
+					if ( k === 'posts_per_page' || k === 'enable_prefixes' ) {
+						return;
+					}
+					payload[ k ] = v;
+				} );
+
+				var settings = {};
+				var ppp = form.querySelector( '[name=posts_per_page]' ).value.trim();
+				settings.posts_per_page = ppp === '' ? '' : parseInt( ppp, 10 );
+				settings.enable_prefixes = prefixToggle && prefixToggle.checked ? 1 : 0;
+
+				var prefixes = [];
+				form.querySelectorAll( '.jt-prefix-row' ).forEach( function ( row ) {
+					var name  = row.querySelector( '.jt-prefix-name' ).value.trim();
+					var color = row.querySelector( '.jt-prefix-color' ).value;
+					if ( name ) {
+						prefixes.push( { name: name, color: color } );
+					}
+				} );
+				settings.prefixes = prefixes;
+				payload.settings = settings;
+
 				fetch( form.dataset.jtRestBase + '/spaces/' + form.dataset.jtSpaceId, {
 					method: 'PATCH',
 					credentials: 'same-origin',
