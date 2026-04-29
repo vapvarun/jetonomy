@@ -738,10 +738,22 @@ class Blocks {
 		wp_enqueue_style( 'jetonomy-blocks' );
 		wp_enqueue_script( 'jetonomy-login-block' );
 
-		$title             = isset( $attributes['title'] ) && '' !== $attributes['title']
+		$title = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
 			: __( 'Join the conversation', 'jetonomy' );
-		$show_register_tab = ! empty( $attributes['showRegister'] ) && (bool) get_option( 'users_can_register' );
+
+		// Default the Sign-up tab to whatever the WP "Anyone can register"
+		// setting says. The auto-rendered sidebar Login card calls this with
+		// an empty $attributes array, so a site owner who turns on
+		// users_can_register and visits /community/ would otherwise see only
+		// the Log-in form — no way to sign up from the community surface.
+		// Block authors can still pin the attribute explicitly to override.
+		$wp_can_register = (bool) get_option( 'users_can_register' );
+		if ( array_key_exists( 'showRegister', $attributes ) ) {
+			$show_register_tab = (bool) $attributes['showRegister'] && $wp_can_register;
+		} else {
+			$show_register_tab = $wp_can_register;
+		}
 		// 1.4.0 A.3 commit 3: both Login and Register tabs use REST. Block
 		// only exposes the REST endpoint base + a wp_rest nonce; the legacy
 		// `data-ajax-url` + per-action nonces are gone.
