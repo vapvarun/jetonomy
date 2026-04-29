@@ -268,6 +268,16 @@ class Admin {
 			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
 			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
+
+			// Front-end space creation role allowlist (G6). Validate each
+			// posted role against the live wp_roles() registry so a stale or
+			// malformed input can't smuggle in an arbitrary string. Empty
+			// array (no checkboxes ticked) keeps the gate admin-only.
+			$raw_roles                              = is_array( $input['frontend_space_creation_roles'] ?? null ) ? $input['frontend_space_creation_roles'] : array();
+			$known_keys                             = function_exists( 'wp_roles' ) ? array_keys( wp_roles()->get_names() ) : array();
+			$clean['frontend_space_creation_roles'] = array_values(
+				array_intersect( array_map( 'sanitize_key', $raw_roles ), $known_keys )
+			);
 		}
 
 		// ── Permissions tab ──
@@ -369,6 +379,16 @@ class Admin {
 			$clean['seo_sitemap']          = ! empty( $input['seo_sitemap'] );
 			$clean['seo_noindex_profiles'] = ! empty( $input['seo_noindex_profiles'] );
 			$clean['seo_noindex_search']   = ! empty( $input['seo_noindex_search'] );
+
+			// Twitter / X site handle (D.6) — emitted as `twitter:site` on
+			// every public route. Strip leading @ if the admin types it; the
+			// emitter prepends it back so the value stored is a plain handle.
+			$raw_twitter                 = trim( (string) ( $input['seo_twitter_handle'] ?? '' ) );
+			$clean['seo_twitter_handle'] = preg_replace( '/[^A-Za-z0-9_]/', '', ltrim( $raw_twitter, '@' ) );
+
+			// Default share image URL (D.6) — falls back into the og:image
+			// chain (route image → admin default → custom logo → site icon).
+			$clean['seo_default_og_image'] = esc_url_raw( $input['seo_default_og_image'] ?? '' );
 
 			// Social embeds — Meta developer app credentials for Instagram/Facebook oEmbed.
 			// App IDs are numeric; secrets are 32-char hex strings. Strip whitespace only.
