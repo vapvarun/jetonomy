@@ -31,7 +31,7 @@
 ## Critical Path & Dependencies
 
 ```
-✅ A1 → ✅ A2 → ⏳ A3 ── security track (gated)
+✅ A1 → ✅ A2 → ✅ A3 ── security track (gated)
                       
 A4, A5 ─── REST additions (parallel, independent)
 A6, A7 ─── admin pages (parallel, independent)

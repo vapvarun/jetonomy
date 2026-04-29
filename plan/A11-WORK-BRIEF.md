@@ -1,56 +1,64 @@
-# A11 — Community Visibility Mode (public / private)
+# A11 — Community Visibility Mode (REST enforcement gap)
 
 **Branch:** `1.4.1`
 **Plugin:** jetonomy (free)
-**Risk:** medium — touches every public-read REST endpoint + frontend templates
-**Estimated time:** 2–3 days
-**Dispatched after:** A3 lands (so A11 can leverage `bin/access-matrix-check.sh` to verify both modes)
-**Reference:** `plan/1.4.1-plan.md` (will be updated to add A11 row)
+**Risk:** medium — adds gates to 25+ public-read REST endpoints
+**Estimated time:** 1–2 days (REVISED DOWN from 2–3 — most of the feature already exists)
+**Dispatched after:** A3 (so the access-matrix runner can verify both modes)
 
-## Problem
+## Status of the existing implementation (audited 2026-04-29)
 
-Most communities run public by default — anyone can browse posts, replies, profiles. **But some operators want to run privately**: corporate forums (employees-only), paid memberships (subscribers-only), pre-launch betas, support communities (customers-only).
+The Community Access toggle **already exists** in production at `Settings → General`:
 
-Today the plugin assumes public-by-default and bakes that assumption into 25+ public-read REST endpoints and every frontend template. Changing it later means touching every one of those sites; we'd rather have the toggle from day 1.
+> **Community Access**
+> ◯ Public community — Anyone can read topics and replies. Visitors must log in to post, reply, or vote.
+> ◉ Private community — Only logged-in members can view any forum content. Everyone else is redirected to the login page.
 
-The user requirement: **"most of the community are public but sometimes they want to run it privately, we should be ready for it from day 1"**.
+**Setting key:** `jetonomy_settings.guest_read` (boolean; default `true` = public)
+**DB migration:** `includes/db/migrations/class-migration_1_2_4.php`
+**Setup wizard default:** set in `includes/admin/ajax/class-setup-handler.php`
 
-## Design
+### What works ✅
+- **Setting UI** — radio toggle in Settings → General (lines 265–288 of `includes/admin/views/settings.php`)
+- **Frontend redirect** — `includes/class-template-loader.php` lines 31–36 redirect anonymous users to the login page when `guest_read` is off, before any template renders
 
-### Setting
+### What's broken 🚨
+- **REST API does NOT honor `guest_read`** — confirmed by `grep -rn "guest_read" includes/api/` returning zero matches.
+- **Consequence**: even in "Private community" mode, an anonymous request to `/wp-json/jetonomy/v1/spaces`, `/posts/{id}`, `/search`, `/categories`, `/users/{id}`, `/leaderboards`, etc. returns content. Site looks private (visitors redirected) but the API is wide open. **This is a real privacy regression for any operator who flipped to private mode.**
+- **Helper class missing** — the `guest_read` check is duplicated inline in template-loader; will be duplicated 25+ more times in REST controllers if we don't centralize it now.
 
-Add to `jetonomy_settings` option:
+## Revised scope
 
-```php
-'community_visibility' => 'public', // 'public' (default) | 'private'
-```
+A11 is no longer "build the toggle from scratch". A11 is:
 
-(Future-extensible to `'hybrid'` — some spaces public, others login-required — but **A11 ships only `public` and `private`**. Hybrid is a 1.5.0 follow-up.)
+1. **Create the helper** — centralize the `guest_read` check
+2. **Apply it to every public-read REST endpoint**
+3. **Refactor template-loader** to use the helper (cosmetic; same behavior)
+4. **Verify both modes** via the A3 access-matrix runner
 
-### Helper
+## Implementation
 
-Create `includes/class-visibility.php`:
+### Step 1 — Create `includes/class-visibility.php`
 
 ```php
 namespace Jetonomy;
 
 final class Visibility {
-    /** Returns true if the current user (or anonymous) can view ANY community content. */
-    public static function can_view_community( ?int $user_id = null ): bool {
-        $mode = self::get_mode();
-        if ( $mode === 'public' ) return true;
-        $user_id = $user_id ?? get_current_user_id();
-        return $user_id > 0;  // private mode: any logged-in user, regardless of role
+    /** True if the caller can view ANY community content. */
+    public static function can_view_community(): bool {
+        if ( self::get_mode() === 'public' ) return true;
+        return is_user_logged_in();
     }
 
-    /** Returns the current mode: 'public' or 'private'. */
+    /** Returns 'public' or 'private'. */
     public static function get_mode(): string {
         $settings = get_option( 'jetonomy_settings', [] );
-        $mode = $settings['community_visibility'] ?? 'public';
-        return in_array( $mode, [ 'public', 'private' ], true ) ? $mode : 'public';
+        // guest_read defaults to true (public) — unset/null/true → public; explicit false → private
+        $public = ! isset( $settings['guest_read'] ) || ! empty( $settings['guest_read'] );
+        return $public ? 'public' : 'private';
     }
 
-    /** REST permission helper for public-read endpoints. Returns true or WP_Error. */
+    /** REST permission_callback helper. Returns true or WP_Error 401. */
     public static function rest_check( \WP_REST_Request $req ) {
         if ( self::can_view_community() ) return true;
         return new \WP_Error(
@@ -62,129 +70,122 @@ final class Visibility {
 }
 ```
 
-### Where to apply the check
+Register the autoloader for `Jetonomy\Visibility` (likely already covered by the namespaced autoloader in `includes/class-autoloader.php` — verify).
 
-**Every REST endpoint currently classified as `auth: "public"` or `"public_with_handler"` in `audit/manifest.json` schema v2** must call `Visibility::rest_check` first. Examples:
+### Step 2 — Wrap public-read REST permission_callbacks
 
-- `GET /spaces` — `Spaces_Controller::list_items`
-- `GET /spaces/{id}` — `Spaces_Controller::get_item`
-- `GET /spaces/{id}/members` — etc.
-- `GET /posts/{id}`, `GET /replies/{id}`, `GET /search`, `GET /leaderboards`
-- `GET /categories`, `GET /tags`, `GET /space-tags`
-- `GET /users/{id}`, `GET /users/by-login/{login}`, `GET /users/{id}/posts`
-- `GET /updates`, `GET /oembed`, `GET /link-preview`
-
-**Pattern** (via permission_callback chain):
+For every endpoint where `audit/manifest.json` shows `auth: "public"` or `auth: "public_with_handler"`, the existing `permission_callback` becomes a chain:
 
 ```php
-'permission_callback' => function ( $req ) {
-    $vis = Visibility::rest_check( $req );
+'permission_callback' => static function ( $req ) {
+    $vis = \Jetonomy\Visibility::rest_check( $req );
     if ( is_wp_error( $vis ) ) return $vis;
-    return existing_callback( $req );  // e.g., __return_true or visibility-filter
+    return existing_callback( $req );  // e.g., __return_true, or the visibility-filter check
 },
 ```
 
-**Routes that stay public regardless of mode** (auth + system endpoints):
+**Routes to gate** (from manifest schema v2):
 
-- `/auth/login`, `/auth/register`, `/auth/lost-password`, `/auth/verify-email`, `/auth/resend-verification`
-- `/oembed` (public oEmbed endpoint per WP convention — but content discovery is gated separately)
-- `/invite/{token}` (private mode + invite token = expected to surface "join" prompt without auth)
+| Controller | Route | Method |
+|---|---|---|
+| `Spaces_Controller` | `/spaces` | GET |
+| `Spaces_Controller` | `/spaces/{id}` | GET |
+| `Spaces_Controller` | `/spaces/{id}/members` | GET |
+| `Spaces_Controller` | `/spaces/{id}/privileged-members` | GET |
+| `Spaces_Controller` | `/spaces/{space_id}/posts` | GET |
+| `Posts_Controller` | `/posts/{id}` | GET |
+| `Posts_Controller` | `/link-preview` | GET |
+| `Posts_Controller` | `/posts/{post_id}/replies` | GET |
+| `Replies_Controller` | `/replies/{id}` | GET |
+| `Categories_Controller` | `/categories`, `/categories/{id}` | GET |
+| `Tags_Controller` | `/tags`, `/tags/{id}`, `/space-tags` | GET |
+| `Users_Controller` | `/users/{id}`, `/users/{id}/posts`, `/users/by-login/{login}` | GET |
+| `Search_Controller` | `/search` | GET |
+| `Leaderboards_Controller` | `/leaderboards` | GET |
+| `Updates_Controller` | `/updates` | GET |
+| `OEmbed_Controller` | `/oembed` | GET |
+| `Spaces_Controller` | `/invite/{token}` | GET |
 
-The auth/* routes should NOT honor the private flag — otherwise users can't ever log in.
+**Routes that stay public regardless of mode:**
 
-### Frontend (template-level)
+- `/auth/login`, `/auth/register`, `/auth/lost-password`, `/auth/verify-email`, `/auth/resend-verification` — locking these breaks login flow itself
+- All admin REST endpoints — already cap-gated, no extra check needed
+- All `/moderation/*` endpoints — already require `jetonomy_moderate`
+- Anything classified `auth: "login_required"` in the manifest — already requires login by definition
 
-Templates check `Visibility::can_view_community()` early in render. If false:
-- Redirect anonymous to `wp_login_url( $request_uri )`
-- Show login form inline if a login block is present on the page
+### Step 3 — Refactor template-loader (cosmetic)
 
-Files (read first, then patch):
-- `templates/views/feed.php` (or whichever is the community home)
-- `templates/views/space.php`
-- `templates/views/single-post.php`
-- `templates/views/user-profile.php`
-- Any template that loads community content
-
-Add at the top:
+Replace lines 31–36 in `includes/class-template-loader.php`:
 
 ```php
+// Before
+$settings            = get_option( 'jetonomy_settings', array() );
+$is_public_community = ! isset( $settings['guest_read'] ) || ! empty( $settings['guest_read'] );
+if ( ! $is_public_community && ! is_user_logged_in() ) {
+
+// After
 if ( ! \Jetonomy\Visibility::can_view_community() ) {
-    \Jetonomy\Template_Loader::redirect_login_or_render_inline_form();
-    return;
-}
 ```
 
-(The redirect helper should be added to the existing template loader class. If a login block is already on the page, render that instead of redirecting.)
+Behavior identical; eliminates the inline duplication.
 
-### Admin UI
+### Step 4 — Verify with the access-matrix runner
 
-In the existing **Settings → General** admin page, add a section:
+A3 ships `bin/access-matrix-check.sh` with a `--mode` flag. After A11 lands:
+
+```bash
+# Public mode — default; everything passes
+wp option update jetonomy_settings '{"guest_read":true}' --format=json
+bin/access-matrix-check.sh --mode=public
+
+# Private mode — anonymous gets 401 for community routes
+wp option update jetonomy_settings '{"guest_read":false}' --format=json
+bin/access-matrix-check.sh --mode=private
+
+# Restore
+wp option update jetonomy_settings '{"guest_read":true}' --format=json
+```
+
+**Expected delta in private mode:**
+- All routes in the table above: anonymous now gets `401` instead of `200`
+- All logged-in cells unchanged
+- All `/auth/*` and admin routes unchanged regardless of mode
+- All `auth: "login_required"` routes unchanged regardless of mode
+
+### Step 5 — PHPStan + WPCS + smoke
+- `composer phpstan` → 0 errors
+- `composer phpcs` → 0 errors
+- `wp jetonomy qa-actions run` → green
+- `php -l` on every modified file
+
+## Commits (bisectable)
 
 ```
-Community Visibility
-  ○ Public (default)
-       Anyone — including unregistered visitors — can browse content.
-  ○ Private
-       Only logged-in users can see anything. Anonymous visitors are
-       redirected to log in.
-  
-  Note: switching to Private does NOT lock down /auth/* (login,
-  register, password reset) or admin pages.
+1. feat(visibility): add Jetonomy\Visibility helper centralizing guest_read check
+2. refactor(template-loader): use Visibility::can_view_community (no behavior change)
+3. feat(visibility): apply Visibility::rest_check to public-read REST endpoints (A11)
 ```
-
-Saves to `jetonomy_settings.community_visibility`.
-
-## Safety contract
-
-After A11, the access matrix has a **second mode** to verify. `plan/REST_ACCESS_MATRIX.md` has been updated with a "Private mode delta" section showing what changes when the toggle flips:
-
-- Every 🔓 anon ✅ in public mode → 🔒 401 in private mode (for community routes)
-- Every 👤+ logged-in cell stays the same
-- All `/auth/*` and admin endpoints unchanged regardless of mode
-
-`bin/access-matrix-check.sh` (built in A3) **must accept a `--mode=public|private` flag** and run the same matrix against the corresponding expected codes. A11 extends the runner to support both modes (or A3's runner already does it; check before extending).
-
-## Implementation steps
-
-1. Read existing settings page UI: `includes/admin/views/settings.php` — find the General tab pattern
-2. Read existing template loader: `includes/class-template-loader.php`
-3. Read sample REST controller to see permission_callback wiring pattern: `includes/api/class-spaces-controller.php`
-4. Create `includes/class-visibility.php` with the helper
-5. Wire `Visibility::rest_check` into every public-read REST endpoint listed above (one method per endpoint or a shared callback wrapper — your call)
-6. Add the admin UI section in settings.php; register the new setting key
-7. Patch every relevant frontend template
-8. Run access-matrix runner in PUBLIC mode → assert all rows pass
-9. Flip setting to private, re-run runner in PRIVATE mode → assert public-read rows now return 401 for anon, 200 for logged-in
-10. Flip back to public, re-run → must pass identically to step 8 (no permanent state change)
-11. PHPStan level 5, WPCS, php -l
-12. Run `wp jetonomy qa-actions run` smoke
-13. Commit per-step with bisectable history:
-    - "feat(visibility): add Visibility helper and mode setting (A11.1)"
-    - "feat(visibility): apply Visibility::rest_check to public-read REST endpoints (A11.2)"
-    - "feat(visibility): admin UI for community visibility mode (A11.3)"
-    - "feat(visibility): frontend redirect when private mode active (A11.4)"
-14. Update `plan/1.4.1-baselines/CHECKLIST.md` to mark A11 done
-15. Push to origin/1.4.1
 
 ## Done criteria
 
-- [ ] `Jetonomy\Visibility` class created with `can_view_community()`, `get_mode()`, `rest_check()`
-- [ ] Setting `jetonomy_settings.community_visibility` registered, default `'public'`
-- [ ] Admin UI in Settings → General with radio toggle
-- [ ] All `auth: "public"` / `"public_with_handler"` REST endpoints call `Visibility::rest_check` first
-- [ ] Frontend templates redirect anonymous users when mode is `private`
-- [ ] Access matrix runner passes in `--mode=public` mode
-- [ ] Access matrix runner passes in `--mode=private` mode (anonymous gets 401 for community routes; logged-in users get 200)
-- [ ] Auth endpoints (`/auth/*`) and admin endpoints behave identically regardless of mode
-- [ ] No new entries in `wp-content/debug.log`
-- [ ] Smoke green in both Free-only and Free+Pro modes
-- [ ] Manifest auto-refresh next time will pick up the new auth label `public_unless_private` for community routes — this is a follow-up for the next /wp-plugin-onboard --refresh; not part of A11.
+- [ ] `Jetonomy\Visibility` class exists with `can_view_community()`, `get_mode()`, `rest_check()`
+- [ ] All public-read REST endpoints wrap their permission_callback with `Visibility::rest_check`
+- [ ] template-loader uses the helper (no behavior change)
+- [ ] Access-matrix runner passes in `--mode=public`
+- [ ] Access-matrix runner passes in `--mode=private` (anonymous community routes → 401)
+- [ ] `/auth/*` and admin routes behave identically regardless of mode
+- [ ] PHPStan, WPCS, smoke all green
+- [ ] `plan/1.4.1-baselines/CHECKLIST.md` updated to mark A11 ✅ DONE
+- [ ] Push to origin/1.4.1
 
 ## Forbidden
 
+- ❌ Don't change the setting key (`guest_read` is the existing field; renaming breaks all existing private-mode sites on upgrade)
+- ❌ Don't change the default behavior in public mode — sites without changes see no difference
+- ❌ Don't add a new admin UI — the existing radio toggle is the UI; just wire REST to honor it
 - ❌ Don't lock down `/auth/*` — that locks users out forever
 - ❌ Don't lock down admin pages — they have their own cap gating
-- ❌ Don't introduce a new option key outside `jetonomy_settings`
-- ❌ Don't change behavior in the default (`'public'`) mode — sites without the toggle see zero difference
-- ❌ Don't break Pro extensions that consume community routes (Pro REST routes follow the same `Visibility::rest_check` pattern via the parent controllers — no Pro changes needed for A11)
-- ❌ Don't ship hybrid mode (per-space visibility); that's 1.5.0
+
+## Manifest update (out-of-band, after A11 lands)
+
+Once REST endpoints honor `guest_read`, the next `/wp-plugin-onboard --refresh` should bump the schema's `auth` field for affected routes from `public` to a new value like `public_unless_private` or `community_visible`. This is a manifest-schema improvement, not part of A11. Capture as a follow-up.
