@@ -9,8 +9,8 @@
 | A1 | REST audit verdict pass | ✅ DONE | 2026-04-29 | `audit/REST_AUDIT.md` with 18 routes, all verdicts classified |
 | A2 | Manifest schema v2 (auth/cap/ownership) | ✅ DONE | 2026-04-29 | All 64 endpoints updated; discrepancies documented in A2-COMPLETION.md |
 | A3 | REST security fixes + access-matrix runner | ✅ DONE | 2026-04-29 | All 4 tasks PASS; runner at `bin/access-matrix-check.sh` (72/72), baseline saved at `plan/1.4.1-baselines/A3/access-matrix-baseline.log` |
-| A4 | POST /moderation/bulk REST endpoint | ⏳ PENDING | — | Additive feature; low risk |
-| A5 | GET /posts/{id}/flags | ⏳ PENDING | — | Mod-only endpoint |
+| A4 | POST /moderation/bulk REST endpoint | ✅ DONE | 2026-04-29 (`698014e` → `fb1e241`) | REST parity for `wp_ajax_jetonomy_bulk_content_action`; AJAX handler retained. Per-item helpers (`approve_item`/`spam_item`/`trash_item`) extracted in `Moderation_Controller` so single + bulk paths fire the same `jetonomy_content_moderated` action and reputation penalty. Per-item failures reported in row's `status` field rather than aborting the batch. Runner extended (78/78 PASS in both `--mode=public` and `--mode=private`); `--diff-baseline` clean; qa-actions 210/210 green. |
+| A5 | GET /posts/{id}/flags | ✅ DONE | 2026-04-29 (`698014e` → `fb1e241`) | New `Flag::find_for_post()` model method backs the mod-only endpoint; row shape matches `Flag::list_pending()` so frontend can swap data sources without remapping fields. Returns `[]` (200) — never 404 — when post has no flags. Runner row added; `COMMUNITY_NON_PUBLIC_SUFFIX_RE` exclusion ensures the route stays cap-gated (anon=403) in private mode rather than getting the visibility 401 flip. |
 | A6 | Activity Log admin page | ⏳ PENDING | — | New admin page |
 | A7 | Revisions admin page | ⏳ PENDING | — | Per-post diff browser |
 | A8 | Email Templates admin editor | ⏳ PENDING | — | UI for `jetonomy_email_templates` option |
