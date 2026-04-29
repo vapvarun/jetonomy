@@ -264,6 +264,49 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.4.1 - Unreleased =
+
+Run public or private communities. Browse drafts and bookmarks. Audit who did what. See every edit. Plus tighter sign-up follow-through and a friendlier email templates editor.
+
+**Public or private community**
+
+* New Access Control mode in Settings — choose **Public** (anyone can read) or **Private** (every page requires sign-in). The mode applies to the whole front-end and to the REST API, so private really means private.
+* The sign-in page itself stays reachable in private mode so guests can register or recover their account.
+* Public mode is the default and is unchanged from 1.4.0 — existing communities keep working without any setting changes.
+
+**For people who run a space**
+
+* New "Activity Log" admin page browses every audit event (post created, reply approved, member banned, role changed, …) with filters by user, type, and date range. Read-only — no edits.
+* New "Revisions" admin page browses every saved post / reply revision with a side-by-side diff between any two revisions. Read-only.
+* Two new REST endpoints for moderation tooling: `POST /jetonomy/v1/moderation/bulk` (approve / spam / trash many posts at once) and `GET /jetonomy/v1/posts/{id}/flags` (the flags raised against a post).
+
+**Members who haven't confirmed their email**
+
+* New hourly nudge: members who registered but haven't clicked the verification link receive a single follow-up email after 24 hours (configurable in Settings). One reminder per member, never duplicates.
+
+**Email templates editor**
+
+* New "Reset to default" button on every notification template — one click restores the shipped subject and body without retyping.
+* The "Verification reminder" template is now editable from the same screen.
+* Defaults now have a single source of truth, so reset always restores the exact copy the plugin ships with.
+
+**For members**
+
+* New "Drafts" tab at `/community/drafts/` lists every post you saved as a draft.
+* New "Bookmarks" tab at `/community/bookmarks/` lists every post you bookmarked.
+* Both tabs are personal pages — they require sign-in and are excluded from search engines.
+
+**Under the hood**
+
+* Per-role REST access matrix is now a verifiable contract — `bin/access-matrix-check.sh` runs 78 checks across 6 roles in either public or private mode, gates the build.
+* Manifest schema bumped to v2: every REST endpoint declares `auth`, `capability`, and `ownership_check` in `audit/manifest.json`.
+
+**For developers**
+
+* New helper `Jetonomy\Visibility` centralizes the public-or-private check (`can_view_community()`, `get_mode()`, `rest_check()`).
+* New filters / hooks reused — no public hook removals.
+* New schema migration: `jt_user_profiles` gains a `verification_reminder_sent_at` column. Runs automatically; rolls back cleanly.
+
 = 1.4.0 - April 2026 =
 
 Run a community without leaving the front end. Show up in search. Cleaner, accessible interface throughout.
