@@ -223,6 +223,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<p class="description" style="margin-block-start:12px;"><?php esc_html_e( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create spaces from /community/new-space/. Leave every box unticked to keep front-end space creation admin-only.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Email verification', 'jetonomy' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="jetonomy_settings[require_email_verification]" value="1" <?php checked( ! empty( $settings['require_email_verification'] ) ); ?>>
+								<?php esc_html_e( 'Require new members to confirm their email before they can sign in', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'When on, the Login block sends a confirmation email after sign-up. Members can\'t log in until they click the link. Existing members are not affected.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
 				</table>
 			</div>
 

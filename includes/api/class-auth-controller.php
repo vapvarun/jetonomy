@@ -105,6 +105,56 @@ class Auth_Controller extends Base_Controller {
 				],
 			]
 		);
+
+		// Verify email — visitor clicks the link in the welcome email
+		// and lands on this GET endpoint. We consume the token, mark the
+		// account verified, drop the auth cookie, and redirect into the
+		// community surface. GET (not POST) so the email link works as a
+		// plain href without JS.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/verify-email',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'verify_email' ],
+					'permission_callback' => '__return_true',
+					'args'                => [
+						'user_id' => [
+							'required' => true,
+							'type'     => 'integer',
+						],
+						'token'   => [
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+					],
+				],
+			]
+		);
+
+		// Resend verification — visitor lost the email, asks for another.
+		// Always returns a generic success so the response can't be used
+		// to probe which emails have pending accounts.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/resend-verification',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'resend_verification' ],
+					'permission_callback' => '__return_true',
+					'args'                => [
+						'user_login' => [
+							'required'          => true,
+							'type'              => 'string',
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -149,6 +199,18 @@ class Auth_Controller extends Base_Controller {
 		);
 
 		if ( is_wp_error( $user ) ) {
+			// Preserve Jetonomy-specific authenticate-filter errors so the
+			// visitor sees the actual reason (banned account, pending email
+			// verification). All other WP errors collapse to a generic
+			// "incorrect credentials" message to prevent username probing.
+			$err_code = $user->get_error_code();
+			if ( in_array( $err_code, array( 'jetonomy_user_banned', 'jetonomy_pending_verification' ), true ) ) {
+				return new WP_Error(
+					$err_code,
+					$user->get_error_message(),
+					[ 'status' => 403 ]
+				);
+			}
 			return new WP_Error(
 				'jetonomy_invalid_credentials',
 				__( 'Incorrect username or password.', 'jetonomy' ),
@@ -256,6 +318,43 @@ class Auth_Controller extends Base_Controller {
 			);
 		}
 
+		$jt_settings = get_option( 'jetonomy_settings', array() );
+		$require_ev  = ! empty( $jt_settings['require_email_verification'] );
+
+		if ( $require_ev ) {
+			// Issue a one-time verification token. Stored as a hash so a
+			// readable copy of usermeta can't be replayed against the verify
+			// endpoint. Plain token only travels in the email link.
+			$token      = wp_generate_password( 40, false );
+			$token_hash = wp_hash_password( $token );
+			$expires_at = time() + DAY_IN_SECONDS;
+
+			update_user_meta( (int) $user_id, '_jetonomy_pending_verification', 1 );
+			update_user_meta( (int) $user_id, '_jetonomy_verification_token_hash', $token_hash );
+			update_user_meta( (int) $user_id, '_jetonomy_verification_token_expires', $expires_at );
+			update_user_meta( (int) $user_id, '_jetonomy_verification_sent_at', time() );
+
+			\Jetonomy\Notifications\Notifier::send_verification_email( (int) $user_id, $token );
+
+			// Intentionally do NOT fire `jetonomy_user_registered` here — that
+			// hook ships the branded welcome email which would arrive before
+			// the visitor confirms their email and read as if the account is
+			// already live. The verify-email handler fires the action once
+			// the account is actually usable.
+			do_action( 'jetonomy_user_pending_verification', (int) $user_id );
+
+			$masked = $this->mask_email( $email );
+			return rest_ensure_response(
+				[
+					'success'               => true,
+					'requires_verification' => true,
+					/* translators: %s: masked email address (e.g. j***@example.com) */
+					'message'               => sprintf( __( 'Account created. Check %s for a confirmation link to finish signing up.', 'jetonomy' ), $masked ),
+				]
+			);
+		}
+
+		// Default flow — no verification required, sign the user in immediately.
 		// Notifier owns branded welcome + admin emails via this hook; we
 		// intentionally do NOT call wp_send_new_user_notifications() to avoid
 		// duplicate sends (parity with the legacy handler comment).
@@ -270,6 +369,150 @@ class Auth_Controller extends Base_Controller {
 				'message' => __( 'Account created. Reloading…', 'jetonomy' ),
 			]
 		);
+	}
+
+	/**
+	 * GET /jetonomy/v1/auth/verify-email — consume a verification token.
+	 *
+	 * Visitor lands here from the email link. On success we mark the account
+	 * verified, set the auth cookie, and 302-redirect to the community home
+	 * so the visitor sees a fully-rendered forum and not a JSON blob.
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function verify_email( WP_REST_Request $request ) {
+		$user_id = absint( $request->get_param( 'user_id' ) );
+		$token   = (string) $request->get_param( 'token' );
+
+		if ( ! $user_id || '' === $token ) {
+			return $this->verification_error( __( 'This confirmation link is missing details. Try the link from your email again.', 'jetonomy' ) );
+		}
+
+		$pending = (bool) get_user_meta( $user_id, '_jetonomy_pending_verification', true );
+		if ( ! $pending ) {
+			return $this->verification_error( __( 'This account is already confirmed. You can log in directly.', 'jetonomy' ) );
+		}
+
+		$stored_hash = (string) get_user_meta( $user_id, '_jetonomy_verification_token_hash', true );
+		$expires_at  = (int) get_user_meta( $user_id, '_jetonomy_verification_token_expires', true );
+
+		if ( '' === $stored_hash || ! wp_check_password( $token, $stored_hash ) ) {
+			return $this->verification_error( __( 'This confirmation link is invalid. Request a new one from the sign-in page.', 'jetonomy' ) );
+		}
+		if ( $expires_at > 0 && time() > $expires_at ) {
+			return $this->verification_error( __( 'This confirmation link has expired. Request a new one from the sign-in page.', 'jetonomy' ) );
+		}
+
+		// Token good — flip the user to verified.
+		delete_user_meta( $user_id, '_jetonomy_pending_verification' );
+		delete_user_meta( $user_id, '_jetonomy_verification_token_hash' );
+		delete_user_meta( $user_id, '_jetonomy_verification_token_expires' );
+		delete_user_meta( $user_id, '_jetonomy_verification_sent_at' );
+		update_user_meta( $user_id, '_jetonomy_verified_at', time() );
+
+		do_action( 'jetonomy_email_verified', $user_id );
+
+		// Now that the account is actually usable, fire the standard
+		// registered hook so Notifier sends the branded welcome email.
+		do_action( 'jetonomy_user_registered', $user_id );
+
+		wp_set_current_user( $user_id );
+		wp_set_auth_cookie( $user_id, false, is_ssl() );
+
+		$redirect = \Jetonomy\base_url() . '/?verified=1';
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/**
+	 * POST /jetonomy/v1/auth/resend-verification — issue a fresh token email.
+	 *
+	 * Always returns the same generic success regardless of whether the
+	 * account exists or is in pending state — same account-enumeration
+	 * policy as lost-password.
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function resend_verification( WP_REST_Request $request ) {
+		if ( ! self::check_rate_limit( 'resend_verification', 3, 5 * MINUTE_IN_SECONDS ) ) {
+			return new WP_Error(
+				'jetonomy_rate_limited',
+				__( 'Too many attempts. Please wait a few minutes and try again.', 'jetonomy' ),
+				[ 'status' => 429 ]
+			);
+		}
+
+		$generic = rest_ensure_response(
+			[
+				'success' => true,
+				'message' => __( 'If an account is waiting on confirmation for that email, a new link is on its way.', 'jetonomy' ),
+			]
+		);
+
+		$login = (string) $request->get_param( 'user_login' );
+		if ( '' === $login ) {
+			return $generic;
+		}
+
+		$user = get_user_by( 'login', $login );
+		if ( ! $user && is_email( $login ) ) {
+			$user = get_user_by( 'email', $login );
+		}
+		if ( ! $user ) {
+			return $generic;
+		}
+
+		$pending = (bool) get_user_meta( $user->ID, '_jetonomy_pending_verification', true );
+		if ( ! $pending ) {
+			return $generic;
+		}
+
+		// Local cooldown: don't send more than one email per 60 seconds for
+		// the same account, even within the IP rate-limit window.
+		$last_sent = (int) get_user_meta( $user->ID, '_jetonomy_verification_sent_at', true );
+		if ( $last_sent > 0 && ( time() - $last_sent ) < MINUTE_IN_SECONDS ) {
+			return $generic;
+		}
+
+		$token      = wp_generate_password( 40, false );
+		$token_hash = wp_hash_password( $token );
+		$expires_at = time() + DAY_IN_SECONDS;
+
+		update_user_meta( $user->ID, '_jetonomy_verification_token_hash', $token_hash );
+		update_user_meta( $user->ID, '_jetonomy_verification_token_expires', $expires_at );
+		update_user_meta( $user->ID, '_jetonomy_verification_sent_at', time() );
+
+		\Jetonomy\Notifications\Notifier::send_verification_email( (int) $user->ID, $token );
+
+		return $generic;
+	}
+
+	private function verification_error( string $message ): WP_Error {
+		return new WP_Error(
+			'jetonomy_verification_failed',
+			$message,
+			[ 'status' => 400 ]
+		);
+	}
+
+	/**
+	 * Build a human-readable masked version of an email — local part keeps
+	 * the first letter, the rest becomes "***@" and the domain is shown.
+	 *
+	 * @param string $email
+	 * @return string
+	 */
+	private function mask_email( string $email ): string {
+		$at = strrpos( $email, '@' );
+		if ( false === $at || $at < 1 ) {
+			return $email;
+		}
+		$local  = substr( $email, 0, $at );
+		$domain = substr( $email, $at );
+		$first  = substr( $local, 0, 1 );
+		return $first . '***' . $domain;
 	}
 
 	/**

@@ -24,6 +24,100 @@ class Notifier {
 		$this->register_hooks();
 	}
 
+	/**
+	 * Send the email-confirmation message to a user who just signed up
+	 * while `require_email_verification` was on.
+	 *
+	 * Static because callers (Auth_Controller) don't need an instance —
+	 * the welcome flow is stateless. Subject + body are wrapped in the
+	 * standard email template so customer branding (logo, footer text,
+	 * accent color) all carry over from Jetonomy → Settings → Email.
+	 *
+	 * @param int    $user_id Newly-created user.
+	 * @param string $token   Plain (un-hashed) verification token; goes into the link.
+	 */
+	public static function send_verification_email( int $user_id, string $token ): void {
+		$user = get_userdata( $user_id );
+		if ( ! $user || empty( $user->user_email ) ) {
+			return;
+		}
+
+		$verify_url = add_query_arg(
+			array(
+				'user_id' => $user_id,
+				'token'   => rawurlencode( $token ),
+			),
+			rest_url( 'jetonomy/v1/auth/verify-email' )
+		);
+
+		$site_name    = wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES );
+		$display_name = $user->display_name ? $user->display_name : $user->user_login;
+
+		/* translators: %s: site name */
+		$subject = sprintf( __( 'Confirm your email to finish signing up at %s', 'jetonomy' ), $site_name );
+
+		$plain = sprintf(
+			/* translators: 1: display name, 2: site name */
+			__( "Hi %1\$s,\n\nThanks for joining %2\$s. Click the link below to confirm your email and finish creating your account:\n\n%3\$s\n\nThis link expires in 24 hours.\n\nIf you didn't sign up, you can ignore this email.\n\n— The %2\$s team", 'jetonomy' ),
+			$display_name,
+			$site_name,
+			$verify_url
+		);
+
+		ob_start();
+		?>
+		<p style="margin:0 0 16px;">
+			<?php
+			echo esc_html(
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'jetonomy' ),
+					$display_name
+				)
+			);
+			?>
+		</p>
+		<p style="margin:0 0 16px;">
+			<?php
+			echo esc_html(
+				sprintf(
+					/* translators: %s: site name */
+					__( 'Thanks for joining %s. Confirm your email to finish creating your account.', 'jetonomy' ),
+					$site_name
+				)
+			);
+			?>
+		</p>
+		<p style="margin:24px 0;">
+			<a href="<?php echo esc_url( $verify_url ); ?>" style="display:inline-block;background:#3B82F6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">
+				<?php esc_html_e( 'Confirm email', 'jetonomy' ); ?>
+			</a>
+		</p>
+		<p style="margin:0 0 16px;color:#6B7280;font-size:14px;">
+			<?php esc_html_e( 'This link expires in 24 hours.', 'jetonomy' ); ?>
+		</p>
+		<p style="margin:0 0 16px;color:#6B7280;font-size:14px;">
+			<?php esc_html_e( "If you didn't sign up, you can ignore this email.", 'jetonomy' ); ?>
+		</p>
+		<?php
+		$html = (string) ob_get_clean();
+
+		// Wrap through the same template helper used by other Jetonomy emails
+		// so logo / footer / colors stay consistent. Fall back to wp_mail with
+		// our own minimal HTML if the helper isn't reachable.
+		$adapter = function_exists( 'jetonomy_get_email_adapter' ) ? jetonomy_get_email_adapter() : null;
+		if ( $adapter && method_exists( $adapter, 'send' ) ) {
+			$adapter->send( $user->user_email, $subject, $html, $plain, array() );
+			return;
+		}
+		wp_mail(
+			$user->user_email,
+			$subject,
+			$html,
+			array( 'Content-Type: text/html; charset=UTF-8' )
+		);
+	}
+
 	private function register_hooks(): void {
 		// Post created — notify space subscribers
 		add_action( 'jetonomy_after_create_post', [ $this, 'on_post_created' ], 10, 2 );

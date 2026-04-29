@@ -278,6 +278,14 @@ class Admin {
 			$clean['frontend_space_creation_roles'] = array_values(
 				array_intersect( array_map( 'sanitize_key', $raw_roles ), $known_keys )
 			);
+
+			// Email verification gate for new signups. When ON, the Login
+			// block's register flow holds the new account in pending state
+			// until the visitor clicks the confirmation link in the email.
+			// The reject_pending_verification_login authenticate filter only
+			// gates accounts that ALREADY have the pending meta — flipping
+			// this setting on does NOT retroactively lock existing users.
+			$clean['require_email_verification'] = ! empty( $input['require_email_verification'] );
 		}
 
 		// ── Permissions tab ──

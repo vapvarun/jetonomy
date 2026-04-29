@@ -41,6 +41,12 @@ final class Jetonomy {
 		// blocked their writes but not the login itself, so they kept showing
 		// up online and reading restricted content via stale sessions.
 		add_filter( 'authenticate', array( $this, 'reject_banned_login' ), 30, 1 );
+
+		// 1.4.0: block login for accounts whose email isn't confirmed yet.
+		// Surfaces a friendly message + a hint to use the resend link from
+		// the Login block, so the visitor doesn't think their password was
+		// wrong.
+		add_filter( 'authenticate', array( $this, 'reject_pending_verification_login' ), 31, 1 );
 	}
 
 	/**
@@ -62,6 +68,31 @@ final class Jetonomy {
 			);
 		}
 		return $user;
+	}
+
+	/**
+	 * Reject login when the account is still pending email verification.
+	 *
+	 * Runs at priority 31 (after the banned-user filter at 30) so the
+	 * messages don't collide. Only fires when the admin has turned on
+	 * `require_email_verification` AND the user has the pending-verification
+	 * meta — accounts created before the setting was switched on are NOT
+	 * gated retroactively.
+	 *
+	 * @param mixed $user WP_User on success, WP_Error on auth failure, null if no auth attempted yet.
+	 */
+	public function reject_pending_verification_login( $user ) {
+		if ( ! $user instanceof \WP_User ) {
+			return $user;
+		}
+		$pending = (bool) get_user_meta( (int) $user->ID, '_jetonomy_pending_verification', true );
+		if ( ! $pending ) {
+			return $user;
+		}
+		return new \WP_Error(
+			'jetonomy_pending_verification',
+			__( 'Confirm your email to finish signing up. Check your inbox for the link, or use "Resend confirmation" on the sign-in form.', 'jetonomy' )
+		);
 	}
 
 	/**
