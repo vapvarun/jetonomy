@@ -7,8 +7,13 @@
 **Dependencies:** A1 (✅ done), A2 (✅ done)  
 **Related Files:**
 - `plan/REST_AUDIT.md` — audit verdicts for all 18 routes (read for context)
+- `plan/REST_ACCESS_MATRIX.md` — **per-role × per-route expected response codes (the safety contract)**
 - `plan/1.4.1-safety-checks.md` lines 66–101 — A3 safety checks
 - `audit/manifest.json` — updated with schema v2 (reference for routes)
+
+**A3 NEW DELIVERABLE (added 2026-04-29):** Build `bin/access-matrix-check.sh` — automated runner that walks every row of `plan/REST_ACCESS_MATRIX.md`, makes the HTTP call as each role (anon, subscriber, author, editor, mod, admin), and asserts the response code. Output is a pass/fail report. This is the **master safety net for every code change in 1.4.1** — must run before/after each commit.
+
+Why this matters: A1's verdict was "code is safe" but it was code-reading. The runner verifies actual HTTP behavior against the documented matrix — catches regressions a code review can miss. Every other package (A4, A6, B1, etc.) will run this script before pushing.
 
 ---
 
