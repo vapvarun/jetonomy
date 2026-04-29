@@ -210,17 +210,18 @@
 			: '/wp-json/jetonomy/v1';
 		var nonce = block.dataset.restNonce || '';
 
+		var body = {
+			username: ( form.querySelector( '[name="username"]' ) || {} ).value || '',
+			email:    ( form.querySelector( '[name="email"]' )    || {} ).value || '',
+			password: ( form.querySelector( '[name="password"]' ) || {} ).value || '',
+			// Anti-spam — honeypot + page-loaded timestamp. Both come
+			// straight off the server-rendered form fields so we can't
+			// accidentally bypass the gate by forgetting to forward them.
+			website:   ( form.querySelector( '[name="website"]' )   || {} ).value || '',
+			loaded_at: parseInt( ( form.querySelector( '[name="loaded_at"]' ) || {} ).value || '0', 10 ) || 0,
+		};
+
 		getCaptchaToken().then( function ( captchaToken ) {
-			var body = {
-				username: ( form.querySelector( '[name="username"]' ) || {} ).value || '',
-				email:    ( form.querySelector( '[name="email"]' )    || {} ).value || '',
-				password: ( form.querySelector( '[name="password"]' ) || {} ).value || '',
-				// Anti-spam — honeypot + page-loaded timestamp. Both come
-				// straight off the server-rendered form fields so we can't
-				// accidentally bypass the gate by forgetting to forward them.
-				website:   ( form.querySelector( '[name="website"]' )   || {} ).value || '',
-				loaded_at: parseInt( ( form.querySelector( '[name="loaded_at"]' ) || {} ).value || '0', 10 ) || 0,
-			};
 			if ( captchaToken ) {
 				body.captcha_token = captchaToken;
 			}
