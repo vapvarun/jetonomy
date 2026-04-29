@@ -104,6 +104,30 @@ class Flag extends Model {
 	}
 
 	/**
+	 * List all flags filed against a single post (any status), newest first.
+	 *
+	 * Used by `GET /posts/{id}/flags` (1.4.1 A5) so a moderator viewing a
+	 * specific post can see its flags without filtering the global queue.
+	 * Row shape matches `list_pending()` so frontend can swap data sources
+	 * without remapping fields.
+	 *
+	 * @param int $post_id Post row ID.
+	 * @return object[]
+	 */
+	public static function find_for_post( int $post_id ): array {
+		if ( $post_id <= 0 ) {
+			return [];
+		}
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . " WHERE object_type = 'post' AND object_id = %d ORDER BY created_at DESC",
+				$post_id
+			)
+		) ?: [];
+	}
+
+	/**
 	 * Count how many flags exist for a given object (regardless of status).
 	 *
 	 * @param string $object_type
