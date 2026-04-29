@@ -24,7 +24,7 @@
 |-------|---------|--------|----------|-------|
 | B1 | White Label extension wiring | ✅ DONE | 2026-04-29 (`jetonomy-pro` 6c596ac) | 3 of 5 filters now actively consumed in Pro (`email_logo_url`, `email_accent_color`, `sidebar_auth_card`); the remaining 2 (`header_logo`, `footer_text`) are subscribed in Pro but not yet fired in free — see KG-1 in `jetonomy-pro/plan/1.4.1-baselines/B1-VERIFICATION.md` |
 | B2 | Analytics dual-path aggregation | ⏳ PENDING | — | Validation alongside direct-query |
-| B3 | Email Digest extension wiring | ⏳ PENDING | — | Event subscriptions |
+| B3 | Email Digest extension wiring | ✅ DONE | 2026-04-29 (`jetonomy-pro` 0732ec7) | Pro `jetonomy_pro_badge_earned` + `jetonomy_pro_poll_voted` consumed in `jetonomy-pro/email-digest`; per-user buffer (user meta `jetonomy_pro_digest_event_buffer`, capped 100 entries / 30-day TTL); two new render blocks (🏆 + 🗳️); buffer cleared after successful send only; commits B3.1=`8895538`, B3.2=`3c0d5ab`, B3.3=`0732ec7`; qa-actions 210/210 PASS; preview duration 3ms vs 7ms PRE (well under +2s budget); empty-buffer digest body identical to PRE baseline (whitespace-only diff); opted-out users (`frequency=none`) get no buffer growth |
 
 ---
 
