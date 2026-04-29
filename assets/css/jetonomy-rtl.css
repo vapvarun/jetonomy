@@ -114,33 +114,14 @@
     --jt-warn-border: color-mix(in srgb, var(--jt-warn) 50%, white);
   }
 
-  /* Dark mode — class-driven by the theme (.jt-dark) is the primary path,
-     but we ALSO honor the browser's `prefers-color-scheme: dark` when no
-     class is set. Reason: browser-only emulation (devtools, Playwright,
-     OS-dark on a theme that does not opt in) used to land Jetonomy panels
-     on a black page background with white-card inputs (visible bug:
-     placeholder text invisible on Create Space form, icon picker swatches
-     reading as black squares). Honoring the OS pref means the dark tokens
-     swap in even when the host theme has not flipped its own class. */
-  @media ( prefers-color-scheme: dark ) {
-    .jt-app:not(.jt-light) {
-      --jt-text: #e5e5e5;
-      --jt-text-secondary: rgba(229, 229, 229, 0.65);
-      --jt-text-tertiary: rgba(229, 229, 229, 0.4);
-      --jt-bg: #171717;
-      --jt-bg-subtle: #1e1e1e;
-      --jt-bg-muted: #262626;
-      --jt-bg-hover: #1f1f1f;
-      --jt-border: rgba(255, 255, 255, 0.1);
-      --jt-border-strong: rgba(255, 255, 255, 0.18);
-      --jt-success-light: #052e16;
-      --jt-warn-light: #422006;
-      --jt-danger-light: #450a0a;
-      --jt-accent-light: color-mix(in srgb, var(--jt-accent) 12%, #171717);
-      --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 18%, #171717);
-      --jt-warn-dark: color-mix(in srgb, var(--jt-warn) 35%, white);
-    }
-  }
+  /* Dark mode — class-driven by the theme ONLY. The host theme decides
+     whether its visitors see dark or light, and Jetonomy mirrors that
+     decision via the .jt-dark class. We deliberately do NOT honor the
+     browser's `prefers-color-scheme: dark` — a forum embedded in a
+     light-themed site should stay light even on an OS-dark visitor;
+     anything else creates a jarring contrast against the surrounding
+     theme chrome and gets reported as a bug. The host theme's dark
+     toggle is the single source of truth. */
   .jt-dark .jt-app, .jt-app.jt-dark {
     --jt-text: #e5e5e5;
     --jt-text-secondary: rgba(229, 229, 229, 0.65);
