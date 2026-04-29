@@ -157,21 +157,70 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								? array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] )
 								: array();
 							$wp_roles_list  = wp_roles()->get_names();
+
+							// Group roles by source so a site with 15+ roles
+							// (LMS + Career Board + e-commerce stack) doesn't
+							// drop a 25-row vertical wall on the admin. Keys
+							// classified by known prefixes; anything else
+							// lands in "Other" (always last).
+							$jt_role_groups = array(
+								'wordpress'       => array(
+									'label' => __( 'WordPress', 'jetonomy' ),
+									'keys'  => array( 'editor', 'author', 'contributor', 'subscriber' ),
+								),
+								'community'       => array(
+									'label' => __( 'Community & Forums', 'jetonomy' ),
+									'keys'  => array(),
+								),
+								'lms_memberships' => array(
+									'label' => __( 'LMS & Memberships', 'jetonomy' ),
+									'keys'  => array(),
+								),
+								'commerce'        => array(
+									'label' => __( 'E-commerce', 'jetonomy' ),
+									'keys'  => array(),
+								),
+								'other'           => array(
+									'label' => __( 'Other', 'jetonomy' ),
+									'keys'  => array(),
+								),
+							);
+
+							foreach ( $wp_roles_list as $jt_rk => $jt_rn ) {
+								if ( 'administrator' === $jt_rk ) {
+									continue;
+								}
+								if ( in_array( $jt_rk, $jt_role_groups['wordpress']['keys'], true ) ) {
+									continue;
+								}
+								if ( preg_match( '/^(bp_|bbp_|spectator|participant|moderator|keymaster|board_)/i', $jt_rk ) ) {
+									$jt_role_groups['community']['keys'][] = $jt_rk;
+								} elseif ( preg_match( '/^(ld_|tutor_|lms_|instructor|teacher|student|group_leader|memberpress|pmpro|wlm_)/i', $jt_rk ) ) {
+									$jt_role_groups['lms_memberships']['keys'][] = $jt_rk;
+								} elseif ( preg_match( '/^(shop_|customer|wc_|edd_|wpforms)/i', $jt_rk ) ) {
+									$jt_role_groups['commerce']['keys'][] = $jt_rk;
+								} else {
+									$jt_role_groups['other']['keys'][] = $jt_rk;
+								}
+							}
 							?>
 							<fieldset>
 								<legend class="screen-reader-text"><?php esc_html_e( 'Roles allowed to create spaces from the front end', 'jetonomy' ); ?></legend>
-								<?php foreach ( $wp_roles_list as $role_key => $role_name ) : ?>
-									<?php
-									if ( 'administrator' === $role_key ) {
-										continue; }
-									?>
-									<label style="display:block;margin-block-end:4px;">
-										<input type="checkbox" name="jetonomy_settings[frontend_space_creation_roles][]" value="<?php echo esc_attr( $role_key ); ?>" <?php checked( in_array( $role_key, $selected_roles, true ) ); ?>>
-										<?php echo esc_html( translate_user_role( $role_name ) ); ?>
-									</label>
+								<?php foreach ( $jt_role_groups as $jt_group ) : ?>
+									<?php if ( ! empty( $jt_group['keys'] ) ) : ?>
+										<p style="margin:12px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#646970;"><?php echo esc_html( $jt_group['label'] ); ?></p>
+										<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px;max-width:520px;">
+											<?php foreach ( $jt_group['keys'] as $jt_rk ) : ?>
+												<label style="display:flex;align-items:center;gap:6px;margin:0;">
+													<input type="checkbox" name="jetonomy_settings[frontend_space_creation_roles][]" value="<?php echo esc_attr( $jt_rk ); ?>" <?php checked( in_array( $jt_rk, $selected_roles, true ) ); ?>>
+													<?php echo esc_html( translate_user_role( $wp_roles_list[ $jt_rk ] ) ); ?>
+												</label>
+											<?php endforeach; ?>
+										</div>
+									<?php endif; ?>
 								<?php endforeach; ?>
 							</fieldset>
-							<p class="description"><?php esc_html_e( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create spaces from /community/new-space/. Leave every box unticked to keep front-end space creation admin-only.', 'jetonomy' ); ?></p>
+							<p class="description" style="margin-block-start:12px;"><?php esc_html_e( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create spaces from /community/new-space/. Leave every box unticked to keep front-end space creation admin-only.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 				</table>
