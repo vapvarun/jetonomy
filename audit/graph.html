@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jetonomy — manifest graph</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<style>
+  :root { --bg:#0f1117; --panel:#161922; --panel2:#1f2230; --text:#e7e9ee; --muted:#8b91a3; --accent:#6ea8fe; --border:#262a37; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text); font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  #app { display:grid; grid-template-columns:280px 1fr 340px; height:100vh; }
+  aside { background:var(--panel); border-right:1px solid var(--border); padding:16px; overflow-y:auto; }
+  aside.right { border-right:0; border-left:1px solid var(--border); }
+  h1 { font-size:14px; margin:0 0 4px; }
+  h2 { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:16px 0 8px; }
+  .slug { color:var(--muted); font-size:11px; margin-bottom:12px; word-break:break-word; }
+  .category { display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer; user-select:none; }
+  .category input { accent-color:var(--accent); }
+  .swatch { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .count { color:var(--muted); margin-left:auto; font-size:11px; font-variant-numeric:tabular-nums; }
+  .ctrl { margin-bottom:10px; }
+  .ctrl label { display:block; font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .ctrl input[type=text], .ctrl select { width:100%; padding:6px 8px; background:var(--panel2); color:var(--text); border:1px solid var(--border); border-radius:4px; font:inherit; }
+  .ctrl input[type=text]:focus, .ctrl select:focus { outline:none; border-color:var(--accent); }
+  #cy { background:radial-gradient(ellipse at center,#181b25 0%,var(--bg) 80%); }
+  .detail h3 { font-size:14px; margin:0 0 4px; word-break:break-word; }
+  .detail .id { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:11px; color:var(--muted); margin-bottom:12px; word-break:break-word; }
+  .detail dl { margin:0; }
+  .detail dt { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:10px; }
+  .detail dd { margin:2px 0 0; word-break:break-word; }
+  .empty { color:var(--muted); font-style:italic; }
+  button { background:var(--panel2); color:var(--text); border:1px solid var(--border); border-radius:4px; padding:6px 10px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  .stats { font-size:11px; color:var(--muted); margin-top:12px; }
+  .stats div { display:flex; justify-content:space-between; padding:2px 0; }
+  pre { background:var(--panel2); padding:8px; border-radius:4px; overflow-x:auto; font-size:11px; margin:0; white-space:pre-wrap; word-break:break-word; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <h1 id="title">manifest graph</h1>
+    <div class="slug" id="subtitle">loading…</div>
+    <div class="ctrl">
+      <label for="search">Search nodes</label>
+      <input id="search" type="text" placeholder="hook name, route, table…">
+    </div>
+    <div class="ctrl">
+      <label for="layout">Layout</label>
+      <select id="layout">
+        <option value="cose">force (cose)</option>
+        <option value="concentric">concentric</option>
+        <option value="breadthfirst">breadth-first</option>
+        <option value="circle">circle</option>
+        <option value="grid">grid</option>
+      </select>
+    </div>
+    <h2>Categories</h2>
+    <div id="categories"></div>
+    <h2>Stats</h2>
+    <div class="stats" id="stats"></div>
+    <div class="ctrl" style="margin-top:16px;"><button id="reset">Reset view</button></div>
+  </aside>
+  <main><div id="cy"></div></main>
+  <aside class="right">
+    <div id="detail" class="detail"><div class="empty">Click any node to see details.</div></div>
+  </aside>
+</div>
+
+<script>
+"use strict";
+
+// All node text and detail fields are rendered via textContent — no innerHTML
+// with manifest data. The manifest is in-repo and authored by tooling we trust,
+// but escaping by construction keeps this viewer safe if the manifest is ever
+// generated from external input.
+
+const COLORS = {
+  rest:       { fill: '#3b82f6', label: 'REST endpoint' },
+  ajax:       { fill: '#0ea5e9', label: 'AJAX action' },
+  hook:       { fill: '#f59e0b', label: 'Hook fired' },
+  block:      { fill: '#a855f7', label: 'Block' },
+  table:      { fill: '#10b981', label: 'DB table' },
+  service:    { fill: '#14b8a6', label: 'Service' },
+  cron:       { fill: '#ef4444', label: 'Cron job' },
+  cpt:        { fill: '#eab308', label: 'CPT' },
+  taxonomy:   { fill: '#facc15', label: 'Taxonomy' },
+  capability: { fill: '#fb923c', label: 'Capability' },
+  admin:      { fill: '#6b7280', label: 'Admin page' },
+  cli:        { fill: '#8b5cf6', label: 'WP-CLI' },
+  feature:    { fill: '#ec4899', label: 'Feature (Pro)' },
+};
+
+const MANIFEST_URL = './manifest.json';
+// For Pro plugins, set FREE_MANIFEST_URL to "../<free-slug>/audit/manifest.json"
+// to draw cross-plugin edges from Free hooks → Pro consumers.
+const FREE_MANIFEST_URL = null;
+
+function el(tag, props = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'data') for (const [dk, dv] of Object.entries(v)) node.dataset[dk] = dv;
+    else if (k === 'style') node.style.cssText = v;
+    else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c == null || c === false) continue;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+
+function setText(id, text) { document.getElementById(id).textContent = text; }
+function clear(id) { const n = document.getElementById(id); while (n.firstChild) n.removeChild(n.firstChild); }
+
+(async function init() {
+  let manifest;
+  try {
+    const res = await fetch(MANIFEST_URL);
+    manifest = await res.json();
+  } catch (err) {
+    setText('subtitle', 'Failed to load manifest.json — open via local server (e.g. `python3 -m http.server` in this dir)');
+    return;
+  }
+
+  setText('title', `${manifest.plugin.name} — graph`);
+  setText('subtitle', `${manifest.plugin.slug} · v${manifest.plugin.version} · schema ${manifest.generated.schema_version}`);
+
+  let freeManifest = null;
+  if (FREE_MANIFEST_URL) {
+    try { freeManifest = await (await fetch(FREE_MANIFEST_URL)).json(); } catch (err) { /* optional */ }
+  }
+
+  const elements = build(manifest, freeManifest);
+  renderCategories(elements);
+  renderStats(elements);
+
+  const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements,
+    minZoom: 0.2,
+    maxZoom: 3,
+    style: [
+      { selector: 'node', style: {
+        'background-color': 'data(color)', 'label': 'data(label)', 'color': '#e7e9ee',
+        'font-size': 10, 'font-family': '-apple-system, system-ui, sans-serif',
+        'text-valign': 'bottom', 'text-margin-y': 4,
+        'text-outline-color': '#0f1117', 'text-outline-width': 2,
+        'width': 18, 'height': 18, 'border-width': 0,
+      }},
+      { selector: 'node[?big]', style: { 'width': 28, 'height': 28, 'font-size': 11 }},
+      { selector: 'node:selected', style: { 'border-width': 3, 'border-color': '#6ea8fe' }},
+      { selector: 'edge', style: {
+        'width': 1, 'line-color': '#3a4053', 'target-arrow-color': '#3a4053',
+        'target-arrow-shape': 'triangle', 'arrow-scale': 0.8, 'curve-style': 'bezier', 'opacity': 0.6,
+      }},
+      { selector: 'edge[kind="consumed_by"]', style: { 'line-color': '#f59e0b', 'target-arrow-color': '#f59e0b', 'opacity': 0.85 }},
+      { selector: 'edge[kind="cross_plugin"]', style: { 'line-color': '#ec4899', 'target-arrow-color': '#ec4899', 'line-style': 'dashed', 'opacity': 0.85 }},
+      { selector: '.dimmed', style: { 'opacity': 0.1 }},
+      { selector: '.highlight', style: { 'opacity': 1, 'border-width': 2, 'border-color': '#6ea8fe' }},
+    ],
+    layout: cosLayout(),
+  });
+
+  cy.on('tap', 'node', (e) => showDetail(e.target.data()));
+  cy.on('tap', (e) => { if (e.target === cy) clearDetail(); });
+
+  document.getElementById('search').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) { cy.elements().removeClass('dimmed').removeClass('highlight'); return; }
+    const matches = cy.nodes().filter(n => (n.data('label') || '').toLowerCase().includes(q) || (n.data('id') || '').toLowerCase().includes(q));
+    cy.elements().addClass('dimmed');
+    matches.removeClass('dimmed').addClass('highlight');
+    matches.connectedEdges().removeClass('dimmed');
+    matches.neighborhood().removeClass('dimmed');
+  });
+
+  document.getElementById('layout').addEventListener('change', (e) => {
+    const name = e.target.value;
+    cy.layout(name === 'cose' ? cosLayout() : { name, animate: true, padding: 30 }).run();
+  });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    cy.fit(); cy.zoom(1); cy.center();
+    document.getElementById('search').value = '';
+    cy.elements().removeClass('dimmed').removeClass('highlight');
+  });
+
+  document.querySelectorAll('#categories input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      cy.nodes(`[category = "${cb.dataset.cat}"]`).style('display', cb.checked ? 'element' : 'none');
+    });
+  });
+
+  function cosLayout() {
+    return { name: 'cose', animate: true, randomize: true, fit: true, padding: 30, nodeRepulsion: 8000, idealEdgeLength: 80, edgeElasticity: 100, gravity: 80, numIter: 1500 };
+  }
+})();
+
+function build(m, freeManifest) {
+  const nodes = [];
+  const edges = [];
+  const nodeIds = new Set();
+  const pushNode = (id, label, category, big = false, extra = {}) => {
+    if (nodeIds.has(id)) return;
+    nodeIds.add(id);
+    nodes.push({ data: { id, label, category, color: (COLORS[category] && COLORS[category].fill) || '#666', big, ...extra }});
+  };
+  const pushEdge = (source, target, kind = 'rel') => {
+    edges.push({ data: { id: `e:${source}->${target}:${kind}`, source, target, kind }});
+  };
+
+  (m.rest && m.rest.endpoints || []).forEach(e => {
+    const id = `rest:${(e.methods || ['GET']).join('|')}:${e.route}`;
+    const label = (e.methods && e.methods[0] || 'GET') + ' ' + e.route.replace(/^\/[^/]+\/v\d+/, '');
+    pushNode(id, label, 'rest', false, { route: e.route, methods: e.methods, handler: e.handler, permission: e.permission, purpose: e.purpose });
+  });
+
+  (m.ajax || []).forEach(a => {
+    pushNode(`ajax:${a.action}`, a.action, 'ajax', false, { handler: a.handler, nonce: a.nonce, capability: a.capability, purpose: a.purpose });
+  });
+
+  (m.hooks_fired || []).forEach(h => {
+    const id = `hook:${h.name}`;
+    pushNode(id, h.name, 'hook', !!h.consumed_by, { type: h.type, args: h.args, where: h.where, consumed_by: h.consumed_by });
+    if (h.consumed_by) {
+      const consumerId = `consumer:${h.consumed_by}`;
+      pushNode(consumerId, h.consumed_by, 'feature', true, { description: 'Consumer of Free hooks (Pro/extension)' });
+      pushEdge(id, consumerId, 'consumed_by');
+    }
+  });
+
+  (m.blocks || []).forEach(b => pushNode(`block:${b.name}`, b.name.replace(/^[^/]+\//, ''), 'block', false, { render: b.render, interactivity: b.interactivity }));
+  (m.tables || []).forEach(t => pushNode(`table:${t.name}`, t.name, 'table', false, { purpose: t.purpose }));
+  (m.services || []).forEach(s => pushNode(`service:${s.key}`, s.key, 'service', false, { class: s.class, added: s.added }));
+  (m.cron || []).forEach(c => pushNode(`cron:${c.hook}`, c.hook, 'cron', false, { interval: c.interval, handler: c.handler, engine: c.engine }));
+  (m.post_types || []).forEach(p => pushNode(`cpt:${p.name}`, p.name, 'cpt', false, { purpose: p.purpose, public: p.public }));
+  (m.taxonomies || []).forEach(t => pushNode(`tax:${t.name}`, t.name, 'taxonomy', false, { post_type: t.post_type, hierarchical: t.hierarchical }));
+  (m.capabilities || []).forEach(c => pushNode(`cap:${c.cap}`, c.cap, 'capability', false, { default_roles: c.default_roles }));
+  (m.admin_pages || []).forEach(p => pushNode(`admin:${p.slug}`, p.title, 'admin', false, { slug: p.slug, parent: p.parent, capability: p.capability }));
+  (m.wp_cli || []).forEach(c => pushNode(`cli:${c.name}`, 'wp ' + c.name, 'cli', false, { handler: c.handler, subcommands: c.subcommands }));
+
+  // Cross-plugin edges (Pro view only — when free manifest is loaded)
+  if (freeManifest && m.free_filters_hooked) {
+    m.free_filters_hooked.forEach(fh => {
+      const freeHookId = `hook:${fh.filter}`;
+      const proConsumerId = `feature:${(fh.where || '').split(/\s|,/)[0] || 'pro'}`;
+      pushNode(`free_hook:${fh.filter}`, fh.filter, 'hook', true, { source: 'free', behavior: fh.behavior, where: fh.where });
+      pushNode(proConsumerId, fh.where, 'feature', true, { plugin: m.plugin.slug, behavior: fh.behavior });
+      pushEdge(`free_hook:${fh.filter}`, proConsumerId, 'cross_plugin');
+    });
+  }
+
+  return [...nodes, ...edges];
+}
+
+function renderCategories(elements) {
+  const cats = {};
+  elements.forEach(e => { if (e.data && e.data.category) cats[e.data.category] = (cats[e.data.category] || 0) + 1; });
+  const container = document.getElementById('categories');
+  clear('categories');
+  Object.entries(cats).sort((a, b) => b[1] - a[1]).forEach(([cat, count]) => {
+    container.appendChild(el('label', { class: 'category' }, [
+      el('input', { type: 'checkbox', checked: 'checked', data: { cat } }),
+      el('span', { class: 'swatch', style: `background:${(COLORS[cat] && COLORS[cat].fill) || '#666'}` }),
+      (COLORS[cat] && COLORS[cat].label) || cat,
+      el('span', { class: 'count' }, [String(count)]),
+    ]));
+  });
+}
+
+function renderStats(elements) {
+  const nodeCount = elements.filter(e => e.data && !e.data.source).length;
+  const edgeCount = elements.filter(e => e.data && e.data.source).length;
+  const container = document.getElementById('stats');
+  clear('stats');
+  container.appendChild(el('div', {}, [el('span', {}, ['nodes']), el('span', {}, [String(nodeCount)])]));
+  container.appendChild(el('div', {}, [el('span', {}, ['edges']), el('span', {}, [String(edgeCount)])]));
+}
+
+function showDetail(d) {
+  const root = document.getElementById('detail');
+  while (root.firstChild) root.removeChild(root.firstChild);
+  root.appendChild(el('h3', {}, [d.label || '']));
+  root.appendChild(el('div', { class: 'id' }, [d.id || '']));
+  const dl = el('dl');
+  const skip = new Set(['id', 'label', 'category', 'color', 'big']);
+  for (const [k, v] of Object.entries(d)) {
+    if (skip.has(k) || v == null) continue;
+    dl.appendChild(el('dt', {}, [k]));
+    if (typeof v === 'object') {
+      dl.appendChild(el('dd', {}, [el('pre', {}, [JSON.stringify(v, null, 2)])]));
+    } else {
+      dl.appendChild(el('dd', {}, [String(v)]));
+    }
+  }
+  root.appendChild(dl);
+}
+
+function clearDetail() {
+  const root = document.getElementById('detail');
+  while (root.firstChild) root.removeChild(root.firstChild);
+  root.appendChild(el('div', { class: 'empty' }, ['Click any node to see details.']));
+}
+</script>
+</body>
+</html>
