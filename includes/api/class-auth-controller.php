@@ -77,6 +77,23 @@ class Auth_Controller extends Base_Controller {
 							'type'     => 'string',
 							'default'  => '',
 						],
+						// Honeypot — must be empty. Bots that auto-fill every
+						// field will populate this; real users never see it
+						// (rendered with display:none + autocomplete=off in
+						// the Login block markup).
+						'website'       => [
+							'required' => false,
+							'type'     => 'string',
+							'default'  => '',
+						],
+						// Page-loaded timestamp (Unix seconds). Real users
+						// take seconds to fill the form; bots submit instantly.
+						// Reject anything < 2s or > 1h since the page rendered.
+						'loaded_at'     => [
+							'required' => false,
+							'type'     => 'integer',
+							'default'  => 0,
+						],
 					],
 				],
 			]
@@ -264,6 +281,47 @@ class Auth_Controller extends Base_Controller {
 		$email    = (string) $request->get_param( 'email' );
 		$password = (string) $request->get_param( 'password' );
 		$token    = (string) $request->get_param( 'captcha_token' );
+
+		// Anti-spam layer 1 — honeypot.
+		// Real users never see the "website" field (display:none in the block
+		// markup). Auto-filling form-spam bots populate every input they see,
+		// so a non-empty value is a near-certain bot signal.
+		$honeypot = (string) $request->get_param( 'website' );
+		if ( '' !== trim( $honeypot ) ) {
+			// Same generic error so the bot can't tell which field tripped it.
+			return new WP_Error(
+				'jetonomy_invalid_signup',
+				__( 'Could not create the account. Please try again.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// Anti-spam layer 2 — time-on-form gate.
+		// Real visitors take more than 2 seconds to fill out 3 fields. If
+		// loaded_at is unset (older Login block markup) we skip the check.
+		$loaded_at = (int) $request->get_param( 'loaded_at' );
+		if ( $loaded_at > 0 ) {
+			$elapsed = time() - $loaded_at;
+			if ( $elapsed < 2 || $elapsed > HOUR_IN_SECONDS ) {
+				return new WP_Error(
+					'jetonomy_invalid_signup',
+					__( 'Could not create the account. Please try again.', 'jetonomy' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
+		// Anti-spam layer 3 — disposable email blocklist.
+		// Sites that need stricter enforcement should turn on email
+		// verification (which forces a real, reachable inbox). The list is
+		// filterable so admins can extend or override.
+		if ( self::is_disposable_email( $email ) ) {
+			return new WP_Error(
+				'jetonomy_disposable_email',
+				__( 'Please use a permanent email address. Disposable mailboxes are not accepted.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
 
 		if ( '' === $username || '' === $email || '' === $password ) {
 			return new WP_Error(
@@ -513,6 +571,77 @@ class Auth_Controller extends Base_Controller {
 		$domain = substr( $email, $at );
 		$first  = substr( $local, 0, 1 );
 		return $first . '***' . $domain;
+	}
+
+	/**
+	 * Built-in disposable-email blocklist. Covers the high-traffic
+	 * temp-mailbox providers that drive most signup spam. Site owners
+	 * who need a fuller list can add to it via the
+	 * `jetonomy_disposable_email_domains` filter.
+	 *
+	 * @param string $email
+	 * @return bool
+	 */
+	private static function is_disposable_email( string $email ): bool {
+		$at = strrpos( $email, '@' );
+		if ( false === $at || $at < 1 ) {
+			return false;
+		}
+		$domain = strtolower( substr( $email, $at + 1 ) );
+
+		$blocked = array(
+			'10minutemail.com',
+			'10minutemail.net',
+			'20minutemail.com',
+			'30minutemail.com',
+			'guerrillamail.com',
+			'guerrillamail.net',
+			'guerrillamail.org',
+			'guerrillamail.biz',
+			'sharklasers.com',
+			'mailinator.com',
+			'mailinator.net',
+			'mailinator.org',
+			'maildrop.cc',
+			'getairmail.com',
+			'tempmail.com',
+			'temp-mail.org',
+			'temp-mail.io',
+			'tempmailo.com',
+			'temporary-mail.net',
+			'throwawaymail.com',
+			'throwaway.email',
+			'yopmail.com',
+			'yopmail.net',
+			'yopmail.org',
+			'discard.email',
+			'discardmail.com',
+			'fakeinbox.com',
+			'trashmail.com',
+			'trashmail.de',
+			'trashmail.net',
+			'spam4.me',
+			'mohmal.com',
+			'mohmal.in',
+			'getnada.com',
+			'inboxbear.com',
+			'mytemp.email',
+			'tempinbox.com',
+			'1secmail.com',
+			'1secmail.net',
+			'1secmail.org',
+			'dropmail.me',
+			'mintemail.com',
+		);
+
+		/**
+		 * Filter the list of disposable email domains rejected on register.
+		 *
+		 * @param string[] $blocked Lowercased domains.
+		 */
+		$blocked = (array) apply_filters( 'jetonomy_disposable_email_domains', $blocked );
+
+		return in_array( $domain, $blocked, true );
 	}
 
 	/**

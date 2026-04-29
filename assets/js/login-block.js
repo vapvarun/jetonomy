@@ -120,6 +120,13 @@
 					var msg = ( payload.json && payload.json.message )
 						|| 'Something went wrong. Please try again.';
 					setMessage( form, msg, false );
+					// When the visitor's account is still pending email
+					// confirmation, surface a Resend button alongside the
+					// error so they can request a fresh link without
+					// switching tabs.
+					if ( payload.json && payload.json.code === 'jetonomy_pending_verification' ) {
+						renderResendVerificationLink( block, form, body.user_login );
+					}
 					if ( unlock ) { unlock(); }
 					return;
 				}
@@ -130,6 +137,55 @@
 				setMessage( form, 'Network error. Please try again.', false );
 				if ( unlock ) { unlock(); }
 			} );
+	}
+
+	/**
+	 * Append a "Resend confirmation" button under the message slot if it
+	 * isn't already there. The button POSTs to /auth/resend-verification
+	 * and shows its own short status. Called from the login + register
+	 * paths when the server reports pending verification.
+	 */
+	function renderResendVerificationLink( block, form, userLogin ) {
+		var holder = form.querySelector( '.jt-login-message' );
+		if ( ! holder || holder.querySelector( '.jt-login-resend' ) ) {
+			return;
+		}
+		var btn = document.createElement( 'button' );
+		btn.type = 'button';
+		btn.className = 'jt-login-resend';
+		btn.textContent = 'Resend confirmation email';
+		btn.style.marginInlineStart = '8px';
+		btn.style.background = 'transparent';
+		btn.style.border = 'none';
+		btn.style.color = 'inherit';
+		btn.style.textDecoration = 'underline';
+		btn.style.cursor = 'pointer';
+		btn.style.padding = '0';
+		btn.style.font = 'inherit';
+		btn.addEventListener( 'click', function () {
+			var restUrl = block.dataset.restUrl
+				? block.dataset.restUrl.replace( /\/+$/, '' )
+				: '/wp-json/jetonomy/v1';
+			var nonce = block.dataset.restNonce || '';
+			btn.disabled = true;
+			btn.textContent = 'Sending…';
+			fetch( restUrl + '/auth/resend-verification', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: nonce
+					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
+					: { 'Content-Type': 'application/json' },
+				body: JSON.stringify( { user_login: userLogin } ),
+			} ).then( function ( res ) {
+				return res.json().catch( function () { return {}; } );
+			} ).then( function ( json ) {
+				btn.textContent = ( json && json.message ) || 'If an account is waiting on confirmation, a new link is on its way.';
+			} ).catch( function () {
+				btn.disabled = false;
+				btn.textContent = 'Resend confirmation email';
+			} );
+		} );
+		holder.appendChild( btn );
 	}
 
 	/**
@@ -159,6 +215,11 @@
 				username: ( form.querySelector( '[name="username"]' ) || {} ).value || '',
 				email:    ( form.querySelector( '[name="email"]' )    || {} ).value || '',
 				password: ( form.querySelector( '[name="password"]' ) || {} ).value || '',
+				// Anti-spam — honeypot + page-loaded timestamp. Both come
+				// straight off the server-rendered form fields so we can't
+				// accidentally bypass the gate by forgetting to forward them.
+				website:   ( form.querySelector( '[name="website"]' )   || {} ).value || '',
+				loaded_at: parseInt( ( form.querySelector( '[name="loaded_at"]' ) || {} ).value || '0', 10 ) || 0,
 			};
 			if ( captchaToken ) {
 				body.captcha_token = captchaToken;
@@ -181,6 +242,15 @@
 				var msg = ( payload.json && payload.json.message )
 					|| 'Something went wrong. Please try again.';
 				setMessage( form, msg, false );
+				if ( unlock ) { unlock(); }
+				return;
+			}
+			// Server signalled the account is pending email verification.
+			// Show the masked-email success message and DON'T reload — the
+			// visitor needs to click the link in their inbox first.
+			if ( payload.json.requires_verification ) {
+				setMessage( form, payload.json.message || 'Account created. Check your email to confirm.', true );
+				renderResendVerificationLink( block, form, body.username || body.email || '' );
 				if ( unlock ) { unlock(); }
 				return;
 			}

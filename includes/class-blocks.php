@@ -814,6 +814,24 @@ class Blocks {
 						<span><?php esc_html_e( 'Password', 'jetonomy' ); ?></span>
 						<input type="password" name="password" autocomplete="new-password" required minlength="8" />
 					</label>
+					<?php
+					/**
+					 * Anti-spam honeypot. Real users never see this field
+					 * (display:none + tabindex=-1 + aria-hidden) but bots
+					 * that auto-fill every input populate it. The register
+					 * REST handler rejects any submission where it isn't empty.
+					 *
+					 * Paired with a server-side time-on-form gate via the
+					 * loaded_at hidden input below; both layers run before
+					 * captcha so they are cheap and don't burn captcha quotas
+					 * on obvious bots.
+					 */
+					?>
+					<label class="jt-login-honeypot" aria-hidden="true" tabindex="-1" style="position:absolute;left:-9999px;top:-9999px;height:0;width:0;overflow:hidden;">
+						<span><?php esc_html_e( 'Website', 'jetonomy' ); ?></span>
+						<input type="text" name="website" autocomplete="off" tabindex="-1" />
+					</label>
+					<input type="hidden" name="loaded_at" value="<?php echo esc_attr( (string) time() ); ?>" />
 					<p class="jt-login-message" role="alert" aria-live="polite"></p>
 					<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
 						<?php esc_html_e( 'Create account', 'jetonomy' ); ?>
