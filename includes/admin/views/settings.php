@@ -578,6 +578,20 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<button type="button" class="button button-small jetonomy-email-send-btn" data-type="<?php echo esc_attr( $type ); ?>" data-label="<?php esc_attr_e( 'Send test', 'jetonomy' ); ?>">
 										<?php esc_html_e( 'Send test', 'jetonomy' ); ?>
 									</button>
+									<?php
+									// A8: only show Reset when an override is actually persisted —
+									// clicking Reset on a row that's already on the default would be
+									// a no-op and confusing. JS toggles visibility after the user
+									// edits or saves, but the initial render is driven by the option.
+									$has_override = isset( $email_templates[ $type ] ) && is_array( $email_templates[ $type ] );
+									?>
+									<button type="button"
+										class="button button-small button-link-delete jetonomy-email-reset-btn"
+										data-type="<?php echo esc_attr( $type ); ?>"
+										data-label="<?php echo esc_attr( $label ); ?>"
+										<?php echo $has_override ? '' : 'style="display:none;"'; ?>>
+										<?php esc_html_e( 'Reset to default', 'jetonomy' ); ?>
+									</button>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -673,6 +687,47 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						btn.textContent = label;
 						const msg = ( json.data && json.data.message ) || json.data || '';
 						( window.jetonomyAlert || window.alert )( msg || ( json.success ? '<?php echo esc_js( __( 'Sent.', 'jetonomy' ) ); ?>' : '<?php echo esc_js( __( 'Failed to send.', 'jetonomy' ) ); ?>' ) );
+					} );
+				} );
+
+				// Reset to default — confirm + AJAX + repopulate row inputs in
+				// place. Server-side ajax_email_reset() already removed the
+				// override key from `jetonomy_email_templates`, so we then
+				// hide the Reset button until the admin edits + saves again.
+				const RESET_CONFIRM = <?php echo wp_json_encode( __( 'Reset %s to default? Your custom copy will be lost.', 'jetonomy' ) ); ?>;
+				document.querySelectorAll( '.jetonomy-email-reset-btn' ).forEach( btn => {
+					btn.addEventListener( 'click', async () => {
+						const type  = btn.dataset.type;
+						const label = btn.dataset.label || type;
+						const msg   = RESET_CONFIRM.replace( '%s', label );
+						if ( ! window.confirm( msg ) ) { return; }
+
+						btn.disabled = true;
+						const body   = new FormData();
+						body.append( 'action', 'jetonomy_email_reset' );
+						body.append( 'nonce', nonce );
+						body.append( 'type', type );
+
+						const res  = await fetch( ajax, { method: 'POST', credentials: 'same-origin', body } );
+						const json = await res.json();
+						btn.disabled = false;
+
+						if ( ! json.success ) {
+							( window.jetonomyAlert || window.alert )( ( json.data && json.data.message ) || json.data || '<?php echo esc_js( __( 'Reset failed.', 'jetonomy' ) ); ?>' );
+							return;
+						}
+
+						const row = document.querySelector( '[data-jt-email-type="' + type + '"]' );
+						if ( row ) {
+							const subjectInput = row.querySelector( '.jetonomy-email-subject-input' );
+							const bodyInput    = row.querySelector( '.jetonomy-email-body-input' );
+							if ( subjectInput ) { subjectInput.value = json.data.subject || ''; }
+							if ( bodyInput )    { bodyInput.value    = json.data.body    || ''; }
+						}
+						// Hide the button — option no longer has an override
+						// for this type. The admin would need to edit + save
+						// again before another Reset is meaningful.
+						btn.style.display = 'none';
 					} );
 				} );
 			} )();

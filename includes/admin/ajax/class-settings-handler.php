@@ -73,6 +73,7 @@ class Settings_Handler {
 		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
 		add_action( 'wp_ajax_jetonomy_flush_rules', [ $this, 'ajax_flush_rules' ] );
 		add_action( 'wp_ajax_jetonomy_email_preview', [ $this, 'ajax_email_preview' ] );
+		add_action( 'wp_ajax_jetonomy_email_reset', [ $this, 'ajax_email_reset' ] );
 	}
 
 	public function ajax_test_email(): void {
@@ -183,6 +184,55 @@ class Settings_Handler {
 			array(
 				'subject' => $subject,
 				'html'    => $html,
+			)
+		);
+	}
+
+	/**
+	 * Reset a single email template row to its shipped default.
+	 *
+	 * Removes the matching key from `jetonomy_email_templates` (so the next
+	 * send falls back to `Notifier::get_default_template()` at render time)
+	 * and returns the default subject/body in the response so the JS can
+	 * repopulate the row's inputs without a full page reload.
+	 *
+	 * Per safety-check § A8: writing into the option is gated by
+	 * `jetonomy_manage_settings` and the standard `jetonomy_admin` nonce —
+	 * same surface as ajax_email_preview / ajax_test_email.
+	 */
+	public function ajax_email_reset(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$type = sanitize_key( wp_unslash( $_POST['type'] ?? '' ) );
+		if ( '' === $type ) {
+			wp_send_json_error( __( 'Unknown notification type.', 'jetonomy' ) );
+		}
+
+		$defaults = Notifier::get_default_template( $type );
+		// `get_default_template()` returns ['subject' => '', 'body' => '']
+		// for unknown types — guard so we don't drop arbitrary attacker-
+		// supplied keys from the option.
+		if ( '' === $defaults['subject'] && '' === $defaults['body'] ) {
+			wp_send_json_error( __( 'Unknown notification type.', 'jetonomy' ) );
+		}
+
+		$templates = get_option( 'jetonomy_email_templates', array() );
+		if ( ! is_array( $templates ) ) {
+			$templates = array();
+		}
+		if ( isset( $templates[ $type ] ) ) {
+			unset( $templates[ $type ] );
+			update_option( 'jetonomy_email_templates', $templates );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Reset to default.', 'jetonomy' ),
+				'subject' => $defaults['subject'],
+				'body'    => $defaults['body'],
 			)
 		);
 	}
