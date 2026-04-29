@@ -184,10 +184,10 @@ class Revisions_List_Table extends \WP_List_Table {
 		}
 
 		if ( ! empty( $post_ids ) ) {
-			$post_ids   = array_values( array_unique( $post_ids ) );
-			$posts_t    = table( 'posts' );
-			$placehold  = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
-			$post_rows  = $wpdb->get_results(
+			$post_ids  = array_values( array_unique( $post_ids ) );
+			$posts_t   = table( 'posts' );
+			$placehold = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+			$post_rows = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT id, title FROM {$posts_t} WHERE id IN ({$placehold})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					...$post_ids
@@ -199,10 +199,10 @@ class Revisions_List_Table extends \WP_List_Table {
 		}
 
 		if ( ! empty( $reply_ids ) ) {
-			$reply_ids = array_values( array_unique( $reply_ids ) );
-			$replies_t = table( 'replies' );
-			$posts_t   = table( 'posts' );
-			$placehold = implode( ',', array_fill( 0, count( $reply_ids ), '%d' ) );
+			$reply_ids  = array_values( array_unique( $reply_ids ) );
+			$replies_t  = table( 'replies' );
+			$posts_t    = table( 'posts' );
+			$placehold  = implode( ',', array_fill( 0, count( $reply_ids ), '%d' ) );
 			$reply_rows = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT r.id, p.title AS post_title
@@ -213,7 +213,7 @@ class Revisions_List_Table extends \WP_List_Table {
 				)
 			) ?: array();
 			foreach ( $reply_rows as $rr ) {
-				$post_title = (string) ( $rr->post_title ?? '' );
+				$post_title                                    = (string) ( $rr->post_title ?? '' );
 				$this->title_cache[ 'reply:' . (int) $rr->id ] = $post_title;
 			}
 		}

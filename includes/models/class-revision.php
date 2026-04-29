@@ -71,8 +71,8 @@ class Revision extends Model {
 	 * highest-numbered user.
 	 *
 	 * @param array{object_type?: string, date_from?: string, date_to?: string} $filters
-	 * @param int                                                                $limit
-	 * @param int                                                                $offset
+	 * @param int                                                               $limit
+	 * @param int                                                               $offset
 	 * @return object[]
 	 */
 	public static function list_objects_with_revisions( array $filters = [], int $limit = 20, int $offset = 0 ): array {

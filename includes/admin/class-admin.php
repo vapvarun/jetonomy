@@ -131,6 +131,22 @@ class Admin {
 			add_action( "load-{$activity_hook}", array( $this, 'on_activity_load' ) );
 		}
 
+		// ── A7: Revisions ──
+		// Slots between Activity Log and Users. Read-only browser over
+		// jt_revisions (per-object diff viewer). Same capability as the
+		// other non-mod admin pages, so no cap migration is needed.
+		// Order constraint: Content · Moderation · Activity Log ·
+		// Revisions · Users — A6 must remain immediately before; Users
+		// must remain immediately after.
+		add_submenu_page(
+			'jetonomy',
+			__( 'Revisions', 'jetonomy' ),
+			__( 'Revisions', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-revisions',
+			array( $this, 'render_revisions_page' )
+		);
+
 		add_submenu_page(
 			'jetonomy',
 			__( 'Users', 'jetonomy' ),
@@ -947,6 +963,97 @@ class Admin {
 		fclose( $out );
 		// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
 		exit;
+	}
+
+	// ── A7: Revisions ──
+
+	/**
+	 * Render the Revisions admin page.
+	 *
+	 * Two modes branch on the URL:
+	 *   - List mode (no object_id): aggregate WP_List_Table.
+	 *   - Detail mode (object_type + object_id): per-object diff viewer
+	 *     using wp_text_diff() against the previous snapshot.
+	 *
+	 * Capability gate is duplicated here on top of the menu cap so a
+	 * direct URL hit fails closed with wp_die() rather than rendering a
+	 * blank page.
+	 */
+	public function render_revisions_page(): void {
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'jetonomy' ) );
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only navigation params.
+		$raw_type  = isset( $_GET['object_type'] ) ? sanitize_key( wp_unslash( $_GET['object_type'] ) ) : '';
+		$object_id = isset( $_GET['object_id'] ) ? absint( wp_unslash( $_GET['object_id'] ) ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$is_detail = ( in_array( $raw_type, array( 'post', 'reply' ), true ) && $object_id > 0 );
+
+		if ( $is_detail ) {
+			$mode        = 'detail';
+			$object_type = $raw_type;
+			$revisions   = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id );
+
+			// Resolve a human-readable title for the page heading. Posts
+			// have a title column; replies fall back to the parent post
+			// title (prefixed) so the row stays scannable even though
+			// replies are titleless.
+			$object_title = $this->resolve_revision_object_title( $object_type, $object_id );
+
+			$back_url = admin_url( 'admin.php?page=jetonomy-revisions' );
+
+			include JETONOMY_DIR . 'includes/admin/views/revisions.php';
+			return;
+		}
+
+		$mode       = 'list';
+		$list_table = new Revisions_List_Table();
+		$list_table->prepare_items();
+
+		include JETONOMY_DIR . 'includes/admin/views/revisions.php';
+	}
+
+	/**
+	 * Resolve a human-readable title for a (type, id) pair. Single-row
+	 * lookup since the detail view only renders one object at a time —
+	 * no batching needed here.
+	 */
+	private function resolve_revision_object_title( string $type, int $id ): string {
+		global $wpdb;
+
+		if ( 'post' === $type ) {
+			$posts_t = table( 'posts' );
+			$title   = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT title FROM {$posts_t} WHERE id = %d",
+					$id
+				)
+			);
+			return is_string( $title ) ? $title : '';
+		}
+
+		if ( 'reply' === $type ) {
+			$replies_t = table( 'replies' );
+			$posts_t   = table( 'posts' );
+			$parent    = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT p.title FROM {$replies_t} r LEFT JOIN {$posts_t} p ON p.id = r.post_id WHERE r.id = %d",
+					$id
+				)
+			);
+			if ( is_string( $parent ) && '' !== $parent ) {
+				return sprintf(
+					/* translators: %s: parent post title */
+					__( 'Reply to: %s', 'jetonomy' ),
+					$parent
+				);
+			}
+			return '';
+		}
+
+		return '';
 	}
 
 	public function render_users(): void {
