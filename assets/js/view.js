@@ -941,10 +941,20 @@ const { state, actions } = store( 'jetonomy', {
                 }
             };
             const scrollHandler = () => { cleanup(); };
+            // Scroll + resize listeners attach immediately. Wrapping them in
+            // setTimeout(0) (as the click handler is) introduced a race —
+            // a fast post-click scroll (Playwright `scrollBy` immediately
+            // after `click()`, or a flick on a long page) could fire before
+            // the next event-loop tick and miss the listener entirely.
+            // Detected by 1.4.0 Pro COMBO smoke (D.share-scroll-detach).
+            window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
+            window.addEventListener( 'resize', scrollHandler, { passive: true } );
+            // Click-outside is the only listener that needs the next-tick
+            // defer — the click that opened the dropdown is still bubbling
+            // when we register, and we don't want it to instantly trigger
+            // close-on-outside-click.
             setTimeout( () => {
                 document.addEventListener( 'click', closeHandler );
-                window.addEventListener( 'scroll', scrollHandler, { passive: true, capture: true } );
-                window.addEventListener( 'resize', scrollHandler, { passive: true } );
             }, 0 );
         },
 
