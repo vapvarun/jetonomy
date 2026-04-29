@@ -16,6 +16,7 @@
 | A8 | Email Templates admin editor | ⏳ PENDING | — | UI for `jetonomy_email_templates` option |
 | A9 | Frontend `?tab=drafts` and `?tab=bookmarks` | ⏳ PENDING | — | User content views |
 | A10 | `jetonomy_user_pending_verification` cron | ⏳ PENDING | — | Reminder emails for unverified users |
+| A11 | Community visibility mode (public/private) | ⏳ PENDING | — | Foundational toggle: helper + setting + per-endpoint enforcement; runner passes in BOTH modes |
 
 ## Track B — Pro Plugin
 
@@ -36,6 +37,7 @@ A4, A5 ─── REST additions (parallel, independent)
 A6, A7 ─── admin pages (parallel, independent)
 A8       ─── email templates (parallel, independent)
 A9, A10  ─── frontend + cron (parallel, independent)
+A11      ─── community visibility mode (after A3 so runner can verify both modes)
 
 B1 ─── White Label (parallel with everything)
 B2 ─── Analytics dual-path (parallel, needs ~7 days for data parity cutover decision)

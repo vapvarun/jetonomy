@@ -37,7 +37,25 @@ For routes that depend on resource ownership (e.g., `PATCH /posts/{id}`), the ma
 
 ---
 
+## Two community modes (A11)
+
+Sites can run in **public** mode (default) where anyone browses content, or **private** mode where the entire community requires login. The matrix below documents **public mode** (most operators). For private mode, every cell currently showing 🔓 ✅ in the "Public read endpoints" section becomes 🔓 🔒 401, while logged-in cells stay identical. `/auth/*` and admin endpoints are unaffected by the mode flag.
+
+The runner (`bin/access-matrix-check.sh`) accepts `--mode=public|private` to verify both contracts.
+
+```bash
+bin/access-matrix-check.sh --mode=public      # default expectations (this matrix)
+bin/access-matrix-check.sh --mode=private     # anonymous gets 401 for community routes
+```
+
+Switching modes is a 1-click admin setting (Settings → General → Community Visibility). A11 builds the helper, the toggle, and the per-endpoint enforcement.
+
+---
+
 ## Public read endpoints (anyone can call; visibility filtering inside)
+
+**In public mode:** anyone can call (visibility filtering still excludes private/hidden spaces).
+**In private mode:** anonymous gets 401; all logged-in cells unchanged.
 
 | Route | Method | 🔓 Anon | 👤 Sub | ✍️ Author | 📝 Editor | 🛡️ Mod | 👑 Admin |
 |---|---|---|---|---|---|---|---|
