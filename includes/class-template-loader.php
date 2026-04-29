@@ -28,9 +28,10 @@ class Template_Loader {
 		// Public community (guest_read on, or unset — defaults public): anyone can read, writes
 		// still require login via the REST permission layer. Private community (guest_read off):
 		// redirect anonymous visitors to the login page.
-		$settings            = get_option( 'jetonomy_settings', array() );
-		$is_public_community = ! isset( $settings['guest_read'] ) || ! empty( $settings['guest_read'] );
-		if ( ! $is_public_community && ! is_user_logged_in() ) {
+		// Visibility helper centralizes the guest_read check; the same predicate
+		// gates the REST API in private mode (see Jetonomy\Visibility::rest_check).
+		$settings = get_option( 'jetonomy_settings', array() );
+		if ( ! \Jetonomy\Visibility::can_view_community() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}
