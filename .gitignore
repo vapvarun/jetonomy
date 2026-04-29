@@ -16,3 +16,8 @@ docs/qa/.last-smoke-pass-pro.json
 docs/qa/.debug-log-*.txt
 docs/qa/fail-*.png
 .claude-tmp/
+
+# 1.4.1 baselines — local PRE-state snapshots, not committed
+audit/1.4.1-baselines/*
+!audit/1.4.1-baselines/CHECKLIST.md
+!audit/1.4.1-baselines/.gitkeep
