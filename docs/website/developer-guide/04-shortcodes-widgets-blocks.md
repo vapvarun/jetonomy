@@ -205,6 +205,29 @@ Displays the currently logged-in user's stats: reputation, post count, reply cou
 
 **Settings:** Title (no other configuration — always reflects the current user)
 
+### `[jetonomy_widget]` shortcode *(new in 1.4.0)*
+
+Each classic widget above can also be embedded directly into any page or page-builder canvas — without dropping into the Customizer or a sidebar — using the `[jetonomy_widget]` shortcode.
+
+**Attributes**
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | yes | Widget id: `jetonomy_recent_posts`, `jetonomy_leaderboard`, `jetonomy_active_spaces`, or `jetonomy_user_stats` |
+| `title` | string | no | Override the widget's title (otherwise the widget's saved Customizer title or the default) |
+| `count` | int | no | For Recent Posts, Leaderboard, and Active Spaces |
+| `space_id` | int | no | For Recent Posts, optional space filter |
+| `sort` | string | no | For Recent Posts: `latest` or `votes` |
+
+```
+[jetonomy_widget id="jetonomy_recent_posts" count="8" sort="latest"]
+[jetonomy_widget id="jetonomy_leaderboard" count="10"]
+[jetonomy_widget id="jetonomy_active_spaces" count="6"]
+[jetonomy_widget id="jetonomy_user_stats" title="Your stats"]
+```
+
+Internally `[jetonomy_widget]` wraps WordPress core's `the_widget()` so the rendered markup matches what the same widget would output in a sidebar — same hooks, same CSS classes, same i18n. Useful for landing pages, footer columns, and page-builder canvases where the Customizer's sidebar widget area isn't available.
+
 ---
 
 ## Gutenberg Blocks
@@ -213,11 +236,18 @@ Jetonomy registers eight server-side rendered blocks. Each block uses a `render_
 
 All blocks live in the **Widgets** category of the block inserter and answer to the search term `jet`.
 
-### Editor experience *(1.4.0+)*
+### Backend (editor) vs frontend (published) render *(1.4.0+)*
 
-In the block editor every Jetonomy block paints a framed **preview card** with a "JETONOMY" pill badge, the block title, and an attribute-aware hint that reflects the current settings (for example `Filtered to space #3`, `7 day window`, `All public spaces`). The preview is a static mock — no REST calls — so dropping a block on a page is instant and safe.
+The two surfaces render differently — by design.
+
+- **Backend (block editor)** — each block paints a framed static **preview card** with a "JETONOMY" pill badge, the block title, and an attribute-aware hint that reflects the current settings (`Filtered to space #3`, `7 day window`, `All public spaces`, etc.). No REST calls fire. Dropping a block onto a page is instant; switching between Visual and Code editors does not trigger a network roundtrip. The preview is a mock — what the editor shows is **not** the actual queried data.
+- **Frontend (published page)** — the block's PHP `render_callback` runs against the live database on every request. Output is the same markup the matching `[jetonomy_*]` shortcode produces, with the block's `wp-block-jetonomy-*` wrapper class applied. Output is permission-aware: private spaces, banned authors, and silenced posts are filtered exactly as they would be on a regular community page.
+
+Reason for the split: a live-data preview in the editor would (a) hammer the REST API on every keystroke in the title field, (b) leak permission-gated content to anyone who can edit the post, and (c) require a working REST connection at edit time. The static-card pattern mirrors what core blocks like Latest Posts do at the editor level, with the exception that core's render path can hit `useEntityRecords()` cheaply because the data is already cached client-side.
 
 Each block exposes its settings through Inspector controls in the right sidebar, sized at the WordPress 6.7+ default (40px) with no deprecated bottom margins. The controls map one-to-one to the block attributes documented per block below.
+
+Block inserter visibility was tightened in 1.4.0 — every block now registers an editor-side script (`assets/js/blocks-editor.js`) so all eight blocks appear in the inserter at once. Pre-1.4.0 only Compose Topic was visible because it was the only block carrying its own `editor_script`.
 
 ### `jetonomy/forum-feed`
 
