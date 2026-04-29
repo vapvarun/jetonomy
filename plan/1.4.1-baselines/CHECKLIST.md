@@ -8,7 +8,7 @@
 |-------|---------|--------|----------|-------|
 | A1 | REST audit verdict pass | ✅ DONE | 2026-04-29 | `audit/REST_AUDIT.md` with 18 routes, all verdicts classified |
 | A2 | Manifest schema v2 (auth/cap/ownership) | ✅ DONE | 2026-04-29 | All 64 endpoints updated; discrepancies documented in A2-COMPLETION.md |
-| A3 | REST security fixes | ⏳ IN PROGRESS | — | Fixing routes flagged 🚨 OPEN (none found); verifying rate-limits on auth endpoints |
+| A3 | REST security fixes + access-matrix runner | ✅ DONE | 2026-04-29 | All 4 tasks PASS; runner at `bin/access-matrix-check.sh` (72/72), baseline saved at `plan/1.4.1-baselines/A3/access-matrix-baseline.log` |
 | A4 | POST /moderation/bulk REST endpoint | ⏳ PENDING | — | Additive feature; low risk |
 | A5 | GET /posts/{id}/flags | ⏳ PENDING | — | Mod-only endpoint |
 | A6 | Activity Log admin page | ⏳ PENDING | — | New admin page |
