@@ -160,6 +160,53 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 
 ## Changelog
 
+### 1.4.0 (April 2026)
+
+**For people who run a space**
+- Edit a space from the front end — title, description, cover, icon, type, visibility, join policy, category, posts-per-page, prefixes
+- Create a space from the front end. Pick which WordPress roles can use the form in Settings → Front-end space creation
+- "My Spaces" page lists every space you run + every space you're in
+- Visual icon picker — 16 icons with search and "Show more" for 8 extras
+- Cover image uploader works without the WordPress upload-files permission
+- Role dropdown can't accidentally orphan a space — no self-demote, no last-admin-out
+
+**For members**
+- @mention autocomplete in the composer
+- "New" pill on threads with replies you haven't read
+- "Managed by" sidebar card on every space
+- Admin / Mod pills next to staff names on posts and replies
+- Layout panel (Container Width / Sidebar / Padding) fits Jetonomy to your theme
+
+**Search and sharing**
+- Every public page now ships full search and social cards (title, meta description, canonical, Open Graph, Twitter / X, structured data)
+- Smart fallback share image when a page has no image of its own
+- Pages not meant for search (moderation, search, composer, notifications) excluded automatically
+- Richer structured data — Sitelinks Searchbox on home, Person cards on profiles, Collection indexes on spaces and tags, breadcrumbs everywhere
+- Settings → SEO grew Twitter / X handle, default share image, sitemap link
+- Image alt text fills in automatically on upload
+
+**Sign-in**
+- Login, register, forgot-password — all faster, all in-page (no wp-login.php bounce)
+- Captcha now actually fires on signup when configured
+
+**Polish**
+- In-product confirms and prompts replace browser pop-ups; WCAG 2.1 AA accessible
+- All 8 Jetonomy blocks now visible in the block inserter
+- Shortcodes render styled on any page or page-builder canvas
+- `[jetonomy_widget id="..."]` shortcode embeds any classic widget on any page
+
+**Bug fixes**
+- Category dropdown on Edit Space is no longer empty; "No category" saves correctly
+- Space moderators without a WordPress editor role can again use the inline mod tools
+- Join-request notifications link to the right place per recipient
+- Notifications page no longer auto-marks everything read on render
+- GDPR export contains the user's display name
+- Tags on post cards link to the tag page; tag page paginates instead of capping at 30
+- Share dropdown closes when you scroll
+- Auth rate-limit window doesn't reset on retry
+- Banned users can no longer log in (security)
+- Private-post structured data no longer leaks to anonymous visitors (security)
+
 ### 1.3.8 (April 2026)
 - New: Cross-space moderation dashboard at `/community/mod/` for site admins; per-space moderation queue at `/community/s/:slug/mod/` for space admins and moderators
 - New: Front-end member role management on `/community/s/:slug/members/` so space admins can promote members to moderator or admin without going through wp-admin

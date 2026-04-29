@@ -266,66 +266,65 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.4.0 - April 2026 =
 
-A space-governance and SEO release. Run a space without ever opening wp-admin, find every page in search results, and reach for a polished, native-dialog-free interface throughout.
+Run a community without leaving the front end. Show up in search. Cleaner, accessible interface throughout.
 
-**Front-end space governance**
+**For people who run a space**
 
-* New: Edit a space from the front end at `/community/s/:slug/edit/`. Title, description, cover image, icon, type, visibility, join policy, category, posts-per-page, and topic prefixes are all editable from a single in-community form — no wp-admin trip required.
-* New: Create a space from the front end at `/community/new-space/`. A new admin setting, "Front-end space creation," lets the site owner pick exactly which WordPress roles can use the form (defaults to admin-only).
-* New: "My Spaces" landing at `/community/my-spaces/` for any logged-in member. Two sections — Spaces I run (with quick links to Edit, Mod queue, Members) and Spaces I'm in — so a moderator running half a dozen spaces has a single home.
-* New: "Managed by" sidebar card. Every space page shows the admins and moderators who run it, so a visitor can tell who's in charge without clicking around.
-* New: Role badges next to author names on posts and replies. An "Admin" or "Mod" pill appears beside the avatar when that user is privileged in the post's space. Pills only render in the space the role applies to, so an admin of one space replying in another doesn't carry their badge across.
-* New: Visual Lucide icon picker on both the Create and Edit space forms. 16 curated icons in two rows, an inline search filter, and a "Show more" affordance for an additional 8. No emoji entry, no text input, no broken icon files — what you see is what saves.
-* New: Cover image uploader on the front-end forms goes through Jetonomy's REST media endpoint, so a space admin can upload a banner without holding the WordPress `upload_files` capability.
-* New: Role-change integrity guards on the front-end members page. The role dropdown can no longer accidentally orphan a space: you can't demote yourself while you're the only admin, and the API blocks any change that would leave the space without a single admin. Both client and server enforce the rule, with translated inline error messages.
+* Edit a space from the front end — title, description, cover, icon, type, visibility, join policy, category, posts-per-page, prefixes.
+* Create a space from the front end. Pick which roles can use the form in Settings → Front-end space creation.
+* "My Spaces" page lists every space you run + every space you're in.
+* Visual icon picker — 16 icons with search and "Show more" for 8 extras.
+* Cover image uploader works without the WordPress upload-files permission.
+* Role dropdown can't accidentally orphan a space — no self-demote, no last-admin-out.
 
-**Discussion polish**
+**For members**
 
-* New: `@mention` autocomplete in the post and reply composer. Type `@` followed by a few letters and a dropdown lists matching members; pick one with the arrow keys + Enter, or click. Suggestions are scoped to members of the current space when you're posting inside one.
-* New: "New" pill on post cards. When a thread has replies you haven't seen since your last visit, the post card shows a small accent pill so unread activity is visible at a glance. Bulk-loaded in a single query — no N+1 even on a busy space view.
-* New: Layout panel under Settings → Appearance. Three controls — Container Width, Theme Sidebar, Padding — let a site owner fit Jetonomy to whatever theme they're running, with a Theme Default option that emits zero rules so existing installs see no behavior change.
+* @mention autocomplete in the composer.
+* "New" pill on threads with replies you haven't read.
+* "Managed by" sidebar card on every space.
+* Admin / Mod pills next to staff names on posts and replies.
+* Layout panel fits Jetonomy to your theme — Container Width, Sidebar, Padding.
 
-**SEO**
+**Search and sharing**
 
-* New: Every public route emits a complete SEO baseline — title, meta description, canonical URL, Open Graph card, Twitter card, and structured data. Before 1.4.0, only single-thread pages had this; home, profile, leaderboard, search, tag, and space pages were silent to crawlers. Now your community can be found.
-* New: og:image fallback chain. When a route has no inline image, the card image falls back to the space cover, then the site's custom logo, then the site icon. Every og:image carries an og:image:alt for accessibility.
-* New: noindex on thin pages. Moderation queues, search results, composer pages, notifications, edit-profile, and invite landing pages now emit `noindex, follow`, so they never compete with the canonical pages in search results.
-* New: Richer JSON-LD. The home page emits WebSite + SearchAction (Sitelinks Searchbox eligibility); profiles emit Person with avatar, bio, and social links; spaces and tag pages emit CollectionPage with an ItemList of recent threads; breadcrumb schema covers every public route. Schema emission now defaults to ON.
-* New: Settings → SEO grew Twitter / X handle, default share image, sitemap verify link, and a notes panel covering the always-on noindex rules.
-* New: Image alt text is written automatically on every uploaded image. An explicit alt always wins; otherwise a readable default is synthesized from the filename, so accessibility doesn't slip when a moderator uploads in a hurry.
+* Every public page now has full search and social cards.
+* Smart fallback share image when a page has no image of its own.
+* Pages that shouldn't show in search (moderation, search, composer, notifications) are excluded automatically.
+* Richer structured data — Sitelinks Searchbox on home, Person cards on profiles, Collection indexes on spaces and tags, breadcrumbs everywhere.
+* Settings → SEO grew Twitter / X handle, default share image, sitemap link.
+* Image alt text fills in automatically on upload.
 
-**Login + auth**
+**Sign-in**
 
-* New: Login, register, and forgot-password all run through Jetonomy's REST API now. The Login block submits to a clean `/jetonomy/v1/auth/*` endpoint, the forgot-password flow stays inside the in-product panel instead of jumping to wp-login.php, and account-enumeration prevention returns the same generic success whether the username exists or not.
-* New: Captcha verification is now wired into the registration path. Sites that have reCAPTCHA v3 or Turnstile configured will see the gate fire on every signup; sites without captcha continue to register users normally.
+* Login, register, forgot-password — all faster, all in-page (no wp-login.php bounce).
+* Captcha now actually fires on signup when configured.
 
-**Modal toolkit**
+**Polish**
 
-* New: A shared in-product confirm/alert/prompt toolkit (window.jetonomyConfirm / Alert / Prompt). Replaces every browser-native dialog the plugin used to call. The dialogs are themeable via the same `--jt-*` tokens, return Promises, and respect the rest of the UI.
-* New: Dialogs ship with full WCAG 2.1 AA support — `role="dialog"`, `aria-modal="true"`, `aria-labelledby` and `aria-describedby` wired to live ids, focus trap on Tab and Shift+Tab, body scroll-lock while open, and focus restoration when the dialog closes.
+* In-product confirms and prompts replace browser pop-ups. Accessible (WCAG 2.1 AA).
+* All 8 Jetonomy blocks now visible in the block inserter.
+* Shortcodes render styled on any page or page-builder canvas.
 
 **Bug fixes**
 
-* Fixed: The Category dropdown on the front-end edit space form is no longer empty, and selecting "No category" no longer errors with "Invalid parameter(s): category_id."
-* Fixed: Space mods who don't have the WP "editor" capability can again use the inline edit, pin, move, merge, and delete tools on posts and replies. Before 1.4.0 the gate looked at WP capabilities only, which hid the tools from a moderator the space admin had just promoted.
-* Fixed: Join-request notification action links no longer 403 for space admins without WP-admin caps. The link now points at the space's front-end mod queue when the recipient lacks wp-admin access, and to the wp-admin spaces tab when they have it.
-* Fixed: The notifications page no longer auto-marks-everything-read on render. It shows what's unread, with a "Mark all as read" button that only appears when there's something to mark and removes the unread dots in place when clicked.
-* Fixed: GDPR personal-data export now contains the user's display name. Pre-1.4.0 the export field was always empty because it read from the wrong table.
-* Fixed: Tags on post cards are now real links to the tag page, not inert spans. The post card markup was refactored to a stretched-link pattern so the row stays clickable while the inner tag links still navigate.
-* Fixed: The tag page no longer silently caps at 30 posts. Popular tags now paginate with a Previous / Next nav, accessible labels, and rel="prev"/"next" for SEO.
-* Fixed: Auth rate-limit windows used to reset on every retry inside the window. They now correctly count down from the first attempt, so a brute-force attempt cannot reset the timer by trying again.
-* Fixed: SEO title patterns no longer double up the site name on routes whose pattern already includes a separator.
-* Fixed: Private-post JSON-LD no longer leaks to anonymous visitors. The structured-data emit now respects the same read permission as the page itself.
-* Fixed: A range of Block inserter and standalone shortcode rendering issues — every Jetonomy block is now visible in the editor and every shortcode renders styled on any page or page-builder canvas.
-* Security: Banned users can no longer log in. A new authentication filter rejects the login attempt with a clear message instead of letting the user re-establish a session via stale cookies.
+* Category dropdown on Edit Space is no longer empty; "No category" saves correctly.
+* Space moderators without a WordPress editor role can again use the inline mod tools.
+* Join-request notifications link to the right place per recipient.
+* Notifications page no longer auto-marks everything read on render.
+* GDPR export contains the user's display name.
+* Tags on post cards link to the tag page; tag page paginates instead of capping at 30.
+* Share dropdown closes when you scroll.
+* Auth rate-limit window doesn't reset on retry.
+* Banned users can no longer log in (security).
+* Private-post structured data no longer leaks to anonymous visitors (security).
 
-**Developer notes**
+**For developers**
 
-* New: `[jetonomy_widget id="..."]` shortcode wraps `the_widget()`, so all four registered Jetonomy widgets can be embedded in any page or page-builder canvas without dropping into the Customizer.
-* New: `jetonomy_seo_meta` filter exposes the entire SEO emission payload (title, description, canonical, og:*, twitter:*, robots, article:*) before it lands in the page head, for themes and Pro extensions that want to tweak any value.
-* New: `jetonomy_use_frontend_space_edit` filter lets you swap the "Edit space" link target between the front-end form and the wp-admin screen.
-* New: REST endpoints for every front-end mutation. The whole release was built REST-first, so a third-party plugin, a mobile client, or WP-CLI can drive every space-governance flow without scraping HTML or going through admin-ajax. Endpoint inventory: `POST /jetonomy/v1/media`, `POST /jetonomy/v1/auth/{login,register,lost-password}`, `GET /jetonomy/v1/spaces/{id}/privileged-members`, `GET /jetonomy/v1/users/suggest`.
-* New: A Phase D SEO plan (docs/plans/v1.4.0.md) and a 45-minute browser QA checklist (docs/qa/v1.4.0-browser-checklist.md) ship with the plugin so a tester can walk every release surface in isolation. A `bin/seed-qa-pages.php` helper upserts dedicated test pages for each shortcode, block, and widget.
+* `[jetonomy_widget id="..."]` shortcode embeds any widget on any page.
+* `jetonomy_seo_meta` filter to tweak the entire SEO payload.
+* `jetonomy_use_frontend_space_edit` filter to swap Edit Space target.
+* New REST endpoints: `POST /media`, `POST /auth/{login,register,lost-password}`, `GET /spaces/{id}/privileged-members`, `GET /users/suggest`.
+* Browser QA checklist + Phase D SEO plan ship with the plugin.
 
 = 1.3.8 - April 2026 =
 
