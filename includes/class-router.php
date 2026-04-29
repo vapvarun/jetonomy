@@ -71,6 +71,17 @@ class Router {
 		// My spaces (G7) — landing for "Spaces I run" + "Spaces I'm in"
 		add_rewrite_rule( "^{$base}/my-spaces/?$", 'index.php?jetonomy_route=my-spaces', 'top' );
 
+		// My drafts (1.4.1 A9) — top-level standalone view, current user's drafts.
+		// Distinct from /u/:slug/drafts/ on the profile page; this URL is the
+		// canonical "go to my drafts" entry point that can be linked from header
+		// menus, emails, etc., without needing to know the user's login slug.
+		add_rewrite_rule( "^{$base}/drafts/?$", 'index.php?jetonomy_route=drafts', 'top' );
+
+		// My bookmarks (1.4.1 A9) — top-level standalone view, current user's
+		// bookmarks. Same rationale as /drafts/ above — canonical login-agnostic
+		// entry point for the current user's bookmark list.
+		add_rewrite_rule( "^{$base}/bookmarks/?$", 'index.php?jetonomy_route=bookmarks', 'top' );
+
 		// Front-end create space (G6) — gated by admin toggle + trust level
 		add_rewrite_rule( "^{$base}/new-space/?$", 'index.php?jetonomy_route=new-space', 'top' );
 

@@ -37,7 +37,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
@@ -116,6 +116,8 @@ class Template_Loader {
 			'my-spaces'        => 'views/my-spaces.php',
 			'new-space'        => 'views/new-space.php',
 			'edit-space'       => 'views/space-edit.php',
+			'drafts'           => 'views/drafts.php',
+			'bookmarks'        => 'views/bookmarks.php',
 		);
 
 		/**
@@ -576,6 +578,12 @@ class Template_Loader {
 					case 'edit-space':
 						$parts['title'] = __( 'Edit space', 'jetonomy' );
 						break;
+					case 'drafts':
+						$parts['title'] = __( 'My drafts', 'jetonomy' );
+						break;
+					case 'bookmarks':
+						$parts['title'] = __( 'My bookmarks', 'jetonomy' );
+						break;
 				}
 				return $parts;
 			}
@@ -824,6 +832,20 @@ class Template_Loader {
 						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in editor view.
+						break;
+					case 'drafts':
+						$title     = __( 'My drafts', 'jetonomy' );
+						$desc      = __( 'Your saved drafts on the community.', 'jetonomy' );
+						$url       = $base . '/drafts/';
+						$image_alt = $site_name;
+						$noindex   = true; // Personal logged-in view.
+						break;
+					case 'bookmarks':
+						$title     = __( 'My bookmarks', 'jetonomy' );
+						$desc      = __( 'Posts you have bookmarked on the community.', 'jetonomy' );
+						$url       = $base . '/bookmarks/';
+						$image_alt = $site_name;
+						$noindex   = true; // Personal logged-in view.
 						break;
 				}
 
