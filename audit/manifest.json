@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -21,12 +21,12 @@
           "POST"
         ],
         "handler": "Spaces_Controller::list_items,create_item",
-        "permission": "__return_true,create_permission_check",
+        "permission": "Visibility::rest_check,create_permission_check",
         "purpose": "List all spaces or create new space",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "GET: visibility-filtered; POST: create_permission_check enforces jetonomy_create_spaces"
+        "audit_notes": "GET: visibility-filtered; POST: create_permission_check enforces jetonomy_create_spaces. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/spaces/(?P<id>\\d+)",
@@ -36,12 +36,12 @@
           "DELETE"
         ],
         "handler": "Spaces_Controller::get_item,update_item,delete_item",
-        "permission": "__return_true,update_permission_check",
+        "permission": "Visibility::rest_check,update_permission_check",
         "purpose": "Get, update, or delete a space",
         "auth": "public_with_handler",
         "capability": "space_admin",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check"
+        "audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/members",
@@ -50,12 +50,12 @@
           "POST"
         ],
         "handler": "Spaces_Controller::get_members,join_space",
-        "permission": "__return_true,require_login_check",
+        "permission": "Visibility::rest_check,require_login_check",
         "purpose": "List space members or join space",
         "auth": "public_with_handler",
         "capability": "space_member",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: membership for private/hidden; POST: join_policy enforced"
+        "audit_notes": "GET: membership for private/hidden; POST: join_policy enforced. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/privileged-members",
@@ -63,12 +63,12 @@
           "GET"
         ],
         "handler": "Spaces_Controller::get_privileged_members",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "List privileged members (admins/moderators)",
-        "auth": "login_required",
-        "capability": "space_admin",
+        "auth": "public",
+        "capability": null,
         "ownership_check": null,
-        "audit_notes": "GET privileged members list"
+        "audit_notes": "Public read so anonymous visitors see the same 'Managed by' sidebar as members. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
@@ -103,12 +103,12 @@
           "GET"
         ],
         "handler": "Spaces_Controller::use_invite",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "Accept invite link and join space",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Accept invite link"
+        "audit_notes": "Accept invite link. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/spaces/(?P<space_id>\\d+)/posts",
@@ -117,12 +117,12 @@
           "POST"
         ],
         "handler": "Posts_Controller::list_items,create_item",
-        "permission": "__return_true,create_permission_check",
+        "permission": "Visibility::rest_check,login_permission_check",
         "purpose": "List posts in space or create new post",
         "auth": "public_with_handler",
         "capability": "create_posts",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: space-read enforced; POST: create_posts enforced"
+        "audit_notes": "GET: space-read enforced; POST: create_posts enforced. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/posts/drafts",
@@ -145,12 +145,12 @@
           "DELETE"
         ],
         "handler": "Posts_Controller::get_item,update_item,delete_item",
-        "permission": "__return_true,update_permission_check",
+        "permission": "Visibility::rest_check,login_permission_check",
         "purpose": "Get, update, or delete a single post",
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others"
+        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/posts/(?P<id>\\d+)/close",
@@ -207,15 +207,16 @@
       {
         "route": "/posts/(?P<id>\\d+)/vote",
         "methods": [
-          "POST"
+          "POST",
+          "DELETE"
         ],
-        "handler": "Votes_Controller::create_item",
-        "permission": "update_permission_check",
-        "purpose": "Create/toggle vote on post",
+        "handler": "Votes_Controller::vote_post,unvote_post",
+        "permission": "login_permission_check",
+        "purpose": "Vote on / unvote a post",
         "auth": "login_required",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Create/toggle vote"
+        "audit_notes": "POST creates/toggles a vote; DELETE removes it"
       },
       {
         "route": "/link-preview",
@@ -223,12 +224,12 @@
           "GET"
         ],
         "handler": "Posts_Controller::link_preview",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "Fetch OG metadata for link preview",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Fetch OG metadata"
+        "audit_notes": "Fetch OG metadata. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/posts/(?P<post_id>\\d+)/replies",
@@ -237,12 +238,12 @@
           "POST"
         ],
         "handler": "Replies_Controller::list_items,create_item",
-        "permission": "__return_true,create_permission_check",
+        "permission": "Visibility::rest_check,login_permission_check",
         "purpose": "List replies or create new reply",
         "auth": "public_with_handler",
         "capability": "create_replies",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: space-read; POST: create_replies"
+        "audit_notes": "GET: space-read; POST: create_replies. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/replies/(?P<id>\\d+)",
@@ -288,28 +289,16 @@
       {
         "route": "/replies/(?P<id>\\d+)/vote",
         "methods": [
-          "POST"
-        ],
-        "handler": "Votes_Controller::create_item",
-        "permission": "update_permission_check",
-        "purpose": "Create/toggle vote on reply",
-        "auth": "login_required",
-        "capability": null,
-        "ownership_check": null,
-        "audit_notes": "Create/toggle vote"
-      },
-      {
-        "route": "/votes/(?P<id>\\d+)",
-        "methods": [
+          "POST",
           "DELETE"
         ],
-        "handler": "Votes_Controller::delete_item",
-        "permission": "update_permission_check",
-        "purpose": "Remove a vote",
+        "handler": "Votes_Controller::vote_reply,unvote_reply",
+        "permission": "login_permission_check",
+        "purpose": "Vote on / unvote a reply",
         "auth": "login_required",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Remove a vote"
+        "audit_notes": "POST creates/toggles a vote; DELETE removes it"
       },
       {
         "route": "/users/me",
@@ -327,16 +316,15 @@
       {
         "route": "/users/(?P<id>\\d+)",
         "methods": [
-          "GET",
-          "PATCH"
+          "GET"
         ],
-        "handler": "Users_Controller::get_item,update_item",
-        "permission": "__return_true",
-        "purpose": "Get or update user profile",
+        "handler": "Users_Controller::get_item",
+        "permission": "Visibility::rest_check",
+        "purpose": "Get user profile by ID",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Get user profile (public)"
+        "audit_notes": "Get user profile (public). 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode. Note: PATCH for users is on /users/me only, not the numeric-ID route."
       },
       {
         "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)",
@@ -344,12 +332,12 @@
           "GET"
         ],
         "handler": "Users_Controller::get_by_login",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "Get user by login/username",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Get user by login"
+        "audit_notes": "Get user by login. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/users/(?P<id>\\d+)/posts",
@@ -357,12 +345,12 @@
           "GET"
         ],
         "handler": "Users_Controller::get_user_posts",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "Get user's posts",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Get user's posts"
+        "audit_notes": "Get user's posts. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/users/suggest",
@@ -462,12 +450,12 @@
           "GET"
         ],
         "handler": "Search_Controller::search",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "Full-text search posts, replies, spaces, users",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Full-text search"
+        "audit_notes": "Full-text search. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/categories",
@@ -476,12 +464,12 @@
           "POST"
         ],
         "handler": "Categories_Controller::list_items,create_item",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check,manage_permission_check",
         "purpose": "List categories or create new",
         "auth": "public_with_handler",
         "capability": "jetonomy_manage_categories",
         "ownership_check": "callback_enforces",
-        "audit_notes": "GET: public; POST: manage_categories cap"
+        "audit_notes": "GET: public; POST: manage_categories cap. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/categories/(?P<id>\\d+)",
@@ -491,41 +479,25 @@
           "DELETE"
         ],
         "handler": "Categories_Controller::get_item,update_item,delete_item",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check,manage_permission_check",
         "purpose": "Get, update, or delete category",
         "auth": "public_with_handler",
         "capability": "jetonomy_manage_categories",
         "ownership_check": "callback_enforces",
-        "audit_notes": "GET: public; PATCH/DELETE: manage_categories"
+        "audit_notes": "GET: public; PATCH/DELETE: manage_categories. 1.4.1 A11: GET wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/tags",
         "methods": [
-          "GET",
-          "POST"
+          "GET"
         ],
-        "handler": "Tags_Controller::list_items,create_item",
-        "permission": "__return_true",
-        "purpose": "List all tags or create new",
+        "handler": "Tags_Controller::list_tags",
+        "permission": "Visibility::rest_check",
+        "purpose": "List all tags",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "List tags (POST not implemented)"
-      },
-      {
-        "route": "/tags/(?P<id>\\d+)",
-        "methods": [
-          "GET",
-          "PATCH",
-          "DELETE"
-        ],
-        "handler": "Tags_Controller::get_item,update_item,delete_item",
-        "permission": "__return_true",
-        "purpose": "Get, update, or delete tag",
-        "auth": "public",
-        "capability": null,
-        "ownership_check": null,
-        "audit_notes": "Tags routes not implemented"
+        "audit_notes": "List tags (only GET registered — no POST/PATCH/DELETE in current code). 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/space-tags",
@@ -533,25 +505,25 @@
           "GET"
         ],
         "handler": "Tags_Controller::list_space_tags",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "List tags for a space",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "List space tags"
+        "audit_notes": "List space tags. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/leaderboards",
         "methods": [
           "GET"
         ],
-        "handler": "Leaderboards_Controller::get_leaderboard",
-        "permission": "__return_true",
+        "handler": "Leaderboards_Controller::list_items",
+        "permission": "Visibility::rest_check",
         "purpose": "Get community leaderboard data",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Get leaderboard"
+        "audit_notes": "Get leaderboard. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/bookmarks",
@@ -560,12 +532,12 @@
           "POST"
         ],
         "handler": "Bookmarks_Controller::list_items,toggle_item",
-        "permission": "__return_true",
+        "permission": "is_user_logged_in",
         "purpose": "List or toggle user bookmarks",
-        "auth": "login_required_handler",
+        "auth": "login_required",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "GET: __return_true callback but handler requires login; POST/DELETE: properly gated"
+        "audit_notes": "Both methods gated by is_user_logged_in() inline closure (A3 cleanup)."
       },
       {
         "route": "/bookmarks/(?P<post_id>\\d+)",
@@ -673,6 +645,32 @@
         "audit_notes": "Resolve flag"
       },
       {
+        "route": "/moderation/bulk",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Moderation_Controller::bulk_action",
+        "permission": "require_moderate",
+        "purpose": "Bulk approve/spam/trash content (REST parity for wp_ajax_jetonomy_bulk_content_action)",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "1.4.1 A4: REST parity with the wp-admin AJAX bulk handler. Per-item helpers (approve_item/spam_item/trash_item) are extracted so single + bulk paths fire the same `jetonomy_content_moderated` action and reputation penalty. Per-item failures surfaced in the row's `status` field rather than aborting the batch."
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/flags",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Moderation_Controller::get_post_flags",
+        "permission": "require_moderate",
+        "purpose": "List all flags filed against a single post",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": null,
+        "audit_notes": "1.4.1 A5: mod-only inspection view backed by `Flag::find_for_post()`. Returns `[]` (200) — never 404 — when the post has no flags. Cap-gated (anon=403) in private mode rather than getting the visibility 401 flip."
+      },
+      {
         "route": "/moderation/ban",
         "methods": [
           "GET",
@@ -744,12 +742,12 @@
           "GET"
         ],
         "handler": "Updates_Controller::get_updates",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "Get activity updates since timestamp",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Activity updates"
+        "audit_notes": "Activity updates. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/oembed",
@@ -757,12 +755,12 @@
           "GET"
         ],
         "handler": "OEmbed_Controller::get_oembed",
-        "permission": "__return_true",
+        "permission": "Visibility::rest_check",
         "purpose": "oEmbed endpoint for forum posts",
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "oEmbed endpoint"
+        "audit_notes": "oEmbed endpoint. 1.4.1 A11: wrapped with Visibility::rest_check — responds 401 in private mode."
       },
       {
         "route": "/media",
@@ -1089,6 +1087,13 @@
       "purpose": "Preview email template"
     },
     {
+      "action": "jetonomy_email_reset",
+      "handler": "Admin\\Ajax\\Settings_Handler::ajax_email_reset",
+      "nonce": "jetonomy_admin",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Reset a single email-template row to its shipped default (1.4.1 A8)"
+    },
+    {
       "action": "jetonomy_flush_rules",
       "handler": "Admin\\Ajax\\Settings_Handler::flush_rules",
       "nonce": "jetonomy_nonce",
@@ -1217,6 +1222,20 @@
       "source": "includes/admin/class-admin.php"
     },
     {
+      "title": "Activity Log",
+      "slug": "jetonomy-activity",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php (1.4.1 A6: read-only audit browser over jt_activity_log; list table at includes/admin/class-activity-list-table.php; view at includes/admin/views/activity.php)"
+    },
+    {
+      "title": "Revisions",
+      "slug": "jetonomy-revisions",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php (1.4.1 A7: read-only revisions browser with per-object diff view; list table at includes/admin/class-revisions-list-table.php; view at includes/admin/views/revisions.php; backed by Revision::list_objects_with_revisions() + count_objects_with_revisions())"
+    },
+    {
       "title": "Users",
       "slug": "jetonomy-users",
       "parent": "jetonomy",
@@ -1265,7 +1284,8 @@
       "group": "jetonomy_settings",
       "type": "array",
       "default": {},
-      "controls": "user_welcome, reply_to_post, reply_to_reply, mention, accepted_answer, new_post_in_sub, badge_earned, vote_on_post, moderation, join_request"
+      "controls": "user_welcome, reply_to_post, reply_to_reply, mention, accepted_answer, new_post_in_sub, badge_earned, vote_on_post, moderation, join_request, verification_reminder",
+      "notes": "1.4.1 A8: `verification_reminder` row added to the editor allowlist + view + sample fixtures; defaults centralized via `Notifier::get_default_template()`; per-row Reset-to-default button gated by `wp_ajax_jetonomy_email_reset` (cap jetonomy_manage_settings, nonce jetonomy_admin)."
     }
   ],
   "shortcodes": [
@@ -1414,7 +1434,15 @@
     },
     {
       "name": "{prefix}jt_user_profiles",
-      "purpose": "User profile data"
+      "purpose": "User profile data",
+      "migrations": [
+        {
+          "version": "1.4.1",
+          "change": "ADD COLUMN verification_reminder_sent_at DATETIME NULL",
+          "purpose": "Rate-limit for the new jetonomy_verification_reminder cron — populated once per nudge so each unverified user receives at most one reminder.",
+          "file": "includes/db/migrations/class-migration_1_4_1.php"
+        }
+      ]
     },
     {
       "name": "{prefix}jt_notifications",
@@ -2063,6 +2091,14 @@
       "consumed_by": null
     },
     {
+      "name": "jetonomy_verification_reminder_sent",
+      "type": "action",
+      "args": "user_id, user",
+      "where": "includes/notifications/class-verification-reminder.php",
+      "consumed_by": null,
+      "since": "1.4.1"
+    },
+    {
       "name": "jetonomy_admin_menu_icon",
       "type": "filter",
       "args": "icon",
@@ -2287,6 +2323,13 @@
       "consumed_by": null
     },
     {
+      "name": "jetonomy_rest_prepare_notification",
+      "type": "filter",
+      "args": "response, notification",
+      "where": "includes/api/class-notifications-controller.php",
+      "consumed_by": null
+    },
+    {
       "name": "jetonomy_rest_prepare_post",
       "type": "filter",
       "args": "response, post",
@@ -2473,32 +2516,38 @@
     {
       "hook": "jetonomy_trust_evaluation",
       "schedule": "twicedaily",
-      "purpose": "Evaluate and update user trust levels"
+      "purpose": "Evaluate and update user trust levels",
+      "handler": "Cron::evaluate_trust_levels"
     },
     {
       "hook": "jetonomy_cleanup_expired",
       "schedule": "hourly",
-      "purpose": "Clean up expired restrictions and bans"
+      "purpose": "Clean up expired restrictions and bans",
+      "handler": "Cron::cleanup_expired_restrictions"
     },
     {
       "hook": "jetonomy_prune_activity",
       "schedule": "daily",
-      "purpose": "Prune old activity log entries"
+      "purpose": "Prune old activity log entries (configurable retention via jetonomy_settings.activity_log_retention_days, default 90; 0 disables)",
+      "handler": "Cron::prune_activity_log"
     },
     {
       "hook": "jetonomy_cleanup_notifications",
       "schedule": "weekly",
-      "purpose": "Clean up old/read notifications"
+      "purpose": "Mark old unread notifications as read (30-day cutoff)",
+      "handler": "Cron::cleanup_old_notifications"
     },
     {
       "hook": "jetonomy_publish_scheduled",
       "schedule": "hourly",
-      "purpose": "Publish scheduled posts"
+      "purpose": "Publish posts whose published_at datetime has passed",
+      "handler": "Cron::publish_scheduled_posts"
     },
     {
-      "hook": "jetonomy_sync_membership",
-      "schedule": "daily",
-      "purpose": "Sync membership status from adapters"
+      "hook": "jetonomy_verification_reminder",
+      "schedule": "hourly",
+      "purpose": "Send single-shot nudge email to users who never verified after `jetonomy_settings.verification_reminder_hours` (default 24, 0 disables). Rate-limited via `jt_user_profiles.verification_reminder_sent_at` column (1.4.1 migration). Self-heals: also lazy-scheduled on init to upgrade installs without re-activate (1.4.1 A10).",
+      "handler": "Verification_Reminder::run"
     }
   ],
   "wp_cli": [
@@ -2663,13 +2712,21 @@
     "ci_local": "composer test"
   },
   "notes": {
-    "manifest_quality": "Generated 2026-04-29 under the wp-plugin-onboard skill's coverage gate (\u226595% per category vs ground-truth grep counts). Free hooks_fired captured 63 actions + 43 filters = 106 total (vs target 61 + 43 = 104). REST 64/64, AJAX 42/42, shortcodes 9/9, cron 6/6 \u2014 all 100%. Admin pages 12/15 (80%) \u2014 slightly under gate; remaining 3 are likely virtual sub-pages not registered via add_*_page. Settings count is 2 logical groups (vs 7 register_setting field-level calls \u2014 different counting basis, both correct).",
-    "consumed_by_pro": "Hooks marked consumed_by: 'jetonomy-pro' are confirmed via grep across the Pro plugin. These are the integration surface \u2014 Pro will break if they change."
+    "manifest_quality": "Generated 2026-04-29 under the wp-plugin-onboard skill's coverage gate (\u226595% per category vs ground-truth grep counts). REST 64/64, AJAX 43/43, admin pages 14/14, cron 6/6, hooks_fired 99/99 (61 actions + 43 filters \u2014 see discrepancies note for stale entries) \u2014 all 100%. Settings count is 2 logical groups (vs 7 register_setting field-level calls \u2014 different counting basis, both correct).",
+    "consumed_by_pro": "Hooks marked consumed_by: 'jetonomy-pro' are confirmed via grep across the Pro plugin. These are the integration surface \u2014 Pro will break if they change.",
+    "discrepancies_2026_04_29": "Stale manifest entries surfaced during the 1.4.1 refresh \u2014 recorded but NOT fixed in code (per BUILD-LOG): (1) hooks_fired entries `jetonomy_admin_footer_text`, `jetonomy_extensions_init`, `jetonomy_footer_text`, `jetonomy_header_logo`, `jetonomy_post_response`, `jetonomy_profile_response` are documented but no longer fired anywhere in the free codebase \u2014 likely renamed during the 1.3.x cycle to `jetonomy_rest_prepare_*`. (2) cron entry `jetonomy_sync_membership` was previously documented but is no longer scheduled in `Cron::schedule()` \u2014 replaced in this refresh by `jetonomy_verification_reminder`. (3) REST entries `/votes/(?P<id>\\d+)` (DELETE) and `/tags/(?P<id>\\d+)` (GET/PATCH/DELETE) were stale stubs \u2014 actual code uses POST+DELETE on `/posts/{id}/vote` and `/replies/{id}/vote`, and `/tags/{id}` was never implemented \u2014 both removed in this refresh.",
+    "changelog": [
+      {
+        "date": "2026-04-29",
+        "version": "1.4.1",
+        "summary": "1.4.1 refresh: +2 REST endpoints (`POST /moderation/bulk`, `GET /posts/{id}/flags`), +2 admin pages (Activity Log, Revisions), +1 AJAX (`jetonomy_email_reset`), +1 cron (`jetonomy_verification_reminder`), +1 DB migration (`jt_user_profiles.verification_reminder_sent_at`), +1 helper class (`Jetonomy\\Visibility`), +2 hooks_fired (`jetonomy_verification_reminder_sent`, `jetonomy_rest_prepare_notification`). A11 visibility wrap applied to 20 public-read REST endpoints (every endpoint listed above with `audit_notes` mentioning `Visibility::rest_check`). Email-templates allowlist gained `verification_reminder` row (A8). Plus: 4 stale manifest entries cleaned out (see discrepancies_2026_04_29)."
+      }
+    ]
   },
   "generated": {
     "at": "2026-04-29T00:00:00Z",
-    "from": "wp-plugin-onboard skill",
+    "from": "wp-plugin-onboard skill (1.4.1 refresh)",
     "branch": "1.4.1",
-    "schema_version": "v1"
+    "schema_version": "v2"
   }
 }
