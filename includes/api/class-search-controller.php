@@ -30,7 +30,7 @@ class Search_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'search' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
 					'q'         => [
 						'type'              => 'string',

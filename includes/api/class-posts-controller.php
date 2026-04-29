@@ -37,7 +37,7 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'list_items' ),
-					'permission_callback' => '__return_true',
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 					'args'                => array_merge(
 						$this->get_collection_params(),
 						array(
@@ -87,7 +87,7 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => '__return_true',
+					'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 				),
 				array(
 					'methods'             => 'PATCH',
@@ -171,7 +171,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'link_preview' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 				'args'                => array(
 					'url' => array(
 						'type'              => 'string',

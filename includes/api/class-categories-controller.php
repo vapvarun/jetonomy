@@ -32,7 +32,7 @@ class Categories_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'list_items' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
@@ -50,7 +50,7 @@ class Categories_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				],
 				[
 					'methods'             => 'PATCH',

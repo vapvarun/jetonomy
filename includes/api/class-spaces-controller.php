@@ -47,7 +47,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'list_items' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 					'args'                => $this->get_list_args(),
 				],
 				[
@@ -67,7 +67,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				],
 				[
 					'methods'             => 'PATCH',
@@ -91,7 +91,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_members' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
@@ -113,7 +113,7 @@ class Spaces_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_privileged_members' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
 					'limit' => [
 						'type'    => 'integer',
@@ -153,7 +153,7 @@ class Spaces_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'use_invite' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 			]
 		);
 
