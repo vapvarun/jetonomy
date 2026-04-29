@@ -15,3 +15,4 @@ docs/qa/.last-smoke-pass-free.json
 docs/qa/.last-smoke-pass-pro.json
 docs/qa/.debug-log-*.txt
 docs/qa/fail-*.png
+.claude-tmp/

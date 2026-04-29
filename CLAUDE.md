@@ -1,6 +1,6 @@
 # Jetonomy — WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 52 REST endpoints, 23 tables, 23 capabilities, 8 blocks, 8 shortcodes, 7 WP-CLI commands, 5 cron hooks. Use this before grepping. See also [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md) and [`audit/journeys.json`](audit/journeys.json). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 64 REST endpoints, 42 AJAX handlers, 102 hooks fired (59 actions + 43 filters), 23 tables, 23 capabilities, 8 blocks, 9 shortcodes, 14 WP-CLI commands, 6 cron hooks, 12 admin pages. Use this before grepping. See also [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md) and [`audit/journeys.json`](audit/journeys.json). Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
 
 ## Build Rule (enforced)
 
