@@ -501,6 +501,11 @@ parameters:
 			path: includes/db/migrations/class-migration_1_2_3.php
 
 		-
+			message: "#^Constant DB_NAME not found\\.$#"
+			count: 1
+			path: includes/db/migrations/class-migration_1_4_1.php
+
+		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
 			count: 2
 			path: includes/integrations/class-buddypress.php
