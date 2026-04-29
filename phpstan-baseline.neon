@@ -12,7 +12,7 @@ parameters:
 
 		-
 			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 13
+			count: 14
 			path: includes/admin/class-admin.php
 
 		-
