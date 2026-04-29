@@ -25,8 +25,13 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
+		// A6: intercepts the CSV export request before any output is sent so
+		// the download streams cleanly without admin-header HTML interleaving.
+		add_action( 'admin_init', array( $this, 'maybe_export_activity_csv' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
+		// A6: persist the per-page screen option for the Activity Log table.
+		add_filter( 'set-screen-option', array( $this, 'save_activity_screen_option' ), 10, 3 );
 
 		new Ajax\Categories_Handler();
 		new Ajax\Tags_Handler();
@@ -108,6 +113,23 @@ class Admin {
 			'jetonomy-moderation',
 			array( $this, 'render_moderation' )
 		);
+
+		// ── A6: Activity Log ──
+		// Sits between Content and Users in the sidebar — read-only audit
+		// browser over jt_activity_log. Capability matches every other
+		// non-mod admin page so existing settings admins can use it without
+		// any cap migration.
+		$activity_hook = add_submenu_page(
+			'jetonomy',
+			__( 'Activity Log', 'jetonomy' ),
+			__( 'Activity Log', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-activity',
+			array( $this, 'render_activity' )
+		);
+		if ( $activity_hook ) {
+			add_action( "load-{$activity_hook}", array( $this, 'on_activity_load' ) );
+		}
 
 		add_submenu_page(
 			'jetonomy',
@@ -784,6 +806,147 @@ class Admin {
 		) ?: array();
 
 		include JETONOMY_DIR . 'includes/admin/views/moderation.php';
+	}
+
+	// ── A6: Activity Log ──
+
+	/**
+	 * load-* hook for the Activity Log screen — registers the per-page
+	 * screen option BEFORE prepare_items() runs so admins can pick a
+	 * non-default page size without their preference being ignored.
+	 */
+	public function on_activity_load(): void {
+		add_screen_option(
+			'per_page',
+			array(
+				'label'   => __( 'Entries per page', 'jetonomy' ),
+				'default' => 20,
+				'option'  => 'jetonomy_activity_per_page',
+			)
+		);
+	}
+
+	/**
+	 * Persist the screen-option value when the user saves it. WP only
+	 * applies returned non-false values, so a defensive cast keeps the
+	 * stored value within sane bounds.
+	 *
+	 * @param mixed  $status Current return value from earlier filters.
+	 * @param string $option Option key being saved.
+	 * @param mixed  $value  Submitted value.
+	 */
+	public function save_activity_screen_option( $status, $option, $value ) {
+		if ( 'jetonomy_activity_per_page' === $option ) {
+			$value = absint( $value );
+			if ( $value < 1 || $value > 200 ) {
+				$value = 20;
+			}
+			return $value;
+		}
+		return $status;
+	}
+
+	/**
+	 * Render the Activity Log admin page.
+	 */
+	public function render_activity(): void {
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'jetonomy' ) );
+		}
+
+		$list_table = new Activity_List_Table();
+		$list_table->prepare_items();
+
+		include JETONOMY_DIR . 'includes/admin/views/activity.php';
+	}
+
+	/**
+	 * Stream the filtered Activity Log as CSV.
+	 *
+	 * Triggered when admin.php?page=jetonomy-activity&action=export_csv is
+	 * loaded with a valid nonce. Runs on admin_init so headers can be sent
+	 * before any wp-admin chrome renders. Filters mirror the list table —
+	 * the same read_filters() helper feeds both code paths.
+	 */
+	public function maybe_export_activity_csv(): void {
+		if ( ! isset( $_GET['page'], $_GET['action'] ) ) {
+			return;
+		}
+		if ( 'jetonomy-activity' !== $_GET['page'] || 'export_csv' !== $_GET['action'] ) {
+			return;
+		}
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to export activity.', 'jetonomy' ) );
+		}
+		check_admin_referer( 'jetonomy_activity_export' );
+
+		global $wpdb;
+		$activity_t = table( 'activity_log' );
+		$filters    = Activity_List_Table::read_filters();
+
+		$clauses = array( '1=1' );
+		$args    = array();
+		if ( $filters['user_id'] > 0 ) {
+			$clauses[] = 'user_id = %d';
+			$args[]    = $filters['user_id'];
+		}
+		if ( '' !== $filters['action'] ) {
+			$clauses[] = 'action = %s';
+			$args[]    = $filters['action'];
+		}
+		if ( '' !== $filters['date_from'] ) {
+			$clauses[] = 'created_at >= %s';
+			$args[]    = $filters['date_from'] . ' 00:00:00';
+		}
+		if ( '' !== $filters['date_to'] ) {
+			$clauses[] = 'created_at <= %s';
+			$args[]    = $filters['date_to'] . ' 23:59:59';
+		}
+		$where = implode( ' AND ', $clauses );
+
+		// Hard cap at 50k rows so a sloppy filter set can't generate a
+		// gigabyte download. Admins who need bigger exports should
+		// narrow the date range or use WP-CLI directly against the table.
+		$sql       = "SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM {$activity_t} WHERE {$where} ORDER BY created_at DESC LIMIT 50000";
+		$full_args = $args;
+		$rows      = $full_args
+			? $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ), ARRAY_A )
+			: $wpdb->get_results( $sql, ARRAY_A );
+		$rows      = is_array( $rows ) ? $rows : array();
+
+		$filename = sprintf( 'jetonomy-activity-%s.csv', gmdate( 'Y-m-d-His' ) );
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		// php://output is the stdout stream — WP_Filesystem doesn't model it.
+		// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		$out = fopen( 'php://output', 'w' );
+		if ( false === $out ) {
+			exit;
+		}
+		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ) );
+		foreach ( $rows as $row ) {
+			$user       = $row['user_id'] ? get_userdata( (int) $row['user_id'] ) : null;
+			$user_login = $user ? $user->user_login : '';
+			fputcsv(
+				$out,
+				array(
+					(string) $row['id'],
+					(string) $row['user_id'],
+					$user_login,
+					(string) $row['action'],
+					(string) $row['object_type'],
+					(string) $row['object_id'],
+					(string) ( $row['metadata'] ?? '' ),
+					(string) $row['created_at'],
+				)
+			);
+		}
+		fclose( $out );
+		// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		exit;
 	}
 
 	public function render_users(): void {
