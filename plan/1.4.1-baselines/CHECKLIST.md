@@ -14,7 +14,7 @@
 | A6 | Activity Log admin page | ⏳ PENDING | — | New admin page |
 | A7 | Revisions admin page | ⏳ PENDING | — | Per-post diff browser |
 | A8 | Email Templates admin editor | ⏳ PENDING | — | UI for `jetonomy_email_templates` option |
-| A9 | Frontend `?tab=drafts` and `?tab=bookmarks` | ⏳ PENDING | — | User content views |
+| A9 | Frontend `?tab=drafts` and `?tab=bookmarks` | ✅ DONE | 2026-04-29 | New top-level routes `/community/drafts/` and `/community/bookmarks/` (router rewrite rules + template_loader map + auth-required gate). New templates `templates/views/drafts.php` and `templates/views/bookmarks.php` reuse `partials/post-card.php` and emit a "Browse the community" CTA in the empty state. SEO `noindex` on both (personal logged-in views). REST surface unchanged so `--diff-baseline` shows no drift. qa-actions 210/210 PASS; access-matrix 78/78 PASS (identical to baseline). |
 | A10 | `jetonomy_user_pending_verification` cron | ⏳ PENDING | — | Reminder emails for unverified users |
 | A11 | Community visibility mode (public/private) | ✅ DONE | 2026-04-29 (`a00bcf3` → `2e48a41`) | REST enforcement gap closed: `Jetonomy\Visibility` helper centralizes the `guest_read` check, every public-read REST endpoint now wraps `permission_callback` with `Visibility::rest_check`, template-loader refactored to use the helper, runner extended with `--mode=public|private` flag. Verified 72/72 in both modes; qa-actions 210/210 green. |
 
@@ -23,7 +23,7 @@
 | Phase | Package | Status | Sign-off | Notes |
 |-------|---------|--------|----------|-------|
 | B1 | White Label extension wiring | ✅ DONE | 2026-04-29 (`jetonomy-pro` 6c596ac) | 3 of 5 filters now actively consumed in Pro (`email_logo_url`, `email_accent_color`, `sidebar_auth_card`); the remaining 2 (`header_logo`, `footer_text`) are subscribed in Pro but not yet fired in free — see KG-1 in `jetonomy-pro/plan/1.4.1-baselines/B1-VERIFICATION.md` |
-| B2 | Analytics dual-path aggregation | ⏳ PENDING | — | Validation alongside direct-query |
+| B2 | Analytics dual-path aggregation | ✅ READY (cutover deferred to 1.5.0) | 2026-04-29 (`jetonomy-pro` B2 commits) | Aggregator + 7 hot-path listeners + `/analytics/diff-report` REST + admin "Verify dual-path" toggle live; `wp_jt_pro_analytics_aggregate` table created via Pro DB-version guard (composite PK + period_start KEY); `Extension::ANALYTICS_PATH = 'query'` (default reader unchanged in 1.4.1, per "Forbidden" rule). 100-event burst measured at 0.36 ms avg per event (budget < 1 ms — PASS). qa-actions 210/210 PASS, PHPStan level 5 clean, WPCS clean. Day-1 drift baseline reflects pre-listener historical source-table rows (legitimate dual-path artifact, see `jetonomy-pro/plan/1.4.1-baselines/B2/diff-day-1.log`). 7-day observation window starts 2026-04-29; cutover decision = 1.5.0 deliverable when day-7 log shows < 1% drift on all metrics. |
 | B3 | Email Digest extension wiring | ✅ DONE | 2026-04-29 (`jetonomy-pro` 0732ec7) | Pro `jetonomy_pro_badge_earned` + `jetonomy_pro_poll_voted` consumed in `jetonomy-pro/email-digest`; per-user buffer (user meta `jetonomy_pro_digest_event_buffer`, capped 100 entries / 30-day TTL); two new render blocks (🏆 + 🗳️); buffer cleared after successful send only; commits B3.1=`8895538`, B3.2=`3c0d5ab`, B3.3=`0732ec7`; qa-actions 210/210 PASS; preview duration 3ms vs 7ms PRE (well under +2s budget); empty-buffer digest body identical to PRE baseline (whitespace-only diff); opted-out users (`frequency=none`) get no buffer growth |
 
 ---
