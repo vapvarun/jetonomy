@@ -194,8 +194,33 @@ final class Jetonomy {
 			$changed                 = true;
 		}
 
+		// Default the verification-reminder threshold to 24h on fresh
+		// installs so the cron has a value to read on its very first tick.
+		// Use array_key_exists() so an admin who explicitly set it to 0
+		// (disable) keeps that choice on re-activation.
+		if ( ! array_key_exists( 'verification_reminder_hours', $settings ) ) {
+			$settings['verification_reminder_hours'] = 24;
+			$changed                                 = true;
+		}
+
 		if ( $changed ) {
 			update_option( 'jetonomy_settings', $settings );
+		}
+
+		// Seed the default `verification_reminder` email template so the
+		// reminder cron has a subject + body to render before the A8 admin
+		// editor ships. Only adds the key when it's missing — never
+		// overwrites admin customizations.
+		$email_templates = get_option( 'jetonomy_email_templates', array() );
+		if ( ! is_array( $email_templates ) ) {
+			$email_templates = array();
+		}
+		if ( ! isset( $email_templates['verification_reminder'] ) ) {
+			$email_templates['verification_reminder'] = array(
+				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
+			);
+			update_option( 'jetonomy_email_templates', $email_templates );
 		}
 
 		// Only redirect to the setup wizard on the FIRST activation. Plugin
@@ -228,6 +253,45 @@ final class Jetonomy {
 		$this->check_db_version();
 		$this->load_dependencies();
 		$this->maybe_backfill_activity();
+		$this->maybe_seed_verification_reminder_defaults();
+	}
+
+	/**
+	 * One-time seed for the 1.4.1 verification-reminder defaults
+	 * (`jetonomy_settings.verification_reminder_hours` + the default
+	 * `verification_reminder` email template). activate() handles fresh
+	 * installs but every existing 1.4.0 install upgrading in-place needs
+	 * the same defaults the first time it loads on 1.4.1. Guarded by a
+	 * single option so the work only happens once per site, identical
+	 * pattern to maybe_backfill_activity() above.
+	 */
+	private function maybe_seed_verification_reminder_defaults(): void {
+		if ( get_option( 'jetonomy_verification_reminder_seeded' ) ) {
+			return;
+		}
+
+		$settings = get_option( 'jetonomy_settings', array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+		if ( ! array_key_exists( 'verification_reminder_hours', $settings ) ) {
+			$settings['verification_reminder_hours'] = 24;
+			update_option( 'jetonomy_settings', $settings );
+		}
+
+		$email_templates = get_option( 'jetonomy_email_templates', array() );
+		if ( ! is_array( $email_templates ) ) {
+			$email_templates = array();
+		}
+		if ( ! isset( $email_templates['verification_reminder'] ) ) {
+			$email_templates['verification_reminder'] = array(
+				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
+			);
+			update_option( 'jetonomy_email_templates', $email_templates );
+		}
+
+		update_option( 'jetonomy_verification_reminder_seeded', true );
 	}
 
 	private function maybe_redirect_to_setup(): void {
