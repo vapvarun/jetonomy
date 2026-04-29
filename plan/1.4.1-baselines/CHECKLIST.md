@@ -22,7 +22,7 @@
 
 | Phase | Package | Status | Sign-off | Notes |
 |-------|---------|--------|----------|-------|
-| B1 | White Label extension wiring | ⏳ PENDING | — | 5 branding filters |
+| B1 | White Label extension wiring | ✅ DONE | 2026-04-29 (`jetonomy-pro` 6c596ac) | 3 of 5 filters now actively consumed in Pro (`email_logo_url`, `email_accent_color`, `sidebar_auth_card`); the remaining 2 (`header_logo`, `footer_text`) are subscribed in Pro but not yet fired in free — see KG-1 in `jetonomy-pro/plan/1.4.1-baselines/B1-VERIFICATION.md` |
 | B2 | Analytics dual-path aggregation | ⏳ PENDING | — | Validation alongside direct-query |
 | B3 | Email Digest extension wiring | ⏳ PENDING | — | Event subscriptions |
 
