@@ -16,7 +16,7 @@
 | A8 | Email Templates admin editor | ⏳ PENDING | — | UI for `jetonomy_email_templates` option |
 | A9 | Frontend `?tab=drafts` and `?tab=bookmarks` | ⏳ PENDING | — | User content views |
 | A10 | `jetonomy_user_pending_verification` cron | ⏳ PENDING | — | Reminder emails for unverified users |
-| A11 | Community visibility mode (public/private) | ⏳ PENDING | — | Foundational toggle: helper + setting + per-endpoint enforcement; runner passes in BOTH modes |
+| A11 | Community visibility mode (public/private) | ✅ DONE | 2026-04-29 (`a00bcf3` → `2e48a41`) | REST enforcement gap closed: `Jetonomy\Visibility` helper centralizes the `guest_read` check, every public-read REST endpoint now wraps `permission_callback` with `Visibility::rest_check`, template-loader refactored to use the helper, runner extended with `--mode=public|private` flag. Verified 72/72 in both modes; qa-actions 210/210 green. |
 
 ## Track B — Pro Plugin
 
