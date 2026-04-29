@@ -426,8 +426,14 @@ if [ "$DIFF_BASELINE" = "1" ]; then
   echo -n "$ALL_LINES" > "$TMP"
   echo
   echo "── Diff vs baseline ──────────────────────────────────────────"
-  if diff -u <(grep -E '^(PASS|FAIL)' "$BASELINE_FILE") <(grep -E '^(PASS|FAIL)' "$TMP"); then
-    echo "Identical to baseline."
+  # Compare only the PASS/FAIL verdict + method + route + role. The actual
+  # "got" code can legitimately vary within the allowed expected-set
+  # (e.g. /auth/resend-verification returns 200 OR 429 depending on
+  # transient state) without that being a regression. The baseline
+  # contract is "this row passed before" — not "this exact response code".
+  normalize() { awk '/^(PASS|FAIL)/ {print $1, $2, $3, $4}' "$1"; }
+  if diff -u <(normalize "$BASELINE_FILE") <(normalize "$TMP"); then
+    echo "Identical to baseline (same PASS/FAIL outcome on every row)."
   else
     echo "Drift detected (above)."
   fi
