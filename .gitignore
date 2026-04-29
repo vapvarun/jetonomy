@@ -18,6 +18,6 @@ docs/qa/fail-*.png
 .claude-tmp/
 
 # 1.4.1 baselines — local PRE-state snapshots, not committed
-audit/1.4.1-baselines/*
-!audit/1.4.1-baselines/CHECKLIST.md
-!audit/1.4.1-baselines/.gitkeep
+plan/1.4.1-baselines/*
+!plan/1.4.1-baselines/CHECKLIST.md
+!plan/1.4.1-baselines/.gitkeep
