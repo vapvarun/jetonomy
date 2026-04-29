@@ -18,10 +18,19 @@
 # becomes the regression baseline for every subsequent package.
 #
 # Usage:
-#   bin/access-matrix-check.sh                 # human-readable output
-#   bin/access-matrix-check.sh --quiet         # only show FAILs (and final summary)
-#   bin/access-matrix-check.sh --baseline      # write to plan/1.4.1-baselines/A3/access-matrix-baseline.log
-#   bin/access-matrix-check.sh --diff-baseline # diff current run vs the saved baseline
+#   bin/access-matrix-check.sh                  # human-readable output (public mode)
+#   bin/access-matrix-check.sh --quiet          # only show FAILs (and final summary)
+#   bin/access-matrix-check.sh --baseline       # write to plan/1.4.1-baselines/A3/access-matrix-baseline.log
+#   bin/access-matrix-check.sh --diff-baseline  # diff current run vs the saved baseline
+#   bin/access-matrix-check.sh --mode=public    # explicit public mode (default)
+#   bin/access-matrix-check.sh --mode=private   # private community: anon expected=401 on public-read routes
+#
+# The --mode flag (added in A11) flips the jetonomy_settings.guest_read flag
+# for the duration of the run and restores it on exit (even on failure).
+# In private mode the runner expects 401 for anonymous calls to every route
+# the manifest classifies as auth: public / public_with_handler — that's the
+# whole point of A11's REST enforcement. Logged-in cells stay unchanged in
+# either mode; /auth/* and admin routes are mode-independent.
 #
 # Constraints:
 # * Read-only by default — uses HEAD or GET for status discovery and only
@@ -45,15 +54,22 @@ NS="/wp-json/jetonomy/v1"
 QUIET=0
 WRITE_BASELINE=0
 DIFF_BASELINE=0
+MODE="public"
 BASELINE_FILE="$PLUGIN_DIR/plan/1.4.1-baselines/A3/access-matrix-baseline.log"
 
 for arg in "$@"; do
   case "$arg" in
-    --quiet)         QUIET=1 ;;
-    --baseline)      WRITE_BASELINE=1 ;;
-    --diff-baseline) DIFF_BASELINE=1 ;;
+    --quiet)            QUIET=1 ;;
+    --baseline)         WRITE_BASELINE=1 ;;
+    --diff-baseline)    DIFF_BASELINE=1 ;;
+    --mode=public)      MODE="public" ;;
+    --mode=private)     MODE="private" ;;
+    --mode=*)
+      echo "Unknown --mode value: ${arg#--mode=} (expected public|private)" >&2
+      exit 2
+      ;;
     --help|-h)
-      sed -n '1,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+      sed -n '1,46p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -62,6 +78,61 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+# ── Community visibility mode (A11) ─────────────────────────────────────────
+# Capture the original guest_read value, switch to the requested mode, and
+# install an EXIT trap that restores the original value no matter how the
+# run terminates. This keeps the runner non-destructive — the operator can
+# leave their site in public mode and still smoke-test private mode safely.
+ORIGINAL_GUEST_READ="$(wp_cli option pluck jetonomy_settings guest_read 2>/dev/null)"
+if [ -z "$ORIGINAL_GUEST_READ" ]; then
+  # Unset/null in DB → default is public (true). Treat as "1" for restore.
+  ORIGINAL_GUEST_READ="1"
+fi
+restore_guest_read() {
+  wp_cli option patch update jetonomy_settings guest_read "$ORIGINAL_GUEST_READ" >/dev/null 2>&1 || true
+}
+trap restore_guest_read EXIT
+
+if [ "$MODE" = "private" ]; then
+  echo "[setup] flipping community to PRIVATE mode for this run…" >&2
+  wp_cli option patch update jetonomy_settings guest_read 0 >/dev/null 2>&1 || {
+    echo "[setup] failed to flip guest_read=0" >&2
+    exit 2
+  }
+else
+  # Force public mode for the run so runs always assert against a known state.
+  wp_cli option patch update jetonomy_settings guest_read 1 >/dev/null 2>&1 || true
+fi
+
+# ── Mode-aware expected-code helper ─────────────────────────────────────────
+# In private mode, every anonymous request to a public-read community route
+# must return 401 ("community_private"). This helper rewrites the expected
+# codes for those (route, role) pairs so the runner can be re-run unchanged
+# in either mode. Routes outside this list (auth/*, admin/*, moderation/*,
+# login_required) keep their original expectations in both modes.
+COMMUNITY_PUBLIC_ROUTES_RE='^(/spaces($|/)|/posts/|/replies($|/)|/categories($|/)|/tags($|/)|/space-tags|/users/|/search|/leaderboards|/updates|/oembed|/invite/|/link-preview)'
+
+mode_adjust_expected() {
+  # $1 method, $2 route, $3 role, $4 original expected
+  local method="$1" route="$2" role="$3" expected="$4"
+  if [ "$MODE" != "private" ]; then
+    echo "$expected"; return
+  fi
+  if [ "$role" != "anon" ]; then
+    echo "$expected"; return
+  fi
+  # Only flip GET expectations on community-public routes — POST/PATCH/DELETE
+  # routes that already required login keep their 401/403/400 expected list.
+  if [ "$method" != "GET" ]; then
+    echo "$expected"; return
+  fi
+  if [[ "$route" =~ $COMMUNITY_PUBLIC_ROUTES_RE ]]; then
+    echo "401"
+  else
+    echo "$expected"
+  fi
+}
 
 # ── Seed test users + collect fixture IDs ────────────────────────────────────
 echo "[setup] seeding QA users + fixtures…" >&2
@@ -144,6 +215,9 @@ run_check() {
   local role="$3"
   local expected="$4"
   local body="${5:-}"
+
+  # In private mode, anon GETs to public-read community routes must return 401.
+  expected="$(mode_adjust_expected "$method" "$route" "$role" "$expected")"
 
   local auth
   auth="$(auth_for "$role")"
@@ -396,7 +470,7 @@ run_check POST "/posts/$POST_ID/vote"                    anon       401,403,400 
 TOTAL=$((PASS_COUNT + FAIL_COUNT))
 echo
 echo "──────────────────────────────────────────────────────────────"
-echo "Access matrix: $PASS_COUNT/$TOTAL passed"
+echo "Access matrix: $PASS_COUNT/$TOTAL passed (mode=$MODE)"
 if [ "$FAIL_COUNT" -gt 0 ]; then
   echo
   echo "Failures:"
