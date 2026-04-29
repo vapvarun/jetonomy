@@ -25,6 +25,85 @@ class Notifier {
 	}
 
 	/**
+	 * Single source of truth for the default subject + body shipped with each
+	 * notification type. Both the activation seeder (which pre-populates the
+	 * `jetonomy_email_templates` option for the `verification_reminder` row,
+	 * because the cron needs SOMETHING to render before the admin saves an
+	 * override) AND the Settings → Notifications "Reset to default" button
+	 * read from this map, so the strings can never drift between the two
+	 * sites.
+	 *
+	 * Subjects are wrapped in `[{site}]` to match the legacy `'[{site}] {message}'`
+	 * fallback used by Notifier::send_email_notification when no override is
+	 * saved — admins see consistent default copy whether they clear the field
+	 * (falls back at send time) or click Reset (writes the same template into
+	 * the field).
+	 *
+	 * Bodies use the documented placeholder set: {site}, {user}, {message},
+	 * {type}, {url}, plus the 1.3.6 enriched placeholders {post_title},
+	 * {actor_display_name}, {reply_excerpt}, {space_title}. Don't add new
+	 * placeholders here without a matching substitution in
+	 * send_email_notification().
+	 *
+	 * @param string $type Notification type key (must match the
+	 *                     sanitize_email_templates() allowlist).
+	 * @return array{subject: string, body: string} Empty pair on unknown type.
+	 */
+	public static function get_default_template( string $type ): array {
+		$defaults = array(
+			'user_welcome'          => array(
+				'subject' => __( '[{site}] Welcome to the community', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready — jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
+			),
+			'reply_to_post'         => array(
+				'subject' => __( '[{site}] {actor_display_name} replied to your post', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to read the full reply and join the conversation.", 'jetonomy' ),
+			),
+			'reply_to_reply'        => array(
+				'subject' => __( '[{site}] {actor_display_name} replied to your comment', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nClick through to read the full thread.", 'jetonomy' ),
+			),
+			'mention'               => array(
+				'subject' => __( '[{site}] You were mentioned by {actor_display_name}', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the discussion to respond.", 'jetonomy' ),
+			),
+			'accepted_answer'       => array(
+				'subject' => __( '[{site}] Your answer was accepted', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nNice work — your reputation just went up.", 'jetonomy' ),
+			),
+			'new_post_in_sub'       => array(
+				'subject' => __( '[{site}] New post in {space_title}', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to read more.", 'jetonomy' ),
+			),
+			'badge_earned'          => array(
+				'subject' => __( '[{site}] You earned a new badge', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nKeep contributing to unlock more.", 'jetonomy' ),
+			),
+			'vote_on_post'          => array(
+				'subject' => __( '[{site}] Your post received a vote', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+			),
+			'moderation'            => array(
+				'subject' => __( '[{site}] A moderator reviewed your content', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
+			),
+			'join_request'          => array(
+				'subject' => __( '[{site}] New space join request', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
+			),
+			'verification_reminder' => array(
+				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
+			),
+		);
+
+		return $defaults[ $type ] ?? array(
+			'subject' => '',
+			'body'    => '',
+		);
+	}
+
+	/**
 	 * Send the email-confirmation message to a user who just signed up
 	 * while `require_email_verification` was on.
 	 *

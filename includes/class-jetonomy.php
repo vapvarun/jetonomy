@@ -210,16 +210,16 @@ final class Jetonomy {
 		// Seed the default `verification_reminder` email template so the
 		// reminder cron has a subject + body to render before the A8 admin
 		// editor ships. Only adds the key when it's missing — never
-		// overwrites admin customizations.
+		// overwrites admin customizations. Defaults are sourced from
+		// Notifier::get_default_template() (single source of truth — also
+		// used by the A8 "Reset to default" button) so the seed and the
+		// editor's reset path can never drift.
 		$email_templates = get_option( 'jetonomy_email_templates', array() );
 		if ( ! is_array( $email_templates ) ) {
 			$email_templates = array();
 		}
 		if ( ! isset( $email_templates['verification_reminder'] ) ) {
-			$email_templates['verification_reminder'] = array(
-				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
-			);
+			$email_templates['verification_reminder'] = \Jetonomy\Notifications\Notifier::get_default_template( 'verification_reminder' );
 			update_option( 'jetonomy_email_templates', $email_templates );
 		}
 
@@ -284,10 +284,10 @@ final class Jetonomy {
 			$email_templates = array();
 		}
 		if ( ! isset( $email_templates['verification_reminder'] ) ) {
-			$email_templates['verification_reminder'] = array(
-				'subject' => __( '[{site}] Confirm your email to finish signing up', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\nWe noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.\n\nThis link expires in 24 hours.", 'jetonomy' ),
-			);
+			// Single source of truth — see Notifier::get_default_template()
+			// docblock for why both the activate() seed and the upgrade
+			// path delegate here.
+			$email_templates['verification_reminder'] = \Jetonomy\Notifications\Notifier::get_default_template( 'verification_reminder' );
 			update_option( 'jetonomy_email_templates', $email_templates );
 		}
 
