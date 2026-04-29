@@ -166,8 +166,10 @@ These are the only routes accepting anonymous mutations. **All must be IP rate-l
 | `/moderation/approve/{type}/{id}` | POST | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/moderation/spam/{type}/{id}` | POST | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/moderation/trash/{type}/{id}` | POST | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
+| `/moderation/bulk` | POST | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/moderation/flags` | GET | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/moderation/flags/{id}/resolve` | POST | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
+| `/posts/{id}/flags` | GET | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/moderation/ban` | GET, POST | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/moderation/ban/{id}` | DELETE | 🔒 401 | 🔒 403 | 🔒 403 | 🔒 403 | ✅ 200 | ✅ 200 |
 | `/spaces/{id}/moderation/flags` | GET | 🔒 401 | 🔒 403 | 🔒 403 | ✅ 200 if space-mod | ✅ 200 | ✅ 200 |

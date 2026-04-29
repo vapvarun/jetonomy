@@ -112,6 +112,11 @@ fi
 # in either mode. Routes outside this list (auth/*, admin/*, moderation/*,
 # login_required) keep their original expectations in both modes.
 COMMUNITY_PUBLIC_ROUTES_RE='^(/spaces($|/)|/posts/|/replies($|/)|/categories($|/)|/tags($|/)|/space-tags|/users/|/search|/leaderboards|/updates|/oembed|/invite/|/link-preview)'
+# Sub-routes nested under a public prefix that are NOT community-public reads —
+# they hold their own auth gate (cap or membership) regardless of guest_read.
+# `/posts/{id}/flags` (1.4.1 A5) is mod-only, so anon must see 403 in BOTH modes,
+# not the visibility 401.
+COMMUNITY_NON_PUBLIC_SUFFIX_RE='/(flags)$'
 
 mode_adjust_expected() {
   # $1 method, $2 route, $3 role, $4 original expected
@@ -125,6 +130,9 @@ mode_adjust_expected() {
   # Only flip GET expectations on community-public routes — POST/PATCH/DELETE
   # routes that already required login keep their 401/403/400 expected list.
   if [ "$method" != "GET" ]; then
+    echo "$expected"; return
+  fi
+  if [[ "$route" =~ $COMMUNITY_NON_PUBLIC_SUFFIX_RE ]]; then
     echo "$expected"; return
   fi
   if [[ "$route" =~ $COMMUNITY_PUBLIC_ROUTES_RE ]]; then
@@ -429,6 +437,21 @@ run_check POST "/flags"                                  subscriber 400,201,409 
 # 27. /space-moderation/queue — space-mod required
 run_check GET  "/space-moderation/queue"                 anon       401,403,404
 run_check GET  "/space-moderation/queue"                 subscriber 403,404
+
+# 27a. POST /moderation/bulk (1.4.1 A4) — mod cap required. We send a valid
+# body shape (action+items present so REST args validation passes) but with
+# a non-existent post ID — mod handler returns 200 with a per-item
+# "not_found" status, leaving the database untouched. This proves the gate
+# fires correctly without destroying data.
+run_check POST "/moderation/bulk"                        anon       401,403  '{"action":"approve","items":[{"type":"post","id":999999}]}'
+run_check POST "/moderation/bulk"                        subscriber 403      '{"action":"approve","items":[{"type":"post","id":999999}]}'
+run_check POST "/moderation/bulk"                        mod        200      '{"action":"approve","items":[{"type":"post","id":999999}]}'
+
+# 27b. GET /posts/{id}/flags (1.4.1 A5) — mod cap required. anon=401,
+# subscriber=403, mod gets 200 with the flag list (or [] when none exist).
+run_check GET  "/posts/$POST_ID/flags"                   anon       401,403
+run_check GET  "/posts/$POST_ID/flags"                   subscriber 403
+run_check GET  "/posts/$POST_ID/flags"                   mod        200
 
 echo
 echo "── Admin-only routes ─────────────────────────────────────────"
