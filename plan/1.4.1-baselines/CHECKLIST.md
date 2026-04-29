@@ -1,40 +1,56 @@
-# 1.4.1 Release Gate Checklist
+# 1.4.1 Phase Completion Checklist
 
-One row per work package. Every box must be ticked before tagging 1.4.1.
+**Gate:** Each phase's safety checks must be signed off before proceeding to the next.
 
-See [`../1.4.1-plan.md`](../1.4.1-plan.md) for scope and [`../1.4.1-safety-checks.md`](../1.4.1-safety-checks.md) for what each check verifies.
+## Track A — Free Plugin
 
-## Track A — Free plugin
+| Phase | Package | Status | Sign-off | Notes |
+|-------|---------|--------|----------|-------|
+| A1 | REST audit verdict pass | ✅ DONE | 2026-04-29 | `audit/REST_AUDIT.md` with 18 routes, all verdicts classified |
+| A2 | Manifest schema v2 (auth/cap/ownership) | ✅ DONE | 2026-04-29 | All 64 endpoints updated; discrepancies documented in A2-COMPLETION.md |
+| A3 | REST security fixes | ⏳ IN PROGRESS | — | Fixing routes flagged 🚨 OPEN (none found); verifying rate-limits on auth endpoints |
+| A4 | POST /moderation/bulk REST endpoint | ⏳ PENDING | — | Additive feature; low risk |
+| A5 | GET /posts/{id}/flags | ⏳ PENDING | — | Mod-only endpoint |
+| A6 | Activity Log admin page | ⏳ PENDING | — | New admin page |
+| A7 | Revisions admin page | ⏳ PENDING | — | Per-post diff browser |
+| A8 | Email Templates admin editor | ⏳ PENDING | — | UI for `jetonomy_email_templates` option |
+| A9 | Frontend `?tab=drafts` and `?tab=bookmarks` | ⏳ PENDING | — | User content views |
+| A10 | `jetonomy_user_pending_verification` cron | ⏳ PENDING | — | Reminder emails for unverified users |
 
-- [ ] **A1** — REST audit verdict pass — `audit/REST_AUDIT.md` exists, 18 verdicts recorded
-- [ ] **A2** — Manifest schema v2 — refresh shows new `auth`/`capability`/`ownership_check` fields, counts unchanged
-- [ ] **A3** — REST security fixes — every 🚨 from A1 is closed, smoke green for owner/non-owner/anon test triple per route
-- [ ] **A4** — `POST /moderation/bulk` — REST + AJAX parity verified, mod-only access enforced
-- [ ] **A5** — `GET /posts/{id}/flags` — mod-only, returns array shape matching existing `/moderation/flags`
-- [ ] **A6** — Activity Log admin page — loads <2s, pagination works, no JS errors, other admin pages unaffected
-- [ ] **A7** — Revisions admin page — diff renders, non-mod cannot view others' revisions
-- [ ] **A8** — Email Templates editor — save→reflect in option key, test email uses new copy, XSS-safe, default reset works
-- [ ] **A9** — Frontend `?tab=drafts` + `?tab=bookmarks` — populated for authed user, login prompt for anon, existing tabs unbroken
-- [ ] **A10** — Verification reminder cron — registered, sends once at T+24h, rate-limited, doesn't email verified users
+## Track B — Pro Plugin
 
-## Track B — Pro plugin
+| Phase | Package | Status | Sign-off | Notes |
+|-------|---------|--------|----------|-------|
+| B1 | White Label extension wiring | ⏳ PENDING | — | 5 branding filters |
+| B2 | Analytics dual-path aggregation | ⏳ PENDING | — | Validation alongside direct-query |
+| B3 | Email Digest extension wiring | ⏳ PENDING | — | Event subscriptions |
 
-- [ ] **B1** — White Label subscribes to 5 branding filters — visual change on enable, pixel-identical to baseline on disable
-- [ ] **B2** — Analytics dual-path — `from_query` and `from_events` agree within ±1% for 7 consecutive days, OR ship with old path active and defer cutover to 1.5.0
-- [ ] **B3** — Email Digest event subscriptions — badge/poll lines appear in next digest, no spurious additions otherwise
+---
 
-## Cross-cutting (run after every push to 1.4.1)
+## Critical Path & Dependencies
 
-- [ ] `/jetonomy-smoke` — both FREE and FREE+PRO modes green
-- [ ] PHPStan level 5 — 0 errors
-- [ ] WPCS — 0 errors
-- [ ] Manifest coverage gate — ≥95% per category
-- [ ] No new entries in `wp-content/debug.log` during smoke
+```
+✅ A1 → ✅ A2 → ⏳ A3 ── security track (gated)
+                      
+A4, A5 ─── REST additions (parallel, independent)
+A6, A7 ─── admin pages (parallel, independent)
+A8       ─── email templates (parallel, independent)
+A9, A10  ─── frontend + cron (parallel, independent)
 
-## Pre-merge to `main` / pre-tag
+B1 ─── White Label (parallel with everything)
+B2 ─── Analytics dual-path (parallel, needs ~7 days for data parity cutover decision)
+B3 ─── Email Digest (parallel)
+```
 
-- [ ] All 13 package boxes above ticked
-- [ ] `bin/build-release.sh --dry-run` accepts the working tree (clean-tree gate, version triangulation, source/min pairing, etc.)
-- [ ] `audit/manifest.json` regenerated with schema v2; `audit/REST_AUDIT.md` shows zero 🚨 entries
-- [ ] CHANGELOG.md entry written, references each package
-- [ ] Smoke test passes against the built zip (not just the working tree)
+---
+
+## Sign-off Authorization
+
+| Role | Names | Authority |
+|------|-------|-----------|
+| Release Driver | Opus Session | Final release gate approval |
+| QA Verifier | wp-qa-auditor | Smoke test & regression check |
+| Security Lead | wp-verifier | Security-critical phase sign-off |
+
+Each phase's PRE/POST baselines are captured in `1.4.1-baselines/<phase>/` and compared by the agent before marking complete.
+

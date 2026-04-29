@@ -14,311 +14,2369 @@
   "rest": {
     "namespace": "jetonomy/v1",
     "endpoints": [
-      {"route": "/spaces", "methods": ["GET", "POST"], "handler": "Spaces_Controller::list_items,create_item", "permission": "__return_true,create_permission_check", "purpose": "List all spaces or create new space"},
-      {"route": "/spaces/(?P<id>\\d+)", "methods": ["GET", "PATCH", "DELETE"], "handler": "Spaces_Controller::get_item,update_item,delete_item", "permission": "__return_true,update_permission_check", "purpose": "Get, update, or delete a space"},
-      {"route": "/spaces/(?P<id>\\d+)/members", "methods": ["GET", "POST"], "handler": "Spaces_Controller::get_members,join_space", "permission": "__return_true,require_login_check", "purpose": "List space members or join space"},
-      {"route": "/spaces/(?P<id>\\d+)/privileged-members", "methods": ["GET"], "handler": "Spaces_Controller::get_privileged_members", "permission": "__return_true", "purpose": "List privileged members (admins/moderators)"},
-      {"route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)", "methods": ["PATCH", "DELETE"], "handler": "Spaces_Controller::update_member_role,leave_space", "permission": "require_login_check", "purpose": "Update member role or leave space"},
-      {"route": "/spaces/(?P<id>\\d+)/invite", "methods": ["POST"], "handler": "Spaces_Controller::generate_invite", "permission": "require_login_check", "purpose": "Generate invite link for space"},
-      {"route": "/invite/(?P<token>[a-zA-Z0-9]+)", "methods": ["GET"], "handler": "Spaces_Controller::use_invite", "permission": "__return_true", "purpose": "Accept invite link and join space"},
-      {"route": "/spaces/(?P<space_id>\\d+)/posts", "methods": ["GET", "POST"], "handler": "Posts_Controller::list_items,create_item", "permission": "__return_true,create_permission_check", "purpose": "List posts in space or create new post"},
-      {"route": "/posts/drafts", "methods": ["GET"], "handler": "Posts_Controller::list_drafts", "permission": "__return_true", "purpose": "List draft posts for current user"},
-      {"route": "/posts/(?P<id>\\d+)", "methods": ["GET", "PATCH", "DELETE"], "handler": "Posts_Controller::get_item,update_item,delete_item", "permission": "__return_true,update_permission_check", "purpose": "Get, update, or delete a single post"},
-      {"route": "/posts/(?P<id>\\d+)/close", "methods": ["POST"], "handler": "Posts_Controller::close_post", "permission": "update_permission_check", "purpose": "Close/lock a post"},
-      {"route": "/posts/(?P<id>\\d+)/pin", "methods": ["POST"], "handler": "Posts_Controller::pin_post", "permission": "update_permission_check", "purpose": "Pin post to top of space"},
-      {"route": "/posts/(?P<id>\\d+)/move", "methods": ["POST"], "handler": "Posts_Controller::move_post", "permission": "update_permission_check", "purpose": "Move post to another space"},
-      {"route": "/posts/(?P<id>\\d+)/merge", "methods": ["POST"], "handler": "Posts_Controller::merge_post", "permission": "update_permission_check", "purpose": "Merge post with another post"},
-      {"route": "/posts/(?P<id>\\d+)/vote", "methods": ["POST"], "handler": "Votes_Controller::create_item", "permission": "update_permission_check", "purpose": "Create/toggle vote on post"},
-      {"route": "/link-preview", "methods": ["GET"], "handler": "Posts_Controller::link_preview", "permission": "__return_true", "purpose": "Fetch OG metadata for link preview"},
-      {"route": "/posts/(?P<post_id>\\d+)/replies", "methods": ["GET", "POST"], "handler": "Replies_Controller::list_items,create_item", "permission": "__return_true,create_permission_check", "purpose": "List replies or create new reply"},
-      {"route": "/replies/(?P<id>\\d+)", "methods": ["GET", "PATCH", "DELETE"], "handler": "Replies_Controller::get_item,update_item,delete_item", "permission": "__return_true,update_permission_check", "purpose": "Get, update, or delete a reply"},
-      {"route": "/replies/(?P<id>\\d+)/accept", "methods": ["POST"], "handler": "Replies_Controller::accept_answer", "permission": "update_permission_check", "purpose": "Mark reply as accepted answer"},
-      {"route": "/replies/(?P<id>\\d+)/split", "methods": ["POST"], "handler": "Replies_Controller::split_item", "permission": "update_permission_check", "purpose": "Split reply into new post"},
-      {"route": "/replies/(?P<id>\\d+)/vote", "methods": ["POST"], "handler": "Votes_Controller::create_item", "permission": "update_permission_check", "purpose": "Create/toggle vote on reply"},
-      {"route": "/votes/(?P<id>\\d+)", "methods": ["DELETE"], "handler": "Votes_Controller::delete_item", "permission": "update_permission_check", "purpose": "Remove a vote"},
-      {"route": "/users/me", "methods": ["GET"], "handler": "Users_Controller::get_current_user", "permission": "__return_true", "purpose": "Get current user profile"},
-      {"route": "/users/(?P<id>\\d+)", "methods": ["GET", "PATCH"], "handler": "Users_Controller::get_item,update_item", "permission": "__return_true", "purpose": "Get or update user profile"},
-      {"route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)", "methods": ["GET"], "handler": "Users_Controller::get_by_login", "permission": "__return_true", "purpose": "Get user by login/username"},
-      {"route": "/users/(?P<id>\\d+)/posts", "methods": ["GET"], "handler": "Users_Controller::get_user_posts", "permission": "__return_true", "purpose": "Get user's posts"},
-      {"route": "/users/suggest", "methods": ["GET"], "handler": "Users_Controller::suggest_users", "permission": "__return_true", "purpose": "Suggest users by name/login prefix"},
-      {"route": "/notifications", "methods": ["GET"], "handler": "Notifications_Controller::list_items", "permission": "update_permission_check", "purpose": "List notifications for current user"},
-      {"route": "/notifications/unread-count", "methods": ["GET"], "handler": "Notifications_Controller::get_unread_count", "permission": "update_permission_check", "purpose": "Get unread notification count"},
-      {"route": "/notifications/mark-all-read", "methods": ["POST"], "handler": "Notifications_Controller::mark_all_read", "permission": "update_permission_check", "purpose": "Mark all notifications as read"},
-      {"route": "/notifications/(?P<id>\\d+)", "methods": ["PATCH"], "handler": "Notifications_Controller::update_item", "permission": "update_permission_check", "purpose": "Mark single notification as read"},
-      {"route": "/subscriptions", "methods": ["GET", "POST"], "handler": "Subscriptions_Controller::list_items,create_item", "permission": "update_permission_check", "purpose": "List or create subscription"},
-      {"route": "/subscriptions/(?P<id>\\d+)", "methods": ["DELETE"], "handler": "Subscriptions_Controller::delete_item", "permission": "update_permission_check", "purpose": "Unsubscribe from space or post"},
-      {"route": "/search", "methods": ["GET"], "handler": "Search_Controller::search", "permission": "__return_true", "purpose": "Full-text search posts, replies, spaces, users"},
-      {"route": "/categories", "methods": ["GET", "POST"], "handler": "Categories_Controller::list_items,create_item", "permission": "__return_true", "purpose": "List categories or create new"},
-      {"route": "/categories/(?P<id>\\d+)", "methods": ["GET", "PATCH", "DELETE"], "handler": "Categories_Controller::get_item,update_item,delete_item", "permission": "__return_true", "purpose": "Get, update, or delete category"},
-      {"route": "/tags", "methods": ["GET", "POST"], "handler": "Tags_Controller::list_items,create_item", "permission": "__return_true", "purpose": "List all tags or create new"},
-      {"route": "/tags/(?P<id>\\d+)", "methods": ["GET", "PATCH", "DELETE"], "handler": "Tags_Controller::get_item,update_item,delete_item", "permission": "__return_true", "purpose": "Get, update, or delete tag"},
-      {"route": "/space-tags", "methods": ["GET"], "handler": "Tags_Controller::list_space_tags", "permission": "__return_true", "purpose": "List tags for a space"},
-      {"route": "/leaderboards", "methods": ["GET"], "handler": "Leaderboards_Controller::get_leaderboard", "permission": "__return_true", "purpose": "Get community leaderboard data"},
-      {"route": "/bookmarks", "methods": ["GET", "POST"], "handler": "Bookmarks_Controller::list_items,toggle_item", "permission": "__return_true", "purpose": "List or toggle user bookmarks"},
-      {"route": "/bookmarks/(?P<post_id>\\d+)", "methods": ["DELETE"], "handler": "Bookmarks_Controller::delete_item", "permission": "update_permission_check", "purpose": "Remove bookmark"},
-      {"route": "/moderation/queue", "methods": ["GET"], "handler": "Moderation_Controller::list_queue", "permission": "update_permission_check", "purpose": "List flagged content in moderation queue"},
-      {"route": "/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)", "methods": ["POST"], "handler": "Moderation_Controller::approve_item", "permission": "update_permission_check", "purpose": "Approve flagged content"},
-      {"route": "/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)", "methods": ["POST"], "handler": "Moderation_Controller::spam_item", "permission": "update_permission_check", "purpose": "Mark content as spam"},
-      {"route": "/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)", "methods": ["POST"], "handler": "Moderation_Controller::trash_item", "permission": "update_permission_check", "purpose": "Move content to trash"},
-      {"route": "/flags", "methods": ["GET", "POST"], "handler": "Moderation_Controller::list_flags,create_flag", "permission": "__return_true", "purpose": "List flags or create new flag"},
-      {"route": "/moderation/flags", "methods": ["GET"], "handler": "Moderation_Controller::list_flags", "permission": "update_permission_check", "purpose": "List all flags for moderation"},
-      {"route": "/moderation/flags/(?P<id>\\d+)/resolve", "methods": ["POST"], "handler": "Moderation_Controller::resolve_flag", "permission": "update_permission_check", "purpose": "Resolve/dismiss a flag"},
-      {"route": "/moderation/ban", "methods": ["GET", "POST"], "handler": "Moderation_Controller::list_bans,ban_user", "permission": "update_permission_check", "purpose": "List bans or ban user"},
-      {"route": "/moderation/ban/(?P<id>\\d+)", "methods": ["DELETE"], "handler": "Moderation_Controller::unban_user", "permission": "update_permission_check", "purpose": "Unban user"},
-      {"route": "/spaces/(?P<id>\\d+)/moderation/flags", "methods": ["GET"], "handler": "Space_Moderation_Controller::list_flags", "permission": "update_permission_check", "purpose": "List flags in specific space"},
-      {"route": "/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve", "methods": ["POST"], "handler": "Space_Moderation_Controller::resolve_flag", "permission": "update_permission_check", "purpose": "Resolve flag in space"},
-      {"route": "/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)", "methods": ["POST"], "handler": "Space_Moderation_Controller::moderate_item", "permission": "update_permission_check", "purpose": "Moderate content in specific space"},
-      {"route": "/updates", "methods": ["GET"], "handler": "Updates_Controller::get_updates", "permission": "__return_true", "purpose": "Get activity updates since timestamp"},
-      {"route": "/oembed", "methods": ["GET"], "handler": "OEmbed_Controller::get_oembed", "permission": "__return_true", "purpose": "oEmbed endpoint for forum posts"},
-      {"route": "/media", "methods": ["POST"], "handler": "Media_Controller::upload_media", "permission": "update_permission_check", "purpose": "Upload media (image, video, file)"},
-      {"route": "/auth/login", "methods": ["POST"], "handler": "Auth_Controller::login", "permission": "__return_true", "purpose": "Login via REST API"},
-      {"route": "/auth/register", "methods": ["POST"], "handler": "Auth_Controller::register_user", "permission": "__return_true", "purpose": "Register new user account"},
-      {"route": "/auth/lost-password", "methods": ["POST"], "handler": "Auth_Controller::lost_password", "permission": "__return_true", "purpose": "Request password reset email"},
-      {"route": "/auth/verify-email", "methods": ["GET"], "handler": "Auth_Controller::verify_email", "permission": "__return_true", "purpose": "Verify email confirmation token"},
-      {"route": "/auth/resend-verification", "methods": ["POST"], "handler": "Auth_Controller::resend_verification", "permission": "__return_true", "purpose": "Resend verification email"},
-      {"route": "/admin/recount", "methods": ["POST"], "handler": "Admin_Controller::recount", "permission": "update_permission_check", "purpose": "Rebuild all content counters"},
-      {"route": "/admin/users/trust-level", "methods": ["POST"], "handler": "Admin_Controller::update_trust_level", "permission": "update_permission_check", "purpose": "Update user trust level"}
+      {
+        "route": "/spaces",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Spaces_Controller::list_items,create_item",
+        "permission": "__return_true,create_permission_check",
+        "purpose": "List all spaces or create new space",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "GET: visibility-filtered; POST: create_permission_check enforces jetonomy_create_spaces"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)",
+        "methods": [
+          "GET",
+          "PATCH",
+          "DELETE"
+        ],
+        "handler": "Spaces_Controller::get_item,update_item,delete_item",
+        "permission": "__return_true,update_permission_check",
+        "purpose": "Get, update, or delete a space",
+        "auth": "public_with_handler",
+        "capability": "space_admin",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/members",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Spaces_Controller::get_members,join_space",
+        "permission": "__return_true,require_login_check",
+        "purpose": "List space members or join space",
+        "auth": "public_with_handler",
+        "capability": "space_member",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: membership for private/hidden; POST: join_policy enforced"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/privileged-members",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Spaces_Controller::get_privileged_members",
+        "permission": "__return_true",
+        "purpose": "List privileged members (admins/moderators)",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": null,
+        "audit_notes": "GET privileged members list"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
+        "methods": [
+          "PATCH",
+          "DELETE"
+        ],
+        "handler": "Spaces_Controller::update_member_role,leave_space",
+        "permission": "require_login_check",
+        "purpose": "Update member role or leave space",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": null,
+        "audit_notes": "PATCH/DELETE: space-admin check"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/invite",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Spaces_Controller::generate_invite",
+        "permission": "require_login_check",
+        "purpose": "Generate invite link for space",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": null,
+        "audit_notes": "Generate invite link"
+      },
+      {
+        "route": "/invite/(?P<token>[a-zA-Z0-9]+)",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Spaces_Controller::use_invite",
+        "permission": "__return_true",
+        "purpose": "Accept invite link and join space",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Accept invite link"
+      },
+      {
+        "route": "/spaces/(?P<space_id>\\d+)/posts",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Posts_Controller::list_items,create_item",
+        "permission": "__return_true,create_permission_check",
+        "purpose": "List posts in space or create new post",
+        "auth": "public_with_handler",
+        "capability": "create_posts",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: space-read enforced; POST: create_posts enforced"
+      },
+      {
+        "route": "/posts/drafts",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Posts_Controller::list_drafts",
+        "permission": "__return_true",
+        "purpose": "List draft posts for current user",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "List user's drafts"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)",
+        "methods": [
+          "GET",
+          "PATCH",
+          "DELETE"
+        ],
+        "handler": "Posts_Controller::get_item,update_item,delete_item",
+        "permission": "__return_true,update_permission_check",
+        "purpose": "Get, update, or delete a single post",
+        "auth": "public_with_handler",
+        "capability": "ownership_or_edit_others",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/close",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::close_post",
+        "permission": "update_permission_check",
+        "purpose": "Close/lock a post",
+        "auth": "login_required",
+        "capability": "ownership_or_edit_others",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Close/lock post"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/pin",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::pin_post",
+        "permission": "update_permission_check",
+        "purpose": "Pin post to top of space",
+        "auth": "login_required",
+        "capability": "edit_others_posts",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Pin to top of space"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/move",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::move_post",
+        "permission": "update_permission_check",
+        "purpose": "Move post to another space",
+        "auth": "login_required",
+        "capability": "edit_others_posts",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Move to another space"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/merge",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::merge_post",
+        "permission": "update_permission_check",
+        "purpose": "Merge post with another post",
+        "auth": "login_required",
+        "capability": "edit_others_posts",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Merge with another post"
+      },
+      {
+        "route": "/posts/(?P<id>\\d+)/vote",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Votes_Controller::create_item",
+        "permission": "update_permission_check",
+        "purpose": "Create/toggle vote on post",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Create/toggle vote"
+      },
+      {
+        "route": "/link-preview",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Posts_Controller::link_preview",
+        "permission": "__return_true",
+        "purpose": "Fetch OG metadata for link preview",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Fetch OG metadata"
+      },
+      {
+        "route": "/posts/(?P<post_id>\\d+)/replies",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Replies_Controller::list_items,create_item",
+        "permission": "__return_true,create_permission_check",
+        "purpose": "List replies or create new reply",
+        "auth": "public_with_handler",
+        "capability": "create_replies",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: space-read; POST: create_replies"
+      },
+      {
+        "route": "/replies/(?P<id>\\d+)",
+        "methods": [
+          "GET",
+          "PATCH",
+          "DELETE"
+        ],
+        "handler": "Replies_Controller::get_item,update_item,delete_item",
+        "permission": "__return_true,update_permission_check",
+        "purpose": "Get, update, or delete a reply",
+        "auth": "public_with_handler",
+        "capability": "ownership_or_edit_others",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: space-read; PATCH/DELETE: ownership or edit_others (no GET registered)"
+      },
+      {
+        "route": "/replies/(?P<id>\\d+)/accept",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Replies_Controller::accept_answer",
+        "permission": "update_permission_check",
+        "purpose": "Mark reply as accepted answer",
+        "auth": "login_required",
+        "capability": "post_author",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Mark as accepted answer"
+      },
+      {
+        "route": "/replies/(?P<id>\\d+)/split",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Replies_Controller::split_item",
+        "permission": "update_permission_check",
+        "purpose": "Split reply into new post",
+        "auth": "login_required",
+        "capability": "edit_others_posts",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Split into new post"
+      },
+      {
+        "route": "/replies/(?P<id>\\d+)/vote",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Votes_Controller::create_item",
+        "permission": "update_permission_check",
+        "purpose": "Create/toggle vote on reply",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Create/toggle vote"
+      },
+      {
+        "route": "/votes/(?P<id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Votes_Controller::delete_item",
+        "permission": "update_permission_check",
+        "purpose": "Remove a vote",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Remove a vote"
+      },
+      {
+        "route": "/users/me",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Users_Controller::get_current_user",
+        "permission": "__return_true",
+        "purpose": "Get current user profile",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Get current user"
+      },
+      {
+        "route": "/users/(?P<id>\\d+)",
+        "methods": [
+          "GET",
+          "PATCH"
+        ],
+        "handler": "Users_Controller::get_item,update_item",
+        "permission": "__return_true",
+        "purpose": "Get or update user profile",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Get user profile (public)"
+      },
+      {
+        "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Users_Controller::get_by_login",
+        "permission": "__return_true",
+        "purpose": "Get user by login/username",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Get user by login"
+      },
+      {
+        "route": "/users/(?P<id>\\d+)/posts",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Users_Controller::get_user_posts",
+        "permission": "__return_true",
+        "purpose": "Get user's posts",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Get user's posts"
+      },
+      {
+        "route": "/users/suggest",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Users_Controller::suggest_users",
+        "permission": "__return_true",
+        "purpose": "Suggest users by name/login prefix",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Suggest users"
+      },
+      {
+        "route": "/notifications",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Notifications_Controller::list_items",
+        "permission": "update_permission_check",
+        "purpose": "List notifications for current user",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "List user's notifications"
+      },
+      {
+        "route": "/notifications/unread-count",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Notifications_Controller::get_unread_count",
+        "permission": "update_permission_check",
+        "purpose": "Get unread notification count",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Get unread count"
+      },
+      {
+        "route": "/notifications/mark-all-read",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Notifications_Controller::mark_all_read",
+        "permission": "update_permission_check",
+        "purpose": "Mark all notifications as read",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Mark all as read"
+      },
+      {
+        "route": "/notifications/(?P<id>\\d+)",
+        "methods": [
+          "PATCH"
+        ],
+        "handler": "Notifications_Controller::update_item",
+        "permission": "update_permission_check",
+        "purpose": "Mark single notification as read",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Mark single notification"
+      },
+      {
+        "route": "/subscriptions",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Subscriptions_Controller::list_items,create_item",
+        "permission": "update_permission_check",
+        "purpose": "List or create subscription",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "List/create subscriptions"
+      },
+      {
+        "route": "/subscriptions/(?P<id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Subscriptions_Controller::delete_item",
+        "permission": "update_permission_check",
+        "purpose": "Unsubscribe from space or post",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Delete subscription"
+      },
+      {
+        "route": "/search",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Search_Controller::search",
+        "permission": "__return_true",
+        "purpose": "Full-text search posts, replies, spaces, users",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Full-text search"
+      },
+      {
+        "route": "/categories",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Categories_Controller::list_items,create_item",
+        "permission": "__return_true",
+        "purpose": "List categories or create new",
+        "auth": "public_with_handler",
+        "capability": "jetonomy_manage_categories",
+        "ownership_check": "callback_enforces",
+        "audit_notes": "GET: public; POST: manage_categories cap"
+      },
+      {
+        "route": "/categories/(?P<id>\\d+)",
+        "methods": [
+          "GET",
+          "PATCH",
+          "DELETE"
+        ],
+        "handler": "Categories_Controller::get_item,update_item,delete_item",
+        "permission": "__return_true",
+        "purpose": "Get, update, or delete category",
+        "auth": "public_with_handler",
+        "capability": "jetonomy_manage_categories",
+        "ownership_check": "callback_enforces",
+        "audit_notes": "GET: public; PATCH/DELETE: manage_categories"
+      },
+      {
+        "route": "/tags",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Tags_Controller::list_items,create_item",
+        "permission": "__return_true",
+        "purpose": "List all tags or create new",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "List tags (POST not implemented)"
+      },
+      {
+        "route": "/tags/(?P<id>\\d+)",
+        "methods": [
+          "GET",
+          "PATCH",
+          "DELETE"
+        ],
+        "handler": "Tags_Controller::get_item,update_item,delete_item",
+        "permission": "__return_true",
+        "purpose": "Get, update, or delete tag",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Tags routes not implemented"
+      },
+      {
+        "route": "/space-tags",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Tags_Controller::list_space_tags",
+        "permission": "__return_true",
+        "purpose": "List tags for a space",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "List space tags"
+      },
+      {
+        "route": "/leaderboards",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Leaderboards_Controller::get_leaderboard",
+        "permission": "__return_true",
+        "purpose": "Get community leaderboard data",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Get leaderboard"
+      },
+      {
+        "route": "/bookmarks",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Bookmarks_Controller::list_items,toggle_item",
+        "permission": "__return_true",
+        "purpose": "List or toggle user bookmarks",
+        "auth": "login_required_handler",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "GET: __return_true callback but handler requires login; POST/DELETE: properly gated"
+      },
+      {
+        "route": "/bookmarks/(?P<post_id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Bookmarks_Controller::delete_item",
+        "permission": "update_permission_check",
+        "purpose": "Remove bookmark",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Delete bookmark"
+      },
+      {
+        "route": "/moderation/queue",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Moderation_Controller::list_queue",
+        "permission": "update_permission_check",
+        "purpose": "List flagged content in moderation queue",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "List moderation queue"
+      },
+      {
+        "route": "/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Moderation_Controller::approve_item",
+        "permission": "update_permission_check",
+        "purpose": "Approve flagged content",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Approve flagged content"
+      },
+      {
+        "route": "/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Moderation_Controller::spam_item",
+        "permission": "update_permission_check",
+        "purpose": "Mark content as spam",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Mark as spam"
+      },
+      {
+        "route": "/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Moderation_Controller::trash_item",
+        "permission": "update_permission_check",
+        "purpose": "Move content to trash",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Move to trash"
+      },
+      {
+        "route": "/flags",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Moderation_Controller::list_flags,create_flag",
+        "permission": "__return_true",
+        "purpose": "List flags or create new flag",
+        "auth": "public_with_handler",
+        "capability": "jetonomy_flag",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "GET: list flags (mod-only); POST: flag (jetonomy_flag enforced)"
+      },
+      {
+        "route": "/moderation/flags",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Moderation_Controller::list_flags",
+        "permission": "update_permission_check",
+        "purpose": "List all flags for moderation",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "List flags for moderation"
+      },
+      {
+        "route": "/moderation/flags/(?P<id>\\d+)/resolve",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Moderation_Controller::resolve_flag",
+        "permission": "update_permission_check",
+        "purpose": "Resolve/dismiss a flag",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Resolve flag"
+      },
+      {
+        "route": "/moderation/ban",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Moderation_Controller::list_bans,ban_user",
+        "permission": "update_permission_check",
+        "purpose": "List bans or ban user",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "List/create bans"
+      },
+      {
+        "route": "/moderation/ban/(?P<id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Moderation_Controller::unban_user",
+        "permission": "update_permission_check",
+        "purpose": "Unban user",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Unban user"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/moderation/flags",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Space_Moderation_Controller::list_flags",
+        "permission": "update_permission_check",
+        "purpose": "List flags in specific space",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "List flags in space"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Space_Moderation_Controller::resolve_flag",
+        "permission": "update_permission_check",
+        "purpose": "Resolve flag in space",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Resolve flag in space"
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Space_Moderation_Controller::moderate_item",
+        "permission": "update_permission_check",
+        "purpose": "Moderate content in specific space",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Moderate content in space"
+      },
+      {
+        "route": "/updates",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Updates_Controller::get_updates",
+        "permission": "__return_true",
+        "purpose": "Get activity updates since timestamp",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Activity updates"
+      },
+      {
+        "route": "/oembed",
+        "methods": [
+          "GET"
+        ],
+        "handler": "OEmbed_Controller::get_oembed",
+        "permission": "__return_true",
+        "purpose": "oEmbed endpoint for forum posts",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "oEmbed endpoint"
+      },
+      {
+        "route": "/media",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Media_Controller::upload_media",
+        "permission": "update_permission_check",
+        "purpose": "Upload media (image, video, file)",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Upload media"
+      },
+      {
+        "route": "/auth/login",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Auth_Controller::login",
+        "permission": "__return_true",
+        "purpose": "Login via REST API",
+        "auth": "public_rate_limited",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Login endpoint (rate-limited)"
+      },
+      {
+        "route": "/auth/register",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Auth_Controller::register_user",
+        "permission": "__return_true",
+        "purpose": "Register new user account",
+        "auth": "public_rate_limited",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Register endpoint (rate-limited, anti-spam)"
+      },
+      {
+        "route": "/auth/lost-password",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Auth_Controller::lost_password",
+        "permission": "__return_true",
+        "purpose": "Request password reset email",
+        "auth": "public_rate_limited",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Password reset (rate-limited, enumeration-proof)"
+      },
+      {
+        "route": "/auth/verify-email",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Auth_Controller::verify_email",
+        "permission": "__return_true",
+        "purpose": "Verify email confirmation token",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Email verification token"
+      },
+      {
+        "route": "/auth/resend-verification",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Auth_Controller::resend_verification",
+        "permission": "__return_true",
+        "purpose": "Resend verification email",
+        "auth": "public_rate_limited",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "Resend verification (rate-limited, enumeration-proof)"
+      },
+      {
+        "route": "/admin/recount",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Admin_Controller::recount",
+        "permission": "update_permission_check",
+        "purpose": "Rebuild all content counters",
+        "auth": "login_required",
+        "capability": "manage_options",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Rebuild counters"
+      },
+      {
+        "route": "/admin/users/trust-level",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Admin_Controller::update_trust_level",
+        "permission": "update_permission_check",
+        "purpose": "Update user trust level",
+        "auth": "login_required",
+        "capability": "manage_options",
+        "ownership_check": "handler_enforces",
+        "audit_notes": "Update trust level"
+      }
     ]
   },
   "ajax": [
-    {"action": "jetonomy_create_category", "handler": "Admin\\Ajax\\Categories_Handler::create", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_categories", "purpose": "Create category"},
-    {"action": "jetonomy_update_category", "handler": "Admin\\Ajax\\Categories_Handler::update", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_categories", "purpose": "Update category"},
-    {"action": "jetonomy_delete_category", "handler": "Admin\\Ajax\\Categories_Handler::delete", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_categories", "purpose": "Delete category"},
-    {"action": "jetonomy_reorder_categories", "handler": "Admin\\Ajax\\Categories_Handler::reorder", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_categories", "purpose": "Reorder categories"},
-    {"action": "jetonomy_create_tag", "handler": "Admin\\Ajax\\Tags_Handler::create", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Create tag"},
-    {"action": "jetonomy_update_tag", "handler": "Admin\\Ajax\\Tags_Handler::update", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Update tag"},
-    {"action": "jetonomy_delete_tag", "handler": "Admin\\Ajax\\Tags_Handler::delete", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Delete tag"},
-    {"action": "jetonomy_bulk_delete_tags", "handler": "Admin\\Ajax\\Tags_Handler::bulk_delete", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Bulk delete tags"},
-    {"action": "jetonomy_create_space", "handler": "Admin\\Ajax\\Spaces_Handler::create", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Create space"},
-    {"action": "jetonomy_update_space", "handler": "Admin\\Ajax\\Spaces_Handler::update", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Update space"},
-    {"action": "jetonomy_delete_space", "handler": "Admin\\Ajax\\Spaces_Handler::delete", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Delete space"},
-    {"action": "jetonomy_add_space_member", "handler": "Admin\\Ajax\\Spaces_Handler::add_member", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Add member to space"},
-    {"action": "jetonomy_remove_space_member", "handler": "Admin\\Ajax\\Spaces_Handler::remove_member", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Remove member from space"},
-    {"action": "jetonomy_change_member_role", "handler": "Admin\\Ajax\\Spaces_Handler::change_role", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Change member role"},
-    {"action": "jetonomy_add_access_rule", "handler": "Admin\\Ajax\\Spaces_Handler::add_access_rule", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Add space access rule"},
-    {"action": "jetonomy_delete_access_rule", "handler": "Admin\\Ajax\\Spaces_Handler::delete_access_rule", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Delete space access rule"},
-    {"action": "jetonomy_sync_access_rule", "handler": "Admin\\Ajax\\Spaces_Handler::sync_access_rule", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Sync access rules"},
-    {"action": "jetonomy_approve_content", "handler": "Admin\\Ajax\\Moderation_Handler::approve", "nonce": "jetonomy_nonce", "capability": "jetonomy_moderate", "purpose": "Approve flagged content"},
-    {"action": "jetonomy_spam_content", "handler": "Admin\\Ajax\\Moderation_Handler::spam", "nonce": "jetonomy_nonce", "capability": "jetonomy_moderate", "purpose": "Mark content as spam"},
-    {"action": "jetonomy_trash_content", "handler": "Admin\\Ajax\\Moderation_Handler::trash", "nonce": "jetonomy_nonce", "capability": "jetonomy_moderate", "purpose": "Trash content"},
-    {"action": "jetonomy_resolve_flag", "handler": "Admin\\Ajax\\Moderation_Handler::resolve_flag", "nonce": "jetonomy_nonce", "capability": "jetonomy_moderate", "purpose": "Resolve flag"},
-    {"action": "jetonomy_bulk_content_action", "handler": "Admin\\Ajax\\Moderation_Handler::bulk_action", "nonce": "jetonomy_nonce", "capability": "jetonomy_moderate", "purpose": "Bulk moderation action"},
-    {"action": "jetonomy_ban_user", "handler": "Admin\\Ajax\\Users_Handler::ban", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_users", "purpose": "Ban user"},
-    {"action": "jetonomy_unban_user", "handler": "Admin\\Ajax\\Users_Handler::unban", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_users", "purpose": "Unban user"},
-    {"action": "jetonomy_change_trust_level", "handler": "Admin\\Ajax\\Users_Handler::change_trust_level", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_users", "purpose": "Change user trust level"},
-    {"action": "jetonomy_search_users", "handler": "Admin\\Ajax\\Users_Handler::search", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Search users"},
-    {"action": "jetonomy_run_import", "handler": "Admin\\Ajax\\Import_Handler::run_import", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Run import"},
-    {"action": "jetonomy_import_batch", "handler": "Admin\\Ajax\\Import_Handler::batch", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Process import batch"},
-    {"action": "jetonomy_import_progress", "handler": "Admin\\Ajax\\Import_Handler::progress", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Get import progress"},
-    {"action": "jetonomy_test_email", "handler": "Admin\\Ajax\\Settings_Handler::test_email", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Send test email"},
-    {"action": "jetonomy_email_preview", "handler": "Admin\\Ajax\\Settings_Handler::email_preview", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Preview email template"},
-    {"action": "jetonomy_flush_rules", "handler": "Admin\\Ajax\\Settings_Handler::flush_rules", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Flush rewrite rules"},
-    {"action": "jetonomy_update_post", "handler": "Admin\\Ajax\\Content_Handler::update_post", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Update post from admin"},
-    {"action": "jetonomy_delete_post", "handler": "Admin\\Ajax\\Content_Handler::delete_post", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Delete post from admin"},
-    {"action": "jetonomy_update_reply", "handler": "Admin\\Ajax\\Content_Handler::update_reply", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Update reply from admin"},
-    {"action": "jetonomy_delete_reply", "handler": "Admin\\Ajax\\Content_Handler::delete_reply", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Delete reply from admin"},
-    {"action": "jetonomy_get_replies", "handler": "Admin\\Ajax\\Content_Handler::get_replies", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_settings", "purpose": "Get replies for post"},
-    {"action": "jetonomy_approve_join_request", "handler": "Admin\\Ajax\\Content_Handler::approve_join_request", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Approve join request"},
-    {"action": "jetonomy_deny_join_request", "handler": "Admin\\Ajax\\Content_Handler::deny_join_request", "nonce": "jetonomy_nonce", "capability": "jetonomy_manage_spaces", "purpose": "Deny join request"},
-    {"action": "jetonomy_setup_save", "handler": "Admin\\Ajax\\Setup_Handler::save", "nonce": "jetonomy_nonce", "capability": "manage_options", "purpose": "Save setup wizard data"},
-    {"action": "jetonomy_setup_create_sample", "handler": "Admin\\Ajax\\Setup_Handler::create_sample", "nonce": "jetonomy_nonce", "capability": "manage_options", "purpose": "Create sample data"},
-    {"action": "jetonomy_cleanup_sample_data", "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample", "nonce": "jetonomy_nonce", "capability": "manage_options", "purpose": "Clean up sample data"}
+    {
+      "action": "jetonomy_create_category",
+      "handler": "Admin\\Ajax\\Categories_Handler::create",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Create category"
+    },
+    {
+      "action": "jetonomy_update_category",
+      "handler": "Admin\\Ajax\\Categories_Handler::update",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Update category"
+    },
+    {
+      "action": "jetonomy_delete_category",
+      "handler": "Admin\\Ajax\\Categories_Handler::delete",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Delete category"
+    },
+    {
+      "action": "jetonomy_reorder_categories",
+      "handler": "Admin\\Ajax\\Categories_Handler::reorder",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_categories",
+      "purpose": "Reorder categories"
+    },
+    {
+      "action": "jetonomy_create_tag",
+      "handler": "Admin\\Ajax\\Tags_Handler::create",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Create tag"
+    },
+    {
+      "action": "jetonomy_update_tag",
+      "handler": "Admin\\Ajax\\Tags_Handler::update",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Update tag"
+    },
+    {
+      "action": "jetonomy_delete_tag",
+      "handler": "Admin\\Ajax\\Tags_Handler::delete",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Delete tag"
+    },
+    {
+      "action": "jetonomy_bulk_delete_tags",
+      "handler": "Admin\\Ajax\\Tags_Handler::bulk_delete",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Bulk delete tags"
+    },
+    {
+      "action": "jetonomy_create_space",
+      "handler": "Admin\\Ajax\\Spaces_Handler::create",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Create space"
+    },
+    {
+      "action": "jetonomy_update_space",
+      "handler": "Admin\\Ajax\\Spaces_Handler::update",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Update space"
+    },
+    {
+      "action": "jetonomy_delete_space",
+      "handler": "Admin\\Ajax\\Spaces_Handler::delete",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Delete space"
+    },
+    {
+      "action": "jetonomy_add_space_member",
+      "handler": "Admin\\Ajax\\Spaces_Handler::add_member",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Add member to space"
+    },
+    {
+      "action": "jetonomy_remove_space_member",
+      "handler": "Admin\\Ajax\\Spaces_Handler::remove_member",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Remove member from space"
+    },
+    {
+      "action": "jetonomy_change_member_role",
+      "handler": "Admin\\Ajax\\Spaces_Handler::change_role",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Change member role"
+    },
+    {
+      "action": "jetonomy_add_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::add_access_rule",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Add space access rule"
+    },
+    {
+      "action": "jetonomy_delete_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::delete_access_rule",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Delete space access rule"
+    },
+    {
+      "action": "jetonomy_sync_access_rule",
+      "handler": "Admin\\Ajax\\Spaces_Handler::sync_access_rule",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Sync access rules"
+    },
+    {
+      "action": "jetonomy_approve_content",
+      "handler": "Admin\\Ajax\\Moderation_Handler::approve",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_moderate",
+      "purpose": "Approve flagged content"
+    },
+    {
+      "action": "jetonomy_spam_content",
+      "handler": "Admin\\Ajax\\Moderation_Handler::spam",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_moderate",
+      "purpose": "Mark content as spam"
+    },
+    {
+      "action": "jetonomy_trash_content",
+      "handler": "Admin\\Ajax\\Moderation_Handler::trash",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_moderate",
+      "purpose": "Trash content"
+    },
+    {
+      "action": "jetonomy_resolve_flag",
+      "handler": "Admin\\Ajax\\Moderation_Handler::resolve_flag",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_moderate",
+      "purpose": "Resolve flag"
+    },
+    {
+      "action": "jetonomy_bulk_content_action",
+      "handler": "Admin\\Ajax\\Moderation_Handler::bulk_action",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_moderate",
+      "purpose": "Bulk moderation action"
+    },
+    {
+      "action": "jetonomy_ban_user",
+      "handler": "Admin\\Ajax\\Users_Handler::ban",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_users",
+      "purpose": "Ban user"
+    },
+    {
+      "action": "jetonomy_unban_user",
+      "handler": "Admin\\Ajax\\Users_Handler::unban",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_users",
+      "purpose": "Unban user"
+    },
+    {
+      "action": "jetonomy_change_trust_level",
+      "handler": "Admin\\Ajax\\Users_Handler::change_trust_level",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_users",
+      "purpose": "Change user trust level"
+    },
+    {
+      "action": "jetonomy_search_users",
+      "handler": "Admin\\Ajax\\Users_Handler::search",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Search users"
+    },
+    {
+      "action": "jetonomy_run_import",
+      "handler": "Admin\\Ajax\\Import_Handler::run_import",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Run import"
+    },
+    {
+      "action": "jetonomy_import_batch",
+      "handler": "Admin\\Ajax\\Import_Handler::batch",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Process import batch"
+    },
+    {
+      "action": "jetonomy_import_progress",
+      "handler": "Admin\\Ajax\\Import_Handler::progress",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Get import progress"
+    },
+    {
+      "action": "jetonomy_test_email",
+      "handler": "Admin\\Ajax\\Settings_Handler::test_email",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Send test email"
+    },
+    {
+      "action": "jetonomy_email_preview",
+      "handler": "Admin\\Ajax\\Settings_Handler::email_preview",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Preview email template"
+    },
+    {
+      "action": "jetonomy_flush_rules",
+      "handler": "Admin\\Ajax\\Settings_Handler::flush_rules",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Flush rewrite rules"
+    },
+    {
+      "action": "jetonomy_update_post",
+      "handler": "Admin\\Ajax\\Content_Handler::update_post",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Update post from admin"
+    },
+    {
+      "action": "jetonomy_delete_post",
+      "handler": "Admin\\Ajax\\Content_Handler::delete_post",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Delete post from admin"
+    },
+    {
+      "action": "jetonomy_update_reply",
+      "handler": "Admin\\Ajax\\Content_Handler::update_reply",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Update reply from admin"
+    },
+    {
+      "action": "jetonomy_delete_reply",
+      "handler": "Admin\\Ajax\\Content_Handler::delete_reply",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Delete reply from admin"
+    },
+    {
+      "action": "jetonomy_get_replies",
+      "handler": "Admin\\Ajax\\Content_Handler::get_replies",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_settings",
+      "purpose": "Get replies for post"
+    },
+    {
+      "action": "jetonomy_approve_join_request",
+      "handler": "Admin\\Ajax\\Content_Handler::approve_join_request",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Approve join request"
+    },
+    {
+      "action": "jetonomy_deny_join_request",
+      "handler": "Admin\\Ajax\\Content_Handler::deny_join_request",
+      "nonce": "jetonomy_nonce",
+      "capability": "jetonomy_manage_spaces",
+      "purpose": "Deny join request"
+    },
+    {
+      "action": "jetonomy_setup_save",
+      "handler": "Admin\\Ajax\\Setup_Handler::save",
+      "nonce": "jetonomy_nonce",
+      "capability": "manage_options",
+      "purpose": "Save setup wizard data"
+    },
+    {
+      "action": "jetonomy_setup_create_sample",
+      "handler": "Admin\\Ajax\\Setup_Handler::create_sample",
+      "nonce": "jetonomy_nonce",
+      "capability": "manage_options",
+      "purpose": "Create sample data"
+    },
+    {
+      "action": "jetonomy_cleanup_sample_data",
+      "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample",
+      "nonce": "jetonomy_nonce",
+      "capability": "manage_options",
+      "purpose": "Clean up sample data"
+    }
   ],
   "admin_pages": [
-    {"title": "Jetonomy", "slug": "jetonomy", "parent": null, "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Dashboard", "slug": "jetonomy", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Categories", "slug": "jetonomy-categories", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Tags", "slug": "jetonomy-tags", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Spaces", "slug": "jetonomy-spaces", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Content", "slug": "jetonomy-content", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Moderation", "slug": "jetonomy-moderation", "parent": "jetonomy", "capability": "jetonomy_moderate", "source": "includes/admin/class-admin.php"},
-    {"title": "Users", "slug": "jetonomy-users", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Import", "slug": "jetonomy-import", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Settings", "slug": "jetonomy-settings", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Extensions", "slug": "jetonomy-extensions", "parent": "jetonomy", "capability": "jetonomy_manage_settings", "source": "includes/admin/class-admin.php"},
-    {"title": "Setup", "slug": "jetonomy-setup", "parent": null, "capability": "manage_options", "source": "includes/admin/class-admin.php"}
+    {
+      "title": "Jetonomy",
+      "slug": "jetonomy",
+      "parent": null,
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Dashboard",
+      "slug": "jetonomy",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Categories",
+      "slug": "jetonomy-categories",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Tags",
+      "slug": "jetonomy-tags",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Spaces",
+      "slug": "jetonomy-spaces",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Content",
+      "slug": "jetonomy-content",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Moderation",
+      "slug": "jetonomy-moderation",
+      "parent": "jetonomy",
+      "capability": "jetonomy_moderate",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Users",
+      "slug": "jetonomy-users",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Import",
+      "slug": "jetonomy-import",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Settings",
+      "slug": "jetonomy-settings",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Extensions",
+      "slug": "jetonomy-extensions",
+      "parent": "jetonomy",
+      "capability": "jetonomy_manage_settings",
+      "source": "includes/admin/class-admin.php"
+    },
+    {
+      "title": "Setup",
+      "slug": "jetonomy-setup",
+      "parent": null,
+      "capability": "manage_options",
+      "source": "includes/admin/class-admin.php"
+    }
   ],
   "settings": [
-    {"key": "jetonomy_settings", "group": "jetonomy_settings", "type": "array", "default": {}, "controls": "base_slug, default_space_type, notification_defaults, trust_thresholds, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles"},
-    {"key": "jetonomy_email_templates", "group": "jetonomy_settings", "type": "array", "default": {}, "controls": "user_welcome, reply_to_post, reply_to_reply, mention, accepted_answer, new_post_in_sub, badge_earned, vote_on_post, moderation, join_request"}
+    {
+      "key": "jetonomy_settings",
+      "group": "jetonomy_settings",
+      "type": "array",
+      "default": {},
+      "controls": "base_slug, default_space_type, notification_defaults, trust_thresholds, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles"
+    },
+    {
+      "key": "jetonomy_email_templates",
+      "group": "jetonomy_settings",
+      "type": "array",
+      "default": {},
+      "controls": "user_welcome, reply_to_post, reply_to_reply, mention, accepted_answer, new_post_in_sub, badge_earned, vote_on_post, moderation, join_request"
+    }
   ],
   "shortcodes": [
-    {"tag": "jetonomy_recent_posts", "handler": "Shortcodes::recent_posts", "attrs": ["count", "space_id", "sort"]},
-    {"tag": "jetonomy_trending_posts", "handler": "Shortcodes::trending_posts", "attrs": ["count", "space_id"]},
-    {"tag": "jetonomy_spaces", "handler": "Shortcodes::spaces", "attrs": ["count", "category_id"]},
-    {"tag": "jetonomy_leaderboard", "handler": "Shortcodes::leaderboard", "attrs": ["limit"]},
-    {"tag": "jetonomy_user_profile", "handler": "Shortcodes::user_profile", "attrs": ["user_id"]},
-    {"tag": "jetonomy_space_members", "handler": "Shortcodes::space_members", "attrs": ["space_id", "limit"]},
-    {"tag": "jetonomy_compose_topic", "handler": "Shortcodes::compose_topic", "attrs": ["space_id"]},
-    {"tag": "jetonomy_widget", "handler": "Shortcodes::widget_embed", "attrs": ["widget_id"]},
-    {"tag": "jetonomy_recent_activity", "handler": "Shortcodes::recent_activity", "attrs": ["limit", "space_id"]}
+    {
+      "tag": "jetonomy_recent_posts",
+      "handler": "Shortcodes::recent_posts",
+      "attrs": [
+        "count",
+        "space_id",
+        "sort"
+      ]
+    },
+    {
+      "tag": "jetonomy_trending_posts",
+      "handler": "Shortcodes::trending_posts",
+      "attrs": [
+        "count",
+        "space_id"
+      ]
+    },
+    {
+      "tag": "jetonomy_spaces",
+      "handler": "Shortcodes::spaces",
+      "attrs": [
+        "count",
+        "category_id"
+      ]
+    },
+    {
+      "tag": "jetonomy_leaderboard",
+      "handler": "Shortcodes::leaderboard",
+      "attrs": [
+        "limit"
+      ]
+    },
+    {
+      "tag": "jetonomy_user_profile",
+      "handler": "Shortcodes::user_profile",
+      "attrs": [
+        "user_id"
+      ]
+    },
+    {
+      "tag": "jetonomy_space_members",
+      "handler": "Shortcodes::space_members",
+      "attrs": [
+        "space_id",
+        "limit"
+      ]
+    },
+    {
+      "tag": "jetonomy_compose_topic",
+      "handler": "Shortcodes::compose_topic",
+      "attrs": [
+        "space_id"
+      ]
+    },
+    {
+      "tag": "jetonomy_widget",
+      "handler": "Shortcodes::widget_embed",
+      "attrs": [
+        "widget_id"
+      ]
+    },
+    {
+      "tag": "jetonomy_recent_activity",
+      "handler": "Shortcodes::recent_activity",
+      "attrs": [
+        "limit",
+        "space_id"
+      ]
+    }
   ],
   "blocks": [
-    {"name": "jetonomy/forum-feed", "render": "Shortcodes::recent_posts", "interactivity": false, "purpose": "Display recent posts"},
-    {"name": "jetonomy/trending-posts", "render": "Shortcodes::trending_posts", "interactivity": false, "purpose": "Display trending posts"},
-    {"name": "jetonomy/spaces", "render": "Shortcodes::spaces", "interactivity": false, "purpose": "Display spaces"},
-    {"name": "jetonomy/leaderboard", "render": "Shortcodes::leaderboard", "interactivity": false, "purpose": "Display leaderboard"},
-    {"name": "jetonomy/compose-topic", "render": "Blocks::render_compose_topic", "interactivity": true, "purpose": "Composer with Interactivity API"},
-    {"name": "jetonomy/navigation", "render": "Blocks::render_navigation", "interactivity": false, "purpose": "Navigation menu"},
-    {"name": "jetonomy/login", "render": "Blocks::render_login", "interactivity": false, "purpose": "Login form"},
-    {"name": "jetonomy/user-panel", "render": "Blocks::render_user_panel", "interactivity": false, "purpose": "User panel"}
+    {
+      "name": "jetonomy/forum-feed",
+      "render": "Shortcodes::recent_posts",
+      "interactivity": false,
+      "purpose": "Display recent posts"
+    },
+    {
+      "name": "jetonomy/trending-posts",
+      "render": "Shortcodes::trending_posts",
+      "interactivity": false,
+      "purpose": "Display trending posts"
+    },
+    {
+      "name": "jetonomy/spaces",
+      "render": "Shortcodes::spaces",
+      "interactivity": false,
+      "purpose": "Display spaces"
+    },
+    {
+      "name": "jetonomy/leaderboard",
+      "render": "Shortcodes::leaderboard",
+      "interactivity": false,
+      "purpose": "Display leaderboard"
+    },
+    {
+      "name": "jetonomy/compose-topic",
+      "render": "Blocks::render_compose_topic",
+      "interactivity": true,
+      "purpose": "Composer with Interactivity API"
+    },
+    {
+      "name": "jetonomy/navigation",
+      "render": "Blocks::render_navigation",
+      "interactivity": false,
+      "purpose": "Navigation menu"
+    },
+    {
+      "name": "jetonomy/login",
+      "render": "Blocks::render_login",
+      "interactivity": false,
+      "purpose": "Login form"
+    },
+    {
+      "name": "jetonomy/user-panel",
+      "render": "Blocks::render_user_panel",
+      "interactivity": false,
+      "purpose": "User panel"
+    }
   ],
   "post_types": [],
   "taxonomies": [],
   "tables": [
-    {"name": "{prefix}jt_categories", "purpose": "Categories/sections"},
-    {"name": "{prefix}jt_spaces", "purpose": "Forums, Q&A, ideas, feeds"},
-    {"name": "{prefix}jt_posts", "purpose": "Posts and questions"},
-    {"name": "{prefix}jt_replies", "purpose": "Replies and answers"},
-    {"name": "{prefix}jt_votes", "purpose": "Up/down votes"},
-    {"name": "{prefix}jt_user_profiles", "purpose": "User profile data"},
-    {"name": "{prefix}jt_notifications", "purpose": "User notifications"},
-    {"name": "{prefix}jt_subscriptions", "purpose": "Subscriptions"},
-    {"name": "{prefix}jt_read_status", "purpose": "Read status tracking"},
-    {"name": "{prefix}jt_space_members", "purpose": "Space membership"},
-    {"name": "{prefix}jt_tags", "purpose": "Topic tags"},
-    {"name": "{prefix}jt_post_tags", "purpose": "Post tags"},
-    {"name": "{prefix}jt_space_tags", "purpose": "Space tags"},
-    {"name": "{prefix}jt_space_tag_map", "purpose": "Space tag mapping"},
-    {"name": "{prefix}jt_user_interests", "purpose": "User interests"},
-    {"name": "{prefix}jt_activity_log", "purpose": "Activity audit log"},
-    {"name": "{prefix}jt_restrictions", "purpose": "User bans and restrictions"},
-    {"name": "{prefix}jt_access_rules", "purpose": "Space access control rules"},
-    {"name": "{prefix}jt_flags", "purpose": "Flagged/reported content"},
-    {"name": "{prefix}jt_revisions", "purpose": "Post and reply edit history"},
-    {"name": "{prefix}jt_join_requests", "purpose": "Join requests for private spaces"},
-    {"name": "{prefix}jt_invite_links", "purpose": "Space invite links"},
-    {"name": "{prefix}jt_bookmarks", "purpose": "User bookmarked posts"}
+    {
+      "name": "{prefix}jt_categories",
+      "purpose": "Categories/sections"
+    },
+    {
+      "name": "{prefix}jt_spaces",
+      "purpose": "Forums, Q&A, ideas, feeds"
+    },
+    {
+      "name": "{prefix}jt_posts",
+      "purpose": "Posts and questions"
+    },
+    {
+      "name": "{prefix}jt_replies",
+      "purpose": "Replies and answers"
+    },
+    {
+      "name": "{prefix}jt_votes",
+      "purpose": "Up/down votes"
+    },
+    {
+      "name": "{prefix}jt_user_profiles",
+      "purpose": "User profile data"
+    },
+    {
+      "name": "{prefix}jt_notifications",
+      "purpose": "User notifications"
+    },
+    {
+      "name": "{prefix}jt_subscriptions",
+      "purpose": "Subscriptions"
+    },
+    {
+      "name": "{prefix}jt_read_status",
+      "purpose": "Read status tracking"
+    },
+    {
+      "name": "{prefix}jt_space_members",
+      "purpose": "Space membership"
+    },
+    {
+      "name": "{prefix}jt_tags",
+      "purpose": "Topic tags"
+    },
+    {
+      "name": "{prefix}jt_post_tags",
+      "purpose": "Post tags"
+    },
+    {
+      "name": "{prefix}jt_space_tags",
+      "purpose": "Space tags"
+    },
+    {
+      "name": "{prefix}jt_space_tag_map",
+      "purpose": "Space tag mapping"
+    },
+    {
+      "name": "{prefix}jt_user_interests",
+      "purpose": "User interests"
+    },
+    {
+      "name": "{prefix}jt_activity_log",
+      "purpose": "Activity audit log"
+    },
+    {
+      "name": "{prefix}jt_restrictions",
+      "purpose": "User bans and restrictions"
+    },
+    {
+      "name": "{prefix}jt_access_rules",
+      "purpose": "Space access control rules"
+    },
+    {
+      "name": "{prefix}jt_flags",
+      "purpose": "Flagged/reported content"
+    },
+    {
+      "name": "{prefix}jt_revisions",
+      "purpose": "Post and reply edit history"
+    },
+    {
+      "name": "{prefix}jt_join_requests",
+      "purpose": "Join requests for private spaces"
+    },
+    {
+      "name": "{prefix}jt_invite_links",
+      "purpose": "Space invite links"
+    },
+    {
+      "name": "{prefix}jt_bookmarks",
+      "purpose": "User bookmarked posts"
+    }
   ],
   "capabilities": [
-    {"cap": "jetonomy_read", "default_roles": ["subscriber", "contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_create_posts", "default_roles": ["contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_create_replies", "default_roles": ["contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_edit_own_posts", "default_roles": ["contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_delete_own_posts", "default_roles": ["contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_vote", "default_roles": ["subscriber", "contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_flag", "default_roles": ["subscriber", "contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_join_spaces", "default_roles": ["subscriber", "contributor", "author", "editor", "administrator"]},
-    {"cap": "jetonomy_upload_media", "default_roles": ["author", "editor", "administrator"]},
-    {"cap": "jetonomy_create_spaces", "default_roles": ["editor", "administrator"]},
-    {"cap": "jetonomy_edit_others_posts", "default_roles": ["editor", "administrator"]},
-    {"cap": "jetonomy_delete_others_posts", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_moderate", "default_roles": ["editor", "administrator"]},
-    {"cap": "jetonomy_manage_users", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_move_posts", "default_roles": ["editor", "administrator"]},
-    {"cap": "jetonomy_close_posts", "default_roles": ["editor", "administrator"]},
-    {"cap": "jetonomy_pin_posts", "default_roles": ["editor", "administrator"]},
-    {"cap": "jetonomy_manage_settings", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_manage_categories", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_manage_spaces", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_manage_badges", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_view_analytics", "default_roles": ["administrator"]},
-    {"cap": "jetonomy_manage_extensions", "default_roles": ["administrator"]}
+    {
+      "cap": "jetonomy_read",
+      "default_roles": [
+        "subscriber",
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_create_posts",
+      "default_roles": [
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_create_replies",
+      "default_roles": [
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_edit_own_posts",
+      "default_roles": [
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_delete_own_posts",
+      "default_roles": [
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_vote",
+      "default_roles": [
+        "subscriber",
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_flag",
+      "default_roles": [
+        "subscriber",
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_join_spaces",
+      "default_roles": [
+        "subscriber",
+        "contributor",
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_upload_media",
+      "default_roles": [
+        "author",
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_create_spaces",
+      "default_roles": [
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_edit_others_posts",
+      "default_roles": [
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_delete_others_posts",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_moderate",
+      "default_roles": [
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_manage_users",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_move_posts",
+      "default_roles": [
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_close_posts",
+      "default_roles": [
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_pin_posts",
+      "default_roles": [
+        "editor",
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_manage_settings",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_manage_categories",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_manage_spaces",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_manage_badges",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_view_analytics",
+      "default_roles": [
+        "administrator"
+      ]
+    },
+    {
+      "cap": "jetonomy_manage_extensions",
+      "default_roles": [
+        "administrator"
+      ]
+    }
   ],
   "services": [],
   "hooks_fired": [
-    {"name": "jetonomy_extensions_init", "type": "action", "args": "none", "where": "includes/class-jetonomy.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_dashboard_after_stats", "type": "action", "args": "none", "where": "includes/admin/views/dashboard.php", "consumed_by": null},
-    {"name": "jetonomy_admin_dashboard_widgets", "type": "action", "args": "none", "where": "includes/admin/views/dashboard.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_license_tab_content", "type": "action", "args": "none", "where": "includes/admin/views/settings.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_moderation_tab_content", "type": "action", "args": "active_tab", "where": "includes/admin/views/moderation.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_moderation_tabs", "type": "action", "args": "none", "where": "includes/admin/views/moderation.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_render_extensions", "type": "action", "args": "none", "where": "includes/admin/views/extensions.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_render_license", "type": "action", "args": "none", "where": "includes/admin/views/settings.php", "consumed_by": null},
-    {"name": "jetonomy_admin_settings_tab_content", "type": "action", "args": "tab, group", "where": "includes/admin/views/settings.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_settings_tabs", "type": "action", "args": "none", "where": "includes/admin/views/settings.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_space_edit_tab_content", "type": "action", "args": "space_id, tab", "where": "includes/admin/views/space-edit.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_space_edit_tabs", "type": "action", "args": "space_id", "where": "includes/admin/views/space-edit.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_after_content", "type": "action", "args": "type, object_id", "where": "templates/post.php", "consumed_by": null},
-    {"name": "jetonomy_after_create_post", "type": "action", "args": "post_id, user_id", "where": "includes/models/class-post.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_after_create_reply", "type": "action", "args": "reply_id, user_id, post_id", "where": "includes/models/class-reply.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_after_post_article", "type": "action", "args": "post_id", "where": "templates/post.php", "consumed_by": null},
-    {"name": "jetonomy_after_post_content", "type": "action", "args": "post_id, content", "where": "templates/post.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_after_replies", "type": "action", "args": "post_id", "where": "templates/post.php", "consumed_by": null},
-    {"name": "jetonomy_after_vote", "type": "action", "args": "user_id, object_type, object_id, vote_value", "where": "includes/models/class-vote.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_before_content", "type": "action", "args": "type, object_id", "where": "templates/post.php", "consumed_by": null},
-    {"name": "jetonomy_before_replies", "type": "action", "args": "post_id", "where": "templates/post.php", "consumed_by": null},
-    {"name": "jetonomy_between_replies", "type": "action", "args": "post_id, reply", "where": "templates/post.php", "consumed_by": null},
-    {"name": "jetonomy_content_moderated", "type": "action", "args": "type, id, action, moderator_id", "where": "includes/admin/ajax/class-moderation-handler.php", "consumed_by": null},
-    {"name": "jetonomy_email_verified", "type": "action", "args": "user_id", "where": "includes/api/class-auth-controller.php", "consumed_by": null},
-    {"name": "jetonomy_flag_created", "type": "action", "args": "flag_id", "where": "includes/models/class-flag.php", "consumed_by": null},
-    {"name": "jetonomy_flag_resolved", "type": "action", "args": "flag_id, action", "where": "includes/models/class-flag.php", "consumed_by": null},
-    {"name": "jetonomy_header_nav_items", "type": "action", "args": "user_id", "where": "templates/header.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_join_request_created", "type": "action", "args": "request_id", "where": "includes/models/class-join-request.php", "consumed_by": null},
-    {"name": "jetonomy_membership_activated", "type": "action", "args": "user_id, level_id, adapter", "where": "includes/integrations/", "consumed_by": null},
-    {"name": "jetonomy_membership_deactivated", "type": "action", "args": "user_id, level_id, adapter", "where": "includes/integrations/", "consumed_by": null},
-    {"name": "jetonomy_new_post_fields", "type": "action", "args": "post_id", "where": "templates/compose.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_notification_created", "type": "action", "args": "notification_id", "where": "includes/notifications/class-notifier.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_post_actions", "type": "action", "args": "post_id", "where": "templates/post.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_post_deleted", "type": "action", "args": "post_id", "where": "includes/models/class-post.php", "consumed_by": null},
-    {"name": "jetonomy_post_merged", "type": "action", "args": "primary_id, secondary_id", "where": "includes/models/class-post.php", "consumed_by": null},
-    {"name": "jetonomy_post_meta_fields", "type": "action", "args": "post_id", "where": "templates/post-meta.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_post_updated", "type": "action", "args": "post_id", "where": "includes/models/class-post.php", "consumed_by": null},
-    {"name": "jetonomy_profile_after_stats", "type": "action", "args": "user_id", "where": "templates/profile.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_profile_display_fields", "type": "action", "args": "user_id", "where": "templates/profile.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_profile_edit_fields", "type": "action", "args": "user_id", "where": "templates/profile-edit.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_reply_accepted", "type": "action", "args": "reply_id", "where": "includes/models/class-reply.php", "consumed_by": null},
-    {"name": "jetonomy_reply_actions", "type": "action", "args": "reply_id", "where": "templates/reply.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_reply_deleted", "type": "action", "args": "reply_id", "where": "includes/models/class-reply.php", "consumed_by": null},
-    {"name": "jetonomy_reply_split", "type": "action", "args": "new_post_id, reply_ids", "where": "includes/models/class-reply.php", "consumed_by": null},
-    {"name": "jetonomy_reply_updated", "type": "action", "args": "reply_id", "where": "includes/models/class-reply.php", "consumed_by": null},
-    {"name": "jetonomy_reputation_changed", "type": "action", "args": "user_id, points, reason", "where": "includes/trust/class-reputation-calculator.php", "consumed_by": null},
-    {"name": "jetonomy_scheduled_post_published", "type": "action", "args": "post_id", "where": "includes/class-cron.php", "consumed_by": null},
-    {"name": "jetonomy_search_filters", "type": "action", "args": "none", "where": "templates/search.php", "consumed_by": null},
-    {"name": "jetonomy_sidebar_about_after_meta", "type": "action", "args": "space_id", "where": "templates/sidebar.php", "consumed_by": null},
-    {"name": "jetonomy_sidebar_after", "type": "action", "args": "none", "where": "templates/sidebar.php", "consumed_by": null},
-    {"name": "jetonomy_sidebar_after_about", "type": "action", "args": "none", "where": "templates/sidebar.php", "consumed_by": null},
-    {"name": "jetonomy_sidebar_before", "type": "action", "args": "none", "where": "templates/sidebar.php", "consumed_by": null},
-    {"name": "jetonomy_trust_evaluation", "type": "action", "args": "cron-only", "where": "includes/class-cron.php", "consumed_by": null},
-    {"name": "jetonomy_trust_level_changed", "type": "action", "args": "user_id, old_level, new_level", "where": "includes/class-cron.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_user_joined_space", "type": "action", "args": "user_id, space_id", "where": "includes/models/class-space-member.php", "consumed_by": null},
-    {"name": "jetonomy_user_pending_verification", "type": "action", "args": "user_id", "where": "includes/api/class-auth-controller.php", "consumed_by": null},
-    {"name": "jetonomy_user_registered", "type": "action", "args": "user_id", "where": "includes/api/class-auth-controller.php", "consumed_by": null},
-    {"name": "jetonomy_admin_menu_icon", "type": "filter", "args": "icon", "where": "includes/admin/class-admin.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_menu_label", "type": "filter", "args": "label", "where": "includes/admin/class-admin.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_admin_footer_text", "type": "filter", "args": "text", "where": "includes/admin/class-admin.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_before_create_post", "type": "filter", "args": "data", "where": "includes/models/class-post.php", "consumed_by": null},
-    {"name": "jetonomy_before_create_reply", "type": "filter", "args": "data", "where": "includes/models/class-reply.php", "consumed_by": null},
-    {"name": "jetonomy_before_delete_post", "type": "filter", "args": "post_id", "where": "includes/models/class-post.php", "consumed_by": null},
-    {"name": "jetonomy_before_delete_reply", "type": "filter", "args": "reply_id", "where": "includes/models/class-reply.php", "consumed_by": null},
-    {"name": "jetonomy_before_join_space", "type": "filter", "args": "user_id, space_id", "where": "includes/models/class-space-member.php", "consumed_by": null},
-    {"name": "jetonomy_before_vote", "type": "filter", "args": "user_id, object_type, object_id, vote_value", "where": "includes/models/class-vote.php", "consumed_by": null},
-    {"name": "jetonomy_check_content", "type": "filter", "args": "content, type", "where": "includes/moderation/class-content-checker.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_disposable_email_domains", "type": "filter", "args": "domains", "where": "includes/api/class-auth-controller.php", "consumed_by": null},
-    {"name": "jetonomy_email_accent_color", "type": "filter", "args": "color", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_body", "type": "filter", "args": "body, template", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_headers", "type": "filter", "args": "headers", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_html", "type": "filter", "args": "html, template", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_logo_url", "type": "filter", "args": "url", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_subject", "type": "filter", "args": "subject, template", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_template_context", "type": "filter", "args": "context, template", "where": "includes/notifications/class-notifier.php", "consumed_by": null},
-    {"name": "jetonomy_email_template_path", "type": "filter", "args": "path, template", "where": "includes/class-template-loader.php", "consumed_by": null},
-    {"name": "jetonomy_footer_text", "type": "filter", "args": "text", "where": "templates/footer.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_header_logo", "type": "filter", "args": "url", "where": "templates/header.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_importers", "type": "filter", "args": "importers", "where": "includes/import/class-import-manager.php", "consumed_by": null},
-    {"name": "jetonomy_link_preview_cache_ttl", "type": "filter", "args": "ttl", "where": "includes/api/class-posts-controller.php", "consumed_by": null},
-    {"name": "jetonomy_link_preview_data", "type": "filter", "args": "data, url", "where": "includes/api/class-posts-controller.php", "consumed_by": null},
-    {"name": "jetonomy_link_preview_providers", "type": "filter", "args": "providers", "where": "includes/api/class-posts-controller.php", "consumed_by": null},
-    {"name": "jetonomy_link_preview_user_agent", "type": "filter", "args": "ua", "where": "includes/api/class-posts-controller.php", "consumed_by": null},
-    {"name": "jetonomy_new_post_submit_action", "type": "filter", "args": "url", "where": "includes/blocks/", "consumed_by": null},
-    {"name": "jetonomy_notification_email_headers", "type": "filter", "args": "headers", "where": "includes/notifications/class-notifier.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_oembed_response", "type": "filter", "args": "response, post", "where": "includes/api/class-oembed-controller.php", "consumed_by": null},
-    {"name": "jetonomy_post_response", "type": "filter", "args": "response, post", "where": "includes/api/class-posts-controller.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_profile_response", "type": "filter", "args": "response, user", "where": "includes/api/class-users-controller.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_profile_url", "type": "filter", "args": "url, user_id", "where": "includes/", "consumed_by": null},
-    {"name": "jetonomy_rest_prepare_post", "type": "filter", "args": "response, post", "where": "includes/api/class-posts-controller.php", "consumed_by": null},
-    {"name": "jetonomy_rest_prepare_reply", "type": "filter", "args": "response, reply", "where": "includes/api/class-replies-controller.php", "consumed_by": null},
-    {"name": "jetonomy_rest_prepare_space", "type": "filter", "args": "response, space", "where": "includes/api/class-spaces-controller.php", "consumed_by": null},
-    {"name": "jetonomy_rest_prepare_user", "type": "filter", "args": "response, user", "where": "includes/api/class-users-controller.php", "consumed_by": null},
-    {"name": "jetonomy_search_query_args", "type": "filter", "args": "args", "where": "includes/api/class-search-controller.php", "consumed_by": null},
-    {"name": "jetonomy_show_community_nav", "type": "filter", "args": "show", "where": "templates/", "consumed_by": null},
-    {"name": "jetonomy_show_sidebar", "type": "filter", "args": "show", "where": "templates/", "consumed_by": null},
-    {"name": "jetonomy_sidebar_auth_card", "type": "filter", "args": "html", "where": "templates/sidebar.php", "consumed_by": null},
-    {"name": "jetonomy_space_role_permissions", "type": "filter", "args": "permissions, role", "where": "includes/permissions/class-permission-engine.php", "consumed_by": null},
-    {"name": "jetonomy_template_map", "type": "filter", "args": "map", "where": "includes/class-template-loader.php", "consumed_by": "jetonomy-pro"},
-    {"name": "jetonomy_theme_dark_tokens", "type": "filter", "args": "tokens", "where": "includes/integrations/class-theme-integration.php", "consumed_by": null},
-    {"name": "jetonomy_theme_light_tokens", "type": "filter", "args": "tokens", "where": "includes/integrations/class-theme-integration.php", "consumed_by": null},
-    {"name": "jetonomy_use_frontend_space_edit", "type": "filter", "args": "use_frontend", "where": "includes/admin/", "consumed_by": null}
+    {
+      "name": "jetonomy_extensions_init",
+      "type": "action",
+      "args": "none",
+      "where": "includes/class-jetonomy.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_dashboard_after_stats",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/dashboard.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_admin_dashboard_widgets",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/dashboard.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_license_tab_content",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/settings.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_moderation_tab_content",
+      "type": "action",
+      "args": "active_tab",
+      "where": "includes/admin/views/moderation.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_moderation_tabs",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/moderation.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_render_extensions",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/extensions.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_render_license",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/settings.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_admin_settings_tab_content",
+      "type": "action",
+      "args": "tab, group",
+      "where": "includes/admin/views/settings.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_settings_tabs",
+      "type": "action",
+      "args": "none",
+      "where": "includes/admin/views/settings.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_space_edit_tab_content",
+      "type": "action",
+      "args": "space_id, tab",
+      "where": "includes/admin/views/space-edit.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_space_edit_tabs",
+      "type": "action",
+      "args": "space_id",
+      "where": "includes/admin/views/space-edit.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_content",
+      "type": "action",
+      "args": "type, object_id",
+      "where": "templates/post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_after_create_post",
+      "type": "action",
+      "args": "post_id, user_id",
+      "where": "includes/models/class-post.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_create_reply",
+      "type": "action",
+      "args": "reply_id, user_id, post_id",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_post_article",
+      "type": "action",
+      "args": "post_id",
+      "where": "templates/post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_after_post_content",
+      "type": "action",
+      "args": "post_id, content",
+      "where": "templates/post.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_replies",
+      "type": "action",
+      "args": "post_id",
+      "where": "templates/post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_after_vote",
+      "type": "action",
+      "args": "user_id, object_type, object_id, vote_value",
+      "where": "includes/models/class-vote.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_before_content",
+      "type": "action",
+      "args": "type, object_id",
+      "where": "templates/post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_before_replies",
+      "type": "action",
+      "args": "post_id",
+      "where": "templates/post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_between_replies",
+      "type": "action",
+      "args": "post_id, reply",
+      "where": "templates/post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_content_moderated",
+      "type": "action",
+      "args": "type, id, action, moderator_id",
+      "where": "includes/admin/ajax/class-moderation-handler.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_verified",
+      "type": "action",
+      "args": "user_id",
+      "where": "includes/api/class-auth-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_flag_created",
+      "type": "action",
+      "args": "flag_id",
+      "where": "includes/models/class-flag.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_flag_resolved",
+      "type": "action",
+      "args": "flag_id, action",
+      "where": "includes/models/class-flag.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_header_nav_items",
+      "type": "action",
+      "args": "user_id",
+      "where": "templates/header.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_join_request_created",
+      "type": "action",
+      "args": "request_id",
+      "where": "includes/models/class-join-request.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_membership_activated",
+      "type": "action",
+      "args": "user_id, level_id, adapter",
+      "where": "includes/integrations/",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_membership_deactivated",
+      "type": "action",
+      "args": "user_id, level_id, adapter",
+      "where": "includes/integrations/",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_new_post_fields",
+      "type": "action",
+      "args": "post_id",
+      "where": "templates/compose.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_notification_created",
+      "type": "action",
+      "args": "notification_id",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_post_actions",
+      "type": "action",
+      "args": "post_id",
+      "where": "templates/post.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_post_deleted",
+      "type": "action",
+      "args": "post_id",
+      "where": "includes/models/class-post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_post_merged",
+      "type": "action",
+      "args": "primary_id, secondary_id",
+      "where": "includes/models/class-post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_post_meta_fields",
+      "type": "action",
+      "args": "post_id",
+      "where": "templates/post-meta.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_post_updated",
+      "type": "action",
+      "args": "post_id",
+      "where": "includes/models/class-post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_profile_after_stats",
+      "type": "action",
+      "args": "user_id",
+      "where": "templates/profile.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_profile_display_fields",
+      "type": "action",
+      "args": "user_id",
+      "where": "templates/profile.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_profile_edit_fields",
+      "type": "action",
+      "args": "user_id",
+      "where": "templates/profile-edit.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_reply_accepted",
+      "type": "action",
+      "args": "reply_id",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_reply_actions",
+      "type": "action",
+      "args": "reply_id",
+      "where": "templates/reply.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_reply_deleted",
+      "type": "action",
+      "args": "reply_id",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_reply_split",
+      "type": "action",
+      "args": "new_post_id, reply_ids",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_reply_updated",
+      "type": "action",
+      "args": "reply_id",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_reputation_changed",
+      "type": "action",
+      "args": "user_id, points, reason",
+      "where": "includes/trust/class-reputation-calculator.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_scheduled_post_published",
+      "type": "action",
+      "args": "post_id",
+      "where": "includes/class-cron.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_search_filters",
+      "type": "action",
+      "args": "none",
+      "where": "templates/search.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_about_after_meta",
+      "type": "action",
+      "args": "space_id",
+      "where": "templates/sidebar.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_after",
+      "type": "action",
+      "args": "none",
+      "where": "templates/sidebar.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_after_about",
+      "type": "action",
+      "args": "none",
+      "where": "templates/sidebar.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_before",
+      "type": "action",
+      "args": "none",
+      "where": "templates/sidebar.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_trust_evaluation",
+      "type": "action",
+      "args": "cron-only",
+      "where": "includes/class-cron.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_trust_level_changed",
+      "type": "action",
+      "args": "user_id, old_level, new_level",
+      "where": "includes/class-cron.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_user_joined_space",
+      "type": "action",
+      "args": "user_id, space_id",
+      "where": "includes/models/class-space-member.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_user_pending_verification",
+      "type": "action",
+      "args": "user_id",
+      "where": "includes/api/class-auth-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_user_registered",
+      "type": "action",
+      "args": "user_id",
+      "where": "includes/api/class-auth-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_admin_menu_icon",
+      "type": "filter",
+      "args": "icon",
+      "where": "includes/admin/class-admin.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_menu_label",
+      "type": "filter",
+      "args": "label",
+      "where": "includes/admin/class-admin.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_admin_footer_text",
+      "type": "filter",
+      "args": "text",
+      "where": "includes/admin/class-admin.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_before_create_post",
+      "type": "filter",
+      "args": "data",
+      "where": "includes/models/class-post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_before_create_reply",
+      "type": "filter",
+      "args": "data",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_before_delete_post",
+      "type": "filter",
+      "args": "post_id",
+      "where": "includes/models/class-post.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_before_delete_reply",
+      "type": "filter",
+      "args": "reply_id",
+      "where": "includes/models/class-reply.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_before_join_space",
+      "type": "filter",
+      "args": "user_id, space_id",
+      "where": "includes/models/class-space-member.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_before_vote",
+      "type": "filter",
+      "args": "user_id, object_type, object_id, vote_value",
+      "where": "includes/models/class-vote.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_check_content",
+      "type": "filter",
+      "args": "content, type",
+      "where": "includes/moderation/class-content-checker.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_disposable_email_domains",
+      "type": "filter",
+      "args": "domains",
+      "where": "includes/api/class-auth-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_accent_color",
+      "type": "filter",
+      "args": "color",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_body",
+      "type": "filter",
+      "args": "body, template",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_headers",
+      "type": "filter",
+      "args": "headers",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_html",
+      "type": "filter",
+      "args": "html, template",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_logo_url",
+      "type": "filter",
+      "args": "url",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_subject",
+      "type": "filter",
+      "args": "subject, template",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_template_context",
+      "type": "filter",
+      "args": "context, template",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_email_template_path",
+      "type": "filter",
+      "args": "path, template",
+      "where": "includes/class-template-loader.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_footer_text",
+      "type": "filter",
+      "args": "text",
+      "where": "templates/footer.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_header_logo",
+      "type": "filter",
+      "args": "url",
+      "where": "templates/header.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_importers",
+      "type": "filter",
+      "args": "importers",
+      "where": "includes/import/class-import-manager.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_link_preview_cache_ttl",
+      "type": "filter",
+      "args": "ttl",
+      "where": "includes/api/class-posts-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_link_preview_data",
+      "type": "filter",
+      "args": "data, url",
+      "where": "includes/api/class-posts-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_link_preview_providers",
+      "type": "filter",
+      "args": "providers",
+      "where": "includes/api/class-posts-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_link_preview_user_agent",
+      "type": "filter",
+      "args": "ua",
+      "where": "includes/api/class-posts-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_new_post_submit_action",
+      "type": "filter",
+      "args": "url",
+      "where": "includes/blocks/",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_notification_email_headers",
+      "type": "filter",
+      "args": "headers",
+      "where": "includes/notifications/class-notifier.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_oembed_response",
+      "type": "filter",
+      "args": "response, post",
+      "where": "includes/api/class-oembed-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_post_response",
+      "type": "filter",
+      "args": "response, post",
+      "where": "includes/api/class-posts-controller.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_profile_response",
+      "type": "filter",
+      "args": "response, user",
+      "where": "includes/api/class-users-controller.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_profile_url",
+      "type": "filter",
+      "args": "url, user_id",
+      "where": "includes/",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_rest_prepare_post",
+      "type": "filter",
+      "args": "response, post",
+      "where": "includes/api/class-posts-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_rest_prepare_reply",
+      "type": "filter",
+      "args": "response, reply",
+      "where": "includes/api/class-replies-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_rest_prepare_space",
+      "type": "filter",
+      "args": "response, space",
+      "where": "includes/api/class-spaces-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_rest_prepare_user",
+      "type": "filter",
+      "args": "response, user",
+      "where": "includes/api/class-users-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_search_query_args",
+      "type": "filter",
+      "args": "args",
+      "where": "includes/api/class-search-controller.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_show_community_nav",
+      "type": "filter",
+      "args": "show",
+      "where": "templates/",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_show_sidebar",
+      "type": "filter",
+      "args": "show",
+      "where": "templates/",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_sidebar_auth_card",
+      "type": "filter",
+      "args": "html",
+      "where": "templates/sidebar.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_space_role_permissions",
+      "type": "filter",
+      "args": "permissions, role",
+      "where": "includes/permissions/class-permission-engine.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_template_map",
+      "type": "filter",
+      "args": "map",
+      "where": "includes/class-template-loader.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_theme_dark_tokens",
+      "type": "filter",
+      "args": "tokens",
+      "where": "includes/integrations/class-theme-integration.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_theme_light_tokens",
+      "type": "filter",
+      "args": "tokens",
+      "where": "includes/integrations/class-theme-integration.php",
+      "consumed_by": null
+    },
+    {
+      "name": "jetonomy_use_frontend_space_edit",
+      "type": "filter",
+      "args": "use_frontend",
+      "where": "includes/admin/",
+      "consumed_by": null
+    }
   ],
   "buddypress_integration": {
     "enabled_when": "function_exists('buddypress')",
@@ -327,47 +2385,253 @@
   },
   "frontend_assets": {
     "js": [
-      {"handle": "jetonomy-view", "path": "assets/js/view.js", "deps": ["@wordpress/interactivity"]},
-      {"handle": "jetonomy-login-block", "path": "assets/js/login-block.js", "deps": []},
-      {"handle": "jetonomy-compose-topic-block", "path": "assets/js/compose-topic-block.js", "deps": ["wp-blocks", "wp-element"]},
-      {"handle": "jetonomy-blocks-editor", "path": "assets/js/blocks-editor.js", "deps": ["wp-blocks", "wp-element"]},
-      {"handle": "jetonomy-modals", "path": "assets/js/jetonomy-modals.js", "deps": []},
-      {"handle": "jetonomy-composer", "path": "assets/js/composer.js", "deps": []},
-      {"handle": "jetonomy-moderation", "path": "assets/js/moderation.js", "deps": []},
-      {"handle": "jetonomy-space-members", "path": "assets/js/space-members.js", "deps": []},
-      {"handle": "jetonomy-admin", "path": "assets/js/admin.js", "deps": ["jquery"]}
+      {
+        "handle": "jetonomy-view",
+        "path": "assets/js/view.js",
+        "deps": [
+          "@wordpress/interactivity"
+        ]
+      },
+      {
+        "handle": "jetonomy-login-block",
+        "path": "assets/js/login-block.js",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-compose-topic-block",
+        "path": "assets/js/compose-topic-block.js",
+        "deps": [
+          "wp-blocks",
+          "wp-element"
+        ]
+      },
+      {
+        "handle": "jetonomy-blocks-editor",
+        "path": "assets/js/blocks-editor.js",
+        "deps": [
+          "wp-blocks",
+          "wp-element"
+        ]
+      },
+      {
+        "handle": "jetonomy-modals",
+        "path": "assets/js/jetonomy-modals.js",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-composer",
+        "path": "assets/js/composer.js",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-moderation",
+        "path": "assets/js/moderation.js",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-space-members",
+        "path": "assets/js/space-members.js",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-admin",
+        "path": "assets/js/admin.js",
+        "deps": [
+          "jquery"
+        ]
+      }
     ],
     "css": [
-      {"handle": "jetonomy", "path": "assets/css/jetonomy.css", "deps": []},
-      {"handle": "jetonomy-blocks", "path": "assets/css/blocks.css", "deps": []},
-      {"handle": "jetonomy-blocks-editor", "path": "assets/css/blocks-editor.css", "deps": []},
-      {"handle": "jetonomy-admin", "path": "assets/css/admin.css", "deps": []},
-      {"handle": "jetonomy-fluent-community", "path": "assets/css/fluent-community.css", "deps": []}
+      {
+        "handle": "jetonomy",
+        "path": "assets/css/jetonomy.css",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-blocks",
+        "path": "assets/css/blocks.css",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-blocks-editor",
+        "path": "assets/css/blocks-editor.css",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-admin",
+        "path": "assets/css/admin.css",
+        "deps": []
+      },
+      {
+        "handle": "jetonomy-fluent-community",
+        "path": "assets/css/fluent-community.css",
+        "deps": []
+      }
     ]
   },
   "cron": [
-    {"hook": "jetonomy_trust_evaluation", "schedule": "twicedaily", "purpose": "Evaluate and update user trust levels"},
-    {"hook": "jetonomy_cleanup_expired", "schedule": "hourly", "purpose": "Clean up expired restrictions and bans"},
-    {"hook": "jetonomy_prune_activity", "schedule": "daily", "purpose": "Prune old activity log entries"},
-    {"hook": "jetonomy_cleanup_notifications", "schedule": "weekly", "purpose": "Clean up old/read notifications"},
-    {"hook": "jetonomy_publish_scheduled", "schedule": "hourly", "purpose": "Publish scheduled posts"},
-    {"hook": "jetonomy_sync_membership", "schedule": "daily", "purpose": "Sync membership status from adapters"}
+    {
+      "hook": "jetonomy_trust_evaluation",
+      "schedule": "twicedaily",
+      "purpose": "Evaluate and update user trust levels"
+    },
+    {
+      "hook": "jetonomy_cleanup_expired",
+      "schedule": "hourly",
+      "purpose": "Clean up expired restrictions and bans"
+    },
+    {
+      "hook": "jetonomy_prune_activity",
+      "schedule": "daily",
+      "purpose": "Prune old activity log entries"
+    },
+    {
+      "hook": "jetonomy_cleanup_notifications",
+      "schedule": "weekly",
+      "purpose": "Clean up old/read notifications"
+    },
+    {
+      "hook": "jetonomy_publish_scheduled",
+      "schedule": "hourly",
+      "purpose": "Publish scheduled posts"
+    },
+    {
+      "hook": "jetonomy_sync_membership",
+      "schedule": "daily",
+      "purpose": "Sync membership status from adapters"
+    }
   ],
   "wp_cli": [
-    {"command": "jetonomy category", "handler": "CLI\\Commands\\Category_Command", "subcommands": ["create", "list", "update", "delete"]},
-    {"command": "jetonomy space", "handler": "CLI\\Commands\\Space_Command", "subcommands": ["create", "list", "update", "delete", "add-member", "remove-member"]},
-    {"command": "jetonomy post", "handler": "CLI\\Commands\\Post_Command", "subcommands": ["create", "list", "update", "delete"]},
-    {"command": "jetonomy reply", "handler": "CLI\\Commands\\Reply_Command", "subcommands": ["create", "list", "update", "delete"]},
-    {"command": "jetonomy tag", "handler": "CLI\\Commands\\Tag_Command", "subcommands": ["create", "list", "update", "delete"]},
-    {"command": "jetonomy user", "handler": "CLI\\Commands\\User_Command", "subcommands": ["ban", "unban", "promote", "demote"]},
-    {"command": "jetonomy member", "handler": "CLI\\Commands\\Member_Command", "subcommands": ["add", "remove", "promote", "demote"]},
-    {"command": "jetonomy vote", "handler": "CLI\\Commands\\Vote_Command", "subcommands": ["create", "delete", "list"]},
-    {"command": "jetonomy flag", "handler": "CLI\\Commands\\Flag_Command", "subcommands": ["list", "resolve"]},
-    {"command": "jetonomy notification", "handler": "CLI\\Commands\\Notification_Command", "subcommands": ["send", "list"]},
-    {"command": "jetonomy config", "handler": "CLI\\Commands\\Config_Command", "subcommands": ["get", "set", "list"]},
-    {"command": "jetonomy mod", "handler": "CLI\\Commands\\Mod_Command", "subcommands": ["approve", "spam", "trash"]},
-    {"command": "jetonomy scenario", "handler": "CLI\\Commands\\Scenario_Command", "subcommands": ["run", "list"]},
-    {"command": "jetonomy qa-actions", "handler": "CLI\\Commands\\Base_Command", "subcommands": ["run"]}
+    {
+      "command": "jetonomy category",
+      "handler": "CLI\\Commands\\Category_Command",
+      "subcommands": [
+        "create",
+        "list",
+        "update",
+        "delete"
+      ]
+    },
+    {
+      "command": "jetonomy space",
+      "handler": "CLI\\Commands\\Space_Command",
+      "subcommands": [
+        "create",
+        "list",
+        "update",
+        "delete",
+        "add-member",
+        "remove-member"
+      ]
+    },
+    {
+      "command": "jetonomy post",
+      "handler": "CLI\\Commands\\Post_Command",
+      "subcommands": [
+        "create",
+        "list",
+        "update",
+        "delete"
+      ]
+    },
+    {
+      "command": "jetonomy reply",
+      "handler": "CLI\\Commands\\Reply_Command",
+      "subcommands": [
+        "create",
+        "list",
+        "update",
+        "delete"
+      ]
+    },
+    {
+      "command": "jetonomy tag",
+      "handler": "CLI\\Commands\\Tag_Command",
+      "subcommands": [
+        "create",
+        "list",
+        "update",
+        "delete"
+      ]
+    },
+    {
+      "command": "jetonomy user",
+      "handler": "CLI\\Commands\\User_Command",
+      "subcommands": [
+        "ban",
+        "unban",
+        "promote",
+        "demote"
+      ]
+    },
+    {
+      "command": "jetonomy member",
+      "handler": "CLI\\Commands\\Member_Command",
+      "subcommands": [
+        "add",
+        "remove",
+        "promote",
+        "demote"
+      ]
+    },
+    {
+      "command": "jetonomy vote",
+      "handler": "CLI\\Commands\\Vote_Command",
+      "subcommands": [
+        "create",
+        "delete",
+        "list"
+      ]
+    },
+    {
+      "command": "jetonomy flag",
+      "handler": "CLI\\Commands\\Flag_Command",
+      "subcommands": [
+        "list",
+        "resolve"
+      ]
+    },
+    {
+      "command": "jetonomy notification",
+      "handler": "CLI\\Commands\\Notification_Command",
+      "subcommands": [
+        "send",
+        "list"
+      ]
+    },
+    {
+      "command": "jetonomy config",
+      "handler": "CLI\\Commands\\Config_Command",
+      "subcommands": [
+        "get",
+        "set",
+        "list"
+      ]
+    },
+    {
+      "command": "jetonomy mod",
+      "handler": "CLI\\Commands\\Mod_Command",
+      "subcommands": [
+        "approve",
+        "spam",
+        "trash"
+      ]
+    },
+    {
+      "command": "jetonomy scenario",
+      "handler": "CLI\\Commands\\Scenario_Command",
+      "subcommands": [
+        "run",
+        "list"
+      ]
+    },
+    {
+      "command": "jetonomy qa-actions",
+      "handler": "CLI\\Commands\\Base_Command",
+      "subcommands": [
+        "run"
+      ]
+    }
   ],
   "storage_drivers": [],
   "security": {
@@ -399,8 +2663,8 @@
     "ci_local": "composer test"
   },
   "notes": {
-    "manifest_quality": "Generated 2026-04-29 under the wp-plugin-onboard skill's coverage gate (≥95% per category vs ground-truth grep counts). Free hooks_fired captured 63 actions + 43 filters = 106 total (vs target 61 + 43 = 104). REST 64/64, AJAX 42/42, shortcodes 9/9, cron 6/6 — all 100%. Admin pages 12/15 (80%) — slightly under gate; remaining 3 are likely virtual sub-pages not registered via add_*_page. Settings count is 2 logical groups (vs 7 register_setting field-level calls — different counting basis, both correct).",
-    "consumed_by_pro": "Hooks marked consumed_by: 'jetonomy-pro' are confirmed via grep across the Pro plugin. These are the integration surface — Pro will break if they change."
+    "manifest_quality": "Generated 2026-04-29 under the wp-plugin-onboard skill's coverage gate (\u226595% per category vs ground-truth grep counts). Free hooks_fired captured 63 actions + 43 filters = 106 total (vs target 61 + 43 = 104). REST 64/64, AJAX 42/42, shortcodes 9/9, cron 6/6 \u2014 all 100%. Admin pages 12/15 (80%) \u2014 slightly under gate; remaining 3 are likely virtual sub-pages not registered via add_*_page. Settings count is 2 logical groups (vs 7 register_setting field-level calls \u2014 different counting basis, both correct).",
+    "consumed_by_pro": "Hooks marked consumed_by: 'jetonomy-pro' are confirmed via grep across the Pro plugin. These are the integration surface \u2014 Pro will break if they change."
   },
   "generated": {
     "at": "2026-04-29T00:00:00Z",
