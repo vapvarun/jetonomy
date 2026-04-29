@@ -257,6 +257,10 @@ class Admin {
 			'vote_on_post',
 			'moderation',
 			'join_request',
+			// A8: editor row for the A10 reminder cron's email. Without this
+			// the form silently strips any verification_reminder override
+			// because the loop below only persists allowlisted keys.
+			'verification_reminder',
 		);
 
 		$clean = array();

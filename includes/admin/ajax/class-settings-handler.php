@@ -22,45 +22,49 @@ class Settings_Handler {
 	 */
 	private static function sample_fixtures(): array {
 		return array(
-			'user_welcome'    => array(
+			'user_welcome'          => array(
 				'message'  => __( 'Welcome to the community. Your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
 				'url_path' => '/',
 			),
-			'reply_to_post'   => array(
+			'reply_to_post'         => array(
 				'message'  => __( 'Alice replied to your post "Getting started with Jetonomy".', 'jetonomy' ),
 				'url_path' => '/s/general/t/getting-started-with-jetonomy/',
 			),
-			'reply_to_reply'  => array(
+			'reply_to_reply'        => array(
 				'message'  => __( 'Bob replied to your comment on "Hosting recommendations".', 'jetonomy' ),
 				'url_path' => '/s/general/t/hosting-recommendations/',
 			),
-			'mention'         => array(
+			'mention'               => array(
 				'message'  => __( '@alice mentioned you in "Release notes discussion".', 'jetonomy' ),
 				'url_path' => '/s/announcements/t/release-notes-discussion/',
 			),
-			'accepted_answer' => array(
+			'accepted_answer'       => array(
 				'message'  => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
 				'url_path' => '/s/help/t/how-do-i-enable-dark-mode/',
 			),
-			'new_post_in_sub' => array(
+			'new_post_in_sub'       => array(
 				'message'  => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
 				'url_path' => '/',
 			),
-			'badge_earned'    => array(
+			'badge_earned'          => array(
 				'message'  => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ),
 				'url_path' => '/u/me/',
 			),
-			'vote_on_post'    => array(
+			'vote_on_post'          => array(
 				'message'  => __( 'Your post received a new vote.', 'jetonomy' ),
 				'url_path' => '/',
 			),
-			'moderation'      => array(
+			'moderation'            => array(
 				'message'  => __( 'A moderator reviewed your recent content.', 'jetonomy' ),
 				'url_path' => '/mod/',
 			),
-			'join_request'    => array(
+			'join_request'          => array(
 				'message'  => __( 'A member has asked to join one of your spaces.', 'jetonomy' ),
 				'url_path' => '/mod/',
+			),
+			'verification_reminder' => array(
+				'message'  => __( "We noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.", 'jetonomy' ),
+				'url_path' => '/',
 			),
 		);
 	}

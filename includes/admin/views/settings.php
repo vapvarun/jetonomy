@@ -526,16 +526,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php
 				$email_templates = get_option( 'jetonomy_email_templates', array() );
 				$tmpl_types      = array(
-					'user_welcome'    => __( 'Welcome: new member', 'jetonomy' ),
-					'reply_to_post'   => __( 'Reply to your post', 'jetonomy' ),
-					'reply_to_reply'  => __( 'Reply to your reply', 'jetonomy' ),
-					'mention'         => __( 'Mention (@username)', 'jetonomy' ),
-					'accepted_answer' => __( 'Your answer accepted', 'jetonomy' ),
-					'new_post_in_sub' => __( 'New post in subscribed space', 'jetonomy' ),
-					'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
-					'vote_on_post'    => __( 'Vote on your post', 'jetonomy' ),
-					'moderation'      => __( 'Moderator action', 'jetonomy' ),
-					'join_request'    => __( 'Space join request', 'jetonomy' ),
+					'user_welcome'          => __( 'Welcome: new member', 'jetonomy' ),
+					'reply_to_post'         => __( 'Reply to your post', 'jetonomy' ),
+					'reply_to_reply'        => __( 'Reply to your reply', 'jetonomy' ),
+					'mention'               => __( 'Mention (@username)', 'jetonomy' ),
+					'accepted_answer'       => __( 'Your answer accepted', 'jetonomy' ),
+					'new_post_in_sub'       => __( 'New post in subscribed space', 'jetonomy' ),
+					'badge_earned'          => __( 'Badge earned', 'jetonomy' ),
+					'vote_on_post'          => __( 'Vote on your post', 'jetonomy' ),
+					'moderation'            => __( 'Moderator action', 'jetonomy' ),
+					'join_request'          => __( 'Space join request', 'jetonomy' ),
+					'verification_reminder' => __( 'Verification reminder', 'jetonomy' ),
 				);
 				?>
 				<table class="widefat striped jetonomy-email-templates-table" style="margin-top:12px;">
