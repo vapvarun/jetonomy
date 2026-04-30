@@ -181,14 +181,26 @@ class Notifier {
 		<?php
 		$html = (string) ob_get_clean();
 
-		// Wrap through the same template helper used by other Jetonomy emails
-		// so logo / footer / colors stay consistent. Fall back to wp_mail with
-		// our own minimal HTML if the helper isn't reachable.
-		$adapter = function_exists( 'jetonomy_get_email_adapter' ) ? jetonomy_get_email_adapter() : null;
-		if ( $adapter && method_exists( $adapter, 'send' ) ) {
-			$adapter->send( $user->user_email, $subject, $html, $plain, array() );
+		// Route through the registered Email_Adapter (same path as the rest of
+		// the notifier — see send_email_notification() at line 659). Earlier
+		// versions reached for an undefined `jetonomy_get_email_adapter()`
+		// helper and fell back to direct wp_mail(), bypassing any Pro
+		// Mailgun / SES / Postmark adapter that might be registered.
+		$adapter = Adapter_Registry::get_email();
+		if ( $adapter ) {
+			$adapter->send(
+				$user->user_email,
+				$subject,
+				$html,
+				$plain,
+				array( 'Content-Type: text/html; charset=UTF-8' )
+			);
 			return;
 		}
+
+		// No email adapter at all (defensive — wp-mail-adapter is registered
+		// at boot in init_defaults()). Fall back to wp_mail so the
+		// verification reminder still has a chance of going out.
 		wp_mail(
 			$user->user_email,
 			$subject,

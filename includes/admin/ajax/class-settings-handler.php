@@ -87,11 +87,16 @@ class Settings_Handler {
 
 		// Generic test when no type specified.
 		if ( '' === $type || ! isset( self::sample_fixtures()[ $type ] ) ) {
-			$result = wp_mail(
-				$admin_email,
-				__( 'Jetonomy Test Email', 'jetonomy' ),
-				__( 'This is a test email from your Jetonomy forum plugin. If you received this, email is working correctly.', 'jetonomy' )
-			);
+			// Route through the registered Email_Adapter so the admin tests
+			// the same path production traffic uses. Earlier versions called
+			// wp_mail() directly, which bypassed any Pro Mailgun / SES /
+			// Postmark adapter and defeated the whole point of "test email".
+			$adapter = \Jetonomy\Adapters\Adapter_Registry::get_email();
+			$body    = __( 'This is a test email from your Jetonomy forum plugin. If you received this, email is working correctly.', 'jetonomy' );
+			$subject = __( 'Jetonomy Test Email', 'jetonomy' );
+			$result  = $adapter
+				? $adapter->send( $admin_email, $subject, $body, $body, array() )
+				: wp_mail( $admin_email, $subject, $body );
 
 			if ( $result ) {
 				wp_send_json_success(
