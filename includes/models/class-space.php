@@ -266,6 +266,47 @@ class Space extends Model {
 	}
 
 	/**
+	 * Hydrate space rows for a given set of IDs.
+	 *
+	 * Single indexed query — used by paths that already know which spaces they
+	 * want (e.g. postable_by_me starts from `space_members`, then needs the
+	 * row data). Keeps the order of the input IDs so callers can preserve their
+	 * own ranking.
+	 *
+	 * @param int[] $ids
+	 * @return object[] Sparse — only IDs that exist + are active are returned.
+	 */
+	public static function list_by_ids( array $ids ): array {
+		$ids = array_filter( array_map( 'intval', $ids ), static fn ( int $id ): bool => $id > 0 );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . " WHERE id IN ({$placeholders})",
+				...$ids
+			)
+		) ?: array();
+
+		// Re-order to match input.
+		$by_id = array();
+		foreach ( $rows as $row ) {
+			$by_id[ (int) $row->id ] = $row;
+		}
+		$ordered = array();
+		foreach ( $ids as $id ) {
+			if ( isset( $by_id[ $id ] ) ) {
+				$ordered[] = $by_id[ $id ];
+			}
+		}
+		return $ordered;
+	}
+
+	/**
 	 * List spaces visible to a given user, with pagination.
 	 *
 	 * Visibility rules (all resolved in SQL — no PHP-side filtering):

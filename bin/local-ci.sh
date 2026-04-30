@@ -170,16 +170,19 @@ if [ "$DO_UNIT" -eq 1 ]; then
     fi
 fi
 
-# --- Gate 4: PHPUnit combo (informational) ------------------------------
+# --- Gate 4: PHPUnit combo (free+pro integration) ------------------------
 if [ "$DO_COMBO" -eq 1 ]; then
-    step "PHPUnit combo (free+pro integration; informational)"
-    COMBO=$(composer test:docker 2>&1 | grep -E "Tests: |Failures:" | tail -1)
-    if echo "$COMBO" | grep -q "Failures: 0"; then
-        ok "PHPUnit combo clean — $COMBO"
+    step "PHPUnit combo (free+pro integration)"
+    COMBO_OUT=$(composer test:docker 2>&1)
+    COMBO=$(echo "$COMBO_OUT" | grep -E "^Tests: " | tail -1)
+    # PHPUnit elides "Failures:" from the summary line when failures = 0, so
+    # the presence of "FAILURES!" in the output is the canonical fail marker.
+    if echo "$COMBO_OUT" | grep -q "^FAILURES!"; then
+        FAIL_LINE=$(echo "$COMBO" | grep -oE 'Failures: [0-9]+')
+        FAILED_GATES+=("phpunit-combo: ${FAIL_LINE:-failures detected}")
+        warn "PHPUnit combo failed — $COMBO"
     else
-        warn "PHPUnit combo has $(echo "$COMBO" | grep -oE 'Failures: [0-9]+') — known rot in SpaceMembersUpdateGuardTest"
-        warn "$COMBO"
-        # Not added to FAILED_GATES until the rot is cleared.
+        ok "PHPUnit combo clean — $COMBO"
     fi
 fi
 

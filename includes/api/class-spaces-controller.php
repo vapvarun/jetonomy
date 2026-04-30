@@ -266,40 +266,54 @@ class Spaces_Controller extends Base_Controller {
 		$postable_by_me = (bool) $request->get_param( 'postable_by_me' );
 		$pagination     = $this->get_pagination( $request );
 
-		// Compose UI wants every postable space in the picker (no pagination UX there);
-		// widen the fetch window so the post-filter doesn't discard members on later pages.
-		$fetch_limit = $postable_by_me ? max( $pagination['limit'], 200 ) : $pagination['limit'];
-
-		$result = Space::list_visible(
-			$user_id,
-			$category_id,
-			$type,
-			$visibility,
-			$fetch_limit,
-			$pagination['offset'],
-			'sort_order ASC, title ASC'
-		);
-
-		$spaces = $result['spaces'];
-		$total  = $result['total'];
-
 		if ( $postable_by_me ) {
+			// Member-scoped picker: start from the user's space_member rows so
+			// the result isn't truncated by the global sort_order ASC, title ASC
+			// pagination window. Earlier shape widened list_visible to LIMIT 200,
+			// which silently dropped member spaces ranked > 200 across the whole
+			// community — the composer would then hide spaces the user can post
+			// in. Hydrating the joined rows directly is O(memberships per user),
+			// which is bounded.
 			if ( ! $user_id ) {
 				$spaces = array();
 				$total  = 0;
 			} else {
+				$member_rows = \Jetonomy\Models\SpaceMember::list_user_spaces( $user_id );
+				$member_ids  = array_map( static fn ( $r ) => (int) $r->space_id, $member_rows );
+
+				$spaces = Space::list_by_ids( $member_ids );
 				$spaces = array_values(
 					array_filter(
 						$spaces,
-						static function ( $space ) use ( $user_id ): bool {
-							$sid = (int) $space->id;
-							return \Jetonomy\Models\SpaceMember::is_member( $sid, $user_id )
-								&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid );
+						static function ( $space ) use ( $user_id, $category_id, $type, $visibility ): bool {
+							if ( null !== $category_id && (int) $space->category_id !== $category_id ) {
+								return false;
+							}
+							if ( null !== $type && $space->type !== $type ) {
+								return false;
+							}
+							if ( null !== $visibility && $space->visibility !== $visibility ) {
+								return false;
+							}
+							return \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $space->id );
 						}
 					)
 				);
 				$total  = count( $spaces );
 			}
+		} else {
+			$result = Space::list_visible(
+				$user_id,
+				$category_id,
+				$type,
+				$visibility,
+				$pagination['limit'],
+				$pagination['offset'],
+				'sort_order ASC, title ASC'
+			);
+
+			$spaces = $result['spaces'];
+			$total  = $result['total'];
 		}
 
 		$items       = array_map( [ $this, 'prepare_space' ], $spaces );
