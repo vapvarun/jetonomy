@@ -43,10 +43,13 @@ class Template_Loader {
 			exit;
 		}
 
-		// ── /mod/ route: redirect space-level mods into their first moderated
-		// space. The aggregate dashboard at /community/mod/ is admin-only, but
-		// space mods who click it from a stale bookmark or a shared link should
-		// land on something useful instead of a 403.
+		// ── /mod/ route: route space-level mods to the right surface ──
+		// A user who moderates exactly one space is sent straight to that
+		// space's queue (one less click for the common case). A user who
+		// moderates two or more spaces falls through to the aggregate
+		// dashboard so they can see every queue they own with pending
+		// counts at a glance — previously they got auto-redirected to
+		// their first space and had no UI affordance to reach the others.
 		if ( 'moderation' === $data['route'] && is_user_logged_in() ) {
 			$mod_user_id = get_current_user_id();
 			if (
@@ -54,7 +57,7 @@ class Template_Loader {
 				&& \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $mod_user_id )
 			) {
 				$mod_space_ids = \Jetonomy\Models\SpaceMember::moderated_space_ids( $mod_user_id );
-				if ( ! empty( $mod_space_ids ) ) {
+				if ( count( $mod_space_ids ) === 1 ) {
 					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
 					if ( $mod_first ) {
 						$mod_settings  = get_option( 'jetonomy_settings', array() );
@@ -63,6 +66,9 @@ class Template_Loader {
 						exit;
 					}
 				}
+				// 0 spaces (somehow) or 2+ spaces: fall through and let
+				// templates/views/moderation.php render the aggregate
+				// dashboard scoped to the user's moderated spaces.
 			}
 		}
 
