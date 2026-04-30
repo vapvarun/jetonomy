@@ -48,14 +48,18 @@ class SpaceMembersUpdateGuardTest extends WP_UnitTestCase {
 		$this->admin_id  = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		$this->member_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 
+		// Space::create() accepts creator_user_id as a SECOND parameter (used to
+		// seed the creator as space admin), not as a $data key. Earlier shape
+		// passed it inside $data which leaked through to INSERT INTO and broke
+		// 7 tests on every run with "Unknown column 'creator_user_id'".
 		$this->space_id = (int) Space::create(
 			[
-				'title'     => 'Guard Test Space',
-				'slug'      => 'guard-test',
-				'type'      => 'forum',
-				'status'    => 'active',
-				'creator_user_id' => $this->admin_id,
-			]
+				'title'  => 'Guard Test Space',
+				'slug'   => 'guard-test',
+				'type'   => 'forum',
+				'status' => 'active',
+			],
+			$this->admin_id
 		);
 		// Add a second member so update_member_role has a target.
 		SpaceMember::add( $this->space_id, $this->member_id, 'member' );

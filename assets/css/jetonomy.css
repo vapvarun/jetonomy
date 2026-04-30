@@ -614,13 +614,13 @@
   .jt-profile-name > * { flex-shrink: 0; }
   .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); white-space: nowrap; display: inline-block; }
 
-  .jt-stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
+  .jt-stats-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
   .jt-stat { text-align: center; }
   .jt-stat-n { font-family: var(--jt-font-mono); font-size: 1.15rem; font-weight: 700; }
   .jt-stat-l { font-size: 0.8125rem; color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
 
   /* ── Badges ── */
-  .jt-badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .jt-badges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .jt-badge-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; border-radius: var(--jt-radius); background: var(--jt-bg-subtle); transition: all var(--jt-dur); }
   .jt-badge-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
   .jt-badge-emoji { font-size: 1.5em; }
@@ -628,7 +628,7 @@
   .jt-badge-tier { font-size: 0.8125rem; font-family: var(--jt-font-mono); color: var(--jt-text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
 
   /* ── Kanban (ideas) ── */
-  .jt-kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .jt-kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
   .jt-col { background: var(--jt-bg-subtle); border-radius: var(--jt-radius-lg); padding: 12px; min-height: 350px; }
   .jt-col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid; }
   .jt-col-title { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -691,7 +691,7 @@
   @media (max-width: 900px) {
     .jt-two-col { grid-template-columns: 1fr; }
     .jt-sidebar { display: none; }
-    .jt-kanban { grid-template-columns: repeat(2, 1fr); }
+    .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jt-space-head { flex-direction: column; text-align: center; }
     .jt-space-nums { margin-left: 0; }
     .jt-header { padding: 10px 16px; }
@@ -2172,7 +2172,7 @@
 .jt-skeleton-profile-banner { height: 120px; }
 .jt-skeleton-profile-body { padding: 0 20px 20px; margin-top: -20px; }
 .jt-skeleton-profile-avatar { width: 64px; height: 64px; border: 3px solid var(--jt-bg); margin-bottom: 10px; }
-.jt-skeleton-profile-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
+.jt-skeleton-profile-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
 .jt-skeleton-profile-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 
 /* ── Search filters ── */

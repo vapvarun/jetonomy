@@ -556,7 +556,7 @@ body.jt-setup-body {
 			<input type="text" id="jt-base-slug" value="<?php echo esc_attr( $base_slug ); ?>" placeholder="community">
 			<div class="jt-url-preview" id="jt-url-preview">
 				<span class="jt-url-preview__icon">
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+					<?php jetonomy_echo_icon( 'link', 14 ); ?>
 				</span>
 				<span class="jt-url-preview__url">
 					<span id="jt-url-base"><?php echo esc_html( $site_url ); ?></span><span class="jt-url-preview__slug" id="jt-url-slug"><?php echo esc_html( $base_slug ); ?></span><span>/</span>
@@ -619,7 +619,7 @@ body.jt-setup-body {
 		<div class="jt-setup-divider"><?php esc_html_e( 'or', 'jetonomy' ); ?></div>
 
 		<button type="button" class="jt-btn jt-btn--ghost" id="jt-create-sample">
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+			<?php jetonomy_echo_icon( 'plus', 16 ); ?>
 			<?php esc_html_e( 'Create sample data instead (2 categories, 4 spaces, 10 posts)', 'jetonomy' ); ?>
 			<span class="jt-spinner" style="border-color:rgba(100,116,139,.4);border-top-color:#64748b;"></span>
 		</button>
@@ -636,20 +636,18 @@ body.jt-setup-body {
 	<!-- Step 3: Done! -->
 	<div class="jt-setup-card jt-step" id="jt-step-3">
 		<div class="jt-success-icon">
-			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M20 6L9 17l-5-5"/>
-			</svg>
+			<?php jetonomy_echo_icon( 'check-circle', 48 ); ?>
 		</div>
 		<h2 class="jt-success-heading"><?php esc_html_e( 'Your community is ready!', 'jetonomy' ); ?></h2>
 		<p class="jt-success-sub"><?php esc_html_e( 'Everything is set up. Start exploring your new Jetonomy community.', 'jetonomy' ); ?></p>
 
 		<div class="jt-success-cta">
 			<a href="<?php echo esc_url( home_url( '/' . $base_slug . '/' ) ); ?>" class="jt-btn jt-btn--primary" id="jt-visit-community" target="_blank">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+				<?php jetonomy_echo_icon( 'external-link', 16 ); ?>
 				<?php esc_html_e( 'Visit Community', 'jetonomy' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy' ) ); ?>" class="jt-btn jt-btn--outline">
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+				<?php jetonomy_echo_icon( 'layout-grid', 16 ); ?>
 				<?php esc_html_e( 'Go to Dashboard', 'jetonomy' ); ?>
 			</a>
 		</div>
