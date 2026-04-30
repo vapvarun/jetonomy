@@ -75,9 +75,7 @@ $resolve_endpoint = esc_url_raw( rest_url( 'jetonomy/v1/spaces/' . (int) $space-
 		<div class="jt-mod-wrap jt-mod-queue">
 			<div class="jt-flex jt-items-center jt-justify-between jt-mb-20">
 				<div class="jt-cat-page-row">
-					<?php if ( ! empty( $space->icon ) ) : ?>
-						<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-					<?php endif; ?>
+					<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 					<div>
 						<h1 class="jt-page-title jt-page-title-sm">
 							<?php echo esc_html( $space->title ); ?>

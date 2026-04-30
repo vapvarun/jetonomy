@@ -287,9 +287,7 @@ $crumbs = [
 								<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
 									class="jt-card jt-space-card jt-no-underline jt-block">
 									<div class="jt-space-card-inner">
-										<?php if ( ! empty( $space->icon ) ) : ?>
-											<span class="jt-cat-emoji"><?php echo esc_html( $space->icon ); ?></span>
-										<?php endif; ?>
+										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-cat-emoji', $space->type ?? '' ); ?>
 										<div>
 											<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 											<?php if ( ! empty( $space->description ) ) : ?>

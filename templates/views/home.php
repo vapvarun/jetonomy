@@ -27,13 +27,12 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 		<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
 			class="jt-card jt-space-card jt-no-underline jt-block">
 			<div class="jt-space-card-inner">
-				<?php if ( ! empty( $space->icon ) ) : ?>
-					<?php if ( str_starts_with( $space->icon, 'dashicons-' ) ) : ?>
-						<span class="jt-space-card-emoji dashicons <?php echo esc_attr( $space->icon ); ?>"></span>
-					<?php else : ?>
-						<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-					<?php endif; ?>
-				<?php endif; ?>
+				<?php
+				// Always route through the icon helper so a stored "message-circle"
+				// renders as the Lucide SVG (not as the literal text). The helper
+				// also defends against legacy emoji values and dashicon prefixes.
+				jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' );
+				?>
 				<div class="jt-space-card-body">
 					<div class="jt-space-card-title">
 						<?php echo esc_html( $space->title ); ?>
