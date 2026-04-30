@@ -11,16 +11,6 @@ parameters:
 			path: includes/admin/ajax/class-demo-seeder.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 16
-			path: includes/admin/class-admin.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 4
-			path: includes/admin/class-admin.php
-
-		-
 			message: "#^Variable \\$all_categories might not be defined\\.$#"
 			count: 1
 			path: includes/admin/views/categories.php
@@ -256,11 +246,6 @@ parameters:
 			path: includes/admin/views/users.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/api/class-api.php
-
-		-
 			message: "#^Property Jetonomy\\\\API\\\\Api\\:\\:\\$controllers is never read, only written\\.$#"
 			count: 1
 			path: includes/api/class-api.php
@@ -346,49 +331,9 @@ parameters:
 			path: includes/class-abilities.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 2
-			path: includes/class-autoloader.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/class-blocks.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 6
-			path: includes/class-blocks.php
-
-		-
 			message: "#^Parameter \\#3 \\$deps of function wp_register_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
 			count: 1
 			path: includes/class-blocks.php
-
-		-
-			message: "#^Call to static method error\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 6
-			path: includes/class-cli.php
-
-		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 54
-			path: includes/class-cli.php
-
-		-
-			message: "#^Call to static method success\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 10
-			path: includes/class-cli.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 3
-			path: includes/class-cli.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 6
-			path: includes/class-cli.php
 
 		-
 			message: "#^Offset 'failed' does not exist on array\\{checks\\: non\\-empty\\-array\\<int\\<0, max\\>, array\\{label\\: string, status\\: 'fail'\\|'pass'\\|'warn', detail\\: string\\}\\>\\}\\.$#"
@@ -421,19 +366,9 @@ parameters:
 			path: includes/class-cli.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 12
-			path: includes/class-jetonomy.php
-
-		-
 			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int\\<min, \\-1\\> given\\.$#"
 			count: 6
 			path: includes/class-nav-menus.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 1
-			path: includes/class-shortcodes.php
 
 		-
 			message: "#^Constant COOKIEPATH not found\\.$#"
@@ -446,63 +381,13 @@ parameters:
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 6
-			path: includes/class-template-loader.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 10
-			path: includes/class-template-loader.php
-
-		-
 			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
 			count: 1
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/db/class-migrator.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_0_0.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_0.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_1.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_2.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_3.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_4_1.php
-
-		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
 			count: 2
-			path: includes/integrations/class-buddypress.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 1
 			path: includes/integrations/class-buddypress.php
 
 		-
@@ -529,11 +414,6 @@ parameters:
 			message: "#^Variable \\$data in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
 			path: includes/integrations/class-buddypress.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 1
-			path: includes/integrations/class-fluent-community.php
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
@@ -626,37 +506,12 @@ parameters:
 			path: includes/moderation/class-akismet.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/notifications/class-notifier.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
 			count: 1
 			path: includes/permissions/class-permission-engine.php
 
 		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 9
-			path: includes/qa/class-model-tests.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 1
-			path: includes/qa/class-model-tests.php
-
-		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
-			count: 1
-			path: includes/qa/class-pro-tests.php
-
-		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 22
-			path: includes/qa/class-pro-tests.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
 			count: 1
 			path: includes/qa/class-pro-tests.php
 
@@ -668,16 +523,6 @@ parameters:
 		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
 			count: 1
-			path: includes/qa/class-rest-tests.php
-
-		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 11
-			path: includes/qa/class-rest-tests.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 2
 			path: includes/qa/class-rest-tests.php
 
 		-
