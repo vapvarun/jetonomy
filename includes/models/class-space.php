@@ -121,29 +121,79 @@ class Space extends Model {
 	}
 
 	/**
-	 * List top-level spaces in a category.
+	 * Build the visibility WHERE fragment + bind values for a viewer.
 	 *
-	 * @param int $category_id
-	 * @return object[]
+	 * Mirrors {@see self::list_visible()}'s rules so every "list spaces"
+	 * surface applies the same predicate end users expect:
+	 *   - WP admin: every space, hidden included.
+	 *   - Logged-in member: public OR hidden spaces they belong to.
+	 *   - Logged-in non-member: public only.
+	 *   - Guest: public only.
+	 *
+	 * Prior to this, list_by_category()/list_uncategorized() hardcoded
+	 * `visibility != 'hidden'` and silently dropped hidden spaces from
+	 * the home and category views even for the WP admin who created
+	 * them. Customers reasonably read the empty listing as "the space
+	 * stopped existing." The predicate now scopes per viewer instead.
+	 *
+	 * @param int|null $user_id Viewer ID. Null defaults to the current
+	 *                          logged-in user. Pass 0 explicitly to
+	 *                          force guest semantics (cron, CLI render).
+	 * @return array{0:string,1:array} [SQL fragment, bind values]
 	 */
-	public static function list_by_category( int $category_id ): array {
-		return static::db()->get_results(
-			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC",
-				$category_id
-			)
-		) ?: [];
+	private static function visibility_predicate_for( ?int $user_id ): array {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
+			return [ '1=1', [] ];
+		}
+
+		if ( $user_id <= 0 ) {
+			return [ "visibility = 'public'", [] ];
+		}
+
+		$members_table = \Jetonomy\table( 'space_members' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
+		$fragment = "(visibility = 'public' OR id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+		return [ $fragment, [ $user_id ] ];
 	}
 
 	/**
-	 * List spaces with no category assigned (category_id IS NULL or 0), excluding hidden.
+	 * List top-level spaces in a category for a given viewer.
 	 *
+	 * @param int      $category_id Category row ID.
+	 * @param int|null $user_id     Viewer ID; null = current user.
 	 * @return object[]
 	 */
-	public static function list_uncategorized(): array {
-		return static::db()->get_results(
-			'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND (visibility IS NULL OR visibility != 'hidden') ORDER BY sort_order ASC, title ASC"
-		) ?: [];
+	public static function list_by_category( int $category_id, ?int $user_id = null ): array {
+		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
+		$sql    = 'SELECT * FROM ' . static::table() . " WHERE category_id = %d AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+		$values = array_merge( [ $category_id ], $vis_values );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared above with bound %d values.
+		return static::db()->get_results( static::db()->prepare( $sql, ...$values ) ) ?: [];
+	}
+
+	/**
+	 * List uncategorized top-level spaces visible to a given viewer.
+	 *
+	 * @param int|null $user_id Viewer ID; null = current user.
+	 * @return object[]
+	 */
+	public static function list_uncategorized( ?int $user_id = null ): array {
+		[ $vis_where, $vis_values ] = self::visibility_predicate_for( $user_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $vis_where comes from visibility_predicate_for() with literal SQL + %d placeholders.
+		$sql = 'SELECT * FROM ' . static::table() . " WHERE (category_id IS NULL OR category_id = 0) AND (parent_id IS NULL OR parent_id = 0) AND {$vis_where} ORDER BY sort_order ASC, title ASC";
+
+		if ( empty( $vis_values ) ) {
+			return static::db()->get_results( $sql ) ?: [];
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- prepared with bound %d values.
+		return static::db()->get_results( static::db()->prepare( $sql, ...$vis_values ) ) ?: [];
 	}
 
 	/**

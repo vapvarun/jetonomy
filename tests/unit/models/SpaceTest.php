@@ -4,6 +4,7 @@ namespace Jetonomy\Tests\Unit\Models;
 use WP_UnitTestCase;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
+use Jetonomy\Models\SpaceMember;
 use Jetonomy\DB\Schema;
 
 class SpaceTest extends WP_UnitTestCase {
@@ -73,6 +74,117 @@ class SpaceTest extends WP_UnitTestCase {
 		foreach ( $spaces as $s ) {
 			$this->assertEquals( $this->category_id, (int) $s->category_id );
 		}
+	}
+
+	public function test_list_by_category_excludes_hidden_for_guest(): void {
+		wp_set_current_user( 0 );
+
+		$public_id = $this->make_space( [ 'slug' => 'public-vis' ] );
+		$hidden_id = $this->make_space( [ 'slug' => 'hidden-vis', 'visibility' => 'hidden' ] );
+
+		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
+
+		$this->assertContains( $public_id, $ids );
+		$this->assertNotContains( $hidden_id, $ids, 'Guests must not see hidden spaces in the category listing.' );
+	}
+
+	public function test_list_by_category_excludes_hidden_for_non_member(): void {
+		// Spaces seed their creator as admin, so we make them with creator_user_id=0
+		// to keep the viewer cleanly outside the membership of the hidden space.
+		$public_id = (int) Space::create(
+			[
+				'title'       => 'Public space NM',
+				'slug'        => 'public-vis-nm-' . uniqid(),
+				'category_id' => $this->category_id,
+				'visibility'  => 'public',
+			],
+			0
+		);
+		$hidden_id = (int) Space::create(
+			[
+				'title'       => 'Hidden space NM',
+				'slug'        => 'hidden-vis-nm-' . uniqid(),
+				'category_id' => $this->category_id,
+				'visibility'  => 'hidden',
+			],
+			0
+		);
+
+		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $user_id );
+
+		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
+
+		$this->assertContains( $public_id, $ids );
+		$this->assertNotContains( $hidden_id, $ids, 'Non-members must not see hidden spaces they do not belong to.' );
+	}
+
+	public function test_list_by_category_shows_hidden_to_member(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $user_id );
+
+		$hidden_id = $this->make_space( [ 'slug' => 'hidden-vis-member', 'visibility' => 'hidden' ] );
+		SpaceMember::add( $hidden_id, $user_id, 'member' );
+
+		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
+
+		$this->assertContains( $hidden_id, $ids, 'Members must see the hidden spaces they belong to.' );
+	}
+
+	public function test_list_by_category_shows_hidden_to_admin(): void {
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		wp_set_current_user( $admin_id );
+
+		$hidden_id = $this->make_space( [ 'slug' => 'hidden-vis-admin', 'visibility' => 'hidden' ] );
+
+		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id ) );
+
+		$this->assertContains( $hidden_id, $ids, 'WP admins must see every hidden space, regardless of membership.' );
+	}
+
+	public function test_list_uncategorized_applies_visibility_predicate(): void {
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$guest_id = 0;
+
+		$public_id = (int) Space::create(
+			[
+				'title'      => 'Uncat public',
+				'slug'       => 'uncat-public-' . uniqid(),
+				'visibility' => 'public',
+			]
+		);
+		$hidden_id = (int) Space::create(
+			[
+				'title'      => 'Uncat hidden',
+				'slug'       => 'uncat-hidden-' . uniqid(),
+				'visibility' => 'hidden',
+			]
+		);
+
+		wp_set_current_user( $guest_id );
+		$guest_ids = array_map( fn( $s ) => (int) $s->id, Space::list_uncategorized() );
+		$this->assertContains( $public_id, $guest_ids );
+		$this->assertNotContains( $hidden_id, $guest_ids );
+
+		wp_set_current_user( $admin_id );
+		$admin_ids = array_map( fn( $s ) => (int) $s->id, Space::list_uncategorized() );
+		$this->assertContains( $hidden_id, $admin_ids, 'Admins must see hidden uncategorized spaces too.' );
+	}
+
+	public function test_list_by_category_explicit_user_id_overrides_current_user(): void {
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$sub_id   = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $sub_id );
+
+		$hidden_id = $this->make_space( [ 'slug' => 'hidden-explicit', 'visibility' => 'hidden' ] );
+
+		// Explicitly ask for the admin's view despite current user being a subscriber.
+		$ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id, $admin_id ) );
+		$this->assertContains( $hidden_id, $ids );
+
+		// Explicit 0 forces guest semantics.
+		$guest_ids = array_map( fn( $s ) => (int) $s->id, Space::list_by_category( $this->category_id, 0 ) );
+		$this->assertNotContains( $hidden_id, $guest_ids );
 	}
 
 	public function test_list_children(): void {

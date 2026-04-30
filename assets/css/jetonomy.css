@@ -866,6 +866,9 @@
   .jt-space-card-stats { display: flex; gap: 12px; margin-top: 6px; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
+  .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; margin-block-end: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
+  .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }
+  .jt-space-card-badge-hidden { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn, var(--jt-text-secondary)); }
 
   /* ── Space status banner ── */
   .jt-status-banner { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; font-weight: 500; margin-bottom: 12px; }
