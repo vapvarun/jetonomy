@@ -57,6 +57,16 @@ class SpaceMember extends Model {
 		if ( ! $exists ) {
 			Space::increment_member_count( $space_id );
 			do_action( 'jetonomy_user_joined_space', $space_id, $user_id, $role );
+
+			/**
+			 * Alias of `jetonomy_user_joined_space` without the role arg —
+			 * matches the Pro webhooks listener contract.
+			 *
+			 * @since 1.4.1
+			 * @param int $space_id Space ID.
+			 * @param int $user_id  Joined user ID.
+			 */
+			do_action( 'jetonomy_space_member_joined', $space_id, $user_id );
 		}
 
 		// 1.4.0 G1: every member-row write may change the privileged set
@@ -86,6 +96,24 @@ class SpaceMember extends Model {
 
 		if ( $deleted ) {
 			Space::increment_member_count( $space_id, -1 );
+
+			/**
+			 * Fires when a user is removed from a space.
+			 *
+			 * @since 1.4.1
+			 * @param int $space_id Space ID.
+			 * @param int $user_id  Removed user ID.
+			 */
+			do_action( 'jetonomy_user_left_space', $space_id, $user_id );
+
+			/**
+			 * Alias matching the Pro webhooks listener contract.
+			 *
+			 * @since 1.4.1
+			 * @param int $space_id Space ID.
+			 * @param int $user_id  Removed user ID.
+			 */
+			do_action( 'jetonomy_space_member_left', $space_id, $user_id );
 		}
 
 		// G1 cache invalidation — see add() comment.

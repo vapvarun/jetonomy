@@ -188,6 +188,25 @@ class Moderation_Service {
 
 		do_action( 'jetonomy_flag_resolved', $flag_id, $status, $user_id );
 
+		/**
+		 * Fires after a flag is resolved with the full flag object plus context.
+		 *
+		 * @since 1.4.1
+		 * @param object         $flag    Flag object (post-resolution row).
+		 * @param array{status:string,user_id:int} $context Context.
+		 */
+		$flag = Flag::find( (int) $flag_id );
+		if ( $flag ) {
+			do_action(
+				'jetonomy_after_resolve_flag',
+				$flag,
+				array(
+					'status'  => $status,
+					'user_id' => $user_id,
+				)
+			);
+		}
+
 		return true;
 	}
 

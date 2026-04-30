@@ -440,6 +440,23 @@ class Replies_Controller extends Base_Controller {
 
 		$updated = Reply::find( $id );
 
+		/**
+		 * Fires after a reply is updated with the full reply object plus context.
+		 *
+		 * @since 1.4.1
+		 * @param object          $updated Reply object.
+		 * @param array{space_id:int,user_id:int,request:WP_REST_Request} $context Context.
+		 */
+		do_action(
+			'jetonomy_after_update_reply',
+			$updated,
+			array(
+				'space_id' => $space_id,
+				'user_id'  => $user_id,
+				'request'  => $request,
+			)
+		);
+
 		return new WP_REST_Response( $this->prepare_reply( $updated ), 200 );
 	}
 
@@ -479,6 +496,14 @@ class Replies_Controller extends Base_Controller {
 		Reply::update( $id, array( 'status' => 'trash' ) );
 
 		do_action( 'jetonomy_reply_deleted', $id, $space_id, $user_id );
+
+		/**
+		 * Fires after a reply is deleted. Receives only the deleted reply ID.
+		 *
+		 * @since 1.4.1
+		 * @param int $id Deleted reply ID.
+		 */
+		do_action( 'jetonomy_after_delete_reply', $id );
 
 		return new WP_REST_Response(
 			array(

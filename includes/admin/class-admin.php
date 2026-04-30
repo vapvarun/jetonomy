@@ -30,6 +30,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'maybe_export_activity_csv' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
+		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
 		// A6: persist the per-page screen option for the Activity Log table.
 		add_filter( 'set-screen-option', array( $this, 'save_activity_screen_option' ), 10, 3 );
 
@@ -454,6 +455,30 @@ class Admin {
 	/**
 	 * Hide third-party admin notices on Jetonomy pages.
 	 */
+	/**
+	 * Apply the `jetonomy_admin_footer_text` filter on Jetonomy admin pages.
+	 * Lets extensions (e.g. Pro white-label) replace the WordPress default
+	 * "Thank you for creating with WordPress" line on plugin screens.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param string $text Default WordPress footer text.
+	 * @return string Filtered text.
+	 */
+	public function filter_admin_footer_text( $text ) {
+		$screen = get_current_screen();
+		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
+			return $text;
+		}
+		/**
+		 * Filter the admin footer text shown on Jetonomy admin pages.
+		 *
+		 * @since 1.4.1
+		 * @param string $text Current footer text.
+		 */
+		return (string) apply_filters( 'jetonomy_admin_footer_text', (string) $text );
+	}
+
 	public function hide_third_party_notices(): void {
 		$screen = get_current_screen();
 		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {

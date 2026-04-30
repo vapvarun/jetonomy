@@ -647,6 +647,25 @@ class Posts_Controller extends Base_Controller {
 
 		$updated = Post::find( $id );
 
+		/**
+		 * Fires after a post is updated. Receives the updated post object plus
+		 * a context array (space_id, user_id, request). Listener-friendly variant
+		 * of `jetonomy_post_updated` for extensions that need the full object.
+		 *
+		 * @since 1.4.1
+		 * @param object          $updated Post object.
+		 * @param array{space_id:int,user_id:int,request:WP_REST_Request} $context Context.
+		 */
+		do_action(
+			'jetonomy_after_update_post',
+			$updated,
+			array(
+				'space_id' => $space_id,
+				'user_id'  => $user_id,
+				'request'  => $request,
+			)
+		);
+
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
 	}
 
@@ -681,6 +700,14 @@ class Posts_Controller extends Base_Controller {
 		Post::update( $id, array( 'status' => 'trash' ) );
 
 		do_action( 'jetonomy_post_deleted', $id, $space_id, $user_id );
+
+		/**
+		 * Fires after a post is deleted. Receives only the deleted post ID.
+		 *
+		 * @since 1.4.1
+		 * @param int $id Deleted post ID.
+		 */
+		do_action( 'jetonomy_after_delete_post', $id );
 
 		return new WP_REST_Response(
 			array(
@@ -941,6 +968,25 @@ class Posts_Controller extends Base_Controller {
 		 * @param null   $request WP_REST_Request (null in non-request contexts).
 		 */
 		$data = apply_filters( 'jetonomy_rest_prepare_post', $data, $post, null );
+
+		/**
+		 * Alias filter matching the Pro custom-fields listener contract —
+		 * lets extensions append per-post payload (custom field values, etc.)
+		 * to the API response. Context carries object_type + object_id so
+		 * generic extensions can route on type.
+		 *
+		 * @since 1.4.1
+		 * @param array $data    Prepared response data.
+		 * @param array $context { object_type: 'post', object_id: int }
+		 */
+		$data = apply_filters(
+			'jetonomy_post_response',
+			$data,
+			array(
+				'object_type' => 'post',
+				'object_id'   => (int) $post->id,
+			)
+		);
 
 		return $data;
 	}

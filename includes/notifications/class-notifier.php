@@ -843,6 +843,11 @@ class Notifier {
 		 */
 		$logo_url = (string) apply_filters( 'jetonomy_email_logo_url', (string) ( $settings['email_logo_url'] ?? '' ), $type );
 
+		// Generic Jetonomy header logo filter — surfaces with no email-specific
+		// override (Pro white-label, integrations) can drive both via the
+		// shared `jetonomy_header_logo` contract.
+		$logo_url = \Jetonomy\header_logo( $logo_url );
+
 		$type_labels = [
 			'reply_to_post'   => __( 'New Reply', 'jetonomy' ),
 			'reply_to_reply'  => __( 'New Reply', 'jetonomy' ),
@@ -889,7 +894,7 @@ class Notifier {
 			'cta_text'           => $cta_text,
 			'cta_url'            => $community_url,
 			'message'            => $message,          // raw — template esc_html's it.
-			'footer_text'        => (string) ( $settings['email_footer_text'] ?? '' ),
+			'footer_text'        => \Jetonomy\footer_text( (string) ( $settings['email_footer_text'] ?? '' ) ),
 			'post_title'         => (string) ( $extra['post_title'] ?? '' ),
 			'actor_display_name' => (string) ( $extra['actor_display_name'] ?? '' ),
 			'reply_excerpt'      => (string) ( $extra['reply_excerpt'] ?? '' ),

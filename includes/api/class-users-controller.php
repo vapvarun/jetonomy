@@ -427,7 +427,7 @@ class Users_Controller extends Base_Controller {
 	 * Format a UserProfile row for API output.
 	 */
 	private function prepare_profile( ?object $profile ): array {
-		return [
+		$data = [
 			'id'           => (int) ( $profile->user_id ?? 0 ),
 			'user_id'      => (int) ( $profile->user_id ?? 0 ),
 			'reputation'   => (int) ( $profile->reputation ?? 0 ),
@@ -440,6 +440,25 @@ class Users_Controller extends Base_Controller {
 			'created_at'   => $profile->created_at ?? null,
 			'updated_at'   => $profile->updated_at ?? null,
 		];
+
+		/**
+		 * Filter the user profile REST response. Extensions (e.g. custom-fields)
+		 * use this to append per-user payload (custom field values, badges, etc.).
+		 *
+		 * @since 1.4.1
+		 * @param array $data    Prepared profile response data.
+		 * @param array $context { object_type: 'user', object_id: int }
+		 */
+		$data = apply_filters(
+			'jetonomy_profile_response',
+			$data,
+			array(
+				'object_type' => 'user',
+				'object_id'   => (int) ( $profile->user_id ?? 0 ),
+			)
+		);
+
+		return $data;
 	}
 
 	/**

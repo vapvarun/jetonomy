@@ -433,6 +433,25 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
 
+		/**
+		 * Fires after a flag is created with the full flag object plus context.
+		 *
+		 * @since 1.4.1
+		 * @param object          $flag    Flag object (id, reporter_id, object_type, object_id, reason, description).
+		 * @param array{user_id:int,request:WP_REST_Request} $context Context.
+		 */
+		$flag = Flag::find( (int) $flag_id );
+		if ( $flag ) {
+			do_action(
+				'jetonomy_after_create_flag',
+				$flag,
+				array(
+					'user_id' => $user_id,
+					'request' => $request,
+				)
+			);
+		}
+
 		return new WP_REST_Response(
 			[
 				'created' => true,
