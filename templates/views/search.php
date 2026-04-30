@@ -140,7 +140,7 @@ $crumbs = [
 			<!-- Search form -->
 			<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-page-form" autocomplete="off">
 				<div class="jt-search-page-input">
-					<svg class="jt-search-page-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
 					<input type="text" name="q"
 						value="<?php echo esc_attr( $q ); ?>"
 						placeholder="<?php esc_attr_e( 'Search discussions, spaces, tags…', 'jetonomy' ); ?>"

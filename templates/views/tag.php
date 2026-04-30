@@ -143,7 +143,8 @@ $crumbs = [
 					<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Tag pagination', 'jetonomy' ); ?>">
 						<?php if ( $paged > 1 ) : ?>
 							<a class="jt-pagination-link" href="<?php echo esc_url( $prev_url ); ?>" rel="prev">
-								<?php esc_html_e( '← Previous', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>
+								<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
 							</a>
 						<?php endif; ?>
 						<span class="jt-pagination-status">
@@ -154,7 +155,8 @@ $crumbs = [
 						</span>
 						<?php if ( $paged < $total_pages ) : ?>
 							<a class="jt-pagination-link" href="<?php echo esc_url( $next_url ); ?>" rel="next">
-								<?php esc_html_e( 'Next →', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Next', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'chevron-right', 14 ); ?>
 							</a>
 						<?php endif; ?>
 					</nav>

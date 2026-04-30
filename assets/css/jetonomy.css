@@ -636,6 +636,12 @@
   /* Mobile-only column header — hidden on desktop. See ≤640px block. */
   .jt-leader-head { display: none; }
   .jt-leader-rank { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; color: var(--jt-text-tertiary); width: 20px; text-align: center; }
+  /* Top-3 medal colors for the leaderboard award icon (Lucide award.svg
+     uses currentColor for stroke; we tint via the wrapper). */
+  .jt-medal { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+  .jt-medal-gold   { color: #d4a017; }
+  .jt-medal-silver { color: #9aa0a6; }
+  .jt-medal-bronze { color: #c08457; }
   .jt-leader-name { flex: 1; font-weight: 500; }
   .jt-leader-pts { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
 

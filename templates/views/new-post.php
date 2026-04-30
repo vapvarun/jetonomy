@@ -150,8 +150,8 @@ $type_label     = $type_defaults['label'];
 					<button type="button" data-cmd="italic" title="Italic"><em>I</em></button>
 					<button type="button" data-cmd="code" title="Code">&lt;/&gt;</button>
 					<button type="button" data-cmd="link" title="Link"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
-					<button type="button" data-cmd="quote" title="Quote"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg></button>
-					<button type="button" data-cmd="image" title="Upload Image"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+					<button type="button" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 16 ); ?></button>
+					<button type="button" data-cmd="image" title="<?php esc_attr_e( 'Upload image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
 				</div>
 				<div class="jt-editor-body" contenteditable="true" data-placeholder="<?php esc_attr_e( 'Write your post...', 'jetonomy' ); ?>"></div>
 			</div>
@@ -238,7 +238,7 @@ $type_label     = $type_defaults['label'];
 						aria-label="<?php esc_attr_e( 'More publishing options', 'jetonomy' ); ?>"
 						aria-haspopup="true"
 						data-wp-on--click="actions.togglePublishMenu">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 				</button>
 				<div class="jt-publish-mode__menu" hidden data-wp-bind--hidden="!state.publishMenuOpen">
 					<button type="button" class="jt-publish-mode__option"

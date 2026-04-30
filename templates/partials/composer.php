@@ -33,7 +33,7 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		<button type="button" class="jt-editor-bar-btn" data-cmd="italic" title="<?php esc_attr_e( 'Italic', 'jetonomy' ); ?>"><em>I</em></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="code" title="<?php esc_attr_e( 'Code', 'jetonomy' ); ?>"><code>&lt;/&gt;</code></button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="link" title="<?php esc_attr_e( 'Link', 'jetonomy' ); ?>">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+			<?php jetonomy_echo_icon( 'link', 14 ); ?>
 		</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>">&ldquo;&rdquo;</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="image" title="<?php esc_attr_e( 'Upload Image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>

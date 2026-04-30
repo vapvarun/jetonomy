@@ -85,22 +85,29 @@ $crumbs = [
 					if ( ! $lu ) {
 						continue;
 					}
-					$trust    = (int) $leader->trust_level;
-					$initials = strtoupper( substr( $lu->display_name, 0, 2 ) );
-					$medal    = '';
+					$trust       = (int) $leader->trust_level;
+					$initials    = strtoupper( substr( $lu->display_name, 0, 2 ) );
+					$medal_class = '';
 					if ( 0 === $rank ) {
-						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#B8860B" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
+						$medal_class = 'jt-medal jt-medal-gold';
 					} elseif ( 1 === $rank ) {
-						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#C0C0C0" stroke="#808080" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
+						$medal_class = 'jt-medal jt-medal-silver';
 					} elseif ( 2 === $rank ) {
-						$medal = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#CD7F32" stroke="#8B4513" stroke-width="1.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>';
+						$medal_class = 'jt-medal jt-medal-bronze';
 					}
 					?>
 					<div class="jt-leader jt-leader-pad">
 						<span class="jt-leader-rank">
 							<?php
-							if ( $medal ) {
-								echo $medal; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- hardcoded SVG
+							if ( $medal_class ) {
+								// 1.4.1 icon-source sweep: medal renders via the
+								// `award` Lucide icon (gold/silver/bronze tinted
+								// by `.jt-medal-*` color classes) instead of the
+								// previous inline-SVG with hex fills. One source
+								// of truth for icon shape across the plugin.
+								echo '<span class="' . esc_attr( $medal_class ) . '" aria-hidden="true">';
+								jetonomy_echo_icon( 'award', 20 );
+								echo '</span>';
 							} else {
 								echo (int) ( $rank + 1 );
 							}
