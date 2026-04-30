@@ -336,16 +336,6 @@ parameters:
 			path: includes/api/class-replies-controller.php
 
 		-
-			message: "#^Call to an undefined method Jetonomy\\\\Adapters\\\\Search_Adapter\\:\\:search_posts\\(\\)\\.$#"
-			count: 1
-			path: includes/class-abilities.php
-
-		-
-			message: "#^Call to an undefined method Jetonomy\\\\Adapters\\\\Search_Adapter\\:\\:search_spaces\\(\\)\\.$#"
-			count: 1
-			path: includes/class-abilities.php
-
-		-
 			message: "#^Call to an undefined static method Jetonomy\\\\Models\\\\JoinRequest\\:\\:create\\(\\)\\.$#"
 			count: 1
 			path: includes/class-abilities.php

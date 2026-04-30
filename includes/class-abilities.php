@@ -1605,11 +1605,20 @@ class Abilities {
 			'total'  => 0,
 		];
 
+		if ( ! $adapter ) {
+			return $results;
+		}
+
+		// Route through the public Search_Adapter::search() contract — earlier
+		// versions called private methods on the FULLTEXT implementation, which
+		// fataled at runtime and was hidden in phpstan-baseline.neon. Each
+		// dispatch passes the type the adapter understands; tags stay on the
+		// Tag model since they're not part of the search-adapter scope.
 		if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
-			$results['posts'] = $adapter->search_posts( $query, $limit );
+			$results['posts'] = $adapter->search( $query, 'post', null, $limit, 0 );
 		}
 		if ( in_array( $filter, [ 'all', 'spaces' ], true ) ) {
-			$results['spaces'] = $adapter->search_spaces( $query, $limit );
+			$results['spaces'] = $adapter->search( $query, 'space', null, $limit, 0 );
 		}
 		if ( in_array( $filter, [ 'all', 'tags' ], true ) ) {
 			$results['tags'] = Tag::search( $query, $limit );
