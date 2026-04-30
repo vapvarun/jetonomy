@@ -62,7 +62,7 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-title"><?php esc_html_e( 'Space title', 'jetonomy' ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
-					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive — what people will look for.', 'jetonomy' ); ?></p>
+					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive. What people will look for.', 'jetonomy' ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
@@ -74,10 +74,10 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label>
 					<select id="jt-ns-type" name="type" class="jt-input">
-						<option value="forum" <?php selected( $default_type, 'forum' ); ?>><?php esc_html_e( 'Forum — discussions and replies', 'jetonomy' ); ?></option>
-						<option value="qa" <?php selected( $default_type, 'qa' ); ?>><?php esc_html_e( 'Q&A — questions with accepted answers', 'jetonomy' ); ?></option>
-						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas — feedback voted by members', 'jetonomy' ); ?></option>
-						<option value="feed" <?php selected( $default_type, 'feed' ); ?>><?php esc_html_e( 'Feed — short-form posts', 'jetonomy' ); ?></option>
+						<option value="forum" <?php selected( $default_type, 'forum' ); ?>><?php esc_html_e( 'Forum: discussions and replies', 'jetonomy' ); ?></option>
+						<option value="qa" <?php selected( $default_type, 'qa' ); ?>><?php esc_html_e( 'Q&A: questions with accepted answers', 'jetonomy' ); ?></option>
+						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
+						<option value="feed" <?php selected( $default_type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 					</select>
 				</div>
 

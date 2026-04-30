@@ -52,7 +52,7 @@ if ( 'detail' === $mode ) :
 			echo esc_html(
 				sprintf(
 					/* translators: 1: object type label, 2: object id, 3: title */
-					__( '%1$s #%2$d — %3$s', 'jetonomy' ),
+					__( '%1$s #%2$d: %3$s', 'jetonomy' ),
 					ucfirst( $object_type ),
 					$object_id,
 					$object_title !== '' ? $object_title : __( '(no title)', 'jetonomy' )
@@ -69,7 +69,7 @@ if ( 'detail' === $mode ) :
 				(int) count( $revisions )
 			);
 			?>
-			<?php esc_html_e( 'Each row compares against the previous snapshot — the oldest entry has no diff.', 'jetonomy' ); ?>
+			<?php esc_html_e( 'Each row compares against the previous snapshot. The oldest entry has no diff.', 'jetonomy' ); ?>
 		</p>
 
 		<?php if ( empty( $revisions ) ) : ?>

@@ -278,25 +278,25 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-row">
 				<label for="jt-se-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label>
 				<select id="jt-se-type" name="type" class="jt-input">
-					<option value="forum" <?php selected( $space->type, 'forum' ); ?>><?php esc_html_e( 'Forum — discussions and replies', 'jetonomy' ); ?></option>
-					<option value="qa" <?php selected( $space->type, 'qa' ); ?>><?php esc_html_e( 'Q&A — questions with accepted answers', 'jetonomy' ); ?></option>
-					<option value="ideas" <?php selected( $space->type, 'ideas' ); ?>><?php esc_html_e( 'Ideas — feedback voted by members', 'jetonomy' ); ?></option>
-					<option value="feed" <?php selected( $space->type, 'feed' ); ?>><?php esc_html_e( 'Feed — short-form posts', 'jetonomy' ); ?></option>
+					<option value="forum" <?php selected( $space->type, 'forum' ); ?>><?php esc_html_e( 'Forum: discussions and replies', 'jetonomy' ); ?></option>
+					<option value="qa" <?php selected( $space->type, 'qa' ); ?>><?php esc_html_e( 'Q&A: questions with accepted answers', 'jetonomy' ); ?></option>
+					<option value="ideas" <?php selected( $space->type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
+					<option value="feed" <?php selected( $space->type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 				</select>
 			</div>
 
 			<div class="jt-form-row">
 				<label for="jt-se-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
 				<select id="jt-se-visibility" name="visibility" class="jt-input">
-					<option value="public" <?php selected( $space->visibility, 'public' ); ?>><?php esc_html_e( 'Public — anyone can read', 'jetonomy' ); ?></option>
-					<option value="private" <?php selected( $space->visibility, 'private' ); ?>><?php esc_html_e( 'Private — members only', 'jetonomy' ); ?></option>
+					<option value="public" <?php selected( $space->visibility, 'public' ); ?>><?php esc_html_e( 'Public: anyone can read', 'jetonomy' ); ?></option>
+					<option value="private" <?php selected( $space->visibility, 'private' ); ?>><?php esc_html_e( 'Private: members only', 'jetonomy' ); ?></option>
 				</select>
 			</div>
 
 			<div class="jt-form-row">
 				<label for="jt-se-join-policy"><?php esc_html_e( 'Join policy', 'jetonomy' ); ?></label>
 				<select id="jt-se-join-policy" name="join_policy" class="jt-input">
-					<option value="open" <?php selected( $space->join_policy ?? 'open', 'open' ); ?>><?php esc_html_e( 'Open — anyone can join', 'jetonomy' ); ?></option>
+					<option value="open" <?php selected( $space->join_policy ?? 'open', 'open' ); ?>><?php esc_html_e( 'Open: anyone can join', 'jetonomy' ); ?></option>
 					<option value="approval" <?php selected( $space->join_policy ?? '', 'approval' ); ?>><?php esc_html_e( 'Approval required', 'jetonomy' ); ?></option>
 					<option value="invite" <?php selected( $space->join_policy ?? '', 'invite' ); ?>><?php esc_html_e( 'Invite only', 'jetonomy' ); ?></option>
 				</select>
@@ -305,7 +305,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-row">
 				<label for="jt-se-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
 				<select id="jt-se-category" name="category_id" class="jt-input">
-					<option value="0"><?php esc_html_e( '— No category —', 'jetonomy' ); ?></option>
+					<option value="0"><?php esc_html_e( 'No category', 'jetonomy' ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( (int) ( $space->category_id ?? 0 ), (int) $cat->id ); ?>>
 							<?php echo esc_html( $cat->name ); ?>
@@ -334,7 +334,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					<input type="checkbox" name="enable_prefixes" value="1" <?php checked( $prefixes_on ); ?> data-jt-prefix-toggle>
 					<?php esc_html_e( 'Enable topic prefixes', 'jetonomy' ); ?>
 				</label>
-				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics — e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics, e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
 
 				<div class="jt-prefix-config" data-jt-prefix-config <?php echo $prefixes_on ? '' : 'hidden'; ?>>
 					<div class="jt-prefix-list" data-jt-prefix-list>

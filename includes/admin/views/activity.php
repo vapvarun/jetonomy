@@ -45,7 +45,7 @@ $export_url = wp_nonce_url(
 	<hr class="wp-header-end" />
 
 	<p class="description">
-		<?php esc_html_e( 'Audit trail of community events. Read-only — adjust retention via the daily prune cron.', 'jetonomy' ); ?>
+		<?php esc_html_e( 'Audit trail of community events. Read-only. Adjust retention via the daily prune cron.', 'jetonomy' ); ?>
 	</p>
 
 	<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">

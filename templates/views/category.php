@@ -60,7 +60,7 @@ $crumbs = [
 								<div class="jt-space-card-body">
 									<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 									<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
-										<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php esc_attr_e( 'Hidden space — only admins and members can see this listing.', 'jetonomy' ); ?>">
+										<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php esc_attr_e( 'Hidden space. Only admins and members can see this listing.', 'jetonomy' ); ?>">
 											<?php jetonomy_echo_icon( 'lock', 12 ); ?>
 											<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
 										</span>
