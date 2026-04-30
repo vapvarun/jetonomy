@@ -529,10 +529,16 @@
   .jt-post-body p { margin: 0 0 12px; }
   .jt-post-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
   .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: 16px; border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 12px; }
-  .jt-post-foot { display: flex; align-items: center; gap: 4px; padding: 10px 16px; border-top: 1px solid var(--jt-border); }
+  .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
-  .jt-act { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--jt-radius-full); font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; transition: all 0.1s; border: none; background: none; cursor: pointer; font-family: var(--jt-font); }
+  .jt-act { display: inline-flex; align-items: center; gap: var(--jt-space-2); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: var(--jt-radius-full); font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; transition: all 0.1s; border: none; background: none; cursor: pointer; font-family: var(--jt-font); min-block-size: 36px; }
+  /* Touch devices: bump to ≥44px so a thumb-tap doesn't slip onto the
+     wrong action. Hover-capable devices (mouse) stay at 36px because
+     pointer precision is finer there. */
+  @media (hover: none) {
+    .jt-act { min-block-size: 44px; padding-inline: var(--jt-space-4); }
+  }
   .jt-act:hover { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: none; }
   .jt-act .n { font-family: var(--jt-font-mono); font-weight: 700; }
 
@@ -554,7 +560,7 @@
   .jt-reply-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--jt-bg-subtle); }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
-  .jt-reply-foot { display: flex; gap: 4px; padding: 6px 12px 10px; }
+  .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-3); }
   .jt-accepted-tag { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 0.9375rem; font-weight: 600; color: var(--jt-success); }
   /* Threaded reply nesting — up to 3 levels */
   .jt-nested { margin-left: 24px; position: relative; }
@@ -584,7 +590,10 @@
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
 
   /* ── Card (sidebar) ── */
-  .jt-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: 16px; }
+  .jt-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding-block: var(--jt-space-5); padding-inline: var(--jt-space-5); }
+  @media (max-width: 640px) {
+    .jt-card { padding-block: var(--jt-space-4); padding-inline: var(--jt-space-4); }
+  }
   .jt-card h4 { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); margin: 0 0 12px; }
 
   /* ── Space card (grid) ── */
