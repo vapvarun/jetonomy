@@ -13,7 +13,6 @@ class Adapter_Registry {
 
 	private static array $membership = [];
 	private static array $search     = [];
-	private static array $realtime   = [];
 	private static array $email      = [];
 	private static array $ai         = [];
 
@@ -23,10 +22,6 @@ class Adapter_Registry {
 
 	public static function register_search( string $id, Search_Adapter $adapter ): void {
 		self::$search[ $id ] = $adapter;
-	}
-
-	public static function register_realtime( string $id, Realtime_Adapter $adapter ): void {
-		self::$realtime[ $id ] = $adapter;
 	}
 
 	public static function register_email( string $id, Email_Adapter $adapter ): void {
@@ -39,15 +34,6 @@ class Adapter_Registry {
 		}
 		// Return first active adapter
 		foreach ( self::$membership as $adapter ) {
-			if ( $adapter->is_active() ) {
-				return $adapter;
-			}
-		}
-		return null;
-	}
-
-	public static function get_realtime(): ?Realtime_Adapter {
-		foreach ( self::$realtime as $adapter ) {
 			if ( $adapter->is_active() ) {
 				return $adapter;
 			}
@@ -102,7 +88,6 @@ class Adapter_Registry {
 	 */
 	public static function init_defaults(): void {
 		self::register_membership( 'wp-roles', new WP_Roles_Adapter() );
-		self::register_realtime( 'polling', new Polling_Adapter() );
 		self::register_email( 'wp-mail', new WP_Mail_Adapter() );
 	}
 }
