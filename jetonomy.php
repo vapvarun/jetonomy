@@ -177,13 +177,18 @@ function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name =
 	}
 
 	// When the stored icon is missing / emoji / unknown, pick a default
-	// based on space type so customers don't see the same `users` icon
-	// on every card. Type-driven defaults are intentionally distinct so
-	// a cluster of spaces reads visually varied without explicit icon
-	// data.
+	// based on space type so customers don't see the same icon on every
+	// card. The defaults are picked for breadth — a cluster of icon-less
+	// spaces reads visually varied without admin work.
+	//
+	// 1.4.1: qa default flipped from `help-circle` to `book-open`.
+	// help-circle reads as a literal question-mark glyph and looked
+	// repetitive on customer sites that ran several support-style Q&A
+	// spaces side by side. `book-open` carries the same "answers /
+	// knowledge" intent without the on-the-nose question-mark visual.
 	if ( '' === $lucide ) {
 		$type_defaults = array(
-			'qa'    => 'help-circle',
+			'qa'    => 'book-open',
 			'ideas' => 'lightbulb',
 			'feed'  => 'hash',
 			'forum' => 'message-circle',
