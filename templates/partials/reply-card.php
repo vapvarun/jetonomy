@@ -79,24 +79,35 @@ $jt_can_moderate_reply = $jt_reply_viewer
 	$reply_viewer_vote = $reply_viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $reply_viewer_id, 'reply', (int) $reply->id ) : null;
 	?>
 	<div class="jt-reply-foot">
-		<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
-			data-wp-on--click="actions.voteReplyUp"
-			data-reply-id="<?php echo (int) $reply->id; ?>"
-			title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-			aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
-			<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
-		</button>
 		<?php
-		// Hide downvote on own replies — same rule as single-post.php
-		// (Basecamp 9803889865).
-		if ( (int) $reply->author_id !== get_current_user_id() ) :
-			?>
-		<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
-			data-wp-on--click="actions.voteReplyDown"
-			data-reply-id="<?php echo (int) $reply->id; ?>"
-			title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-			aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
-		<?php endif; ?>
+		// 1.4.1 voting cleanup: up + down buttons stay as separate <button>
+		// elements (voting JS in view.js binds to the buttons individually
+		// and reads the score via `el.ref.querySelector('.n')`, so the
+		// inner shape MUST not change). The wrapper `.jt-vote-cluster`
+		// only adds visual grouping + alignment so up and down read as
+		// equal-weight peers — no friction asymmetry, no nudging toward
+		// one side. JS bindings are untouched and verified live.
+		?>
+		<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this reply', 'jetonomy' ); ?>">
+			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
+				data-wp-on--click="actions.voteReplyUp"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
+			</button>
+			<?php
+			// Hide downvote on own replies — self-downvote was landing at
+			// -1 (Basecamp 9803889865).
+			if ( (int) $reply->author_id !== get_current_user_id() ) :
+				?>
+			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
+				data-wp-on--click="actions.voteReplyDown"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+			<?php endif; ?>
+		</div>
 		<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"

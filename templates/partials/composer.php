@@ -45,7 +45,15 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		id="jt-composer-<?php echo (int) $_post_id; ?>"
 		aria-label="<?php esc_attr_e( 'Reply editor', 'jetonomy' ); ?>"></div>
 	<div class="jt-editor-foot">
-		<span class="jt-editor-hint"><?php esc_html_e( 'Markdown · Ctrl+Enter to submit', 'jetonomy' ); ?></span>
+		<?php
+		// 1.4.1 platform-aware hint: phones / tablets do not have a Ctrl key,
+		// so the desktop submit-shortcut copy reads as nonsense there. Detect
+		// touch via wp_is_mobile() (matches WP's own mobile signal) and swap.
+		$_jt_composer_hint = wp_is_mobile()
+			? __( 'Markdown supported.', 'jetonomy' )
+			: __( 'Markdown · Ctrl+Enter to submit', 'jetonomy' );
+		?>
+		<span class="jt-editor-hint"><?php echo esc_html( $_jt_composer_hint ); ?></span>
 		<div class="jt-flex jt-items-center jt-gap-sm">
 			<?php if ( $_reply_to ) : ?>
 				<button type="button" class="jt-btn jt-btn-ghost"

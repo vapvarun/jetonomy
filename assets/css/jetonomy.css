@@ -474,6 +474,14 @@
   .jt-act.voted { color: var(--jt-accent); }
   .jt-v-num { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; }
 
+  /* Vote cluster — visual grouping for up + down so they read as
+     equal-weight peers in the action bar. End-user goal: both
+     directions feel equally available, no friction asymmetry.
+     The inner buttons keep the existing .jt-act styling so JS
+     bindings + hover affordances stay unchanged. */
+  .jt-vote-cluster { display: inline-flex; align-items: center; gap: 2px; }
+
+
   /* ── Tags ── */
   .jt-tag { font-size: 0.9375rem; font-weight: 500; padding: 1px 7px; border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); display: inline-block; }
   .jt-tag-qa { background: var(--jt-success-light); color: var(--jt-success); }
