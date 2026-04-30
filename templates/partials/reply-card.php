@@ -44,8 +44,11 @@ $jt_can_moderate_reply = $jt_reply_viewer
 				<?php echo esc_html( $jt_role_label ); ?>
 			</span>
 		<?php endif; ?>
-		<?php /* translators: %d: trust level number */ ?>
-		<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
+		<?php
+		// 1.4.1 byline cleanup: trust-level number removed from inline bylines.
+		// "TL2" / "TL3" reads as jargon to first-time visitors. Trust progress
+		// stays accessible on the user profile + hover-card surfaces.
+		?>
 		<?php if ( $is_op ) : ?>
 			<span class="jt-reply-op"><?php esc_html_e( 'OP', 'jetonomy' ); ?></span>
 		<?php endif; ?>

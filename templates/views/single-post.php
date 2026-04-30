@@ -282,8 +282,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php echo esc_html( $post->title ); ?>
 					</h1>
 					<div class="jt-meta">
-						<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) ); ?>
-						<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+						<?php
+						// 1.4.1 byline cleanup: trust-level number removed from inline
+						// bylines (it lives on the user profile + hover-card surfaces).
+						// Tags moved out of the byline into their own row below the
+						// post body so the meta line reads cleanly as
+						// "User · time · status" without descriptor noise.
+						echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) );
+						?>
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference */
@@ -305,11 +311,6 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php esc_html_e( 'Closed', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
-						<?php foreach ( $tags as $tag ) : ?>
-							<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
-								<?php echo esc_html( $tag->name ); ?>
-							</a>
-						<?php endforeach; ?>
 					</div>
 					<?php
 					if ( is_user_logged_in() ) :
@@ -334,6 +335,16 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					echo $jt_post_rendered; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					?>
 				</div>
+
+				<?php if ( ! empty( $tags ) ) : ?>
+					<div class="jt-post-tags" aria-label="<?php esc_attr_e( 'Tags', 'jetonomy' ); ?>">
+						<?php foreach ( $tags as $tag ) : ?>
+							<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag-link">
+								#<?php echo esc_html( $tag->name ); ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
 
 				<?php
 				/**

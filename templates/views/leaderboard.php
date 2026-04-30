@@ -111,7 +111,11 @@ $crumbs = [
 							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
 								<?php echo esc_html( $lu->display_name ); ?>
 							</a>
-							<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
+							<?php
+							// 1.4.1 byline cleanup: trust-level number removed.
+							// Trust progress lives on the user profile + hover-card
+							// surfaces.
+							?>
 						</span>
 						<div class="jt-leader-stats">
 							<div>

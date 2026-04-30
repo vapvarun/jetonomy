@@ -86,8 +86,10 @@ if ( $prefix_name && $space ) {
 					<?php echo esc_html( $jt_role_label ); ?>
 				</span>
 			<?php endif; ?>
-			<?php /* translators: %d: trust level number */ ?>
-			<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo (int) $trust; ?></span>
+			<?php
+			// 1.4.1 byline cleanup: trust-level number removed. Trust progress
+			// stays on the user profile + hover-card surfaces.
+			?>
 			<?php foreach ( $tags as $post_tag ) : ?>
 				<?php
 				// 1.4.0 C.4 fix: tags are now anchors to /community/tag/:slug/

@@ -103,7 +103,11 @@ $role_labels = [
 									class="jt-member-name">
 									<?php echo esc_html( $mu->display_name ); ?>
 								</a>
-								<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+								<?php
+								// 1.4.1 byline cleanup: trust-level number removed
+								// from inline bylines. Trust progress lives on the
+								// user profile + hover-card surfaces.
+								?>
 								<div class="jt-member-joined">
 									<?php
 									/* translators: %s: joined date */
