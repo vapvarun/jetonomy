@@ -145,6 +145,52 @@ class Flag extends Model {
 	}
 
 	/**
+	 * Resolve every other pending flag filed against the same object.
+	 *
+	 * Called after a moderator marks one flag as 'valid' and the underlying
+	 * post or reply is trashed. Without this cascade, the queue keeps
+	 * showing stale pending flags pointing at removed content, and a second
+	 * moderator can re-action the same object minutes later.
+	 *
+	 * Excludes the originating flag (already resolved by the caller).
+	 *
+	 * @param string $object_type     'post' or 'reply'.
+	 * @param int    $object_id       Object row ID.
+	 * @param int    $resolved_by     Moderator user ID applying the cascade.
+	 * @param string $status          New status ('valid' mirrors the originator).
+	 * @param int    $exclude_flag_id Flag ID already resolved by the caller.
+	 * @return int Number of sibling flags transitioned.
+	 */
+	public static function resolve_siblings_for(
+		string $object_type,
+		int $object_id,
+		int $resolved_by,
+		string $status,
+		int $exclude_flag_id
+	): int {
+		if ( $object_id <= 0 || ! in_array( $object_type, [ 'post', 'reply' ], true ) ) {
+			return 0;
+		}
+
+		$db = static::db();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from static::table()
+		$rows = $db->query(
+			$db->prepare(
+				'UPDATE ' . static::table() . " SET status = %s, resolved_by = %d, resolved_at = %s WHERE object_type = %s AND object_id = %d AND status = 'pending' AND id != %d",
+				$status,
+				$resolved_by,
+				now(),
+				$object_type,
+				$object_id,
+				$exclude_flag_id
+			)
+		);
+
+		return is_int( $rows ) ? $rows : 0;
+	}
+
+	/**
 	 * List pending flags on content that belongs to a single space.
 	 *
 	 * Resolves each flag's owning space via a LEFT JOIN chain:

@@ -9,6 +9,8 @@ namespace Jetonomy\CLI\Journeys;
 
 use Jetonomy\CLI\Journey_Result;
 use Jetonomy\Models\Flag;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\Restriction;
 
 defined( 'ABSPATH' ) || exit;
@@ -99,6 +101,16 @@ final class Moderation_Journey {
 	/**
 	 * Resolve a pending flag, transitioning it to 'valid' or 'dismissed'.
 	 *
+	 * Honours the same customer contract as the UI moderation queue: a
+	 * 'valid' decision trashes the offending post or reply and cascades
+	 * across any other pending flags on the same object so the queue
+	 * doesn't go on showing stale entries. 'dismissed' leaves content
+	 * untouched.
+	 *
+	 * Permission gating belongs to the upstream caller — the journey
+	 * mirrors the rest of this class and stays unguarded so scenarios and
+	 * impersonated contexts can drive it directly.
+	 *
 	 * @param int    $flag_id     Flag row ID.
 	 * @param int    $resolver_id User ID of the moderator resolving the flag.
 	 * @param string $decision    Either 'valid' or 'dismissed'.
@@ -121,16 +133,38 @@ final class Moderation_Journey {
 			);
 		}
 
+		$flag = Flag::find( $flag_id );
+		if ( ! $flag ) {
+			return Journey_Result::fail( sprintf( 'Flag(%d) not found.', $flag_id ) );
+		}
+
 		$ok = Flag::resolve( $flag_id, $resolver_id, $decision );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Flag::resolve(%d) returned false.', $flag_id ) );
 		}
 
+		$cascaded = 0;
+		if ( 'valid' === $decision ) {
+			$type = (string) ( $flag->object_type ?? '' );
+			$id   = (int) ( $flag->object_id ?? 0 );
+			if ( $id > 0 ) {
+				if ( 'post' === $type ) {
+					Post::update( $id, [ 'status' => 'trash' ] );
+				} elseif ( 'reply' === $type ) {
+					Reply::update( $id, [ 'status' => 'trash' ] );
+				}
+				$cascaded = Flag::resolve_siblings_for( $type, $id, $resolver_id, 'valid', $flag_id );
+			}
+		}
+
 		return Journey_Result::ok(
 			[
-				'id'          => $flag_id,
-				'status'      => $decision,
-				'resolved_by' => $resolver_id,
+				'id'                => $flag_id,
+				'status'            => $decision,
+				'resolved_by'       => $resolver_id,
+				'object_type'       => (string) ( $flag->object_type ?? '' ),
+				'object_id'         => (int) ( $flag->object_id ?? 0 ),
+				'cascaded_resolved' => $cascaded,
 			],
 			[],
 			$this->duration_ms( $start )
