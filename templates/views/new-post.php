@@ -10,7 +10,16 @@ defined( 'ABSPATH' ) || exit;
 // Auth check is handled by Template_Loader before output.
 $space = \Jetonomy\Models\Space::find_by_slug( $data['slug'] );
 if ( ! $space ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'Space not found.', 'jetonomy' ) . '</p></div>';
+	status_header( 404 );
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 

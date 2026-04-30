@@ -37,8 +37,13 @@ $is_admin = Moderation_Permissions::can_view_admin_dashboard( $user_id );
 // link / drive-by visit.
 if ( ! $is_admin && ! Moderation_Permissions::can_view_any_queue( $user_id ) ) {
 	status_header( 403 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'lock', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'You do not have permission to view this page.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'message' => __( 'You do not have permission to view this page.', 'jetonomy' ),
+			'tone'    => 'forbidden',
+		]
+	);
 	return;
 }
 

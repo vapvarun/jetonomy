@@ -75,10 +75,15 @@ $community_title = ! empty( $settings['community_title'] ) ? $settings['communit
 <div class="jt-two-col">
 		<main>
 			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-posts', 80 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'No categories yet. Check back soon!', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'    => 'empty-posts',
+						'message' => __( 'No categories yet. Check back soon!', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php else : ?>
 				<?php foreach ( $categories as $category ) : ?>
 					<?php $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id ); ?>

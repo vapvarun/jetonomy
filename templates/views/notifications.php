@@ -61,10 +61,15 @@ $type_labels = [
 		</div>
 
 		<?php if ( empty( $notifications ) ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-notifications', 80 ); ?></div>
-				<div class="jt-empty-text"><?php esc_html_e( 'You are all caught up!', 'jetonomy' ); ?></div>
-			</div>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'    => 'empty-notifications',
+					'message' => __( 'You are all caught up!', 'jetonomy' ),
+				]
+			);
+			?>
 		<?php else : ?>
 			<div class="jt-card jt-card-flush">
 				<?php foreach ( $notifications as $notif ) : ?>

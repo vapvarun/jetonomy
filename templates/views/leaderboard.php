@@ -57,10 +57,16 @@ $crumbs = [
 		</div>
 
 		<?php if ( empty( $leaders ) ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'award', 48 ); ?></div>
-				<div class="jt-empty-text"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></div>
-			</div>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'      => 'award',
+					'icon_size' => 48,
+					'message'   => __( 'No members yet.', 'jetonomy' ),
+				]
+			);
+			?>
 		<?php else : ?>
 			<div class="jt-card">
 				<?php /* Mobile-only column header — hidden on desktop via .jt-leader-head CSS. */ ?>

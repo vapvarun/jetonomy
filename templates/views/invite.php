@@ -10,26 +10,56 @@ defined( 'ABSPATH' ) || exit;
 $token = $data['slug'] ?? '';
 
 if ( empty( $token ) ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'Invalid invite link.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Invalid invite link.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
 $invite = \Jetonomy\Models\InviteLink::find_by_token( $token );
 
 if ( ! $invite ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'Invite link not found.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Invite link not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
 if ( ! \Jetonomy\Models\InviteLink::is_valid( $invite ) ) {
-	echo '<div class="jt-empty"><p>' . esc_html__( 'This invite link has expired or reached its usage limit.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'message' => __( 'This invite link has expired or reached its usage limit.', 'jetonomy' ),
+			'tone'    => 'warn',
+		]
+	);
 	return;
 }
 
 $space = \Jetonomy\Models\Space::find( (int) $invite->space_id );
 
 if ( ! $space ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'The space for this invite no longer exists.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'The space for this invite no longer exists.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 

@@ -46,17 +46,19 @@ $crumbs = array(
 		</h1>
 
 		<?php if ( ! $qualifies ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'lock', 64 ); ?></div>
-				<div class="jt-empty-text">
-					<?php esc_html_e( 'Creating spaces is reserved for community administrators.', 'jetonomy' ); ?>
-				</div>
-				<p class="jt-empty-cta">
-					<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( $base . '/' ); ?>">
-						<?php esc_html_e( 'Back to community', 'jetonomy' ); ?>
-					</a>
-				</p>
-			</div>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'      => 'lock',
+					'icon_size' => 64,
+					'message'   => __( 'Creating spaces is reserved for community administrators.', 'jetonomy' ),
+					'cta_label' => __( 'Back to community', 'jetonomy' ),
+					'cta_url'   => $base . '/',
+					'tone'      => 'forbidden',
+				]
+			);
+			?>
 		<?php else : ?>
 			<form id="jt-new-space-form" class="jt-form jt-card" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">

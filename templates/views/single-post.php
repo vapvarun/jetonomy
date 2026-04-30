@@ -12,8 +12,15 @@ $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
 if ( ! $post ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Post not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -35,8 +42,15 @@ if ( 'publish' !== $post->status ) {
 
 	if ( ! $is_author && ! $is_mod ) {
 		status_header( 404 );
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-		echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			[
+				'icon'      => 'empty-search',
+				'icon_size' => 48,
+				'message'   => __( 'Post not found.', 'jetonomy' ),
+				'tone'      => 'warn',
+			]
+		);
 		return;
 	}
 }
@@ -47,7 +61,13 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
 	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			echo '<div class="jt-empty"><p>' . esc_html__( 'This content is in a private space.', 'jetonomy' ) . '</p></div>';
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'message' => __( 'This content is in a private space.', 'jetonomy' ),
+					'tone'    => 'forbidden',
+				]
+			);
 			return;
 		}
 	}
@@ -60,8 +80,15 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 // source of truth — author + manage_options + space mod/admin only.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Post not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -498,10 +525,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				?>
 
 				<?php if ( empty( $first_batch ) && empty( $last_batch ) ) : ?>
-					<div class="jt-empty">
-						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-replies', 80 ); ?></div>
-						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
-					</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'icon'    => 'empty-replies',
+							'message' => __( 'No replies yet. Be the first to reply!', 'jetonomy' ),
+						]
+					);
+					?>
 				<?php else : ?>
 
 					<div class="jt-replies-list" id="jt-replies-container">

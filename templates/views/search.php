@@ -221,15 +221,17 @@ $crumbs = [
 				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 
 				<?php if ( 0 === $total ) : ?>
-					<div class="jt-empty">
-						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-search', 80 ); ?></div>
-						<div class="jt-empty-text">
-							<?php
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'icon'    => 'empty-search',
 							/* translators: %s: search query */
-							echo esc_html( sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ) );
-							?>
-						</div>
-					</div>
+							'message' => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
+							'tone'    => 'warn',
+						]
+					);
+					?>
 				<?php else : ?>
 
 					<?php if ( ! empty( $posts ) ) : ?>
@@ -319,11 +321,16 @@ $crumbs = [
 
 				<?php endif; ?>
 			<?php else : ?>
-				<!-- No query yet -->
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-search', 80 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'Enter a search term above to find discussions, spaces, and tags.', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				// No query yet — invite the user to search.
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'    => 'empty-search',
+						'message' => __( 'Enter a search term above to find discussions, spaces, and tags.', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php endif; ?>
 		</main>
 

@@ -921,6 +921,17 @@
   /* ── Empty with padding ── */
   .jt-empty-compact { text-align: center; padding: 30px 20px; color: var(--jt-text-tertiary); }
 
+  /* ── Empty-state partial: tones ── */
+  .jt-empty-tone-warn .jt-empty-text { color: var(--jt-text-secondary); }
+  .jt-empty-tone-forbidden .jt-empty-icon { color: var(--jt-text-tertiary); }
+  .jt-empty-tone-forbidden .jt-empty-text { color: var(--jt-text-secondary); font-weight: 600; }
+  .jt-empty-desc { color: var(--jt-text-tertiary); font-size: var(--jt-text-sm); margin: 8px 0 0; }
+  .jt-empty-cta { margin-top: 16px; }
+
+  /* ── Space gate (private/invite/approval) standalone form / actions below empty-state ── */
+  .jt-space-gate-form { max-inline-size: 480px; margin-inline: auto; margin-block-start: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .jt-space-gate-actions { text-align: center; margin-block-start: 16px; }
+
   /* ── Reply composer wrapper ── */
   .jt-reply-composer { margin-top: 24px; }
   .jt-reply-composer h4 { font-weight: 600; margin-bottom: 10px; }

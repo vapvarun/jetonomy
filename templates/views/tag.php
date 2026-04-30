@@ -12,8 +12,15 @@ $tag      = \Jetonomy\Models\Tag::find_by_slug( $tag_slug );
 
 if ( ! $tag ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Tag not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Tag not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -99,10 +106,16 @@ $crumbs = [
 			</div>
 
 			<?php if ( empty( $posts ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'message-circle', 48 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'No posts with this tag yet.', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'      => 'message-circle',
+						'icon_size' => 48,
+						'message'   => __( 'No posts with this tag yet.', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-topics">
 					<?php foreach ( $posts as $post ) : ?>

@@ -22,7 +22,15 @@ $space = '' !== $slug ? \Jetonomy\Models\Space::find_by_slug( $slug ) : null;
 
 if ( ! $space ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -30,7 +38,15 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user
 	// 1.4.0: respond with 404 (not 403) so the URL existence isn't leaked
 	// to non-admins, matching the pattern used by other gated views.
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 

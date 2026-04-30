@@ -50,17 +50,17 @@ $crumbs = array(
 		</header>
 
 		<?php if ( empty( $drafts ) ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'edit', 80 ); ?></div>
-				<div class="jt-empty-text">
-					<?php esc_html_e( 'No drafts yet. Save a post as a draft and it will appear here.', 'jetonomy' ); ?>
-				</div>
-				<p class="jt-empty-cta">
-					<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( $base . '/' ); ?>">
-						<?php esc_html_e( 'Browse the community', 'jetonomy' ); ?>
-					</a>
-				</p>
-			</div>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'      => 'edit',
+					'message'   => __( 'No drafts yet. Save a post as a draft and it will appear here.', 'jetonomy' ),
+					'cta_label' => __( 'Browse the community', 'jetonomy' ),
+					'cta_url'   => $base . '/',
+				]
+			);
+			?>
 		<?php else : ?>
 			<div class="jt-topics">
 				<?php foreach ( $drafts as $draft_post ) : ?>
