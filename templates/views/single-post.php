@@ -512,10 +512,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				'>
 
 				<div class="jt-replies-head">
-					<h3>
+					<h2>
 						<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
 						<span class="jt-count-pill"><?php echo esc_html( (int) $total_replies ); ?></span>
-					</h3>
+					</h2>
 					<div class="jt-replies-controls">
 						<div class="jt-pills">
 							<?php
@@ -528,7 +528,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
 								?>
 								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
-									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>">
+									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>"
+									<?php echo $reply_sort === $key ? 'aria-current="true"' : ''; ?>>
 									<?php echo esc_html( $label ); ?>
 								</a>
 							<?php endforeach; ?>
@@ -635,9 +636,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</div>
 			<?php elseif ( is_user_logged_in() ) : ?>
 				<div class="jt-reply-composer" id="jt-composer">
-					<h4>
+					<h3>
 						<?php esc_html_e( 'Your Reply', 'jetonomy' ); ?>
-					</h4>
+					</h3>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'composer',

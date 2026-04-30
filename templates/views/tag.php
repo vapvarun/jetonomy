@@ -98,7 +98,8 @@ $crumbs = [
 						$pill_url = add_query_arg( 'sort', $key, $tag_url );
 						?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
-							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
+							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>"
+							<?php echo $sort === $key ? 'aria-current="true"' : ''; ?>>
 							<?php echo esc_html( $label ); ?>
 						</a>
 					<?php endforeach; ?>

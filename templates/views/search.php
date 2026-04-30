@@ -170,7 +170,8 @@ $crumbs = [
 							);
 							?>
 							<a href="<?php echo esc_url( $f_url ); ?>"
-								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>">
+								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>"
+								<?php echo $filter === $key ? 'aria-current="true"' : ''; ?>>
 								<?php echo esc_html( $label ); ?>
 							</a>
 						<?php endforeach; ?>

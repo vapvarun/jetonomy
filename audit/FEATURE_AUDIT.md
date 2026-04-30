@@ -60,8 +60,22 @@ The fix is mechanical for each one: either rename the Pro listener to the actual
 - [x] **Verification reminder bypassed Email_Adapter — FIXED in 1.4.1 (commit `5a67043`).** `class-notifier.php:187` reached for an undefined `jetonomy_get_email_adapter()` helper and fell back to direct `wp_mail()`. Customers configuring a custom Email_Adapter (Pro Mailgun / SES / Postmark when one ships) silently lost the verification-reminder path. Now uses `Adapter_Registry::get_email()`.
 - [x] **Admin "send test email" bypassed Email_Adapter — FIXED in 1.4.1 (commit `5a67043`).** `class-settings-handler.php:90` fired `wp_mail()` directly. The whole point of "test email" is to verify the production path; bypassing the adapter defeated that. Now routes through `Adapter_Registry::get_email()`.
 - [ ] **Search adapter contract too narrow (MEDIUM, deferred to 1.4.2).** `Search_Adapter::search()` signature can't carry the filters `Search_Controller` already applies (tag, date, author, sort, viewer-aware visibility), so the controller bypasses the registry. Direction recorded in `interface-search-adapter.php` head comment. Block A3/A4 in `plan/punch-list-2026-04-30.md`.
-- [ ] **Grid track-overflow risk (LOW).** Add `minmax(0, 1fr)` to 4 fixed-column grids. Drop into next CSS sweep. Block F1 in the punch list.
-- [ ] **Suppressed-baseline debt (260 entries).** PHPStan + PHPCS suppressions surfaced by detector D3. ~213 are noise (clear via stub hardening); ~70 are real "might not be defined" assertions worth triaging. Block G in the punch list.
+- [x] **Grid track-overflow risk (LOW) — FIXED in 1.4.1.** `minmax(0, 1fr)` added to 4 fixed-column grids on each side.
+- [x] **Suppressed-baseline debt — partially closed in 1.4.1.** Baseline shrunk 262 → 86 (67%) via stub-hardening (commit `666db38`) and view-template `@var` docblocks (commit `eca6bcd`). Remaining 86 are mostly defensive `is_wp_error` checks against filter-returnable errors and `$wpdb->get_row()` generic-object access. Carry to 1.4.2 as Block G3.
+
+### A11y findings (Sprint 3 first-pass audit, 2026-04-30)
+
+Sonnet sub-agent walked the five customer-critical flows (new post, single post + voting, reply submission, moderation queue, leaderboard) at 390px and 1280px in light + dark mode. 9 verified WCAG 2.1 AA gaps. Quick wins land in 1.4.1; toggle-state and live-region work carry to 1.4.2 because each requires WP Interactivity binding changes and template restructuring.
+
+- [x] **A11Y-1 — breadcrumb contrast 3.11:1 (light) / 3.15:1 (dark) — FIXED in 1.4.1.** `--jt-text-tertiary` token bumped from 60% → 65% (light) and 40% → 60% (dark) so all 84 surfaces using it pass 4.5:1.
+- [x] **A11Y-7 — heading hierarchy on single post + new post — FIXED in 1.4.1.** Single post: `Replies` h3 → h2, `Your Reply` h4 → h3. New post (Pro custom-fields): `Additional Fields` h4 → h2. WCAG 1.3.1.
+- [x] **A11Y-6 — reaction picker buttons used machine slugs — FIXED in 1.4.1.** Pro reactions extension now uses the human label from the REACTIONS map (`Like`, `Love`, `Haha`, etc.) as the `aria-label` instead of the slug (`thumbsup`, `heart`, …). WCAG 4.1.2.
+- [x] **A11Y-9 — sort pills missing `aria-current` — FIXED in 1.4.1.** Active sort pill across single-post replies, space, tag, and search views now sets `aria-current="true"`. WCAG 4.1.2.
+- [ ] **A11Y-2 — vote / bookmark / follow toggle buttons no `aria-pressed` (HIGH, deferred to 1.4.2).** Each toggle is a WP Interactivity-bound button; needs `data-wp-bind--aria-pressed` wired to the corresponding state field. WCAG 4.1.2. Affects every post and reply page.
+- [ ] **A11Y-3 — vote count updates have no `aria-live` region (HIGH, deferred to 1.4.2).** Casting / removing a vote updates `.jt-vote-cluster .n` silently. Wrap the score span in a `polite` live region. WCAG 4.1.3.
+- [ ] **A11Y-4 — reply / new-post composer `contenteditable` missing `role="textbox"` and `aria-multiline="true"` (HIGH, deferred to 1.4.2).** Some screen readers (NVDA + Firefox in particular) don't recognise the editor as an editable field. WCAG 4.1.2.
+- [ ] **A11Y-5 — "More options" menu button has no `aria-expanded` / `aria-haspopup` (MEDIUM, deferred to 1.4.2).** Custom dropdown needs Interactivity-bound `aria-expanded` and the popup list needs `role="menu"` + `role="menuitem"` children. WCAG 4.1.2.
+- [ ] **A11Y-8 — leaderboard top-3 rank position not announced to AT (MEDIUM, deferred to 1.4.2).** Medal SVGs are `aria-hidden="true"` with no text alternative; rank 1/2/3 invisible to screen readers. Add visually-hidden `<span class="screen-reader-text">1st place</span>` for top-3. WCAG 1.3.1.
 
 ## How to re-run
 

@@ -22,8 +22,10 @@
     --jt-text: var(--text-1, var(--wp--preset--color--contrast, #1a1a1a));
     --jt-text-secondary: #4B5563;
     --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
+    /* Bumped from 60% → 65% so any text using --jt-text-tertiary against
+       the default light bg passes WCAG AA 4.5:1 (was 3.48:1 at 60%). */
     --jt-text-tertiary: #6B7280;
-    --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 60%, transparent);
+    --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 65%, transparent);
 
     --jt-bg: var(--bg, var(--wp--preset--color--base, #ffffff));
     --jt-bg-subtle: #F9FAFB;
@@ -124,8 +126,10 @@
      toggle is the single source of truth. */
   .jt-dark .jt-app, .jt-app.jt-dark {
     --jt-text: #e5e5e5;
-    --jt-text-secondary: rgba(229, 229, 229, 0.65);
-    --jt-text-tertiary: rgba(229, 229, 229, 0.4);
+    --jt-text-secondary: rgba(229, 229, 229, 0.75);
+    /* Bumped from 0.4 → 0.6 so text using --jt-text-tertiary passes WCAG AA
+       on the dark surface (was 3.07:1 at 0.4, now ≈ 4.65:1). */
+    --jt-text-tertiary: rgba(229, 229, 229, 0.6);
     --jt-bg: #171717;
     --jt-bg-subtle: #1e1e1e;
     --jt-bg-muted: #262626;
