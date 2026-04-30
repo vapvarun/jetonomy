@@ -55,8 +55,13 @@ The fix is mechanical for each one: either rename the Pro listener to the actual
 
 ## Known issues surfaced by audit (action items)
 
-- [ ] **Pro contract gap (HIGH).** Wire 13 missing free hooks (or rename Pro listeners). See list above. Slot for next release.
-- [ ] **Grid track-overflow risk (LOW).** Add `minmax(0, 1fr)` to 4 fixed-column grids. Drop into next CSS sweep.
+- [x] **Pro contract gap (HIGH) — FIXED in 1.4.1 (commit `c54b856`).** 13 missing free hooks wired so Pro extensions (white-label, custom-fields, webhooks) actually fire on customer sites.
+- [x] **Abilities `execute_search` runtime fatal — FIXED in 1.4.1 (commit `d609424`).** `class-abilities.php:1609, 1612` was calling `$adapter->search_posts()` and `$adapter->search_spaces()` on a `Search_Adapter`-typed variable; methods don't exist on the interface and are private on `Fulltext_Search`. Suppressed in `phpstan-baseline.neon` until detector D1 surfaced it. Now routes through `Search_Adapter::search()`. Both baseline suppressions removed.
+- [x] **Verification reminder bypassed Email_Adapter — FIXED in 1.4.1 (commit `5a67043`).** `class-notifier.php:187` reached for an undefined `jetonomy_get_email_adapter()` helper and fell back to direct `wp_mail()`. Customers configuring a custom Email_Adapter (Pro Mailgun / SES / Postmark when one ships) silently lost the verification-reminder path. Now uses `Adapter_Registry::get_email()`.
+- [x] **Admin "send test email" bypassed Email_Adapter — FIXED in 1.4.1 (commit `5a67043`).** `class-settings-handler.php:90` fired `wp_mail()` directly. The whole point of "test email" is to verify the production path; bypassing the adapter defeated that. Now routes through `Adapter_Registry::get_email()`.
+- [ ] **Search adapter contract too narrow (MEDIUM, deferred to 1.4.2).** `Search_Adapter::search()` signature can't carry the filters `Search_Controller` already applies (tag, date, author, sort, viewer-aware visibility), so the controller bypasses the registry. Direction recorded in `interface-search-adapter.php` head comment. Block A3/A4 in `plan/punch-list-2026-04-30.md`.
+- [ ] **Grid track-overflow risk (LOW).** Add `minmax(0, 1fr)` to 4 fixed-column grids. Drop into next CSS sweep. Block F1 in the punch list.
+- [ ] **Suppressed-baseline debt (260 entries).** PHPStan + PHPCS suppressions surfaced by detector D3. ~213 are noise (clear via stub hardening); ~70 are real "might not be defined" assertions worth triaging. Block G in the punch list.
 
 ## How to re-run
 

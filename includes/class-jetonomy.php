@@ -397,6 +397,14 @@ final class Jetonomy {
 		}
 
 		// Ollama AI adapter (conditional — self-hosted, free).
+		//
+		// AI_Adapter has zero in-tree consumers in the free plugin. That's
+		// intentional: the registry slot is a Pro-only extension hook. Pro's
+		// AI extension consumes Adapter_Registry::get_ai() / get_all_ai() and
+		// brings its own provider adapters (OpenAI, Anthropic, custom) plus
+		// the moderator / suggester / summarizer features that consume them.
+		// Free ships Ollama for the self-hosted no-Pro use case via the
+		// AI_Spam_Detector instance below.
 		$ai_settings = $settings['ai']['providers']['ollama'] ?? [];
 		if ( ! empty( $ai_settings['enabled'] ) ) {
 			Adapters\Adapter_Registry::register_ai( 'ollama', new Adapters\Ollama_AI_Adapter() );
