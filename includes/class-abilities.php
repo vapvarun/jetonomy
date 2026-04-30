@@ -1262,10 +1262,11 @@ class Abilities {
 				'created_at'  => $p->created_at ?? '',
 			];
 		}
-		// TODO: compute accurate total via COUNT query for cursor-based pagination.
+		$total = Post::count_by_space_visible( $space_id, (int) $user_id, (bool) $is_privileged, $sort );
 		return [
 			'posts'    => $items,
-			'has_more' => count( $items ) === $limit,
+			'total'    => $total,
+			'has_more' => count( $items ) === $limit && ( count( $items ) + (int) $after ) < $total,
 		];
 	}
 
@@ -1321,10 +1322,11 @@ class Abilities {
 				'created_at'  => $r->created_at ?? '',
 			];
 		}
-		// TODO: compute accurate total via COUNT query for cursor-based pagination.
+		$total = Reply::count_by_post( $post_id );
 		return [
 			'replies'  => $items,
-			'has_more' => count( $items ) === $limit,
+			'total'    => $total,
+			'has_more' => count( $items ) === $limit && ( count( $items ) + (int) $after ) < $total,
 		];
 	}
 

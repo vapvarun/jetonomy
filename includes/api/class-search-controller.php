@@ -128,15 +128,20 @@ class Search_Controller extends Base_Controller {
 		}
 
 		$results = [];
+		$total   = 0;
 
 		if ( 'post' === $type ) {
 			$results = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort );
+			$total   = $this->count_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug );
 		} elseif ( 'reply' === $type ) {
 			$results = $this->search_replies( $wpdb, $q, $space_id, $date_from, $date_to, $author_id );
+			$total   = $this->count_replies( $wpdb, $q, $space_id, $date_from, $date_to, $author_id );
 		} elseif ( 'space' === $type ) {
 			$results = $this->search_spaces( $wpdb, $q );
+			$total   = $this->count_spaces( $wpdb, $q );
 		} elseif ( 'tag' === $type ) {
 			$results = $this->search_tags( $wpdb, $q );
+			$total   = $this->count_tags( $wpdb, $q );
 		}
 
 		$items = array_map(
@@ -148,12 +153,15 @@ class Search_Controller extends Base_Controller {
 			$results
 		);
 
-		// TODO: implement proper search pagination with COUNT query for accurate total.
+		// COUNT mirrors the WHERE clause of each search_* method. Result-set
+		// page size is 20 (or 10 for tags); has_more is "total exceeds what
+		// we returned." When A3 lands the per-type SQL collapses into a
+		// single adapter call and these count_* siblings disappear too.
 		return $this->paginated_response(
 			$items,
 			[
-				'total'    => count( $items ),
-				'has_more' => count( $items ) >= 20,
+				'total'    => $total,
+				'has_more' => $total > count( $items ),
 			]
 		);
 	}
@@ -392,5 +400,165 @@ class Search_Controller extends Base_Controller {
 				$like
 			)
 		) ?: [];
+	}
+
+	/**
+	 * Count companion to search_posts() — same WHERE clause, no LIMIT/ORDER.
+	 * Mirrors viewer-aware visibility + tag/date/author filters so meta.total
+	 * matches what the user would page through.
+	 *
+	 * @param \wpdb       $wpdb
+	 * @param string      $q
+	 * @param int|null    $space_id
+	 * @param string|null $date_from
+	 * @param string|null $date_to
+	 * @param int|null    $author_id
+	 * @param string|null $tag_slug
+	 * @return int
+	 */
+	private function count_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null ): int {
+		$posts_table = table( 'posts' );
+		$boolean_q   = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
+
+		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
+		$params = [ $boolean_q ];
+
+		$viewer_id     = get_current_user_id();
+		$is_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		if ( ! $is_privileged ) {
+			if ( $viewer_id > 0 ) {
+				$where[]  = '(p.is_private = 0 OR p.author_id = %d)';
+				$params[] = $viewer_id;
+			} else {
+				$where[] = 'p.is_private = 0';
+			}
+		}
+
+		if ( $space_id ) {
+			$where[]  = 'p.space_id = %d';
+			$params[] = $space_id;
+		}
+		if ( $date_from ) {
+			$where[]  = 'p.created_at >= %s';
+			$params[] = $date_from . ' 00:00:00';
+		}
+		if ( $date_to ) {
+			$where[]  = 'p.created_at <= %s';
+			$params[] = $date_to . ' 23:59:59';
+		}
+		if ( $author_id ) {
+			$where[]  = 'p.author_id = %d';
+			$params[] = $author_id;
+		}
+
+		$where_sql = implode( ' AND ', $where );
+
+		if ( $tag_slug ) {
+			$tags_table      = table( 'tags' );
+			$post_tags_table = table( 'post_tags' );
+			$all_params      = array_merge( [ $tag_slug ], $params );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			return (int) $wpdb->get_var(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT COUNT(*) FROM {$posts_table} p INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql}",
+					...$all_params
+				)
+			);
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$posts_table} p WHERE {$where_sql}",
+				...$params
+			)
+		);
+	}
+
+	/**
+	 * Count companion to search_replies() — viewer-aware private-post filter
+	 * preserved so the total never exposes private content the viewer can't read.
+	 */
+	private function count_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): int {
+		$replies_table = table( 'replies' );
+		$posts_table   = table( 'posts' );
+		$boolean_q     = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
+
+		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
+		$r_params = [ $boolean_q ];
+
+		$viewer_id    = get_current_user_id();
+		$r_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		if ( ! $r_privileged ) {
+			if ( $viewer_id > 0 ) {
+				$r_where[]  = '(p.is_private = 0 OR p.author_id = %d)';
+				$r_params[] = $viewer_id;
+			} else {
+				$r_where[] = 'p.is_private = 0';
+			}
+		}
+
+		if ( $date_from ) {
+			$r_where[]  = 'r.created_at >= %s';
+			$r_params[] = $date_from . ' 00:00:00';
+		}
+		if ( $date_to ) {
+			$r_where[]  = 'r.created_at <= %s';
+			$r_params[] = $date_to . ' 23:59:59';
+		}
+		if ( $author_id ) {
+			$r_where[]  = 'r.author_id = %d';
+			$r_params[] = $author_id;
+		}
+		if ( $space_id ) {
+			$r_where[]  = 'p.space_id = %d';
+			$r_params[] = $space_id;
+		}
+
+		$where_sql = implode( ' AND ', $r_where );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql}",
+				...$r_params
+			)
+		);
+	}
+
+	/**
+	 * Count companion to search_spaces() — public-only, same LIKE filter.
+	 */
+	private function count_spaces( \wpdb $wpdb, string $q ): int {
+		$spaces_table = table( 'spaces' );
+		$like         = '%' . $wpdb->esc_like( $q ) . '%';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public'",
+				$like,
+				$like
+			)
+		);
+	}
+
+	/**
+	 * Count companion to search_tags() — same LIKE filter.
+	 */
+	private function count_tags( \wpdb $wpdb, string $q ): int {
+		$tags_table = table( 'tags' );
+		$like       = '%' . $wpdb->esc_like( $q ) . '%';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$tags_table} WHERE name LIKE %s",
+				$like
+			)
+		);
 	}
 }
