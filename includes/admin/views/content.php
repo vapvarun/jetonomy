@@ -1,12 +1,17 @@
 <?php
 /**
- * Admin view: Manage Posts & Replies
+ * Admin view: Manage Posts & Replies.
  *
- * Received variables:
- *   $posts          — array of post objects from wp_jt_posts (with space_title, space_slug, author columns joined)
- *   $spaces         — array of space objects for the filter dropdown
- *   $current_space  — int, currently selected space_id filter (0 = all)
- *   $current_status — string, currently selected status filter ('all'|'publish'|'pending'|'spam'|'trash')
+ * Variables seeded by Admin::render_content() before include.
+ *
+ * @var object[] $posts          Post rows joined with space_title, space_slug, author columns.
+ * @var object[] $spaces         For the space filter dropdown.
+ * @var int      $current_space  Currently selected space_id filter (0 = all).
+ * @var string   $current_status all|publish|pending|spam|trash.
+ * @var int      $per_page
+ * @var int      $paged
+ * @var int      $total
+ * @var int      $total_pages
  *
  * @package Jetonomy
  */

@@ -2,6 +2,11 @@
 /**
  * Admin dashboard view.
  *
+ * Variables seeded by Admin::render_dashboard() before include.
+ *
+ * @var array<string,mixed> $stats
+ * @var string              $base_slug
+ *
  * @package Jetonomy
  */
 

@@ -1,17 +1,19 @@
 <?php
 /**
- * Admin view: Replies for a specific post
+ * Admin view: Replies for a specific post.
  *
- * Received variables:
- *   $post           — post object from wp_jt_posts
- *   $replies        — array of reply objects (paginated, 50/page)
- *   $total          — int, total reply count matching current filters
- *   $total_pages    — int
- *   $paged          — int
- *   $per_page       — int
- *   $current_status — string, active status filter
- *   $search_query   — string
- *   $nonce_value    — string
+ * Variables seeded by Admin::render_replies() before include — declared here
+ * for static analysis (PHPStan does not follow include-from-method scope).
+ *
+ * @var object   $post
+ * @var object[] $replies
+ * @var int      $total
+ * @var int      $total_pages
+ * @var int      $paged
+ * @var int      $per_page
+ * @var string   $current_status
+ * @var string   $search_query
+ * @var string   $nonce_value
  *
  * @package Jetonomy
  */

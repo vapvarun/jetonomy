@@ -2,6 +2,23 @@
 /**
  * Admin moderation view.
  *
+ * Variables seeded by Admin::render_moderation() before include — declared here
+ * for static analysis (PHPStan does not follow include-from-method scope).
+ *
+ * @var int      $per_page
+ * @var int      $paged_posts
+ * @var int      $paged_replies
+ * @var int      $paged_flags
+ * @var int      $paged_banned
+ * @var int      $total_posts
+ * @var int      $total_replies
+ * @var int      $total_flags
+ * @var int      $total_banned
+ * @var object[] $pending_posts
+ * @var object[] $pending_replies
+ * @var object[] $pending_flags
+ * @var object[] $banned_users
+ *
  * @package Jetonomy
  */
 

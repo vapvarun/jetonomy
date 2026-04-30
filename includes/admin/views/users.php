@@ -2,6 +2,14 @@
 /**
  * Admin users management view.
  *
+ * Variables seeded by Admin::render_users() before include.
+ *
+ * @var int        $paged
+ * @var int        $total
+ * @var int        $total_pages
+ * @var string     $search
+ * @var int|string $filter_trust
+ *
  * @package Jetonomy
  */
 
