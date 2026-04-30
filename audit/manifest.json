@@ -2712,21 +2712,61 @@
     "ci_local": "composer test"
   },
   "notes": {
-    "manifest_quality": "Generated 2026-04-29 under the wp-plugin-onboard skill's coverage gate (\u226595% per category vs ground-truth grep counts). REST 64/64, AJAX 43/43, admin pages 14/14, cron 6/6, hooks_fired 99/99 (61 actions + 43 filters \u2014 see discrepancies note for stale entries) \u2014 all 100%. Settings count is 2 logical groups (vs 7 register_setting field-level calls \u2014 different counting basis, both correct).",
-    "consumed_by_pro": "Hooks marked consumed_by: 'jetonomy-pro' are confirmed via grep across the Pro plugin. These are the integration surface \u2014 Pro will break if they change.",
-    "discrepancies_2026_04_29": "Stale manifest entries surfaced during the 1.4.1 refresh \u2014 recorded but NOT fixed in code (per BUILD-LOG): (1) hooks_fired entries `jetonomy_admin_footer_text`, `jetonomy_extensions_init`, `jetonomy_footer_text`, `jetonomy_header_logo`, `jetonomy_post_response`, `jetonomy_profile_response` are documented but no longer fired anywhere in the free codebase \u2014 likely renamed during the 1.3.x cycle to `jetonomy_rest_prepare_*`. (2) cron entry `jetonomy_sync_membership` was previously documented but is no longer scheduled in `Cron::schedule()` \u2014 replaced in this refresh by `jetonomy_verification_reminder`. (3) REST entries `/votes/(?P<id>\\d+)` (DELETE) and `/tags/(?P<id>\\d+)` (GET/PATCH/DELETE) were stale stubs \u2014 actual code uses POST+DELETE on `/posts/{id}/vote` and `/replies/{id}/vote`, and `/tags/{id}` was never implemented \u2014 both removed in this refresh.",
+    "manifest_quality": "Generated 2026-04-29 under the wp-plugin-onboard skill's coverage gate (≥95% per category vs ground-truth grep counts). REST 64/64, AJAX 43/43, admin pages 14/14, cron 6/6, hooks_fired 99/99 (61 actions + 43 filters — see discrepancies note for stale entries) — all 100%. Settings count is 2 logical groups (vs 7 register_setting field-level calls — different counting basis, both correct).",
+    "consumed_by_pro": "Hooks marked consumed_by: 'jetonomy-pro' are confirmed via grep across the Pro plugin. These are the integration surface — Pro will break if they change.",
+    "discrepancies_2026_04_29": "Stale manifest entries surfaced during the 1.4.1 refresh — recorded but NOT fixed in code (per BUILD-LOG): (1) hooks_fired entries `jetonomy_admin_footer_text`, `jetonomy_extensions_init`, `jetonomy_footer_text`, `jetonomy_header_logo`, `jetonomy_post_response`, `jetonomy_profile_response` are documented but no longer fired anywhere in the free codebase — likely renamed during the 1.3.x cycle to `jetonomy_rest_prepare_*`. (2) cron entry `jetonomy_sync_membership` was previously documented but is no longer scheduled in `Cron::schedule()` — replaced in this refresh by `jetonomy_verification_reminder`. (3) REST entries `/votes/(?P<id>\\d+)` (DELETE) and `/tags/(?P<id>\\d+)` (GET/PATCH/DELETE) were stale stubs — actual code uses POST+DELETE on `/posts/{id}/vote` and `/replies/{id}/vote`, and `/tags/{id}` was never implemented — both removed in this refresh.",
     "changelog": [
       {
         "date": "2026-04-29",
         "version": "1.4.1",
         "summary": "1.4.1 refresh: +2 REST endpoints (`POST /moderation/bulk`, `GET /posts/{id}/flags`), +2 admin pages (Activity Log, Revisions), +1 AJAX (`jetonomy_email_reset`), +1 cron (`jetonomy_verification_reminder`), +1 DB migration (`jt_user_profiles.verification_reminder_sent_at`), +1 helper class (`Jetonomy\\Visibility`), +2 hooks_fired (`jetonomy_verification_reminder_sent`, `jetonomy_rest_prepare_notification`). A11 visibility wrap applied to 20 public-read REST endpoints (every endpoint listed above with `audit_notes` mentioning `Visibility::rest_check`). Email-templates allowlist gained `verification_reminder` row (A8). Plus: 4 stale manifest entries cleaned out (see discrepancies_2026_04_29)."
       }
+    ],
+    "refresh_2026_04_30": [
+      "v2 schema sections added on 2026-04-30 refresh. All `static_analysis.*` arrays default to []; populated entries are confirmed findings.",
+      "dead_listeners: free's 6 candidates (jetonomy_cleanup_expired, jetonomy_cleanup_notifications, jetonomy_prune_activity, jetonomy_publish_scheduled, jetonomy_trust_evaluation, jetonomy_verification_reminder) are wp_schedule_event() cron hooks, not dead — fired by WP-Cron, not direct do_action.",
+      "grid_track_overflow_risks: 4 bare 1fr tracks in fixed-column grids. Risk rated low (current cell content fits). Fix on next CSS sweep — convert to minmax(0, 1fr) for content-overflow safety."
     ]
   },
   "generated": {
-    "at": "2026-04-29T00:00:00Z",
-    "from": "wp-plugin-onboard skill (1.4.1 refresh)",
+    "at": "2026-04-30T15:00:00Z",
+    "from": "wp-plugin-onboard skill (1.4.1 refresh, 2026-04-30 v2 static_analysis)",
     "branch": "1.4.1",
     "schema_version": "v2"
+  },
+  "static_analysis": {
+    "dead_listeners": [],
+    "cap_context_mismatches": [],
+    "extensibility_gaps": [],
+    "js_only_activation": [],
+    "rest_hang_risks": [],
+    "visual_required_no_enforcement": [],
+    "grid_track_overflow_risks": [
+      {
+        "file": "assets/css/jetonomy.css:617",
+        "selector": ".jt-stats-bar",
+        "track_rule": "grid-template-columns: repeat(4, 1fr)",
+        "suggestion": "repeat(4, minmax(0, 1fr))"
+      },
+      {
+        "file": "assets/css/jetonomy.css:623",
+        "selector": ".jt-badges",
+        "track_rule": "grid-template-columns: repeat(3, 1fr)",
+        "suggestion": "repeat(3, minmax(0, 1fr))"
+      },
+      {
+        "file": "assets/css/jetonomy.css:631",
+        "selector": ".jt-kanban",
+        "track_rule": "grid-template-columns: repeat(4, 1fr)",
+        "suggestion": "repeat(4, minmax(0, 1fr))"
+      },
+      {
+        "file": "assets/css/jetonomy.css:694",
+        "selector": ".jt-kanban (tablet)",
+        "track_rule": "grid-template-columns: repeat(2, 1fr)",
+        "suggestion": "repeat(2, minmax(0, 1fr))"
+      }
+    ],
+    "hook_signature_drift": []
   }
 }
