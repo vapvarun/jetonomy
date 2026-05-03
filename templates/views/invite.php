@@ -84,8 +84,7 @@ if ( ! is_user_logged_in() ) {
 $user_id = get_current_user_id();
 
 if ( \Jetonomy\Models\SpaceMember::is_member( (int) $invite->space_id, $user_id ) ) {
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe
-	echo '<script>window.location=' . wp_json_encode( $space_url ) . ';</script>';
+	echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 	exit;
 }
 
@@ -97,6 +96,5 @@ if ( is_wp_error( $add_result ) ) {
 }
 \Jetonomy\Models\InviteLink::use_invite( (int) $invite->id );
 
-// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe
-echo '<script>window.location=' . wp_json_encode( $space_url ) . ';</script>';
+echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 exit;
