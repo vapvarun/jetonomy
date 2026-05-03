@@ -213,31 +213,6 @@ if ( 'detail' === $mode ) :
 				</tbody>
 			</table>
 
-			<script>
-			( function () {
-				var toggles = document.querySelectorAll( '.jt-rev-diff-toggle' );
-				for ( var i = 0; i < toggles.length; i++ ) {
-					toggles[ i ].addEventListener( 'click', function ( evt ) {
-						var btn       = evt.currentTarget;
-						var targetId  = btn.getAttribute( 'data-target' );
-						var row       = document.getElementById( targetId );
-						if ( ! row ) {
-							return;
-						}
-						var isOpen    = ! row.hasAttribute( 'hidden' );
-						if ( isOpen ) {
-							row.setAttribute( 'hidden', '' );
-							btn.setAttribute( 'aria-expanded', 'false' );
-							btn.textContent = <?php echo wp_json_encode( __( 'View diff', 'jetonomy' ) ); ?>;
-						} else {
-							row.removeAttribute( 'hidden' );
-							btn.setAttribute( 'aria-expanded', 'true' );
-							btn.textContent = <?php echo wp_json_encode( __( 'Hide diff', 'jetonomy' ) ); ?>;
-						}
-					} );
-				}
-			} )();
-			</script>
 		<?php endif; ?>
 	</div>
 	<?php

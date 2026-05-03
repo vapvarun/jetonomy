@@ -608,23 +608,48 @@ class Admin {
 				'nonce'              => wp_create_nonce( 'jetonomy_admin' ),
 				'membershipAdapters' => $membership_adapters,
 				'i18n'               => array(
-					'confirmDelete'   => __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
-					'confirmBan'      => __( 'Are you sure you want to ban this user?', 'jetonomy' ),
-					'saving'          => __( 'Saving...', 'jetonomy' ),
-					'saved'           => __( 'Saved!', 'jetonomy' ),
-					'deleted'         => __( 'Deleted.', 'jetonomy' ),
-					'error'           => __( 'Something went wrong.', 'jetonomy' ),
-					'importing'       => __( 'Importing...', 'jetonomy' ),
-					'importDone'      => __( 'Import complete!', 'jetonomy' ),
-					'selectImage'     => __( 'Select Image', 'jetonomy' ),
-					'useImage'        => __( 'Use this image', 'jetonomy' ),
-					'testEmailSent'   => __( 'Test email sent!', 'jetonomy' ),
-					'rewritesFlushed' => __( 'Rewrite rules flushed.', 'jetonomy' ),
-					'unban'           => __( 'Unban', 'jetonomy' ),
-					'ban'             => __( 'Ban', 'jetonomy' ),
+					'confirmDelete'       => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
+					'confirmBan'          => esc_html__( 'Are you sure you want to ban this user?', 'jetonomy' ),
+					'saving'              => esc_html__( 'Saving...', 'jetonomy' ),
+					'saved'               => esc_html__( 'Saved!', 'jetonomy' ),
+					'deleted'             => esc_html__( 'Deleted.', 'jetonomy' ),
+					'error'               => esc_html__( 'Something went wrong.', 'jetonomy' ),
+					'importing'           => esc_html__( 'Importing...', 'jetonomy' ),
+					'importDone'          => esc_html__( 'Import complete!', 'jetonomy' ),
+					'selectImage'         => esc_html__( 'Select Image', 'jetonomy' ),
+					'useImage'            => esc_html__( 'Use this image', 'jetonomy' ),
+					'testEmailSent'       => esc_html__( 'Test email sent!', 'jetonomy' ),
+					'rewritesFlushed'     => esc_html__( 'Rewrite rules flushed.', 'jetonomy' ),
+					'unban'               => esc_html__( 'Unban', 'jetonomy' ),
+					'ban'                 => esc_html__( 'Ban', 'jetonomy' ),
+					'demoCleanupConfirm'  => esc_html__( 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.', 'jetonomy' ),
+					'demoCleanupRemoving' => esc_html__( 'Removing...', 'jetonomy' ),
+					'revisionViewDiff'    => esc_html__( 'View diff', 'jetonomy' ),
+					'revisionHideDiff'    => esc_html__( 'Hide diff', 'jetonomy' ),
 				),
 			)
 		);
+
+		// Per-page admin scripts. Hook suffix matches WP's auto-generated
+		// menu_page_url hook ('toplevel_page_jetonomy' for the dashboard,
+		// 'jetonomy_page_jetonomy-{slug}' for sub-pages).
+		if ( 'toplevel_page_jetonomy' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-dashboard',
+				JETONOMY_URL . 'assets/js/admin-dashboard.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'jetonomy_page_jetonomy-revisions' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-revisions',
+				JETONOMY_URL . 'assets/js/admin-revisions.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		}
 	}
 
 	// ── Page Renderers ──

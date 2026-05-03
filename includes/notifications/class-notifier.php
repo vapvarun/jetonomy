@@ -53,7 +53,7 @@ class Notifier {
 		$defaults = array(
 			'user_welcome'          => array(
 				'subject' => __( '[{site}] Welcome to the community', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready — jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\nWelcome to {site}. Your account is ready. Jump in and introduce yourself, ask a question, or browse the latest discussions.\n\n{message}", 'jetonomy' ),
 			),
 			'reply_to_post'         => array(
 				'subject' => __( '[{site}] {actor_display_name} replied to your post', 'jetonomy' ),
@@ -69,7 +69,7 @@ class Notifier {
 			),
 			'accepted_answer'       => array(
 				'subject' => __( '[{site}] Your answer was accepted', 'jetonomy' ),
-				'body'    => __( "Hi {user},\n\n{message}\n\nNice work — your reputation just went up.", 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nNice work. Your reputation just went up.", 'jetonomy' ),
 			),
 			'new_post_in_sub'       => array(
 				'subject' => __( '[{site}] New post in {space_title}', 'jetonomy' ),
@@ -137,7 +137,7 @@ class Notifier {
 
 		$plain = sprintf(
 			/* translators: 1: display name, 2: site name */
-			__( "Hi %1\$s,\n\nThanks for joining %2\$s. Click the link below to confirm your email and finish creating your account:\n\n%3\$s\n\nThis link expires in 24 hours.\n\nIf you didn't sign up, you can ignore this email.\n\n— The %2\$s team", 'jetonomy' ),
+			__( "Hi %1\$s,\n\nThanks for joining %2\$s. Click the link below to confirm your email and finish creating your account:\n\n%3\$s\n\nThis link expires in 24 hours.\n\nIf you didn't sign up, you can ignore this email.\n\nThe %2\$s team", 'jetonomy' ),
 			$display_name,
 			$site_name,
 			$verify_url
