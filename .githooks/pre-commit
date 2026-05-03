@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# Pre-commit gate for Jetonomy — blocks commits that fail PHPStan or WPCS
-# on the staged PHP files. Mirrors the GitHub Actions CI so red X's never
-# reach the public commit history.
+# Pre-commit gate for Jetonomy — blocks commits that fail PHPStan, WPCS,
+# the no-inline-JS/CSS rule, or introduce hardcoded user-visible JS strings
+# that bypass localisation.
 #
 # Install (one-time, per clone): composer install  (automatic via post-install-cmd)
 # Skip (emergencies only): git commit --no-verify
@@ -18,37 +18,92 @@ cd "$ROOT"
 STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACMR -- '*.php' | tr '\n' ' ')
 
 if [ -z "$STAGED_PHP" ]; then
-    echo "pre-commit: no staged PHP — skipping."
-    exit 0
-fi
+    echo "pre-commit: no staged PHP — skipping PHP checks."
+else
+    echo "pre-commit: checking $(echo $STAGED_PHP | wc -w) staged PHP file(s)..."
 
-echo "pre-commit: checking $(echo $STAGED_PHP | wc -w) staged PHP file(s)..."
+    # PHPStan uses the baseline; running the whole project is the only way to
+    # honour the baseline accurately. ~20-30s cached, usually acceptable.
+    if [ -x vendor/bin/phpstan ]; then
+        echo "  -> phpstan"
+        vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=raw
+        if [ $? -ne 0 ]; then
+            echo
+            echo "pre-commit FAILED: PHPStan errors above. Fix them or run with --no-verify (discouraged)."
+            exit 1
+        fi
+    else
+        echo "  -> phpstan (SKIPPED — vendor/bin/phpstan missing. Run: composer install)"
+    fi
 
-# PHPStan uses the baseline; running the whole project is the only way to
-# honour the baseline accurately. ~20-30s cached, usually acceptable.
-if [ -x vendor/bin/phpstan ]; then
-    echo "  -> phpstan"
-    vendor/bin/phpstan analyse --memory-limit=2G --no-progress --error-format=raw
-    if [ $? -ne 0 ]; then
+    # WPCS only on the staged files — much faster than scanning the whole tree.
+    if [ -x vendor/bin/phpcs ]; then
+        echo "  -> phpcs (staged files only)"
+        vendor/bin/phpcs --standard=phpcs.xml $STAGED_PHP
+        if [ $? -ne 0 ]; then
+            echo
+            echo "pre-commit FAILED: WPCS errors above. Fix manually, run 'composer phpcbf' to auto-fix many, or --no-verify (discouraged)."
+            exit 1
+        fi
+    else
+        echo "  -> phpcs (SKIPPED — vendor/bin/phpcs missing. Run: composer install)"
+    fi
+
+    # ── Gate: no inline <script>/<style> in PHP source ──
+    # Reason: the badges-style race condition (inline script reads localize
+    # data that hasn't been printed yet) keeps reappearing whenever JS code
+    # lives next to PHP that injects it. The match looks for a raw HTML
+    # opening tag at the start of a line (the signature of echoed inline
+    # markup). Quoted string literals and code comments stay out by
+    # construction. JSON-LD <script type="application/ld+json"> and email
+    # templates are exempt.
+    echo "  -> no-inline-js (PHP)"
+    INLINE_OFFENDERS=""
+    for f in $STAGED_PHP; do
+        case "$f" in
+            vendor/*|dist/*|node_modules/*|build/*|tests/*|tools/*|qa/*) continue ;;
+            */templates/emails/*) continue ;;
+        esac
+        hits=$(grep -nE '^[[:space:]]*<(script|style)([[:space:]]|>)' "$f" 2>/dev/null \
+            | grep -vE 'application/(ld\+json|json)')
+        if [ -n "$hits" ]; then
+            INLINE_OFFENDERS="$INLINE_OFFENDERS\n  $f:\n$(echo "$hits" | sed 's/^/    /')"
+        fi
+    done
+    if [ -n "$INLINE_OFFENDERS" ]; then
         echo
-        echo "pre-commit FAILED: PHPStan errors above. Fix them or run with --no-verify (discouraged)."
+        printf '%b\n' "$INLINE_OFFENDERS"
+        echo
+        echo "pre-commit FAILED: inline <script> or <style> in PHP. Move the JS/CSS to assets/{js,css}/ and enqueue via wp_enqueue_script / wp_enqueue_style. Pass any PHP-rendered runtime data via wp_localize_script (esc_html__ for translatable strings)."
+        echo "(Allowed: <script type=\"application/ld+json\">, email templates.)"
         exit 1
     fi
-else
-    echo "  -> phpstan (SKIPPED — vendor/bin/phpstan missing. Run: composer install)"
 fi
 
-# WPCS only on the staged files — much faster than scanning the whole tree.
-if [ -x vendor/bin/phpcs ]; then
-    echo "  -> phpcs (staged files only)"
-    vendor/bin/phpcs --standard=phpcs.xml $STAGED_PHP
-    if [ $? -ne 0 ]; then
+# ── Gate: hardcoded user-visible strings in staged JS ──
+# Reason: a `.textContent = 'Loading...'` slipped past every prior review and
+# made several screens un-translatable. New JS must route user-visible
+# strings through window.jetonomy*.i18n (with an English fallback after `||`).
+STAGED_JS=$(git diff --cached --name-only --diff-filter=ACMR -- 'assets/js/*.js' | grep -v '\.min\.js$' | tr '\n' ' ')
+if [ -n "$STAGED_JS" ]; then
+    echo "pre-commit: checking $(echo $STAGED_JS | wc -w) staged JS file(s)..."
+    echo "  -> i18n hard-coding"
+    # Inspect only added lines in the staged diff. Any additions of
+    # .textContent / .placeholder / .title / setAttribute('aria-label', ...)
+    # / alert(...) with a literal capitalised multi-word string fail unless
+    # the line uses a localised lookup (`||` fallback or i18n.* reference).
+    HARDCODED=$(git diff --cached -- $STAGED_JS \
+        | grep -E '^\+[^+]' \
+        | grep -vE '^\+[[:space:]]*(//|\*|/\*)' \
+        | grep -vE 'i18n\.|jetonomy[A-Za-z]+\.i18n|\|\|' \
+        | grep -E "(\.textContent|\.placeholder|\.title|\.innerText|setAttribute\(['\"]aria-label['\"]|alert\()[[:space:]]*[=,][[:space:]]*['\"][A-Z][a-z]+[ ][a-zA-Z]")
+    if [ -n "$HARDCODED" ]; then
         echo
-        echo "pre-commit FAILED: WPCS errors above. Fix manually, run 'composer phpcbf' to auto-fix many, or --no-verify (discouraged)."
+        echo "$HARDCODED" | sed 's/^/    /'
+        echo
+        echo "pre-commit FAILED: hardcoded user-visible strings in JS. Route through window.jetonomy*.i18n (with esc_html__ on the PHP side); keep an English fallback via the \"|| 'Default'\" pattern so no translation == no breakage."
         exit 1
     fi
-else
-    echo "  -> phpcs (SKIPPED — vendor/bin/phpcs missing. Run: composer install)"
 fi
 
 echo "pre-commit: OK"
