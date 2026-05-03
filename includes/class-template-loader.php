@@ -353,12 +353,23 @@ class Template_Loader {
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
 				'i18n'          => array(
-					'queueClean'       => esc_html__( 'Queue cleared.', 'jetonomy' ),
-					'resolveFailed'    => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
-					'roleUpdateFailed' => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
-					'loading'          => esc_html__( 'Loading...', 'jetonomy' ),
-					'loadMore'         => esc_html__( 'Load More', 'jetonomy' ),
-					'roleLabels'       => array(
+					'queueClean'        => esc_html__( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'     => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'roleUpdateFailed'  => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
+					'loading'           => esc_html__( 'Loading...', 'jetonomy' ),
+					'loadMore'          => esc_html__( 'Load More', 'jetonomy' ),
+					'iconShowFewer'     => esc_html__( 'Show fewer icons', 'jetonomy' ),
+					'iconShowMore'      => esc_html__( 'Show more icons', 'jetonomy' ),
+					'uploading'         => esc_html__( 'Uploading...', 'jetonomy' ),
+					'uploaded'          => esc_html__( 'Uploaded.', 'jetonomy' ),
+					'uploadFailed'      => esc_html__( 'Upload failed.', 'jetonomy' ),
+					'networkError'      => esc_html__( 'Network error.', 'jetonomy' ),
+					'networkErrorRetry' => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
+					'createSpaceFailed' => esc_html__( 'Could not create the space. Please try again.', 'jetonomy' ),
+					'saveFailed'        => esc_html__( 'Could not save changes.', 'jetonomy' ),
+					'prefixLabel'       => esc_html__( 'Label', 'jetonomy' ),
+					'removePrefix'      => esc_html__( 'Remove prefix', 'jetonomy' ),
+					'roleLabels'        => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
 						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
@@ -376,6 +387,33 @@ class Template_Loader {
 			JETONOMY_VERSION,
 			true
 		);
+
+		// Per-route page scripts.
+		if ( 'new-space' === $data['route'] ) {
+			wp_enqueue_script(
+				'jetonomy-new-space',
+				JETONOMY_URL . 'assets/js/new-space.js',
+				array( 'jetonomy-data' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'space-edit' === $data['route'] ) {
+			wp_enqueue_script(
+				'jetonomy-space-edit',
+				JETONOMY_URL . 'assets/js/space-edit.js',
+				array( 'jetonomy-data' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'notifications' === $data['route'] ) {
+			wp_enqueue_script(
+				'jetonomy-notifications-page',
+				JETONOMY_URL . 'assets/js/notifications-page.js',
+				array( 'jetonomy-data' ),
+				JETONOMY_VERSION,
+				true
+			);
+		}
 
 		// Enqueue composer enhancement script (depends on the shared modal
 		// toolkit for the link-insert prompt).
