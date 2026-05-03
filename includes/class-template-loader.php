@@ -353,16 +353,28 @@ class Template_Loader {
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
 				'i18n'          => array(
-					'queueClean'       => __( 'Queue cleared.', 'jetonomy' ),
-					'resolveFailed'    => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
-					'roleUpdateFailed' => __( 'Could not update role. Please try again.', 'jetonomy' ),
+					'queueClean'       => esc_html__( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'    => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'roleUpdateFailed' => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
+					'loading'          => esc_html__( 'Loading...', 'jetonomy' ),
+					'loadMore'         => esc_html__( 'Load More', 'jetonomy' ),
 					'roleLabels'       => array(
-						'member'    => __( 'Member', 'jetonomy' ),
-						'moderator' => __( 'Moderator', 'jetonomy' ),
-						'admin'     => __( 'Admin', 'jetonomy' ),
+						'member'    => esc_html__( 'Member', 'jetonomy' ),
+						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
+						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
 					),
 				),
 			)
+		);
+
+		// Pagination "Load More" auto-scroll handler. Self-discovers all
+		// .jt-pagination containers on the page; safe to always enqueue.
+		wp_enqueue_script(
+			'jetonomy-pagination',
+			JETONOMY_URL . 'assets/js/pagination-frontend.js',
+			array( 'jetonomy-data' ),
+			JETONOMY_VERSION,
+			true
 		);
 
 		// Enqueue composer enhancement script (depends on the shared modal
