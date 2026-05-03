@@ -632,6 +632,14 @@ class Admin {
 					'tagDeleteAttachedSuffix' => esc_html__( 'posts. Delete it and detach from all posts?', 'jetonomy' ),
 					'tagBulkSelectAtLeastOne' => esc_html__( 'Select at least one tag.', 'jetonomy' ),
 					'tagBulkDeleteConfirm'    => esc_html__( 'Delete the selected tags?', 'jetonomy' ),
+					'emailPreviewFailed'      => esc_html__( 'Preview failed.', 'jetonomy' ),
+					'emailPreviewTitle'       => esc_html__( 'Email Preview', 'jetonomy' ),
+					'emailSending'            => esc_html__( 'Sending...', 'jetonomy' ),
+					'emailSent'               => esc_html__( 'Sent.', 'jetonomy' ),
+					'emailSendFailed'         => esc_html__( 'Failed to send.', 'jetonomy' ),
+					/* translators: %s: email template label */
+					'emailResetConfirm'       => esc_html__( 'Reset %s to default? Your custom copy will be lost.', 'jetonomy' ),
+					'emailResetFailed'        => esc_html__( 'Reset failed.', 'jetonomy' ),
 				),
 			)
 		);
@@ -659,6 +667,14 @@ class Admin {
 			wp_enqueue_script(
 				'jetonomy-admin-tags',
 				JETONOMY_URL . 'assets/js/admin-tags.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'jetonomy_page_jetonomy-settings' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-settings',
+				JETONOMY_URL . 'assets/js/admin-settings.js',
 				array( 'jetonomy-admin' ),
 				JETONOMY_VERSION,
 				true
