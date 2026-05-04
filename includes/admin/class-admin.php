@@ -640,6 +640,8 @@ class Admin {
 					/* translators: %s: email template label */
 					'emailResetConfirm'       => esc_html__( 'Reset %s to default? Your custom copy will be lost.', 'jetonomy' ),
 					'emailResetFailed'        => esc_html__( 'Reset failed.', 'jetonomy' ),
+					'hiddenForcesInvite'      => esc_html__( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
+					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
 				),
 			)
 		);

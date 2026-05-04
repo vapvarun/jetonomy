@@ -280,4 +280,33 @@ class SpaceTest extends WP_UnitTestCase {
 		Space::delete( $id );
 		$this->assertNull( Space::find( $id ) );
 	}
+
+	public function test_validate_visibility_join_policy_rejects_hidden_open(): void {
+		$result = Space::validate_visibility_join_policy( 'hidden', 'open' );
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertEquals( 'jetonomy_invalid_combo', $result->get_error_code() );
+		$data = $result->get_error_data();
+		$this->assertSame( 400, $data['status'] ?? 0 );
+	}
+
+	public function test_validate_visibility_join_policy_rejects_hidden_approval(): void {
+		$result = Space::validate_visibility_join_policy( 'hidden', 'approval' );
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertEquals( 'jetonomy_invalid_combo', $result->get_error_code() );
+	}
+
+	public function test_validate_visibility_join_policy_accepts_hidden_invite(): void {
+		$this->assertTrue( Space::validate_visibility_join_policy( 'hidden', 'invite' ) );
+	}
+
+	public function test_validate_visibility_join_policy_accepts_public_and_private(): void {
+		foreach ( [ 'public', 'private' ] as $vis ) {
+			foreach ( [ 'open', 'approval', 'invite' ] as $jp ) {
+				$this->assertTrue(
+					Space::validate_visibility_join_policy( $vis, $jp ),
+					"$vis + $jp should be allowed"
+				);
+			}
+		}
+	}
 }

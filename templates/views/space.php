@@ -28,6 +28,17 @@ $_jt_join_policy = $space->join_policy ?? 'open';
 $_jt_user_id     = get_current_user_id();
 $_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $_jt_user_id );
 $_jt_is_admin    = current_user_can( 'manage_options' );
+$_jt_is_hidden   = 'hidden' === ( $space->visibility ?? '' );
+
+// Read-side defence against legacy data: hidden spaces are invite-only
+// regardless of what stored join_policy says. The write-side validator
+// rejects the bad combo on every entry point now, but a site that already
+// had hidden + open rows in the database before upgrading must still gate
+// correctly until the data migration runs. Forcing the local view of
+// join_policy here keeps the gate, sidebar, and join button consistent.
+if ( $_jt_is_hidden ) {
+	$_jt_join_policy = 'invite';
+}
 
 // Gate: block access for private/hidden spaces (full block) or public spaces with
 // restricted join policies (buttons handled below; content stays readable).
@@ -39,12 +50,19 @@ $_jt_is_admin    = current_user_can( 'manage_options' );
 // itself is too bespoke to fit the generic CTA argument.
 if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin ) {
 	if ( ! $_jt_user_id ) {
-		// Guest — prompt to log in.
+		// Guest — prompt to log in. Hidden and private spaces use distinct
+		// copy so the message does not lie about the space's actual setting:
+		// the sidebar already shows "Hidden" via ucfirst($space->visibility)
+		// and the home/category listings show a Hidden badge, so the gate
+		// message must agree.
+		$gate_message = $_jt_is_hidden
+			? __( 'This space is hidden. Log in to check whether you have access.', 'jetonomy' )
+			: __( 'This space is private. Please log in to request access.', 'jetonomy' );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			[
 				'icon'      => 'lock',
-				'message'   => __( 'This space is private. Please log in to request access.', 'jetonomy' ),
+				'message'   => $gate_message,
 				'cta_label' => __( 'Log In', 'jetonomy' ),
 				'cta_url'   => wp_login_url( get_permalink() ),
 				'tone'      => 'forbidden',
@@ -52,12 +70,16 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		);
 		return;
 	} elseif ( 'invite' === $_jt_join_policy ) {
-		// Invite-only — cannot self-join.
+		// Invite-only — cannot self-join. Hidden spaces always land here
+		// (forced above) so the message wording works for both.
+		$invite_message = $_jt_is_hidden
+			? __( 'This space is hidden and invite-only. You need an invitation to join.', 'jetonomy' )
+			: __( 'This space is invite-only. You need an invitation to join.', 'jetonomy' );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			[
 				'icon'    => 'lock',
-				'message' => __( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ),
+				'message' => $invite_message,
 				'tone'    => 'forbidden',
 			]
 		);

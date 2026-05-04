@@ -468,4 +468,34 @@ class Space extends Model {
 		$global = get_option( 'jetonomy_settings', [] );
 		return (int) ( $global['posts_per_page'] ?? 20 );
 	}
+
+	/**
+	 * Validate the cross-field rule between visibility and join_policy.
+	 *
+	 * Hidden spaces must be invite-only. A hidden space with an "open" or
+	 * "approval" join_policy is a contract contradiction: the listing
+	 * pretends the space does not exist, while the gate happily lets any
+	 * logged-in user with the slug self-join. Logged-in users can discover
+	 * hidden slugs via shared links, browser history, or the admin area,
+	 * so the only sane combination is hidden + invite.
+	 *
+	 * Each individual enum is still validated by the caller. This helper
+	 * focuses purely on the cross-field rule so callers can run it after
+	 * their own enum normalization without re-implementing it six times.
+	 *
+	 * @param string $visibility  'public' | 'private' | 'hidden'.
+	 * @param string $join_policy 'open' | 'approval' | 'invite'.
+	 * @return true|\WP_Error True when valid; WP_Error with status 400
+	 *                        and code 'jetonomy_invalid_combo' otherwise.
+	 */
+	public static function validate_visibility_join_policy( string $visibility, string $join_policy ) {
+		if ( 'hidden' === $visibility && 'invite' !== $join_policy ) {
+			return new \WP_Error(
+				'jetonomy_invalid_combo',
+				__( 'Hidden spaces must use the invite-only join policy.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+		return true;
+	}
 }

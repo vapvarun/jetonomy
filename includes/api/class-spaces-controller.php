@@ -392,14 +392,22 @@ class Spaces_Controller extends Base_Controller {
 			$requested_type = in_array( $configured, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $configured : 'forum';
 		}
 
+		$visibility  = sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public';
+		$join_policy = sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open';
+
+		$combo = Space::validate_visibility_join_policy( $visibility, $join_policy );
+		if ( is_wp_error( $combo ) ) {
+			return $combo;
+		}
+
 		$data = [
 			'category_id' => absint( $request->get_param( 'category_id' ) ) ?: null,
 			'title'       => $title,
 			'slug'        => $slug,
 			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
 			'type'        => $requested_type,
-			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
-			'join_policy' => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
+			'visibility'  => $visibility,
+			'join_policy' => $join_policy,
 			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
 			'cover_image' => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
 			'settings'    => $settings,
@@ -469,6 +477,23 @@ class Spaces_Controller extends Base_Controller {
 		}
 		if ( null !== $request->get_param( 'join_policy' ) ) {
 			$data['join_policy'] = sanitize_text_field( $request->get_param( 'join_policy' ) );
+		}
+
+		// Cross-validate visibility + join_policy after overlaying the patch
+		// onto the existing space so partial PATCHes (just visibility, or
+		// just join_policy) still trip the rule. Hidden + non-invite is
+		// rejected with a 400 here; the admin form's JS prevents the user
+		// from getting this far in normal use.
+		if ( isset( $data['visibility'] ) || isset( $data['join_policy'] ) ) {
+			$effective_visibility  = $data['visibility'] ?? ( $space->visibility ?? 'public' );
+			$effective_join_policy = $data['join_policy'] ?? ( $space->join_policy ?? 'open' );
+			$combo                 = Space::validate_visibility_join_policy(
+				(string) $effective_visibility,
+				(string) $effective_join_policy
+			);
+			if ( is_wp_error( $combo ) ) {
+				return $combo;
+			}
 		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );

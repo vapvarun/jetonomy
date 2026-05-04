@@ -241,4 +241,60 @@ class SpaceJourneyTest extends WP_UnitTestCase {
 			]
 		);
 	}
+
+	public function test_create_rejects_hidden_with_open_join_policy(): void {
+		$result = $this->journey->create(
+			[
+				'title'       => 'Hidden Open',
+				'slug'        => 'hidden-open-' . $this->suffix,
+				'category_id' => $this->category_id,
+				'visibility'  => 'hidden',
+				'join_policy' => 'open',
+			]
+		);
+		$this->assertFalse( $result->success );
+		$this->assertStringContainsString( 'invite', strtolower( implode( ' ', $result->errors ) ) );
+	}
+
+	public function test_create_accepts_hidden_with_invite_join_policy(): void {
+		$result = $this->journey->create(
+			[
+				'title'       => 'Hidden Invite',
+				'slug'        => 'hidden-invite-' . $this->suffix,
+				'category_id' => $this->category_id,
+				'visibility'  => 'hidden',
+				'join_policy' => 'invite',
+			]
+		);
+		$this->assertTrue( $result->success );
+	}
+
+	public function test_update_rejects_flipping_visibility_to_hidden_with_open_policy(): void {
+		$id     = $this->make_space( 'flip' ); // public + open
+		$result = $this->journey->update( $id, [ 'visibility' => 'hidden' ] );
+		$this->assertFalse( $result->success );
+		$this->assertStringContainsString( 'invite', strtolower( implode( ' ', $result->errors ) ) );
+	}
+
+	public function test_update_accepts_flipping_visibility_to_hidden_after_invite(): void {
+		$id = $this->make_space( 'flip2' );
+		$ok = $this->journey->update( $id, [ 'join_policy' => 'invite' ] );
+		$this->assertTrue( $ok->success );
+		$result = $this->journey->update( $id, [ 'visibility' => 'hidden' ] );
+		$this->assertTrue( $result->success );
+	}
+
+	public function test_set_join_policy_rejects_open_on_hidden_space(): void {
+		$id = $this->make_space( 'sjp' );
+		$this->journey->update( $id, [ 'join_policy' => 'invite' ] );
+		$this->journey->update( $id, [ 'visibility' => 'hidden' ] );
+		$result = $this->journey->set_join_policy( $id, 'open' );
+		$this->assertFalse( $result->success );
+	}
+
+	public function test_set_visibility_rejects_hidden_on_open_space(): void {
+		$id     = $this->make_space( 'sv' );
+		$result = $this->journey->set_visibility( $id, 'hidden' );
+		$this->assertFalse( $result->success );
+	}
 }
