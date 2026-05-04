@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
-use Jetonomy\Models\Flag;
+use Jetonomy\Moderation\Moderation_Service;
 
 class Moderation_Handler {
 
@@ -110,20 +110,22 @@ class Moderation_Handler {
 			wp_send_json_error( __( 'Invalid flag data.', 'jetonomy' ) );
 		}
 
-		$flag = Flag::find( $flag_id );
-		if ( ! $flag ) {
-			wp_send_json_error( __( 'Flag not found.', 'jetonomy' ) );
-		}
-
-		Flag::resolve( $flag_id, get_current_user_id(), $resolution );
-
-		// If valid, also trash the reported content
-		if ( 'valid' === $resolution ) {
-			if ( 'post' === $flag->object_type ) {
-				Post::update( (int) $flag->object_id, [ 'status' => 'trash' ] );
-			} elseif ( 'reply' === $flag->object_type ) {
-				Reply::update( (int) $flag->object_id, [ 'status' => 'trash' ] );
+		// Delegate to the canonical service so this admin path picks up the
+		// per-object permission gate, the sibling cascade, and the
+		// jetonomy_flag_resolved / jetonomy_after_resolve_flag actions.
+		// The frontend moderation queue and the CLI journey already use
+		// this code path; before this refactor only this admin AJAX hop
+		// went through inline Flag::resolve + Post/Reply trash, leaving
+		// stale "pending" siblings on the same content and skipping any
+		// downstream listeners (analytics, audit log, reputation).
+		$result = Moderation_Service::resolve_flag( get_current_user_id(), $flag_id, $resolution );
+		if ( is_wp_error( $result ) ) {
+			$status = 0;
+			$data   = $result->get_error_data();
+			if ( is_array( $data ) && isset( $data['status'] ) ) {
+				$status = (int) $data['status'];
 			}
+			wp_send_json_error( $result->get_error_message(), $status > 0 ? $status : null );
 		}
 
 		wp_send_json_success( [ 'message' => __( 'Flag resolved.', 'jetonomy' ) ] );
