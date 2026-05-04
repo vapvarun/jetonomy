@@ -64,8 +64,9 @@ else
             vendor/*|dist/*|node_modules/*|build/*|tests/*|tools/*|qa/*) continue ;;
             */templates/emails/*) continue ;;
         esac
+        # `|| true` so a clean file (zero matches) doesn't trip set -e.
         hits=$(grep -nE '^[[:space:]]*<(script|style)([[:space:]]|>)' "$f" 2>/dev/null \
-            | grep -vE 'application/(ld\+json|json)')
+            | grep -vE 'application/(ld\+json|json)' || true)
         if [ -n "$hits" ]; then
             INLINE_OFFENDERS="$INLINE_OFFENDERS\n  $f:\n$(echo "$hits" | sed 's/^/    /')"
         fi
@@ -96,7 +97,7 @@ if [ -n "$STAGED_JS" ]; then
         | grep -E '^\+[^+]' \
         | grep -vE '^\+[[:space:]]*(//|\*|/\*)' \
         | grep -vE 'i18n\.|jetonomy[A-Za-z]+\.i18n|\|\|' \
-        | grep -E "(\.textContent|\.placeholder|\.title|\.innerText|setAttribute\(['\"]aria-label['\"]|alert\()[[:space:]]*[=,][[:space:]]*['\"][A-Z][a-z]+[ ][a-zA-Z]")
+        | grep -E "(\.textContent|\.placeholder|\.title|\.innerText|setAttribute\(['\"]aria-label['\"]|alert\()[[:space:]]*[=,][[:space:]]*['\"][A-Z][a-z]+[ ][a-zA-Z]" || true)
     if [ -n "$HARDCODED" ]; then
         echo
         echo "$HARDCODED" | sed 's/^/    /'
