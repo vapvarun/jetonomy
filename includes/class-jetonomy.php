@@ -316,10 +316,25 @@ final class Jetonomy {
 
 	private function check_db_version(): void {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
-		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
-			require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
-			DB\Migrator::run( $current );
+		if ( ! version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
+			return;
 		}
+
+		// 1) Run any registered data migrations from the stored version forward.
+		require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
+		DB\Migrator::run( $current );
+
+		// 2) Re-run Schema::create_tables() as a safety net. dbDelta is
+		// idempotent — it adds any tables / columns / indexes that exist in
+		// the current Schema definition but are missing from the database.
+		// This protects against the case where a new table was added to
+		// Schema between releases without a matching migration file (e.g.
+		// `jt_bookmarks` added in 1.1.0 but never registered in Migrator).
+		// Mirrors the Pro plugin's self-heal pattern in class-jetonomy-pro.php.
+		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
+		DB\Schema::create_tables();
+
+		update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 	}
 
 	private function load_dependencies(): void {

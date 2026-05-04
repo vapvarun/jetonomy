@@ -120,6 +120,7 @@ class PMPro_Adapter implements Membership_Adapter {
 			if ( $activate ) {
 				$result = SpaceMember::add( (int) $rule->space_id, $user_id, $rule->space_role ?? 'member' );
 				if ( is_wp_error( $result ) ) {
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 					error_log( '[Jetonomy] PMPro adapter: failed to add user ' . $user_id . ' to space ' . $rule->space_id . ' — ' . $result->get_error_message() );
 					continue;
 				}
