@@ -310,6 +310,14 @@ final class Jetonomy {
 		if ( wp_doing_ajax() || wp_doing_cron() || is_network_admin() ) {
 			return;
 		}
+		// Skip the redirect under WP-CLI / WP-Cron-as-CLI / REST contexts.
+		// Browser activation still gets the wizard; `wp plugin install --activate`
+		// stays clean instead of emitting wp-cli's "trying to do a URL redirect"
+		// backtrace. The transient survives until the next browser admin page load.
+		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			set_transient( 'jetonomy_activation_redirect', 1, 5 * MINUTE_IN_SECONDS );
+			return;
+		}
 		wp_safe_redirect( admin_url( 'admin.php?page=jetonomy-setup' ) );
 		exit;
 	}
