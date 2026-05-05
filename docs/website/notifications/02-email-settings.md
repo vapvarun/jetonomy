@@ -29,6 +29,17 @@ The defaults above are what Jetonomy applies when a new member signs up. You can
 
 > **Tip:** "New post in followed space" email is off by default because members who follow many active spaces would receive a high volume of email. Let members opt in rather than having to opt out.
 
+## Editable Email Templates *(updated in 1.4.1)*
+
+Every notification email Jetonomy sends has an editable template — subject and body — at **Jetonomy → Settings → Email → Templates**. Change the wording to match your community's voice without writing any code.
+
+Two improvements landed in 1.4.1 that are worth knowing about:
+
+- **Reset to default button** on every template — one click restores the shipped subject and body. No more retyping if you change your mind or want to start over.
+- **Verification reminder template** is now editable from the same screen. The reminder fires once per member, 24 hours after sign-up, if they haven't clicked the verification link in their welcome email. The interval is configurable.
+
+Defaults now have a single source of truth so reset always restores the exact copy the plugin ships with — even if a future update changes the default wording, your reset still gets the version you'd see on a fresh install.
+
 ## Configuring Default Settings
 
 Go to **Jetonomy → Settings → Email** to set the community-wide defaults.

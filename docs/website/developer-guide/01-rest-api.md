@@ -300,11 +300,32 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | POST | `/moderation/approve/{type}/{id}` | Moderator | Approve a flagged item |
 | POST | `/moderation/spam/{type}/{id}` | Moderator | Mark as spam |
 | POST | `/moderation/trash/{type}/{id}` | Moderator | Send to trash |
+| POST | `/moderation/bulk` *(new in 1.4.1)* | Moderator | Approve / spam / trash many posts in one call |
 | POST | `/flags` | Logged in | Submit a flag on a post or reply |
+| GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag |
 | POST | `/moderation/ban` | Moderator | Ban a user |
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
+
+**POST /moderation/bulk — body**
+
+```javascript
+{
+    action:     'approve',  // approve | spam | trash
+    object_type: 'post',    // or 'reply'
+    object_ids: [101, 104, 109, 117]
+}
+```
+
+Returns per-item results so partial failures are visible:
+
+```javascript
+{
+    succeeded: [101, 104, 117],
+    failed:    [{ id: 109, reason: 'already_spam' }]
+}
+```
 
 `{type}` in approve/spam/trash routes is either `post` or `reply`.
 

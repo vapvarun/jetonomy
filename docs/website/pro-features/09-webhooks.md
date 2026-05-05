@@ -2,6 +2,8 @@ Automatically send community events to any external URL — connect Jetonomy to 
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
+> **As of 1.4.1, every documented event actually fires.** Earlier versions registered listeners against hook names the free plugin never emitted, so deployments would test the webhook UI, see "delivered," and never receive a single real-world event afterwards. Free 1.4.1 ships the lifecycle action contract Pro now hooks into. If you previously configured webhooks and saw zero deliveries despite real activity, update both plugins to 1.4.1 and the existing webhooks will start working without any reconfiguration.
+
 ![Webhook management page listing configured endpoints](../images/pro-webhooks.png)
 ## What You Will Learn
 
@@ -47,11 +49,16 @@ Subscribe to any combination of these events:
 | `post.deleted` | A topic is deleted or trashed |
 | `reply.created` | A new reply is posted |
 | `reply.updated` | A reply is edited |
+| `reply.deleted` | A reply is deleted or trashed |
 | `vote.cast` | A member votes on a post or reply |
 | `answer.accepted` | A Q&A answer is accepted |
 | `member.joined` | A new user joins the community |
+| `member.left` | A member leaves a space |
 | `member.banned` | A member is banned |
+| `user.registered` | A new user account is created |
+| `trust_level.changed` | A member is promoted or demoted |
 | `flag.created` | Content is flagged by a member |
+| `flag.resolved` | A flag is resolved by a moderator |
 | `moderation.action` | A moderator approves, spams, or trashes content |
 
 You can create multiple webhooks pointing to different URLs with different event subsets — for example, one webhook for Slack (post events only) and one for your CRM (member events only).

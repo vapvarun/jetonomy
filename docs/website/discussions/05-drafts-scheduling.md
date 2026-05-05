@@ -24,9 +24,12 @@ Your draft is saved immediately and you are returned to the space listing. No no
 
 ## Finding Your Drafts
 
-Go to your profile at `/community/u/your-username/` and open the **Drafts** tab.
+Two ways to get there, both show the same list:
 
-Your drafts are listed in order of last-modified time, most recent first. Each draft shows:
+- The **Drafts** tab on your profile at `/community/u/your-username/`
+- A dedicated standalone page at `/community/drafts/` *(new in 1.4.1)*
+
+Your drafts are listed in order of last-modified time, most recent first. The standalone page requires sign-in and is excluded from search engines, so unfinished work never leaks. Each draft shows:
 
 - The post title (or "Untitled Draft" if you have not written a title yet)
 - The space it is intended for

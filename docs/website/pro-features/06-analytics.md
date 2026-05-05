@@ -85,6 +85,34 @@ Click **Export CSV** in the top right of any table to download a full data expor
 
 Exported files are compatible with Excel, Google Sheets, and any BI tool. Column headers match the on-screen labels exactly.
 
+## Dual-Path Aggregator (1.4.1, observation only)
+
+In 1.4.1 a second analytics path runs quietly alongside the existing direct-query reader. It's an event-driven aggregator that writes to a new internal table (`jt_pro_analytics_aggregate`) on every relevant community event, instead of querying core tables every time the dashboard loads.
+
+The aggregator is in a 7-day observation window. **Your dashboards still read from the original direct-query path in 1.4.1** — there is no public-facing behaviour change yet. The point of the observation window is to verify that the two paths agree before flipping the default.
+
+### Verify Dual-Path admin toggle
+
+Go to **Jetonomy → Analytics**. The Pro Analytics page now has a **Verify dual-path** toggle. Turn it on and every metric on the page is shown twice — once from the direct-query reader, once from the aggregator — with a drift percentage between them. Use this if you want to spot-check the aggregator's accuracy before we promote it to default.
+
+### `GET /jetonomy/v1/analytics/diff-report`
+
+For programmatic comparison, the same data is available at:
+
+```json
+GET /wp-json/jetonomy/v1/analytics/diff-report?range=30d
+
+{
+  "range": "30d",
+  "metrics": [
+    { "key": "total_posts", "direct": 1284, "aggregated": 1284, "drift_pct": 0 },
+    { "key": "active_members", "direct": 312, "aggregated": 311, "drift_pct": -0.32 }
+  ]
+}
+```
+
+Helpful if you want to ship a custom monitoring panel during the observation window.
+
 ## What's Next?
 
 Reduce your moderation workload by automating common moderation decisions.

@@ -2,6 +2,8 @@ Add structured fields to member profiles — collect the information that matter
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
+> **As of 1.4.1, custom field values are exposed on the REST API for both posts and users.** Earlier versions only saved the values to the database; third-party API consumers couldn't read them because the response filters were registered against an event nothing emitted. Free 1.4.1 fires the matching filters on `/jetonomy/v1/posts` and `/jetonomy/v1/users`, so any tool reading from the API now sees every custom field you have configured.
+
 ![Custom fields displayed on a member profile page](../images/pro-custom-fields.png)
 ## What You Will Learn
 
@@ -71,12 +73,15 @@ Members edit their custom fields at `/community/u/{username}/edit/` under the **
 
 ## REST API
 
-Custom Fields adds field-aware parameters to the existing profile endpoints:
+Custom Fields adds field-aware parameters to the existing profile and post endpoints:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/users/{id}` | Profile response now includes `custom_fields` object |
+| `GET` | `/users/{id}` | Profile response includes `custom_fields` object |
+| `GET` | `/users` | List response includes `custom_fields` on each member |
 | `PATCH` | `/users/{id}` | Pass `custom_fields: { field_key: value }` to update |
+| `GET` | `/posts/{id}` | Post response includes `custom_fields` if any post-level fields are configured |
+| `GET` | `/posts` | List response includes `custom_fields` on each post |
 | `GET` | `/custom-fields` | List all defined fields and their settings |
 
 **Example — read a profile with custom fields:**

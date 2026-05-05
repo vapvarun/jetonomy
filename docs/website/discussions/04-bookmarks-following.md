@@ -19,11 +19,14 @@ Bookmarking is instant and does not require a page reload. There is no confirmat
 
 ### Accessing Your Bookmarks
 
-Go to your profile at `/community/u/your-username/` and open the **Bookmarks** tab. This page lists every topic you have bookmarked, in the order you bookmarked them (most recent first).
+Two ways to get there, both show the same list:
 
-Each item in the list shows the topic title, the space it belongs to, the author, and when it was posted. Click any item to go directly to the topic.
+- The **Bookmarks** tab on your profile at `/community/u/your-username/`
+- A dedicated standalone page at `/community/bookmarks/` *(new in 1.4.1)*
 
-Bookmarks are private. Other members cannot see your bookmark list.
+Both list every topic you have bookmarked, most recent first. Each item shows the topic title, the space it belongs to, the author, and when it was posted. Click any item to go directly to the topic.
+
+Bookmarks are private — other members cannot see your bookmark list. The standalone page requires sign-in and is excluded from search engines so the URL itself never reveals what you've saved.
 
 > **Tip:** Use bookmarks as a reading queue — bookmark topics you want to read later, then clear them as you go. The Bookmarks tab gives you a clean list without any algorithm reordering it.
 

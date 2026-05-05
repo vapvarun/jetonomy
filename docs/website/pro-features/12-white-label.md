@@ -2,6 +2,8 @@ Remove all Jetonomy branding and present your community as entirely your own pro
 
 > **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
+> **As of 1.4.1, every White Label setting actually applies on every surface.** Header logo, footer text, email accent colour, email logos, the sidebar sign-in card, and admin footer text all rebrand on every send / render. Earlier versions defined the filters but nothing was hooking into them, so changes to the Branding settings had no visible effect on customer sites. Free 1.4.1 ships the matching `Jetonomy\header_logo()` and `Jetonomy\footer_text()` helpers Pro hooks into.
+
 <!-- TODO screenshot needed: Community frontend with custom logo and brand colors — no Jetonomy attribution (was ../images/pro-white-label-frontend.png) -->
 ## What You Will Learn
 

@@ -41,8 +41,12 @@ The digest compiles:
 - **Active discussions** — posts with the most replies in the period
 - **Spaces you follow** — activity in spaces the member has joined or bookmarked
 - **Replies to your topics** — new replies on topics the member created or commented on
+- 🏆 **Badges earned** *(new in 1.4.1)* — every badge the member earned during the digest window
+- 🗳️ **Polls voted on** *(new in 1.4.1)* — every poll the member participated in during the window
 
 You can toggle each content section on or off in the digest settings. At least one section must remain on.
+
+> **How the new sections work:** badges and polls are tracked in a per-user buffer that's capped at 100 events with a 30-day TTL. The buffer is cleared only after a successful send, so opted-out members never accumulate state, and a missed send doesn't lose the activity.
 
 <!-- TODO screenshot needed: Email Digest settings panel (was ../images/pro-email-digest-settings.png) -->
 > **Tip:** Keeping "Replies to your topics" on is the single most effective setting. Members always care more about activity on their own posts than about the broader community.
