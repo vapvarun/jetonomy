@@ -2,6 +2,13 @@
 /**
  * Admin space edit view.
  *
+ * Variables seeded by Admin::render_space_edit() before include.
+ *
+ * @var object{id:int,title:string,slug:string,type:string,visibility:string,join_policy:string,status:string,description:?string,icon:?string,cover_image:?string,settings:?string,sort_order:int,post_count:int,member_count:int,parent_id:?int,category_id:?int,last_activity_at:?string,created_at:string,updated_at:string} $space
+ * @var object[] $categories
+ * @var array<int,object{user_id:int,role:string,space_role?:string,joined_at?:string,display_name?:string}> $members
+ * @var object[] $access_rules
+ *
  * @package Jetonomy
  */
 

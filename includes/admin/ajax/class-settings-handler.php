@@ -22,45 +22,49 @@ class Settings_Handler {
 	 */
 	private static function sample_fixtures(): array {
 		return array(
-			'user_welcome'    => array(
+			'user_welcome'          => array(
 				'message'  => __( 'Welcome to the community. Your account is ready. Jump in and introduce yourself.', 'jetonomy' ),
 				'url_path' => '/',
 			),
-			'reply_to_post'   => array(
+			'reply_to_post'         => array(
 				'message'  => __( 'Alice replied to your post "Getting started with Jetonomy".', 'jetonomy' ),
 				'url_path' => '/s/general/t/getting-started-with-jetonomy/',
 			),
-			'reply_to_reply'  => array(
+			'reply_to_reply'        => array(
 				'message'  => __( 'Bob replied to your comment on "Hosting recommendations".', 'jetonomy' ),
 				'url_path' => '/s/general/t/hosting-recommendations/',
 			),
-			'mention'         => array(
+			'mention'               => array(
 				'message'  => __( '@alice mentioned you in "Release notes discussion".', 'jetonomy' ),
 				'url_path' => '/s/announcements/t/release-notes-discussion/',
 			),
-			'accepted_answer' => array(
+			'accepted_answer'       => array(
 				'message'  => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
 				'url_path' => '/s/help/t/how-do-i-enable-dark-mode/',
 			),
-			'new_post_in_sub' => array(
+			'new_post_in_sub'       => array(
 				'message'  => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
 				'url_path' => '/',
 			),
-			'badge_earned'    => array(
+			'badge_earned'          => array(
 				'message'  => __( 'You earned the "First Post" badge. Nice work.', 'jetonomy' ),
 				'url_path' => '/u/me/',
 			),
-			'vote_on_post'    => array(
+			'vote_on_post'          => array(
 				'message'  => __( 'Your post received a new vote.', 'jetonomy' ),
 				'url_path' => '/',
 			),
-			'moderation'      => array(
+			'moderation'            => array(
 				'message'  => __( 'A moderator reviewed your recent content.', 'jetonomy' ),
 				'url_path' => '/mod/',
 			),
-			'join_request'    => array(
+			'join_request'          => array(
 				'message'  => __( 'A member has asked to join one of your spaces.', 'jetonomy' ),
 				'url_path' => '/mod/',
+			),
+			'verification_reminder' => array(
+				'message'  => __( "We noticed you haven't confirmed your email yet at {site}. Click the link below to verify your account and start participating.", 'jetonomy' ),
+				'url_path' => '/',
 			),
 		);
 	}
@@ -69,6 +73,7 @@ class Settings_Handler {
 		add_action( 'wp_ajax_jetonomy_test_email', [ $this, 'ajax_test_email' ] );
 		add_action( 'wp_ajax_jetonomy_flush_rules', [ $this, 'ajax_flush_rules' ] );
 		add_action( 'wp_ajax_jetonomy_email_preview', [ $this, 'ajax_email_preview' ] );
+		add_action( 'wp_ajax_jetonomy_email_reset', [ $this, 'ajax_email_reset' ] );
 	}
 
 	public function ajax_test_email(): void {
@@ -82,11 +87,16 @@ class Settings_Handler {
 
 		// Generic test when no type specified.
 		if ( '' === $type || ! isset( self::sample_fixtures()[ $type ] ) ) {
-			$result = wp_mail(
-				$admin_email,
-				__( 'Jetonomy Test Email', 'jetonomy' ),
-				__( 'This is a test email from your Jetonomy forum plugin. If you received this, email is working correctly.', 'jetonomy' )
-			);
+			// Route through the registered Email_Adapter so the admin tests
+			// the same path production traffic uses. Earlier versions called
+			// wp_mail() directly, which bypassed any Pro Mailgun / SES /
+			// Postmark adapter and defeated the whole point of "test email".
+			$adapter = \Jetonomy\Adapters\Adapter_Registry::get_email();
+			$body    = __( 'This is a test email from your Jetonomy forum plugin. If you received this, email is working correctly.', 'jetonomy' );
+			$subject = __( 'Jetonomy Test Email', 'jetonomy' );
+			$result  = $adapter
+				? $adapter->send( $admin_email, $subject, $body, $body, array() )
+				: wp_mail( $admin_email, $subject, $body );
 
 			if ( $result ) {
 				wp_send_json_success(
@@ -179,6 +189,55 @@ class Settings_Handler {
 			array(
 				'subject' => $subject,
 				'html'    => $html,
+			)
+		);
+	}
+
+	/**
+	 * Reset a single email template row to its shipped default.
+	 *
+	 * Removes the matching key from `jetonomy_email_templates` (so the next
+	 * send falls back to `Notifier::get_default_template()` at render time)
+	 * and returns the default subject/body in the response so the JS can
+	 * repopulate the row's inputs without a full page reload.
+	 *
+	 * Per safety-check § A8: writing into the option is gated by
+	 * `jetonomy_manage_settings` and the standard `jetonomy_admin` nonce —
+	 * same surface as ajax_email_preview / ajax_test_email.
+	 */
+	public function ajax_email_reset(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$type = sanitize_key( wp_unslash( $_POST['type'] ?? '' ) );
+		if ( '' === $type ) {
+			wp_send_json_error( __( 'Unknown notification type.', 'jetonomy' ) );
+		}
+
+		$defaults = Notifier::get_default_template( $type );
+		// `get_default_template()` returns ['subject' => '', 'body' => '']
+		// for unknown types — guard so we don't drop arbitrary attacker-
+		// supplied keys from the option.
+		if ( '' === $defaults['subject'] && '' === $defaults['body'] ) {
+			wp_send_json_error( __( 'Unknown notification type.', 'jetonomy' ) );
+		}
+
+		$templates = get_option( 'jetonomy_email_templates', array() );
+		if ( ! is_array( $templates ) ) {
+			$templates = array();
+		}
+		if ( isset( $templates[ $type ] ) ) {
+			unset( $templates[ $type ] );
+			update_option( 'jetonomy_email_templates', $templates );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Reset to default.', 'jetonomy' ),
+				'subject' => $defaults['subject'],
+				'body'    => $defaults['body'],
 			)
 		);
 	}

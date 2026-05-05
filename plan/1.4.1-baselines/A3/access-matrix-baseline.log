@@ -1,0 +1,76 @@
+# Access matrix baseline — generated 2026-04-29T12:26:49Z
+# Site: http://forums.local  Plugin: /Users/varundubey/Local Sites/forums/app/public/wp-content/plugins/jetonomy
+# Pass=72 Fail=0 Total=72
+
+PASS  GET     /spaces                                            [anon      ] expected=200          got=200
+PASS  GET     /spaces                                            [subscriber] expected=200          got=200
+PASS  GET     /spaces                                            [admin     ] expected=200          got=200
+PASS  GET     /spaces/6                                          [anon      ] expected=200          got=200
+PASS  GET     /spaces/6                                          [subscriber] expected=200          got=200
+PASS  GET     /spaces/6/posts                                    [anon      ] expected=200          got=200
+PASS  GET     /spaces/6/posts                                    [subscriber] expected=200          got=200
+PASS  GET     /spaces/6/members                                  [anon      ] expected=200          got=200
+PASS  GET     /posts/14                                          [anon      ] expected=200          got=200
+PASS  GET     /posts/14                                          [subscriber] expected=200          got=200
+PASS  GET     /posts/14/replies                                  [anon      ] expected=200          got=200
+PASS  GET     /categories                                        [anon      ] expected=200          got=200
+PASS  GET     /tags                                              [anon      ] expected=200          got=200
+PASS  GET     /users/154                                         [anon      ] expected=200          got=200
+PASS  GET     /leaderboards                                      [anon      ] expected=200          got=200
+PASS  POST    /auth/lost-password                                [anon      ] expected=200,400,429  got=429
+PASS  POST    /auth/resend-verification                          [anon      ] expected=200,429      got=429
+PASS  POST    /auth/login                                        [anon      ] expected=401,429,400  got=401
+PASS  GET     /bookmarks                                         [anon      ] expected=401,403      got=401
+PASS  GET     /bookmarks                                         [subscriber] expected=200          got=200
+PASS  GET     /bookmarks                                         [admin     ] expected=200          got=200
+PASS  GET     /notifications/unread-count                        [anon      ] expected=401,403      got=401
+PASS  GET     /notifications/unread-count                        [subscriber] expected=200          got=200
+PASS  GET     /users/me                                          [anon      ] expected=401,403      got=401
+PASS  GET     /users/me                                          [subscriber] expected=200          got=200
+PASS  GET     /users/me                                          [admin     ] expected=200          got=200
+PASS  GET     /subscriptions                                     [anon      ] expected=401,403      got=401
+PASS  GET     /subscriptions                                     [subscriber] expected=200          got=200
+PASS  POST    /categories                                        [anon      ] expected=401,403      got=403
+PASS  POST    /categories                                        [subscriber] expected=403          got=403
+PASS  POST    /categories                                        [mod       ] expected=403          got=403
+PASS  POST    /categories                                        [admin     ] expected=400,201      got=400
+PASS  POST    /spaces                                            [anon      ] expected=401,403,400  got=400
+PASS  POST    /spaces                                            [subscriber] expected=403,400      got=400
+PASS  POST    /spaces                                            [admin     ] expected=400,201      got=400
+PASS  PATCH   /spaces/6                                          [anon      ] expected=401,403      got=401
+PASS  PATCH   /spaces/6                                          [subscriber] expected=403          got=403
+PASS  PATCH   /spaces/6                                          [editor    ] expected=200,204,400  got=400
+PASS  PATCH   /spaces/6                                          [admin     ] expected=200,204,400  got=400
+PASS  PATCH   /posts/14                                          [anon      ] expected=401,403      got=401
+PASS  PATCH   /posts/14                                          [subscriber] expected=403          got=403
+PASS  PATCH   /posts/14                                          [admin     ] expected=200,400      got=400
+PASS  DELETE  /posts/14                                          [anon      ] expected=401,403      got=401
+PASS  DELETE  /posts/14                                          [subscriber] expected=403          got=403
+PASS  POST    /posts/14/replies                                  [anon      ] expected=401,403,400  got=400
+PASS  POST    /posts/14/replies                                  [subscriber] expected=400,201      got=400
+PASS  GET     /moderation/queue                                  [anon      ] expected=401,403      got=403
+PASS  GET     /moderation/queue                                  [subscriber] expected=403          got=403
+PASS  GET     /moderation/queue                                  [author    ] expected=403          got=403
+PASS  GET     /moderation/queue                                  [mod       ] expected=200          got=200
+PASS  GET     /moderation/queue                                  [admin     ] expected=200          got=200
+PASS  GET     /moderation/flags                                  [anon      ] expected=401,403      got=403
+PASS  GET     /moderation/flags                                  [subscriber] expected=403          got=403
+PASS  GET     /moderation/flags                                  [mod       ] expected=200          got=200
+PASS  POST    /flags                                             [anon      ] expected=401,403,400  got=400
+PASS  POST    /flags                                             [subscriber] expected=400,201,409  got=400
+PASS  GET     /space-moderation/queue                            [anon      ] expected=401,403,404  got=404
+PASS  GET     /space-moderation/queue                            [subscriber] expected=403,404      got=404
+PASS  GET     /admin/settings                                    [anon      ] expected=401,403,404  got=404
+PASS  GET     /admin/settings                                    [subscriber] expected=403,404      got=404
+PASS  GET     /admin/settings                                    [mod       ] expected=403,404      got=404
+PASS  GET     /admin/settings                                    [admin     ] expected=200,404      got=404
+PASS  POST    /admin/recount                                     [anon      ] expected=401,403,404  got=403
+PASS  POST    /admin/recount                                     [subscriber] expected=403,404      got=403
+PASS  POST    /admin/recount                                     [admin     ] expected=200,400,404  got=200
+PASS  POST    /users/150/ban                                     [anon      ] expected=401,403,404  got=404
+PASS  POST    /users/150/ban                                     [author    ] expected=403,404      got=404
+PASS  POST    /bookmarks                                         [anon      ] expected=401,403      got=401
+PASS  POST    /bookmarks                                         [subscriber] expected=200,201      got=200
+PASS  GET     /search?q=test                                     [anon      ] expected=200          got=200
+PASS  GET     /space-tags                                        [anon      ] expected=200          got=200
+PASS  POST    /posts/14/vote                                     [anon      ] expected=401,403,400  got=400

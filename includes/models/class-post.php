@@ -371,6 +371,45 @@ class Post extends Model {
 	}
 
 	/**
+	 * Count visible posts in a space — viewer-aware companion to
+	 * list_by_space_visible(). Used by abilities/REST listings to report
+	 * accurate totals for cursor-based pagination instead of guessing
+	 * "has_more" from the page-size hit.
+	 *
+	 * @param int    $space_id      Space.
+	 * @param int    $user_id       Current viewer (0 for guest).
+	 * @param bool   $is_privileged Whether viewer sees private content.
+	 * @param string $sort         Same sort flag as list — only matters because
+	 *                             'unanswered' applies an extra WHERE clause.
+	 * @return int
+	 */
+	public static function count_by_space_visible( int $space_id, int $user_id, bool $is_privileged, string $sort = 'latest' ): int {
+		$table       = static::table();
+		$extra_where = '';
+
+		if ( 'unanswered' === $sort ) {
+			$extra_where = ' AND reply_count = 0';
+		}
+
+		if ( ! $is_privileged ) {
+			if ( $user_id > 0 ) {
+				$extra_where .= static::db()->prepare( ' AND (is_private = 0 OR author_id = %d)', $user_id );
+			} else {
+				$extra_where .= ' AND is_private = 0';
+			}
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$table} WHERE space_id = %d AND status = 'publish'{$extra_where}",
+				$space_id
+			)
+		);
+	}
+
+	/**
 	 * Toggle private visibility on a post.
 	 *
 	 * @param int  $id         Post ID.

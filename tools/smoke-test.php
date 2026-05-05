@@ -20,10 +20,24 @@ if ( null === $plugin_file || ! is_file( $plugin_file ) ) {
 	exit( 2 );
 }
 
+// ABSPATH must point at a directory that contains wp-admin/includes/upgrade.php
+// so plugin migrations doing `require_once ABSPATH . 'wp-admin/includes/upgrade.php'`
+// load against an empty shim instead of fataling. Real dbDelta() is stubbed
+// in wp-stubs.php so the require itself just needs to succeed. Using a scratch
+// dir (not the staged plugin dir) keeps the shim out of the release zip.
+$smoke_abspath = sys_get_temp_dir() . '/jetonomy-smoke-abspath/';
+if ( ! is_dir( $smoke_abspath . 'wp-admin/includes' ) ) {
+	mkdir( $smoke_abspath . 'wp-admin/includes', 0777, true );
+}
+$shim = $smoke_abspath . 'wp-admin/includes/upgrade.php';
+if ( ! is_file( $shim ) ) {
+	file_put_contents( $shim, "<?php // smoke-test shim — real dbDelta is in wp-stubs.php\n" );
+}
+
 // WP constants — caller-set before requiring the stubs. Each define() is
 // guarded by defined() so this is safe to run multiple times in one process.
 foreach ( array(
-	'ABSPATH'             => dirname( $plugin_file ) . '/',
+	'ABSPATH'             => $smoke_abspath,
 	'WPINC'               => 'wp-includes',
 	'WP_CONTENT_DIR'      => sys_get_temp_dir(),
 	'WP_DEBUG'            => false,

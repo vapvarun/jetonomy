@@ -12,8 +12,15 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -21,46 +28,111 @@ $_jt_join_policy = $space->join_policy ?? 'open';
 $_jt_user_id     = get_current_user_id();
 $_jt_is_member   = $_jt_user_id && \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $_jt_user_id );
 $_jt_is_admin    = current_user_can( 'manage_options' );
+$_jt_is_hidden   = 'hidden' === ( $space->visibility ?? '' );
+
+// Read-side defence against legacy data: hidden spaces are invite-only
+// regardless of what stored join_policy says. The write-side validator
+// rejects the bad combo on every entry point now, but a site that already
+// had hidden + open rows in the database before upgrading must still gate
+// correctly until the data migration runs. Forcing the local view of
+// join_policy here keeps the gate, sidebar, and join button consistent.
+if ( $_jt_is_hidden ) {
+	$_jt_join_policy = 'invite';
+}
 
 // Gate: block access for private/hidden spaces (full block) or public spaces with
-// restricted join policies (buttons handled below — content stays readable).
+// restricted join policies (buttons handled below; content stays readable).
+//
+// The four gate variants below render their unique content (login link, join
+// form, pending-approval state) inside the shared empty-state partial so the
+// spacing, icon, and tone treatment are uniform with every other empty path.
+// Only the join-form variant adds raw HTML below the partial because the form
+// itself is too bespoke to fit the generic CTA argument.
 if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_member && ! $_jt_is_admin ) {
 	if ( ! $_jt_user_id ) {
-		// Guest — prompt to log in.
-		echo '<div class="jt-empty">';
-		echo '<p>' . esc_html__( 'This space is private. Please log in to request access.', 'jetonomy' ) . '</p>';
-		echo '<a href="' . esc_url( wp_login_url( get_permalink() ) ) . '" class="jt-btn jt-btn-fill">' . esc_html__( 'Log In', 'jetonomy' ) . '</a>';
-		echo '</div>';
+		// Guest — prompt to log in. Hidden and private spaces use distinct
+		// copy so the message does not lie about the space's actual setting:
+		// the sidebar already shows "Hidden" via ucfirst($space->visibility)
+		// and the home/category listings show a Hidden badge, so the gate
+		// message must agree.
+		$gate_message = $_jt_is_hidden
+			? __( 'This space is hidden. Log in to check whether you have access.', 'jetonomy' )
+			: __( 'This space is private. Please log in to request access.', 'jetonomy' );
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			[
+				'icon'      => 'lock',
+				'message'   => $gate_message,
+				'cta_label' => __( 'Log In', 'jetonomy' ),
+				'cta_url'   => wp_login_url( get_permalink() ),
+				'tone'      => 'forbidden',
+			]
+		);
 		return;
 	} elseif ( 'invite' === $_jt_join_policy ) {
-		// Invite-only — cannot self-join.
-		echo '<div class="jt-empty"><p>' . esc_html__( 'This space is invite-only. You need an invitation to join.', 'jetonomy' ) . '</p></div>';
+		// Invite-only — cannot self-join. Hidden spaces always land here
+		// (forced above) so the message wording works for both.
+		$invite_message = $_jt_is_hidden
+			? __( 'This space is hidden and invite-only. You need an invitation to join.', 'jetonomy' )
+			: __( 'This space is invite-only. You need an invitation to join.', 'jetonomy' );
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			[
+				'icon'    => 'lock',
+				'message' => $invite_message,
+				'tone'    => 'forbidden',
+			]
+		);
 		return;
 	} elseif ( 'approval' === $_jt_join_policy ) {
 		// Approval required — check for existing pending request first.
 		$_jt_gate_pending = \Jetonomy\Models\JoinRequest::find_pending( (int) $space->id, $_jt_user_id );
 		if ( $_jt_gate_pending ) {
-			echo '<div class="jt-empty jt-space-gate">';
-			echo '<p>' . esc_html__( 'Your request to join this space is awaiting approval.', 'jetonomy' ) . '</p>';
-			echo '</div>';
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'    => 'check-circle',
+					'message' => __( 'Your request to join this space is awaiting approval.', 'jetonomy' ),
+				]
+			);
 			return;
 		}
 		$join_nonce = wp_create_nonce( 'wp_rest' );
-		echo '<div class="jt-empty jt-space-gate">';
-		echo '<p>' . esc_html__( 'This space requires approval to join. Submit a request below.', 'jetonomy' ) . '</p>';
-		echo '<form class="jt-join-request-form" data-space-id="' . absint( $space->id ) . '" data-nonce="' . esc_attr( $join_nonce ) . '">';
-		echo '<textarea class="jt-input" name="message" rows="3" placeholder="' . esc_attr__( 'Optional: why do you want to join?', 'jetonomy' ) . '"></textarea>';
-		echo '<button type="submit" class="jt-btn jt-btn-fill">' . esc_html__( 'Join', 'jetonomy' ) . '</button>';
-		echo '</form>';
-		echo '</div>';
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			[
+				'icon'    => 'lock',
+				'message' => __( 'This space requires approval to join. Submit a request below.', 'jetonomy' ),
+				'tone'    => 'forbidden',
+			]
+		);
+		?>
+		<form class="jt-join-request-form jt-space-gate-form" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
+			<textarea class="jt-input" name="message" rows="3" placeholder="<?php esc_attr_e( 'Optional: why do you want to join?', 'jetonomy' ); ?>"></textarea>
+			<button type="submit" class="jt-btn jt-btn-fill"><?php esc_html_e( 'Join', 'jetonomy' ); ?></button>
+		</form>
+		<?php
 		return;
 	} else {
 		// Open join policy but private visibility — allow direct join.
 		$join_nonce = wp_create_nonce( 'wp_rest' );
-		echo '<div class="jt-empty jt-space-gate">';
-		echo '<p>' . esc_html__( 'This space is private. Join to access posts and discussions.', 'jetonomy' ) . '</p>';
-		echo '<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="' . absint( $space->id ) . '" data-nonce="' . esc_attr( $join_nonce ) . '">' . esc_html__( 'Join Space', 'jetonomy' ) . '</button>';
-		echo '</div>';
+		?>
+		<?php
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			[
+				'icon'    => 'lock',
+				'message' => __( 'This space is private. Join to access posts and discussions.', 'jetonomy' ),
+				'tone'    => 'forbidden',
+			]
+		);
+		?>
+		<div class="jt-space-gate-actions">
+			<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
+				<?php esc_html_e( 'Join Space', 'jetonomy' ); ?>
+			</button>
+		</div>
+		<?php
 		return;
 	}
 }
@@ -211,7 +283,8 @@ $crumbs[] = [
 						$pill_url = add_query_arg( 'sort', $key, $space_url );
 						?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
-							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
+							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>"
+							<?php echo $sort === $key ? 'aria-current="true"' : ''; ?>>
 							<?php echo esc_html( $label ); ?>
 						</a>
 					<?php endforeach; ?>
@@ -237,23 +310,21 @@ $crumbs[] = [
 			</div>
 
 			<?php if ( empty( $posts ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-posts', 80 ); ?></div>
-					<div class="jt-empty-text">
-						<?php
-						if ( 'unanswered' === $sort ) {
-							esc_html_e( 'All questions have been answered!', 'jetonomy' );
-						} else {
-							esc_html_e( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
-						}
-						?>
-					</div>
-					<?php if ( is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy ) ) : ?>
-						<a href="<?php echo esc_url( $space_url . 'new/' ); ?>" class="jt-btn jt-btn-fill">
-							+ <?php esc_html_e( 'New Post', 'jetonomy' ); ?>
-						</a>
-					<?php endif; ?>
-				</div>
+				<?php
+				$_jt_no_posts_msg = ( 'unanswered' === $sort )
+					? __( 'All questions have been answered!', 'jetonomy' )
+					: __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+				$_jt_can_post     = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'      => 'empty-posts',
+						'message'   => $_jt_no_posts_msg,
+						'cta_label' => $_jt_can_post ? __( 'New Post', 'jetonomy' ) : '',
+						'cta_url'   => $_jt_can_post ? ( $space_url . 'new/' ) : '',
+					]
+				);
+				?>
 			<?php else : ?>
 				<?php
 				// 1.4.0 G3: warm the per-request role-label cache so each

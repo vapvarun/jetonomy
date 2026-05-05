@@ -12,8 +12,15 @@ $post      = \Jetonomy\Models\Post::find_by_slug( $post_slug );
 
 if ( ! $post ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Post not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -35,8 +42,15 @@ if ( 'publish' !== $post->status ) {
 
 	if ( ! $is_author && ! $is_mod ) {
 		status_header( 404 );
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-		echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+		\Jetonomy\Template_Loader::partial(
+			'empty-state',
+			[
+				'icon'      => 'empty-search',
+				'icon_size' => 48,
+				'message'   => __( 'Post not found.', 'jetonomy' ),
+				'tone'      => 'warn',
+			]
+		);
 		return;
 	}
 }
@@ -47,7 +61,13 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 	$user_id = get_current_user_id();
 	if ( ! $user_id || ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $user_id ) ) {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			echo '<div class="jt-empty"><p>' . esc_html__( 'This content is in a private space.', 'jetonomy' ) . '</p></div>';
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'message' => __( 'This content is in a private space.', 'jetonomy' ),
+					'tone'    => 'forbidden',
+				]
+			);
 			return;
 		}
 	}
@@ -60,8 +80,15 @@ if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
 // source of truth — author + manage_options + space mod/admin only.
 if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Post not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Post not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -255,8 +282,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						<?php echo esc_html( $post->title ); ?>
 					</h1>
 					<div class="jt-meta">
-						<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) ); ?>
-						<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+						<?php
+						// 1.4.1 byline cleanup: trust-level number removed from inline
+						// bylines (it lives on the user profile + hover-card surfaces).
+						// Tags moved out of the byline into their own row below the
+						// post body so the meta line reads cleanly as
+						// "User · time · status" without descriptor noise.
+						echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) );
+						?>
 						<span>
 							<?php
 							/* translators: %s: human-readable time difference */
@@ -278,11 +311,6 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php esc_html_e( 'Closed', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
-						<?php foreach ( $tags as $tag ) : ?>
-							<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag">
-								<?php echo esc_html( $tag->name ); ?>
-							</a>
-						<?php endforeach; ?>
 					</div>
 					<?php
 					if ( is_user_logged_in() ) :
@@ -308,6 +336,16 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					?>
 				</div>
 
+				<?php if ( ! empty( $tags ) ) : ?>
+					<div class="jt-post-tags" aria-label="<?php esc_attr_e( 'Tags', 'jetonomy' ); ?>">
+						<?php foreach ( $tags as $tag ) : ?>
+							<a href="<?php echo esc_url( $base . '/tag/' . $tag->slug . '/' ); ?>" class="jt-tag-link">
+								#<?php echo esc_html( $tag->name ); ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
+				<?php endif; ?>
+
 				<?php
 				/**
 				 * Fires after the post body to display custom field values.
@@ -320,34 +358,46 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php echo wp_kses_post( apply_filters( 'jetonomy_after_post_content', '', $post ) ); ?>
 
 				<div class="jt-post-foot">
-					<?php if ( is_user_logged_in() ) : ?>
-					<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
-						data-wp-on--click="actions.voteUp"
-						data-post-id="<?php echo absint( $post->id ); ?>"
-						title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-						aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
-						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-						<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-					</button>
-						<?php
-						// Hide downvote on own content — authors can only upvote
-						// their own post (Basecamp 9803889865, self-downvote lands at -1).
-						if ( (int) $post->author_id !== get_current_user_id() ) :
-							?>
-					<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
-						data-wp-on--click="actions.voteDown"
-						data-post-id="<?php echo absint( $post->id ); ?>"
-						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
-							<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
-					</button>
+					<?php
+					// 1.4.1 voting cleanup: up + down render inside one
+					// `.jt-vote-cluster` wrapper for visual grouping + equal-
+					// weight presentation. The inner button shape stays
+					// identical so view.js's bindings (which read score
+					// via `el.ref.querySelector('.n')` and find the sibling
+					// down button via `el.ref.parentElement?.querySelector`)
+					// keep working — both buttons remain direct siblings
+					// inside the cluster.
+					?>
+					<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+						<?php if ( is_user_logged_in() ) : ?>
+						<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
+							data-wp-on--click="actions.voteUp"
+							data-post-id="<?php echo absint( $post->id ); ?>"
+							title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
+							aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+							<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+							<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+						</button>
+							<?php
+							// Hide downvote on own content — self-downvote was
+							// landing at -1 (Basecamp 9803889865).
+							if ( (int) $post->author_id !== get_current_user_id() ) :
+								?>
+						<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
+							data-wp-on--click="actions.voteDown"
+							data-post-id="<?php echo absint( $post->id ); ?>"
+							title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
+							aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+						</button>
+							<?php endif; ?>
+						<?php else : ?>
+						<span class="jt-act">
+							<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+							<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+						</span>
 						<?php endif; ?>
-					<?php else : ?>
-					<span class="jt-act">
-						<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-						<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-					</span>
-					<?php endif; ?>
+					</div>
 					<?php
 					/* translators: %d: number of views */
 					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );
@@ -462,10 +512,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				'>
 
 				<div class="jt-replies-head">
-					<h3>
+					<h2>
 						<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
 						<span class="jt-count-pill"><?php echo esc_html( (int) $total_replies ); ?></span>
-					</h3>
+					</h2>
 					<div class="jt-replies-controls">
 						<div class="jt-pills">
 							<?php
@@ -478,7 +528,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								$rsort_url = add_query_arg( [ 'rsort' => $key ], $post_url );
 								?>
 								<a href="<?php echo esc_url( $rsort_url ); ?>#replies"
-									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>">
+									class="jt-pill <?php echo $reply_sort === $key ? esc_attr( 'on' ) : ''; ?>"
+									<?php echo $reply_sort === $key ? 'aria-current="true"' : ''; ?>>
 									<?php echo esc_html( $label ); ?>
 								</a>
 							<?php endforeach; ?>
@@ -498,10 +549,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				?>
 
 				<?php if ( empty( $first_batch ) && empty( $last_batch ) ) : ?>
-					<div class="jt-empty">
-						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-replies', 80 ); ?></div>
-						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet. Be the first to reply!', 'jetonomy' ); ?></div>
-					</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'icon'    => 'empty-replies',
+							'message' => __( 'No replies yet. Be the first to reply!', 'jetonomy' ),
+						]
+					);
+					?>
 				<?php else : ?>
 
 					<div class="jt-replies-list" id="jt-replies-container">
@@ -580,9 +636,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</div>
 			<?php elseif ( is_user_logged_in() ) : ?>
 				<div class="jt-reply-composer" id="jt-composer">
-					<h4>
+					<h3>
 						<?php esc_html_e( 'Your Reply', 'jetonomy' ); ?>
-					</h4>
+					</h3>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'composer',

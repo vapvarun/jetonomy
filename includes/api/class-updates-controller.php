@@ -30,7 +30,7 @@ class Updates_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_updates' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
 					'since' => [
 						'type'     => 'string',

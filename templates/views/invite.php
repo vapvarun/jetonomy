@@ -10,26 +10,56 @@ defined( 'ABSPATH' ) || exit;
 $token = $data['slug'] ?? '';
 
 if ( empty( $token ) ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'Invalid invite link.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Invalid invite link.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
 $invite = \Jetonomy\Models\InviteLink::find_by_token( $token );
 
 if ( ! $invite ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'Invite link not found.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Invite link not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
 if ( ! \Jetonomy\Models\InviteLink::is_valid( $invite ) ) {
-	echo '<div class="jt-empty"><p>' . esc_html__( 'This invite link has expired or reached its usage limit.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'message' => __( 'This invite link has expired or reached its usage limit.', 'jetonomy' ),
+			'tone'    => 'warn',
+		]
+	);
 	return;
 }
 
 $space = \Jetonomy\Models\Space::find( (int) $invite->space_id );
 
 if ( ! $space ) {
-	echo '<div class="jt-empty"><div class="jt-empty-icon">404</div><p>' . esc_html__( 'The space for this invite no longer exists.', 'jetonomy' ) . '</p></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'The space for this invite no longer exists.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -54,8 +84,7 @@ if ( ! is_user_logged_in() ) {
 $user_id = get_current_user_id();
 
 if ( \Jetonomy\Models\SpaceMember::is_member( (int) $invite->space_id, $user_id ) ) {
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe
-	echo '<script>window.location=' . wp_json_encode( $space_url ) . ';</script>';
+	echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 	exit;
 }
 
@@ -67,6 +96,5 @@ if ( is_wp_error( $add_result ) ) {
 }
 \Jetonomy\Models\InviteLink::use_invite( (int) $invite->id );
 
-// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_json_encode is safe
-echo '<script>window.location=' . wp_json_encode( $space_url ) . ';</script>';
+echo '<meta http-equiv="refresh" content="0; url=' . esc_url( $space_url ) . '">';
 exit;

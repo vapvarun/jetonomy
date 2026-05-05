@@ -1262,10 +1262,11 @@ class Abilities {
 				'created_at'  => $p->created_at ?? '',
 			];
 		}
-		// TODO: compute accurate total via COUNT query for cursor-based pagination.
+		$total = Post::count_by_space_visible( $space_id, (int) $user_id, (bool) $is_privileged, $sort );
 		return [
 			'posts'    => $items,
-			'has_more' => count( $items ) === $limit,
+			'total'    => $total,
+			'has_more' => count( $items ) === $limit && ( count( $items ) + (int) $after ) < $total,
 		];
 	}
 
@@ -1321,10 +1322,11 @@ class Abilities {
 				'created_at'  => $r->created_at ?? '',
 			];
 		}
-		// TODO: compute accurate total via COUNT query for cursor-based pagination.
+		$total = Reply::count_by_post( $post_id );
 		return [
 			'replies'  => $items,
-			'has_more' => count( $items ) === $limit,
+			'total'    => $total,
+			'has_more' => count( $items ) === $limit && ( count( $items ) + (int) $after ) < $total,
 		];
 	}
 
@@ -1605,11 +1607,20 @@ class Abilities {
 			'total'  => 0,
 		];
 
+		if ( ! $adapter ) {
+			return $results;
+		}
+
+		// Route through the public Search_Adapter::search() contract — earlier
+		// versions called private methods on the FULLTEXT implementation, which
+		// fataled at runtime and was hidden in phpstan-baseline.neon. Each
+		// dispatch passes the type the adapter understands; tags stay on the
+		// Tag model since they're not part of the search-adapter scope.
 		if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
-			$results['posts'] = $adapter->search_posts( $query, $limit );
+			$results['posts'] = $adapter->search( $query, 'post', null, $limit, 0 );
 		}
 		if ( in_array( $filter, [ 'all', 'spaces' ], true ) ) {
-			$results['spaces'] = $adapter->search_spaces( $query, $limit );
+			$results['spaces'] = $adapter->search( $query, 'space', null, $limit, 0 );
 		}
 		if ( in_array( $filter, [ 'all', 'tags' ], true ) ) {
 			$results['tags'] = Tag::search( $query, $limit );

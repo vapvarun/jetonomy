@@ -53,7 +53,7 @@ class OEmbed_Controller extends Base_Controller {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'handle' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( \Jetonomy\Visibility::class, 'rest_check' ),
 				'args'                => array(
 					'url'       => array(
 						'required'          => true,

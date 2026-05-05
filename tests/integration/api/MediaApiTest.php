@@ -79,7 +79,10 @@ class MediaApiTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'jetonomy_no_file', $response->get_data()['code'] );
 
-		\Jetonomy\Permissions\Capabilities::unregister();
+		// Intentionally NO Capabilities::unregister() — clearing role caps mid-suite
+		// poisons subsequent tests that expect the bootstrap-registered cap set
+		// (PostableByMe etc rely on subscribers having jetonomy_create_posts).
+		// The bootstrap's activate() call already seeded caps; we keep them.
 	}
 
 	public function test_author_with_upload_files_passes_permission_check(): void {

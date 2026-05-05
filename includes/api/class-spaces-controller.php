@@ -47,7 +47,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'list_items' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 					'args'                => $this->get_list_args(),
 				],
 				[
@@ -67,7 +67,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_item' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				],
 				[
 					'methods'             => 'PATCH',
@@ -91,7 +91,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_members' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
@@ -113,7 +113,7 @@ class Spaces_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_privileged_members' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
 					'limit' => [
 						'type'    => 'integer',
@@ -153,7 +153,7 @@ class Spaces_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'use_invite' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 			]
 		);
 
@@ -266,40 +266,54 @@ class Spaces_Controller extends Base_Controller {
 		$postable_by_me = (bool) $request->get_param( 'postable_by_me' );
 		$pagination     = $this->get_pagination( $request );
 
-		// Compose UI wants every postable space in the picker (no pagination UX there);
-		// widen the fetch window so the post-filter doesn't discard members on later pages.
-		$fetch_limit = $postable_by_me ? max( $pagination['limit'], 200 ) : $pagination['limit'];
-
-		$result = Space::list_visible(
-			$user_id,
-			$category_id,
-			$type,
-			$visibility,
-			$fetch_limit,
-			$pagination['offset'],
-			'sort_order ASC, title ASC'
-		);
-
-		$spaces = $result['spaces'];
-		$total  = $result['total'];
-
 		if ( $postable_by_me ) {
+			// Member-scoped picker: start from the user's space_member rows so
+			// the result isn't truncated by the global sort_order ASC, title ASC
+			// pagination window. Earlier shape widened list_visible to LIMIT 200,
+			// which silently dropped member spaces ranked > 200 across the whole
+			// community — the composer would then hide spaces the user can post
+			// in. Hydrating the joined rows directly is O(memberships per user),
+			// which is bounded.
 			if ( ! $user_id ) {
 				$spaces = array();
 				$total  = 0;
 			} else {
+				$member_rows = \Jetonomy\Models\SpaceMember::list_user_spaces( $user_id );
+				$member_ids  = array_map( static fn ( $r ) => (int) $r->space_id, $member_rows );
+
+				$spaces = Space::list_by_ids( $member_ids );
 				$spaces = array_values(
 					array_filter(
 						$spaces,
-						static function ( $space ) use ( $user_id ): bool {
-							$sid = (int) $space->id;
-							return \Jetonomy\Models\SpaceMember::is_member( $sid, $user_id )
-								&& \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', $sid );
+						static function ( $space ) use ( $user_id, $category_id, $type, $visibility ): bool {
+							if ( null !== $category_id && (int) $space->category_id !== $category_id ) {
+								return false;
+							}
+							if ( null !== $type && $space->type !== $type ) {
+								return false;
+							}
+							if ( null !== $visibility && $space->visibility !== $visibility ) {
+								return false;
+							}
+							return \Jetonomy\Permissions\Permission_Engine::can( $user_id, 'create_posts', (int) $space->id );
 						}
 					)
 				);
 				$total  = count( $spaces );
 			}
+		} else {
+			$result = Space::list_visible(
+				$user_id,
+				$category_id,
+				$type,
+				$visibility,
+				$pagination['limit'],
+				$pagination['offset'],
+				'sort_order ASC, title ASC'
+			);
+
+			$spaces = $result['spaces'];
+			$total  = $result['total'];
 		}
 
 		$items       = array_map( [ $this, 'prepare_space' ], $spaces );
@@ -378,14 +392,22 @@ class Spaces_Controller extends Base_Controller {
 			$requested_type = in_array( $configured, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $configured : 'forum';
 		}
 
+		$visibility  = sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public';
+		$join_policy = sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open';
+
+		$combo = Space::validate_visibility_join_policy( $visibility, $join_policy );
+		if ( is_wp_error( $combo ) ) {
+			return $combo;
+		}
+
 		$data = [
 			'category_id' => absint( $request->get_param( 'category_id' ) ) ?: null,
 			'title'       => $title,
 			'slug'        => $slug,
 			'description' => sanitize_textarea_field( (string) $request->get_param( 'description' ) ),
 			'type'        => $requested_type,
-			'visibility'  => sanitize_text_field( (string) $request->get_param( 'visibility' ) ) ?: 'public',
-			'join_policy' => sanitize_text_field( (string) $request->get_param( 'join_policy' ) ) ?: 'open',
+			'visibility'  => $visibility,
+			'join_policy' => $join_policy,
 			'icon'        => sanitize_text_field( (string) $request->get_param( 'icon' ) ),
 			'cover_image' => esc_url_raw( (string) $request->get_param( 'cover_image' ) ),
 			'settings'    => $settings,
@@ -455,6 +477,23 @@ class Spaces_Controller extends Base_Controller {
 		}
 		if ( null !== $request->get_param( 'join_policy' ) ) {
 			$data['join_policy'] = sanitize_text_field( $request->get_param( 'join_policy' ) );
+		}
+
+		// Cross-validate visibility + join_policy after overlaying the patch
+		// onto the existing space so partial PATCHes (just visibility, or
+		// just join_policy) still trip the rule. Hidden + non-invite is
+		// rejected with a 400 here; the admin form's JS prevents the user
+		// from getting this far in normal use.
+		if ( isset( $data['visibility'] ) || isset( $data['join_policy'] ) ) {
+			$effective_visibility  = $data['visibility'] ?? ( $space->visibility ?? 'public' );
+			$effective_join_policy = $data['join_policy'] ?? ( $space->join_policy ?? 'open' );
+			$combo                 = Space::validate_visibility_join_policy(
+				(string) $effective_visibility,
+				(string) $effective_join_policy
+			);
+			if ( is_wp_error( $combo ) ) {
+				return $combo;
+			}
 		}
 		if ( null !== $request->get_param( 'icon' ) ) {
 			$data['icon'] = sanitize_text_field( $request->get_param( 'icon' ) );

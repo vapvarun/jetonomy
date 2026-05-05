@@ -2,6 +2,11 @@
 /**
  * Admin dashboard view.
  *
+ * Variables seeded by Admin::render_dashboard() before include.
+ *
+ * @var array<string,mixed> $stats
+ * @var string              $base_slug
+ *
  * @package Jetonomy
  */
 
@@ -219,29 +224,6 @@ $stat_cards = [
 					<span class="dashicons dashicons-trash"></span>
 					<?php esc_html_e( 'Remove All Demo Data', 'jetonomy' ); ?>
 				</button>
-				<script>
-				document.getElementById('jetonomy-cleanup-demo').addEventListener('click', function() {
-					if (!confirm(<?php echo wp_json_encode( __( 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.', 'jetonomy' ) ); ?>)) return;
-					var btn = this;
-					btn.disabled = true;
-					btn.textContent = <?php echo wp_json_encode( __( 'Removing...', 'jetonomy' ) ); ?>;
-					fetch(ajaxurl, {
-						method: 'POST',
-						headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-						body: new URLSearchParams({action:'jetonomy_cleanup_sample_data', nonce: jetonomyAdmin.nonce}),
-						credentials: 'same-origin'
-					})
-					.then(function(r){return r.json();})
-					.then(function(res){
-						if (res.success) {
-							document.getElementById('jt-demo-card').remove();
-						} else {
-							alert(res.data || 'Failed');
-							btn.disabled = false;
-						}
-					});
-				});
-				</script>
 			</div>
 			<?php endif; ?>
 

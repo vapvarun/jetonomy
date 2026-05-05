@@ -148,6 +148,53 @@ class Moderation_Controller extends Base_Controller {
 			]
 		);
 
+		// Bulk moderation action — REST parity with the wp-admin AJAX handler
+		// `wp_ajax_jetonomy_bulk_content_action` (1.4.1 A4). The AJAX handler
+		// stays in place for the wp-admin Content page; this endpoint exposes
+		// the same operation to frontend custom-mod tooling that talks REST.
+		register_rest_route(
+			$ns,
+			'/moderation/bulk',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_action' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					'action' => [
+						'type'              => 'string',
+						'required'          => true,
+						'enum'              => [ 'approve', 'spam', 'trash' ],
+						'sanitize_callback' => 'sanitize_key',
+					],
+					'items'  => [
+						'type'     => 'array',
+						'required' => true,
+					],
+				],
+			]
+		);
+
+		// Per-post flag inspection (1.4.1 A5). Mods looking at a specific post
+		// shouldn't have to filter the global flags list to see what was
+		// reported on that post — this returns an empty array (200), never 404,
+		// when a post has no flags.
+		register_rest_route(
+			$ns,
+			'/posts/(?P<id>\d+)/flags',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_post_flags' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					'id' => [
+						'type'     => 'integer',
+						'required' => true,
+						'minimum'  => 1,
+					],
+				],
+			]
+		);
+
 		// Ban user.
 		register_rest_route(
 			$ns,
@@ -306,12 +353,10 @@ class Moderation_Controller extends Base_Controller {
 		$type = $request->get_param( 'type' );
 		$id   = absint( $request->get_param( 'id' ) );
 
-		$result = $this->set_status( $type, $id, 'publish' );
+		$result = $this->approve_item( $type, $id );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-
-		do_action( 'jetonomy_content_moderated', 'approved', $type, $id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			[
@@ -332,28 +377,10 @@ class Moderation_Controller extends Base_Controller {
 		$type = $request->get_param( 'type' );
 		$id   = absint( $request->get_param( 'id' ) );
 
-		global $wpdb;
-		$table = table( 'post' === $type ? 'posts' : 'replies' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) );
-
-		if ( ! $row ) {
-			return $this->not_found( 'post' === $type ? 'Post' : 'Reply' );
-		}
-
-		$result = $this->set_status( $type, $id, 'spam' );
+		$result = $this->spam_item( $type, $id );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-
-		// Apply reputation penalty.
-		$author_id = (int) $row->author_id;
-		if ( $author_id ) {
-			UserProfile::adjust_reputation( $author_id, -20 );
-		}
-
-		do_action( 'jetonomy_content_moderated', 'spam', $type, $id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			[
@@ -406,6 +433,25 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
 
+		/**
+		 * Fires after a flag is created with the full flag object plus context.
+		 *
+		 * @since 1.4.1
+		 * @param object          $flag    Flag object (id, reporter_id, object_type, object_id, reason, description).
+		 * @param array{user_id:int,request:WP_REST_Request} $context Context.
+		 */
+		$flag = Flag::find( (int) $flag_id );
+		if ( $flag ) {
+			do_action(
+				'jetonomy_after_create_flag',
+				$flag,
+				array(
+					'user_id' => $user_id,
+					'request' => $request,
+				)
+			);
+		}
+
 		return new WP_REST_Response(
 			[
 				'created' => true,
@@ -437,12 +483,10 @@ class Moderation_Controller extends Base_Controller {
 		$type = $request->get_param( 'type' );
 		$id   = absint( $request->get_param( 'id' ) );
 
-		$result = $this->set_status( $type, $id, 'trash' );
+		$result = $this->trash_item( $type, $id );
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-
-		do_action( 'jetonomy_content_moderated', 'trash', $type, $id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			[
@@ -452,6 +496,107 @@ class Moderation_Controller extends Base_Controller {
 			],
 			200
 		);
+	}
+
+	/**
+	 * POST /moderation/bulk — Apply approve/spam/trash across many items in one call (1.4.1 A4).
+	 *
+	 * REST parity with the wp-admin AJAX path `wp_ajax_jetonomy_bulk_content_action`.
+	 * Each item is dispatched through the same per-item helper used by the single-item
+	 * routes so any side effect (reputation penalty, `jetonomy_content_moderated`
+	 * action, future notify-reporter logic) fires identically.
+	 *
+	 * Response is always 200 with a per-item `results` array; individual item
+	 * failures are reported in the row's `status` field rather than aborting
+	 * the whole batch (a moderator approving 50 comments shouldn't lose progress
+	 * because one row was already deleted by another mod).
+	 */
+	public function bulk_action( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$action = sanitize_key( (string) $request->get_param( 'action' ) );
+		$items  = $request->get_param( 'items' );
+
+		if ( ! is_array( $items ) || empty( $items ) ) {
+			return $this->validation_error( __( 'items must be a non-empty array.', 'jetonomy' ) );
+		}
+
+		if ( ! in_array( $action, [ 'approve', 'spam', 'trash' ], true ) ) {
+			return $this->validation_error( __( 'Invalid action; expected approve, spam, or trash.', 'jetonomy' ) );
+		}
+
+		$results = [];
+		foreach ( $items as $item ) {
+			// Tolerate both array and stdClass payloads (REST decodes JSON to assoc arrays
+			// by default, but PHP arg passing through internal callers can yield objects).
+			$type = '';
+			$id   = 0;
+			if ( is_array( $item ) ) {
+				$type = isset( $item['type'] ) ? sanitize_key( (string) $item['type'] ) : '';
+				$id   = isset( $item['id'] ) ? absint( $item['id'] ) : 0;
+			} elseif ( is_object( $item ) ) {
+				$type = isset( $item->type ) ? sanitize_key( (string) $item->type ) : '';
+				$id   = isset( $item->id ) ? absint( $item->id ) : 0;
+			}
+
+			if ( ! in_array( $type, [ 'post', 'reply' ], true ) || $id <= 0 ) {
+				$results[] = [
+					'type'   => $type,
+					'id'     => $id,
+					'status' => 'invalid_item',
+				];
+				continue;
+			}
+
+			$result = match ( $action ) {
+				'approve' => $this->approve_item( $type, $id ),
+				'spam'    => $this->spam_item( $type, $id ),
+				'trash'   => $this->trash_item( $type, $id ),
+			};
+
+			if ( is_wp_error( $result ) ) {
+				$results[] = [
+					'type'   => $type,
+					'id'     => $id,
+					'status' => $result->get_error_code() ?: 'error',
+				];
+			} else {
+				$results[] = [
+					'type'   => $type,
+					'id'     => $id,
+					'status' => 'ok',
+				];
+			}
+		}
+
+		return new WP_REST_Response(
+			[
+				'action'  => $action,
+				'results' => $results,
+			],
+			200
+		);
+	}
+
+	/**
+	 * GET /posts/{id}/flags — List all flags filed against a single post (1.4.1 A5).
+	 *
+	 * Mod-only inspection view. Returns `[]` (200) — never 404 — when the post
+	 * has no flags, because the resource (the post) exists and the relationship
+	 * "this post's flags" is simply empty.
+	 */
+	public function get_post_flags( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$post_id = absint( $request->get_param( 'id' ) );
+
+		if ( $post_id <= 0 ) {
+			return $this->validation_error( __( 'Invalid post id.', 'jetonomy' ) );
+		}
+
+		if ( ! \Jetonomy\Models\Post::find( $post_id ) ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$flags = Flag::find_for_post( $post_id );
+
+		return new WP_REST_Response( $flags, 200 );
 	}
 
 	/**
@@ -579,6 +724,84 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'Reply' );
 		}
 		\Jetonomy\Models\Reply::update( $id, array( 'status' => $status ) );
+		return true;
+	}
+
+	/**
+	 * Approve a single post or reply (shared by single-item POST and bulk REST routes).
+	 *
+	 * Idempotent: if the item is already published the helper still fires the
+	 * `jetonomy_content_moderated` action with the moderator's ID so audit
+	 * trails record the explicit approval click.
+	 *
+	 * @param string $type 'post' or 'reply'.
+	 * @param int    $id   Row ID.
+	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
+	 */
+	private function approve_item( string $type, int $id ): bool|WP_Error {
+		$result = $this->set_status( $type, $id, 'publish' );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		do_action( 'jetonomy_content_moderated', 'approved', $type, $id, get_current_user_id() );
+
+		return true;
+	}
+
+	/**
+	 * Mark a single post or reply as spam (shared by single-item POST and bulk REST routes).
+	 *
+	 * Applies the -20 reputation penalty to the author and fires the
+	 * `jetonomy_content_moderated` action so any future per-item business rule
+	 * (notify-reporter, AI feedback loop) executes identically across both
+	 * dispatch paths.
+	 *
+	 * @param string $type 'post' or 'reply'.
+	 * @param int    $id   Row ID.
+	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
+	 */
+	private function spam_item( string $type, int $id ): bool|WP_Error {
+		global $wpdb;
+		$table = table( 'post' === $type ? 'posts' : 'replies' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) );
+
+		if ( ! $row ) {
+			return $this->not_found( 'post' === $type ? 'Post' : 'Reply' );
+		}
+
+		$result = $this->set_status( $type, $id, 'spam' );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$author_id = (int) $row->author_id;
+		if ( $author_id ) {
+			UserProfile::adjust_reputation( $author_id, -20 );
+		}
+
+		do_action( 'jetonomy_content_moderated', 'spam', $type, $id, get_current_user_id() );
+
+		return true;
+	}
+
+	/**
+	 * Soft-delete a single post or reply (shared by single-item POST and bulk REST routes).
+	 *
+	 * @param string $type 'post' or 'reply'.
+	 * @param int    $id   Row ID.
+	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
+	 */
+	private function trash_item( string $type, int $id ): bool|WP_Error {
+		$result = $this->set_status( $type, $id, 'trash' );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		do_action( 'jetonomy_content_moderated', 'trash', $type, $id, get_current_user_id() );
+
 		return true;
 	}
 }

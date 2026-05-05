@@ -159,3 +159,44 @@ function get_space_role_label( int $user_id, int $space_id ): ?string {
 	}
 	return \Jetonomy\Models\SpaceMember::role_label( $space_id, $user_id );
 }
+
+/**
+ * Header logo URL for Jetonomy-rendered surfaces (emails, blocks, shortcodes).
+ *
+ * Themes own the site header — this helper exists for surfaces Jetonomy
+ * renders itself. Filterable via `jetonomy_header_logo` so extensions
+ * (e.g. Pro white-label) can override the default with a custom URL.
+ *
+ * @since 1.4.1
+ *
+ * @param string $default Default logo URL when no override is set.
+ * @return string Filtered logo URL (may be empty for "no logo, use site name").
+ */
+function header_logo( string $default = '' ): string {
+	/**
+	 * Filter the header logo URL used by Jetonomy-rendered surfaces.
+	 *
+	 * @param string $url The current logo URL. Empty string means "no logo set".
+	 */
+	return (string) apply_filters( 'jetonomy_header_logo', $default );
+}
+
+/**
+ * Footer text for Jetonomy-rendered surfaces (emails, blocks, shortcodes).
+ *
+ * Filterable via `jetonomy_footer_text` so extensions (e.g. Pro white-label)
+ * can replace the default copy with their own.
+ *
+ * @since 1.4.1
+ *
+ * @param string $default Default footer text.
+ * @return string Filtered footer text (may be empty).
+ */
+function footer_text( string $default = '' ): string {
+	/**
+	 * Filter the footer text used by Jetonomy-rendered surfaces.
+	 *
+	 * @param string $text The current footer text. May be empty.
+	 */
+	return (string) apply_filters( 'jetonomy_footer_text', $default );
+}

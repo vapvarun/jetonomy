@@ -12,8 +12,15 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -51,9 +58,7 @@ $role_labels = [
 <div class="jt-two-col">
 		<main>
 			<div class="jt-cat-page-row">
-				<?php if ( ! empty( $space->icon ) ) : ?>
-					<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-				<?php endif; ?>
+				<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 				<div>
 					<h1 class="jt-page-title jt-page-title-sm">
 						<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Members', 'jetonomy' ); ?>
@@ -68,10 +73,15 @@ $role_labels = [
 			</div>
 
 			<?php if ( empty( $members ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-members', 80 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'    => 'empty-members',
+						'message' => __( 'No members yet.', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-card jt-card-flush">
 					<?php foreach ( $members as $member ) : ?>
@@ -93,7 +103,11 @@ $role_labels = [
 									class="jt-member-name">
 									<?php echo esc_html( $mu->display_name ); ?>
 								</a>
-								<span class="jt-tl" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
+								<?php
+								// 1.4.1 byline cleanup: trust-level number removed
+								// from inline bylines. Trust progress lives on the
+								// user profile + hover-card surfaces.
+								?>
 								<div class="jt-member-joined">
 									<?php
 									/* translators: %s: joined date */

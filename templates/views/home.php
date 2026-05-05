@@ -27,17 +27,22 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 		<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
 			class="jt-card jt-space-card jt-no-underline jt-block">
 			<div class="jt-space-card-inner">
-				<?php if ( ! empty( $space->icon ) ) : ?>
-					<?php if ( str_starts_with( $space->icon, 'dashicons-' ) ) : ?>
-						<span class="jt-space-card-emoji dashicons <?php echo esc_attr( $space->icon ); ?>"></span>
-					<?php else : ?>
-						<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-					<?php endif; ?>
-				<?php endif; ?>
+				<?php
+				// Always route through the icon helper so a stored "message-circle"
+				// renders as the Lucide SVG (not as the literal text). The helper
+				// also defends against legacy emoji values and dashicon prefixes.
+				jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' );
+				?>
 				<div class="jt-space-card-body">
 					<div class="jt-space-card-title">
 						<?php echo esc_html( $space->title ); ?>
 					</div>
+					<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
+						<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php esc_attr_e( 'Hidden space. Only admins and members can see this listing.', 'jetonomy' ); ?>">
+							<?php jetonomy_echo_icon( 'lock', 12 ); ?>
+							<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
+						</span>
+					<?php endif; ?>
 					<?php if ( ! empty( $space->description ) ) : ?>
 						<div class="jt-space-card-excerpt">
 							<?php echo esc_html( $space->description ); ?>
@@ -69,10 +74,15 @@ $community_title = ! empty( $settings['community_title'] ) ? $settings['communit
 <div class="jt-two-col">
 		<main>
 			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-posts', 80 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'No categories yet. Check back soon!', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'    => 'empty-posts',
+						'message' => __( 'No categories yet. Check back soon!', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php else : ?>
 				<?php foreach ( $categories as $category ) : ?>
 					<?php $spaces = \Jetonomy\Models\Space::list_by_category( (int) $category->id ); ?>

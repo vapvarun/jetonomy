@@ -29,7 +29,7 @@ class Leaderboards_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'list_items' ],
-				'permission_callback' => '__return_true',
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
 				'args'                => [
 					'limit'  => [
 						'type'    => 'integer',

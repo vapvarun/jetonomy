@@ -67,17 +67,17 @@ $crumbs = array(
 		</header>
 
 		<?php if ( empty( $privileged_spaces ) && empty( $member_spaces ) ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'users', 80 ); ?></div>
-				<div class="jt-empty-text">
-					<?php esc_html_e( 'You are not in any spaces yet.', 'jetonomy' ); ?>
-				</div>
-				<p class="jt-empty-cta">
-					<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( $base . '/' ); ?>">
-						<?php esc_html_e( 'Browse spaces', 'jetonomy' ); ?>
-					</a>
-				</p>
-			</div>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'      => 'users',
+					'message'   => __( 'You are not in any spaces yet.', 'jetonomy' ),
+					'cta_label' => __( 'Browse spaces', 'jetonomy' ),
+					'cta_url'   => $base . '/',
+				]
+			);
+			?>
 		<?php endif; ?>
 
 		<?php

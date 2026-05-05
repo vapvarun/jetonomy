@@ -2,6 +2,10 @@
 /**
  * Admin import view.
  *
+ * Variables seeded by Admin::render_import() before include.
+ *
+ * @var array<string,bool> $available
+ *
  * @package Jetonomy
  */
 

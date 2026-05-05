@@ -61,6 +61,11 @@ final class Space_Journey {
 			return Journey_Result::fail( 'join_policy must be one of: ' . implode( ', ', self::ALLOWED_JOIN_POLICIES ) );
 		}
 
+		$combo = Space::validate_visibility_join_policy( $visibility, $join_policy );
+		if ( is_wp_error( $combo ) ) {
+			return Journey_Result::fail( $combo->get_error_message() );
+		}
+
 		$data = [
 			'category_id' => (int) $input['category_id'],
 			'title'       => (string) $input['title'],
@@ -123,6 +128,19 @@ final class Space_Journey {
 		}
 		if ( isset( $patch['join_policy'] ) && ! in_array( $patch['join_policy'], self::ALLOWED_JOIN_POLICIES, true ) ) {
 			return Journey_Result::fail( 'join_policy must be one of: ' . implode( ', ', self::ALLOWED_JOIN_POLICIES ) );
+		}
+
+		// Cross-validate visibility + join_policy after overlaying the patch
+		// onto the existing space row so partial updates that touch only
+		// one of the two fields still trip the rule.
+		if ( isset( $patch['visibility'] ) || isset( $patch['join_policy'] ) ) {
+			$existing              = Space::find( $id );
+			$effective_visibility  = (string) ( $patch['visibility'] ?? ( $existing->visibility ?? 'public' ) );
+			$effective_join_policy = (string) ( $patch['join_policy'] ?? ( $existing->join_policy ?? 'open' ) );
+			$combo                 = Space::validate_visibility_join_policy( $effective_visibility, $effective_join_policy );
+			if ( is_wp_error( $combo ) ) {
+				return Journey_Result::fail( $combo->get_error_message() );
+			}
 		}
 
 		$ok = Space::update( $id, $patch );
@@ -218,6 +236,15 @@ final class Space_Journey {
 			return Journey_Result::fail( 'join_policy must be one of: ' . implode( ', ', self::ALLOWED_JOIN_POLICIES ) );
 		}
 
+		$existing = Space::find( $id );
+		$combo    = Space::validate_visibility_join_policy(
+			(string) ( $existing->visibility ?? 'public' ),
+			$policy
+		);
+		if ( is_wp_error( $combo ) ) {
+			return Journey_Result::fail( $combo->get_error_message() );
+		}
+
 		$ok = Space::update( $id, [ 'join_policy' => $policy ] );
 		if ( ! $ok ) {
 			return Journey_Result::fail( sprintf( 'Space::update(%d) returned false.', $id ) );
@@ -247,6 +274,15 @@ final class Space_Journey {
 		}
 		if ( ! in_array( $visibility, self::ALLOWED_VISIBILITIES, true ) ) {
 			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', self::ALLOWED_VISIBILITIES ) );
+		}
+
+		$existing = Space::find( $id );
+		$combo    = Space::validate_visibility_join_policy(
+			$visibility,
+			(string) ( $existing->join_policy ?? 'open' )
+		);
+		if ( is_wp_error( $combo ) ) {
+			return Journey_Result::fail( $combo->get_error_message() );
 		}
 
 		$ok = Space::update( $id, [ 'visibility' => $visibility ] );

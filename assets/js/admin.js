@@ -323,6 +323,47 @@
 		bindSpaceActions: function() {
 			var self = this;
 
+			// Visibility ↔ Join Policy coupling: hidden spaces must be
+			// invite-only. Server-side validation rejects the bad combo;
+			// this handler stops the user from tripping the rejection in
+			// the first place by snapping the dropdown when Hidden is
+			// chosen. Reverse direction (changing join_policy away from
+			// invite while Hidden) flips visibility back to Private with
+			// an inline note so the user understands what happened.
+			var coupleVisibilityJoinPolicy = function() {
+				var $vis  = $('#space-visibility');
+				var $join = $('#space-join-policy');
+				if (!$vis.length || !$join.length) {
+					return;
+				}
+				var noteId = 'space-visibility-coupling-note';
+				var ensureNote = function(message) {
+					var $note = $('#' + noteId);
+					if (!$note.length) {
+						$note = $('<p id="' + noteId + '" class="description jt-admin-msg jt-admin-msg--info" role="status" aria-live="polite"></p>');
+						$join.after($note);
+					}
+					$note.text(message).show();
+					setTimeout(function() { $note.fadeOut(2400); }, 4000);
+				};
+				$vis.off('change.jtCouple').on('change.jtCouple', function() {
+					if ($(this).val() === 'hidden' && $join.val() !== 'invite') {
+						$join.val('invite').trigger('change.jtCoupleSilent');
+						ensureNote(self.i18n.hiddenForcesInvite || 'Hidden spaces must be invite-only.');
+					}
+				});
+				$join.off('change.jtCouple').on('change.jtCouple', function(e) {
+					if (e.namespace === 'jtCoupleSilent') {
+						return;
+					}
+					if ($vis.val() === 'hidden' && $(this).val() !== 'invite') {
+						$vis.val('private');
+						ensureNote(self.i18n.hiddenRequiresInvite || 'Switched visibility to Private — Hidden requires invite-only.');
+					}
+				});
+			};
+			coupleVisibilityJoinPolicy();
+
 			// Filter Spaces
 			$(document).on('click', '#jetonomy-filter-spaces', function() {
 				var params = {

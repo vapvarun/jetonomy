@@ -46,23 +46,25 @@ $crumbs = array(
 		</h1>
 
 		<?php if ( ! $qualifies ) : ?>
-			<div class="jt-empty">
-				<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'lock', 64 ); ?></div>
-				<div class="jt-empty-text">
-					<?php esc_html_e( 'Creating spaces is reserved for community administrators.', 'jetonomy' ); ?>
-				</div>
-				<p class="jt-empty-cta">
-					<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( $base . '/' ); ?>">
-						<?php esc_html_e( 'Back to community', 'jetonomy' ); ?>
-					</a>
-				</p>
-			</div>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'icon'      => 'lock',
+					'icon_size' => 64,
+					'message'   => __( 'Creating spaces is reserved for community administrators.', 'jetonomy' ),
+					'cta_label' => __( 'Back to community', 'jetonomy' ),
+					'cta_url'   => $base . '/',
+					'tone'      => 'forbidden',
+				]
+			);
+			?>
 		<?php else : ?>
 			<form id="jt-new-space-form" class="jt-form jt-card" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">
 					<label for="jt-ns-title"><?php esc_html_e( 'Space title', 'jetonomy' ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
-					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive — what people will look for.', 'jetonomy' ); ?></p>
+					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive. What people will look for.', 'jetonomy' ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
@@ -74,10 +76,10 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label>
 					<select id="jt-ns-type" name="type" class="jt-input">
-						<option value="forum" <?php selected( $default_type, 'forum' ); ?>><?php esc_html_e( 'Forum — discussions and replies', 'jetonomy' ); ?></option>
-						<option value="qa" <?php selected( $default_type, 'qa' ); ?>><?php esc_html_e( 'Q&A — questions with accepted answers', 'jetonomy' ); ?></option>
-						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas — feedback voted by members', 'jetonomy' ); ?></option>
-						<option value="feed" <?php selected( $default_type, 'feed' ); ?>><?php esc_html_e( 'Feed — short-form posts', 'jetonomy' ); ?></option>
+						<option value="forum" <?php selected( $default_type, 'forum' ); ?>><?php esc_html_e( 'Forum: discussions and replies', 'jetonomy' ); ?></option>
+						<option value="qa" <?php selected( $default_type, 'qa' ); ?>><?php esc_html_e( 'Q&A: questions with accepted answers', 'jetonomy' ); ?></option>
+						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
+						<option value="feed" <?php selected( $default_type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 					</select>
 				</div>
 
@@ -276,164 +278,6 @@ $crumbs = array(
 				<div class="jt-form-error" data-jt-error hidden></div>
 			</form>
 
-			<script>
-			( function () {
-				'use strict';
-				var form = document.getElementById( 'jt-new-space-form' );
-				if ( ! form ) {
-					return;
-				}
-
-				// Icon picker — toggle .is-selected on radio change.
-				form.querySelectorAll( '.jt-icon-option input[type=radio]' ).forEach( function ( radio ) {
-					radio.addEventListener( 'change', function () {
-						form.querySelectorAll( '.jt-icon-option' ).forEach( function ( el ) {
-							el.classList.toggle( 'is-selected', el.contains( radio ) && radio.checked );
-						} );
-					} );
-				} );
-
-				// Icon picker — search filter + show-more toggle.
-				( function () {
-					var pickerWrap = form.querySelector( '[data-jt-icon-picker]' );
-					if ( ! pickerWrap ) { return; }
-					var searchInput = pickerWrap.querySelector( '[data-jt-icon-search]' );
-					var moreBtn     = pickerWrap.querySelector( '[data-jt-icon-more]' );
-					var emptyMsg    = pickerWrap.querySelector( '[data-jt-icon-empty]' );
-					var options     = pickerWrap.querySelectorAll( '.jt-icon-option' );
-					var moreOpen    = false;
-					var moreLabelOpen   = '<?php echo esc_js( __( 'Show fewer icons', 'jetonomy' ) ); ?>';
-					var moreLabelClosed = '<?php echo esc_js( __( 'Show more icons', 'jetonomy' ) ); ?>';
-
-					function applyFilter() {
-						var q = ( searchInput.value || '' ).trim().toLowerCase();
-						var anyVisible = false;
-						options.forEach( function ( opt ) {
-							var keywords   = ( opt.getAttribute( 'data-jt-icon-keywords' ) || '' ).toLowerCase();
-							var isExtended = '1' === opt.getAttribute( 'data-jt-icon-extended' );
-							var isSelected = opt.classList.contains( 'is-selected' );
-							var show;
-							if ( '' === q ) {
-								show = isSelected || ! isExtended || moreOpen;
-							} else {
-								show = keywords.indexOf( q ) !== -1;
-							}
-							opt.hidden = ! show;
-							if ( show ) { anyVisible = true; }
-						} );
-						if ( emptyMsg ) { emptyMsg.hidden = anyVisible; }
-						if ( moreBtn ) { moreBtn.hidden = '' !== q; }
-					}
-
-					if ( searchInput ) {
-						searchInput.addEventListener( 'input', applyFilter );
-					}
-					if ( moreBtn ) {
-						moreBtn.addEventListener( 'click', function () {
-							moreOpen = ! moreOpen;
-							moreBtn.textContent = moreOpen ? moreLabelOpen : moreLabelClosed;
-							applyFilter();
-						} );
-					}
-				} )();
-
-				// Cover uploader — POSTs to /jetonomy/v1/media, writes returned URL
-				// into the hidden cover_image input + renders preview.
-				var coverInput  = form.querySelector( '[data-jt-cover-input]' );
-				var coverValue  = form.querySelector( '[data-jt-cover-value]' );
-				var coverPrev   = form.querySelector( '[data-jt-cover-preview]' );
-				var coverRemove = form.querySelector( '[data-jt-cover-remove]' );
-				var coverStatus = form.querySelector( '[data-jt-cover-status]' );
-
-				function setPreview( url ) {
-					coverValue.value = url;
-					if ( url ) {
-						coverPrev.hidden = false;
-						var img = coverPrev.querySelector( 'img' );
-						if ( ! img ) {
-							img = document.createElement( 'img' );
-							img.alt = '';
-							coverPrev.appendChild( img );
-						}
-						img.src = url;
-						coverRemove.hidden = false;
-					} else {
-						coverPrev.hidden = true;
-						coverRemove.hidden = true;
-						var existing = coverPrev.querySelector( 'img' );
-						if ( existing ) { existing.remove(); }
-					}
-				}
-
-				if ( coverInput ) {
-					coverInput.addEventListener( 'change', function () {
-						var file = coverInput.files && coverInput.files[ 0 ];
-						if ( ! file ) { return; }
-						coverStatus.textContent = 'Uploading…';
-						var fd = new FormData();
-						fd.append( 'file', file );
-						fetch( form.dataset.jtRestBase + '/media', {
-							method: 'POST',
-							credentials: 'same-origin',
-							headers: { 'X-WP-Nonce': form.dataset.jtRestNonce },
-							body: fd
-						} ).then( function ( r ) {
-							return r.json().then( function ( b ) { return { ok: r.ok, body: b }; } );
-						} ).then( function ( res ) {
-							if ( ! res.ok || ! res.body || ! res.body.url ) {
-								coverStatus.textContent = ( res.body && res.body.message ) || 'Upload failed.';
-								return;
-							}
-							setPreview( res.body.url );
-							coverStatus.textContent = 'Uploaded.';
-							setTimeout( function () { coverStatus.textContent = ''; }, 2000 );
-						} ).catch( function () {
-							coverStatus.textContent = 'Network error.';
-						} );
-						coverInput.value = '';
-					} );
-				}
-				if ( coverRemove ) {
-					coverRemove.addEventListener( 'click', function () {
-						setPreview( '' );
-					} );
-				}
-
-				form.addEventListener( 'submit', function ( e ) {
-					e.preventDefault();
-					var errBox = form.querySelector( '[data-jt-error]' );
-					errBox.hidden = true;
-					var btn = form.querySelector( 'button[type="submit"]' );
-					btn.disabled = true;
-					var fd = new FormData( form );
-					var payload = {};
-					fd.forEach( function ( v, k ) { if ( v ) { payload[ k ] = v; } } );
-					fetch( form.dataset.jtRestBase + '/spaces', {
-						method: 'POST',
-						credentials: 'same-origin',
-						headers: {
-							'X-WP-Nonce': form.dataset.jtRestNonce,
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify( payload )
-					} ).then( function ( r ) {
-						return r.json().then( function ( body ) { return { ok: r.ok, body: body }; } );
-					} ).then( function ( res ) {
-						if ( ! res.ok || ! res.body || ! res.body.slug ) {
-							errBox.textContent = ( res.body && res.body.message ) || 'Could not create the space. Please try again.';
-							errBox.hidden = false;
-							btn.disabled = false;
-							return;
-						}
-						window.location.href = form.dataset.jtCommunityBase + '/s/' + res.body.slug + '/';
-					} ).catch( function () {
-						errBox.textContent = 'Network error. Please try again.';
-						errBox.hidden = false;
-						btn.disabled = false;
-					} );
-				} );
-			} )();
-			</script>
 		<?php endif; ?>
 	</main>
 

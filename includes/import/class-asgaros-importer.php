@@ -182,8 +182,8 @@ class Asgaros_Importer extends Importer {
 			return;
 		}
 
-		$topic_ids      = wp_list_pluck( $topics, 'id' );
-		$placeholders   = implode( ',', array_fill( 0, count( $topic_ids ), '%d' ) );
+		$topic_ids    = wp_list_pluck( $topics, 'id' );
+		$placeholders = implode( ',', array_fill( 0, count( $topic_ids ), '%d' ) );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$first_posts_raw = $wpdb->get_results(
 			$wpdb->prepare(

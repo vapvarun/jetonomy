@@ -124,6 +124,66 @@ class ModerationJourneyTest extends WP_UnitTestCase {
 		$this->assertContains( $this->flag_id, array_column( $valid_rows->data['items'], 'id' ) );
 	}
 
+	public function test_resolve_flag_valid_trashes_underlying_post(): void {
+		$result = $this->journey->resolve_flag( $this->flag_id, $this->resolver_id, 'valid' );
+
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
+
+		$post = Post::find( $this->post_id );
+		$this->assertNotNull( $post, 'Trashed post row should still exist.' );
+		$this->assertSame( 'trash', (string) $post->status, 'A valid resolution must trash the offending post.' );
+	}
+
+	public function test_resolve_flag_dismissed_leaves_post_published(): void {
+		$result = $this->journey->resolve_flag( $this->flag_id, $this->resolver_id, 'dismissed' );
+
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
+
+		$post = Post::find( $this->post_id );
+		$this->assertNotNull( $post );
+		$this->assertNotSame( 'trash', (string) $post->status, 'A dismissed flag must leave content untouched.' );
+		$this->assertSame( 0, $result->data['cascaded_resolved'] );
+	}
+
+	public function test_resolve_flag_valid_cascades_sibling_pending_flags(): void {
+		$second_reporter = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$third_reporter  = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+
+		$sibling_a = (int) Flag::create(
+			[
+				'object_type' => 'post',
+				'object_id'   => $this->post_id,
+				'reporter_id' => $second_reporter,
+				'reason'      => 'offensive',
+				'description' => 'second flag on same post',
+			]
+		);
+		$sibling_b = (int) Flag::create(
+			[
+				'object_type' => 'post',
+				'object_id'   => $this->post_id,
+				'reporter_id' => $third_reporter,
+				'reason'      => 'spam',
+				'description' => 'third flag on same post',
+			]
+		);
+
+		$result = $this->journey->resolve_flag( $this->flag_id, $this->resolver_id, 'valid' );
+
+		$this->assertTrue( $result->is_success(), implode( ',', $result->errors ) );
+		$this->assertSame( 2, $result->data['cascaded_resolved'], 'Both sibling flags should cascade-resolve.' );
+
+		$pending = $this->journey->list_flags_by_status( 'pending' );
+		$pending_ids = array_column( $pending->data['items'], 'id' );
+		$this->assertNotContains( $sibling_a, $pending_ids );
+		$this->assertNotContains( $sibling_b, $pending_ids );
+
+		$valid_rows = $this->journey->list_flags_by_status( 'valid' );
+		$valid_ids = array_column( $valid_rows->data['items'], 'id' );
+		$this->assertContains( $sibling_a, $valid_ids );
+		$this->assertContains( $sibling_b, $valid_ids );
+	}
+
 	public function test_resolve_flag_rejects_invalid_decision(): void {
 		$result = $this->journey->resolve_flag( $this->flag_id, $this->resolver_id, 'maybe' );
 

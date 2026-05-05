@@ -231,8 +231,8 @@ class Tag extends Model {
 		$per_page        = max( 1, min( 100, $per_page ) );
 		$offset          = max( 0, $offset );
 
-		$where   = '';
-		$values  = [];
+		$where  = '';
+		$values = [];
 		if ( '' !== $search ) {
 			$where    = 'WHERE name LIKE %s';
 			$values[] = '%' . static::db()->esc_like( $search ) . '%';

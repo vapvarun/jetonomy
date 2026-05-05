@@ -22,7 +22,15 @@ $space = '' !== $slug ? \Jetonomy\Models\Space::find_by_slug( $slug ) : null;
 
 if ( ! $space ) {
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -30,7 +38,15 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user
 	// 1.4.0: respond with 404 (not 403) so the URL existence isn't leaked
 	// to non-admins, matching the pattern used by other gated views.
 	status_header( 404 );
-	echo '<div class="jt-empty"><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -278,25 +294,25 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-row">
 				<label for="jt-se-type"><?php esc_html_e( 'Type', 'jetonomy' ); ?></label>
 				<select id="jt-se-type" name="type" class="jt-input">
-					<option value="forum" <?php selected( $space->type, 'forum' ); ?>><?php esc_html_e( 'Forum — discussions and replies', 'jetonomy' ); ?></option>
-					<option value="qa" <?php selected( $space->type, 'qa' ); ?>><?php esc_html_e( 'Q&A — questions with accepted answers', 'jetonomy' ); ?></option>
-					<option value="ideas" <?php selected( $space->type, 'ideas' ); ?>><?php esc_html_e( 'Ideas — feedback voted by members', 'jetonomy' ); ?></option>
-					<option value="feed" <?php selected( $space->type, 'feed' ); ?>><?php esc_html_e( 'Feed — short-form posts', 'jetonomy' ); ?></option>
+					<option value="forum" <?php selected( $space->type, 'forum' ); ?>><?php esc_html_e( 'Forum: discussions and replies', 'jetonomy' ); ?></option>
+					<option value="qa" <?php selected( $space->type, 'qa' ); ?>><?php esc_html_e( 'Q&A: questions with accepted answers', 'jetonomy' ); ?></option>
+					<option value="ideas" <?php selected( $space->type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
+					<option value="feed" <?php selected( $space->type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 				</select>
 			</div>
 
 			<div class="jt-form-row">
 				<label for="jt-se-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
 				<select id="jt-se-visibility" name="visibility" class="jt-input">
-					<option value="public" <?php selected( $space->visibility, 'public' ); ?>><?php esc_html_e( 'Public — anyone can read', 'jetonomy' ); ?></option>
-					<option value="private" <?php selected( $space->visibility, 'private' ); ?>><?php esc_html_e( 'Private — members only', 'jetonomy' ); ?></option>
+					<option value="public" <?php selected( $space->visibility, 'public' ); ?>><?php esc_html_e( 'Public: anyone can read', 'jetonomy' ); ?></option>
+					<option value="private" <?php selected( $space->visibility, 'private' ); ?>><?php esc_html_e( 'Private: members only', 'jetonomy' ); ?></option>
 				</select>
 			</div>
 
 			<div class="jt-form-row">
 				<label for="jt-se-join-policy"><?php esc_html_e( 'Join policy', 'jetonomy' ); ?></label>
 				<select id="jt-se-join-policy" name="join_policy" class="jt-input">
-					<option value="open" <?php selected( $space->join_policy ?? 'open', 'open' ); ?>><?php esc_html_e( 'Open — anyone can join', 'jetonomy' ); ?></option>
+					<option value="open" <?php selected( $space->join_policy ?? 'open', 'open' ); ?>><?php esc_html_e( 'Open: anyone can join', 'jetonomy' ); ?></option>
 					<option value="approval" <?php selected( $space->join_policy ?? '', 'approval' ); ?>><?php esc_html_e( 'Approval required', 'jetonomy' ); ?></option>
 					<option value="invite" <?php selected( $space->join_policy ?? '', 'invite' ); ?>><?php esc_html_e( 'Invite only', 'jetonomy' ); ?></option>
 				</select>
@@ -305,7 +321,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-row">
 				<label for="jt-se-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
 				<select id="jt-se-category" name="category_id" class="jt-input">
-					<option value="0"><?php esc_html_e( '— No category —', 'jetonomy' ); ?></option>
+					<option value="0"><?php esc_html_e( 'No category', 'jetonomy' ); ?></option>
 					<?php foreach ( $categories as $cat ) : ?>
 						<option value="<?php echo absint( $cat->id ); ?>" <?php selected( (int) ( $space->category_id ?? 0 ), (int) $cat->id ); ?>>
 							<?php echo esc_html( $cat->name ); ?>
@@ -334,7 +350,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					<input type="checkbox" name="enable_prefixes" value="1" <?php checked( $prefixes_on ); ?> data-jt-prefix-toggle>
 					<?php esc_html_e( 'Enable topic prefixes', 'jetonomy' ); ?>
 				</label>
-				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics — e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics, e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
 
 				<div class="jt-prefix-config" data-jt-prefix-config <?php echo $prefixes_on ? '' : 'hidden'; ?>>
 					<div class="jt-prefix-list" data-jt-prefix-list>
@@ -372,245 +388,6 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			<div class="jt-form-error" data-jt-error hidden></div>
 		</form>
 
-		<script>
-		( function () {
-			'use strict';
-			var form = document.getElementById( 'jt-space-edit-form' );
-			if ( ! form ) {
-				return;
-			}
-
-			// Icon picker — radios visually styled; toggle .is-selected on change.
-			form.querySelectorAll( '.jt-icon-option input[type=radio]' ).forEach( function ( radio ) {
-				radio.addEventListener( 'change', function () {
-					form.querySelectorAll( '.jt-icon-option' ).forEach( function ( el ) {
-						el.classList.toggle( 'is-selected', el.contains( radio ) && radio.checked );
-					} );
-				} );
-			} );
-
-			// Icon picker — search filter + show-more toggle.
-			( function () {
-				var pickerWrap = form.querySelector( '[data-jt-icon-picker]' );
-				if ( ! pickerWrap ) { return; }
-				var searchInput = pickerWrap.querySelector( '[data-jt-icon-search]' );
-				var moreBtn     = pickerWrap.querySelector( '[data-jt-icon-more]' );
-				var emptyMsg    = pickerWrap.querySelector( '[data-jt-icon-empty]' );
-				var options     = pickerWrap.querySelectorAll( '.jt-icon-option' );
-				var moreOpen    = false;
-				var moreLabelOpen   = '<?php echo esc_js( __( 'Show fewer icons', 'jetonomy' ) ); ?>';
-				var moreLabelClosed = '<?php echo esc_js( __( 'Show more icons', 'jetonomy' ) ); ?>';
-
-				function applyFilter() {
-					var q = ( searchInput.value || '' ).trim().toLowerCase();
-					var anyVisible = false;
-					options.forEach( function ( opt ) {
-						var keywords   = ( opt.getAttribute( 'data-jt-icon-keywords' ) || '' ).toLowerCase();
-						var isExtended = '1' === opt.getAttribute( 'data-jt-icon-extended' );
-						var isSelected = opt.classList.contains( 'is-selected' );
-						var show;
-						if ( '' === q ) {
-							show = isSelected || ! isExtended || moreOpen;
-						} else {
-							show = keywords.indexOf( q ) !== -1;
-						}
-						opt.hidden = ! show;
-						if ( show ) { anyVisible = true; }
-					} );
-					if ( emptyMsg ) { emptyMsg.hidden = anyVisible; }
-					if ( moreBtn ) { moreBtn.hidden = '' !== q; }
-				}
-
-				if ( searchInput ) {
-					searchInput.addEventListener( 'input', applyFilter );
-				}
-				if ( moreBtn ) {
-					moreBtn.addEventListener( 'click', function () {
-						moreOpen = ! moreOpen;
-						moreBtn.textContent = moreOpen ? moreLabelOpen : moreLabelClosed;
-						applyFilter();
-					} );
-				}
-			} )();
-
-			// Cover uploader — POSTs to /jetonomy/v1/media, writes returned URL
-			// into the hidden cover_image input + renders preview.
-			var coverInput  = form.querySelector( '[data-jt-cover-input]' );
-			var coverValue  = form.querySelector( '[data-jt-cover-value]' );
-			var coverPrev   = form.querySelector( '[data-jt-cover-preview]' );
-			var coverRemove = form.querySelector( '[data-jt-cover-remove]' );
-			var coverStatus = form.querySelector( '[data-jt-cover-status]' );
-
-			function setPreview( url ) {
-				coverValue.value = url;
-				if ( url ) {
-					coverPrev.hidden = false;
-					var img = coverPrev.querySelector( 'img' );
-					if ( ! img ) {
-						img = document.createElement( 'img' );
-						img.alt = '';
-						coverPrev.appendChild( img );
-					}
-					img.src = url;
-					coverRemove.hidden = false;
-				} else {
-					coverPrev.hidden = true;
-					coverRemove.hidden = true;
-					var existing = coverPrev.querySelector( 'img' );
-					if ( existing ) { existing.remove(); }
-				}
-			}
-
-			coverInput.addEventListener( 'change', function () {
-				var file = coverInput.files && coverInput.files[ 0 ];
-				if ( ! file ) { return; }
-				coverStatus.textContent = 'Uploading…';
-				var fd = new FormData();
-				fd.append( 'file', file );
-				fetch( form.dataset.jtRestBase + '/media', {
-					method: 'POST',
-					credentials: 'same-origin',
-					headers: { 'X-WP-Nonce': form.dataset.jtRestNonce },
-					body: fd
-				} ).then( function ( r ) {
-					return r.json().then( function ( b ) { return { ok: r.ok, body: b }; } );
-				} ).then( function ( res ) {
-					if ( ! res.ok || ! res.body || ! res.body.url ) {
-						coverStatus.textContent = ( res.body && res.body.message ) || 'Upload failed.';
-						return;
-					}
-					setPreview( res.body.url );
-					coverStatus.textContent = 'Uploaded.';
-					setTimeout( function () { coverStatus.textContent = ''; }, 2000 );
-				} ).catch( function () {
-					coverStatus.textContent = 'Network error.';
-				} );
-				// Reset input so re-picking the same file fires change again.
-				coverInput.value = '';
-			} );
-
-			coverRemove.addEventListener( 'click', function () {
-				setPreview( '' );
-			} );
-
-			// Prefix editor — toggle visibility + add/remove rows.
-			var prefixToggle = form.querySelector( '[data-jt-prefix-toggle]' );
-			var prefixConfig = form.querySelector( '[data-jt-prefix-config]' );
-			var prefixList   = form.querySelector( '[data-jt-prefix-list]' );
-			var prefixAdd    = form.querySelector( '[data-jt-prefix-add]' );
-
-			if ( prefixToggle && prefixConfig ) {
-				prefixToggle.addEventListener( 'change', function () {
-					prefixConfig.hidden = ! prefixToggle.checked;
-				} );
-			}
-
-			function addPrefixRow( name, color ) {
-				var row = document.createElement( 'div' );
-				row.className = 'jt-prefix-row';
-
-				var nameInput = document.createElement( 'input' );
-				nameInput.type = 'text';
-				nameInput.className = 'jt-input jt-prefix-name';
-				nameInput.placeholder = 'Label';
-				nameInput.maxLength = 50;
-				nameInput.value = name || '';
-
-				var colorInput = document.createElement( 'input' );
-				colorInput.type = 'color';
-				colorInput.className = 'jt-prefix-color';
-				colorInput.value = color || '#3B82F6';
-
-				var removeBtn = document.createElement( 'button' );
-				removeBtn.type = 'button';
-				removeBtn.className = 'jt-btn jt-btn-ghost jt-prefix-remove';
-				removeBtn.setAttribute( 'aria-label', 'Remove prefix' );
-				removeBtn.textContent = '×';
-				removeBtn.addEventListener( 'click', function () { row.remove(); } );
-
-				row.appendChild( nameInput );
-				row.appendChild( colorInput );
-				row.appendChild( removeBtn );
-				prefixList.appendChild( row );
-			}
-
-			if ( prefixAdd ) {
-				prefixAdd.addEventListener( 'click', function () { addPrefixRow( '', '#3B82F6' ); } );
-			}
-
-			// Existing rows from server-side render need their remove button wired.
-			form.querySelectorAll( '.jt-prefix-row .jt-prefix-remove' ).forEach( function ( btn ) {
-				btn.addEventListener( 'click', function () {
-					var row = btn.closest( '.jt-prefix-row' );
-					if ( row ) { row.remove(); }
-				} );
-			} );
-
-			form.addEventListener( 'submit', function ( e ) {
-				e.preventDefault();
-				var errBox = form.querySelector( '[data-jt-error]' );
-				var savedBox = form.querySelector( '[data-jt-saved]' );
-				errBox.hidden = true;
-				savedBox.hidden = true;
-				var btn = form.querySelector( 'button[type="submit"]' );
-				btn.disabled = true;
-
-				// Collect base fields from FormData, then translate the
-				// space-settings fields (posts_per_page, enable_prefixes,
-				// prefixes[]) into a nested `settings` object that PATCH
-				// /spaces/:id stores in the JSON settings column.
-				var fd = new FormData( form );
-				var payload = {};
-				fd.forEach( function ( v, k ) {
-					if ( k === 'posts_per_page' || k === 'enable_prefixes' ) {
-						return;
-					}
-					payload[ k ] = v;
-				} );
-
-				var settings = {};
-				var ppp = form.querySelector( '[name=posts_per_page]' ).value.trim();
-				settings.posts_per_page = ppp === '' ? '' : parseInt( ppp, 10 );
-				settings.enable_prefixes = prefixToggle && prefixToggle.checked ? 1 : 0;
-
-				var prefixes = [];
-				form.querySelectorAll( '.jt-prefix-row' ).forEach( function ( row ) {
-					var name  = row.querySelector( '.jt-prefix-name' ).value.trim();
-					var color = row.querySelector( '.jt-prefix-color' ).value;
-					if ( name ) {
-						prefixes.push( { name: name, color: color } );
-					}
-				} );
-				settings.prefixes = prefixes;
-				payload.settings = settings;
-
-				fetch( form.dataset.jtRestBase + '/spaces/' + form.dataset.jtSpaceId, {
-					method: 'PATCH',
-					credentials: 'same-origin',
-					headers: {
-						'X-WP-Nonce': form.dataset.jtRestNonce,
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify( payload )
-				} ).then( function ( r ) {
-					return r.json().then( function ( body ) { return { ok: r.ok, body: body }; } );
-				} ).then( function ( res ) {
-					btn.disabled = false;
-					if ( ! res.ok ) {
-						errBox.textContent = ( res.body && res.body.message ) || 'Could not save changes.';
-						errBox.hidden = false;
-						return;
-					}
-					savedBox.hidden = false;
-					setTimeout( function () { savedBox.hidden = true; }, 2500 );
-				} ).catch( function () {
-					btn.disabled = false;
-					errBox.textContent = 'Network error. Please try again.';
-					errBox.hidden = false;
-				} );
-			} );
-		} )();
-		</script>
 	</main>
 
 	<?php \Jetonomy\Template_Loader::partial( 'sidebar', array( 'space' => $space ) ); ?>

@@ -116,7 +116,12 @@ class PostableByMeTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $user_id );
 
+		// Scope the lookup to the test's unique category so the assertion isn't
+		// at the mercy of accumulated wp-env state (the pagination window is
+		// global ORDER BY sort_order ASC, title ASC — a 200th-place fixture
+		// from a prior run can push our just-created space off the first page).
 		$req = new WP_REST_Request( 'GET', '/jetonomy/v1/spaces' );
+		$req->set_param( 'category_id', $this->category_id );
 		// No postable_by_me param.
 		$res = $this->server->dispatch( $req );
 		$this->assertSame( 200, $res->get_status() );

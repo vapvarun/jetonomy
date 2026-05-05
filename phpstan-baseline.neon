@@ -11,154 +11,14 @@ parameters:
 			path: includes/admin/ajax/class-demo-seeder.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 13
-			path: includes/admin/class-admin.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 4
-			path: includes/admin/class-admin.php
-
-		-
-			message: "#^Variable \\$all_categories might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/categories.php
-
-		-
-			message: "#^Variable \\$current_space might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$current_status might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$paged might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$per_page might not be defined\\.$#"
+			message: "#^Cannot access offset 'name' on bool\\.$#"
 			count: 2
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$spaces might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$total might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$total_pages might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/content.php
-
-		-
-			message: "#^Variable \\$base_slug might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/dashboard.php
-
-		-
-			message: "#^Variable \\$stats might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/dashboard.php
-
-		-
-			message: "#^Variable \\$available might not be defined\\.$#"
-			count: 1
 			path: includes/admin/views/import.php
 
 		-
-			message: "#^Variable \\$paged_banned might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$paged_flags might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$paged_posts might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$paged_replies might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$per_page might not be defined\\.$#"
-			count: 16
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$total_banned might not be defined\\.$#"
-			count: 5
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$total_flags might not be defined\\.$#"
-			count: 5
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$total_posts might not be defined\\.$#"
-			count: 5
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$total_replies might not be defined\\.$#"
-			count: 5
-			path: includes/admin/views/moderation.php
-
-		-
-			message: "#^Variable \\$current_status might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$nonce_value might not be defined\\.$#"
+			message: "#^Cannot access offset 'stats' on bool\\.$#"
 			count: 1
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$paged might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$per_page might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$post might not be defined\\.$#"
-			count: 7
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$search_query might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$total might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/replies.php
-
-		-
-			message: "#^Variable \\$total_pages might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/replies.php
+			path: includes/admin/views/import.php
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$id\\.$#"
@@ -171,94 +31,9 @@ parameters:
 			path: includes/admin/views/space-edit.php
 
 		-
-			message: "#^Variable \\$access_rules might not be defined\\.$#"
+			message: "#^Access to an undefined property object\\{user_id\\: int, role\\: string, space_role\\?\\: string, joined_at\\?\\: string, display_name\\?\\: string\\}\\:\\:\\$joined_at\\.$#"
 			count: 1
 			path: includes/admin/views/space-edit.php
-
-		-
-			message: "#^Variable \\$categories might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/space-edit.php
-
-		-
-			message: "#^Variable \\$members might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/space-edit.php
-
-		-
-			message: "#^Variable \\$space might not be defined\\.$#"
-			count: 31
-			path: includes/admin/views/space-edit.php
-
-		-
-			message: "#^Variable \\$categories might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$filter_category might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$filter_status might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$filter_type might not be defined\\.$#"
-			count: 4
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$paged might not be defined\\.$#"
-			count: 3
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$per_page might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$total might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$total_pages might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/spaces.php
-
-		-
-			message: "#^Variable \\$filter_trust might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/users.php
-
-		-
-			message: "#^Variable \\$paged might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/users.php
-
-		-
-			message: "#^Variable \\$search might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/users.php
-
-		-
-			message: "#^Variable \\$total might not be defined\\.$#"
-			count: 2
-			path: includes/admin/views/users.php
-
-		-
-			message: "#^Variable \\$total_pages might not be defined\\.$#"
-			count: 1
-			path: includes/admin/views/users.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/api/class-api.php
 
 		-
 			message: "#^Property Jetonomy\\\\API\\\\Api\\:\\:\\$controllers is never read, only written\\.$#"
@@ -336,16 +111,6 @@ parameters:
 			path: includes/api/class-replies-controller.php
 
 		-
-			message: "#^Call to an undefined method Jetonomy\\\\Adapters\\\\Search_Adapter\\:\\:search_posts\\(\\)\\.$#"
-			count: 1
-			path: includes/class-abilities.php
-
-		-
-			message: "#^Call to an undefined method Jetonomy\\\\Adapters\\\\Search_Adapter\\:\\:search_spaces\\(\\)\\.$#"
-			count: 1
-			path: includes/class-abilities.php
-
-		-
 			message: "#^Call to an undefined static method Jetonomy\\\\Models\\\\JoinRequest\\:\\:create\\(\\)\\.$#"
 			count: 1
 			path: includes/class-abilities.php
@@ -356,49 +121,9 @@ parameters:
 			path: includes/class-abilities.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 2
-			path: includes/class-autoloader.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/class-blocks.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 6
-			path: includes/class-blocks.php
-
-		-
 			message: "#^Parameter \\#3 \\$deps of function wp_register_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
 			count: 1
 			path: includes/class-blocks.php
-
-		-
-			message: "#^Call to static method error\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 6
-			path: includes/class-cli.php
-
-		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 54
-			path: includes/class-cli.php
-
-		-
-			message: "#^Call to static method success\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 10
-			path: includes/class-cli.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 3
-			path: includes/class-cli.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 6
-			path: includes/class-cli.php
 
 		-
 			message: "#^Offset 'failed' does not exist on array\\{checks\\: non\\-empty\\-array\\<int\\<0, max\\>, array\\{label\\: string, status\\: 'fail'\\|'pass'\\|'warn', detail\\: string\\}\\>\\}\\.$#"
@@ -431,19 +156,9 @@ parameters:
 			path: includes/class-cli.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 12
-			path: includes/class-jetonomy.php
-
-		-
 			message: "#^Parameter \\#1 \\$text of function esc_attr expects string, int\\<min, \\-1\\> given\\.$#"
 			count: 6
 			path: includes/class-nav-menus.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 1
-			path: includes/class-shortcodes.php
 
 		-
 			message: "#^Constant COOKIEPATH not found\\.$#"
@@ -456,58 +171,13 @@ parameters:
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 6
-			path: includes/class-template-loader.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 10
-			path: includes/class-template-loader.php
-
-		-
 			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
 			count: 1
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/db/class-migrator.php
-
-		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_0_0.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_0.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_1.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_2.php
-
-		-
-			message: "#^Constant DB_NAME not found\\.$#"
-			count: 1
-			path: includes/db/migrations/class-migration_1_2_3.php
-
-		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
 			count: 2
-			path: includes/integrations/class-buddypress.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 1
 			path: includes/integrations/class-buddypress.php
 
 		-
@@ -534,11 +204,6 @@ parameters:
 			message: "#^Variable \\$data in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
 			path: includes/integrations/class-buddypress.php
-
-		-
-			message: "#^Constant JETONOMY_URL not found\\.$#"
-			count: 1
-			path: includes/integrations/class-fluent-community.php
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
@@ -631,37 +296,12 @@ parameters:
 			path: includes/moderation/class-akismet.php
 
 		-
-			message: "#^Constant JETONOMY_DIR not found\\.$#"
-			count: 1
-			path: includes/notifications/class-notifier.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
 			count: 1
 			path: includes/permissions/class-permission-engine.php
 
 		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 9
-			path: includes/qa/class-model-tests.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 1
-			path: includes/qa/class-model-tests.php
-
-		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
-			count: 1
-			path: includes/qa/class-pro-tests.php
-
-		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 22
-			path: includes/qa/class-pro-tests.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
 			count: 1
 			path: includes/qa/class-pro-tests.php
 
@@ -673,16 +313,6 @@ parameters:
 		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
 			count: 1
-			path: includes/qa/class-rest-tests.php
-
-		-
-			message: "#^Call to static method log\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 11
-			path: includes/qa/class-rest-tests.php
-
-		-
-			message: "#^Call to static method warning\\(\\) on an unknown class WP_CLI\\.$#"
-			count: 2
 			path: includes/qa/class-rest-tests.php
 
 		-

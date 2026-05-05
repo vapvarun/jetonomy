@@ -1,0 +1,329 @@
+{
+  "Membership_Adapter": {
+    "methods": [
+      {
+        "name": "is_active",
+        "visibility": "public"
+      },
+      {
+        "name": "get_user_levels",
+        "visibility": "public"
+      },
+      {
+        "name": "user_has_level",
+        "visibility": "public"
+      },
+      {
+        "name": "get_all_levels",
+        "visibility": "public"
+      },
+      {
+        "name": "get_level_label",
+        "visibility": "public"
+      },
+      {
+        "name": "register_hooks",
+        "visibility": "public"
+      }
+    ],
+    "implementers": [
+      {
+        "class": "MemberPress_Adapter",
+        "file": "includes/adapters/class-member-press-adapter.php"
+      },
+      {
+        "class": "WP_Roles_Adapter",
+        "file": "includes/adapters/class-wp-roles-adapter.php"
+      },
+      {
+        "class": "PMPro_Adapter",
+        "file": "includes/adapters/class-pmpro-adapter.php"
+      },
+      {
+        "class": "RCP_Adapter",
+        "file": "includes/adapters/class-rcp-adapter.php"
+      },
+      {
+        "class": "MasterStudy_Adapter",
+        "file": "includes/adapters/class-masterstudy-adapter.php"
+      },
+      {
+        "class": "Sensei_Adapter",
+        "file": "includes/adapters/class-sensei-adapter.php"
+      },
+      {
+        "class": "LearnDash_Adapter",
+        "file": "includes/adapters/class-learndash-adapter.php"
+      },
+      {
+        "class": "WooCommerce_Adapter",
+        "file": "includes/adapters/class-woocommerce-adapter.php"
+      },
+      {
+        "class": "Tutor_Adapter",
+        "file": "includes/adapters/class-tutor-adapter.php"
+      },
+      {
+        "class": "LifterLMS_Adapter",
+        "file": "includes/adapters/class-lifterlms-adapter.php"
+      }
+    ],
+    "consumers": [
+      {
+        "plugin": "this",
+        "file": "includes/admin/views/space-edit.php:298",
+        "var": "$adapter",
+        "calls": [
+          "get_level_label",
+          "is_active"
+        ],
+        "unsupported_calls": []
+      }
+    ],
+    "compatible": true
+  },
+  "Realtime_Adapter": {
+    "methods": [
+      {
+        "name": "is_active",
+        "visibility": "public"
+      },
+      {
+        "name": "publish",
+        "visibility": "public"
+      },
+      {
+        "name": "get_client_config",
+        "visibility": "public"
+      }
+    ],
+    "implementers": [
+      {
+        "class": "Polling_Adapter",
+        "file": "includes/adapters/class-polling-adapter.php"
+      }
+    ],
+    "consumers": [],
+    "compatible": true
+  },
+  "Email_Adapter": {
+    "methods": [
+      {
+        "name": "is_active",
+        "visibility": "public"
+      },
+      {
+        "name": "send",
+        "visibility": "public"
+      },
+      {
+        "name": "send_batch",
+        "visibility": "public"
+      },
+      {
+        "name": "register_hooks",
+        "visibility": "public"
+      }
+    ],
+    "implementers": [
+      {
+        "class": "WP_Mail_Adapter",
+        "file": "includes/adapters/class-wp-mail-adapter.php"
+      }
+    ],
+    "consumers": [
+      {
+        "plugin": "this",
+        "file": "includes/class-mentions.php:100",
+        "var": "$email_adapter",
+        "calls": [
+          "send"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "this",
+        "file": "includes/notifications/class-notifier.php:659",
+        "var": "$email_adapter",
+        "calls": [
+          "send"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "companion",
+        "file": "includes/extensions/email-digest/class-extension.php:1325",
+        "var": "$email_adapter",
+        "calls": [
+          "send"
+        ],
+        "unsupported_calls": []
+      }
+    ],
+    "compatible": true
+  },
+  "AI_Adapter": {
+    "methods": [
+      {
+        "name": "is_active",
+        "visibility": "public"
+      },
+      {
+        "name": "get_id",
+        "visibility": "public"
+      },
+      {
+        "name": "get_name",
+        "visibility": "public"
+      },
+      {
+        "name": "chat",
+        "visibility": "public"
+      },
+      {
+        "name": "embed",
+        "visibility": "public"
+      },
+      {
+        "name": "get_models",
+        "visibility": "public"
+      },
+      {
+        "name": "test",
+        "visibility": "public"
+      }
+    ],
+    "implementers": [
+      {
+        "class": "Ollama_AI_Adapter",
+        "file": "includes/adapters/class-ollama-ai-adapter.php"
+      },
+      {
+        "class": "OpenAI_AI_Adapter",
+        "file": "includes/adapters/class-openai-ai-adapter.php"
+      },
+      {
+        "class": "Anthropic_AI_Adapter",
+        "file": "includes/adapters/class-anthropic-ai-adapter.php"
+      },
+      {
+        "class": "Custom_AI_Adapter",
+        "file": "includes/adapters/class-custom-ai-adapter.php"
+      }
+    ],
+    "consumers": [
+      {
+        "plugin": "this",
+        "file": "includes/moderation/class-ai-spam-detector.php:38",
+        "var": "$adapter",
+        "calls": [
+          "chat",
+          "is_active"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "companion",
+        "file": "includes/cli/journeys/class-ai-journey.php:120",
+        "var": "$adapter",
+        "calls": [
+          "chat",
+          "is_active"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "companion",
+        "file": "includes/cli/journeys/class-ai-journey.php:171",
+        "var": "$adapter",
+        "calls": [
+          "chat",
+          "is_active"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "companion",
+        "file": "includes/extensions/ai/class-extension.php:606",
+        "var": "$adapter",
+        "calls": [
+          "test"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "companion",
+        "file": "includes/extensions/ai/class-ai-client.php:46",
+        "var": "$adapter",
+        "calls": [
+          "chat",
+          "embed",
+          "is_active"
+        ],
+        "unsupported_calls": []
+      },
+      {
+        "plugin": "companion",
+        "file": "includes/extensions/ai/class-ai-client.php:91",
+        "var": "$adapter",
+        "calls": [
+          "embed",
+          "is_active"
+        ],
+        "unsupported_calls": []
+      }
+    ],
+    "compatible": true
+  },
+  "Search_Adapter": {
+    "methods": [
+      {
+        "name": "is_active",
+        "visibility": "public"
+      },
+      {
+        "name": "index",
+        "visibility": "public"
+      },
+      {
+        "name": "search",
+        "visibility": "public"
+      },
+      {
+        "name": "delete",
+        "visibility": "public"
+      }
+    ],
+    "implementers": [
+      {
+        "class": "Fulltext_Search",
+        "file": "includes/search/class-fulltext-search.php"
+      }
+    ],
+    "consumers": [
+      {
+        "plugin": "this",
+        "file": "includes/class-abilities.php:1600",
+        "var": "$adapter",
+        "calls": [
+          "search_posts",
+          "search_spaces"
+        ],
+        "unsupported_calls": [
+          "search_posts",
+          "search_spaces"
+        ]
+      },
+      {
+        "plugin": "this",
+        "file": "templates/views/search.php:43",
+        "var": "$search_adapter",
+        "calls": [
+          "search"
+        ],
+        "unsupported_calls": []
+      }
+    ],
+    "compatible": false
+  }
+}

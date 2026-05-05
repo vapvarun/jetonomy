@@ -12,8 +12,15 @@ $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
 if ( ! $space ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Space not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -95,9 +102,7 @@ $crumbs[] = [
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>
 
 <div class="jt-cat-page-row">
-		<?php if ( ! empty( $space->icon ) ) : ?>
-			<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-		<?php endif; ?>
+		<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 		<h1 class="jt-page-title jt-page-title-sm">
 			<?php echo esc_html( $space->title ); ?> &mdash; <?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
 		</h1>

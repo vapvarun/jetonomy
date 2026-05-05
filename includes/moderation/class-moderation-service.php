@@ -145,6 +145,27 @@ class Moderation_Service {
 			);
 		}
 
+		// End-user contract: the moderation queue's "Remove" button maps to
+		// data-resolution=valid and carries a trash icon. A moderator who
+		// clicks it expects the offending post or reply to come down at the
+		// same time the flag clears, and any other pending flags on the
+		// same object to clear with it. Resolving the flag without trashing
+		// the content (the prior behaviour) leaves bad content in front of
+		// readers and bait for a second moderator to re-action minutes
+		// later. Gate the trash permission upfront so we never leave the
+		// flag in 'valid' with content still live.
+		$type      = (string) $flag->object_type;
+		$object_id = (int) $flag->object_id;
+		if ( 'valid' === $status
+			&& ! Moderation_Permissions::can_act_on_object( $user_id, $type, $object_id )
+		) {
+			return new WP_Error(
+				'jetonomy_forbidden',
+				__( 'You cannot remove this content.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		$ok = Flag::resolve( $flag_id, $user_id, $status );
 		if ( ! $ok ) {
 			return new WP_Error(
@@ -154,7 +175,37 @@ class Moderation_Service {
 			);
 		}
 
+		if ( 'valid' === $status ) {
+			$trash = self::set_object_status( $user_id, $type, $object_id, 'trash' );
+			// Already-deleted content makes the report moot, not failed —
+			// keep the flag valid and let the cascade clean up siblings.
+			if ( is_wp_error( $trash ) && 'jetonomy_not_found' !== $trash->get_error_code() ) {
+				return $trash;
+			}
+
+			Flag::resolve_siblings_for( $type, $object_id, $user_id, 'valid', $flag_id );
+		}
+
 		do_action( 'jetonomy_flag_resolved', $flag_id, $status, $user_id );
+
+		/**
+		 * Fires after a flag is resolved with the full flag object plus context.
+		 *
+		 * @since 1.4.1
+		 * @param object         $flag    Flag object (post-resolution row).
+		 * @param array{status:string,user_id:int} $context Context.
+		 */
+		$flag = Flag::find( (int) $flag_id );
+		if ( $flag ) {
+			do_action(
+				'jetonomy_after_resolve_flag',
+				$flag,
+				array(
+					'status'  => $status,
+					'user_id' => $user_id,
+				)
+			);
+		}
 
 		return true;
 	}

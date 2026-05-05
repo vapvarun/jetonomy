@@ -28,24 +28,28 @@ class Template_Loader {
 		// Public community (guest_read on, or unset — defaults public): anyone can read, writes
 		// still require login via the REST permission layer. Private community (guest_read off):
 		// redirect anonymous visitors to the login page.
-		$settings            = get_option( 'jetonomy_settings', array() );
-		$is_public_community = ! isset( $settings['guest_read'] ) || ! empty( $settings['guest_read'] );
-		if ( ! $is_public_community && ! is_user_logged_in() ) {
+		// Visibility helper centralizes the guest_read check; the same predicate
+		// gates the REST API in private mode (see Jetonomy\Visibility::rest_check).
+		$settings = get_option( 'jetonomy_settings', array() );
+		if ( ! \Jetonomy\Visibility::can_view_community() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
 			exit;
 		}
 
-		// ── /mod/ route: redirect space-level mods into their first moderated
-		// space. The aggregate dashboard at /community/mod/ is admin-only, but
-		// space mods who click it from a stale bookmark or a shared link should
-		// land on something useful instead of a 403.
+		// ── /mod/ route: route space-level mods to the right surface ──
+		// A user who moderates exactly one space is sent straight to that
+		// space's queue (one less click for the common case). A user who
+		// moderates two or more spaces falls through to the aggregate
+		// dashboard so they can see every queue they own with pending
+		// counts at a glance — previously they got auto-redirected to
+		// their first space and had no UI affordance to reach the others.
 		if ( 'moderation' === $data['route'] && is_user_logged_in() ) {
 			$mod_user_id = get_current_user_id();
 			if (
@@ -53,7 +57,7 @@ class Template_Loader {
 				&& \Jetonomy\Moderation\Moderation_Permissions::can_view_any_queue( $mod_user_id )
 			) {
 				$mod_space_ids = \Jetonomy\Models\SpaceMember::moderated_space_ids( $mod_user_id );
-				if ( ! empty( $mod_space_ids ) ) {
+				if ( count( $mod_space_ids ) === 1 ) {
 					$mod_first = \Jetonomy\Models\Space::find( (int) $mod_space_ids[0] );
 					if ( $mod_first ) {
 						$mod_settings  = get_option( 'jetonomy_settings', array() );
@@ -62,6 +66,9 @@ class Template_Loader {
 						exit;
 					}
 				}
+				// 0 spaces (somehow) or 2+ spaces: fall through and let
+				// templates/views/moderation.php render the aggregate
+				// dashboard scoped to the user's moderated spaces.
 			}
 		}
 
@@ -115,6 +122,8 @@ class Template_Loader {
 			'my-spaces'        => 'views/my-spaces.php',
 			'new-space'        => 'views/new-space.php',
 			'edit-space'       => 'views/space-edit.php',
+			'drafts'           => 'views/drafts.php',
+			'bookmarks'        => 'views/bookmarks.php',
 		);
 
 		/**
@@ -344,17 +353,67 @@ class Template_Loader {
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
 				'i18n'          => array(
-					'queueClean'       => __( 'Queue cleared.', 'jetonomy' ),
-					'resolveFailed'    => __( 'Could not resolve flag. Please try again.', 'jetonomy' ),
-					'roleUpdateFailed' => __( 'Could not update role. Please try again.', 'jetonomy' ),
-					'roleLabels'       => array(
-						'member'    => __( 'Member', 'jetonomy' ),
-						'moderator' => __( 'Moderator', 'jetonomy' ),
-						'admin'     => __( 'Admin', 'jetonomy' ),
+					'queueClean'        => esc_html__( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'     => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'roleUpdateFailed'  => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
+					'loading'           => esc_html__( 'Loading...', 'jetonomy' ),
+					'loadMore'          => esc_html__( 'Load More', 'jetonomy' ),
+					'iconShowFewer'     => esc_html__( 'Show fewer icons', 'jetonomy' ),
+					'iconShowMore'      => esc_html__( 'Show more icons', 'jetonomy' ),
+					'uploading'         => esc_html__( 'Uploading...', 'jetonomy' ),
+					'uploaded'          => esc_html__( 'Uploaded.', 'jetonomy' ),
+					'uploadFailed'      => esc_html__( 'Upload failed.', 'jetonomy' ),
+					'networkError'      => esc_html__( 'Network error.', 'jetonomy' ),
+					'networkErrorRetry' => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
+					'createSpaceFailed' => esc_html__( 'Could not create the space. Please try again.', 'jetonomy' ),
+					'saveFailed'        => esc_html__( 'Could not save changes.', 'jetonomy' ),
+					'prefixLabel'       => esc_html__( 'Label', 'jetonomy' ),
+					'removePrefix'      => esc_html__( 'Remove prefix', 'jetonomy' ),
+					'roleLabels'        => array(
+						'member'    => esc_html__( 'Member', 'jetonomy' ),
+						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
+						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
 					),
 				),
 			)
 		);
+
+		// Pagination "Load More" auto-scroll handler. Self-discovers all
+		// .jt-pagination containers on the page; safe to always enqueue.
+		wp_enqueue_script(
+			'jetonomy-pagination',
+			JETONOMY_URL . 'assets/js/pagination-frontend.js',
+			array( 'jetonomy-data' ),
+			JETONOMY_VERSION,
+			true
+		);
+
+		// Per-route page scripts.
+		if ( 'new-space' === $data['route'] ) {
+			wp_enqueue_script(
+				'jetonomy-new-space',
+				JETONOMY_URL . 'assets/js/new-space.js',
+				array( 'jetonomy-data' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'space-edit' === $data['route'] ) {
+			wp_enqueue_script(
+				'jetonomy-space-edit',
+				JETONOMY_URL . 'assets/js/space-edit.js',
+				array( 'jetonomy-data' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'notifications' === $data['route'] ) {
+			wp_enqueue_script(
+				'jetonomy-notifications-page',
+				JETONOMY_URL . 'assets/js/notifications-page.js',
+				array( 'jetonomy-data' ),
+				JETONOMY_VERSION,
+				true
+			);
+		}
 
 		// Enqueue composer enhancement script (depends on the shared modal
 		// toolkit for the link-insert prompt).
@@ -574,6 +633,12 @@ class Template_Loader {
 						break;
 					case 'edit-space':
 						$parts['title'] = __( 'Edit space', 'jetonomy' );
+						break;
+					case 'drafts':
+						$parts['title'] = __( 'My drafts', 'jetonomy' );
+						break;
+					case 'bookmarks':
+						$parts['title'] = __( 'My bookmarks', 'jetonomy' );
 						break;
 				}
 				return $parts;
@@ -823,6 +888,20 @@ class Template_Loader {
 						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in editor view.
+						break;
+					case 'drafts':
+						$title     = __( 'My drafts', 'jetonomy' );
+						$desc      = __( 'Your saved drafts on the community.', 'jetonomy' );
+						$url       = $base . '/drafts/';
+						$image_alt = $site_name;
+						$noindex   = true; // Personal logged-in view.
+						break;
+					case 'bookmarks':
+						$title     = __( 'My bookmarks', 'jetonomy' );
+						$desc      = __( 'Posts you have bookmarked on the community.', 'jetonomy' );
+						$url       = $base . '/bookmarks/';
+						$image_alt = $site_name;
+						$noindex   = true; // Personal logged-in view.
 						break;
 				}
 

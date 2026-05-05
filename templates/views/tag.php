@@ -12,8 +12,15 @@ $tag      = \Jetonomy\Models\Tag::find_by_slug( $tag_slug );
 
 if ( ! $tag ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Tag not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Tag not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -91,7 +98,8 @@ $crumbs = [
 						$pill_url = add_query_arg( 'sort', $key, $tag_url );
 						?>
 						<a href="<?php echo esc_url( $pill_url ); ?>"
-							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>">
+							class="jt-pill <?php echo $sort === $key ? esc_attr( 'on' ) : ''; ?>"
+							<?php echo $sort === $key ? 'aria-current="true"' : ''; ?>>
 							<?php echo esc_html( $label ); ?>
 						</a>
 					<?php endforeach; ?>
@@ -99,10 +107,16 @@ $crumbs = [
 			</div>
 
 			<?php if ( empty( $posts ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'message-circle', 48 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'No posts with this tag yet.', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'      => 'message-circle',
+						'icon_size' => 48,
+						'message'   => __( 'No posts with this tag yet.', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-topics">
 					<?php foreach ( $posts as $post ) : ?>
@@ -130,7 +144,8 @@ $crumbs = [
 					<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Tag pagination', 'jetonomy' ); ?>">
 						<?php if ( $paged > 1 ) : ?>
 							<a class="jt-pagination-link" href="<?php echo esc_url( $prev_url ); ?>" rel="prev">
-								<?php esc_html_e( '← Previous', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>
+								<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
 							</a>
 						<?php endif; ?>
 						<span class="jt-pagination-status">
@@ -141,7 +156,8 @@ $crumbs = [
 						</span>
 						<?php if ( $paged < $total_pages ) : ?>
 							<a class="jt-pagination-link" href="<?php echo esc_url( $next_url ); ?>" rel="next">
-								<?php esc_html_e( 'Next →', 'jetonomy' ); ?>
+								<?php esc_html_e( 'Next', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'chevron-right', 14 ); ?>
 							</a>
 						<?php endif; ?>
 					</nav>

@@ -1,0 +1,65 @@
+{
+  "membership": {
+    "selection": "explicit_id_or_option",
+    "has_id_param": true,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "Membership_Adapter",
+    "registered_count_across_plugins": 9,
+    "risk": "low"
+  },
+  "realtime": {
+    "selection": "first_active_only",
+    "has_id_param": false,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "Realtime_Adapter",
+    "registered_count_across_plugins": 0,
+    "risk": "low_now_high_when_count>1"
+  },
+  "email": {
+    "selection": "first_active_only",
+    "has_id_param": false,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "Email_Adapter",
+    "registered_count_across_plugins": 1,
+    "risk": "low_now_high_when_count>1"
+  },
+  "search": {
+    "selection": "first_active_only",
+    "has_id_param": false,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "Search_Adapter",
+    "registered_count_across_plugins": 1,
+    "risk": "low_now_high_when_count>1"
+  },
+  "all_membership": {
+    "selection": "first_active_only",
+    "has_id_param": false,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "array",
+    "registered_count_across_plugins": 0,
+    "risk": "low_now_high_when_count>1"
+  },
+  "ai": {
+    "selection": "explicit_id_or_option",
+    "has_id_param": true,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "AI_Adapter",
+    "registered_count_across_plugins": 5,
+    "risk": "low"
+  },
+  "all_ai": {
+    "selection": "first_active_only",
+    "has_id_param": false,
+    "has_option_lookup": false,
+    "has_setter": false,
+    "interface": "array",
+    "registered_count_across_plugins": 0,
+    "risk": "low_now_high_when_count>1"
+  }
+}

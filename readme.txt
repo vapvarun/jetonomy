@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,77 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.4.1 - April 2026 =
+
+Run public or private communities. Browse drafts and bookmarks. Audit who did what. See every edit. Plus tighter sign-up follow-through, a friendlier email templates editor, a uniform interface across every page, and one large bug-fix sweep customers had been waiting on.
+
+**Public or private community**
+
+* New Access Control mode in Settings — choose **Public** (anyone can read) or **Private** (every page requires sign-in). The mode applies to the whole front-end and to the REST API, so private really means private.
+* The sign-in page itself stays reachable in private mode so guests can register or recover their account.
+* Public mode is the default and is unchanged from 1.4.0 — existing communities keep working without any setting changes.
+
+**For people who run a space**
+
+* New "Activity Log" admin page browses every audit event (post created, reply approved, member banned, role changed, …) with filters by user, type, and date range. Read-only — no edits.
+* New "Revisions" admin page browses every saved post / reply revision with a side-by-side diff between any two revisions. Read-only.
+* Two new REST endpoints for moderation tooling: `POST /jetonomy/v1/moderation/bulk` (approve / spam / trash many posts at once) and `GET /jetonomy/v1/posts/{id}/flags` (the flags raised against a post).
+
+**Members who haven't confirmed their email**
+
+* New hourly nudge: members who registered but haven't clicked the verification link receive a single follow-up email after 24 hours (configurable in Settings). One reminder per member, never duplicates.
+
+**Email templates editor**
+
+* New "Reset to default" button on every notification template — one click restores the shipped subject and body without retyping.
+* The "Verification reminder" template is now editable from the same screen.
+* Defaults now have a single source of truth, so reset always restores the exact copy the plugin ships with.
+
+**For members**
+
+* New "Drafts" tab at `/community/drafts/` lists every post you saved as a draft.
+* New "Bookmarks" tab at `/community/bookmarks/` lists every post you bookmarked.
+* Both tabs are personal pages — they require sign-in and are excluded from search engines.
+
+**Under the hood**
+
+* Per-role REST access matrix is now a verifiable contract — `bin/access-matrix-check.sh` runs 78 checks across 6 roles in either public or private mode, gates the build.
+* Manifest schema bumped to v2: every REST endpoint declares `auth`, `capability`, and `ownership_check` in `audit/manifest.json`.
+
+**Bug fixes**
+
+* Hidden spaces no longer leak from the homepage spaces list to non-admins.
+* Multi-space moderators now see every queue they own at /community/mod/, instead of getting redirected away.
+* The Remove button on flagged content now actually removes the content (used to mark the flag valid without trashing the post or reply).
+* Voting works on every install — fixed a Pro analytics aggregator bug that was corrupting the AJAX response on sites that hadn't installed the analytics table.
+* Space cards now render their icon correctly even when only the icon name was saved (was rendering "message-circle" as plain text on some imports).
+* The default qa-type space icon switched from a question-mark to an open book so multiple Q&A spaces in one community don't all look identical.
+* New-post composer with Pro polls active no longer drops form fields between submit attempts.
+
+**Cleaner, uniform interface**
+
+* Every empty state across the plugin now uses the same partial — same icon, same copy style, same call-to-action placement on every screen that can be empty.
+* Every customer-facing icon now comes from the Lucide icon set via the `jetonomy_echo_icon()` helper. No more inline SVG on customer surfaces; no more WordPress emojis as a fallback.
+* Action density on post and reply cards capped at three primary actions, with the rest moved into a kebab menu — far less visual noise on busy threads.
+* Voting controls present positive and negative voices at equal weight (upvote and downvote share the same control cluster, same touch target size).
+* Touch targets across the plugin now meet the 44 × 44 px minimum on hover-less devices; spacing uses CSS logical properties so RTL flips for free.
+
+**Extensibility (Pro extension contract)**
+
+* 13 hooks the Pro extensions had been listening to without anything firing them — fixed. Pro's white-label, custom-fields, and webhooks extensions now actually activate on customer sites instead of silently doing nothing. Lifecycle events (post created/updated/deleted, reply created/updated/deleted, flag created/resolved, member joined/left) fire under the documented names so any third-party extension subscribing to them works too.
+* Verification-reminder cron and the admin "send test email" button now route through the Email_Adapter registry, so any registered custom mail provider sees the same traffic as a real notification.
+* The `jetonomy/search` Ability no longer fatals at runtime — earlier versions called methods that were never on the adapter contract.
+* Search results now report accurate totals — pagination of large result sets works correctly instead of guessing "has_more" from the page size.
+* Manifest schema upgraded to v2.1 with cross-plugin consumed_by index, category_sources map, and an audit/derived/ cache so future audits skip work whose inputs haven't changed.
+* New helper functions Jetonomy\\header_logo() and Jetonomy\\footer_text() expose the documented branding hook contract for Pro white-label and any third-party theme integration.
+
+**For developers**
+
+* New helper `Jetonomy\Visibility` centralizes the public-or-private check (`can_view_community()`, `get_mode()`, `rest_check()`).
+* New schema migration: `jt_user_profiles` gains a `verification_reminder_sent_at` column. Runs automatically; rolls back cleanly.
+* `bin/local-ci.sh` runs the full PHPStan + WPCS + PHPUnit gate locally against a wp-env Docker stack — same gates a remote CI matrix would run, in under 2 minutes after first warm-up. Useful pre-push.
+* New helper `Jetonomy\Models\Post::count_by_space_visible()` — viewer-aware companion to `list_by_space_visible()` for accurate cursor pagination.
 
 = 1.4.0 - April 2026 =
 

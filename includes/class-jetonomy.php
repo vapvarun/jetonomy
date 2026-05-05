@@ -194,8 +194,33 @@ final class Jetonomy {
 			$changed                 = true;
 		}
 
+		// Default the verification-reminder threshold to 24h on fresh
+		// installs so the cron has a value to read on its very first tick.
+		// Use array_key_exists() so an admin who explicitly set it to 0
+		// (disable) keeps that choice on re-activation.
+		if ( ! array_key_exists( 'verification_reminder_hours', $settings ) ) {
+			$settings['verification_reminder_hours'] = 24;
+			$changed                                 = true;
+		}
+
 		if ( $changed ) {
 			update_option( 'jetonomy_settings', $settings );
+		}
+
+		// Seed the default `verification_reminder` email template so the
+		// reminder cron has a subject + body to render before the A8 admin
+		// editor ships. Only adds the key when it's missing — never
+		// overwrites admin customizations. Defaults are sourced from
+		// Notifier::get_default_template() (single source of truth — also
+		// used by the A8 "Reset to default" button) so the seed and the
+		// editor's reset path can never drift.
+		$email_templates = get_option( 'jetonomy_email_templates', array() );
+		if ( ! is_array( $email_templates ) ) {
+			$email_templates = array();
+		}
+		if ( ! isset( $email_templates['verification_reminder'] ) ) {
+			$email_templates['verification_reminder'] = \Jetonomy\Notifications\Notifier::get_default_template( 'verification_reminder' );
+			update_option( 'jetonomy_email_templates', $email_templates );
 		}
 
 		// Only redirect to the setup wizard on the FIRST activation. Plugin
@@ -228,6 +253,45 @@ final class Jetonomy {
 		$this->check_db_version();
 		$this->load_dependencies();
 		$this->maybe_backfill_activity();
+		$this->maybe_seed_verification_reminder_defaults();
+	}
+
+	/**
+	 * One-time seed for the 1.4.1 verification-reminder defaults
+	 * (`jetonomy_settings.verification_reminder_hours` + the default
+	 * `verification_reminder` email template). activate() handles fresh
+	 * installs but every existing 1.4.0 install upgrading in-place needs
+	 * the same defaults the first time it loads on 1.4.1. Guarded by a
+	 * single option so the work only happens once per site, identical
+	 * pattern to maybe_backfill_activity() above.
+	 */
+	private function maybe_seed_verification_reminder_defaults(): void {
+		if ( get_option( 'jetonomy_verification_reminder_seeded' ) ) {
+			return;
+		}
+
+		$settings = get_option( 'jetonomy_settings', array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+		if ( ! array_key_exists( 'verification_reminder_hours', $settings ) ) {
+			$settings['verification_reminder_hours'] = 24;
+			update_option( 'jetonomy_settings', $settings );
+		}
+
+		$email_templates = get_option( 'jetonomy_email_templates', array() );
+		if ( ! is_array( $email_templates ) ) {
+			$email_templates = array();
+		}
+		if ( ! isset( $email_templates['verification_reminder'] ) ) {
+			// Single source of truth — see Notifier::get_default_template()
+			// docblock for why both the activate() seed and the upgrade
+			// path delegate here.
+			$email_templates['verification_reminder'] = \Jetonomy\Notifications\Notifier::get_default_template( 'verification_reminder' );
+			update_option( 'jetonomy_email_templates', $email_templates );
+		}
+
+		update_option( 'jetonomy_verification_reminder_seeded', true );
 	}
 
 	private function maybe_redirect_to_setup(): void {
@@ -252,10 +316,25 @@ final class Jetonomy {
 
 	private function check_db_version(): void {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
-		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
-			require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
-			DB\Migrator::run( $current );
+		if ( ! version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
+			return;
 		}
+
+		// 1) Run any registered data migrations from the stored version forward.
+		require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
+		DB\Migrator::run( $current );
+
+		// 2) Re-run Schema::create_tables() as a safety net. dbDelta is
+		// idempotent — it adds any tables / columns / indexes that exist in
+		// the current Schema definition but are missing from the database.
+		// This protects against the case where a new table was added to
+		// Schema between releases without a matching migration file (e.g.
+		// `jt_bookmarks` added in 1.1.0 but never registered in Migrator).
+		// Mirrors the Pro plugin's self-heal pattern in class-jetonomy-pro.php.
+		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
+		DB\Schema::create_tables();
+
+		update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 	}
 
 	private function load_dependencies(): void {
@@ -333,6 +412,14 @@ final class Jetonomy {
 		}
 
 		// Ollama AI adapter (conditional — self-hosted, free).
+		//
+		// AI_Adapter has zero in-tree consumers in the free plugin. That's
+		// intentional: the registry slot is a Pro-only extension hook. Pro's
+		// AI extension consumes Adapter_Registry::get_ai() / get_all_ai() and
+		// brings its own provider adapters (OpenAI, Anthropic, custom) plus
+		// the moderator / suggester / summarizer features that consume them.
+		// Free ships Ollama for the self-hosted no-Pro use case via the
+		// AI_Spam_Detector instance below.
 		$ai_settings = $settings['ai']['providers']['ollama'] ?? [];
 		if ( ! empty( $ai_settings['enabled'] ) ) {
 			Adapters\Adapter_Registry::register_ai( 'ollama', new Adapters\Ollama_AI_Adapter() );

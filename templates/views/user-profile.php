@@ -12,8 +12,15 @@ $user       = get_user_by( 'login', $user_login );
 
 if ( ! $user ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'User not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'User not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -224,9 +231,15 @@ $crumbs = [
 
 			<?php if ( 'replies' === $current_tab ) : ?>
 				<?php if ( empty( $user_replies ) ) : ?>
-					<div class="jt-empty-compact">
-						<div class="jt-empty-text"><?php esc_html_e( 'No replies yet.', 'jetonomy' ); ?></div>
-					</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'message' => __( 'No replies yet.', 'jetonomy' ),
+							'variant' => 'compact',
+						]
+					);
+					?>
 				<?php else : ?>
 					<div class="jt-topics">
 						<?php foreach ( $user_replies as $ur ) : ?>
@@ -265,9 +278,15 @@ $crumbs = [
 
 			<?php elseif ( 'votes' === $current_tab ) : ?>
 				<?php if ( empty( $user_votes ) ) : ?>
-					<div class="jt-empty-compact">
-						<div class="jt-empty-text"><?php esc_html_e( 'No votes yet.', 'jetonomy' ); ?></div>
-					</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'message' => __( 'No votes yet.', 'jetonomy' ),
+							'variant' => 'compact',
+						]
+					);
+					?>
 				<?php else : ?>
 					<div class="jt-topics">
 						<?php foreach ( $user_votes as $uv ) : ?>
@@ -305,9 +324,15 @@ $crumbs = [
 
 			<?php elseif ( 'drafts' === $current_tab && $is_own ) : ?>
 				<?php if ( empty( $user_drafts ) ) : ?>
-				<div class="jt-empty-compact">
-					<div class="jt-empty-text"><?php esc_html_e( 'No drafts yet. Save a post as draft and it will appear here.', 'jetonomy' ); ?></div>
-				</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'message' => __( 'No drafts yet. Save a post as draft and it will appear here.', 'jetonomy' ),
+							'variant' => 'compact',
+						]
+					);
+					?>
 			<?php else : ?>
 				<?php $datetime_format = $wp_date_format . ' ' . $wp_time_format; ?>
 				<div class="jt-topics">
@@ -371,9 +396,15 @@ $crumbs = [
 
 		<?php elseif ( 'bookmarks' === $current_tab && $is_own ) : ?>
 				<?php if ( empty( $bookmarks ) ) : ?>
-					<div class="jt-empty-compact">
-						<div class="jt-empty-text"><?php esc_html_e( 'No bookmarks yet. Bookmark posts to find them here later.', 'jetonomy' ); ?></div>
-					</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'message' => __( 'No bookmarks yet. Bookmark posts to find them here later.', 'jetonomy' ),
+							'variant' => 'compact',
+						]
+					);
+					?>
 				<?php else : ?>
 					<div class="jt-topics">
 						<?php
@@ -430,9 +461,15 @@ $crumbs = [
 				<?php endif; ?>
 			<?php else : ?>
 				<?php if ( empty( $recent_posts ) ) : ?>
-					<div class="jt-empty-compact">
-						<div class="jt-empty-text"><?php esc_html_e( 'No posts yet.', 'jetonomy' ); ?></div>
-					</div>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'message' => __( 'No posts yet.', 'jetonomy' ),
+							'variant' => 'compact',
+						]
+					);
+					?>
 				<?php else : ?>
 					<div class="jt-topics">
 						<?php foreach ( $recent_posts as $r_post ) : ?>

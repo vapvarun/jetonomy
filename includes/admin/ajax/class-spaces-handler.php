@@ -70,6 +70,11 @@ class Spaces_Handler {
 			$status = 'active';
 		}
 
+		$combo = Space::validate_visibility_join_policy( $visibility, $join_policy );
+		if ( is_wp_error( $combo ) ) {
+			wp_send_json_error( $combo->get_error_message() );
+		}
+
 		$id = Space::create(
 			array(
 				'title'       => $title,
@@ -152,6 +157,24 @@ class Spaces_Handler {
 				$data['status'] = $status;
 			}
 		}
+
+		// Cross-validate visibility + join_policy after overlaying the patch
+		// onto the existing space row. Either field may have been left out of
+		// the form post and we still need to honour the rule against the
+		// stored value (e.g. flipping just visibility to "hidden" on a space
+		// whose stored join_policy is "open").
+		if ( isset( $data['visibility'] ) || isset( $data['join_policy'] ) ) {
+			$existing              = Space::find( $id );
+			$effective_visibility  = $data['visibility'] ?? ( $existing->visibility ?? 'public' );
+			$effective_join_policy = $data['join_policy'] ?? ( $existing->join_policy ?? 'open' );
+			$combo                 = Space::validate_visibility_join_policy(
+				(string) $effective_visibility,
+				(string) $effective_join_policy
+			);
+			if ( is_wp_error( $combo ) ) {
+				wp_send_json_error( $combo->get_error_message() );
+			}
+		}
 		if ( isset( $_POST['cover_image'] ) ) {
 			$data['cover_image'] = esc_url_raw( wp_unslash( $_POST['cover_image'] ) ) ?: null;
 		}
@@ -200,7 +223,7 @@ class Spaces_Handler {
 							$drop_posts_per_page = true;
 						} else {
 							$decoded['posts_per_page'] = max( 1, min( 100, (int) $pp ) );
-							$drop_posts_per_page = false;
+							$drop_posts_per_page       = false;
 						}
 					} else {
 						$drop_posts_per_page = false;

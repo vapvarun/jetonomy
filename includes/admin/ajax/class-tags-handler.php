@@ -132,8 +132,8 @@ class Tags_Handler {
 		if ( (int) ( $tag->post_count ?? 0 ) > 0 && ! $force ) {
 			wp_send_json_error(
 				[
-					'message'    => __( 'This tag is still attached to posts.', 'jetonomy' ),
-					'post_count' => (int) $tag->post_count,
+					'message'       => __( 'This tag is still attached to posts.', 'jetonomy' ),
+					'post_count'    => (int) $tag->post_count,
 					'needs_confirm' => true,
 				]
 			);

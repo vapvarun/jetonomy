@@ -2,6 +2,17 @@
 /**
  * Admin spaces management view.
  *
+ * Variables seeded by Admin::render_spaces() before include.
+ *
+ * @var int      $per_page
+ * @var int      $paged
+ * @var int      $total
+ * @var int      $total_pages
+ * @var object[] $categories
+ * @var int|null $filter_category
+ * @var string   $filter_status
+ * @var string   $filter_type
+ *
  * @package Jetonomy
  */
 

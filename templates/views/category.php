@@ -12,8 +12,15 @@ $category      = \Jetonomy\Models\Category::find_by_slug( $category_slug );
 
 if ( ! $category ) {
 	status_header( 404 );
-	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- jetonomy_icon() returns trusted SVG
-	echo '<div class="jt-empty"><div class="jt-empty-icon">' . jetonomy_icon( 'search', 48 ) . '</div><div class="jt-empty-text">' . esc_html__( 'Category not found.', 'jetonomy' ) . '</div></div>';
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'      => 'empty-search',
+			'icon_size' => 48,
+			'message'   => __( 'Category not found.', 'jetonomy' ),
+			'tone'      => 'warn',
+		]
+	);
 	return;
 }
 
@@ -44,21 +51,31 @@ $crumbs = [
 			</div>
 
 			<?php if ( empty( $spaces ) ) : ?>
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'search', 48 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'No spaces in this category yet.', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'      => 'empty-search',
+						'icon_size' => 48,
+						'message'   => __( 'No spaces in this category yet.', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-space-grid">
 					<?php foreach ( $spaces as $space ) : ?>
 						<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
 							class="jt-card jt-space-card jt-no-underline jt-block">
 							<div class="jt-space-card-inner">
-								<?php if ( ! empty( $space->icon ) ) : ?>
-									<span class="jt-space-card-emoji"><?php echo esc_html( $space->icon ); ?></span>
-								<?php endif; ?>
+								<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-space-card-emoji', $space->type ?? '' ); ?>
 								<div class="jt-space-card-body">
 									<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
+									<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
+										<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php esc_attr_e( 'Hidden space. Only admins and members can see this listing.', 'jetonomy' ); ?>">
+											<?php jetonomy_echo_icon( 'lock', 12 ); ?>
+											<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
+										</span>
+									<?php endif; ?>
 									<?php if ( ! empty( $space->description ) ) : ?>
 										<div class="jt-space-card-excerpt">
 											<?php echo esc_html( $space->description ); ?>

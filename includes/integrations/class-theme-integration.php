@@ -49,7 +49,7 @@ class Theme_Integration {
 	 */
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'output_color_bridge' ), 20 );
-		add_action( 'wp_footer', array( $this, 'output_dark_mode_mirror' ), 5 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'output_dark_mode_mirror' ), 20 );
 	}
 
 	/**
@@ -125,39 +125,13 @@ class Theme_Integration {
 			return;
 		}
 
-		$script = <<<'JS'
-(function () {
-	var html = document.documentElement;
-	var body = document.body;
-	if ( ! body ) {
-		return;
-	}
-	var darkClasses = [ 'wp-dark-mode-active', 'dark-mode', 'theme-dark' ];
-	function sync() {
-		var isDark = false;
-		for ( var i = 0; i < darkClasses.length; i++ ) {
-			if ( html.classList.contains( darkClasses[ i ] )
-				|| body.classList.contains( darkClasses[ i ] ) ) {
-				isDark = true;
-				break;
-			}
-		}
-		body.classList.toggle( 'jt-dark', isDark );
-	}
-	sync();
-	if ( typeof MutationObserver === 'function' ) {
-		var opts = { attributes: true, attributeFilter: [ 'class' ] };
-		new MutationObserver( sync ).observe( html, opts );
-		new MutationObserver( sync ).observe( body, opts );
-	}
-})();
-JS;
-
-		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
-			wp_print_inline_script_tag( $script, array( 'id' => 'jetonomy-theme-dark-mirror' ) );
-		} else {
-			echo '<script id="jetonomy-theme-dark-mirror">' . $script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		}
+		wp_enqueue_script(
+			'jetonomy-dark-mode-mirror',
+			JETONOMY_URL . 'assets/js/dark-mode-mirror.js',
+			array(),
+			JETONOMY_VERSION,
+			true
+		);
 	}
 
 	/**

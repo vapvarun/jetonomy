@@ -2,6 +2,10 @@
 /**
  * Admin categories management view.
  *
+ * Variables seeded by Admin::render_categories() before include.
+ *
+ * @var object[] $all_categories
+ *
  * @package Jetonomy
  */
 

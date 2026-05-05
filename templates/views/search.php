@@ -140,7 +140,7 @@ $crumbs = [
 			<!-- Search form -->
 			<form method="get" action="<?php echo esc_url( $base . '/search/' ); ?>" class="jt-search-page-form" autocomplete="off">
 				<div class="jt-search-page-input">
-					<svg class="jt-search-page-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
 					<input type="text" name="q"
 						value="<?php echo esc_attr( $q ); ?>"
 						placeholder="<?php esc_attr_e( 'Search discussions, spaces, tags…', 'jetonomy' ); ?>"
@@ -170,7 +170,8 @@ $crumbs = [
 							);
 							?>
 							<a href="<?php echo esc_url( $f_url ); ?>"
-								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>">
+								class="jt-pill <?php echo $filter === $key ? esc_attr( 'on' ) : ''; ?>"
+								<?php echo $filter === $key ? 'aria-current="true"' : ''; ?>>
 								<?php echo esc_html( $label ); ?>
 							</a>
 						<?php endforeach; ?>
@@ -221,15 +222,17 @@ $crumbs = [
 				<?php do_action( 'jetonomy_search_filters', $q, $filter, compact( 'date_from', 'date_to', 'author_id', 'tag_slug', 'sort' ) ); ?>
 
 				<?php if ( 0 === $total ) : ?>
-					<div class="jt-empty">
-						<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-search', 80 ); ?></div>
-						<div class="jt-empty-text">
-							<?php
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'empty-state',
+						[
+							'icon'    => 'empty-search',
 							/* translators: %s: search query */
-							echo esc_html( sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ) );
-							?>
-						</div>
-					</div>
+							'message' => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
+							'tone'    => 'warn',
+						]
+					);
+					?>
 				<?php else : ?>
 
 					<?php if ( ! empty( $posts ) ) : ?>
@@ -285,9 +288,7 @@ $crumbs = [
 								<a href="<?php echo esc_url( $base . '/s/' . $space->slug . '/' ); ?>"
 									class="jt-card jt-space-card jt-no-underline jt-block">
 									<div class="jt-space-card-inner">
-										<?php if ( ! empty( $space->icon ) ) : ?>
-											<span class="jt-cat-emoji"><?php echo esc_html( $space->icon ); ?></span>
-										<?php endif; ?>
+										<?php jetonomy_render_space_icon( $space->icon ?? '', 24, 'jt-cat-emoji', $space->type ?? '' ); ?>
 										<div>
 											<div class="jt-space-card-title"><?php echo esc_html( $space->title ); ?></div>
 											<?php if ( ! empty( $space->description ) ) : ?>
@@ -319,11 +320,16 @@ $crumbs = [
 
 				<?php endif; ?>
 			<?php else : ?>
-				<!-- No query yet -->
-				<div class="jt-empty">
-					<div class="jt-empty-icon"><?php jetonomy_echo_icon( 'empty-search', 80 ); ?></div>
-					<div class="jt-empty-text"><?php esc_html_e( 'Enter a search term above to find discussions, spaces, and tags.', 'jetonomy' ); ?></div>
-				</div>
+				<?php
+				// No query yet — invite the user to search.
+				\Jetonomy\Template_Loader::partial(
+					'empty-state',
+					[
+						'icon'    => 'empty-search',
+						'message' => __( 'Enter a search term above to find discussions, spaces, and tags.', 'jetonomy' ),
+					]
+				);
+				?>
 			<?php endif; ?>
 		</main>
 

@@ -9,6 +9,7 @@ namespace Jetonomy;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Notifications\Verification_Reminder;
 use Jetonomy\Trust\Trust_Evaluator;
 use function Jetonomy\table;
 
@@ -24,6 +25,13 @@ class Cron {
 		add_action( 'jetonomy_prune_activity', [ $this, 'prune_activity_log' ] );
 		add_action( 'jetonomy_cleanup_notifications', [ $this, 'cleanup_old_notifications' ] );
 		add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
+		add_action( 'jetonomy_verification_reminder', [ Verification_Reminder::class, 'run' ] );
+
+		// Self-heal: schedule the verification-reminder cron lazily on
+		// every request so existing installs upgrading to 1.4.1 pick up
+		// the new hook without having to deactivate/reactivate. Cheap —
+		// `wp_next_scheduled` is a single transient lookup.
+		add_action( 'init', [ $this, 'maybe_schedule_verification_reminder' ] );
 	}
 
 	/**
@@ -60,6 +68,11 @@ class Cron {
 		if ( ! wp_next_scheduled( 'jetonomy_publish_scheduled' ) ) {
 			wp_schedule_event( time(), 'hourly', 'jetonomy_publish_scheduled' );
 		}
+		if ( ! wp_next_scheduled( 'jetonomy_verification_reminder' ) ) {
+			// Stagger by an hour so the cron isn't competing with everything
+			// else activate() just scheduled at time().
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_verification_reminder' );
+		}
 	}
 
 	/**
@@ -71,6 +84,19 @@ class Cron {
 		wp_clear_scheduled_hook( 'jetonomy_prune_activity' );
 		wp_clear_scheduled_hook( 'jetonomy_cleanup_notifications' );
 		wp_clear_scheduled_hook( 'jetonomy_publish_scheduled' );
+		wp_clear_scheduled_hook( 'jetonomy_verification_reminder' );
+	}
+
+	/**
+	 * Lazy-schedule the verification-reminder cron on every request so
+	 * existing installs upgrading to 1.4.1 pick up the new hook without
+	 * needing a deactivate/reactivate cycle. `wp_next_scheduled()` is a
+	 * cheap transient lookup, so the no-op path is essentially free.
+	 */
+	public function maybe_schedule_verification_reminder(): void {
+		if ( ! wp_next_scheduled( 'jetonomy_verification_reminder' ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_verification_reminder' );
+		}
 	}
 
 	public function add_schedules( array $schedules ): array {
@@ -100,7 +126,7 @@ class Cron {
 			return;
 		}
 
-		$user_ids = wp_list_pluck( $profiles, 'user_id' );
+		$user_ids        = wp_list_pluck( $profiles, 'user_id' );
 		$id_placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare

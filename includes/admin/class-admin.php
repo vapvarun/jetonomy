@@ -25,8 +25,14 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_init', array( $this, 'maybe_render_setup_wizard' ) );
+		// A6: intercepts the CSV export request before any output is sent so
+		// the download streams cleanly without admin-header HTML interleaving.
+		add_action( 'admin_init', array( $this, 'maybe_export_activity_csv' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
+		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
+		// A6: persist the per-page screen option for the Activity Log table.
+		add_filter( 'set-screen-option', array( $this, 'save_activity_screen_option' ), 10, 3 );
 
 		new Ajax\Categories_Handler();
 		new Ajax\Tags_Handler();
@@ -107,6 +113,39 @@ class Admin {
 			'jetonomy_moderate',
 			'jetonomy-moderation',
 			array( $this, 'render_moderation' )
+		);
+
+		// ── A6: Activity Log ──
+		// Sits between Content and Users in the sidebar — read-only audit
+		// browser over jt_activity_log. Capability matches every other
+		// non-mod admin page so existing settings admins can use it without
+		// any cap migration.
+		$activity_hook = add_submenu_page(
+			'jetonomy',
+			__( 'Activity Log', 'jetonomy' ),
+			__( 'Activity Log', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-activity',
+			array( $this, 'render_activity' )
+		);
+		if ( $activity_hook ) {
+			add_action( "load-{$activity_hook}", array( $this, 'on_activity_load' ) );
+		}
+
+		// ── A7: Revisions ──
+		// Slots between Activity Log and Users. Read-only browser over
+		// jt_revisions (per-object diff viewer). Same capability as the
+		// other non-mod admin pages, so no cap migration is needed.
+		// Order constraint: Content · Moderation · Activity Log ·
+		// Revisions · Users — A6 must remain immediately before; Users
+		// must remain immediately after.
+		add_submenu_page(
+			'jetonomy',
+			__( 'Revisions', 'jetonomy' ),
+			__( 'Revisions', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-revisions',
+			array( $this, 'render_revisions_page' )
 		);
 
 		add_submenu_page(
@@ -219,6 +258,10 @@ class Admin {
 			'vote_on_post',
 			'moderation',
 			'join_request',
+			// A8: editor row for the A10 reminder cron's email. Without this
+			// the form silently strips any verification_reminder override
+			// because the loop below only persists allowlisted keys.
+			'verification_reminder',
 		);
 
 		$clean = array();
@@ -412,6 +455,30 @@ class Admin {
 	/**
 	 * Hide third-party admin notices on Jetonomy pages.
 	 */
+	/**
+	 * Apply the `jetonomy_admin_footer_text` filter on Jetonomy admin pages.
+	 * Lets extensions (e.g. Pro white-label) replace the WordPress default
+	 * "Thank you for creating with WordPress" line on plugin screens.
+	 *
+	 * @since 1.4.1
+	 *
+	 * @param string $text Default WordPress footer text.
+	 * @return string Filtered text.
+	 */
+	public function filter_admin_footer_text( $text ) {
+		$screen = get_current_screen();
+		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
+			return $text;
+		}
+		/**
+		 * Filter the admin footer text shown on Jetonomy admin pages.
+		 *
+		 * @since 1.4.1
+		 * @param string $text Current footer text.
+		 */
+		return (string) apply_filters( 'jetonomy_admin_footer_text', (string) $text );
+	}
+
 	public function hide_third_party_notices(): void {
 		$screen = get_current_screen();
 		if ( ! $screen || false === strpos( $screen->id, 'jetonomy' ) ) {
@@ -541,23 +608,80 @@ class Admin {
 				'nonce'              => wp_create_nonce( 'jetonomy_admin' ),
 				'membershipAdapters' => $membership_adapters,
 				'i18n'               => array(
-					'confirmDelete'   => __( 'Are you sure? This cannot be undone.', 'jetonomy' ),
-					'confirmBan'      => __( 'Are you sure you want to ban this user?', 'jetonomy' ),
-					'saving'          => __( 'Saving...', 'jetonomy' ),
-					'saved'           => __( 'Saved!', 'jetonomy' ),
-					'deleted'         => __( 'Deleted.', 'jetonomy' ),
-					'error'           => __( 'Something went wrong.', 'jetonomy' ),
-					'importing'       => __( 'Importing...', 'jetonomy' ),
-					'importDone'      => __( 'Import complete!', 'jetonomy' ),
-					'selectImage'     => __( 'Select Image', 'jetonomy' ),
-					'useImage'        => __( 'Use this image', 'jetonomy' ),
-					'testEmailSent'   => __( 'Test email sent!', 'jetonomy' ),
-					'rewritesFlushed' => __( 'Rewrite rules flushed.', 'jetonomy' ),
-					'unban'           => __( 'Unban', 'jetonomy' ),
-					'ban'             => __( 'Ban', 'jetonomy' ),
+					'confirmDelete'           => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
+					'confirmBan'              => esc_html__( 'Are you sure you want to ban this user?', 'jetonomy' ),
+					'saving'                  => esc_html__( 'Saving...', 'jetonomy' ),
+					'saved'                   => esc_html__( 'Saved!', 'jetonomy' ),
+					'deleted'                 => esc_html__( 'Deleted.', 'jetonomy' ),
+					'error'                   => esc_html__( 'Something went wrong.', 'jetonomy' ),
+					'importing'               => esc_html__( 'Importing...', 'jetonomy' ),
+					'importDone'              => esc_html__( 'Import complete!', 'jetonomy' ),
+					'selectImage'             => esc_html__( 'Select Image', 'jetonomy' ),
+					'useImage'                => esc_html__( 'Use this image', 'jetonomy' ),
+					'testEmailSent'           => esc_html__( 'Test email sent!', 'jetonomy' ),
+					'rewritesFlushed'         => esc_html__( 'Rewrite rules flushed.', 'jetonomy' ),
+					'unban'                   => esc_html__( 'Unban', 'jetonomy' ),
+					'ban'                     => esc_html__( 'Ban', 'jetonomy' ),
+					'demoCleanupConfirm'      => esc_html__( 'Delete all sample categories, spaces, posts, and replies from the setup wizard? Your own content is not affected.', 'jetonomy' ),
+					'demoCleanupRemoving'     => esc_html__( 'Removing...', 'jetonomy' ),
+					'revisionViewDiff'        => esc_html__( 'View diff', 'jetonomy' ),
+					'revisionHideDiff'        => esc_html__( 'Hide diff', 'jetonomy' ),
+					'tagNameRequired'         => esc_html__( 'Name is required.', 'jetonomy' ),
+					'tagDeleteConfirm'        => esc_html__( 'Delete this tag?', 'jetonomy' ),
+					'tagDeleteAttachedPrefix' => esc_html__( 'This tag is attached to', 'jetonomy' ),
+					'tagDeleteAttachedSuffix' => esc_html__( 'posts. Delete it and detach from all posts?', 'jetonomy' ),
+					'tagBulkSelectAtLeastOne' => esc_html__( 'Select at least one tag.', 'jetonomy' ),
+					'tagBulkDeleteConfirm'    => esc_html__( 'Delete the selected tags?', 'jetonomy' ),
+					'emailPreviewFailed'      => esc_html__( 'Preview failed.', 'jetonomy' ),
+					'emailPreviewTitle'       => esc_html__( 'Email Preview', 'jetonomy' ),
+					'emailSending'            => esc_html__( 'Sending...', 'jetonomy' ),
+					'emailSent'               => esc_html__( 'Sent.', 'jetonomy' ),
+					'emailSendFailed'         => esc_html__( 'Failed to send.', 'jetonomy' ),
+					/* translators: %s: email template label */
+					'emailResetConfirm'       => esc_html__( 'Reset %s to default? Your custom copy will be lost.', 'jetonomy' ),
+					'emailResetFailed'        => esc_html__( 'Reset failed.', 'jetonomy' ),
+					'hiddenForcesInvite'      => esc_html__( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
+					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
 				),
 			)
 		);
+
+		// Per-page admin scripts. Hook suffix matches WP's auto-generated
+		// menu_page_url hook ('toplevel_page_jetonomy' for the dashboard,
+		// 'jetonomy_page_jetonomy-{slug}' for sub-pages).
+		if ( 'toplevel_page_jetonomy' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-dashboard',
+				JETONOMY_URL . 'assets/js/admin-dashboard.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'jetonomy_page_jetonomy-revisions' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-revisions',
+				JETONOMY_URL . 'assets/js/admin-revisions.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'jetonomy_page_jetonomy-tags' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-tags',
+				JETONOMY_URL . 'assets/js/admin-tags.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		} elseif ( 'jetonomy_page_jetonomy-settings' === $hook ) {
+			wp_enqueue_script(
+				'jetonomy-admin-settings',
+				JETONOMY_URL . 'assets/js/admin-settings.js',
+				array( 'jetonomy-admin' ),
+				JETONOMY_VERSION,
+				true
+			);
+		}
 	}
 
 	// ── Page Renderers ──
@@ -784,6 +908,238 @@ class Admin {
 		) ?: array();
 
 		include JETONOMY_DIR . 'includes/admin/views/moderation.php';
+	}
+
+	// ── A6: Activity Log ──
+
+	/**
+	 * load-* hook for the Activity Log screen — registers the per-page
+	 * screen option BEFORE prepare_items() runs so admins can pick a
+	 * non-default page size without their preference being ignored.
+	 */
+	public function on_activity_load(): void {
+		add_screen_option(
+			'per_page',
+			array(
+				'label'   => __( 'Entries per page', 'jetonomy' ),
+				'default' => 20,
+				'option'  => 'jetonomy_activity_per_page',
+			)
+		);
+	}
+
+	/**
+	 * Persist the screen-option value when the user saves it. WP only
+	 * applies returned non-false values, so a defensive cast keeps the
+	 * stored value within sane bounds.
+	 *
+	 * @param mixed  $status Current return value from earlier filters.
+	 * @param string $option Option key being saved.
+	 * @param mixed  $value  Submitted value.
+	 */
+	public function save_activity_screen_option( $status, $option, $value ) {
+		if ( 'jetonomy_activity_per_page' === $option ) {
+			$value = absint( $value );
+			if ( $value < 1 || $value > 200 ) {
+				$value = 20;
+			}
+			return $value;
+		}
+		return $status;
+	}
+
+	/**
+	 * Render the Activity Log admin page.
+	 */
+	public function render_activity(): void {
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'jetonomy' ) );
+		}
+
+		$list_table = new Activity_List_Table();
+		$list_table->prepare_items();
+
+		include JETONOMY_DIR . 'includes/admin/views/activity.php';
+	}
+
+	/**
+	 * Stream the filtered Activity Log as CSV.
+	 *
+	 * Triggered when admin.php?page=jetonomy-activity&action=export_csv is
+	 * loaded with a valid nonce. Runs on admin_init so headers can be sent
+	 * before any wp-admin chrome renders. Filters mirror the list table —
+	 * the same read_filters() helper feeds both code paths.
+	 */
+	public function maybe_export_activity_csv(): void {
+		if ( ! isset( $_GET['page'], $_GET['action'] ) ) {
+			return;
+		}
+		if ( 'jetonomy-activity' !== $_GET['page'] || 'export_csv' !== $_GET['action'] ) {
+			return;
+		}
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to export activity.', 'jetonomy' ) );
+		}
+		check_admin_referer( 'jetonomy_activity_export' );
+
+		global $wpdb;
+		$activity_t = table( 'activity_log' );
+		$filters    = Activity_List_Table::read_filters();
+
+		$clauses = array( '1=1' );
+		$args    = array();
+		if ( $filters['user_id'] > 0 ) {
+			$clauses[] = 'user_id = %d';
+			$args[]    = $filters['user_id'];
+		}
+		if ( '' !== $filters['action'] ) {
+			$clauses[] = 'action = %s';
+			$args[]    = $filters['action'];
+		}
+		if ( '' !== $filters['date_from'] ) {
+			$clauses[] = 'created_at >= %s';
+			$args[]    = $filters['date_from'] . ' 00:00:00';
+		}
+		if ( '' !== $filters['date_to'] ) {
+			$clauses[] = 'created_at <= %s';
+			$args[]    = $filters['date_to'] . ' 23:59:59';
+		}
+		$where = implode( ' AND ', $clauses );
+
+		// Hard cap at 50k rows so a sloppy filter set can't generate a
+		// gigabyte download. Admins who need bigger exports should
+		// narrow the date range or use WP-CLI directly against the table.
+		$sql       = "SELECT id, user_id, action, object_type, object_id, metadata, created_at FROM {$activity_t} WHERE {$where} ORDER BY created_at DESC LIMIT 50000";
+		$full_args = $args;
+		$rows      = $full_args
+			? $wpdb->get_results( $wpdb->prepare( $sql, ...$full_args ), ARRAY_A )
+			: $wpdb->get_results( $sql, ARRAY_A );
+		$rows      = is_array( $rows ) ? $rows : array();
+
+		$filename = sprintf( 'jetonomy-activity-%s.csv', gmdate( 'Y-m-d-His' ) );
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		// php://output is the stdout stream — WP_Filesystem doesn't model it.
+		// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		$out = fopen( 'php://output', 'w' );
+		if ( false === $out ) {
+			exit;
+		}
+		fputcsv( $out, array( 'id', 'user_id', 'user_login', 'action', 'object_type', 'object_id', 'metadata', 'created_at' ) );
+		foreach ( $rows as $row ) {
+			$user       = $row['user_id'] ? get_userdata( (int) $row['user_id'] ) : null;
+			$user_login = $user ? $user->user_login : '';
+			fputcsv(
+				$out,
+				array(
+					(string) $row['id'],
+					(string) $row['user_id'],
+					$user_login,
+					(string) $row['action'],
+					(string) $row['object_type'],
+					(string) $row['object_id'],
+					(string) ( $row['metadata'] ?? '' ),
+					(string) $row['created_at'],
+				)
+			);
+		}
+		fclose( $out );
+		// phpcs:enable WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.WP.AlternativeFunctions.file_system_operations_fclose, WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		exit;
+	}
+
+	// ── A7: Revisions ──
+
+	/**
+	 * Render the Revisions admin page.
+	 *
+	 * Two modes branch on the URL:
+	 *   - List mode (no object_id): aggregate WP_List_Table.
+	 *   - Detail mode (object_type + object_id): per-object diff viewer
+	 *     using wp_text_diff() against the previous snapshot.
+	 *
+	 * Capability gate is duplicated here on top of the menu cap so a
+	 * direct URL hit fails closed with wp_die() rather than rendering a
+	 * blank page.
+	 */
+	public function render_revisions_page(): void {
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'jetonomy' ) );
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only navigation params.
+		$raw_type  = isset( $_GET['object_type'] ) ? sanitize_key( wp_unslash( $_GET['object_type'] ) ) : '';
+		$object_id = isset( $_GET['object_id'] ) ? absint( wp_unslash( $_GET['object_id'] ) ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$is_detail = ( in_array( $raw_type, array( 'post', 'reply' ), true ) && $object_id > 0 );
+
+		if ( $is_detail ) {
+			$mode        = 'detail';
+			$object_type = $raw_type;
+			$revisions   = \Jetonomy\Models\Revision::list_for_object( $object_type, $object_id );
+
+			// Resolve a human-readable title for the page heading. Posts
+			// have a title column; replies fall back to the parent post
+			// title (prefixed) so the row stays scannable even though
+			// replies are titleless.
+			$object_title = $this->resolve_revision_object_title( $object_type, $object_id );
+
+			$back_url = admin_url( 'admin.php?page=jetonomy-revisions' );
+
+			include JETONOMY_DIR . 'includes/admin/views/revisions.php';
+			return;
+		}
+
+		$mode       = 'list';
+		$list_table = new Revisions_List_Table();
+		$list_table->prepare_items();
+
+		include JETONOMY_DIR . 'includes/admin/views/revisions.php';
+	}
+
+	/**
+	 * Resolve a human-readable title for a (type, id) pair. Single-row
+	 * lookup since the detail view only renders one object at a time —
+	 * no batching needed here.
+	 */
+	private function resolve_revision_object_title( string $type, int $id ): string {
+		global $wpdb;
+
+		if ( 'post' === $type ) {
+			$posts_t = table( 'posts' );
+			$title   = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT title FROM {$posts_t} WHERE id = %d",
+					$id
+				)
+			);
+			return is_string( $title ) ? $title : '';
+		}
+
+		if ( 'reply' === $type ) {
+			$replies_t = table( 'replies' );
+			$posts_t   = table( 'posts' );
+			$parent    = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT p.title FROM {$replies_t} r LEFT JOIN {$posts_t} p ON p.id = r.post_id WHERE r.id = %d",
+					$id
+				)
+			);
+			if ( is_string( $parent ) && '' !== $parent ) {
+				return sprintf(
+					/* translators: %s: parent post title */
+					__( 'Reply to: %s', 'jetonomy' ),
+					$parent
+				);
+			}
+			return '';
+		}
+
+		return '';
 	}
 
 	public function render_users(): void {

@@ -24,41 +24,17 @@ global $wpdb;
 // -------------------------------------------------------------------------
 // 1. Drop custom database tables.
 //
-// All Jetonomy tables use the site's table prefix followed by "jt_".
-// Tables are dropped in reverse dependency order to avoid foreign-key issues
-// on environments that have FOREIGN_KEY_CHECKS enabled.
+// Pulls the canonical table list from Schema::get_table_names() so the drop
+// list never goes stale when a new table is added to Schema. Schema is a
+// pure namespaced helper with no load-time side effects (no hooks, no DB
+// calls in the class body), so requiring it here is safe even after
+// plugin files are mostly removed by WordPress's uninstall flow. The
+// Composer autoloader is intentionally NOT relied on — vendor/ may already
+// be deleted by the time this file runs.
 // -------------------------------------------------------------------------
 
-$tables = array(
-	'invite_links',
-	'join_requests',
-	'revisions',
-	'flags',
-	'access_rules',
-	'restrictions',
-	'activity_log',
-	'user_interests',
-	'space_tag_map',
-	'space_tags',
-	'post_tags',
-	'tags',
-	'space_members',
-	'read_status',
-	'subscriptions',
-	'notifications',
-	'user_profiles',
-	'votes',
-	'replies',
-	'posts',
-	'spaces',
-	'categories',
-);
-
-foreach ( $tables as $table ) {
-	$wpdb->query(
-		'DROP TABLE IF EXISTS ' . esc_sql( $wpdb->prefix . 'jt_' . $table )
-	);
-}
+require_once __DIR__ . '/includes/db/class-schema.php';
+\Jetonomy\DB\Schema::drop_tables();
 
 // -------------------------------------------------------------------------
 // 2. Delete plugin options.

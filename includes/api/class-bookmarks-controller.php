@@ -28,7 +28,11 @@ class Bookmarks_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'list_items' ],
-					'permission_callback' => '__return_true',
+					// A3 cleanup: handler enforces login via require_auth(); the
+					// callback now mirrors that so the manifest's `auth` field is
+					// accurate ("login_required" instead of "login_required_handler").
+					'permission_callback' => function () {
+						return is_user_logged_in(); },
 					'args'                => $this->get_collection_params(),
 				],
 				[

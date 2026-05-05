@@ -526,16 +526,17 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php
 				$email_templates = get_option( 'jetonomy_email_templates', array() );
 				$tmpl_types      = array(
-					'user_welcome'    => __( 'Welcome: new member', 'jetonomy' ),
-					'reply_to_post'   => __( 'Reply to your post', 'jetonomy' ),
-					'reply_to_reply'  => __( 'Reply to your reply', 'jetonomy' ),
-					'mention'         => __( 'Mention (@username)', 'jetonomy' ),
-					'accepted_answer' => __( 'Your answer accepted', 'jetonomy' ),
-					'new_post_in_sub' => __( 'New post in subscribed space', 'jetonomy' ),
-					'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
-					'vote_on_post'    => __( 'Vote on your post', 'jetonomy' ),
-					'moderation'      => __( 'Moderator action', 'jetonomy' ),
-					'join_request'    => __( 'Space join request', 'jetonomy' ),
+					'user_welcome'          => __( 'Welcome: new member', 'jetonomy' ),
+					'reply_to_post'         => __( 'Reply to your post', 'jetonomy' ),
+					'reply_to_reply'        => __( 'Reply to your reply', 'jetonomy' ),
+					'mention'               => __( 'Mention (@username)', 'jetonomy' ),
+					'accepted_answer'       => __( 'Your answer accepted', 'jetonomy' ),
+					'new_post_in_sub'       => __( 'New post in subscribed space', 'jetonomy' ),
+					'badge_earned'          => __( 'Badge earned', 'jetonomy' ),
+					'vote_on_post'          => __( 'Vote on your post', 'jetonomy' ),
+					'moderation'            => __( 'Moderator action', 'jetonomy' ),
+					'join_request'          => __( 'Space join request', 'jetonomy' ),
+					'verification_reminder' => __( 'Verification reminder', 'jetonomy' ),
 				);
 				?>
 				<table class="widefat striped jetonomy-email-templates-table" style="margin-top:12px;">
@@ -577,6 +578,20 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<button type="button" class="button button-small jetonomy-email-send-btn" data-type="<?php echo esc_attr( $type ); ?>" data-label="<?php esc_attr_e( 'Send test', 'jetonomy' ); ?>">
 										<?php esc_html_e( 'Send test', 'jetonomy' ); ?>
 									</button>
+									<?php
+									// A8: only show Reset when an override is actually persisted —
+									// clicking Reset on a row that's already on the default would be
+									// a no-op and confusing. JS toggles visibility after the user
+									// edits or saves, but the initial render is driven by the option.
+									$has_override = isset( $email_templates[ $type ] ) && is_array( $email_templates[ $type ] );
+									?>
+									<button type="button"
+										class="button button-small button-link-delete jetonomy-email-reset-btn"
+										data-type="<?php echo esc_attr( $type ); ?>"
+										data-label="<?php echo esc_attr( $label ); ?>"
+										<?php echo $has_override ? '' : 'style="display:none;"'; ?>>
+										<?php esc_html_e( 'Reset to default', 'jetonomy' ); ?>
+									</button>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -598,84 +613,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</p>
 				</div>
 			</div>
-
-			<script>
-			( function () {
-				const nonce = ( window.jetonomyAdmin && window.jetonomyAdmin.nonce ) || '';
-				const ajax  = ( window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl ) || window.ajaxurl;
-				if ( ! nonce || ! ajax ) { return; }
-
-				const modal   = document.getElementById( 'jetonomy-email-preview-modal' );
-				const iframe  = document.getElementById( 'jetonomy-email-preview-iframe' );
-				const subjEl  = document.getElementById( 'jetonomy-email-preview-subject' );
-
-				function closeModal() { modal.style.display = 'none'; }
-				function openModal()  { modal.style.display = ''; }
-
-				modal.querySelectorAll( '.jetonomy-modal-close, .jetonomy-modal__overlay' ).forEach( el => {
-					el.addEventListener( 'click', closeModal );
-				} );
-				document.addEventListener( 'keydown', e => {
-					if ( 'Escape' === e.key && 'none' !== modal.style.display ) { closeModal(); }
-				} );
-
-				function rowFields( type ) {
-					const row = document.querySelector( '[data-jt-email-type="' + type + '"]' );
-					return {
-						subject: row ? ( row.querySelector( '.jetonomy-email-subject-input' )?.value || '' ) : '',
-						body:    row ? ( row.querySelector( '.jetonomy-email-body-input' )?.value || '' ) : ''
-					};
-				}
-
-				// Preview — modal with branded HTML in an iframe (srcdoc).
-				document.querySelectorAll( '.jetonomy-email-preview-btn' ).forEach( btn => {
-					btn.addEventListener( 'click', async () => {
-						const type = btn.dataset.type;
-						const f    = rowFields( type );
-						const body = new FormData();
-						body.append( 'action', 'jetonomy_email_preview' );
-						body.append( 'nonce', nonce );
-						body.append( 'type', type );
-						body.append( 'subject', f.subject );
-						body.append( 'body', f.body );
-
-						const res  = await fetch( ajax, { method: 'POST', credentials: 'same-origin', body } );
-						const json = await res.json();
-						if ( ! json.success ) {
-							( window.jetonomyAlert || window.alert )( ( json.data && json.data.message ) || json.data || '<?php echo esc_js( __( 'Preview failed.', 'jetonomy' ) ); ?>' );
-							return;
-						}
-						subjEl.textContent = json.data.subject || '<?php echo esc_js( __( 'Email Preview', 'jetonomy' ) ); ?>';
-						// srcdoc takes a string of HTML and sandboxes it inside
-						// the iframe — safer than writing into the parent document.
-						iframe.srcdoc = json.data.html;
-						openModal();
-					} );
-				} );
-
-				// Send test — deliver a real email with this type to admin_email.
-				document.querySelectorAll( '.jetonomy-email-send-btn' ).forEach( btn => {
-					btn.addEventListener( 'click', async () => {
-						const type   = btn.dataset.type;
-						const label  = btn.dataset.label || btn.textContent;
-						btn.disabled = true;
-						btn.textContent = '<?php echo esc_js( __( 'Sending…', 'jetonomy' ) ); ?>';
-
-						const body = new FormData();
-						body.append( 'action', 'jetonomy_test_email' );
-						body.append( 'nonce', nonce );
-						body.append( 'type', type );
-
-						const res  = await fetch( ajax, { method: 'POST', credentials: 'same-origin', body } );
-						const json = await res.json();
-						btn.disabled    = false;
-						btn.textContent = label;
-						const msg = ( json.data && json.data.message ) || json.data || '';
-						( window.jetonomyAlert || window.alert )( msg || ( json.success ? '<?php echo esc_js( __( 'Sent.', 'jetonomy' ) ); ?>' : '<?php echo esc_js( __( 'Failed to send.', 'jetonomy' ) ); ?>' ) );
-					} );
-				} );
-			} )();
-			</script>
 
 			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 				<div class="jt-pro-upsell">
@@ -1074,17 +1011,6 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</tr>
 				</table>
 			</div>
-
-			<script>
-			( function () {
-				var sel = document.getElementById( 'captcha_provider' );
-				var rcRow = document.querySelector( '.jt-captcha-recaptcha-only' );
-				if ( ! sel || ! rcRow ) return;
-				sel.addEventListener( 'change', function () {
-					rcRow.style.display = this.value === 'recaptcha_v3' ? '' : 'none';
-				} );
-			} )();
-			</script>
 
 		<?php elseif ( 'free-vs-pro' === $active_tab && ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
 
