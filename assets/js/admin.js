@@ -1223,12 +1223,12 @@
 				notice.className = 'notice notice-success';
 				var p = document.createElement('p');
 				var strong = document.createElement('strong');
-				strong.textContent = 'Import complete! ';
+				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
 				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
 				var link = document.createElement('a');
 				link.href = '';
-				link.textContent = 'Reload page';
+				link.textContent = Jetonomy.i18n.reloadPage || 'Reload page';
 				p.appendChild(link);
 				p.appendChild(document.createTextNode(' to see updated status.'));
 				notice.appendChild(p);
@@ -1267,7 +1267,7 @@
 							progressFill.style.width = '100%';
 							statusPct.textContent    = '100%';
 							progress.classList.add('jetonomy-import-progress--done');
-							statusText.textContent   = 'Import complete!';
+							statusText.textContent   = Jetonomy.i18n.importDone || 'Import complete!';
 
 							steps.forEach(function(s) {
 								s.classList.remove('jetonomy-step--active');
@@ -1283,7 +1283,7 @@
 						}
 					})
 					.catch(function() {
-						statusText.textContent  = 'Connection lost. You can resume this import later.';
+						statusText.textContent  = Jetonomy.i18n.importConnectionLost || 'Connection lost. You can resume this import later.';
 						actionDiv.style.display = 'block';
 					});
 			}

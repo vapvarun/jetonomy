@@ -697,6 +697,8 @@ class Admin {
 					'emailResetFailed'        => esc_html__( 'Reset failed.', 'jetonomy' ),
 					'hiddenForcesInvite'      => esc_html__( 'Hidden spaces must use Invite Only. Join policy switched.', 'jetonomy' ),
 					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
+					'reloadPage'              => esc_html__( 'Reload page', 'jetonomy' ),
+					'importConnectionLost'    => esc_html__( 'Connection lost. You can resume this import later.', 'jetonomy' ),
 				),
 			)
 		);
