@@ -152,82 +152,15 @@ composer test:combo        # PHPUnit with Pro loaded
 composer test:usability    # Playwright browser tests (250 flows)
 ```
 
-## Testing strategy (2026-04-14)
+## Testing strategy
 
-**Removed: browser-level Playwright usability suite** (`tests/usability/`).
-After evaluation it surfaced zero product UX bugs and primarily exposed
-test-infrastructure drift (hardcoded IDs, CLI arg mismatches, selector
-drift). The grind-to-signal ratio was too poor to justify continued
-investment. Real UX validation moved back to manual browser testing +
-Basecamp triage.
+The browser-level Playwright usability suite (`tests/usability/`) was removed because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
 
-**Kept — the layers that actually find bugs:**
-1. **PHPUnit** — 226 tests across unit/integration/security/concurrency/error-paths/pro. Runs via `composer test`. Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
-2. **`wp jetonomy qa-actions`** — 210 live-stack smoke checks (74 REST + 23 Model + 62 Pro + 51 Journey). Runs in ~30s, surfaces config gaps (e.g. missing `trust_thresholds` defaults).
-3. **`wp jetonomy scenario run <name>`** — 5 bundled end-to-end scenarios.
+1. **PHPUnit** — `composer test` (free + pro combo). Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
+2. **`wp jetonomy qa-actions`** — live-stack smoke checks across REST + Model + Pro + Journey layers. Runs in ~30s, surfaces config gaps.
+3. **`wp jetonomy scenario run <name>`** — bundled end-to-end scenarios.
 
-**Next session priorities:**
-- Triage Basecamp "In Testing" column (13+ cards never triaged)
-- Customer ticket triage (`/autovap support`)
-- Add `composer test` + `wp jetonomy qa-actions` to CI if not already wired
-
-## Recent Changes
-| Date | Commit | Summary |
-|---|---|---|
-| 2026-04-30 | audit refresh | `/wp-plugin-onboard --refresh` rerun for free + pro; v2 schema's `static_analysis` section added to both manifests. Free side: no dead listeners (the 6 candidates are wp_schedule_event cron names, not bugs); 4 low-severity grid 1fr collapse candidates documented for next CSS sweep. Cross-plugin scan against pro flagged 13 contract bugs (white-label filters never applied, custom-fields filters never applied, webhooks 8 lifecycle events have name drift or no firer). Documented in `audit/FEATURE_AUDIT.md`. Each entry has a fix target with file:line. |
-| 2026-04-30 | 1.4.1 in-flight | UX uniformity sweep landed: 5 contract sweeps (icons, action density, byline, spacing, empty state) executed across templates + partials + blocks. New `templates/partials/empty-state.php` partial used by 22 surfaces. Lucide icons only (no inline SVG, no WP emojis). Voting fix: Pro analytics aggregator gated by `table_exists()` check (was breaking AJAX response on sites without the analytics table). |
-| 2026-04-26 | 1.4.0 in-flight | Branch open. Phase 0 prelude landed: `Space::create` always seeds the creator as space admin (was AJAX-vs-Abilities split). Phases A (frontend AJAX → REST migration: media upload + Login block) and B (front-end space governance, G1–G7 in `docs/plans/v1.4.0.md`) follow. REST-first + RTL-ready hard-gated for every new feature. Frontend-REST-only / backend-AJAX-OK split codified. |
-| 2026-04-26 | release process | `bin/build-release.sh` hardened with three new gates: Step 0 auto `grunt build` (regen .min/.pot/RTL), Step 5b source/min pairing assertion, Step 5c top-level cruft check. Manual zip-extract per release replaced with the build gate. Mirror landed on Pro. |
-| 2026-04-26 | v1.3.8 | Space-scoped moderation queue at `/community/s/:slug/mod/` plus cross-space dashboard at `/community/mod/`; front-end member role management on the space members page; FluentCommunity integration (paired spaces, profile cross-links, unified avatars, member sync, activity broadcast, comment-to-reply bridge); BuddyPress group activity broadcast with comment round-trip; dark-mode contrast fixes for plugin headings and accent tints; sort modes (oldest/newest/unanswered) + space-settings merge fixes; rewrite-flush on activation; long bug-fix tail. |
-| 2026-04-21 | v1.3.7 | Reaction picker bundled-SVG fix (CDN / emoji-loader resilience); Polls topic body-required inline error parity with regular posts; plain-language polish across admin labels and emails. |
-| 2026-04-20 | v1.3.6 | Private Messaging recipient typeahead with shared-space scope; `POST /conversations` enforces shared-space scope on every recipient (security); Top Members + profile-hover Message actions wired up. |
-| 2026-04-18 | v1.3.5 | Jetonomy Navigation block + Jetonomy Login block (`includes/blocks/class-navigation-block.php`, `class-login-block.php`); inline editor paragraph preservation fix; `bin/build-release.sh` as the only path to a release zip (clean-tree gate, version triangulation, prod composer install, `php -l`, smoke test, zip/re-extract/re-smoke-test) |
-| 2026-04-18 | incident | 1.3.5 stale-desktop-zip broke a customer's live site on auto-update — led to the build-release.sh hardening above. Never attach a pre-existing zip to a release; always rebuild from the tagged commit. |
-| 2026-04-17 | v1.3.4 | Akismet bypass for staff roles (`includes/moderation/class-akismet-adapter.php`); one-click Approve/Not Spam in admin lists; spaces auto-join authors on post/reply + historical back-fill upgrade routine; counter accuracy through approve/spam/trash actions; moderation queue REST supports `status=pending\|spam\|all`; bulk trust-level promotion via admin API |
-| 2026-04-16 | v1.3.3 | Access Control collapsed 3-option → 2-option (Public / Private) with auto-migration; admin counter-rebuild button (no WP-CLI needed); preserve original `created_at` on imported/seeded topics; `default_space_type` setting actually applied (was previously dead) |
-| 2026-04-13 | v1.3.2 | Setup wizard PHP 8.1+/WP 6.4+ deprecations fixed (`strip_tags(null)`, `print_emoji_styles`, `wp_admin_bar_header`); new `jetonomy_new_post_submit_action` filter so Pro extensions can intercept the new-post submit URL server-side (closed three Preact/virtual-DOM bugs in the Poll extension) |
-| 2026-04-10 | v1.3.1 | Scoped CSS reset for `.jt-app` — theme button hover styles no longer bleed into Jetonomy button states (BuddyX/Reign regression from 1.3.0). Release process now requires browser verification on BuddyX, Reign, and Twenty Twenty-Five before tagging. |
-| 2026-04-18 | docs | `docs/website/` audit + refresh: `docs_config.json` version bumped to 1.3.5; shortcodes-widgets-blocks.md updated to five blocks; theme-compatibility.md adds BuddyX Pro + Reign + Kirki bridge; AI extension doc adds multi-provider fallback / spend caps / moderation presets; README.md changelog extended through 1.3.5 |
-| 2026-04-18 | community | community.wbcomdesigns.com (Jetonomy-powered Wbcom support community) prepping for public registration flip — becomes the default first-stop for support. Paid tickets unchanged. |
-| 2026-04-15 | feature | Theme bridge for BuddyX, BuddyX Pro, Reign — reads Kirki theme mods, injects `--jt-accent` + toggles `.jt-dark` via `body_class` (`includes/integrations/class-theme-integration.php`) |
-| 2026-04-14 | pending | fix(#9721640432): posts_per_page space setting truly applies — drop `default=>20` from REST `limit` schema (made null-check dead), use raw query params in posts controller, save `null` (not `20`) on empty admin field, render empty `value=""` (not `0`) in space-edit form, strip key in spaces handler sanitizer when null/0 |
-| 2026-04-14 | `9b242b3` | fix(cli): reply create docblock — `[--status]` and `[--format]` missing `: description` before `---` enum, so WP-CLI rejected `--format=json` |
-| 2026-04-14 | `8745756` | test(usability): id-lookup helpers + member/admin/moderator fixes — free-flow pass rate 29 → 67 |
-| 2026-04-14 | `1a89088` | test(usability): fix CLI arg signatures in 7 flows (`demo-seed`, `demo-cleanup`, `space list --category=<id>`) |
-| 2026-04-14 | `f1106a2` | test(usability): align demo seeder (friendly user logins, category slug `community`) + matcher implicit `flow_completes_without_error` |
-| 2026-04-14 | `1cfeae6` | fix: jt_notifications `object_type` ENUM adds `'message'` (migration 1.2.3) + declare `$ai_spam_detector` to remove PHP 8.2 deprecation; DB_VERSION → 1.2.3 |
-| 2026-04-12 | `bf1a1a8` | Usability test suite complete — 250 flows, 250 YAMLs, all layers connected, zero TODO |
-| 2026-04-12 | `7f205b2` | 66 free flows implemented (trusted + moderator + admin + cross-cutting) |
-| 2026-04-12 | `7e45d40` | 52 free flows implemented (anonymous + registered + member) |
-| 2026-04-12 | `159f8fe` | Phase 4 qa-actions extended to all 14 Pro journeys (51/51 checks) |
-| 2026-04-12 | multiple | Pro CLI — 14 extension journeys + commands + tests across both plugins |
-| 2026-04-11 | `06db47c` | Scenario runner + 5 bundled scenarios |
-| 2026-04-11 | `32968a9`→`d61b49b` | CLI module foundation through qa-actions Phase 4 (10 commits) |
-| 2026-04-11 | 5 commits | 5 Basecamp bug fixes (notification click, Join Space, email URL, tab visibility, settings defaults) |
-| 2026-04-05 | v1.3.0 | AI adapter layer (interface, Ollama provider, registry, spam detector), 9 Basecamp bug fixes, security/code quality audit, WPCS ruleset |
-| 2026-03-29 | v1.0.1 | Theme compat: .container→.jt-container rename, dynamic --jt-container-width from theme settings, flex parent fix, sub-nav inside container, page title suppression, tested 12 themes |
-| 2026-03-27 | `e42b7ec` | Fix: space settings merge (not replace), join request state persists on refresh, join request email notification to admins |
-| 2026-03-27 | `e3a21fc` | Fix: WPCS translators comments, Yoda conditions, PHPStan baseline update for space-edit |
-| 2026-03-27 | `189fe6d` | Fix: 10 Basecamp bugs — notification defaults reset, vote state indicator, rewrite flush deferred, admin View link, join request admin UI, Post::create() last_reply_at default |
-| 2026-03-26 | `cc27780` | Fix: settings write pattern (always write all fields), nonce mismatch (wp_rest), credentials: same-origin on all fetch calls |
-| 2026-03-26 | CI | PHPUnit 219/219 pass, PHPStan 0 errors, WPCS 0 new errors, GitHub Actions CI green |
-| 2026-03-24 | feature | BLOCK DT: Unified Design Token Bridge — `--jt-*` root tokens now reference BuddyNext tokens first (`--brand`, `--bg`, `--text-1`, `--green`, `--amber`, `--red`, `--r-md`, `--font-body`, `--font-display`), then WP theme.json, then hardcoded fallback; dark mode flows automatically via CSS cascade | `assets/css/jetonomy.css` |
-| 2026-03-24 | feature | Categories page split layout — form left (360px), table right; removed Order column; truncate description in table | includes/admin/views/categories.php, assets/css/admin.css |
-| 2026-03-20 | pending | Human-readable activity feed, activity backfill, uninstall.php, model methods, Pro abilities rewrite |
-| 2026-03-20 | `2c554ea` | Admin Content page (post/reply management), realistic demo data, demo cleanup |
-| 2026-03-20 | `49381a2` | WordPress Abilities API (18 abilities) + centralized Activity Tracker |
-| 2026-03-19 | `ea1dfe2` | Fix Spaces admin page — unregistered capability |
-| 2026-03-19 | `2043cfb` | Enterprise import UX: completion tracking, resume on failure, step indicators |
-| 2026-03-19 | `c2440f8` | G4-G10: RTL, quote text, hover cards, IP ban, shortcuts, emoji picker, invite links |
-| 2026-03-19 | `439553d` | Cache layer, eager loading, cursor-based pagination |
-
-## Key Files (recent additions)
-| Path | Purpose |
-|---|---|
-| `includes/class-abilities.php` | WP Abilities API — 18 abilities in 5 categories |
-| `includes/class-activity-tracker.php` | Centralized event logging via hooks |
-| `includes/admin/views/content.php` | Admin post/reply management page |
-| `uninstall.php` | Clean removal of all tables, options, caps, cron |
+For release history, run `git log --oneline` or read `readme.txt`. For architectural context on a specific subsystem, check the manifest at `audit/manifest.json` first, then grep.
 
 ## Coding Patterns
 - All data access via model classes — no raw SQL outside `includes/db/` (exception: Abilities execute callbacks for cross-table queries)
