@@ -3,6 +3,20 @@
  * Simple contenteditable enhancement with toolbar actions
  */
 
+/**
+ * Translate a single string via the localized jetonomyData.i18n payload from
+ * includes/class-template-loader.php. The English fallback is the safety net
+ * if the localize block did not deliver — composer.js still runs.
+ *
+ * @param {string} key
+ * @param {string} fallback English fallback shipped with the source.
+ * @returns {string}
+ */
+function jtI18n( key, fallback ) {
+    var d = window.jetonomyData && window.jetonomyData.i18n;
+    return ( d && d[ key ] ) || fallback;
+}
+
 // Mobile hamburger navigation
 document.addEventListener( 'DOMContentLoaded', function() {
     var toggle = document.querySelector( '.jt-mobile-toggle' );
@@ -212,7 +226,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         // Show uploading placeholder
         var placeholder = document.createElement( 'div' );
         placeholder.className = 'jt-upload-placeholder';
-        placeholder.textContent = 'Uploading\u2026';
+        placeholder.textContent = jtI18n( 'uploading', 'Uploading\u2026' );
         editor.appendChild( placeholder );
 
         // 1.4.0 A.1: POST /jetonomy/v1/media replaces wp_ajax_jetonomy_upload_image.
@@ -258,7 +272,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         } )
         .catch( function() {
             placeholder.remove();
-            if ( window.bnToast ) { window.bnToast( 'Upload failed', 'error' ); }
+            if ( window.bnToast ) { window.bnToast( jtI18n( 'uploadFailed', 'Upload failed' ), 'error' ); }
         } );
     }
 
@@ -329,7 +343,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
     var quoteBtn = document.createElement('button');
     quoteBtn.className = 'jt-quote-btn';
-    quoteBtn.textContent = 'Quote';
+    quoteBtn.textContent = jtI18n( 'quoteSelected', 'Quote' );
     quoteBtn.style.display = 'none';
     document.body.appendChild(quoteBtn);
 
@@ -576,7 +590,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         btn.disabled = true;
-        btn.textContent = 'Joining\u2026';
+        btn.textContent = jtI18n( 'joining', 'Joining\u2026' );
 
         fetch(apiBase + '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -590,14 +604,14 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 window.location.reload();
             } else {
                 btn.disabled = false;
-                btn.textContent = 'Join Space';
+                btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
                 (window.bnToast ? window.bnToast(res.data.message || 'Could not join space.', 'error') : null);
             }
         })
         .catch(function() {
             btn.disabled = false;
-            btn.textContent = 'Join Space';
-            (window.bnToast ? window.bnToast('Network error. Please try again.', 'error') : null);
+            btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
+            (window.bnToast ? window.bnToast(jtI18n( 'networkErrorRetry', 'Network error. Please try again.' ), 'error') : null);
         });
     });
 
@@ -612,7 +626,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         btn.disabled = true;
-        btn.textContent = 'Requesting\u2026';
+        btn.textContent = jtI18n( 'requesting', 'Requesting\u2026' );
 
         fetch(apiBase + '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -624,7 +638,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             if (res.data.status === 'pending') {
                 btn.disabled = true;
-                btn.textContent = 'Awaiting Approval';
+                btn.textContent = jtI18n( 'awaitingApproval', 'Awaiting Approval' );
                 btn.classList.remove('jt-btn-fill');
                 btn.classList.add('jt-btn-outline');
                 (window.bnToast ? window.bnToast(res.data.message || 'Request submitted. Awaiting approval.', 'success') : null);
@@ -632,14 +646,14 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 window.location.reload();
             } else {
                 btn.disabled = false;
-                btn.textContent = 'Request to Join';
+                btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
                 (window.bnToast ? window.bnToast(res.data.message || 'Could not submit request.', 'error') : null);
             }
         })
         .catch(function() {
             btn.disabled = false;
-            btn.textContent = 'Request to Join';
-            (window.bnToast ? window.bnToast('Network error. Please try again.', 'error') : null);
+            btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
+            (window.bnToast ? window.bnToast(jtI18n( 'networkErrorRetry', 'Network error. Please try again.' ), 'error') : null);
         });
     });
 
@@ -655,7 +669,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if (!spaceId) return;
 
         var submitBtn = form.querySelector('[type="submit"]');
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting\u2026'; }
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'submitting', 'Submitting\u2026' ); }
 
         fetch(apiBase + '/spaces/' + spaceId + '/members', {
             method: 'POST',
@@ -667,17 +681,17 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             if (res.data.status === 'pending') {
                 showGateMessage(form, res.data.message || 'Request submitted. Awaiting approval.', false);
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Request Sent'; }
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'requestSent', 'Request Sent' ); }
             } else if (res.ok && res.data.status === 'joined') {
                 window.location.reload();
             } else {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Request to Join'; }
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
                 showGateMessage(form, res.data.message || 'Could not submit request.', true);
             }
         })
         .catch(function() {
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Request to Join'; }
-            showGateMessage(form, 'Network error. Please try again.', true);
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
+            showGateMessage(form, jtI18n( 'networkErrorRetry', 'Network error. Please try again.' ), true);
         });
     });
 }());
@@ -759,7 +773,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         if ( ! matches.length ) {
             var empty = document.createElement( 'div' );
             empty.className = 'jt-mention-empty';
-            empty.textContent = 'No matches';
+            empty.textContent = jtI18n( 'noMentionMatches', 'No matches' );
             dropdown.appendChild( empty );
             return;
         }
