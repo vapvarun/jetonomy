@@ -15,11 +15,17 @@
 		i18n: (window.jetonomyContent && window.jetonomyContent.i18n) || {}
 	};
 
+	// Modal toolkit (jetonomy-modals.js) is a hard dependency on every
+	// Jetonomy admin page. If it is somehow absent we degrade silently
+	// rather than fall back to native alert/confirm: native dialogs are
+	// jarring, untranslatable, and can't carry a tone (danger / info)
+	// so they make every prompt feel the same. Destructive paths
+	// resolve to false so the action never silently runs.
 	var _alert = function (msg) {
-		return window.jetonomyAlert ? window.jetonomyAlert(msg) : Promise.resolve(window.alert(msg));
+		return typeof window.jetonomyAlert === 'function' ? window.jetonomyAlert(msg) : Promise.resolve();
 	};
 	var _confirm = function (msg, opts) {
-		return window.jetonomyConfirm ? window.jetonomyConfirm(msg, opts) : Promise.resolve(window.confirm(msg));
+		return typeof window.jetonomyConfirm === 'function' ? window.jetonomyConfirm(msg, opts) : Promise.resolve(false);
 	};
 
 	var table = document.getElementById('jt-posts-table');

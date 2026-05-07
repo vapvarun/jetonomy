@@ -12,7 +12,16 @@
 	var i18n = (window.jetonomyAdmin && window.jetonomyAdmin.i18n) || {};
 	var nonce = (window.jetonomyAdmin && window.jetonomyAdmin.nonce) || '';
 	var ajax = (window.jetonomyAdmin && window.jetonomyAdmin.ajaxUrl) || window.ajaxurl;
-	var alertFn = function (msg) { return (window.jetonomyAlert || window.alert)(msg); };
+
+	// Modal toolkit (jetonomy-modals.js) is a hard dependency. Degrade
+	// silently if it is absent rather than emitting native alert/confirm.
+	// See assets/js/admin-content.js for the full rationale.
+	var alertFn = function (msg) {
+		return typeof window.jetonomyAlert === 'function' ? window.jetonomyAlert(msg) : Promise.resolve();
+	};
+	var confirmFn = function (msg, opts) {
+		return typeof window.jetonomyConfirm === 'function' ? window.jetonomyConfirm(msg, opts) : Promise.resolve(false);
+	};
 
 	// CAPTCHA provider toggle (Spam tab).
 	(function () {
@@ -97,23 +106,26 @@
 			var type = btn.dataset.type;
 			var label = btn.dataset.label || type;
 			var msg = (i18n.emailResetConfirm || 'Reset %s to default? Your custom copy will be lost.').replace('%s', label);
-			if (!window.confirm(msg)) { return; }
 
-			btn.disabled = true;
-			postForm('jetonomy_email_reset', { type: type }).then(function (json) {
-				btn.disabled = false;
-				if (!json.success) {
-					alertFn((json.data && json.data.message) || json.data || (i18n.emailResetFailed || 'Reset failed.'));
-					return;
-				}
-				var row = document.querySelector('[data-jt-email-type="' + type + '"]');
-				if (row) {
-					var subjectInput = row.querySelector('.jetonomy-email-subject-input');
-					var bodyInput = row.querySelector('.jetonomy-email-body-input');
-					if (subjectInput) { subjectInput.value = json.data.subject || ''; }
-					if (bodyInput) { bodyInput.value = json.data.body || ''; }
-				}
-				btn.style.display = 'none';
+			confirmFn(msg, { danger: true }).then(function (ok) {
+				if (!ok) { return; }
+
+				btn.disabled = true;
+				postForm('jetonomy_email_reset', { type: type }).then(function (json) {
+					btn.disabled = false;
+					if (!json.success) {
+						alertFn((json.data && json.data.message) || json.data || (i18n.emailResetFailed || 'Reset failed.'));
+						return;
+					}
+					var row = document.querySelector('[data-jt-email-type="' + type + '"]');
+					if (row) {
+						var subjectInput = row.querySelector('.jetonomy-email-subject-input');
+						var bodyInput = row.querySelector('.jetonomy-email-body-input');
+						if (subjectInput) { subjectInput.value = json.data.subject || ''; }
+						if (bodyInput) { bodyInput.value = json.data.body || ''; }
+					}
+					btn.style.display = 'none';
+				});
 			});
 		});
 	});

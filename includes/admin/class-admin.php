@@ -597,6 +597,17 @@ class Admin {
 			true
 		);
 
+		// Shared confirm-on-click delegate for [data-jt-confirm] markup.
+		// Replaces legacy inline event-attribute confirms that fight CSP,
+		// the Interactivity API, and event delegation.
+		wp_enqueue_script(
+			'jetonomy-admin-confirm',
+			JETONOMY_URL . 'assets/js/admin-confirm.js',
+			array( 'jetonomy-modals' ),
+			JETONOMY_VERSION,
+			true
+		);
+
 		wp_enqueue_style( 'wp-color-picker' );
 
 		// Code editor for custom CSS

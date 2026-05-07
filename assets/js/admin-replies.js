@@ -15,11 +15,14 @@
 		i18n: (window.jetonomyReplies && window.jetonomyReplies.i18n) || {}
 	};
 
+	// Modal toolkit (jetonomy-modals.js) is a hard dependency. Degrade
+	// silently if it is absent rather than emitting native alert/confirm.
+	// See assets/js/admin-content.js for the full rationale.
 	var _alert = function (msg) {
-		return window.jetonomyAlert ? window.jetonomyAlert(msg) : Promise.resolve(window.alert(msg));
+		return typeof window.jetonomyAlert === 'function' ? window.jetonomyAlert(msg) : Promise.resolve();
 	};
 	var _confirm = function (msg, opts) {
-		return window.jetonomyConfirm ? window.jetonomyConfirm(msg, opts) : Promise.resolve(window.confirm(msg));
+		return typeof window.jetonomyConfirm === 'function' ? window.jetonomyConfirm(msg, opts) : Promise.resolve(false);
 	};
 
 	function ajax(action, data) {

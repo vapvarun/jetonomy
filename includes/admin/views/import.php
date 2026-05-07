@@ -153,7 +153,9 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 						<?php elseif ( $was_imported ) : ?>
 							<button type="button" class="button jetonomy-import-btn jetonomy-import-btn--reimport"
 								data-source="<?php echo esc_attr( $id ); ?>"
-								onclick="return confirm('<?php echo esc_js( __( 'Re-importing may create duplicates. Are you sure?', 'jetonomy' ) ); ?>');">
+								data-jt-confirm="<?php esc_attr_e( 'Re-importing may create duplicates. Are you sure?', 'jetonomy' ); ?>"
+								data-jt-confirm-tone="warning"
+								data-jt-confirm-handler="dispatch-click">
 								<?php esc_html_e( 'Re-Import', 'jetonomy' ); ?>
 							</button>
 						<?php else : ?>
