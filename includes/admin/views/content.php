@@ -46,7 +46,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 		<div class="jt-content-toolbar">
 
 			<!-- Space filter -->
-			<select name="space_id" id="jt-filter-space">
+			<select name="space_id" id="jt-filter-space" aria-label="<?php esc_attr_e( 'Filter by space', 'jetonomy' ); ?>">
 				<option value="0" <?php selected( $current_space, 0 ); ?>><?php esc_html_e( 'All Spaces', 'jetonomy' ); ?></option>
 				<?php foreach ( $spaces as $space ) : ?>
 					<option value="<?php echo absint( $space->id ); ?>" <?php selected( $current_space, (int) $space->id ); ?>><?php echo esc_html( $space->title ); ?></option>
@@ -54,14 +54,14 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			</select>
 
 			<!-- Status filter -->
-			<select name="status" id="jt-filter-status">
+			<select name="status" id="jt-filter-status" aria-label="<?php esc_attr_e( 'Filter by status', 'jetonomy' ); ?>">
 				<?php foreach ( $status_labels as $slug => $label ) : ?>
 					<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $current_status, $slug ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 
 			<!-- Search -->
-			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" class="regular-text">
+			<input type="search" name="s" id="jt-filter-search" value="<?php echo esc_attr( $search_query ); ?>" placeholder="<?php esc_attr_e( 'Search by title…', 'jetonomy' ); ?>" aria-label="<?php esc_attr_e( 'Search posts and replies by title', 'jetonomy' ); ?>" class="regular-text">
 
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
 
@@ -72,7 +72,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			<span class="jt-toolbar-spacer"></span>
 
 			<!-- Bulk actions -->
-			<select id="jt-bulk-action">
+			<select id="jt-bulk-action" aria-label="<?php esc_attr_e( 'Bulk action', 'jetonomy' ); ?>">
 				<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
 				<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
 				<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
@@ -111,7 +111,7 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			<thead>
 				<tr>
 					<td class="manage-column column-cb check-column">
-						<input type="checkbox" id="jt-select-all" title="<?php esc_attr_e( 'Select all', 'jetonomy' ); ?>">
+						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
 					<th class="manage-column column-title column-primary"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
 					<th class="manage-column" style="width:120px;"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>

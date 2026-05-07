@@ -105,7 +105,7 @@ $status_labels = [
 		<div class="jt-content-toolbar">
 
 			<!-- Status tabs -->
-			<select name="status" id="jt-filter-status">
+			<select name="status" id="jt-filter-status" aria-label="<?php esc_attr_e( 'Filter by status', 'jetonomy' ); ?>">
 				<?php foreach ( $status_labels as $slug => $label ) : ?>
 					<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $current_status, $slug ); ?>>
 						<?php echo esc_html( $label ); ?>
@@ -120,6 +120,7 @@ $status_labels = [
 				id="jt-filter-search"
 				value="<?php echo esc_attr( $search_query ); ?>"
 				placeholder="<?php esc_attr_e( 'Search replies…', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Search replies', 'jetonomy' ); ?>"
 				class="regular-text"
 			>
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'jetonomy' ); ?></button>
@@ -131,7 +132,7 @@ $status_labels = [
 			<span class="jt-toolbar-spacer"></span>
 
 			<!-- Bulk actions -->
-			<select id="jt-bulk-action">
+			<select id="jt-bulk-action" aria-label="<?php esc_attr_e( 'Bulk action', 'jetonomy' ); ?>">
 				<option value=""><?php esc_html_e( 'Bulk Actions', 'jetonomy' ); ?></option>
 				<option value="approve"><?php esc_html_e( 'Approve', 'jetonomy' ); ?></option>
 				<option value="trash"><?php esc_html_e( 'Move to Trash', 'jetonomy' ); ?></option>
@@ -169,7 +170,7 @@ $status_labels = [
 			<thead>
 				<tr>
 					<td class="manage-column column-cb check-column">
-						<input type="checkbox" id="jt-select-all" title="<?php esc_attr_e( 'Select all', 'jetonomy' ); ?>">
+						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
 					<th class="manage-column column-primary"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></th>
 					<th class="manage-column" style="width:130px;"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
