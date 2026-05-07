@@ -493,21 +493,65 @@ class Admin {
 			}
 			foreach ( $wp_filter[ $hook_name ]->callbacks as $priority => $callbacks ) {
 				foreach ( $callbacks as $key => $callback ) {
-					$fn = $callback['function'] ?? null;
-					// Keep our own notices and WordPress core settings errors.
-					if ( is_array( $fn ) && is_object( $fn[0] ) ) {
-						$class = get_class( $fn[0] );
-						if ( str_contains( $class, 'Jetonomy' ) || str_contains( $class, 'Wbcom' ) ) {
-							continue;
-						}
-					}
-					if ( is_string( $fn ) && ( 'settings_errors' === $fn || str_contains( $fn, 'jetonomy' ) || str_contains( $fn, 'wbcom' ) ) ) {
+					if ( $this->is_own_notice_callback( $callback['function'] ?? null ) ) {
 						continue;
 					}
 					unset( $wp_filter[ $hook_name ]->callbacks[ $priority ][ $key ] );
 				}
 			}
 		}
+	}
+
+	/**
+	 * Decide whether a notice callback belongs to Jetonomy or Wbcom code.
+	 *
+	 * Without the closure branch, every Pro extension that registers a
+	 * save-confirmation notice via add_action( 'admin_notices', function () { ... } )
+	 * has its notice silently stripped on every Jetonomy admin screen, so the
+	 * customer saves the form, sees nothing, and concludes the save did not work.
+	 *
+	 * @param mixed $fn Callback function part of a $wp_filter callback entry.
+	 */
+	private function is_own_notice_callback( $fn ): bool {
+		// Built-in WordPress settings errors output.
+		if ( is_string( $fn ) && 'settings_errors' === $fn ) {
+			return true;
+		}
+
+		// Named functions whose symbol contains our slug.
+		if ( is_string( $fn ) && ( str_contains( $fn, 'jetonomy' ) || str_contains( $fn, 'wbcom' ) ) ) {
+			return true;
+		}
+
+		// [ $object, 'method' ] callbacks where the class belongs to us.
+		if ( is_array( $fn ) && isset( $fn[0] ) && is_object( $fn[0] ) ) {
+			$class = get_class( $fn[0] );
+			if ( str_contains( $class, 'Jetonomy' ) || str_contains( $class, 'Wbcom' ) ) {
+				return true;
+			}
+		}
+
+		// Anonymous closures defined inside our own plugin files. Reflection
+		// is the only reliable way to attribute a closure to source code; a
+		// class check fails because every closure reports class "Closure".
+		if ( $fn instanceof \Closure ) {
+			try {
+				$file = (string) ( new \ReflectionFunction( $fn ) )->getFileName();
+			} catch ( \Throwable $e ) {
+				// Fail open: a third-party closure leaking through is less
+				// harmful than swallowing one of our own save confirmations.
+				return true;
+			}
+			if ( '' === $file ) {
+				return true;
+			}
+			$file = wp_normalize_path( $file );
+			if ( str_contains( $file, '/jetonomy/' ) || str_contains( $file, '/jetonomy-pro/' ) || str_contains( $file, '/wbcom' ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function enqueue_assets( string $hook ): void {
