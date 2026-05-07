@@ -6,6 +6,19 @@
 	<file>includes/</file>
 	<file>templates/</file>
 
+	<!--
+	Hard exclude paths so PHPCS skips them even when CLI invocation overrides
+	the <file> declarations above with a whole-plugin path argument. Without
+	these, audit harnesses that run `phpcs <plugin_root>` re-scan the staged
+	build copy in dist/ and the dev-only NPM packages in node_modules/, both
+	of which then surface as duplicate-class errors and i18n violations on
+	third-party test fixtures.
+	-->
+	<exclude-pattern>dist/*</exclude-pattern>
+	<exclude-pattern>node_modules/*</exclude-pattern>
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<exclude-pattern>tests/*</exclude-pattern>
+
 	<arg name="extensions" value="php"/>
 	<arg name="colors"/>
 	<arg value="sp"/>
