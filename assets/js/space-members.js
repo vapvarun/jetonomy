@@ -240,7 +240,7 @@
 					row.style.opacity = '0.5';
 					var note = document.createElement( 'span' );
 					note.className = 'jt-member-banned-note';
-					note.textContent = 'Banned';
+					note.textContent = ( data.i18n && data.i18n.memberBanned ) || 'Banned';
 					row.appendChild( note );
 				}
 				btn.remove();

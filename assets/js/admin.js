@@ -485,10 +485,12 @@
 				$('#jt-prefixes-config').toggle(this.checked);
 			});
 			$(document).on('click', '#jt-add-prefix', function() {
+				var labelPlaceholder = Jetonomy.i18n.prefixLabel || 'Label';
+				var removeTitle      = Jetonomy.i18n.removePrefix || 'Remove';
 				var row = '<div class="jt-prefix-row">' +
-					'<input type="text" class="jt-prefix-name" placeholder="Label" maxlength="50">' +
+					'<input type="text" class="jt-prefix-name" placeholder="' + $('<div>').text(labelPlaceholder).html() + '" maxlength="50">' +
 					'<input type="color" class="jt-prefix-color" value="#3B82F6">' +
-					'<button type="button" class="button jt-prefix-remove" title="Remove">&times;</button>' +
+					'<button type="button" class="button jt-prefix-remove" title="' + $('<div>').text(removeTitle).html() + '">&times;</button>' +
 					'</div>';
 				$('#jt-prefixes-list').append(row);
 			});

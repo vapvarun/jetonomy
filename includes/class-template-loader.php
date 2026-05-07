@@ -386,6 +386,7 @@ class Template_Loader {
 					'requestSubmitted'  => esc_html__( 'Request submitted. Awaiting approval.', 'jetonomy' ),
 					'requestFailed'     => esc_html__( 'Could not submit request.', 'jetonomy' ),
 					'noMentionMatches'  => esc_html__( 'No matches', 'jetonomy' ),
+					'memberBanned'      => esc_html__( 'Banned', 'jetonomy' ),
 					'roleLabels'        => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),

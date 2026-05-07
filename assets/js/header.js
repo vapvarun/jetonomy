@@ -158,7 +158,7 @@
 		field.appendChild(input);
 		var kbd = document.createElement('kbd');
 		kbd.className = 'jt-search-overlay-kbd';
-		kbd.textContent = 'ESC';
+		kbd.textContent = ( D.i18n && D.i18n.escKey ) || 'ESC';
 		field.appendChild(kbd);
 		inner.appendChild(field);
 		var results = document.createElement('div');
