@@ -675,19 +675,31 @@ class Post extends Model {
 	/**
 	 * Get posts that are scheduled and due for publishing.
 	 *
+	 * @param int $limit Maximum number of rows to return. 0 means no limit.
 	 * @return object[]
 	 */
-	public static function get_due_scheduled(): array {
+	public static function get_due_scheduled( int $limit = 0 ): array {
 		$table = static::table();
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL AND published_at <= %s",
-				\Jetonomy\now()
-			)
-		);
+		if ( $limit > 0 ) {
+			$results = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL AND published_at <= %s LIMIT %d",
+					\Jetonomy\now(),
+					$limit
+				)
+			);
+		} else {
+			$results = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL AND published_at <= %s",
+					\Jetonomy\now()
+				)
+			);
+		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $results ? $results : array();
 	}
