@@ -250,40 +250,6 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 	} );
 }
 
-/**
- * Build reply HTML for client-side rendering (used by loadGapReplies and loadMoreReplies).
- */
-function jetonomyBuildReplyHtml( reply ) {
-    const author = reply.author_name || 'Anonymous';
-    const initials = author.substring( 0, 2 ).toUpperCase();
-    const avatarUrl = reply.author_avatar || '';
-    const timeAgo = reply.time_ago || '';
-    const isAccepted = reply.is_accepted ? ' accepted' : '';
-    const trustLevel = reply.trust_level || 0;
-    const profileUrl = reply.profile_url || '#';
-
-    const avatarHtml = avatarUrl
-        ? `<img src="${ avatarUrl }" alt="${ author }" class="jt-avatar jt-avatar-sm" width="28" height="28" loading="lazy">`
-        : `<span class="jt-avatar jt-avatar-sm">${ initials }</span>`;
-
-    return `
-        <div class="jt-reply${ isAccepted }" data-wp-interactive="jetonomy">
-            <div class="jt-reply-head">
-                <a href="${ profileUrl }" class="jt-user-link">${ avatarHtml } <span class="jt-user-name">${ author }</span></a>
-                <span class="jt-tl" data-jt-tl="${ trustLevel }">${ trustLevel }</span>
-                <span class="jt-reply-time">${ timeAgo }</span>
-                ${ reply.is_accepted ? '<span class="jt-accepted-tag">&#10003; Accepted</span>' : '' }
-            </div>
-            <div class="jt-reply-body">${ reply.content }</div>
-            <div class="jt-reply-foot">
-                <button class="jt-act" data-wp-on--click="actions.voteReplyUp" data-reply-id="${ reply.id }">&#9650; <span class="n">${ reply.vote_score || 0 }</span></button>
-                <button class="jt-act" data-wp-on--click="actions.voteReplyDown" data-reply-id="${ reply.id }">&#9660;</button>
-                <button class="jt-act jt-reply-to-btn" data-wp-on--click="actions.setReplyTo" data-reply-id="${ reply.id }" data-reply-author="${ author }">Reply</button>
-                <button class="jt-act" data-wp-on--click="actions.quoteReply" data-reply-id="${ reply.id }" data-reply-author="${ author }">Quote</button>
-            </div>
-        </div>`;
-}
-
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -1655,43 +1621,6 @@ const { state, actions } = store( 'jetonomy', {
             sel.addRange( range );
         },
 
-        // ── Load gap replies (in-between) ──
-        *loadGapReplies() {
-            const ctx = getContext();
-            if ( ctx.loading ) return;
-            ctx.loading = true;
-
-            try {
-                const response = yield fetch(
-                    `${ state.apiBase }/posts/${ ctx.postId }/replies?sort=oldest&limit=${ ctx.gapCount }&offset=${ ctx.gapStart }`,
-                    { headers: { 'X-WP-Nonce': state.nonce }, credentials: 'same-origin' }
-                );
-
-                if ( ! response.ok ) return;
-                const result = yield response.json();
-                const replies = result.data || result;
-
-                if ( ! replies.length ) return;
-
-                // Find the gap element and insert replies before it.
-                const elRef = getElement();
-                const gap = elRef.ref.closest( '.jt-load-gap' );
-                if ( ! gap ) return;
-
-                for ( const reply of replies ) {
-                    const html = jetonomyBuildReplyHtml( reply );
-                    gap.insertAdjacentHTML( 'beforebegin', html );
-                }
-
-                // Remove the gap loader.
-                gap.remove();
-            } catch {
-                // silent
-            } finally {
-                ctx.loading = false;
-            }
-        },
-
         // ── Editor input tracking ──
         onEditorInput() {
             // Placeholder for editor input handling (e.g. auto-save, char count).
@@ -2020,54 +1949,6 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
-        // ── Load More Replies (no page reload) ──
-        *loadMoreReplies() {
-            const ctx = getContext();
-            if ( ctx.loading || ! ctx.hasMore ) return;
-
-            ctx.loading = true;
-
-            try {
-                const response = yield fetch(
-                    `${ state.apiBase }/posts/${ ctx.postId }/replies?sort=${ ctx.sort }&limit=20&offset=${ ctx.loadedCount }`,
-                    {
-                        headers: { 'X-WP-Nonce': state.nonce },
-                        credentials: 'same-origin',
-                    }
-                );
-
-                if ( ! response.ok ) return;
-                const result = yield response.json();
-                const replies = result.data || result;
-
-                if ( ! replies.length ) {
-                    ctx.hasMore = false;
-                    return;
-                }
-
-                // Render replies and append to container
-                const container = document.getElementById( 'jt-replies-container' );
-                if ( ! container ) return;
-
-                for ( const reply of replies ) {
-                    container.insertAdjacentHTML( 'beforeend', jetonomyBuildReplyHtml( reply ) );
-                }
-
-                ctx.loadedCount += replies.length;
-                ctx.lastReplyId = replies[ replies.length - 1 ].id;
-
-                // Update remaining count on button
-                const remaining = ctx.totalReplies - ctx.loadedCount;
-                if ( remaining <= 0 ) {
-                    ctx.hasMore = false;
-                }
-            } catch {
-                // silent
-            } finally {
-                ctx.loading = false;
-            }
-        },
-
         // ── Notification polling ──
         *pollNotifications() {
             if ( ! state.nonce ) return;
@@ -2173,38 +2054,6 @@ const { state, actions } = store( 'jetonomy', {
             setInterval( () => {
                 actions.pollNotifications();
             }, 30000 );
-        },
-
-        // Auto-trigger gap loading when the user scrolls to it (infinite scroll).
-        // Gated on a real scroll event so a trigger that is already inside the
-        // initial viewport (e.g. when posts_per_page=1 on a short space) does
-        // not auto-fire on page load. The Load More button stays clickable either
-        // way, so users who want more without scrolling can still request it.
-        initInfiniteScroll() {
-            const gaps = document.querySelectorAll( '.jt-load-gap' );
-            if ( ! gaps.length ) return;
-
-            let userHasScrolled = false;
-            const markScrolled = () => {
-                userHasScrolled = true;
-                window.removeEventListener( 'scroll', markScrolled );
-            };
-            window.addEventListener( 'scroll', markScrolled, { passive: true } );
-
-            const observer = new IntersectionObserver( ( entries ) => {
-                if ( ! userHasScrolled ) return;
-                entries.forEach( ( entry ) => {
-                    if ( entry.isIntersecting ) {
-                        const btn = entry.target.querySelector( '.jt-load-gap-btn' );
-                        if ( btn && ! btn.disabled ) {
-                            btn.click();
-                            observer.unobserve( entry.target );
-                        }
-                    }
-                } );
-            }, { rootMargin: '200px' } );
-
-            gaps.forEach( ( gap ) => observer.observe( gap ) );
         },
 
         // On mobile, the profile tabs row is horizontally scrollable to fit

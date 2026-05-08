@@ -123,32 +123,24 @@ $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
 	$reply_sort = 'oldest';
 }
-// Smart threaded loading: first 10 top-level + last 10 top-level, with gap in between.
-$total_replies   = (int) $post->reply_count;
-$top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
-$batch_size      = 10;
-
-if ( $top_level_count <= $batch_size * 2 ) {
-	// Small post — load all threaded.
-	$reply_tree  = \Jetonomy\Models\Reply::get_threaded( (int) $post->id, $reply_sort );
-	$first_batch = $reply_tree;
-	$last_batch  = [];
-	$gap_count   = 0;
-} else {
-	// Large post — split into first + gap + last.
-	$first_batch = \Jetonomy\Models\Reply::get_threaded( (int) $post->id, 'oldest', $batch_size, 0 );
-	$last_batch  = \Jetonomy\Models\Reply::get_threaded( (int) $post->id, 'oldest', $batch_size, $top_level_count - $batch_size );
-	$gap_count   = $top_level_count - ( $batch_size * 2 );
-
-	// Apply sort to split batches when not 'oldest'.
-	if ( 'newest' === $reply_sort ) {
-		$first_batch = array_reverse( $first_batch );
-		$last_batch  = array_reverse( $last_batch );
-	} elseif ( 'best' === $reply_sort ) {
-		usort( $first_batch, fn( $a, $b ) => (int) $b->vote_score - (int) $a->vote_score );
-		usort( $last_batch, fn( $a, $b ) => (int) $b->vote_score - (int) $a->vote_score );
-	}
-}
+// Top-level reply pagination, honouring the global `replies_per_page`
+// setting. Server renders the requested page; pagination-frontend.js
+// fetches the next page and appends in place. No-JS users get classic
+// full-page pagination via the ?rpg=N anchor.
+$total_replies    = (int) $post->reply_count;
+$top_level_count  = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
+$jt_settings      = get_option( 'jetonomy_settings', array() );
+$replies_per_page = max( 1, (int) ( $jt_settings['replies_per_page'] ?? 30 ) );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$reply_page        = max( 1, (int) ( $_GET['rpg'] ?? 1 ) );
+$reply_offset      = ( $reply_page - 1 ) * $replies_per_page;
+$reply_batch       = \Jetonomy\Models\Reply::get_threaded(
+	(int) $post->id,
+	$reply_sort,
+	$replies_per_page,
+	$reply_offset
+);
+$replies_have_more = ( $reply_page * $replies_per_page ) < $top_level_count;
 
 // 1.4.0 G3: warm the role-label cache for the post author + every reply
 // author (including nested children) so each role-pill lookup downstream
@@ -163,8 +155,7 @@ $jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_role
 		}
 	}
 };
-$jt_role_walker( $first_batch );
-$jt_role_walker( $last_batch );
+$jt_role_walker( $reply_batch );
 \Jetonomy\Models\SpaceMember::warm_role_cache( (int) $post->space_id, $jt_role_warm_ids );
 
 // Current user vote on post.
@@ -494,7 +485,6 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<!-- Replies -->
 			<div class="jt-replies-section" id="replies"
 				data-wp-interactive="jetonomy"
-				data-wp-init--infinite="callbacks.initInfiniteScroll"
 				data-wp-init--polling="callbacks.initReplyPolling"
 				data-wp-context='
 				<?php
@@ -548,7 +538,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				do_action( 'jetonomy_before_replies', $post, $total_replies );
 				?>
 
-				<?php if ( empty( $first_batch ) && empty( $last_batch ) ) : ?>
+				<?php if ( empty( $reply_batch ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
@@ -561,8 +551,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php else : ?>
 
 					<div class="jt-replies-list" id="jt-replies-container">
-						<!-- First batch (opening conversation) -->
-						<?php foreach ( $first_batch as $index => $reply ) : ?>
+						<?php foreach ( $reply_batch as $index => $reply ) : ?>
 							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
 							<?php
 							/**
@@ -576,44 +565,18 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							do_action( 'jetonomy_between_replies', $reply, $index, $post );
 							?>
 						<?php endforeach; ?>
-
-						<!-- Gap loader (in-between) -->
-						<?php if ( $gap_count > 0 ) : ?>
-							<div class="jt-load-gap" data-wp-interactive="jetonomy"
-								data-wp-context='
-								<?php
-								echo wp_json_encode(
-									[
-										'postId'   => (int) $post->id,
-										'gapStart' => $batch_size,
-										'gapCount' => $gap_count,
-										'loading'  => false,
-									]
-								);
-								?>
-								'>
-								<button class="jt-btn jt-btn-ghost jt-load-gap-btn"
-									data-wp-on--click="actions.loadGapReplies"
-									data-wp-bind--disabled="context.loading">
-									<span data-wp-text="context.loading ? '<?php echo esc_js( __( 'Loading…', 'jetonomy' ) ); ?>' : '<?php echo esc_js( sprintf( /* translators: %d: number of hidden replies */ __( 'Show %d more replies', 'jetonomy' ), $gap_count ) ); ?>'">
-										<?php
-										/* translators: %d: number of hidden replies */
-										printf( esc_html__( 'Show %d more replies', 'jetonomy' ), absint( $gap_count ) );
-										?>
-									</span>
-								</button>
-							</div>
-						<?php endif; ?>
-
-						<!-- Last batch (latest conversation) -->
-						<?php foreach ( $last_batch as $index => $reply ) : ?>
-							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
-							<?php
-							/** @see hook docblock above on jetonomy_between_replies */
-							do_action( 'jetonomy_between_replies', $reply, $index, $post );
-							?>
-						<?php endforeach; ?>
 					</div>
+
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'pagination',
+						array(
+							'has_more'  => $replies_have_more,
+							'param_key' => 'rpg',
+							'target'    => '#jt-replies-container',
+						)
+					);
+					?>
 
 				<?php endif; ?>
 
