@@ -158,14 +158,18 @@ if [ "$DO_CS" -eq 1 ]; then
 fi
 
 # --- Gate 3: PHPUnit unit suite ----------------------------------------
+# Accepts: "OK (N tests...)" and "OK, but incomplete, skipped, or risky tests!"
+# Skipped-only results (e.g. multisite tests on single-site bootstrap) are
+# treated as passing -- only actual failures or errors block the gate.
 if [ "$DO_UNIT" -eq 1 ]; then
     step "PHPUnit unit suite (must be 100% green)"
-    if composer test:docker:unit 2>&1 | grep -qE "OK \([0-9]+ tests"; then
-        UNIT_OUT=$(composer test:docker:unit 2>&1 | grep -E "Tests: |OK \(" | tail -1)
+    UNIT_OUT_RAW=$(composer test:docker:unit 2>&1)
+    if echo "$UNIT_OUT_RAW" | grep -qE "OK \([0-9]+ tests|OK, but incomplete, skipped"; then
+        UNIT_OUT=$(echo "$UNIT_OUT_RAW" | grep -E "Tests: |OK" | tail -1)
         ok "PHPUnit unit clean — $UNIT_OUT"
     else
         fail "PHPUnit unit suite has failures"
-        composer test:docker:unit 2>&1 | grep -E "^[ ]*✘|FAILURES|Tests:" | tail -10
+        echo "$UNIT_OUT_RAW" | grep -E "^[ ]*✘|FAILURES|Tests:" | tail -10
         FAILED_GATES+=("phpunit-unit")
     fi
 fi

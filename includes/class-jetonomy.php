@@ -26,8 +26,9 @@ final class Jetonomy {
 	}
 
 	private function register_hooks(): void {
-		register_activation_hook( JETONOMY_FILE, array( $this, 'activate' ) );
+		register_activation_hook( JETONOMY_FILE, 'Jetonomy\activate_plugin' );
 		register_deactivation_hook( JETONOMY_FILE, array( $this, 'deactivate' ) );
+		add_action( 'wp_initialize_site', 'Jetonomy\install_on_new_site', 10, 2 );
 		add_action( 'init', array( $this, 'load_textdomain' ), 1 );
 		add_action( 'plugins_loaded', array( $this, 'init' ) );
 

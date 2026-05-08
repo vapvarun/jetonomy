@@ -38,6 +38,9 @@ function jetonomy(): Jetonomy\Jetonomy {
 
 jetonomy();
 
+// Multisite-aware activation helpers -- declared in the Jetonomy namespace.
+require_once JETONOMY_DIR . 'includes/functions-multisite.php';
+
 // EDD Software Licensing SDK — free plugin auto-updates with preset key.
 add_action(
 	'edd_sl_sdk_registry',
