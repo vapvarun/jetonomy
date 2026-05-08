@@ -247,10 +247,13 @@ $crumbs = [
 								$excerpt  = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author   = get_userdata( (int) $post->author_id );
 								?>
+								<?php $_jt_search_space = isset( $post->space_id ) ? \Jetonomy\Models\Space::find( (int) $post->space_id ) : null; ?>
 								<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row">
-									<div class="jt-votes">
-										<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
-									</div>
+									<?php if ( jetonomy_space_allows_voting( $_jt_search_space ) ) : ?>
+										<div class="jt-votes">
+											<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+										</div>
+									<?php endif; ?>
 									<div class="jt-row-main">
 										<div class="jt-row-title"><?php echo esc_html( $post->title ); ?></div>
 										<div class="jt-row-sub">

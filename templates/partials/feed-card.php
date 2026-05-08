@@ -55,6 +55,7 @@ $author_name = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
 	</div>
 
 	<footer class="jt-feed-card-foot">
+		<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 		<button type="button"
 			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>"
 			data-wp-on--click="actions.voteUp"
@@ -63,6 +64,7 @@ $author_name = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
 			<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 			<span class="jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</button>
+		<?php endif; ?>
 
 		<a class="jt-feed-act" href="<?php echo esc_url( $post_url . '#replies' ); ?>"
 			aria-label="<?php esc_attr_e( 'View replies', 'jetonomy' ); ?>">

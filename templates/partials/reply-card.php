@@ -88,6 +88,7 @@ $jt_can_moderate_reply = $jt_reply_viewer
 		// equal-weight peers — no friction asymmetry, no nudging toward
 		// one side. JS bindings are untouched and verified live.
 		?>
+		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
 		<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this reply', 'jetonomy' ); ?>">
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
@@ -108,6 +109,7 @@ $jt_can_moderate_reply = $jt_reply_viewer
 				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
 			<?php endif; ?>
 		</div>
+		<?php endif; ?>
 		<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"

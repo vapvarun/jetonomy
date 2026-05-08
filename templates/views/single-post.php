@@ -394,36 +394,38 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// keep working — both buttons remain direct siblings
 					// inside the cluster.
 					?>
-					<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
-						<?php if ( is_user_logged_in() ) : ?>
-						<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
-							data-wp-on--click="actions.voteUp"
-							data-post-id="<?php echo absint( $post->id ); ?>"
-							title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-							aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
-							<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-							<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-						</button>
-							<?php
-							// Hide downvote on own content — self-downvote was
-							// landing at -1 (Basecamp 9803889865).
-							if ( (int) $post->author_id !== get_current_user_id() ) :
-								?>
-						<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
-							data-wp-on--click="actions.voteDown"
-							data-post-id="<?php echo absint( $post->id ); ?>"
-							title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-							aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
-								<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
-						</button>
+					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+							<?php if ( is_user_logged_in() ) : ?>
+							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
+								data-wp-on--click="actions.voteUp"
+								data-post-id="<?php echo absint( $post->id ); ?>"
+								title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
+								aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+							</button>
+								<?php
+								// Hide downvote on own content — self-downvote was
+								// landing at -1 (Basecamp 9803889865).
+								if ( (int) $post->author_id !== get_current_user_id() ) :
+									?>
+							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
+								data-wp-on--click="actions.voteDown"
+								data-post-id="<?php echo absint( $post->id ); ?>"
+								title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
+								aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
+									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+							</button>
+								<?php endif; ?>
+							<?php else : ?>
+							<span class="jt-act">
+								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+							</span>
 							<?php endif; ?>
-						<?php else : ?>
-						<span class="jt-act">
-							<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-							<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-						</span>
-						<?php endif; ?>
-					</div>
+						</div>
+					<?php endif; ?>
 					<?php
 					/* translators: %d: number of views */
 					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );

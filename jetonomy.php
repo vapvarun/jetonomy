@@ -212,6 +212,30 @@ function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name =
  * @return string Processed content with mention and tag links.
  */
 /**
+ * Resolve whether voting is enabled on a given space.
+ *
+ * Mirrors the server-side gate in `Permission_Engine::can()` (the
+ * 'vote' branch). The admin checkbox stores `'1'` for enabled; an
+ * unset key defaults to allowed so spaces seeded before this feature
+ * existed don't suddenly lose voting. Used at every frontend render
+ * site that draws vote controls so the UI never shows an affordance
+ * the server will refuse.
+ *
+ * @param object|null $space Space object (or null when no space context).
+ * @return bool True when voting is allowed on the space.
+ */
+function jetonomy_space_allows_voting( $space ): bool {
+	if ( ! $space || empty( $space->id ) ) {
+		return true;
+	}
+	$settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
+	if ( ! isset( $settings['allow_voting'] ) ) {
+		return true;
+	}
+	return '1' === (string) $settings['allow_voting'];
+}
+
+/**
  * Resolve a customer-facing label for an idea roadmap status enum value.
  *
  * Mirrors the column labels in `templates/views/space-roadmap.php`. Used

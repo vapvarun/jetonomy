@@ -153,7 +153,9 @@ $space_url = $base . '/s/' . $space->slug . '/';
 							</div>
 						<?php endif; ?>
 						<div class="jt-idea-meta">
-							<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
+							<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+								<span class="jt-idea-votes"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <?php echo esc_html( (int) $idea->vote_score ); ?></span>
+							<?php endif; ?>
 							<span><?php echo esc_html( (int) $idea->reply_count ); ?> <?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
 						</div>
 					</div>

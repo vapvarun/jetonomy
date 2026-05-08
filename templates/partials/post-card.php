@@ -37,11 +37,13 @@ if ( $prefix_name && $space ) {
 ?>
 <div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
-	<div class="jt-votes">
-		<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
-		<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
-		<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
-	</div>
+	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+		<div class="jt-votes">
+			<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
+			<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+			<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
+		</div>
+	<?php endif; ?>
 	<div class="jt-row-main">
 		<?php
 		// 1.4.0 C.4 fix: row is no longer one big <a>. The title link is the
