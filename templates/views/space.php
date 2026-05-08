@@ -363,7 +363,14 @@ $crumbs[] = [
 					);
 				}
 				?>
-				<div class="jt-topics">
+				<?php
+				// Feed spaces render the post body inline as a social-feed
+				// card; every other space type uses the topic-card list with
+				// title + excerpt + click-through.
+				$jt_card_partial = ( 'feed' === ( $space->type ?? '' ) ) ? 'feed-card' : 'post-card';
+				$jt_topics_class = ( 'feed' === ( $space->type ?? '' ) ) ? 'jt-topics jt-feed' : 'jt-topics';
+				?>
+				<div class="<?php echo esc_attr( $jt_topics_class ); ?>">
 					<?php foreach ( $posts as $post ) : ?>
 						<?php
 						// Boolean signal: does the viewer have unread replies on
@@ -379,7 +386,7 @@ $crumbs[] = [
 						?>
 						<?php
 						\Jetonomy\Template_Loader::partial(
-							'post-card',
+							$jt_card_partial,
 							array(
 								'post'       => $post,
 								'has_unread' => $jt_has_unread,

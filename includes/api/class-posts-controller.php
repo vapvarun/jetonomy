@@ -365,14 +365,24 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
 		}
 
-		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
-		if ( empty( $title ) ) {
-			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
-		}
-
+		$title   = sanitize_text_field( (string) $request->get_param( 'title' ) );
 		$content = wp_kses_post( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
+		}
+
+		// Feed spaces are short-form: a status post is its content. Members
+		// shouldn't be forced to invent a headline for a one-line update,
+		// so when the space is a Feed and no title was sent we derive one
+		// from the first sentence-or-so of the content. The full body is
+		// still rendered in the listing, the derived title only feeds
+		// search, slugs, and breadcrumbs.
+		$_jt_space_type = (string) ( $space->type ?? '' );
+		if ( empty( $title ) && 'feed' === $_jt_space_type ) {
+			$title = $this->derive_title_from_content( $content );
+		}
+		if ( empty( $title ) ) {
+			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
 		}
 
 		// Derive post type from space type if not provided.
@@ -1068,6 +1078,38 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Derive a short title from a post body. Used on Feed spaces where
+	 * the composer omits the Title field — members shouldn't have to
+	 * write a headline for a status update. The full body still renders
+	 * in the listing card; the derived title is only here so search,
+	 * slugs, breadcrumbs, and notification subjects have something to
+	 * work with.
+	 *
+	 * Trims HTML, collapses whitespace, takes up to roughly the first
+	 * sentence boundary, then caps at 80 visible chars. The 255-char
+	 * physical column limit is honored by the schema; this lower cap
+	 * is a readability choice, not a posting cap.
+	 */
+	private function derive_title_from_content( string $content ): string {
+		$plain = trim( wp_strip_all_tags( $content ) );
+		if ( '' === $plain ) {
+			return '';
+		}
+		$plain = preg_replace( '/\s+/u', ' ', $plain );
+		// Prefer the first sentence-end punctuation if it falls early
+		// enough; otherwise fall back to a clean word-boundary trim.
+		if ( preg_match( '/^(.{20,80}?)(?:[.!?…]|$)/u', $plain, $m ) ) {
+			return trim( $m[1] );
+		}
+		if ( function_exists( 'mb_strlen' ) && mb_strlen( $plain ) > 80 ) {
+			$truncated = mb_substr( $plain, 0, 80 );
+			$last_sp   = mb_strrpos( $truncated, ' ' );
+			return rtrim( false !== $last_sp ? mb_substr( $truncated, 0, $last_sp ) : $truncated ) . '…';
+		}
+		return $plain;
+	}
+
+	/**
 	 * Generate a unique post slug by appending a numeric suffix if needed.
 	 */
 	private function unique_post_slug( string $base_slug ): string {
@@ -1087,9 +1129,14 @@ class Posts_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return array(
+			// Title is optional at the REST layer; the handler still
+			// requires it for non-Feed spaces and derives it from content
+			// for Feed spaces. Marking it `required: true` here would
+			// short-circuit the body-derived title path before reaching
+			// the handler.
 			'title'        => array(
 				'type'     => 'string',
-				'required' => true,
+				'required' => false,
 			),
 			'content'      => array(
 				'type'     => 'string',

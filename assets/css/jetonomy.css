@@ -913,6 +913,31 @@
   .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
+  /* Feed-space card layout — full body inline like a social feed.
+     Distinct from the dense topic-list .jt-row used by Forum/QA/Ideas
+     so the visual hierarchy matches the type's contract. */
+  .jt-feed { display: flex; flex-direction: column; gap: 12px; }
+  .jt-feed-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); padding: 16px; }
+  .jt-feed-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-block-end: 12px; }
+  .jt-feed-card-meta { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .jt-feed-card-author { font-weight: 600; color: var(--jt-text); }
+  .jt-feed-card-time { color: var(--jt-text-tertiary); font-size: 0.875rem; text-decoration: none; }
+  .jt-feed-card-time:hover { color: var(--jt-text-secondary); text-decoration: underline; }
+  .jt-feed-card-body { color: var(--jt-text); line-height: 1.6; word-break: break-word; }
+  .jt-feed-card-body p { margin-block: 0 12px; }
+  .jt-feed-card-body p:last-child { margin-block-end: 0; }
+  .jt-feed-card-body img { max-width: 100%; height: auto; border-radius: var(--jt-radius-sm); }
+  .jt-feed-card-foot { display: flex; align-items: center; gap: 4px; margin-block-start: 14px; padding-block-start: 12px; border-block-start: 1px solid var(--jt-border); }
+  .jt-feed-act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; background: transparent; border: 0; color: var(--jt-text-secondary); font: inherit; font-size: 0.875rem; cursor: pointer; border-radius: var(--jt-radius-sm); text-decoration: none; transition: background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-feed-act:hover, .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: none; }
+  .jt-feed-act.jt-voted { color: var(--jt-accent); }
+  .jt-feed-act-n { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .jt-feed-act-permalink { margin-inline-start: auto; color: var(--jt-text-tertiary); }
+  @media (max-width: 640px) {
+    .jt-feed-card { padding: 12px; }
+    .jt-feed-card-foot { flex-wrap: wrap; }
+  }
+
   /* Q&A "Answered" / "Needs answer" pill on post cards. Same visual
      language as the idea-status pill so listings stay scannable across
      space types. Answered = success green; Needs answer = quiet neutral. */

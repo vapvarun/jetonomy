@@ -268,9 +268,12 @@ const { state, actions } = store( 'jetonomy', {
         // Threaded reply-to tracking
         replyToId: null,
         replyToAuthor: '',
-        // Form submission state
+        // Form submission state. submitLabel intentionally omitted from
+        // the JS defaults so the SSR value set via wp_interactivity_state
+        // (which is type-aware: "Post Question" / "Submit Idea" /
+        // "Post Status" / "Post Topic" depending on the space type)
+        // survives hydration.
         isSubmitting: false,
-        submitLabel: 'Post Topic',
         // Publish mode dropdown open/closed
         publishMenuOpen: false,
         // Nonce for API calls
