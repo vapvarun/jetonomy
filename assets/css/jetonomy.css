@@ -913,6 +913,21 @@
   .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
+  /* Q&A "Answered" / "Needs answer" pill on post cards. Same visual
+     language as the idea-status pill so listings stay scannable across
+     space types. Answered = success green; Needs answer = quiet neutral. */
+  .jt-qa-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
+  .jt-qa-pill-answered { background: color-mix(in srgb, var(--jt-success) 16%, transparent); color: var(--jt-success); }
+  .jt-qa-pill-needs-answer { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+
+  /* Pinned accepted-answer callout above the reply list on Q&A posts.
+     Visually echoes the reply's "Accepted" badge color so customers
+     immediately recognise this is the answer, while the reply itself
+     still appears in chronological position below. */
+  .jt-accepted-callout { background: color-mix(in srgb, var(--jt-success) 8%, transparent); border: 1px solid color-mix(in srgb, var(--jt-success) 30%, transparent); border-radius: var(--jt-radius); padding: 12px 14px; margin-block: 8px 16px; }
+  .jt-accepted-callout-head { display: inline-flex; align-items: center; gap: 6px; color: var(--jt-success); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.02em; text-transform: uppercase; margin-block-end: 8px; }
+  .jt-accepted-callout-body .jt-reply { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-sm); padding: 12px; }
+
   /* Idea roadmap status pill — six canonical statuses, color-coded so the
      listing and post header speak the same visual language as the kanban. */
   .jt-idea-pill { --jt-ip: var(--jt-text-secondary); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }

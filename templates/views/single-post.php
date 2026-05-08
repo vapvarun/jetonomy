@@ -573,6 +573,42 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				do_action( 'jetonomy_before_replies', $post, $total_replies );
 				?>
 
+				<?php
+				// Q&A: surface the accepted answer above the chronological
+				// thread so members read it first regardless of sort. The
+				// reply still renders in its original position below — this
+				// is a pinned echo, not a relocation, so the conversation
+				// flow stays intact for the curious.
+				$jt_accepted_reply = null;
+				if (
+					$space
+					&& 'qa' === ( $space->type ?? '' )
+					&& ! empty( $post->accepted_reply_id )
+				) {
+					$jt_accepted_reply = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+				}
+				if ( $jt_accepted_reply ) :
+					?>
+					<aside class="jt-accepted-callout" aria-label="<?php esc_attr_e( 'Accepted answer', 'jetonomy' ); ?>">
+						<header class="jt-accepted-callout-head">
+							<?php jetonomy_echo_icon( 'check-circle', 16 ); ?>
+							<span><?php esc_html_e( 'Accepted answer', 'jetonomy' ); ?></span>
+						</header>
+						<div class="jt-accepted-callout-body">
+							<?php
+							\Jetonomy\Template_Loader::partial(
+								'reply-card',
+								array(
+									'reply' => $jt_accepted_reply,
+									'post'  => $post,
+									'space' => $space,
+								)
+							);
+							?>
+						</div>
+					</aside>
+				<?php endif; ?>
+
 				<?php if ( empty( $reply_batch ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(

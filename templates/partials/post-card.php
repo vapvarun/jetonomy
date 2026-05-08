@@ -65,6 +65,12 @@ if ( $prefix_name && $space ) {
 			<?php endif; ?>
 			<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
 				<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+			<?php elseif ( $space && 'qa' === ( $space->type ?? '' ) ) : ?>
+				<?php if ( ! empty( $post->accepted_reply_id ) ) : ?>
+					<span class="jt-qa-pill jt-qa-pill-answered"><?php jetonomy_echo_icon( 'check-circle', 12 ); ?> <?php esc_html_e( 'Answered', 'jetonomy' ); ?></span>
+				<?php else : ?>
+					<span class="jt-qa-pill jt-qa-pill-needs-answer"><?php esc_html_e( 'Needs answer', 'jetonomy' ); ?></span>
+				<?php endif; ?>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
 			<?php if ( $has_unread ) : ?>

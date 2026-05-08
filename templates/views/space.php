@@ -322,10 +322,14 @@ $crumbs[] = [
 
 			<?php if ( empty( $posts ) ) : ?>
 				<?php
-				$_jt_no_posts_msg = ( 'unanswered' === $sort )
-					? __( 'All questions have been answered!', 'jetonomy' )
-					: __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
-				$_jt_can_post     = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				if ( 'unanswered' === $sort ) {
+					$_jt_no_posts_msg = ( 'qa' === ( $space->type ?? '' ) )
+						? __( 'Every question has an accepted answer.', 'jetonomy' )
+						: __( 'No posts without replies yet.', 'jetonomy' );
+				} else {
+					$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+				}
+				$_jt_can_post = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[

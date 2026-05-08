@@ -539,6 +539,19 @@ class Replies_Controller extends Base_Controller {
 		$post_author_id  = (int) $post->author_id;
 		$reply_author_id = (int) $reply->author_id;
 
+		// Accept-answer is a Q&A workflow. Other space types use the
+		// roadmap status (Ideas) or have no equivalent (Forum, Feed), so
+		// accepting on them would write `is_resolved=1` data that those
+		// types' read paths interpret differently. Refuse cleanly.
+		$space = \Jetonomy\Models\Space::find( $space_id );
+		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_qa_space',
+				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Only post author or a moderator/admin may accept a reply.
 		$can_accept = ( $post_author_id === $user_id )
 			|| $this->check_permission( 'close_posts', $space_id );

@@ -231,8 +231,15 @@ class Post extends Model {
 				break;
 
 			case 'unanswered':
-				$order_by    = 'created_at DESC';
-				$extra_where = ' AND reply_count = 0';
+				$order_by = 'created_at DESC';
+				// On Q&A spaces "unanswered" means "no accepted answer yet";
+				// elsewhere it means "no replies yet". The same pill label
+				// covers both because each space type's contract makes the
+				// definition unambiguous to its members.
+				$_jt_space   = Space::find( $space_id );
+				$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+					? ' AND accepted_reply_id IS NULL'
+					: ' AND reply_count = 0';
 				break;
 
 			case 'latest':
@@ -327,8 +334,15 @@ class Post extends Model {
 				break;
 
 			case 'unanswered':
-				$order_by    = 'created_at DESC';
-				$extra_where = ' AND reply_count = 0';
+				$order_by = 'created_at DESC';
+				// On Q&A spaces "unanswered" means "no accepted answer yet";
+				// elsewhere it means "no replies yet". The same pill label
+				// covers both because each space type's contract makes the
+				// definition unambiguous to its members.
+				$_jt_space   = Space::find( $space_id );
+				$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+					? ' AND accepted_reply_id IS NULL'
+					: ' AND reply_count = 0';
 				break;
 
 			case 'latest':
@@ -388,7 +402,10 @@ class Post extends Model {
 		$extra_where = '';
 
 		if ( 'unanswered' === $sort ) {
-			$extra_where = ' AND reply_count = 0';
+			$_jt_space   = Space::find( $space_id );
+			$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+				? ' AND accepted_reply_id IS NULL'
+				: ' AND reply_count = 0';
 		}
 
 		if ( ! $is_privileged ) {
