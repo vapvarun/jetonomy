@@ -1,4 +1,4 @@
-Flagging lets any logged-in member report content that breaks your community rules. It is the first step in the moderation pipeline — members surface problems, and your moderators review and act.
+Flagging lets any logged-in member report content that breaks your community rules. It is the first step in the moderation pipeline - members surface problems, and your moderators review and act.
 
 ![Admin moderation dashboard showing flagged content awaiting review](../images/admin-moderation.png)
 
@@ -12,7 +12,7 @@ Flagging lets any logged-in member report content that breaks your community rul
 
 ## How to Flag Content
 
-Every topic and every reply has a **...** (more actions) menu. Open it and click **Report**. A small modal appears asking for a reason. Type a brief description of the problem — for example, "This contains spam links" or "This is abusive toward another member" — and click **Submit Report**.
+Every topic and every reply has a **...** (more actions) menu. Open it and click **Report**. A small modal appears asking for a reason. Type a brief description of the problem - for example, "This contains spam links" or "This is abusive toward another member" - and click **Submit Report**.
 
 The flag is saved immediately. You receive a confirmation message and the modal closes.
 
@@ -22,7 +22,7 @@ The flag is saved immediately. You receive a confirmation message and the modal 
 
 Any logged-in member can flag a topic or reply, regardless of their trust level. There is one restriction: you cannot flag your own content.
 
-The flag button is not visible to guests (logged-out visitors). If you want guests to be able to report content, you will need a custom solution — the built-in flagging system requires authentication.
+The flag button is not visible to guests (logged-out visitors). If you want guests to be able to report content, you will need a custom solution - the built-in flagging system requires authentication.
 
 There is no daily limit on flags per member. A member who finds multiple pieces of problematic content can flag all of them.
 
@@ -39,7 +39,7 @@ Moderators see all of this information when they review the flag in the moderati
 
 ## What Happens to Flagged Content
 
-Flagging alone does not change the visibility of a post or reply. The content stays live and readable by all members until a moderator reviews it and takes action. This is intentional — hiding content automatically on a single flag would allow abuse of the flagging system.
+Flagging alone does not change the visibility of a post or reply. The content stays live and readable by all members until a moderator reviews it and takes action. This is intentional - hiding content automatically on a single flag would allow abuse of the flagging system.
 
 A moderator can then approve the flag (confirming the content breaks the rules) and take action, or dismiss the flag (marking it unfounded). See the [Moderation Queue](03-moderation-queue.md) guide for the full review workflow.
 

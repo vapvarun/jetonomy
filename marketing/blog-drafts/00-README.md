@@ -1,6 +1,6 @@
-# Jetonomy Forum Alternative Content — Blog Drafts
+# Jetonomy Forum Alternative Content - Blog Drafts
 
-**Purpose:** Three first-person marketing articles that position Jetonomy as the forum / bbPress / Discourse alternative across wbcomdesigns.com, vapvarun.com, and buddyxtheme.com. Each piece is written with a lived-in 2026 user perspective — not a marketing team's generic listicle.
+**Purpose:** Three first-person marketing articles that position Jetonomy as the forum / bbPress / Discourse alternative across wbcomdesigns.com, vapvarun.com, and buddyxtheme.com. Each piece is written with a lived-in 2026 user perspective - not a marketing team's generic listicle.
 
 **Created:** 2026-04-11
 **Research basis:** SpyFu keyword data + competitive domain audit
@@ -16,7 +16,7 @@
 | vapvarun.com | `02-vapvarun-forum-plugin-listicle.md` | UPDATE existing `/forum-wordpress-plugin/` | `wordpress forum plugin` | 840 | 19 | **#35** | Top 10 |
 | buddyxtheme.com | `03-buddyx-discourse-alternatives.md` | NEW `/discourse-alternatives-wordpress/` | `discourse alternatives` | 220 | 20 | Greenfield | Top 10 within 90 days |
 
-**Key insight from research:** wbcomdesigns and vapvarun already rank for their primary keywords — the play is REFRESHING existing content with Jetonomy positioning, not creating new articles. buddyxtheme has zero forum content but already ranks well for "alternatives" listicles (discord, gofundme, textnow) — natural URL pattern + voice fit.
+**Key insight from research:** wbcomdesigns and vapvarun already rank for their primary keywords - the play is REFRESHING existing content with Jetonomy positioning, not creating new articles. buddyxtheme has zero forum content but already ranks well for "alternatives" listicles (discord, gofundme, textnow) - natural URL pattern + voice fit.
 
 ---
 
@@ -38,7 +38,7 @@ This is the cross-site linking plan. All three articles should link to each othe
                         ┌──────────────────────────────────────┐
                         │                                      │
         ┌───────────────┤ wbcomdesigns.com/bbpress-review/     │
-        │               │ (the authority piece — most links)   │
+        │               │ (the authority piece - most links)   │
         │               └──────────────┬───────────────────────┘
         │                              │
         │                              │
@@ -124,11 +124,11 @@ Re-run SpyFu domain checks monthly to verify rank movement.
 
 Research surfaced these secondary opportunities you might want to pursue later:
 
-1. **"bbpress vs buddypress"** (220/mo, KD 15, buddypress.org at #1) — write a dedicated comparison page on wbcomdesigns. Natural fit because wbcom is the BuddyPress extensions shop.
-2. **"bbpress vs phpbb"** (220/mo, KD 0) — much easier ranking target; short comparison post.
-3. **"bbpress forum examples"** (340/mo, KD 18) — showcase page with live communities running bbPress + migration case studies.
-4. **"community platform"** (400/mo, KD 38, circle.so dominant) — harder to crack but larger volume; cornerstone page on buddyxtheme.
-5. **"wordpress q&a plugin"** (180/mo, KD 0) — dedicated Jetonomy Q&A space type post, targets the Q&A-only audience.
+1. **"bbpress vs buddypress"** (220/mo, KD 15, buddypress.org at #1) - write a dedicated comparison page on wbcomdesigns. Natural fit because wbcom is the BuddyPress extensions shop.
+2. **"bbpress vs phpbb"** (220/mo, KD 0) - much easier ranking target; short comparison post.
+3. **"bbpress forum examples"** (340/mo, KD 18) - showcase page with live communities running bbPress + migration case studies.
+4. **"community platform"** (400/mo, KD 38, circle.so dominant) - harder to crack but larger volume; cornerstone page on buddyxtheme.
+5. **"wordpress q&a plugin"** (180/mo, KD 0) - dedicated Jetonomy Q&A space type post, targets the Q&A-only audience.
 
 These are all high-ROI follow-ups after the initial three articles prove the positioning works.
 
@@ -136,7 +136,12 @@ These are all high-ROI follow-ups after the initial three articles prove the pos
 
 ## Files in this folder
 
-- `00-README.md` — this file
-- `01-wbcom-bbpress-review-refresh.md` — ~3,000 words, update `/bbpress-review/`
-- `02-vapvarun-forum-plugin-listicle.md` — ~3,300 words, update `/forum-wordpress-plugin/`
-- `03-buddyx-discourse-alternatives.md` — ~2,800 words, new `/discourse-alternatives-wordpress/`
+- `00-README.md` - this file
+- `01-wbcom-bbpress-review-refresh.md` - ~3,000 words, update `/bbpress-review/`
+- `02-vapvarun-forum-plugin-listicle.md` - ~3,300 words, update `/forum-wordpress-plugin/`
+- `03-buddyx-discourse-alternatives.md` - ~2,800 words, new `/discourse-alternatives-wordpress/`
+- `04-attowp-community-cms-architecture.md` - CMS architecture comparison for attowp.com
+- `05-reigntheme-community-themes-listicle.md` - community themes listicle for reigntheme.com
+- `06-vapvarun-jetonomy-1.3.0-to-1.3.5-retrospective.md` - 1.3.x retrospective, vapvarun.com
+- `07-vapvarun-jetonomy-1.4.2-whats-new.md` - 1.4.2 launch retrospective, vapvarun.com (May 2026)
+- `CONTENT-EXPANSION-PLAN.md` - network content expansion strategy

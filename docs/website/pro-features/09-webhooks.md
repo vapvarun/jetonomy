@@ -1,6 +1,6 @@
-Automatically send community events to any external URL — connect Jetonomy to Slack, Zapier, your CRM, or any custom pipeline.
+Automatically send community events to any external URL - connect Jetonomy to Slack, Zapier, your CRM, or any custom pipeline.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 > **As of 1.4.1, every documented event actually fires.** Earlier versions registered listeners against hook names the free plugin never emitted, so deployments would test the webhook UI, see "delivered," and never receive a single real-world event afterwards. Free 1.4.1 ships the lifecycle action contract Pro now hooks into. If you previously configured webhooks and saw zero deliveries despite real activity, update both plugins to 1.4.1 and the existing webhooks will start working without any reconfiguration.
 
@@ -14,7 +14,7 @@ Automatically send community events to any external URL — connect Jetonomy to 
 
 ## Why Webhooks Matter
 
-Jetonomy lives inside WordPress — but your business does not. Your team lives in Slack. Your sales data lives in a CRM. Your analytics live in a data warehouse. Webhooks close that gap. Every time something happens in your community, Jetonomy can push that data wherever you need it — in real time, with zero polling.
+Jetonomy lives inside WordPress - but your business does not. Your team lives in Slack. Your sales data lives in a CRM. Your analytics live in a data warehouse. Webhooks close that gap. Every time something happens in your community, Jetonomy can push that data wherever you need it - in real time, with zero polling.
 
 ## Enabling Webhooks
 
@@ -61,7 +61,7 @@ Subscribe to any combination of these events:
 | `flag.resolved` | A flag is resolved by a moderator |
 | `moderation.action` | A moderator approves, spams, or trashes content |
 
-You can create multiple webhooks pointing to different URLs with different event subsets — for example, one webhook for Slack (post events only) and one for your CRM (member events only).
+You can create multiple webhooks pointing to different URLs with different event subsets - for example, one webhook for Slack (post events only) and one for your CRM (member events only).
 
 ## Payload Format
 
@@ -128,10 +128,10 @@ Failed deliveries are retried up to three times with exponential backoff (5 min,
 
 ## Use Case Examples
 
-- **Slack notifications** — Post a message to a Slack channel whenever a new topic is created in your community.
-- **CRM sync** — Push `member.joined` events to HubSpot or Salesforce to trigger a welcome sequence.
-- **Zapier** — Connect any event to thousands of apps via a Zapier webhook trigger — no custom code needed.
-- **Analytics pipeline** — Stream all events to a data warehouse like BigQuery or Amplitude for long-term retention and custom analysis.
+- **Slack notifications** - Post a message to a Slack channel whenever a new topic is created in your community.
+- **CRM sync** - Push `member.joined` events to HubSpot or Salesforce to trigger a welcome sequence.
+- **Zapier** - Connect any event to thousands of apps via a Zapier webhook trigger - no custom code needed.
+- **Analytics pipeline** - Stream all events to a data warehouse like BigQuery or Amplitude for long-term retention and custom analysis.
 
 ## What's Next?
 

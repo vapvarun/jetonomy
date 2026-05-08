@@ -1,9 +1,9 @@
-# Jetonomy — Pitch Deck Outline
+# Jetonomy - Pitch Deck Outline
 
-**Version:** 1.3.0
-**Last updated:** April 2026
+**Version:** 1.4.2
+**Last updated:** May 2026
 
-Text-only outline for a 12-slide pitch deck. Designer converts to Figma/Keynote/PowerPoint. Tone follows `07-brand-assets/messaging-guide.md` — specific numbers over vague claims, helpful colleague not marketing department.
+Text-only outline for a 13-slide pitch deck. Designer converts to Figma/Keynote/PowerPoint. Tone follows `07-brand-assets/messaging-guide.md` - specific numbers over vague claims, helpful colleague not marketing department.
 
 Use cases:
 - Sales calls with agencies and community consultants
@@ -13,30 +13,30 @@ Use cases:
 
 ---
 
-## Slide 1 — Title
+## Slide 1 - Title
 
 **Headline:** Jetonomy
 **Subhead:** The modern forum plugin for WordPress
-**Tagline:** Forums, Q&A, and idea boards — built for communities that grow.
+**Tagline:** Forums, Q&A, idea boards, and Show & Tell - built for communities that grow.
 **Visual:** Full-bleed community home page screenshot with BuddyX theme
-**Bottom:** wbcomdesigns.com/downloads/jetonomy/ • v1.3.0 • April 2026
+**Bottom:** wbcomdesigns.com/downloads/jetonomy/ - v1.4.2 - May 2026
 
 ---
 
-## Slide 2 — The Problem
+## Slide 2 - The Problem
 
 **Headline:** WordPress forum plugins were built for blogs, not communities
 
 **Three bullets (with specific pain):**
-- **Slow at scale.** bbPress stores every topic and reply in wp_posts. At 50K topics, wp_postmeta queries get painful — and they slow the whole site, not just the forum.
+- **Slow at scale.** bbPress stores every topic and reply in wp_posts. At 50K topics, wp_postmeta queries get painful and they slow the whole site, not just the forum.
 - **Ugly by default.** Most forum plugins ship their own CSS that fights every theme. You spend days overriding !important selectors or give up and live with a forum that looks bolted on.
 - **Moderation never ends.** Every forum plugin assumes human moderators will watch every post. Active communities burn out their moderators in weeks.
 
-**Visual:** Side-by-side screenshots — one bbPress forum on a modern theme (looking out of place), one speed test showing slow query
+**Visual:** Side-by-side screenshots - one bbPress forum on a modern theme (looking out of place), one speed test showing slow query
 
 ---
 
-## Slide 3 — The Solution
+## Slide 3 - The Solution
 
 **Headline:** Jetonomy rewrites the data layer, the design system, and the moderation model
 
@@ -44,14 +44,14 @@ Use cases:
 
 | 24 | 6 | 90+ |
 |---|---|---|
-| **custom MySQL tables** | **trust levels (0–5)** | **REST endpoints** |
-| Fast queries, proper indexes, zero wp_postmeta bloat | Community moderates itself — new accounts rate-limited automatically | Full REST API — build anything on top |
+| **custom MySQL tables** | **trust levels (0-5)** | **REST endpoints** |
+| Fast queries, proper indexes, zero wp_postmeta bloat | Community moderates itself - new accounts rate-limited automatically | Full REST API - build anything on top |
 
 **Subhead:** Built for WordPress 6.7+, PHP 8.1+. Theme-adaptive via theme.json.
 
 ---
 
-## Slide 4 — Four in One
+## Slide 4 - Four in One
 
 **Headline:** One plugin, four community modes
 
@@ -59,25 +59,25 @@ Use cases:
 | **Forum** | **Q&A** |
 |---|---|
 | Classic threaded discussion. Support, general chat, announcements. | Questions get answers. Best answer rises to the top. Stack Overflow for your site. |
-| **Ideas** | **Social Feed** |
-| Members submit and vote. Roadmap view tracks ideas through Open → Planned → Done. | Lightweight scrollable feed. News spaces, team updates. |
+| **Ideas** | **Show & Tell** |
+| Members submit and vote. Roadmap lanes: Planned, In Progress, Shipped, Declined. | Short-form content cards. Links, screenshots, team updates - no full thread required. |
 
 **Bottom:** Mix and match on the same site. Each space has its own type, visibility, and moderators.
 
 ---
 
-## Slide 5 — Performance at Scale
+## Slide 5 - Performance at Scale
 
 **Headline:** Sub-200ms page loads at 50,000 topics with Redis
 
-**Left column — what we did:**
+**Left column - what we did:**
 - 24 custom MySQL tables with proper composite indexes
 - Denormalized counters (reply_count, vote_score, post_count stored on write)
 - Cursor-based pagination on every list endpoint
 - Object cache for spaces, profiles, permissions
 - FULLTEXT indexes for instant search
 
-**Right column — what it means:**
+**Right column - what it means:**
 - Your community grows to 100K+ posts without a performance crisis
 - No slow COUNT queries on page load
 - List pages stay fast regardless of table size
@@ -87,47 +87,69 @@ Use cases:
 
 ---
 
-## Slide 6 — Self-Moderating Community
+## Slide 6 - Self-Moderating Community
 
 **Headline:** Trust levels reduce moderation work by 90%+
 
-**Stair diagram — 6 trust levels:**
-- Level 0: Newcomer — 3 posts/day limit, no links, auto-applied
-- Level 1: Member — full posting, rate limits lift
-- Level 2: Regular — bypass CAPTCHA, vote weight increases
-- Level 3: Trusted — edit own content, flag more
-- Level 4: Leader — admin-granted, minor moderation
-- Level 5: Moderator — full moderation in assigned spaces
+**Stair diagram - 6 trust levels:**
+- Level 0: Newcomer - 3 posts/day limit, no links, auto-applied
+- Level 1: Member - full posting, rate limits lift
+- Level 2: Regular - bypass CAPTCHA, vote weight increases
+- Level 3: Trusted - edit own content, flag more
+- Level 4: Leader - admin-granted, minor moderation
+- Level 5: Moderator - full moderation in assigned spaces
 
 **Below the diagram:**
 Zero configuration. Works from day one. Your best defense against spam is that new accounts can't reach it.
 
 ---
 
-## Slide 7 — NEW in 1.3.0: AI Moderation
+## Slide 7 - NEW in 1.3.0: AI Moderation
 
-**Headline:** AI that reads every post — on your own server
+**Headline:** AI that reads every post - on your own server
 
 **Big visual:** Ollama logo + Jetonomy logo, connected with an arrow labeled "localhost only"
 
 **Four features:**
-- **Spam detection** — scores every post for spam probability
-- **Content moderation** — flags against rules you describe in plain English
-- **Reply suggestions** — drafts replies for knowledge-base communities
-- **Thread summaries** — pins a summary on long topics
+- **Spam detection** - scores every post for spam probability
+- **Content moderation** - flags against rules you describe in plain English
+- **Reply suggestions** - drafts replies for knowledge-base communities
+- **Thread summaries** - pins a summary on long topics
 
 **Privacy callout:**
 Four providers supported: OpenAI, Anthropic, custom endpoint, and **self-hosted Ollama**. With Ollama, no content leaves your server. No API keys. No per-request billing. Every decision logged for compliance review.
 
-**Subhead:** This is the biggest 1.3.0 change — and the reason buyers who wouldn't consider AI moderation before are considering it now.
+**Subhead:** This is the biggest 1.3.0 change. Buyers who wouldn't consider AI moderation before are now taking a closer look.
 
 ---
 
-## Slide 8 — Works With Any Theme
+## Slide 7b - NEW in 1.4.2: More Space Types, Multisite, and Accessibility
 
-**Headline:** Adapts to your WordPress theme — automatically
+**Headline:** Four space types. Multisite-ready. Keyboard-accessible.
 
-**Left:** Screenshot grid of the same Jetonomy community rendered on 6 different themes (BuddyX, Twenty Twenty-Five, Astra, GeneratePress, Kadence, Blocksy) — each looks native to its theme
+**Four callout blocks:**
+
+**Show & Tell spaces**
+Short-form content cards with an optional title. Members share links, screenshots, and updates without the structure of a full forum thread. A lighter on-ramp for community participation.
+
+**Ideas roadmap lanes**
+Ideas spaces now have real status lanes: Planned, In Progress, Shipped, Declined. Members can see exactly where their votes land. The roadmap view is a public product log, not just a wishlist.
+
+**Q&A "Answered" badge**
+Posts with an accepted answer show an "Answered" badge in the space listing. Members scanning for open questions can skip resolved threads at a glance.
+
+**Multisite network activation**
+Activating Jetonomy network-wide now provisions tables on every existing subsite and on all future subsites automatically. No per-site activation required.
+
+**Footer note:** 1.4.2 also ships a full i18n and accessibility sweep - translatable strings throughout, keyboard focus indicators everywhere, aria-labels on filter and bulk controls.
+
+---
+
+## Slide 8 - Works With Any Theme
+
+**Headline:** Adapts to your WordPress theme automatically
+
+**Left:** Screenshot grid of the same Jetonomy community rendered on 6 different themes (BuddyX, Twenty Twenty-Five, Astra, GeneratePress, Kadence, Blocksy) - each looks native to its theme
 
 **Right:**
 Jetonomy reads your theme's `theme.json` and inherits:
@@ -143,7 +165,7 @@ If your theme doesn't publish theme.json, Jetonomy falls back to neutral default
 
 ---
 
-## Slide 9 — Free vs Pro
+## Slide 9 - Free vs Pro
 
 **Headline:** The free plugin covers everything a real community needs
 
@@ -151,45 +173,47 @@ If your theme doesn't publish theme.json, Jetonomy falls back to neutral default
 
 | | Free | Pro |
 |---|:---:|:---:|
-| Forum, Q&A, Ideas, Social Feed spaces | ✓ | ✓ |
+| Forum, Q&A, Ideas, and Show & Tell spaces | ✓ | ✓ |
 | Voting, reputation, trust levels | ✓ | ✓ |
 | Moderation queue and flagging | ✓ | ✓ |
 | Full-text search | ✓ | ✓ |
 | 48+ REST API endpoints | ✓ | ✓ |
 | Abilities API (19 abilities) | ✓ | ✓ |
-| bbPress, wpForo, Asgaros importers | ✓ | ✓ |
-| **AI integration (Ollama-ready)** | — | ✓ |
-| Private messaging | — | ✓ |
-| Emoji reactions, polls, custom badges | — | ✓ |
-| Analytics dashboard, email digest | — | ✓ |
-| Webhooks, Web push, Reply by email | — | ✓ |
-| SEO Pro (per-space controls) | — | ✓ |
-| White label, WooCommerce, LearnDash, RCP | — | ✓ |
+| bbPress and wpForo importers | ✓ | ✓ |
+| Multisite network activation | ✓ | ✓ |
+| Translatable interface + keyboard accessibility | ✓ | ✓ |
+| **AI integration (Ollama-ready)** | - | ✓ |
+| Private messaging | - | ✓ |
+| Emoji reactions, polls, custom badges | - | ✓ |
+| Analytics dashboard, email digest | - | ✓ |
+| Webhooks, web push, reply by email | - | ✓ |
+| SEO Pro (per-space controls) | - | ✓ |
+| White label, WooCommerce, LearnDash, RCP | - | ✓ |
 
 **Bottom:** 14 Pro modules. No feature locks in free.
 
 ---
 
-## Slide 10 — Migration Story
+## Slide 10 - Migration Story
 
-**Headline:** Built-in importers for bbPress, wpForo, and Asgaros
+**Headline:** Built-in importers for bbPress and wpForo
 
 **Three-step timeline:**
-1. **Auto-detect** — Jetonomy scans your install and shows what it found: forums, topics, replies, users
-2. **Dry run** — preview exactly what will be created before anything is written
-3. **Import + resume** — batched processing with live progress bar; resumes from failure point if interrupted
+1. **Auto-detect** - Jetonomy scans your install and shows what it found: forums, topics, replies, users
+2. **Dry run** - preview exactly what will be created before anything is written
+3. **Import + resume** - batched processing with live progress bar; resumes from failure point if interrupted
 
 **What migrates:**
 - Forums → Spaces
 - Topics → Posts (with threading preserved)
 - Replies → Replies
-- Users → WordPress accounts (unchanged — Jetonomy uses your existing user table)
+- Users → WordPress accounts (unchanged - Jetonomy uses your existing user table)
 
 **Callout:** 301 redirects from old bbPress URLs preserve your SEO.
 
 ---
 
-## Slide 11 — Developer Story
+## Slide 11 - Developer Story
 
 **Headline:** Built for developers, not just site owners
 
@@ -209,9 +233,9 @@ Copy any template into `your-theme/jetonomy/` and customize without touching the
 
 ---
 
-## Slide 12 — Get Started
+## Slide 12 - Get Started
 
-**Headline:** Start your community today — it's free
+**Headline:** Start your community today - it's free
 
 **Big CTA button:**
 Download Free from wbcomdesigns.com/downloads/jetonomy/
@@ -224,7 +248,7 @@ See Pro Features → wbcomdesigns.com/downloads/jetonomy-pro/
 - GitHub: github.com/wbcomdesigns/jetonomy
 - Support: support.wbcomdesigns.com
 
-**Corner tagline:** Built by Wbcom Designs — the team behind BuddyX, BuddyPress extensions, and WPMediaVerse.
+**Corner tagline:** Built by Wbcom Designs - the team behind BuddyX, BuddyPress extensions, and WPMediaVerse.
 
 ---
 
@@ -236,4 +260,4 @@ See Pro Features → wbcomdesigns.com/downloads/jetonomy-pro/
 
 **On slide 6 (Trust Levels):** When audience members push back with "but my community is different," the response is: every community says that, trust levels ship with no configuration required, and you can always override the thresholds later. Show the admin setting panel in a side screenshot.
 
-**On slide 9 (Free vs Pro):** Never apologize for the Pro price. Pro is one license, 14 modules, lifetime or annual options — it is competitively priced against any single bbPress add-on, let alone against Discourse's hosted plans.
+**On slide 9 (Free vs Pro):** Never apologize for the Pro price. Pro is one license, 14 modules, lifetime or annual options. It is competitively priced against any single bbPress add-on, let alone against Discourse's hosted plans.

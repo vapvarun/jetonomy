@@ -29,6 +29,10 @@
 | wordpress forum draft posts | Feature page |
 | wordpress forum leaderboard | Feature page |
 | self-moderating wordpress forum | Blog post |
+| show and tell wordpress | Feature page |
+| ideas roadmap wordpress | Feature page |
+| q&a accepted answer wordpress | Feature page |
+| wordpress forum multisite | Feature page |
 
 ## Long-tail Keywords (target in blog posts, docs)
 
@@ -46,7 +50,7 @@
 ## Meta Content Templates
 
 ### Product Page
-**Title:** Jetonomy — Forums, Q&A & Idea Boards for WordPress
+**Title:** Jetonomy - Forums, Q&A & Idea Boards for WordPress
 **Description:** Add a modern discussion platform to your WordPress site. Custom database tables for performance, trust levels for self-moderation, and a UI that adapts to your theme. Free.
 
 ### Landing Page
@@ -54,9 +58,9 @@
 **Meta Description:** Forums, Q&A, and idea boards with custom database tables, trust levels, and 90+ REST API endpoints. Free plugin. Pro adds AI moderation, reactions, messaging, polls, and analytics.
 
 ### Feature Pages
-**Title pattern:** [Feature Name] — Jetonomy WordPress Forum Plugin
+**Title pattern:** [Feature Name] - Jetonomy WordPress Forum Plugin
 **Description pattern:** [Feature benefit in 1 sentence]. Part of Jetonomy, the modern forum plugin for WordPress.
 
 ### Comparison Pages
-**Title pattern:** Jetonomy vs [Competitor] — WordPress Forum Plugin Comparison
+**Title pattern:** Jetonomy vs [Competitor] - WordPress Forum Plugin Comparison
 **Description pattern:** See how Jetonomy compares to [competitor] across [N] features including performance, moderation, search, and developer tools.

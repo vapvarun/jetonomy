@@ -1,4 +1,4 @@
-Jetonomy's search finds content across your entire community in real time — topics, replies, spaces, and tags — and lets you narrow results with powerful filters so members always land on exactly what they need.
+Jetonomy's search finds content across your entire community in real time - topics, replies, spaces, and tags - and lets you narrow results with powerful filters so members always land on exactly what they need.
 
 ## What You Will Learn
 
@@ -21,7 +21,7 @@ Results appear on the search results page at `/community/search/`. Each result c
 
 ![Search results page](../images/search-results.png)
 
-> **Tip:** Phrase searches work well in Jetonomy. Wrap your query in quotes — `"email digest"` — to find that exact phrase rather than posts containing both words separately.
+> **Tip:** Phrase searches work well in Jetonomy. Wrap your query in quotes - `"email digest"` - to find that exact phrase rather than posts containing both words separately.
 
 ## Filter Pills
 
@@ -38,7 +38,7 @@ Click any pill to filter. The URL updates so you can share a filtered search lin
 
 ## Advanced Filters
 
-Click the **Filters** button to expand the advanced filter bar. These filters stack — you can combine them in any combination.
+Click the **Filters** button to expand the advanced filter bar. These filters stack - you can combine them in any combination.
 
 ### Date Range
 
@@ -64,7 +64,7 @@ Relevance is the default because it surfaces the best textual match. Switch to N
 
 ### Collapsing the Filter Bar
 
-Click **Filters** again to collapse the bar. Your active filters remain applied — the pill count badge on the Filters button shows how many filters are currently active.
+Click **Filters** again to collapse the bar. Your active filters remain applied - the pill count badge on the Filters button shows how many filters are currently active.
 
 ## For Developers: Extending Search Filters
 

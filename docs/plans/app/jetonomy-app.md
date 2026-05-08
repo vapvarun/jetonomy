@@ -1,4 +1,4 @@
-# jetonomy-app — React Native Mobile App
+# jetonomy-app - React Native Mobile App
 
 ## Overview
 
@@ -114,10 +114,10 @@ jetonomy-app/
 
 **Flow:**
 1. User enters site URL
-2. App calls `GET {url}/wp-json/jetonomy/v1` — validates Jetonomy is installed
+2. App calls `GET {url}/wp-json/jetonomy/v1` - validates Jetonomy is installed
 3. User enters credentials
-4. App calls `POST {url}/wp-json/jetonomy/v1/auth/token` — gets JWT
-5. App calls `GET {url}/wp-json/jetonomy/v1/app/config` — gets branding + features
+4. App calls `POST {url}/wp-json/jetonomy/v1/auth/token` - gets JWT
+5. App calls `GET {url}/wp-json/jetonomy/v1/app/config` - gets branding + features
 6. Navigate to home
 
 For white-label builds: site URL hardcoded, only username/password shown.
@@ -266,7 +266,7 @@ For white-label builds: site URL hardcoded, only username/password shown.
 - Tap → navigate to post/reply
 - Mark all read button
 
-### Messages (Tab 4 — Pro only)
+### Messages (Tab 4 - Pro only)
 ```
 ┌─────────────────────────┐
 │  Messages         [New]  │
@@ -397,9 +397,9 @@ Dark mode: toggle in settings, persisted in AsyncStorage.
 ## Offline Support
 
 React Query provides:
-- Cached feeds — app works offline with stale data
-- Optimistic updates — vote/reply feels instant, syncs in background
-- Retry on reconnect — failed requests auto-retry
+- Cached feeds - app works offline with stale data
+- Optimistic updates - vote/reply feels instant, syncs in background
+- Retry on reconnect - failed requests auto-retry
 
 ## Push Notifications
 
@@ -412,7 +412,7 @@ React Query provides:
 
 ## Development Phases
 
-### Phase 1 — Core (Week 1-2)
+### Phase 1 - Core (Week 1-2)
 - [ ] Expo project setup with Router + NativeWind
 - [ ] Auth flow: site URL validation → login → JWT storage
 - [ ] Home feed with PostCard component
@@ -420,7 +420,7 @@ React Query provides:
 - [ ] Vote buttons (optimistic update)
 - [ ] Spaces list with categories
 
-### Phase 2 — Interaction (Week 3-4)
+### Phase 2 - Interaction (Week 3-4)
 - [ ] Create post with space selector
 - [ ] Reply composer
 - [ ] Search screen
@@ -428,14 +428,14 @@ React Query provides:
 - [ ] User profile screen
 - [ ] Pull to refresh + infinite scroll
 
-### Phase 3 — Pro Features (Week 5)
+### Phase 3 - Pro Features (Week 5)
 - [ ] Messaging tab (conversations + thread)
 - [ ] Reactions picker
 - [ ] Polls display + vote
 - [ ] Badges on profile
 - [ ] Feature detection (show/hide Pro features)
 
-### Phase 4 — Polish (Week 6)
+### Phase 4 - Polish (Week 6)
 - [ ] Dark mode
 - [ ] Bookmarks
 - [ ] Similar topics on create post
@@ -444,7 +444,7 @@ React Query provides:
 - [ ] Image upload in posts
 - [ ] App settings screen
 
-### Phase 5 — White-label (Week 7)
+### Phase 5 - White-label (Week 7)
 - [ ] Branding from app.json (name, icon, colors)
 - [ ] Hardcoded site URL mode for white-label
 - [ ] EAS build profiles

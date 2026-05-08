@@ -1,6 +1,6 @@
 # AJAX Handlers Manifest
 # Generated: 2026-03-24
-# Source: includes/admin/class-admin.php (consolidated — pending extraction)
+# Source: includes/admin/class-admin.php (consolidated - pending extraction)
 # Total: 34
 
 ## Categories (4)

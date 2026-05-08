@@ -1,4 +1,4 @@
-The moderation queue is your single dashboard for everything that needs human review — posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
+The moderation queue is your single dashboard for everything that needs human review - posts waiting for approval, flagged content, and items caught by spam filters. You can action everything from one page without digging through individual topics.
 
 ![Admin moderation queue with pending items and bulk action controls](../images/admin-moderation.png)
 
@@ -13,7 +13,7 @@ The moderation queue is your single dashboard for everything that needs human re
 
 ## Accessing the Moderation Queue
 
-Go to **Jetonomy → Moderation** in your WordPress admin. The page is also accessible from the frontend at `/community/mod/` — WordPress Administrators and users with the `jetonomy_moderate` capability can access both routes.
+Go to **Jetonomy → Moderation** in your WordPress admin. The page is also accessible from the frontend at `/community/mod/` - WordPress Administrators and users with the `jetonomy_moderate` capability can access both routes.
 
 The queue shows a count badge on the admin menu item whenever there are items waiting for review.
 
@@ -41,19 +41,19 @@ For each item in the queue, you can take one of three actions:
 | Mark as Spam | Marks the content as spam and moves it to trash; updates Akismet's spam training if Akismet is active |
 | Trash | Moves the content to trash without marking it as spam |
 
-For flagged content, Approve resolves the flag as dismissed — meaning the flag was unfounded and the content is fine. The content stays live. Use Trash or Mark as Spam to remove content where the flag was legitimate.
+For flagged content, Approve resolves the flag as dismissed - meaning the flag was unfounded and the content is fine. The content stays live. Use Trash or Mark as Spam to remove content where the flag was legitimate.
 
 > **Tip:** Use Mark as Spam rather than Trash when content is clearly commercial spam. This trains Akismet for your site, making future auto-detection more accurate.
 
 ## Bulk Actions
 
-Check the checkbox on multiple queue items, then choose an action from the **Bulk Action** dropdown and click **Apply**. All three actions — Approve, Mark as Spam, Trash — are available as bulk actions.
+Check the checkbox on multiple queue items, then choose an action from the **Bulk Action** dropdown and click **Apply**. All three actions - Approve, Mark as Spam, Trash - are available as bulk actions.
 
 Bulk actions are the fastest way to clear a backlog. If you have 40 flagged items from a spam attack, select all and bulk-trash them in one click.
 
 ## Per-Space vs Global Moderation
 
-The queue shows content from all spaces by default. Use the **Space** filter dropdown at the top of the queue to narrow to a single space. This is useful when you have dedicated space moderators — a moderator for your Support space only needs to see Support space items.
+The queue shows content from all spaces by default. Use the **Space** filter dropdown at the top of the queue to narrow to a single space. This is useful when you have dedicated space moderators - a moderator for your Support space only needs to see Support space items.
 
 Space moderators who do not have global admin access see only their own spaces' items when they visit `/community/mod/`. They do not see content from spaces they do not moderate.
 
@@ -69,10 +69,10 @@ If the Akismet Anti-Spam plugin is active and configured on your site, Jetonomy 
 
 You can review Akismet-held items and restore any that were incorrectly caught by clicking **Not Spam**. This action publishes the content and updates Akismet's model.
 
-> **Note:** Akismet integration requires the Akismet plugin to be installed, activated, and connected with a valid API key. Jetonomy does not bundle Akismet — it integrates with it automatically when present.
+> **Note:** Akismet integration requires the Akismet plugin to be installed, activated, and connected with a valid API key. Jetonomy does not bundle Akismet - it integrates with it automatically when present.
 
 ## What's Next?
 
-Learn about Jetonomy's built-in anti-spam tools — reCAPTCHA, Turnstile, and rate limiting — that reduce how much reaches the moderation queue in the first place.
+Learn about Jetonomy's built-in anti-spam tools - reCAPTCHA, Turnstile, and rate limiting - that reduce how much reaches the moderation queue in the first place.
 
 [Anti-Spam Protection →](04-anti-spam.md)

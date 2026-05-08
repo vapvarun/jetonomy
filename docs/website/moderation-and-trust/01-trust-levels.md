@@ -1,4 +1,4 @@
-Jetonomy's trust system automatically promotes reliable members to higher privilege levels as they earn reputation — so you spend less time manually managing who can do what, and your most active members get recognized for their contributions.
+Jetonomy's trust system automatically promotes reliable members to higher privilege levels as they earn reputation - so you spend less time manually managing who can do what, and your most active members get recognized for their contributions.
 
 ![Permissions settings with trust level thresholds and promotion rules](../images/admin-permissions.png)
 
@@ -52,13 +52,13 @@ Reputation is updated in real time whenever a qualifying event occurs.
 | Your topic or reply is downvoted | -2 |
 | A moderator deletes your content | -20 |
 
-Reputation points accumulate on your public profile. The leaderboard ranks members by reputation score — see the [Leaderboard](../user-profiles/02-leaderboard.md) doc for details.
+Reputation points accumulate on your public profile. The leaderboard ranks members by reputation score - see the [Leaderboard](../user-profiles/02-leaderboard.md) doc for details.
 
 ## Automatic Promotion
 
 A cron job runs twice daily to evaluate all members against the current trust level thresholds. Any member whose reputation meets or exceeds the next threshold is automatically promoted.
 
-Promotion is silent — members are not notified by default. You can add a welcome notification using the `jetonomy_trust_level_changed` action hook if you want to acknowledge promotions.
+Promotion is silent - members are not notified by default. You can add a welcome notification using the `jetonomy_trust_level_changed` action hook if you want to acknowledge promotions.
 
 Demotion works the same way. If a member's reputation falls below a threshold (for example, because posts were deleted), they are automatically moved back to the appropriate level on the next cron run.
 
@@ -66,11 +66,11 @@ Demotion works the same way. If a member's reputation falls below a threshold (f
 
 ## Configuring Thresholds
 
-Go to **Jetonomy → Settings → Permissions** to adjust the reputation threshold for each trust level. Changes take effect on the next cron run — or immediately if you run a manual recalculation.
+Go to **Jetonomy → Settings → Permissions** to adjust the reputation threshold for each trust level. Changes take effect on the next cron run - or immediately if you run a manual recalculation.
 
-Lower thresholds make promotion faster and more accessible. Higher thresholds make higher trust levels a meaningful achievement. There is no right answer — tune these to the pace and size of your community.
+Lower thresholds make promotion faster and more accessible. Higher thresholds make higher trust levels a meaningful achievement. There is no right answer - tune these to the pace and size of your community.
 
-> **Note:** Setting a threshold to 0 makes that trust level automatic for all members who meet all lower thresholds. Use this carefully — it effectively grants TL capabilities to your entire community.
+> **Note:** Setting a threshold to 0 makes that trust level automatic for all members who meet all lower thresholds. Use this carefully - it effectively grants TL capabilities to your entire community.
 
 ## Trust Badges on Avatars
 
@@ -87,7 +87,7 @@ Each trust level has a colored badge that appears on a member's avatar across to
 
 ## Why Trust-Based Moderation Beats Manual Role Assignment
 
-In a traditional forum, you manually decide who is a "trusted" member. That does not scale. With Jetonomy's trust system, your community self-selects. Members who contribute quality content earn their way to higher levels automatically. You only need to intervene in edge cases — banning bad actors or manually elevating a known expert to a higher level.
+In a traditional forum, you manually decide who is a "trusted" member. That does not scale. With Jetonomy's trust system, your community self-selects. Members who contribute quality content earn their way to higher levels automatically. You only need to intervene in edge cases - banning bad actors or manually elevating a known expert to a higher level.
 
 ## What's Next?
 

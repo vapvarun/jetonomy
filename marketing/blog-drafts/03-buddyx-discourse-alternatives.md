@@ -1,6 +1,6 @@
 ---
 site: buddyxtheme.com
-target_url: /discourse-alternatives-wordpress/  (NEW — follows same URL pattern as /top-alternatives-to-discord-to-use/)
+target_url: /discourse-alternatives-wordpress/  (NEW - follows same URL pattern as /top-alternatives-to-discord-to-use/)
 action: NEW article
 primary_keyword: discourse alternatives (90+130/mo, KD 20)
 secondary_keywords:
@@ -20,13 +20,13 @@ goal: rank top 10 for "discourse alternatives" within 3 months; capture secondar
 
 # Title / Meta
 
-**H1:** 7 Best Discourse Alternatives in 2026 (I Ran Discourse for 18 Months — Here's What I Switched To)
+**H1:** 7 Best Discourse Alternatives in 2026 (I Ran Discourse for 18 Months - Here's What I Switched To)
 
-**SEO Title (60 chars):** 7 Best Discourse Alternatives in 2026 — Tested and Ranked
+**SEO Title (60 chars):** 7 Best Discourse Alternatives in 2026 - Tested and Ranked
 
 **Meta Description (155 chars):** I ran a Discourse community for 18 months before migrating. Here are 7 Discourse alternatives that actually work in 2026, with honest trade-offs for each.
 
-**Featured image alt:** "Discourse alternatives comparison chart — Jetonomy, Flarum, NodeBB, BuddyBoss and more"
+**Featured image alt:** "Discourse alternatives comparison chart - Jetonomy, Flarum, NodeBB, BuddyBoss and more"
 
 **Schema.org:** `ItemList` with 7 `SoftwareApplication` items, plus `FAQPage` for the Q&A section.
 
@@ -36,9 +36,9 @@ goal: rank top 10 for "discourse alternatives" within 3 months; capture secondar
 
 ## Discourse is excellent software. It's also the wrong shape for a lot of community projects.
 
-I ran a Discourse community for 18 months between 2023 and 2025. It was a developer-focused community of about 4,000 members — software architects, mostly, asking each other long-form questions about system design. Discourse was good for them. It's one of the few forum platforms built for the kind of long, deep, written-first conversation that developer communities actually do.
+I ran a Discourse community for 18 months between 2023 and 2025. It was a developer-focused community of about 4,000 members - software architects, mostly, asking each other long-form questions about system design. Discourse was good for them. It's one of the few forum platforms built for the kind of long, deep, written-first conversation that developer communities actually do.
 
-But I migrated off it in early 2025, and I want to explain why — because if you're here, you're probably asking the same questions I was asking: "Do I really need Discourse for this? Is there something that does 80% of what Discourse does for 20% of the hosting cost? Is there something that lives inside my existing site instead of being a separate application?"
+But I migrated off it in early 2025, and I want to explain why - because if you're here, you're probably asking the same questions I was asking: "Do I really need Discourse for this? Is there something that does 80% of what Discourse does for 20% of the hosting cost? Is there something that lives inside my existing site instead of being a separate application?"
 
 There is. There are several, actually. Here are the seven Discourse alternatives I've either deployed on real projects or seriously evaluated in 2026, ranked by which one I'd pick for which job.
 
@@ -64,7 +64,7 @@ For a small community where the forum is one feature among many, this feels wild
 
 ### 3. Visual design lives in Discourse's world, not yours
 
-Discourse has its own visual design system. Making it match your main website's branding requires writing a custom Discourse theme — which means learning Ember (Discourse's frontend framework) and maintaining a theme repository separately from your main site's codebase.
+Discourse has its own visual design system. Making it match your main website's branding requires writing a custom Discourse theme - which means learning Ember (Discourse's frontend framework) and maintaining a theme repository separately from your main site's codebase.
 
 I spent two weeks getting the Discourse theme to match our main site's brand colors. Every WordPress theme update, I had to check whether the Discourse theme still looked right.
 
@@ -80,7 +80,7 @@ Those are the specific reasons I migrated. Let's look at what I considered.
 
 ---
 
-## 1. Jetonomy — the WordPress-native alternative I actually switched to
+## 1. Jetonomy - the WordPress-native alternative I actually switched to
 
 **WordPress plugin · Free + Pro · Released March 2026 · By Wbcom Designs**
 
@@ -89,19 +89,19 @@ Full disclosure: Jetonomy is from Wbcom Designs, the studio behind BuddyX theme 
 **What it does well (the Discourse-alternative angle):**
 
 - **Lives inside WordPress.** One admin panel, one user database, one hosting bill. My developer community now lives at `/community/` on the same WordPress site as the rest of our content. No bridge, no SSO, no dual-admin headache.
-- **Four community types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers — the thing Discourse doesn't quite do), Ideas (with a public roadmap), and Social Feed (short-form). You pick per space. Discourse is forum-only.
-- **Six trust levels, like Discourse.** Jetonomy's trust level system is conceptually similar to Discourse's — new members are rate-limited, and trust is earned through participation. I didn't lose the trust-level moderation story when I migrated.
+- **Four community types in one plugin.** Forum (threaded discussion), Q&A (with accepted answers - the thing Discourse doesn't quite do), Ideas (with a public roadmap), and Social Feed (short-form). You pick per space. Discourse is forum-only.
+- **Six trust levels, like Discourse.** Jetonomy's trust level system is conceptually similar to Discourse's - new members are rate-limited, and trust is earned through participation. I didn't lose the trust-level moderation story when I migrated.
 - **Theme integration via `theme.json`.** Jetonomy reads your active WordPress theme's fonts, colors, and spacing automatically. I did zero CSS work to match my site's brand. This was the first time I didn't have to maintain a separate theme repository.
 - **Built-in importers** for bbPress and wpForo (and I hear a Discourse importer is on the roadmap). For communities migrating from another WordPress forum, the path is low-risk: dry run first, then batched background import with resume-on-failure.
 - **48+ REST API endpoints in free, 90+ with Pro.** Everything Jetonomy does is accessible via REST API. I built a custom dashboard showing community growth metrics in an afternoon.
-- **WordPress Abilities API support** (19 abilities in 5 categories). Requires WordPress 6.9+. AI agents can discover and interact with the community programmatically — this is something Discourse doesn't offer.
+- **WordPress Abilities API support** (19 abilities in 5 categories). Requires WordPress 6.9+. AI agents can discover and interact with the community programmatically - this is something Discourse doesn't offer.
 - **AI-powered moderation in Pro 1.3.0** with four providers including self-hosted Ollama. If your community has privacy requirements (mine did), you can run the moderation model entirely on your own server with no content leaving your machine.
 
 **Where it's weaker than Discourse:**
 
 - Discourse is more mature. It's been around since 2013 and has a huge ecosystem of plugins, themes, and hosted integrations. Jetonomy 1.0 shipped March 2026.
 - Discourse has better real-time features today. Discourse has native WebSocket-based live updates; Jetonomy uses polling by default (with a real-time adapter pattern for custom backends if you need push updates).
-- Discourse has a mobile app. Jetonomy relies on your main WordPress site's mobile responsiveness — works fine in 2026, but not a dedicated app.
+- Discourse has a mobile app. Jetonomy relies on your main WordPress site's mobile responsiveness - works fine in 2026, but not a dedicated app.
 - Discourse scales to Reddit-sized communities on a single deployment. Jetonomy scales well into the 100,000+ post range, but I wouldn't deploy it for a community expecting 10 million posts.
 
 **Best for:** Communities that already run on WordPress (or want to). Teams that don't want the operational overhead of a separate Ruby application. Anyone who wants Q&A or Ideas space types alongside forums.
@@ -112,7 +112,7 @@ Full disclosure: Jetonomy is from Wbcom Designs, the studio behind BuddyX theme 
 
 ---
 
-## 2. Flarum — the self-hosted forum built on modern PHP
+## 2. Flarum - the self-hosted forum built on modern PHP
 
 **Open source · Self-hosted · By Flarum team**
 
@@ -121,9 +121,9 @@ Flarum is the closest thing to Discourse in the self-hosted world if you don't w
 **What it does well:**
 
 - Genuinely fast and lightweight. Cold page loads are quick even on modest hosting.
-- Clean visual design out of the box — maybe the best-looking self-hosted forum after Discourse.
+- Clean visual design out of the box - maybe the best-looking self-hosted forum after Discourse.
 - Active development with a committed maintainer team.
-- Extension ecosystem — hundreds of community-built extensions cover most common forum needs.
+- Extension ecosystem - hundreds of community-built extensions cover most common forum needs.
 - Runs on shared hosting or a small VPS. Way cheaper than Discourse to self-host.
 - Open source under MIT.
 
@@ -141,11 +141,11 @@ Flarum is the closest thing to Discourse in the self-hosted world if you don't w
 
 ---
 
-## 3. NodeBB — the Node.js option
+## 3. NodeBB - the Node.js option
 
 **Open source · Self-hosted · By NodeBB team**
 
-NodeBB is Discourse's Node.js equivalent — a modern, real-time forum built on a JavaScript stack. If you're already a Node shop, this is a natural fit.
+NodeBB is Discourse's Node.js equivalent - a modern, real-time forum built on a JavaScript stack. If you're already a Node shop, this is a natural fit.
 
 **What it does well:**
 
@@ -170,7 +170,7 @@ NodeBB is Discourse's Node.js equivalent — a modern, real-time forum built on 
 
 ---
 
-## 4. BuddyBoss Platform — the paid all-in-one social platform
+## 4. BuddyBoss Platform - the paid all-in-one social platform
 
 **WordPress plugin · Paid · By BuddyBoss**
 
@@ -178,7 +178,7 @@ BuddyBoss is less a "Discourse alternative" and more a "we'll replace your entir
 
 **What it does well:**
 
-- Complete social community platform in a single product — activity streams, groups, forums, messaging, events, courses.
+- Complete social community platform in a single product - activity streams, groups, forums, messaging, events, courses.
 - Native iOS and Android mobile apps as part of the platform.
 - Professional visual design out of the box.
 - Commercial team with active development.
@@ -187,7 +187,7 @@ BuddyBoss is less a "Discourse alternative" and more a "we'll replace your entir
 **Where it hurts:**
 
 - It's paid. Pricing scales with features and the total cost adds up fast for small communities.
-- Replaces a lot of the WordPress stack with BuddyBoss's own versions — you commit to their ecosystem.
+- Replaces a lot of the WordPress stack with BuddyBoss's own versions - you commit to their ecosystem.
 - The forum layer inherits bbPress's architectural problems at scale.
 - Overkill if you only want a forum.
 - Less flexible than running individual best-of-breed plugins.
@@ -198,15 +198,15 @@ BuddyBoss is less a "Discourse alternative" and more a "we'll replace your entir
 
 ---
 
-## 5. Circle — the SaaS community platform
+## 5. Circle - the SaaS community platform
 
 **Hosted SaaS · Paid · By Circle**
 
-Circle is the Discourse alternative that isn't trying to be a forum at all — it's a hosted community platform aimed at creators, course authors, and SaaS companies running customer communities. Think of it as "Discourse's product aesthetic, but hosted, simpler, and aimed at non-technical operators."
+Circle is the Discourse alternative that isn't trying to be a forum at all - it's a hosted community platform aimed at creators, course authors, and SaaS companies running customer communities. Think of it as "Discourse's product aesthetic, but hosted, simpler, and aimed at non-technical operators."
 
 **What it does well:**
 
-- Fully hosted — zero infrastructure to manage. Point your DNS, pay monthly, done.
+- Fully hosted - zero infrastructure to manage. Point your DNS, pay monthly, done.
 - Modern visual design and UX that rivals Slack or Notion.
 - Built-in live events, courses, and video hosting alongside the forum.
 - Easy to set up for non-technical users.
@@ -215,7 +215,7 @@ Circle is the Discourse alternative that isn't trying to be a forum at all — i
 
 **Where it hurts:**
 
-- Expensive — starts at $49/month for basic features, and scales up significantly for anything serious.
+- Expensive - starts at $49/month for basic features, and scales up significantly for anything serious.
 - Closed source. Your community data lives on Circle's servers. If Circle shuts down or raises prices, you migrate or stay trapped.
 - Not self-hostable.
 - Not a WordPress plugin. Lives at a separate subdomain.
@@ -227,7 +227,7 @@ Circle is the Discourse alternative that isn't trying to be a forum at all — i
 
 ---
 
-## 6. bbPress + BuddyPress on WordPress — the classic combo
+## 6. bbPress + BuddyPress on WordPress - the classic combo
 
 **WordPress plugins · Free · By the WordPress core team**
 
@@ -246,7 +246,7 @@ For the sake of completeness, the original "don't use Discourse, use WordPress" 
 - bbPress hasn't had a major release since 2020. Development has slowed to a crawl.
 - bbPress stores forum content in `wp_posts` and `wp_postmeta`, which causes site-wide performance issues at scale.
 - Neither plugin has Q&A mode, Ideas spaces, trust levels, or a modern REST API.
-- Theme integration is a fight in 2026 — neither plugin reads `theme.json`.
+- Theme integration is a fight in 2026 - neither plugin reads `theme.json`.
 - Moderation is basic.
 
 **Best for:** Sites already running this combo that are working fine and don't need to change.
@@ -255,11 +255,11 @@ For the sake of completeness, the original "don't use Discourse, use WordPress" 
 
 ---
 
-## 7. Mighty Networks — the SaaS alternative focused on creators
+## 7. Mighty Networks - the SaaS alternative focused on creators
 
 **Hosted SaaS · Paid · By Mighty Networks**
 
-Mighty Networks is Circle's main competitor — same "hosted community platform for creators" category, same business model, slightly different feature emphasis.
+Mighty Networks is Circle's main competitor - same "hosted community platform for creators" category, same business model, slightly different feature emphasis.
 
 **What it does well:**
 
@@ -271,7 +271,7 @@ Mighty Networks is Circle's main competitor — same "hosted community platform 
 
 **Where it hurts:**
 
-- Same category limitations as Circle — paid, closed, your data lives on their servers.
+- Same category limitations as Circle - paid, closed, your data lives on their servers.
 - Opinionated product structure that doesn't fit every community shape.
 - Expensive at scale.
 - Not a WordPress plugin. Separate platform entirely.
@@ -284,7 +284,7 @@ Mighty Networks is Circle's main competitor — same "hosted community platform 
 
 ---
 
-## Quick comparison — Discourse vs the alternatives
+## Quick comparison - Discourse vs the alternatives
 
 | Platform | WordPress-native | Self-hostable | Free | Trust levels | Q&A / Ideas | Mobile app | 2026 pick? |
 |----------|:----------------:|:-------------:|:----:|:------------:|:-----------:|:----------:|:----------:|
@@ -323,7 +323,7 @@ Here's the shortcut version:
 - **Yes** → Jetonomy Pro 1.3.0 with self-hosted Ollama is the only option on this list that ships this.
 - **No** → Anything works.
 
-For 80% of readers arriving at this article, the answer is **Jetonomy** — because most people searching "Discourse alternatives" already run WordPress and want the community inside it. That's why it's at #1.
+For 80% of readers arriving at this article, the answer is **Jetonomy** - because most people searching "Discourse alternatives" already run WordPress and want the community inside it. That's why it's at #1.
 
 ---
 
@@ -331,11 +331,11 @@ For 80% of readers arriving at this article, the answer is **Jetonomy** — beca
 
 ### Is Discourse free?
 
-Yes — the self-hosted version is open source under GPL. But "free" here means "you pay with server resources and admin time instead of dollars." A real Discourse deployment needs 1-2GB of RAM, a PostgreSQL database, Redis, and an email pipeline. Hosted Discourse starts at $100/month.
+Yes - the self-hosted version is open source under GPL. But "free" here means "you pay with server resources and admin time instead of dollars." A real Discourse deployment needs 1-2GB of RAM, a PostgreSQL database, Redis, and an email pipeline. Hosted Discourse starts at $100/month.
 
 ### What's the best free Discourse alternative?
 
-For WordPress sites, Jetonomy (free version at wbcomdesigns.com) is the best free option — it gives you forum, Q&A, Ideas, trust levels, and a full REST API in the free plugin. For self-hosted standalone forums, Flarum is free and open source. bbPress + BuddyPress is also free but the architectural limits become obvious past 10,000 posts.
+For WordPress sites, Jetonomy (free version at wbcomdesigns.com) is the best free option - it gives you forum, Q&A, Ideas, trust levels, and a full REST API in the free plugin. For self-hosted standalone forums, Flarum is free and open source. bbPress + BuddyPress is also free but the architectural limits become obvious past 10,000 posts.
 
 ### Can I run Discourse as a WordPress plugin?
 
@@ -343,7 +343,7 @@ No. Discourse is a separate Ruby on Rails application that runs on its own serve
 
 ### What's the cheapest Discourse alternative?
 
-Jetonomy free is genuinely free — no trial, no signup wall, no feature locks on the things a new community actually needs. If you're not on WordPress, Flarum and NodeBB are open source and run on cheap shared hosting or a small VPS.
+Jetonomy free is genuinely free - no trial, no signup wall, no feature locks on the things a new community actually needs. If you're not on WordPress, Flarum and NodeBB are open source and run on cheap shared hosting or a small VPS.
 
 ### Does Discourse have Q&A mode?
 
@@ -351,11 +351,11 @@ Sort of. Discourse has a "question" topic type and tags for accepted answers, bu
 
 ### What about Reddit-style voting?
 
-Most modern forum platforms support upvoting now — Discourse (via plugins), Jetonomy (built in), wpForo (built in). Voting itself isn't a differentiator in 2026.
+Most modern forum platforms support upvoting now - Discourse (via plugins), Jetonomy (built in), wpForo (built in). Voting itself isn't a differentiator in 2026.
 
 ### Which Discourse alternative has the best mobile experience?
 
-BuddyBoss, Mighty Networks, and Circle ship native iOS/Android apps. Discourse has an official app. Jetonomy, Flarum, and NodeBB use responsive web design — which in 2026, on modern browsers, feels close enough to a native app for most users. If "native app" is a hard requirement, the three SaaS options (or BuddyBoss) are where to look.
+BuddyBoss, Mighty Networks, and Circle ship native iOS/Android apps. Discourse has an official app. Jetonomy, Flarum, and NodeBB use responsive web design - which in 2026, on modern browsers, feels close enough to a native app for most users. If "native app" is a hard requirement, the three SaaS options (or BuddyBoss) are where to look.
 
 ### Can I migrate from Discourse to another platform?
 
@@ -369,16 +369,16 @@ If you're on WordPress and you're thinking about Discourse, **don't**. You don't
 
 If you're running a standalone community where the forum is the product and you have DevOps capacity to handle Discourse's requirements, **Discourse is still genuinely excellent** and you don't need an alternative. Don't migrate off it for the sake of migrating.
 
-If you're somewhere in the middle — you have a WordPress site but you also need some of what Discourse does — start with Jetonomy free. It's the free plugin with the most "Discourse features done right for WordPress" that I've tested in 2026. You can evaluate it in an afternoon without committing anything.
+If you're somewhere in the middle - you have a WordPress site but you also need some of what Discourse does - start with Jetonomy free. It's the free plugin with the most "Discourse features done right for WordPress" that I've tested in 2026. You can evaluate it in an afternoon without committing anything.
 
 **Try Jetonomy free:** [wbcomdesigns.com/downloads/jetonomy/](https://wbcomdesigns.com/downloads/jetonomy/)
 
 **Related reading:**
 
-- [Top 7 Alternatives to Discord](https://buddyxtheme.com/top-alternatives-to-discord-to-use/) — if your question was really about Discord, not Discourse
-- [Mighty Networks review and pricing](https://wbcomdesigns.com/mighty-networks-review-features-pricing-pros-cons/) — full breakdown of the hosted alternative
-- [bbPress review 2026](https://wbcomdesigns.com/bbpress-review/) — honest look at the classic WordPress forum plugin
-- [9 Best WordPress Forum Plugins for 2026](https://vapvarun.com/forum-wordpress-plugin/) — the full WordPress forum plugin landscape
+- [Top 7 Alternatives to Discord](https://buddyxtheme.com/top-alternatives-to-discord-to-use/) - if your question was really about Discord, not Discourse
+- [Mighty Networks review and pricing](https://wbcomdesigns.com/mighty-networks-review-features-pricing-pros-cons/) - full breakdown of the hosted alternative
+- [bbPress review 2026](https://wbcomdesigns.com/bbpress-review/) - honest look at the classic WordPress forum plugin
+- [9 Best WordPress Forum Plugins for 2026](https://vapvarun.com/forum-wordpress-plugin/) - the full WordPress forum plugin landscape
 
 ---
 
@@ -393,7 +393,7 @@ Link from this article to:
 
 Link to this article from:
 - buddyxtheme.com/top-alternatives-to-discord-to-use/ (related reading)
-- buddyxtheme.com/best-crm-systems-tools/ (tangential — "community" sidebar link)
+- buddyxtheme.com/best-crm-systems-tools/ (tangential - "community" sidebar link)
 - wbcomdesigns.com/mighty-networks-review-features-pricing-pros-cons/ (related reading)
 - wbcomdesigns.com/bbpress-review/ (new internal link)
 - vapvarun.com/forum-wordpress-plugin/ (new internal link)

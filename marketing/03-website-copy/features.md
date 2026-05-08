@@ -1,17 +1,17 @@
-# Jetonomy — Feature Highlights
+# Jetonomy - Feature Highlights
 
-**Version:** 1.3.0
-**Last updated:** April 2026
+**Version:** 1.4.2
+**Last updated:** May 2026
 
 ---
 
-## CORE — Spaces, Topics, Replies, Voting
+## CORE - Spaces, Topics, Replies, Voting
 
 ### Spaces
 
-**What it does:** Spaces are the containers for your community. Create Forum spaces for open discussion, Q&A spaces where the best answer gets marked and surfaced, or Ideas spaces where members vote on what gets built next. Each space can have its own visibility (public, private, or hidden), join policy (open, approval-required, or invite-only), and per-space moderators.
+**What it does:** Spaces are the containers for your community. Create Forum spaces for open discussion, Q&A spaces where the best answer gets marked and surfaced, Ideas spaces where members vote on what gets built next, or Show & Tell spaces for short-form content cards with an optional title and inline media. Each space can have its own visibility (public, private, or hidden), join policy (open, approval-required, or invite-only), and per-space moderators.
 
-**Why it matters:** You can run one community with completely different rules for different parts. A public support forum, a private staff area, and a customer ideas board can all live on the same site under the same /community/ path — each with its own access controls.
+**Why it matters:** You can run one community with completely different rules for different parts. A public support forum, a private staff area, and a customer ideas board can all live on the same site under the same /community/ path - each with its own access controls.
 
 ---
 
@@ -25,7 +25,7 @@
 
 ### Rich Posts and Threaded Replies
 
-**What it does:** Posts support a full rich-text editor with tags and optional media library attachments. Replies support up to three levels of threading with collapsible branches. Long threads use smart loading — first and last replies load by default, middle replies load on demand.
+**What it does:** Posts support a full rich-text editor with tags and optional media library attachments. Replies support up to three levels of threading with collapsible branches. Long threads use smart loading: first and last replies load by default, middle replies load on demand.
 
 **Why it matters:** Long threads stay readable. Members can follow a specific branch of conversation without scrolling through hundreds of replies. The smart loading means a thread with 400 replies is not a wall of text.
 
@@ -43,7 +43,7 @@
 
 **What it does:** In Q&A spaces, the post author can mark one reply as the accepted answer. It's highlighted at the top of the thread and earns the replier a +15 reputation bonus.
 
-**Why it matters:** Members searching for answers find them instantly — the accepted answer is the first thing they see. Repeat questions drop because the canonical answer is visible and authoritative.
+**Why it matters:** Members searching for answers find them instantly. The accepted answer is the first thing they see. Repeat questions drop because the canonical answer is visible and authoritative.
 
 ---
 
@@ -71,11 +71,11 @@
 
 ---
 
-## DISCOVERY — Search, Tags, Leaderboard
+## DISCOVERY - Search, Tags, Leaderboard
 
 ### Full-Text Search
 
-**What it does:** Search across posts, spaces, and tags using MySQL FULLTEXT in BOOLEAN MODE. Results are grouped by type (All, Posts, Spaces, Tags) with counts and content excerpts. The search system uses a swappable adapter interface — connect Meilisearch or Elasticsearch when your community needs it, using the same API.
+**What it does:** Search across posts, spaces, and tags using MySQL FULLTEXT in BOOLEAN MODE. Results are grouped by type (All, Posts, Spaces, Tags) with counts and content excerpts. The search system uses a swappable adapter interface. Connect Meilisearch or Elasticsearch when your community needs it, using the same API.
 
 **Why it matters:** Members find answers before they ask questions. The adapter pattern means you can start with built-in search and upgrade to a dedicated search service later without touching any custom code.
 
@@ -93,7 +93,7 @@
 
 **What it does:** Leaderboard page shows top contributors by posts, replies, and reputation. Rankings update in real time.
 
-**Why it matters:** Active members get recognition. New members can find the most helpful people in the community quickly. The leaderboard also signals community health — a growing leaderboard shows an active community.
+**Why it matters:** Active members get recognition. New members can find the most helpful people in the community quickly. The leaderboard also signals community health. A growing leaderboard shows an active community.
 
 ---
 
@@ -105,11 +105,11 @@
 
 ---
 
-## MODERATION — Trust Levels, Flagging, Anti-Spam
+## MODERATION - Trust Levels, Flagging, Anti-Spam
 
 ### Six Trust Levels
 
-**What it does:** Members move through six trust levels — Newcomer (0), Member (1), Regular (2), Trusted (3), Leader (4), and Moderator (5). Levels 0–3 are earned automatically based on activity. Levels 4 and 5 are granted by admins.
+**What it does:** Members move through six trust levels: Newcomer (0), Member (1), Regular (2), Trusted (3), Leader (4), and Moderator (5). Levels 0-3 are earned automatically based on activity. Levels 4 and 5 are granted by admins.
 
 **Why it matters:** Trust is earned, not assumed. New accounts have limited reach, which cuts spam without requiring constant moderator attention. Reliable contributors gain capabilities over time, and by the time someone reaches Level 4, the community has already shown they deserve the trust.
 
@@ -119,13 +119,13 @@
 
 **What it does:** Level 0 members are rate-limited to 3 posts per day and cannot post links. These restrictions lift automatically as members earn higher trust levels. No configuration required.
 
-**Why it matters:** This is the single most effective anti-spam measure in Jetonomy. Most spam comes from new accounts. Rate-limiting new accounts and blocking links from them cuts the volume of spam reaching the moderation queue dramatically — before it's ever published.
+**Why it matters:** This is the single most effective anti-spam measure in Jetonomy. Most spam comes from new accounts. Rate-limiting new accounts and blocking links from them cuts the volume of spam reaching the moderation queue dramatically, before it's ever published.
 
 ---
 
 ### Moderation Queue
 
-**What it does:** A single admin view showing pending posts, pending replies, flagged content, and banned users. Moderators can approve, mark as spam, or trash in one click. Marking as spam automatically deducts 20 reputation from the author.
+**What it does:** A single admin view showing pending posts, pending replies, flagged content, and banned users. Moderators can approve, mark as spam, or trash in one click. Marking as spam deducts 20 reputation from the author automatically.
 
 **Why it matters:** Moderation is one screen instead of five. The most important actions take one click. Reputation deductions for spam create a natural feedback loop that discourages repeat offenses.
 
@@ -163,13 +163,13 @@
 
 ---
 
-## PRO — Reactions, Messaging, Polls, Badges, Analytics, Webhooks
+## PRO - Reactions, Messaging, Polls, Badges, Analytics, Webhooks
 
 ### Emoji Reactions (Pro)
 
 **What it does:** Members can react to posts and replies with emoji. Multiple reactions per post. Reactions are tallied and displayed inline.
 
-**Why it matters:** Not every response needs a reply. Reactions let members acknowledge content — agree, funny, helpful — without adding noise to the thread. High-reaction posts surface as useful signals.
+**Why it matters:** Not every response needs a reply. Reactions let members acknowledge content (agree, funny, helpful) without adding noise to the thread. High-reaction posts surface as useful signals.
 
 ---
 
@@ -191,7 +191,7 @@
 
 ### Custom Badges with Criteria Engine (Pro)
 
-**What it does:** Create badges that are awarded automatically when a member meets defined criteria — first post, 100 replies, Trust Level 3 reached, first accepted answer, and more. Badge display on profiles and in posts.
+**What it does:** Create badges that are awarded automatically when a member meets defined criteria: first post, 100 replies, Trust Level 3 reached, first accepted answer, and more. Badge display on profiles and in posts.
 
 **Why it matters:** Badges gamify participation in a way that goes beyond the automatic trust system. You can create badges specific to your community's milestones and culture. Members collect them; profiles display them as signals of expertise.
 
@@ -207,9 +207,9 @@
 
 ### Advanced Auto-Moderation Rules (Pro)
 
-**What it does:** Create rules that trigger automatic actions — hold for review, spam, or auto-approve — based on conditions like trust level, word lists, link count, and post frequency.
+**What it does:** Create rules that trigger automatic actions - hold for review, spam, or auto-approve - based on conditions like trust level, word lists, link count, and post frequency.
 
-**Why it matters:** The built-in trust-level gates handle most spam. Pro auto-moderation handles the cases that need custom rules specific to your community — particular phrases, post patterns, or new accounts from certain domains.
+**Why it matters:** The built-in trust-level gates handle most spam. Pro auto-moderation handles the cases that need custom rules specific to your community: particular phrases, post patterns, or new accounts from certain domains.
 
 ---
 
@@ -233,13 +233,13 @@
 
 **What it does:** Members can subscribe to browser push notifications. Triggers on the same events as in-community and email notifications.
 
-**Why it matters:** Push notifications reach members even when they're not on your site. For time-sensitive discussions — support questions, active debates — push gets the right people back quickly.
+**Why it matters:** Push notifications reach members even when they're not on your site. For time-sensitive discussions - support questions, active debates - push gets the right people back quickly.
 
 ---
 
 ### Webhooks (Pro)
 
-**What it does:** Send HTTP POST requests to any URL when community events occur — new post, new reply, trust level change, accepted answer, member joined, and more. Configurable event selection and target URL per webhook.
+**What it does:** Send HTTP POST requests to any URL when community events occur: new post, new reply, trust level change, accepted answer, member joined, and more. Configurable event selection and target URL per webhook.
 
 **Why it matters:** Connect Jetonomy to your existing tools without building a custom integration. Trigger Zapier workflows, post to Slack, sync to a CRM, or update an external analytics system when community events happen.
 
@@ -263,7 +263,7 @@
 
 ### Per-Space SEO Controls (Pro)
 
-**What it does:** Override default SEO settings per space — custom meta title patterns, meta description, noindex toggle, and canonical URL behavior.
+**What it does:** Override default SEO settings per space: custom meta title patterns, meta description, noindex toggle, and canonical URL behavior.
 
 **Why it matters:** Some spaces should be indexed; others (private support channels, staff areas) should not. Pro SEO controls let you manage this precisely instead of using site-wide settings that affect all spaces.
 
@@ -273,11 +273,11 @@
 
 **What it does:** Gate spaces by WooCommerce product purchase, LearnDash course enrollment, or Restrict Content Pro membership level. Access rules sync automatically with subscription status.
 
-**Why it matters:** The free plugin supports MemberPress and Paid Memberships Pro. Pro expands this to three additional membership and LMS systems — covering the majority of WordPress membership and course setups.
+**Why it matters:** The free plugin supports MemberPress and Paid Memberships Pro. Pro expands this to three additional membership and LMS systems, covering the majority of WordPress membership and course setups.
 
 ---
 
-## NEW IN 1.3.0 — AI INTEGRATION (PRO)
+## NEW IN 1.3.0 - AI INTEGRATION (PRO)
 
 ### AI-Powered Spam Detection, Moderation, and Summaries (Pro)
 
@@ -285,17 +285,17 @@
 
 **Providers:** OpenAI, Anthropic, any OpenAI-compatible endpoint, or self-hosted **Ollama** running on the same server as WordPress.
 
-**Why it matters:** Moderation is the single biggest burden on community owners. Trust levels handle most of the work, Akismet handles known spam, and now AI handles the gray zone — context-aware spam, subtle abuse, and the long tail of judgment calls. With the Ollama provider, everything runs on your own server — no content leaves your machine, and there is no per-request API bill. For communities that cannot send content to a third-party API (legal, health, enterprise internal), this is the difference between shipping AI moderation and not shipping it at all.
+**Why it matters:** Moderation is the single biggest burden on community owners. Trust levels handle most of the work, Akismet handles known spam, and AI handles the gray zone: context-aware spam, subtle abuse, and the long tail of judgment calls. With the Ollama provider, everything runs on your own server. No content leaves your machine, and there is no per-request API bill. For communities that cannot send content to a third-party API (legal, health, enterprise internal), this is the difference between shipping AI moderation and not shipping it at all.
 
 ---
 
-## NEW IN 1.2.0 — DISCUSSION CONTROLS (FREE)
+## NEW IN 1.2.0 - DISCUSSION CONTROLS (FREE)
 
 ### Private Topics
 
 **What it does:** Mark individual topics as private so only the author and space moderators can see them. Other members of the space cannot find or open the topic.
 
-**Why it matters:** Support communities often have sensitive one-off conversations — account details, abuse reports, billing questions — that should not sit in a public space but do not warrant a full private message thread. Private topics handle this case without moving the conversation off-platform.
+**Why it matters:** Support communities often have sensitive one-off conversations - account details, abuse reports, billing questions - that should not sit in a public space but do not warrant a full private message thread. Private topics handle this case without moving the conversation off-platform.
 
 ### Topic Prefixes
 
@@ -314,3 +314,53 @@
 **What it does:** Select any passage in a reply and click Quote to insert a styled blockquote into your reply composer with attribution linked back to the source. Or click Quote in a reply's `...` menu to quote the full body.
 
 **Why it matters:** Long threads stay readable when each reply quotes the specific passage it is responding to. Quote Replies gives readers the context without forcing them to scroll back up a thousand replies.
+
+---
+
+## NEW IN 1.4.2 - SPACE TYPES, SCALE, AND ACCESSIBILITY (FREE)
+
+### Show & Tell Spaces
+
+**What it does:** A fourth space type designed for short-form content. Posts use inline content cards with an optional title and rich content area. No long subject lines required. Great for sharing links, screenshots, team updates, and news.
+
+**Why it matters:** Not every community conversation fits a forum thread structure. Show & Tell gives members a low-friction way to share quick content - and gives moderators a dedicated space to separate short posts from in-depth discussions.
+
+---
+
+### Ideas Spaces with Real Roadmap Lanes
+
+**What it does:** Ideas spaces now include a full roadmap view with four status lanes: Planned, In Progress, Shipped, and Declined. Members can see exactly where each idea stands. Admins drag ideas between lanes or update status from the moderation view.
+
+**Why it matters:** Telling a member "your idea is under review" is not the same as showing them it moved from Planned to In Progress this week. Visible status lanes turn the ideas board into a real product roadmap - one that builds trust because members can see their input making a difference.
+
+---
+
+### Q&A "Answered" Badge in Space Listings
+
+**What it does:** Q&A spaces now show an "Answered" badge on any post that has an accepted answer, visible directly in the space listing. Posts without an accepted answer are clearly distinguishable at a glance.
+
+**Why it matters:** Members scanning the space listing can skip posts that are already resolved and focus on open questions. This reduces duplicate answers and helps new members find authoritative replies before posting.
+
+---
+
+### Cleanup Cron Batching for Large Communities
+
+**What it does:** Background cleanup jobs now process records in batches of 500 per run, with a filter (`jetonomy_cron_batch_size`) to adjust the batch size. Previously, cleanup jobs could time out on large installs with tens of thousands of rows to process.
+
+**Why it matters:** Communities with 10,000+ posts, activity log entries, or read-status records no longer face cron timeouts or partial cleanups. The filter gives developers control over the batch size when needed.
+
+---
+
+### Multisite Network Activation
+
+**What it does:** Activating Jetonomy network-wide now installs the required database tables on every existing subsite and on any new subsite created in the future. Previously, tables had to be installed manually per subsite.
+
+**Why it matters:** Network operators running Jetonomy across 10, 50, or 500 subsites no longer need to activate site-by-site. New subsites get fully provisioned database tables automatically.
+
+---
+
+### Internationalization and Accessibility Sweep
+
+**What it does:** The majority of user-facing strings across space listings, filter controls, bulk actions, and selection interfaces are now translatable. Keyboard focus indicators are visible throughout the frontend. All filter controls, bulk action dropdowns, and select-all checkboxes have proper aria-labels.
+
+**Why it matters:** Communities with non-English-speaking members can now translate the interface fully via standard WordPress translation workflows. Members who navigate by keyboard or use assistive technologies get clear focus indicators and labeled controls on every surface.

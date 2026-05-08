@@ -1,6 +1,6 @@
-Attach a poll to any topic and let your community vote — perfect for decisions, feedback, and feature prioritization.
+Attach a poll to any topic and let your community vote - perfect for decisions, feedback, and feature prioritization.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 <!-- TODO screenshot needed: Poll attached to a community post with percentage bars (was ../images/pro-polls-result-bars.png) -->
 ## What You Will Learn
@@ -13,7 +13,7 @@ Attach a poll to any topic and let your community vote — perfect for decisions
 
 ## Why Polls Matter
 
-Asking a question in text is passive. Attaching a poll turns the same question into an action — members click an option in seconds instead of writing a response. You get quantified signal, higher engagement on that post, and a result the whole community can see at a glance.
+Asking a question in text is passive. Attaching a poll turns the same question into an action - members click an option in seconds instead of writing a response. You get quantified signal, higher engagement on that post, and a result the whole community can see at a glance.
 
 ## Enabling Polls
 
@@ -29,10 +29,10 @@ The poll builder lets you:
 
 - Write up to 10 options (minimum 2 required).
 - Choose **Single choice** (members pick one) or **Multiple choice** (members pick several).
-- Optionally set a **Close date** — the poll stops accepting votes automatically at that date and time.
+- Optionally set a **Close date** - the poll stops accepting votes automatically at that date and time.
 
 <!-- TODO screenshot needed: Poll builder in the post composer (was ../images/pro-polls-composer.png) -->
-The poll is attached to the topic and saved together when you click **Post**. You cannot attach a poll to a reply — only to top-level topics.
+The poll is attached to the topic and saved together when you click **Post**. You cannot attach a poll to a reply - only to top-level topics.
 
 > **Tip:** You can add or remove a poll from an existing topic by editing the post. Removing a poll permanently deletes all votes cast on it.
 
@@ -40,8 +40,8 @@ The poll is attached to the topic and saved together when you click **Post**. Yo
 
 The poll appears below the post body, before any replies. Each option is displayed as a labeled button.
 
-- **Single choice** — clicking an option records your vote immediately. You see the results as percentage bars as soon as you vote.
-- **Multiple choice** — checkboxes appear. Select all the options you want and click **Vote**.
+- **Single choice** - clicking an option records your vote immediately. You see the results as percentage bars as soon as you vote.
+- **Multiple choice** - checkboxes appear. Select all the options you want and click **Vote**.
 
 After voting, members can change their vote by clicking a different option. Clicking your current selection a second time removes your vote entirely.
 

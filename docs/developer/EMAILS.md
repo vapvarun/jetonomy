@@ -1,4 +1,4 @@
-# Jetonomy Emails — Developer Guide
+# Jetonomy Emails - Developer Guide
 
 How Jetonomy sends notification emails, what admins can change in the UI,
 and every filter/hook available to developers.
@@ -133,7 +133,7 @@ add_action( 'init', function () {
 } );
 ```
 
-`Postmark_Adapter` must implement `\Jetonomy\Adapters\Email_Adapter` —
+`Postmark_Adapter` must implement `\Jetonomy\Adapters\Email_Adapter` -
 see `includes/adapters/interface-email-adapter.php`.
 
 ## 5. Avoiding double-sends
@@ -143,7 +143,7 @@ handles three emails that we deliberately do not replicate:
 
 | Event | Owned by | Notes |
 | --- | --- | --- |
-| New user registration | **WP core** (`wp_new_user_notification`) + Jetonomy's own branded welcome | The Login block calls `do_action('jetonomy_user_registered', $user_id)` so integrators can hang a branded welcome here. We do **not** call `wp_send_new_user_notifications()` — that would duplicate core's default admin-new-user email. |
+| New user registration | **WP core** (`wp_new_user_notification`) + Jetonomy's own branded welcome | The Login block calls `do_action('jetonomy_user_registered', $user_id)` so integrators can hang a branded welcome here. We do **not** call `wp_send_new_user_notifications()` - that would duplicate core's default admin-new-user email. |
 | Lost password | WP core | Initiated from `/wp-login.php?action=lostpassword`, which the Login block links to. Jetonomy never intercepts. |
 | Email change confirmation | WP core | Initiated from `wp-admin` profile or `/community/u/:login/edit/`. |
 
@@ -165,7 +165,7 @@ Local by Flywheel ships Mailpit per site. For `forums.local`:
 Note: `wp-cli` on a Local site does **not** inherit PHP-FPM's `sendmail_path`,
 so any email triggered via `wp --path=… eval …` or a CLI command will not
 reach Mailpit. Always test email flows via the web runtime (admin-ajax,
-REST, or a browser-triggered action) — this is codified in `docs/qa/AGENT_SMOKE_RUNBOOK.md`.
+REST, or a browser-triggered action) - this is codified in `docs/qa/AGENT_SMOKE_RUNBOOK.md`.
 
 ## 7. Default templates reference
 

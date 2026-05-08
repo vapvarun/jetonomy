@@ -1,4 +1,4 @@
-Spaces are the discussion areas inside your community — each one has its own topic listing, member list, and settings. This guide shows you how to create, configure, and manage them.
+Spaces are the discussion areas inside your community - each one has its own topic listing, member list, and settings. This guide shows you how to create, configure, and manage them.
 
 ![Admin space editor with name, description, and settings fields](../images/admin-space-edit.png)
 
@@ -23,23 +23,23 @@ Go to **Jetonomy → Spaces** in your WordPress admin and click **Add New Space*
 
 ### Basic Information
 
-**Title** — The name members see in listings, the space header, and breadcrumbs. Keep it short and descriptive.
+**Title** - The name members see in listings, the space header, and breadcrumbs. Keep it short and descriptive.
 
-**Slug** — The URL-safe identifier for this space. Jetonomy auto-generates a slug from the title. The final URL will be `/community/s/your-slug/`. You can change the slug, but doing so after posts exist will break any existing links.
+**Slug** - The URL-safe identifier for this space. Jetonomy auto-generates a slug from the title. The final URL will be `/community/s/your-slug/`. You can change the slug, but doing so after posts exist will break any existing links.
 
-**Description** — A short sentence or two explaining what this space is for. This appears in the space header below the title and in category listing cards. It also populates the meta description for search engines.
+**Description** - A short sentence or two explaining what this space is for. This appears in the space header below the title and in category listing cards. It also populates the meta description for search engines.
 
-**Icon** — A single emoji that represents the space. It appears in the space header and on category listing cards alongside the title. Choose something that works in monochrome — it will be displayed at small sizes on mobile.
+**Icon** - A single emoji that represents the space. It appears in the space header and on category listing cards alongside the title. Choose something that works in monochrome - it will be displayed at small sizes on mobile.
 
-**Category** — Select which category this space belongs to. A space must be assigned to a category to appear on the community home page.
+**Category** - Select which category this space belongs to. A space must be assigned to a category to appear on the community home page.
 
 ### Space Configuration
 
-**Type** — Choose Forum, Q&A, or Ideas. This controls how posts and replies behave. See [Space Types](02-space-types.md) for a full explanation of each.
+**Type** - Choose Forum, Q&A, or Ideas. This controls how posts and replies behave. See [Space Types](02-space-types.md) for a full explanation of each.
 
-**Visibility** — Controls who can see the space and its content. Options: Public, Private, or Hidden. See [Membership & Join Policies](03-membership-policies.md) for details.
+**Visibility** - Controls who can see the space and its content. Options: Public, Private, or Hidden. See [Membership & Join Policies](03-membership-policies.md) for details.
 
-**Join Policy** — Controls how members gain access. Options: Open, Approval Required, or Invite Only.
+**Join Policy** - Controls how members gain access. Options: Open, Approval Required, or Invite Only.
 
 Click **Save Space** to publish it immediately.
 
@@ -63,7 +63,7 @@ Go to **Jetonomy → Spaces**, find the space in the list, and click **Edit**. A
 
 ## Archiving a Space
 
-To archive a space, open it for editing and set its **Status** to **Archived**. An archived space becomes read-only — members can read existing posts and replies, but cannot create new ones. The space remains visible in listings with a clear "Archived" label.
+To archive a space, open it for editing and set its **Status** to **Archived**. An archived space becomes read-only - members can read existing posts and replies, but cannot create new ones. The space remains visible in listings with a clear "Archived" label.
 
 Archived spaces do not count toward activity stats on the community home page.
 

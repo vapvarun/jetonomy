@@ -26,9 +26,9 @@ Two ways to get there, both show the same list:
 
 Both list every topic you have bookmarked, most recent first. Each item shows the topic title, the space it belongs to, the author, and when it was posted. Click any item to go directly to the topic.
 
-Bookmarks are private — other members cannot see your bookmark list. The standalone page requires sign-in and is excluded from search engines so the URL itself never reveals what you've saved.
+Bookmarks are private - other members cannot see your bookmark list. The standalone page requires sign-in and is excluded from search engines so the URL itself never reveals what you've saved.
 
-> **Tip:** Use bookmarks as a reading queue — bookmark topics you want to read later, then clear them as you go. The Bookmarks tab gives you a clean list without any algorithm reordering it.
+> **Tip:** Use bookmarks as a reading queue - bookmark topics you want to read later, then clear them as you go. The Bookmarks tab gives you a clean list without any algorithm reordering it.
 
 ## Following Spaces
 
@@ -42,7 +42,7 @@ Following a space subscribes you to new post notifications from that space. Ever
 
 Click **Following** in the space header to toggle it off. The button returns to **Follow** and you stop receiving new post notifications from that space.
 
-Following a space does not make you a member of the space. In Open spaces, you can follow without joining — you will receive notifications but you will not be listed as a member and cannot post until you join.
+Following a space does not make you a member of the space. In Open spaces, you can follow without joining - you will receive notifications but you will not be listed as a member and cannot post until you join.
 
 ### What You Get Notified About
 
@@ -82,7 +82,7 @@ Here you can:
 - See topics you are subscribed to (the list shows the 20 most recent)
 - Set your notification preference for email delivery (immediate, daily digest, or never)
 
-> **Note:** Daily and weekly email digests are a Jetonomy Pro feature. In the free plugin, email notifications are sent immediately for each event or not at all — based on your notification settings.
+> **Note:** Daily and weekly email digests are a Jetonomy Pro feature. In the free plugin, email notifications are sent immediately for each event or not at all - based on your notification settings.
 
 ## What's Next?
 

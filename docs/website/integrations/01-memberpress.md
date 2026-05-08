@@ -1,4 +1,4 @@
-Connect MemberPress membership levels to Jetonomy spaces — so paying members automatically land in the right discussion areas the moment their subscription activates.
+Connect MemberPress membership levels to Jetonomy spaces - so paying members automatically land in the right discussion areas the moment their subscription activates.
 
 ![Jetonomy admin settings panel for configuring integrations](../images/admin-settings.png)
 
@@ -27,7 +27,7 @@ Jetonomy checks for MemberPress automatically on every page load. No configurati
 
 Members who hold the selected level gain access to this space. Members without it see the space as locked (or hidden, depending on your space visibility setting).
 
-> **Tip:** Combine multiple rules if you want to grant access to more than one membership level. Each rule is evaluated independently — a member passes if they match any Grant rule.
+> **Tip:** Combine multiple rules if you want to grant access to more than one membership level. Each rule is evaluated independently - a member passes if they match any Grant rule.
 
 ## Auto-Join and Auto-Leave
 
@@ -61,11 +61,11 @@ add_action( 'jetonomy_membership_activated', function( int $user_id, string $lev
 
 ## Troubleshooting
 
-**Access rules dropdown is empty** — MemberPress may not be active. Check **Plugins → Installed Plugins** and confirm MemberPress is activated.
+**Access rules dropdown is empty** - MemberPress may not be active. Check **Plugins → Installed Plugins** and confirm MemberPress is activated.
 
-**Member not joining on activation** — Ensure the membership level ID in the Access Rule exactly matches the level in MemberPress. Level IDs are numeric; check the MemberPress level edit URL for the ID.
+**Member not joining on activation** - Ensure the membership level ID in the Access Rule exactly matches the level in MemberPress. Level IDs are numeric; check the MemberPress level edit URL for the ID.
 
-**Member still has access after expiry** — Check whether the member holds a second membership level that also grants access to the space.
+**Member still has access after expiry** - Check whether the member holds a second membership level that also grants access to the space.
 
 ## What's Next?
 

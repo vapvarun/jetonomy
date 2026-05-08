@@ -1,6 +1,6 @@
-Connect LearnDash course and group enrollment to Jetonomy spaces — students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
+Connect LearnDash course and group enrollment to Jetonomy spaces - students get dedicated discussion areas automatically when they enroll, and lose access when they un-enroll.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn
 
@@ -12,7 +12,7 @@ Connect LearnDash course and group enrollment to Jetonomy spaces — students ge
 
 ## How Detection Works
 
-Jetonomy Pro detects LearnDash automatically when both plugins are active. A **LearnDash Course** option appears in the Access Rules rule type dropdown — no setup needed. Compatible with LearnDash 4.x and 5.x.
+Jetonomy Pro detects LearnDash automatically when both plugins are active. A **LearnDash Course** option appears in the Access Rules rule type dropdown - no setup needed. Compatible with LearnDash 4.x and 5.x.
 
 ![Integrations settings showing active LMS plugins](../images/integrations-settings.png)
 
@@ -20,7 +20,7 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.
-3. Start typing the course name — a searchable dropdown shows all published LearnDash courses.
+3. Start typing the course name - a searchable dropdown shows all published LearnDash courses.
 4. Select the course, set Grants to **Participate** and Space Role to **Member**.
 5. Click **Add Rule**.
 
@@ -28,13 +28,13 @@ The rule appears in the table showing the course name and a **Sync Members** but
 
 ## Gating a Space by LearnDash Group
 
-LearnDash groups also appear in the searchable dropdown. This is ideal for cohort-based learning — one group, one space.
+LearnDash groups also appear in the searchable dropdown. This is ideal for cohort-based learning - one group, one space.
 
 1. Select **LearnDash Course** from the rule type dropdown.
-2. Type the group name — groups show as "Group Name (LD Group)" in the results.
+2. Type the group name - groups show as "Group Name (LD Group)" in the results.
 3. Select the group, set Grants and Space Role, and click **Add Rule**.
 
-All members of the LearnDash group — including group leaders — gain access. When a user is removed from the group, they lose space access.
+All members of the LearnDash group - including group leaders - gain access. When a user is removed from the group, they lose space access.
 
 ## Syncing Existing Students
 
@@ -64,7 +64,7 @@ When you publish a new course in LearnDash, a private discussion space is automa
 | User added to group | Added to linked spaces as Member |
 | User removed from group | Removed from linked spaces |
 
-Content (posts and replies) remains in the space — only access is revoked.
+Content (posts and replies) remains in the space - only access is revoked.
 
 ## Typical Setup for a Course Community
 
@@ -74,11 +74,11 @@ Content (posts and replies) remains in the space — only access is revoked.
 
 ## Troubleshooting
 
-**LearnDash Course does not appear in the rule type dropdown** — Confirm Jetonomy Pro and LearnDash are both active. Check **Jetonomy → Settings → Integrations** to see the LearnDash status.
+**LearnDash Course does not appear in the rule type dropdown** - Confirm Jetonomy Pro and LearnDash are both active. Check **Jetonomy → Settings → Integrations** to see the LearnDash status.
 
-**Students still have access after un-enrolling** — Confirm the un-enrollment uses LearnDash's standard course access management. Custom enrollment plugins that bypass the `learndash_update_course_access` hook will not trigger removal.
+**Students still have access after un-enrolling** - Confirm the un-enrollment uses LearnDash's standard course access management. Custom enrollment plugins that bypass the `learndash_update_course_access` hook will not trigger removal.
 
-**Sync Members shows 0 synced** — The students may already be space members, or no users are enrolled in the selected course.
+**Sync Members shows 0 synced** - The students may already be space members, or no users are enrolled in the selected course.
 
 ## What's Next?
 

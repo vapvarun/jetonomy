@@ -1,6 +1,6 @@
-Understand what your community is doing, where it is growing, and who is driving it — all from a single admin dashboard.
+Understand what your community is doing, where it is growing, and who is driving it - all from a single admin dashboard.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ![Analytics dashboard showing charts and top contributor table](../images/pro-analytics.png)
 ## What You Will Learn
@@ -12,7 +12,7 @@ Understand what your community is doing, where it is growing, and who is driving
 
 ## Why Analytics Matter
 
-You cannot grow what you cannot measure. The Analytics dashboard turns raw community activity into actionable metrics — so you know which spaces need attention, who your power users are, and whether engagement is trending up or down before it becomes a problem.
+You cannot grow what you cannot measure. The Analytics dashboard turns raw community activity into actionable metrics - so you know which spaces need attention, who your power users are, and whether engagement is trending up or down before it becomes a problem.
 
 ## Enabling Analytics
 
@@ -50,13 +50,13 @@ The top row shows four headline numbers for your selected range:
 | **Active Members** | Unique members who posted, replied, or voted |
 | **Growth Rate** | Percentage change vs the previous equal-length period |
 
-Below the headline row, a line chart shows daily post and reply volume over the selected range. Spikes are easy to spot — hover any point to see the exact date and count.
+Below the headline row, a line chart shows daily post and reply volume over the selected range. Spikes are easy to spot - hover any point to see the exact date and count.
 
 ## Top Spaces
 
 A ranked table shows your most active spaces sorted by total posts + replies in the period. Columns include post count, reply count, unique contributors, and engagement rate (replies per post).
 
-Use this view to find spaces that are thriving — and spaces that have gone quiet and may need a prompt or a featured topic.
+Use this view to find spaces that are thriving - and spaces that have gone quiet and may need a prompt or a featured topic.
 
 ## Top Contributors
 
@@ -72,7 +72,7 @@ The engagement section shows:
 |--------|---------------|
 | **Avg. replies per post** | How much discussion each new topic generates |
 | **Vote activity** | Total upvotes and downvotes cast |
-| **Accepted answers** | Q&A spaces only — rate of questions getting resolved |
+| **Accepted answers** | Q&A spaces only - rate of questions getting resolved |
 | **New member joins** | Community growth over the period |
 
 ## Moderation Stats
@@ -81,7 +81,7 @@ The moderation section shows flagged content volume, auto-moderation rule trigge
 
 ## CSV Export
 
-Click **Export CSV** in the top right of any table to download a full data export for the current date range. Exports include all rows — not just the visible page.
+Click **Export CSV** in the top right of any table to download a full data export for the current date range. Exports include all rows - not just the visible page.
 
 Exported files are compatible with Excel, Google Sheets, and any BI tool. Column headers match the on-screen labels exactly.
 
@@ -89,11 +89,11 @@ Exported files are compatible with Excel, Google Sheets, and any BI tool. Column
 
 In 1.4.1 a second analytics path runs quietly alongside the existing direct-query reader. It's an event-driven aggregator that writes to a new internal table (`jt_pro_analytics_aggregate`) on every relevant community event, instead of querying core tables every time the dashboard loads.
 
-The aggregator is in a 7-day observation window. **Your dashboards still read from the original direct-query path in 1.4.1** — there is no public-facing behaviour change yet. The point of the observation window is to verify that the two paths agree before flipping the default.
+The aggregator is in a 7-day observation window. **Your dashboards still read from the original direct-query path in 1.4.1** - there is no public-facing behaviour change yet. The point of the observation window is to verify that the two paths agree before flipping the default.
 
 ### Verify Dual-Path admin toggle
 
-Go to **Jetonomy → Analytics**. The Pro Analytics page now has a **Verify dual-path** toggle. Turn it on and every metric on the page is shown twice — once from the direct-query reader, once from the aggregator — with a drift percentage between them. Use this if you want to spot-check the aggregator's accuracy before we promote it to default.
+Go to **Jetonomy → Analytics**. The Pro Analytics page now has a **Verify dual-path** toggle. Turn it on and every metric on the page is shown twice - once from the direct-query reader, once from the aggregator - with a drift percentage between them. Use this if you want to spot-check the aggregator's accuracy before we promote it to default.
 
 ### `GET /jetonomy/v1/analytics/diff-report`
 

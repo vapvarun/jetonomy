@@ -1,6 +1,6 @@
-Connect Sensei LMS course enrollment to Jetonomy spaces — students get a dedicated discussion area when enrolled, and lose access when withdrawn.
+Connect Sensei LMS course enrollment to Jetonomy spaces - students get a dedicated discussion area when enrolled, and lose access when withdrawn.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn
 
@@ -18,7 +18,7 @@ Jetonomy Pro detects Sensei LMS automatically when both plugins are active. A **
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **Sensei Course** from the rule type dropdown.
-3. Start typing the course name — a searchable dropdown shows all published Sensei courses.
+3. Start typing the course name - a searchable dropdown shows all published Sensei courses.
 4. Select the course, set Grants to **Participate** and Space Role to **Member**.
 5. Click **Add Rule**.
 
@@ -46,17 +46,17 @@ Sensei uses a single enrollment status change event that handles both enrollment
 | Learner manually enrolled by admin | Added to linked space as Member |
 | Learner manually withdrawn by admin | Removed from linked space |
 
-Content remains in the space — only access is revoked.
+Content remains in the space - only access is revoked.
 
 ## WooCommerce Integration
 
-Sensei LMS integrates with WooCommerce for paid courses. When a student purchases a course through WooCommerce and Sensei enrolls them, the Jetonomy space access rule triggers automatically — no additional WooCommerce adapter needed for course gating.
+Sensei LMS integrates with WooCommerce for paid courses. When a student purchases a course through WooCommerce and Sensei enrolls them, the Jetonomy space access rule triggers automatically - no additional WooCommerce adapter needed for course gating.
 
 ## Troubleshooting
 
-**Sensei Course does not appear in dropdown** — Confirm Jetonomy Pro and Sensei LMS are both active. Check **Jetonomy → Settings → Integrations**.
+**Sensei Course does not appear in dropdown** - Confirm Jetonomy Pro and Sensei LMS are both active. Check **Jetonomy → Settings → Integrations**.
 
-**Students not losing access after withdrawal** — Ensure the withdrawal uses Sensei's standard enrollment management. Set the space to **Private** to fully restrict access.
+**Students not losing access after withdrawal** - Ensure the withdrawal uses Sensei's standard enrollment management. Set the space to **Private** to fully restrict access.
 
 ## What's Next?
 

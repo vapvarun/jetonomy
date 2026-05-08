@@ -1,4 +1,4 @@
-Every space has two independent controls: who can see it (visibility) and how members get in (join policy). Combining them gives you precise control over every access scenario — from fully public forums to invite-only private communities.
+Every space has two independent controls: who can see it (visibility) and how members get in (join policy). Combining them gives you precise control over every access scenario - from fully public forums to invite-only private communities.
 
 ![Permissions settings panel with trust level thresholds and rate limits](../images/admin-permissions.png)
 
@@ -16,7 +16,7 @@ Visibility controls whether the space appears in listings and whether non-member
 
 ### Public
 
-The space appears on the community home page, in search results, and in category listings. Any visitor — including users who are not logged in — can read all posts and replies.
+The space appears on the community home page, in search results, and in category listings. Any visitor - including users who are not logged in - can read all posts and replies.
 
 Members still need to join (or be approved) before they can post or reply, depending on your join policy.
 
@@ -30,7 +30,7 @@ Use Private for paid membership communities, internal team discussions, or beta 
 
 ### Hidden
 
-The space does not appear in any listing, search result, or category navigation. Only members who have already joined — and admins — can see it.
+The space does not appear in any listing, search result, or category navigation. Only members who have already joined - and admins - can see it.
 
 Members can only reach a hidden space via a direct link or an invite link you share with them.
 
@@ -58,7 +58,7 @@ Moderators see pending requests in **Jetonomy → Moderation → Join Requests**
 
 Approved members can then post and reply immediately.
 
-Use Approval Required when you want to vet members before they can participate — for example, a verified customer support channel or a professional community with admission criteria.
+Use Approval Required when you want to vet members before they can participate - for example, a verified customer support channel or a professional community with admission criteria.
 
 ### Invite Only
 
@@ -66,7 +66,7 @@ No join button is shown to non-members. Members can only enter via an invite lin
 
 To create an invite link, open the space in the admin panel and go to the **Invite Links** section. Each link has a configurable usage limit and optional expiry date. You can see how many times each link has been used.
 
-Anyone who visits a valid invite link is automatically added as a member — no approval step required.
+Anyone who visits a valid invite link is automatically added as a member - no approval step required.
 
 Use Invite Only for private groups, course cohorts, or closed communities where every member should be explicitly invited.
 
@@ -74,7 +74,7 @@ Use Invite Only for private groups, course cohorts, or closed communities where 
 
 Beyond join policy, each space has two additional settings that control what members can do once inside:
 
-**Who Can Post** — Controls who can create new topics in this space.
+**Who Can Post** - Controls who can create new topics in this space.
 
 | Setting | Effect |
 |---------|--------|
@@ -82,7 +82,7 @@ Beyond join policy, each space has two additional settings that control what mem
 | Members with trust level 1+ | New members (trust level 0) cannot post |
 | Moderators only | Only space moderators and admins can post |
 
-**Who Can Reply** — Controls who can reply to existing topics.
+**Who Can Reply** - Controls who can reply to existing topics.
 
 | Setting | Effect |
 |---------|--------|
@@ -96,11 +96,11 @@ These settings let you create announcement-only spaces (post and reply both set 
 
 Every member of a space has one of three roles:
 
-**Member** — Can read, post, and reply within the space's configured restrictions. Can vote, follow, and bookmark topics.
+**Member** - Can read, post, and reply within the space's configured restrictions. Can vote, follow, and bookmark topics.
 
-**Moderator** — All member abilities plus: approve pending posts, pin topics, close topics, move topics, delete posts and replies, manage join requests, create invite links, and review flagged content within the space.
+**Moderator** - All member abilities plus: approve pending posts, pin topics, close topics, move topics, delete posts and replies, manage join requests, create invite links, and review flagged content within the space.
 
-**Admin** — All moderator abilities plus: change space settings, assign moderator and admin roles to other members, manage access rules, and archive or delete the space.
+**Admin** - All moderator abilities plus: change space settings, assign moderator and admin roles to other members, manage access rules, and archive or delete the space.
 
 > **Note:** WordPress site admins can perform all admin-level actions on any space, regardless of their space role.
 

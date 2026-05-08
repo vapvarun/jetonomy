@@ -2,5 +2,5 @@
 # Generated: 2026-03-24
 # Total: 0 (plugin uses Interactivity API, not registered blocks)
 
-# No block.json files found — this plugin uses the WP Interactivity API
+# No block.json files found - this plugin uses the WP Interactivity API
 # for dynamic frontend behavior rather than registered Gutenberg blocks.

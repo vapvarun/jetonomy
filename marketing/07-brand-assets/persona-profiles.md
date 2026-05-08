@@ -7,7 +7,7 @@
 - Age: 28-42
 - Team Size: 1-3 people
 - Industry: SaaS, ed-tech, membership sites
-- Technical Level: Intermediate WordPress — can install plugins, configure settings, but does not write code
+- Technical Level: Intermediate WordPress - can install plugins, configure settings, but does not write code
 
 ### Goals
 - Build an engaged community around a product or brand
@@ -21,7 +21,7 @@
 - Forum looks disconnected from the rest of the site
 
 ### Why Jetonomy Appeals
-- Trust levels automate moderation — the community polices itself
+- Trust levels automate moderation. The community polices itself.
 - Q&A spaces with accepted answers reduce repetitive support questions
 - Modern UI that matches the site design via CSS custom properties
 - Idea boards let members vote on what matters
@@ -43,7 +43,7 @@
 - Age: 25-40
 - Team Size: Solo or 2-5 person agency
 - Industry: Web development agency, client services
-- Technical Level: Advanced — builds themes, plugins, uses REST API
+- Technical Level: Advanced - builds themes, plugins, uses REST API
 
 ### Goals
 - Deliver a modern forum solution to clients without building from scratch
@@ -51,19 +51,19 @@
 - Integrate with existing membership plugins (MemberPress, WooCommerce)
 
 ### Pain Points
-- bbPress is a dead end — no REST API, no modern architecture
+- bbPress is a dead end: no REST API, no modern architecture
 - wpForo is hard to customize and theme integration is painful
-- Most forum plugins store data in wp_posts — kills site performance at scale
+- Most forum plugins store data in wp_posts. Kills site performance at scale.
 - Client wants a forum that looks native to their theme, not bolted on
 
 ### Why Jetonomy Appeals
-- 48+ REST API endpoints free, 90+ with Pro — build custom frontends, mobile apps, integrations
-- Template override system — full control without touching plugin code
-- Adapter pattern — swap search, email, membership providers
-- Custom database tables — does not bloat wp_posts
+- 48+ REST API endpoints free, 90+ with Pro - build custom frontends, mobile apps, integrations
+- Template override system - full control without touching plugin code
+- Adapter pattern - swap search, email, membership providers
+- Custom database tables - does not bloat wp_posts
 
 ### Key Message
-> "The forum plugin that respects your architecture. Custom tables, REST API, template overrides — built for developers who build for clients."
+> "The forum plugin that respects your architecture. Custom tables, REST API, template overrides - built for developers who build for clients."
 
 ### Content They Respond To
 - API documentation and code examples
@@ -80,7 +80,7 @@
 - Age: 30-50
 - Team Size: 1-5 (often solo creator)
 - Industry: Online education, coaching, training
-- Technical Level: Beginner to intermediate — uses page builders, follows tutorials
+- Technical Level: Beginner to intermediate - uses page builders, follows tutorials
 
 ### Goals
 - Add a discussion forum to complement course content
@@ -90,17 +90,17 @@
 ### Pain Points
 - LearnDash/LifterLMS have no built-in forum
 - bbPress has no membership gating without expensive add-ons
-- Students ask the same questions repeatedly — no Q&A with accepted answers
+- Students ask the same questions repeatedly. No Q&A with accepted answers.
 - Cannot track which students are most helpful
 
 ### Why Jetonomy Appeals
-- Q&A spaces with accepted answers — students find solutions fast
+- Q&A spaces with accepted answers - students find solutions fast
 - MemberPress/LearnDash integration gates spaces by enrollment
 - Trust levels identify top students automatically
 - Leaderboard gamifies participation
 
 ### Key Message
-> "Turn your course community into a peer learning network. Students help each other — you focus on teaching."
+> "Turn your course community into a peer learning network. Students help each other. You focus on teaching."
 
 ### Content They Respond To
 - Step-by-step setup guides with screenshots
@@ -117,7 +117,7 @@
 - Age: 30-45
 - Team Size: 5-20
 - Industry: SaaS, B2B software, marketplace
-- Technical Level: Non-technical — delegates implementation to dev team
+- Technical Level: Non-technical - delegates implementation to dev team
 
 ### Goals
 - Collect feature requests and prioritize by customer votes
@@ -131,13 +131,13 @@
 - Support team is overwhelmed with repetitive questions
 
 ### Why Jetonomy Appeals
-- Idea boards with voting — customers prioritize the roadmap
-- Q&A spaces replace tier-1 support — community answers common questions
+- Idea boards with voting - customers prioritize the roadmap
+- Q&A spaces replace tier-1 support - community answers common questions
 - Analytics dashboard shows engagement trends and top contributors
-- Self-hosted — no per-seat pricing, no monthly SaaS fees
+- Self-hosted - no per-seat pricing, no monthly SaaS fees
 
 ### Key Message
-> "Your customers already have the answers. Give them a place to share them — and vote on what you build next."
+> "Your customers already have the answers. Give them a place to share them and vote on what you build next."
 
 ### Content They Respond To
 - ROI comparisons (Jetonomy vs Discourse/Zendesk monthly cost)
@@ -154,12 +154,12 @@
 - Age: 35-55
 - Team Size: Solo or 1-2
 - Industry: Local business, niche community, hobby group
-- Technical Level: Beginner — can install plugins from the WordPress admin
+- Technical Level: Beginner - can install plugins from the WordPress admin
 
 ### Goals
 - Add a discussion area to an existing WordPress site
 - Let customers or community members talk to each other
-- Simple setup — does not want to spend days configuring
+- Simple setup - does not want to spend days configuring
 
 ### Pain Points
 - Tried bbPress but it looks ugly and outdated
@@ -169,8 +169,8 @@
 
 ### Why Jetonomy Appeals
 - Setup wizard gets a forum running in 5 minutes
-- Anti-spam built in (reCAPTCHA/Turnstile) — no configuration needed for trusted members
-- Works with the BuddyX theme out of the box — looks professional immediately
+- Anti-spam built in (reCAPTCHA/Turnstile) - no configuration needed for trusted members
+- Works with the BuddyX theme out of the box - looks professional immediately
 - Free version covers everything a small community needs
 
 ### Key Message

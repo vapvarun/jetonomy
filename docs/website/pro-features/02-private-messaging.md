@@ -1,6 +1,6 @@
-Let members send direct messages to each other — one-on-one or in small groups — without leaving your community.
+Let members send direct messages to each other - one-on-one or in small groups - without leaving your community.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ![Messages inbox showing conversation list](../images/pro-messages-list.png)
 ## What You Will Learn
@@ -13,11 +13,11 @@ Let members send direct messages to each other — one-on-one or in small groups
 
 ## Why Private Messaging Matters
 
-When members can message each other directly, your community becomes a platform — not just a forum. It reduces off-site communication, keeps relationships within your ecosystem, and gives you a richer, stickier product.
+When members can message each other directly, your community becomes a platform - not just a forum. It reduces off-site communication, keeps relationships within your ecosystem, and gives you a richer, stickier product.
 
 ## How It Works
 
-Private Messaging adds a dedicated inbox at `/community/messages/`. Members can start a new conversation with any other member, or create a group conversation with up to 20 participants. Each conversation is a persistent thread — messages appear in chronological order, and new messages are loaded automatically via polling.
+Private Messaging adds a dedicated inbox at `/community/messages/`. Members can start a new conversation with any other member, or create a group conversation with up to 20 participants. Each conversation is a persistent thread - messages appear in chronological order, and new messages are loaded automatically via polling.
 
 ![Single conversation thread view](../images/pro-message-thread.png)
 ## Enabling Private Messaging
@@ -55,7 +55,7 @@ Any member can block another from sending them messages:
 2. Click the **···** menu in the thread header.
 3. Select **Block [username]**.
 
-Blocked users cannot send new messages to the member who blocked them. Existing conversation history is preserved but no new messages are delivered. The blocked user sees a generic "Unable to send message" error — they are not told they are blocked.
+Blocked users cannot send new messages to the member who blocked them. Existing conversation history is preserved but no new messages are delivered. The blocked user sees a generic "Unable to send message" error - they are not told they are blocked.
 
 Admins can view and clear blocks in **Jetonomy → Users → [username] → Messaging**.
 
@@ -75,9 +75,9 @@ Private Messaging adds endpoints under `jetonomy/v1`:
 | `POST` | `/blocks` | Block a user from messaging you |
 | `DELETE` | `/blocks/{user_id}` | Unblock a user |
 
-All endpoints require authentication. The `jetonomy_send_messages` capability controls who can start conversations — by default all Trust Level 1+ members.
+All endpoints require authentication. The `jetonomy_send_messages` capability controls who can start conversations - by default all Trust Level 1+ members.
 
-**Example — start a conversation:**
+**Example - start a conversation:**
 
 ```json
 POST /wp-json/jetonomy/v1/conversations
@@ -87,7 +87,7 @@ POST /wp-json/jetonomy/v1/conversations
 }
 ```
 
-**Example — get messages with cursor pagination:**
+**Example - get messages with cursor pagination:**
 
 ```
 GET /wp-json/jetonomy/v1/conversations/12/messages?after=msg_abc123&per_page=20

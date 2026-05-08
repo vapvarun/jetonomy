@@ -1,4 +1,4 @@
-When BuddyNext is active alongside Jetonomy, the two plugins integrate automatically — sharing navigation, design tokens, and community surfaces without any configuration.
+When BuddyNext is active alongside Jetonomy, the two plugins integrate automatically - sharing navigation, design tokens, and community surfaces without any configuration.
 
 ![Jetonomy admin settings showing BuddyNext integration status](../images/admin-settings.png)
 
@@ -31,7 +31,7 @@ This means Jetonomy matches the BuddyNext visual style without you writing a sin
 
 When BuddyNext community spaces are active, Jetonomy adds a **Forum** tab to each BuddyNext space. The tab links to the corresponding Jetonomy space, filtered to show only posts from that community space.
 
-BuddyNext uses the `jetonomy_template_map` filter to register the forum tab route. This integration is non-destructive — if a BuddyNext space has no linked Jetonomy space, the Forum tab does not appear.
+BuddyNext uses the `jetonomy_template_map` filter to register the forum tab route. This integration is non-destructive - if a BuddyNext space has no linked Jetonomy space, the Forum tab does not appear.
 
 ## Unified Navigation
 
@@ -41,7 +41,7 @@ The `jetonomy_profile_url` filter is also overridden automatically: user profile
 
 ## Dark Mode
 
-BuddyNext's dark mode toggle sets `data-theme="dark"` on the document root. Jetonomy's dark mode overrides live in `.jt-dark .jt-app` and respond to this same attribute — so toggling dark mode in BuddyNext also applies to Jetonomy community pages instantly.
+BuddyNext's dark mode toggle sets `data-theme="dark"` on the document root. Jetonomy's dark mode overrides live in `.jt-dark .jt-app` and respond to this same attribute - so toggling dark mode in BuddyNext also applies to Jetonomy community pages instantly.
 
 ## Developer Notes
 
@@ -56,9 +56,9 @@ Use this hook to register additional tab mappings or extend the forum tab with c
 
 ## Troubleshooting
 
-**Forum tab not appearing in BuddyNext spaces** — Confirm BuddyNext's community spaces feature is active (not just the plugin). Also confirm the BuddyNext space has a linked Jetonomy space configured in its space settings.
+**Forum tab not appearing in BuddyNext spaces** - Confirm BuddyNext's community spaces feature is active (not just the plugin). Also confirm the BuddyNext space has a linked Jetonomy space configured in its space settings.
 
-**Design tokens not matching** — BuddyNext's TokenService may not be firing on community pages. Check the BuddyNext community page template and ensure `buddynext_loaded` action fires before the `wp_head` hook.
+**Design tokens not matching** - BuddyNext's TokenService may not be firing on community pages. Check the BuddyNext community page template and ensure `buddynext_loaded` action fires before the `wp_head` hook.
 
 ## What's Next?
 

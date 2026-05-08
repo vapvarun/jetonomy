@@ -1,6 +1,6 @@
-# Jetonomy — WordPress Forum Plugin
+# Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 64 REST endpoints, 43 AJAX handlers, 104 hooks fired (59 actions + 43 filters + 2 deprecated aliases), 23 tables, 23 capabilities, 8 blocks, 9 shortcodes, 14 WP-CLI commands, 6 cron hooks, 14 admin pages. v2 schema with `static_analysis` populated (zero dead listeners after 1.4.2; 4 grid 1fr risks documented as design notes since the CSS already implements `minmax(0, 1fr)`). See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md) and [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md). End-to-end customer flows live as runnable PHP scenarios under `includes/cli/scenarios/` and as the pre-release smoke runbook (`/jetonomy-smoke`). For an interactive graph view, run `cd audit && python3 -m http.server 8765` and open <http://localhost:8765/graph.html>. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory - 64 REST endpoints, 43 AJAX handlers, 104 hooks fired (59 actions + 43 filters + 2 deprecated aliases), 23 tables, 23 capabilities, 8 blocks, 9 shortcodes, 14 WP-CLI commands, 6 cron hooks, 14 admin pages. v2 schema with `static_analysis` populated (zero dead listeners after 1.4.2; 4 grid 1fr risks documented as design notes since the CSS already implements `minmax(0, 1fr)`). See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md) and [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md). End-to-end customer flows live as runnable PHP scenarios under `includes/cli/scenarios/` and as the pre-release smoke runbook (`/jetonomy-smoke`). For an interactive graph view, run `cd audit && python3 -m http.server 8765` and open <http://localhost:8765/graph.html>. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
 
 ## Build Rule (enforced)
 
@@ -8,36 +8,36 @@
 
 - Why: on 1.3.5 a stale Desktop zip (built before the critical bootstrap fix was committed) reached the GitHub release and took a customer's live site down. The release agent trusted "zip already exists" instead of rebuilding.
 - What the script guarantees, in order:
-  1. **Step 0 — asset regen.** Auto-runs `grunt build` (after a one-time `npm install`) so every release zip ships with fresh `.min.css`, `.min.js`, RTL CSS, and `.pot`. Closes the "stale .min" gap that almost shipped in 1.3.8 (newly added source files had no minified counterpart).
+  1. **Step 0 - asset regen.** Auto-runs `grunt build` (after a one-time `npm install`) so every release zip ships with fresh `.min.css`, `.min.js`, RTL CSS, and `.pot`. Closes the "stale .min" gap that almost shipped in 1.3.8 (newly added source files had no minified counterpart).
   2. Clean-tree gate (`--allow-dirty` only for local dev). Ignores grunt-regenerated paths so Step 0's deterministic output doesn't trip the gate.
-  3. Version triangulation — Version header, constant, and readme Stable tag must match.
+  3. Version triangulation - Version header, constant, and readme Stable tag must match.
   4. Production composer install in staging (`--no-dev --optimize-autoloader`).
   5. Required-files sanity check.
-  5b. **Source/min pairing assertion** — every `assets/css/*.css` (non-RTL, non-min) must have a `*.min.css` in staging; same for JS. Fails with the missing list.
-  5c. **Top-level cruft check** — rejects `verify-*.png`, `.playwright-mcp/`, `.distignore`, `.wp-env.json`, `phpstan-*.dist`, `*.log`, empty `build/` from leaking past EXCLUDES. Tonight's pro 1.3.8 zip had ~1.1 MB of these files; this gate would have failed the build before tagging.
+  5b. **Source/min pairing assertion** - every `assets/css/*.css` (non-RTL, non-min) must have a `*.min.css` in staging; same for JS. Fails with the missing list.
+  5c. **Top-level cruft check** - rejects `verify-*.png`, `.playwright-mcp/`, `.distignore`, `.wp-env.json`, `phpstan-*.dist`, `*.log`, empty `build/` from leaking past EXCLUDES. Tonight's pro 1.3.8 zip had ~1.1 MB of these files; this gate would have failed the build before tagging.
   6. `php -l` on every staged PHP file.
-  7. **WP-stub smoke test** — boots the plugin through `plugins_loaded` + `init` in a minimal WP stub (`tools/wp-stubs.php` + `tools/smoke-test.php`), catching load-time fatals like the 1.3.5 `Jetonomy\table()` bug.
-  7b. **Browser smoke gate** — the smoke skill writes `.last-smoke-pass-free.json`; the script triages by `origin`, only `from`-origin failures or debug-log entries block. `for`-origin entries (test harness, theme, OS) stay informational.
+  7. **WP-stub smoke test** - boots the plugin through `plugins_loaded` + `init` in a minimal WP stub (`tools/wp-stubs.php` + `tools/smoke-test.php`), catching load-time fatals like the 1.3.5 `Jetonomy\table()` bug.
+  7b. **Browser smoke gate** - the smoke skill writes `.last-smoke-pass-free.json`; the script triages by `origin`, only `from`-origin failures or debug-log entries block. `for`-origin entries (test harness, theme, OS) stay informational.
   8. Zip → re-extract to scratch → re-run WP-stub smoke (catches zip corruption).
 - Never attach a pre-existing zip to a release. Always rebuild from the tagged commit.
-- Pro: `bin/build-release.sh` additionally enforces the lockstep rule — fails if Pro's version doesn't match free's. Pro does not have the browser smoke gate (uses the COMBO smoke skill for verification before tagging instead).
+- Pro: `bin/build-release.sh` additionally enforces the lockstep rule - fails if Pro's version doesn't match free's. Pro does not have the browser smoke gate (uses the COMBO smoke skill for verification before tagging instead).
 
 ## Pre-Commit Rule (enforced)
 
 **Every commit is locally gated by `.githooks/pre-commit`.** The hook runs PHPStan on the full tree (honours the baseline) and WPCS on staged PHP files before the commit lands. Failures block the commit so red X's never reach the public history.
 
 - Install: `composer install` auto-configures it via `post-install-cmd` (sets `core.hooksPath .githooks`). For existing clones, `composer run hooks:install` does the same.
-- Skip (emergencies only): `git commit --no-verify` — but fix it in the next commit.
+- Skip (emergencies only): `git commit --no-verify` - but fix it in the next commit.
 - Target latency: under 30 seconds. If the hook gets slower, split the check or move it to pre-push.
 
 ## Release Rule (enforced)
 
 **Free and Pro always ship with the same `x.y.z` version number.** No exceptions.
 
-- Every release bumps `jetonomy` AND `jetonomy-pro` together, even if one side has no user-facing changes — the side with no changes gets a "Compatibility: Aligned with Jetonomy x.y.z" entry in its readme.
+- Every release bumps `jetonomy` AND `jetonomy-pro` together, even if one side has no user-facing changes - the side with no changes gets a "Compatibility: Aligned with Jetonomy x.y.z" entry in its readme.
 - `JETONOMY_VERSION`, `jetonomy.php` `Version:` header, and `readme.txt` `Stable tag:` must all match the corresponding Pro constants and headers.
 - CI fails fast if the two versions drift.
-- Rationale: pairing simplifies support ("what version are you on?"), EDD updater routing, and the release checklist — no cognitive load deciding which plugins need which bump.
+- Rationale: pairing simplifies support ("what version are you on?"), EDD updater routing, and the release checklist - no cognitive load deciding which plugins need which bump.
 
 ## Feature Acceptance Rules (enforced for every release)
 
@@ -61,10 +61,10 @@ Two further rules apply to every release:
 - **REST API**: `jetonomy/v1` (42 endpoints, 15 controllers)
 
 ## Architecture
-- **Database**: Custom MySQL tables via `dbDelta()` — NOT WordPress CPTs
-- **Models**: `includes/models/` — all extend abstract `Model` class
+- **Database**: Custom MySQL tables via `dbDelta()` - NOT WordPress CPTs
+- **Models**: `includes/models/` - all extend abstract `Model` class
 - **Permissions**: 3-layer system (WP Caps → Space Roles → Trust Levels)
-- **API**: `includes/api/` — all extend `Base_Controller` → `WP_REST_Controller`
+- **API**: `includes/api/` - all extend `Base_Controller` → `WP_REST_Controller`
 - **Frontend**: PHP templates + WP Interactivity API + CSS Custom Properties
 - **Adapters**: Universal adapter pattern for membership, search, real-time, email
 
@@ -128,21 +128,21 @@ wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 ```
 
 **Key files:**
-- `includes/cli/class-journey-result.php` — shared DTO (ok/fail/from_wp_error)
-- `includes/cli/class-cli-dispatcher.php` — registers 13 free command slugs
-- `includes/cli/journeys/` — 8 journey classes (pure PHP, no WP_CLI coupling)
-- `includes/cli/commands/` — 13 command classes (thin WP_CLI wrappers extending Base_Command)
-- `includes/cli/scenarios/` — Scenario_Runner + 5 bundled scenarios
-- `includes/qa/class-journey-tests.php` — Phase 4 of qa-actions, smoke-tests every journey
-- `tests/unit/cli/journeys/` — 8 journey unit test files
-- `tests/unit/cli/scenarios/ScenarioRunnerTest.php` — 11 scenario runner tests
-- `tests/pro/cli/journeys/` — 14 Pro journey unit test files (in free plugin's tests/pro/ dir)
+- `includes/cli/class-journey-result.php` - shared DTO (ok/fail/from_wp_error)
+- `includes/cli/class-cli-dispatcher.php` - registers 13 free command slugs
+- `includes/cli/journeys/` - 8 journey classes (pure PHP, no WP_CLI coupling)
+- `includes/cli/commands/` - 13 command classes (thin WP_CLI wrappers extending Base_Command)
+- `includes/cli/scenarios/` - Scenario_Runner + 5 bundled scenarios
+- `includes/qa/class-journey-tests.php` - Phase 4 of qa-actions, smoke-tests every journey
+- `tests/unit/cli/journeys/` - 8 journey unit test files
+- `tests/unit/cli/scenarios/ScenarioRunnerTest.php` - 11 scenario runner tests
+- `tests/pro/cli/journeys/` - 14 Pro journey unit test files (in free plugin's tests/pro/ dir)
 
 **Pro CLI (in jetonomy-pro plugin):**
-- `jetonomy-pro/includes/cli/class-pro-cli-dispatcher.php` — 15 Pro command slugs
-- `jetonomy-pro/includes/cli/journeys/` — 14 journey classes (one per extension)
-- `jetonomy-pro/includes/cli/commands/` — 15 command classes
-- Pro CLI loads via `Jetonomy_Pro::maybe_load_cli()` — guarded by `is_dir()` for dist safety
+- `jetonomy-pro/includes/cli/class-pro-cli-dispatcher.php` - 15 Pro command slugs
+- `jetonomy-pro/includes/cli/journeys/` - 14 journey classes (one per extension)
+- `jetonomy-pro/includes/cli/commands/` - 15 command classes
+- Pro CLI loads via `Jetonomy_Pro::maybe_load_cli()` - guarded by `is_dir()` for dist safety
 
 **Test commands:**
 ```bash
@@ -156,14 +156,14 @@ composer test:usability    # Playwright browser tests (250 flows)
 
 The browser-level Playwright usability suite (`tests/usability/`) was removed because it surfaced zero product UX bugs and primarily exposed test-infrastructure drift. Real UX validation runs through manual browser testing + Basecamp triage. The layers that actually find bugs:
 
-1. **PHPUnit** — `composer test` (free + pro combo). Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
-2. **`wp jetonomy qa-actions`** — live-stack smoke checks across REST + Model + Pro + Journey layers. Runs in ~30s, surfaces config gaps.
-3. **`wp jetonomy scenario run <name>`** — bundled end-to-end scenarios.
+1. **PHPUnit** - `composer test` (free + pro combo). Caught the `jt_notifications.object_type` schema bug that was silently breaking every Pro DM notification in prod.
+2. **`wp jetonomy qa-actions`** - live-stack smoke checks across REST + Model + Pro + Journey layers. Runs in ~30s, surfaces config gaps.
+3. **`wp jetonomy scenario run <name>`** - bundled end-to-end scenarios.
 
 For release history, run `git log --oneline` or read `readme.txt`. For architectural context on a specific subsystem, check the manifest at `audit/manifest.json` first, then grep.
 
 ## Coding Patterns
-- All data access via model classes — no raw SQL outside `includes/db/` (exception: Abilities execute callbacks for cross-table queries)
+- All data access via model classes - no raw SQL outside `includes/db/` (exception: Abilities execute callbacks for cross-table queries)
 - Denormalized counters updated on write (reply_count, post_count, vote_score)
 - Permission checks via `Permission_Engine::can($user_id, $action, $space_id)`
 - Content stored as sanitized HTML (`wp_kses_post`), plain text copy for FULLTEXT search
@@ -171,13 +171,13 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 - Templates overridable via `theme/jetonomy/` directory
 - Zero inline styles in templates (except truly dynamic values like kanban column colors)
 - Trust level badges use `data-jt-tl` attribute selectors for background color
-- Rewrite rules auto-flush on first load via deferred `init:99` callback (not during activation — rules aren't registered yet)
-- Space settings save MERGES with existing JSON via `array_merge()` — never replaces entire settings column
-- Activity logging via `Activity_Tracker` hooks — no direct `ActivityLog::log()` in controllers
+- Rewrite rules auto-flush on first load via deferred `init:99` callback (not during activation - rules aren't registered yet)
+- Space settings save MERGES with existing JSON via `array_merge()` - never replaces entire settings column
+- Activity logging via `Activity_Tracker` hooks - no direct `ActivityLog::log()` in controllers
 - Demo data tracked in `jetonomy_demo_data` option for one-click cleanup
 - Activity backfill runs automatically once via `jetonomy_activity_backfilled` flag
 
-## CSS Token Rules (enforced — mirrors BuddyNext pattern)
+## CSS Token Rules (enforced - mirrors BuddyNext pattern)
 
 **Golden rule: never write a hardcoded px, hex, or font-family value in any CSS file.**
 
@@ -190,7 +190,7 @@ All `--jt-*` tokens live in `:root, .jt-app` at the top of `assets/css/jetonomy.
 ```css
 /* Root tokens inherit from BuddyNext first, then WP theme.json, then hardcoded fallback.
    When BuddyNext is active, its TokenService injects --brand, --bg, --text-1 etc.
-   Dark mode flows automatically — BuddyNext's [data-theme="dark"] overrides the
+   Dark mode flows automatically - BuddyNext's [data-theme="dark"] overrides the
    underlying tokens, and --jt-* picks them up via the var() cascade. */
 --jt-font:     var(--font-body, var(--wp--preset--font-family--body, inherit))
 --jt-accent:   var(--brand, var(--wp--preset--color--primary, #3B82F6))
@@ -219,11 +219,11 @@ All `--jt-*` tokens live in `:root, .jt-app` at the top of `assets/css/jetonomy.
 Derived color tokens use `color-mix()` for modern browsers with a hex fallback for older ones. Always write the hex fallback first, then override with `color-mix()` on the next line:
 
 ```css
-/* Correct — hex fallback first, color-mix second */
+/* Correct - hex fallback first, color-mix second */
 --jt-text-secondary: #4B5563;
 --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
 
-/* Wrong — skipping the fallback */
+/* Wrong - skipping the fallback */
 --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
 ```
 
@@ -232,10 +232,10 @@ Derived color tokens use `color-mix()` for modern browsers with a hex fallback f
 Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark .jt-app` in `jetonomy.css` by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
 
 ```css
-/* Correct — uses tokens, dark mode is automatic */
+/* Correct - uses tokens, dark mode is automatic */
 .jt-card { background: var(--jt-bg); border: 1px solid var(--jt-border); }
 
-/* Wrong — adds a separate dark selector per component */
+/* Wrong - adds a separate dark selector per component */
 .jt-dark .jt-card { background: #1e1e1e; }
 ```
 
@@ -249,15 +249,15 @@ There is no spacing scale yet (gap to fill in a future task). Until a `--jt-spac
 ### What to do when adding new CSS
 
 1. Pick the closest existing `--jt-*` token
-2. If no token fits, add one to `:root, .jt-app` — inherit from `--wp--preset--*` if applicable
-3. Never copy-paste hex or px values from designs — always map them to token names first
+2. If no token fits, add one to `:root, .jt-app` - inherit from `--wp--preset--*` if applicable
+3. Never copy-paste hex or px values from designs - always map them to token names first
 4. Test at 390px viewport width before committing
 
 ---
 
 ## Admin Architecture Rules (enforced)
 
-**AJAX handlers live in `Jetonomy\Admin\Ajax\` — never in `Admin` class directly.**
+**AJAX handlers live in `Jetonomy\Admin\Ajax\` - never in `Admin` class directly.**
 
 | Rule | Detail |
 |------|--------|
@@ -269,22 +269,22 @@ There is no spacing scale yet (gap to fill in a future task). Until a `--jt-spac
 | No AJAX in `Admin::__construct()` | `__construct()` only: `add_menu`, `register_settings`, `enqueue_assets`, and `new Ajax\*_Handler()` calls |
 
 **Current handler map** (see `includes/admin/ajax/`):
-- `Categories_Handler` — create/update/delete/reorder category AJAX
-- `Spaces_Handler` — space + member + access-rule AJAX
-- `Moderation_Handler` — approve/spam/trash content + resolve flag AJAX
-- `Users_Handler` — ban/unban/trust-level/search-users AJAX
-- `Import_Handler` — run/batch/progress import AJAX
-- `Settings_Handler` — test-email/flush-rules AJAX
-- `Content_Handler` — post/reply CRUD + bulk-action AJAX
-- `Setup_Handler` — setup wizard AJAX
-- `Demo_Seeder` — helper class (static seed/cleanup methods), NOT an AJAX handler; used by Setup_Handler
+- `Categories_Handler` - create/update/delete/reorder category AJAX
+- `Spaces_Handler` - space + member + access-rule AJAX
+- `Moderation_Handler` - approve/spam/trash content + resolve flag AJAX
+- `Users_Handler` - ban/unban/trust-level/search-users AJAX
+- `Import_Handler` - run/batch/progress import AJAX
+- `Settings_Handler` - test-email/flush-rules AJAX
+- `Content_Handler` - post/reply CRUD + bulk-action AJAX
+- `Setup_Handler` - setup wizard AJAX
+- `Demo_Seeder` - helper class (static seed/cleanup methods), NOT an AJAX handler; used by Setup_Handler
 
 **Naming conventions:**
 - Options: `jetonomy_*` prefix always
 - User meta: `jetonomy_*` prefix always
 - DB tables: `jt_*` prefix always (becomes `wp_jt_*` with WP prefix)
-- Hook names: `jetonomy_*` prefix always — never rename existing hooks
-- AJAX actions: `wp_ajax_jetonomy_*` — never rename existing actions
+- Hook names: `jetonomy_*` prefix always - never rename existing hooks
+- AJAX actions: `wp_ajax_jetonomy_*` - never rename existing actions
 - Asset handles: `jetonomy` or `jetonomy-{variant}`
 
 ## Basecamp Board

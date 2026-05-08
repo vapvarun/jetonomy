@@ -1,4 +1,4 @@
-The Anti-Spam tab lets you add invisible bot protection to post and reply submission — without disrupting the experience for legitimate members.
+The Anti-Spam tab lets you add invisible bot protection to post and reply submission - without disrupting the experience for legitimate members.
 
 ![Anti-spam settings with provider selection, API keys, and score threshold](../images/admin-antispam.png)
 
@@ -13,7 +13,7 @@ Go to **Jetonomy → Settings → Anti-Spam** to access these settings.
 
 ## How It Works
 
-Anti-spam checks run server-side before a post or reply is saved. When a submission fails the check, Jetonomy blocks the save and returns an error to the user. The check is invisible to legitimate members — no checkbox to tick, no image to identify.
+Anti-spam checks run server-side before a post or reply is saved. When a submission fails the check, Jetonomy blocks the save and returns an error to the user. The check is invisible to legitimate members - no checkbox to tick, no image to identify.
 
 Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins are always exempt. This ensures your most active, trusted members never encounter friction.
 
@@ -29,7 +29,7 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 | Google reCAPTCHA v3 | Score-based, no user interaction | Invisible (small badge) |
 | Cloudflare Turnstile | Smart challenge, no image puzzle | Invisible (small badge) |
 
-**Google reCAPTCHA v3** assigns a risk score (0.0 to 1.0) to each submission. You set a threshold — submissions below it are blocked.
+**Google reCAPTCHA v3** assigns a risk score (0.0 to 1.0) to each submission. You set a threshold - submissions below it are blocked.
 
 **Cloudflare Turnstile** is GDPR-friendlier than reCAPTCHA and does not show a challenge unless it detects suspicious behavior. It is a good default for EU communities.
 
@@ -70,7 +70,7 @@ Start at 0.5. If you see false positives (legitimate members getting blocked), l
 5. Paste them into **Jetonomy → Settings → Anti-Spam**.
 6. Save settings.
 
-There is no score threshold for Turnstile — Cloudflare handles the risk scoring internally. A submission either passes or fails.
+There is no score threshold for Turnstile - Cloudflare handles the risk scoring internally. A submission either passes or fails.
 
 > **Note:** Turnstile requires your domain to be exactly correct in the Cloudflare dashboard. `www.yoursite.com` and `yoursite.com` are treated as different hostnames.
 
@@ -78,7 +78,7 @@ There is no score threshold for Turnstile — Cloudflare handles the risk scorin
 
 Members at **Trust Level 2 or above** are never shown a challenge and their submissions never go through the anti-spam check. The check is skipped entirely on the server side.
 
-This is intentional. Trust Level 2 requires consistent participation over time — members who earn it are clearly not bots.
+This is intentional. Trust Level 2 requires consistent participation over time - members who earn it are clearly not bots.
 
 **WordPress admins** (`manage_options` capability) are also always exempt, regardless of trust level.
 

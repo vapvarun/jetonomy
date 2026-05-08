@@ -1,8 +1,8 @@
-Gate Jetonomy spaces by Restrict Content Pro subscription level — with automatic access on activation and automatic removal on expiry or cancellation.
+Gate Jetonomy spaces by Restrict Content Pro subscription level - with automatic access on activation and automatic removal on expiry or cancellation.
 
 ![Jetonomy admin settings for Restrict Content Pro integration](../images/admin-settings.png)
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn
 
@@ -28,7 +28,7 @@ Jetonomy Pro detects Restrict Content Pro automatically when both plugins are ac
 
 Members with an active subscription to the selected level gain access immediately. You can add multiple rules to grant access across more than one RCP level.
 
-> **Tip:** RCP supports free membership levels. You can use a free level as a gate to require a (free) registration before members can post — while still keeping the community open to anyone willing to sign up.
+> **Tip:** RCP supports free membership levels. You can use a free level as a gate to require a (free) registration before members can post - while still keeping the community open to anyone willing to sign up.
 
 ## Auto-Join on Activation
 
@@ -54,15 +54,15 @@ When an RCP subscription expires, is cancelled, or is set to **pending**, Jetono
 
 ## Combining with Other Adapters
 
-RCP rules stack with all other Access Rule types in Jetonomy. A member gains access to a space if they satisfy any single Grant rule — whether it comes from RCP, MemberPress, WooCommerce, or trust level.
+RCP rules stack with all other Access Rule types in Jetonomy. A member gains access to a space if they satisfy any single Grant rule - whether it comes from RCP, MemberPress, WooCommerce, or trust level.
 
 ## Troubleshooting
 
-**RCP Level not appearing in Rule Type dropdown** — Confirm Jetonomy Pro is active and Restrict Content Pro is active. Check that at least one subscription level exists in **Restrict Content → Subscription Levels**.
+**RCP Level not appearing in Rule Type dropdown** - Confirm Jetonomy Pro is active and Restrict Content Pro is active. Check that at least one subscription level exists in **Restrict Content → Subscription Levels**.
 
-**Member not removed after subscription expires** — RCP can be configured to change status on expiry, grace periods, or manual review. Jetonomy listens to the `rcp_set_status` action. If a custom RCP workflow bypasses this action, auto-removal will not fire.
+**Member not removed after subscription expires** - RCP can be configured to change status on expiry, grace periods, or manual review. Jetonomy listens to the `rcp_set_status` action. If a custom RCP workflow bypasses this action, auto-removal will not fire.
 
-**Access still active after cancellation** — Check whether the user holds a second active RCP subscription that also grants access to the space via a separate rule.
+**Access still active after cancellation** - Check whether the user holds a second active RCP subscription that also grants access to the space via a separate rule.
 
 ## What's Next?
 

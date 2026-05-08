@@ -8,13 +8,13 @@
 
 ## 1. Design principles
 
-1. **Premium SaaS forum feel** — uniform hierarchy, generous breathing room, no visual surprises between pages.
-2. **Mobile-first** — design decisions start at 390px. Tablet and desktop are progressive enhancements of the mobile layout.
-3. **Accessibility is table-stakes** — every interactive element has a visible focus state, a 40×40px tap target, and an accessible name (label, `aria-label`, or `title`).
-4. **One source of truth per concept** — one button component, one card component, one row component. No parallel implementations.
-5. **Token-driven** — spacing, colors, radius, typography, motion all reference `--jt-*` custom properties. No hardcoded hex codes or px values inside component CSS unless explicitly listed as exceptions.
-6. **Theme-adaptive** — the plugin inherits accent color and dark mode from the active WordPress theme via the token bridge. Don't fight the theme; augment it.
-7. **No patch work** — if a fix needs to touch more than one selector or more than one media query, rewrite the component against the design system instead.
+1. **Premium SaaS forum feel** - uniform hierarchy, generous breathing room, no visual surprises between pages.
+2. **Mobile-first** - design decisions start at 390px. Tablet and desktop are progressive enhancements of the mobile layout.
+3. **Accessibility is table-stakes** - every interactive element has a visible focus state, a 40×40px tap target, and an accessible name (label, `aria-label`, or `title`).
+4. **One source of truth per concept** - one button component, one card component, one row component. No parallel implementations.
+5. **Token-driven** - spacing, colors, radius, typography, motion all reference `--jt-*` custom properties. No hardcoded hex codes or px values inside component CSS unless explicitly listed as exceptions.
+6. **Theme-adaptive** - the plugin inherits accent color and dark mode from the active WordPress theme via the token bridge. Don't fight the theme; augment it.
+7. **No patch work** - if a fix needs to touch more than one selector or more than one media query, rewrite the component against the design system instead.
 
 ---
 
@@ -33,11 +33,11 @@ Exactly three breakpoints. Do not invent new ones.
 All responsive rules live in **one `@media` block per breakpoint** at the bottom of `jetonomy.css`. Do not scatter tablet or mobile rules inline with their desktop counterparts.
 
 ```css
-/* Desktop styles — base (no media query) */
+/* Desktop styles - base (no media query) */
 .jt-row { grid-template-columns: 48px 1fr 80px 80px; }
 
 /* All mobile/tablet adjustments go in the two consolidated blocks at
-   the bottom of jetonomy.css — NOT next to the desktop rule above. */
+   the bottom of jetonomy.css - NOT next to the desktop rule above. */
 ```
 
 ### Specificity rule
@@ -61,7 +61,7 @@ All font sizes in `rem`. Root `font-size` is the theme's default (typically 16px
 | Stat label | `0.75rem` (12px) | `0.6875rem` (11px) | 500 uppercase | "REPLIES", "POSTS" |
 
 **Rules**
-- Never drop below `0.6875rem` (11px) — becomes illegible on small devices.
+- Never drop below `0.6875rem` (11px) - becomes illegible on small devices.
 - Line-height: `1.5` for body, `1.35` for titles, `1.2` for stat numbers.
 - Titles use `--jt-font-heading`, body uses `--jt-font`, numbers use `--jt-font-mono`.
 
@@ -101,7 +101,7 @@ Use semantic spacing tokens. No arbitrary `px` values.
 
 Already fully tokenized via `--jt-*` custom properties. See "CSS Token Rules" in `CLAUDE.md`. Key rules:
 - Never write hex or RGB values in component CSS
-- Dark mode lives only in `.jt-dark .jt-app { ... }` — reassigning root tokens, not per-component selectors
+- Dark mode lives only in `.jt-dark .jt-app { ... }` - reassigning root tokens, not per-component selectors
 - Use `color-mix(in srgb, var(--jt-foo) X%, transparent)` for alpha variants, with a hex fallback
 
 ---
@@ -145,17 +145,17 @@ Variants (exactly these, no others):
 **Rules**
 - Minimum height 40px, padding `var(--jt-space-2) var(--jt-space-5)`
 - Primary CTAs on mobile get `width: 100%` when inside `.jt-bar` or `.jt-form-actions`
-- Always have `icon + label` for primary CTAs — never icon-only
+- Always have `icon + label` for primary CTAs - never icon-only
 - Secondary icon-only buttons (Vote, Share, Bookmark, More): 40×40px square with `title` + `aria-label`
 
 ### Cards
 
-One canonical class: `.jt-card` (or semantic variants that extend it — e.g., `.jt-profile`, `.jt-post`, `.jt-idea`). Each card has:
+One canonical class: `.jt-card` (or semantic variants that extend it - e.g., `.jt-profile`, `.jt-post`, `.jt-idea`). Each card has:
 - `border: 1px solid var(--jt-border)`
 - `border-radius: var(--jt-radius)`
 - `background: var(--jt-bg)`
 - `padding: var(--jt-space-4)` (mobile) / `var(--jt-space-5)` (desktop)
-- No box-shadow by default — use hover shadow for elevation
+- No box-shadow by default - use hover shadow for elevation
 
 ### Rows (`.jt-row`)
 
@@ -168,9 +168,9 @@ Grid-based horizontal layout for lists. **One grid template per breakpoint**, ne
 | Mobile | `36px 1fr 48px` (hide last stat) | `8px` | `10px 12px` |
 
 Children:
-- `.jt-votes` — first column, 36–48px wide
-- `.jt-row-main` — title + `.jt-row-sub` meta, `min-width: 0` for text truncation
-- `.jt-row-stat` — right-aligned stats, last one hides on mobile
+- `.jt-votes` - first column, 36–48px wide
+- `.jt-row-main` - title + `.jt-row-sub` meta, `min-width: 0` for text truncation
+- `.jt-row-stat` - right-aligned stats, last one hides on mobile
 
 Anchor-wrapped rows MUST use the same selector compound as the override: `.jt-row, a.jt-row { ... }`.
 
@@ -197,14 +197,14 @@ Horizontal flex row of metadata items (author + trust + time + tags).
 }
 ```
 
-This pattern applies to **every** meta line in the plugin — post header, reply card, user profile, topic row sub, search result.
+This pattern applies to **every** meta line in the plugin - post header, reply card, user profile, topic row sub, search result.
 
 ### Tags + pills
 
-- `.jt-tag` — semantic tag pill. `font-size: 0.75rem` desktop, `0.6875rem` mobile. `padding: 2px 8px`. `border-radius: var(--jt-radius-full)`.
-- `.jt-badge-*` — status badges (private, resolved, closed, draft, scheduled). Same shape as tag pill, different background colors.
-- `.jt-tl` — trust level circle. `18×18px` desktop, `16×16px` mobile. Never word-wraps.
-- `.jt-level-tag` — full profile "Level X" badge. `white-space: nowrap`, `display: inline-block`.
+- `.jt-tag` - semantic tag pill. `font-size: 0.75rem` desktop, `0.6875rem` mobile. `padding: 2px 8px`. `border-radius: var(--jt-radius-full)`.
+- `.jt-badge-*` - status badges (private, resolved, closed, draft, scheduled). Same shape as tag pill, different background colors.
+- `.jt-tl` - trust level circle. `18×18px` desktop, `16×16px` mobile. Never word-wraps.
+- `.jt-level-tag` - full profile "Level X" badge. `white-space: nowrap`, `display: inline-block`.
 
 ### Community nav
 
@@ -248,12 +248,12 @@ Use `grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))` for space/cat
 
 ## 11. Navigation hierarchy
 
-1. **Theme header** — site logo, global search (out of plugin scope).
-2. **Community nav** (`.jt-community-nav`) — Jetonomy's internal nav (Community, Search, Leaderboard, Profile, Moderation, Messages). Icons + labels.
-3. **Breadcrumb** (`.jt-breadcrumb`) — Home / Category / Space / Thread. Truncated with ellipsis on mobile.
-4. **Sort tabs** (`.jt-sort-tabs`) — Latest / Popular / Unanswered. Text-only (never icon).
-5. **Page action** (`.jt-bar`) — primary CTA button (+ New Post, Submit). Full width on mobile.
-6. **List / grid** — the actual content (topic rows, space cards, etc.).
+1. **Theme header** - site logo, global search (out of plugin scope).
+2. **Community nav** (`.jt-community-nav`) - Jetonomy's internal nav (Community, Search, Leaderboard, Profile, Moderation, Messages). Icons + labels.
+3. **Breadcrumb** (`.jt-breadcrumb`) - Home / Category / Space / Thread. Truncated with ellipsis on mobile.
+4. **Sort tabs** (`.jt-sort-tabs`) - Latest / Popular / Unanswered. Text-only (never icon).
+5. **Page action** (`.jt-bar`) - primary CTA button (+ New Post, Submit). Full width on mobile.
+6. **List / grid** - the actual content (topic rows, space cards, etc.).
 
 Every frontend page follows this order top-to-bottom. Don't reorder or skip levels.
 
@@ -264,7 +264,7 @@ Every frontend page follows this order top-to-bottom. Don't reorder or skip leve
 - Use native `title` attribute for all icon-only buttons
 - Also set `aria-label` for screen-reader compatibility
 - For state-toggling buttons (Follow/Following, Bookmark/Remove), **update both `title` and `aria-label` in the IA action** when state changes
-- Never rely on tooltip alone for critical information — tooltips are a hint, not documentation
+- Never rely on tooltip alone for critical information - tooltips are a hint, not documentation
 
 ---
 

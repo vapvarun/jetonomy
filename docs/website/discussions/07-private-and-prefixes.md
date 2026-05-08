@@ -1,4 +1,4 @@
-Two features that give you finer control over individual topics — mark sensitive topics private so only you and moderators can see them, and use colored prefixes to classify topics at a glance in the space listing.
+Two features that give you finer control over individual topics - mark sensitive topics private so only you and moderators can see them, and use colored prefixes to classify topics at a glance in the space listing.
 
 <!-- TODO screenshot needed: Space listing with colored topic prefixes and a private topic indicator (was ../images/topic-prefixes-and-private.png) -->
 ## What You Will Learn
@@ -11,7 +11,7 @@ Two features that give you finer control over individual topics — mark sensiti
 
 ## Private Topics
 
-A private topic is visible only to its author and to space moderators. Other members of the space cannot see it in the listing, cannot find it through search, and cannot open its URL directly — they receive a "not found" response instead.
+A private topic is visible only to its author and to space moderators. Other members of the space cannot see it in the listing, cannot find it through search, and cannot open its URL directly - they receive a "not found" response instead.
 
 Use private topics for:
 
@@ -48,13 +48,13 @@ Private topics show a **Private** badge next to the title on the topic page. The
 
 A moderator can reply to a private topic, mark it resolved, or escalate it to a full support ticket using whatever workflow your community has. The topic author is notified of replies the same way they would be on a normal topic.
 
-> **Note:** Private topics are different from private spaces. A private space is hidden entirely — a member either has access to everything in it or nothing at all. A private topic is a one-off exception inside an otherwise public space. Pick private spaces for ongoing confidential work (staff lounges, paying customer lounges) and private topics for one-off sensitive conversations.
+> **Note:** Private topics are different from private spaces. A private space is hidden entirely - a member either has access to everything in it or nothing at all. A private topic is a one-off exception inside an otherwise public space. Pick private spaces for ongoing confidential work (staff lounges, paying customer lounges) and private topics for one-off sensitive conversations.
 
 ## Topic Prefixes
 
-Prefixes are colored labels that appear in front of topic titles in the space listing. They let members classify topics at a glance — `Bug`, `Question`, `Solved`, `Announcement`, `Discussion`, and so on.
+Prefixes are colored labels that appear in front of topic titles in the space listing. They let members classify topics at a glance - `Bug`, `Question`, `Solved`, `Announcement`, `Discussion`, and so on.
 
-Prefixes are configured per space by the space owner. Different spaces can have entirely different prefix sets — a support space might use `Bug`, `Question`, `Solved`, while a marketing space might use `Idea`, `Campaign`, `Report`.
+Prefixes are configured per space by the space owner. Different spaces can have entirely different prefix sets - a support space might use `Bug`, `Question`, `Solved`, while a marketing space might use `Idea`, `Campaign`, `Report`.
 
 ### Enabling and Creating Prefixes
 
@@ -66,7 +66,7 @@ Go to **Jetonomy → Spaces → (your space) → Settings → Prefixes**.
 4. Pick a color from the palette, or enter a custom hex value.
 5. Save.
 
-Repeat for each prefix you want. Re-ordering a prefix in the admin changes its order in the composer picker. Prefixes you no longer need can be deleted — topics that used a deleted prefix revert to having no prefix.
+Repeat for each prefix you want. Re-ordering a prefix in the admin changes its order in the composer picker. Prefixes you no longer need can be deleted - topics that used a deleted prefix revert to having no prefix.
 
 ### Using a Prefix When Creating a Topic
 
@@ -82,14 +82,14 @@ If the space is configured with **Require prefix** enabled, the composer rejects
 - In notification emails that reference the topic
 - In the admin moderation queue
 
-Filter the space listing by prefix by clicking any prefix label — the listing re-renders to show only topics with that prefix.
+Filter the space listing by prefix by clicking any prefix label - the listing re-renders to show only topics with that prefix.
 
 ### Prefix Color Guidelines
 
 - Use high-contrast colors for critical prefixes (`Bug` in red, `Announcement` in blue)
 - Use muted colors for passive prefixes (`Discussion` in grey)
-- Avoid using green except for `Solved` or `Done` — green is a strong "resolved" signal
-- Avoid using red except for critical prefixes — red grabs attention
+- Avoid using green except for `Solved` or `Done` - green is a strong "resolved" signal
+- Avoid using red except for critical prefixes - red grabs attention
 
 ## What's Next?
 

@@ -1,6 +1,6 @@
-Reach members with browser push notifications — even when they have closed your site.
+Reach members with browser push notifications - even when they have closed your site.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 <!-- TODO screenshot needed: Browser push notification appearing on a desktop screen (was ../images/pro-web-push-notification.png) -->
 ## What You Will Learn
@@ -12,7 +12,7 @@ Reach members with browser push notifications — even when they have closed you
 
 ## Why Web Push Matters
 
-Email notifications have open rates around 20–30%. Browser push notifications have open rates above 60% because they appear immediately on the member's screen — no inbox, no subject line, no waiting. For time-sensitive events like a reply to your question or a mention from a teammate, push gets the message there instantly.
+Email notifications have open rates around 20–30%. Browser push notifications have open rates above 60% because they appear immediately on the member's screen - no inbox, no subject line, no waiting. For time-sensitive events like a reply to your question or a mention from a teammate, push gets the message there instantly.
 
 ## Enabling Web Push
 
@@ -28,7 +28,7 @@ Web Push requires a VAPID key pair to authenticate your server with browsers.
 ![Web Push settings page with VAPID key fields and enable toggle](../images/pro-web-push.png)
 ## Service Worker Registration
 
-Jetonomy automatically registers a service worker (`/community/sw.js`) on every community page. You do not need to create or configure the service worker — this happens at extension activation.
+Jetonomy automatically registers a service worker (`/community/sw.js`) on every community page. You do not need to create or configure the service worker - this happens at extension activation.
 
 The service worker handles:
 
@@ -44,7 +44,7 @@ Members who grant permission are subscribed automatically. Their subscription is
 
 Members can unsubscribe at any time from **Profile → Notification Settings → Push Notifications → Off**.
 
-> **Note:** The browser permission prompt can only be triggered by a user action (a click). Jetonomy waits for the member to interact with the prompt banner before requesting permission — it never requests permission automatically on page load.
+> **Note:** The browser permission prompt can only be triggered by a user action (a click). Jetonomy waits for the member to interact with the prompt banner before requesting permission - it never requests permission automatically on page load.
 
 ## Notification Events
 
@@ -72,7 +72,7 @@ Web Push works on all major modern browsers without any app installation:
 | Firefox | Yes | Limited |
 | Safari | Yes (macOS 13+) | Yes (iOS 16.4+) |
 
-> **Tip:** Safari on iOS requires members to add your site to their Home Screen before push notifications work. This is an Apple platform limitation — not a Jetonomy limitation.
+> **Tip:** Safari on iOS requires members to add your site to their Home Screen before push notifications work. This is an Apple platform limitation - not a Jetonomy limitation.
 
 ## What's Next?
 

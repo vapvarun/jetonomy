@@ -18,13 +18,13 @@ goal: push into top 10; target featured snippet on "bbpress review"
 
 # Title / Meta
 
-**H1:** bbPress Review 2026: I Ran Forums on It for 4 Years — Here's the Honest Truth (and What I Use Now)
+**H1:** bbPress Review 2026: I Ran Forums on It for 4 Years - Here's the Honest Truth (and What I Use Now)
 
 **SEO Title (60 chars):** bbPress Review 2026: Still Worth It? Honest Take + Alternatives
 
 **Meta Description (155 chars):** I ran bbPress communities for 4 years. Here's what bbPress still does well, where it quietly breaks, and the modern WordPress forum plugin I switched to.
 
-**Featured image alt:** "bbPress admin dashboard next to Jetonomy's modern forum interface — side-by-side comparison screenshot"
+**Featured image alt:** "bbPress admin dashboard next to Jetonomy's modern forum interface - side-by-side comparison screenshot"
 
 **Schema.org:** `Review` with `itemReviewed` = `SoftwareApplication` (bbPress), plus `FAQPage` for the Q&A section.
 
@@ -36,15 +36,15 @@ goal: push into top 10; target featured snippet on "bbpress review"
 
 It's free. It's from the core WordPress team. It's been around since 2004. If you're adding a forum to a WordPress site today, bbPress is probably the first plugin you'll find.
 
-I've run three production communities on it — a SaaS support forum with ~8,000 topics, a niche hobbyist community that grew to around 15,000 posts, and a client's membership site we gated with Paid Memberships Pro. Between those three, I've put bbPress through almost every real-world scenario a WordPress forum plugin faces.
+I've run three production communities on it - a SaaS support forum with ~8,000 topics, a niche hobbyist community that grew to around 15,000 posts, and a client's membership site we gated with Paid Memberships Pro. Between those three, I've put bbPress through almost every real-world scenario a WordPress forum plugin faces.
 
-And I'm going to be honest: in **April 2026**, I can't recommend bbPress for a new forum anymore. Not because it's bad — because it's standing still while the rest of WordPress has moved on.
+And I'm going to be honest: in **April 2026**, I can't recommend bbPress for a new forum anymore. Not because it's bad - because it's standing still while the rest of WordPress has moved on.
 
 This isn't a drive-by review written by someone who installed bbPress on a staging site for twenty minutes. This is a four-year walk-through of what bbPress actually feels like to run. What works. What quietly breaks. And what I switched to after a specific incident I'll describe below.
 
 ---
 
-## TL;DR — should you use bbPress in 2026?
+## TL;DR - should you use bbPress in 2026?
 
 - **If you have a tiny, low-traffic community (under 1,000 posts) and zero plans to grow:** bbPress works. It's free, stable, and simple.
 - **If you're migrating off bbPress:** I'll show you a path at the end of this article.
@@ -69,11 +69,11 @@ bbPress has been around since 2004. In the four years I've run it, I've never ha
 
 ### It integrates with BuddyPress naturally
 
-If you're already running BuddyPress, bbPress is the natural forum layer. The integration is solid — forum topics appear in member activity streams, trusted members show in forum listings, the visual language matches. For BuddyPress-first sites, this is a real advantage.
+If you're already running BuddyPress, bbPress is the natural forum layer. The integration is solid - forum topics appear in member activity streams, trusted members show in forum listings, the visual language matches. For BuddyPress-first sites, this is a real advantage.
 
 ### The hook system is extensive
 
-bbPress has years of hooks and filters built up. If you want to customize behavior — block certain words, change the topic listing, add custom fields — you can usually find a hook that lets you do it without touching core files. This is a big deal for developers.
+bbPress has years of hooks and filters built up. If you want to customize behavior - block certain words, change the topic listing, add custom fields - you can usually find a hook that lets you do it without touching core files. This is a big deal for developers.
 
 ### It uses WordPress's own user system
 
@@ -89,14 +89,14 @@ These aren't complaints from a 20-minute trial. These are the things that made m
 
 ### 1. It stores everything in `wp_posts` and `wp_postmeta`
 
-This is the technical decision that causes almost every other problem on this list. Every forum, topic, and reply in bbPress is a WordPress post or comment. Every piece of metadata — reply counts, subscriptions, favorites, topic status — lives in `wp_postmeta`.
+This is the technical decision that causes almost every other problem on this list. Every forum, topic, and reply in bbPress is a WordPress post or comment. Every piece of metadata - reply counts, subscriptions, favorites, topic status - lives in `wp_postmeta`.
 
 For a 500-post forum, this is fine. Nobody notices. But here's what happened to my 15,000-post hobbyist community around month 18:
 
 - `wp_postmeta` grew to several million rows (bbPress writes a lot of meta per topic)
 - Admin list pages started timing out
 - The WordPress "All Posts" view became painful because bbPress topics were mixed in
-- Third-party plugins that queried `wp_posts` (an SEO plugin, a sitemap generator, a caching plugin) slowed down — they didn't know to ignore bbPress content, so they tried to process thousands of forum posts as regular blog posts
+- Third-party plugins that queried `wp_posts` (an SEO plugin, a sitemap generator, a caching plugin) slowed down - they didn't know to ignore bbPress content, so they tried to process thousands of forum posts as regular blog posts
 - Site-wide search got worse for everyone because `wp_posts` was heavy
 
 I moved that site to managed WordPress hosting with Redis, threw money at the problem, and got it stable. But the root cause was architectural, not a hosting issue. At that scale, bbPress's approach of "forum posts are just WordPress posts" stops being a feature and starts being a tax on the whole site.
@@ -115,11 +115,11 @@ bbPress uses offset pagination (`LIMIT 20 OFFSET 400`). On page 21 of a busy for
 
 Here's the release history:
 
-- bbPress 2.5 — shipped 2013
-- bbPress 2.6 — shipped 2020 (seven years later)
-- bbPress 2.7 — no release as of April 2026
+- bbPress 2.5 - shipped 2013
+- bbPress 2.6 - shipped 2020 (seven years later)
+- bbPress 2.7 - no release as of April 2026
 
-The last commit to the `develop` branch was over a year ago. The bbPress team hasn't abandoned the project — they've released minor fixes — but the pace means features I expected to see in 2020 are still missing in 2026. Q&A spaces. Accepted answers. Trust levels. Full-text search that rivals dedicated search plugins. A REST API worth building on. None of these are in bbPress today.
+The last commit to the `develop` branch was over a year ago. The bbPress team hasn't abandoned the project - they've released minor fixes - but the pace means features I expected to see in 2020 are still missing in 2026. Q&A spaces. Accepted answers. Trust levels. Full-text search that rivals dedicated search plugins. A REST API worth building on. None of these are in bbPress today.
 
 ### 5. No REST API worth building on
 
@@ -135,7 +135,7 @@ Akismet catches obvious spam. That's the extent of the defense. If you want a re
 
 ### 7. Theme integration is a fight
 
-bbPress ships with its own CSS and its own template hierarchy. When you drop it into a modern block theme, it looks wrong — wrong fonts, wrong spacing, wrong colors. Every theme I've used required custom CSS to make bbPress look like it belonged.
+bbPress ships with its own CSS and its own template hierarchy. When you drop it into a modern block theme, it looks wrong - wrong fonts, wrong spacing, wrong colors. Every theme I've used required custom CSS to make bbPress look like it belonged.
 
 In 2026, WordPress has `theme.json` design tokens that define fonts, colors, and spacing for the whole site. A modern forum plugin reads those tokens and adapts automatically. bbPress doesn't. You override, or you live with the mismatch.
 
@@ -163,7 +163,7 @@ That week I started looking at what else was available.
 
 ## The alternatives I evaluated
 
-I gave each of these a real trial — installed on a staging site, imported real data where possible, ran actual community workflows through them.
+I gave each of these a real trial - installed on a staging site, imported real data where possible, ran actual community workflows through them.
 
 ### wpForo
 
@@ -183,7 +183,7 @@ A lightweight bbPress alternative that keeps things simple.
 
 ### Discourse (self-hosted)
 
-I ran this for two weeks. Discourse is excellent software — probably the best forum platform in the world technically.
+I ran this for two weeks. Discourse is excellent software - probably the best forum platform in the world technically.
 
 **Why I didn't stay:** It's not a WordPress plugin. It's a separate Rails application that runs on its own server and needs its own login system. Connecting it to WordPress required a plugin bridge that got stale when either side updated. I had two admin panels, two user tables, two hosting bills. For a forum that was supposed to live inside my WordPress site, it was the wrong shape.
 
@@ -197,14 +197,14 @@ I was already running BuddyPress on this site, so I tried adding BuddyPress Docs
 
 This is what I ended up switching to. Full disclosure: Wbcom Designs is the WordPress studio behind BuddyX, BuddyPress extensions, and now Jetonomy, and I know the team. That's why I gave it a serious look. But I tested it the same way I tested the others.
 
-**What I liked — the architectural stuff that solved my bbPress problems:**
+**What I liked - the architectural stuff that solved my bbPress problems:**
 
 - **24 custom MySQL tables** instead of `wp_posts`. My 15,000-post data imported cleanly with the built-in bbPress importer (dry run first, then resume on failure). After the import, my `wp_postmeta` shed several million rows. Site-wide admin pages got faster.
 - **Denormalized counters.** Reply counts, vote scores, and post counts are stored as columns directly on each topic record. No COUNT queries on page load. The listing page went from 47 queries to 12.
 - **Cursor-based pagination everywhere.** Page 21 loads in the same time as page 1.
 - **Theme integration via `theme.json`.** Jetonomy reads my theme's brand color, font, and border radius automatically. I did zero CSS overrides. This was the first forum plugin I've tried that actually looked like it belonged in my theme out of the box.
 
-**What I liked — the features bbPress doesn't have:**
+**What I liked - the features bbPress doesn't have:**
 
 - **Q&A spaces with accepted answers.** I moved my support section to a Q&A space. Members mark the reply that solved their problem. That reply pins to the top with a green "Accepted Answer" badge and the replier earns reputation. Repeat questions dropped because the canonical answer is visible.
 - **Ideas spaces with a roadmap.** I moved feature requests to an Ideas space. Members vote, and admins move ideas through Open → Planned → In Progress → Done. Replaces the spreadsheet I used to keep.
@@ -224,7 +224,7 @@ I've been running Jetonomy on that same community for about three weeks now. Pag
 
 ---
 
-## bbPress vs the modern alternatives — the comparison table
+## bbPress vs the modern alternatives - the comparison table
 
 Here's how bbPress stacks up against the three WordPress-native options I'd actually recommend in 2026.
 
@@ -249,19 +249,19 @@ I'm not saying any of these three is bad. wpForo is a legitimate option if you d
 
 ---
 
-## bbPress vs BuddyPress — a common point of confusion
+## bbPress vs BuddyPress - a common point of confusion
 
 I see this question a lot: **"Should I use bbPress or BuddyPress?"**
 
-They solve different problems. bbPress is forum software — threaded topics, replies, subscriptions. BuddyPress is social network software — member profiles, activity streams, groups, friends. They were built to work together, and for a site that needs both (a member community with a forum attached), you install both.
+They solve different problems. bbPress is forum software - threaded topics, replies, subscriptions. BuddyPress is social network software - member profiles, activity streams, groups, friends. They were built to work together, and for a site that needs both (a member community with a forum attached), you install both.
 
 If you only need a forum, install bbPress (or an alternative). If you only need a social network, install BuddyPress. If you need both, install both.
 
-Jetonomy is closer to bbPress in scope — it's a forum plugin. If you're also running BuddyPress, Jetonomy integrates with it cleanly and the visual language matches BuddyX themes out of the box.
+Jetonomy is closer to bbPress in scope - it's a forum plugin. If you're also running BuddyPress, Jetonomy integrates with it cleanly and the visual language matches BuddyX themes out of the box.
 
 ---
 
-## bbPress vs phpBB — different worlds
+## bbPress vs phpBB - different worlds
 
 Another question I see: **"bbPress vs phpBB?"**
 
@@ -275,9 +275,9 @@ bbPress is a WordPress plugin. It lives inside your WordPress install, uses your
 
 ---
 
-## bbPress themes — the theme situation
+## bbPress themes - the theme situation
 
-bbPress has a small ecosystem of "bbPress themes" — theme authors that styled their themes to work well with bbPress out of the box. Most of them date from 2014-2018. A few are still actively maintained.
+bbPress has a small ecosystem of "bbPress themes" - theme authors that styled their themes to work well with bbPress out of the box. Most of them date from 2014-2018. A few are still actively maintained.
 
 The modern answer is: your forum plugin should read `theme.json` from your active theme and adapt automatically. You shouldn't need a "bbPress-compatible theme" in 2026. That's a workaround for the plugin not integrating with modern WordPress theming.
 
@@ -285,15 +285,15 @@ If you're stuck on bbPress and need a theme that works with it, the ones I've us
 
 ---
 
-## bbPress forum examples — live sites running bbPress
+## bbPress forum examples - live sites running bbPress
 
 If you want to see bbPress in action before committing, here are communities running it in 2026:
 
-- **WordPress.org Support Forums** — the largest bbPress deployment on the planet. Millions of topics. Heavily customized, but it's the canonical example.
-- **BuddyPress.org Support** — from the same team as bbPress. Standard install, shows bbPress+BuddyPress integration.
+- **WordPress.org Support Forums** - the largest bbPress deployment on the planet. Millions of topics. Heavily customized, but it's the canonical example.
+- **BuddyPress.org Support** - from the same team as bbPress. Standard install, shows bbPress+BuddyPress integration.
 - Various WordPress plugin support forums scattered across wordpress.org.
 
-Most large bbPress sites are plugin support forums, not community forums. That's a signal about where bbPress fits today — it's a solid tool for vendor support, less so for thriving social communities.
+Most large bbPress sites are plugin support forums, not community forums. That's a signal about where bbPress fits today - it's a solid tool for vendor support, less so for thriving social communities.
 
 ---
 
@@ -303,9 +303,9 @@ I get asked this a lot, so here's the short version:
 
 1. Install Jetonomy (free version from wbcomdesigns.com) on your WordPress site.
 2. Go to **Jetonomy → Import**. The importer auto-detects your bbPress installation and shows you what it found: forums, topics, replies, users.
-3. Run a **dry run** first. This shows exactly what will be created in Jetonomy without writing anything to the database. I strongly recommend this step — you'll see any data that might not map cleanly.
+3. Run a **dry run** first. This shows exactly what will be created in Jetonomy without writing anything to the database. I strongly recommend this step - you'll see any data that might not map cleanly.
 4. Run the actual import. Large imports (10,000+ topics) run as batched background jobs with a progress indicator. You can close the browser and come back.
-5. If the import is interrupted for any reason — server timeout, browser crash, your laptop sleeping — it resumes from where it stopped.
+5. If the import is interrupted for any reason - server timeout, browser crash, your laptop sleeping - it resumes from where it stopped.
 6. After the import, bbPress URLs are automatically 301-redirected to the Jetonomy URLs to preserve your SEO.
 
 The migration took about 40 minutes for my 15,000-post community. Zero data loss. I deactivated bbPress after a week of running both in parallel to confirm the Jetonomy version was complete.
@@ -316,7 +316,7 @@ The migration took about 40 minutes for my 15,000-post community. Zero data loss
 
 ### Is bbPress still being developed in 2026?
 
-Technically yes. The bbPress team is still around, and they ship security fixes. But feature development has slowed dramatically — no major release since 2020, and the feature gap with modern forum plugins has widened significantly. For a long-term project, I'd treat bbPress as maintenance-mode software.
+Technically yes. The bbPress team is still around, and they ship security fixes. But feature development has slowed dramatically - no major release since 2020, and the feature gap with modern forum plugins has widened significantly. For a long-term project, I'd treat bbPress as maintenance-mode software.
 
 ### Is bbPress free?
 
@@ -336,7 +336,7 @@ Depends on what you need. For a small, low-traffic forum: Asgaros works. For a m
 
 ### Does bbPress work with Elementor?
 
-Sort of. bbPress template output isn't Elementor-native — you can't drag-drop forum widgets into Elementor pages. You can embed bbPress shortcodes inside Elementor templates, but the styling control is limited. Modern forum plugins handle this more cleanly.
+Sort of. bbPress template output isn't Elementor-native - you can't drag-drop forum widgets into Elementor pages. You can embed bbPress shortcodes inside Elementor templates, but the styling control is limited. Modern forum plugins handle this more cleanly.
 
 ### Is there a bbPress REST API?
 
@@ -346,21 +346,21 @@ Not an official one. There's a community add-on called "bbPress REST API" on Git
 
 ## My recommendation
 
-If you're starting a new community on WordPress in 2026 and you expect it to grow: **don't start with bbPress**. You'll end up where I ended up — running into architectural problems at scale and having to migrate anyway. Start with a plugin that was built for 2026 expectations.
+If you're starting a new community on WordPress in 2026 and you expect it to grow: **don't start with bbPress**. You'll end up where I ended up - running into architectural problems at scale and having to migrate anyway. Start with a plugin that was built for 2026 expectations.
 
 If you already run bbPress and it's working for you: **don't migrate yet**. Migration has costs, and if your current setup is stable, there's no urgency. But keep the option in your back pocket for when you hit the scale wall.
 
 If you're hitting the scale wall right now: **look at Jetonomy**. The bbPress importer is built in, the migration is genuinely low-risk (dry run first, resume on failure), and the architectural payoff is real. I switched three weeks ago and I'd do it again tomorrow.
 
-Try Jetonomy free at [wbcomdesigns.com/downloads/jetonomy/](https://wbcomdesigns.com/downloads/jetonomy/). There's no trial gate — the free version is the full free version. If it doesn't fit your community, uninstall it and nothing is lost.
+Try Jetonomy free at [wbcomdesigns.com/downloads/jetonomy/](https://wbcomdesigns.com/downloads/jetonomy/). There's no trial gate - the free version is the full free version. If it doesn't fit your community, uninstall it and nothing is lost.
 
 ---
 
 **Related reading:**
 
-- [How to Migrate from bbPress to Jetonomy — step-by-step guide](https://wbcomdesigns.com/jetonomy-bbpress-migration/)
-- [Jetonomy vs wpForo — which modern forum plugin wins?](https://wbcomdesigns.com/jetonomy-vs-wpforo/)
-- [BuddyPress vs bbPress — picking the right community tool](https://wbcomdesigns.com/buddypress-vs-bbpress/)
+- [How to Migrate from bbPress to Jetonomy - step-by-step guide](https://wbcomdesigns.com/jetonomy-bbpress-migration/)
+- [Jetonomy vs wpForo - which modern forum plugin wins?](https://wbcomdesigns.com/jetonomy-vs-wpforo/)
+- [BuddyPress vs bbPress - picking the right community tool](https://wbcomdesigns.com/buddypress-vs-bbpress/)
 
 ---
 

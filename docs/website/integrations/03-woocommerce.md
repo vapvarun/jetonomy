@@ -1,8 +1,8 @@
-Gate Jetonomy spaces by WooCommerce product purchase or active WooCommerce Subscription — so customers unlock discussion areas the moment they buy.
+Gate Jetonomy spaces by WooCommerce product purchase or active WooCommerce Subscription - so customers unlock discussion areas the moment they buy.
 
 ![Jetonomy admin settings for WooCommerce integration setup](../images/admin-settings.png)
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn
 
@@ -16,7 +16,7 @@ Gate Jetonomy spaces by WooCommerce product purchase or active WooCommerce Subsc
 | Product Type | Supported | Notes |
 |---|---|---|
 | Simple product | Yes | Access granted on order complete, permanent |
-| Variable product | Yes | Gate by parent product — any variation grants access |
+| Variable product | Yes | Gate by parent product - any variation grants access |
 | WooCommerce Subscriptions | Yes | Access active while subscription is active; revoked on pause, cancel, or expiry |
 | Grouped product | No | Gate individual products within the group instead |
 
@@ -59,20 +59,20 @@ When an order is refunded, Jetonomy Pro removes the customer from any spaces gat
 
 ## Combining with Other Rules
 
-WooCommerce rules stack with MemberPress, PMPro, and trust-level rules in the same space. A member gains access if they satisfy any Grant rule — regardless of which rule type it is.
+WooCommerce rules stack with MemberPress, PMPro, and trust-level rules in the same space. A member gains access if they satisfy any Grant rule - regardless of which rule type it is.
 
 Example: gate a "Premium VIP" space to either MemberPress VIP level OR a specific WooCommerce product purchase. Members who qualify through either path are both added automatically.
 
 ## Troubleshooting
 
-**Rule Type dropdown does not show WooCommerce Product** — Confirm Jetonomy Pro is active and WooCommerce is active. Navigate to **Jetonomy → Extensions** and check that the WooCommerce integration is listed.
+**Rule Type dropdown does not show WooCommerce Product** - Confirm Jetonomy Pro is active and WooCommerce is active. Navigate to **Jetonomy → Extensions** and check that the WooCommerce integration is listed.
 
-**Subscription product not gating correctly** — Confirm WooCommerce Subscriptions (by WooCommerce.com) is installed and active. WooCommerce Memberships (a separate product) is not required.
+**Subscription product not gating correctly** - Confirm WooCommerce Subscriptions (by WooCommerce.com) is installed and active. WooCommerce Memberships (a separate product) is not required.
 
-**Member not removed after refund** — Verify the order status actually moved to Refunded, not just to Cancelled or On-Hold. Only a full Refunded status triggers access revocation.
+**Member not removed after refund** - Verify the order status actually moved to Refunded, not just to Cancelled or On-Hold. Only a full Refunded status triggers access revocation.
 
 ## What's Next?
 
-Gate spaces by LearnDash course or group enrollment — so students get discussion access automatically when they enroll.
+Gate spaces by LearnDash course or group enrollment - so students get discussion access automatically when they enroll.
 
 [LearnDash Integration →](04-learndash.md)

@@ -1,4 +1,4 @@
-The SEO settings tab controls how Jetonomy pages appear in search engines — XML sitemaps, structured data, meta title patterns, and robots directives for specific page types.
+The SEO settings tab controls how Jetonomy pages appear in search engines - XML sitemaps, structured data, meta title patterns, and robots directives for specific page types.
 
 ![SEO settings with sitemap toggle, meta title patterns, and robots directives](../images/admin-seo.png)
 
@@ -79,7 +79,7 @@ These patterns control the `<title>` tag on Jetonomy pages. Use the available to
 | `{site_name}` | Your WordPress site name |
 | `{page_number}` | Current page number (reply pagination) |
 
-**Default post title pattern:** `{post_title} — {space_name} | {site_name}`
+**Default post title pattern:** `{post_title} - {space_name} | {site_name}`
 
 **Default space title pattern:** `{space_name} | {site_name}`
 
@@ -91,21 +91,21 @@ These patterns control the `<title>` tag on Jetonomy pages. Use the available to
 **Default:** Off for profiles, On for search
 **Location:** SEO tab → Robots section
 
-**Noindex user profiles** — When enabled, Jetonomy adds `<meta name="robots" content="noindex">` to all `/community/u/*/` pages. Enable this if you prefer profiles not to appear in search results (common for privacy-sensitive communities).
+**Noindex user profiles** - When enabled, Jetonomy adds `<meta name="robots" content="noindex">` to all `/community/u/*/` pages. Enable this if you prefer profiles not to appear in search results (common for privacy-sensitive communities).
 
-**Noindex search results** — When enabled, the `/community/search/` page is excluded from indexing. This is on by default because search results pages provide minimal SEO value and can create duplicate-content signals.
+**Noindex search results** - When enabled, the `/community/search/` page is excluded from indexing. This is on by default because search results pages provide minimal SEO value and can create duplicate-content signals.
 
 ## Open Graph and Twitter Card Tags
 
 Jetonomy outputs Open Graph and Twitter Card meta tags automatically on all public community pages. No setting is needed. These tags control how your posts appear when shared on social media:
 
-- `og:title` — the post or space title
-- `og:description` — the post excerpt (first 160 characters of body text)
-- `og:type` — `article` for posts, `website` for other pages
-- `og:url` — the canonical URL
-- `twitter:card` — `summary` (or `summary_large_image` if a post has an image attachment)
+- `og:title` - the post or space title
+- `og:description` - the post excerpt (first 160 characters of body text)
+- `og:type` - `article` for posts, `website` for other pages
+- `og:url` - the canonical URL
+- `twitter:card` - `summary` (or `summary_large_image` if a post has an image attachment)
 
-> **Note:** If you use an SEO plugin like Yoast SEO, RankMath, or The SEO Framework, its OG tags may override Jetonomy's. This is fine — SEO plugin output takes priority via standard WordPress `wp_head` hook priority ordering.
+> **Note:** If you use an SEO plugin like Yoast SEO, RankMath, or The SEO Framework, its OG tags may override Jetonomy's. This is fine - SEO plugin output takes priority via standard WordPress `wp_head` hook priority ordering.
 
 ## What's Next?
 

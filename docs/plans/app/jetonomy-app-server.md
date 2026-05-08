@@ -1,8 +1,8 @@
-# jetonomy-app-server — Laravel Build Platform
+# jetonomy-app-server - Laravel Build Platform
 
 ## Overview
 
-`app.jetonomy.com` — Laravel application that manages customer app configurations, triggers builds via GitHub Actions + Expo EAS, and serves download links. Hosted on DigitalOcean droplet.
+`app.jetonomy.com` - Laravel application that manages customer app configurations, triggers builds via GitHub Actions + Expo EAS, and serves download links. Hosted on DigitalOcean droplet.
 
 ## Tech Stack
 
@@ -379,27 +379,27 @@ MAIL_HOST=smtp.postmarkapp.com
 
 ## Development Phases
 
-### Phase 1 — MVP (Week 1)
+### Phase 1 - MVP (Week 1)
 - [ ] Laravel project scaffold
 - [ ] Customer model + migration
 - [ ] EDD license validation
 - [ ] Login / logout
 - [ ] Dashboard page (static)
 
-### Phase 2 — Branding (Week 2)
+### Phase 2 - Branding (Week 2)
 - [ ] AppConfig model + migration
 - [ ] Branding form (name, icon, colors)
 - [ ] S3 upload for assets
 - [ ] Build config API endpoint
 
-### Phase 3 — Build Pipeline (Week 3)
+### Phase 3 - Build Pipeline (Week 3)
 - [ ] Build model + migration
 - [ ] GitHub Actions workflow in jetonomy-app repo
 - [ ] Trigger build from dashboard
 - [ ] Webhook for build completion
 - [ ] Download links
 
-### Phase 4 — Polish (Week 4)
+### Phase 4 - Polish (Week 4)
 - [ ] Email notifications (build ready, build failed)
 - [ ] Build history page
 - [ ] Rate limiting (2 builds/day)

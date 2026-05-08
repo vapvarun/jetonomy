@@ -3,7 +3,7 @@
 # Source: /wp-content/plugins/jetonomy
 # Total: 42
 
-## Action Hooks — Admin Extension Points
+## Action Hooks - Admin Extension Points
 [x] jetonomy_admin_dashboard_widgets | admin/views/dashboard.php:266 | status:documented
 [x] jetonomy_admin_dashboard_after_stats | admin/views/dashboard.php:45 | status:documented
 [x] jetonomy_admin_settings_tabs | admin/views/settings.php:10 | status:documented
@@ -15,7 +15,7 @@
 [x] jetonomy_admin_render_extensions | admin/class-admin.php:551 | status:documented
 [x] jetonomy_admin_render_license | admin/class-admin.php:562 | status:documented
 
-## Action Hooks — Content Lifecycle
+## Action Hooks - Content Lifecycle
 [x] jetonomy_after_create_post | api/class-posts-controller.php:260 + class-abilities.php:791 | status:documented
 [x] jetonomy_after_create_reply | api/class-replies-controller.php:230 + class-abilities.php:866 | status:documented
 [x] jetonomy_post_updated | api/class-posts-controller.php:360 | status:documented
@@ -26,7 +26,7 @@
 [x] jetonomy_content_moderated | api/class-moderation-controller.php + admin/class-admin.php | status:documented
 [x] jetonomy_after_vote | api/class-votes-controller.php:130 + class-abilities.php:913 | status:documented
 
-## Action Hooks — Users / Trust
+## Action Hooks - Users / Trust
 [x] jetonomy_user_joined_space | models/class-space-member.php:40 | status:documented
 [x] jetonomy_trust_level_changed | class-cron.php:101 + class-cli.php:112 | status:documented
 [x] jetonomy_reputation_changed | trust/class-reputation.php:68 | status:documented
@@ -34,7 +34,7 @@
 [x] jetonomy_membership_deactivated | adapters/class-member-press-adapter.php:91 + class-pmpro-adapter.php:85 | status:documented
 [x] jetonomy_notification_created | notifications/class-notifier.php:259 | status:documented
 
-## Action Hooks — Templates
+## Action Hooks - Templates
 [x] jetonomy_new_post_fields | templates/views/new-post.php:85 | status:documented
 [x] jetonomy_post_meta_fields | templates/views/single-post.php:208 | status:documented
 [x] jetonomy_post_actions | templates/views/single-post.php:240 | status:documented

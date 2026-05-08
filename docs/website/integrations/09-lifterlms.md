@@ -1,6 +1,6 @@
-Connect LifterLMS course and membership enrollment to Jetonomy spaces — students get a dedicated discussion area when they enroll, and lose access when removed.
+Connect LifterLMS course and membership enrollment to Jetonomy spaces - students get a dedicated discussion area when they enroll, and lose access when removed.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn
 
@@ -18,11 +18,11 @@ Jetonomy Pro detects LifterLMS automatically when both plugins are active. A **L
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LifterLMS Course** from the rule type dropdown.
-3. Start typing the course name — a searchable dropdown shows all published courses and memberships.
+3. Start typing the course name - a searchable dropdown shows all published courses and memberships.
 4. Select the course, set Grants to **Participate** and Space Role to **Member**.
 5. Click **Add Rule**.
 
-LifterLMS memberships also appear in the search — select a membership to gate a space by membership level instead of individual course enrollment.
+LifterLMS memberships also appear in the search - select a membership to gate a space by membership level instead of individual course enrollment.
 
 ## Syncing Existing Students
 
@@ -47,7 +47,7 @@ When you publish a new LifterLMS course, a private space is created with the cou
 | Student removed from membership | Removed from linked space |
 | Enrollment permanently deleted | Removed from linked space |
 
-Content remains in the space — only access is revoked.
+Content remains in the space - only access is revoked.
 
 ## Memberships and Courses
 
@@ -57,9 +57,9 @@ LifterLMS memberships can auto-enroll students in multiple courses. When a stude
 
 ## Troubleshooting
 
-**LifterLMS Course does not appear in dropdown** — Confirm Jetonomy Pro and LifterLMS are both active. Check **Jetonomy → Settings → Integrations**.
+**LifterLMS Course does not appear in dropdown** - Confirm Jetonomy Pro and LifterLMS are both active. Check **Jetonomy → Settings → Integrations**.
 
-**Membership students not getting access** — Ensure the access rule uses the membership level ID (shows as "Membership Name (LifterLMS Membership)" in the search). Course-level rules only apply to direct course enrollment.
+**Membership students not getting access** - Ensure the access rule uses the membership level ID (shows as "Membership Name (LifterLMS Membership)" in the search). Course-level rules only apply to direct course enrollment.
 
 ## What's Next?
 

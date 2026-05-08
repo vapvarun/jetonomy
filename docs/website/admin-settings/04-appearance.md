@@ -1,4 +1,4 @@
-The Appearance settings tab gives you direct control over the visual style of your community — from a single accent color override to a full custom CSS field.
+The Appearance settings tab gives you direct control over the visual style of your community - from a single accent color override to a full custom CSS field.
 
 ![Appearance settings with accent color picker, font options, and layout density controls](../images/admin-appearance.png)
 
@@ -35,7 +35,7 @@ This value is injected as `--jt-accent` on the `.jt-app` element at runtime, so 
 **Default:** On
 **Location:** Appearance tab → Typography section
 
-When on, Jetonomy uses `--jt-font: inherit` — the community adopts whatever font your theme sets on the `body` element. This is the correct setting for most sites.
+When on, Jetonomy uses `--jt-font: inherit` - the community adopts whatever font your theme sets on the `body` element. This is the correct setting for most sites.
 
 Turn this off only if you want Jetonomy to use a specific font independent of your theme. In that case, define `--jt-font` in the Custom CSS field.
 
@@ -56,9 +56,9 @@ Turn this off if you have set a custom accent color above and do not want theme 
 **Options:** Comfortable, Compact
 **Location:** Appearance tab → Layout section
 
-**Comfortable** — Standard spacing between post cards, reply cards, and interface elements. Best for general communities and long-form discussion.
+**Comfortable** - Standard spacing between post cards, reply cards, and interface elements. Best for general communities and long-form discussion.
 
-**Compact** — Reduced padding and tighter spacing. Fits more content on screen at once. Best for high-volume spaces where members scan many posts quickly.
+**Compact** - Reduced padding and tighter spacing. Fits more content on screen at once. Best for high-volume spaces where members scan many posts quickly.
 
 When you change this setting, Jetonomy adds `data-jt-density="compact"` (or `"comfortable"`) to the `.jt-app` wrapper element. CSS rules keyed to this attribute apply the appropriate spacing.
 
@@ -85,12 +85,12 @@ Use this field to override `--jt-*` tokens, adjust component styles, or add comm
 }
 ```
 
-> **Note:** Custom CSS is output as-is — no minification, no scoping, no sandboxing. Write only CSS you control. If you enter invalid CSS here, it may break parts of the community UI.
+> **Note:** Custom CSS is output as-is - no minification, no scoping, no sandboxing. Write only CSS you control. If you enter invalid CSS here, it may break parts of the community UI.
 
 > **Tip:** For larger CSS customizations, consider using a child theme's `style.css` or a dedicated CSS plugin instead of this field. The Custom CSS field is best for quick, targeted overrides.
 
 ## What's Next?
 
-Configure how Jetonomy appears in search engines — XML sitemaps, schema markup, and meta title patterns.
+Configure how Jetonomy appears in search engines - XML sitemaps, schema markup, and meta title patterns.
 
 [SEO Settings →](05-seo.md)

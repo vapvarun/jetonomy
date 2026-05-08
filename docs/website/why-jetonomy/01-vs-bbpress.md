@@ -1,4 +1,4 @@
-How Jetonomy compares to bbPress — and why communities are switching to a modern forum experience.
+How Jetonomy compares to bbPress - and why communities are switching to a modern forum experience.
 
 ![Jetonomy community home page with modern UI and space listings](../images/community-home.png)
 
@@ -8,7 +8,7 @@ How Jetonomy compares to bbPress — and why communities are switching to a mode
 - Where Jetonomy excels for growing communities
 - What bbPress still does well
 
-> **Try a live Jetonomy community before you commit** — Wbcom runs its own public support community on Jetonomy at [community.wbcomdesigns.com](https://community.wbcomdesigns.com/). Browse spaces, read real support threads, and get a feel for the voting, trust-level badges, reply threading, and moderation flow on a production site.
+> **Try a live Jetonomy community before you commit** - Wbcom runs its own public support community on Jetonomy at [community.wbcomdesigns.com](https://community.wbcomdesigns.com/). Browse spaces, read real support threads, and get a feel for the voting, trust-level badges, reply threading, and moderation flow on a production site.
 
 ## Feature Comparison
 
@@ -34,7 +34,7 @@ How Jetonomy compares to bbPress — and why communities are switching to a mode
 
 ### Performance at Scale
 
-bbPress stores every topic and reply as a WordPress post. On sites with 10,000+ topics, this bloats the `wp_posts` and `wp_postmeta` tables, slowing down your entire WordPress installation — not just the forum.
+bbPress stores every topic and reply as a WordPress post. On sites with 10,000+ topics, this bloats the `wp_posts` and `wp_postmeta` tables, slowing down your entire WordPress installation - not just the forum.
 
 Jetonomy uses its own database tables with proper indexes and cursor-based pagination. Your forum can grow to tens of thousands of topics without affecting the rest of your site.
 
@@ -42,11 +42,11 @@ Jetonomy uses its own database tables with proper indexes and cursor-based pagin
 
 bbPress relies entirely on WordPress roles. You either trust someone to moderate or you do not. There is no middle ground.
 
-Jetonomy's trust level system automatically promotes members as they contribute. New users start restricted. Active, helpful members gradually earn the ability to edit, moderate, and manage — without any manual role changes.
+Jetonomy's trust level system automatically promotes members as they contribute. New users start restricted. Active, helpful members gradually earn the ability to edit, moderate, and manage - without any manual role changes.
 
 ### Modern User Experience
 
-bbPress was designed before mobile-first became standard. Jetonomy is built with responsive CSS custom properties that adapt to any theme, inline editing, instant voting, and real-time notifications — all without page reloads.
+bbPress was designed before mobile-first became standard. Jetonomy is built with responsive CSS custom properties that adapt to any theme, inline editing, instant voting, and real-time notifications - all without page reloads.
 
 ## Where bbPress Still Works
 
@@ -56,5 +56,5 @@ If you are already running bbPress and considering a switch, Jetonomy includes a
 
 ## What's Next?
 
-- [Importing from bbPress](../migration/01-bbpress-import.md) — step-by-step migration guide
-- [Scalability](03-scalability.md) — how Jetonomy handles large communities
+- [Importing from bbPress](../migration/01-bbpress-import.md) - step-by-step migration guide
+- [Scalability](03-scalability.md) - how Jetonomy handles large communities

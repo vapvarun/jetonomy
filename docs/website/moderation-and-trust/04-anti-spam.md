@@ -1,4 +1,4 @@
-Spam is the fastest way to kill a community's quality. Jetonomy has multiple layers of protection that work silently in the background — your real members never know they are there.
+Spam is the fastest way to kill a community's quality. Jetonomy has multiple layers of protection that work silently in the background - your real members never know they are there.
 
 ![Anti-spam settings with CAPTCHA provider selection and API key fields](../images/admin-antispam.png)
 
@@ -18,8 +18,8 @@ Jetonomy supports two providers:
 
 | Provider | Type | User friction |
 |----------|------|---------------|
-| Google reCAPTCHA v3 | Score-based, invisible | None — runs in background |
-| Cloudflare Turnstile | Challenge-based, invisible | None — usually auto-passes |
+| Google reCAPTCHA v3 | Score-based, invisible | None - runs in background |
+| Cloudflare Turnstile | Challenge-based, invisible | None - usually auto-passes |
 
 Both are invisible to real users. reCAPTCHA v3 assigns a bot-likelihood score and blocks low-scoring submissions. Cloudflare Turnstile analyzes browser signals and shows a challenge only when it cannot verify the user automatically.
 
@@ -43,7 +43,7 @@ Choose Cloudflare Turnstile if your community has members who are privacy-consci
 
 ## Trusted Members Skip CAPTCHA
 
-Members at Trust Level 2 and above never see or trigger a CAPTCHA check. Jetonomy bypasses the verification entirely for them — the API call is never made.
+Members at Trust Level 2 and above never see or trigger a CAPTCHA check. Jetonomy bypasses the verification entirely for them - the API call is never made.
 
 This means your most active, trusted members post without any friction while new accounts get verified. As members earn reputation and cross the TL2 threshold, they transition out of CAPTCHA checks automatically.
 
@@ -59,11 +59,11 @@ Akismet and CAPTCHA work independently. You can run both at the same time for ma
 
 Jetonomy Pro's AI extension adds a third layer: a language model reads every new post and reply and scores it for spam probability before it is published. Posts above the configured threshold go to the moderation queue with a reason the model generated. Posts below it are published as normal.
 
-This catches the kinds of spam that pattern matching and Akismet miss — subtly rewritten affiliate spam, contextually wrong replies designed to pad posting history, and coordinated attacks that use clean accounts.
+This catches the kinds of spam that pattern matching and Akismet miss - subtly rewritten affiliate spam, contextually wrong replies designed to pad posting history, and coordinated attacks that use clean accounts.
 
-Run the detection through any supported provider — OpenAI, Anthropic, a custom endpoint, or self-hosted **Ollama** (which keeps all content on your own server). See [AI Integration](../pro-features/13-ai.md) for setup.
+Run the detection through any supported provider - OpenAI, Anthropic, a custom endpoint, or self-hosted **Ollama** (which keeps all content on your own server). See [AI Integration](../pro-features/13-ai.md) for setup.
 
-AI spam detection stacks on top of CAPTCHA, Akismet, and rate limits — not instead of them. Each layer catches different threats.
+AI spam detection stacks on top of CAPTCHA, Akismet, and rate limits - not instead of them. Each layer catches different threats.
 
 ## Rate Limiting for New Members
 

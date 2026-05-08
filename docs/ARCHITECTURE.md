@@ -80,7 +80,7 @@ WP REST dispatch
 
 ### Outbound oEmbed (v1.3.0)
 
-Jetonomy threads live in `wp_jt_posts` — not WP CPTs — so core WP oEmbed can't resolve forum URLs. The `OEmbed_Controller` at `/wp-json/jetonomy/v1/oembed` fills the gap: parses `/community/s/{space}/t/{thread}/` URLs, looks up posts by slug with a space-slug collision guard, and returns oEmbed 1.0 JSON (default `type=rich` with a self-contained card, optional `type=link`).
+Jetonomy threads live in `wp_jt_posts` - not WP CPTs - so core WP oEmbed can't resolve forum URLs. The `OEmbed_Controller` at `/wp-json/jetonomy/v1/oembed` fills the gap: parses `/community/s/{space}/t/{thread}/` URLs, looks up posts by slug with a space-slug collision guard, and returns oEmbed 1.0 JSON (default `type=rich` with a self-contained card, optional `type=link`).
 
 `wp_oembed_add_provider()` registers the pattern on `init` so the WordPress block editor auto-embeds pasted Jetonomy URLs. Social consumers (Slack, Twitter/X, Discord, Facebook) discover the endpoint via the `<link rel="alternate" type="application/json+oembed">` auto-discovery tag emitted on every thread page alongside richer OG + Twitter Card meta.
 

@@ -41,7 +41,7 @@ The post author receives a notification when their post is approved or rejected.
 
 Controls whether upvote and downvote buttons appear on posts and replies in this space. Disabling voting also removes vote scores from the space's topic listing.
 
-In Q&A spaces, voting is always available on replies regardless of this setting — otherwise the Best sort and accepted-answer workflow cannot function correctly.
+In Q&A spaces, voting is always available on replies regardless of this setting - otherwise the Best sort and accepted-answer workflow cannot function correctly.
 
 In Ideas spaces, voting cannot be disabled because it is the core mechanism for prioritizing ideas.
 
@@ -61,22 +61,22 @@ Controls who can add replies to topics in this space. Overrides the global defau
 
 Jetonomy uses a two-layer settings system:
 
-1. **Global settings** — Set at **Jetonomy → Settings → Community**. These are the defaults that apply to every space.
-2. **Per-space settings** — Set on individual spaces. When a per-space value is configured, it takes precedence over the global value for that space only.
+1. **Global settings** - Set at **Jetonomy → Settings → Community**. These are the defaults that apply to every space.
+2. **Per-space settings** - Set on individual spaces. When a per-space value is configured, it takes precedence over the global value for that space only.
 
 If you leave a per-space setting at "Inherit from global," any future changes to the global setting will automatically apply to that space. If you explicitly set a per-space value, global changes do not affect it.
 
-This means you can configure a sensible default globally and only override the spaces that need different behavior — instead of configuring every space individually.
+This means you can configure a sensible default globally and only override the spaces that need different behavior - instead of configuring every space individually.
 
 ## Access Rules for Membership-Gated Spaces
 
-For Private and Hidden spaces, you can restrict access based on external membership status — not just whether someone has joined the space.
+For Private and Hidden spaces, you can restrict access based on external membership status - not just whether someone has joined the space.
 
 Go to the **Access Rules** tab on the space edit screen to add rules.
 
 Each rule has three parts:
 
-**Rule Type** — What to check:
+**Rule Type** - What to check:
 
 | Type | What it checks |
 |------|---------------|
@@ -87,7 +87,7 @@ Each rule has three parts:
 | MemberPress | User has an active MemberPress membership |
 | Paid Memberships Pro | User has an active PMPro level |
 
-**Access Grant** — What to allow:
+**Access Grant** - What to allow:
 
 | Grant | Effect |
 |-------|--------|
@@ -95,7 +95,7 @@ Each rule has three parts:
 | Participate | Can read, post, and reply |
 | Full | All participate abilities plus moderator actions |
 
-**Auto-Assign Role** — Optionally assign the member a space role (Member, Moderator, Admin) automatically when the access rule is satisfied. This is useful when you want MemberPress Gold members to automatically become space moderators.
+**Auto-Assign Role** - Optionally assign the member a space role (Member, Moderator, Admin) automatically when the access rule is satisfied. This is useful when you want MemberPress Gold members to automatically become space moderators.
 
 Multiple rules can be stacked. Jetonomy grants the highest matching permission level.
 
@@ -117,7 +117,7 @@ Jetonomy generates a unique URL: `/community/invite/abc123def/`
 
 ### Sharing an Invite Link
 
-Copy the link from the Invite Links table and share it however you prefer — email, Slack, a membership welcome email, etc.
+Copy the link from the Invite Links table and share it however you prefer - email, Slack, a membership welcome email, etc.
 
 When someone visits the link, they are prompted to log in if they are not already. After logging in, they are automatically added to the space as a Member.
 

@@ -1,4 +1,4 @@
-Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site — sidebars, pages, posts, or block-based layouts.
+Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site - sidebars, pages, posts, or block-based layouts.
 
 ## What You Will Learn
 
@@ -17,7 +17,7 @@ Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg bl
 | Shortcode | `[jetonomy_leaderboard]` | Top members by reputation | 1.0 |
 | Shortcode | `[jetonomy_user_profile]` | Single user profile card | 1.2 |
 | Shortcode | `[jetonomy_space_members]` | Members of one space | 1.2 |
-| Shortcode | `[jetonomy_compose_topic]` | **New in 1.3.7** — inline topic composer (fixed space or member picker) | 1.3.7 |
+| Shortcode | `[jetonomy_compose_topic]` | **New in 1.3.7** - inline topic composer (fixed space or member picker) | 1.3.7 |
 | Block | `jetonomy/forum-feed` | Live post feed | 1.3.0 |
 | Block | `jetonomy/trending` | Trending topics with time-decayed hot score | 1.3.6 |
 | Block | `jetonomy/space-list` | Space grid | 1.3.0 |
@@ -25,13 +25,13 @@ Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg bl
 | Block | `jetonomy/navigation` | Permission-aware category + space tree | 1.3.5 |
 | Block | `jetonomy/user-panel` | Logged-in sidebar profile card | 1.3.5 |
 | Block | `jetonomy/login` | Inline login/register panel | 1.3.5 |
-| Block | `jetonomy/compose-topic` | **New in 1.3.7** — topic composer embeddable anywhere | 1.3.7 |
+| Block | `jetonomy/compose-topic` | **New in 1.3.7** - topic composer embeddable anywhere | 1.3.7 |
 
 ## Shortcodes
 
 All shortcodes are registered by `Jetonomy\Shortcodes::register()` and are available on any page or post.
 
-**Self-styling on any page** *(1.4.0+)*: every shortcode auto-enqueues `assets/css/blocks.css` at render time and ships its own `--jtb-*` token block, so a bare `[jetonomy_recent_posts]` paste on a regular WordPress page renders fully styled — no need to put it inside a Forum Feed block container. Works in classic editor, page builders (Elementor, Divi, Bricks, WPBakery), widget areas, and template parts.
+**Self-styling on any page** *(1.4.0+)*: every shortcode auto-enqueues `assets/css/blocks.css` at render time and ships its own `--jtb-*` token block, so a bare `[jetonomy_recent_posts]` paste on a regular WordPress page renders fully styled - no need to put it inside a Forum Feed block container. Works in classic editor, page builders (Elementor, Divi, Bricks, WPBakery), widget areas, and template parts.
 
 ---
 
@@ -164,14 +164,14 @@ Lets signed-in members start a new topic from **any** WordPress page, post, or p
 
 **Behavior**
 
-- **Logged-out viewers** see a "Sign in to start a new topic" CTA that redirects back to the current URL after login — no form exposure, no wasted scroll.
+- **Logged-out viewers** see a "Sign in to start a new topic" CTA that redirects back to the current URL after login - no form exposure, no wasted scroll.
 - **Picker mode** queries `Permission_Engine::can($uid, 'create_posts', $space_id)` against every space the user is a member of. Only spaces where they actually have posting rights appear.
 - **Fixed mode** hides the picker entirely. If the hardcoded `space_id` is missing or the user cannot post in it, the embed silently degrades to picker mode rather than breaking.
 - Assets (`blocks.css` + the Interactivity API bundle) enqueue on-demand at render time so pages that don't use the shortcode carry no overhead. Works inside page builders that render shortcodes outside `the_content` (Elementor, Divi, Bricks, WPBakery).
 
 Companion REST endpoint: `GET /jetonomy/v1/spaces?postable_by_me=1` returns the user's postable spaces.
 
-When the title is filled but the body is empty, an inline error banner appears above the title — no silent failures, no lost input:
+When the title is filled but the body is empty, an inline error banner appears above the title - no silent failures, no lost input:
 
 ![Inline validation banner when the body is empty](../images/developer-guide/compose-topic-validation.png)
 
@@ -203,11 +203,11 @@ Displays the most active spaces by post count.
 
 Displays the currently logged-in user's stats: reputation, post count, reply count, and trust level.
 
-**Settings:** Title (no other configuration — always reflects the current user)
+**Settings:** Title (no other configuration - always reflects the current user)
 
 ### `[jetonomy_widget]` shortcode *(new in 1.4.0)*
 
-Each classic widget above can also be embedded directly into any page or page-builder canvas — without dropping into the Customizer or a sidebar — using the `[jetonomy_widget]` shortcode.
+Each classic widget above can also be embedded directly into any page or page-builder canvas - without dropping into the Customizer or a sidebar - using the `[jetonomy_widget]` shortcode.
 
 **Attributes**
 
@@ -226,7 +226,7 @@ Each classic widget above can also be embedded directly into any page or page-bu
 [jetonomy_widget id="jetonomy_user_stats" title="Your stats"]
 ```
 
-Internally `[jetonomy_widget]` wraps WordPress core's `the_widget()` so the rendered markup matches what the same widget would output in a sidebar — same hooks, same CSS classes, same i18n. Useful for landing pages, footer columns, and page-builder canvases where the Customizer's sidebar widget area isn't available.
+Internally `[jetonomy_widget]` wraps WordPress core's `the_widget()` so the rendered markup matches what the same widget would output in a sidebar - same hooks, same CSS classes, same i18n. Useful for landing pages, footer columns, and page-builder canvases where the Customizer's sidebar widget area isn't available.
 
 ---
 
@@ -238,16 +238,16 @@ All blocks live in the **Widgets** category of the block inserter and answer to 
 
 ### Backend (editor) vs frontend (published) render *(1.4.0+)*
 
-The two surfaces render differently — by design.
+The two surfaces render differently - by design.
 
-- **Backend (block editor)** — each block paints a framed static **preview card** with a "JETONOMY" pill badge, the block title, and an attribute-aware hint that reflects the current settings (`Filtered to space #3`, `7 day window`, `All public spaces`, etc.). No REST calls fire. Dropping a block onto a page is instant; switching between Visual and Code editors does not trigger a network roundtrip. The preview is a mock — what the editor shows is **not** the actual queried data.
-- **Frontend (published page)** — the block's PHP `render_callback` runs against the live database on every request. Output is the same markup the matching `[jetonomy_*]` shortcode produces, with the block's `wp-block-jetonomy-*` wrapper class applied. Output is permission-aware: private spaces, banned authors, and silenced posts are filtered exactly as they would be on a regular community page.
+- **Backend (block editor)** - each block paints a framed static **preview card** with a "JETONOMY" pill badge, the block title, and an attribute-aware hint that reflects the current settings (`Filtered to space #3`, `7 day window`, `All public spaces`, etc.). No REST calls fire. Dropping a block onto a page is instant; switching between Visual and Code editors does not trigger a network roundtrip. The preview is a mock - what the editor shows is **not** the actual queried data.
+- **Frontend (published page)** - the block's PHP `render_callback` runs against the live database on every request. Output is the same markup the matching `[jetonomy_*]` shortcode produces, with the block's `wp-block-jetonomy-*` wrapper class applied. Output is permission-aware: private spaces, banned authors, and silenced posts are filtered exactly as they would be on a regular community page.
 
 Reason for the split: a live-data preview in the editor would (a) hammer the REST API on every keystroke in the title field, (b) leak permission-gated content to anyone who can edit the post, and (c) require a working REST connection at edit time. The static-card pattern mirrors what core blocks like Latest Posts do at the editor level, with the exception that core's render path can hit `useEntityRecords()` cheaply because the data is already cached client-side.
 
 Each block exposes its settings through Inspector controls in the right sidebar, sized at the WordPress 6.7+ default (40px) with no deprecated bottom margins. The controls map one-to-one to the block attributes documented per block below.
 
-Block inserter visibility was tightened in 1.4.0 — every block now registers an editor-side script (`assets/js/blocks-editor.js`) so all eight blocks appear in the inserter at once. Pre-1.4.0 only Compose Topic was visible because it was the only block carrying its own `editor_script`.
+Block inserter visibility was tightened in 1.4.0 - every block now registers an editor-side script (`assets/js/blocks-editor.js`) so all eight blocks appear in the inserter at once. Pre-1.4.0 only Compose Topic was visible because it was the only block carrying its own `editor_script`.
 
 ### `jetonomy/forum-feed`
 
@@ -318,13 +318,13 @@ Most community themes render the space list with a hand-maintained nav menu. Tha
 | `hideEmptyCategories` | boolean | `true` | Hide categories that have no visible spaces |
 | `title` | string | `''` | Optional wrapper title |
 
-Scales to sites with thousands of spaces — the rendered tree uses Jetonomy's cached category/space index, not a per-request DB scan.
+Scales to sites with thousands of spaces - the rendered tree uses Jetonomy's cached category/space index, not a per-request DB scan.
 
 ---
 
 ### `jetonomy/user-panel` *(1.3.5+)*
 
-Renders a compact profile card for logged-in viewers — avatar, display name, notifications count, quick links to Profile / Notifications / Messages / Edit Profile / Logout. Empty for logged-out viewers so the sidebar layout doesn't shift.
+Renders a compact profile card for logged-in viewers - avatar, display name, notifications count, quick links to Profile / Notifications / Messages / Edit Profile / Logout. Empty for logged-out viewers so the sidebar layout doesn't shift.
 
 **Block Attributes**
 
@@ -338,7 +338,7 @@ Auto-injects at the top of the community sidebar for logged-in viewers so admins
 
 ### `jetonomy/login` *(1.3.5+)*
 
-Renders an inline login and register panel for the community sidebar. Logged-out viewers see Login and Register tabs without leaving the page. Logged-in viewers get nothing rendered — no layout shift when state changes.
+Renders an inline login and register panel for the community sidebar. Logged-out viewers see Login and Register tabs without leaving the page. Logged-in viewers get nothing rendered - no layout shift when state changes.
 
 **Block Attributes**
 
@@ -371,15 +371,15 @@ Gutenberg equivalent of `[jetonomy_compose_topic]`. Drop it on any page, post, o
 
 ![Compose Topic block in the Gutenberg editor](../images/developer-guide/compose-topic-block-editor.png)
 
-- The block editor shows a **static preview** (no live REST calls) — safe to drop into any page without hitting the server.
+- The block editor shows a **static preview** (no live REST calls) - safe to drop into any page without hitting the server.
 - Inspector controls: Mode select (picker / fixed), Space ID (visible only when Mode is fixed), Allowed types (comma-separated).
-- Falls back to picker mode at render time if the fixed `spaceId` doesn't resolve to a space the viewer can post in — so themes/pages that were built before a space was deleted keep working instead of 500'ing.
+- Falls back to picker mode at render time if the fixed `spaceId` doesn't resolve to a space the viewer can post in - so themes/pages that were built before a space was deleted keep working instead of 500'ing.
 
 **Rendering**
 
 - Server render delegates to `[jetonomy_compose_topic]`, so the block + shortcode output are pixel-identical.
-- Styles come from `assets/css/blocks.css` — self-contained, inherits theme tokens through `--wp--preset--*` fallbacks so it looks correct outside Jetonomy templates.
-- Built-in mobile breakpoint at 640px — submit button spans the column width, actions stack vertically.
+- Styles come from `assets/css/blocks.css` - self-contained, inherits theme tokens through `--wp--preset--*` fallbacks so it looks correct outside Jetonomy templates.
+- Built-in mobile breakpoint at 640px - submit button spans the column width, actions stack vertically.
 
 ---
 
@@ -437,6 +437,6 @@ Use the model classes for server-side rendering or the REST API for client-side 
 
 ## What's Next?
 
-- [REST API Reference](./01-rest-api.md) — Fetch community data from any context
-- [Template Overrides](./03-template-overrides.md) — Customize community page layouts
-- [Adapter System](./05-adapters.md) — Extend search, email, and real-time integrations
+- [REST API Reference](./01-rest-api.md) - Fetch community data from any context
+- [Template Overrides](./03-template-overrides.md) - Customize community page layouts
+- [Adapter System](./05-adapters.md) - Extend search, email, and real-time integrations

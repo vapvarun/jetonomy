@@ -1,4 +1,4 @@
-# Jetonomy — Deferred follow-ups
+# Jetonomy - Deferred follow-ups
 
 Customer-facing UX gaps surfaced during the 1.4.0 / 1.4.1 cycle that did not make either release. Pulled out of the now-shipped `v1.4.0.md` plan so the remaining work has a clean home.
 
@@ -21,4 +21,4 @@ Each item still needs a usability + placement audit before implementation. None 
 
 - These were carried over from `v1.4.0.md` (deleted in the same commit that created this file) so the open boxes did not silently outlive the release that was supposed to ship them.
 - Implementation order is not fixed. Each item is independent.
-- Memory rule applies: no partial fixes — audit every surface where the same UX shows up before changing one of them.
+- Memory rule applies: no partial fixes - audit every surface where the same UX shows up before changing one of them.

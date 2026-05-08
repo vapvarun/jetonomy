@@ -1,4 +1,4 @@
-Move your existing bbPress community into Jetonomy — forums, topics, replies, user data, and vote history — using the built-in importer.
+Move your existing bbPress community into Jetonomy - forums, topics, replies, user data, and vote history - using the built-in importer.
 
 ![Import tool interface with source selection and progress tracking](../images/admin-import.png)
 
@@ -51,7 +51,7 @@ Complete these steps before starting the import:
 
 The importer processes records in batches of 50. A progress bar shows completion percentage, current batch, and estimated time remaining.
 
-Do not close the browser tab while the import is running. If the page refreshes or you navigate away, the import will pause — but can be resumed (see below).
+Do not close the browser tab while the import is running. If the page refreshes or you navigate away, the import will pause - but can be resumed (see below).
 
 ## Dry-Run Mode
 
@@ -108,13 +108,13 @@ WP-CLI runs without a timeout limit and outputs a progress line for each batch.
 
 After the import completes, verify the following:
 
-- [ ] Navigate to your community home — spaces should match your old bbPress forums
+- [ ] Navigate to your community home - spaces should match your old bbPress forums
 - [ ] Open several posts and confirm content and replies are intact
 - [ ] Check that user profiles show post counts
 - [ ] Verify that moderators have the Moderator role in their respective spaces
 - [ ] Test creating a new post as a regular user
 - [ ] Visit **Jetonomy → Settings → Permalinks** and click Save to flush rewrite rules
-- [ ] If you used bbPress shortcodes on pages, remove or replace them — they will output raw shortcode text now that bbPress is still active
+- [ ] If you used bbPress shortcodes on pages, remove or replace them - they will output raw shortcode text now that bbPress is still active
 
 > **Note:** After a successful import, you can deactivate bbPress. Your community data is now in Jetonomy's tables and bbPress is no longer needed.
 

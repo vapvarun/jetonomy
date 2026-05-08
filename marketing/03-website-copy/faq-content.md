@@ -1,4 +1,4 @@
-# Jetonomy — FAQ Content
+# Jetonomy - FAQ Content
 
 **Version:** 1.3.0
 **Last updated:** April 2026
@@ -7,7 +7,7 @@ For use on the website FAQ page and support documentation.
 
 ---
 
-## Q1 — What are the server requirements?
+## Q1 - What are the server requirements?
 
 **PHP 8.1 or higher, WordPress 6.7 or higher, MySQL 5.7 or higher.**
 
@@ -19,7 +19,7 @@ For the WordPress Abilities API features (AI agent integration), WordPress 6.9+ 
 
 ---
 
-## Q2 — How much does Jetonomy cost?
+## Q2 - How much does Jetonomy cost?
 
 **The core plugin is free.** Download it from wbcomdesigns.com. It includes forums, Q&A spaces, ideas boards, voting, trust levels, moderation, full-text search, notifications, SEO markup, 48+ REST API endpoints, and built-in importers for bbPress and wpForo.
 
@@ -29,7 +29,7 @@ Pro pricing is available at wbcomdesigns.com/downloads/jetonomy-pro/.
 
 ---
 
-## Q3 — Can I migrate from bbPress or wpForo?
+## Q3 - Can I migrate from bbPress or wpForo?
 
 **Yes. Both are supported with built-in importers.**
 
@@ -41,25 +41,25 @@ What gets migrated:
 - Replies become Replies
 - Users keep their accounts and post history
 
-Large migrations run with a live progress indicator and can resume from where they left off if something goes wrong. There is no record limit — the importer handles communities of any size by batching the work.
+Large migrations run with a live progress indicator and can resume from where they left off if something goes wrong. There is no record limit. The importer handles communities of any size by batching the work.
 
 ---
 
-## Q4 — Does it work with my theme?
+## Q4 - Does it work with my theme?
 
 **Yes, with any theme that follows WordPress standards.**
 
-Jetonomy uses CSS custom properties that pull values from your theme's theme.json — font families, brand colors, border radius, and base spacing. Drop it into any block theme or classic theme and it adapts automatically.
+Jetonomy uses CSS custom properties that pull values from your theme's theme.json - font families, brand colors, border radius, and base spacing. Drop it into any block theme or classic theme and it adapts automatically.
 
 No CSS overrides. No shortcode wrappers. No style conflicts.
 
-If your theme uses the BuddyX theme from Wbcom Designs, integration is even tighter — Jetonomy inherits BuddyNext design tokens directly, including dark mode support.
+If your theme uses the BuddyX theme from Wbcom Designs, integration is even tighter. Jetonomy inherits BuddyNext design tokens directly, including dark mode support.
 
 If your theme doesn't publish theme.json values, Jetonomy falls back to sensible defaults that look clean on any background color.
 
 ---
 
-## Q5 — How does Jetonomy perform at scale?
+## Q5 - How does Jetonomy perform at scale?
 
 **Community data lives in 24 custom MySQL tables, not in WordPress posts.**
 
@@ -69,40 +69,40 @@ Specific design decisions that affect performance:
 
 - Reply counts, post counts, and vote scores are stored as denormalized counters directly on each record. No COUNT queries on page load.
 - Object cache support is built in. When Redis or Memcached is available, space data, user profiles, and permission results are cached automatically.
-- Cursor-based pagination on all list endpoints — results stay consistent even when new content is posted between pages.
-- FULLTEXT indexes for search — no linear table scans.
+- Cursor-based pagination on all list endpoints - results stay consistent even when new content is posted between pages.
+- FULLTEXT indexes for search - no linear table scans.
 
-Tested scale path: sub-200ms page loads at 50,000 topics with Redis. The architecture supports 10,000+ active users without any configuration changes — scaling beyond that point involves infrastructure (more caching, read replicas), not code changes.
+Tested scale path: sub-200ms page loads at 50,000 topics with Redis. The architecture supports 10,000+ active users without any configuration changes. Scaling beyond that point involves infrastructure (more caching, read replicas), not code changes.
 
 ---
 
-## Q6 — What's the difference between Jetonomy Free and Jetonomy Pro?
+## Q6 - What's the difference between Jetonomy Free and Jetonomy Pro?
 
 **Free gives you a complete community platform. Pro adds tools for larger or more sophisticated communities.**
 
 Free includes: Forum, Q&A, and Ideas spaces; voting and reputation; 6 trust levels with automatic promotion; moderation queue and flagging; full-text search; in-community and email notifications; subscriptions; leaderboard and user profiles; SEO markup (Schema.org, sitemaps, Open Graph); 48+ REST API endpoints; template overrides; bbPress and wpForo importers; MemberPress and Paid Memberships Pro integration; WordPress Abilities API support.
 
-Pro adds 14 modules: AI integration (spam detection, content moderation, reply suggestions, and thread summaries — with OpenAI, Anthropic, and self-hosted Ollama support), private messaging, emoji reactions, polls, analytics dashboard, email digest, custom badges with criteria engine, advanced auto-moderation rules, custom fields for posts and profiles, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+Pro adds 14 modules: AI integration (spam detection, content moderation, reply suggestions, and thread summaries - with OpenAI, Anthropic, and self-hosted Ollama support), private messaging, emoji reactions, polls, analytics dashboard, email digest, custom badges with criteria engine, advanced auto-moderation rules, custom fields for posts and profiles, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
-The free plugin will stay free and fully functional. It is not a limited trial. Pro exists for communities that need the additional modules — not to lock features that should be free.
+The free plugin will stay free and fully functional. It is not a limited trial. Pro exists for communities that need the additional modules, not to lock features that should be free.
 
 ---
 
-## Q7 — Who owns the data? Can I export it?
+## Q7 - Who owns the data? Can I export it?
 
 **You own your data. It lives in your WordPress database.**
 
-Jetonomy creates custom MySQL tables in your database (wp_jt_* by default). You access them the same way you access any WordPress data — via phpMyAdmin, WP-CLI, or your hosting control panel.
+Jetonomy creates custom MySQL tables in your database (wp_jt_* by default). You access them the same way you access any WordPress data - via phpMyAdmin, WP-CLI, or your hosting control panel.
 
 There is no data sent to Wbcom Designs servers during normal operation. No telemetry. No usage tracking.
 
 To export your community data, you can use standard WordPress database export tools, WP-CLI, or the Jetonomy REST API (which covers all content types). If you ever move to a different platform, your data is not locked in a proprietary format.
 
-If you choose to delete the plugin, Jetonomy offers a complete data cleanup option — removing all tables, options, capabilities, and scheduled jobs. This is an explicit choice, not automatic, so you don't lose data by accident.
+If you choose to delete the plugin, Jetonomy offers a complete data cleanup option - removing all tables, options, capabilities, and scheduled jobs. This is an explicit choice, not automatic, so you don't lose data by accident.
 
 ---
 
-## Q8 — What kind of support is available?
+## Q8 - What kind of support is available?
 
 **Support depends on your license.**
 
@@ -110,11 +110,11 @@ Free plugin users can reach out via Wbcom Designs support. The team monitors sup
 
 Jetonomy Pro license holders get access to priority email support via the Wbcom Designs support portal. Response time targets and support scope details are on the Pro product page.
 
-Documentation — including getting started guides, full settings reference, REST API reference, and developer guides — is published at wbcomdesigns.com/docs/jetonomy/.
+Documentation - including getting started guides, full settings reference, REST API reference, and developer guides - is published at wbcomdesigns.com/docs/jetonomy/.
 
 ---
 
-## Q9 — How are updates delivered? What's the release policy?
+## Q9 - How are updates delivered? What's the release policy?
 
 **Updates are delivered through the standard WordPress plugin update system.**
 
@@ -124,16 +124,16 @@ For Jetonomy Pro: updates are delivered via the Wbcom Designs license system. Yo
 
 Versioning follows semantic versioning: major releases (1.x) for significant new features or breaking changes, minor releases (1.x.x) for non-breaking features, and patch releases for bug fixes and security updates.
 
-Database schema changes are handled automatically via the built-in migrator — you do not need to run manual SQL on updates.
+Database schema changes are handled automatically via the built-in migrator. You do not need to run manual SQL on updates.
 
 ---
 
-## Q10 — Is Jetonomy GDPR compliant? What personal data does it store?
+## Q10 - Is Jetonomy GDPR compliant? What personal data does it store?
 
 **Jetonomy stores only the data your members provide and that is necessary for the forum to function.**
 
 Data stored per member:
-- Display name, username, email (inherited from WordPress user account — Jetonomy does not duplicate these)
+- Display name, username, email (inherited from WordPress user account - Jetonomy does not duplicate these)
 - Posts, replies, and votes authored
 - Reputation score and trust level
 - Notification preferences and subscriptions

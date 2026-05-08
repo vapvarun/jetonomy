@@ -1,4 +1,4 @@
-Space moderators have a full toolkit for organizing, curating, and controlling discussions. Every action in this guide requires moderator permission on the space where the topic lives — or site-wide admin access.
+Space moderators have a full toolkit for organizing, curating, and controlling discussions. Every action in this guide requires moderator permission on the space where the topic lives - or site-wide admin access.
 
 ![Admin moderation panel with content review and bulk action controls](../images/admin-moderation.png)
 
@@ -23,7 +23,7 @@ Regular members do not see moderation options in the menus, even if they are the
 
 ## Moving a Topic to a Different Space
 
-Use this when a topic was posted in the wrong space — for example, a bug report in a General Discussion space that belongs in a Support space.
+Use this when a topic was posted in the wrong space - for example, a bug report in a General Discussion space that belongs in a Support space.
 
 1. Open the topic.
 2. Click the **...** menu at the top right of the topic.
@@ -48,7 +48,7 @@ Use this when two members post the same question or idea in the same space. Merg
 4. Select the target topic.
 5. Click **Merge**.
 
-All replies from the duplicate are appended to the target topic's reply list in chronological order. The source topic is permanently deleted — it is not moved to trash. A moderator note is added to the target topic indicating that replies were merged from another topic.
+All replies from the duplicate are appended to the target topic's reply list in chronological order. The source topic is permanently deleted - it is not moved to trash. A moderator note is added to the target topic indicating that replies were merged from another topic.
 
 > **Warning:** Merging cannot be undone. Verify you have selected the correct target topic before confirming.
 
@@ -100,7 +100,7 @@ Deleting a topic moves it to trash. It disappears from the space listing and is 
 2. Click the **...** menu and select **Delete Topic**.
 3. Confirm the deletion in the prompt.
 
-Deleted topics can be recovered by a site admin from **Jetonomy → Content** in the WordPress admin — filter by status "Trash" to find them. A trashed topic can be restored or permanently deleted.
+Deleted topics can be recovered by a site admin from **Jetonomy → Content** in the WordPress admin - filter by status "Trash" to find them. A trashed topic can be restored or permanently deleted.
 
 Permanent deletion removes the topic, all replies, all votes, all bookmarks, and all associated notifications from the database. It cannot be undone.
 

@@ -13,7 +13,7 @@ Replies are where conversations happen. Jetonomy's reply system supports threade
 
 ## The Reply Composer
 
-The reply composer appears at the bottom of every topic page. Click into the text area to expand the full Markdown toolbar — the same formatting options available in the post composer (bold, italic, inline code, links, block quotes, image upload, code blocks).
+The reply composer appears at the bottom of every topic page. Click into the text area to expand the full Markdown toolbar - the same formatting options available in the post composer (bold, italic, inline code, links, block quotes, image upload, code blocks).
 
 Click **Reply** to submit. The reply appears immediately without a page reload.
 
@@ -23,7 +23,7 @@ If the space has "Require Post Approval" enabled, your reply is held for moderat
 
 To reply while quoting a specific passage from an existing reply, select the text you want to quote and click the **Quote** button that appears. Jetonomy inserts the quoted text as a styled blockquote in your reply composer, with the author attribution linked back to the source reply.
 
-You can also click **Quote** in the `...` menu on any reply to quote its full body without selecting text first. This is the quickest way to address a specific point from a long reply — the quoted passage gives readers the context without forcing them to scroll back up.
+You can also click **Quote** in the `...` menu on any reply to quote its full body without selecting text first. This is the quickest way to address a specific point from a long reply - the quoted passage gives readers the context without forcing them to scroll back up.
 
 ## Threading: Replies to Replies
 
@@ -37,7 +37,7 @@ Reply (level 1)
        └─ Reply to reply to reply (level 3)
 ```
 
-At level 3, no further nesting is allowed. Members can still reply to a level-3 comment — that reply is added at level 3 as well, keeping the conversation readable.
+At level 3, no further nesting is allowed. Members can still reply to a level-3 comment - that reply is added at level 3 as well, keeping the conversation readable.
 
 Threaded replies let you have multiple parallel conversations inside the same topic without them colliding. A question inside a reply gets its own sub-thread. The main discussion continues underneath.
 
@@ -45,13 +45,13 @@ Threaded replies let you have multiple parallel conversations inside the same to
 
 Use the sort controls at the top of the reply list to change the order:
 
-**Oldest first** — Replies appear in chronological order, oldest at the top. Best for reading a long discussion from the beginning. This is the default for Forum spaces.
+**Oldest first** - Replies appear in chronological order, oldest at the top. Best for reading a long discussion from the beginning. This is the default for Forum spaces.
 
-**Newest first** — Most recent replies appear at the top. Best for active topics where you want to see the latest contributions without scrolling.
+**Newest first** - Most recent replies appear at the top. Best for active topics where you want to see the latest contributions without scrolling.
 
-**Best** — Replies are ranked by net vote score (upvotes minus downvotes), highest at the top. Best for Q&A spaces or any topic where you want the most useful contributions visible first. Within the same vote score, older replies rank first.
+**Best** - Replies are ranked by net vote score (upvotes minus downvotes), highest at the top. Best for Q&A spaces or any topic where you want the most useful contributions visible first. Within the same vote score, older replies rank first.
 
-Sort preference is stored per-session — if you change it on one topic, it persists as you navigate between topics in the same session.
+Sort preference is stored per-session - if you change it on one topic, it persists as you navigate between topics in the same session.
 
 ## Accepted Answers in Q&A Spaces
 
@@ -68,11 +68,11 @@ The accepted reply is highlighted with a green "Accepted Answer" badge. The repl
 
 You can change the accepted answer at any time by clicking Accept on a different reply. The previous acceptance is removed.
 
-> **Tip:** Space moderators can also accept answers on any Q&A topic in their space — useful for resolving unanswered questions on behalf of absent authors.
+> **Tip:** Space moderators can also accept answers on any Q&A topic in their space - useful for resolving unanswered questions on behalf of absent authors.
 
 ## Editing Your Own Replies
 
-Click the **...** menu on any reply you authored and select **Edit**. The reply text becomes an inline editor — you make changes and click **Save**. No page reload.
+Click the **...** menu on any reply you authored and select **Edit**. The reply text becomes an inline editor - you make changes and click **Save**. No page reload.
 
 Edits are tracked as revisions internally. Moderators can view reply revision history from the moderation panel.
 
@@ -86,7 +86,7 @@ For topics with many replies, Jetonomy uses cursor-based pagination to load repl
 
 The first time you open a topic, you see the first batch of top-level replies (default: 20). A **Load more replies** button appears at the bottom if more exist. Clicking it loads the next batch without reloading the page.
 
-For very high-traffic topics — those with hundreds of top-level replies — Jetonomy uses a smart loading strategy: it loads the first 10 replies and the last 10 replies, with a collapsed gap in the middle showing how many replies are hidden. You can click the gap to load replies from that range.
+For very high-traffic topics - those with hundreds of top-level replies - Jetonomy uses a smart loading strategy: it loads the first 10 replies and the last 10 replies, with a collapsed gap in the middle showing how many replies are hidden. You can click the gap to load replies from that range.
 
 Threaded sub-replies follow the same pattern. A thread deeper than a few replies shows a "Show X more replies" link inline.
 

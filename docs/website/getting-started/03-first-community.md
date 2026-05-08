@@ -1,4 +1,4 @@
-Your community is installed and the wizard is complete. This guide walks you through what to do next — from organizing your spaces to inviting your first members — so your community is genuinely ready for people on day one.
+Your community is installed and the wizard is complete. This guide walks you through what to do next, from organizing your spaces to inviting your first members, so your community is genuinely ready for people on day one.
 
 ![Community home page showing spaces organized by category](../images/community-home.png)
 
@@ -13,7 +13,7 @@ Your community is installed and the wizard is complete. This guide walks you thr
 
 ## Create Categories to Organize Your Spaces
 
-Categories are the top-level groupings in your community. Every space belongs to a category. Before you create more spaces, take a moment to plan your category structure — it is much easier to do now than to reorganize later.
+Categories are the top-level groupings in your community. Every space belongs to a category. Before you create more spaces, take a moment to plan your category structure - it is much easier to do now than to reorganize later.
 
 To create a category:
 
@@ -21,7 +21,7 @@ To create a category:
 2. Enter a name and optional description in the form on the left.
 3. Click **Add Category**.
 
-Your category appears in the table on the right. Drag rows to reorder them — the order here is the order your members see on the community home page.
+Your category appears in the table on the right. Drag rows to reorder them. The order here is the order your members see on the community home page.
 
 > **Tip:** Start with two to four broad categories. You can always add more later. Common patterns: "Support / General / Announcements" for a product community, or "Ideas / Questions / Showcase" for a creator community.
 
@@ -35,14 +35,15 @@ A space is where discussions happen. Each space has a type that shapes how membe
 |---|---|---|
 | **Forum** | General discussion, announcements, support | Threaded replies, newest/popular sort |
 | **Q&A** | Technical help, knowledge bases | Votable answers, accepted answer highlight |
-| **Ideas** | Feature requests, roadmaps | Status tracking (Under Review, Planned, Shipped) |
+| **Ideas** | Feature requests, roadmaps | Status lanes (Planned, In Progress, Shipped, Declined) with roadmap view |
+| **Show & Tell** | Project showcases, member work | Card feed with optional title, reactions, and votes |
 
 To create a space:
 
 1. Go to **Jetonomy → Spaces → Add Space**.
 2. Enter a name and optional description.
 3. Choose the space type.
-4. Set visibility: **Public** (anyone can see it), **Private** (members only see content), or **Hidden** (not listed — invite only).
+4. Set visibility: **Public** (anyone can see it), **Private** (members only see content), or **Hidden** (not listed, invite only).
 5. Set the join policy: **Open**, **Request to join**, or **Invite only**.
 6. Click **Save Space**.
 
@@ -58,7 +59,7 @@ You do not need to wait for members to discover your community organically. Jeto
 2. Click **Members** in the space navigation.
 3. Click **Generate Invite Link**.
 4. Set an expiry date, or leave it open with no expiry.
-5. Copy the link and share it — email, Slack, social media, anywhere.
+5. Copy the link and share it via email, Slack, social media, or anywhere else.
 
 When someone visits the link, they are added to the space immediately after logging in or creating a WordPress account.
 
@@ -70,14 +71,14 @@ Anyone who already has an account on your WordPress site can visit `yoursite.com
 
 ## Customize the Appearance
 
-Jetonomy inherits your theme's fonts, colors, and border radius automatically via WordPress theme tokens. If you are using BuddyX, this integration is immediate — Jetonomy reads BuddyX's design tokens and matches your brand without any manual work.
+Jetonomy inherits your theme's fonts, colors, and border radius automatically via WordPress theme tokens. If you are using BuddyX, this integration is immediate. Jetonomy reads BuddyX's design tokens and matches your brand without any manual work.
 
 To adjust further:
 
 - Go to **Jetonomy → Settings** and explore the **General** and **Advanced** tabs.
 - To override specific templates, create a `jetonomy/` folder inside your active theme directory and drop in any template file from `wp-content/plugins/jetonomy/templates/`. Jetonomy always checks your theme folder first.
 
-> **Tip:** You do not need to copy all templates — only override the ones you want to change. Unmodified templates are served directly from the plugin.
+> **Tip:** You do not need to copy all templates. Only override the ones you want to change. Unmodified templates are served directly from the plugin.
 
 ## Importing from bbPress, wpForo, or Asgaros
 
@@ -85,11 +86,11 @@ If you are migrating an existing community, Jetonomy includes a built-in importe
 
 1. Go to **Jetonomy → Import**.
 2. Select your source plugin: **bbPress**, **wpForo**, or **Asgaros Forum**.
-3. Jetonomy auto-detects your existing data and shows a summary — for example, "Found: 12 forums, 3,847 topics, 28,419 replies."
+3. Jetonomy auto-detects your existing data and shows a summary, for example: "Found: 12 forums, 3,847 topics, 28,419 replies."
 4. Run a **Dry Run** first to check for any mapping issues.
 5. Click **Start Import** when you are ready.
 
-Imports run in background batches. You can close your browser and come back — the import continues via WP-Cron and resumes from where it left off if interrupted.
+Imports run in background batches. You can close your browser and come back. The import continues via WP-Cron and resumes from where it left off if interrupted.
 
 **What gets migrated:**
 
@@ -122,10 +123,10 @@ In Q&A spaces, the accepted answer is pinned to the top and highlighted with a g
 
 The community sidebar (where the theme layout places it) shows active members, trending tags, and recent activity. The exact sidebar layout depends on your theme.
 
-> **Note:** All community pages are server-side rendered. There are no JavaScript-only pages — every URL is indexable by search engines out of the box.
+> **Note:** All community pages are server-side rendered. There are no JavaScript-only pages, so every URL is indexable by search engines out of the box.
 
 ## What's Next?
 
-Now that your community is live and populated, learn how to organize it further with spaces and categories — including sub-spaces, visibility rules, and per-space permissions.
+Now that your community is live and populated, learn how to organize it further with spaces and categories, including visibility rules and per-space permissions.
 
 [Spaces and Categories →](../spaces-and-categories/01-creating-spaces.md)

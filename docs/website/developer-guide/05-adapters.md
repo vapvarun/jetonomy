@@ -19,7 +19,7 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 
 | Adapter Class | Type | Active When |
 |---------------|------|-------------|
-| `Fulltext_Search` (`Jetonomy\Search\`) | Search | Always (MySQL FULLTEXT — built-in) |
+| `Fulltext_Search` (`Jetonomy\Search\`) | Search | Always (MySQL FULLTEXT - built-in) |
 | `WP_Mail_Adapter` | Email | Always (uses `wp_mail()`) |
 | `WP_Roles_Adapter` | Membership | Always (WP role-based membership fallback) |
 | `Polling_Adapter` | Realtime | Always (long-polling fallback via `/updates` endpoint) |
@@ -64,7 +64,7 @@ $mp = \Jetonomy\Adapters\Adapter_Registry::get_membership( 'memberpress' );
 $all = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
 ```
 
-The Registry returns `null` when no active adapter is found for a type — always null-check before calling methods.
+The Registry returns `null` when no active adapter is found for a type - always null-check before calling methods.
 
 **Registration timing:** Register your adapters at `plugins_loaded`. Use priority 9 if you want your adapter to override a built-in default (e.g. replacing built-in search). Use priority 15 for additive adapters that do not need to override defaults (e.g. adding a new membership source):
 
@@ -194,13 +194,13 @@ add_action( 'plugins_loaded', function() {
 }, 15 );
 ```
 
-Jetonomy will call `is_active()` on every registered search adapter and use the first one that returns `true`. Because the built-in `Fulltext_Search` adapter always returns `true`, register your custom adapter before the defaults are initialized — or override it by making sure your adapter is registered first.
+Jetonomy will call `is_active()` on every registered search adapter and use the first one that returns `true`. Because the built-in `Fulltext_Search` adapter always returns `true`, register your custom adapter before the defaults are initialized - or override it by making sure your adapter is registered first.
 
 The built-in defaults are initialized at `plugins_loaded` priority 10 via `Adapter_Registry::init_defaults()`. Registering at priority 15 means your adapter is added after the defaults, but since `get_search()` iterates in insertion order, you need to register at priority **9** if you want your adapter to take precedence:
 
 ```php
 add_action( 'plugins_loaded', function() {
-    // Priority 9 — runs before Jetonomy's init_defaults() at priority 10.
+    // Priority 9 - runs before Jetonomy's init_defaults() at priority 10.
     \Jetonomy\Adapters\Adapter_Registry::register_search( 'elasticsearch', new My_Plugin\Elasticsearch_Adapter() );
 }, 9 );
 ```
@@ -280,7 +280,7 @@ class Postmark_Adapter implements \Jetonomy\Adapters\Email_Adapter {
     }
 
     public function register_hooks(): void {
-        // Optional — intercept wp_mail if you want to route ALL site email through Postmark.
+        // Optional - intercept wp_mail if you want to route ALL site email through Postmark.
     }
 }
 ```
@@ -312,7 +312,7 @@ interface Membership_Adapter {
 }
 ```
 
-The `register_hooks()` method is where you fire `jetonomy_membership_activated` and `jetonomy_membership_deactivated` — see [02-hooks-reference.md](./02-hooks-reference.md).
+The `register_hooks()` method is where you fire `jetonomy_membership_activated` and `jetonomy_membership_deactivated` - see [02-hooks-reference.md](./02-hooks-reference.md).
 
 ### Example: Custom Membership Adapter
 
@@ -421,7 +421,7 @@ class Pusher_Adapter implements \Jetonomy\Adapters\Realtime_Adapter {
 
 ## Connecting Adapters to Jetonomy Events
 
-Adapters do not self-wire — you need to connect them to Jetonomy's lifecycle hooks to trigger indexing, emailing, or broadcasting at the right time.
+Adapters do not self-wire - you need to connect them to Jetonomy's lifecycle hooks to trigger indexing, emailing, or broadcasting at the right time.
 
 ### Search: Index content on create/update
 
@@ -476,24 +476,24 @@ add_action( 'plugins_loaded', function() {
         return;
     }
 
-    // Search — replace built-in MySQL FULLTEXT.
+    // Search - replace built-in MySQL FULLTEXT.
     \Jetonomy\Adapters\Adapter_Registry::register_search(
         'meilisearch',
         new My_Plugin\Meilisearch_Adapter()
     );
 
-    // Email — replace wp_mail for notification emails.
+    // Email - replace wp_mail for notification emails.
     \Jetonomy\Adapters\Adapter_Registry::register_email(
         'postmark',
         new My_Plugin\Postmark_Adapter()
     );
 
-    // Membership — add a custom membership source.
+    // Membership - add a custom membership source.
     $adapter = new My_Plugin\My_Membership_Adapter();
     $adapter->register_hooks();
     \Jetonomy\Adapters\Adapter_Registry::register_membership( 'my-membership', $adapter );
 
-    // Realtime — replace long-polling with WebSockets.
+    // Realtime - replace long-polling with WebSockets.
     \Jetonomy\Adapters\Adapter_Registry::register_realtime(
         'pusher',
         new My_Plugin\Pusher_Adapter()
@@ -505,6 +505,6 @@ add_action( 'plugins_loaded', function() {
 
 ## What's Next?
 
-- [REST API Reference](./01-rest-api.md) — All 48+ free endpoints (90+ with Pro) in detail
-- [Hooks Reference](./02-hooks-reference.md) — Connect your adapter to content lifecycle events
-- [Template Overrides](./03-template-overrides.md) — Customize the community UI
+- [REST API Reference](./01-rest-api.md) - All 48+ free endpoints (90+ with Pro) in detail
+- [Hooks Reference](./02-hooks-reference.md) - Connect your adapter to content lifecycle events
+- [Template Overrides](./03-template-overrides.md) - Customize the community UI

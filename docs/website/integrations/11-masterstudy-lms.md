@@ -1,6 +1,6 @@
-Connect MasterStudy LMS course enrollment to Jetonomy spaces — students get a dedicated discussion area when they enroll in a course.
+Connect MasterStudy LMS course enrollment to Jetonomy spaces - students get a dedicated discussion area when they enroll in a course.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ## What You Will Learn
 
@@ -18,7 +18,7 @@ Jetonomy Pro detects MasterStudy LMS automatically when both plugins are active.
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **MasterStudy Course** from the rule type dropdown.
-3. Start typing the course name — a searchable dropdown shows all published MasterStudy courses.
+3. Start typing the course name - a searchable dropdown shows all published MasterStudy courses.
 4. Select the course, set Grants to **Participate** and Space Role to **Member**.
 5. Click **Add Rule**.
 
@@ -45,15 +45,15 @@ When you publish a new MasterStudy course, a private space is created with the c
 
 MasterStudy LMS does not fire a hook when students are removed from courses. This means automatic removal from linked spaces is not available. To manage access:
 
-- Use the **Sync Members** button periodically to re-sync — students no longer enrolled will not be re-added
+- Use the **Sync Members** button periodically to re-sync - students no longer enrolled will not be re-added
 - Remove students manually from the space Members tab
 - For subscription-based access, consider pairing MasterStudy with WooCommerce Memberships which does fire removal hooks
 
 ## Troubleshooting
 
-**MasterStudy Course does not appear in dropdown** — Confirm Jetonomy Pro and MasterStudy LMS are both active. Check **Jetonomy → Settings → Integrations**.
+**MasterStudy Course does not appear in dropdown** - Confirm Jetonomy Pro and MasterStudy LMS are both active. Check **Jetonomy → Settings → Integrations**.
 
-**Students remain in space after course access revoked** — MasterStudy does not fire removal hooks. Remove students manually from the space Members tab or use the Sync Members button to verify current enrollment.
+**Students remain in space after course access revoked** - MasterStudy does not fire removal hooks. Remove students manually from the space Members tab or use the Sync Members button to verify current enrollment.
 
 ## What's Next?
 

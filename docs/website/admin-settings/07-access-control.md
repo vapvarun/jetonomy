@@ -11,7 +11,7 @@ Go to **Jetonomy → Settings → General → Access Control** to choose the mod
 
 ## Public Mode (default)
 
-Anyone — including search engines and visitors who haven't signed in — can read posts, replies, and member profiles. Posting and voting still require sign-in.
+Anyone - including search engines and visitors who haven't signed in - can read posts, replies, and member profiles. Posting and voting still require sign-in.
 
 This is the default for every community and is unchanged from prior versions. Existing communities continue working without any setting change after upgrading to 1.4.1.
 
@@ -42,13 +42,13 @@ These pages are intentionally exempt so guests can sign up and recover access:
 - The forgot-password page
 - Email verification and password-reset confirmation links
 
-Everything else — homepage, spaces, posts, replies, tags, member profiles, leaderboard, search — is gated.
+Everything else - homepage, spaces, posts, replies, tags, member profiles, leaderboard, search - is gated.
 
 ## REST API Behaviour
 
 Public mode: read endpoints return data to anyone. Write endpoints still require auth.
 
-Private mode: every endpoint under `/wp-json/jetonomy/v1/` requires an authenticated request. Anonymous calls return `401 Unauthorized`. This is checked centrally — third-party clients calling the API see the same gate as the website does.
+Private mode: every endpoint under `/wp-json/jetonomy/v1/` requires an authenticated request. Anonymous calls return `401 Unauthorized`. This is checked centrally - third-party clients calling the API see the same gate as the website does.
 
 ## Switching Modes
 

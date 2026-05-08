@@ -18,13 +18,13 @@ Jetonomy uses six trust levels (0 through 5) to gradually extend posting privile
 | Level | Name | Earned By |
 |---|---|---|
 | 0 | New Member | Default on registration |
-| 1 | Basic | Automatic — light activity |
-| 2 | Member | Automatic — consistent participation |
-| 3 | Regular | Automatic — high engagement and reputation |
-| 4 | Trusted | Manual — granted by moderator or admin |
-| 5 | Leader | Manual — granted by admin only |
+| 1 | Basic | Automatic - light activity |
+| 2 | Member | Automatic - consistent participation |
+| 3 | Regular | Automatic - high engagement and reputation |
+| 4 | Trusted | Manual - granted by moderator or admin |
+| 5 | Leader | Manual - granted by admin only |
 
-The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Demotion is also possible — if a member is muted or receives too many spam flags, their trust level can drop.
+The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Demotion is also possible - if a member is muted or receives too many spam flags, their trust level can drop.
 
 ## Trust Level Thresholds
 
@@ -91,17 +91,17 @@ Rate limits cap how many actions a member can take in a given time window. They 
 
 Trust Level 1+ members are exempt from all rate limits.
 
-For high-traffic communities, raise these limits. For communities experiencing spam problems, lower them. Changes take effect immediately — no cache flush needed.
+For high-traffic communities, raise these limits. For communities experiencing spam problems, lower them. Changes take effect immediately - no cache flush needed.
 
 ## Adjusting for Community Size
 
 **Small community (under 500 members):**
-- Lower all trust thresholds significantly — active members should reach Level 2 within a week
-- Keep rate limits at defaults — spam volume is low
+- Lower all trust thresholds significantly - active members should reach Level 2 within a week
+- Keep rate limits at defaults - spam volume is low
 - Consider setting `min_days` to 0 for Level 1 to avoid frustrating early adopters
 
 **Large community (10,000+ members):**
-- Keep thresholds at defaults or raise them — organic promotion still happens, just slower
+- Keep thresholds at defaults or raise them - organic promotion still happens, just slower
 - Raise `max_flags` threshold at Level 0 to prevent easy reputational attacks
 - Lower post rate limits if you see spam bursts
 

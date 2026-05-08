@@ -1,4 +1,4 @@
-Jetonomy's template system is designed to be overridden without touching plugin files. Place your custom templates in your theme and they will be loaded automatically — no hooks, no filters required for simple overrides.
+Jetonomy's template system is designed to be overridden without touching plugin files. Place your custom templates in your theme and they will be loaded automatically - no hooks, no filters required for simple overrides.
 
 ---
 
@@ -8,10 +8,10 @@ When Jetonomy loads a template, `Template_Loader` checks your active theme direc
 
 **Resolution order:**
 
-1. `{your-theme}/jetonomy/{relative-path}` — checked first
-2. `{jetonomy-plugin}/templates/{relative-path}` — fallback default
+1. `{your-theme}/jetonomy/{relative-path}` - checked first
+2. `{jetonomy-plugin}/templates/{relative-path}` - fallback default
 
-The `{relative-path}` is always the same path the plugin uses internally — for example, `views/home.php` or `partials/reply-card.php`.
+The `{relative-path}` is always the same path the plugin uses internally - for example, `views/home.php` or `partials/reply-card.php`.
 
 ---
 
@@ -49,7 +49,7 @@ your-theme/
         └── sidebar.php
 ```
 
-You do not need to copy all of these. Only create the files you want to customize — any file not present in your theme directory is loaded from the plugin.
+You do not need to copy all of these. Only create the files you want to customize - any file not present in your theme directory is loaded from the plugin.
 
 ---
 
@@ -194,7 +194,7 @@ Common objects available in plugin templates:
 
 ## The `jetonomy_template_map` Filter
 
-For cases where you need to register a completely new route — or override the template for an existing route with a file stored outside the theme — use the `jetonomy_template_map` filter.
+For cases where you need to register a completely new route - or override the template for an existing route with a file stored outside the theme - use the `jetonomy_template_map` filter.
 
 ```php
 add_filter( 'jetonomy_template_map', function( array $map ): array {
@@ -208,7 +208,7 @@ add_filter( 'jetonomy_template_map', function( array $map ): array {
 } );
 ```
 
-**Important:** If you provide an absolute path (starting with `/`), the theme-override check is bypassed — the file you point to is loaded directly. This is the correct approach for Pro extensions and companion plugins that ship their own templates.
+**Important:** If you provide an absolute path (starting with `/`), the theme-override check is bypassed - the file you point to is loaded directly. This is the correct approach for Pro extensions and companion plugins that ship their own templates.
 
 The Jetonomy Router must know about new routes before they can receive traffic. Register rewrite rules alongside the template map:
 
@@ -242,7 +242,7 @@ wp --path="/path/to/wordpress" rewrite flush
 
 ## Child Theme Compatibility
 
-If you are using a child theme, place overrides in the child theme directory — `get_stylesheet_directory()` resolves to the child theme path when a child theme is active. The plugin does not check the parent theme separately, so all overrides must live in the active (child) theme.
+If you are using a child theme, place overrides in the child theme directory - `get_stylesheet_directory()` resolves to the child theme path when a child theme is active. The plugin does not check the parent theme separately, so all overrides must live in the active (child) theme.
 
 ---
 
@@ -264,6 +264,6 @@ Place overrides here and they will be detected automatically because Pro's `Temp
 
 ## What's Next?
 
-- [Hooks Reference](./02-hooks-reference.md) — Inject content at specific points without overriding full templates
-- [REST API Reference](./01-rest-api.md) — Fetch data to power your custom templates
-- [Shortcodes, Widgets & Blocks](./04-shortcodes-widgets-blocks.md) — Embed community content on non-community pages
+- [Hooks Reference](./02-hooks-reference.md) - Inject content at specific points without overriding full templates
+- [REST API Reference](./01-rest-api.md) - Fetch data to power your custom templates
+- [Shortcodes, Widgets & Blocks](./04-shortcodes-widgets-blocks.md) - Embed community content on non-community pages

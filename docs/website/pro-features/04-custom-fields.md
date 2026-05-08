@@ -1,6 +1,6 @@
-Add structured fields to member profiles — collect the information that matters to your specific community.
+Add structured fields to member profiles - collect the information that matters to your specific community.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 > **As of 1.4.1, custom field values are exposed on the REST API for both posts and users.** Earlier versions only saved the values to the database; third-party API consumers couldn't read them because the response filters were registered against an event nothing emitted. Free 1.4.1 fires the matching filters on `/jetonomy/v1/posts` and `/jetonomy/v1/users`, so any tool reading from the API now sees every custom field you have configured.
 
@@ -51,7 +51,7 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 | **Checkbox** | Yes/no toggle (newsletter opt-in, open to work) |
 | **URL** | Website, GitHub, LinkedIn, portfolio links |
 
-For the **Select** type, you define the options in the field editor — one per line. The member sees a dropdown.
+For the **Select** type, you define the options in the field editor - one per line. The member sees a dropdown.
 
 ## Visibility Options
 
@@ -84,7 +84,7 @@ Custom Fields adds field-aware parameters to the existing profile and post endpo
 | `GET` | `/posts` | List response includes `custom_fields` on each post |
 | `GET` | `/custom-fields` | List all defined fields and their settings |
 
-**Example — read a profile with custom fields:**
+**Example - read a profile with custom fields:**
 
 ```json
 GET /wp-json/jetonomy/v1/users/45
@@ -100,7 +100,7 @@ GET /wp-json/jetonomy/v1/users/45
 }
 ```
 
-**Example — update custom fields:**
+**Example - update custom fields:**
 
 ```json
 PATCH /wp-json/jetonomy/v1/users/45

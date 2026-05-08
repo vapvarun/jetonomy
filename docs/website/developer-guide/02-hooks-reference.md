@@ -179,7 +179,7 @@ add_action( 'jetonomy_after_vote', function( string $type, int $id, string $dire
 
 ### `jetonomy_content_moderated`
 
-Fires when a moderator takes an action on a post or reply — approve, spam, or trash.
+Fires when a moderator takes an action on a post or reply: approve, spam, or trash.
 
 **Parameters**
 
@@ -626,7 +626,7 @@ Fires after each top-level reply in the reply list. Use the `$index` parameter t
 
 **Source:** `templates/views/single-post.php`
 
-> The replies list renders in two batches (opening + latest). The index resets at the start of each batch — use `$reply->id` for absolute identity.
+> The replies list renders in two batches (opening + latest). The index resets at the start of each batch. Use `$reply->id` for absolute identity.
 
 ```php
 add_action( 'jetonomy_between_replies', function( $reply, $index, $post ) {
@@ -666,16 +666,16 @@ Use these to add content to the Jetonomy admin pages without overriding core adm
 
 | Hook | Parameters | Where it fires |
 |------|------------|---------------|
-| `jetonomy_admin_dashboard_widgets` | none | Dashboard page — add custom stat cards |
-| `jetonomy_admin_dashboard_after_stats` | none | Dashboard — below the stats row |
-| `jetonomy_admin_settings_tabs` | none | Settings page — register new tab nav items |
-| `jetonomy_admin_settings_tab_content` | `$active_tab` (string) | Settings page — render tab content |
-| `jetonomy_admin_moderation_tabs` | none | Moderation page — extra tab nav items |
-| `jetonomy_admin_moderation_tab_content` | `$active_tab` (string) | Moderation page — render tab content |
-| `jetonomy_admin_space_edit_tabs` | `$space_id` (int) | Space edit page — extra tab nav items |
-| `jetonomy_admin_space_edit_tab_content` | `$active_tab` (string), `$space_id` (int) | Space edit page — render tab content |
-| `jetonomy_admin_render_extensions` | none | Admin — Extensions tab placeholder |
-| `jetonomy_admin_render_license` | none | Admin — License tab placeholder |
+| `jetonomy_admin_dashboard_widgets` | none | Dashboard page - add custom stat cards |
+| `jetonomy_admin_dashboard_after_stats` | none | Dashboard - below the stats row |
+| `jetonomy_admin_settings_tabs` | none | Settings page - register new tab nav items |
+| `jetonomy_admin_settings_tab_content` | `$active_tab` (string) | Settings page - render tab content |
+| `jetonomy_admin_moderation_tabs` | none | Moderation page - extra tab nav items |
+| `jetonomy_admin_moderation_tab_content` | `$active_tab` (string) | Moderation page - render tab content |
+| `jetonomy_admin_space_edit_tabs` | `$space_id` (int) | Space edit page - extra tab nav items |
+| `jetonomy_admin_space_edit_tab_content` | `$active_tab` (string), `$space_id` (int) | Space edit page - render tab content |
+| `jetonomy_admin_render_extensions` | none | Admin - Extensions tab placeholder |
+| `jetonomy_admin_render_license` | none | Admin - License tab placeholder |
 
 **Example: adding a Settings tab**
 
@@ -703,6 +703,37 @@ add_action( 'jetonomy_admin_settings_tab_content', function( string $active_tab 
     // Your settings form here.
     echo '</div>';
 } );
+```
+
+---
+
+## Performance & Cron
+
+### `jetonomy_cron_batch_size`
+
+Filters the maximum number of rows processed per run by any of Jetonomy's background cleanup handlers. The default is 500 rows per run, which prevents cron jobs from timing out on large sites with high activity volumes.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$batch_size` | `int` | Maximum rows to process. Default: `500` |
+| `$handler` | `string` | The handler name, e.g. `'prune_activity_log'`, `'expire_restrictions'`, `'cleanup_notifications'`, `'publish_scheduled_posts'` |
+
+**Return:** `int`
+
+**Source:** `includes/class-cron.php`
+
+Use the `$handler` parameter to set different limits per job:
+
+```php
+add_filter( 'jetonomy_cron_batch_size', function( int $batch_size, string $handler ): int {
+    // Allow the activity log pruner to work through larger batches on this high-traffic site.
+    if ( 'prune_activity_log' === $handler ) {
+        return 1000;
+    }
+    return $batch_size;
+}, 10, 2 );
 ```
 
 ---
@@ -923,6 +954,6 @@ These hooks are available only when **Jetonomy Pro** is active. Pro injects into
 
 ## What's Next?
 
-- [Template Overrides](./03-template-overrides.md) — Customize templates without modifying plugin files
-- [REST API Reference](./01-rest-api.md) — Full endpoint listing
-- [Adapter System](./05-adapters.md) — Swap email, search, and real-time backends
+- [Template Overrides](./03-template-overrides.md) - Customize templates without modifying plugin files
+- [REST API Reference](./01-rest-api.md) - Full endpoint listing
+- [Adapter System](./05-adapters.md) - Swap email, search, and real-time backends

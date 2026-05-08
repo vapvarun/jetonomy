@@ -1,4 +1,4 @@
-How Jetonomy compares to wpForo — two modern forum plugins with different approaches.
+How Jetonomy compares to wpForo - two modern forum plugins with different approaches.
 
 ![Jetonomy community home page showcasing the modern forum interface](../images/community-home.png)
 
@@ -34,7 +34,7 @@ How Jetonomy compares to wpForo — two modern forum plugins with different appr
 
 ### WordPress-Native Architecture
 
-wpForo was originally built as a standalone forum that happens to run inside WordPress. Jetonomy was built WordPress-first — it uses the Interactivity API, theme.json design tokens, wp_cache, WP-Cron, and the WordPress REST API as its foundation.
+wpForo was originally built as a standalone forum that happens to run inside WordPress. Jetonomy was built WordPress-first - it uses the Interactivity API, theme.json design tokens, wp_cache, WP-Cron, and the WordPress REST API as its foundation.
 
 This means Jetonomy integrates more deeply with WordPress features like block themes, site editing, and the Abilities API.
 
@@ -46,11 +46,11 @@ Jetonomy automates this entirely. New members start restricted and earn trust th
 
 ### Invisible Anti-Spam
 
-wpForo supports reCAPTCHA v2 — the "I'm not a robot" checkbox that interrupts every user. Jetonomy uses reCAPTCHA v3 and Cloudflare Turnstile, both invisible. Members never see a CAPTCHA, and trusted members (Trust Level 2+) are completely exempt.
+wpForo supports reCAPTCHA v2 - the "I'm not a robot" checkbox that interrupts every user. Jetonomy uses reCAPTCHA v3 and Cloudflare Turnstile, both invisible. Members never see a CAPTCHA, and trusted members (Trust Level 2+) are completely exempt.
 
 ### Adapter-Based Integrations
 
-wpForo has built-in membership gating but requires wpForo-specific extensions for each membership plugin. Jetonomy uses a universal adapter pattern — MemberPress and PMPro work out of the box in free, and Pro adds WooCommerce, LearnDash, and Restrict Content Pro. Custom adapters can be built for any membership system.
+wpForo has built-in membership gating but requires wpForo-specific extensions for each membership plugin. Jetonomy uses a universal adapter pattern - MemberPress and PMPro work out of the box in free, and Pro adds WooCommerce, LearnDash, and Restrict Content Pro. Custom adapters can be built for any membership system.
 
 ## Where wpForo Works Well
 
@@ -60,5 +60,5 @@ If you are running wpForo and want to migrate, Jetonomy includes a built-in wpFo
 
 ## What's Next?
 
-- [Importing from wpForo](../migration/02-wpforo-import.md) — step-by-step migration guide
-- [Scalability](03-scalability.md) — how Jetonomy handles growth
+- [Importing from wpForo](../migration/02-wpforo-import.md) - step-by-step migration guide
+- [Scalability](03-scalability.md) - how Jetonomy handles growth

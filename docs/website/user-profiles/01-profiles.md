@@ -10,7 +10,7 @@ Every member in your community has a public profile page that shows who they are
 
 ## The Profile Page
 
-Every member has a profile page at `/community/u/their-username/`. Anyone can visit this page — no login is required unless your community is set to private.
+Every member has a profile page at `/community/u/their-username/`. Anyone can visit this page - no login is required unless your community is set to private.
 
 ![User profile page](../images/profile-page.png)
 
@@ -18,12 +18,12 @@ Every member has a profile page at `/community/u/their-username/`. Anyone can vi
 
 The profile header shows:
 
-- **Avatar** — pulled from WordPress Gravatar by default. Members can upload a custom avatar if your theme supports it.
-- **Display name** — the name shown across all community activity
-- **Username** — the login handle used in @mentions and the profile URL
-- **Bio** — a short text description the member writes themselves
-- **Join date** — when the member's account was created
-- **Online status** — a green dot appears if the member was active in the last 5 minutes (see [Online Status](03-online-status.md))
+- **Avatar** - pulled from WordPress Gravatar by default. Members can upload a custom avatar if your theme supports it.
+- **Display name** - the name shown across all community activity
+- **Username** - the login handle used in @mentions and the profile URL
+- **Bio** - a short text description the member writes themselves
+- **Join date** - when the member's account was created
+- **Online status** - a green dot appears if the member was active in the last 5 minutes (see [Online Status](03-online-status.md))
 
 ### Stats Bar
 
@@ -36,7 +36,7 @@ Below the header, four stats appear at a glance:
 | Replies | Number of published replies |
 | Trust Level | Current trust level badge and name |
 
-The reputation score links to the leaderboard. The trust level badge uses the same color coding as it does on reply cards — grey for TL0, scaling up to gold for TL5.
+The reputation score links to the leaderboard. The trust level badge uses the same color coding as it does on reply cards - grey for TL0, scaling up to gold for TL5.
 
 ## Profile Tabs
 
@@ -50,13 +50,13 @@ Lists every reply the member has posted across all spaces, paginated 20 per page
 
 ### Votes
 
-Shows the content this member has voted on. The tab is visible to the member themselves and to WordPress Administrators. Other members cannot see this tab — voting is semi-private.
+Shows the content this member has voted on. The tab is visible to the member themselves and to WordPress Administrators. Other members cannot see this tab - voting is semi-private.
 
 ### Drafts
 
 Shows unpublished draft topics saved by this member. This tab is visible only to the profile owner and WordPress Administrators. Drafts are never exposed publicly.
 
-> **Tip:** Encourage active members to complete their bio. Profiles with a bio and a recognizable avatar get more replies — other members feel more comfortable engaging when they know who they are talking to.
+> **Tip:** Encourage active members to complete their bio. Profiles with a bio and a recognizable avatar get more replies - other members feel more comfortable engaging when they know who they are talking to.
 
 ## Editing a Profile
 

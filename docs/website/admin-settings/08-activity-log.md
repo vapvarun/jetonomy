@@ -1,4 +1,4 @@
-The Activity Log admin page shows you every audit-worthy event in your community — who created a post, who approved a reply, who banned a member, when a role changed. Read-only and filterable.
+The Activity Log admin page shows you every audit-worthy event in your community - who created a post, who approved a reply, who banned a member, when a role changed. Read-only and filterable.
 
 ## What You Will Learn
 
@@ -22,7 +22,7 @@ The log records every event that changes the state of the community in a way tha
 - Bans and silences (issued and lifted)
 - Setting changes that affect community behaviour
 
-What's NOT logged: votes, reads, search queries, page views — these are too high-volume to keep useful and are tracked separately by Analytics (Pro).
+What's NOT logged: votes, reads, search queries, page views - these are too high-volume to keep useful and are tracked separately by Analytics (Pro).
 
 ## Filters
 
@@ -38,7 +38,7 @@ Combine all three to answer questions like "which posts did this moderator appro
 
 ## Read-Only
 
-The Activity Log is intentionally read-only. You can't edit or delete entries from this page. The log is the audit trail — modifying it would defeat the point.
+The Activity Log is intentionally read-only. You can't edit or delete entries from this page. The log is the audit trail - modifying it would defeat the point.
 
 If you need to undo something a member or staff user did, do it in the relevant area (e.g. restore a deleted post from the post page, lift a ban from the member's profile). The log will then record the corrective action as a new entry.
 
@@ -46,4 +46,4 @@ If you need to undo something a member or staff user did, do it in the relevant 
 
 The log is paginated server-side at 50 entries per page. Filters apply at the database level, so even on a community with hundreds of thousands of entries, filtered queries return in under a second on a normal host.
 
-There's no automatic cleanup — entries are kept indefinitely. If you want to prune the log, you can do it via WP-CLI; reach out via support if you need a recipe.
+There's no automatic cleanup - entries are kept indefinitely. If you want to prune the log, you can do it via WP-CLI; reach out via support if you need a recipe.

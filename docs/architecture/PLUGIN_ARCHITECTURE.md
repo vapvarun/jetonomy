@@ -1,4 +1,4 @@
-# Jetonomy — Plugin Architecture Reference
+# Jetonomy - Plugin Architecture Reference
 
 > **Generated:** 2026-03-24 | **Scope:** hybrid | **Version:** 1.0.0
 > **PHP:** 8.1+ | **WordPress:** 6.7+ | **Tables:** 22 custom | **REST endpoints:** 42 | **AJAX actions:** 34
@@ -41,7 +41,7 @@ Jetonomy is a next-gen discussion platform for WordPress. It provides **forums, 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Storage | Custom MySQL tables (22) | Performance at 10,000+ posts/space; CPTs cannot scale |
-| API | WP REST API (`jetonomy/v1`) | 42 endpoints — clean decoupling of data from views |
+| API | WP REST API (`jetonomy/v1`) | 42 endpoints - clean decoupling of data from views |
 | Frontend | PHP templates + WP Interactivity API | SSR for SEO; reactive for UX |
 | Permissions | 3-layer engine (ban → WP caps → space roles) | Fine-grained control without custom role plugins |
 | Integrations | Universal adapter interfaces | Swap membership/email/realtime providers without touching core |
@@ -66,23 +66,23 @@ jetonomy.php
 
 | Hook | Priority | Callback |
 |------|----------|----------|
-| `init` | 1 | `load_textdomain()` — must be priority 1 to beat `wp_cron()` at priority 10 |
-| `plugins_loaded` | 10 | `init()` — loads all dependencies |
-| `wp_theme_json_data_default` | — | `register_plugin_theme_json()` |
-| activation | — | `activate()` — dbDelta, capabilities, cron, redirect |
-| deactivation | — | `deactivate()` — unschedule cron, flush rewrites |
+| `init` | 1 | `load_textdomain()` - must be priority 1 to beat `wp_cron()` at priority 10 |
+| `plugins_loaded` | 10 | `init()` - loads all dependencies |
+| `wp_theme_json_data_default` | - | `register_plugin_theme_json()` |
+| activation | - | `activate()` - dbDelta, capabilities, cron, redirect |
+| deactivation | - | `deactivate()` - unschedule cron, flush rewrites |
 
 ### `init()` sequence
 
 ```
 init()
-├── maybe_redirect_to_setup()    — one-time activation redirect
-├── check_db_version()           — runs Migrator if version < JETONOMY_DB_VERSION
+├── maybe_redirect_to_setup()    - one-time activation redirect
+├── check_db_version()           - runs Migrator if version < JETONOMY_DB_VERSION
 ├── load_dependencies()
 │   ├── require functions.php
-│   ├── new Router()             — register rewrite rules
-│   ├── flush_rewrite_rules()    — once per version (keyed option)
-│   ├── Capabilities::register() — once per version (keyed option)
+│   ├── new Router()             - register rewrite rules
+│   ├── flush_rewrite_rules()    - once per version (keyed option)
+│   ├── Capabilities::register() - once per version (keyed option)
 │   ├── new API\Api()
 │   ├── Adapter_Registry::init_defaults()
 │   ├── Adapter_Registry::register_email('wp-mail', ...)
@@ -100,7 +100,7 @@ init()
 │   ├── new Abilities()
 │   ├── Import_Manager::init()
 │   └── new Admin\Admin()  (if is_admin())
-└── maybe_backfill_activity()    — one-time backfill for pre-Activity_Tracker installs
+└── maybe_backfill_activity()    - one-time backfill for pre-Activity_Tracker installs
 ```
 
 ---
@@ -111,7 +111,7 @@ init()
 
 File: `includes/class-autoloader.php`
 
-**Namespace → Directory map** (order matters — more specific entries first):
+**Namespace → Directory map** (order matters - more specific entries first):
 
 | Namespace prefix | Directory |
 |-----------------|-----------|
@@ -130,7 +130,7 @@ File: `includes/class-autoloader.php`
 | `Jetonomy\DB\Migrations\` | `includes/db/migrations/` |
 | `Jetonomy\` | `includes/` |
 
-**IMPORTANT — Admin AJAX sub-namespace (pending):** The Admin split plan adds `Jetonomy\Admin\Ajax\` → `includes/admin/ajax/` as a new entry. This entry **must appear BEFORE** `Jetonomy\Admin\` in the map to resolve correctly.
+**IMPORTANT - Admin AJAX sub-namespace (pending):** The Admin split plan adds `Jetonomy\Admin\Ajax\` → `includes/admin/ajax/` as a new entry. This entry **must appear BEFORE** `Jetonomy\Admin\` in the map to resolve correctly.
 
 **Class → filename conversion** (`class_to_file()`):
 - `Permission_Engine` → `permission-engine` → `class-permission-engine.php`
@@ -174,7 +174,7 @@ jetonomy/
 │   ├── class-cli.php             # WP-CLI commands
 │   ├── functions.php             # Global helpers: table(), now(), get_profile_url(), etc.
 │   ├── admin/
-│   │   ├── class-admin.php       # Admin menu, assets, settings, AJAX (2,100+ lines — NEEDS SPLIT)
+│   │   ├── class-admin.php       # Admin menu, assets, settings, AJAX (2,100+ lines - NEEDS SPLIT)
 │   │   └── views/                # Admin page PHP templates
 │   │       ├── dashboard.php
 │   │       ├── categories.php
@@ -306,14 +306,14 @@ jetonomy/
 
 ### Schema Management
 
-- **`DB\Schema::create_tables()`** — runs `dbDelta()` for all 22 tables. Idempotent — safe to call repeatedly.
-- **`DB\Migrator::run($current_version)`** — runs incremental migrations from `includes/db/migrations/`.
+- **`DB\Schema::create_tables()`** - runs `dbDelta()` for all 22 tables. Idempotent - safe to call repeatedly.
+- **`DB\Migrator::run($current_version)`** - runs incremental migrations from `includes/db/migrations/`.
 - DB version stored in `jetonomy_db_version` option (tracks against `JETONOMY_DB_VERSION` constant).
 
 ### Helper Function
 
 ```php
-// Global helper — returns full prefixed table name
+// Global helper - returns full prefixed table name
 table('posts')  // → "wp_jt_posts"
 table('spaces') // → "wp_jt_spaces"
 ```
@@ -358,7 +358,7 @@ Several counters are kept denormalized for performance:
 
 ### `Jetonomy\Permissions\Permission_Engine`
 
-**Three-layer resolver** — resolved in order, short-circuits on first denial:
+**Three-layer resolver** - resolved in order, short-circuits on first denial:
 
 ```
 can($user_id, $action, $space_id?)
@@ -399,7 +399,7 @@ WP capabilities registered at activation and on version change:
 
 ## 8. Trust & Reputation System
 
-**Trust levels 0–5** — auto-evaluated by `Trust_Evaluator` (runs twicedaily via cron).
+**Trust levels 0–5** - auto-evaluated by `Trust_Evaluator` (runs twicedaily via cron).
 
 | Level | Label | Typical threshold |
 |-------|-------|-------------------|
@@ -435,9 +435,9 @@ Registers all controllers at `rest_api_init`. All routes under namespace `jetono
 ### `Jetonomy\API\Base_Controller` (abstract, extends `WP_REST_Controller`)
 
 Shared methods:
-- `get_current_user_id()` — returns WP user ID or 0
-- `permission_error()` — standard 403 `WP_Error`
-- `validate_space_access()` — checks `Permission_Engine::can()`
+- `get_current_user_id()` - returns WP user ID or 0
+- `permission_error()` - standard 403 `WP_Error`
+- `validate_space_access()` - checks `Permission_Engine::can()`
 - Cursor-based pagination helpers
 
 ### Full Endpoint Reference
@@ -549,7 +549,7 @@ Jetonomy (main)            jetonomy          dashicons-groups
 └── Setup (hidden)         jetonomy-setup
 ```
 
-*Conditional pages — only visible after setup is complete.
+*Conditional pages - only visible after setup is complete.
 
 **Admin extension hooks (for Jetonomy Pro):**
 
@@ -558,7 +558,7 @@ do_action('jetonomy_admin_render_extensions')   // Extensions submenu placeholde
 do_action('jetonomy_admin_render_license')       // License submenu placeholder
 ```
 
-**⚠️ Known architectural issue:** `Admin` class is currently ~2,100 lines — violates the 750-line rule from CLAUDE.md. **Admin split plan** is at `docs/superpowers/plans/2026-03-24-admin-class-split.md`.
+**⚠️ Known architectural issue:** `Admin` class is currently ~2,100 lines - violates the 750-line rule from CLAUDE.md. **Admin split plan** is at `docs/superpowers/plans/2026-03-24-admin-class-split.md`.
 
 ### Admin Views (`includes/admin/views/`)
 
@@ -684,7 +684,7 @@ Extends the `jetonomy` store with:
 
 `assets/css/jetonomy.css` uses CSS custom properties that inherit from the active theme's `theme.json`. Plugin provides a baseline via `register_plugin_theme_json()` filter on `wp_theme_json_data_default`.
 
-**Trust level badge colors** use `data-jt-tl` attribute selectors — never inline styles.
+**Trust level badge colors** use `data-jt-tl` attribute selectors - never inline styles.
 
 ---
 
@@ -692,7 +692,7 @@ Extends the `jetonomy` store with:
 
 ### `Jetonomy\Notifications\Notifier`
 
-Event-driven — hooks into action hooks fired by API controllers:
+Event-driven - hooks into action hooks fired by API controllers:
 
 | Trigger hook | Notification type |
 |-------------|------------------|
@@ -703,7 +703,7 @@ Event-driven — hooks into action hooks fired by API controllers:
 
 Fires on create: `do_action('jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id)`
 
-Email delivery via `Adapter_Registry::get_email()` — defaults to `WP_Mail_Adapter`.
+Email delivery via `Adapter_Registry::get_email()` - defaults to `WP_Mail_Adapter`.
 Email headers filterable: `apply_filters('jetonomy_notification_email_headers', $headers, $to, $subject)`
 
 ---
@@ -712,7 +712,7 @@ Email headers filterable: `apply_filters('jetonomy_notification_email_headers', 
 
 ### `Jetonomy\Activity_Tracker`
 
-Central event logger — hooks into all lifecycle actions and inserts rows into `jt_activity_log`. Keeps activity logging out of controllers.
+Central event logger - hooks into all lifecycle actions and inserts rows into `jt_activity_log`. Keeps activity logging out of controllers.
 
 All activity logging goes through hooks. **Never call `ActivityLog::log()` directly in controllers.**
 
@@ -799,7 +799,7 @@ Registered at `WP_CLI::add_command('jetonomy', 'Jetonomy\CLI')`.
 
 ## 21. Hook Reference
 
-### Action Hooks — Admin Extension Points
+### Action Hooks - Admin Extension Points
 
 | Hook | Args | Fired in | Used by |
 |------|------|---------|---------|
@@ -814,7 +814,7 @@ Registered at `WP_CLI::add_command('jetonomy', 'Jetonomy\CLI')`.
 | `jetonomy_admin_render_extensions` | none | `admin/class-admin.php:551` | Jetonomy Pro: extensions page |
 | `jetonomy_admin_render_license` | none | `admin/class-admin.php:562` | Jetonomy Pro: license page |
 
-### Action Hooks — Content Lifecycle
+### Action Hooks - Content Lifecycle
 
 | Hook | Args | Description |
 |------|------|-------------|
@@ -828,7 +828,7 @@ Registered at `WP_CLI::add_command('jetonomy', 'Jetonomy\CLI')`.
 | `jetonomy_content_moderated` | `$action, $object_type, $object_id, $moderator_id` | After approve/spam/trash action |
 | `jetonomy_after_vote` | `$object_type, $object_id, $user_id` | After any vote |
 
-### Action Hooks — Users / Membership
+### Action Hooks - Users / Membership
 
 | Hook | Args | Description |
 |------|------|-------------|
@@ -839,7 +839,7 @@ Registered at `WP_CLI::add_command('jetonomy', 'Jetonomy\CLI')`.
 | `jetonomy_membership_deactivated` | `$user_id, $level_id, $source` | Membership plugin deactivated |
 | `jetonomy_notification_created` | `$notification_id, $user_id, $type, $object_type, $object_id` | After notification inserted |
 
-### Action Hooks — Template Injection
+### Action Hooks - Template Injection
 
 | Hook | Args | Location |
 |------|------|---------|
@@ -888,8 +888,8 @@ Registered at `WP_CLI::add_command('jetonomy', 'Jetonomy\CLI')`.
 - **Options:** `jetonomy_*` prefix always
 - **User meta:** `jetonomy_*` prefix always
 - **DB tables:** `jt_*` prefix (becomes `wp_jt_*`)
-- **Hook names:** `jetonomy_*` prefix — never rename existing hooks
-- **AJAX actions:** `wp_ajax_jetonomy_*` — never rename existing actions
+- **Hook names:** `jetonomy_*` prefix - never rename existing hooks
+- **AJAX actions:** `wp_ajax_jetonomy_*` - never rename existing actions
 
 ---
 
@@ -923,7 +923,7 @@ Pro hooks into core admin pages using:
 // Hook into dashboard
 add_action('jetonomy_admin_dashboard_widgets', [$this, 'render_pro_status_widget']);
 
-// Hook into settings page — add tabs
+// Hook into settings page - add tabs
 add_action('jetonomy_admin_settings_tabs', [$this, 'add_pro_tabs']);
 add_action('jetonomy_admin_settings_tab_content', [$this, 'render_pro_tab_content']);
 

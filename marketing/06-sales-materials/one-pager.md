@@ -1,7 +1,7 @@
-# Jetonomy — One-Pager
+# Jetonomy - One-Pager
 
 **The Modern Forum Plugin for WordPress**
-Forums, Q&A, and idea boards — built for communities that grow.
+Forums, Q&A, idea boards, and Show & Tell - built for communities that grow.
 
 **wbcomdesigns.com/downloads/jetonomy-pro/**
 
@@ -17,11 +17,12 @@ Most WordPress forum plugins were designed for blogs, not communities. They stor
 
 Jetonomy is a WordPress forum plugin built from the ground up for how WordPress works today.
 
-- **24 custom MySQL tables** — not CPTs. Fast queries, proper indexes, no wp_postmeta bloat.
-- **6 trust levels** — new members are rate-limited automatically. Active contributors earn moderation abilities.
-- **Three space types** — Forum, Q&A, and Ideas. Each with its own rules and access controls.
-- **Theme-adaptive design** — inherits fonts and colors from theme.json automatically.
-- **48+ REST endpoints (90+ with Pro)** — every feature is accessible via API.
+- **24 custom MySQL tables** - not CPTs. Fast queries, proper indexes, no wp_postmeta bloat.
+- **6 trust levels** - new members are rate-limited automatically. Active contributors earn moderation abilities.
+- **Four space types** - Forum, Q&A, Ideas, and Show & Tell. Each with its own rules and access controls.
+- **Theme-adaptive design** - inherits fonts and colors from theme.json automatically.
+- **48+ REST endpoints (90+ with Pro)** - every feature is accessible via API.
+- **Multisite-ready** - network activation provisions tables on every existing and future subsite.
 
 ---
 
@@ -36,7 +37,7 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | bbPress and wpForo importers | Dry run first, then migrate forums, topics, replies, and users. Resumes on failure. |
 | REST API (48+ free, 90+ with Pro) | Cursor-based pagination, JSON schema validation. Build custom frontends and integrations. |
 
-**Proof points:** Sub-200ms at 50K topics with Redis. Schema.org markup on every page. Server-side rendered — search engines see full content. WordPress Abilities API support — AI agents can discover and operate the community. **New in 1.3.0:** Pro AI integration with self-hosted Ollama for private, on-server spam detection and content moderation.
+**Proof points:** Sub-200ms at 50K topics with Redis. Schema.org markup on every page. Server-side rendered - search engines see full content. WordPress Abilities API support - AI agents can discover and operate the community. **New in 1.3.0:** Pro AI integration with self-hosted Ollama for private, on-server spam detection and content moderation. **New in 1.4.2:** Show & Tell space type, Ideas roadmap lanes, Q&A Answered badge in listing view, multisite network activation.
 
 ---
 
@@ -52,19 +53,19 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | 48+ REST API endpoints | Yes | Yes |
 | bbPress and wpForo importers | Yes | Yes |
 | MemberPress and PMPro integration | Yes | Yes |
-| AI integration (spam detection, moderation, thread summaries — Ollama-ready) | — | Yes |
-| Private messaging | — | Yes |
-| Emoji reactions | — | Yes |
-| Polls | — | Yes |
-| Analytics dashboard | — | Yes |
-| Custom badges | — | Yes |
-| Email digest | — | Yes |
-| Webhooks | — | Yes |
-| White label | — | Yes |
-| WooCommerce, LearnDash, RCP integrations | — | Yes |
+| AI integration (spam detection, moderation, thread summaries - Ollama-ready) | - | Yes |
+| Private messaging | - | Yes |
+| Emoji reactions | - | Yes |
+| Polls | - | Yes |
+| Analytics dashboard | - | Yes |
+| Custom badges | - | Yes |
+| Email digest | - | Yes |
+| Webhooks | - | Yes |
+| White label | - | Yes |
+| WooCommerce, LearnDash, RCP integrations | - | Yes |
 
 **Jetonomy Free** is available at wbcomdesigns.com at no cost. It covers everything a real community needs.
-**Jetonomy Pro** adds 14 modules — including AI Integration (new in 1.3.0) — for larger communities. Pricing at wbcomdesigns.com.
+**Jetonomy Pro** adds 14 modules - including AI Integration (new in 1.3.0) - for larger communities. Pricing at wbcomdesigns.com.
 
 ---
 
@@ -75,14 +76,14 @@ Jetonomy is a WordPress forum plugin built from the ground up for how WordPress 
 | Community managers | Replace a dated bbPress or wpForo install. Trust levels reduce moderation time. |
 | WordPress developers | Clean REST API, template overrides, adapter pattern. Deliver forum builds to clients. |
 | Course creators | Gate forum access by enrollment. Q&A spaces cut repeat support questions. |
-| SaaS product teams | Ideas boards replace spreadsheet-based feature voting. Self-hosted — no per-seat fees. |
+| SaaS product teams | Ideas boards replace spreadsheet-based feature voting. Self-hosted - no per-seat fees. |
 | Small business owners | 5-minute setup. Anti-spam built in. Looks native to any theme. |
 
 ---
 
 ## REQUIREMENTS
 
-PHP 8.1+ — WordPress 6.7+ — MySQL 5.7+
+PHP 8.1+ | WordPress 6.7+ | MySQL 5.7+
 
 ---
 

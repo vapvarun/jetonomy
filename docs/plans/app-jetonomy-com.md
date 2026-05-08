@@ -1,8 +1,8 @@
-# app.jetonomy.com — Laravel App Builder Platform
+# app.jetonomy.com - Laravel App Builder Platform
 
 ## Overview
 
-Central platform for Jetonomy customers to configure and build their branded mobile apps. Separate from the WordPress plugin ecosystem — fast, secure, Laravel-based.
+Central platform for Jetonomy customers to configure and build their branded mobile apps. Separate from the WordPress plugin ecosystem - fast, secure, Laravel-based.
 
 ## Tech Stack
 
@@ -53,8 +53,8 @@ app.jetonomy.com/dashboard
 │   ├── Login Background: [upload or color]
 │   └── Dark Mode Default: [toggle]
 ├── Builds
-│   ├── Android: Ready — [Download APK] — Built Mar 30, 2026
-│   ├── iOS: Ready — [Download IPA] — Built Mar 30, 2026
+│   ├── Android: Ready - [Download APK] - Built Mar 30, 2026
+│   ├── iOS: Ready - [Download IPA] - Built Mar 30, 2026
 │   └── [Request New Build]
 ├── Build History
 │   └── Table of past builds with status, date, download
@@ -130,7 +130,7 @@ Or embedded experience:
 
 ## OTA Updates (Post-Launch)
 
-Expo supports Over-The-Air JS updates — push bug fixes and features without app store resubmission. Customer's app auto-updates on next launch.
+Expo supports Over-The-Air JS updates - push bug fixes and features without app store resubmission. Customer's app auto-updates on next launch.
 
 Only native changes (new SDK, new permissions) require a full rebuild.
 
@@ -140,13 +140,13 @@ Only native changes (new SDK, new permissions) require a full rebuild.
 - S3 presigned URLs for downloads (expire after 24h)
 - Rate limiting on build requests (max 2/day per customer)
 - HTTPS only
-- No customer credentials stored — auth via license key + EDD validation
+- No customer credentials stored - auth via license key + EDD validation
 
 ## Pages
 
 | Route | What |
 |---|---|
-| `/` | Landing page — "Build your branded community app" |
+| `/` | Landing page - "Build your branded community app" |
 | `/login` | License key entry |
 | `/dashboard` | App config + builds |
 | `/dashboard/builds` | Build history |
@@ -157,27 +157,27 @@ Only native changes (new SDK, new permissions) require a full rebuild.
 | Tier | App Access |
 |---|---|
 | Free Jetonomy | Pay $99-199/year separately |
-| Pro Starter | Free — included |
-| Pro Growth | Free — included |
-| Pro Agency | Free — included |
-| Pro Lifetime | Free — included |
+| Pro Starter | Free - included |
+| Pro Growth | Free - included |
+| Pro Agency | Free - included |
+| Pro Lifetime | Free - included |
 
 ## Development Phases
 
-### Phase 1 — MVP (2-3 weeks)
+### Phase 1 - MVP (2-3 weeks)
 - Laravel project setup + deploy to droplet
 - Customer auth via EDD license validation
 - App config form (name, icon, colors)
 - GitHub Actions build workflow for Android
 - Build status + download link
 
-### Phase 2 — iOS + Polish (1-2 weeks)
+### Phase 2 - iOS + Polish (1-2 weeks)
 - iOS build support
 - Build history
 - OTA update pipeline
 - Customer documentation for app store submission
 
-### Phase 3 — wp-admin Integration (1 week)
+### Phase 3 - wp-admin Integration (1 week)
 - Pro plugin Settings → App tab
 - Inline config + build status via API
 - One-click "Open App Builder" with auto-login via license key

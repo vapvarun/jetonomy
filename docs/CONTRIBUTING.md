@@ -36,11 +36,11 @@ vendor/bin/phpstan analyse -c phpstan.neon.dist
 All data access goes through model classes that extend `Jetonomy\Models\Model`. No raw SQL outside `includes/db/`.
 
 ```php
-// Good — use model methods
+// Good - use model methods
 $post = Post::find( $id );
 Post::update( $id, [ 'title' => $title ] );
 
-// Bad — raw query in a controller
+// Bad - raw query in a controller
 $wpdb->get_row( "SELECT * FROM {$wpdb->prefix}jt_posts WHERE id = $id" );
 ```
 
@@ -71,10 +71,10 @@ All core settings live in one option: `get_option( 'jetonomy_settings', [] )`. N
 Denormalized counters (`reply_count`, `post_count`, `vote_score`) are updated inside `Model::create()` and `Model::delete()` methods. Never increment counters in controllers or hooks.
 
 ```php
-// Inside Reply::create() — correct
+// Inside Reply::create() - correct
 Space::increment_reply_count( $space_id );
 
-// Inside Replies_Controller::create_item() — wrong
+// Inside Replies_Controller::create_item() - wrong
 $wpdb->query( "UPDATE ... SET reply_count = reply_count + 1" );
 ```
 

@@ -1,4 +1,4 @@
-Move your existing wpForo community into Jetonomy — forums, topics, replies, user profiles, and reputation data — using the built-in wpForo importer.
+Move your existing wpForo community into Jetonomy - forums, topics, replies, user profiles, and reputation data - using the built-in wpForo importer.
 
 ![Import tool with wpForo source selected and migration progress](../images/admin-import.png)
 
@@ -36,20 +36,20 @@ Move your existing wpForo community into Jetonomy — forums, topics, replies, u
 
 wpForo and Jetonomy structure their data differently in a few key areas:
 
-**Multi-board support** — wpForo supports multiple boards, each with its own set of forums, topics, and posts stored in separate database tables (e.g., `wp_wpforo1_forums` for board 1, `wp_wpforo2_forums` for board 2). The importer automatically detects all active boards and imports each into its own Jetonomy category. Single-board installs work without any extra configuration.
+**Multi-board support** - wpForo supports multiple boards, each with its own set of forums, topics, and posts stored in separate database tables (e.g., `wp_wpforo1_forums` for board 1, `wp_wpforo2_forums` for board 2). The importer automatically detects all active boards and imports each into its own Jetonomy category. Single-board installs work without any extra configuration.
 
-**Forums and categories** — Within each board, wpForo uses a hierarchical forums table. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates a Jetonomy category per board and spaces from the forums within each board.
+**Forums and categories** - Within each board, wpForo uses a hierarchical forums table. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates a Jetonomy category per board and spaces from the forums within each board.
 
-**Post structure** — In wpForo, the first "post" of a topic is a reply in the same table. In Jetonomy, topics and replies are separate entities. The importer promotes the first wpForo post as the Jetonomy post body and imports subsequent posts as replies.
+**Post structure** - In wpForo, the first "post" of a topic is a reply in the same table. In Jetonomy, topics and replies are separate entities. The importer promotes the first wpForo post as the Jetonomy post body and imports subsequent posts as replies.
 
-**Reputation** — wpForo tracks reputation as a single integer. Jetonomy maps it directly as the starting reputation score. Trust levels are re-evaluated by the cron job after import based on your configured thresholds.
+**Reputation** - wpForo tracks reputation as a single integer. Jetonomy maps it directly as the starting reputation score. Trust levels are re-evaluated by the cron job after import based on your configured thresholds.
 
 ## Pre-Import Checklist
 
 1. **Back up your database.** The importer reads but never modifies wpForo tables, but a backup protects against any edge cases.
 2. **Activate Jetonomy** and complete the setup wizard.
-3. **Keep wpForo active** during the import — the importer reads from wpForo's live tables.
-4. **Check your wpForo table prefix.** If wpForo uses a custom prefix, confirm it in `wpforo_boards` — the importer auto-detects it.
+3. **Keep wpForo active** during the import - the importer reads from wpForo's live tables.
+4. **Check your wpForo table prefix.** If wpForo uses a custom prefix, confirm it in `wpforo_boards` - the importer auto-detects it.
 5. **Disable wpForo page caching** if active, to avoid stale data during the import process.
 
 > **Tip:** If you have over 50,000 topics, use WP-CLI to run the import. Browser-based imports on large databases can time out on shared hosting.
@@ -130,7 +130,7 @@ After the import completes:
 - [ ] Confirm that forum moderators have the Moderator role in their spaces
 - [ ] Go to **Settings → Permalinks** and click Save to flush rewrite rules
 - [ ] Remove or update any wpForo shortcodes on pages and widgets
-- [ ] Consider deactivating wpForo after confirming the import — it is no longer needed
+- [ ] Consider deactivating wpForo after confirming the import - it is no longer needed
 
 > **Note:** If your wpForo installation used a third-party plugin for member ratings or post reactions, those values are not included in the standard import. You can extend the importer using the `jetonomy_importers` filter.
 

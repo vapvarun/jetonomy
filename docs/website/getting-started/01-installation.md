@@ -8,7 +8,7 @@ Get Jetonomy running on your WordPress site in under five minutes. This guide co
 - Three ways to install Jetonomy
 - What Jetonomy sets up automatically on first activation
 
-> **See it running first** — [community.wbcomdesigns.com](https://community.wbcomdesigns.com/) is Wbcom's own support community, running Jetonomy in production. Browse the spaces, read the threads, and see how topics, replies, voting, trust levels, and moderation feel on a live site before you install. Public registration is open — you can sign up and ask a question there if you have one.
+> **See it running first** - [community.wbcomdesigns.com](https://community.wbcomdesigns.com/) is Wbcom's own support community, running Jetonomy in production. Browse the spaces, read the threads, and see how topics, replies, voting, trust levels, and moderation feel on a live site before you install. Public registration is open, so you can sign up and ask a question there if you have one.
 
 ## Requirements
 
@@ -23,7 +23,7 @@ Jetonomy requires a modern WordPress stack. Check these before installing.
 
 Jetonomy works with any WordPress theme. For the best visual result with zero extra configuration, use **BuddyX**.
 
-> **Note:** Jetonomy does not use WordPress custom post types. It stores all community data in its own optimized database tables (`wp_jt_*`). This is intentional — it gives your community the query performance and scalability that CPT-based plugins cannot match.
+> **Note:** Jetonomy does not use WordPress custom post types. It stores all community data in its own optimized database tables (`wp_jt_*`). This is intentional - it gives your community the query performance and scalability that CPT-based plugins cannot match.
 
 ## Installation
 
@@ -51,7 +51,7 @@ Jetonomy sets everything up automatically the first time you activate it. You do
 
 **Database tables created (24 total):**
 
-Jetonomy creates 24 custom tables under the `wp_jt_` prefix — one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more.
+Jetonomy creates 24 custom tables under the `wp_jt_` prefix, one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more.
 
 **WordPress capabilities registered:**
 
@@ -67,8 +67,8 @@ Your community URLs (e.g. `yoursite.com/community/`) are registered and rewrite 
 
 Two background jobs are scheduled via WP-Cron:
 
-- **Trust level evaluation** — runs every 12 hours to promote members who have earned higher trust levels.
-- **Notification digests** — runs daily and weekly (Jetonomy Pro).
+- **Trust level evaluation** - runs every 12 hours to promote members who have earned higher trust levels.
+- **Notification digests** - runs daily and weekly (Jetonomy Pro).
 
 After activation, you will see a blue notice at the top of your dashboard:
 
@@ -78,9 +78,19 @@ Click that notice to launch the setup wizard and go live.
 
 > **Tip:** If you are migrating from bbPress, wpForo, or Asgaros Forum, activate Jetonomy first to complete setup, then use the importer at **Jetonomy → Import**. Your existing data is never touched until you explicitly start an import.
 
+## WordPress Multisite
+
+Jetonomy is multisite-compatible. When you network-activate the plugin from **Network Admin → Plugins**, Jetonomy automatically creates all required `wp_jt_*` database tables on every existing subsite in the network.
+
+New subsites created after network activation are also provisioned automatically. The moment WordPress adds a new subsite to the network, Jetonomy detects it and creates the required tables before any community activity can occur.
+
+> **Note:** Each subsite has its own independent set of `wp_{blog_id}_jt_*` tables and its own community data. Spaces, posts, and members are not shared across subsites.
+
+If you prefer per-site activation rather than network activation, install and activate Jetonomy on each subsite individually. Both approaches work correctly.
+
 ## Uninstalling
 
-If you deactivate Jetonomy, your data is preserved. Only a full uninstall (delete) removes the `wp_jt_*` tables, all plugin options, and all registered capabilities — giving you a clean removal with no database debris.
+If you deactivate Jetonomy, your data is preserved. Only a full uninstall (delete) removes the `wp_jt_*` tables, all plugin options, and all registered capabilities, giving you a clean removal with no database debris.
 
 ## What's Next?
 

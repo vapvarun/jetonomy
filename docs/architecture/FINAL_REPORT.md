@@ -1,4 +1,4 @@
-# Architecture Documentation — Final Report
+# Architecture Documentation - Final Report
 
 **Plugin:** Jetonomy (free)
 **Date:** 2026-03-24
@@ -67,13 +67,13 @@
 
 | Severity | Issue | Plan |
 |----------|-------|------|
-| High | `Admin` class is 2,132 lines — violates 750-line rule | `docs/superpowers/plans/2026-03-24-admin-class-split.md` |
+| High | `Admin` class is 2,132 lines - violates 750-line rule | `docs/superpowers/plans/2026-03-24-admin-class-split.md` |
 
 ---
 
 ## Next Steps
 
-1. **Execute admin-class-split plan** — extract 8 AJAX handler classes
+1. **Execute admin-class-split plan** - extract 8 AJAX handler classes
 2. **Update this docs** after the split (run `/codebase-architect --scope=verify` to check)
 3. **Run /codebase-architect on jetonomy-pro** for Pro architecture reference
-4. **Execute Pro meta-key-fix plan** — rename `META_LAST_DIGEST` constant
+4. **Execute Pro meta-key-fix plan** - rename `META_LAST_DIGEST` constant

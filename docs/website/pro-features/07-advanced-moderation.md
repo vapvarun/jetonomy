@@ -1,6 +1,6 @@
-Define rules that catch bad content automatically — before it ever appears in your community.
+Define rules that catch bad content automatically - before it ever appears in your community.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 <!-- TODO screenshot needed: Advanced moderation rules list in the admin panel (was ../images/pro-advanced-mod-rules-list.png) -->
 ## What You Will Learn
@@ -13,7 +13,7 @@ Define rules that catch bad content automatically — before it ever appears in 
 
 ## Why Auto-Moderation Matters
 
-Manual moderation does not scale. A single moderator reviewing every post works fine at 10 posts per day — it fails at 1,000. Auto-moderation rules handle the obvious cases automatically so your human moderators can focus on edge cases that require judgment.
+Manual moderation does not scale. A single moderator reviewing every post works fine at 10 posts per day - it fails at 1,000. Auto-moderation rules handle the obvious cases automatically so your human moderators can focus on edge cases that require judgment.
 
 Advanced Moderation complements the free trust level system. New members with Trust Level 0 are already rate-limited. Auto-moderation rules add a content layer on top of that.
 
@@ -31,7 +31,7 @@ Advanced Moderation complements the free trust level system. New members with Tr
 
 | Setting | Description |
 |---------|-------------|
-| **Name** | Internal label — members never see this |
+| **Name** | Internal label - members never see this |
 | **Pattern type** | Keyword, Regex, Link limit, or Spam score |
 | **Pattern** | The word, phrase, regex, or threshold to match |
 | **Action** | What happens when the rule triggers |
@@ -51,7 +51,7 @@ Example: `buy now, click here, limited offer`
 
 ### Regex
 
-Full regular expression matched against the post body. Use this for patterns a keyword list cannot capture — phone number patterns, URL shortener patterns, or obfuscated spam.
+Full regular expression matched against the post body. Use this for patterns a keyword list cannot capture - phone number patterns, URL shortener patterns, or obfuscated spam.
 
 Example: `\b(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b`
 
@@ -63,7 +63,7 @@ Triggers when a post or reply contains more than a set number of links. New spam
 
 ### Spam Score
 
-Jetonomy calculates a spam probability score (0–100) for each post based on content patterns, account age, and posting frequency. Set a threshold — any post above that score triggers the rule.
+Jetonomy calculates a spam probability score (0–100) for each post based on content patterns, account age, and posting frequency. Set a threshold - any post above that score triggers the rule.
 
 A threshold of 80 is a good starting point. Lower it only if you are seeing spam slip through.
 
@@ -80,15 +80,15 @@ Choose the least restrictive action that solves the problem. Use **Flag** for bo
 
 ## Rule Scope
 
-**Global rules** apply to every post and reply across all spaces. Use these for site-wide policies — prohibited words, adult content, competitor spam.
+**Global rules** apply to every post and reply across all spaces. Use these for site-wide policies - prohibited words, adult content, competitor spam.
 
-**Space-scoped rules** apply only within a specific space. Use these for space-specific norms — a Support space might block all links to prevent fishing attacks, while General Chat allows them freely.
+**Space-scoped rules** apply only within a specific space. Use these for space-specific norms - a Support space might block all links to prevent fishing attacks, while General Chat allows them freely.
 
 ## Rule Statistics
 
-The rules list shows a **Triggered** count for each rule — how many times it has fired since the rule was created. Click a rule to see a breakdown by action, by space, and a timeline chart.
+The rules list shows a **Triggered** count for each rule - how many times it has fired since the rule was created. Click a rule to see a breakdown by action, by space, and a timeline chart.
 
-Use this data to tune your rules. A rule that triggers 500 times in a week and sends everything to Spam probably needs a higher threshold — it is catching legitimate content.
+Use this data to tune your rules. A rule that triggers 500 times in a week and sends everything to Spam probably needs a higher threshold - it is catching legitimate content.
 
 ## What's Next?
 

@@ -19,7 +19,7 @@ Go to **Jetonomy → Settings** to access these options. All changes take effect
 
 This is the URL prefix for all Jetonomy pages on your site. With the default value, your community home is at `yoursite.com/community/`. Spaces live at `yoursite.com/community/s/space-name/`, and so on.
 
-You can change this to any URL-safe string — for example `forum`, `hub`, or `discuss`. Jetonomy automatically flushes rewrite rules when you change the base URL and save settings.
+You can change this to any URL-safe string, for example `forum`, `hub`, or `discuss`. Jetonomy automatically flushes rewrite rules when you change the base URL and save settings.
 
 > **Warning:** Changing the base URL after your community has content will break all existing links. If you must change it on a live site, set up 301 redirects from the old slug to the new one.
 
@@ -27,15 +27,16 @@ You can change this to any URL-safe string — for example `forum`, `hub`, or `d
 
 **Setting:** `default_space_type`
 **Default:** `forum`
-**Options:** Forum, Q&A, Ideas
+**Options:** Forum, Q&A, Ideas, Show & Tell
 
-When you create a new space in the admin, this setting pre-fills the **Type** dropdown. It is a convenience setting only — you can always change the type on any individual space. It does not affect existing spaces.
+When you create a new space in the admin, this setting pre-fills the **Type** dropdown. It is a convenience setting only - you can always change the type on any individual space. It does not affect existing spaces.
 
 Choose the type that best matches the primary purpose of your community:
 
-- **Forum** — open discussion, replies sorted by date
-- **Q&A** — questions and answers, accepted answers float to top
-- **Ideas** — feature requests and votes, status workflow
+- **Forum** - open discussion, replies sorted by date
+- **Q&A** - questions and answers, accepted answers float to top
+- **Ideas** - feature requests and votes, status workflow
+- **Show & Tell** - short-form cards, optional title, chronological feed
 
 ## Posts Per Page
 
@@ -43,7 +44,7 @@ Choose the type that best matches the primary purpose of your community:
 **Default:** `20`
 **Location:** General tab → Pagination section
 
-Controls how many posts appear per page in space listings and search results. A lower number is faster on large communities; a higher number reduces clicks for users who prefer scrolling.
+Controls how many posts appear per page in space listings and search results. A lower number is faster on large communities; a higher number reduces clicks for users who prefer scrolling. This value also controls how many additional posts load each time a member clicks **Load More** on a space listing.
 
 > **Tip:** For communities with 10,000+ posts per space, keep this at 20 or lower. Higher values increase page load time and database query time proportionally.
 
@@ -53,7 +54,7 @@ Controls how many posts appear per page in space listings and search results. A 
 **Default:** `20`
 **Location:** General tab → Pagination section
 
-Controls how many replies load per page inside a single post view. Pagination starts at the oldest replies and works forward. Members can jump to the last page to see the most recent replies.
+Controls how many replies load per page inside a single post view. This value also controls how many additional replies load each time a member clicks **Load More** in a thread. Pagination starts at the oldest replies and works forward. Members can jump to the last page to see the most recent replies.
 
 ## Guest Access
 
@@ -71,11 +72,15 @@ Turn this off if your community is members-only and you do not want any content 
 **Default:** `true` (on)
 **Location:** General tab → Access section
 
-When enabled, any action that writes data — posting, replying, voting, following — requires the user to be logged in. Guests are redirected to the WordPress login page.
+When enabled, any action that writes data (posting, replying, voting, following) requires the user to be logged in. Guests are redirected to the WordPress login page.
 
 This is always recommended on. Disable it only if you are running a very specific open-participation setup where anonymous contributions make sense.
 
 > **Note:** Even with guest access enabled, anonymous posting is not supported. "Guest access" means read-only browsing for logged-out visitors.
+
+## Settings Save Confirmations
+
+After you click **Save Changes**, a confirmation banner appears at the top of the settings page. The banner stays visible until you dismiss it - it does not disappear automatically. This ensures you always have a clear signal that your changes were saved.
 
 ## What's Next?
 

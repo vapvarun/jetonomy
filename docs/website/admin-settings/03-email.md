@@ -13,7 +13,7 @@ Go to **Jetonomy → Settings → Email** to access these settings.
 
 ## How Jetonomy Sends Email
 
-Jetonomy uses WordPress's built-in `wp_mail()` function for all outgoing notifications. This means it is immediately compatible with any SMTP plugin you already use — WP Mail SMTP, FluentSMTP, Postman, or any other. No extra configuration in Jetonomy is needed; just configure your SMTP plugin and Jetonomy benefits automatically.
+Jetonomy uses WordPress's built-in `wp_mail()` function for all outgoing notifications. This means it is immediately compatible with any SMTP plugin you already use - WP Mail SMTP, FluentSMTP, Postman, or any other. No extra configuration in Jetonomy is needed; just configure your SMTP plugin and Jetonomy benefits automatically.
 
 > **Tip:** On production sites, always use an SMTP plugin with a transactional email service (Mailgun, Postmark, SendGrid, SES). The default PHP `mail()` delivery is unreliable and frequently lands in spam.
 
@@ -23,7 +23,7 @@ Jetonomy uses WordPress's built-in `wp_mail()` function for all outgoing notific
 **Default:** Your WordPress site name
 **Location:** Email tab → Sender section
 
-This is the display name that appears in the **From** field of every Jetonomy notification email. Use your community or product name — something members will recognize immediately in their inbox.
+This is the display name that appears in the **From** field of every Jetonomy notification email. Use your community or product name - something members will recognize immediately in their inbox.
 
 ## From Address
 
@@ -52,7 +52,7 @@ Each notification type has an independent toggle for both **web** (in-app bell) 
 | Badge earned | On | Off |
 | New post in followed space | On | Off |
 
-Turning off a type at the site level disables it globally — individual members cannot re-enable a type you have disabled here. Use this to prevent email overload from noisy notification types.
+Turning off a type at the site level disables it globally - individual members cannot re-enable a type you have disabled here. Use this to prevent email overload from noisy notification types.
 
 > **Note:** Vote and badge notifications default to web-only because they can occur frequently. Email for every vote would quickly train members to ignore your community emails entirely.
 
@@ -72,13 +72,13 @@ If the test email does not arrive within a few minutes, check:
 
 Jetonomy Pro adds two additional email capabilities:
 
-- **Email Digest** — daily and weekly summary emails that bundle multiple notifications into one. Members set their preference per notification type.
-- **ESP Adapters** — native integrations for SendGrid, Mailgun, Amazon SES, and Postmark that bypass `wp_mail()` for higher throughput and detailed delivery analytics.
+- **Email Digest** - daily and weekly summary emails that bundle multiple notifications into one. Members set their preference per notification type.
+- **ESP Adapters** - native integrations for SendGrid, Mailgun, Amazon SES, and Postmark that bypass `wp_mail()` for higher throughput and detailed delivery analytics.
 
 Both are managed via **Jetonomy → Extensions** after installing Jetonomy Pro.
 
 ## What's Next?
 
-Control the visual appearance of your community — accent color, font inheritance, layout density, and custom CSS.
+Control the visual appearance of your community - accent color, font inheritance, layout density, and custom CSS.
 
 [Appearance Settings →](04-appearance.md)

@@ -1,4 +1,4 @@
-Jetonomy exposes a full REST API under the `jetonomy/v1` namespace — 48+ endpoints in the free plugin, plus 40+ additional endpoints when Jetonomy Pro is active (90+ total). All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
+Jetonomy exposes a full REST API under the `jetonomy/v1` namespace: 48+ endpoints in the free plugin, plus 40+ additional endpoints when Jetonomy Pro is active (90+ total). All endpoints return JSON and integrate with WordPress nonce authentication via the `wp_rest` nonce.
 
 **Base URL:** `https://example.com/wp-json/jetonomy/v1/`
 
@@ -36,7 +36,7 @@ Manage the top-level taxonomy that groups Spaces.
 | PATCH | `/categories/{id}` | `manage_options` | Update a category |
 | DELETE | `/categories/{id}` | `manage_options` | Delete a category |
 
-**GET /categories — example**
+**GET /categories - example**
 
 ```javascript
 const res  = await fetch( '/wp-json/jetonomy/v1/categories' );
@@ -65,7 +65,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | POST | `/spaces/{id}/invite` | Moderator / Admin | Generate an invite link |
 | GET | `/invite/{token}` | Public | Resolve an invite token |
 
-**GET /spaces — parameters**
+**GET /spaces - parameters**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -102,7 +102,7 @@ Posts are individual discussion threads (topics) inside a Space.
 | GET | `/posts/drafts` | Logged in | List current user's drafts |
 | GET | `/link-preview` | Public | Fetch OG metadata for a URL |
 
-**GET /spaces/{space_id}/posts — parameters**
+**GET /spaces/{space_id}/posts - parameters**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -113,7 +113,7 @@ Posts are individual discussion threads (topics) inside a Space.
 | `tag` | string | — | Filter by tag slug |
 | `status` | string | `publish` | `publish`, `draft` (author/mod only) |
 
-**POST /spaces/{space_id}/posts — body**
+**POST /spaces/{space_id}/posts - body**
 
 ```javascript
 await fetch( `/wp-json/jetonomy/v1/spaces/${spaceId}/posts`, {
@@ -129,19 +129,19 @@ await fetch( `/wp-json/jetonomy/v1/spaces/${spaceId}/posts`, {
 } );
 ```
 
-**POST /posts/{id}/move — body**
+**POST /posts/{id}/move - body**
 
 ```javascript
 { target_space_id: 42 }
 ```
 
-**POST /posts/{id}/merge — body**
+**POST /posts/{id}/merge - body**
 
 ```javascript
 { target_post_id: 17 }
 ```
 
-**GET /link-preview — parameters**
+**GET /link-preview - parameters**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -164,7 +164,7 @@ Replies are threaded responses to a Post.
 | DELETE | `/replies/{id}` | Author / Moderator | Delete a reply |
 | POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer |
 
-**GET /posts/{post_id}/replies — parameters**
+**GET /posts/{post_id}/replies - parameters**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -206,7 +206,7 @@ Response includes `vote_score` (current net score) and `user_vote` (the caller's
 
 ## Search
 
-Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` with Boolean Mode by default. Swap to a custom search adapter (Meilisearch, Algolia, etc.) via the Adapter System — see [05-adapters.md](./05-adapters.md).
+Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` with Boolean Mode by default. Swap to a custom search adapter (Meilisearch, Algolia, etc.) via the Adapter System. See [05-adapters.md](./05-adapters.md).
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
@@ -251,7 +251,7 @@ const data = await res.json();
 | POST | `/tags` | Logged in (trust level 1+) | Create a tag |
 | GET | `/space-tags` | Public | List tags filtered to a space |
 
-**GET /space-tags — parameters**
+**GET /space-tags - parameters**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -268,7 +268,7 @@ const data = await res.json();
 | POST | `/notifications/mark-all-read` | Logged in | Mark all notifications read |
 | PATCH | `/notifications/{id}` | Logged in | Mark a single notification read |
 
-**GET /notifications — parameters**
+**GET /notifications - parameters**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -308,7 +308,7 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | POST | `/moderation/ban` | Moderator | Ban a user |
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
 
-**POST /moderation/bulk — body**
+**POST /moderation/bulk - body**
 
 ```javascript
 {
@@ -329,7 +329,7 @@ Returns per-item results so partial failures are visible:
 
 `{type}` in approve/spam/trash routes is either `post` or `reply`.
 
-**POST /flags — body**
+**POST /flags - body**
 
 ```javascript
 {
@@ -339,13 +339,13 @@ Returns per-item results so partial failures are visible:
 }
 ```
 
-**POST /moderation/ban — body**
+**POST /moderation/ban - body**
 
 ```javascript
 {
     user_id:  123,
     reason:   'Repeated spam',
-    duration: 7,           // days — omit for permanent ban
+    duration: 7,           // days - omit for permanent ban
 }
 ```
 
@@ -377,7 +377,7 @@ Returns per-item results so partial failures are visible:
 | GET | `/users/by-login/{login}` | Public | Look up a user by login slug |
 | GET | `/users/{id}/posts` | Public | List posts by this user |
 
-**PATCH /users/{id} — updatable fields**
+**PATCH /users/{id} - updatable fields**
 
 ```javascript
 {
@@ -404,7 +404,7 @@ The Updates endpoint powers the "N new replies" banner in single-post view. It i
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `since` | string | ISO 8601 timestamp — returns items created after this |
+| `since` | string | ISO 8601 timestamp. Returns items created after this time. |
 | `post_id` | int | If provided, returns new reply count for that post |
 
 ---
@@ -425,7 +425,7 @@ The following endpoints are available only when **Jetonomy Pro** is active and t
 | POST | `/conversations/{id}/messages` | Participant + TL 1+ | Send a message |
 | GET | `/conversations/unread-count` | Logged in | Unread message count (30s cache) |
 
-**POST /conversations — body**
+**POST /conversations - body**
 
 ```javascript
 {
@@ -491,6 +491,6 @@ Common error codes:
 
 ## What's Next?
 
-- [Hooks Reference](./02-hooks-reference.md) — React to Jetonomy events in your own plugin
-- [Template Overrides](./03-template-overrides.md) — Customize the frontend without touching plugin files
-- [Adapter System](./05-adapters.md) — Swap the search backend or add a real-time layer
+- [Hooks Reference](./02-hooks-reference.md) - React to Jetonomy events in your own plugin
+- [Template Overrides](./03-template-overrides.md) - Customize the frontend without touching plugin files
+- [Adapter System](./05-adapters.md) - Swap the search backend or add a real-time layer

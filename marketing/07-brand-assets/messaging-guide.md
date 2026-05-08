@@ -4,9 +4,9 @@
 
 **Headline:** The Modern Forum Plugin for WordPress
 
-**Tagline:** Forums, Q&A, and idea boards — built for communities that grow.
+**Tagline:** Forums, Q&A, idea boards, and Show & Tell - built for communities that grow.
 
-**Value Proposition:** Jetonomy adds a fast, self-moderating discussion platform to any WordPress site — with custom database tables for performance, trust levels that automate moderation, and a design that adapts to your theme.
+**Value Proposition:** Jetonomy adds a fast, self-moderating discussion platform to any WordPress site. Custom database tables for performance, trust levels that automate moderation, and a design that adapts to your theme.
 
 **Elevator Pitch (30 seconds):**
 Most WordPress forum plugins store everything in wp_posts and require constant manual moderation. Jetonomy uses custom database tables that scale to 50,000+ topics, a trust level system that lets the community moderate itself, and CSS custom properties that match any theme automatically. Free version covers forums, Q&A, ideas, search, notifications, and moderation. Pro adds reactions, messaging, polls, badges, and analytics.

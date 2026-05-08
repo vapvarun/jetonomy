@@ -2,6 +2,6 @@
 # Generated: 2026-03-24
 # Total: 3
 
-[x] assets/js/view.js | purpose:Interactivity API store — voting, sorting, polls | status:documented
+[x] assets/js/view.js | purpose:Interactivity API store - voting, sorting, polls | status:documented
 [x] assets/js/admin.js | purpose:Admin UI (categories, spaces, moderation, content AJAX) | status:documented
 [x] assets/js/composer.js | purpose:Post/reply composer (rich text, attachments) | status:documented

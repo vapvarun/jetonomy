@@ -13,7 +13,7 @@ Email notifications bring members back to your community even when they are not 
 
 ## Which Notification Types Send Email
 
-Every notification type that appears in the in-app bell can also send an email. The email mirrors the in-app notification — it names the event, shows a short excerpt of the content, and includes a direct link back to the relevant topic or reply.
+Every notification type that appears in the in-app bell can also send an email. The email mirrors the in-app notification - it names the event, shows a short excerpt of the content, and includes a direct link back to the relevant topic or reply.
 
 | Notification type | Email sent by default |
 |-------------------|-----------------------|
@@ -31,14 +31,14 @@ The defaults above are what Jetonomy applies when a new member signs up. You can
 
 ## Editable Email Templates *(updated in 1.4.1)*
 
-Every notification email Jetonomy sends has an editable template — subject and body — at **Jetonomy → Settings → Email → Templates**. Change the wording to match your community's voice without writing any code.
+Every notification email Jetonomy sends has an editable template - subject and body - at **Jetonomy → Settings → Email → Templates**. Change the wording to match your community's voice without writing any code.
 
 Two improvements landed in 1.4.1 that are worth knowing about:
 
-- **Reset to default button** on every template — one click restores the shipped subject and body. No more retyping if you change your mind or want to start over.
+- **Reset to default button** on every template - one click restores the shipped subject and body. No more retyping if you change your mind or want to start over.
 - **Verification reminder template** is now editable from the same screen. The reminder fires once per member, 24 hours after sign-up, if they haven't clicked the verification link in their welcome email. The interval is configurable.
 
-Defaults now have a single source of truth so reset always restores the exact copy the plugin ships with — even if a future update changes the default wording, your reset still gets the version you'd see on a fresh install.
+Defaults now have a single source of truth so reset always restores the exact copy the plugin ships with - even if a future update changes the default wording, your reset still gets the version you'd see on a fresh install.
 
 ## Configuring Default Settings
 
@@ -46,7 +46,7 @@ Go to **Jetonomy → Settings → Email** to set the community-wide defaults.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Email notifications enabled | Yes | Master switch — turns off all notification email for the site |
+| Email notifications enabled | Yes | Master switch - turns off all notification email for the site |
 | Default: reply notifications | Yes | Whether new members receive reply emails by default |
 | Default: mention notifications | Yes | Whether new members receive mention emails by default |
 | Default: followed space notifications | No | Whether new members receive followed-space emails by default |
@@ -60,25 +60,25 @@ Changes to defaults apply only to new members who sign up after the change. Exis
 
 Each member can override the defaults from their profile settings at `/community/u/their-username/edit/` under the **Notifications** tab. Every notification type has a separate toggle for in-app and email delivery.
 
-Members can disable all notification emails at once with the **Pause all email** toggle. This is the equivalent of a temporary snooze — all preferences are preserved so they can turn email back on later.
+Members can disable all notification emails at once with the **Pause all email** toggle. This is the equivalent of a temporary snooze - all preferences are preserved so they can turn email back on later.
 
 ## One-Click Unsubscribe
 
 Every notification email sent by Jetonomy includes an unsubscribe link in the footer. Clicking it takes the member to a confirmation page where they can unsubscribe from that specific notification type or from all notification emails in one click.
 
-No login is required to unsubscribe — the link contains a signed token that authenticates the action. This keeps unsubscribe rates low and means members who receive an email do not need to remember their password to opt out.
+No login is required to unsubscribe - the link contains a signed token that authenticates the action. This keeps unsubscribe rates low and means members who receive an email do not need to remember their password to opt out.
 
 ## How Jetonomy Sends Email
 
-Jetonomy uses WordPress's `wp_mail()` function to send all notification emails. This means it automatically works with any SMTP plugin you have installed — WP Mail SMTP, FluentSMTP, Postmark, Mailgun, or any other `wp_mail` compatible provider.
+Jetonomy uses WordPress's `wp_mail()` function to send all notification emails. This means it automatically works with any SMTP plugin you have installed - WP Mail SMTP, FluentSMTP, Postmark, Mailgun, or any other `wp_mail` compatible provider.
 
-No additional configuration is needed in Jetonomy when you add an SMTP plugin — it just works.
+No additional configuration is needed in Jetonomy when you add an SMTP plugin - it just works.
 
 > **Note:** If you send high volumes of notification email, use a dedicated transactional email provider (Postmark, Mailgun, Sendgrid) rather than your hosting server's mail. Dedicated providers give you delivery tracking, bounce handling, and higher sending limits.
 
 ## Email Digest (Jetonomy Pro)
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 The Email Digest feature bundles all notifications from a configurable time window into a single summary email. Members can choose daily or weekly digests instead of receiving individual emails for each event. This dramatically reduces email volume for active community members while keeping them informed.
 

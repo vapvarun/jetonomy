@@ -125,7 +125,7 @@ For growing communities that need more, [Jetonomy Pro](https://store.wbcomdesign
 
 | Extension | What it does |
 |-----------|-------------|
-| AI Integration | Spam detection, auto-moderation, reply suggestions, thread summaries — OpenAI, Anthropic, or self-hosted Ollama |
+| AI Integration | Spam detection, auto-moderation, reply suggestions, thread summaries - OpenAI, Anthropic, or self-hosted Ollama |
 | Emoji Reactions | Slack-style reactions on posts and replies |
 | Private Messaging | 1:1 and group conversations |
 | Polls | Community voting within posts |
@@ -228,12 +228,12 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 ### 1.4.0 (April 2026)
 
 **For people who run a space**
-- Edit a space from the front end — title, description, cover, icon, type, visibility, join policy, category, posts-per-page, prefixes
+- Edit a space from the front end - title, description, cover, icon, type, visibility, join policy, category, posts-per-page, prefixes
 - Create a space from the front end. Pick which WordPress roles can use the form in Settings → Front-end space creation
 - "My Spaces" page lists every space you run + every space you're in
-- Visual icon picker — 16 icons with search and "Show more" for 8 extras
+- Visual icon picker - 16 icons with search and "Show more" for 8 extras
 - Cover image uploader works without the WordPress upload-files permission
-- Role dropdown can't accidentally orphan a space — no self-demote, no last-admin-out
+- Role dropdown can't accidentally orphan a space - no self-demote, no last-admin-out
 
 **For members**
 - @mention autocomplete in the composer
@@ -246,12 +246,12 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 - Every public page now ships full search and social cards (title, meta description, canonical, Open Graph, Twitter / X, structured data)
 - Smart fallback share image when a page has no image of its own
 - Pages not meant for search (moderation, search, composer, notifications) excluded automatically
-- Richer structured data — Sitelinks Searchbox on home, Person cards on profiles, Collection indexes on spaces and tags, breadcrumbs everywhere
+- Richer structured data - Sitelinks Searchbox on home, Person cards on profiles, Collection indexes on spaces and tags, breadcrumbs everywhere
 - Settings → SEO grew Twitter / X handle, default share image, sitemap link
 - Image alt text fills in automatically on upload
 
 **Sign-in**
-- Login, register, forgot-password — all faster, all in-page (no wp-login.php bounce)
+- Login, register, forgot-password - all faster, all in-page (no wp-login.php bounce)
 - Captcha now actually fires on signup when configured
 
 **Polish**
@@ -293,83 +293,83 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 - Fix: "Message" actions on the Top Members widget and profile hover cards now open the working compose flow
 
 ### 1.3.5 (April 2026)
-- New: Jetonomy Navigation block — permission-aware Category/Space tree for sidebars, scales to thousands of spaces
-- New: Jetonomy Login block — inline login/register panel with rate limiting and nonce protection (renders nothing for logged-in users — no layout shift)
+- New: Jetonomy Navigation block - permission-aware Category/Space tree for sidebars, scales to thousands of spaces
+- New: Jetonomy Login block - inline login/register panel with rate limiting and nonce protection (renders nothing for logged-in users - no layout shift)
 - Fix: Inline editor no longer collapses paragraphs into a single run-on line on save; historical flattened posts render with paragraphs restored on next page load
-- Release hygiene: `bin/build-release.sh` is now the only path to a release zip — enforces clean-tree gate, version triangulation (Version header + constant + readme Stable tag), production composer install, `php -l` on every staged file, smoke test through `plugins_loaded` + `init`, zip/re-extract/re-smoke-test
+- Release hygiene: `bin/build-release.sh` is now the only path to a release zip - enforces clean-tree gate, version triangulation (Version header + constant + readme Stable tag), production composer install, `php -l` on every staged file, smoke test through `plugins_loaded` + `init`, zip/re-extract/re-smoke-test
 
 ### 1.3.4 (April 2026)
-- New: Akismet bypass for admin/space-admin/moderator replies — staff answers no longer quarantined on support communities
+- New: Akismet bypass for admin/space-admin/moderator replies - staff answers no longer quarantined on support communities
 - New: One-click "Approve" / "Not Spam" action in Replies and Posts admin lists for content held for moderation
 - New: Moderation queue REST endpoint accepts `status=pending|spam|all`
-- New: Bulk trust-level promotion via admin API — useful after migrations and onboarding batches
-- New: Spaces now track real membership — posting or replying in an open space auto-joins the author; one-time upgrade back-fills historical authors
+- New: Bulk trust-level promotion via admin API - useful after migrations and onboarding batches
+- New: Spaces now track real membership - posting or replying in an open space auto-joins the author; one-time upgrade back-fills historical authors
 - Fix: Approve/spam/trash actions from the admin list now correctly update denormalized topic, reply, and member counters
 - New: Admin counter-rebuild tool extended to repair member-count drift (the 1.3.3 tool now covers members too)
 
 ### 1.3.3 (April 2026)
-- New: Access Control collapsed from three options to two — "Public community" and "Private community"; existing installs migrated automatically
-- New: Admin counter rebuild button — refresh topic, reply, and vote counters when they drift after a bulk import or manual DB change (no WP-CLI required)
+- New: Access Control collapsed from three options to two - "Public community" and "Private community"; existing installs migrated automatically
+- New: Admin counter rebuild button - refresh topic, reply, and vote counters when they drift after a bulk import or manual DB change (no WP-CLI required)
 - New: Imported/seeded topics preserve their original `created_at` timestamp instead of being stamped with today's date
 - Fix: "Default Space Type" setting now actually applies when creating new spaces (both admin UI and REST API); previously defaulted to Forum regardless
 
 ### 1.3.2 (April 2026)
 - Fix: Setup wizard PHP deprecation warnings under PHP 8.1+ with WordPress 6.4+ (`strip_tags(null)`, `print_emoji_styles`, `wp_admin_bar_header`)
-- New: `jetonomy_new_post_submit_action` filter — Pro extensions can intercept the new-post form submit URL without mutating DOM after hydration
+- New: `jetonomy_new_post_submit_action` filter - Pro extensions can intercept the new-post form submit URL without mutating DOM after hydration
 
 ### 1.3.1 (April 2026)
-- Fix: Theme button hover styles no longer bleed into Jetonomy button states — scoped CSS reset for BuddyX/Reign compatibility
+- Fix: Theme button hover styles no longer bleed into Jetonomy button states - scoped CSS reset for BuddyX/Reign compatibility
 
 ### 1.3.0 (April 2026)
 
 **Share forum threads anywhere**
-- New: Outbound oEmbed — thread URLs unfurl in Slack, Twitter/X, Discord, Facebook, and other WordPress sites with a rich preview card (title, author, excerpt, thumbnail)
-- New: Inbound embed expansion — pasted YouTube, Vimeo, SoundCloud, Spotify, TED Talks and other supported links in posts or replies render as embedded players instead of plain URLs
-- New: Instagram + Facebook embed support via optional Meta Developer App credentials — Settings → SEO → Social Embeds card with a collapsible 6-step setup guide; empty credentials = graceful plain-link fallback
-- New: Richer Open Graph + Twitter Card meta on every thread page — `og:type=article`, `article:author`, `article:published_time`, `article:section`, first-inline-image as `og:image`
+- New: Outbound oEmbed - thread URLs unfurl in Slack, Twitter/X, Discord, Facebook, and other WordPress sites with a rich preview card (title, author, excerpt, thumbnail)
+- New: Inbound embed expansion - pasted YouTube, Vimeo, SoundCloud, Spotify, TED Talks and other supported links in posts or replies render as embedded players instead of plain URLs
+- New: Instagram + Facebook embed support via optional Meta Developer App credentials - Settings → SEO → Social Embeds card with a collapsible 6-step setup guide; empty credentials = graceful plain-link fallback
+- New: Richer Open Graph + Twitter Card meta on every thread page - `og:type=article`, `article:author`, `article:published_time`, `article:section`, first-inline-image as `og:image`
 
 **Theme compatibility**
-- New: BuddyX, BuddyX Pro, and Reign theme color + dark mode bridge — forum accent and dark scheme automatically match the active theme with zero custom CSS
-- New: Unified Design Token Bridge — `--jt-*` tokens reference BuddyNext, then theme.json, then hardcoded fallbacks
+- New: BuddyX, BuddyX Pro, and Reign theme color + dark mode bridge - forum accent and dark scheme automatically match the active theme with zero custom CSS
+- New: Unified Design Token Bridge - `--jt-*` tokens reference BuddyNext, then theme.json, then hardcoded fallbacks
 
 **AI moderation**
-- New: AI Adapter Layer — pluggable interface for AI providers with built-in self-hosted Ollama support
+- New: AI Adapter Layer - pluggable interface for AI providers with built-in self-hosted Ollama support
 - New: AI-powered spam detection for new posts and replies (free, local, no API costs)
 
 **Mobile UX pass**
-- New: `docs/DESIGN-SYSTEM.md` — long-term UI/UX source of truth (breakpoints, typography scale, spacing scale, component patterns, anti-patterns)
-- New: Token scale — `--jt-space-1..12`, `--jt-text-2xs..3xl`, `--jt-tap` (40px)
+- New: `docs/DESIGN-SYSTEM.md` - long-term UI/UX source of truth (breakpoints, typography scale, spacing scale, component patterns, anti-patterns)
+- New: Token scale - `--jt-space-1..12`, `--jt-text-2xs..3xl`, `--jt-tap` (40px)
 - New: Community nav uses Lucide icons with `title` tooltips on mobile, icon+label on desktop/tablet
 - New: Post + reply action bars are uniformly icon-only on mobile (vote / share / bookmark / quote / report / more / react)
 - Fix: Topic listing title/count column rebalance on mobile so titles get 76% of the row width
-- Fix: Post meta row (`.jt-meta`) — "3 weeks ago" no longer breaks mid-word on narrow viewports
-- Fix: Firefox time picker on scheduled publish form — split `datetime-local` into separate `date` + `time` inputs so Firefox shows proper native pickers
+- Fix: Post meta row (`.jt-meta`) - "3 weeks ago" no longer breaks mid-word on narrow viewports
+- Fix: Firefox time picker on scheduled publish form - split `datetime-local` into separate `date` + `time` inputs so Firefox shows proper native pickers
 - Fix: Publish mode menu flash-of-visible-content on the new topic form
-- Fix: Preact/Interactivity API hydration console warnings from inline `onclick` attributes — replaced with delegated handlers using `data-jt-href`
+- Fix: Preact/Interactivity API hydration console warnings from inline `onclick` attributes - replaced with delegated handlers using `data-jt-href`
 - Fix: More menu 3-dots dropdown now visible on touch devices (hover-reveal was hiding it)
 
 **Extensibility**
 - New: 6 ad/content injection hooks for sidebar and reply flow (`jetonomy_sidebar_*`, `jetonomy_reply_*`, `jetonomy_sidebar_after_about`)
-- New: `before_delete_*` filters on every model — third-party plugins can reject deletions by returning `WP_Error`
+- New: `before_delete_*` filters on every model - third-party plugins can reject deletions by returning `WP_Error`
 - New: Query args filters on every model list method (`jetonomy_posts_query_args`, `jetonomy_spaces_query_args`, etc.)
-- New: Base slug 301 redirect — changing community base in settings now permanently redirects old URLs for SEO continuity
-- New: WP-CLI command module — 13 command roots covering every user/admin journey, plus 5 bundled scenarios (`wp jetonomy scenario run <name>`)
+- New: Base slug 301 redirect - changing community base in settings now permanently redirects old URLs for SEO continuity
+- New: WP-CLI command module - 13 command roots covering every user/admin journey, plus 5 bundled scenarios (`wp jetonomy scenario run <name>`)
 
 **Quality + CI**
-- New: GitHub Actions CI pipeline — PHP Lint (8.1–8.4), WPCS, PHPStan level 5, Plugin Check (PCP), PHPUnit matrix
+- New: GitHub Actions CI pipeline - PHP Lint (8.1–8.4), WPCS, PHPStan level 5, Plugin Check (PCP), PHPUnit matrix
 - New: `composer test:free` and `composer test:combo` scripts
-- Improvement: WP_Error checks at every model caller site — prevents fatal errors when `before_delete` hooks reject an operation
+- Improvement: WP_Error checks at every model caller site - prevents fatal errors when `before_delete` hooks reject an operation
 - Improvement: `has_more` pagination accuracy across every list endpoint
 - Improvement: InnoDB engine enforced on all 23 custom tables (migration 1.2.3)
 - Improvement: Vote operations wrapped in DB transactions
-- Improvement: Spaces N+1 query eliminated — visibility filter moved to SQL `LEFT JOIN`
+- Improvement: Spaces N+1 query eliminated - visibility filter moved to SQL `LEFT JOIN`
 - Improvement: `jt_notifications.object_type` ENUM extended with `'message'` so Pro private-messaging notifications persist cleanly
 
 **Bug fixes**
 - Fix: `posts_per_page` space setting now actually applies to the topic listing
 - Fix: Guarded EDD Software Licensing SDK's `plugins_api_filter` against non-object `$_data`
-- Fix: Space settings merge (not replace) on save — previously full JSON replacement dropped keys
-- Fix: 10 earlier customer-reported bugs — BP compat crash, notification defaults, vote state indicator, admin View link, join request admin UI, post scheduling defaults, settings write consistency, REST nonce handling, fetch cookie credentials
+- Fix: Space settings merge (not replace) on save - previously full JSON replacement dropped keys
+- Fix: 10 earlier customer-reported bugs - BP compat crash, notification defaults, vote state indicator, admin View link, join request admin UI, post scheduling defaults, settings write consistency, REST nonce handling, fetch cookie credentials
 - Fix: PHP 8.1 `bool` return type compat
 - Fix: Double reply counter increment on new reply
 - Fix: Space settings cache invalidation

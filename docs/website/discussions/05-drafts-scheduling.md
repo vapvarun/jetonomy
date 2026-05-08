@@ -48,7 +48,7 @@ Draft posts do not count toward any community statistics until they are publishe
 - They do not appear in search results.
 - They do not appear on your public profile's Posts tab.
 
-The moment a draft is published — either manually or via scheduled publishing — all of the above update immediately.
+The moment a draft is published, either manually or via scheduled publishing, all of the above update immediately.
 
 ## Scheduling a Post
 
@@ -72,9 +72,9 @@ Jetonomy checks for scheduled posts using WordPress Cron (WP-Cron). The check ru
 
 This means a post scheduled for 9:00 AM may publish at any point between 9:00 AM and 10:00 AM, depending on when the next site visitor triggers a cron run.
 
-> **Note:** If your site uses a server-side cron (via `crontab`) instead of WP-Cron, scheduled posts will publish more precisely — within one minute of the scheduled time. Ask your host or developer to configure a real cron job if timing precision matters for your community.
+> **Note:** If your site uses a server-side cron (via `crontab`) instead of WP-Cron, scheduled posts will publish more precisely, within one minute of the scheduled time. Ask your host or developer to configure a real cron job if timing precision matters for your community.
 
-If a post's scheduled time is missed — for example, because WP-Cron did not run during a low-traffic period — Jetonomy will publish it the next time cron runs. It never silently drops a scheduled post.
+If a post's scheduled time is missed (for example, because WP-Cron did not run during a low-traffic period), Jetonomy will publish it the next time cron runs. It never silently drops a scheduled post.
 
 ## The Split-Button UI
 
@@ -87,6 +87,6 @@ The left side updates based on context. When you are editing a draft, the left s
 
 ## What's Next?
 
-Learn the full set of moderation tools available to space moderators — moving, merging, splitting, pinning, closing, and deleting topics.
+Learn the full set of moderation tools available to space moderators: moving, merging, splitting, pinning, closing, and deleting topics.
 
 [Topic Management →](06-topic-management.md)

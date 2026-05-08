@@ -8,11 +8,11 @@ The online status green dot shows which members are currently active in your com
 - Where online status is displayed across the community
 - Where it is intentionally not shown and why
 - How Jetonomy tracks activity without overloading the database
-- That no setup is needed — it works automatically
+- That no setup is needed - it works automatically
 
 ## When the Green Dot Appears
 
-A green dot appears on a member's avatar when they have been active in the community within the last 5 minutes. Active means any authenticated page load or interaction — visiting a topic, posting a reply, casting a vote, or navigating between pages.
+A green dot appears on a member's avatar when they have been active in the community within the last 5 minutes. Active means any authenticated page load or interaction - visiting a topic, posting a reply, casting a vote, or navigating between pages.
 
 After 5 minutes of inactivity, the dot disappears automatically on the next page load that renders it.
 
@@ -32,7 +32,7 @@ The green dot is shown in these locations:
 
 ## Why Not on Topic Listing Rows
 
-Topic listing pages can show dozens of topics, each by a different author. Rendering the online status for every author on that page would require checking multiple records in a single request — potentially 20 to 50 lookups per page view on an active community.
+Topic listing pages can show dozens of topics, each by a different author. Rendering the online status for every author on that page would require checking multiple records in a single request - potentially 20 to 50 lookups per page view on an active community.
 
 Jetonomy deliberately omits the online dot from listing rows to keep those pages fast. The detail-level contexts (reply cards, profiles, widgets) are the right place for presence information because you are already focused on a specific member.
 

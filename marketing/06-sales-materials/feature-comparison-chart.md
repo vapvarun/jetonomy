@@ -1,7 +1,7 @@
-# Jetonomy vs bbPress vs wpForo — Feature Comparison
+# Jetonomy vs bbPress vs wpForo - Feature Comparison
 
-**Version:** 1.3.0
-**Last updated:** April 2026
+**Version:** 1.4.2
+**Last updated:** May 2026
 
 ---
 
@@ -18,12 +18,13 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
 | Data storage | 24 custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
-| Avoids wp_postmeta bloat | Yes | No — heavy wp_postmeta use | Yes |
+| Avoids wp_postmeta bloat | Yes | No - heavy wp_postmeta use | Yes |
 | Denormalized counters (no COUNT on load) | Yes | No | Partial |
 | Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial |
-| Cursor-based pagination | Yes | No — offset only | No — offset only |
-| Tested at 50K+ topics | Yes — sub-200ms with Redis | No documented scale testing | Limited documentation |
-| Server-side rendered HTML | Yes — WP Interactivity API | Yes — classic PHP templates | Yes |
+| Cursor-based pagination | Yes | No - offset only | No - offset only |
+| Tested at 50K+ topics | Yes - sub-200ms with Redis | No documented scale testing | Limited documentation |
+| Server-side rendered HTML | Yes - WP Interactivity API | Yes - classic PHP templates | Yes |
+| Multisite (network activation installs everywhere) | Yes | No | No |
 | PHP version requirement | 8.1+ | 7.2+ | 7.4+ |
 | WordPress version requirement | 6.7+ | 5.0+ | 5.5+ |
 
@@ -37,12 +38,13 @@ This comparison is honest. Where competitors do something well, that is noted. T
 |---|---|---|---|
 | Forum spaces | Yes | Yes (Forums) | Yes |
 | Q&A spaces with accepted answers | Yes | No (add-on required) | Yes |
-| Ideas / roadmap spaces | Yes | No | No |
+| Ideas / roadmap spaces with status lanes | Yes | No | No |
+| Short-form / Show & Tell spaces | Yes | No | No |
 | Categories for grouping spaces | Yes | Yes | Yes |
-| Sub-spaces (nested) | Yes — 3 tiers | Yes | Yes |
+| Sub-spaces (nested) | Yes - 3 tiers | Yes | Yes |
 | Space visibility (public/private/hidden) | Yes | Partial | Yes |
 | Per-space join policies (open/approval/invite) | Yes | No | Partial |
-| Space-specific moderators | Yes | No — moderators are site-wide | Partial |
+| Space-specific moderators | Yes | No - moderators are site-wide | Partial |
 
 ---
 
@@ -51,7 +53,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
 | Rich text editor (posts) | Yes | Limited | Yes |
-| Threaded replies | Yes — 3 levels, collapsible | No — flat replies | Yes — configurable depth |
+| Threaded replies | Yes - 3 levels, collapsible | No - flat replies | Yes - configurable depth |
 | Smart loading for long threads | Yes | No | No |
 | Voting (posts and replies) | Yes | Partial (add-on) | Yes |
 | Accepted answers | Yes | Add-on required | Yes |
@@ -71,14 +73,14 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
 | Reputation points system | Yes | No | Yes |
-| Trust levels (automated) | Yes — 6 levels | No | No |
-| Automatic behavior gates (rate limits, link blocks) | Yes — no configuration needed | No | No |
+| Trust levels (automated) | Yes - 6 levels | No | No |
+| Automatic behavior gates (rate limits, link blocks) | Yes - no configuration needed | No | No |
 | Trust badges on avatars | Yes | No | Partial |
 | Custom badges with criteria engine | Jetonomy Pro | No | No |
 | Leaderboard | Yes | No | Yes |
 | User profiles with activity | Yes | Yes | Yes |
 
-**Honest note:** wpForo has a solid reputation system that many communities have relied on for years. Jetonomy's advantage is the automated behavior gates — new account rate-limiting works from day one without any setup.
+**Honest note:** wpForo has a solid reputation system that many communities have relied on for years. Jetonomy's advantage is the automated behavior gates. New account rate-limiting works from day one without any setup.
 
 ---
 
@@ -86,7 +88,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Moderation queue | Yes — single view for all content | Partial | Yes |
+| Moderation queue | Yes - single view for all content | Partial | Yes |
 | Member flagging with reasons | Yes | No | Yes |
 | Ban users (global) | Yes | Yes | Yes |
 | Ban users (per-space) | Yes | No | No |
@@ -104,7 +106,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Three-layer permission system | Yes (WP Caps + Space Roles + Trust Levels) | No — WordPress roles only | Partial (WP roles + usergroup roles) |
+| Three-layer permission system | Yes (WP Caps + Space Roles + Trust Levels) | No - WordPress roles only | Partial (WP roles + usergroup roles) |
 | Per-space roles | Yes | No | Yes (usergroups) |
 | 20+ fine-grained capabilities | Yes | Partial | Yes |
 | MemberPress integration | Yes (free) | Add-on required | Add-on required |
@@ -119,7 +121,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Full-text search | Yes — MySQL FULLTEXT | Basic WordPress search | Yes |
+| Full-text search | Yes - MySQL FULLTEXT | Basic WordPress search | Yes |
 | Search results by type with counts | Yes | No | Yes |
 | Swappable search adapter (Meilisearch, etc.) | Yes | No | No |
 | Tag pages | Yes | No | Yes |
@@ -136,7 +138,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | BreadcrumbList structured data | Yes | No | Partial |
 | Open Graph tags | Yes | No | Yes |
 | Twitter card tags | Yes | No | Yes |
-| XML sitemap inclusion | Yes — WP core sitemaps | Yes | Yes |
+| XML sitemap inclusion | Yes - WP core sitemaps | Yes | Yes |
 | Clean human-readable URLs | Yes | Yes | Yes |
 | Per-space SEO controls (noindex, custom meta) | Jetonomy Pro | No | Partial |
 
@@ -146,13 +148,13 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| REST API | Yes — 48+ endpoints (90+ with Pro) | No | Partial |
+| REST API | Yes - 48+ endpoints (90+ with Pro) | No | Partial |
 | Cursor-based pagination on API | Yes | No | No |
 | JSON schema validation on API | Yes | No | No |
-| Template override system | Yes — theme/jetonomy/ | Yes — theme/bbpress/ | Partial |
-| Action and filter hooks | Yes — throughout | Yes — throughout | Yes |
+| Template override system | Yes - theme/jetonomy/ | Yes - theme/bbpress/ | Partial |
+| Action and filter hooks | Yes - throughout | Yes - throughout | Yes |
 | Adapter pattern for integrations | Yes (search, email, realtime, membership) | No | No |
-| WordPress Abilities API support | Yes — 19 abilities | No | No |
+| WordPress Abilities API support | Yes - 19 abilities | No | No |
 | Clean uninstall (removes all data) | Yes | Partial | Yes |
 | Composer autoloader | No | No | No |
 
@@ -164,8 +166,8 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Import from bbPress | Yes — built in | — | No |
-| Import from wpForo | Yes — built in | No | — |
+| Import from bbPress | Yes - built in | - | No |
+| Import from wpForo | Yes - built in | No | - |
 | Dry run before importing | Yes | No | No |
 | Progress tracking during import | Yes | No | No |
 | Resume on failure | Yes | No | No |
@@ -203,7 +205,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Free version | Yes — full-featured | Yes — full plugin | Yes — core features |
+| Free version | Yes - full-featured | Yes - full plugin | Yes - core features |
 | Free on WordPress.org | No (wbcomdesigns.com) | Yes | Yes |
 | Pro pricing | See wbcomdesigns.com | Add-ons sold separately | Paid plans available |
 | Lifetime license available | Yes (Pro) | N/A | No |
@@ -215,16 +217,17 @@ This comparison is honest. Where competitors do something well, that is noted. T
 ## Summary
 
 **Choose Jetonomy if:**
-- Performance at scale matters — custom tables and denormalized counters make a measurable difference above a few thousand topics
+- Performance at scale matters - custom tables and denormalized counters make a measurable difference above a few thousand topics
 - You want automated spam control that requires no configuration
-- You need Q&A and Ideas spaces alongside standard forums
+- You need Q&A, Ideas, or Show & Tell spaces alongside standard forums
 - Your developers want a clean REST API and adapter pattern
 - You're migrating from bbPress or wpForo and want a built-in path
+- You need true multisite network activation with tables provisioned on every subsite
 
 **Choose bbPress if:**
 - You need maximum compatibility with older WordPress versions and hosting environments
 - You're already deeply invested in the bbPress add-on ecosystem
-- You need minimal overhead — bbPress has the smallest footprint of the three
+- You need minimal overhead - bbPress has the smallest footprint of the three
 - Your community is small and performance is not a concern
 
 **Choose wpForo if:**

@@ -1,6 +1,6 @@
 Design your own badges, set the conditions that earn them, and watch members compete to collect them.
 
-> **PRO** — This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
 ![Badges displayed on a member profile page](../images/pro-badges.png)
 ## What You Will Learn
@@ -12,7 +12,7 @@ Design your own badges, set the conditions that earn them, and watch members com
 
 ## Why Custom Badges Matter
 
-Trust levels and reputation points are invisible to casual members. Badges are visible, collectible, and shareable — they give members a concrete goal to aim for. A "100 Posts" badge tells the community this member is active. A "Top Answerer" badge signals expertise. Badges convert passive lurkers into active contributors.
+Trust levels and reputation points are invisible to casual members. Badges are visible, collectible, and shareable - they give members a concrete goal to aim for. A "100 Posts" badge tells the community this member is active. A "Top Answerer" badge signals expertise. Badges convert passive lurkers into active contributors.
 
 ## Enabling Custom Badges
 
@@ -31,7 +31,7 @@ Trust levels and reputation points are invisible to casual members. Badges are v
 | **Name** | Displayed on the badge and in the award notification |
 | **Description** | One sentence explaining how to earn it |
 | **Icon** | Upload a 64×64 PNG or SVG icon |
-| **Tier** | Bronze, Silver, or Gold — controls the border color on profile |
+| **Tier** | Bronze, Silver, or Gold - controls the border color on profile |
 
 4. Set the award conditions (see below).
 5. Click **Save Badge**.
@@ -51,13 +51,13 @@ Auto-awarded badges evaluate all members on a regular schedule and grant the bad
 | **Upvotes received** | 10, 50, 200 upvotes on any content |
 | **Days as member** | 30, 180, 365 days since joining |
 
-Set the threshold for each criteria you want to use. You can combine multiple criteria — the member must satisfy all of them to earn the badge.
+Set the threshold for each criteria you want to use. You can combine multiple criteria - the member must satisfy all of them to earn the badge.
 
 > **Note:** Auto-evaluation runs once every 12 hours via WP-Cron, aligned with the trust level evaluation job. There is no manual "evaluate now" button, but you can trigger evaluation by going to **Jetonomy → Badges → Run Evaluation**.
 
 ### Manual Award
 
-Some badges should not be automated — "Staff Pick", "Most Helpful in July", or "Community Founder" are judgment calls. For these, leave all auto-award criteria blank and award manually:
+Some badges should not be automated - "Staff Pick", "Most Helpful in July", or "Community Founder" are judgment calls. For these, leave all auto-award criteria blank and award manually:
 
 1. Go to **Jetonomy → Users** and open the member's profile.
 2. Click **Award Badge**.
@@ -76,11 +76,11 @@ Badges have three visual tiers that appear as border colors on the badge icon:
 | **Silver** | Cool silver | Mid-tier milestones (100 posts, 10 accepted answers) |
 | **Gold** | Bright gold | Elite milestones (500 posts, Top Contributor of the year) |
 
-Tiers are visual only — they do not affect permissions or trust levels.
+Tiers are visual only - they do not affect permissions or trust levels.
 
 ## Badge Display
 
-Badges appear on member profile pages in a dedicated **Badges** section. Members who have earned no badges see an empty state that lists a few featured badges to work toward — this passively encourages engagement.
+Badges appear on member profile pages in a dedicated **Badges** section. Members who have earned no badges see an empty state that lists a few featured badges to work toward - this passively encourages engagement.
 
 The three most recently earned badges also appear in the member's hover card, which pops up when anyone hovers their username throughout the community.
 

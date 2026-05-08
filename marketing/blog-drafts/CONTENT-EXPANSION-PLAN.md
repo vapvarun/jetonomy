@@ -7,7 +7,7 @@
 
 ---
 
-## Current state (baseline — 7 articles live)
+## Current state (baseline - 7 articles live)
 
 | Site | Article | Primary KW | Volume | Status |
 |---|---|---|--:|---|
@@ -35,48 +35,48 @@ The existing 7 articles cover **alternative/review/comparison intent** for users
 4. **SaaS refugees** (Circle/Skool/Mighty) actively shopping
 5. **Migration-intent** searchers (Facebook Groups → X, Discord → X, Slack → X)
 
-Each of these audiences converts to Jetonomy at a different funnel stage. Owning the whole funnel — not just bottom-of-funnel alternatives — is what "more visibility" actually means.
+Each of these audiences converts to Jetonomy at a different funnel stage. Owning the whole funnel - not just bottom-of-funnel alternatives - is what "more visibility" actually means.
 
 ---
 
-## Phase 1 — bbPress power-user cluster (Week 1–2)
+## Phase 1 - bbPress power-user cluster (Week 1–2)
 
-**Rationale:** The single highest-volume untapped cluster. 2,610+ monthly searches across 8 keywords, all KD 0–18. bbpress.org currently dominates most of these SERPs with thin content — beatable with longer, better-organized posts.
+**Rationale:** The single highest-volume untapped cluster. 2,610+ monthly searches across 8 keywords, all KD 0–18. bbpress.org currently dominates most of these SERPs with thin content - beatable with longer, better-organized posts.
 
 **Audience:** bbPress power users trying to make bbPress work better. They're not leaving bbPress yet. But every article plugs Jetonomy in the "when you outgrow this" section at the bottom. We're planting a seed that bears fruit when they hit the scale wall in 12-18 months.
 
-### Article 1.1 — bbPress Shortcodes Complete Reference
+### Article 1.1 - bbPress Shortcodes Complete Reference
 
 - **Target KW:** `bbpress shortcodes` (630/mo, KD 2)
 - **Secondary KWs:** bbpress shortcode list, bbpress embed forum, bbpress template tags
 - **Format:** Comprehensive reference documentation. Every shortcode, every parameter, copy-paste examples, visual output screenshots.
 - **Site:** **wbcomdesigns.com** (highest authority + existing bbPress topical relevance)
 - **Word count:** 3,500–4,000
-- **Angle:** "The complete bbPress shortcode reference. Every shortcode in the plugin, every parameter it accepts, with working examples. Bookmarked by bbPress devs since 2019 — refreshed for 2026."
+- **Angle:** "The complete bbPress shortcode reference. Every shortcode in the plugin, every parameter it accepts, with working examples. Bookmarked by bbPress devs since 2019 - refreshed for 2026."
 - **Jetonomy plug:** Final section: "What happens when you outgrow shortcodes? Modern WordPress forum plugins use blocks and REST APIs. Here's what that looks like with Jetonomy." 300 words max.
 - **Expected impact:** Top 10 ranking for the 630/mo keyword within 90 days. Featured snippet target (bbpress.org currently holds the #1 with thin content).
 
-### Article 1.2 — bbPress Complete Tutorial 2026
+### Article 1.2 - bbPress Complete Tutorial 2026
 
 - **Target KW:** `bbpress tutorial` (380/mo, KD 4)
 - **Secondary KWs:** bbpress setup, bbpress installation, bbpress getting started, how to use bbpress
 - **Format:** Step-by-step setup walkthrough from zero. Install → configure → theme → moderate → scale.
-- **Site:** **tweakswp.com** (WordPress tutorials voice matches exactly — existing /best-wordpress-forum-themes/ post shows topical fit)
+- **Site:** **tweakswp.com** (WordPress tutorials voice matches exactly - existing /best-wordpress-forum-themes/ post shows topical fit)
 - **Word count:** 3,000
 - **Angle:** First-person: "I've set up bbPress on 50+ client sites. Here's the tutorial I wish someone had written for me in 2018."
-- **Jetonomy plug:** "If after all this you're wondering whether bbPress is still the right pick in 2026 — I wrote about that here [link to wbcom bbPress review]." Light, not pushy.
+- **Jetonomy plug:** "If after all this you're wondering whether bbPress is still the right pick in 2026 - I wrote about that here [link to wbcom bbPress review]." Light, not pushy.
 
-### Article 1.3 — bbPress vs BuddyPress Complete Guide
+### Article 1.3 - bbPress vs BuddyPress Complete Guide
 
 - **Target KW:** `bbpress vs buddypress` (220/mo, KD 15)
 - **Secondary KWs:** buddypress vs bbpress, bbpress or buddypress, bbpress and buddypress together
 - **Format:** Head-to-head comparison with decision tree.
-- **Site:** **wbcomdesigns.com** (they're THE BuddyPress extensions shop — highest authority signal in this niche)
+- **Site:** **wbcomdesigns.com** (they're THE BuddyPress extensions shop - highest authority signal in this niche)
 - **Word count:** 2,500
 - **Angle:** "Don't pick one. Use both, or pick a third option." Explains the two plugins solve different problems (forum vs social), shows how they integrate, and introduces Jetonomy as the "single plugin that replaces both for most use cases."
 - **Jetonomy plug:** Central to the article, not a footnote. Positioned as "the 2026 answer."
 
-### Article 1.4 — bbPress Forum Examples Showcase (OPTIONAL)
+### Article 1.4 - bbPress Forum Examples Showcase (OPTIONAL)
 
 - **Target KW:** `bbpress forum examples` (340/mo, KD 18)
 - **Format:** Showcase of 20+ live sites running bbPress with screenshots and context.
@@ -88,21 +88,21 @@ Each of these audiences converts to Jetonomy at a different funnel stage. Owning
 
 ---
 
-## Phase 2 — Getting Started / top-of-funnel (Week 2–3)
+## Phase 2 - Getting Started / top-of-funnel (Week 2–3)
 
 **Rationale:** ~350 combined monthly volume across how-to queries. All KD 0–19. Featured snippet opportunity exists on `how to start an online community forum` (higherlogic.com currently holds it with weak content). Top-of-funnel audience that installs whatever they're told to install.
 
-### Article 2.1 — How to Start an Online Community From Zero
+### Article 2.1 - How to Start an Online Community From Zero
 
 - **Target KW:** `how to start an online community` (135/mo, KD 19, Reddit #1)
 - **Secondary KWs:** how to start an online community forum (55/mo, KD 0, featured snippet target), how to create an online community, how to start a community from scratch
 - **Format:** Step-by-step guide from "I have an idea" to "100 active members."
-- **Site:** **vapvarun.com** (Varun's personal voice + existing `/different-types-of-online-communities/` which already ranks #34 for "online communities" 1,100/mo — this becomes the natural next step in the topical cluster)
+- **Site:** **vapvarun.com** (Varun's personal voice + existing `/different-types-of-online-communities/` which already ranks #34 for "online communities" 1,100/mo - this becomes the natural next step in the topical cluster)
 - **Word count:** 4,000
 - **Angle:** First-person: "I've launched 12 communities since 2018. Here's the exact playbook I use, including what goes wrong the first month and how to fix it."
 - **Structure:**
   1. The 5 questions to answer before picking a platform
-  2. Picking the right platform (Jetonomy, Circle, Discourse — decision tree)
+  2. Picking the right platform (Jetonomy, Circle, Discourse - decision tree)
   3. Setup (Jetonomy as the walkthrough example)
   4. Your first 10 spaces / categories
   5. Inviting your first 20 members (what works, what doesn't)
@@ -112,37 +112,37 @@ Each of these audiences converts to Jetonomy at a different funnel stage. Owning
 - **Jetonomy plug:** Natural, woven throughout the setup walkthrough. Not an add-on at the end.
 - **Featured snippet target:** The `how to start an online community forum` query currently has higherlogic.com in the featured snippet with generic advice. A better-structured numbered list with steps will likely capture it.
 
-### Article 2.2 — How to Build a Community Around Your WordPress Site
+### Article 2.2 - How to Build a Community Around Your WordPress Site
 
 - **Target KW:** `wordpress platform for private community` (40/mo, KD 0) + related long-tail
 - **Site:** **attowp.com** (architectural voice, pairs with existing CMS comparison content)
 - **Word count:** 2,500
 - **Angle:** Dev-focused. "Your WordPress site doesn't have a community yet. Here's how to add one the right way, without bloating your database."
-- **Lower priority than 2.1** — think of this as a supporting post that strengthens the internal linking cluster.
+- **Lower priority than 2.1** - think of this as a supporting post that strengthens the internal linking cluster.
 
 **Phase 2 total:** 2 articles, ~230+ monthly volume captured.
 
 ---
 
-## Phase 3 — Private/Membership + Migration intent (Week 3–4)
+## Phase 3 - Private/Membership + Migration intent (Week 3–4)
 
 **Rationale:** Lower volume but very high commercial intent. "Private community platform" searchers are paying $49-$399/month on SaaS or considering going self-hosted. "Migration" searchers have already decided to leave and are actively shopping.
 
-### Article 3.1 — Best Private Community Platforms for 2026
+### Article 3.1 - Best Private Community Platforms for 2026
 
 - **Target KW:** `private online community platforms` (80/mo, KD 0, thinkific.com #1)
 - **Secondary KWs:** private community platform, private online community, private membership community
 - **Format:** Listicle ranked by what "private" means to the searcher (gated behind payment, invite-only, hidden from public, etc.)
-- **Site:** **wbcomdesigns.com** (has `/wordpress-membership-sites-ai-data-protection/` and `/wordpress-vs-saas-community-platforms/` — topical cluster builds)
+- **Site:** **wbcomdesigns.com** (has `/wordpress-membership-sites-ai-data-protection/` and `/wordpress-vs-saas-community-platforms/` - topical cluster builds)
 - **Word count:** 2,500
 - **Angle:** "I've built 15 private communities across WordPress, Circle, and Mighty Networks. Here's what 'private' actually means in each, and which platform wins by privacy shape."
-- **Jetonomy plug:** v1.2.0 Private Topics feature is the native answer for the "one-off sensitive topic" use case — unique to Jetonomy among WordPress plugins.
+- **Jetonomy plug:** v1.2.0 Private Topics feature is the native answer for the "one-off sensitive topic" use case - unique to Jetonomy among WordPress plugins.
 
-### Article 3.2 — How to Migrate Your Community From Facebook Groups, Discord, or Slack to Self-Hosted WordPress
+### Article 3.2 - How to Migrate Your Community From Facebook Groups, Discord, or Slack to Self-Hosted WordPress
 
 - **Target KW:** migration intent (long-tail, hard to exact-volume)
 - **Secondary signals:** "move community off facebook groups", "slack community alternatives 2026", "discord alternatives for community"
-- **Site:** **bpcustomdev.com** (already has `/building-private-communities-when-users-are-leaving-big-platforms/` from March — this article builds the topical cluster)
+- **Site:** **bpcustomdev.com** (already has `/building-private-communities-when-users-are-leaving-big-platforms/` from March - this article builds the topical cluster)
 - **Word count:** 3,500
 - **Angle:** Practical migration playbook covering the 3 biggest platform exoduses in 2025-2026:
   1. Facebook Groups → WordPress (reach/algorithm collapse drove exodus)
@@ -155,44 +155,44 @@ Each of these audiences converts to Jetonomy at a different funnel stage. Owning
 
 ---
 
-## Phase 4 — SaaS alternatives cluster (Week 4–6, REQUIRES DATA VERIFICATION)
+## Phase 4 - SaaS alternatives cluster (Week 4–6, REQUIRES DATA VERIFICATION)
 
-**Rationale:** Speculative but potentially highest commercial intent. SpyFu underreports this cluster — real volumes likely 3-5x higher based on Mighty Networks live_search_volume signals. Circle.so, Skool, and Mighty Networks are all actively growing platforms with real competitor-shopping behavior.
+**Rationale:** Speculative but potentially highest commercial intent. SpyFu underreports this cluster - real volumes likely 3-5x higher based on Mighty Networks live_search_volume signals. Circle.so, Skool, and Mighty Networks are all actively growing platforms with real competitor-shopping behavior.
 
 **BLOCKER:** Before writing these, verify volumes with Ahrefs, Semrush, or Google Keyword Planner. If the verified volumes are under 50/mo combined, deprioritize. If they're 200+/mo, this cluster becomes Phase 1 priority.
 
-### Article 4.1 — Best Circle.so Alternatives for 2026
+### Article 4.1 - Best Circle.so Alternatives for 2026
 
 - **Target KW (unverified):** `circle.so alternatives` + `alternatives to circle.so` + `circle.so vs`
-- **Site:** **wbcomdesigns.com** (already has `/circle-so-vs-wordpress/` from April 1 — direct complement, strong topical cluster signal)
+- **Site:** **wbcomdesigns.com** (already has `/circle-so-vs-wordpress/` from April 1 - direct complement, strong topical cluster signal)
 - **Word count:** 2,800
 - **Angle:** "I ran a Circle.so community for 14 months. Here's why I migrated and what I picked." Lived-in voice matching the existing first-person articles.
 - **Structure:** 7-9 alternatives ranked by category (WordPress-native, other SaaS, self-hosted). Jetonomy at #1 as the WordPress-native answer.
 
-### Article 4.2 — Skool vs Circle vs Mighty Networks vs WordPress
+### Article 4.2 - Skool vs Circle vs Mighty Networks vs WordPress
 
 - **Target KW (unverified):** `circle vs mighty networks`, `circle vs skool`, `skool vs mighty networks`
 - **Site:** **attowp.com** (architectural comparison voice, pairs with existing `/wordpress-vs-saas-community-platforms/`)
 - **Word count:** 3,500
 - **Angle:** Honest comparison matrix. Each platform gets its strengths. WordPress+Jetonomy positioned as the data-ownership alternative. No puffery.
 
-### Article 4.3 — Self-Hosted Circle.so Alternative (WordPress)
+### Article 4.3 - Self-Hosted Circle.so Alternative (WordPress)
 
 - **Target KW (unverified):** `self hosted circle.so`, `circle.so self hosted`, `open source circle.so alternative`
 - **Site:** **bpcustomdev.com** (community-dev voice)
 - **Word count:** 2,000
 - **Angle:** Short, sharp piece. "Circle.so doesn't have a self-hosted option. Here's what does." Tight comparison to Jetonomy, BuddyBoss, Discourse, Flarum.
-- **Lower priority** — write only if 4.1 and 4.2 rank well and the cluster shows traction.
+- **Lower priority** - write only if 4.1 and 4.2 rank well and the cluster shows traction.
 
 **Phase 4 total:** 2–3 articles pending data verification.
 
 ---
 
-## Optional Phase 5 — Hub page (pillar content)
+## Optional Phase 5 - Hub page (pillar content)
 
 **Rationale:** Topical authority signal to Google. All of the above articles should link to a single "pillar" page that acts as the network's hub for community/forum content. Pillar pages rank surprisingly well for broad head terms.
 
-### Hub page — "The 2026 Guide to WordPress Communities"
+### Hub page - "The 2026 Guide to WordPress Communities"
 
 - **Site:** **wbcomdesigns.com** (highest authority)
 - **URL:** /wordpress-community-guide-2026/ (or similar)
@@ -203,7 +203,7 @@ Each of these audiences converts to Jetonomy at a different funnel stage. Owning
   1. Intro: why WordPress is still the right community platform in 2026
   2. Choosing a platform (links to architecture comparison on attowp)
   3. Picking a forum plugin (links to vapvarun listicle + wbcom bbPress review + bpcustomdev alternatives)
-  4. Pairing with a theme (links to reigntheme community themes — already exists)
+  4. Pairing with a theme (links to reigntheme community themes - already exists)
   5. Moderation & trust levels (links to the to-be-written getting-started guide)
   6. Scale considerations (links to attowp architecture piece)
   7. Migration from other platforms (links to new migration guide)
@@ -227,7 +227,7 @@ Each of these audiences converts to Jetonomy at a different funnel stage. Owning
 | **tweakswp.com** | 1 | 1 (bbPress tutorial) | WordPress tutorials |
 | **woosellservices.com** | 1 | 0 | Forum software anchor |
 
-**Total: 10 new articles + 1 pillar page across 6 sites. Zero new content on buddyxtheme or woosell — both already have the right article for their voice.**
+**Total: 10 new articles + 1 pillar page across 6 sites. Zero new content on buddyxtheme or woosell - both already have the right article for their voice.**
 
 ---
 
@@ -235,17 +235,17 @@ Each of these audiences converts to Jetonomy at a different funnel stage. Owning
 
 If you can only commit to **3 more articles**:
 
-1. **Article 1.1 — bbPress Shortcodes Complete Reference** (wbcom) — 630/mo, KD 2, immediate win
-2. **Article 2.1 — How to Start an Online Community From Zero** (vapvarun) — 135+55 mo, featured snippet target, top-of-funnel
-3. **Article 1.3 — bbPress vs BuddyPress Complete Guide** (wbcom) — 220/mo, KD 15, high-authority domain fit
+1. **Article 1.1 - bbPress Shortcodes Complete Reference** (wbcom) - 630/mo, KD 2, immediate win
+2. **Article 2.1 - How to Start an Online Community From Zero** (vapvarun) - 135+55 mo, featured snippet target, top-of-funnel
+3. **Article 1.3 - bbPress vs BuddyPress Complete Guide** (wbcom) - 220/mo, KD 15, high-authority domain fit
 
 If you can commit to **5 articles**:
-4. **Article 1.2 — bbPress Complete Tutorial 2026** (tweakswp) — 380/mo, KD 4, uses tweakswp's unused WordPress-tutorial voice
-5. **Article 3.2 — Community Migration Playbook** (bpcustomdev) — strengthens existing topical cluster
+4. **Article 1.2 - bbPress Complete Tutorial 2026** (tweakswp) - 380/mo, KD 4, uses tweakswp's unused WordPress-tutorial voice
+5. **Article 3.2 - Community Migration Playbook** (bpcustomdev) - strengthens existing topical cluster
 
 If you can commit to **7 articles**:
-6. **Article 3.1 — Best Private Community Platforms** (wbcom) — 80/mo + high commercial intent
-7. **Article 4.1 — Best Circle.so Alternatives** (wbcom) — PENDING Ahrefs verification, but high potential
+6. **Article 3.1 - Best Private Community Platforms** (wbcom) - 80/mo + high commercial intent
+7. **Article 4.1 - Best Circle.so Alternatives** (wbcom) - PENDING Ahrefs verification, but high potential
 
 **10+ articles:** Add Phase 4.2, 4.3, Article 1.4 (showcase), Article 2.2 (supporting post), and the hub page.
 
@@ -285,7 +285,7 @@ If you can commit to **7 articles**:
 
 ## Risk assessment
 
-### Risk 1 — Network pattern detection (PBN risk)
+### Risk 1 - Network pattern detection (PBN risk)
 **Concern:** Publishing many articles on the same topic across ~7 domains in a short time window could look like a private blog network to Google.
 **Mitigation:**
 - Space publications out (1–2 per week max, not 5 per day)
@@ -296,18 +296,18 @@ If you can commit to **7 articles**:
 
 This is the biggest risk. The 7 articles we've already shipped are fine because they're spread over 11 days and each has a genuinely different angle. If we ship 12 more in 2 weeks, it starts to look suspicious. **Spread over 4-6 weeks minimum.**
 
-### Risk 2 — Author credibility
+### Risk 2 - Author credibility
 **Concern:** Multiple articles on the same topic across multiple sites written in the same first-person voice could trigger author-manipulation signals.
 **Mitigation:**
-- Use different author names on each site (already the case — Varun on vapvarun, Shashank/others on wbcom)
+- Use different author names on each site (already the case - Varun on vapvarun, Shashank/others on wbcom)
 - Each article opens with a site-specific anchor ("I run tweaks...", "I built BP custom sites...")
 - Tone/vocabulary variation per site
 
-### Risk 3 — Cannibalization with existing content
+### Risk 3 - Cannibalization with existing content
 **Concern:** Some of the proposed articles overlap keyword-wise with already-published content on the target sites.
 **Mitigation:** Pre-check every planned article with `post_list` search on the target site for any existing competing URL. This is what caught the reigntheme duplicate earlier in the session.
 
-### Risk 4 — Keyword volume uncertainty in Cluster D (SaaS)
+### Risk 4 - Keyword volume uncertainty in Cluster D (SaaS)
 **Concern:** SpyFu's thin data on Circle/Skool/Mighty Networks alternatives means the 4.x articles are speculative. Writing them without data verification risks spending effort on dead queries.
 **Mitigation:** Verify with Ahrefs/Semrush/Google Keyword Planner before committing to Phase 4. If volumes are under 50/mo combined, skip Phase 4 entirely.
 
@@ -316,9 +316,9 @@ This is the biggest risk. The 7 articles we've already shipped are fine because 
 ## Dependencies
 
 - **Ahrefs or Semrush access** (or Google Keyword Planner) for Phase 4 verification. Can be skipped if the user chooses to drop Phase 4.
-- **Playwright MCP + wp-blog MCP** — same as current session, no new tooling needed.
-- **ImageMagick / HTML template library** — already set up at /tmp/featured-images/, reusable.
-- **No new site access required** — all 7 target sites are already configured in wp-blog MCP.
+- **Playwright MCP + wp-blog MCP** - same as current session, no new tooling needed.
+- **ImageMagick / HTML template library** - already set up at /tmp/featured-images/, reusable.
+- **No new site access required** - all 7 target sites are already configured in wp-blog MCP.
 
 ---
 
@@ -360,12 +360,12 @@ Specific link targets by article:
 
 ## Out of scope
 
-- **New sites or brand additions** — working only within the existing 7 configured sites
-- **Non-WordPress/community content** — focused exclusively on forum/community niche
-- **Video, podcast, or social content** — article strategy only (social distribution is a separate pass)
-- **Translation / multilingual** — English only
-- **Paid promotion or ad budget** — organic SEO strategy only
-- **Jetonomy product development** — content strategy only, not feature suggestions
+- **New sites or brand additions** - working only within the existing 7 configured sites
+- **Non-WordPress/community content** - focused exclusively on forum/community niche
+- **Video, podcast, or social content** - article strategy only (social distribution is a separate pass)
+- **Translation / multilingual** - English only
+- **Paid promotion or ad budget** - organic SEO strategy only
+- **Jetonomy product development** - content strategy only, not feature suggestions
 
 ---
 
@@ -388,7 +388,7 @@ If you want to go faster and skip the plan:
 
 - **Conservative:** Ship 1 article per week for 10 weeks. Slowest but safest. Lowest PBN risk, smoothest publish cadence, easier to iterate based on ranking data.
 
-My recommendation: **middle path** — 2 articles per week for 5-6 weeks, pausing after week 3 to check Google Search Console trends before committing to Phase 4.
+My recommendation: **middle path** - 2 articles per week for 5-6 weeks, pausing after week 3 to check Google Search Console trends before committing to Phase 4.
 
 ---
 
@@ -396,10 +396,10 @@ My recommendation: **middle path** — 2 articles per week for 5-6 weeks, pausin
 
 | Phase | Articles | Effort | Risk | Volume captured | Priority |
 |---|:-:|:-:|:-:|---:|:-:|
-| Phase 1 — bbPress long-tails | 3-4 | Medium | Low | 1,230+ | **P0** |
-| Phase 2 — Getting Started | 2 | Low | Low | 230+ | **P0** |
-| Phase 3 — Private/Migration | 2 | Medium | Low | 150+ | P1 |
-| Phase 4 — SaaS alternatives | 2-3 | Medium | **Medium** (data uncertainty) | Unknown | P2 |
-| Phase 5 — Hub page | 1 | High | Low | N/A (topical authority) | P2 |
+| Phase 1 - bbPress long-tails | 3-4 | Medium | Low | 1,230+ | **P0** |
+| Phase 2 - Getting Started | 2 | Low | Low | 230+ | **P0** |
+| Phase 3 - Private/Migration | 2 | Medium | Low | 150+ | P1 |
+| Phase 4 - SaaS alternatives | 2-3 | Medium | **Medium** (data uncertainty) | Unknown | P2 |
+| Phase 5 - Hub page | 1 | High | Low | N/A (topical authority) | P2 |
 
 **Phase 1 and Phase 2 together (5-6 articles) capture ~1,460+ monthly searches with the highest confidence.** Start there.

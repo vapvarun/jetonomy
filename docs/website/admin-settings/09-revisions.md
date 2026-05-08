@@ -11,13 +11,13 @@ Go to **Jetonomy → Revisions** to access the page.
 
 ## When a Revision Is Saved
 
-A revision is saved every time a post or reply is edited and the change is meaningful — that is, the content actually differs from the previous version. Pure formatting tweaks (e.g. adding a paragraph break that doesn't change the rendered output) won't always create a revision.
+A revision is saved every time a post or reply is edited and the change is meaningful - that is, the content actually differs from the previous version. Pure formatting tweaks (e.g. adding a paragraph break that doesn't change the rendered output) won't always create a revision.
 
 Revisions are NOT created when:
 
-- The post is first published — that's the initial version, not a revision
+- The post is first published - that's the initial version, not a revision
 - The edit is from the same user within the auto-save window (a few seconds)
-- Only metadata changes (e.g. tags or pinned-state) — those go into the Activity Log, not Revisions
+- Only metadata changes (e.g. tags or pinned-state) - those go into the Activity Log, not Revisions
 
 ## Browsing Revisions
 
@@ -43,7 +43,7 @@ The diff is character-aware, so small typo fixes show as small highlights rather
 
 ## Read-Only
 
-Like the Activity Log, the Revisions page is read-only. To roll back to a prior revision, edit the post and paste the older content in. There's no one-click revert button — that's a deliberate choice to keep the audit trail truthful.
+Like the Activity Log, the Revisions page is read-only. To roll back to a prior revision, edit the post and paste the older content in. There's no one-click revert button - that's a deliberate choice to keep the audit trail truthful.
 
 ## Permission
 

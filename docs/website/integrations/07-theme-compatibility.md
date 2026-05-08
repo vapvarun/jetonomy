@@ -1,4 +1,4 @@
-Jetonomy works with any WordPress theme. Its CSS inherits from your theme's design tokens automatically, so the community looks native — not bolted on.
+Jetonomy works with any WordPress theme. Its CSS inherits from your theme's design tokens automatically, so the community looks native - not bolted on.
 
 ![Community home page adapting to the active WordPress theme](../images/community-home.png)
 
@@ -24,9 +24,9 @@ If your theme defines these standard WP preset tokens, Jetonomy adopts the theme
 
 ## Best With BuddyX
 
-BuddyX is Jetonomy's reference theme. With BuddyX active, Jetonomy requires zero configuration — colors, fonts, border radius, hover states, and dark mode all match the theme perfectly out of the box.
+BuddyX is Jetonomy's reference theme. With BuddyX active, Jetonomy requires zero configuration - colors, fonts, border radius, hover states, and dark mode all match the theme perfectly out of the box.
 
-> **Tip:** If you are building a new community site from scratch, start with BuddyX. You can always switch themes later — Jetonomy will adapt.
+> **Tip:** If you are building a new community site from scratch, start with BuddyX. You can always switch themes later - Jetonomy will adapt.
 
 ## BuddyX Pro, Reign, and the Theme Bridge (1.3.0+)
 
@@ -35,19 +35,19 @@ Starting in 1.3.0, Jetonomy ships a dedicated bridge for the three Kirki-based t
 **What the bridge does**
 
 - Reads the theme's Kirki mods on every render (accent color, dark mode state, container width).
-- Injects `--jt-accent` directly so the community picks up the exact color the customer chose in the Customizer — not a hardcoded fallback.
+- Injects `--jt-accent` directly so the community picks up the exact color the customer chose in the Customizer - not a hardcoded fallback.
 - Toggles `.jt-dark` on the page `<body>` via `body_class` whenever the theme is in dark mode, so the community's dark overrides activate automatically without requiring custom CSS.
 - No configuration screen. If the theme is active, the bridge runs. If you switch to a non-Kirki theme, the bridge silently bows out and the standard `theme.json` path takes over.
 
 **Where it lives**
 
-`includes/integrations/class-theme-integration.php` — guarded by `class_exists( 'Kirki' )` and a per-theme check against the theme template slug.
+`includes/integrations/class-theme-integration.php` - guarded by `class_exists( 'Kirki' )` and a per-theme check against the theme template slug.
 
 **Why this matters**
 
 On BuddyX/BuddyX Pro/Reign, flipping the theme's dark-mode toggle in the Customizer now flips the entire community sidebar, nav, post cards, and reply editor in the same render. No custom-CSS bridge required.
 
-If you build a custom Kirki theme and want to hook into the same bridge, the integration is extensible via the `jetonomy_theme_integration_accent` and `jetonomy_theme_integration_dark_mode` filters — return your own values and Jetonomy will use them.
+If you build a custom Kirki theme and want to hook into the same bridge, the integration is extensible via the `jetonomy_theme_integration_accent` and `jetonomy_theme_integration_dark_mode` filters - return your own values and Jetonomy will use them.
 
 ## Using Other Themes
 
@@ -55,9 +55,9 @@ Jetonomy works with any well-built WordPress theme. Compatibility level depends 
 
 | Theme Type | Expected Result |
 |---|---|
-| Modern block theme (theme.json) | Excellent — tokens inherit fully |
-| Classic theme with CSS variables | Good — accent and font tokens pick up if variable names match |
-| Classic theme without CSS variables | Functional — Jetonomy falls back to its own neutral defaults |
+| Modern block theme (theme.json) | Excellent - tokens inherit fully |
+| Classic theme with CSS variables | Good - accent and font tokens pick up if variable names match |
+| Classic theme without CSS variables | Functional - Jetonomy falls back to its own neutral defaults |
 
 For classic themes, you can override the `--jt-accent` token in your theme's `style.css` or via **Jetonomy → Settings → Appearance → Custom CSS**.
 
@@ -65,10 +65,10 @@ For classic themes, you can override the `--jt-accent` token in your theme's `st
 
 Jetonomy supports dark mode natively. If your theme sets `data-theme="dark"` or a `.dark` class on the `<html>` or `<body>` element, Jetonomy's dark overrides activate automatically via the `.jt-dark .jt-app` CSS selector.
 
-BuddyX and BuddyNext set `data-theme="dark"` — so dark mode is seamless. For other themes, add a small bridge if their dark mode uses a different selector:
+BuddyX and BuddyNext set `data-theme="dark"` - so dark mode is seamless. For other themes, add a small bridge if their dark mode uses a different selector:
 
 ```css
-/* In your theme's style.css — bridge for custom dark mode selector */
+/* In your theme's style.css - bridge for custom dark mode selector */
 .my-theme-dark .jt-app { --jt-bg: #121212; --jt-text: #f0f0f0; }
 ```
 
@@ -122,6 +122,6 @@ This approach is update-safe and does not require template overrides.
 
 ## What's Next?
 
-Configure your community's global settings — URL slug, pagination, and access defaults.
+Configure your community's global settings - URL slug, pagination, and access defaults.
 
 [General Settings →](../admin-settings/01-general.md)

@@ -38,6 +38,6 @@
 ## Notes
 - Admin class (2,132 lines) flagged as needing extraction per CLAUDE.md rule.
   Plan saved at: docs/superpowers/plans/2026-03-24-admin-class-split.md
-- No Gutenberg blocks registered — plugin uses WP Interactivity API for frontend reactivity
-- No shortcodes — uses custom Router + rewrite rules
-- No WP CPTs — uses 22 custom MySQL tables
+- No Gutenberg blocks registered - plugin uses WP Interactivity API for frontend reactivity
+- No shortcodes - uses custom Router + rewrite rules
+- No WP CPTs - uses 22 custom MySQL tables
