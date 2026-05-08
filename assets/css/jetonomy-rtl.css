@@ -1231,9 +1231,11 @@
   .jt-label-hint { font-size: 0.8125rem; font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: right; }
   .jt-input:focus { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
+  .jt-input:focus-visible { outline: 2px solid var(--jt-accent) !important; outline-offset: 2px !important; }
   .jt-input::placeholder { color: var(--jt-text-secondary); }
   .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
   .jt-select:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
+  .jt-select:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
@@ -1827,7 +1829,8 @@
 .jt-share-item-icon svg { width: 16px; height: 16px; display: block; }
 .jt-share-item-label { display: inline-block; }
 .jt-share-item:hover,
-.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent); outline: none; }
+.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent); }
+.jt-share-item:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
 .jt-share-item:hover .jt-share-item-icon,
 .jt-share-item:focus-visible .jt-share-item-icon { color: var(--jt-accent); }
 
@@ -2104,7 +2107,7 @@
 }
 .jt-search-overlay-icon { flex-shrink: 0; color: var(--jt-text-tertiary); display: flex; }
 .jt-search-overlay-input {
-  flex: 1; border: none; background: none; outline: none;
+  flex: 1; border: none; background: none;
   font-family: var(--jt-font); font-size: 1.0625rem; color: var(--jt-text);
   padding: 0;
 }
@@ -2412,6 +2415,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	outline: 0;
 	border-color: var(--jt-accent);
 	box-shadow: 0 0 0 3px var(--jt-accent-light, transparent);
+}
+.jt-login-label > input:focus-visible {
+	outline: 2px solid var(--jt-accent);
+	outline-offset: 2px;
 }
 .jt-login-remember {
 	display: flex;
