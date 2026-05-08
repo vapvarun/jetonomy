@@ -160,6 +160,71 @@ Contributions are welcome. Please open an issue first to discuss what you'd like
 
 ## Changelog
 
+### 1.4.2 (May 2026)
+
+**New content types**
+- Show & Tell short-form feed spaces. Optional title, inline content cards.
+- Ideas spaces ship a real roadmap with statuses (planned, in progress, shipped, declined).
+- Q&A spaces let owners pin the accepted answer; an "Answered" badge surfaces on the space list.
+
+**Performance and scale**
+- Cleanup cron handlers (trust evaluation, expired restrictions, old notifications, scheduled posts) now process at most 500 rows per run. Filterable via `jetonomy_cron_batch_size`. Sites with large activity logs no longer time out.
+
+**Multisite**
+- Activating Jetonomy across a network now creates the required tables on every existing subsite, and on every new subsite created later. Previously only the current blog got tables.
+
+**Translations and accessibility**
+- Composer, login block, IA state, banned-member notice, header escape hint, prefix builder, and admin import flow are fully translatable.
+- Keyboard focus indicators are visible everywhere; aria-labels added to filter, bulk-action, and select-all controls.
+
+**Fixes**
+- Posts/replies-per-page setting now controls the actual list length and the Load More click count.
+- Vote controls hide when an admin disables voting on a space.
+- Idea status changes notify the right people across the activity log, email digest, and in-app inbox.
+- Native browser confirm dialogs swapped for in-product modals so admin actions feel consistent.
+- Import progress AJAX requires the right capability, not just a nonce.
+- Setup wizard redirect skips under WP-CLI / REST contexts so automation does not get bounced to the wizard.
+- Settings save confirmations no longer disappear before the user can see them.
+- Q&A: accepting a second answer now correctly clears the previously accepted reply (one accepted answer per post).
+
+### 1.4.1 (April 2026)
+
+**Public or private community**
+- New Access Control mode in Settings: Public (anyone can read) or Private (every page requires sign-in). The mode applies to the whole front-end and to the REST API, so private really means private.
+- The sign-in page itself stays reachable in private mode so guests can register or recover their account.
+- Public mode is the default and is unchanged from 1.4.0; existing communities keep working without any setting changes.
+
+**For people who run a space**
+- New Activity Log admin page browses every audit event (post created, reply approved, member banned, role changed) with filters by user, type, and date range.
+- New Revisions admin page browses every saved post / reply revision with a side-by-side diff between any two revisions.
+- Two new REST endpoints for moderation tooling: `POST /jetonomy/v1/moderation/bulk` and `GET /jetonomy/v1/posts/{id}/flags`.
+
+**For members**
+- New Drafts tab at `/community/drafts/` lists every post you saved as a draft.
+- New Bookmarks tab at `/community/bookmarks/` lists every post you bookmarked.
+- Both are personal pages: require sign-in, excluded from search engines.
+
+**Email templates editor**
+- New Reset to default button on every notification template restores the shipped subject and body in one click.
+- The Verification reminder template is now editable from the same screen.
+- Single source of truth for defaults so reset always restores the exact copy the plugin ships with.
+
+**Members who have not confirmed their email**
+- New hourly nudge: members who registered but did not click the verification link receive a single follow-up email after 24 hours (configurable in Settings).
+
+**Under the hood**
+- Per-role REST access matrix is now a verifiable contract: `bin/access-matrix-check.sh` runs 78 checks across 6 roles in either public or private mode, gates the build.
+- Manifest schema bumped to v2: every REST endpoint declares `auth`, `capability`, and `ownership_check` in `audit/manifest.json`.
+
+**Bug fixes**
+- Hidden spaces no longer leak from the homepage spaces list to non-admins.
+- Multi-space moderators see every queue they own at `/community/mod/` instead of being redirected away.
+- The Remove button on flagged content now actually removes the content.
+- Voting works on every install (fixed a Pro analytics aggregator bug that corrupted the AJAX response on sites without the analytics table).
+- Space cards render their icon correctly even when only the icon name was saved.
+- The default qa-type space icon switched from a question-mark to an open book.
+- New-post composer with Pro polls active no longer drops form fields between submit attempts.
+
 ### 1.4.0 (April 2026)
 
 **For people who run a space**
