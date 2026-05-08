@@ -264,14 +264,49 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-post-head">
 					<h1>
 						<?php if ( $prefix_name ) : ?>
-							<span class="jt-prefix" 
+							<span class="jt-prefix"
 							<?php
 							if ( $prefix_color ) :
 								?>
 								style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 						<?php endif; ?>
+						<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+							<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+						<?php endif; ?>
 						<?php echo esc_html( $post->title ); ?>
 					</h1>
+					<?php
+					// On Ideas spaces, space moderators see a status picker so
+					// the roadmap workflow is reachable from the post page.
+					// Members see the read-only pill above; non-Ideas spaces
+					// see neither. The picker is a row of pill buttons rather
+					// than a native <select> — same visual language as the
+					// status pill itself, single click to apply.
+					if ( $space && 'ideas' === ( $space->type ?? '' ) && $jt_can_moderate_here ) :
+						$jt_current_status = (string) ( $post->idea_status ?? 'submitted' );
+						if ( '' === $jt_current_status ) {
+							$jt_current_status = 'submitted';
+						}
+						?>
+						<div class="jt-idea-status-setter"
+							data-wp-interactive="jetonomy"
+							data-wp-context='<?php echo wp_json_encode( array( 'postId' => (int) $post->id ) ); ?>'
+							role="group"
+							aria-label="<?php esc_attr_e( 'Set roadmap status', 'jetonomy' ); ?>">
+							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Status:', 'jetonomy' ); ?></span>
+							<div class="jt-idea-status-options">
+								<?php foreach ( \Jetonomy\Models\Post::valid_idea_statuses() as $jt_opt ) : ?>
+									<button type="button"
+										class="jt-idea-pill jt-idea-pill-<?php echo esc_attr( $jt_opt ); ?> jt-idea-status-btn<?php echo $jt_current_status === $jt_opt ? ' is-active' : ''; ?>"
+										data-status="<?php echo esc_attr( $jt_opt ); ?>"
+										data-wp-on--click="actions.setIdeaStatus"
+										aria-pressed="<?php echo $jt_current_status === $jt_opt ? 'true' : 'false'; ?>">
+										<?php echo esc_html( jetonomy_idea_status_label( $jt_opt ) ); ?>
+									</button>
+								<?php endforeach; ?>
+							</div>
+						</div>
+					<?php endif; ?>
 					<div class="jt-meta">
 						<?php
 						// 1.4.1 byline cleanup: trust-level number removed from inline

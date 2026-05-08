@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.4.1' );
-define( 'JETONOMY_DB_VERSION', '1.4.2' );
+define( 'JETONOMY_DB_VERSION', '1.4.2.1' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -211,6 +211,45 @@ function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name =
  * @param string $content Sanitized HTML content string.
  * @return string Processed content with mention and tag links.
  */
+/**
+ * Resolve a customer-facing label for an idea roadmap status enum value.
+ *
+ * Mirrors the column labels in `templates/views/space-roadmap.php`. Used
+ * on idea cards in space listings and on the single-post page when the
+ * post belongs to a `type=ideas` space. Unknown values fall back to
+ * "Submitted" so a stale enum never renders an empty pill.
+ *
+ * @param string $status One of Post::valid_idea_statuses(), or empty.
+ * @return string Translated label.
+ */
+function jetonomy_idea_status_label( string $status ): string {
+	$labels = array(
+		'submitted'    => __( 'Submitted', 'jetonomy' ),
+		'under_review' => __( 'Under Review', 'jetonomy' ),
+		'planned'      => __( 'Planned', 'jetonomy' ),
+		'in_progress'  => __( 'In Progress', 'jetonomy' ),
+		'completed'    => __( 'Completed', 'jetonomy' ),
+		'declined'     => __( 'Declined', 'jetonomy' ),
+	);
+	return $labels[ $status ] ?? $labels['submitted'];
+}
+
+/**
+ * Render an idea-status pill for a post on a `type=ideas` space.
+ *
+ * Echoes a small <span class="jt-idea-pill jt-idea-pill-{status}"> so
+ * the listing card and the post header both look the same. Status colors
+ * come from CSS so themes can override them without inline-style fights.
+ *
+ * @param string $status One of Post::valid_idea_statuses(), or empty.
+ */
+function jetonomy_render_idea_status_pill( string $status ): void {
+	$resolved = '' !== $status ? $status : 'submitted';
+	echo '<span class="jt-idea-pill jt-idea-pill-' . esc_attr( $resolved ) . '">'
+		. esc_html( jetonomy_idea_status_label( $resolved ) )
+		. '</span>';
+}
+
 /**
  * wp_kses variant for rendered post/reply content.
  *

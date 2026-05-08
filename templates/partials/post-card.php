@@ -63,6 +63,9 @@ if ( $prefix_name && $space ) {
 					?>
 					style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 			<?php endif; ?>
+			<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+				<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
 			<?php if ( $has_unread ) : ?>
 				<span class="jt-unread-pill" aria-label="<?php esc_attr_e( 'You have unread replies', 'jetonomy' ); ?>">

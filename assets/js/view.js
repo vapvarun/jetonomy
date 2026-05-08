@@ -1466,6 +1466,69 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Set roadmap status on an idea (moderator only, Ideas spaces) ──
+        *setIdeaStatus( event ) {
+            const ctx = getContext();
+            const postId = ctx.postId;
+            const btn = event.currentTarget || event.target;
+            const newStatus = btn?.dataset?.status;
+            if ( ! postId || ! newStatus ) return;
+            if ( btn?.classList?.contains( 'is-active' ) ) return; // no-op
+
+            const setter = btn.closest( '.jt-idea-status-setter' );
+            const allBtns = setter ? setter.querySelectorAll( '.jt-idea-status-btn' ) : [];
+
+            // Optimistic active swap so the picker reacts instantly. Reverted
+            // below if the request fails.
+            const prevActive = setter?.querySelector( '.jt-idea-status-btn.is-active' );
+            allBtns.forEach( ( b ) => { b.classList.remove( 'is-active' ); b.setAttribute( 'aria-pressed', 'false' ); } );
+            btn.classList.add( 'is-active' );
+            btn.setAttribute( 'aria-pressed', 'true' );
+            allBtns.forEach( ( b ) => { b.disabled = true; } );
+
+            try {
+                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify( { idea_status: newStatus } ),
+                } );
+
+                if ( res.ok ) {
+                    // Mirror the change to the post-header pill so the read-
+                    // only badge customers see at the top stays in sync with
+                    // the picker below.
+                    const pill = document.querySelector( '.jt-post-head .jt-idea-pill:not(.jt-idea-status-btn)' );
+                    if ( pill ) {
+                        pill.className = 'jt-idea-pill jt-idea-pill-' + newStatus;
+                        pill.textContent = btn.textContent.trim();
+                    }
+                    if ( window.bnToast ) window.bnToast( state.i18n?.statusUpdated || 'Roadmap status updated' );
+                } else {
+                    // Roll back the optimistic swap.
+                    allBtns.forEach( ( b ) => { b.classList.remove( 'is-active' ); b.setAttribute( 'aria-pressed', 'false' ); } );
+                    if ( prevActive ) {
+                        prevActive.classList.add( 'is-active' );
+                        prevActive.setAttribute( 'aria-pressed', 'true' );
+                    }
+                    const err = yield res.json().catch( () => ( {} ) );
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Could not update status.', 'error' );
+                }
+            } catch {
+                allBtns.forEach( ( b ) => { b.classList.remove( 'is-active' ); b.setAttribute( 'aria-pressed', 'false' ); } );
+                if ( prevActive ) {
+                    prevActive.classList.add( 'is-active' );
+                    prevActive.setAttribute( 'aria-pressed', 'true' );
+                }
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.', 'error' );
+            } finally {
+                allBtns.forEach( ( b ) => { b.disabled = false; } );
+            }
+        },
+
         // ── Toggle collapsible thread ──
         toggleThread() {
             const ctx = getContext();

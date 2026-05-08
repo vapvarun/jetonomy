@@ -37,6 +37,9 @@ class Activity_Tracker {
 
 		// Space membership.
 		add_action( 'jetonomy_user_joined_space', [ $this, 'on_space_join' ], 5, 3 );
+
+		// Idea roadmap status changes (Ideas spaces only).
+		add_action( 'jetonomy_idea_status_changed', [ $this, 'on_idea_status_changed' ], 5, 4 );
 	}
 
 	public function on_post_created( int $post_id, int $space_id ): void {
@@ -114,6 +117,29 @@ class Activity_Tracker {
 			[
 				'role' => $role,
 			]
+		);
+	}
+
+	/**
+	 * Log roadmap-status changes on Ideas spaces. Helps owners audit who
+	 * curated which idea, and the same row drives the optional notification
+	 * to the idea author (handled in the Notifier).
+	 *
+	 * @param int    $post_id    Post ID.
+	 * @param string $new_status The new idea_status value.
+	 * @param string $old_status The previous idea_status value (or '').
+	 * @param int    $actor_id   Moderator who triggered the change.
+	 */
+	public function on_idea_status_changed( int $post_id, string $new_status, string $old_status, int $actor_id ): void {
+		ActivityLog::log(
+			$actor_id,
+			'idea_status_changed',
+			'post',
+			$post_id,
+			array(
+				'old' => $old_status,
+				'new' => $new_status,
+			)
 		);
 	}
 }

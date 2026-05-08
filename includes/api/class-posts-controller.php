@@ -158,6 +158,26 @@ class Posts_Controller extends Base_Controller {
 			)
 		);
 
+		// Idea roadmap status — only meaningful on `type=ideas` spaces, gated
+		// to space moderators. The post-author cannot self-curate their own
+		// status; that's the owner's job.
+		register_rest_route(
+			$ns,
+			'/posts/(?P<id>\d+)/idea-status',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'set_idea_status' ),
+				'permission_callback' => array( $this, 'login_permission_check' ),
+				'args'                => array(
+					'idea_status' => array(
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => Post::valid_idea_statuses(),
+					),
+				),
+			)
+		);
+
 		// Link preview — fetch OG metadata for a URL. Public-readable:
 		// anonymous visitors to a public post deserve the same rich link
 		// preview cards that logged-in members see. The URL being previewed
@@ -746,6 +766,61 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
+	 * POST /posts/{id}/idea-status — Set the roadmap status for an idea.
+	 *
+	 * Only valid on `type=ideas` spaces. Other space types get 400 so a
+	 * moderator with API access can't accidentally pollute non-Ideas posts
+	 * with a status field that means nothing for those types.
+	 */
+	public function set_idea_status( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$id   = absint( $request->get_param( 'id' ) );
+		$post = Post::find( $id );
+
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+		if ( ! $space || 'ideas' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_ideas_space',
+				__( 'Roadmap status only applies to Ideas spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! $this->check_permission( 'close_posts', (int) $post->space_id ) ) {
+			return $this->permission_error();
+		}
+
+		$status = sanitize_key( (string) $request->get_param( 'idea_status' ) );
+		if ( ! Post::set_idea_status( $id, $status ) ) {
+			return $this->validation_error( __( 'Invalid roadmap status.', 'jetonomy' ) );
+		}
+
+		/**
+		 * Fires after an idea's roadmap status changes.
+		 *
+		 * Listeners (activity log, notifier) hook here to track the
+		 * curation workflow without coupling the controller to either.
+		 *
+		 * @param int    $post_id    Post ID.
+		 * @param string $new_status The new status value.
+		 * @param string $old_status The previous status value (or empty if unset).
+		 * @param int    $actor_id   User ID of the moderator who changed it.
+		 */
+		do_action( 'jetonomy_idea_status_changed', $id, $status, (string) ( $post->idea_status ?? '' ), $user_id );
+
+		$updated = Post::find( $id );
+		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
+	}
+
+	/**
 	 * POST /posts/{id}/pin — Pin (sticky) a post.
 	 */
 	public function pin_post( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -937,6 +1012,7 @@ class Posts_Controller extends Base_Controller {
 			'is_private'        => (bool) ( $post->is_private ?? false ),
 			'is_closed'         => (bool) ( $post->is_closed ?? false ),
 			'is_resolved'       => (bool) ( $post->is_resolved ?? false ),
+			'idea_status'       => isset( $post->idea_status ) && '' !== (string) $post->idea_status ? (string) $post->idea_status : null,
 			'accepted_reply_id' => $post->accepted_reply_id ? (int) $post->accepted_reply_id : null,
 			'view_count'        => (int) ( $post->view_count ?? 0 ),
 			'reply_count'       => (int) ( $post->reply_count ?? 0 ),

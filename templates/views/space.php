@@ -271,6 +271,17 @@ $crumbs[] = [
 			</div>
 			<?php endif; ?>
 
+			<?php if ( 'ideas' === ( $space->type ?? '' ) ) : ?>
+				<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Space sections', 'jetonomy' ); ?>">
+					<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab on" aria-current="page">
+						<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>
+					</a>
+					<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab">
+						<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
+					</a>
+				</nav>
+			<?php endif; ?>
+
 			<div class="jt-bar">
 				<div class="jt-pills">
 					<?php

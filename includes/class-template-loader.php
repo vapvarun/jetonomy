@@ -256,6 +256,7 @@ class Template_Loader {
 			'msgComposeOpen'    => false,
 			'i18n'              => array(
 				'voteRecorded'       => __( 'Vote recorded', 'jetonomy' ),
+				'statusUpdated'      => __( 'Roadmap status updated', 'jetonomy' ),
 				'accepted'           => __( 'Accepted', 'jetonomy' ),
 				'reply'              => __( 'Reply', 'jetonomy' ),
 				'cancel'             => __( 'Cancel', 'jetonomy' ),

@@ -71,6 +71,10 @@ class Notifier {
 				'subject' => __( '[{site}] Your answer was accepted', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nNice work. Your reputation just went up.", 'jetonomy' ),
 			),
+			'idea_status_changed'   => array(
+				'subject' => __( '[{site}] Your idea was updated', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nThanks for sharing your idea. Open the post to see the latest updates.", 'jetonomy' ),
+			),
 			'new_post_in_sub'       => array(
 				'subject' => __( '[{site}] New post in {space_title}', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to read more.", 'jetonomy' ),
@@ -221,6 +225,9 @@ class Notifier {
 
 		// Reply accepted — notify reply author
 		add_action( 'jetonomy_reply_accepted', [ $this, 'on_reply_accepted' ], 10, 2 );
+
+		// Idea roadmap status changed — notify idea author
+		add_action( 'jetonomy_idea_status_changed', [ $this, 'on_idea_status_changed' ], 10, 4 );
 
 		// Trust level changed
 		add_action( 'jetonomy_trust_level_changed', [ $this, 'on_trust_change' ], 10, 3 );
@@ -509,6 +516,45 @@ class Notifier {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Notify the idea author when a moderator changes their roadmap status.
+	 *
+	 * Self-changes (a moderator setting status on their own idea) are
+	 * skipped — same pattern as on_reply_accepted skipping self-accepts.
+	 *
+	 * @param int    $post_id    Post ID.
+	 * @param string $new_status The new idea_status value.
+	 * @param string $old_status The previous idea_status value (or '').
+	 * @param int    $actor_id   Moderator who triggered the change.
+	 */
+	public function on_idea_status_changed( int $post_id, string $new_status, string $old_status, int $actor_id ): void {
+		$post = Post::find( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+		$author_id = (int) $post->author_id;
+		if ( $author_id <= 0 || $author_id === $actor_id ) {
+			return;
+		}
+		if ( $new_status === $old_status ) {
+			return;
+		}
+
+		$this->create_and_maybe_email(
+			$author_id,
+			$actor_id,
+			'idea_status_changed',
+			'post',
+			$post_id,
+			sprintf(
+				/* translators: 1: idea title, 2: new status label */
+				__( 'Your idea "%1$s" is now %2$s', 'jetonomy' ),
+				mb_substr( (string) $post->title, 0, 60 ),
+				jetonomy_idea_status_label( $new_status )
+			)
+		);
 	}
 
 	/**
