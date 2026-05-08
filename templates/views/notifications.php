@@ -32,15 +32,16 @@ $crumbs = [
 ];
 
 $type_labels = [
-	'reply_to_post'   => __( 'replied to your post', 'jetonomy' ),
-	'reply_to_reply'  => __( 'replied to your comment', 'jetonomy' ),
-	'mention'         => __( 'mentioned you', 'jetonomy' ),
-	'vote_on_post'    => __( 'voted on your post', 'jetonomy' ),
-	'accepted_answer' => __( 'accepted your reply', 'jetonomy' ),
-	'new_post_in_sub' => __( 'new activity in a subscribed space', 'jetonomy' ),
-	'moderation'      => __( 'a moderator acted on your content', 'jetonomy' ),
-	'badge_earned'    => __( 'earned a badge', 'jetonomy' ),
-	'flag'            => __( 'new content flag requires review', 'jetonomy' ),
+	'reply_to_post'       => __( 'replied to your post', 'jetonomy' ),
+	'reply_to_reply'      => __( 'replied to your comment', 'jetonomy' ),
+	'mention'             => __( 'mentioned you', 'jetonomy' ),
+	'vote_on_post'        => __( 'voted on your post', 'jetonomy' ),
+	'accepted_answer'     => __( 'accepted your reply', 'jetonomy' ),
+	'idea_status_changed' => __( 'updated your idea on the roadmap', 'jetonomy' ),
+	'new_post_in_sub'     => __( 'new activity in a subscribed space', 'jetonomy' ),
+	'moderation'          => __( 'a moderator acted on your content', 'jetonomy' ),
+	'badge_earned'        => __( 'earned a badge', 'jetonomy' ),
+	'flag'                => __( 'new content flag requires review', 'jetonomy' ),
 ];
 ?>
 <?php \Jetonomy\Template_Loader::partial( 'breadcrumb', [ 'crumbs' => $crumbs ] ); ?>

@@ -42,6 +42,10 @@ class Settings_Handler {
 				'message'  => __( 'Your answer was accepted as the best reply on "How do I enable dark mode?".', 'jetonomy' ),
 				'url_path' => '/s/help/t/how-do-i-enable-dark-mode/',
 			),
+			'idea_status_changed'   => array(
+				'message'  => __( 'Your idea "Dark mode toggle" is now Planned.', 'jetonomy' ),
+				'url_path' => '/s/feature-requests/roadmap/',
+			),
 			'new_post_in_sub'       => array(
 				'message'  => __( 'A new discussion was posted in a space you follow.', 'jetonomy' ),
 				'url_path' => '/',

@@ -907,30 +907,32 @@ class Notifier {
 		$logo_url = \Jetonomy\header_logo( $logo_url );
 
 		$type_labels = [
-			'reply_to_post'   => __( 'New Reply', 'jetonomy' ),
-			'reply_to_reply'  => __( 'New Reply', 'jetonomy' ),
-			'mention'         => __( 'Mention', 'jetonomy' ),
-			'vote_on_post'    => __( 'Vote', 'jetonomy' ),
-			'accepted_answer' => __( 'Answer Accepted', 'jetonomy' ),
-			'new_post_in_sub' => __( 'New Post', 'jetonomy' ),
-			'badge_earned'    => __( 'Achievement', 'jetonomy' ),
-			'moderation'      => __( 'Moderation', 'jetonomy' ),
-			'join_request'    => __( 'Join Request', 'jetonomy' ),
-			'user_welcome'    => __( 'Welcome', 'jetonomy' ),
+			'reply_to_post'       => __( 'New Reply', 'jetonomy' ),
+			'reply_to_reply'      => __( 'New Reply', 'jetonomy' ),
+			'mention'             => __( 'Mention', 'jetonomy' ),
+			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
+			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
+			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
+			'new_post_in_sub'     => __( 'New Post', 'jetonomy' ),
+			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
+			'moderation'          => __( 'Moderation', 'jetonomy' ),
+			'join_request'        => __( 'Join Request', 'jetonomy' ),
+			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
 		];
 		$type_label  = esc_html( $type_labels[ $type ] ?? ucfirst( str_replace( '_', ' ', $type ) ) );
 
 		$cta_labels = [
-			'reply_to_post'   => __( 'View Post', 'jetonomy' ),
-			'reply_to_reply'  => __( 'View Reply', 'jetonomy' ),
-			'mention'         => __( 'View Post', 'jetonomy' ),
-			'vote_on_post'    => __( 'View Post', 'jetonomy' ),
-			'accepted_answer' => __( 'View Answer', 'jetonomy' ),
-			'new_post_in_sub' => __( 'View Post', 'jetonomy' ),
-			'badge_earned'    => __( 'View Your Badges', 'jetonomy' ),
-			'moderation'      => __( 'Review in Mod Queue', 'jetonomy' ),
-			'join_request'    => __( 'Review Request', 'jetonomy' ),
-			'user_welcome'    => __( 'Open the Community', 'jetonomy' ),
+			'reply_to_post'       => __( 'View Post', 'jetonomy' ),
+			'reply_to_reply'      => __( 'View Reply', 'jetonomy' ),
+			'mention'             => __( 'View Post', 'jetonomy' ),
+			'vote_on_post'        => __( 'View Post', 'jetonomy' ),
+			'accepted_answer'     => __( 'View Answer', 'jetonomy' ),
+			'idea_status_changed' => __( 'View Idea', 'jetonomy' ),
+			'new_post_in_sub'     => __( 'View Post', 'jetonomy' ),
+			'badge_earned'        => __( 'View Your Badges', 'jetonomy' ),
+			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
+			'join_request'        => __( 'Review Request', 'jetonomy' ),
+			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
 		];
 		$cta_text   = $cta_labels[ $type ] ?? __( 'View in Community', 'jetonomy' );
 
