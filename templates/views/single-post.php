@@ -123,32 +123,24 @@ $reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
 	$reply_sort = 'oldest';
 }
-// Smart threaded loading: first 10 top-level + last 10 top-level, with gap in between.
-$total_replies   = (int) $post->reply_count;
-$top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
-$batch_size      = 10;
-
-if ( $top_level_count <= $batch_size * 2 ) {
-	// Small post — load all threaded.
-	$reply_tree  = \Jetonomy\Models\Reply::get_threaded( (int) $post->id, $reply_sort );
-	$first_batch = $reply_tree;
-	$last_batch  = [];
-	$gap_count   = 0;
-} else {
-	// Large post — split into first + gap + last.
-	$first_batch = \Jetonomy\Models\Reply::get_threaded( (int) $post->id, 'oldest', $batch_size, 0 );
-	$last_batch  = \Jetonomy\Models\Reply::get_threaded( (int) $post->id, 'oldest', $batch_size, $top_level_count - $batch_size );
-	$gap_count   = $top_level_count - ( $batch_size * 2 );
-
-	// Apply sort to split batches when not 'oldest'.
-	if ( 'newest' === $reply_sort ) {
-		$first_batch = array_reverse( $first_batch );
-		$last_batch  = array_reverse( $last_batch );
-	} elseif ( 'best' === $reply_sort ) {
-		usort( $first_batch, fn( $a, $b ) => (int) $b->vote_score - (int) $a->vote_score );
-		usort( $last_batch, fn( $a, $b ) => (int) $b->vote_score - (int) $a->vote_score );
-	}
-}
+// Top-level reply pagination, honouring the global `replies_per_page`
+// setting. Server renders the requested page; pagination-frontend.js
+// fetches the next page and appends in place. No-JS users get classic
+// full-page pagination via the ?rpg=N anchor.
+$total_replies    = (int) $post->reply_count;
+$top_level_count  = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
+$jt_settings      = get_option( 'jetonomy_settings', array() );
+$replies_per_page = max( 1, (int) ( $jt_settings['replies_per_page'] ?? 30 ) );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$reply_page        = max( 1, (int) ( $_GET['rpg'] ?? 1 ) );
+$reply_offset      = ( $reply_page - 1 ) * $replies_per_page;
+$reply_batch       = \Jetonomy\Models\Reply::get_threaded(
+	(int) $post->id,
+	$reply_sort,
+	$replies_per_page,
+	$reply_offset
+);
+$replies_have_more = ( $reply_page * $replies_per_page ) < $top_level_count;
 
 // 1.4.0 G3: warm the role-label cache for the post author + every reply
 // author (including nested children) so each role-pill lookup downstream
@@ -163,8 +155,7 @@ $jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_role
 		}
 	}
 };
-$jt_role_walker( $first_batch );
-$jt_role_walker( $last_batch );
+$jt_role_walker( $reply_batch );
 \Jetonomy\Models\SpaceMember::warm_role_cache( (int) $post->space_id, $jt_role_warm_ids );
 
 // Current user vote on post.
@@ -273,14 +264,49 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<div class="jt-post-head">
 					<h1>
 						<?php if ( $prefix_name ) : ?>
-							<span class="jt-prefix" 
+							<span class="jt-prefix"
 							<?php
 							if ( $prefix_color ) :
 								?>
 								style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 						<?php endif; ?>
+						<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+							<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+						<?php endif; ?>
 						<?php echo esc_html( $post->title ); ?>
 					</h1>
+					<?php
+					// On Ideas spaces, space moderators see a status picker so
+					// the roadmap workflow is reachable from the post page.
+					// Members see the read-only pill above; non-Ideas spaces
+					// see neither. The picker is a row of pill buttons rather
+					// than a native <select> — same visual language as the
+					// status pill itself, single click to apply.
+					if ( $space && 'ideas' === ( $space->type ?? '' ) && $jt_can_moderate_here ) :
+						$jt_current_status = (string) ( $post->idea_status ?? 'submitted' );
+						if ( '' === $jt_current_status ) {
+							$jt_current_status = 'submitted';
+						}
+						?>
+						<div class="jt-idea-status-setter"
+							data-wp-interactive="jetonomy"
+							data-wp-context='<?php echo wp_json_encode( array( 'postId' => (int) $post->id ) ); ?>'
+							role="group"
+							aria-label="<?php esc_attr_e( 'Set roadmap status', 'jetonomy' ); ?>">
+							<span class="jt-idea-status-setter-label"><?php esc_html_e( 'Status:', 'jetonomy' ); ?></span>
+							<div class="jt-idea-status-options">
+								<?php foreach ( \Jetonomy\Models\Post::valid_idea_statuses() as $jt_opt ) : ?>
+									<button type="button"
+										class="jt-idea-pill jt-idea-pill-<?php echo esc_attr( $jt_opt ); ?> jt-idea-status-btn<?php echo $jt_current_status === $jt_opt ? ' is-active' : ''; ?>"
+										data-status="<?php echo esc_attr( $jt_opt ); ?>"
+										data-wp-on--click="actions.setIdeaStatus"
+										aria-pressed="<?php echo $jt_current_status === $jt_opt ? 'true' : 'false'; ?>">
+										<?php echo esc_html( jetonomy_idea_status_label( $jt_opt ) ); ?>
+									</button>
+								<?php endforeach; ?>
+							</div>
+						</div>
+					<?php endif; ?>
 					<div class="jt-meta">
 						<?php
 						// 1.4.1 byline cleanup: trust-level number removed from inline
@@ -368,36 +394,38 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// keep working — both buttons remain direct siblings
 					// inside the cluster.
 					?>
-					<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
-						<?php if ( is_user_logged_in() ) : ?>
-						<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
-							data-wp-on--click="actions.voteUp"
-							data-post-id="<?php echo absint( $post->id ); ?>"
-							title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
-							aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
-							<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-							<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-						</button>
-							<?php
-							// Hide downvote on own content — self-downvote was
-							// landing at -1 (Basecamp 9803889865).
-							if ( (int) $post->author_id !== get_current_user_id() ) :
-								?>
-						<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
-							data-wp-on--click="actions.voteDown"
-							data-post-id="<?php echo absint( $post->id ); ?>"
-							title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
-							aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
-								<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
-						</button>
+					<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+						<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+							<?php if ( is_user_logged_in() ) : ?>
+							<button class="jt-act <?php echo 1 === $user_post_vote ? 'voted' : ''; ?>"
+								data-wp-on--click="actions.voteUp"
+								data-post-id="<?php echo absint( $post->id ); ?>"
+								title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
+								aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+								<span class="n" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+							</button>
+								<?php
+								// Hide downvote on own content — self-downvote was
+								// landing at -1 (Basecamp 9803889865).
+								if ( (int) $post->author_id !== get_current_user_id() ) :
+									?>
+							<button class="jt-act <?php echo -1 === $user_post_vote ? 'voted' : ''; ?>"
+								data-wp-on--click="actions.voteDown"
+								data-post-id="<?php echo absint( $post->id ); ?>"
+								title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
+								aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>">
+									<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+							</button>
+								<?php endif; ?>
+							<?php else : ?>
+							<span class="jt-act">
+								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
+								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+							</span>
 							<?php endif; ?>
-						<?php else : ?>
-						<span class="jt-act">
-							<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-							<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-						</span>
-						<?php endif; ?>
-					</div>
+						</div>
+					<?php endif; ?>
 					<?php
 					/* translators: %d: number of views */
 					$jt_view_count_label = sprintf( _n( '%d view', '%d views', (int) $post->view_count, 'jetonomy' ), (int) $post->view_count );
@@ -494,7 +522,6 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<!-- Replies -->
 			<div class="jt-replies-section" id="replies"
 				data-wp-interactive="jetonomy"
-				data-wp-init--infinite="callbacks.initInfiniteScroll"
 				data-wp-init--polling="callbacks.initReplyPolling"
 				data-wp-context='
 				<?php
@@ -548,7 +575,43 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				do_action( 'jetonomy_before_replies', $post, $total_replies );
 				?>
 
-				<?php if ( empty( $first_batch ) && empty( $last_batch ) ) : ?>
+				<?php
+				// Q&A: surface the accepted answer above the chronological
+				// thread so members read it first regardless of sort. The
+				// reply still renders in its original position below — this
+				// is a pinned echo, not a relocation, so the conversation
+				// flow stays intact for the curious.
+				$jt_accepted_reply = null;
+				if (
+					$space
+					&& 'qa' === ( $space->type ?? '' )
+					&& ! empty( $post->accepted_reply_id )
+				) {
+					$jt_accepted_reply = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+				}
+				if ( $jt_accepted_reply ) :
+					?>
+					<aside class="jt-accepted-callout" aria-label="<?php esc_attr_e( 'Accepted answer', 'jetonomy' ); ?>">
+						<header class="jt-accepted-callout-head">
+							<?php jetonomy_echo_icon( 'check-circle', 16 ); ?>
+							<span><?php esc_html_e( 'Accepted answer', 'jetonomy' ); ?></span>
+						</header>
+						<div class="jt-accepted-callout-body">
+							<?php
+							\Jetonomy\Template_Loader::partial(
+								'reply-card',
+								array(
+									'reply' => $jt_accepted_reply,
+									'post'  => $post,
+									'space' => $space,
+								)
+							);
+							?>
+						</div>
+					</aside>
+				<?php endif; ?>
+
+				<?php if ( empty( $reply_batch ) ) : ?>
 					<?php
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
@@ -561,8 +624,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<?php else : ?>
 
 					<div class="jt-replies-list" id="jt-replies-container">
-						<!-- First batch (opening conversation) -->
-						<?php foreach ( $first_batch as $index => $reply ) : ?>
+						<?php foreach ( $reply_batch as $index => $reply ) : ?>
 							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
 							<?php
 							/**
@@ -576,44 +638,18 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							do_action( 'jetonomy_between_replies', $reply, $index, $post );
 							?>
 						<?php endforeach; ?>
-
-						<!-- Gap loader (in-between) -->
-						<?php if ( $gap_count > 0 ) : ?>
-							<div class="jt-load-gap" data-wp-interactive="jetonomy"
-								data-wp-context='
-								<?php
-								echo wp_json_encode(
-									[
-										'postId'   => (int) $post->id,
-										'gapStart' => $batch_size,
-										'gapCount' => $gap_count,
-										'loading'  => false,
-									]
-								);
-								?>
-								'>
-								<button class="jt-btn jt-btn-ghost jt-load-gap-btn"
-									data-wp-on--click="actions.loadGapReplies"
-									data-wp-bind--disabled="context.loading">
-									<span data-wp-text="context.loading ? '<?php echo esc_js( __( 'Loading…', 'jetonomy' ) ); ?>' : '<?php echo esc_js( sprintf( /* translators: %d: number of hidden replies */ __( 'Show %d more replies', 'jetonomy' ), $gap_count ) ); ?>'">
-										<?php
-										/* translators: %d: number of hidden replies */
-										printf( esc_html__( 'Show %d more replies', 'jetonomy' ), absint( $gap_count ) );
-										?>
-									</span>
-								</button>
-							</div>
-						<?php endif; ?>
-
-						<!-- Last batch (latest conversation) -->
-						<?php foreach ( $last_batch as $index => $reply ) : ?>
-							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
-							<?php
-							/** @see hook docblock above on jetonomy_between_replies */
-							do_action( 'jetonomy_between_replies', $reply, $index, $post );
-							?>
-						<?php endforeach; ?>
 					</div>
+
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'pagination',
+						array(
+							'has_more'  => $replies_have_more,
+							'param_key' => 'rpg',
+							'target'    => '#jt-replies-container',
+						)
+					);
+					?>
 
 				<?php endif; ?>
 

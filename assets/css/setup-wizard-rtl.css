@@ -165,7 +165,6 @@ body.jt-setup-body {
 	color: #0f172a;
 	background: #f8fafc;
 	transition: border-color .2s, box-shadow .2s;
-	outline: none;
 }
 
 .jt-form-group input[type="text"]:focus,
@@ -173,6 +172,13 @@ body.jt-setup-body {
 	border-color: #3B82F6;
 	box-shadow: 0 0 0 3px rgba(59,130,246,.15);
 	background: #fff;
+	outline: none;
+}
+
+.jt-form-group input[type="text"]:focus-visible,
+.jt-form-group textarea:focus-visible {
+	outline: 2px solid #3B82F6;
+	outline-offset: 2px;
 }
 
 .jt-form-group textarea {

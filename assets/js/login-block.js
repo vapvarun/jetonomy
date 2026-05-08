@@ -150,10 +150,13 @@
 		if ( ! holder || holder.querySelector( '.jt-login-resend' ) ) {
 			return;
 		}
+		var i18n = ( window.jetonomyLoginBlock && window.jetonomyLoginBlock.i18n ) || {};
+		var resendLabel = i18n.resendConfirmation || 'Resend confirmation email';
+		var sendingLabel = i18n.sending || 'Sending…';
 		var btn = document.createElement( 'button' );
 		btn.type = 'button';
 		btn.className = 'jt-login-resend';
-		btn.textContent = 'Resend confirmation email';
+		btn.textContent = resendLabel;
 		btn.style.marginInlineStart = '8px';
 		btn.style.background = 'transparent';
 		btn.style.border = 'none';
@@ -168,7 +171,7 @@
 				: '/wp-json/jetonomy/v1';
 			var nonce = block.dataset.restNonce || '';
 			btn.disabled = true;
-			btn.textContent = 'Sending…';
+			btn.textContent = sendingLabel;
 			fetch( restUrl + '/auth/resend-verification', {
 				method: 'POST',
 				credentials: 'same-origin',
@@ -182,7 +185,7 @@
 				btn.textContent = ( json && json.message ) || 'If an account is waiting on confirmation, a new link is on its way.';
 			} ).catch( function () {
 				btn.disabled = false;
-				btn.textContent = 'Resend confirmation email';
+				btn.textContent = resendLabel;
 			} );
 		} );
 		holder.appendChild( btn );

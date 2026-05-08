@@ -60,6 +60,16 @@ class Blocks {
 			JETONOMY_VERSION,
 			true
 		);
+		wp_localize_script(
+			'jetonomy-login-block',
+			'jetonomyLoginBlock',
+			array(
+				'i18n' => array(
+					'resendConfirmation' => esc_html__( 'Resend confirmation email', 'jetonomy' ),
+					'sending'            => esc_html__( 'Sending...', 'jetonomy' ),
+				),
+			)
+		);
 
 		// Compose-topic block/shortcode piggybacks on the main view bundle —
 		// that's where the Interactivity API `jetonomy` store lives. Registering

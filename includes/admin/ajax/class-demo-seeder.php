@@ -164,6 +164,21 @@ class Demo_Seeder {
 		);
 		$demo['spaces'][] = $s_tips;
 
+		$s_showcase       = Space::create(
+			array(
+				'category_id' => $cat2,
+				'author_id'   => $alice,
+				'type'        => 'feed',
+				'title'       => 'Show & Tell',
+				'slug'        => 'show-and-tell',
+				'description' => 'Short updates, screenshots, and quick wins from the community. Drop a status, share a milestone.',
+				'icon'        => 'megaphone',
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			)
+		);
+		$demo['spaces'][] = $s_showcase;
+
 		// All demo users join every space.
 		foreach ( $demo['spaces'] as $sid ) {
 			$result = SpaceMember::add( $sid, $admin_id, 'admin' );
@@ -258,6 +273,31 @@ class Demo_Seeder {
 				'title'   => 'Keyboard shortcuts you might not know about',
 				'content' => '<p>Quick productivity tip — this platform has built-in keyboard shortcuts:</p><ul><li><code>j</code> / <code>k</code> — Navigate between topics</li><li><code>l</code> — Upvote the current topic</li><li><code>r</code> — Open the reply composer</li><li><code>n</code> — New post</li><li><code>/</code> — Focus the search bar</li><li><code>?</code> — Show the full shortcut help</li></ul><p>Try pressing <code>?</code> anywhere on the community pages to see the complete list.</p>',
 			],
+
+			// Feed-type status posts. Title is auto-derived on the REST
+			// path; for the seeder we provide one so the slug reads cleanly,
+			// but the listing renders the body inline regardless.
+			array(
+				'space'   => $s_showcase,
+				'type'    => 'status',
+				'author'  => $alice,
+				'title'   => 'Just shipped a weekly digest email for our community',
+				'content' => '<p>Just shipped a weekly digest email for our community! Top posts, new members, trending tags. Open rate jumped to 47% in the first week. Tiny win that turned into a big retention lever.</p>',
+			),
+			array(
+				'space'   => $s_showcase,
+				'type'    => 'status',
+				'author'  => $bob,
+				'title'   => 'Hit 1,000 members on our developer community',
+				'content' => "<p>Hit 1,000 members on our developer community today. Started six months ago with seven people in a Slack channel. The thing that worked: respond to every single first-time post within an hour. Doesn't scale forever but it sets the culture.</p>",
+			),
+			array(
+				'space'   => $s_showcase,
+				'type'    => 'status',
+				'author'  => $carol,
+				'title'   => 'Migrated from a legacy forum and the import preserved everything',
+				'content' => '<p>Migrated 3,200 topics and 14,000 replies from a 2014-era forum over the weekend. The importer preserved post dates, threading, and even the original author mappings. Took about 40 minutes for the full run. Members are still finding their old conversations linked correctly.</p>',
+			),
 		];
 
 		foreach ( $posts_raw as $p ) {
@@ -411,8 +451,25 @@ class Demo_Seeder {
 			$demo['replies'][] = $rid;
 
 			if ( $rid && ! empty( $rd['accepted'] ) ) {
-				$wpdb->update( $replies_t, [ 'is_accepted' => 1 ], [ 'id' => $rid ] );
+				$wpdb->update( $replies_t, array( 'is_accepted' => 1 ), array( 'id' => $rid ) );
+				// Populate posts.accepted_reply_id so the Q&A pinned callout
+				// has something to surface above the chronological reply
+				// list. Without this the callout silently never renders for
+				// demo data even though the badge on the reply itself does.
+				Post::accept_reply( (int) $post_id, (int) $rid );
 			}
+		}
+
+		// ── Idea roadmap statuses ─────────────────────────────────────────────
+		// Spread the seeded ideas across the roadmap kanban so a fresh
+		// demo install shows the workflow populated, not just a single
+		// "Submitted" column. The two seeded ideas split into Planned and
+		// Completed; rest auto-default to Submitted.
+		if ( ! empty( $demo['posts'][7] ) ) {
+			Post::set_idea_status( (int) $demo['posts'][7], 'in_progress' );
+		}
+		if ( ! empty( $demo['posts'][8] ) ) {
+			Post::set_idea_status( (int) $demo['posts'][8], 'planned' );
 		}
 
 		// ── Votes ──────────────────────────────────────────────────────────────

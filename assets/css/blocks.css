@@ -153,7 +153,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: var(--jtb-bg-hover);
 	color: var(--jtb-accent);
 	text-decoration: none;
-	outline: none;
+}
+.jt-nav-space > a:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
 }
 .jt-nav-space.is-active > a,
 .jt-nav-space > a[aria-current="page"] {
@@ -239,7 +242,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-tab:hover,
 .jt-login-tab:focus-visible {
 	color: var(--jtb-text);
-	outline: none;
+}
+.jt-login-tab:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: -2px;
 }
 .jt-login-tab.is-active {
 	background: var(--jtb-bg);
@@ -281,6 +287,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: var(--jtb-bg);
 	box-shadow: 0 0 0 3px var(--jtb-accent-soft);
 }
+.jt-login-label > input:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
+}
 .jt-login-remember {
 	display: flex;
 	align-items: center;
@@ -316,7 +326,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-submit:focus-visible {
 	background: var(--jtb-accent-hover);
 	color: var(--jtb-bg);
-	outline: none;
+}
+.jt-login-submit:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
 }
 .jt-login-submit:active { transform: scale(0.98); }
 .jt-login-submit:disabled {
@@ -340,7 +353,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-login-lostpw:focus-visible {
 	color: var(--jtb-accent);
 	text-decoration: underline;
-	outline: none;
+}
+.jt-login-lostpw:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
+	border-radius: var(--jtb-radius-sm, 4px);
 }
 
 .jt-login-forgot-intro {
@@ -456,7 +473,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	background: var(--jtb-bg-hover);
 	color: var(--jtb-accent);
 	text-decoration: none;
-	outline: none;
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: -2px;
 }
 .jt-userpanel-link--logout {
 	margin-top: 4px;
@@ -532,7 +550,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-feed-viewall:focus-visible {
 	color: var(--jtb-accent-hover);
 	text-decoration: underline;
-	outline: none;
+}
+.jt-feed-viewall:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
+	border-radius: var(--jtb-radius-sm, 4px);
 }
 
 /* Trending accent bar + number badge */
@@ -589,7 +611,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-post-title:focus-visible {
 	color: var(--jtb-accent);
 	text-decoration: none;
-	outline: none;
+}
+.jt-shortcode-post-title:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
 }
 
 .jt-shortcode-post-meta {
@@ -636,7 +661,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-shortcode-space:focus-visible {
 	background: var(--jtb-bg-hover);
 	border-color: var(--jtb-accent);
-	outline: none;
+}
+.jt-shortcode-space:focus-visible {
+	outline: 2px solid var(--jtb-accent);
+	outline-offset: 2px;
 }
 .jt-shortcode-space-desc {
 	font-size: 0.82rem;

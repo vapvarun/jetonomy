@@ -37,11 +37,13 @@ if ( $prefix_name && $space ) {
 ?>
 <div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
-	<div class="jt-votes">
-		<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
-		<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
-		<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
-	</div>
+	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+		<div class="jt-votes">
+			<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
+			<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+			<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
+		</div>
+	<?php endif; ?>
 	<div class="jt-row-main">
 		<?php
 		// 1.4.0 C.4 fix: row is no longer one big <a>. The title link is the
@@ -62,6 +64,15 @@ if ( $prefix_name && $space ) {
 				if ( $prefix_color ) :
 					?>
 					style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
+			<?php endif; ?>
+			<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+				<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+			<?php elseif ( $space && 'qa' === ( $space->type ?? '' ) ) : ?>
+				<?php if ( ! empty( $post->accepted_reply_id ) ) : ?>
+					<span class="jt-qa-pill jt-qa-pill-answered"><?php jetonomy_echo_icon( 'check-circle', 12 ); ?> <?php esc_html_e( 'Answered', 'jetonomy' ); ?></span>
+				<?php else : ?>
+					<span class="jt-qa-pill jt-qa-pill-needs-answer"><?php esc_html_e( 'Needs answer', 'jetonomy' ); ?></span>
+				<?php endif; ?>
 			<?php endif; ?>
 			<?php echo esc_html( $post->title ); ?>
 			<?php if ( $has_unread ) : ?>

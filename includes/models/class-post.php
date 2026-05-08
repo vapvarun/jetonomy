@@ -231,8 +231,15 @@ class Post extends Model {
 				break;
 
 			case 'unanswered':
-				$order_by    = 'created_at DESC';
-				$extra_where = ' AND reply_count = 0';
+				$order_by = 'created_at DESC';
+				// On Q&A spaces "unanswered" means "no accepted answer yet";
+				// elsewhere it means "no replies yet". The same pill label
+				// covers both because each space type's contract makes the
+				// definition unambiguous to its members.
+				$_jt_space   = Space::find( $space_id );
+				$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+					? ' AND accepted_reply_id IS NULL'
+					: ' AND reply_count = 0';
 				break;
 
 			case 'latest':
@@ -327,8 +334,15 @@ class Post extends Model {
 				break;
 
 			case 'unanswered':
-				$order_by    = 'created_at DESC';
-				$extra_where = ' AND reply_count = 0';
+				$order_by = 'created_at DESC';
+				// On Q&A spaces "unanswered" means "no accepted answer yet";
+				// elsewhere it means "no replies yet". The same pill label
+				// covers both because each space type's contract makes the
+				// definition unambiguous to its members.
+				$_jt_space   = Space::find( $space_id );
+				$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+					? ' AND accepted_reply_id IS NULL'
+					: ' AND reply_count = 0';
 				break;
 
 			case 'latest':
@@ -388,7 +402,10 @@ class Post extends Model {
 		$extra_where = '';
 
 		if ( 'unanswered' === $sort ) {
-			$extra_where = ' AND reply_count = 0';
+			$_jt_space   = Space::find( $space_id );
+			$extra_where = ( $_jt_space && 'qa' === ( $_jt_space->type ?? '' ) )
+				? ' AND accepted_reply_id IS NULL'
+				: ' AND reply_count = 0';
 		}
 
 		if ( ! $is_privileged ) {
@@ -563,6 +580,39 @@ class Post extends Model {
 	}
 
 	/**
+	 * Roadmap statuses an idea (a post on a `type=ideas` space) can be in.
+	 *
+	 * Mirrors the `idea_status` enum in `class-schema.php`. Order is the
+	 * canonical kanban progression — owners typically move ideas left to
+	 * right (Submitted → Under Review → Planned → In Progress → Completed),
+	 * with Declined as the off-ramp.
+	 *
+	 * @return string[]
+	 */
+	public static function valid_idea_statuses(): array {
+		return array( 'submitted', 'under_review', 'planned', 'in_progress', 'completed', 'declined' );
+	}
+
+	/**
+	 * Set the roadmap status for an idea post.
+	 *
+	 * Caller is responsible for verifying the post belongs to a `type=ideas`
+	 * space and the actor has moderator permission. The model only enforces
+	 * that the new status is one of the canonical enum values; everything
+	 * else (notification, activity log) is layered on top.
+	 *
+	 * @param int    $id     Post ID.
+	 * @param string $status One of self::valid_idea_statuses().
+	 * @return bool True on success, false if the status is invalid.
+	 */
+	public static function set_idea_status( int $id, string $status ): bool {
+		if ( ! in_array( $status, self::valid_idea_statuses(), true ) ) {
+			return false;
+		}
+		return static::update( $id, array( 'idea_status' => $status ) );
+	}
+
+	/**
 	 * Publish a scheduled post when its published_at time has arrived.
 	 *
 	 * @param int $id Post ID.
@@ -625,19 +675,31 @@ class Post extends Model {
 	/**
 	 * Get posts that are scheduled and due for publishing.
 	 *
+	 * @param int $limit Maximum number of rows to return. 0 means no limit.
 	 * @return object[]
 	 */
-	public static function get_due_scheduled(): array {
+	public static function get_due_scheduled( int $limit = 0 ): array {
 		$table = static::table();
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$results = static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL AND published_at <= %s",
-				\Jetonomy\now()
-			)
-		);
+		if ( $limit > 0 ) {
+			$results = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL AND published_at <= %s LIMIT %d",
+					\Jetonomy\now(),
+					$limit
+				)
+			);
+		} else {
+			$results = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE status = 'draft' AND published_at IS NOT NULL AND published_at <= %s",
+					\Jetonomy\now()
+				)
+			);
+		}
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $results ? $results : array();
 	}

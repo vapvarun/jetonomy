@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,39 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.4.2 - May 2026 =
+
+A scale and multisite release. Three new content types finish off, multisite networks now get tables on every subsite, cleanup crons no longer time out on large communities, and a long sweep of accessibility, translation, and admin-flow fixes.
+
+**New content types**
+
+* Show & Tell short-form feed spaces. Optional title, inline content cards.
+* Ideas spaces ship a real roadmap with statuses (planned, in progress, shipped, declined).
+* Q&A spaces let owners pin the accepted answer; an "Answered" badge surfaces on the space list.
+
+**Performance and scale**
+
+* Cleanup cron handlers (trust evaluation, expired restrictions, old notifications, scheduled posts) now process at most 500 rows per run. Filterable via `jetonomy_cron_batch_size`. Sites with large activity logs no longer time out.
+
+**Multisite**
+
+* Activating Jetonomy across a network now creates the required tables on every existing subsite, and on every new subsite created later. Previously only the current blog got tables.
+
+**Translations and accessibility**
+
+* Composer, login block, IA state, banned-member notice, header escape hint, prefix builder, and admin import flow are fully translatable.
+* Keyboard focus indicators are visible everywhere; aria-labels added to filter, bulk-action, and select-all controls.
+
+**Fixes**
+
+* Posts/replies-per-page setting now controls the actual list length and the Load More click count.
+* Vote controls hide when an admin disables voting on a space.
+* Idea status changes notify the right people across the activity log, email digest, and in-app inbox.
+* Native browser confirm dialogs swapped for in-product modals so admin actions feel consistent.
+* Import progress AJAX requires the right capability, not just a nonce.
+* Setup wizard redirect skips under WP-CLI / REST contexts so automation does not get bounced to the wizard.
+* Settings save confirmations no longer disappear before the user can see them.
 
 = 1.4.1 - April 2026 =
 

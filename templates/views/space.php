@@ -271,6 +271,17 @@ $crumbs[] = [
 			</div>
 			<?php endif; ?>
 
+			<?php if ( 'ideas' === ( $space->type ?? '' ) ) : ?>
+				<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Space sections', 'jetonomy' ); ?>">
+					<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab on" aria-current="page">
+						<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>
+					</a>
+					<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab">
+						<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
+					</a>
+				</nav>
+			<?php endif; ?>
+
 			<div class="jt-bar">
 				<div class="jt-pills">
 					<?php
@@ -311,10 +322,14 @@ $crumbs[] = [
 
 			<?php if ( empty( $posts ) ) : ?>
 				<?php
-				$_jt_no_posts_msg = ( 'unanswered' === $sort )
-					? __( 'All questions have been answered!', 'jetonomy' )
-					: __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
-				$_jt_can_post     = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				if ( 'unanswered' === $sort ) {
+					$_jt_no_posts_msg = ( 'qa' === ( $space->type ?? '' ) )
+						? __( 'Every question has an accepted answer.', 'jetonomy' )
+						: __( 'No posts without replies yet.', 'jetonomy' );
+				} else {
+					$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+				}
+				$_jt_can_post = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[
@@ -348,7 +363,14 @@ $crumbs[] = [
 					);
 				}
 				?>
-				<div class="jt-topics">
+				<?php
+				// Feed spaces render the post body inline as a social-feed
+				// card; every other space type uses the topic-card list with
+				// title + excerpt + click-through.
+				$jt_card_partial = ( 'feed' === ( $space->type ?? '' ) ) ? 'feed-card' : 'post-card';
+				$jt_topics_class = ( 'feed' === ( $space->type ?? '' ) ) ? 'jt-topics jt-feed' : 'jt-topics';
+				?>
+				<div class="<?php echo esc_attr( $jt_topics_class ); ?>">
 					<?php foreach ( $posts as $post ) : ?>
 						<?php
 						// Boolean signal: does the viewer have unread replies on
@@ -364,7 +386,7 @@ $crumbs[] = [
 						?>
 						<?php
 						\Jetonomy\Template_Loader::partial(
-							'post-card',
+							$jt_card_partial,
 							array(
 								'post'       => $post,
 								'has_unread' => $jt_has_unread,

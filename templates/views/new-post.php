@@ -46,6 +46,19 @@ $type_defaults  = $space_type_map[ $space->type ] ?? [
 $post_type      = $type_defaults['post_type'];
 $type_label     = $type_defaults['label'];
 
+// Type-aware submit label. Set as Interactivity state so the button text
+// stays correct after hydration (the SSR'd label gets replaced by
+// state.submitLabel via data-wp-text).
+$jt_submit_labels = array(
+	'question' => __( 'Post Question', 'jetonomy' ),
+	'idea'     => __( 'Submit Idea', 'jetonomy' ),
+	'status'   => __( 'Post Status', 'jetonomy' ),
+);
+$jt_submit_label  = $jt_submit_labels[ $post_type ] ?? __( 'Post Topic', 'jetonomy' );
+if ( function_exists( 'wp_interactivity_state' ) ) {
+	wp_interactivity_state( 'jetonomy', array( 'submitLabel' => $jt_submit_label ) );
+}
+
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
 	[
@@ -95,31 +108,38 @@ $type_label     = $type_defaults['label'];
 		<input type="hidden" name="space_id" value="<?php echo (int) $space->id; ?>">
 		<input type="hidden" name="type" value="<?php echo esc_attr( $post_type ); ?>">
 
-		<div class="jt-form-group">
-			<label for="jt-post-title" class="jt-label"><?php esc_html_e( 'Title', 'jetonomy' ); ?></label>
-			<?php
-			$title_placeholders = [
-				'question' => __( 'What is your question?', 'jetonomy' ),
-				'idea'     => __( 'Describe your idea', 'jetonomy' ),
-				'status'   => __( "What's on your mind?", 'jetonomy' ),
-			];
-			$title_placeholder  = esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
+		<?php
+		// Feed spaces hide the title field — a status post is its content.
+		// The REST layer derives a title from the body so search and
+		// breadcrumbs still have something to work with.
+		$jt_hide_title = ( 'feed' === ( $space->type ?? '' ) );
+		if ( ! $jt_hide_title ) :
 			?>
-			<input type="text" id="jt-post-title" name="title" class="jt-input"
-					placeholder="<?php echo $title_placeholder; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped above ?>"
-					data-space-id="<?php echo (int) $space->id; ?>"
-					required maxlength="255" autofocus>
-			<div id="jt-similar-topics" class="jt-similar" hidden>
-				<div class="jt-similar-head">
-					<span class="jt-similar-label"><?php esc_html_e( 'Similar topics', 'jetonomy' ); ?></span>
-					<label class="jt-similar-toggle">
-						<input type="checkbox" id="jt-similar-all-spaces">
-						<?php esc_html_e( 'Search all spaces', 'jetonomy' ); ?>
-					</label>
+			<div class="jt-form-group">
+				<label for="jt-post-title" class="jt-label"><?php esc_html_e( 'Title', 'jetonomy' ); ?></label>
+				<?php
+				$title_placeholders = [
+					'question' => __( 'What is your question?', 'jetonomy' ),
+					'idea'     => __( 'Describe your idea', 'jetonomy' ),
+				];
+				$title_placeholder  = esc_attr( $title_placeholders[ $post_type ] ?? __( 'Topic title', 'jetonomy' ) );
+				?>
+				<input type="text" id="jt-post-title" name="title" class="jt-input"
+						placeholder="<?php echo $title_placeholder; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped above ?>"
+						data-space-id="<?php echo (int) $space->id; ?>"
+						required maxlength="255" autofocus>
+				<div id="jt-similar-topics" class="jt-similar" hidden>
+					<div class="jt-similar-head">
+						<span class="jt-similar-label"><?php esc_html_e( 'Similar topics', 'jetonomy' ); ?></span>
+						<label class="jt-similar-toggle">
+							<input type="checkbox" id="jt-similar-all-spaces">
+							<?php esc_html_e( 'Search all spaces', 'jetonomy' ); ?>
+						</label>
+					</div>
+					<div id="jt-similar-results"></div>
 				</div>
-				<div id="jt-similar-results"></div>
 			</div>
-		</div>
+		<?php endif; ?>
 
 		<div class="jt-form-group">
 			<label for="jt-post-tags" class="jt-label"><?php esc_html_e( 'Tags', 'jetonomy' ); ?> <span class="jt-label-hint"><?php esc_html_e( '(optional, comma-separated)', 'jetonomy' ); ?></span></label>

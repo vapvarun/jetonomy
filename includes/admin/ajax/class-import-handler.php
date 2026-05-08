@@ -146,6 +146,9 @@ class Import_Handler {
 	 */
 	public function ajax_import_progress(): void {
 		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'jetonomy' ) ), 403 );
+		}
 		$progress = \Jetonomy\Import\Importer::get_progress();
 		wp_send_json_success( $progress );
 	}

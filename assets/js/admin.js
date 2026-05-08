@@ -485,10 +485,12 @@
 				$('#jt-prefixes-config').toggle(this.checked);
 			});
 			$(document).on('click', '#jt-add-prefix', function() {
+				var labelPlaceholder = Jetonomy.i18n.prefixLabel || 'Label';
+				var removeTitle      = Jetonomy.i18n.removePrefix || 'Remove';
 				var row = '<div class="jt-prefix-row">' +
-					'<input type="text" class="jt-prefix-name" placeholder="Label" maxlength="50">' +
+					'<input type="text" class="jt-prefix-name" placeholder="' + $('<div>').text(labelPlaceholder).html() + '" maxlength="50">' +
 					'<input type="color" class="jt-prefix-color" value="#3B82F6">' +
-					'<button type="button" class="button jt-prefix-remove" title="Remove">&times;</button>' +
+					'<button type="button" class="button jt-prefix-remove" title="' + $('<div>').text(removeTitle).html() + '">&times;</button>' +
 					'</div>';
 				$('#jt-prefixes-list').append(row);
 			});
@@ -1223,12 +1225,12 @@
 				notice.className = 'notice notice-success';
 				var p = document.createElement('p');
 				var strong = document.createElement('strong');
-				strong.textContent = 'Import complete! ';
+				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
 				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
 				var link = document.createElement('a');
 				link.href = '';
-				link.textContent = 'Reload page';
+				link.textContent = Jetonomy.i18n.reloadPage || 'Reload page';
 				p.appendChild(link);
 				p.appendChild(document.createTextNode(' to see updated status.'));
 				notice.appendChild(p);
@@ -1267,7 +1269,7 @@
 							progressFill.style.width = '100%';
 							statusPct.textContent    = '100%';
 							progress.classList.add('jetonomy-import-progress--done');
-							statusText.textContent   = 'Import complete!';
+							statusText.textContent   = Jetonomy.i18n.importDone || 'Import complete!';
 
 							steps.forEach(function(s) {
 								s.classList.remove('jetonomy-step--active');
@@ -1283,7 +1285,7 @@
 						}
 					})
 					.catch(function() {
-						statusText.textContent  = 'Connection lost. You can resume this import later.';
+						statusText.textContent  = Jetonomy.i18n.importConnectionLost || 'Connection lost. You can resume this import later.';
 						actionDiv.style.display = 'block';
 					});
 			}

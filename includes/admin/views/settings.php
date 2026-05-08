@@ -458,15 +458,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php
 				$notif_defaults = $settings['notification_defaults'] ?? [];
 				$notif_types    = [
-					'reply_to_post'   => __( 'Reply to your post', 'jetonomy' ),
-					'reply_to_reply'  => __( 'Reply to your reply', 'jetonomy' ),
-					'mention'         => __( 'Mention (@username)', 'jetonomy' ),
-					'accepted_answer' => __( 'Your answer accepted', 'jetonomy' ),
-					'new_post_in_sub' => __( 'New post in subscribed space', 'jetonomy' ),
-					'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
-					'vote_on_post'    => __( 'Vote on your post', 'jetonomy' ),
-					'moderation'      => __( 'Moderator action on your content', 'jetonomy' ),
-					'join_request'    => __( 'Space join request', 'jetonomy' ),
+					'reply_to_post'       => __( 'Reply to your post', 'jetonomy' ),
+					'reply_to_reply'      => __( 'Reply to your reply', 'jetonomy' ),
+					'mention'             => __( 'Mention (@username)', 'jetonomy' ),
+					'accepted_answer'     => __( 'Your answer accepted', 'jetonomy' ),
+					'idea_status_changed' => __( 'Your idea roadmap status changed', 'jetonomy' ),
+					'new_post_in_sub'     => __( 'New post in subscribed space', 'jetonomy' ),
+					'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
+					'vote_on_post'        => __( 'Vote on your post', 'jetonomy' ),
+					'moderation'          => __( 'Moderator action on your content', 'jetonomy' ),
+					'join_request'        => __( 'Space join request', 'jetonomy' ),
 				];
 				?>
 				<table class="jt-notif-defaults-table">
@@ -531,6 +532,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'reply_to_reply'        => __( 'Reply to your reply', 'jetonomy' ),
 					'mention'               => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'       => __( 'Your answer accepted', 'jetonomy' ),
+					'idea_status_changed'   => __( 'Your idea roadmap status changed', 'jetonomy' ),
 					'new_post_in_sub'       => __( 'New post in subscribed space', 'jetonomy' ),
 					'badge_earned'          => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'          => __( 'Vote on your post', 'jetonomy' ),

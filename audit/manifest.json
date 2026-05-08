@@ -2729,10 +2729,12 @@
     ]
   },
   "generated": {
-    "at": "2026-04-30T15:00:00Z",
+    "at": "2026-05-07T16:30:00Z",
     "from": "wp-plugin-onboard skill (1.4.1 refresh, 2026-04-30 v2 static_analysis)",
     "branch": "1.4.1",
-    "schema_version": "v2"
+    "schema_version": "v2",
+    "refresh_note": "Refreshed 2026-05-07 — grid_track_overflow_risks already implemented via minmax(0, 1fr); kept entries as design-decision documentation. New admin-confirm.js helper enqueued plugin-wide for [data-jt-confirm] delegated modal toolkit.",
+    "refreshed_via": "wp-plugin-onboard --refresh (focused on static_analysis + timestamp)"
   },
   "static_analysis": {
     "dead_listeners": [],

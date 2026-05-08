@@ -111,6 +111,9 @@ class Cron {
 
 	/**
 	 * Evaluate and promote trust levels for all users (runs every 12h).
+	 *
+	 * Processes at most jetonomy_cron_batch_size profiles per run (default 500)
+	 * to avoid hitting max_execution_time on large communities.
 	 */
 	public function evaluate_trust_levels(): void {
 		global $wpdb;
@@ -118,8 +121,14 @@ class Cron {
 		$replies_t  = table( 'replies' );
 		$posts_t    = table( 'posts' );
 
+		$batch = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$profiles = $wpdb->get_results(
-			"SELECT user_id, post_count, reply_count, reputation, trust_level, created_at FROM {$profiles_t} WHERE trust_level < 4"
+			$wpdb->prepare(
+				"SELECT user_id, post_count, reply_count, reputation, trust_level, created_at FROM {$profiles_t} WHERE trust_level < 4 LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$batch
+			)
 		);
 
 		if ( empty( $profiles ) ) {
@@ -173,13 +182,19 @@ class Cron {
 
 	/**
 	 * Remove expired bans/restrictions (runs hourly).
+	 *
+	 * Processes at most jetonomy_cron_batch_size rows per run (default 500)
+	 * to avoid long-running DELETE locks on large communities.
 	 */
 	public function cleanup_expired_restrictions(): void {
 		global $wpdb;
-		$wpdb->query(
+		$table = table( 'restrictions' );
+		$batch = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_expired_restrictions' );
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
-				'DELETE FROM ' . table( 'restrictions' ) . ' WHERE expires_at IS NOT NULL AND expires_at < %s',
-				current_time( 'mysql', true )
+				"DELETE FROM {$table} WHERE expires_at IS NOT NULL AND expires_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				current_time( 'mysql', true ),
+				$batch
 			)
 		);
 	}
@@ -213,24 +228,33 @@ class Cron {
 
 	/**
 	 * Mark old unread notifications as read (runs weekly, 30 days).
+	 *
+	 * Processes at most jetonomy_cron_batch_size rows per run (default 500)
+	 * to avoid long-running UPDATE locks on large communities.
 	 */
 	public function cleanup_old_notifications(): void {
 		global $wpdb;
+		$table  = table( 'notifications' );
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( 30 * DAY_IN_SECONDS ) );
-		// Use direct query for the WHERE clause with date
-		$wpdb->query(
+		$batch  = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'cleanup_old_notifications' );
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
-				'UPDATE ' . table( 'notifications' ) . ' SET is_read = 1 WHERE is_read = 0 AND created_at < %s',
-				$cutoff
+				"UPDATE {$table} SET is_read = 1 WHERE is_read = 0 AND created_at < %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$cutoff,
+				$batch
 			)
 		);
 	}
 
 	/**
 	 * Publish any posts whose published_at datetime has passed (runs hourly).
+	 *
+	 * Processes at most jetonomy_cron_batch_size due posts per run (default 500)
+	 * to keep each invocation time-bounded on large communities.
 	 */
 	public function publish_scheduled_posts(): void {
-		$due_posts = \Jetonomy\Models\Post::get_due_scheduled();
+		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'publish_scheduled_posts' );
+		$due_posts = \Jetonomy\Models\Post::get_due_scheduled( $batch );
 		foreach ( $due_posts as $post ) {
 			\Jetonomy\Models\Post::publish_scheduled( (int) $post->id );
 		}

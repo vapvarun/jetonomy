@@ -256,6 +256,7 @@ class Template_Loader {
 			'msgComposeOpen'    => false,
 			'i18n'              => array(
 				'voteRecorded'       => __( 'Vote recorded', 'jetonomy' ),
+				'statusUpdated'      => __( 'Roadmap status updated', 'jetonomy' ),
 				'accepted'           => __( 'Accepted', 'jetonomy' ),
 				'reply'              => __( 'Reply', 'jetonomy' ),
 				'cancel'             => __( 'Cancel', 'jetonomy' ),
@@ -302,6 +303,11 @@ class Template_Loader {
 				'titleRequired'      => __( 'Please enter a title for your topic.', 'jetonomy' ),
 				'bodyRequired'       => __( 'Please add some details before posting.', 'jetonomy' ),
 				'loginRequired'      => __( 'Please sign in to use this.', 'jetonomy' ),
+				// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
+				'messageSending'     => __( 'Sending...', 'jetonomy' ),
+				'messageSend'        => __( 'Send', 'jetonomy' ),
+				'messageSendFailed'  => __( 'Failed to send. Please try again.', 'jetonomy' ),
+				'noMessageMatches'   => __( 'No matches. You can only message people who share at least one space with you.', 'jetonomy' ),
 			),
 			)
 		);
@@ -369,6 +375,19 @@ class Template_Loader {
 					'saveFailed'        => esc_html__( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'       => esc_html__( 'Label', 'jetonomy' ),
 					'removePrefix'      => esc_html__( 'Remove prefix', 'jetonomy' ),
+					// Composer + Join-Space gate strings (consumed by composer.js).
+					'quoteSelected'     => esc_html__( 'Quote', 'jetonomy' ),
+					'joining'           => esc_html__( 'Joining...', 'jetonomy' ),
+					'joinSpace'         => esc_html__( 'Join Space', 'jetonomy' ),
+					'requesting'        => esc_html__( 'Requesting...', 'jetonomy' ),
+					'awaitingApproval'  => esc_html__( 'Awaiting Approval', 'jetonomy' ),
+					'requestToJoin'     => esc_html__( 'Request to Join', 'jetonomy' ),
+					'submitting'        => esc_html__( 'Submitting...', 'jetonomy' ),
+					'requestSent'       => esc_html__( 'Request Sent', 'jetonomy' ),
+					'requestSubmitted'  => esc_html__( 'Request submitted. Awaiting approval.', 'jetonomy' ),
+					'requestFailed'     => esc_html__( 'Could not submit request.', 'jetonomy' ),
+					'noMentionMatches'  => esc_html__( 'No matches', 'jetonomy' ),
+					'memberBanned'      => esc_html__( 'Banned', 'jetonomy' ),
 					'roleLabels'        => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),

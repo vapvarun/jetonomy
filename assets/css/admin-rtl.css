@@ -306,6 +306,12 @@
 	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 	outline: none;
 }
+.jetonomy-admin .form-table input:focus-visible,
+.jetonomy-admin .form-table select:focus-visible,
+.jetonomy-admin .form-table textarea:focus-visible {
+	outline: 2px solid var(--jt-admin-accent);
+	outline-offset: 2px;
+}
 
 /* ── Section Dividers in Settings ── */
 .jetonomy-admin .jt-settings-section {
@@ -800,7 +806,8 @@
 	outline: none;
 }
 .jetonomy-admin .tablenav-pages a.page-numbers:focus-visible {
-	box-shadow: 0 0 0 2px #2271b1;
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
 	border-color: #2271b1;
 }
 .jetonomy-admin .tablenav-pages .page-numbers.current {

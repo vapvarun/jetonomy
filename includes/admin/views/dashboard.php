@@ -110,6 +110,7 @@ $stat_cards = [
 								'moderated_spam'      => __( 'Marked as spam', 'jetonomy' ),
 								'reputation_changed'  => __( 'Reputation changed', 'jetonomy' ),
 								'joined_space'        => __( 'Joined a space', 'jetonomy' ),
+								'idea_status_changed' => __( 'Updated idea roadmap status', 'jetonomy' ),
 							];
 
 							$action_label = isset( $action_labels[ $action_code ] )

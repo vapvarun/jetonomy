@@ -169,6 +169,7 @@ wp_localize_script(
 			'shortcuts' => esc_html__( 'Keyboard Shortcuts', 'jetonomy' ),
 			'close'     => esc_html__( 'Close', 'jetonomy' ),
 			'loadFail'  => esc_html__( 'Failed to load', 'jetonomy' ),
+			'escKey'    => esc_html_x( 'ESC', 'keyboard key label shown next to the search overlay', 'jetonomy' ),
 		),
 	)
 );

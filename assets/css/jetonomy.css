@@ -913,6 +913,82 @@
   .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
+  /* Feed-space card layout — full body inline like a social feed.
+     Distinct from the dense topic-list .jt-row used by Forum/QA/Ideas
+     so the visual hierarchy matches the type's contract. */
+  .jt-feed { display: flex; flex-direction: column; gap: 12px; }
+  .jt-feed-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); padding: 16px; }
+  .jt-feed-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-block-end: 12px; }
+  .jt-feed-card-meta { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+  .jt-feed-card-author { font-weight: 600; color: var(--jt-text); }
+  .jt-feed-card-time { color: var(--jt-text-tertiary); font-size: 0.875rem; text-decoration: none; }
+  .jt-feed-card-time:hover { color: var(--jt-text-secondary); text-decoration: underline; }
+  .jt-feed-card-body { color: var(--jt-text); line-height: 1.6; word-break: break-word; }
+  .jt-feed-card-body p { margin-block: 0 12px; }
+  .jt-feed-card-body p:last-child { margin-block-end: 0; }
+  .jt-feed-card-body img { max-width: 100%; height: auto; border-radius: var(--jt-radius-sm); }
+  .jt-feed-card-foot { display: flex; align-items: center; gap: 4px; margin-block-start: 14px; padding-block-start: 12px; border-block-start: 1px solid var(--jt-border); }
+  .jt-feed-act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; background: transparent; border: 0; color: var(--jt-text-secondary); font: inherit; font-size: 0.875rem; cursor: pointer; border-radius: var(--jt-radius-sm); text-decoration: none; transition: background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-feed-act:hover, .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: none; }
+  .jt-feed-act.jt-voted { color: var(--jt-accent); }
+  .jt-feed-act-n { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .jt-feed-act-permalink { margin-inline-start: auto; color: var(--jt-text-tertiary); }
+  @media (max-width: 640px) {
+    .jt-feed-card { padding: 12px; }
+    .jt-feed-card-foot { flex-wrap: wrap; }
+  }
+
+  /* Q&A "Answered" / "Needs answer" pill on post cards. Same visual
+     language as the idea-status pill so listings stay scannable across
+     space types. Answered = success green; Needs answer = quiet neutral. */
+  .jt-qa-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
+  .jt-qa-pill-answered { background: color-mix(in srgb, var(--jt-success) 16%, transparent); color: var(--jt-success); }
+  .jt-qa-pill-needs-answer { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+
+  /* Pinned accepted-answer callout above the reply list on Q&A posts.
+     Visually echoes the reply's "Accepted" badge color so customers
+     immediately recognise this is the answer, while the reply itself
+     still appears in chronological position below. */
+  .jt-accepted-callout { background: color-mix(in srgb, var(--jt-success) 8%, transparent); border: 1px solid color-mix(in srgb, var(--jt-success) 30%, transparent); border-radius: var(--jt-radius); padding: 12px 14px; margin-block: 8px 16px; }
+  .jt-accepted-callout-head { display: inline-flex; align-items: center; gap: 6px; color: var(--jt-success); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.02em; text-transform: uppercase; margin-block-end: 8px; }
+  .jt-accepted-callout-body .jt-reply { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-sm); padding: 12px; }
+
+  /* Idea roadmap status pill — six canonical statuses, color-coded so the
+     listing and post header speak the same visual language as the kanban. */
+  .jt-idea-pill { --jt-ip: var(--jt-text-secondary); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
+  .jt-idea-pill-submitted { --jt-ip: var(--jt-accent); }
+  .jt-idea-pill-under_review { --jt-ip: var(--jt-text-secondary); }
+  .jt-idea-pill-planned { --jt-ip: var(--jt-warn); }
+  .jt-idea-pill-in_progress { --jt-ip: var(--jt-warn); }
+  .jt-idea-pill-completed { --jt-ip: var(--jt-success); }
+  .jt-idea-pill-declined { --jt-ip: var(--jt-text-tertiary); }
+
+  /* Roadmap status picker (moderator only on Ideas spaces). Each option
+     is a pill button that mirrors the read-only pill above; the active
+     option uses a heavier border + filled background so the choice is
+     obvious without dominating the post header. */
+  .jt-idea-status-setter { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-start: 12px; padding: 10px 12px; background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-idea-status-setter-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
+  .jt-idea-status-options { display: flex; flex-wrap: wrap; gap: 6px; }
+  .jt-idea-status-btn { font-family: inherit; cursor: pointer; border: 1px solid transparent; line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 24%, transparent); outline: none; }
+  .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
+  .jt-idea-status-btn.is-active { background: var(--jt-ip); color: #fff; border-color: var(--jt-ip); }
+  .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
+  @media (max-width: 640px) {
+    .jt-idea-status-setter { gap: 8px; padding: 10px; align-items: flex-start; flex-direction: column; }
+    .jt-idea-status-options { width: 100%; }
+    .jt-idea-status-btn { flex: 0 0 auto; }
+  }
+
+  /* Posts | Roadmap tabs on Ideas spaces. Plain underline-on-active tab
+     row, mobile-first single line that wraps if the labels grow. */
+  .jt-space-tabs { display: flex; gap: 4px; border-block-end: 1px solid var(--jt-border); margin-block: 12px 16px; }
+  .jt-space-tab { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); text-decoration: none; border-block-end: 2px solid transparent; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
+  .jt-space-tab:hover, .jt-space-tab:focus-visible { color: var(--jt-text); }
+  .jt-space-tab.on { color: var(--jt-accent); border-block-end-color: var(--jt-accent); }
+  @media (max-width: 640px) { .jt-space-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; } .jt-space-tab { white-space: nowrap; } }
+
   /* ── Private toggle on new post form ── */
   .jt-private-toggle { display: flex; align-items: center; }
   .jt-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
@@ -1231,9 +1307,11 @@
   .jt-label-hint { font-size: 0.8125rem; font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: left; }
   .jt-input:focus { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
+  .jt-input:focus-visible { outline: 2px solid var(--jt-accent) !important; outline-offset: 2px !important; }
   .jt-input::placeholder { color: var(--jt-text-secondary); }
   .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
   .jt-select:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
+  .jt-select:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
@@ -1827,7 +1905,8 @@
 .jt-share-item-icon svg { width: 16px; height: 16px; display: block; }
 .jt-share-item-label { display: inline-block; }
 .jt-share-item:hover,
-.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent); outline: none; }
+.jt-share-item:focus-visible { background: var(--jt-bg-hover); color: var(--jt-accent); }
+.jt-share-item:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; }
 .jt-share-item:hover .jt-share-item-icon,
 .jt-share-item:focus-visible .jt-share-item-icon { color: var(--jt-accent); }
 
@@ -2104,7 +2183,7 @@
 }
 .jt-search-overlay-icon { flex-shrink: 0; color: var(--jt-text-tertiary); display: flex; }
 .jt-search-overlay-input {
-  flex: 1; border: none; background: none; outline: none;
+  flex: 1; border: none; background: none;
   font-family: var(--jt-font); font-size: 1.0625rem; color: var(--jt-text);
   padding: 0;
 }
@@ -2412,6 +2491,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	outline: 0;
 	border-color: var(--jt-accent);
 	box-shadow: 0 0 0 3px var(--jt-accent-light, transparent);
+}
+.jt-login-label > input:focus-visible {
+	outline: 2px solid var(--jt-accent);
+	outline-offset: 2px;
 }
 .jt-login-remember {
 	display: flex;

@@ -67,13 +67,14 @@ $base         = \Jetonomy\base_url();
 		$notif_prefs   = $user_settings['notifications'] ?? [];
 		$global_defs   = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
 		$notif_types   = [
-			'reply_to_post'   => __( 'Reply to my post', 'jetonomy' ),
-			'reply_to_reply'  => __( 'Reply to my reply', 'jetonomy' ),
-			'mention'         => __( '@Mention', 'jetonomy' ),
-			'vote_on_post'    => __( 'Vote on my post', 'jetonomy' ),
-			'accepted_answer' => __( 'Accepted answer', 'jetonomy' ),
-			'new_post_in_sub' => __( 'New post in followed space', 'jetonomy' ),
-			'badge_earned'    => __( 'Badge earned', 'jetonomy' ),
+			'reply_to_post'       => __( 'Reply to my post', 'jetonomy' ),
+			'reply_to_reply'      => __( 'Reply to my reply', 'jetonomy' ),
+			'mention'             => __( '@Mention', 'jetonomy' ),
+			'vote_on_post'        => __( 'Vote on my post', 'jetonomy' ),
+			'accepted_answer'     => __( 'Accepted answer', 'jetonomy' ),
+			'idea_status_changed' => __( 'My idea roadmap status changed', 'jetonomy' ),
+			'new_post_in_sub'     => __( 'New post in followed space', 'jetonomy' ),
+			'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 		];
 		?>
 		<div class="jt-form-group">

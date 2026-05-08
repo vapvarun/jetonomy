@@ -244,13 +244,16 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $user_replies as $ur ) : ?>
 							<?php
-							$ur_url = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
-							$ur_ago = human_time_diff( strtotime( $ur->created_at ), time() );
+							$ur_url   = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
+							$ur_ago   = human_time_diff( strtotime( $ur->created_at ), time() );
+							$ur_space = ! empty( $ur->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $ur->space_slug ) : null;
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
-								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
-								</div>
+								<?php if ( jetonomy_space_allows_voting( $ur_space ) ) : ?>
+									<div class="jt-votes">
+										<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
+									</div>
+								<?php endif; ?>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
 									<div class="jt-row-sub">
@@ -291,13 +294,16 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $user_votes as $uv ) : ?>
 							<?php
-							$uv_url = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
-							$uv_ago = human_time_diff( strtotime( $uv->voted_at ), time() );
+							$uv_url   = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
+							$uv_ago   = human_time_diff( strtotime( $uv->voted_at ), time() );
+							$uv_space = ! empty( $uv->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $uv->space_slug ) : null;
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
-								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
-								</div>
+								<?php if ( jetonomy_space_allows_voting( $uv_space ) ) : ?>
+									<div class="jt-votes">
+										<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
+									</div>
+								<?php endif; ?>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( $uv->title ); ?></div>
 									<div class="jt-row-sub">
@@ -433,9 +439,11 @@ $crumbs = [
 							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
-								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
-								</div>
+								<?php if ( jetonomy_space_allows_voting( $bk_space ) ) : ?>
+									<div class="jt-votes">
+										<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
+									</div>
+								<?php endif; ?>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( $bk_post->title ); ?></div>
 									<div class="jt-row-sub">
@@ -476,11 +484,14 @@ $crumbs = [
 							<?php
 							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
 							$post_url = $base . '/s/' . $r_post->space_slug . '/t/' . $r_post->slug . '/';
+							$r_space  = ! empty( $r_post->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $r_post->space_slug ) : null;
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
-								<div class="jt-votes">
-									<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
-								</div>
+								<?php if ( jetonomy_space_allows_voting( $r_space ) ) : ?>
+									<div class="jt-votes">
+										<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
+									</div>
+								<?php endif; ?>
 								<div class="jt-row-main">
 									<div class="jt-row-title"><?php echo esc_html( $r_post->title ); ?></div>
 									<div class="jt-row-sub">

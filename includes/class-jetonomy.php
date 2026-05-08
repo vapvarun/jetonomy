@@ -26,8 +26,9 @@ final class Jetonomy {
 	}
 
 	private function register_hooks(): void {
-		register_activation_hook( JETONOMY_FILE, array( $this, 'activate' ) );
+		register_activation_hook( JETONOMY_FILE, 'Jetonomy\activate_plugin' );
 		register_deactivation_hook( JETONOMY_FILE, array( $this, 'deactivate' ) );
+		add_action( 'wp_initialize_site', 'Jetonomy\install_on_new_site', 10, 2 );
 		add_action( 'init', array( $this, 'load_textdomain' ), 1 );
 		add_action( 'plugins_loaded', array( $this, 'init' ) );
 
@@ -144,39 +145,43 @@ final class Jetonomy {
 
 		if ( empty( $settings['notification_defaults'] ) ) {
 			$settings['notification_defaults'] = array(
-				'reply_to_post'   => array(
+				'reply_to_post'       => array(
 					'web'   => true,
 					'email' => true,
 				),
-				'reply_to_reply'  => array(
+				'reply_to_reply'      => array(
 					'web'   => true,
 					'email' => false,
 				),
-				'mention'         => array(
+				'mention'             => array(
 					'web'   => true,
 					'email' => true,
 				),
-				'accepted_answer' => array(
+				'accepted_answer'     => array(
 					'web'   => true,
 					'email' => true,
 				),
-				'new_post_in_sub' => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'badge_earned'    => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'vote_on_post'    => array(
-					'web'   => true,
-					'email' => false,
-				),
-				'moderation'      => array(
+				'idea_status_changed' => array(
 					'web'   => true,
 					'email' => true,
 				),
-				'join_request'    => array(
+				'new_post_in_sub'     => array(
+					'web'   => true,
+					'email' => false,
+				),
+				'badge_earned'        => array(
+					'web'   => true,
+					'email' => false,
+				),
+				'vote_on_post'        => array(
+					'web'   => true,
+					'email' => false,
+				),
+				'moderation'          => array(
+					'web'   => true,
+					'email' => true,
+				),
+				'join_request'        => array(
 					'web'   => true,
 					'email' => true,
 				),

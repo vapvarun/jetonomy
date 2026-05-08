@@ -158,6 +158,26 @@ class Posts_Controller extends Base_Controller {
 			)
 		);
 
+		// Idea roadmap status — only meaningful on `type=ideas` spaces, gated
+		// to space moderators. The post-author cannot self-curate their own
+		// status; that's the owner's job.
+		register_rest_route(
+			$ns,
+			'/posts/(?P<id>\d+)/idea-status',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'set_idea_status' ),
+				'permission_callback' => array( $this, 'login_permission_check' ),
+				'args'                => array(
+					'idea_status' => array(
+						'type'     => 'string',
+						'required' => true,
+						'enum'     => Post::valid_idea_statuses(),
+					),
+				),
+			)
+		);
+
 		// Link preview — fetch OG metadata for a URL. Public-readable:
 		// anonymous visitors to a public post deserve the same rich link
 		// preview cards that logged-in members see. The URL being previewed
@@ -345,14 +365,24 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
 		}
 
-		$title = sanitize_text_field( (string) $request->get_param( 'title' ) );
-		if ( empty( $title ) ) {
-			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
-		}
-
+		$title   = sanitize_text_field( (string) $request->get_param( 'title' ) );
 		$content = wp_kses_post( (string) $request->get_param( 'content' ) );
 		if ( empty( $content ) ) {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
+		}
+
+		// Feed spaces are short-form: a status post is its content. Members
+		// shouldn't be forced to invent a headline for a one-line update,
+		// so when the space is a Feed and no title was sent we derive one
+		// from the first sentence-or-so of the content. The full body is
+		// still rendered in the listing, the derived title only feeds
+		// search, slugs, and breadcrumbs.
+		$_jt_space_type = (string) ( $space->type ?? '' );
+		if ( empty( $title ) && 'feed' === $_jt_space_type ) {
+			$title = $this->derive_title_from_content( $content );
+		}
+		if ( empty( $title ) ) {
+			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
 		}
 
 		// Derive post type from space type if not provided.
@@ -746,6 +776,61 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
+	 * POST /posts/{id}/idea-status — Set the roadmap status for an idea.
+	 *
+	 * Only valid on `type=ideas` spaces. Other space types get 400 so a
+	 * moderator with API access can't accidentally pollute non-Ideas posts
+	 * with a status field that means nothing for those types.
+	 */
+	public function set_idea_status( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$id   = absint( $request->get_param( 'id' ) );
+		$post = Post::find( $id );
+
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+		if ( ! $space || 'ideas' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_ideas_space',
+				__( 'Roadmap status only applies to Ideas spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! $this->check_permission( 'close_posts', (int) $post->space_id ) ) {
+			return $this->permission_error();
+		}
+
+		$status = sanitize_key( (string) $request->get_param( 'idea_status' ) );
+		if ( ! Post::set_idea_status( $id, $status ) ) {
+			return $this->validation_error( __( 'Invalid roadmap status.', 'jetonomy' ) );
+		}
+
+		/**
+		 * Fires after an idea's roadmap status changes.
+		 *
+		 * Listeners (activity log, notifier) hook here to track the
+		 * curation workflow without coupling the controller to either.
+		 *
+		 * @param int    $post_id    Post ID.
+		 * @param string $new_status The new status value.
+		 * @param string $old_status The previous status value (or empty if unset).
+		 * @param int    $actor_id   User ID of the moderator who changed it.
+		 */
+		do_action( 'jetonomy_idea_status_changed', $id, $status, (string) ( $post->idea_status ?? '' ), $user_id );
+
+		$updated = Post::find( $id );
+		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
+	}
+
+	/**
 	 * POST /posts/{id}/pin — Pin (sticky) a post.
 	 */
 	public function pin_post( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -937,6 +1022,7 @@ class Posts_Controller extends Base_Controller {
 			'is_private'        => (bool) ( $post->is_private ?? false ),
 			'is_closed'         => (bool) ( $post->is_closed ?? false ),
 			'is_resolved'       => (bool) ( $post->is_resolved ?? false ),
+			'idea_status'       => isset( $post->idea_status ) && '' !== (string) $post->idea_status ? (string) $post->idea_status : null,
 			'accepted_reply_id' => $post->accepted_reply_id ? (int) $post->accepted_reply_id : null,
 			'view_count'        => (int) ( $post->view_count ?? 0 ),
 			'reply_count'       => (int) ( $post->reply_count ?? 0 ),
@@ -992,6 +1078,38 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Derive a short title from a post body. Used on Feed spaces where
+	 * the composer omits the Title field — members shouldn't have to
+	 * write a headline for a status update. The full body still renders
+	 * in the listing card; the derived title is only here so search,
+	 * slugs, breadcrumbs, and notification subjects have something to
+	 * work with.
+	 *
+	 * Trims HTML, collapses whitespace, takes up to roughly the first
+	 * sentence boundary, then caps at 80 visible chars. The 255-char
+	 * physical column limit is honored by the schema; this lower cap
+	 * is a readability choice, not a posting cap.
+	 */
+	private function derive_title_from_content( string $content ): string {
+		$plain = trim( wp_strip_all_tags( $content ) );
+		if ( '' === $plain ) {
+			return '';
+		}
+		$plain = preg_replace( '/\s+/u', ' ', $plain );
+		// Prefer the first sentence-end punctuation if it falls early
+		// enough; otherwise fall back to a clean word-boundary trim.
+		if ( preg_match( '/^(.{20,80}?)(?:[.!?…]|$)/u', $plain, $m ) ) {
+			return trim( $m[1] );
+		}
+		if ( function_exists( 'mb_strlen' ) && mb_strlen( $plain ) > 80 ) {
+			$truncated = mb_substr( $plain, 0, 80 );
+			$last_sp   = mb_strrpos( $truncated, ' ' );
+			return rtrim( false !== $last_sp ? mb_substr( $truncated, 0, $last_sp ) : $truncated ) . '…';
+		}
+		return $plain;
+	}
+
+	/**
 	 * Generate a unique post slug by appending a numeric suffix if needed.
 	 */
 	private function unique_post_slug( string $base_slug ): string {
@@ -1011,9 +1129,14 @@ class Posts_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return array(
+			// Title is optional at the REST layer; the handler still
+			// requires it for non-Feed spaces and derives it from content
+			// for Feed spaces. Marking it `required: true` here would
+			// short-circuit the body-derived title path before reaching
+			// the handler.
 			'title'        => array(
 				'type'     => 'string',
-				'required' => true,
+				'required' => false,
 			),
 			'content'      => array(
 				'type'     => 'string',
