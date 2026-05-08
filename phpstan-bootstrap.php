@@ -15,10 +15,10 @@
  */
 
 if ( ! defined( 'JETONOMY_VERSION' ) ) {
-	define( 'JETONOMY_VERSION', '1.4.1' );
+	define( 'JETONOMY_VERSION', '1.4.2' );
 }
 if ( ! defined( 'JETONOMY_DB_VERSION' ) ) {
-	define( 'JETONOMY_DB_VERSION', '1.4.1' );
+	define( 'JETONOMY_DB_VERSION', '1.4.2.1' );
 }
 if ( ! defined( 'JETONOMY_FILE' ) ) {
 	define( 'JETONOMY_FILE', __FILE__ );
@@ -34,7 +34,7 @@ if ( ! defined( 'JETONOMY_BASENAME' ) ) {
 }
 
 if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) {
-	define( 'JETONOMY_PRO_VERSION', '1.4.1' );
+	define( 'JETONOMY_PRO_VERSION', '1.4.2' );
 }
 if ( ! defined( 'JETONOMY_PRO_DIR' ) ) {
 	define( 'JETONOMY_PRO_DIR', '' );
