@@ -235,9 +235,34 @@ class Reply extends Model {
 	/**
 	 * Mark a reply as the accepted answer.
 	 *
+	 * Clears any previously-accepted reply on the same post before marking
+	 * the new one, so a Q&A post always has at most one accepted reply.
+	 *
 	 * @param int $id Reply ID.
 	 */
 	public static function mark_accepted( int $id ): void {
+		$reply = static::find( $id );
+		if ( ! $reply ) {
+			return;
+		}
+
+		$post_id = (int) $reply->post_id;
+		if ( $post_id > 0 ) {
+			// Clear any other accepted reply on this post first. Worst case
+			// between the two updates is zero accepted replies, which is a
+			// safe state. Two accepted replies is the broken state we prevent.
+			static::db()->update(
+				static::table(),
+				array( 'is_accepted' => 0 ),
+				array(
+					'post_id'     => $post_id,
+					'is_accepted' => 1,
+				),
+				array( '%d' ),
+				array( '%d', '%d' )
+			);
+		}
+
 		static::update( $id, array( 'is_accepted' => 1 ) );
 	}
 

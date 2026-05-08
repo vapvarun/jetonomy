@@ -451,7 +451,7 @@ class Demo_Seeder {
 			$demo['replies'][] = $rid;
 
 			if ( $rid && ! empty( $rd['accepted'] ) ) {
-				$wpdb->update( $replies_t, array( 'is_accepted' => 1 ), array( 'id' => $rid ) );
+				Reply::mark_accepted( (int) $rid );
 				// Populate posts.accepted_reply_id so the Q&A pinned callout
 				// has something to surface above the chronological reply
 				// list. Without this the callout silently never renders for
