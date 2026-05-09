@@ -424,18 +424,32 @@ function build(m, freeManifest) {
   // === EDGES (intra-plugin inferred relationships) ===
 
   // hook → consumer (already in manifest)
+  // consumed_by may be a string (legacy) or an array of {plugin, where, kind}
+  // objects (schema v2). Normalize both into a uniform consumer list.
   (m.hooks_fired || []).forEach(h => {
     if (!h.consumed_by) return;
-    // consumer might be a Pro feature class — check existence first
-    const consumerId = `feature:${h.consumed_by.split(' ')[0].split('(')[0].trim()}`;
-    if (seen.has(consumerId)) {
-      addEdge(`hook:${h.name}`, consumerId, 'consumed_by', 2);
-    } else {
-      // fallback — create a generic consumer node
-      const fallback = `consumer:${h.consumed_by}`;
-      addNode(fallback, h.consumed_by, 'feature', { size:16, big:true });
-      addEdge(`hook:${h.name}`, fallback, 'consumed_by', 2);
-    }
+    if (Array.isArray(h.consumed_by) && h.consumed_by.length === 0) return;
+    const consumers = Array.isArray(h.consumed_by)
+      ? h.consumed_by.map(c => ({
+          key: (c.where || c.plugin || '').split(' ')[0].split('(')[0].trim() || (c.plugin || ''),
+          label: c.plugin ? (c.kind ? `${c.plugin} (${c.kind})` : c.plugin) : (c.where || ''),
+        }))
+      : [{
+          key: String(h.consumed_by).split(' ')[0].split('(')[0].trim(),
+          label: String(h.consumed_by),
+        }];
+    consumers.forEach(c => {
+      if (!c.key) return;
+      const consumerId = `feature:${c.key}`;
+      if (seen.has(consumerId)) {
+        addEdge(`hook:${h.name}`, consumerId, 'consumed_by', 2);
+      } else {
+        // fallback — create a generic consumer node
+        const fallback = `consumer:${c.key}`;
+        addNode(fallback, c.label, 'feature', { size:16, big:true });
+        addEdge(`hook:${h.name}`, fallback, 'consumed_by', 2);
+      }
+    });
   });
 
   // REST endpoint → table (route name contains table name)
