@@ -5,7 +5,7 @@
         "version": "1.4.2"
     },
     "generated": {
-        "at": "2026-05-09T10:35:30+00:00",
+        "at": "2026-05-09T10:40:23+00:00",
         "manifest_at": "2026-05-09T05:30:00Z",
         "manifest_branch": "main"
     },
@@ -714,8 +714,8 @@
         "coverage_percent": 24.199999999999999
     },
     "drift": {
-        "previous_uncovered": 122,
+        "previous_uncovered": 113,
         "current_uncovered": 113,
-        "delta": -9
+        "delta": 0
     }
 }
