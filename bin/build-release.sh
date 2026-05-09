@@ -252,6 +252,23 @@ if [ "$LINT_FAILED" -ne 0 ]; then
 	exit 30
 fi
 
+# --- 6b. QA COVERAGE GATE — manifest entries must have test stubs ---------
+# Phase A/E gate: bin/qa-coverage-check.php reads audit/manifest.json and
+# asserts every REST endpoint / AJAX handler / cron / hook-with-consumer
+# has corresponding test coverage. Exit 1 if uncovered_total grew vs the
+# previous run (drift) — same baseline-shrink discipline phpstan-baseline
+# uses. Skip with COVERAGE_SKIP=1 only in genuine emergencies.
+if [ -f "$ROOT/bin/qa-coverage-check.php" ] && [ -z "${COVERAGE_SKIP:-}" ]; then
+	echo "==> qa-coverage gate"
+	if ! php "$ROOT/bin/qa-coverage-check.php" --quiet --plugin="$ROOT"; then
+		echo "FAIL: QA coverage regressed — see audit/qa-coverage.json" >&2
+		echo "      Each uncovered entry has a stub_command. Run them, fill in TODOs," >&2
+		echo "      verify pass, retry the build." >&2
+		echo "      Bypass (emergency only): COVERAGE_SKIP=1 bin/build-release.sh" >&2
+		exit 31
+	fi
+fi
+
 # --- 7. SMOKE TEST — boot the plugin in the minimal WP stub ---------------
 # This is the step that would have caught the 1.3.5 fatal. Do not remove.
 echo "==> smoke-test: boot plugin + fire plugins_loaded"

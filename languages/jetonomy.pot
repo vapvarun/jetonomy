@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.4.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-05-08 13:35:15+00:00\n"
+"POT-Creation-Date: 2026-05-09 05:46:01+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -859,7 +859,7 @@ msgstr ""
 #: templates/partials/moderation/flag-card.php:95
 #: templates/partials/post-card.php:124 templates/partials/reply-card.php:58
 #: templates/views/notifications.php:158 templates/views/search.php:264
-#: templates/views/single-post.php:322 templates/views/user-profile.php:272
+#: templates/views/single-post.php:319 templates/views/user-profile.php:272
 #: templates/views/user-profile.php:393 templates/views/user-profile.php:512
 #. translators: %s: human-readable time difference
 #. translators: %s: human-readable time difference.
@@ -985,7 +985,7 @@ msgstr ""
 #: includes/admin/class-admin.php:84 includes/admin/class-admin.php:85
 #: includes/admin/views/tags.php:46 templates/views/new-post.php:145
 #: templates/views/search.php:161 templates/views/search.php:312
-#: templates/views/single-post.php:366
+#: templates/views/single-post.php:363
 msgid "Tags"
 msgstr ""
 
@@ -1488,7 +1488,7 @@ msgstr ""
 #: includes/admin/views/users.php:64
 #: includes/integrations/class-buddypress.php:811
 #: includes/integrations/class-buddypress.php:974
-#: templates/views/single-post.php:543 templates/views/user-profile.php:181
+#: templates/views/single-post.php:540 templates/views/user-profile.php:181
 #: templates/views/user-profile.php:217
 msgid "Replies"
 msgstr ""
@@ -1612,7 +1612,7 @@ msgstr ""
 #: includes/admin/views/categories.php:249
 #: includes/admin/views/space-edit.php:104 includes/admin/views/spaces.php:75
 #: templates/partials/post-card.php:59 templates/views/new-space.php:230
-#: templates/views/single-post.php:327 templates/views/space-edit.php:188
+#: templates/views/single-post.php:324 templates/views/space-edit.php:188
 msgid "Private"
 msgstr ""
 
@@ -1726,7 +1726,7 @@ msgstr ""
 #: includes/admin/views/categories.php:148 includes/admin/views/content.php:206
 #: includes/admin/views/replies.php:233 includes/admin/views/spaces.php:216
 #: includes/admin/views/tags.php:138 templates/partials/reply-card.php:144
-#: templates/views/my-spaces.php:132 templates/views/single-post.php:471
+#: templates/views/my-spaces.php:132 templates/views/single-post.php:468
 #: templates/views/space-edit.php:60
 msgid "Edit"
 msgstr ""
@@ -1744,7 +1744,7 @@ msgstr ""
 #: includes/admin/views/categories.php:149
 #: includes/admin/views/space-edit.php:323 includes/admin/views/spaces.php:218
 #: includes/admin/views/tags.php:81 includes/admin/views/tags.php:139
-#: templates/partials/reply-card.php:158 templates/views/single-post.php:496
+#: templates/partials/reply-card.php:158 templates/views/single-post.php:493
 #: vendor/easy-digital-downloads/edd-sl-sdk/src/Messenger.php:273
 msgid "Delete"
 msgstr ""
@@ -2324,7 +2324,7 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/spaces.php:127
 #: dist/jetonomy/includes/class-abilities.php:674
 #: includes/admin/views/dashboard.php:204
-#: includes/admin/views/setup-wizard.php:180
+#: includes/admin/views/setup-wizard.php:194
 #: includes/admin/views/spaces.php:127 includes/class-abilities.php:674
 msgid "Create Space"
 msgstr ""
@@ -2975,11 +2975,13 @@ msgstr ""
 #: dist/jetonomy/templates/views/space-edit.php:97
 #: dist/jetonomy/templates/views/space-roadmap.php:127
 #: dist/jetonomy/templates/views/space.php:277
-#: includes/admin/views/settings.php:146 includes/admin/views/space-edit.php:94
-#: includes/admin/views/spaces.php:64 includes/admin/views/spaces.php:154
-#: includes/admin/views/spaces.php:226 templates/partials/sidebar.php:121
-#: templates/views/new-space.php:139 templates/views/space-edit.php:97
-#: templates/views/space-roadmap.php:127 templates/views/space.php:277
+#: includes/admin/views/settings.php:146
+#: includes/admin/views/setup-wizard.php:138
+#: includes/admin/views/space-edit.php:94 includes/admin/views/spaces.php:64
+#: includes/admin/views/spaces.php:154 includes/admin/views/spaces.php:226
+#: templates/partials/sidebar.php:121 templates/views/new-space.php:139
+#: templates/views/space-edit.php:97 templates/views/space-roadmap.php:117
+#: templates/views/space.php:277
 msgid "Ideas"
 msgstr ""
 
@@ -4285,104 +4287,103 @@ msgid "Questions, answers, accepted solution"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:140
-#: includes/admin/views/setup-wizard.php:140
+#: includes/admin/views/setup-wizard.php:154
 msgid "Next: First Space"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:148
-#: includes/admin/views/setup-wizard.php:148
+#: includes/admin/views/setup-wizard.php:162
 msgid "Create Your First Space"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:149
-#: includes/admin/views/setup-wizard.php:149
+#: includes/admin/views/setup-wizard.php:163
 msgid ""
 "A Space is a community section where people can start discussions. You can "
 "add more spaces later."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:154
-#: includes/admin/views/setup-wizard.php:154
+#: includes/admin/views/setup-wizard.php:168
 msgid "Category Name"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:156
-#: includes/admin/views/setup-wizard.php:156
+#: includes/admin/views/setup-wizard.php:170
 msgid "Categories group related spaces together."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:160
-#: includes/admin/views/setup-wizard.php:160
+#: includes/admin/views/setup-wizard.php:174
 msgid "Space Name"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:165
-#: includes/admin/views/setup-wizard.php:165
+#: includes/admin/views/setup-wizard.php:179
 msgid "Space Description"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:166
-#: includes/admin/views/setup-wizard.php:166
+#: includes/admin/views/setup-wizard.php:180
 msgid "A place for community discussions..."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:169
-#: includes/admin/views/setup-wizard.php:169
+#: includes/admin/views/setup-wizard.php:183
 msgid "or"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:173
-#: includes/admin/views/setup-wizard.php:173
 msgid "Create sample data instead (2 categories, 4 spaces, 10 posts)"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:178
-#: includes/admin/views/setup-wizard.php:178
+#: includes/admin/views/setup-wizard.php:192
 msgid "Back"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:191
-#: includes/admin/views/setup-wizard.php:191
+#: includes/admin/views/setup-wizard.php:205
 msgid "Your community is ready!"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:192
-#: includes/admin/views/setup-wizard.php:192
+#: includes/admin/views/setup-wizard.php:206
 msgid "Everything is set up. Start exploring your new Jetonomy community."
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:197
-#: includes/admin/views/setup-wizard.php:197
+#: includes/admin/views/setup-wizard.php:211
 msgid "Visit Community"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:201
-#: includes/admin/views/setup-wizard.php:201
+#: includes/admin/views/setup-wizard.php:215
 msgid "Go to Dashboard"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:206
-#: includes/admin/views/setup-wizard.php:206
+#: includes/admin/views/setup-wizard.php:220
 msgid "Next Steps"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:208
-#: includes/admin/views/setup-wizard.php:208
+#: includes/admin/views/setup-wizard.php:222
 msgid "Customize appearance in Settings (colors, fonts, layout)"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:209
-#: includes/admin/views/setup-wizard.php:209
+#: includes/admin/views/setup-wizard.php:223
 msgid "Create more spaces for different topics"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:210
-#: includes/admin/views/setup-wizard.php:210
+#: includes/admin/views/setup-wizard.php:224
 msgid "Invite members to start discussions"
 msgstr ""
 
 #: dist/jetonomy/includes/admin/views/setup-wizard.php:211
-#: includes/admin/views/setup-wizard.php:211
+#: includes/admin/views/setup-wizard.php:225
 msgid "Import existing content from bbPress or wpForo"
 msgstr ""
 
@@ -4595,7 +4596,7 @@ msgstr ""
 #: includes/class-template-loader.php:394 templates/partials/feed-card.php:39
 #: templates/partials/managed-by-card.php:23
 #: templates/partials/post-card.php:93 templates/partials/reply-card.php:40
-#: templates/views/my-spaces.php:96 templates/views/single-post.php:499
+#: templates/views/my-spaces.php:96 templates/views/single-post.php:496
 #: templates/views/space-members.php:53
 msgid "Admin"
 msgstr ""
@@ -6404,7 +6405,7 @@ msgstr ""
 #: dist/jetonomy/includes/class-template-loader.php:267
 #: dist/jetonomy/templates/views/single-post.php:349
 #: dist/jetonomy/templates/views/space.php:258
-#: includes/class-template-loader.php:267 templates/views/single-post.php:349
+#: includes/class-template-loader.php:267 templates/views/single-post.php:346
 #: templates/views/space.php:258
 msgid "Follow"
 msgstr ""
@@ -6412,7 +6413,7 @@ msgstr ""
 #: dist/jetonomy/includes/class-template-loader.php:268
 #: dist/jetonomy/templates/views/single-post.php:349
 #: dist/jetonomy/templates/views/space.php:258
-#: includes/class-template-loader.php:268 templates/views/single-post.php:349
+#: includes/class-template-loader.php:268 templates/views/single-post.php:346
 #: templates/views/space.php:258
 msgid "Following"
 msgstr ""
@@ -6435,16 +6436,16 @@ msgstr ""
 #: dist/jetonomy/includes/class-template-loader.php:272
 #: dist/jetonomy/templates/views/single-post.php:451
 #: dist/jetonomy/templates/views/single-post.php:452
-#: includes/class-template-loader.php:272 templates/views/single-post.php:451
-#: templates/views/single-post.php:452
+#: includes/class-template-loader.php:272 templates/views/single-post.php:448
+#: templates/views/single-post.php:449
 msgid "Bookmark"
 msgstr ""
 
 #: dist/jetonomy/includes/class-template-loader.php:273
 #: dist/jetonomy/templates/views/single-post.php:451
 #: dist/jetonomy/templates/views/single-post.php:452
-#: includes/class-template-loader.php:273 templates/views/single-post.php:451
-#: templates/views/single-post.php:452
+#: includes/class-template-loader.php:273 templates/views/single-post.php:448
+#: templates/views/single-post.php:449
 msgid "Remove bookmark"
 msgstr ""
 
@@ -6759,8 +6760,8 @@ msgstr ""
 #: dist/jetonomy/templates/views/space-roadmap.php:130
 #: dist/jetonomy/templates/views/space.php:280
 #: includes/class-template-loader.php:609
-#: includes/class-template-loader.php:745 templates/views/space-roadmap.php:108
-#: templates/views/space-roadmap.php:121 templates/views/space-roadmap.php:130
+#: includes/class-template-loader.php:745 templates/views/space-roadmap.php:98
+#: templates/views/space-roadmap.php:111 templates/views/space-roadmap.php:120
 #: templates/views/space.php:280
 msgid "Roadmap"
 msgstr ""
@@ -7890,38 +7891,35 @@ msgid "My Stats"
 msgstr ""
 
 #: dist/jetonomy/jetonomy.php:254
-#: dist/jetonomy/templates/views/space-roadmap.php:52 jetonomy.php:254
-#: templates/views/space-roadmap.php:52
+#: dist/jetonomy/templates/views/space-roadmap.php:52
 msgid "Submitted"
 msgstr ""
 
 #: dist/jetonomy/jetonomy.php:255
-#: dist/jetonomy/templates/views/space-roadmap.php:57 jetonomy.php:255
-#: templates/views/space-roadmap.php:57
+#: dist/jetonomy/templates/views/space-roadmap.php:57
 msgid "Under Review"
 msgstr ""
 
 #: dist/jetonomy/jetonomy.php:256
-#: dist/jetonomy/templates/views/space-roadmap.php:62 jetonomy.php:256
-#: templates/views/space-roadmap.php:62
+#: dist/jetonomy/templates/views/space-roadmap.php:62 jetonomy.php:254
+#: templates/views/space-roadmap.php:52
 msgid "Planned"
 msgstr ""
 
 #: dist/jetonomy/jetonomy.php:257
-#: dist/jetonomy/templates/views/space-roadmap.php:67 jetonomy.php:257
-#: templates/views/space-roadmap.php:67
+#: dist/jetonomy/templates/views/space-roadmap.php:67 jetonomy.php:255
+#: templates/views/space-roadmap.php:57
 msgid "In Progress"
 msgstr ""
 
 #: dist/jetonomy/jetonomy.php:258
-#: dist/jetonomy/templates/views/space-roadmap.php:72 jetonomy.php:258
-#: templates/views/space-roadmap.php:72
+#: dist/jetonomy/templates/views/space-roadmap.php:72
 msgid "Completed"
 msgstr ""
 
 #: dist/jetonomy/jetonomy.php:259
-#: dist/jetonomy/templates/views/space-roadmap.php:77 jetonomy.php:259
-#: templates/views/space-roadmap.php:77
+#: dist/jetonomy/templates/views/space-roadmap.php:77 jetonomy.php:257
+#: templates/views/space-roadmap.php:67
 msgid "Declined"
 msgstr ""
 
@@ -8026,7 +8024,7 @@ msgstr ""
 
 #: dist/jetonomy/templates/partials/composer.php:17
 #: dist/jetonomy/templates/views/single-post.php:690
-#: templates/partials/composer.php:17 templates/views/single-post.php:690
+#: templates/partials/composer.php:17 templates/views/single-post.php:687
 msgid "Log in to reply"
 msgstr ""
 
@@ -8266,7 +8264,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/user-profile.php:455
 #: dist/jetonomy/templates/views/user-profile.php:506
 #: templates/partials/post-card.php:118 templates/views/search.php:272
-#: templates/views/space-roadmap.php:159 templates/views/user-profile.php:315
+#: templates/views/space-roadmap.php:149 templates/views/user-profile.php:315
 #: templates/views/user-profile.php:455 templates/views/user-profile.php:506
 msgid "replies"
 msgstr ""
@@ -8286,7 +8284,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:403
 #: dist/jetonomy/templates/views/single-post.php:404
 #: templates/partials/reply-card.php:96 templates/partials/reply-card.php:97
-#: templates/views/single-post.php:403 templates/views/single-post.php:404
+#: templates/views/single-post.php:400 templates/views/single-post.php:401
 msgid "Vote up"
 msgstr ""
 
@@ -8295,7 +8293,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:416
 #: dist/jetonomy/templates/views/single-post.php:417
 #: templates/partials/reply-card.php:108 templates/partials/reply-card.php:109
-#: templates/views/single-post.php:416 templates/views/single-post.php:417
+#: templates/views/single-post.php:413 templates/views/single-post.php:414
 msgid "Vote down"
 msgstr ""
 
@@ -8305,7 +8303,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:458
 #: dist/jetonomy/templates/views/user-profile.php:145
 #: templates/partials/reply-card.php:131 templates/partials/reply-card.php:132
-#: templates/views/single-post.php:457 templates/views/single-post.php:458
+#: templates/views/single-post.php:454 templates/views/single-post.php:455
 #: templates/views/user-profile.php:145
 msgid "Report"
 msgstr ""
@@ -8315,7 +8313,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:464
 #: dist/jetonomy/templates/views/single-post.php:465
 #: templates/partials/reply-card.php:138 templates/partials/reply-card.php:139
-#: templates/views/single-post.php:464 templates/views/single-post.php:465
+#: templates/views/single-post.php:461 templates/views/single-post.php:462
 msgid "More options"
 msgstr ""
 
@@ -8469,8 +8467,8 @@ msgstr ""
 #: dist/jetonomy/templates/views/edit-profile.php:74
 #: dist/jetonomy/templates/views/single-post.php:594
 #: dist/jetonomy/templates/views/single-post.php:597
-#: templates/views/edit-profile.php:74 templates/views/single-post.php:594
-#: templates/views/single-post.php:597
+#: templates/views/edit-profile.php:74 templates/views/single-post.php:591
+#: templates/views/single-post.php:594
 msgid "Accepted answer"
 msgstr ""
 
@@ -9052,7 +9050,7 @@ msgstr ""
 
 #: dist/jetonomy/templates/views/search.php:210
 #: dist/jetonomy/templates/views/single-post.php:551
-#: templates/views/search.php:210 templates/views/single-post.php:551
+#: templates/views/search.php:210 templates/views/single-post.php:548
 msgid "Newest"
 msgstr ""
 
@@ -9095,32 +9093,32 @@ msgid "This post has status: %s"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:295
-#: templates/views/single-post.php:295
+#: templates/views/single-post.php:292
 msgid "Set roadmap status"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:296
-#: templates/views/single-post.php:296
+#: templates/views/single-post.php:293
 msgid "Status:"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:332
-#: templates/views/single-post.php:332
+#: templates/views/single-post.php:329
 msgid "Resolved"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:337
-#: templates/views/single-post.php:337
+#: templates/views/single-post.php:334
 msgid "Closed"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:398
-#: templates/views/single-post.php:398
+#: templates/views/single-post.php:395
 msgid "Vote on this post"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:431
-#: templates/views/single-post.php:431
+#: templates/views/single-post.php:428
 #. translators: %d: number of views
 msgid "%d view"
 msgid_plural "%d views"
@@ -9129,62 +9127,62 @@ msgstr[1] ""
 
 #: dist/jetonomy/templates/views/single-post.php:441
 #: dist/jetonomy/templates/views/single-post.php:442
-#: templates/views/single-post.php:441 templates/views/single-post.php:442
+#: templates/views/single-post.php:438 templates/views/single-post.php:439
 msgid "Share"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:475
-#: templates/views/single-post.php:475
+#: templates/views/single-post.php:472
 msgid "Make Public"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:475
-#: templates/views/single-post.php:475
+#: templates/views/single-post.php:472
 msgid "Make Private"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:480
-#: templates/views/single-post.php:480
+#: templates/views/single-post.php:477
 msgid "Unpin"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:480
-#: templates/views/single-post.php:480
+#: templates/views/single-post.php:477
 msgid "Pin"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:486
-#: templates/views/single-post.php:486
+#: templates/views/single-post.php:483
 msgid "Move"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:490
-#: templates/views/single-post.php:490
+#: templates/views/single-post.php:487
 msgid "Merge"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:550
-#: templates/views/single-post.php:550
+#: templates/views/single-post.php:547
 msgid "Oldest"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:552
-#: templates/views/single-post.php:552
+#: templates/views/single-post.php:549
 msgid "Best"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:620
-#: templates/views/single-post.php:620
+#: templates/views/single-post.php:617
 msgid "No replies yet. Be the first to reply!"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:671
-#: templates/views/single-post.php:671
+#: templates/views/single-post.php:668
 msgid "This post is closed and no longer accepts replies."
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:676
-#: templates/views/single-post.php:676
+#: templates/views/single-post.php:673
 msgid "Your Reply"
 msgstr ""
 
@@ -9315,12 +9313,12 @@ msgstr[1] ""
 
 #: dist/jetonomy/templates/views/space-roadmap.php:125
 #: dist/jetonomy/templates/views/space.php:275
-#: templates/views/space-roadmap.php:125 templates/views/space.php:275
+#: templates/views/space-roadmap.php:115 templates/views/space.php:275
 msgid "Space sections"
 msgstr ""
 
 #: dist/jetonomy/templates/views/space-roadmap.php:144
-#: templates/views/space-roadmap.php:144
+#: templates/views/space-roadmap.php:134
 msgid "No ideas here yet."
 msgstr ""
 
@@ -9712,12 +9710,34 @@ msgstr ""
 msgid "%1$sView version %2$s details%3$s or %4$supdate now%5$s."
 msgstr ""
 
+#: includes/admin/views/setup-wizard.php:139
+msgid "Feature requests, voting, planned/in progress/shipped/declined roadmap lanes"
+msgstr ""
+
+#: includes/admin/views/setup-wizard.php:145
+msgid "Show &amp; Tell"
+msgstr ""
+
+#: includes/admin/views/setup-wizard.php:146
+msgid "Short-form feed for status updates, screenshots, and quick wins"
+msgstr ""
+
+#: includes/admin/views/setup-wizard.php:187
+msgid ""
+"Create sample data instead (2 categories, 6 spaces across all four types, "
+"~12 posts)"
+msgstr ""
+
+#: jetonomy.php:256 templates/views/space-roadmap.php:62
+msgid "Shipped"
+msgstr ""
+
 #. Plugin URI of the plugin/theme
 msgid "https://store.wbcomdesigns.com/jetonomy/"
 msgstr ""
 
 #. Description of the plugin/theme
-msgid "Next-gen discussion platform for WordPress — forums, Q&A, and more."
+msgid "Next-gen discussion platform for WordPress - forums, Q&A, and more."
 msgstr ""
 
 #. Author of the plugin/theme

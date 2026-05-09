@@ -107,5 +107,26 @@ if [ -n "$STAGED_JS" ]; then
     fi
 fi
 
+# ── Gate: manifest-driven QA coverage drift (Phase C) ──
+# Reason: every new REST endpoint / AJAX handler / cron / hook with a
+# consumer should carry a corresponding test stub. The qa-coverage-check
+# script reads audit/manifest.json + test source and writes
+# audit/qa-coverage.json — exit 1 when the uncovered count grew vs the
+# previous run. Same baseline-shrink discipline phpstan-baseline uses:
+# the gate can drop, never grow.
+#
+# Skip: COVERAGE_SKIP=1 git commit (emergency only — fix it next commit).
+if [ -f bin/qa-coverage-check.php ] && [ -z "${COVERAGE_SKIP:-}" ]; then
+    echo "  -> qa-coverage drift"
+    if ! php bin/qa-coverage-check.php --quiet; then
+        echo
+        echo "pre-commit FAILED: QA coverage regressed (audit/qa-coverage.json shows new uncovered manifest entries)."
+        echo "Each uncovered entry has a stub_command in audit/qa-coverage.json — run those commands"
+        echo "to scaffold a test, fill in the assertions, retry the commit."
+        echo "Bypass (emergency only): COVERAGE_SKIP=1 git commit ..."
+        exit 1
+    fi
+fi
+
 echo "pre-commit: OK"
 exit 0
