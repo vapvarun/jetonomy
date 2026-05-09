@@ -219,6 +219,19 @@
         "audit_notes": "POST creates/toggles a vote; DELETE removes it"
       },
       {
+        "route": "/posts/(?P<id>\\d+)/idea-status",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Posts_Controller::set_idea_status",
+        "permission": "login_permission_check",
+        "purpose": "Set the roadmap status (planned, in_progress, shipped, declined) on an Ideas-type post. Fires jetonomy_idea_status_changed.",
+        "auth": "logged_in",
+        "capability": null,
+        "ownership_check": "moderator-of-space",
+        "audit_notes": "Added 1.4.2 with the Ideas roadmap. Outer gate is login_permission_check; inner gate is check_permission('close_posts', $space_id) which requires space trust level 3 (moderator). Validates via Post::valid_idea_statuses() so adding a new lane requires no controller change. Returns 400 if the post's space type is not 'ideas'."
+      },
+      {
         "route": "/link-preview",
         "methods": [
           "GET"
@@ -1422,7 +1435,18 @@
     },
     {
       "name": "{prefix}jt_posts",
-      "purpose": "Posts and questions"
+      "purpose": "Posts and questions",
+      "columns": {
+        "idea_status": "enum('planned','in_progress','shipped','declined') DEFAULT NULL"
+      },
+      "migrations": [
+        {
+          "version": "1.4.2.2",
+          "change": "ALTER ENUM idea_status to 4 documented lanes; remap legacy data",
+          "purpose": "Aligns code with the 1.4.2 readme contract (planned, in_progress, shipped, declined). Earlier 1.4.2.1 backfill set rows to 'submitted' / 'completed' which the 4-lane UI does not render.",
+          "file": "includes/db/migrations/class-migration_1_4_2_2.php"
+        }
+      ]
     },
     {
       "name": "{prefix}jt_replies",
@@ -1785,15 +1809,17 @@
     {
       "name": "jetonomy_after_create_post",
       "type": "action",
-      "args": "post_id, user_id",
-      "where": "includes/models/class-post.php",
+      "args_count": 3,
+      "args_signature": ["int $post_id", "int $space_id", "WP_REST_Request $request"],
+      "where": "includes/api/class-posts-controller.php:529",
       "consumed_by": "jetonomy-pro"
     },
     {
       "name": "jetonomy_after_create_reply",
       "type": "action",
-      "args": "reply_id, user_id, post_id",
-      "where": "includes/models/class-reply.php",
+      "args_count": 2,
+      "args_signature": ["int $reply_id", "int $post_id"],
+      "where": "includes/api/class-replies-controller.php:335",
       "consumed_by": "jetonomy-pro"
     },
     {
@@ -2075,6 +2101,16 @@
       "args": "user_id, space_id",
       "where": "includes/models/class-space-member.php",
       "consumed_by": null
+    },
+    {
+      "name": "jetonomy_user_left_space",
+      "type": "action",
+      "args_count": 2,
+      "args_signature": ["int $space_id", "int $user_id"],
+      "where": "includes/models/class-space-member.php:107",
+      "consumed_by": [
+        { "plugin": "jetonomy-pro", "where": "includes/extensions/webhooks/class-extension.php:104", "kind": "action_listener" }
+      ]
     },
     {
       "name": "jetonomy_user_pending_verification",
@@ -2718,6 +2754,11 @@
     "changelog": [
       {
         "date": "2026-05-09",
+        "version": "1.4.2.2",
+        "summary": "1.4.2.x patch cycle: schema migration aligns idea_status ENUM with the documented 4-lane spec (planned, in_progress, shipped, declined); login block stays light in dark mode; setup wizard offers all 4 default-space-type options; manifest gains the missing POST /posts/{id}/idea-status REST endpoint and jetonomy_user_left_space hooks_fired entry."
+      },
+      {
+        "date": "2026-05-09",
         "version": "1.4.2",
         "summary": "1.4.2 release: Show & Tell short-form feed space type, Ideas roadmap statuses (planned/in progress/shipped/declined), Q&A accepted-answer pinning with 'Answered' badge on space list, idea-status notifications across activity log + email digest + in-app inbox. Performance: jetonomy_cron_batch_size filter caps cleanup cron handlers at 500 rows/run by default (trust evaluation, expired restrictions, old notifications, scheduled posts). Multisite: activation now installs tables on every existing subsite AND every new subsite created later (wp_initialize_site hook). i18n: composer, login block, IA state, banned-member notice, header escape hint, prefix builder, admin import flow fully translatable. a11y: visible focus indicators everywhere, aria-labels on filter / bulk-action / select-all controls. Fixes: per-page setting now controls list length AND Load More click count; vote controls hide (not just disable) when admin disables voting on a space; native confirms swapped for in-product modals; import progress AJAX now requires the right capability not just a nonce; setup wizard skips redirect under WP-CLI / REST contexts; settings save confirmations persist until dismissed."
       },
@@ -2734,12 +2775,12 @@
     ]
   },
   "generated": {
-    "at": "2026-05-09T00:00:00Z",
-    "from": "wp-plugin-onboard skill (1.4.2 refresh)",
+    "at": "2026-05-09T05:30:00Z",
+    "from": "wp-plugin-onboard skill (1.4.2.x refresh)",
     "branch": "main",
     "schema_version": "v2",
-    "refresh_note": "Refreshed 2026-05-09 for the 1.4.2 release. Adds: Show & Tell space type, Ideas roadmap statuses (planned/in progress/shipped/declined), Q&A accepted-answer pinning + 'Answered' badge, jetonomy_cron_batch_size filter on cleanup handlers (default 500 rows/run), multisite-aware activation creating tables on every existing and future subsite. grid_track_overflow_risks already implemented via minmax(0, 1fr); kept entries as design-decision documentation.",
-    "refreshed_via": "wp-plugin-onboard --refresh"
+    "refresh_note": "Refreshed 2026-05-09 for the 1.4.2.x release cycle. Adds: migration 1.4.2.2 (idea_status ENUM 6 -> 4 lanes per readme contract), new REST endpoint POST /posts/{id}/idea-status, missing hooks_fired entry jetonomy_user_left_space, corrected args_count + signatures on jetonomy_after_create_post and jetonomy_after_create_reply, login dark-mode CSS override, setup wizard now offers all 4 default-space-type radios. Schema enum and admin UI now agree with the documented 4-lane spec.",
+    "refreshed_via": "wp-plugin-onboard --refresh (diff-driven, 11 changed files)"
   },
   "static_analysis": {
     "dead_listeners": [],
