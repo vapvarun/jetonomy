@@ -583,14 +583,15 @@ class Post extends Model {
 	 * Roadmap statuses an idea (a post on a `type=ideas` space) can be in.
 	 *
 	 * Mirrors the `idea_status` enum in `class-schema.php`. Order is the
-	 * canonical kanban progression — owners typically move ideas left to
-	 * right (Submitted → Under Review → Planned → In Progress → Completed),
-	 * with Declined as the off-ramp.
+	 * canonical kanban progression - owners move ideas left to right
+	 * (Planned -> In Progress -> Shipped), with Declined as the off-ramp.
+	 * Ideas with no status assigned (NULL) live in the space's normal
+	 * feed and do not appear on the roadmap kanban.
 	 *
 	 * @return string[]
 	 */
 	public static function valid_idea_statuses(): array {
-		return array( 'submitted', 'under_review', 'planned', 'in_progress', 'completed', 'declined' );
+		return array( 'planned', 'in_progress', 'shipped', 'declined' );
 	}
 
 	/**

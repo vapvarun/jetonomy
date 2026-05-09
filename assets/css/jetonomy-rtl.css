@@ -953,14 +953,12 @@
   .jt-accepted-callout-head { display: inline-flex; align-items: center; gap: 6px; color: var(--jt-success); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.02em; text-transform: uppercase; margin-block-end: 8px; }
   .jt-accepted-callout-body .jt-reply { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-sm); padding: 12px; }
 
-  /* Idea roadmap status pill — six canonical statuses, color-coded so the
+  /* Idea roadmap status pill - four canonical statuses, color-coded so the
      listing and post header speak the same visual language as the kanban. */
   .jt-idea-pill { --jt-ip: var(--jt-text-secondary); display: inline-flex; align-items: center; background: color-mix(in srgb, var(--jt-ip) 14%, transparent); color: var(--jt-ip); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-full); letter-spacing: 0.02em; white-space: nowrap; }
-  .jt-idea-pill-submitted { --jt-ip: var(--jt-accent); }
-  .jt-idea-pill-under_review { --jt-ip: var(--jt-text-secondary); }
-  .jt-idea-pill-planned { --jt-ip: var(--jt-warn); }
+  .jt-idea-pill-planned { --jt-ip: var(--jt-accent); }
   .jt-idea-pill-in_progress { --jt-ip: var(--jt-warn); }
-  .jt-idea-pill-completed { --jt-ip: var(--jt-success); }
+  .jt-idea-pill-shipped { --jt-ip: var(--jt-success); }
   .jt-idea-pill-declined { --jt-ip: var(--jt-text-tertiary); }
 
   /* Roadmap status picker (moderator only on Ideas spaces). Each option

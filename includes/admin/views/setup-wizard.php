@@ -132,6 +132,20 @@ wp_head();
 						<span><?php esc_html_e( 'Questions, answers, accepted solution', 'jetonomy' ); ?></span>
 					</label>
 				</div>
+				<div class="jt-radio-option">
+					<input type="radio" name="jt-default-type" id="jt-type-ideas" value="ideas">
+					<label for="jt-type-ideas">
+						<strong><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></strong>
+						<span><?php esc_html_e( 'Feature requests, voting, planned/in progress/shipped/declined roadmap lanes', 'jetonomy' ); ?></span>
+					</label>
+				</div>
+				<div class="jt-radio-option">
+					<input type="radio" name="jt-default-type" id="jt-type-feed" value="feed">
+					<label for="jt-type-feed">
+						<strong><?php esc_html_e( 'Show &amp; Tell', 'jetonomy' ); ?></strong>
+						<span><?php esc_html_e( 'Short-form feed for status updates, screenshots, and quick wins', 'jetonomy' ); ?></span>
+					</label>
+				</div>
 			</div>
 		</div>
 
@@ -170,7 +184,7 @@ wp_head();
 
 		<button type="button" class="jt-btn jt-btn--ghost" id="jt-create-sample">
 			<?php jetonomy_echo_icon( 'plus', 16 ); ?>
-			<?php esc_html_e( 'Create sample data instead (2 categories, 4 spaces, 10 posts)', 'jetonomy' ); ?>
+			<?php esc_html_e( 'Create sample data instead (2 categories, 6 spaces across all four types, ~12 posts)', 'jetonomy' ); ?>
 			<span class="jt-spinner" style="border-color:rgba(100,116,139,.4);border-top-color:#64748b;"></span>
 		</button>
 

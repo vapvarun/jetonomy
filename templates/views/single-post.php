@@ -283,10 +283,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					// than a native <select> — same visual language as the
 					// status pill itself, single click to apply.
 					if ( $space && 'ideas' === ( $space->type ?? '' ) && $jt_can_moderate_here ) :
-						$jt_current_status = (string) ( $post->idea_status ?? 'submitted' );
-						if ( '' === $jt_current_status ) {
-							$jt_current_status = 'submitted';
-						}
+						$jt_current_status = (string) ( $post->idea_status ?? '' );
 						?>
 						<div class="jt-idea-status-setter"
 							data-wp-interactive="jetonomy"

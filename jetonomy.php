@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
- * Description: Next-gen discussion platform for WordPress — forums, Q&A, and more.
+ * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
  * Version:     1.4.2
  * Requires at least: 6.7
  * Requires PHP: 8.1
@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.4.2' );
-define( 'JETONOMY_DB_VERSION', '1.4.2.1' );
+define( 'JETONOMY_DB_VERSION', '1.4.2.2' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -251,14 +251,12 @@ function jetonomy_space_allows_voting( $space ): bool {
  */
 function jetonomy_idea_status_label( string $status ): string {
 	$labels = array(
-		'submitted'    => __( 'Submitted', 'jetonomy' ),
-		'under_review' => __( 'Under Review', 'jetonomy' ),
-		'planned'      => __( 'Planned', 'jetonomy' ),
-		'in_progress'  => __( 'In Progress', 'jetonomy' ),
-		'completed'    => __( 'Completed', 'jetonomy' ),
-		'declined'     => __( 'Declined', 'jetonomy' ),
+		'planned'     => __( 'Planned', 'jetonomy' ),
+		'in_progress' => __( 'In Progress', 'jetonomy' ),
+		'shipped'     => __( 'Shipped', 'jetonomy' ),
+		'declined'    => __( 'Declined', 'jetonomy' ),
 	);
-	return $labels[ $status ] ?? $labels['submitted'];
+	return $labels[ $status ] ?? '';
 }
 
 /**
@@ -271,9 +269,11 @@ function jetonomy_idea_status_label( string $status ): string {
  * @param string $status One of Post::valid_idea_statuses(), or empty.
  */
 function jetonomy_render_idea_status_pill( string $status ): void {
-	$resolved = '' !== $status ? $status : 'submitted';
-	echo '<span class="jt-idea-pill jt-idea-pill-' . esc_attr( $resolved ) . '">'
-		. esc_html( jetonomy_idea_status_label( $resolved ) )
+	if ( '' === $status || ! in_array( $status, \Jetonomy\Models\Post::valid_idea_statuses(), true ) ) {
+		return;
+	}
+	echo '<span class="jt-idea-pill jt-idea-pill-' . esc_attr( $status ) . '">'
+		. esc_html( jetonomy_idea_status_label( $status ) )
 		. '</span>';
 }
 

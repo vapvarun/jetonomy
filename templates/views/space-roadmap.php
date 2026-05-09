@@ -6,8 +6,8 @@
  * `idea_status` column. Status is set by space moderators via the
  * post page, never inferred from `is_resolved` / `is_closed` /
  * `reply_count` (those signals all mean different things and were
- * never a real workflow). Posts without an explicit status default
- * to "Submitted".
+ * never a real workflow). Posts without an explicit status (NULL)
+ * live in the space's normal feed and do not appear on the roadmap.
  *
  * @package Jetonomy
  */
@@ -48,32 +48,22 @@ $all_ideas = $wpdb->get_results(
 // Canonical column order (mirrors Post::valid_idea_statuses()). Owners
 // move ideas left to right; "declined" sits at the end as the off-ramp.
 $columns = array(
-	'submitted'    => array(
-		'label' => __( 'Submitted', 'jetonomy' ),
-		'color' => 'var(--jt-accent)',
-		'posts' => array(),
-	),
-	'under_review' => array(
-		'label' => __( 'Under Review', 'jetonomy' ),
-		'color' => 'var(--jt-text-secondary)',
-		'posts' => array(),
-	),
-	'planned'      => array(
+	'planned'     => array(
 		'label' => __( 'Planned', 'jetonomy' ),
 		'color' => 'var(--jt-warn)',
 		'posts' => array(),
 	),
-	'in_progress'  => array(
+	'in_progress' => array(
 		'label' => __( 'In Progress', 'jetonomy' ),
 		'color' => 'var(--jt-warn)',
 		'posts' => array(),
 	),
-	'completed'    => array(
-		'label' => __( 'Completed', 'jetonomy' ),
+	'shipped'     => array(
+		'label' => __( 'Shipped', 'jetonomy' ),
 		'color' => 'var(--jt-success)',
 		'posts' => array(),
 	),
-	'declined'     => array(
+	'declined'    => array(
 		'label' => __( 'Declined', 'jetonomy' ),
 		'color' => 'var(--jt-text-tertiary)',
 		'posts' => array(),
@@ -81,11 +71,11 @@ $columns = array(
 );
 
 foreach ( $all_ideas as $idea ) {
-	$status = isset( $idea->idea_status ) && '' !== (string) $idea->idea_status
-		? (string) $idea->idea_status
-		: 'submitted';
-	if ( ! isset( $columns[ $status ] ) ) {
-		$status = 'submitted';
+	$status = isset( $idea->idea_status ) ? (string) $idea->idea_status : '';
+	if ( '' === $status || ! isset( $columns[ $status ] ) ) {
+		// Ideas without a curated status stay off the roadmap; owners
+		// see them in the space's regular feed instead.
+		continue;
 	}
 	$columns[ $status ]['posts'][] = $idea;
 }

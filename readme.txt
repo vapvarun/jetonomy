@@ -271,7 +271,7 @@ A scale and multisite release. Three new content types finish off, multisite net
 **New content types**
 
 * Show & Tell short-form feed spaces. Optional title, inline content cards.
-* Ideas spaces ship a real roadmap with statuses (planned, in progress, shipped, declined).
+* Ideas spaces ship a real roadmap with four status lanes - Planned, In Progress, Shipped, Declined. Ideas without a curated status live in the space's normal feed and enter the roadmap only when an owner assigns one.
 * Q&A spaces let owners pin the accepted answer; an "Answered" badge surfaces on the space list.
 
 **Performance and scale**

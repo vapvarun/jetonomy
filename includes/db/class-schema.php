@@ -156,7 +156,7 @@ class Schema {
   is_private tinyint(1) NOT NULL DEFAULT 0,
   is_closed tinyint(1) NOT NULL DEFAULT 0,
   is_resolved tinyint(1) NOT NULL DEFAULT 0,
-  idea_status ENUM('submitted','under_review','planned','in_progress','completed','declined') DEFAULT NULL,
+  idea_status ENUM('planned','in_progress','shipped','declined') DEFAULT NULL,
   vote_score int(11) NOT NULL DEFAULT 0,
   reply_count int(11) NOT NULL DEFAULT 0,
   view_count int(11) NOT NULL DEFAULT 0,
