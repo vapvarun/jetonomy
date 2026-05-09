@@ -175,6 +175,31 @@
     color: var(--jt-text);
   }
 
+  /* Login block stays in light mode even when the rest of the app is dark.
+     The login block is a focused auth surface (not part of the community
+     feed) so users expect the form to look like a form regardless of the
+     surrounding theme. Without this override the .jt-app token redefinitions
+     above propagate into the block via inheritance and the form goes near-
+     black on near-black. Re-declaring the relevant tokens here re-establishes
+     light values inside the block scope only. */
+  .jt-dark .jt-login-block,
+  .jt-app.jt-dark .jt-login-block {
+    --jt-text: #1a1a1a;
+    --jt-text-secondary: color-mix(in srgb, #1a1a1a 70%, transparent);
+    --jt-text-tertiary: color-mix(in srgb, #1a1a1a 65%, transparent);
+    --jt-bg: #ffffff;
+    --jt-bg-subtle: color-mix(in srgb, #1a1a1a 3%, #ffffff);
+    --jt-bg-muted: color-mix(in srgb, #1a1a1a 6%, #ffffff);
+    --jt-bg-hover: color-mix(in srgb, #1a1a1a 4%, #ffffff);
+    --jt-border: color-mix(in srgb, #1a1a1a 10%, transparent);
+    --jt-border-strong: color-mix(in srgb, #1a1a1a 18%, transparent);
+    --jt-success-light: #dcfce7;
+    --jt-warn-light: #fef9c3;
+    --jt-danger-light: #fee2e2;
+    --jt-accent-light: color-mix(in srgb, var(--jt-accent) 10%, white);
+    --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 15%, white);
+  }
+
   /* ── Font size scaling (A / A+ / A++) ─────────────────────────────────────
      Uses the same data-bn-font-scale attribute and bn_font_scale localStorage
      key as BuddyNext so the preference is shared across both plugins.
