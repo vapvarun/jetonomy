@@ -137,10 +137,37 @@ $result['drift'] = array(
 // 5. Persist + report.
 // ─────────────────────────────────────────────────────────
 
-file_put_contents(
-	$coverage,
-	json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n"
-);
+// Only write when something other than `generated.at` changed.
+// Otherwise every commit dirties qa-coverage.json with a fresh timestamp
+// and the working tree never settles.
+$should_write = true;
+if ( is_file( $coverage ) ) {
+	$existing = json_decode( (string) file_get_contents( $coverage ), true );
+	if ( is_array( $existing ) ) {
+		$existing_summary  = $existing['summary'] ?? array();
+		$current_summary   = $result['summary'];
+		$material_unchanged = (
+			( $existing_summary['items_total']     ?? null ) === $current_summary['items_total']
+			&& ( $existing_summary['items_covered']   ?? null ) === $current_summary['items_covered']
+			&& ( $existing_summary['items_uncovered'] ?? null ) === $current_summary['items_uncovered']
+			&& ( $existing_summary['items_skipped']   ?? null ) === $current_summary['items_skipped']
+		);
+		if ( $material_unchanged ) {
+			$should_write = false;
+			// Carry the existing generated.at + drift forward so subsequent
+			// runs still see a stable baseline.
+			$result['generated']['at'] = $existing['generated']['at'] ?? $result['generated']['at'];
+			$result['drift']           = $existing['drift'] ?? $result['drift'];
+		}
+	}
+}
+
+if ( $should_write ) {
+	file_put_contents(
+		$coverage,
+		json_encode( $result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n"
+	);
+}
 
 print_human_summary( $result, $opts );
 
