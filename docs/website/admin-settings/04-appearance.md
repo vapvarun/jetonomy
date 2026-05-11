@@ -49,6 +49,50 @@ When on, the `--jt-accent` token pulls from `--wp--preset--color--primary` in yo
 
 Turn this off if you have set a custom accent color above and do not want theme updates to override it.
 
+## Layout
+
+Jetonomy 1.4.0 added a Layout panel with three controls that decide how the community canvas sits inside your active theme. Every option defaults to **Theme Default**, so existing installs see no visual change after the upgrade. When you do change a value, Jetonomy emits a small block of CSS scoped to `body.jt-page` - the rules only apply on community routes and never leak into the rest of your site.
+
+### Container Width
+
+**Setting:** `container_width`
+**Default:** Theme Default
+**Options:** Theme Default, Full Width, Custom (px)
+**Location:** Appearance tab → Layout section
+
+Controls how wide the community canvas can grow before it stops expanding.
+
+- **Theme Default** - Inherits the host theme's content container width. Use this when your theme's reading width already feels right.
+- **Full Width** - Lets the community stretch edge-to-edge of the viewport. Best for kanban-style spaces, leaderboards, and dense feeds that benefit from horizontal room.
+- **Custom (px)** - Pins the canvas to a specific pixel width (e.g. `1280`). Useful when you want a wider reading column than the theme provides without going fully edge-to-edge.
+
+### Theme Sidebar
+
+**Setting:** `theme_sidebar`
+**Default:** Theme Default
+**Options:** Theme Default, Hide on community pages
+**Location:** Appearance tab → Layout section
+
+Decides whether the host theme's sidebar shows on community routes.
+
+- **Theme Default** - Leaves the theme's sidebar exactly where the theme renders it.
+- **Hide on community pages** - Suppresses the host theme's sidebar across `/community/*` so the forum renders at full width even when the rest of the site has a sidebar everywhere. Pair this with **Full Width** above when you want a true full-bleed community experience.
+
+### Page Padding
+
+**Setting:** `page_padding`
+**Default:** Theme Default
+**Options:** Theme Default, None, Comfortable
+**Location:** Appearance tab → Layout section
+
+Adjusts the inline padding around the community canvas.
+
+- **Theme Default** - Uses whatever inline padding the theme provides.
+- **None** - Removes the inline padding so the community sits flush against the viewport edges. Good for themes that already hug the edges.
+- **Comfortable** - Adds a generous inline padding. Useful for themes that hug the edges too tightly and leave content butting against the screen on mobile.
+
+> **Tip:** If your theme has a sidebar everywhere but you want the community to feel like a standalone app, set **Container Width** to Full Width, **Theme Sidebar** to Hide on community pages, and **Page Padding** to Comfortable. The rest of your site keeps the original theme layout.
+
 ## Layout Density
 
 **Setting:** `layout_density`

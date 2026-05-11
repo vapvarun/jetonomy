@@ -45,6 +45,17 @@ Private, hidden, and archived spaces are excluded. Draft and scheduled posts are
 
 > **Tip:** Check **Settings → Reading → Search engine visibility** is not set to "Discourage search engines" or your sitemap will be disregarded.
 
+### Sitemap Link
+
+**Location:** SEO tab → Sitemap section
+
+Right next to the toggle is a button that surfaces the live sitemap URL for your install (typically `https://example.com/wp-sitemap.xml`). Copy the URL straight from the admin and submit it to:
+
+- [Google Search Console](https://search.google.com/search-console) - the standard sitemap submission flow under Index → Sitemaps
+- [Bing Webmaster Tools](https://www.bing.com/webmasters) - submit under Sitemaps in the left nav
+
+You only need to submit the sitemap once per search engine. Google and Bing both recrawl the file automatically after the first submission, so new posts and spaces appear in the index without any further action.
+
 ## Schema Markup
 
 **Setting:** `seo_schema`
@@ -106,6 +117,35 @@ Jetonomy outputs Open Graph and Twitter Card meta tags automatically on all publ
 - `twitter:card` - `summary` (or `summary_large_image` if a post has an image attachment)
 
 > **Note:** If you use an SEO plugin like Yoast SEO, RankMath, or The SEO Framework, its OG tags may override Jetonomy's. This is fine - SEO plugin output takes priority via standard WordPress `wp_head` hook priority ordering.
+
+### Twitter / X Handle
+
+**Setting:** `seo_twitter_handle`
+**Default:** Empty
+**Location:** SEO tab → Twitter handle
+
+Enter your community's Twitter or X handle (with or without the leading `@`). When set, Jetonomy emits `twitter:site` and `twitter:creator` meta tags on every community page that does not already declare a per-page override. This gives X / Twitter a verified attribution to display alongside link previews and unlocks richer card layouts.
+
+Leave this empty if the community has no Twitter / X presence - Jetonomy simply omits the tags instead of emitting empty ones.
+
+### Default Share Image
+
+**Setting:** `seo_default_share_image`
+**Default:** Empty
+**Location:** SEO tab → Default share image
+
+Pick an image from the WordPress media library to use as the fallback `og:image` whenever a specific post does not have an image of its own. Posts that already include their own image continue to use that image - this setting only kicks in when there is nothing else to show.
+
+**Recommended specs:**
+
+| Property | Value |
+|---|---|
+| Dimensions | 1200 x 630 px |
+| Format | PNG or JPG |
+| File size | Under 5 MB |
+| Aspect ratio | 1.91:1 |
+
+Twitter / X, Facebook, LinkedIn, and Slack all read this image when generating link previews, so picking a branded fallback (logo + community name on a clean background) keeps shared links recognizable.
 
 ## What's Next?
 

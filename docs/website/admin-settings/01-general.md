@@ -72,7 +72,7 @@ Turn this off if your community is members-only and you do not want any content 
 **Default:** `true` (on)
 **Location:** General tab → Access section
 
-When enabled, any action that writes data (posting, replying, voting, following) requires the user to be logged in. Guests are redirected to the WordPress login page.
+When enabled, any action that writes data (posting, replying, voting, following) requires the user to be logged in. Guests are routed to Jetonomy's in-page sign-in form (no wp-login.php bounce) and returned to whatever they were doing once they sign in.
 
 This is always recommended on. Disable it only if you are running a very specific open-participation setup where anonymous contributions make sense.
 

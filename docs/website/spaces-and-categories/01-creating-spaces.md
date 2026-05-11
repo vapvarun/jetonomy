@@ -19,7 +19,12 @@ Every space belongs to a category. Categories are the top-level groupings (like 
 
 ## Creating a Space
 
-Go to **Jetonomy → Spaces** in your WordPress admin and click **Add New Space**.
+You have two ways to create a space, depending on who needs to do it:
+
+- **wp-admin path (admins):** Go to **Jetonomy → Spaces** in your WordPress dashboard and click **Add New Space**.
+- **Front-end path (anyone you choose):** Visit `/community/new-space/` while signed in. This page is available to any user role you've allowed under **Settings → Front-end space creation**, so you can let space owners or moderators create spaces without giving them wp-admin access. See [Creating Spaces From the Front End](07-front-end-create-space.md) for the full walkthrough.
+
+Both paths show the same fields and produce the same result. The rest of this section describes each field.
 
 ### Basic Information
 
@@ -29,7 +34,7 @@ Go to **Jetonomy → Spaces** in your WordPress admin and click **Add New Space*
 
 **Description** - A short sentence or two explaining what this space is for. This appears in the space header below the title and in category listing cards. It also populates the meta description for search engines.
 
-**Icon** - A single emoji that represents the space. It appears in the space header and on category listing cards alongside the title. Choose something that works in monochrome - it will be displayed at small sizes on mobile.
+**Icon** - The space icon is selected from Jetonomy's built-in Lucide icon picker (16 default icons plus 8 extras revealed by the "Show more" button, plus a search field to find any other Lucide name). The chosen icon appears in the space header and on category listing cards alongside the title. Icons render as crisp SVGs at every size, so they read clearly on mobile.
 
 **Category** - Select which category this space belongs to. A space must be assigned to a category to appear on the community home page.
 
@@ -47,7 +52,7 @@ Click **Save Space** to publish it immediately.
 
 Every space has a header at the top of `/community/s/your-slug/` showing:
 
-- The emoji icon at large size
+- The Lucide icon at large size
 - The space title and description
 - A stat bar with total post count, member count, and last activity time
 - A **Follow** button for logged-in users (subscribes them to new post notifications)
@@ -57,7 +62,12 @@ Members who have already joined see the Join button replaced with their role bad
 
 ## Editing a Space
 
-Go to **Jetonomy → Spaces**, find the space in the list, and click **Edit**. All fields are editable, including the type and visibility settings.
+Two paths, same fields:
+
+- **wp-admin:** Go to **Jetonomy → Spaces**, find the space in the list, and click **Edit**.
+- **Front end:** Visit the space at `/community/s/your-slug/` while signed in as a space owner / moderator and click the **Edit space** button in the space header. See [Editing Spaces From the Front End](08-front-end-edit-space.md) for screenshots.
+
+All fields are editable from either path, including the type and visibility settings.
 
 > **Note:** Changing the space type after content exists does not reformat old posts. Existing posts keep their original structure. Only new posts use the new type's behavior.
 
