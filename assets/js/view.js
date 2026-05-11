@@ -6,9 +6,15 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
 
 /**
  * Custom modal helpers — replace browser alert/confirm/prompt with styled modals.
+ * Strings come from window.jetonomyData.i18n (set via wp_localize_script on the
+ * `jetonomy-data` handle in class-template-loader.php) with English fallbacks
+ * for defense in depth.
  */
+const jtModalI18n = () => ( ( typeof window !== 'undefined' && window.jetonomyData && window.jetonomyData.i18n ) || {} );
+
 function jetonomyConfirm( message ) {
 	return new Promise( ( resolve ) => {
+		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
 		const box = document.createElement( 'div' );
@@ -21,11 +27,11 @@ function jetonomyConfirm( message ) {
 		actions.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
-		cancelBtn.textContent = 'Cancel';
+		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( false ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn jt-btn-fill';
-		okBtn.textContent = 'Confirm';
+		okBtn.textContent = t.modalConfirm || 'Confirm';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( true ); } );
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
@@ -39,6 +45,7 @@ function jetonomyConfirm( message ) {
 
 function jetonomyPrompt( message, placeholder ) {
 	return new Promise( ( resolve ) => {
+		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
 		const box = document.createElement( 'div' );
@@ -56,11 +63,11 @@ function jetonomyPrompt( message, placeholder ) {
 		actions.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
-		cancelBtn.textContent = 'Cancel';
+		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn jt-btn-fill';
-		okBtn.textContent = 'Submit';
+		okBtn.textContent = t.modalSubmit || 'Submit';
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( input.value.trim() ); } );
 		actions.appendChild( cancelBtn );
 		actions.appendChild( okBtn );
@@ -83,6 +90,7 @@ function jetonomyPrompt( message, placeholder ) {
  */
 function jetonomySpacePicker( title, excludeSpaceId ) {
 	return new Promise( ( resolve ) => {
+		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
 		const box = document.createElement( 'div' );
@@ -94,7 +102,7 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		const select = document.createElement( 'select' );
 		select.className = 'jt-modal-input jt-input';
 		const loadingOpt = document.createElement( 'option' );
-		loadingOpt.textContent = 'Loading spaces…';
+		loadingOpt.textContent = t.loadingSpaces || 'Loading spaces…';
 		loadingOpt.disabled = true;
 		loadingOpt.selected = true;
 		select.appendChild( loadingOpt );
@@ -103,11 +111,11 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		actions.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
-		cancelBtn.textContent = 'Cancel';
+		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn jt-btn-fill';
-		okBtn.textContent = 'Move';
+		okBtn.textContent = t.modalMove || 'Move';
 		okBtn.disabled = true;
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( select.value || null ); } );
 		actions.appendChild( cancelBtn );
@@ -124,9 +132,9 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		fetch( apiBase + '/spaces', { credentials: 'same-origin' } )
 			.then( ( r ) => r.json() )
 			.then( ( data ) => {
-				select.innerHTML = '';
+				while ( select.firstChild ) select.removeChild( select.firstChild );
 				const defaultOpt = document.createElement( 'option' );
-				defaultOpt.textContent = 'Select a space…';
+				defaultOpt.textContent = t.selectSpacePlaceholder || 'Select a space…';
 				defaultOpt.value = '';
 				defaultOpt.disabled = true;
 				defaultOpt.selected = true;
@@ -143,7 +151,7 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 				if ( select.options.length <= 1 ) {
 					// Only the placeholder — no other spaces available.
 					const noneOpt = document.createElement( 'option' );
-					noneOpt.textContent = 'No other spaces available';
+					noneOpt.textContent = t.noOtherSpaces || 'No other spaces available';
 					noneOpt.disabled = true;
 					select.appendChild( noneOpt );
 				} else {
@@ -151,7 +159,11 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 				}
 			} )
 			.catch( () => {
-				select.innerHTML = '<option disabled>Failed to load spaces</option>';
+				while ( select.firstChild ) select.removeChild( select.firstChild );
+				const failOpt = document.createElement( 'option' );
+				failOpt.textContent = t.failedLoadSpaces || 'Failed to load spaces';
+				failOpt.disabled = true;
+				select.appendChild( failOpt );
 			} );
 	} );
 }
@@ -161,6 +173,7 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
  */
 function jetonomyPostPicker( title, excludePostId, spaceId ) {
 	return new Promise( ( resolve ) => {
+		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
 		const box = document.createElement( 'div' );
@@ -173,7 +186,7 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 		const searchInput = document.createElement( 'input' );
 		searchInput.type = 'text';
 		searchInput.className = 'jt-modal-input jt-input';
-		searchInput.placeholder = 'Search for a topic...';
+		searchInput.placeholder = t.searchTopicPlaceholder || 'Search for a topic...';
 		box.appendChild( searchInput );
 
 		const resultsList = document.createElement( 'div' );
@@ -186,11 +199,11 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 		actionsDiv.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
-		cancelBtn.textContent = 'Cancel';
+		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn jt-btn-fill';
-		okBtn.textContent = 'Merge';
+		okBtn.textContent = t.modalMerge || 'Merge';
 		okBtn.disabled = true;
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( selectedId ); } );
 		actionsDiv.appendChild( cancelBtn );
@@ -218,7 +231,7 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 						if ( ! Array.isArray( posts ) || posts.length === 0 ) {
 							const empty = document.createElement( 'div' );
 							empty.style.cssText = 'padding:8px;color:var(--jt-text-secondary);';
-							empty.textContent = 'No topics found';
+							empty.textContent = t.noTopicsFound || 'No topics found';
 							resultsList.appendChild( empty );
 							return;
 						}
@@ -242,7 +255,7 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 						while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
 						const errDiv = document.createElement( 'div' );
 						errDiv.style.cssText = 'padding:8px;color:var(--jt-danger);';
-						errDiv.textContent = 'Search failed';
+						errDiv.textContent = t.searchFailed || 'Search failed';
 						resultsList.appendChild( errDiv );
 					} );
 			}, 300 );

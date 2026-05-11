@@ -578,6 +578,19 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
+			// Mirrors the front-end localize (Template_Loader::enqueue_assets) so
+			// jetonomy-modals.js has the same translated button defaults whether
+			// it loads on the community pages or in wp-admin.
+			wp_localize_script(
+				'jetonomy-modals',
+				'jetonomyModalsI18n',
+				array(
+					'cancel'  => __( 'Cancel', 'jetonomy' ),
+					'confirm' => __( 'Confirm', 'jetonomy' ),
+					'submit'  => __( 'Submit', 'jetonomy' ),
+					'ok'      => __( 'OK', 'jetonomy' ),
+				)
+			);
 		}
 		// Admin pages need the .jt-modal-* CSS classes the toolkit relies on,
 		// which live in the front-end stylesheet. Enqueue it on Jetonomy admin
