@@ -342,6 +342,20 @@ class Template_Loader {
 				JETONOMY_VERSION,
 				true
 			);
+			// Default button labels for jetonomyConfirm / jetonomyAlert /
+			// jetonomyPrompt when no override is passed. Localized so the
+			// toolkit works in every language Jetonomy itself supports —
+			// previously these were hard-coded English in the JS bundle.
+			wp_localize_script(
+				'jetonomy-modals',
+				'jetonomyModalsI18n',
+				array(
+					'cancel'  => __( 'Cancel', 'jetonomy' ),
+					'confirm' => __( 'Confirm', 'jetonomy' ),
+					'submit'  => __( 'Submit', 'jetonomy' ),
+					'ok'      => __( 'OK', 'jetonomy' ),
+				)
+			);
 		}
 		wp_enqueue_script( 'jetonomy-modals' );
 
@@ -359,36 +373,52 @@ class Template_Loader {
 				'restNonce'     => wp_create_nonce( 'wp_rest' ),
 				'communityBase' => \Jetonomy\base_url(),
 				'i18n'          => array(
-					'queueClean'        => esc_html__( 'Queue cleared.', 'jetonomy' ),
-					'resolveFailed'     => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
-					'roleUpdateFailed'  => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
-					'loading'           => esc_html__( 'Loading...', 'jetonomy' ),
-					'loadMore'          => esc_html__( 'Load More', 'jetonomy' ),
-					'iconShowFewer'     => esc_html__( 'Show fewer icons', 'jetonomy' ),
-					'iconShowMore'      => esc_html__( 'Show more icons', 'jetonomy' ),
-					'uploading'         => esc_html__( 'Uploading...', 'jetonomy' ),
-					'uploaded'          => esc_html__( 'Uploaded.', 'jetonomy' ),
-					'uploadFailed'      => esc_html__( 'Upload failed.', 'jetonomy' ),
-					'networkError'      => esc_html__( 'Network error.', 'jetonomy' ),
-					'networkErrorRetry' => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
-					'createSpaceFailed' => esc_html__( 'Could not create the space. Please try again.', 'jetonomy' ),
-					'saveFailed'        => esc_html__( 'Could not save changes.', 'jetonomy' ),
-					'prefixLabel'       => esc_html__( 'Label', 'jetonomy' ),
-					'removePrefix'      => esc_html__( 'Remove prefix', 'jetonomy' ),
+					'queueClean'             => esc_html__( 'Queue cleared.', 'jetonomy' ),
+					'resolveFailed'          => esc_html__( 'Could not resolve flag. Please try again.', 'jetonomy' ),
+					'roleUpdateFailed'       => esc_html__( 'Could not update role. Please try again.', 'jetonomy' ),
+					'loading'                => esc_html__( 'Loading...', 'jetonomy' ),
+					'loadMore'               => esc_html__( 'Load More', 'jetonomy' ),
+					'iconShowFewer'          => esc_html__( 'Show fewer icons', 'jetonomy' ),
+					'iconShowMore'           => esc_html__( 'Show more icons', 'jetonomy' ),
+					'uploading'              => esc_html__( 'Uploading...', 'jetonomy' ),
+					'uploaded'               => esc_html__( 'Uploaded.', 'jetonomy' ),
+					'uploadFailed'           => esc_html__( 'Upload failed.', 'jetonomy' ),
+					'networkError'           => esc_html__( 'Network error.', 'jetonomy' ),
+					'networkErrorRetry'      => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
+					'createSpaceFailed'      => esc_html__( 'Could not create the space. Please try again.', 'jetonomy' ),
+					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
+					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
+					'removePrefix'           => esc_html__( 'Remove prefix', 'jetonomy' ),
 					// Composer + Join-Space gate strings (consumed by composer.js).
-					'quoteSelected'     => esc_html__( 'Quote', 'jetonomy' ),
-					'joining'           => esc_html__( 'Joining...', 'jetonomy' ),
-					'joinSpace'         => esc_html__( 'Join Space', 'jetonomy' ),
-					'requesting'        => esc_html__( 'Requesting...', 'jetonomy' ),
-					'awaitingApproval'  => esc_html__( 'Awaiting Approval', 'jetonomy' ),
-					'requestToJoin'     => esc_html__( 'Request to Join', 'jetonomy' ),
-					'submitting'        => esc_html__( 'Submitting...', 'jetonomy' ),
-					'requestSent'       => esc_html__( 'Request Sent', 'jetonomy' ),
-					'requestSubmitted'  => esc_html__( 'Request submitted. Awaiting approval.', 'jetonomy' ),
-					'requestFailed'     => esc_html__( 'Could not submit request.', 'jetonomy' ),
-					'noMentionMatches'  => esc_html__( 'No matches', 'jetonomy' ),
-					'memberBanned'      => esc_html__( 'Banned', 'jetonomy' ),
-					'roleLabels'        => array(
+					'quoteSelected'          => esc_html__( 'Quote', 'jetonomy' ),
+					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
+					'joinSpace'              => esc_html__( 'Join Space', 'jetonomy' ),
+					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
+					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
+					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),
+					'submitting'             => esc_html__( 'Submitting...', 'jetonomy' ),
+					'requestSent'            => esc_html__( 'Request Sent', 'jetonomy' ),
+					'requestSubmitted'       => esc_html__( 'Request submitted. Awaiting approval.', 'jetonomy' ),
+					'requestFailed'          => esc_html__( 'Could not submit request.', 'jetonomy' ),
+					'noMentionMatches'       => esc_html__( 'No matches', 'jetonomy' ),
+					'memberBanned'           => esc_html__( 'Banned', 'jetonomy' ),
+					// Modal helpers in view.js (jetonomyConfirm / jetonomyPrompt /
+					// jetonomySpacePicker / jetonomyPostPicker). These live OUTSIDE the
+					// Interactivity store so they read window.jetonomyData.i18n, not
+					// state.i18n. Hard-coded English used to ship in the JS bundle.
+					'modalCancel'            => esc_html__( 'Cancel', 'jetonomy' ),
+					'modalConfirm'           => esc_html__( 'Confirm', 'jetonomy' ),
+					'modalSubmit'            => esc_html__( 'Submit', 'jetonomy' ),
+					'modalMove'              => esc_html__( 'Move', 'jetonomy' ),
+					'modalMerge'             => esc_html__( 'Merge', 'jetonomy' ),
+					'loadingSpaces'          => esc_html__( 'Loading spaces…', 'jetonomy' ),
+					'selectSpacePlaceholder' => esc_html__( 'Select a space…', 'jetonomy' ),
+					'noOtherSpaces'          => esc_html__( 'No other spaces available', 'jetonomy' ),
+					'failedLoadSpaces'       => esc_html__( 'Failed to load spaces', 'jetonomy' ),
+					'searchTopicPlaceholder' => esc_html__( 'Search for a topic...', 'jetonomy' ),
+					'noTopicsFound'          => esc_html__( 'No topics found', 'jetonomy' ),
+					'searchFailed'           => esc_html__( 'Search failed', 'jetonomy' ),
+					'roleLabels'             => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
 						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
