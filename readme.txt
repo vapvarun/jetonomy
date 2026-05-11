@@ -1,4 +1,4 @@
-=== Jetonomy — Community Forums, Q&A & Discussions ===
+=== Jetonomy - Community Forums, Q&A & Discussions ===
 Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
@@ -8,27 +8,27 @@ Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-The community platform WordPress deserves. Forums, Q&A, Ideas, and social discussions — all in one fast, beautiful plugin.
+The community platform WordPress deserves. Forums, Q&A, Ideas, and social discussions - all in one fast, beautiful plugin.
 
 == Description ==
 
-**Jetonomy turns your WordPress site into a thriving community.** Whether you want a support forum, a Stack Overflow-style Q&A, an ideas board, or just a place for members to chat — Jetonomy handles it all without duct-taping six different plugins together.
+**Jetonomy turns your WordPress site into a thriving community.** Whether you want a support forum, a Stack Overflow-style Q&A, an ideas board, or just a place for members to chat - Jetonomy handles it all without duct-taping six different plugins together.
 
 It's built from scratch with modern WordPress tech: custom database tables (not slow post types), the WordPress Interactivity API (no jQuery, no React bundle), and a permission system that actually makes sense. The result is a community platform that feels snappy and looks great on every theme you throw at it.
 
-If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-click importers for all three. Your community, your posts, your members — all move over cleanly.
+If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-click importers for all three. Your community, your posts, your members - all move over cleanly.
 
 ---
 
 ### Four Community Types, One Plugin
 
-**Forum** — Classic threaded discussion. Great for support, general chat, announcements.
+**Forum** - Classic threaded discussion. Great for support, general chat, announcements.
 
-**Q&A** — Questions get answers. Answers get voted on. The best answer floats to the top. Perfect for knowledge bases and support communities.
+**Q&A** - Questions get answers. Answers get voted on. The best answer floats to the top. Perfect for knowledge bases and support communities.
 
-**Ideas** — Members submit ideas, vote, and see a roadmap. Works like UserVoice but lives inside WordPress. Ship the features your community actually wants.
+**Ideas** - Members submit ideas, vote, and see a roadmap. Works like UserVoice but lives inside WordPress. Ship the features your community actually wants.
 
-**Social Feed** — Lightweight, scrollable discussion. Great for news communities or team spaces that don't need the full forum structure.
+**Social Feed** - Lightweight, scrollable discussion. Great for news communities or team spaces that don't need the full forum structure.
 
 ---
 
@@ -36,7 +36,7 @@ If you're still running bbPress, wpForo, or Asgaros, Jetonomy ships with one-cli
 
 Most forum plugins store content in `wp_posts` and `wp_postmeta`. That works for 500 posts. It gets painful at 50,000. Jetonomy uses 24 purpose-built MySQL tables with proper indexes, denormalized counters, and FULLTEXT search. Your community can grow to 100,000+ posts without a performance crisis.
 
-Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). Frequently accessed data is automatically cached with Redis or Memcached if you have them. Batch queries everywhere — no N+1 problems.
+Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). Frequently accessed data is automatically cached with Redis or Memcached if you have them. Batch queries everywhere - no N+1 problems.
 
 ---
 
@@ -44,9 +44,9 @@ Every list view uses cursor-based pagination (no expensive `COUNT(*)` queries). 
 
 Jetonomy has three layers of permissions that stack together cleanly:
 
-1. **WordPress Capabilities** — Admins and editors get full access. Subscribers get participant access. You control the defaults.
-2. **Space Roles** — Every space has its own owner, moderators, and members. A space owner can moderate their own space without being a site admin.
-3. **Trust Levels (0–5)** — New users start at Level 0 (limited posting). As they participate, Jetonomy automatically promotes them to Level 1, 2, and 3 based on thresholds you configure. Levels 4 and 5 are granted manually.
+1. **WordPress Capabilities** - Admins and editors get full access. Subscribers get participant access. You control the defaults.
+2. **Space Roles** - Every space has its own owner, moderators, and members. A space owner can moderate their own space without being a site admin.
+3. **Trust Levels (0–5)** - New users start at Level 0 (limited posting). As they participate, Jetonomy automatically promotes them to Level 1, 2, and 3 based on thresholds you configure. Levels 4 and 5 are granted manually.
 
 The trust level system is your best spam defense. New accounts can post, but they can't spam the whole site with impunity. Regular contributors earn more abilities over time.
 
@@ -64,7 +64,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 **Content & Editor**
 - Rich text editor with bold, italic, lists, code blocks, and headings
 - Drag-and-drop image upload directly into the editor
-- Paste images from clipboard — they upload automatically
+- Paste images from clipboard - they upload automatically
 - @mention users with autocomplete and instant notifications
 - Auto-embed YouTube, Twitter/X, Vimeo, and other oEmbed URLs
 - Emoji picker for reactions in replies
@@ -97,7 +97,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 - Notification preferences per user
 
 **Moderation**
-- Flag system — members flag content, moderators review a queue
+- Flag system - members flag content, moderators review a queue
 - Akismet spam detection on every post and reply
 - IP address tracking for ban enforcement
 - Ban and silence system: ban prevents login, silence prevents posting
@@ -119,7 +119,7 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 **Performance**
 - Object caching (auto-detects Redis/Memcached)
-- Eager loading with batch queries — no N+1 database calls
+- Eager loading with batch queries - no N+1 database calls
 - Cursor-based pagination on all REST API endpoints
 - Denormalized counters (reply_count, post_count, vote_score updated on write)
 - FULLTEXT indexes for instant search
@@ -151,21 +151,21 @@ The trust level system is your best spam defense. New accounts can post, but the
 
 Jetonomy Pro extends the free plugin with power-user and enterprise features:
 
-* **AI Integration** — Language-model-powered spam detection, content moderation, reply suggestions, and thread summaries. Pluggable providers including OpenAI, Anthropic, custom endpoints, and self-hosted Ollama (privacy-first).
-* **Private Messaging** — Direct messages between members
-* **Emoji Reactions** — React to posts and replies with custom emoji sets
-* **Polls** — Run polls inside posts and spaces
-* **Custom Fields** — Add custom fields to user profiles and posts
-* **Analytics Dashboard** — See what your community talks about most, top contributors, growth trends
-* **Email Digests** — Weekly/daily community digest emails
-* **Advanced Auto-Moderation** — Rule-based moderation (keyword filters, rate limits, user score gates)
-* **WooCommerce, Restrict Content Pro, LearnDash, Tutor LMS adapters** — Gate spaces behind courses or purchases
-* **SEO Pro** — Per-space meta titles, Open Graph images, schema controls, and sitemap rules
-* **Reply by Email** — Members reply to notification emails and the reply posts automatically
-* **Web Push Notifications** — Browser push for replies, mentions, and moderation events
-* **Webhooks** — Send HTTP POSTs to external services on community events
-* **White-label branding** — Remove Jetonomy branding, use your own logo
-* **Custom badge builder** — Design badges and award them manually or automatically
+* **AI Integration** - Language-model-powered spam detection, content moderation, reply suggestions, and thread summaries. Pluggable providers including OpenAI, Anthropic, custom endpoints, and self-hosted Ollama (privacy-first).
+* **Private Messaging** - Direct messages between members
+* **Emoji Reactions** - React to posts and replies with custom emoji sets
+* **Polls** - Run polls inside posts and spaces
+* **Custom Fields** - Add custom fields to user profiles and posts
+* **Analytics Dashboard** - See what your community talks about most, top contributors, growth trends
+* **Email Digests** - Weekly/daily community digest emails
+* **Advanced Auto-Moderation** - Rule-based moderation (keyword filters, rate limits, user score gates)
+* **WooCommerce, Restrict Content Pro, LearnDash, Tutor LMS adapters** - Gate spaces behind courses or purchases
+* **SEO Pro** - Per-space meta titles, Open Graph images, schema controls, and sitemap rules
+* **Reply by Email** - Members reply to notification emails and the reply posts automatically
+* **Web Push Notifications** - Browser push for replies, mentions, and moderation events
+* **Webhooks** - Send HTTP POSTs to external services on community events
+* **White-label branding** - Remove Jetonomy branding, use your own logo
+* **Custom badge builder** - Design badges and award them manually or automatically
 
 [Learn more about Jetonomy Pro →](https://store.wbcomdesigns.com/jetonomy-pro/)
 
@@ -195,7 +195,7 @@ That's it. Your community lives at `/community/` (you can change the base slug i
 4. Q&A mode with accepted answer highlighted
 5. Ideas board with roadmap view
 6. Admin dashboard with statistics
-7. Setup wizard — choose custom setup or demo data
+7. Setup wizard - choose custom setup or demo data
 8. Moderation queue with pending posts and flags
 
 == Frequently Asked Questions ==
@@ -224,7 +224,7 @@ The result: new spammers can't immediately flood your community, and your most t
 
 = Does it have full-text search? =
 
-Yes. Jetonomy uses MySQL's native FULLTEXT indexes for fast, relevant search results. Typing in the search bar shows instant results as you type. The search system is built on a swappable adapter pattern — developers can write custom adapters for services like Meilisearch, Elasticsearch, or Algolia without touching the plugin core.
+Yes. Jetonomy uses MySQL's native FULLTEXT indexes for fast, relevant search results. Typing in the search bar shows instant results as you type. The search system is built on a swappable adapter pattern - developers can write custom adapters for services like Meilisearch, Elasticsearch, or Algolia without touching the plugin core.
 
 = Can my community members moderate their own spaces? =
 
@@ -232,7 +232,7 @@ Yes. Every space has its own owner and can have multiple moderators. Space moder
 
 = How do I import from bbPress, wpForo, or Asgaros? =
 
-Go to **Jetonomy → Import** in your WordPress admin. Jetonomy detects which forum plugins are installed and shows the available importers. Imports run in batches with a progress bar — you can close the browser and the import continues. If the import stops, you can resume it exactly where it left off.
+Go to **Jetonomy → Import** in your WordPress admin. Jetonomy detects which forum plugins are installed and shows the available importers. Imports run in batches with a progress bar - you can close the browser and the import continues. If the import stops, you can resume it exactly where it left off.
 
 = Can I create a Q&A community like Stack Overflow? =
 
@@ -303,13 +303,13 @@ Run public or private communities. Browse drafts and bookmarks. Audit who did wh
 
 **Public or private community**
 
-* New Access Control mode in Settings — choose **Public** (anyone can read) or **Private** (every page requires sign-in). The mode applies to the whole front-end and to the REST API, so private really means private.
+* New Access Control mode in Settings - choose **Public** (anyone can read) or **Private** (every page requires sign-in). The mode applies to the whole front-end and to the REST API, so private really means private.
 * The sign-in page itself stays reachable in private mode so guests can register or recover their account.
-* Public mode is the default and is unchanged from 1.4.0 — existing communities keep working without any setting changes.
+* Public mode is the default and is unchanged from 1.4.0 - existing communities keep working without any setting changes.
 
 **For people who run a space**
 
-* New "Activity Log" admin page browses every audit event (post created, reply approved, member banned, role changed, …) with filters by user, type, and date range. Read-only — no edits.
+* New "Activity Log" admin page browses every audit event (post created, reply approved, member banned, role changed, …) with filters by user, type, and date range. Read-only - no edits.
 * New "Revisions" admin page browses every saved post / reply revision with a side-by-side diff between any two revisions. Read-only.
 * Two new REST endpoints for moderation tooling: `POST /jetonomy/v1/moderation/bulk` (approve / spam / trash many posts at once) and `GET /jetonomy/v1/posts/{id}/flags` (the flags raised against a post).
 
@@ -319,7 +319,7 @@ Run public or private communities. Browse drafts and bookmarks. Audit who did wh
 
 **Email templates editor**
 
-* New "Reset to default" button on every notification template — one click restores the shipped subject and body without retyping.
+* New "Reset to default" button on every notification template - one click restores the shipped subject and body without retyping.
 * The "Verification reminder" template is now editable from the same screen.
 * Defaults now have a single source of truth, so reset always restores the exact copy the plugin ships with.
 
@@ -327,11 +327,11 @@ Run public or private communities. Browse drafts and bookmarks. Audit who did wh
 
 * New "Drafts" tab at `/community/drafts/` lists every post you saved as a draft.
 * New "Bookmarks" tab at `/community/bookmarks/` lists every post you bookmarked.
-* Both tabs are personal pages — they require sign-in and are excluded from search engines.
+* Both tabs are personal pages - they require sign-in and are excluded from search engines.
 
 **Under the hood**
 
-* Per-role REST access matrix is now a verifiable contract — `bin/access-matrix-check.sh` runs 78 checks across 6 roles in either public or private mode, gates the build.
+* Per-role REST access matrix is now a verifiable contract - `bin/access-matrix-check.sh` runs 78 checks across 6 roles in either public or private mode, gates the build.
 * Manifest schema bumped to v2: every REST endpoint declares `auth`, `capability`, and `ownership_check` in `audit/manifest.json`.
 
 **Bug fixes**
@@ -339,25 +339,25 @@ Run public or private communities. Browse drafts and bookmarks. Audit who did wh
 * Hidden spaces no longer leak from the homepage spaces list to non-admins.
 * Multi-space moderators now see every queue they own at /community/mod/, instead of getting redirected away.
 * The Remove button on flagged content now actually removes the content (used to mark the flag valid without trashing the post or reply).
-* Voting works on every install — fixed a Pro analytics aggregator bug that was corrupting the AJAX response on sites that hadn't installed the analytics table.
+* Voting works on every install - fixed a Pro analytics aggregator bug that was corrupting the AJAX response on sites that hadn't installed the analytics table.
 * Space cards now render their icon correctly even when only the icon name was saved (was rendering "message-circle" as plain text on some imports).
 * The default qa-type space icon switched from a question-mark to an open book so multiple Q&A spaces in one community don't all look identical.
 * New-post composer with Pro polls active no longer drops form fields between submit attempts.
 
 **Cleaner, uniform interface**
 
-* Every empty state across the plugin now uses the same partial — same icon, same copy style, same call-to-action placement on every screen that can be empty.
+* Every empty state across the plugin now uses the same partial - same icon, same copy style, same call-to-action placement on every screen that can be empty.
 * Every customer-facing icon now comes from the Lucide icon set via the `jetonomy_echo_icon()` helper. No more inline SVG on customer surfaces; no more WordPress emojis as a fallback.
-* Action density on post and reply cards capped at three primary actions, with the rest moved into a kebab menu — far less visual noise on busy threads.
+* Action density on post and reply cards capped at three primary actions, with the rest moved into a kebab menu - far less visual noise on busy threads.
 * Voting controls present positive and negative voices at equal weight (upvote and downvote share the same control cluster, same touch target size).
 * Touch targets across the plugin now meet the 44 × 44 px minimum on hover-less devices; spacing uses CSS logical properties so RTL flips for free.
 
 **Extensibility (Pro extension contract)**
 
-* 13 hooks the Pro extensions had been listening to without anything firing them — fixed. Pro's white-label, custom-fields, and webhooks extensions now actually activate on customer sites instead of silently doing nothing. Lifecycle events (post created/updated/deleted, reply created/updated/deleted, flag created/resolved, member joined/left) fire under the documented names so any third-party extension subscribing to them works too.
+* 13 hooks the Pro extensions had been listening to without anything firing them - fixed. Pro's white-label, custom-fields, and webhooks extensions now actually activate on customer sites instead of silently doing nothing. Lifecycle events (post created/updated/deleted, reply created/updated/deleted, flag created/resolved, member joined/left) fire under the documented names so any third-party extension subscribing to them works too.
 * Verification-reminder cron and the admin "send test email" button now route through the Email_Adapter registry, so any registered custom mail provider sees the same traffic as a real notification.
-* The `jetonomy/search` Ability no longer fatals at runtime — earlier versions called methods that were never on the adapter contract.
-* Search results now report accurate totals — pagination of large result sets works correctly instead of guessing "has_more" from the page size.
+* The `jetonomy/search` Ability no longer fatals at runtime - earlier versions called methods that were never on the adapter contract.
+* Search results now report accurate totals - pagination of large result sets works correctly instead of guessing "has_more" from the page size.
 * Manifest schema upgraded to v2.1 with cross-plugin consumed_by index, category_sources map, and an audit/derived/ cache so future audits skip work whose inputs haven't changed.
 * New helper functions Jetonomy\\header_logo() and Jetonomy\\footer_text() expose the documented branding hook contract for Pro white-label and any third-party theme integration.
 
@@ -365,8 +365,8 @@ Run public or private communities. Browse drafts and bookmarks. Audit who did wh
 
 * New helper `Jetonomy\Visibility` centralizes the public-or-private check (`can_view_community()`, `get_mode()`, `rest_check()`).
 * New schema migration: `jt_user_profiles` gains a `verification_reminder_sent_at` column. Runs automatically; rolls back cleanly.
-* `bin/local-ci.sh` runs the full PHPStan + WPCS + PHPUnit gate locally against a wp-env Docker stack — same gates a remote CI matrix would run, in under 2 minutes after first warm-up. Useful pre-push.
-* New helper `Jetonomy\Models\Post::count_by_space_visible()` — viewer-aware companion to `list_by_space_visible()` for accurate cursor pagination.
+* `bin/local-ci.sh` runs the full PHPStan + WPCS + PHPUnit gate locally against a wp-env Docker stack - same gates a remote CI matrix would run, in under 2 minutes after first warm-up. Useful pre-push.
+* New helper `Jetonomy\Models\Post::count_by_space_visible()` - viewer-aware companion to `list_by_space_visible()` for accurate cursor pagination.
 
 = 1.4.0 - April 2026 =
 
@@ -374,12 +374,12 @@ Run a community without leaving the front end. Show up in search. Cleaner, acces
 
 **For people who run a space**
 
-* Edit a space from the front end — title, description, cover, icon, type, visibility, join policy, category, posts-per-page, prefixes.
+* Edit a space from the front end - title, description, cover, icon, type, visibility, join policy, category, posts-per-page, prefixes.
 * Create a space from the front end. Pick which roles can use the form in Settings → Front-end space creation.
 * "My Spaces" page lists every space you run + every space you're in.
-* Visual icon picker — 16 icons with search and "Show more" for 8 extras.
+* Visual icon picker - 16 icons with search and "Show more" for 8 extras.
 * Cover image uploader works without the WordPress upload-files permission.
-* Role dropdown can't accidentally orphan a space — no self-demote, no last-admin-out.
+* Role dropdown can't accidentally orphan a space - no self-demote, no last-admin-out.
 
 **For members**
 
@@ -387,20 +387,20 @@ Run a community without leaving the front end. Show up in search. Cleaner, acces
 * "New" pill on threads with replies you haven't read.
 * "Managed by" sidebar card on every space.
 * Admin / Mod pills next to staff names on posts and replies.
-* Layout panel fits Jetonomy to your theme — Container Width, Sidebar, Padding.
+* Layout panel fits Jetonomy to your theme - Container Width, Sidebar, Padding.
 
 **Search and sharing**
 
 * Every public page now has full search and social cards.
 * Smart fallback share image when a page has no image of its own.
 * Pages that shouldn't show in search (moderation, search, composer, notifications) are excluded automatically.
-* Richer structured data — Sitelinks Searchbox on home, Person cards on profiles, Collection indexes on spaces and tags, breadcrumbs everywhere.
+* Richer structured data - Sitelinks Searchbox on home, Person cards on profiles, Collection indexes on spaces and tags, breadcrumbs everywhere.
 * Settings → SEO grew Twitter / X handle, default share image, sitemap link.
 * Image alt text fills in automatically on upload.
 
 **Sign-in**
 
-* Login, register, forgot-password — all faster, all in-page (no wp-login.php bounce).
+* Login, register, forgot-password - all faster, all in-page (no wp-login.php bounce).
 * Captcha now actually fires on signup when configured.
 
 **Polish**
@@ -494,57 +494,57 @@ Upgrading from 1.3.7 does not require any migration; nothing in your database ch
 
 * New: Members can now start a new topic from any page on your site. Drop the new "Jetonomy Compose Topic" block onto a landing page, sidebar, or footer (or use the [jetonomy_compose_topic] shortcode if you prefer) and signed-in members get a clean composer right where they are. Works in the Site Editor, Elementor, Divi, Bricks, WPBakery, and any other page builder. Choose between a single fixed space or a picker that shows only the spaces the member can actually post in. Visitors who aren't signed in see a friendly "Join the conversation" prompt with sign-in and register links instead of a broken form.
 * New: Sign-in prompt on the compose-topic block welcomes visitors with a Lucide chat icon, a one-line invitation that mentions the target space by name, and side-by-side "Sign in to post" and "Create an account" buttons. The register link only appears when registration is open in your WP settings.
-* Fixed: Share button on a single topic now opens a share menu in the right place. Previously it was rendering off-screen on most themes — clicking it appeared to do nothing. The dropdown also picks up crisp icons for Copy link, Twitter/X, Facebook, and LinkedIn, and auto-flips above the button when there's no room below.
+* Fixed: Share button on a single topic now opens a share menu in the right place. Previously it was rendering off-screen on most themes - clicking it appeared to do nothing. The dropdown also picks up crisp icons for Copy link, Twitter/X, Facebook, and LinkedIn, and auto-flips above the button when there's no room below.
 * Fixed: Posting a topic without filling in the body used to silently reset the form with no feedback. You now see a clear inline message asking for the missing field, and Pro Polls topics get the same protection.
 * Fixed: Editing a topic that contained an uploaded image no longer wipes the image when you save. Same fix lands for replies, so embeds, images, and formatting all survive an edit cleanly.
 * Fixed: TikTok video previews and embedded players now work everywhere. Pasting a TikTok URL from the mobile Share button (the short tiktok.com/t/... links) used to leave you with just a hyperlink and a generic "TikTok – Make Your Day" card instead of the actual video. The same fix covers Twitter (t.co), Reddit (redd.it and the new mobile share links), Facebook (fb.watch), and Spotify (spoti.fi), so paste-from-app flows across all major platforms now produce the proper rich preview or embedded player. Also fixes x.com tweets that previously fell back to a plain link.
-* Fixed: Embedded TikTok, Instagram, and Twitter posts no longer pick up your theme's blockquote styling — no more out-of-place blue or grey side borders, italic text, or tinted backgrounds on social embeds. Tested across BuddyX, Reign, and Twenty Twenty-* themes.
+* Fixed: Embedded TikTok, Instagram, and Twitter posts no longer pick up your theme's blockquote styling - no more out-of-place blue or grey side borders, italic text, or tinted backgrounds on social embeds. Tested across BuddyX, Reign, and Twenty Twenty-* themes.
 * Improved: Reaction picker no longer disappears on sites with emoji rendering disabled. Reactions are now drawn as crisp colour SVG icons that look identical on every browser, operating system, and host configuration.
-* Improved: Block inserter now reliably finds every Jetonomy block. Some users reported having to refresh repeatedly to make blocks appear in the inserter — that's fixed for all blocks with an editor script.
+* Improved: Block inserter now reliably finds every Jetonomy block. Some users reported having to refresh repeatedly to make blocks appear in the inserter - that's fixed for all blocks with an editor script.
 * Improved: The compose-topic block's CSS and JavaScript only load on pages that actually use the block, so pages without it pay no overhead.
 
 Upgrading from 1.3.6 does not require any migration; nothing in your database changes.
 
 = 1.3.6 - April 2026 =
 
-* New: Trending Topics block — a Gutenberg block that ranks community posts by recent engagement (votes + replies over a trailing window, with time decay) so the list surfaces what's hot right now rather than what's popular all-time. Drop it on the homepage, a landing page, or any WordPress page outside the community routes.
-* New: Forum Feed block can now be scoped to a single space with a styled header and "View all" link — a drop-in "Topics from this space" widget for marketing pages, sidebars, and FSE templates.
-* New: Rich link previews — topics and replies that include a URL now render a preview card with title, description, and favicon, using a local unfurling service so sites stay fast and privacy-preserving.
-* New: Per-type email templates — welcome, mention, reply, digest, moderation, and system notifications each have their own template file, and themes can override any of them from a `jetonomy/emails/` directory. The context passed to each template is now richer (actor name, space, post excerpt, action URL).
-* New: External plugins and extensions can now open the community message composer programmatically via the shared `msgComposeOpen` state — used by Pro Messages to wire in the "Message" action from Top Members and elsewhere.
+* New: Trending Topics block - a Gutenberg block that ranks community posts by recent engagement (votes + replies over a trailing window, with time decay) so the list surfaces what's hot right now rather than what's popular all-time. Drop it on the homepage, a landing page, or any WordPress page outside the community routes.
+* New: Forum Feed block can now be scoped to a single space with a styled header and "View all" link - a drop-in "Topics from this space" widget for marketing pages, sidebars, and FSE templates.
+* New: Rich link previews - topics and replies that include a URL now render a preview card with title, description, and favicon, using a local unfurling service so sites stay fast and privacy-preserving.
+* New: Per-type email templates - welcome, mention, reply, digest, moderation, and system notifications each have their own template file, and themes can override any of them from a `jetonomy/emails/` directory. The context passed to each template is now richer (actor name, space, post excerpt, action URL).
+* New: External plugins and extensions can now open the community message composer programmatically via the shared `msgComposeOpen` state - used by Pro Messages to wire in the "Message" action from Top Members and elsewhere.
 * Fixed: The three-dot dropdown on topic and reply cards no longer gets trapped or clipped inside the card. Opening, closing, and clicking menu items now behaves consistently on every theme.
-* Fixed: Users can no longer downvote their own posts or replies — the REST vote endpoint now rejects self-downvotes and the vote button on the author's own content reflects that.
-* Fixed: Private (is_private) topics are now truly private across every read surface — archives, search, tag pages, and REST listings now honour the private flag so draft or sensitive content can't be enumerated.
+* Fixed: Users can no longer downvote their own posts or replies - the REST vote endpoint now rejects self-downvotes and the vote button on the author's own content reflects that.
+* Fixed: Private (is_private) topics are now truly private across every read surface - archives, search, tag pages, and REST listings now honour the private flag so draft or sensitive content can't be enumerated.
 * Fixed: TikTok, Instagram, and Twitter/X links now embed as real video/post players instead of falling back to oEmbed blockquotes.
-* Fixed: Invite-only space journey — visiting `/new/` without an invite now returns users to the space with a clear inline error, REST errors surface inline on the invite form, and stale "Join" CTAs are hidden when the viewer has already joined or has a pending request.
-* Fixed: Spacing between the Post Topic button and the publish-options dropdown on the composer — no more visual collision.
+* Fixed: Invite-only space journey - visiting `/new/` without an invite now returns users to the space with a clear inline error, REST errors surface inline on the invite form, and stale "Join" CTAs are hidden when the viewer has already joined or has a pending request.
+* Fixed: Spacing between the Post Topic button and the publish-options dropdown on the composer - no more visual collision.
 * Fixed: Tags admin page now writes nonce-protected requests; invalid nonces are rejected cleanly instead of silently failing.
-* Improvement: `wp jetonomy config get` dotted-path lookups (e.g. `trust_thresholds.1.posts`) now return the effective runtime value when the admin has not explicitly saved that block — defaults fill the gap so automation scripts don't trip on "Key not found".
+* Improvement: `wp jetonomy config get` dotted-path lookups (e.g. `trust_thresholds.1.posts`) now return the effective runtime value when the admin has not explicitly saved that block - defaults fill the gap so automation scripts don't trip on "Key not found".
 
 = 1.3.5 - April 2026 =
 
 * Fixed: Editing a topic or reply no longer collapses paragraphs into a single run-on line. The inline editor now preserves blank lines between paragraphs all the way through open, save, and display. Historically broken posts also render with their paragraphs restored on the next page load.
-* New: Jetonomy Navigation block — a drop-in Gutenberg block that renders the Category → Space tree as sidebar navigation. Permission-aware (private spaces stay hidden from anonymous viewers), highlights the current space, and scales to sites with thousands of spaces.
-* New: Jetonomy Login block — a quick login and register panel built for the community sidebar. Logged-out viewers see inline Login and Register tabs without leaving the page; logged-in viewers see nothing, so there is no layout shift. Rate-limited and nonce-protected.
+* New: Jetonomy Navigation block - a drop-in Gutenberg block that renders the Category → Space tree as sidebar navigation. Permission-aware (private spaces stay hidden from anonymous viewers), highlights the current space, and scales to sites with thousands of spaces.
+* New: Jetonomy Login block - a quick login and register panel built for the community sidebar. Logged-out viewers see inline Login and Register tabs without leaving the page; logged-in viewers see nothing, so there is no layout shift. Rate-limited and nonce-protected.
 
 = 1.3.4 - April 2026 =
 
 * Fixed: Akismet no longer flags replies written by site admins or space admins/moderators as spam. Staff responses were getting quarantined on sites with Akismet active, hiding legitimate support answers from members.
 * New: Admins can approve a spam-flagged topic or reply in one click. The Replies and Posts admin lists now show an "Approve" / "Not Spam" action next to Trash on any row currently held for moderation.
 * Fixed: Approving, marking-as-spam, or trashing a topic or reply from the admin list now correctly updates the topic count, reply count, and member contribution totals. Previously, moving content between publish and other statuses left the denormalized totals stuck at their old values.
-* New: Admins can refresh community member counts alongside topic and reply counters — the one-click counter rebuild added in 1.3.3 now repairs member drift too.
+* New: Admins can refresh community member counts alongside topic and reply counters - the one-click counter rebuild added in 1.3.3 now repairs member drift too.
 * New: Spaces now track their real membership. Posting a topic or replying in an open community automatically joins the author as a member, so spaces correctly show the number of people actually contributing instead of just the space creator.
 * New: A one-time upgrade routine adds every historical author to the spaces they've contributed to, so your existing communities start showing accurate member counts immediately after the update.
-* New: Admins managing moderation by API can now see spam-flagged items alongside pending ones — the moderation queue endpoint accepts `status=pending|spam|all`.
-* New: Site admins can promote many members to a trust level in one call via the admin API — useful after migrations, onboarding batches, or granting long-standing members a higher tier.
+* New: Admins managing moderation by API can now see spam-flagged items alongside pending ones - the moderation queue endpoint accepts `status=pending|spam|all`.
+* New: Site admins can promote many members to a trust level in one call via the admin API - useful after migrations, onboarding batches, or granting long-standing members a higher tier.
 
 = 1.3.3 - April 2026 =
 
 * New: Preserve original dates when seeding or migrating discussions. Topics and replies added by admins now keep the date they were originally written, so imported content doesn't all show up stamped with today's date.
 * New: Admins can rebuild community counters when they look off. If topic totals, reply totals, member stats, or vote scores ever drift after a bulk import or manual database change, admins can refresh them all in one go without needing command-line access.
-* Improved: Access Control settings are now a single, clearer choice — "Public community" (anyone can read, login required to post) or "Private community" (login required to view anything). Matches how most communities actually work and removes a setting whose label didn't match its behaviour.
-* Fixed: The "Default Space Type" setting now really applies to new spaces — both in the admin panel and when creating spaces through the API. Previously the choice was saved but nothing read it.
-* Upgrade: Existing installs are migrated automatically — a private-community install (everyone required to log in) keeps that behaviour, and any default space type set during setup is carried over to the new unified setting.
+* Improved: Access Control settings are now a single, clearer choice - "Public community" (anyone can read, login required to post) or "Private community" (login required to view anything). Matches how most communities actually work and removes a setting whose label didn't match its behaviour.
+* Fixed: The "Default Space Type" setting now really applies to new spaces - both in the admin panel and when creating spaces through the API. Previously the choice was saved but nothing read it.
+* Upgrade: Existing installs are migrated automatically - a private-community install (everyone required to log in) keeps that behaviour, and any default space type set during setup is carried over to the new unified setting.
 
 = 1.3.2 - April 2026 =
 
@@ -553,29 +553,29 @@ Upgrading from 1.3.6 does not require any migration; nothing in your database ch
 
 = 1.3.1 - April 2026 =
 
-* Fix: Theme button hover styles no longer override Jetonomy button states — scoped CSS reset for BuddyX/Reign compatibility.
+* Fix: Theme button hover styles no longer override Jetonomy button states - scoped CSS reset for BuddyX/Reign compatibility.
 
 = 1.3.0 - April 2026 =
 
-* New: Share forum threads anywhere — paste any topic URL into Slack, Twitter/X, Discord, Facebook, or another WordPress site and you'll see a rich preview card with the title, author, excerpt, space, and thumbnail. No extra setup needed.
-* New: Embed videos and music in posts — just paste a YouTube, Vimeo, SoundCloud, Spotify, TED Talks, or other supported link into a post or reply and it plays inline instead of showing as a plain URL.
-* New: Instagram and Facebook embed support — optional free Meta Developer App integration under Settings → SEO → Social Embeds lets pasted Instagram and Facebook URLs unfurl as rich previews. Includes a 5-minute step-by-step setup guide right in the settings screen. Leave the fields blank to skip — URLs fall back to plain clickable links.
-* New: BuddyX, BuddyX Pro, and Reign theme compatibility — your forum automatically picks up the active theme's accent color and dark mode, so your community looks at home with zero custom CSS.
-* New: AI spam detection — optional AI-powered spam filter for new posts and replies. Free, self-hosted via Ollama (no API costs, no data leaves your server).
-* New: Ad and content injection slots — new hooks let you (or your custom code) drop banners, promotions, or extra content into the sidebar, reply flow, and below the space intro.
-* New: Change your community URL safely — if you rename your community base (e.g. /forum/ → /community/), Jetonomy now automatically redirects visitors from the old URLs so you don't lose search traffic or bookmarks.
-* New: WordPress Abilities API integration — 18 abilities across 5 categories let AI assistants and automation tools drive Jetonomy from the terminal.
-* New: Demo data seeder — one-click demo content for previewing how your community will look, with a cleanup button when you're done.
-* New: Richer search preview snippets — search engines see thread titles, author names, publish dates, and space categories for better listings.
-* Improvement: Theme compatibility across 12+ popular themes — page titles, container widths, and responsive layouts tested and tuned.
+* New: Share forum threads anywhere - paste any topic URL into Slack, Twitter/X, Discord, Facebook, or another WordPress site and you'll see a rich preview card with the title, author, excerpt, space, and thumbnail. No extra setup needed.
+* New: Embed videos and music in posts - just paste a YouTube, Vimeo, SoundCloud, Spotify, TED Talks, or other supported link into a post or reply and it plays inline instead of showing as a plain URL.
+* New: Instagram and Facebook embed support - optional free Meta Developer App integration under Settings → SEO → Social Embeds lets pasted Instagram and Facebook URLs unfurl as rich previews. Includes a 5-minute step-by-step setup guide right in the settings screen. Leave the fields blank to skip - URLs fall back to plain clickable links.
+* New: BuddyX, BuddyX Pro, and Reign theme compatibility - your forum automatically picks up the active theme's accent color and dark mode, so your community looks at home with zero custom CSS.
+* New: AI spam detection - optional AI-powered spam filter for new posts and replies. Free, self-hosted via Ollama (no API costs, no data leaves your server).
+* New: Ad and content injection slots - new hooks let you (or your custom code) drop banners, promotions, or extra content into the sidebar, reply flow, and below the space intro.
+* New: Change your community URL safely - if you rename your community base (e.g. /forum/ → /community/), Jetonomy now automatically redirects visitors from the old URLs so you don't lose search traffic or bookmarks.
+* New: WordPress Abilities API integration - 18 abilities across 5 categories let AI assistants and automation tools drive Jetonomy from the terminal.
+* New: Demo data seeder - one-click demo content for previewing how your community will look, with a cleanup button when you're done.
+* New: Richer search preview snippets - search engines see thread titles, author names, publish dates, and space categories for better listings.
+* Improvement: Theme compatibility across 12+ popular themes - page titles, container widths, and responsive layouts tested and tuned.
 * Improvement: Forum topics now render 2–3× faster on big spaces (10,000+ topics) thanks to smarter database queries.
-* Improvement: Vote buttons stay consistent even under heavy concurrent use — no more stuck or duplicate votes.
-* Improvement: Pagination is more accurate — "Load more" and "has more" work correctly across all lists.
+* Improvement: Vote buttons stay consistent even under heavy concurrent use - no more stuck or duplicate votes.
+* Improvement: Pagination is more accurate - "Load more" and "has more" work correctly across all lists.
 * Improvement: Admin list pages load faster with fewer database hits.
 * Improvement: Daily activity cleanup runs without locking the database on large sites.
 * Improvement: All admin pages and forms are easier on screen readers and keyboard users.
 * Improvement: Content displayed in forum threads is fully sanitized and escaped for safety.
-* Fix: Firefox scheduled-post time picker — the time field now shows a proper picker widget (was previously date-only on Firefox).
+* Fix: Firefox scheduled-post time picker - the time field now shows a proper picker widget (was previously date-only on Firefox).
 * Fix: The "..." more menu on posts and replies now opens reliably across browsers.
 * Fix: Publish mode menu no longer flashes open-then-closed when you load the new topic page.
 * Fix: Notification bell dropdown no longer throws a console warning on page load.
@@ -590,18 +590,18 @@ Upgrading from 1.3.6 does not require any migration; nothing in your database ch
 * Fix: Private message notifications now dispatch reliably when Pro is active.
 * Fix: License activation flow no longer errors on third-party plugin-info calls.
 * Fix: Double reply counter increment on new replies.
-* Fix: 10 earlier customer-reported bugs fixed — BuddyPress compatibility crash, notification defaults, vote state indicator, admin "View" link, join request admin UI, post scheduling default timestamps, settings write consistency, REST nonce handling, and cookie credentials on fetch calls.
+* Fix: 10 earlier customer-reported bugs fixed - BuddyPress compatibility crash, notification defaults, vote state indicator, admin "View" link, join request admin UI, post scheduling default timestamps, settings write consistency, REST nonce handling, and cookie credentials on fetch calls.
 
 **Upgrade notes**
 Jetonomy 1.3.0 includes a small database update that runs automatically on the next admin page load. No manual action required. Free activation is unchanged.
 
 = 1.2.0 - April 2026 =
 
-* New: Private Topics — mark individual topics as private so only you and moderators can see them
-* New: Topic Prefixes — colored labels (Bug, Suggestion, Solved) configurable per space
-* New: Similar Topics — see related topics as you type your title, before posting duplicates
-* New: Quote Replies — click Quote on any reply to insert a styled blockquote in your response
-* New: BuddyPress Integration — link BP Groups to forum spaces with automatic member sync
+* New: Private Topics - mark individual topics as private so only you and moderators can see them
+* New: Topic Prefixes - colored labels (Bug, Suggestion, Solved) configurable per space
+* New: Similar Topics - see related topics as you type your title, before posting duplicates
+* New: Quote Replies - click Quote on any reply to insert a styled blockquote in your response
+* New: BuddyPress Integration - link BP Groups to forum spaces with automatic member sync
 * New: Forum tab in BP Group pages showing topics and a New Topic button
 * New: Forum tab on BP Member profiles with Posts, Replies, and Bookmarks sub-tabs
 * New: Discussion Forum settings in group creation wizard and group manage screen
@@ -615,10 +615,10 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 
 = 1.1.0 - March 2026 =
 
-* New: Configurable Community Title setting — displayed as H1 on the community home page
+* New: Configurable Community Title setting - displayed as H1 on the community home page
 * New: Adapter-specific rule type options in Access Rules (e.g. "Tutor Course", "LearnDash Course" instead of generic "Membership")
-* New: Searchable autocomplete for membership levels — scales to 1000+ courses
-* New: Human-readable labels in access rules table — shows course names instead of raw IDs
+* New: Searchable autocomplete for membership levels - scales to 1000+ courses
+* New: Human-readable labels in access rules table - shows course names instead of raw IDs
 * New: Sync Members button to pull in existing enrolled users when creating a rule
 * Fix: H1 heading added to community home page for SEO and accessibility
 * Fix: Membership deactivation now fully removes space access instead of downgrading to viewer
@@ -628,7 +628,7 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 = 1.0.1 - March 2026 =
 
 * Fix: Renamed internal `.container` to `.jt-container` to prevent CSS class collisions with theme frameworks
-* Fix: Community app wrapper fills theme flex/grid parents correctly — resolves blank sidebar space
+* Fix: Community app wrapper fills theme flex/grid parents correctly - resolves blank sidebar space
 * Fix: Container width auto-detects from theme settings (theme.json wideSize → $content_width → 1200px fallback)
 * Fix: Community sub-nav moved inside content container for proper alignment
 * Fix: Hide theme page title bars ("Recent Posts", "Blog") on community pages
@@ -639,9 +639,9 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 
 ### Added
 - Forum, Q&A, Ideas, and Social discussion types
-- Custom MySQL tables (21 tables) — no `wp_posts` bottleneck
+- Custom MySQL tables (21 tables) - no `wp_posts` bottleneck
 - 3-layer permission engine: WP Capabilities + Space Roles + Trust Levels 0–5
-- WordPress Interactivity API frontend — no jQuery, no React bundle
+- WordPress Interactivity API frontend - no jQuery, no React bundle
 - 19 abilities registered with the WordPress Abilities API (WP 6.9+)
 - Rich text editor with drag-drop image upload and paste-to-upload
 - @mention notifications with autocomplete
@@ -665,7 +665,7 @@ Jetonomy 1.3.0 includes a small database update that runs automatically on the n
 - Import from bbPress, wpForo, and Asgaros (batched with progress bar and resume)
 - Trust level threshold configuration
 - Object caching (Redis/Memcached auto-detection)
-- Eager loading with batch queries — no N+1 problems
+- Eager loading with batch queries - no N+1 problems
 - Cursor-based pagination on all REST API endpoints
 - MemberPress and Paid Memberships Pro integration
 - Canonical URLs, Open Graph tags, JSON-LD schema markup

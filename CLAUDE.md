@@ -52,6 +52,19 @@ Two further rules apply to every release:
 - **readme.txt is customer-facing**, not developer notes. Lead with what's new and what's fixed, in plain English. Internal commits/refactors stay in git history and PR descriptions.
 - **Release zip is verified by the build, not by hand.** `bin/build-release.sh` runs `grunt build` (Step 0), asserts every CSS/JS source has a `.min` pair (Step 5b), and rejects any top-level dev cruft (Step 5c). Manual extract-and-eyeball is the wrong model.
 
+## Release Notes Style (readme.txt + GitHub releases)
+
+Every changelog entry and GitHub release body must be plain, shareable, and consistent. The same rules apply to both surfaces:
+
+1. **No emoji in headings or bullets.** Plain text labels only (`**Reliability**`, `**Fixed**`, `**Multisite**`). Never decorate with trophies, ballot boxes, party poppers, etc. Section labels do the work.
+2. **No em-dashes (`-`) anywhere.** Use a regular hyphen `-` with surrounding spaces. The em-dash reads as AI-generated and has been flagged multiple times by the team. Sweep readme.txt AND GitHub release body before tagging.
+3. **Simple "what's done" structure with proper section labels.** Lead with a one-paragraph summary, then sectioned bullets under labels like `**New**`, `**Performance**`, `**Multisite**`, `**Reliability**`, `**Translations and accessibility**`, `**Fixed**`, `**Compatibility**`. Pick the labels that fit; keep them short. No verbose marketing intros.
+4. **Release title is `Plugin X.Y.Z - one-line summary`.** No em-dash in the title. Examples: `Jetonomy 1.4.2 - Show & Tell, Ideas roadmap, multisite, scale` / `Jetonomy Pro 1.4.2 - Webhooks back online, multisite Pro install`.
+5. **Strip emojis from older entries when touching adjacent changelog lines.** Don't rewrite history wholesale, but if you're editing a section that contains emoji decoration, clean it as you go.
+6. **Lockstep cross-link.** Free release body links to Pro release tag; Pro release body links to free release tag. So both halves of every customer's install are findable from either page.
+
+The rule lives here so we do not repeat the same cleanup on the next release.
+
 ## Quick Reference
 - **Type**: WordPress Plugin (forum, Q&A, ideas, social feed)
 - **PHP**: 8.1+ required
