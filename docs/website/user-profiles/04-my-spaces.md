@@ -121,4 +121,4 @@ Unread counts are read from the same per-user read-status table used everywhere 
 
 The My Spaces page is one entry into your community life. The full profile page covers everything else: activity feed, badges, trust level, and account settings.
 
-[Your Profile Page →](01-profile-overview.md)
+[Your Profile Page →](01-profiles.md)
