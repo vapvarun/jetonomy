@@ -6,8 +6,6 @@ order: 4
 
 Since Jetonomy 1.4.0, every signed-in member has a personal page at `/community/my-spaces/` that lists every space they run and every space they're a member of, in one place. It is the fastest way to jump back into a space you are active in without scrolling the home page.
 
-![My Spaces page showing two sections - Spaces you run and Spaces you're in - with role badges and unread counts](../images/my-spaces.png)
-
 ## What You Will Learn
 
 - Where the My Spaces page lives and how to reach it

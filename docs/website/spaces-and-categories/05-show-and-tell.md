@@ -6,8 +6,6 @@ order: 5
 
 Show & Tell spaces are built for members to share what they have made. Where a Forum space is about discussion and a Q&A space is about solving problems, Show & Tell is about visibility - giving members a dedicated place to publish projects, creative work, course completions, or anything worth sharing with the community.
 
-![Show & Tell space showing a card feed of member projects with vote counts and reply links](../images/space-show-and-tell.png)
-
 ## What You Will Learn
 
 - What a Show & Tell space is and when to use one

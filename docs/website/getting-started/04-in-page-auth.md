@@ -6,8 +6,6 @@ order: 4
 
 Before Jetonomy 1.4.0, anything that required a logged-in member bounced visitors to `wp-login.php`. That meant signing in to upvote a post or reply to a thread sent visitors to a generic WordPress login screen, then back to the community after a redirect. From 1.4.0 onward, Jetonomy handles Login, Register, and Forgot Password in-page through its own `/auth/*` REST endpoints, with forms that match your theme and the rest of the community UI.
 
-![Login modal opening over a topic page when a guest clicks to reply](../images/auth-login-modal.png)
-
 ## What You Will Learn
 
 - Where the in-page auth forms appear and how they behave
