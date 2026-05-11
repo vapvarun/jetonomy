@@ -54,16 +54,38 @@ Two further rules apply to every release:
 
 ## Release Notes Style (readme.txt + GitHub releases)
 
-Every changelog entry and GitHub release body must be plain, shareable, and consistent. The same rules apply to both surfaces:
+Every changelog entry and GitHub release body must follow the WooCommerce-style action-prefix format. The same rules apply to both surfaces (readme.txt changelog AND GitHub release body):
 
-1. **No emoji in headings or bullets.** Plain text labels only (`**Reliability**`, `**Fixed**`, `**Multisite**`). Never decorate with trophies, ballot boxes, party poppers, etc. Section labels do the work.
-2. **No em-dashes (`-`) anywhere.** Use a regular hyphen `-` with surrounding spaces. The em-dash reads as AI-generated and has been flagged multiple times by the team. Sweep readme.txt AND GitHub release body before tagging.
-3. **Simple "what's done" structure with proper section labels.** Lead with a one-paragraph summary, then sectioned bullets under labels like `**New**`, `**Performance**`, `**Multisite**`, `**Reliability**`, `**Translations and accessibility**`, `**Fixed**`, `**Compatibility**`. Pick the labels that fit; keep them short. No verbose marketing intros.
-4. **Release title is `Plugin X.Y.Z - one-line summary`.** No em-dash in the title. Examples: `Jetonomy 1.4.2 - Show & Tell, Ideas roadmap, multisite, scale` / `Jetonomy Pro 1.4.2 - Webhooks back online, multisite Pro install`.
-5. **Strip emojis from older entries when touching adjacent changelog lines.** Don't rewrite history wholesale, but if you're editing a section that contains emoji decoration, clean it as you go.
-6. **Lockstep cross-link.** Free release body links to Pro release tag; Pro release body links to free release tag. So both halves of every customer's install are findable from either page.
+### Format
 
-The rule lives here so we do not repeat the same cleanup on the next release.
+```
+= 1.4.2 - May 2026 =
+
+One-line summary of the release in plain English. No marketing fluff.
+
+* New      - Description of the new feature.
+* New      - Description of another new feature.
+* Improve  - Description of the improvement.
+* Fix      - Description of the fix.
+* Security - Description of the security fix.
+* Dev      - Developer-facing change (REST endpoint, hook, helper, CI).
+* Compat   - Compatibility / lockstep note.
+```
+
+### Rules
+
+1. **One bullet per change with an action prefix.** Action labels: `New`, `Improve`, `Fix`, `Security`, `Dev`, `Compat`. Pad to 8 characters before ` - ` so columns line up. No feature-themed subheadings (`**Public or private community**`, `**For people who run a space**`) - the action label IS the section.
+2. **No emoji anywhere.** Not in summary, not in bullets, not in headings. Trophies, ballot boxes, party poppers all out. Section labels do the work.
+3. **No em-dashes (`-`) anywhere.** Use a regular hyphen `-`. Em-dash reads as AI-generated and has been flagged multiple times by the team. Sweep before tagging.
+4. **Short summary paragraph (optional).** One line of plain English under the version heading explains what the release is about. Skip it if the bullets speak for themselves (small fix releases).
+5. **Release title is `Plugin X.Y.Z - one-line summary`.** No em-dash. Examples: `Jetonomy 1.4.2 - Show & Tell, Ideas roadmap, multisite, scale` / `Jetonomy Pro 1.4.2 - Webhooks back online, multisite Pro install`.
+6. **Lockstep cross-link.** Free release body links to Pro release tag; Pro release body links to free release tag. Both halves of a customer's install are findable from either page.
+7. **Order within a version.** Group by action label in this order: New, Improve, Fix, Security, Dev, Compat. Keeps the most customer-relevant bullets at the top.
+8. **One sentence per bullet.** If a change needs two sentences, the first is the headline, the second is the detail. No marketing copy, no internal references (ticket IDs, branch names, commit SHAs in the bullet text).
+
+### Why this style
+
+WooCommerce, EDD, GravityForms, ACF, and most major WP plugins use this format. It is the closest thing to a standard for WordPress.org readme.txt. Scannable, easy to translate, easy to share, easy to diff between versions. The rule lives here so we do not repeat the same cleanup on the next release.
 
 ## Quick Reference
 - **Type**: WordPress Plugin (forum, Q&A, ideas, social feed)
