@@ -13,8 +13,6 @@ Connect Tutor LMS course enrollment to Jetonomy spaces - students get a dedicate
 
 Jetonomy Pro detects Tutor LMS automatically when both plugins are active. A **Tutor Course** option appears in the Access Rules rule type dropdown - no setup needed.
 
-![Integrations settings showing Tutor LMS active](../images/integrations-settings.png)
-
 ## Linking a Course to a Space
 
 1. Go to **Jetonomy → Spaces** and open (or create) the discussion space for your course.
@@ -25,10 +23,6 @@ Jetonomy Pro detects Tutor LMS automatically when both plugins are active. A **T
 6. Click **Add Rule**.
 
 The rule appears in the table showing the course name (not an ID), with a **Sync Members** button and **Delete** button.
-
-![Access rules with Tutor Course rule and Sync Members button](../images/access-rules-with-rule.png)
-
-![Searching for a Tutor course in the autocomplete dropdown](../images/course-search-autocomplete.png)
 
 ## Syncing Existing Students
 

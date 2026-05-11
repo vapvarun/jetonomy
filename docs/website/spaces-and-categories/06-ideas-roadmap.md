@@ -6,8 +6,6 @@ order: 6
 
 Every Ideas space includes a built-in roadmap view. Instead of scrolling through a flat list of feature requests, visitors can see all ideas organized by status - what is planned, what is being built, what has shipped, and what will not be pursued. This page explains the roadmap, the status lanes, and how status changes are communicated to your community.
 
-![Ideas roadmap showing four status lanes: Planned, In Progress, Shipped, Declined](../images/space-ideas-roadmap.png)
-
 ## What You Will Learn
 
 - Where to find the roadmap view

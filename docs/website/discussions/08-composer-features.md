@@ -6,8 +6,6 @@ order: 8
 
 The composer is the box you type in when you create a new post or reply. Jetonomy 1.4.0 added three features that make the composer feel more like a modern community tool and less like a comment form: @mention autocomplete, a "New" pill on unread threads, and a "Managed by" sidebar card that surfaces space staff at a glance. Admin and moderator role pills also appear next to staff names so members always know who they are talking to.
 
-![Composer with @mention dropdown open, showing matching member suggestions](../images/composer-mention-autocomplete.png)
-
 ## What You Will Learn
 
 - How @mention autocomplete works in posts and replies
@@ -61,8 +59,6 @@ If you start typing a name that does not match anyone in your shared spaces, the
 
 The space listing shows a card for each topic. When a topic has replies you have not read yet, a small "New" pill appears on the card.
 
-![Space listing with a New pill on two of the topic cards](../images/composer-new-pill.png)
-
 The pill is intentionally subtle. It uses the `--jt-accent` design token, so it picks up your theme's brand color and matches dark mode automatically.
 
 ### When the Pill Appears and Clears
@@ -84,8 +80,6 @@ On mobile the pill sits at the top-right of the card, sized for thumb readabilit
 ## "Managed by" Sidebar Card
 
 Every space page now shows a "Managed by" card in the sidebar. The card lists the space admin(s) and moderator(s) with their avatars and a small role badge next to each name.
-
-![Space sidebar showing the Managed by card with one admin and two moderators](../images/composer-managed-by-card.png)
 
 ### What the Card Shows
 

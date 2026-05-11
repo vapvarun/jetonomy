@@ -6,8 +6,6 @@ order: 9
 
 Jetonomy 1.4.0 introduced an in-product modal toolkit that replaces the native browser `confirm`, `alert`, and `prompt` dialogs across the community. Native browser dialogs look like operating system pop-ups, cannot be themed, and don't follow modern accessibility patterns. The Jetonomy modals are themed, keyboard-accessible, and localised. The 1.4.2 retag completed full translation coverage for the button labels.
 
-![Confirmation modal asking to confirm deletion of a post, with Cancel and Confirm buttons](../images/modals-delete-confirmation.png)
-
 ## What You Will Learn
 
 - What the modal toolkit replaces and why

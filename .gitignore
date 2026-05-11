@@ -20,3 +20,6 @@ docs/qa/fail-*.png
 plan/1.4.1-baselines/*
 !plan/1.4.1-baselines/CHECKLIST.md
 !plan/1.4.1-baselines/.gitkeep
+
+# wbcom-docs MCP generated artifact (sibling of canonical image_map.json)
+docs/website/image-mapping.json

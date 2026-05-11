@@ -6,8 +6,6 @@ order: 7
 
 Since Jetonomy 1.4.0, members with the right role can create a new space without ever opening wp-admin. The front-end Create Space page lives at `/community/new-space/` and gives community owners a way to delegate space creation to trusted regulars, team leads, or paying members without handing out WordPress admin access.
 
-![Front-end Create Space page showing the title field, description, icon picker, and visibility options](../images/front-end-create-space.png)
-
 ## What You Will Learn
 
 - Where the Create Space page lives and who can reach it
