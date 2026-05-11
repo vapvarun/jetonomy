@@ -20,7 +20,7 @@ Every topic and every reply has an upvote button (thumbs up) and a downvote butt
 
 **To change your vote direction:** Click the opposite button. Jetonomy removes your previous vote and applies the new one in a single action. The score adjusts correctly.
 
-You must be logged in to vote. If you click a vote button while logged out, Jetonomy redirects you to the login page and returns you to the same topic afterward.
+You must be logged in to vote. If you click a vote button while logged out, Jetonomy opens its in-page sign-in form (no wp-login.php bounce) and returns you to the same topic once you sign in.
 
 > **Note:** You cannot vote on your own posts or replies. The vote buttons are visible but disabled with a tooltip explaining why.
 

@@ -38,14 +38,19 @@ A space is where discussions happen. Each space has a type that shapes how membe
 | **Ideas** | Feature requests, roadmaps | Status lanes (Planned, In Progress, Shipped, Declined) with roadmap view |
 | **Show & Tell** | Project showcases, member work | Card feed with optional title, reactions, and votes |
 
-To create a space:
+To create a space, you can use either the wp-admin form or the front-end Create Space page. Both produce the same result.
+
+**From wp-admin:**
 
 1. Go to **Jetonomy → Spaces → Add Space**.
 2. Enter a name and optional description.
-3. Choose the space type.
-4. Set visibility: **Public** (anyone can see it), **Private** (members only see content), or **Hidden** (not listed, invite only).
-5. Set the join policy: **Open**, **Request to join**, or **Invite only**.
-6. Click **Save Space**.
+3. Pick an icon from the visual Lucide picker (16 defaults plus a search field).
+4. Choose the space type.
+5. Set visibility: **Public** (anyone can see it), **Private** (members only see content), or **Hidden** (not listed, invite only).
+6. Set the join policy: **Open**, **Request to join**, or **Invite only**.
+7. Click **Save Space**.
+
+**From the front end** (so non-admin owners can create spaces too): visit `/community/new-space/` while signed in. The form is identical and is available to any role you've enabled under **Settings → Front-end space creation**.
 
 Your space is immediately available on the community frontend under its category.
 

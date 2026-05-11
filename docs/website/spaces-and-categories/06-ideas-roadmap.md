@@ -72,7 +72,7 @@ Members who do not follow the space will not receive notifications about that sp
 
 What members see at each stage:
 
-- **Submitted idea with no status** - Appears in the idea list. Not shown in the roadmap lanes. Vote buttons are active.
+- **New idea with no status assigned** - Appears in the idea list. Not shown in any roadmap lane until an admin or moderator picks a status. Vote buttons are active so members can build up signal even before the team triages.
 - **Planned** - Appears in the Planned lane on the roadmap. A "Planned" badge shows on the idea card.
 - **In Progress** - Moves to the In Progress lane. Badge updates. Members can see work has started.
 - **Shipped** - Moves to the Shipped lane. Badge shows "Shipped." Upvote button remains available so members can react positively to the delivery.

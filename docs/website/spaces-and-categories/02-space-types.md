@@ -64,7 +64,7 @@ Use Ideas for: product feedback boards, feature request trackers, community road
 
 For a full guide to the Ideas roadmap view, see [Ideas Roadmap](06-ideas-roadmap.md).
 
-> **Tip:** Set the space icon to a lightbulb emoji and name it something like "Ideas & Feedback" to set the right expectation before members click through.
+> **Tip:** Pick the `lightbulb` icon from the Lucide icon picker and name the space something like "Ideas & Feedback" to set the right expectation before members click through.
 
 ### Show & Tell
 
@@ -100,7 +100,7 @@ Use Social Feed for: member introductions, community announcements, daily check-
 
 ## Changing the Space Type
 
-You can change the type of an existing space at any time. Open the space for editing in **Jetonomy → Spaces** and update the **Type** field.
+You can change the type of an existing space at any time. Either open it in **Jetonomy → Spaces** in wp-admin, or use the **Edit space** button on the space header itself (front-end edit), and update the **Type** field.
 
 The change takes effect immediately for all new posts. Existing posts keep their original structure. A Q&A post does not lose its accepted answer, and an Ideas post does not lose its status history.
 
