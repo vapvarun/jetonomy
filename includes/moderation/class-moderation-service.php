@@ -22,6 +22,7 @@ use Jetonomy\Models\Reply;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Trust\Reputation;
 
 class Moderation_Service {
 
@@ -266,7 +267,7 @@ class Moderation_Service {
 		}
 
 		if ( 'spam' === $action && ! empty( $row->author_id ) ) {
-			UserProfile::adjust_reputation( (int) $row->author_id, -20 );
+			Reputation::award( (int) $row->author_id, 'post_removed' );
 		}
 
 		do_action( 'jetonomy_content_moderated', $action, $type, $id, $user_id );

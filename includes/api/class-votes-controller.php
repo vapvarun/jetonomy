@@ -289,16 +289,14 @@ class Votes_Controller extends Base_Controller {
 		}
 
 		if ( 'removed' === $action ) {
-			// Undo vote: reverse the points.
-			$delta = Reputation::points_for( self::reputation_action_for( $type, $value ) );
-			UserProfile::adjust_reputation( $author_id, -$delta );
+			// Undo vote: revoke the original award.
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $value ) );
 			return;
 		}
 
 		if ( 'updated' === $action && null !== $old_value ) {
-			// Changed vote direction: reverse old and award new.
-			$old_delta = Reputation::points_for( self::reputation_action_for( $type, $old_value ) );
-			UserProfile::adjust_reputation( $author_id, -$old_delta );
+			// Changed vote direction: revoke old award and apply new one.
+			Reputation::revoke( $author_id, self::reputation_action_for( $type, $old_value ) );
 			Reputation::award( $author_id, self::reputation_action_for( $type, $value ) );
 		}
 	}
@@ -314,7 +312,7 @@ class Votes_Controller extends Base_Controller {
 		if ( $value > 0 ) {
 			return 'post' === $type ? 'post_upvoted' : 'reply_upvoted';
 		}
-		return 'downvoted';
+		return 'post' === $type ? 'post_downvoted' : 'reply_downvoted';
 	}
 
 	/**

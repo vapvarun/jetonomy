@@ -17,15 +17,11 @@ use Jetonomy\Models\Reply;
 use Jetonomy\Models\Revision;
 use Jetonomy\Models\Notification;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Trust\Reputation;
 
 class Replies_Controller extends Base_Controller {
 
 	protected $rest_base = 'replies';
-
-	/**
-	 * Reputation delta awarded when a reply is accepted as the answer.
-	 */
-	private const REP_REPLY_ACCEPTED = 15;
 
 	/**
 	 * Register all REST routes for replies.
@@ -570,7 +566,7 @@ class Replies_Controller extends Base_Controller {
 		// Award reputation to the reply author (skip self-award).
 		if ( $reply_author_id && $reply_author_id !== $user_id ) {
 			UserProfile::find_or_create( $reply_author_id );
-			UserProfile::adjust_reputation( $reply_author_id, self::REP_REPLY_ACCEPTED );
+			Reputation::award( $reply_author_id, 'reply_accepted' );
 
 			// Notification handled by Notifier via jetonomy_reply_accepted hook above.
 		}

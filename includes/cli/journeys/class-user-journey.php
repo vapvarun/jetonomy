@@ -9,6 +9,7 @@ namespace Jetonomy\CLI\Journeys;
 
 use Jetonomy\CLI\Journey_Result;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Trust\Reputation;
 use Jetonomy\Trust\Trust_Levels;
 
 defined( 'ABSPATH' ) || exit;
@@ -238,7 +239,7 @@ final class User_Journey {
 		}
 
 		UserProfile::find_or_create( $user_id );
-		UserProfile::adjust_reputation( $user_id, $delta );
+		Reputation::award_custom( $user_id, $delta, 'cli_manual_adjust' );
 
 		$profile        = UserProfile::find_by_user( $user_id );
 		$new_reputation = $profile ? (int) ( $profile->reputation ?? 0 ) : 0;

@@ -86,12 +86,25 @@ class UserProfile extends Model {
 	}
 
 	/**
-	 * Add or subtract from a user's reputation score, then invalidate the cache.
+	 * Apply a raw reputation delta to a user profile and invalidate the cache.
 	 *
-	 * @param int $user_id
-	 * @param int $delta Amount to add (use negative value to subtract).
+	 * @internal
+	 *
+	 * This is the low-level persistence primitive. It does NOT fire the
+	 * `jetonomy_reputation_changed` action and does NOT consult POINTS_MAP.
+	 *
+	 * Public callers MUST NOT invoke this directly. Use one of:
+	 *   - {@see \Jetonomy\Trust\Reputation::award()}        for known POINTS_MAP actions
+	 *   - {@see \Jetonomy\Trust\Reputation::revoke()}       to reverse a previous award
+	 *   - {@see \Jetonomy\Trust\Reputation::award_custom()} for dynamic deltas
+	 *
+	 * Remains `public static` only so the `Reputation` facade (different namespace)
+	 * can call it; treat as package-private.
+	 *
+	 * @param int $user_id WP user ID.
+	 * @param int $delta   Amount to add (use negative value to subtract).
 	 */
-	public static function adjust_reputation( int $user_id, int $delta ): void {
+	public static function _apply_reputation_delta( int $user_id, int $delta ): void {
 		Cache::delete( "profile:{$user_id}" );
 		static::db()->query(
 			static::db()->prepare(

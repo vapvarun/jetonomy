@@ -15,6 +15,7 @@ use WP_Error;
 use Jetonomy\Models\Flag;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Trust\Reputation;
 use function Jetonomy\table;
 
 class Moderation_Controller extends Base_Controller {
@@ -779,7 +780,7 @@ class Moderation_Controller extends Base_Controller {
 
 		$author_id = (int) $row->author_id;
 		if ( $author_id ) {
-			UserProfile::adjust_reputation( $author_id, -20 );
+			Reputation::award( $author_id, 'post_removed' );
 		}
 
 		do_action( 'jetonomy_content_moderated', 'spam', $type, $id, get_current_user_id() );

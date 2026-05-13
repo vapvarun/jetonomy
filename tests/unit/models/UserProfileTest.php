@@ -56,21 +56,21 @@ class UserProfileTest extends WP_UnitTestCase {
 		$this->assertTrue( $result );
 	}
 
-	public function test_adjust_reputation_positive(): void {
+	public function test_apply_reputation_delta_positive(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
-		UserProfile::adjust_reputation( $user_id, 10 );
-		UserProfile::adjust_reputation( $user_id, 5 );
+		UserProfile::_apply_reputation_delta( $user_id, 10 );
+		UserProfile::_apply_reputation_delta( $user_id, 5 );
 
 		$profile = UserProfile::find_by_user( $user_id );
 		$this->assertEquals( 15, (int) $profile->reputation );
 	}
 
-	public function test_adjust_reputation_negative(): void {
+	public function test_apply_reputation_delta_negative(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
-		UserProfile::adjust_reputation( $user_id, 20 );
-		UserProfile::adjust_reputation( $user_id, -5 );
+		UserProfile::_apply_reputation_delta( $user_id, 20 );
+		UserProfile::_apply_reputation_delta( $user_id, -5 );
 
 		$profile = UserProfile::find_by_user( $user_id );
 		$this->assertEquals( 15, (int) $profile->reputation );

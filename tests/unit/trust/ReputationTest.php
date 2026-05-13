@@ -29,8 +29,12 @@ class ReputationTest extends WP_UnitTestCase {
 		$this->assertEquals( 20, Reputation::points_for( 'idea_planned' ) );
 	}
 
-	public function test_points_for_downvoted(): void {
-		$this->assertEquals( -2, Reputation::points_for( 'downvoted' ) );
+	public function test_points_for_post_downvoted(): void {
+		$this->assertEquals( -2, Reputation::points_for( 'post_downvoted' ) );
+	}
+
+	public function test_points_for_reply_downvoted(): void {
+		$this->assertEquals( -2, Reputation::points_for( 'reply_downvoted' ) );
 	}
 
 	public function test_points_for_flag_validated(): void {
@@ -49,14 +53,34 @@ class ReputationTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, Reputation::points_for( 'some_unknown_action' ) );
 	}
 
-	public function test_award_calls_adjust_reputation(): void {
+	public function test_award_applies_delta_and_fires_hook(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
 
-		Reputation::award( $user_id, 'post_upvoted' );
+		$fired    = false;
+		$captured = [];
+		add_action(
+			'jetonomy_reputation_changed',
+			function ( $uid, $action, $delta, $context ) use ( &$fired, &$captured ) {
+				$fired    = true;
+				$captured = compact( 'uid', 'action', 'delta', 'context' );
+			},
+			10,
+			4
+		);
+
+		$result = Reputation::award( $user_id, 'post_upvoted' );
+
+		$this->assertEquals( 10, $result );
 
 		$profile = UserProfile::find_by_user( $user_id );
 		$this->assertEquals( 10, (int) $profile->reputation );
+
+		$this->assertTrue( $fired );
+		$this->assertEquals( $user_id, $captured['uid'] );
+		$this->assertEquals( 'post_upvoted', $captured['action'] );
+		$this->assertEquals( 10, $captured['delta'] );
+		$this->assertEquals( [], $captured['context'] );
 	}
 
 	public function test_award_returns_delta(): void {
@@ -70,18 +94,18 @@ class ReputationTest extends WP_UnitTestCase {
 	public function test_award_negative_action_deducts_reputation(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
-		UserProfile::adjust_reputation( $user_id, 50 ); // Start at 50.
+		UserProfile::_apply_reputation_delta( $user_id, 50 ); // Start at 50.
 
-		Reputation::award( $user_id, 'downvoted' );
+		Reputation::award( $user_id, 'post_downvoted' );
 
 		$profile = UserProfile::find_by_user( $user_id );
 		$this->assertEquals( 48, (int) $profile->reputation );
 	}
 
-	public function test_award_unknown_action_returns_zero_and_does_not_modify_reputation(): void {
+	public function test_award_returns_zero_for_unknown_action(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
-		UserProfile::adjust_reputation( $user_id, 30 );
+		UserProfile::_apply_reputation_delta( $user_id, 30 );
 
 		$delta = Reputation::award( $user_id, 'nonexistent_action' );
 
@@ -91,36 +115,112 @@ class ReputationTest extends WP_UnitTestCase {
 		$this->assertEquals( 30, (int) $profile->reputation );
 	}
 
-	public function test_award_fires_reputation_changed_action(): void {
-		$user_id   = $this->factory()->user->create();
-		UserProfile::find_or_create( $user_id );
-		$fired     = false;
-		$captured  = [];
-
-		add_action( 'jetonomy_reputation_changed', function( $uid, $action, $delta ) use ( &$fired, &$captured ) {
-			$fired    = true;
-			$captured = compact( 'uid', 'action', 'delta' );
-		}, 10, 3 );
-
-		Reputation::award( $user_id, 'post_upvoted' );
-
-		$this->assertTrue( $fired );
-		$this->assertEquals( $user_id, $captured['uid'] );
-		$this->assertEquals( 'post_upvoted', $captured['action'] );
-		$this->assertEquals( 10, $captured['delta'] );
-	}
-
 	public function test_award_unknown_action_does_not_fire_reputation_changed(): void {
 		$user_id = $this->factory()->user->create();
 		UserProfile::find_or_create( $user_id );
-		$fired   = false;
+		$fired = false;
 
-		add_action( 'jetonomy_reputation_changed', function() use ( &$fired ) {
-			$fired = true;
-		} );
+		add_action(
+			'jetonomy_reputation_changed',
+			function () use ( &$fired ) {
+				$fired = true;
+			}
+		);
 
 		Reputation::award( $user_id, 'unknown_action' );
 
+		$this->assertFalse( $fired );
+	}
+
+	public function test_revoke_applies_negative_delta_and_fires_hook_with_revoked_suffix(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+		UserProfile::_apply_reputation_delta( $user_id, 100 );
+
+		$captured = [];
+		add_action(
+			'jetonomy_reputation_changed',
+			function ( $uid, $action, $delta, $context ) use ( &$captured ) {
+				$captured = compact( 'uid', 'action', 'delta', 'context' );
+			},
+			10,
+			4
+		);
+
+		$result = Reputation::revoke( $user_id, 'post_upvoted' );
+
+		$this->assertEquals( -10, $result );
+
+		$profile = UserProfile::find_by_user( $user_id );
+		$this->assertEquals( 90, (int) $profile->reputation );
+
+		$this->assertEquals( 'post_upvoted_revoked', $captured['action'] );
+		$this->assertEquals( -10, $captured['delta'] );
+		$this->assertEquals( [], $captured['context'] );
+	}
+
+	public function test_revoke_negative_action_adds_points_back(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+		UserProfile::_apply_reputation_delta( $user_id, 50 );
+
+		// Reverse a downvote -> reputation should go UP by 2.
+		$result = Reputation::revoke( $user_id, 'post_downvoted' );
+
+		$this->assertEquals( 2, $result );
+
+		$profile = UserProfile::find_by_user( $user_id );
+		$this->assertEquals( 52, (int) $profile->reputation );
+	}
+
+	public function test_revoke_returns_zero_for_unknown_action(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+
+		$this->assertEquals( 0, Reputation::revoke( $user_id, 'never_awarded' ) );
+	}
+
+	public function test_award_custom_applies_arbitrary_delta(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+
+		$captured = [];
+		add_action(
+			'jetonomy_reputation_changed',
+			function ( $uid, $action, $delta, $context ) use ( &$captured ) {
+				$captured = compact( 'uid', 'action', 'delta', 'context' );
+			},
+			10,
+			4
+		);
+
+		$result = Reputation::award_custom( $user_id, 42, 'badge_earned', [ 'badge_id' => 7 ] );
+
+		$this->assertEquals( 42, $result );
+
+		$profile = UserProfile::find_by_user( $user_id );
+		$this->assertEquals( 42, (int) $profile->reputation );
+
+		$this->assertEquals( 'badge_earned', $captured['action'] );
+		$this->assertEquals( 42, $captured['delta'] );
+		$this->assertEquals( [ 'badge_id' => 7 ], $captured['context'] );
+	}
+
+	public function test_award_custom_zero_delta_is_noop(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+
+		$fired = false;
+		add_action(
+			'jetonomy_reputation_changed',
+			function () use ( &$fired ) {
+				$fired = true;
+			}
+		);
+
+		$result = Reputation::award_custom( $user_id, 0, 'noop' );
+
+		$this->assertEquals( 0, $result );
 		$this->assertFalse( $fired );
 	}
 }
