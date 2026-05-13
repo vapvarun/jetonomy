@@ -1350,7 +1350,9 @@
      without proper spacing"). */
   .jt-publish-mode { position: relative; display: inline-flex; gap: 6px; align-items: center; }
   .jt-publish-mode__toggle { min-width: 34px; padding-left: 8px; padding-right: 8px; }
-  .jt-publish-mode__menu { position: absolute; bottom: calc(100% + 6px); right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
+  /* [1.4.3 WS3-B] Positioning owned by jetonomySmartDropdown (position:
+     fixed + JS-computed top/left). Keep z-index/border/background only. */
+  .jt-publish-mode__menu { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
   .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
   .jt-publish-mode__option:hover { background: var(--jt-bg-hover); }
@@ -1407,7 +1409,7 @@
     .jt-form-actions { flex-wrap: wrap; }
     .jt-publish-mode { width: 100%; }
     .jt-publish-mode__submit { flex: 1; }
-    .jt-publish-mode__menu { right: 0; left: 0; min-width: unset; }
+    .jt-publish-mode__menu { min-width: unset; }
   }
 
   /* ── Pagination ── */
@@ -1978,10 +1980,12 @@
 /* More-trigger button — was styled for a text `…` character, now
    uses a Lucide more-horizontal SVG. Keep the min tap-target only. */
 .jt-more-trigger { min-width: var(--jt-tap); min-height: var(--jt-tap); justify-content: center; }
-/* Opens downward from the trigger. Was `bottom: 100%` which flipped the
-   menu upward; with 5+ items (Pin/Move/Merge/Delete/Admin) it pushed the
-   list onto the post title and looked misaligned (Basecamp 9803818273). */
-.jt-more-dropdown { position: absolute; top: 100%; right: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-top: 0.25rem; }
+/* Positioning is owned by jetonomySmartDropdown (WS3-A primitive, wired
+   in WS3-B). It sets `position: fixed` and computes top/left so the panel
+   flips above when there's no room below and shifts to stay on-screen —
+   fixing Basecamp 9886004438 (last-reply More menu clipped). We keep
+   z-index/border/background here; everything else is JS-controlled. */
+.jt-more-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger); }

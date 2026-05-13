@@ -300,34 +300,32 @@ const { state, actions } = store( 'jetonomy', {
         *voteUp( event ) {
             event.stopPropagation();
             const el = getElement();
-            const postId = el.ref.dataset.postId;
+            const btnEl = el.ref;
+            const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
-            // Optimistic update. Delta depends on the user's existing vote,
-            // not a naïve +1: flipping from a prior downvote is +2 (remove -1,
-            // add +1); clicking the same up button again toggles off (-1);
-            // no prior vote is a straight +1. Without this, a user flipping
-            // down → up saw an intermediate 'wrong' score for a beat before
-            // the server reply corrected it.
-            const current = state.postScores[ postId ] || 0;
-            const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
-            let delta = 1;
-            if ( el.ref.classList.contains( 'voted' ) ) {
-                delta = -1;
-            } else if ( downSibling?.classList.contains( 'voted' ) ) {
-                delta = 2;
-            }
-            state.postScores[ postId ] = current + delta;
+            const downSibling = btnEl.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
+            const scoreEl = btnEl.querySelector( '.n' );
 
-            // Visual feedback — vote pop
-            const scoreEl = el.ref.querySelector( '.n' );
-            if ( scoreEl ) {
-                scoreEl.style.transform = 'scale(1.3)';
-                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
-            }
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    // Optimistic delta: same-button toggle is -1, flipping
+                    // from a prior downvote is +2, fresh vote is +1.
+                    const current = state.postScores[ postId ] || 0;
+                    const wasVoted = btnEl.classList.contains( 'voted' );
+                    const downWasVoted = !! downSibling?.classList.contains( 'voted' );
+                    let delta = 1;
+                    if ( wasVoted ) delta = -1;
+                    else if ( downWasVoted ) delta = 2;
 
-            try {
-                const response = yield fetch(
+                    state.postScores[ postId ] = current + delta;
+                    if ( scoreEl ) {
+                        scoreEl.style.transform = 'scale(1.3)';
+                        setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+                    }
+                    return { prevScore: current, wasVoted, downWasVoted };
+                },
+                fetch: () => fetch(
                     `${ state.apiBase }/posts/${ postId }/vote`,
                     {
                         method: 'POST',
@@ -338,62 +336,61 @@ const { state, actions } = store( 'jetonomy', {
                         credentials: 'same-origin',
                         body: JSON.stringify( { value: 1 } ),
                     }
-                );
-                if ( response.ok ) {
-                    const data = yield response.json();
-                    if ( data.score !== undefined ) {
+                ),
+                onSuccess: ( data ) => {
+                    if ( data && data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    // Toggle voted state on the button.
-                    if ( data.action === 'removed' ) {
-                        el.ref.classList.remove( 'voted' );
+                    if ( data && data.action === 'removed' ) {
+                        btnEl.classList.remove( 'voted' );
                     } else {
-                        el.ref.classList.add( 'voted' );
-                        // Remove voted from the sibling down button.
-                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteDown"], [data-wp-on--click="actions.voteDown"]' );
-                        if ( sibling ) sibling.classList.remove( 'voted' );
+                        btnEl.classList.add( 'voted' );
+                        if ( downSibling ) downSibling.classList.remove( 'voted' );
                     }
-                    if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
-                } else {
-                    // Rollback on error
-                    state.postScores[ postId ] = current;
-                    const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
-                }
-            } catch {
-                state.postScores[ postId ] = current;
-                if ( window.bnToast ) window.bnToast( 'Network error. Please try again.', 'error' );
-            }
+                    if ( window.bnToast && ! window._jetonomyVoteToasted ) {
+                        window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
+                        window._jetonomyVoteToasted = true;
+                        setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
+                    }
+                },
+                revert: ( snap ) => {
+                    state.postScores[ postId ] = snap.prevScore;
+                    btnEl.classList.toggle( 'voted', snap.wasVoted );
+                    if ( downSibling ) downSibling.classList.toggle( 'voted', snap.downWasVoted );
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+            } );
         },
 
         *voteDown( event ) {
             event.stopPropagation();
             const el = getElement();
-            const postId = el.ref.dataset.postId;
+            const btnEl = el.ref;
+            const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
-            // Optimistic delta mirrors voteUp: flipping up → down is -2,
-            // clicking the same down again toggles off (+1), no prior vote
-            // is a straight -1. See voteUp comment for the full rationale.
-            const current = state.postScores[ postId ] || 0;
-            const upSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteUp"], [data-wp-on--click="actions.voteUp"]' );
-            let delta = -1;
-            if ( el.ref.classList.contains( 'voted' ) ) {
-                delta = 1;
-            } else if ( upSibling?.classList.contains( 'voted' ) ) {
-                delta = -2;
-            }
-            state.postScores[ postId ] = current + delta;
+            const upSibling = btnEl.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteUp"], [data-wp-on--click="actions.voteUp"]' );
+            const scoreEl = btnEl.querySelector( '.n' );
 
-            // Visual feedback — vote pop
-            const scoreEl = el.ref.querySelector( '.n' );
-            if ( scoreEl ) {
-                scoreEl.style.transform = 'scale(1.3)';
-                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
-            }
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    // Mirror of voteUp; see comment there.
+                    const current = state.postScores[ postId ] || 0;
+                    const wasVoted = btnEl.classList.contains( 'voted' );
+                    const upWasVoted = !! upSibling?.classList.contains( 'voted' );
+                    let delta = -1;
+                    if ( wasVoted ) delta = 1;
+                    else if ( upWasVoted ) delta = -2;
 
-            try {
-                const response = yield fetch(
+                    state.postScores[ postId ] = current + delta;
+                    if ( scoreEl ) {
+                        scoreEl.style.transform = 'scale(1.3)';
+                        setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+                    }
+                    return { prevScore: current, wasVoted, upWasVoted };
+                },
+                fetch: () => fetch(
                     `${ state.apiBase }/posts/${ postId }/vote`,
                     {
                         method: 'POST',
@@ -404,60 +401,61 @@ const { state, actions } = store( 'jetonomy', {
                         credentials: 'same-origin',
                         body: JSON.stringify( { value: -1 } ),
                     }
-                );
-                if ( response.ok ) {
-                    const data = yield response.json();
-                    if ( data.score !== undefined ) {
+                ),
+                onSuccess: ( data ) => {
+                    if ( data && data.score !== undefined ) {
                         state.postScores[ postId ] = data.score;
                     }
-                    // Toggle voted state on the button.
-                    if ( data.action === 'removed' ) {
-                        el.ref.classList.remove( 'voted' );
+                    if ( data && data.action === 'removed' ) {
+                        btnEl.classList.remove( 'voted' );
                     } else {
-                        el.ref.classList.add( 'voted' );
-                        // Remove voted from the sibling up button.
-                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteUp"], [data-wp-on--click="actions.voteUp"]' );
-                        if ( sibling ) sibling.classList.remove( 'voted' );
+                        btnEl.classList.add( 'voted' );
+                        if ( upSibling ) upSibling.classList.remove( 'voted' );
                     }
-                    if ( window.bnToast && !window._jetonomyVoteToasted ) { window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' ); window._jetonomyVoteToasted = true; setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 ); }
-                } else {
-                    state.postScores[ postId ] = current;
-                    const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
-                }
-            } catch {
-                state.postScores[ postId ] = current;
-                if ( window.bnToast ) window.bnToast( 'Network error. Please try again.', 'error' );
-            }
+                    if ( window.bnToast && ! window._jetonomyVoteToasted ) {
+                        window.bnToast( state.i18n?.voteRecorded || 'Vote recorded' );
+                        window._jetonomyVoteToasted = true;
+                        setTimeout( () => { window._jetonomyVoteToasted = false; }, 2000 );
+                    }
+                },
+                revert: ( snap ) => {
+                    state.postScores[ postId ] = snap.prevScore;
+                    btnEl.classList.toggle( 'voted', snap.wasVoted );
+                    if ( upSibling ) upSibling.classList.toggle( 'voted', snap.upWasVoted );
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+            } );
         },
 
         *voteReplyUp( event ) {
             event.stopPropagation();
             const el = getElement();
-            const replyId = el.ref.dataset.replyId;
+            const btnEl = el.ref;
+            const replyId = btnEl.dataset.replyId;
             if ( ! replyId ) return;
 
-            const scoreEl = el.ref.querySelector( '.n' );
-            const current = parseInt( scoreEl?.textContent || '0', 10 );
+            const scoreEl = btnEl.querySelector( '.n' );
+            const downSibling = btnEl.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyDown"], [data-wp-on--click="actions.voteReplyDown"]' );
 
-            // Delta accounts for a previous vote: same-button click toggles
-            // off (-1); flipping from a prior downvote is +2; first vote is +1.
-            const downSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyDown"], [data-wp-on--click="actions.voteReplyDown"]' );
-            let delta = 1;
-            if ( el.ref.classList.contains( 'voted' ) ) {
-                delta = -1;
-            } else if ( downSibling?.classList.contains( 'voted' ) ) {
-                delta = 2;
-            }
-            state.replyScores[ replyId ] = current + delta;
-            if ( scoreEl ) {
-                scoreEl.textContent = current + delta;
-                scoreEl.style.transform = 'scale(1.3)';
-                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
-            }
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    const current = parseInt( scoreEl?.textContent || '0', 10 );
+                    const wasVoted = btnEl.classList.contains( 'voted' );
+                    const downWasVoted = !! downSibling?.classList.contains( 'voted' );
+                    let delta = 1;
+                    if ( wasVoted ) delta = -1;
+                    else if ( downWasVoted ) delta = 2;
 
-            try {
-                const response = yield fetch(
+                    state.replyScores[ replyId ] = current + delta;
+                    if ( scoreEl ) {
+                        scoreEl.textContent = String( current + delta );
+                        scoreEl.style.transform = 'scale(1.3)';
+                        setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+                    }
+                    return { prevScore: current, wasVoted, downWasVoted };
+                },
+                fetch: () => fetch(
                     `${ state.apiBase }/replies/${ replyId }/vote`,
                     {
                         method: 'POST',
@@ -468,60 +466,58 @@ const { state, actions } = store( 'jetonomy', {
                         credentials: 'same-origin',
                         body: JSON.stringify( { value: 1 } ),
                     }
-                );
-                if ( response.ok ) {
-                    const data = yield response.json();
-                    if ( data.score !== undefined ) {
+                ),
+                onSuccess: ( data ) => {
+                    if ( data && data.score !== undefined ) {
                         state.replyScores[ replyId ] = data.score;
-                        if ( scoreEl ) scoreEl.textContent = data.score;
+                        if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
-                    // Toggle voted state on the button.
-                    if ( data.action === 'removed' ) {
-                        el.ref.classList.remove( 'voted' );
+                    if ( data && data.action === 'removed' ) {
+                        btnEl.classList.remove( 'voted' );
                     } else {
-                        el.ref.classList.add( 'voted' );
-                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyDown"], [data-wp-on--click="actions.voteReplyDown"]' );
-                        if ( sibling ) sibling.classList.remove( 'voted' );
+                        btnEl.classList.add( 'voted' );
+                        if ( downSibling ) downSibling.classList.remove( 'voted' );
                     }
-                } else {
-                    state.replyScores[ replyId ] = current;
-                    if ( scoreEl ) scoreEl.textContent = current;
-                    const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
-                }
-            } catch {
-                state.replyScores[ replyId ] = current;
-                if ( scoreEl ) scoreEl.textContent = current;
-            }
+                },
+                revert: ( snap ) => {
+                    state.replyScores[ replyId ] = snap.prevScore;
+                    if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
+                    btnEl.classList.toggle( 'voted', snap.wasVoted );
+                    if ( downSibling ) downSibling.classList.toggle( 'voted', snap.downWasVoted );
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+            } );
         },
 
         *voteReplyDown( event ) {
             event.stopPropagation();
             const el = getElement();
-            const replyId = el.ref.dataset.replyId;
+            const btnEl = el.ref;
+            const replyId = btnEl.dataset.replyId;
             if ( ! replyId ) return;
 
-            const scoreEl = el.ref.querySelector( '.n' );
-            const current = parseInt( scoreEl?.textContent || '0', 10 );
+            const scoreEl = btnEl.querySelector( '.n' );
+            const upSibling = btnEl.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
 
-            // Delta mirrors voteReplyUp: flipping up → down is -2, same-button
-            // toggle-off is +1, first vote is -1.
-            const upSibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
-            let delta = -1;
-            if ( el.ref.classList.contains( 'voted' ) ) {
-                delta = 1;
-            } else if ( upSibling?.classList.contains( 'voted' ) ) {
-                delta = -2;
-            }
-            state.replyScores[ replyId ] = current + delta;
-            if ( scoreEl ) {
-                scoreEl.textContent = current + delta;
-                scoreEl.style.transform = 'scale(1.3)';
-                setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
-            }
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    const current = parseInt( scoreEl?.textContent || '0', 10 );
+                    const wasVoted = btnEl.classList.contains( 'voted' );
+                    const upWasVoted = !! upSibling?.classList.contains( 'voted' );
+                    let delta = -1;
+                    if ( wasVoted ) delta = 1;
+                    else if ( upWasVoted ) delta = -2;
 
-            try {
-                const response = yield fetch(
+                    state.replyScores[ replyId ] = current + delta;
+                    if ( scoreEl ) {
+                        scoreEl.textContent = String( current + delta );
+                        scoreEl.style.transform = 'scale(1.3)';
+                        setTimeout( () => { scoreEl.style.transform = 'scale(1)'; }, 200 );
+                    }
+                    return { prevScore: current, wasVoted, upWasVoted };
+                },
+                fetch: () => fetch(
                     `${ state.apiBase }/replies/${ replyId }/vote`,
                     {
                         method: 'POST',
@@ -532,31 +528,31 @@ const { state, actions } = store( 'jetonomy', {
                         credentials: 'same-origin',
                         body: JSON.stringify( { value: -1 } ),
                     }
-                );
-                if ( response.ok ) {
-                    const data = yield response.json();
-                    if ( data.score !== undefined ) {
+                ),
+                onSuccess: ( data ) => {
+                    if ( data && data.score !== undefined ) {
                         state.replyScores[ replyId ] = data.score;
-                        if ( scoreEl ) scoreEl.textContent = data.score;
+                        if ( scoreEl ) scoreEl.textContent = String( data.score );
                     }
-                    // Toggle voted state on the button.
-                    if ( data.action === 'removed' ) {
-                        el.ref.classList.remove( 'voted' );
+                    if ( data && data.action === 'removed' ) {
+                        btnEl.classList.remove( 'voted' );
                     } else {
-                        el.ref.classList.add( 'voted' );
-                        const sibling = el.ref.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
-                        if ( sibling ) sibling.classList.remove( 'voted' );
+                        btnEl.classList.add( 'voted' );
+                        if ( upSibling ) upSibling.classList.remove( 'voted' );
                     }
-                } else {
-                    state.replyScores[ replyId ] = current;
-                    if ( scoreEl ) scoreEl.textContent = current;
-                    const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || 'Vote failed.', 'error' );
-                }
-            } catch {
-                state.replyScores[ replyId ] = current;
-                if ( scoreEl ) scoreEl.textContent = current;
-            }
+                },
+                revert: ( snap ) => {
+                    // Restore DOM + state from snapshot — this was the
+                    // missing revert that caused #9886066727 (stale UI on
+                    // failed downvote until refresh).
+                    state.replyScores[ replyId ] = snap.prevScore;
+                    if ( scoreEl ) scoreEl.textContent = String( snap.prevScore );
+                    btnEl.classList.toggle( 'voted', snap.wasVoted );
+                    if ( upSibling ) upSibling.classList.toggle( 'voted', snap.upWasVoted );
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.voteFailed || 'Vote failed.',
+            } );
         },
 
         // ── Inline reply edit ──
@@ -662,14 +658,39 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Follow post ──
+        //
+        // Two-step subscription protocol: when unfollowing we GET the existing
+        // subscription row to find its ID, then DELETE it. The follow path is
+        // a single POST. We apply the optimistic UI flip in `apply` and let
+        // the helper revert from snapshot if the mutating request fails.
         *followPost( event ) {
             const el = getElement();
-            const postId = el.ref.dataset.postId;
-            const isFollowing = el.ref.dataset.following === '1';
+            const btnEl = el.ref;
+            const postId = btnEl.dataset.postId;
+            const wasFollowing = btnEl.dataset.following === '1';
             if ( ! postId ) return;
 
-            try {
-                if ( isFollowing ) {
+            const applyFollowingUI = ( following ) => {
+                if ( following ) {
+                    btnEl.dataset.following = '1';
+                    btnEl.textContent = state.i18n?.following || 'Following';
+                    btnEl.classList.remove( 'jt-btn-ghost' );
+                    btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
+                } else {
+                    btnEl.dataset.following = '0';
+                    btnEl.textContent = state.i18n?.follow || 'Follow';
+                    btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
+                    btnEl.classList.add( 'jt-btn-ghost' );
+                }
+            };
+
+            // Unfollow path needs the subscription ID before we can DELETE.
+            // We resolve that BEFORE the optimistic helper runs so the
+            // helper's `fetch` is a single, atomic request whose failure can
+            // be cleanly reverted.
+            let subscriptionId = null;
+            if ( wasFollowing ) {
+                try {
                     const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=post&object_id=${ postId }`, {
                         headers: { 'X-WP-Nonce': state._nonce || state.nonce },
                         credentials: 'same-origin',
@@ -677,44 +698,63 @@ const { state, actions } = store( 'jetonomy', {
                     if ( res.ok ) {
                         const data = yield res.json();
                         const subs = data.data || [];
-                        if ( subs.length > 0 ) {
-                            yield fetch( `${ state.apiBase }/subscriptions/${ subs[0].id }`, {
-                                method: 'DELETE',
-                                headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                                credentials: 'same-origin',
-                            } );
-                        }
+                        if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
                     }
-                    el.ref.dataset.following = '0';
-                    el.ref.textContent = state.i18n?.follow || 'Follow';
-                    el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
-                    el.ref.classList.add( 'jt-btn-ghost' );
-                } else {
-                    const res = yield fetch( `${ state.apiBase }/subscriptions`, {
+                } catch { /* fall through — DELETE will fail and revert */ }
+                if ( ! subscriptionId ) {
+                    // Nothing to delete; UI already in correct state.
+                    return;
+                }
+            }
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    applyFollowingUI( ! wasFollowing );
+                    return { wasFollowing };
+                },
+                fetch: () => wasFollowing
+                    ? fetch( `${ state.apiBase }/subscriptions/${ subscriptionId }`, {
+                        method: 'DELETE',
+                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                        credentials: 'same-origin',
+                    } )
+                    : fetch( `${ state.apiBase }/subscriptions`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
                         credentials: 'same-origin',
                         body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), via: 'both' } ),
-                    } );
-                    if ( res.ok ) {
-                        el.ref.dataset.following = '1';
-                        el.ref.textContent = state.i18n?.following || 'Following';
-                        el.ref.classList.remove( 'jt-btn-ghost' );
-                        el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
-                    }
-                }
-            } catch { /* non-critical */ }
+                    } ),
+                revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Could not update follow state.',
+            } );
         },
 
         // ── Follow space ──
         *followSpace( event ) {
             const el = getElement();
-            const spaceId = el.ref.dataset.spaceId;
-            const isFollowing = el.ref.dataset.following === '1';
+            const btnEl = el.ref;
+            const spaceId = btnEl.dataset.spaceId;
+            const wasFollowing = btnEl.dataset.following === '1';
             if ( ! spaceId ) return;
 
-            try {
-                if ( isFollowing ) {
+            const applyFollowingUI = ( following ) => {
+                if ( following ) {
+                    btnEl.dataset.following = '1';
+                    btnEl.textContent = state.i18n?.following || 'Following';
+                    btnEl.classList.remove( 'jt-btn-ghost' );
+                    btnEl.classList.add( 'jt-btn-fill', 'jt-following' );
+                } else {
+                    btnEl.dataset.following = '0';
+                    btnEl.textContent = state.i18n?.follow || 'Follow';
+                    btnEl.classList.remove( 'jt-btn-fill', 'jt-following' );
+                    btnEl.classList.add( 'jt-btn-ghost' );
+                }
+            };
+
+            let subscriptionId = null;
+            if ( wasFollowing ) {
+                try {
                     const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=space&object_id=${ spaceId }`, {
                         headers: { 'X-WP-Nonce': state._nonce || state.nonce },
                         credentials: 'same-origin',
@@ -722,35 +762,41 @@ const { state, actions } = store( 'jetonomy', {
                     if ( res.ok ) {
                         const data = yield res.json();
                         const subs = data.data || [];
-                        if ( subs.length > 0 ) {
-                            yield fetch( `${ state.apiBase }/subscriptions/${ subs[0].id }`, {
-                                method: 'DELETE',
-                                headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                                credentials: 'same-origin',
-                            } );
-                        }
+                        if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
                     }
-                    el.ref.dataset.following = '0';
-                    el.ref.textContent = state.i18n?.follow || 'Follow';
-                    el.ref.classList.remove( 'jt-btn-fill', 'jt-following' );
-                    el.ref.classList.add( 'jt-btn-ghost' );
-                    if ( window.bnToast ) window.bnToast( state.i18n?.unfollowedSpace || 'Unfollowed space' );
-                } else {
-                    const res = yield fetch( `${ state.apiBase }/subscriptions`, {
+                } catch { /* fall through */ }
+                if ( ! subscriptionId ) return;
+            }
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    applyFollowingUI( ! wasFollowing );
+                    return { wasFollowing };
+                },
+                fetch: () => wasFollowing
+                    ? fetch( `${ state.apiBase }/subscriptions/${ subscriptionId }`, {
+                        method: 'DELETE',
+                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                        credentials: 'same-origin',
+                    } )
+                    : fetch( `${ state.apiBase }/subscriptions`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
                         credentials: 'same-origin',
                         body: JSON.stringify( { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' } ),
-                    } );
-                    if ( res.ok ) {
-                        el.ref.dataset.following = '1';
-                        el.ref.textContent = state.i18n?.following || 'Following';
-                        el.ref.classList.remove( 'jt-btn-ghost' );
-                        el.ref.classList.add( 'jt-btn-fill', 'jt-following' );
-                        if ( window.bnToast ) window.bnToast( state.i18n?.followingSpace || 'Following space' );
+                    } ),
+                onSuccess: () => {
+                    if ( window.bnToast ) {
+                        window.bnToast( wasFollowing
+                            ? ( state.i18n?.unfollowedSpace || 'Unfollowed space' )
+                            : ( state.i18n?.followingSpace || 'Following space' )
+                        );
                     }
-                }
-            } catch { /* non-critical */ }
+                },
+                revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Could not update follow state.',
+            } );
         },
 
         // ── Share post ──
@@ -943,24 +989,52 @@ const { state, actions } = store( 'jetonomy', {
         // ── Toggle bookmark ──
         *toggleBookmark( event ) {
             const el = getElement();
-            const postId = el.ref.dataset.postId;
+            const btnEl = el.ref;
+            const postId = btnEl.dataset.postId;
             if ( ! postId ) return;
 
-            try {
-                const res = yield fetch( `${ state.apiBase }/bookmarks`, {
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    const wasBookmarked = btnEl.dataset.bookmarked === '1';
+                    const willBe = ! wasBookmarked;
+                    btnEl.dataset.bookmarked = willBe ? '1' : '0';
+                    btnEl.classList.toggle( 'bookmarked', willBe );
+                    btnEl.title = willBe
+                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
+                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    return { wasBookmarked };
+                },
+                fetch: () => fetch( `${ state.apiBase }/bookmarks`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
                     credentials: 'same-origin',
                     body: JSON.stringify( { post_id: parseInt( postId ) } ),
-                } );
-                if ( res.ok ) {
-                    const data = yield res.json();
-                    el.ref.dataset.bookmarked = data.bookmarked ? '1' : '0';
-                    el.ref.classList.toggle( 'bookmarked', data.bookmarked );
-                    el.ref.title = data.bookmarked ? ( state.i18n?.removeBookmark || 'Remove bookmark' ) : ( state.i18n?.bookmark || 'Bookmark' );
-                    if ( window.bnToast ) window.bnToast( data.bookmarked ? ( state.i18n?.bookmarked || 'Bookmarked' ) : ( state.i18n?.bookmarkRemoved || 'Bookmark removed' ) );
-                }
-            } catch { /* non-critical */ }
+                } ),
+                onSuccess: ( data ) => {
+                    if ( ! data ) return;
+                    // Reconcile with server canonical value.
+                    btnEl.dataset.bookmarked = data.bookmarked ? '1' : '0';
+                    btnEl.classList.toggle( 'bookmarked', !! data.bookmarked );
+                    btnEl.title = data.bookmarked
+                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
+                        : ( state.i18n?.bookmark || 'Bookmark' );
+                    if ( window.bnToast ) {
+                        window.bnToast( data.bookmarked
+                            ? ( state.i18n?.bookmarked || 'Bookmarked' )
+                            : ( state.i18n?.bookmarkRemoved || 'Bookmark removed' )
+                        );
+                    }
+                },
+                revert: ( snap ) => {
+                    btnEl.dataset.bookmarked = snap.wasBookmarked ? '1' : '0';
+                    btnEl.classList.toggle( 'bookmarked', snap.wasBookmarked );
+                    btnEl.title = snap.wasBookmarked
+                        ? ( state.i18n?.removeBookmark || 'Remove bookmark' )
+                        : ( state.i18n?.bookmark || 'Bookmark' );
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Could not update bookmark.',
+            } );
         },
 
         // ── Flag / report post ──
@@ -1045,27 +1119,38 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Toggle "more" dropdown menu ──
+        //
+        // [1.4.3 WS3-B] Migrated to jetonomySmartDropdown — fixes
+        // Basecamp 9886004438: the last-reply More menu was clipped by
+        // overflow because the panel was absolutely positioned inside the
+        // reply card. The shared primitive uses `position: fixed`, flips up
+        // when there is no room below, and shifts to stay inside the
+        // viewport. `group: 'jt-more'` ensures opening one closes the prior.
         toggleMoreMenu( event ) {
             event.stopPropagation();
             const el = getElement();
-            const menu = el.ref.closest( '.jt-more-menu' );
+            const trigger = el.ref;
+            const menu = trigger.closest( '.jt-more-menu' );
             if ( ! menu ) return;
+            const panel = menu.querySelector( '.jt-more-dropdown' );
+            if ( ! panel ) return;
 
-            const dropdown = menu.querySelector( '.jt-more-dropdown' );
-            if ( ! dropdown ) return;
+            // SSR markup ships `hidden` on the panel; the smart-dropdown
+            // primitive flips display/position inline once it takes over,
+            // so we drop the attribute on first activation.
+            panel.removeAttribute( 'hidden' );
 
-            const isHidden = dropdown.hidden;
-            dropdown.hidden = ! isHidden;
-
-            if ( ! isHidden ) return;
-
-            const closeHandler = ( e ) => {
-                if ( ! menu.contains( e.target ) ) {
-                    dropdown.hidden = true;
-                    document.removeEventListener( 'click', closeHandler );
-                }
-            };
-            setTimeout( () => document.addEventListener( 'click', closeHandler ), 0 );
+            if ( ! trigger._jtDropdown ) {
+                trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
+                    placement: 'bottom-end',
+                    group: 'jt-more',
+                    closeOnOutside: true,
+                    closeOnEscape: true,
+                } );
+                // Initial state must be closed — primitive starts collapsed.
+                panel.style.display = 'none';
+            }
+            trigger._jtDropdown.toggle();
         },
 
         // ── Inline post (topic) edit ──
@@ -1183,39 +1268,39 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Pin / Unpin post ──
+        //
+        // Pin/unpin reloads the page on success (the sticky position affects
+        // the surrounding listing, not just one card), so the optimistic
+        // "snapshot" is just a token; the real revert path is when the server
+        // returns non-OK — the helper toasts and we stay on the page.
         *pinPost( event ) {
             const el = getElement();
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
-            try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/pin`, {
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => null,
+                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/pin`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-WP-Nonce': state._nonce || state.nonce,
                     },
                     credentials: 'same-origin',
-                } );
-
-                if ( res.ok ) {
-                    const data = yield res.json();
-                    // Reload page to reflect pinned state in UI
+                } ),
+                onSuccess: ( data ) => {
                     if ( window.bnToast ) {
-                        window.bnToast( data.is_sticky ? ( state.i18n?.postPinned || 'Post pinned' ) : ( state.i18n?.postUnpinned || 'Post unpinned' ) );
+                        window.bnToast( data && data.is_sticky
+                            ? ( state.i18n?.postPinned || 'Post pinned' )
+                            : ( state.i18n?.postUnpinned || 'Post unpinned' )
+                        );
                     }
                     setTimeout( () => window.location.reload(), 600 );
-                } else {
-                    const err = yield res.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) {
-                        window.bnToast( err.message || state.i18n?.failedPin || 'Failed to toggle pin.' );
-                    }
-                }
-            } catch {
-                if ( window.bnToast ) {
-                    window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
-                }
-            }
+                },
+                revert: () => { /* No optimistic UI to undo — helper will toast. */ },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedPin || 'Failed to toggle pin.',
+            } );
         },
         // ── Toggle private visibility ──
         *togglePrivate( event ) {
@@ -1458,28 +1543,31 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Accept reply as best answer (Q&A) ──
+        //
+        // Server-side mutation reloads the page on success because the
+        // "accepted" badge moves to the new reply and the previously-accepted
+        // reply needs to lose its mark — we let the page rerender handle that
+        // rather than mirror cross-card state here.
         *acceptReply( event ) {
             const el = getElement();
             const replyId = el.ref.dataset.replyId;
             if ( ! replyId ) return;
 
-            try {
-                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => null,
+                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
                     method: 'POST',
                     headers: { 'X-WP-Nonce': state._nonce || state.nonce },
                     credentials: 'same-origin',
-                } );
-
-                if ( res.ok ) {
+                } ),
+                onSuccess: () => {
                     if ( window.bnToast ) window.bnToast( state.i18n?.accepted || 'Accepted' );
                     setTimeout( () => window.location.reload(), 600 );
-                } else {
-                    const err = yield res.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || 'Failed to accept.' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error.' );
-            }
+                },
+                revert: () => { /* No optimistic UI — helper toasts on error. */ },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Failed to accept.',
+            } );
         },
 
         // ── Set roadmap status on an idea (moderator only, Ideas spaces) ──
@@ -1494,16 +1582,20 @@ const { state, actions } = store( 'jetonomy', {
             const setter = btn.closest( '.jt-idea-status-setter' );
             const allBtns = setter ? setter.querySelectorAll( '.jt-idea-status-btn' ) : [];
 
-            // Optimistic active swap so the picker reacts instantly. Reverted
-            // below if the request fails.
-            const prevActive = setter?.querySelector( '.jt-idea-status-btn.is-active' );
-            allBtns.forEach( ( b ) => { b.classList.remove( 'is-active' ); b.setAttribute( 'aria-pressed', 'false' ); } );
-            btn.classList.add( 'is-active' );
-            btn.setAttribute( 'aria-pressed', 'true' );
-            allBtns.forEach( ( b ) => { b.disabled = true; } );
-
-            try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    // Optimistic active swap so the picker reacts instantly.
+                    const prevActive = setter?.querySelector( '.jt-idea-status-btn.is-active' ) || null;
+                    allBtns.forEach( ( b ) => {
+                        b.classList.remove( 'is-active' );
+                        b.setAttribute( 'aria-pressed', 'false' );
+                    } );
+                    btn.classList.add( 'is-active' );
+                    btn.setAttribute( 'aria-pressed', 'true' );
+                    allBtns.forEach( ( b ) => { b.disabled = true; } );
+                    return { prevActive };
+                },
+                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
                     method: 'POST',
                     headers: {
                         'X-WP-Nonce': state._nonce || state.nonce,
@@ -1511,9 +1603,8 @@ const { state, actions } = store( 'jetonomy', {
                     },
                     credentials: 'same-origin',
                     body: JSON.stringify( { idea_status: newStatus } ),
-                } );
-
-                if ( res.ok ) {
+                } ),
+                onSuccess: () => {
                     // Mirror the change to the post-header pill so the read-
                     // only badge customers see at the top stays in sync with
                     // the picker below.
@@ -1523,26 +1614,23 @@ const { state, actions } = store( 'jetonomy', {
                         pill.textContent = btn.textContent.trim();
                     }
                     if ( window.bnToast ) window.bnToast( state.i18n?.statusUpdated || 'Roadmap status updated' );
-                } else {
-                    // Roll back the optimistic swap.
-                    allBtns.forEach( ( b ) => { b.classList.remove( 'is-active' ); b.setAttribute( 'aria-pressed', 'false' ); } );
-                    if ( prevActive ) {
-                        prevActive.classList.add( 'is-active' );
-                        prevActive.setAttribute( 'aria-pressed', 'true' );
+                },
+                revert: ( snap ) => {
+                    allBtns.forEach( ( b ) => {
+                        b.classList.remove( 'is-active' );
+                        b.setAttribute( 'aria-pressed', 'false' );
+                    } );
+                    if ( snap.prevActive ) {
+                        snap.prevActive.classList.add( 'is-active' );
+                        snap.prevActive.setAttribute( 'aria-pressed', 'true' );
                     }
-                    const err = yield res.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Could not update status.', 'error' );
-                }
-            } catch {
-                allBtns.forEach( ( b ) => { b.classList.remove( 'is-active' ); b.setAttribute( 'aria-pressed', 'false' ); } );
-                if ( prevActive ) {
-                    prevActive.classList.add( 'is-active' );
-                    prevActive.setAttribute( 'aria-pressed', 'true' );
-                }
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.', 'error' );
-            } finally {
-                allBtns.forEach( ( b ) => { b.disabled = false; } );
-            }
+                },
+                onFinally: () => {
+                    allBtns.forEach( ( b ) => { b.disabled = false; } );
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Could not update status.',
+            } );
         },
 
         // ── Toggle collapsible thread ──
@@ -1806,15 +1894,50 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Publish mode menu ──
-        togglePublishMenu() {
-            state.publishMenuOpen = ! state.publishMenuOpen;
+        //
+        // [1.4.3 WS3-B] Migrated to jetonomySmartDropdown. Previous
+        // implementation used state.publishMenuOpen + data-wp-bind--hidden,
+        // which couldn't flip placement when the trigger sat near the
+        // viewport bottom. The shared primitive handles flip/outside-click/
+        // Escape for free. We still flip state.publishMenuOpen for
+        // backwards-compat (other code may read it) and as a paper trail.
+        togglePublishMenu( event ) {
+            const trigger = ( event && ( event.currentTarget || event.target?.closest( '.jt-publish-mode__toggle' ) ) ) || getElement()?.ref;
+            if ( ! trigger ) return;
+            const menu = trigger.closest( '.jt-publish-mode' );
+            const panel = menu?.querySelector( '.jt-publish-mode__menu' );
+            if ( ! panel ) return;
+            panel.removeAttribute( 'hidden' );
+
+            if ( ! trigger._jtDropdown ) {
+                trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
+                    placement: 'bottom-end',
+                    group: 'jt-publish',
+                    closeOnOutside: true,
+                    closeOnEscape: true,
+                    onOpen: () => { state.publishMenuOpen = true; },
+                    onClose: () => { state.publishMenuOpen = false; },
+                } );
+                panel.style.display = 'none';
+            }
+            trigger._jtDropdown.toggle();
+        },
+
+        // Helper — close every open publish-mode dropdown on the page. The
+        // select* actions below all need this and the smartDropdown group
+        // mechanism is per-trigger, so we walk the DOM.
+        _closePublishMenus() {
+            document.querySelectorAll( '.jt-publish-mode__toggle' ).forEach( ( t ) => {
+                if ( t._jtDropdown && t._jtDropdown.isOpen ) t._jtDropdown.close();
+            } );
+            state.publishMenuOpen = false;
         },
 
         selectPublishNow() {
             const ctx = getContext();
             ctx.postStatus    = 'publish';
             ctx.showScheduler = false;
-            state.publishMenuOpen = false;
+            actions._closePublishMenus();
             state.submitLabel = state.i18n?.postTopic || 'Post Topic';
         },
 
@@ -1822,7 +1945,7 @@ const { state, actions } = store( 'jetonomy', {
             const ctx = getContext();
             ctx.postStatus    = 'draft';
             ctx.showScheduler = false;
-            state.publishMenuOpen = false;
+            actions._closePublishMenus();
             state.submitLabel = state.i18n?.saveDraft || 'Save Draft';
         },
 
@@ -1830,7 +1953,7 @@ const { state, actions } = store( 'jetonomy', {
             const ctx = getContext();
             ctx.postStatus    = 'draft';
             ctx.showScheduler = true;
-            state.publishMenuOpen = false;
+            actions._closePublishMenus();
             state.submitLabel = state.i18n?.schedule || 'Schedule';
         },
 
@@ -1883,7 +2006,15 @@ const { state, actions } = store( 'jetonomy', {
             const setBusy = () => {
                 state.isSubmitting = true;
                 ctx.submitting     = true;
-                state.publishMenuOpen = false;
+                // Close any open publish-mode dropdown when we start a
+                // submission so the menu doesn't linger over the post-success
+                // toast or redirect. _closePublishMenus also flips
+                // state.publishMenuOpen for any legacy bindings.
+                if ( typeof actions._closePublishMenus === 'function' ) {
+                    actions._closePublishMenus();
+                } else {
+                    state.publishMenuOpen = false;
+                }
                 if ( 'state' === o.errorSink ) {
                     state.submitLabel = state.i18n?.posting || 'Posting...';
                 }

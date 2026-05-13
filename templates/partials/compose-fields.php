@@ -240,7 +240,11 @@ do_action( $_fields_hook, $space );
 						data-wp-on--click="actions.togglePublishMenu">
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 				</button>
-				<div class="jt-publish-mode__menu" hidden data-wp-bind--hidden="!state.publishMenuOpen">
+				<?php // [1.4.3 WS3-B] Visibility now driven by jetonomySmartDropdown
+				// (togglePublishMenu); removed `data-wp-bind--hidden` so JS owns
+				// display + position. Initial `hidden` attribute prevents flash
+				// before the primitive attaches. ?>
+				<div class="jt-publish-mode__menu" hidden>
 					<button type="button" class="jt-publish-mode__option"
 							data-wp-on--click="actions.selectPublishNow">
 						<?php esc_html_e( 'Publish now', 'jetonomy' ); ?>
