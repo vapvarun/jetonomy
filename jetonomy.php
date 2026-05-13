@@ -30,6 +30,12 @@ Jetonomy\Autoloader::register();
 // Migrator runs (fired on plugins_loaded -> init) can call these helpers.
 require_once JETONOMY_DIR . 'includes/functions.php';
 
+// Public global helpers for templates (jetonomy_post_title_or_excerpt etc.).
+// Kept separate from functions.php because functions.php is namespaced
+// (Jetonomy\*) while helpers.php exposes global functions that templates and
+// child themes can call without namespace imports.
+require_once JETONOMY_DIR . 'includes/helpers.php';
+
 require_once JETONOMY_DIR . 'includes/class-jetonomy.php';
 
 function jetonomy(): Jetonomy\Jetonomy {

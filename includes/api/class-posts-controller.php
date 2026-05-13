@@ -371,17 +371,14 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
 
-		// Feed spaces are short-form: a status post is its content. Members
-		// shouldn't be forced to invent a headline for a one-line update,
-		// so when the space is a Feed and no title was sent we derive one
-		// from the first sentence-or-so of the content. The full body is
-		// still rendered in the listing, the derived title only feeds
-		// search, slugs, and breadcrumbs.
+		// Feed spaces are short-form: a status post IS its content. The
+		// composer hides the title input for feed spaces and the REST layer
+		// stores an empty title verbatim — listings render a content excerpt
+		// via jetonomy_post_title_or_excerpt() so search, breadcrumbs, and
+		// notifications still have something to display. Every other space
+		// type still requires a real title; an empty title there returns 400.
 		$_jt_space_type = (string) ( $space->type ?? '' );
-		if ( empty( $title ) && 'feed' === $_jt_space_type ) {
-			$title = $this->derive_title_from_content( $content );
-		}
-		if ( empty( $title ) ) {
+		if ( empty( $title ) && 'feed' !== $_jt_space_type ) {
 			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
 		}
 
@@ -398,7 +395,21 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		$content_plain = wp_strip_all_tags( $content );
-		$slug          = $this->unique_post_slug( sanitize_title( $title ) );
+
+		// Slug generation:
+		//   1. Title present → slugify it (typical case).
+		//   2. Title empty (feed space) → build a slug from the first 40
+		//      chars of plain content so URLs still look meaningful.
+		//   3. Step 2 yielded nothing (content was image-only / sanitised to
+		//      empty) → randomised stub so the INSERT never violates the
+		//      NOT NULL slug column.
+		$slug_seed = '' !== $title
+			? sanitize_title( $title )
+			: sanitize_title( wp_strip_all_tags( substr( $content_plain, 0, 40 ) ) );
+		if ( '' === $slug_seed ) {
+			$slug_seed = 'post-' . wp_generate_password( 6, false, false );
+		}
+		$slug = $this->unique_post_slug( $slug_seed );
 
 		// Akismet spam check — skip for site admins and space admins/moderators.
 		// They cannot meaningfully spam their own community and false positives
@@ -1087,38 +1098,6 @@ class Posts_Controller extends Base_Controller {
 		);
 
 		return $data;
-	}
-
-	/**
-	 * Derive a short title from a post body. Used on Feed spaces where
-	 * the composer omits the Title field — members shouldn't have to
-	 * write a headline for a status update. The full body still renders
-	 * in the listing card; the derived title is only here so search,
-	 * slugs, breadcrumbs, and notification subjects have something to
-	 * work with.
-	 *
-	 * Trims HTML, collapses whitespace, takes up to roughly the first
-	 * sentence boundary, then caps at 80 visible chars. The 255-char
-	 * physical column limit is honored by the schema; this lower cap
-	 * is a readability choice, not a posting cap.
-	 */
-	private function derive_title_from_content( string $content ): string {
-		$plain = trim( wp_strip_all_tags( $content ) );
-		if ( '' === $plain ) {
-			return '';
-		}
-		$plain = preg_replace( '/\s+/u', ' ', $plain );
-		// Prefer the first sentence-end punctuation if it falls early
-		// enough; otherwise fall back to a clean word-boundary trim.
-		if ( preg_match( '/^(.{20,80}?)(?:[.!?…]|$)/u', $plain, $m ) ) {
-			return trim( $m[1] );
-		}
-		if ( function_exists( 'mb_strlen' ) && mb_strlen( $plain ) > 80 ) {
-			$truncated = mb_substr( $plain, 0, 80 );
-			$last_sp   = mb_strrpos( $truncated, ' ' );
-			return rtrim( false !== $last_sp ? mb_substr( $truncated, 0, $last_sp ) : $truncated ) . '…';
-		}
-		return $plain;
 	}
 
 	/**

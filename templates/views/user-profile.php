@@ -258,8 +258,17 @@ $crumbs = [
 									<div class="jt-row-title"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $ur->content ), 15 ) ); ?></div>
 									<div class="jt-row-sub">
 										<?php
+										// Feed-space parent posts store an empty title — fall
+										// back to a short excerpt of the parent's body so the
+										// "on …" label never reads "on " for that case.
+										$jt_parent_label = jetonomy_post_title_or_excerpt(
+											(object) array(
+												'title'   => (string) ( $ur->post_title ?? '' ),
+												'content' => (string) ( $ur->post_content_plain ?? '' ),
+											)
+										);
 										/* translators: %s: post title */
-										echo esc_html( sprintf( __( 'on %s', 'jetonomy' ), $ur->post_title ?? '' ) );
+										echo esc_html( sprintf( __( 'on %s', 'jetonomy' ), $jt_parent_label ) );
 										?>
 										&middot;
 										<?php echo esc_html( $ur->space_title ?? '' ); ?>
@@ -305,7 +314,7 @@ $crumbs = [
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( $uv->title ); ?></div>
+									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $uv ) ); ?></div>
 									<div class="jt-row-sub">
 										<?php echo esc_html( $uv->space_title ?? '' ); ?>
 									</div>
@@ -366,7 +375,7 @@ $crumbs = [
 							<?php endif; ?>>
 							<div class="jt-row-main">
 								<div class="jt-row-title">
-									<?php echo esc_html( $dr_post->title ); ?>
+									<?php echo esc_html( jetonomy_post_title_or_excerpt( $dr_post ) ); ?>
 									<?php if ( $is_scheduled ) : ?>
 										<span class="jt-badge jt-badge--scheduled">
 											<?php
@@ -445,7 +454,7 @@ $crumbs = [
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( $bk_post->title ); ?></div>
+									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $bk_post ) ); ?></div>
 									<div class="jt-row-sub">
 										<?php echo esc_html( $bk_space->title ?? '' ); ?>
 									</div>
@@ -493,7 +502,7 @@ $crumbs = [
 									</div>
 								<?php endif; ?>
 								<div class="jt-row-main">
-									<div class="jt-row-title"><?php echo esc_html( $r_post->title ); ?></div>
+									<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $r_post ) ); ?></div>
 									<div class="jt-row-sub">
 										<a href="<?php echo esc_url( $base . '/s/' . $r_post->space_slug . '/' ); ?>"
 											>

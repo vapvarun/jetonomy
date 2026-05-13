@@ -207,7 +207,7 @@ $bn_active = did_action( 'buddynext_loaded' );
 					<div>
 						<div class="jt-trend-title">
 							<a href="<?php echo esc_url( $base . '/s/' . $t_post->space_slug . '/t/' . $t_post->slug . '/' ); ?>">
-								<?php echo esc_html( $t_post->title ); ?>
+								<?php echo esc_html( jetonomy_post_title_or_excerpt( $t_post ) ); ?>
 							</a>
 						</div>
 						<div class="jt-trend-meta">

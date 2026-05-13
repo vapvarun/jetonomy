@@ -177,7 +177,7 @@ if ( $space ) {
 	];
 }
 $crumbs[] = [
-	'label' => $post->title,
+	'label' => jetonomy_post_title_or_excerpt( $post ),
 	'url'   => '',
 ];
 
@@ -262,18 +262,28 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<!-- Post -->
 			<article class="jt-post" data-wp-interactive="jetonomy">
 				<div class="jt-post-head">
-					<h1>
-						<?php if ( $prefix_name ) : ?>
+					<?php
+					// Feed-space posts are untitled by design (the body IS the
+					// content). When the stored title is empty we still emit
+					// an <h1> for a11y — assistive tech expects a heading for
+					// the article — but tag it `screen-reader-text` and fill
+					// it with an excerpt so it doesn't visually duplicate
+					// the content below. Titled posts keep the visible h1.
+					$jt_h1_is_sr_only = ( '' === trim( (string) ( $post->title ?? '' ) ) );
+					$jt_h1_label      = jetonomy_post_title_or_excerpt( $post );
+					?>
+					<h1<?php echo $jt_h1_is_sr_only ? ' class="screen-reader-text"' : ''; ?>>
+						<?php if ( $prefix_name && ! $jt_h1_is_sr_only ) : ?>
 							<span class="jt-prefix"
 							<?php
 							if ( $prefix_color ) :
 								?>
 								style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
 						<?php endif; ?>
-						<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+						<?php if ( $space && 'ideas' === ( $space->type ?? '' ) && ! $jt_h1_is_sr_only ) : ?>
 							<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
 						<?php endif; ?>
-						<?php echo esc_html( $post->title ); ?>
+						<?php echo esc_html( $jt_h1_is_sr_only ? $jt_h1_label : (string) ( $post->title ?? '' ) ); ?>
 					</h1>
 					<?php
 					// On Ideas spaces, space moderators see a status picker so
@@ -434,7 +444,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				<button class="jt-act jt-share-btn"
 					data-wp-on--click="actions.sharePost"
 					data-post-url="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>"
-					data-post-title="<?php echo esc_attr( $post->title ); ?>"
+					data-post-title="<?php echo esc_attr( jetonomy_post_title_or_excerpt( $post ) ); ?>"
 					title="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"
 					aria-label="<?php esc_attr_e( 'Share', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'link', 16 ); ?></button>
 				<?php

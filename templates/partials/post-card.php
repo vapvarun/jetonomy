@@ -74,7 +74,7 @@ if ( $prefix_name && $space ) {
 					<span class="jt-qa-pill jt-qa-pill-needs-answer"><?php esc_html_e( 'Needs answer', 'jetonomy' ); ?></span>
 				<?php endif; ?>
 			<?php endif; ?>
-			<?php echo esc_html( $post->title ); ?>
+			<?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?>
 			<?php if ( $has_unread ) : ?>
 				<span class="jt-unread-pill" aria-label="<?php esc_attr_e( 'You have unread replies', 'jetonomy' ); ?>">
 					<?php esc_html_e( 'New', 'jetonomy' ); ?>

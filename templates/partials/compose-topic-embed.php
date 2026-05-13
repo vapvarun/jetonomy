@@ -81,14 +81,48 @@ if ( 'fixed' === $_mode && ! $_space ) {
 	$_mode = 'picker';
 }
 
+// Initial spaceType is the resolved space's type when fixed; in picker mode
+// we don't know which space the user will pick yet, so default to empty.
+// The picker's <option data-type="…"> markers drive a JS state toggle when
+// the user changes selection so the title field show/hide stays in sync.
+$_initial_space_type = $_space ? (string) ( $_space->type ?? '' ) : '';
+$_initial_show_title = ( 'feed' !== $_initial_space_type );
+
+// In picker mode we don't know the space type until selection; render the
+// title field by default (visible) and let JS toggle it off when a Feed
+// space is picked. Fixed mode uses the resolved space type as the static
+// initial value so non-JS viewers still see the correct fields.
+$_show_title_initial = ( 'picker' === $_mode ) ? true : $_initial_show_title;
+
+// Build a JSON-shaped lookup the JS can use to map spaceId → spaceType,
+// so composeTopicSelectSpace can flip `composeShowTitle` without parsing
+// the DOM. Keeping this server-side keeps the picker behaviour consistent
+// even when the surrounding markup is rebuilt by themes.
+$_space_types_map = array();
+foreach ( $_postable as $_s ) {
+	$_space_types_map[ (int) $_s->id ] = (string) ( $_s->type ?? '' );
+}
+
 $_context = array(
-	'mode'       => $_mode,
-	'spaceId'    => $_space_id,
-	'title'      => '',
-	'body'       => '',
-	'postType'   => $_default_type,
-	'submitting' => false,
-	'error'      => '',
+	'mode'             => $_mode,
+	'spaceId'          => $_space_id,
+	'spaceType'        => $_initial_space_type,
+	'composeShowTitle' => $_show_title_initial,
+	'title'            => '',
+	'body'             => '',
+	'postType'         => $_default_type,
+	'submitting'       => false,
+	'error'            => '',
+	'spaceTypes'       => (object) $_space_types_map,
+);
+
+// A dummy space object for the partial when no space is resolved yet
+// (picker mode, nothing chosen). The partial only reads ->id and ->type
+// so a tiny stdClass is enough; this prevents a fatal when the user
+// renders the picker on a page with no member spaces.
+$_partial_space = $_space ? $_space : (object) array(
+	'id'   => $_space_id,
+	'type' => $_initial_space_type,
 );
 ?>
 <div class="jt-compose-topic-embed"
@@ -107,9 +141,11 @@ $_context = array(
 				class="jt-compose-topic-space"
 				data-wp-on--change="actions.composeTopicSelectSpace"
 				data-wp-bind--disabled="context.submitting">
-				<option value=""><?php esc_html_e( 'Choose a space…', 'jetonomy' ); ?></option>
+				<option value="" data-type=""><?php esc_html_e( 'Choose a space…', 'jetonomy' ); ?></option>
 				<?php foreach ( $_postable as $_s ) : ?>
-					<option value="<?php echo (int) $_s->id; ?>"><?php echo esc_html( $_s->title ); ?></option>
+					<option
+						value="<?php echo (int) $_s->id; ?>"
+						data-type="<?php echo esc_attr( (string) ( $_s->type ?? '' ) ); ?>"><?php echo esc_html( $_s->title ); ?></option>
 				<?php endforeach; ?>
 			</select>
 			<?php if ( empty( $_postable ) ) : ?>
@@ -130,36 +166,49 @@ $_context = array(
 		</p>
 	<?php endif; ?>
 
-	<label class="jt-compose-topic-field">
-		<span class="jt-compose-topic-label"><?php esc_html_e( 'Title', 'jetonomy' ); ?></span>
-		<input type="text"
-			class="jt-compose-topic-title"
-			maxlength="200"
-			data-wp-on--input="actions.composeTopicTitleInput"
-			data-wp-bind--disabled="context.submitting"
-			placeholder="<?php esc_attr_e( 'What is your topic about?', 'jetonomy' ); ?>">
-	</label>
+	<form class="jt-compose-topic-form"
+		onsubmit="return false;"
+		data-wp-on--submit="actions.composeTopicSubmit">
 
-	<label class="jt-compose-topic-field">
-		<span class="jt-compose-topic-label"><?php esc_html_e( 'Details', 'jetonomy' ); ?></span>
-		<textarea
-			class="jt-compose-topic-body"
-			rows="6"
-			data-wp-on--input="actions.composeTopicBodyInput"
-			data-wp-bind--disabled="context.submitting"
-			placeholder="<?php esc_attr_e( 'Share the details… (Markdown supported)', 'jetonomy' ); ?>"></textarea>
-	</label>
+		<?php
+		// Single render of the shared field partial. Flags here describe
+		// the embed surface: title only when space isn't a Feed (in picker
+		// mode JS toggles the title group's hidden binding when selection
+		// changes); body uses a plain textarea (the embed is meant to be
+		// lightweight and host-page compatible); tags, prefix, scheduler,
+		// and publish-menu are full-page-only. Private toggle stays so
+		// regression #9886339472 (private leak) is fixed by giving the
+		// embed the same privacy switch the full page has.
+		\Jetonomy\Template_Loader::partial(
+			'compose-fields',
+			[
+				'space'                     => $_partial_space,
+				'show_title'                => $_show_title_initial,
+				'show_tags'                 => false,
+				'show_prefix'               => false,
+				'show_private'              => true,
+				'show_scheduler'            => false,
+				'show_publish_menu'         => false,
+				'show_captcha'              => false,
+				'body_mode'                 => 'textarea',
+				'submit_label'              => '',
+				// Picker mode flips title visibility in response to space
+				// switches; fixed mode stays static (no binding emitted).
+				'title_visibility_binding'  => ( 'picker' === $_mode ) ? '!context.composeShowTitle' : '',
+			]
+		);
+		?>
 
-	<div class="jt-compose-topic-actions">
-		<p class="jt-compose-topic-error"
-			data-wp-text="context.error"
-			data-wp-class--is-shown="context.error"></p>
-		<button type="button"
-			class="jt-btn jt-btn-fill jt-compose-topic-submit"
-			data-wp-on--click="actions.composeTopicSubmit"
-			data-wp-bind--disabled="context.submitting"
-			data-wp-class--is-submitting="context.submitting">
-			<?php esc_html_e( 'Post topic', 'jetonomy' ); ?>
-		</button>
-	</div>
+		<div class="jt-compose-topic-actions">
+			<p class="jt-compose-topic-error"
+				data-wp-text="context.error"
+				data-wp-class--is-shown="context.error"></p>
+			<button type="submit"
+				class="jt-btn jt-btn-fill jt-compose-topic-submit"
+				data-wp-bind--disabled="context.submitting"
+				data-wp-class--is-submitting="context.submitting">
+				<?php esc_html_e( 'Post topic', 'jetonomy' ); ?>
+			</button>
+		</div>
+	</form>
 </div>

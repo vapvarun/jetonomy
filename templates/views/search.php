@@ -255,7 +255,7 @@ $crumbs = [
 										</div>
 									<?php endif; ?>
 									<div class="jt-row-main">
-										<div class="jt-row-title"><?php echo esc_html( $post->title ); ?></div>
+										<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?></div>
 										<div class="jt-row-sub">
 											<?php echo esc_html( $author ? $author->display_name : '' ); ?>
 											&middot;

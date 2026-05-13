@@ -335,8 +335,12 @@ class Notifier {
 			? (string) $reply->content_plain
 			: wp_strip_all_tags( (string) ( $reply->content ?? '' ) );
 		$reply_excerpt = wp_trim_words( $reply_plain, 30, '…' );
-		$ctx_extra     = array(
-			'post_title'         => (string) $post->title,
+		// Feed-space posts (1.4.3 WS1) are stored untitled — fall back to
+		// the post-title-or-excerpt helper so the email subject line and
+		// the "On topic" block in templates/emails/reply-to-post.php always
+		// have a human-readable label.
+		$ctx_extra = array(
+			'post_title'         => jetonomy_post_title_or_excerpt( $post ),
 			'actor_display_name' => $this->get_display_name( $actor_id ),
 			'reply_excerpt'      => $reply_excerpt,
 			'space_title'        => $space ? (string) $space->title : '',

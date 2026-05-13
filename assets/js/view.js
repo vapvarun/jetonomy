@@ -1834,149 +1834,267 @@ const { state, actions } = store( 'jetonomy', {
             state.submitLabel = state.i18n?.schedule || 'Schedule';
         },
 
-        // ── New post submission ──
-        *submitNewPost( event ) {
-            event.preventDefault();
-            const ctx = getContext();
-            state.isSubmitting = true;
-            state.submitLabel = state.i18n?.posting || 'Posting...';
-            // Clear any prior inline error surfaced from a previous attempt.
-            state.submitError = '';
+        // ── Shared post-compose generator (1.4.3) ──
+        //
+        // Single submission path used by BOTH the full new-post page and the
+        // inline embed. The previous codebase had two parallel implementations
+        // (`submitNewPost` for the page, `composeTopicSubmit` for the embed)
+        // that drifted on private-flag handling, error surfaces, and the
+        // server-side endpoint. composePost collapses them onto one function
+        // whose behaviour is controlled by per-flag callbacks so the embed can
+        // opt out of tags / scheduler / CAPTCHA while still going through the
+        // same validation, REST plumbing, and post-success branching.
+        //
+        // Required opts:
+        //   requireTitle    Boolean — when false, empty title is allowed (feed spaces).
+        //   collectTags     Boolean — read `[name="tags"]` and split on commas.
+        //   collectPrefix   Boolean — read `[name="prefix"]`.
+        //   collectPrivate  Boolean — read `[name="is_private"]` checkbox.
+        //   collectSchedule Boolean — read `[name="published_*"]` and merge into ISO.
+        //   collectCaptcha  Boolean — query the active CAPTCHA provider for a token.
+        //   bodySource      'editor' (read contenteditable .innerHTML) | 'textarea'.
+        //   errorSink       'state'   (write to state.submitError) |
+        //                   'context' (write to getContext().error).
+        //   extraPayload    Optional (form) => object — Pro extensions inject fields.
+        //   onSuccess       Optional (data) => void  — caller overrides redirect.
+        *composePost( event, opts ) {
+            if ( event && typeof event.preventDefault === 'function' ) {
+                event.preventDefault();
+            }
 
-            // Close publish menu if open.
-            state.publishMenuOpen = false;
-
-            const form     = getElement().ref;
-            const title    = form.querySelector('[name="title"]')?.value?.trim();
-            const bodyEl   = form.querySelector('[contenteditable]');
-            // innerHTML is what we send to the server (preserves Markdown,
-            // inline formatting, embeds). textContent is what we validate
-            // against, because an "interacted-with-then-cleared" contentedi-
-            // table commonly leaves <br> or &nbsp; in innerHTML which are
-            // truthy — that false-negative was the root cause of Basecamp
-            // 9808714691 ("no validation message is shown for empty content").
-            const content      = bodyEl?.innerHTML?.trim() || '';
-            const contentPlain = ( bodyEl?.textContent || '' ).trim();
-            const tags     = form.querySelector('[name="tags"]')?.value?.trim();
-
-            const resetForRetry = () => {
-                state.isSubmitting = false;
-                state.submitLabel  = state.i18n?.postTopic || 'Post Topic';
+            const o          = opts || {};
+            const ctx        = getContext();
+            const writeError = ( msg ) => {
+                if ( 'context' === o.errorSink ) {
+                    ctx.error = msg || '';
+                } else {
+                    state.submitError = msg || '';
+                }
             };
 
-            if ( ! title ) {
-                state.submitError = state.i18n?.titleRequired || 'Please enter a title for your topic.';
-                resetForRetry();
-                return;
-            }
-            if ( ! contentPlain ) {
-                state.submitError = state.i18n?.bodyRequired || 'Please add some details before posting.';
-                resetForRetry();
+            // Reset prior error before doing anything else so a retry doesn't
+            // show two errors stacked.
+            writeError( '' );
+
+            // The page surface uses a top-level submit chrome (state.*); the
+            // embed surface uses per-instance context.submitting. Drive both
+            // so a single helper covers both. setBusy/setIdle are no-ops on
+            // the path that doesn't own a particular field.
+            const setBusy = () => {
+                state.isSubmitting = true;
+                ctx.submitting     = true;
+                state.publishMenuOpen = false;
+                if ( 'state' === o.errorSink ) {
+                    state.submitLabel = state.i18n?.posting || 'Posting...';
+                }
+            };
+            const setIdle = () => {
+                state.isSubmitting = false;
+                ctx.submitting     = false;
+                if ( 'state' === o.errorSink ) {
+                    state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+                }
+            };
+
+            setBusy();
+
+            // Resolve the form root. For the page composer event.target is the
+            // form (form submit event); for the embed it's the inner form
+            // wrapping compose-fields. Either way we need a query root for
+            // every field lookup so the dispatch works the same.
+            const form = getElement()?.ref
+                || ( event && event.target && event.target.closest ? event.target.closest( 'form' ) : null )
+                || document.getElementById( 'jt-new-post-form' )
+                || document.querySelector( '.jt-compose-topic-embed .jt-compose-topic-form' );
+
+            if ( ! form ) {
+                writeError( state.i18n?.failedSave || 'Failed to create post.' );
+                setIdle();
                 return;
             }
 
-            // Determine post status and optional scheduled date. The scheduler
-            // uses two separate native inputs (type=date + type=time) instead
-            // of a single `datetime-local` because Firefox's native
-            // datetime-local picker exposes only the date portion — see
-            // Basecamp #9788118420. Combine them into an ISO-like local
-            // datetime string here so the REST payload stays unchanged.
-            const postStatus   = ctx.postStatus || 'publish';
-            let publishedAt = '';
-            if ( ctx.showScheduler ) {
-                const dateVal = form.querySelector('[name="published_date"]')?.value?.trim() || '';
-                // Scheduler uses native hour + minute selects so every desktop
-                // browser (Firefox included, where <input type="time"> has no
-                // popup picker) gets a consistent click-to-pick UX. Mobile
-                // browsers render native select as a scroll wheel. Combine the
-                // two selects into HH:MM:SS here so the REST payload (and the
-                // server-side scheduling logic) stays unchanged.
-                const hourVal = form.querySelector('[name="published_hour"]')?.value?.trim() || '';
-                const minuteVal = form.querySelector('[name="published_minute"]')?.value?.trim() || '';
-                const timeVal = hourVal && minuteVal ? `${hourVal}:${minuteVal}` : '';
+            // ── Title ─────────────────────────────────────────────────────────
+            // Feed spaces post UNTITLED — opts.requireTitle is false. When the
+            // title input was rendered but the space type flipped to feed via
+            // JS (picker mode), we still read whatever the user typed but
+            // don't block submit on emptiness. The server is the source of
+            // truth on "must this space have a title" — sending '' for a feed
+            // space is a valid request.
+            const titleInput = form.querySelector( '[name="title"]' );
+            const title      = titleInput ? ( titleInput.value || '' ).trim() : '';
+            if ( false !== o.requireTitle && ! title ) {
+                writeError( state.i18n?.titleRequired || 'Please enter a title for your topic.' );
+                setIdle();
+                return;
+            }
+
+            // ── Body ──────────────────────────────────────────────────────────
+            // `editor` mode reads innerHTML so we preserve formatting; we
+            // additionally validate against textContent because an
+            // "interacted-then-cleared" contenteditable holds <br>/&nbsp; in
+            // innerHTML which is truthy and was the root cause of
+            // Basecamp #9808714691 (silent submit-fail when body was empty).
+            // `textarea` mode reads .value directly.
+            let content      = '';
+            let contentPlain = '';
+            if ( 'textarea' === o.bodySource ) {
+                const ta = form.querySelector( 'textarea[name="content"], .jt-compose-topic-body' );
+                content      = ta ? ( ta.value || '' ).trim() : '';
+                contentPlain = content;
+            } else {
+                const bodyEl = form.querySelector( '[contenteditable]' );
+                content      = bodyEl ? ( bodyEl.innerHTML || '' ).trim() : '';
+                contentPlain = bodyEl ? ( bodyEl.textContent || '' ).trim() : '';
+            }
+            if ( ! contentPlain ) {
+                writeError( state.i18n?.bodyRequired || 'Please add some details before posting.' );
+                setIdle();
+                return;
+            }
+
+            // ── Tags / Prefix / Private ───────────────────────────────────────
+            const tagsRaw  = o.collectTags ? ( form.querySelector( '[name="tags"]' )?.value?.trim() || '' ) : '';
+            const tags     = tagsRaw ? tagsRaw.split( ',' ).map( t => t.trim() ).filter( Boolean ) : [];
+            const prefix   = o.collectPrefix ? ( form.querySelector( '[name="prefix"]' )?.value || '' ) : '';
+            const isPrivate = o.collectPrivate
+                ? !! form.querySelector( '[name="is_private"]' )?.checked
+                : false;
+
+            // ── Schedule ──────────────────────────────────────────────────────
+            // Two native inputs (date + hour + minute) get merged into an
+            // ISO-like local datetime so Firefox's missing time-picker
+            // popup doesn't block scheduling. See Basecamp #9788118420.
+            const postStatus = ctx.postStatus || 'publish';
+            let publishedAt  = '';
+            if ( o.collectSchedule && ctx.showScheduler ) {
+                const dateVal   = form.querySelector( '[name="published_date"]' )?.value?.trim() || '';
+                const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
+                const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
+                const timeVal   = hourVal && minuteVal ? `${ hourVal }:${ minuteVal }` : '';
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
                 } else if ( dateVal ) {
                     publishedAt = dateVal + 'T00:00:00';
                 }
             }
-
-            // Validate scheduler: a scheduled post needs a future date.
-            if ( 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
+            if ( o.collectSchedule && 'draft' === postStatus && ctx.showScheduler && ! publishedAt ) {
                 state.isSubmitting = false;
-                state.submitLabel = state.i18n?.schedule || 'Schedule';
+                state.submitLabel  = state.i18n?.schedule || 'Schedule';
                 if ( window.bnToast ) window.bnToast( state.i18n?.scheduleDateRequired || 'Please choose a publish date and time.' );
                 return;
             }
 
-            // Get CAPTCHA token if a provider is active.
+            // ── CAPTCHA ───────────────────────────────────────────────────────
             let captchaToken = '';
-            if ( window.jetonomyCaptcha ) {
+            if ( o.collectCaptcha && window.jetonomyCaptcha ) {
                 if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
                     captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
                 } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
                     const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
-                    captchaToken = tsInput ? ( tsInput.value || '' ) : '';
+                    captchaToken  = tsInput ? ( tsInput.value || '' ) : '';
                 }
             }
 
-            try {
-                const response = yield fetch(
-                    `${ state.apiBase }/spaces/${ ctx.spaceId }/posts`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( {
-                            title,
-                            content,
-                            type: ctx.postType,
-                            tags: tags ? tags.split( ',' ).map( t => t.trim() ) : [],
-                            status: postStatus,
-                            prefix: form.querySelector('[name="prefix"]')?.value || '',
-                            is_private: !! form.querySelector('[name="is_private"]')?.checked,
-                            ...( publishedAt && { published_at: publishedAt } ),
-                            ...( captchaToken && { captcha_token: captchaToken } ),
-                        } ),
-                    }
-                );
-                if ( ! response.ok ) {
-                    const err = yield response.json().catch( () => ( {} ) );
-                    const errMsg = err.message || state.i18n?.failedSave || 'Failed to create post.';
-                    // Surface inline above the composer — does not rely on
-                    // window.bnToast, which is only present when BuddyNext is
-                    // active. Without this, a REST 403 / 400 on this endpoint
-                    // left the composer with no feedback at all.
-                    state.submitError = errMsg;
-                    if ( window.bnToast ) window.bnToast( errMsg );
-                    return;
-                }
-                const data = yield response.json();
-                if ( data.id || data.data?.id ) {
-                    const status = data.status || data.data?.status || 'publish';
-                    if ( 'draft' === status ) {
-                        state.submitLabel = state.i18n?.saveDraft || 'Save Draft';
-                        state.isSubmitting = false;
-                        if ( window.bnToast ) window.bnToast( state.i18n?.draftSaved || 'Draft saved. You can find it in your profile under Drafts.' );
-                        return;
-                    }
-                    if ( 'pending' === status || 'spam' === status ) {
-                        state.submitLabel = state.i18n?.postTopic || 'Post Topic';
-                        state.isSubmitting = false;
-                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
-                        return;
-                    }
-                    const slug = data.slug || data.data?.slug || '';
-                    window.location.href = `${ state.communityBase }/s/${ ctx.spaceSlug }/t/${ slug }/`;
-                }
-            } catch {
-                const errMsg = state.i18n?.networkError || 'Network error. Please try again.';
-                state.submitError = errMsg;
-                if ( window.bnToast ) window.bnToast( errMsg );
-            } finally {
-                state.isSubmitting = false;
-                state.submitLabel = state.i18n?.postTopic || 'Post Topic';
+            // ── Payload ───────────────────────────────────────────────────────
+            const payload = {
+                title,
+                content,
+                type: ctx.postType,
+                tags,
+                status: postStatus,
+                prefix,
+                is_private: isPrivate,
+            };
+            if ( publishedAt ) payload.published_at = publishedAt;
+            if ( captchaToken ) payload.captcha_token = captchaToken;
+            if ( typeof o.extraPayload === 'function' ) {
+                const extras = o.extraPayload( form ) || {};
+                Object.assign( payload, extras );
             }
+
+            // ── Request ───────────────────────────────────────────────────────
+            // restFetch (1.4.3) wraps fetch, refreshes nonce on 403, and
+            // normalises the response into { ok, status, data }. Using it here
+            // means a stale nonce no longer eats the post silently.
+            if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
+                writeError( state.i18n?.failedSave || 'Failed to create post.' );
+                setIdle();
+                return;
+            }
+
+            const result = yield window.jetonomyRest.restFetch(
+                `/spaces/${ ctx.spaceId }/posts`,
+                { method: 'POST', body: payload }
+            );
+
+            if ( ! result.ok ) {
+                const errMsg = ( result.data && result.data.message )
+                    ? result.data.message
+                    : ( state.i18n?.failedSave || 'Failed to create post.' );
+                writeError( errMsg );
+                if ( window.bnToast ) window.bnToast( errMsg );
+                setIdle();
+                return;
+            }
+
+            // ── Success ───────────────────────────────────────────────────────
+            const data    = result.data || {};
+            const dataId  = data.id || data.data?.id;
+            const status  = data.status || data.data?.status || 'publish';
+            const slug    = data.slug || data.data?.slug || '';
+            const spaceSlug = data.space_slug || data.data?.space_slug || ctx.spaceSlug || '';
+
+            if ( typeof o.onSuccess === 'function' ) {
+                o.onSuccess( data );
+                return;
+            }
+
+            if ( ! dataId ) {
+                // Server returned 2xx with no id — fall back to a reload so
+                // the user still lands somewhere meaningful.
+                window.location.reload();
+                return;
+            }
+
+            if ( 'draft' === status ) {
+                state.submitLabel  = state.i18n?.saveDraft || 'Save Draft';
+                setIdle();
+                if ( window.bnToast ) window.bnToast( state.i18n?.draftSaved || 'Draft saved. You can find it in your profile under Drafts.' );
+                return;
+            }
+            if ( 'pending' === status || 'spam' === status ) {
+                setIdle();
+                if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your post is awaiting moderation and will appear once approved.' );
+                return;
+            }
+
+            if ( slug && spaceSlug && state.communityBase ) {
+                window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
+                return;
+            }
+            // Last-resort fallback for embed hosts where communityBase isn't
+            // localized — hard reload so the user can confirm their post
+            // landed.
+            window.location.reload();
+        },
+
+        // Thin wrapper used by the full new-post page. The form's
+        // `data-wp-on--submit` binding (filterable as
+        // `jetonomy_new_post_submit_action`) targets this name; Pro extensions
+        // (e.g. the Polls builder) replace it with their own action which
+        // calls composePost with extraPayload. Keeping this wrapper avoids
+        // breaking any third-party customisation that already overrides it.
+        *submitNewPost( event ) {
+            yield actions.composePost( event, {
+                requireTitle:    true,
+                collectTags:     true,
+                collectPrefix:   true,
+                collectPrivate:  true,
+                collectSchedule: true,
+                collectCaptcha:  true,
+                bodySource:      'editor',
+                errorSink:       'state',
+            } );
         },
 
         // ── Profile save ──
@@ -2049,14 +2167,30 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
-        // ── Compose Topic embed (1.3.7) ──
+        // ── Compose Topic embed (1.3.7, refactored 1.4.3) ──
         // Inline topic composer usable on any WordPress page — fixed-space or
-        // member picker. Shares submit plumbing with submitNewPost but works
-        // against local context only (no form element / CAPTCHA / scheduler).
+        // member picker. Submission goes through the shared composePost
+        // generator; this layer only handles the picker-specific UX (space
+        // selection updates title-field visibility based on the picked
+        // space's type, body input syncing).
         composeTopicSelectSpace( e ) {
-            const ctx = getContext();
-            ctx.spaceId = parseInt( e.target.value, 10 ) || 0;
-            ctx.error   = '';
+            const ctx     = getContext();
+            const sel     = e.target;
+            const spaceId = parseInt( sel.value, 10 ) || 0;
+            // Resolve the picked space's type from the <option data-type="…">
+            // marker the partial emits. Falls back to the server-built map on
+            // context.spaceTypes if the option marker is missing (defensive).
+            const opt       = sel.options ? sel.options[ sel.selectedIndex ] : null;
+            const optType   = opt ? ( opt.getAttribute( 'data-type' ) || '' ) : '';
+            const mapType   = ctx.spaceTypes ? ( ctx.spaceTypes[ spaceId ] || '' ) : '';
+            const spaceType = optType || mapType;
+
+            ctx.spaceId          = spaceId;
+            ctx.spaceType        = spaceType;
+            // Feed spaces hide the title input via data-wp-bind--hidden on the
+            // title group; every other space type re-shows it.
+            ctx.composeShowTitle = ( 'feed' !== spaceType );
+            ctx.error            = '';
         },
         composeTopicTitleInput( e ) {
             const ctx = getContext();
@@ -2065,64 +2199,35 @@ const { state, actions } = store( 'jetonomy', {
         },
         composeTopicBodyInput( e ) {
             const ctx = getContext();
-            ctx.body = e.target.value;
+            ctx.body  = e.target.value;
             if ( ctx.error ) ctx.error = '';
         },
-        *composeTopicSubmit() {
+        *composeTopicSubmit( event ) {
             const ctx = getContext();
             ctx.error = '';
 
+            // Picker mode demands a chosen space before anything else.
             if ( ! ctx.spaceId ) {
                 ctx.error = state.i18n?.chooseSpace || 'Choose a space first.';
                 return;
             }
-            if ( ! ctx.title || ! ctx.title.trim() ) {
-                ctx.error = state.i18n?.titleRequired || 'Title is required.';
-                return;
-            }
 
-            ctx.submitting = true;
-            try {
-                const res = yield fetch(
-                    `${ state.apiBase }/spaces/${ ctx.spaceId }/posts`,
-                    {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        body: JSON.stringify( {
-                            title:   ctx.title.trim(),
-                            content: ( ctx.body || '' ).trim(),
-                            type:    ctx.postType || 'topic',
-                        } ),
-                    }
-                );
+            // requireTitle follows the picked space's type — feed spaces are
+            // untitled by design, so we only enforce a title on non-feed
+            // spaces. composePost still reads the title field and submits
+            // whatever is there.
+            const requireTitle = ( 'feed' !== ( ctx.spaceType || '' ) );
 
-                if ( ! res.ok ) {
-                    const err = yield res.json().catch( () => ( {} ) );
-                    ctx.error = ( err && err.message )
-                        ? err.message
-                        : ( state.i18n?.couldNotCreate || 'Could not create the topic.' );
-                    ctx.submitting = false;
-                    return;
-                }
-
-                const data      = yield res.json();
-                const slug      = data.slug || data.data?.slug || '';
-                const spaceSlug = data.space_slug || data.data?.space_slug || '';
-                if ( slug && spaceSlug && state.communityBase ) {
-                    window.location.href = `${ state.communityBase }/s/${ spaceSlug }/t/${ slug }/`;
-                    return;
-                }
-                // Fallback: hard reload so the user sees their new topic
-                // wherever the embed hosts page redirects them.
-                window.location.reload();
-            } catch {
-                ctx.error = state.i18n?.networkError || 'Network error — try again.';
-                ctx.submitting = false;
-            }
+            yield actions.composePost( event, {
+                requireTitle,
+                collectTags:     false,
+                collectPrefix:   false,
+                collectPrivate:  true, // regression #9886339472 — embed must respect private flag.
+                collectSchedule: false,
+                collectCaptcha:  false,
+                bodySource:      'textarea',
+                errorSink:       'context',
+            } );
         },
     },
 

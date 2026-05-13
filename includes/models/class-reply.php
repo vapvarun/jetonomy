@@ -400,7 +400,11 @@ class Reply extends Model {
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, sp.slug AS space_slug, sp.title AS space_title
+				// post_content_plain is selected so feed-space parent posts
+				// (which store an empty title by design — 1.4.3 WS1) can
+				// still render a human-readable "on <excerpt>" string in
+				// the user-profile Replies tab.
+				"SELECT r.*, p.title AS post_title, p.slug AS post_slug, p.content_plain AS post_content_plain, sp.slug AS space_slug, sp.title AS space_title
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
