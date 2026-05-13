@@ -372,14 +372,12 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
 
-		// Feed spaces are short-form: a status post IS its content. The
-		// composer hides the title input for feed spaces and the REST layer
-		// stores an empty title verbatim — listings render a content excerpt
-		// via jetonomy_post_title_or_excerpt() so search, breadcrumbs, and
-		// notifications still have something to display. Every other space
-		// type still requires a real title; an empty title there returns 400.
-		$_jt_space_type = (string) ( $space->type ?? '' );
-		if ( empty( $title ) && 'feed' !== $_jt_space_type ) {
+		// 1.4.3: every space type collects a user-entered title. Feed-space
+		// posts hide the rendered <h1> visually on the single-post page
+		// (sr-only) so the surface stays body-first, but the title itself
+		// is real data used by breadcrumbs, notifications, search results,
+		// emails, and OG share previews.
+		if ( empty( $title ) ) {
 			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
 		}
 
@@ -397,16 +395,11 @@ class Posts_Controller extends Base_Controller {
 
 		$content_plain = wp_strip_all_tags( $content );
 
-		// Slug generation:
-		//   1. Title present → slugify it (typical case).
-		//   2. Title empty (feed space) → build a slug from the first 40
-		//      chars of plain content so URLs still look meaningful.
-		//   3. Step 2 yielded nothing (content was image-only / sanitised to
-		//      empty) → randomised stub so the INSERT never violates the
-		//      NOT NULL slug column.
-		$slug_seed = '' !== $title
-			? sanitize_title( $title )
-			: sanitize_title( wp_strip_all_tags( substr( $content_plain, 0, 40 ) ) );
+		// Slug generation: title is required (validated above), so slugify
+		// it. If sanitize_title yields nothing (e.g. emoji-only title), fall
+		// back to a randomised stub so the INSERT never violates the
+		// NOT NULL slug column.
+		$slug_seed = sanitize_title( $title );
 		if ( '' === $slug_seed ) {
 			$slug_seed = 'post-' . wp_generate_password( 6, false, false );
 		}

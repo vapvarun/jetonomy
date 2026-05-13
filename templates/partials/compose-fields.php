@@ -45,7 +45,10 @@ $_space_type = (string) ( $space->type ?? '' );
 // follows the documented defaults so the partial behaves identically
 // whether called from the embed or the full page unless a caller
 // explicitly opts out.
-$_show_title        = isset( $show_title ) ? (bool) $show_title : ( 'feed' !== $_space_type );
+// 1.4.3: title is always collected. Feed spaces display the title as
+// sr-only on the post view, but the value is real data used by
+// breadcrumbs, notifications, search, and share previews.
+$_show_title        = isset( $show_title ) ? (bool) $show_title : true;
 $_show_tags         = isset( $show_tags ) ? (bool) $show_tags : true;
 $_show_prefix       = isset( $show_prefix ) ? (bool) $show_prefix : true;
 $_show_private      = isset( $show_private ) ? (bool) $show_private : true;
@@ -53,11 +56,11 @@ $_show_scheduler    = isset( $show_scheduler ) ? (bool) $show_scheduler : false;
 $_show_publish_menu = isset( $show_publish_menu ) ? (bool) $show_publish_menu : false;
 // CAPTCHA widget itself is owned by the surrounding form; this flag is
 // here so Pro extensions can read it via the fields_hook if they need to.
-$_show_captcha = isset( $show_captcha ) ? (bool) $show_captcha : false;
-$_fields_hook  = isset( $fields_hook ) && is_string( $fields_hook ) && '' !== $fields_hook
+$_show_captcha             = isset( $show_captcha ) ? (bool) $show_captcha : false;
+$_fields_hook              = isset( $fields_hook ) && is_string( $fields_hook ) && '' !== $fields_hook
 	? $fields_hook
 	: 'jetonomy_new_post_fields';
-$_body_mode    = ( isset( $body_mode ) && in_array( $body_mode, array( 'editor', 'textarea' ), true ) ) ? $body_mode : 'editor';
+$_body_mode                = ( isset( $body_mode ) && in_array( $body_mode, array( 'editor', 'textarea' ), true ) ) ? $body_mode : 'editor';
 $_submit_label             = isset( $submit_label ) ? (string) $submit_label : '';
 $_cancel_url               = isset( $cancel_url ) ? (string) $cancel_url : '';
 $_title_visibility_binding = isset( $title_visibility_binding ) ? (string) $title_visibility_binding : '';
@@ -76,7 +79,11 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 ?>
 
 <?php if ( $_show_title ) : ?>
-	<div class="jt-form-group" data-jt-field="title"<?php if ( '' !== $_title_visibility_binding ) : ?> data-wp-bind--hidden="<?php echo esc_attr( $_title_visibility_binding ); ?>"<?php endif; ?>>
+	<div class="jt-form-group" data-jt-field="title"
+	<?php
+	if ( '' !== $_title_visibility_binding ) :
+		?>
+		data-wp-bind--hidden="<?php echo esc_attr( $_title_visibility_binding ); ?>"<?php endif; ?>>
 		<label for="jt-post-title" class="jt-label"><?php esc_html_e( 'Title', 'jetonomy' ); ?></label>
 		<?php
 		$_title_placeholders = array(
@@ -166,6 +173,7 @@ endif;
  *
  * @param object|null $space The space object.
  */
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- caller-controlled hook (defaults to jetonomy_compose_extras) so embeds can pass a different surface-specific hook.
 do_action( $_fields_hook, $space );
 ?>
 
@@ -240,10 +248,12 @@ do_action( $_fields_hook, $space );
 						data-wp-on--click="actions.togglePublishMenu">
 					<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
 				</button>
-				<?php // [1.4.3 WS3-B] Visibility now driven by jetonomySmartDropdown
+				<?php
+				// [1.4.3 WS3-B] Visibility now driven by jetonomySmartDropdown
 				// (togglePublishMenu); removed `data-wp-bind--hidden` so JS owns
 				// display + position. Initial `hidden` attribute prevents flash
-				// before the primitive attaches. ?>
+				// before the primitive attaches.
+				?>
 				<div class="jt-publish-mode__menu" hidden>
 					<button type="button" class="jt-publish-mode__option"
 							data-wp-on--click="actions.selectPublishNow">

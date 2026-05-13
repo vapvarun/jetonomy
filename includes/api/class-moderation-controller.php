@@ -340,7 +340,7 @@ class Moderation_Controller extends Base_Controller {
 			}
 		);
 
-		$pending_flags_count = count( Flag::list_pending() );
+		$pending_flags_count = Flag::count_pending();
 
 		return new WP_REST_Response(
 			array(
@@ -687,9 +687,9 @@ class Moderation_Controller extends Base_Controller {
 		$expires_at = $request->get_param( 'expires_at' ) ? sanitize_text_field( (string) $request->get_param( 'expires_at' ) ) : null;
 
 		// Cap matrix mirroring the legacy require_ban_permission():
-		//   - jetonomy_moderate OR manage_options always passes.
-		//   - space_ban additionally accepts the space-admin delegate from the
-		//     body-supplied space_id.
+		// - jetonomy_moderate OR manage_options always passes.
+		// - space_ban additionally accepts the space-admin delegate from the
+		// body-supplied space_id.
 		// Global bans / silences without either cap are rejected.
 		$actor_id = get_current_user_id();
 		$has_caps = current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' );

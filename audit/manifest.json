@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "1.4.2",
+    "version": "1.4.3",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -1810,7 +1810,11 @@
       "name": "jetonomy_after_create_post",
       "type": "action",
       "args_count": 3,
-      "args_signature": ["int $post_id", "int $space_id", "WP_REST_Request $request"],
+      "args_signature": [
+        "int $post_id",
+        "int $space_id",
+        "WP_REST_Request $request"
+      ],
       "where": "includes/api/class-posts-controller.php:529",
       "consumed_by": "jetonomy-pro"
     },
@@ -1818,7 +1822,10 @@
       "name": "jetonomy_after_create_reply",
       "type": "action",
       "args_count": 2,
-      "args_signature": ["int $reply_id", "int $post_id"],
+      "args_signature": [
+        "int $reply_id",
+        "int $post_id"
+      ],
       "where": "includes/api/class-replies-controller.php:335",
       "consumed_by": "jetonomy-pro"
     },
@@ -2106,10 +2113,17 @@
       "name": "jetonomy_user_left_space",
       "type": "action",
       "args_count": 2,
-      "args_signature": ["int $space_id", "int $user_id"],
+      "args_signature": [
+        "int $space_id",
+        "int $user_id"
+      ],
       "where": "includes/models/class-space-member.php:107",
       "consumed_by": [
-        { "plugin": "jetonomy-pro", "where": "includes/extensions/webhooks/class-extension.php:104", "kind": "action_listener" }
+        {
+          "plugin": "jetonomy-pro",
+          "where": "includes/extensions/webhooks/class-extension.php:104",
+          "kind": "action_listener"
+        }
       ]
     },
     {
@@ -2775,15 +2789,24 @@
     ]
   },
   "generated": {
-    "at": "2026-05-09T05:30:00Z",
+    "at": "2026-05-13T18:00:00Z",
     "from": "wp-plugin-onboard skill (1.4.2.x refresh)",
     "branch": "main",
     "schema_version": "v2",
-    "refresh_note": "Refreshed 2026-05-09 for the 1.4.2.x release cycle. Adds: migration 1.4.2.2 (idea_status ENUM 6 -> 4 lanes per readme contract), new REST endpoint POST /posts/{id}/idea-status, missing hooks_fired entry jetonomy_user_left_space, corrected args_count + signatures on jetonomy_after_create_post and jetonomy_after_create_reply, login dark-mode CSS override, setup wizard now offers all 4 default-space-type radios. Schema enum and admin UI now agree with the documented 4-lane spec.",
-    "refreshed_via": "wp-plugin-onboard --refresh (diff-driven, 11 changed files)"
+    "refresh_note": "Refreshed 2026-05-13 for the 1.4.3 release. Three i18n drift fixes in class-template-loader.php (added recipientRequired + userNotFound, kept messageSendFailed name canonical). Two pro-view.js confirm() calls migrated to window.jetonomyConfirm (Rule 10 compliance). Annotated jetonomy_after_resolve_flag as intentional dead-fire extension point. No REST/AJAX/hook topology change since 2026-05-09 — WS1-WS4 were wiring migrations, not API surface changes.",
+    "refreshed_via": "wp-plugin-onboard --refresh (wppqa-driven, undefined-ref hunt focus)"
   },
   "static_analysis": {
-    "dead_listeners": [],
+    "dead_listeners": [
+      {
+        "hook": "jetonomy_after_resolve_flag",
+        "listener_at": null,
+        "fired_at": "includes/moderation/class-moderation-service.php:259",
+        "kind": "own",
+        "verdict": "intentional_extension_point",
+        "note": "Dead-fire-only — fired in moderation service after flag resolution, no listeners in either free or pro. Reserved as an extension point for custom listeners (Pro webhooks listens to the earlier jetonomy_flag_resolved hook instead)."
+      }
+    ],
     "cap_context_mismatches": [],
     "extensibility_gaps": [],
     "js_only_activation": [],

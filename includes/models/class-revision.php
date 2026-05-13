@@ -39,18 +39,49 @@ class Revision extends Model {
 	/**
 	 * List all revisions for a given object, newest first.
 	 *
-	 * @param string $type      Object type (e.g. 'post', 'reply').
-	 * @param int    $id        Object ID.
+	 * @param string $type   Object type (e.g. 'post', 'reply').
+	 * @param int    $id     Object ID.
+	 * @param int    $limit  Max rows to return. 0 = unbounded (default,
+	 *                       preserves pre-1.4.3 behaviour for every caller
+	 *                       that did not opt in to pagination).
+	 * @param int    $offset Row offset. Ignored when $limit = 0.
 	 * @return object[]
 	 */
-	public static function list_for_object( string $type, int $id ): array {
+	public static function list_for_object( string $type, int $id, int $limit = 0, int $offset = 0 ): array {
+		$base = 'SELECT * FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d ORDER BY created_at DESC';
+		if ( $limit > 0 ) {
+			return static::db()->get_results(
+				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $type, $id, $limit, max( 0, $offset ) )
+			) ?: [];
+		}
 		return static::db()->get_results(
+			static::db()->prepare( $base, $type, $id )
+		) ?: [];
+	}
+
+	/**
+	 * Cheap COUNT(*) partner for {@see self::list_for_object()}. Used by
+	 * paginated callers (the per-object revisions modal / admin view)
+	 * for the pager total without materialising every row.
+	 *
+	 * Backed by the existing `object_created (object_type, object_id,
+	 * created_at)` index.
+	 *
+	 * @param string $type Object type ('post' or 'reply').
+	 * @param int    $id   Object ID.
+	 * @return int
+	 */
+	public static function count_for_object( string $type, int $id ): int {
+		if ( $id <= 0 ) {
+			return 0;
+		}
+		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d ORDER BY created_at DESC',
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
 				$type,
 				$id
 			)
-		) ?: [];
+		);
 	}
 
 	/**

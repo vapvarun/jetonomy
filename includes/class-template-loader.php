@@ -308,6 +308,8 @@ class Template_Loader {
 				'messageSend'        => __( 'Send', 'jetonomy' ),
 				'messageSendFailed'  => __( 'Failed to send. Please try again.', 'jetonomy' ),
 				'noMessageMatches'   => __( 'No matches. You can only message people who share at least one space with you.', 'jetonomy' ),
+				'recipientRequired'  => __( 'Please enter a recipient.', 'jetonomy' ),
+				'userNotFound'       => __( 'User not found: ', 'jetonomy' ),
 				// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
 				'muteFailed'         => __( 'Could not update mute setting.', 'jetonomy' ),
 				'archiveFailed'      => __( 'Could not archive the conversation.', 'jetonomy' ),

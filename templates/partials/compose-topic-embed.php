@@ -81,18 +81,12 @@ if ( 'fixed' === $_mode && ! $_space ) {
 	$_mode = 'picker';
 }
 
-// Initial spaceType is the resolved space's type when fixed; in picker mode
-// we don't know which space the user will pick yet, so default to empty.
-// The picker's <option data-type="…"> markers drive a JS state toggle when
-// the user changes selection so the title field show/hide stays in sync.
+// Title is collected at write time on every space type (1.4.3 decision: a
+// real user-chosen title is worth keeping in the data even when the post
+// view hides it visually for feed spaces). Both picker and fixed modes
+// render the title input.
 $_initial_space_type = $_space ? (string) ( $_space->type ?? '' ) : '';
-$_initial_show_title = ( 'feed' !== $_initial_space_type );
-
-// In picker mode we don't know the space type until selection; render the
-// title field by default (visible) and let JS toggle it off when a Feed
-// space is picked. Fixed mode uses the resolved space type as the static
-// initial value so non-JS viewers still see the correct fields.
-$_show_title_initial = ( 'picker' === $_mode ) ? true : $_initial_show_title;
+$_show_title_initial = true;
 
 // Build a JSON-shaped lookup the JS can use to map spaceId → spaceType,
 // so composeTopicSelectSpace can flip `composeShowTitle` without parsing
@@ -182,19 +176,19 @@ $_partial_space = $_space ? $_space : (object) array(
 		\Jetonomy\Template_Loader::partial(
 			'compose-fields',
 			[
-				'space'                     => $_partial_space,
-				'show_title'                => $_show_title_initial,
-				'show_tags'                 => false,
-				'show_prefix'               => false,
-				'show_private'              => true,
-				'show_scheduler'            => false,
-				'show_publish_menu'         => false,
-				'show_captcha'              => false,
-				'body_mode'                 => 'textarea',
-				'submit_label'              => '',
+				'space'                    => $_partial_space,
+				'show_title'               => $_show_title_initial,
+				'show_tags'                => false,
+				'show_prefix'              => false,
+				'show_private'             => true,
+				'show_scheduler'           => false,
+				'show_publish_menu'        => false,
+				'show_captcha'             => false,
+				'body_mode'                => 'textarea',
+				'submit_label'             => '',
 				// Picker mode flips title visibility in response to space
 				// switches; fixed mode stays static (no binding emitted).
-				'title_visibility_binding'  => ( 'picker' === $_mode ) ? '!context.composeShowTitle' : '',
+				'title_visibility_binding' => ( 'picker' === $_mode ) ? '!context.composeShowTitle' : '',
 			]
 		);
 		?>

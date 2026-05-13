@@ -24,7 +24,36 @@ if ( ! $space ) {
 	return;
 }
 
-$members        = \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id );
+// Pagination. 25/page is readable on desktop, fits mobile, keeps the
+// COUNT(*) query trivial against the new space_role_joined index.
+$jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
+$jt_members_paged    = max( 1, (int) ( $_GET['paged'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
+$jt_members_pages    = max( 1, (int) ceil( $jt_members_total / $jt_members_per_page ) );
+if ( $jt_members_paged > $jt_members_pages ) {
+	$jt_members_paged = $jt_members_pages;
+}
+$jt_members_offset = ( $jt_members_paged - 1 ) * $jt_members_per_page;
+$members           = $jt_members_total > 0
+	? \Jetonomy\Models\SpaceMember::list_by_space( (int) $space->id, $jt_members_per_page, $jt_members_offset )
+	: [];
+
+// Batch-fetch WP_User + UserProfile for the page's members up front
+// so the render loop reads from in-memory maps instead of firing two
+// extra queries per row (N+1). At 25/page that's 50 fewer queries.
+$jt_member_user_ids    = array_map( static fn( $m ) => (int) $m->user_id, $members );
+$jt_member_users       = ! empty( $jt_member_user_ids )
+	? get_users(
+		array(
+			'include' => $jt_member_user_ids,
+			'orderby' => 'include',
+		)
+	)
+	: array();
+$jt_member_users_by_id = array();
+foreach ( $jt_member_users as $jt_u ) {
+	$jt_member_users_by_id[ (int) $jt_u->ID ] = $jt_u;
+}
 $category       = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
 $base           = \Jetonomy\base_url();
 $viewer_id      = get_current_user_id();
@@ -86,7 +115,7 @@ $role_labels = [
 				<div class="jt-card jt-card-flush">
 					<?php foreach ( $members as $member ) : ?>
 						<?php
-						$mu = get_userdata( (int) $member->user_id );
+						$mu = $jt_member_users_by_id[ (int) $member->user_id ] ?? null;
 						if ( ! $mu ) {
 							continue;
 						}
@@ -161,6 +190,34 @@ $role_labels = [
 						</div>
 					<?php endforeach; ?>
 				</div>
+
+				<?php
+				if ( $jt_members_pages > 1 ) :
+					$jt_members_base_url = $base . '/s/' . $space->slug . '/members/';
+					$jt_members_prev_url = add_query_arg( 'paged', max( 1, $jt_members_paged - 1 ), $jt_members_base_url );
+					$jt_members_next_url = add_query_arg( 'paged', min( $jt_members_pages, $jt_members_paged + 1 ), $jt_members_base_url );
+					?>
+					<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Members pagination', 'jetonomy' ); ?>">
+						<?php if ( $jt_members_paged > 1 ) : ?>
+							<a class="jt-pagination-link" href="<?php echo esc_url( $jt_members_prev_url ); ?>" rel="prev">
+								<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>
+								<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
+							</a>
+						<?php endif; ?>
+						<span class="jt-pagination-status">
+							<?php
+							/* translators: 1: current page, 2: total pages */
+							echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_members_paged, $jt_members_pages ) );
+							?>
+						</span>
+						<?php if ( $jt_members_paged < $jt_members_pages ) : ?>
+							<a class="jt-pagination-link" href="<?php echo esc_url( $jt_members_next_url ); ?>" rel="next">
+								<?php esc_html_e( 'Next', 'jetonomy' ); ?>
+								<?php jetonomy_echo_icon( 'chevron-right', 14 ); ?>
+							</a>
+						<?php endif; ?>
+					</nav>
+				<?php endif; ?>
 			<?php endif; ?>
 		</main>
 

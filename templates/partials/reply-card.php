@@ -25,8 +25,15 @@ $jt_can_moderate_reply = $jt_reply_viewer
 <div class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
 		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? esc_attr( 'is-online' ) : ''; ?>">
-			<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, true ) ); ?>
+			<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, false ) ); ?>
 		</span>
+		<?php if ( $author ) : ?>
+			<a class="jt-reply-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $reply->author_id ) ); ?>">
+				<?php echo esc_html( $author->display_name ); ?>
+			</a>
+		<?php else : ?>
+			<span class="jt-reply-author"><?php esc_html_e( 'Anonymous', 'jetonomy' ); ?></span>
+		<?php endif; ?>
 		<?php
 		// 1.4.0 G3: role pill — same as post-card.php, scoped to the
 		// PARENT POST's space (an admin of space A replying in space B

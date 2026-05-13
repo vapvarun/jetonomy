@@ -177,7 +177,7 @@ if ( $space ) {
 	];
 }
 $crumbs[] = [
-	'label' => jetonomy_post_title_or_excerpt( $post ),
+	'label' => (string) ( $post->title ?? '' ),
 	'url'   => '',
 ];
 
@@ -263,28 +263,51 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<article class="jt-post" data-wp-interactive="jetonomy">
 				<div class="jt-post-head">
 					<?php
-					// Feed-space posts are untitled by design (the body IS the
-					// content). When the stored title is empty we still emit
-					// an <h1> for a11y — assistive tech expects a heading for
-					// the article — but tag it `screen-reader-text` and fill
-					// it with an excerpt so it doesn't visually duplicate
-					// the content below. Titled posts keep the visible h1.
-					$jt_h1_is_sr_only = ( '' === trim( (string) ( $post->title ?? '' ) ) );
-					$jt_h1_label      = jetonomy_post_title_or_excerpt( $post );
+					// 1.4.3: feed-space posts hide the h1 visually but the
+					// title is a real user-entered string used by breadcrumbs,
+					// notifications, search, and share previews. Visible h1
+					// for every other space type.
+					$jt_h1_is_sr_only = ( $space && 'feed' === ( $space->type ?? '' ) );
+					$jt_h1_label      = (string) ( $post->title ?? '' );
 					?>
-					<h1<?php echo $jt_h1_is_sr_only ? ' class="screen-reader-text"' : ''; ?>>
-						<?php if ( $prefix_name && ! $jt_h1_is_sr_only ) : ?>
-							<span class="jt-prefix"
-							<?php
-							if ( $prefix_color ) :
-								?>
-								style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
-						<?php endif; ?>
-						<?php if ( $space && 'ideas' === ( $space->type ?? '' ) && ! $jt_h1_is_sr_only ) : ?>
-							<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
-						<?php endif; ?>
-						<?php echo esc_html( $jt_h1_is_sr_only ? $jt_h1_label : (string) ( $post->title ?? '' ) ); ?>
-					</h1>
+					<?php
+					// Feed-space untitled posts: emit the sr-only h1 alone so
+					// the visual flow is meta-row → body. Defer the Follow
+					// button to the meta row (it lands at the trailing edge
+					// via margin-inline-start: auto). Titled posts get the
+					// usual title-row with Follow on the right.
+					$jt_show_follow = is_user_logged_in();
+					if ( $jt_show_follow ) {
+						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
+					}
+					if ( $jt_h1_is_sr_only ) :
+						?>
+						<h1 class="screen-reader-text"><?php echo esc_html( $jt_h1_label ); ?></h1>
+					<?php else : ?>
+						<div class="jt-post-title-row">
+							<h1>
+								<?php if ( $prefix_name ) : ?>
+									<span class="jt-prefix"
+									<?php
+									if ( $prefix_color ) :
+										?>
+										style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
+								<?php endif; ?>
+								<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+									<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+								<?php endif; ?>
+								<?php echo esc_html( (string) ( $post->title ?? '' ) ); ?>
+							</h1>
+							<?php if ( $jt_show_follow ) : ?>
+								<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
+									data-wp-on--click="actions.followPost"
+									data-post-id="<?php echo absint( $post->id ); ?>"
+									data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
+									<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+								</button>
+							<?php endif; ?>
+						</div>
+					<?php endif; ?>
 					<?php
 					// On Ideas spaces, space moderators see a status picker so
 					// the roadmap workflow is reachable from the post page.
@@ -344,18 +367,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php esc_html_e( 'Closed', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
+						<?php if ( $jt_h1_is_sr_only && $jt_show_follow ) : ?>
+							<button class="jt-btn jt-btn-sm jt-meta-follow <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
+								data-wp-on--click="actions.followPost"
+								data-post-id="<?php echo absint( $post->id ); ?>"
+								data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
+								<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+							</button>
+						<?php endif; ?>
 					</div>
-					<?php
-					if ( is_user_logged_in() ) :
-						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
-						?>
-						<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
-							data-wp-on--click="actions.followPost"
-							data-post-id="<?php echo absint( $post->id ); ?>"
-							data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
-							<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
-						</button>
-					<?php endif; ?>
 				</div>
 
 				<div class="jt-post-body">
@@ -388,7 +408,68 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				do_action( 'jetonomy_post_meta_fields', $post );
 				?>
 
-				<?php echo wp_kses_post( apply_filters( 'jetonomy_after_post_content', '', $post ) ); ?>
+				<?php
+				// Poll widget (Pro) renders radio/checkbox inputs via this
+				// filter. wp_kses_post() strips form inputs, which silently
+				// breaks voting UI even though the REST endpoint works.
+				// Extend the post-content allowlist with the input element
+				// + the IA event directive consumers used inside the slot.
+				$jt_post_content_after_tags          = wp_kses_allowed_html( 'post' );
+				$jt_post_content_after_tags['input'] = array(
+					'type'                   => true,
+					'name'                   => true,
+					'value'                  => true,
+					'checked'                => true,
+					'disabled'               => true,
+					'class'                  => true,
+					'id'                     => true,
+					'data-wp-on--click'      => true,
+					'data-wp-on--change'     => true,
+					'data-wp-bind--checked'  => true,
+					'data-wp-bind--disabled' => true,
+					'aria-label'             => true,
+					'aria-checked'           => true,
+				);
+				// IA directives on existing elements (div/span/button/label).
+				foreach ( array( 'div', 'span', 'button', 'label', 'a', 'form', 'select', 'option', 'textarea' ) as $jt_tag ) {
+					if ( isset( $jt_post_content_after_tags[ $jt_tag ] ) ) {
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-interactive']    = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-context']        = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-on--click']      = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-on--change']     = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-on--submit']     = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-bind--hidden']   = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-bind--disabled'] = true;
+						$jt_post_content_after_tags[ $jt_tag ]['data-wp-class--active']  = true;
+					}
+				}
+				$jt_post_content_after_tags['textarea'] = isset( $jt_post_content_after_tags['textarea'] )
+					? $jt_post_content_after_tags['textarea']
+					: array(
+						'name'        => true,
+						'class'       => true,
+						'rows'        => true,
+						'cols'        => true,
+						'placeholder' => true,
+					);
+				$jt_post_content_after_tags['select']   = isset( $jt_post_content_after_tags['select'] )
+					? $jt_post_content_after_tags['select']
+					: array(
+						'name'  => true,
+						'class' => true,
+					);
+				$jt_post_content_after_tags['option']   = isset( $jt_post_content_after_tags['option'] )
+					? $jt_post_content_after_tags['option']
+					: array(
+						'value'    => true,
+						'selected' => true,
+					);
+
+				echo wp_kses(
+					apply_filters( 'jetonomy_after_post_content', '', $post ),
+					$jt_post_content_after_tags
+				);
+				?>
 
 				<div class="jt-post-foot">
 					<?php

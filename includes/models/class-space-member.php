@@ -154,15 +154,39 @@ class SpaceMember extends Model {
 	 * List all members of a space ordered by role (DESC) then joined_at (ASC).
 	 *
 	 * @param int $space_id
+	 * @param int $limit    Max rows to return. 0 = unbounded (default,
+	 *                      preserves pre-1.4.3 behaviour for every caller
+	 *                      that did not opt in to pagination).
+	 * @param int $offset   Row offset. Ignored when $limit = 0.
 	 * @return object[]
 	 */
-	public static function list_by_space( int $space_id ): array {
+	public static function list_by_space( int $space_id, int $limit = 0, int $offset = 0 ): array {
+		$base = 'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY role DESC, joined_at ASC';
+		if ( $limit > 0 ) {
+			return static::db()->get_results(
+				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $limit, max( 0, $offset ) )
+			) ?: [];
+		}
 		return static::db()->get_results(
+			static::db()->prepare( $base, $space_id )
+		) ?: [];
+	}
+
+	/**
+	 * Cheap COUNT(*) partner for {@see self::list_by_space()}. Used by
+	 * paginated callers (the space members admin / template) without
+	 * materialising every row.
+	 *
+	 * @param int $space_id
+	 * @return int
+	 */
+	public static function count_by_space( int $space_id ): int {
+		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE space_id = %d ORDER BY role DESC, joined_at ASC',
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE space_id = %d',
 				$space_id
 			)
-		) ?: [];
+		);
 	}
 
 	/**
@@ -366,6 +390,28 @@ class SpaceMember extends Model {
 				$user_id
 			)
 		) ?: [];
+	}
+
+	/**
+	 * Cheap COUNT(*) partner for {@see self::list_user_spaces()}. Mirrors
+	 * its scoping (every space row the user holds any role in) so callers
+	 * needing only the number — `/users/me` `spaces_joined_count`, profile
+	 * cards — never have to materialise the full row set just to PHP-count
+	 * it. Backed by the existing `user_joined (user_id, joined_at)` index.
+	 *
+	 * @param int $user_id
+	 * @return int
+	 */
+	public static function count_user_spaces( int $user_id ): int {
+		if ( $user_id <= 0 ) {
+			return 0;
+		}
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE user_id = %d',
+				$user_id
+			)
+		);
 	}
 
 	/**

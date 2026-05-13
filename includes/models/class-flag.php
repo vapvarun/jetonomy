@@ -40,12 +40,32 @@ class Flag extends Model {
 	/**
 	 * List all flags with status 'pending', newest first.
 	 *
+	 * @param int $limit  Max rows to return. 0 = unbounded (default,
+	 *                    preserves pre-1.4.3 behaviour).
+	 * @param int $offset Row offset for pagination. Ignored when $limit = 0.
 	 * @return object[]
 	 */
-	public static function list_pending(): array {
-		return static::db()->get_results(
-			'SELECT * FROM ' . static::table() . " WHERE status = 'pending' ORDER BY created_at DESC"
-		) ?: [];
+	public static function list_pending( int $limit = 0, int $offset = 0 ): array {
+		$base = 'SELECT * FROM ' . static::table() . " WHERE status = 'pending' ORDER BY created_at DESC";
+		if ( $limit > 0 ) {
+			return static::db()->get_results(
+				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $limit, max( 0, $offset ) )
+			) ?: [];
+		}
+		return static::db()->get_results( $base ) ?: [];
+	}
+
+	/**
+	 * Count flags with status 'pending'. Cheap alternative to count()
+	 * on the full row set — adopted by callers that only need the
+	 * number (pagination totals, badges).
+	 *
+	 * @return int
+	 */
+	public static function count_pending(): int {
+		return (int) static::db()->get_var(
+			'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'pending'"
+		);
 	}
 
 	/**
@@ -201,7 +221,7 @@ class Flag extends Model {
 	 * @param int $space_id
 	 * @return object[]
 	 */
-	public static function list_pending_in_space( int $space_id ): array {
+	public static function list_pending_in_space( int $space_id, int $limit = 0, int $offset = 0 ): array {
 		if ( $space_id <= 0 ) {
 			return [];
 		}
@@ -211,10 +231,49 @@ class Flag extends Model {
 		$posts_t   = \Jetonomy\table( 'posts' );
 		$replies_t = \Jetonomy\table( 'replies' );
 
+		$base = "SELECT f.* FROM {$flags_t} f
+			 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
+			 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
+			 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
+			 WHERE f.status = 'pending'
+			   AND (
+			     ( f.object_type = 'post'  AND p.space_id  = %d )
+			     OR ( f.object_type = 'reply' AND rp.space_id = %d )
+			   )
+			 ORDER BY f.created_at DESC";
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
+		if ( $limit > 0 ) {
+			$rows = $wpdb->get_results(
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				$wpdb->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $space_id, $limit, max( 0, $offset ) )
+			);
+		} else {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare( $base, $space_id, $space_id )
+			);
+		}
+
+		return $rows ?: [];
+	}
+
+	/**
+	 * Count pending flags scoped to a single space.
+	 *
+	 * @param int $space_id
+	 * @return int
+	 */
+	public static function count_pending_in_space( int $space_id ): int {
+		if ( $space_id <= 0 ) {
+			return 0;
+		}
+		global $wpdb;
+		$flags_t   = \Jetonomy\table( 'flags' );
+		$posts_t   = \Jetonomy\table( 'posts' );
+		$replies_t = \Jetonomy\table( 'replies' );
+		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT f.* FROM {$flags_t} f
+				"SELECT COUNT(*) FROM {$flags_t} f
 				 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
 				 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
 				 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
@@ -222,14 +281,11 @@ class Flag extends Model {
 				   AND (
 				     ( f.object_type = 'post'  AND p.space_id  = %d )
 				     OR ( f.object_type = 'reply' AND rp.space_id = %d )
-				   )
-				 ORDER BY f.created_at DESC",
+				   )",
 				$space_id,
 				$space_id
 			)
 		);
-
-		return $rows ?: [];
 	}
 
 	/**
@@ -241,7 +297,7 @@ class Flag extends Model {
 	 * @param int[] $space_ids
 	 * @return object[]
 	 */
-	public static function list_pending_in_spaces( array $space_ids ): array {
+	public static function list_pending_in_spaces( array $space_ids, int $limit = 0, int $offset = 0 ): array {
 		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
 		if ( empty( $space_ids ) ) {
 			return [];
@@ -254,11 +310,51 @@ class Flag extends Model {
 		$placeholders = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
 		$params       = array_merge( $space_ids, $space_ids );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
+		$sql = "SELECT f.* FROM {$flags_t} f
+			 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
+			 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
+			 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
+			 WHERE f.status = 'pending'
+			   AND (
+			     ( f.object_type = 'post'  AND p.space_id  IN ({$placeholders}) )
+			     OR ( f.object_type = 'reply' AND rp.space_id IN ({$placeholders}) )
+			   )
+			 ORDER BY f.created_at DESC";
+
+		if ( $limit > 0 ) {
+			$sql     .= ' LIMIT %d OFFSET %d';
+			$params[] = $limit;
+			$params[] = max( 0, $offset );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$params ) );
+
+		return $rows ?: [];
+	}
+
+	/**
+	 * Count pending flags across the given set of spaces. Paired with
+	 * list_pending_in_spaces() for pagination totals.
+	 *
+	 * @param int[] $space_ids
+	 * @return int
+	 */
+	public static function count_pending_in_spaces( array $space_ids ): int {
+		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
+		if ( empty( $space_ids ) ) {
+			return 0;
+		}
+		global $wpdb;
+		$flags_t      = \Jetonomy\table( 'flags' );
+		$posts_t      = \Jetonomy\table( 'posts' );
+		$replies_t    = \Jetonomy\table( 'replies' );
+		$placeholders = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+		$params       = array_merge( $space_ids, $space_ids );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-				"SELECT f.* FROM {$flags_t} f
+				"SELECT COUNT(*) FROM {$flags_t} f
 				 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
 				 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
 				 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
@@ -266,12 +362,9 @@ class Flag extends Model {
 				   AND (
 				     ( f.object_type = 'post'  AND p.space_id  IN ({$placeholders}) )
 				     OR ( f.object_type = 'reply' AND rp.space_id IN ({$placeholders}) )
-				   )
-				 ORDER BY f.created_at DESC",
+				   )",
 				...$params
 			)
 		);
-
-		return $rows ?: [];
 	}
 }

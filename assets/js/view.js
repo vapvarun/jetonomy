@@ -497,8 +497,11 @@ const { state, actions } = store( 'jetonomy', {
             const replyId = btnEl.dataset.replyId;
             if ( ! replyId ) return;
 
-            const scoreEl = btnEl.querySelector( '.n' );
             const upSibling = btnEl.parentElement?.querySelector( '[data-wp-on\\:click="actions.voteReplyUp"], [data-wp-on--click="actions.voteReplyUp"]' );
+            // Score `.n` is rendered inside the UP button only — the DOWN
+            // button is icon-only. Read/write through the sibling so the
+            // optimistic DOM update is actually visible.
+            const scoreEl = upSibling?.querySelector( '.n' );
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => {
