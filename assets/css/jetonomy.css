@@ -1234,18 +1234,32 @@
   /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
   .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
 
-  /* Admin cross-space dashboard at /community/mod/. */
-  .jt-mod-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--jt-space-4); }
-  .jt-mod-dashboard-card { display: flex; flex-direction: column; gap: var(--jt-space-3); padding: var(--jt-space-4); text-decoration: none; color: inherit; border: 1px solid var(--jt-border); transition: border-color .15s ease, transform .15s ease; }
-  .jt-mod-dashboard-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
-  /* 1.4.0 polish: stack badge above title so a long space title (e.g.
-     "Welcome & Introductions") never collides with the "X pending" pill.
-     Badge becomes a small chip at the top-left of the card; title wraps
-     freely on its own row beneath it. Reads cleaner at any width. */
-  .jt-mod-dashboard-card-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--jt-space-2); }
-  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); width: 100%; overflow-wrap: anywhere; word-break: break-word; }
-  .jt-mod-dashboard-card-head .jt-badge-danger { align-self: flex-start; flex-shrink: 0; }
-  .jt-mod-dashboard-card-cta { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: var(--jt-text-sm); color: var(--jt-accent); }
+  /* Cross-space moderation dashboard at /community/mod/.
+     1.4.3 redesign: the queue is rendered as a list of actual pending
+     flags, not a navigation grid of space cards. A moderator sees the
+     content excerpt, reason, reporter, and age inline — they only click
+     through to /s/:slug/mod/ when they're ready to act. */
+  .jt-mod-dashboard-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--jt-space-4); margin-block-end: var(--jt-space-5); }
+  .jt-mod-flag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--jt-space-3); }
+  .jt-mod-flag-row { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: var(--jt-space-4); display: flex; flex-direction: column; gap: var(--jt-space-3); transition: border-color .15s ease; }
+  .jt-mod-flag-row:hover { border-color: var(--jt-border-strong); }
+  .jt-mod-flag-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); }
+  .jt-mod-flag-row .jt-mod-flag-reason { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+  .jt-mod-flag-reason--spam { background: var(--jt-danger-light); color: var(--jt-danger); }
+  .jt-mod-flag-reason--offensive,
+  .jt-mod-flag-reason--harassment { background: var(--jt-warn-light); color: var(--jt-warn); }
+  .jt-mod-flag-reason--off_topic { background: var(--jt-accent-light); color: var(--jt-accent); }
+  .jt-mod-flag-row .jt-mod-flag-type { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jt-text-tertiary); background: transparent; padding: 0; }
+  .jt-mod-flag-space { font-size: 0.875rem; font-weight: 500; color: var(--jt-text); text-decoration: none; }
+  .jt-mod-flag-space:hover { color: var(--jt-accent); text-decoration: underline; }
+  .jt-mod-flag-age { margin-inline-start: auto; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-mod-flag-title { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); }
+  .jt-mod-flag-excerpt { font-size: 0.9375rem; color: var(--jt-text-secondary); line-height: 1.5; word-break: break-word; }
+  .jt-mod-flag-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); border-block-start: 1px solid var(--jt-border); }
+  .jt-mod-flag-row .jt-mod-flag-reporter { margin-inline-start: 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-mod-flag-row .jt-mod-flag-note { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: 0.8125rem; color: var(--jt-text-secondary); background: transparent; padding: 0; cursor: help; }
+  .jt-mod-flag-action { display: inline-flex; align-items: center; gap: var(--jt-space-1); margin-inline-start: auto; font-size: 0.875rem; font-weight: 500; color: var(--jt-accent); text-decoration: none; }
+  .jt-mod-flag-action:hover { text-decoration: underline; }
 
   /* Sidebar links column — moderation link sits below "View all members". */
   .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
