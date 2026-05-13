@@ -96,4 +96,20 @@ class Notification extends Model {
 			)
 		);
 	}
+
+	/**
+	 * Return the total notification count for a user (read + unread).
+	 * Paired with list_for_user() for pagination totals.
+	 *
+	 * @param int $user_id
+	 * @return int
+	 */
+	public static function count_for_user( int $user_id ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE user_id = %d',
+				$user_id
+			)
+		);
+	}
 }
