@@ -177,10 +177,7 @@ if ( $space ) {
 	];
 }
 $crumbs[] = [
-	// Short label for the breadcrumb's trailing crumb — full body excerpt
-	// at 80 chars wraps awkwardly when feed posts have no title. 40 chars
-	// + ellipsis fits the crumb row without dominating it.
-	'label' => jetonomy_post_title_or_excerpt( $post, 40 ),
+	'label' => (string) ( $post->title ?? '' ),
 	'url'   => '',
 ];
 
@@ -266,14 +263,12 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<article class="jt-post" data-wp-interactive="jetonomy">
 				<div class="jt-post-head">
 					<?php
-					// Feed-space posts are untitled by design (the body IS the
-					// content). When the stored title is empty we still emit
-					// an <h1> for a11y — assistive tech expects a heading for
-					// the article — but tag it `screen-reader-text` and fill
-					// it with an excerpt so it doesn't visually duplicate
-					// the content below. Titled posts keep the visible h1.
-					$jt_h1_is_sr_only = ( '' === trim( (string) ( $post->title ?? '' ) ) );
-					$jt_h1_label      = jetonomy_post_title_or_excerpt( $post );
+					// 1.4.3: feed-space posts hide the h1 visually but the
+					// title is a real user-entered string used by breadcrumbs,
+					// notifications, search, and share previews. Visible h1
+					// for every other space type.
+					$jt_h1_is_sr_only = ( $space && 'feed' === ( $space->type ?? '' ) );
+					$jt_h1_label      = (string) ( $post->title ?? '' );
 					?>
 					<?php
 					// Feed-space untitled posts: emit the sr-only h1 alone so

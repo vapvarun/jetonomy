@@ -119,11 +119,12 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 			'compose-fields',
 			[
 				'space'             => $space,
-				// Feed-space posts are untitled by design — the body IS the
-				// post. show_title flips to false here so the partial omits
-				// the input entirely (no synthetic title, no hidden field,
-				// no client-side validation friction).
-				'show_title'        => ( 'feed' !== ( $space->type ?? '' ) ),
+				// Title is always collected at write time (every space type).
+				// For feed-spaces the single-post view hides the rendered h1
+				// visually (sr-only) so the page still reads body-first, but
+				// the title is real data — breadcrumbs, notifications,
+				// search, and share previews all use it.
+				'show_title'        => true,
 				'show_tags'         => true,
 				'show_prefix'       => true,
 				'show_private'      => true,
