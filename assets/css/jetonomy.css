@@ -996,8 +996,13 @@
   .jt-idea-status-setter { display: flex; align-items: center; gap: var(--jt-space-3); flex-wrap: wrap; margin: 0; padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
   .jt-idea-status-setter-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-idea-status-options { display: flex; flex-wrap: wrap; gap: 6px; }
-  .jt-idea-status-btn { font-family: inherit; cursor: pointer; border: 1px solid transparent; line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 24%, transparent); outline: none; }
+  /* Inactive setter buttons render neutral so the ONE active status is
+     visually obvious. Only the active button wears its semantic color
+     (planned=blue, in_progress=warn, shipped=success, declined=tertiary).
+     Hover previews the semantic color as a tint so the affordance is
+     still legible. */
+  .jt-idea-status-btn { font-family: inherit; cursor: pointer; background: var(--jt-bg); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip); border-color: color-mix(in srgb, var(--jt-ip) 30%, transparent); outline: none; }
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
   .jt-idea-status-btn.is-active { background: var(--jt-ip); color: #fff; border-color: var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
