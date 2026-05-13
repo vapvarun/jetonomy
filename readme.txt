@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.4.2
+Stable tag: 1.4.3
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,25 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.4.3 - May 2026 =
+
+Security and refactor release. All mutation REST routes now flow through a unified auth helper, the compose pipeline is a single path, and optimistic UI is one shared primitive instead of a dozen one-offs.
+
+* Security  - All mutation REST routes (posts, replies, votes, bookmarks, moderation, spaces, subscriptions, notifications) now use a unified `REST_Auth` permission helper that enforces login + cookie nonce + capability + post-ownership in a single contract. A CI gate (`bin/audit-rest-routes.php`) blocks new routes that skip the helper.
+* Refactor  - Compose pipeline unified across "Share an Idea", the full new-post page, and inline topic embeds. One `composePost()` path; per-surface fields supply extra payload.
+* Refactor  - Feed-space posts are now untitled by design (Twitter-style). Validator no longer requires a title for feed spaces; the inline composer publishes status updates cleanly.
+* Refactor  - Single `optimisticAction()` JS helper replaces ~11 hand-rolled optimistic-update sites (votes, bookmarks, follow, subscribe, reactions, etc.). Failures revert without a page reload.
+* Refactor  - Single `smartDropdown()` JS helper replaces ~4 floating-panel implementations (post menus, reply menus, conversation actions, reaction picker). Auto-flips upward near the viewport edge.
+* Refactor  - `Reputation::award()` / `revoke()` / `award_custom()` is the sole public mutator for trust points. The internal helper was renamed so accidental bypass is impossible.
+* Fix       - Private ideas now stay private when published via the inline composer (previously leaked to public on the first save).
+* Fix       - Polls accept votes again (previously failed silently due to nonce drift between the legacy submitter and the unified compose path).
+* Fix       - Downvote on a reply reverts cleanly when the server rejects the action (no more "needs refresh" UX).
+* Fix       - "More" menu on the last reply in a thread no longer clips below the viewport — the JS positioner flips it upward automatically.
+* Fix       - Reporting a post now correctly deducts reputation from the author (previously the flag-validated action was wired to a no-op).
+* Fix       - Idea-planned action now consistently awards owner reputation across the activity log and notifications.
+* i18n      - ~30 previously-hardcoded JS strings are now translatable. ESLint gate (`no-restricted-syntax`) prevents regression by blocking raw string literals in user-facing JS APIs.
+* Compat    - Aligned with Jetonomy Pro 1.4.3. Install both updates together.
 
 = 1.4.2 - May 2026 =
 
