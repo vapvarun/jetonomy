@@ -308,6 +308,13 @@ class Template_Loader {
 				'messageSend'        => __( 'Send', 'jetonomy' ),
 				'messageSendFailed'  => __( 'Failed to send. Please try again.', 'jetonomy' ),
 				'noMessageMatches'   => __( 'No matches. You can only message people who share at least one space with you.', 'jetonomy' ),
+				// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
+				'muteFailed'         => __( 'Could not update mute setting.', 'jetonomy' ),
+				'archiveFailed'      => __( 'Could not archive the conversation.', 'jetonomy' ),
+				'leaveFailed'        => __( 'Could not leave the conversation.', 'jetonomy' ),
+				'blockFailed'        => __( 'Could not update block setting.', 'jetonomy' ),
+				'confirmLeave'       => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
+				'confirmBlock'       => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
 			),
 			)
 		);

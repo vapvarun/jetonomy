@@ -238,4 +238,216 @@ class MessagingTest extends WP_UnitTestCase {
 		$this->assertIsArray( $body['data'],
 			'"data" must be an array.' );
 	}
+
+	// -------------------------------------------------------------------------
+	// WS3-C — Conversation actions: mute / archive / leave / block
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Helper: create a direct conversation between admin and recipient and
+	 * return its ID. Skips the test cleanly if creation fails.
+	 */
+	private function create_direct_conversation(): int {
+		$response = $this->do_request(
+			'POST',
+			'/jetonomy/v1/conversations',
+			[
+				'recipient_ids' => [ $this->recipient_id ],
+				'message'       => 'Direct convo for action test.',
+			],
+			$this->admin_id
+		);
+		$this->assertContains( $response->get_status(), [ 200, 201 ] );
+		return (int) $response->get_data()['conversation_id'];
+	}
+
+	/**
+	 * Helper: create a group conversation between admin, recipient, and sender.
+	 */
+	private function create_group_conversation(): int {
+		$response = $this->do_request(
+			'POST',
+			'/jetonomy/v1/conversations',
+			[
+				'recipient_ids' => [ $this->recipient_id, $this->sender_id ],
+				'message'       => 'Group convo for action test.',
+				'title'         => 'Action Test Group',
+			],
+			$this->admin_id
+		);
+		$this->assertContains( $response->get_status(), [ 200, 201 ] );
+		return (int) $response->get_data()['conversation_id'];
+	}
+
+	/**
+	 * POST /conversations/{id}/mute flips is_muted and the conversation
+	 * payload reflects the new state.
+	 */
+	public function test_mute_endpoint_toggles_state(): void {
+		$conv_id = $this->create_direct_conversation();
+
+		$response = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$conv_id}/mute",
+			[ 'muted' => true ],
+			$this->admin_id
+		);
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data()['data'] ?? [];
+		$this->assertTrue( (bool) ( $data['is_muted'] ?? false ),
+			'Conversation must surface is_muted=true after muting.' );
+
+		// Unmute round-trip.
+		$response = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$conv_id}/mute",
+			[ 'muted' => false ],
+			$this->admin_id
+		);
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data()['data'] ?? [];
+		$this->assertFalse( (bool) ( $data['is_muted'] ?? true ),
+			'Conversation must surface is_muted=false after unmuting.' );
+	}
+
+	/**
+	 * POST /conversations/{id}/archive moves the conversation out of the
+	 * default list and into ?filter=archived.
+	 */
+	public function test_archive_endpoint_moves_conversation_to_archived_filter(): void {
+		$conv_id = $this->create_direct_conversation();
+
+		$archive = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$conv_id}/archive",
+			[ 'archived' => true ],
+			$this->admin_id
+		);
+		$this->assertEquals( 200, $archive->get_status() );
+
+		// Default (active) list — should NOT contain the conv.
+		$active = $this->do_request( 'GET', '/jetonomy/v1/conversations', [], $this->admin_id );
+		$active_ids = array_column( $active->get_data()['data'] ?? [], 'id' );
+		$this->assertNotContains( $conv_id, $active_ids,
+			'Archived conversation must not appear in the default list.' );
+
+		// Archived list — should contain the conv.
+		$archived = $this->do_request( 'GET', '/jetonomy/v1/conversations', [ 'filter' => 'archived' ], $this->admin_id );
+		$archived_ids = array_column( $archived->get_data()['data'] ?? [], 'id' );
+		$this->assertContains( $conv_id, $archived_ids,
+			'Archived conversation must appear under ?filter=archived.' );
+	}
+
+	/**
+	 * POST /conversations/{id}/leave is rejected for direct conversations
+	 * and accepted (with system message) for group conversations.
+	 */
+	public function test_leave_endpoint_group_only(): void {
+		// Direct: 400.
+		$direct_id = $this->create_direct_conversation();
+		$direct    = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$direct_id}/leave",
+			[],
+			$this->admin_id
+		);
+		$this->assertEquals( 400, $direct->get_status(),
+			'Leave on a direct conversation must return 400.' );
+
+		// Group: success, and conversation drops from the default list.
+		$group_id = $this->create_group_conversation();
+		$leave    = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$group_id}/leave",
+			[],
+			$this->admin_id
+		);
+		$this->assertEquals( 200, $leave->get_status() );
+
+		$listing = $this->do_request( 'GET', '/jetonomy/v1/conversations', [], $this->admin_id );
+		$ids     = array_column( $listing->get_data()['data'] ?? [], 'id' );
+		$this->assertNotContains( $group_id, $ids,
+			'Left group must not appear in the default conversations list.' );
+
+		// A system message announcing the departure must exist in the thread.
+		global $wpdb;
+		$msg_table = $wpdb->prefix . 'jt_pro_messages';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$system_count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$msg_table} WHERE conversation_id = %d AND is_system = 1",
+				$group_id
+			)
+		);
+		$this->assertGreaterThanOrEqual( 1, $system_count,
+			'Leaving a group must insert at least one system message into the thread.' );
+	}
+
+	/**
+	 * POST /conversations/{id}/block is rejected for group conversations
+	 * and toggles is_blocked for direct conversations.
+	 */
+	public function test_block_endpoint_direct_only(): void {
+		// Group: 400.
+		$group_id = $this->create_group_conversation();
+		$bad      = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$group_id}/block",
+			[ 'blocked' => true ],
+			$this->admin_id
+		);
+		$this->assertEquals( 400, $bad->get_status(),
+			'Block on a group conversation must return 400.' );
+
+		// Direct: success.
+		$direct_id = $this->create_direct_conversation();
+		$ok        = $this->do_request(
+			'POST',
+			"/jetonomy/v1/conversations/{$direct_id}/block",
+			[ 'blocked' => true ],
+			$this->admin_id
+		);
+		$this->assertEquals( 200, $ok->get_status() );
+
+		$data = $ok->get_data()['data'] ?? [];
+		$this->assertTrue( (bool) ( $data['is_blocked'] ?? false ),
+			'Direct conversation must surface is_blocked=true after blocking.' );
+
+		// Verify the flag landed on the OTHER participant's row.
+		global $wpdb;
+		$part_table = $wpdb->prefix . 'jt_pro_conversation_participants';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$blocked_row_user = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT user_id FROM {$part_table} WHERE conversation_id = %d AND is_blocked = 1 LIMIT 1",
+				$direct_id
+			)
+		);
+		$this->assertEquals( $this->recipient_id, $blocked_row_user,
+			'is_blocked must be set on the OTHER participant row, not the blocker.' );
+	}
+
+	/**
+	 * The four action endpoints must require an authenticated request — an
+	 * anonymous caller hits the REST_Auth nonce/login gate before reaching
+	 * the handler.
+	 */
+	public function test_action_endpoints_reject_anonymous(): void {
+		$conv_id = $this->create_direct_conversation();
+
+		foreach ( [ 'mute', 'archive', 'block' ] as $action ) {
+			$response = $this->do_request(
+				'POST',
+				"/jetonomy/v1/conversations/{$conv_id}/{$action}",
+				[],
+				null // anonymous.
+			);
+			$this->assertContains(
+				$response->get_status(),
+				[ 401, 403 ],
+				"Anonymous POST to /{$action} must be rejected (got {$response->get_status()})."
+			);
+		}
+	}
 }
