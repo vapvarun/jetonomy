@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Subscription;
 use function Jetonomy\table;
 
@@ -39,8 +40,7 @@ class Subscriptions_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_create_args(),
 				],
 			]
@@ -53,8 +53,7 @@ class Subscriptions_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'delete_item' ],
-				'permission_callback' => function () {
-					return is_user_logged_in(); },
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			]
 		);
 	}

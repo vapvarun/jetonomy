@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Revision;
@@ -57,7 +58,7 @@ class Replies_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_create_args(),
 				),
 			)
@@ -71,13 +72,13 @@ class Replies_Controller extends Base_Controller {
 				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				),
 			)
 		);
@@ -89,7 +90,7 @@ class Replies_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'accept_reply' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			)
 		);
 
@@ -99,7 +100,7 @@ class Replies_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'split_reply' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
 					'title'    => array(
 						'type'     => 'string',

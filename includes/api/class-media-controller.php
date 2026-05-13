@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 
 class Media_Controller extends Base_Controller {
 
@@ -30,7 +31,12 @@ class Media_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'upload_image' ],
-					'permission_callback' => [ $this, 'upload_permissions_check' ],
+					// REST_Auth enforces login + nonce upfront. The fine-grained
+					// cap matrix (upload_files OR jetonomy_upload_media OR
+					// jetonomy_create_posts OR jetonomy_create_replies) is
+					// re-checked in upload_image() so the handler keeps the same
+					// cap-OR semantics REST_Auth can't express in a single call.
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
 			]
 		);

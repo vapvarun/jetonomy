@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Revision;
@@ -62,7 +63,7 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_create_args(),
 				),
 			)
@@ -92,13 +93,13 @@ class Posts_Controller extends Base_Controller {
 				array(
 					'methods'             => 'PATCH',
 					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
 				),
 				array(
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				),
 			)
 		);
@@ -110,7 +111,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'close_post' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			)
 		);
 
@@ -120,7 +121,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'pin_post' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			)
 		);
 
@@ -130,7 +131,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'move_post' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
 					'target_space_id' => array(
 						'type'     => 'integer',
@@ -147,7 +148,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'merge_post' ),
-				'permission_callback' => [ $this, 'login_permission_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
 					'target_post_id' => array(
 						'type'     => 'integer',
@@ -167,7 +168,7 @@ class Posts_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'set_idea_status' ),
-				'permission_callback' => array( $this, 'login_permission_check' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => array(
 					'idea_status' => array(
 						'type'     => 'string',

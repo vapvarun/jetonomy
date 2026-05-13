@@ -59,12 +59,11 @@ if ( ! is_dir( $target ) && ! is_file( $target ) ) {
  * signature, HMAC, etc).
  */
 $allowlist = array(
-	// Reply-by-email webhook — signature-validated payload.
+	// Reply-by-email webhook — signature-validated payload. The handler
+	// authenticates by reading the HMAC signature header before doing any
+	// work, so the route legitimately accepts `__return_true` — no WP
+	// login or nonce exists for the upstream mail relay.
 	'includes/extensions/reply-by-email/class-extension.php',
-	// Web-push public config (kept here for parity even though all routes
-	// in that file are READABLE; mutation routes added later would need an
-	// explicit per-route exemption).
-	'includes/extensions/web-push/class-extension.php',
 );
 
 /** Approved permission_callback static calls (case-sensitive). */
@@ -204,10 +203,7 @@ function audit_file( string $path, array $approved, array $mutation_markers ): a
 		// printable form — clear, simple, and resilient to formatting.
 		$body_str = stringify_tokens( $body_tokens );
 
-		// Determine if any mutation marker appears in the args. The marker
-		// must be present in the `methods` slot, but a textual check is
-		// adequate: register_rest_route() takes a single args array, and
-		// `methods` is the only place these tokens legitimately appear.
+		// Determine if any mutation marker appears in the args.
 		$is_mutation = false;
 		foreach ( $mutation_markers as $marker ) {
 			if ( stripos( $body_str, $marker ) !== false ) {
@@ -219,28 +215,92 @@ function audit_file( string $path, array $approved, array $mutation_markers ): a
 			continue;
 		}
 
-		// Extract the permission_callback value as text. We look for
-		// `'permission_callback' =>` or `"permission_callback" =>` and grab
-		// the next expression up to a comma at depth 0.
-		$callback_text = '';
-		if ( preg_match( '/[\'"]permission_callback[\'"]\s*=>\s*(.+?)(?:,\s*[\'"]\w+[\'"]\s*=>|,\s*\)|\)\s*$)/s', $body_str, $m ) ) {
-			$callback_text = trim( $m[1] );
-		}
+		// register_rest_route() accepts either a single-method route array
+		// (`[ 'methods' => ..., 'permission_callback' => ... ]`) or a
+		// multi-method block (`[ [ ... ], [ ... ] ]`). We need to inspect
+		// each method/permission_callback pair individually so that a route
+		// block with a READABLE callback followed by a CREATABLE callback
+		// only flags violations on the CREATABLE half.
+		//
+		// Approach — walk every `'methods' => <expr>` and pair it with the
+		// next `'permission_callback' => <expr>`. Methods come immediately
+		// before permission_callback in WP route registration, so a pair-up
+		// pass over their positions is sufficient and resilient to commas
+		// embedded inside the `callback` expression (e.g. `[ $this, 'm' ]`).
+		preg_match_all(
+			'/[\'"]methods[\'"]\s*=>\s*([^,]+?)\s*,/s',
+			$body_str,
+			$method_matches,
+			PREG_OFFSET_CAPTURE
+		);
+		preg_match_all(
+			// `permission_callback` value runs from `=>` until either
+			//   - the next `,\s*'<word>' =>` (another key in the same array)
+			//   - or `,\s*]` / `]` (end of the route-config array).
+			// `\w+[\'"]\s*=>` is the terminator that previously chopped off
+			// `'read' )` from inside `auth_mutation( 'read' )` — by adding a
+			// preceding `\s` requirement before the next-key `'<word>'` we
+			// keep the terminator anchored to key-value boundaries instead.
+			'/[\'"]permission_callback[\'"]\s*=>\s*(.+?)(?:,\s+[\'"]\w+[\'"]\s*=>|,\s*[\]\)]|\s*[\]\)])/s',
+			$body_str,
+			$perm_matches,
+			PREG_OFFSET_CAPTURE
+		);
 
-		// Approve if the callback text contains any approved static call.
-		$approved_match = false;
-		foreach ( $approved as $needle ) {
-			if ( strpos( $callback_text, $needle ) !== false ) {
-				$approved_match = true;
-				break;
-			}
-		}
+		$method_pairs = $method_matches[1] ?? array();
+		$perm_pairs   = $perm_matches[1]   ?? array();
 
-		if ( ! $approved_match ) {
+		if ( empty( $perm_pairs ) ) {
+			// No permission_callback at all in a route the parser considers a
+			// mutation — flag once with `(unresolved)` for human review.
 			$violations[] = array(
 				'line'     => $call_line,
-				'callback' => $callback_text !== '' ? $callback_text : '(unresolved)',
+				'callback' => '(unresolved)',
 			);
+			continue;
+		}
+
+		// Pair each `permission_callback` with the most recent preceding
+		// `methods` expression. If there are no `methods` matches at all
+		// (defensive), fall back to validating every permission_callback.
+		foreach ( $perm_pairs as $perm_match ) {
+			$perm_offset   = (int) $perm_match[1];
+			$callback_text = trim( (string) $perm_match[0] );
+
+			$methods_text = '';
+			foreach ( $method_pairs as $method_match ) {
+				$method_offset = (int) $method_match[1];
+				if ( $method_offset < $perm_offset ) {
+					$methods_text = trim( (string) $method_match[0] );
+				} else {
+					break;
+				}
+			}
+
+			$pair_is_mutation = false;
+			foreach ( $mutation_markers as $marker ) {
+				if ( stripos( $methods_text, $marker ) !== false ) {
+					$pair_is_mutation = true;
+					break;
+				}
+			}
+			if ( ! $pair_is_mutation ) {
+				continue;
+			}
+
+			$approved_match = false;
+			foreach ( $approved as $needle ) {
+				if ( strpos( $callback_text, $needle ) !== false ) {
+					$approved_match = true;
+					break;
+				}
+			}
+			if ( ! $approved_match ) {
+				$violations[] = array(
+					'line'     => $call_line,
+					'callback' => $callback_text !== '' ? $callback_text : '(unresolved)',
+				);
+			}
 		}
 	}
 

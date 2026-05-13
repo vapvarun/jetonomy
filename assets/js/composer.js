@@ -242,38 +242,38 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var formData = new FormData();
         formData.append( 'file', file );
 
-        fetch( apiBase + '/media', {
-            method: 'POST',
-            headers: restNonce ? { 'X-WP-Nonce': restNonce } : {},
-            body: formData,
-            credentials: 'same-origin',
-        } )
-        .then( function( r ) {
-            return r.json().then( function( body ) {
-                return { ok: r.ok, status: r.status, body: body };
-            } );
-        } )
-        .then( function( res ) {
-            placeholder.remove();
-            if ( res.ok && res.body && res.body.url ) {
-                var img = document.createElement( 'img' );
-                img.src = res.body.url;
-                img.alt = res.body.alt || file.name;
-                img.style.maxWidth = '100%';
-                img.style.height = 'auto';
-                img.style.borderRadius = '8px';
-                img.style.margin = '8px 0';
-                editor.appendChild( img );
-                editor.appendChild( document.createElement( 'br' ) );
-            } else {
-                var msg = ( res.body && res.body.message ) ? res.body.message : 'Upload failed';
-                if ( window.bnToast ) { window.bnToast( msg, 'error' ); }
+        // restFetch handles nonce injection + the 403/invalid-nonce refresh
+        // path centrally so this upload no longer has to remember the
+        // X-WP-Nonce header (or fail silently when restNonce isn't around).
+        var doUpload = function () {
+            if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
+                placeholder.remove();
+                if ( window.bnToast ) { window.bnToast( jtI18n( 'uploadFailed', 'Upload failed' ), 'error' ); }
+                return;
             }
-        } )
-        .catch( function() {
-            placeholder.remove();
-            if ( window.bnToast ) { window.bnToast( jtI18n( 'uploadFailed', 'Upload failed' ), 'error' ); }
-        } );
+            window.jetonomyRest.restFetch( '/media', {
+                method: 'POST',
+                body: formData,
+            } )
+            .then( function ( res ) {
+                placeholder.remove();
+                if ( res.ok && res.data && res.data.url ) {
+                    var img = document.createElement( 'img' );
+                    img.src = res.data.url;
+                    img.alt = res.data.alt || file.name;
+                    img.style.maxWidth = '100%';
+                    img.style.height = 'auto';
+                    img.style.borderRadius = '8px';
+                    img.style.margin = '8px 0';
+                    editor.appendChild( img );
+                    editor.appendChild( document.createElement( 'br' ) );
+                } else {
+                    var msg = ( res.data && res.data.message ) ? res.data.message : 'Upload failed';
+                    if ( window.bnToast ) { window.bnToast( msg, 'error' ); }
+                }
+            } );
+        };
+        doUpload();
     }
 
     // ── G3: Instant Search-as-You-Type ──
@@ -592,26 +592,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
         btn.disabled = true;
         btn.textContent = jtI18n( 'joining', 'Joining\u2026' );
 
-        fetch(apiBase + '/spaces/' + spaceId + '/members', {
+        window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-            credentials: 'same-origin',
-            body: JSON.stringify({}),
+            body: {},
         })
-        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
-            if (res.ok && res.data.status === 'joined') {
+            if (res.ok && res.data && res.data.status === 'joined') {
                 window.location.reload();
             } else {
                 btn.disabled = false;
                 btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
-                (window.bnToast ? window.bnToast(res.data.message || 'Could not join space.', 'error') : null);
+                (window.bnToast ? window.bnToast((res.data && res.data.message) || 'Could not join space.', 'error') : null);
             }
-        })
-        .catch(function() {
-            btn.disabled = false;
-            btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
-            (window.bnToast ? window.bnToast(jtI18n( 'networkErrorRetry', 'Network error. Please try again.' ), 'error') : null);
         });
     });
 
@@ -628,32 +620,25 @@ document.addEventListener( 'DOMContentLoaded', () => {
         btn.disabled = true;
         btn.textContent = jtI18n( 'requesting', 'Requesting\u2026' );
 
-        fetch(apiBase + '/spaces/' + spaceId + '/members', {
+        window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-            credentials: 'same-origin',
-            body: JSON.stringify({}),
+            body: {},
         })
-        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
-            if (res.data.status === 'pending') {
+            var data = res.data || {};
+            if (data.status === 'pending') {
                 btn.disabled = true;
                 btn.textContent = jtI18n( 'awaitingApproval', 'Awaiting Approval' );
                 btn.classList.remove('jt-btn-fill');
                 btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(res.data.message || 'Request submitted. Awaiting approval.', 'success') : null);
-            } else if (res.ok && res.data.status === 'joined') {
+                (window.bnToast ? window.bnToast(data.message || 'Request submitted. Awaiting approval.', 'success') : null);
+            } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
                 btn.disabled = false;
                 btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
-                (window.bnToast ? window.bnToast(res.data.message || 'Could not submit request.', 'error') : null);
+                (window.bnToast ? window.bnToast(data.message || 'Could not submit request.', 'error') : null);
             }
-        })
-        .catch(function() {
-            btn.disabled = false;
-            btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
-            (window.bnToast ? window.bnToast(jtI18n( 'networkErrorRetry', 'Network error. Please try again.' ), 'error') : null);
         });
     });
 
@@ -671,27 +656,21 @@ document.addEventListener( 'DOMContentLoaded', () => {
         var submitBtn = form.querySelector('[type="submit"]');
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'submitting', 'Submitting\u2026' ); }
 
-        fetch(apiBase + '/spaces/' + spaceId + '/members', {
+        window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-            credentials: 'same-origin',
-            body: JSON.stringify({ message: message }),
+            body: { message: message },
         })
-        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
-            if (res.data.status === 'pending') {
-                showGateMessage(form, res.data.message || 'Request submitted. Awaiting approval.', false);
+            var data = res.data || {};
+            if (data.status === 'pending') {
+                showGateMessage(form, data.message || 'Request submitted. Awaiting approval.', false);
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'requestSent', 'Request Sent' ); }
-            } else if (res.ok && res.data.status === 'joined') {
+            } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
-                showGateMessage(form, res.data.message || 'Could not submit request.', true);
+                showGateMessage(form, data.message || 'Could not submit request.', true);
             }
-        })
-        .catch(function() {
-            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
-            showGateMessage(form, jtI18n( 'networkErrorRetry', 'Network error. Please try again.' ), true);
         });
     });
 }());

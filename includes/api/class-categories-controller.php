@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 
@@ -37,7 +38,7 @@ class Categories_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'manage_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_categories' ),
 					'args'                => $this->get_create_args(),
 				],
 			]
@@ -55,13 +56,13 @@ class Categories_Controller extends Base_Controller {
 				[
 					'methods'             => 'PATCH',
 					'callback'            => [ $this, 'update_item' ],
-					'permission_callback' => [ $this, 'manage_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_categories' ),
 					'args'                => $this->get_update_args(),
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_item' ],
-					'permission_callback' => [ $this, 'manage_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_manage_categories' ),
 				],
 			]
 		);

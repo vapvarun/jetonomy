@@ -16,6 +16,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 
 class Auth_Controller extends Base_Controller {
 
@@ -29,7 +30,7 @@ class Auth_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'login' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'login' ] ),
 					'args'                => [
 						'user_login'    => [
 							'required'          => true,
@@ -56,7 +57,7 @@ class Auth_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'register_user' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'register' ] ),
 					'args'                => [
 						'username'      => [
 							'required' => true,
@@ -106,7 +107,7 @@ class Auth_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'lost_password' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'lost_password' ] ),
 					'args'                => [
 						'user_login'    => [
 							'required'          => true,
@@ -161,7 +162,7 @@ class Auth_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'resend_verification' ],
-					'permission_callback' => '__return_true',
+					'permission_callback' => REST_Auth::auth_public_write( [ 'rate_limit' => 'resend_verification' ] ),
 					'args'                => [
 						'user_login' => [
 							'required'          => true,

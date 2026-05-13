@@ -11,19 +11,12 @@
 	btn.addEventListener('click', function (e) {
 		e.preventDefault();
 		btn.disabled = true;
-		fetch(window.jetonomyData.restBase + '/notifications/mark-all-read', {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'X-WP-Nonce': window.jetonomyData.restNonce,
-				'Content-Type': 'application/json'
-			}
-		}).then(function (r) {
-			if (!r.ok) { throw new Error('mark_all_read_failed'); }
+		window.jetonomyRest.restFetch('/notifications/mark-all-read', {
+			method: 'POST'
+		}).then(function (res) {
+			if (!res.ok) { btn.disabled = false; return; }
 			document.querySelectorAll('.jt-notif-dot').forEach(function (d) { d.remove(); });
 			btn.remove();
-		}).catch(function () {
-			btn.disabled = false;
 		});
 	});
 })();

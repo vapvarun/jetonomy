@@ -142,42 +142,26 @@
 			clearError( select );
 			select.disabled = true;
 
-			fetch( data.restBase + '/spaces/' + spaceId + '/members/' + userId, {
+			window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members/' + userId, {
 				method: 'PATCH',
-				credentials: 'same-origin',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce':   data.restNonce
-				},
-				body: JSON.stringify( { role: role } )
-			} )
-				.then( function ( res ) {
-					return res.json().then( function ( body ) {
-						return { ok: res.ok, status: res.status, body: body };
-					} );
-				} )
-				.then( function ( payload ) {
-					if ( ! payload.ok ) {
-						var msg = ( payload.body && payload.body.message )
-							|| ( ( data.i18n && data.i18n.roleUpdateFailed ) || 'Could not update role. Please try again.' );
-						select.value = prev;
-						select.disabled = false;
-						showError( select, msg );
-						return;
-					}
-					var row = select.closest( '.jt-member-item' );
-					if ( row ) {
-						setBadge( row, role );
-					}
-					select.setAttribute( 'data-prev-role', role );
-					select.disabled = false;
-					clearError( select );
-				} )
-				.catch( function () {
+				body: { role: role }
+			} ).then( function ( payload ) {
+				if ( ! payload.ok ) {
+					var msg = ( payload.data && payload.data.message )
+						|| ( ( data.i18n && data.i18n.roleUpdateFailed ) || 'Could not update role. Please try again.' );
 					select.value = prev;
 					select.disabled = false;
-					showError( select, ( data.i18n && data.i18n.networkError ) || 'Network error. Please try again.' );
-				} );
+					showError( select, msg );
+					return;
+				}
+				var row = select.closest( '.jt-member-item' );
+				if ( row ) {
+					setBadge( row, role );
+				}
+				select.setAttribute( 'data-prev-role', role );
+				select.disabled = false;
+				clearError( select );
+			} );
 		} );
 	} );
 
@@ -214,24 +198,17 @@
 				return;
 			}
 			btn.disabled = true;
-			fetch( data.restBase + '/moderation/ban', {
+			window.jetonomyRest.restFetch( '/moderation/ban', {
 				method: 'POST',
-				credentials: 'same-origin',
-				headers: {
-					'X-WP-Nonce': data.restNonce,
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify( {
+				body: {
 					user_id: parseInt( userId, 10 ),
 					space_id: parseInt( spaceId, 10 ),
 					type: 'space_ban'
-				} )
-			} ).then( function ( r ) {
-				return r.json().then( function ( body ) { return { ok: r.ok, body: body }; } );
+				}
 			} ).then( function ( res ) {
 				if ( ! res.ok ) {
 					btn.disabled = false;
-					var msg = ( res.body && res.body.message ) || 'Ban failed. Please try again.';
+					var msg = ( res.data && res.data.message ) || 'Ban failed. Please try again.';
 					showError( btn, msg );
 					return;
 				}
@@ -244,9 +221,6 @@
 					row.appendChild( note );
 				}
 				btn.remove();
-			} ).catch( function () {
-				btn.disabled = false;
-				showError( btn, 'Network error. Please try again.' );
 			} );
 		} );
 	} );

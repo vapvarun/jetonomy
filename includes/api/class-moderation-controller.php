@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Flag;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
@@ -62,7 +63,7 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'approve' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 			]
 		);
 
@@ -73,18 +74,21 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'mark_spam' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 			]
 		);
 
 		// Create a flag report (requires jetonomy_flag, not moderate).
+		// Silenced-user gate runs inside the handler — REST_Auth covers
+		// login + nonce + cap, the silenced check needs to read a Restriction
+		// row that is too business-rule heavy to live in the auth helper.
 		register_rest_route(
 			$ns,
 			'/flags',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_flag' ],
-				'permission_callback' => [ $this, 'require_flag' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_flag' ),
 				'args'                => [
 					'object_type' => [
 						'type'     => 'string',
@@ -127,7 +131,7 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'trash_content' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 			]
 		);
 
@@ -138,7 +142,7 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'resolve_flag' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 				'args'                => [
 					'status' => [
 						'type'     => 'string',
@@ -159,7 +163,7 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_action' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 				'args'                => [
 					'action' => [
 						'type'              => 'string',
@@ -196,14 +200,20 @@ class Moderation_Controller extends Base_Controller {
 			]
 		);
 
-		// Ban user.
+		// Ban user — REST_Auth handles login + cookie nonce only. The cap
+		// matrix here is too contextual for the helper: global bans + silences
+		// require jetonomy_moderate / manage_options, but space_ban also accepts
+		// the per-space admin role from the supplied body `space_id`. The
+		// detailed gate runs inside ban_user() once the request body has been
+		// parsed; REST_Auth still blocks anonymous + un-nonced requests at the
+		// route layer so unauthenticated callers never reach the handler.
 		register_rest_route(
 			$ns,
 			'/moderation/ban',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'ban_user' ],
-				'permission_callback' => [ $this, 'require_ban_permission' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => [
 					'user_id'    => [
 						'type'     => 'integer',
@@ -228,7 +238,7 @@ class Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'unban_user' ],
-				'permission_callback' => [ $this, 'require_moderate' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
 			]
 		);
 	}
@@ -395,9 +405,17 @@ class Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /flags — Create a flag report.
+	 *
+	 * REST_Auth covers login + nonce + the `jetonomy_flag` cap. The silenced-user
+	 * check stays in the handler because it queries a Restriction row — a
+	 * business-rule layer that doesn't belong in the auth helper.
 	 */
 	public function create_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = get_current_user_id();
+
+		if ( Restriction::is_silenced( $user_id ) ) {
+			return new WP_Error( 'silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
+		}
 
 		$object_type = sanitize_text_field( (string) $request->get_param( 'object_type' ) );
 		$object_id   = absint( $request->get_param( 'object_id' ) );
@@ -654,6 +672,12 @@ class Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /moderation/ban — Issue a ban, space ban, or silence.
+	 *
+	 * REST_Auth gates this on `jetonomy_moderate` OR `manage_options`. Space
+	 * admins legitimately need to issue `space_ban` for their own space even
+	 * without those caps, so the route-level callback above accepts the broad
+	 * pair and we re-resolve the space-admin delegation here. Global bans /
+	 * silences always require the upfront caps; space-bans accept space-admins.
 	 */
 	public function ban_user( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id    = absint( $request->get_param( 'user_id' ) );
@@ -661,6 +685,20 @@ class Moderation_Controller extends Base_Controller {
 		$reason     = $request->get_param( 'reason' ) ? sanitize_textarea_field( (string) $request->get_param( 'reason' ) ) : null;
 		$space_id   = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
 		$expires_at = $request->get_param( 'expires_at' ) ? sanitize_text_field( (string) $request->get_param( 'expires_at' ) ) : null;
+
+		// Cap matrix mirroring the legacy require_ban_permission():
+		//   - jetonomy_moderate OR manage_options always passes.
+		//   - space_ban additionally accepts the space-admin delegate from the
+		//     body-supplied space_id.
+		// Global bans / silences without either cap are rejected.
+		$actor_id = get_current_user_id();
+		$has_caps = current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' );
+		if ( ! $has_caps ) {
+			if ( 'space_ban' !== $type || ! $space_id
+				|| ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( $actor_id, $space_id ) ) {
+				return $this->permission_error();
+			}
+		}
 
 		if ( ! get_userdata( $user_id ) ) {
 			return $this->not_found( 'User' );

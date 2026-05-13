@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Vote;
@@ -35,13 +36,13 @@ class Votes_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'vote_post' ],
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_vote_args(),
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'unvote_post' ],
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
 			]
 		);
@@ -53,13 +54,13 @@ class Votes_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'vote_reply' ],
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_vote_args(),
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'unvote_reply' ],
-					'permission_callback' => [ $this, 'login_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
 			]
 		);

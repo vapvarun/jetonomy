@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\JoinRequest;
@@ -53,7 +54,12 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_item' ],
-					'permission_callback' => [ $this, 'create_permission_check' ],
+					// REST_Auth handles login + nonce. The detailed cap matrix
+					// (manage_options OR jetonomy_create_spaces OR admin-allowed
+					// role) stays in create_permission_check because it consults
+					// the admin's saved frontend_space_creation_roles list and
+					// the user's WP roles — neither belongs in REST_Auth.
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_create_args(),
 				],
 			]
@@ -72,13 +78,15 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => 'PATCH',
 					'callback'            => [ $this, 'update_item' ],
-					'permission_callback' => [ $this, 'update_permission_check' ],
+					// Space-admin check happens inside the handler because it
+					// resolves the route's `id` against per-space role rows.
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'delete_item' ],
-					'permission_callback' => [ $this, 'update_permission_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
 			]
 		);
@@ -96,7 +104,7 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'join_space' ],
-					'permission_callback' => [ $this, 'require_login_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
 			]
 		);
@@ -132,7 +140,7 @@ class Spaces_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'generate_invite' ],
-				'permission_callback' => [ $this, 'require_login_check' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => [
 					'max_uses'   => [
 						'type'     => 'integer',
@@ -165,12 +173,12 @@ class Spaces_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
 					'callback'            => [ $this, 'leave_space' ],
-					'permission_callback' => [ $this, 'require_login_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
 				[
 					'methods'             => 'PATCH',
 					'callback'            => [ $this, 'update_member_role' ],
-					'permission_callback' => [ $this, 'require_login_check' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => [
 						'role' => [
 							'type'     => 'string',
@@ -357,8 +365,17 @@ class Spaces_Controller extends Base_Controller {
 
 	/**
 	 * POST /spaces — Create a new space.
+	 *
+	 * REST_Auth at the route layer enforces login + nonce. The cap matrix
+	 * (manage_options / jetonomy_create_spaces / admin-allowed role) is too
+	 * contextual for the helper, so re-run create_permission_check() here.
 	 */
 	public function create_item( $request ) {
+		$gate = $this->create_permission_check();
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
 		$title = sanitize_text_field( $request->get_param( 'title' ) );
 
 		if ( empty( $title ) ) {

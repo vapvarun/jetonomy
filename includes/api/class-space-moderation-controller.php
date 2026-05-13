@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Space;
 use Jetonomy\Moderation\Moderation_Permissions;
 use Jetonomy\Moderation\Moderation_Service;
@@ -51,7 +52,10 @@ class Space_Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'resolve_flag' ],
-				'permission_callback' => [ $this, 'require_view_space_queue' ],
+				// REST_Auth handles login + nonce; the per-space queue gate
+				// (which needs the path-bound `id`) runs in the handler via
+				// Moderation_Permissions::can_view_space_queue.
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				'args'                => [
 					'status' => [
 						'type'     => 'string',
@@ -68,7 +72,9 @@ class Space_Moderation_Controller extends Base_Controller {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'act_on_object' ],
-				'permission_callback' => [ $this, 'require_view_space_queue' ],
+				// Same shape as resolve_flag — gate is per-space + per-object
+				// inside the handler.
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 			]
 		);
 	}
@@ -116,8 +122,17 @@ class Space_Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /spaces/{id}/moderation/flags/{flag_id}/resolve
+	 *
+	 * REST_Auth covers login + nonce at the route level. The per-space gate
+	 * has to run here because it depends on the path-bound `id` plus the
+	 * caller's space role — both unavailable to the route helper.
 	 */
 	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$gate = $this->require_view_space_queue( $request );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
 		$flag_id = absint( $request->get_param( 'flag_id' ) );
 		$status  = sanitize_text_field( (string) $request->get_param( 'status' ) );
 
@@ -138,8 +153,16 @@ class Space_Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /spaces/{id}/moderation/(approve|spam|trash)/(post|reply)/{obj_id}
+	 *
+	 * Same gate pattern as resolve_flag — REST_Auth handles login/nonce,
+	 * the per-space queue check runs here.
 	 */
 	public function act_on_object( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$gate = $this->require_view_space_queue( $request );
+		if ( is_wp_error( $gate ) ) {
+			return $gate;
+		}
+
 		$action = sanitize_key( (string) $request->get_param( 'action' ) );
 		$type   = sanitize_key( (string) $request->get_param( 'type' ) );
 		$obj_id = absint( $request->get_param( 'obj_id' ) );

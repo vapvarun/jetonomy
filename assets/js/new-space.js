@@ -95,23 +95,17 @@
 			coverStatus.textContent = i18n.uploading || 'Uploading...';
 			var fd = new FormData();
 			fd.append('file', file);
-			fetch(form.dataset.jtRestBase + '/media', {
+			window.jetonomyRest.restFetch('/media', {
 				method: 'POST',
-				credentials: 'same-origin',
-				headers: { 'X-WP-Nonce': form.dataset.jtRestNonce },
 				body: fd
-			}).then(function (r) {
-				return r.json().then(function (b) { return { ok: r.ok, body: b }; });
 			}).then(function (res) {
-				if (!res.ok || !res.body || !res.body.url) {
-					coverStatus.textContent = (res.body && res.body.message) || (i18n.uploadFailed || 'Upload failed.');
+				if (!res.ok || !res.data || !res.data.url) {
+					coverStatus.textContent = (res.data && res.data.message) || (i18n.uploadFailed || 'Upload failed.');
 					return;
 				}
-				setPreview(res.body.url);
+				setPreview(res.data.url);
 				coverStatus.textContent = i18n.uploaded || 'Uploaded.';
 				setTimeout(function () { coverStatus.textContent = ''; }, 2000);
-			}).catch(function () {
-				coverStatus.textContent = i18n.networkError || 'Network error.';
 			});
 			coverInput.value = '';
 		});
@@ -129,28 +123,17 @@
 		var fd = new FormData(form);
 		var payload = {};
 		fd.forEach(function (v, k) { if (v) { payload[k] = v; } });
-		fetch(form.dataset.jtRestBase + '/spaces', {
+		window.jetonomyRest.restFetch('/spaces', {
 			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'X-WP-Nonce': form.dataset.jtRestNonce,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(payload)
-		}).then(function (r) {
-			return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+			body: payload
 		}).then(function (res) {
-			if (!res.ok || !res.body || !res.body.slug) {
-				errBox.textContent = (res.body && res.body.message) || (i18n.createSpaceFailed || 'Could not create the space. Please try again.');
+			if (!res.ok || !res.data || !res.data.slug) {
+				errBox.textContent = (res.data && res.data.message) || (i18n.createSpaceFailed || 'Could not create the space. Please try again.');
 				errBox.hidden = false;
 				btn.disabled = false;
 				return;
 			}
-			window.location.href = form.dataset.jtCommunityBase + '/s/' + res.body.slug + '/';
-		}).catch(function () {
-			errBox.textContent = i18n.networkErrorRetry || 'Network error. Please try again.';
-			errBox.hidden = false;
-			btn.disabled = false;
+			window.location.href = form.dataset.jtCommunityBase + '/s/' + res.data.slug + '/';
 		});
 	});
 })();

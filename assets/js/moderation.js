@@ -73,27 +73,44 @@
 		var buttons = card.querySelectorAll( 'button' );
 		buttons.forEach( function ( b ) { b.disabled = true; } );
 
-		fetch( endpoint + flagId + '/resolve', {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-WP-Nonce':   data.restNonce
-			},
-			body: JSON.stringify( { status: resolution } )
-		} )
-			.then( function ( res ) {
-				if ( ! res.ok ) {
-					throw new Error( 'HTTP ' + res.status );
-				}
-				return res.json();
-			} )
-			.then( function () {
-				removeCard( card );
-			} )
-			.catch( function () {
-				buttons.forEach( function ( b ) { b.disabled = false; } );
-				showError( card, ( data.i18n && data.i18n.resolveFailed ) || 'Could not resolve flag. Please try again.' );
+		// restFetch is path-based (it owns the restBase prefix), so the
+		// inherited `endpoint` -- which is an absolute REST URL pinned by the
+		// server template -- has to be trimmed back to the path segment
+		// before handing it off. Falls back to the legacy fetch path when
+		// restFetch isn't loaded so the queue keeps working on any future
+		// page that ships moderation.js without jetonomy-rest.js.
+		var resolvePath = endpoint + flagId + '/resolve';
+		var base        = ( data && data.restBase ) ? String( data.restBase ).replace( /\/+$/, '' ) : '';
+		if ( base && resolvePath.indexOf( base ) === 0 ) {
+			resolvePath = resolvePath.slice( base.length );
+		}
+
+		var onSuccess = function () { removeCard( card ); };
+		var onFailure = function () {
+			buttons.forEach( function ( b ) { b.disabled = false; } );
+			showError( card, ( data.i18n && data.i18n.resolveFailed ) || 'Could not resolve flag. Please try again.' );
+		};
+
+		if ( window.jetonomyRest && typeof window.jetonomyRest.restFetch === 'function' ) {
+			window.jetonomyRest.restFetch( resolvePath, {
+				method: 'POST',
+				body: { status: resolution }
+			} ).then( function ( res ) {
+				if ( res.ok ) { onSuccess(); } else { onFailure(); }
 			} );
+		} else {
+			fetch( endpoint + flagId + '/resolve', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce':   data.restNonce
+				},
+				body: JSON.stringify( { status: resolution } )
+			} )
+				.then( function ( res ) { if ( ! res.ok ) { throw new Error( 'HTTP ' + res.status ); } return res.json(); } )
+				.then( onSuccess )
+				.catch( onFailure );
+		}
 	} );
 } )();

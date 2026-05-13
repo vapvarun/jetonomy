@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\SpaceMember;
@@ -41,8 +42,7 @@ class Users_Controller extends Base_Controller {
 				[
 					'methods'             => 'PATCH',
 					'callback'            => [ $this, 'update_current_user' ],
-					'permission_callback' => function () {
-						return is_user_logged_in(); },
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
 				],
 			]

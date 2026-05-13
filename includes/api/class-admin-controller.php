@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use Jetonomy\API\REST_Auth;
 use Jetonomy\Recount;
 use Jetonomy\Models\UserProfile;
 
@@ -31,7 +32,7 @@ class Admin_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'recount' ),
-				'permission_callback' => array( $this, 'require_manage_options' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
 				'args'                => array(
 					'type' => array(
 						'type'              => 'string',
@@ -50,7 +51,7 @@ class Admin_Controller extends Base_Controller {
 			array(
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'bulk_set_trust_level' ),
-				'permission_callback' => array( $this, 'require_manage_options' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'manage_options' ),
 				'args'                => array(
 					'user_ids' => array(
 						'type'     => 'array',

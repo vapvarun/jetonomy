@@ -22,6 +22,17 @@
 - Never attach a pre-existing zip to a release. Always rebuild from the tagged commit.
 - Pro: `bin/build-release.sh` additionally enforces the lockstep rule - fails if Pro's version doesn't match free's. Pro does not have the browser smoke gate (uses the COMBO smoke skill for verification before tagging instead).
 
+## REST Mutation Auth Gate (manual until CI lands)
+
+**Every mutation route MUST use `\Jetonomy\API\REST_Auth::auth_mutation()` or `auth_public_write()`.** No raw `is_user_logged_in`, `current_user_can`, closures, or class methods as `permission_callback` on mutation routes. The audit script verifies this.
+
+```
+php bin/audit-rest-routes.php includes/                  # free
+php bin/audit-rest-routes.php ../jetonomy-pro/includes/  # pro
+```
+
+Both must report `OK (no mutation routes missing REST_Auth)` before merging to `1.4.3`. Allowlist (signature-validated webhooks) lives in `bin/audit-rest-routes.php`. Run before tagging — the script ships with the repo so a local clone + `php` is enough; no GitHub Actions hook yet because `.github/workflows/ci.yml` edits are gated by an org-wide hook. Add the step to CI once the security-scan exemption process is sorted.
+
 ## Pre-Commit Rule (enforced)
 
 **Every commit is locally gated by `.githooks/pre-commit`.** The hook runs PHPStan on the full tree (honours the baseline) and WPCS on staged PHP files before the commit lands. Failures block the commit so red X's never reach the public history.
