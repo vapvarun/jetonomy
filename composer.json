@@ -38,6 +38,7 @@
         "phpcs": "phpcs --standard=phpcs.xml",
         "phpcbf": "phpcbf --standard=phpcs.xml",
         "phpstan": "phpstan analyse --memory-limit=1G",
+        "audit-rest": "php bin/audit-rest-routes.php includes/",
         "hooks:install": "git config core.hooksPath .githooks && echo 'pre-commit hook installed (.githooks/pre-commit)'",
         "post-install-cmd": "@hooks:install",
         "post-update-cmd": "@hooks:install"
@@ -51,6 +52,7 @@
         "test:docker": "Run the full PHPUnit suite inside the wp-env Docker container (requires `composer test:docker:start` first).",
         "test:docker:unit": "Run only tests/unit/* inside the wp-env Docker container.",
         "test:docker:start": "Bring up the wp-env Docker stack (dev on :8888, tests on :8889).",
-        "test:docker:stop": "Stop the wp-env Docker stack."
+        "test:docker:stop": "Stop the wp-env Docker stack.",
+        "audit-rest": "Audit mutation REST routes for REST_Auth helper usage (WS2-A gate; enforcing after WS2-B route migration)."
     }
 }

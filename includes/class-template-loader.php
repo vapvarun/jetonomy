@@ -437,6 +437,22 @@ class Template_Loader {
 			)
 		);
 
+		// Unified REST fetch client (1.4.3). Exposes window.jetonomyRest.restFetch
+		// for every mutation/read; centralises nonce handling + auto-retry on
+		// rest_cookie_invalid_nonce. Depends on `jetonomy-data` for restBase
+		// + restNonce. See includes/api/class-rest-auth.php for the matching
+		// server-side permission helper.
+		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
+		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
+		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
+		wp_enqueue_script(
+			'jetonomy-rest',
+			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
+			array( 'jetonomy-data' ),
+			$jr_version,
+			true
+		);
+
 		// Pagination "Load More" auto-scroll handler. Self-discovers all
 		// .jt-pagination containers on the page; safe to always enqueue.
 		wp_enqueue_script(
