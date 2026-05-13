@@ -943,10 +943,11 @@
      so the visual hierarchy matches the type's contract. */
   .jt-feed { display: flex; flex-direction: column; gap: 12px; }
   .jt-feed-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); padding: 16px; }
-  .jt-feed-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-block-end: 12px; }
-  .jt-feed-card-meta { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
-  .jt-feed-card-author { font-weight: 600; color: var(--jt-text); }
-  .jt-feed-card-time { color: var(--jt-text-tertiary); font-size: 0.875rem; text-decoration: none; }
+  .jt-feed-card-head { display: flex; align-items: center; gap: var(--jt-space-3); flex-wrap: wrap; margin-block-end: var(--jt-space-3); }
+  .jt-feed-card-meta { display: inline-flex; align-items: center; gap: var(--jt-space-2); flex-wrap: wrap; min-width: 0; line-height: 1.4; }
+  .jt-feed-card-author { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); text-decoration: none; }
+  .jt-feed-card-author:hover { text-decoration: underline; color: var(--jt-text); }
+  .jt-feed-card-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; text-decoration: none; }
   .jt-feed-card-time:hover { color: var(--jt-text-secondary); text-decoration: underline; }
   .jt-feed-card-body { color: var(--jt-text); line-height: 1.6; word-break: break-word; }
   .jt-feed-card-body p { margin-block: 0 12px; }
@@ -1286,7 +1287,9 @@
   /* ── Reply card extras ── */
   .jt-reply-author { }
   .jt-reply-op { font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 600; }
-  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; }
+  .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
+  .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
+  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; }
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
 
   /* ── Time stat on post rows ── */

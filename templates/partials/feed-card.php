@@ -29,9 +29,9 @@ $author_name = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
 ?>
 <article class="jt-feed-card" data-wp-interactive="jetonomy">
 	<header class="jt-feed-card-head">
-		<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) ); ?>
+		<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, false ) ); ?>
 		<div class="jt-feed-card-meta">
-			<span class="jt-feed-card-author"><?php echo esc_html( $author_name ); ?></span>
+			<a class="jt-feed-card-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $post->author_id ) ); ?>"><?php echo esc_html( $author_name ); ?></a>
 			<?php
 			$jt_role = \Jetonomy\get_space_role_label( (int) $post->author_id, (int) $post->space_id );
 			if ( null !== $jt_role ) :
