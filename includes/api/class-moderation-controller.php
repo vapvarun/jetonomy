@@ -340,7 +340,7 @@ class Moderation_Controller extends Base_Controller {
 			}
 		);
 
-		$pending_flags_count = count( Flag::list_pending() );
+		$pending_flags_count = Flag::count_pending();
 
 		return new WP_REST_Response(
 			array(

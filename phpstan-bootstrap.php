@@ -18,7 +18,7 @@ if ( ! defined( 'JETONOMY_VERSION' ) ) {
 	define( 'JETONOMY_VERSION', '1.4.2' );
 }
 if ( ! defined( 'JETONOMY_DB_VERSION' ) ) {
-	define( 'JETONOMY_DB_VERSION', '1.4.2.1' );
+	define( 'JETONOMY_DB_VERSION', '1.4.3.0' );
 }
 if ( ! defined( 'JETONOMY_FILE' ) ) {
 	define( 'JETONOMY_FILE', __FILE__ );

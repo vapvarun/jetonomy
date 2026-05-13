@@ -194,7 +194,7 @@ class Users_Controller extends Base_Controller {
 
 		$profile      = UserProfile::find_or_create( $user_id );
 		$trust_level  = (int) ( $profile->trust_level ?? 0 );
-		$spaces_count = count( SpaceMember::list_user_spaces( $user_id ) );
+		$spaces_count = SpaceMember::count_user_spaces( $user_id );
 
 		return new WP_REST_Response(
 			array_merge(

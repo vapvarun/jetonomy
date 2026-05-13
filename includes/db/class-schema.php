@@ -136,7 +136,8 @@ class Schema {
   PRIMARY KEY  (id),
   UNIQUE KEY slug (slug),
   KEY category_sort (category_id,sort_order),
-  KEY parent_sort (parent_id,sort_order)
+  KEY parent_sort (parent_id,sort_order),
+  KEY visibility_sort (visibility,sort_order)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 3. jt_posts
@@ -272,7 +273,8 @@ class Schema {
   role ENUM('viewer','member','moderator','admin') NOT NULL DEFAULT 'member',
   joined_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (space_id,user_id),
-  KEY user_joined (user_id,joined_at)
+  KEY user_joined (user_id,joined_at),
+  KEY space_role_joined (space_id,role,joined_at)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 11. jt_tags

@@ -116,18 +116,28 @@ class Tag extends Model {
 	/**
 	 * List all tags attached to a post.
 	 *
+	 * The default $limit is deliberately high (200) — every real-world
+	 * post stays well under it, so existing callers see the same row set
+	 * they got pre-1.4.3 — but it is no longer truly unbounded. A
+	 * runaway migration or hostile mass-tag import that wires thousands
+	 * of tags onto a single post can no longer balloon the per-post
+	 * render budget without an explicit, larger $limit.
+	 *
 	 * @param int $post_id
+	 * @param int $limit   Defensive cap. Defaults to 200.
 	 * @return object[]
 	 */
-	public static function list_for_post( int $post_id ): array {
+	public static function list_for_post( int $post_id, int $limit = 200 ): array {
 		$post_tags = table( 'post_tags' );
 		$tags      = static::table();
+		$limit     = max( 1, $limit );
 
 		return static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT t.* FROM {$tags} t INNER JOIN {$post_tags} pt ON pt.tag_id = t.id WHERE pt.post_id = %d ORDER BY t.name ASC",
-				$post_id
+				"SELECT t.* FROM {$tags} t INNER JOIN {$post_tags} pt ON pt.tag_id = t.id WHERE pt.post_id = %d ORDER BY t.name ASC LIMIT %d",
+				$post_id,
+				$limit
 			)
 		) ?: [];
 	}

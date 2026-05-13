@@ -254,15 +254,38 @@ class Space extends Model {
 	 * List all spaces filtered by status.
 	 *
 	 * @param string $status Row status value to filter by (e.g. 'active', 'archived').
+	 * @param int    $limit  Max rows to return. 0 = unbounded (default,
+	 *                       preserves pre-1.4.3 behaviour for every caller
+	 *                       that did not opt in to pagination).
+	 * @param int    $offset Row offset. Ignored when $limit = 0.
 	 * @return object[]
 	 */
-	public static function list_all( string $status = 'active' ): array {
+	public static function list_all( string $status = 'active', int $limit = 0, int $offset = 0 ): array {
+		$base = 'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY title ASC';
+		if ( $limit > 0 ) {
+			return static::db()->get_results(
+				static::db()->prepare( $base . ' LIMIT %d OFFSET %d', $status, $limit, max( 0, $offset ) )
+			) ?: [];
+		}
 		return static::db()->get_results(
+			static::db()->prepare( $base, $status )
+		) ?: [];
+	}
+
+	/**
+	 * Cheap COUNT(*) partner for {@see self::list_all()} — used by
+	 * pagination totals without materialising every row.
+	 *
+	 * @param string $status Row status value to filter by.
+	 * @return int
+	 */
+	public static function count_all( string $status = 'active' ): int {
+		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY title ASC',
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE status = %s',
 				$status
 			)
-		) ?: [];
+		);
 	}
 
 	/**
