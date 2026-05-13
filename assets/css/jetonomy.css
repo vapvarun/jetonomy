@@ -545,8 +545,10 @@
   .jt-post > *:first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-post > *:last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-5); border-bottom: 1px solid var(--jt-border); position: relative; }
-  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin: 0; padding-right: 6rem; }
-  .jt-post-head > .jt-btn-sm { position: absolute; top: var(--jt-space-5); right: var(--jt-space-5); }
+  .jt-post-title-row { display: flex; align-items: center; gap: var(--jt-space-4); }
+  .jt-post-title-row > h1 { flex: 1 1 auto; min-width: 0; }
+  .jt-post-title-row > .jt-btn-sm { flex: 0 0 auto; }
+  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin: 0; }
   /* Meta row — author + trust + time + tags. Flex-wraps atomically
      so individual items never break mid-word on narrow viewports.
      See docs/DESIGN-SYSTEM.md §9 "Meta line". */
@@ -574,7 +576,7 @@
   /* ── Replies ── */
   .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--jt-space-4); }
   .jt-replies-head h2, .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: var(--jt-space-2); margin: 0; }
-  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); }
+  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.75rem; font-weight: 600; line-height: 1.4; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-accent-light); color: var(--jt-accent); min-width: 1.75em; text-align: center; }
 
   /* Reply card: must NOT clip overflow, otherwise the three-dot menu dropdown
      (absolute-positioned on the actions row) gets hidden the moment it extends
@@ -702,7 +704,7 @@
   @keyframes jt-spin { to { transform: rotate(360deg); } }
 
   /* ── Empty state ── */
-  .jt-empty { background: var(--jt-bg-muted); text-align: center; padding: 60px 20px; color: var(--jt-text-tertiary); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); }
+  .jt-empty { background: var(--jt-bg-muted); text-align: center; padding: var(--jt-space-8) var(--jt-space-5); color: var(--jt-text-tertiary); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); }
   .jt-empty-icon { font-size: 3em; margin-bottom: 12px; }
   .jt-empty-text { font-size: 0.9375rem; margin-bottom: 16px; }
 
