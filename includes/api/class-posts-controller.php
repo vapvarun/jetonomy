@@ -808,9 +808,21 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		$status = sanitize_key( (string) $request->get_param( 'idea_status' ) );
+		$status          = sanitize_key( (string) $request->get_param( 'idea_status' ) );
+		$previous_status = (string) ( $post->idea_status ?? '' );
 		if ( ! Post::set_idea_status( $id, $status ) ) {
 			return $this->validation_error( __( 'Invalid roadmap status.', 'jetonomy' ) );
+		}
+
+		// Reward author when status transitions TO 'planned'. Idempotent on
+		// no-op changes (planned → planned awards nothing) and skips
+		// self-curated ideas (author == actor) so a moderator can't farm
+		// reputation by re-planning their own idea.
+		if ( 'planned' === $status && 'planned' !== $previous_status && ! empty( $post->author_id ) ) {
+			$author_id = (int) $post->author_id;
+			if ( $author_id !== (int) $user_id ) {
+				\Jetonomy\Trust\Reputation::award( $author_id, 'idea_planned' );
+			}
 		}
 
 		/**
@@ -824,7 +836,7 @@ class Posts_Controller extends Base_Controller {
 		 * @param string $old_status The previous status value (or empty if unset).
 		 * @param int    $actor_id   User ID of the moderator who changed it.
 		 */
-		do_action( 'jetonomy_idea_status_changed', $id, $status, (string) ( $post->idea_status ?? '' ), $user_id );
+		do_action( 'jetonomy_idea_status_changed', $id, $status, $previous_status, $user_id );
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );

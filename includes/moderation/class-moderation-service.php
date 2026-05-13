@@ -185,6 +185,28 @@ class Moderation_Service {
 			}
 
 			Flag::resolve_siblings_for( $type, $object_id, $user_id, 'valid', $flag_id );
+
+			// Reward the original reporter when their flag is confirmed valid.
+			// Skip self-flags (reporter == author) — that's a moderation
+			// no-op and shouldn't pad the actor's reputation.
+			$reporter_id = isset( $flag->reporter_id ) ? (int) $flag->reporter_id : 0;
+			if ( $reporter_id > 0 ) {
+				$author_id = 0;
+				if ( 'post' === $type ) {
+					$obj = Post::find( $object_id );
+					if ( $obj ) {
+						$author_id = (int) $obj->author_id;
+					}
+				} elseif ( 'reply' === $type ) {
+					$obj = Reply::find( $object_id );
+					if ( $obj ) {
+						$author_id = (int) $obj->author_id;
+					}
+				}
+				if ( $reporter_id !== $author_id ) {
+					Reputation::award( $reporter_id, 'flag_validated' );
+				}
+			}
 		}
 
 		do_action( 'jetonomy_flag_resolved', $flag_id, $status, $user_id );

@@ -434,6 +434,26 @@ class Moderation_Controller extends Base_Controller {
 
 		do_action( 'jetonomy_flag_created', $flag_id, $object_type );
 
+		// Award reputation impact to reported content author (skip self-reports).
+		// Fires for post/reply targets only; user-targeted flags don't deduct
+		// reputation from the reported user — those go through the ban flow.
+		$author_id = 0;
+		if ( 'post' === $object_type ) {
+			$reported_post = \Jetonomy\Models\Post::find( (int) $object_id );
+			if ( $reported_post ) {
+				$author_id = (int) $reported_post->author_id;
+			}
+		} elseif ( 'reply' === $object_type ) {
+			$reported_reply = \Jetonomy\Models\Reply::find( (int) $object_id );
+			if ( $reported_reply ) {
+				$author_id = (int) $reported_reply->author_id;
+			}
+		}
+
+		if ( $author_id > 0 && $author_id !== (int) $user_id ) {
+			Reputation::award( $author_id, 'post_reported' );
+		}
+
 		/**
 		 * Fires after a flag is created with the full flag object plus context.
 		 *
