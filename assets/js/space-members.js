@@ -188,9 +188,16 @@
 		if ( typeof window.jetonomyConfirm !== 'function' ) {
 			return;
 		}
+		var i18n        = ( data.i18n ) || {};
+		var banFmt      = i18n.banConfirmFormat || 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.';
+		var banBody     = banFmt.replace( '%s', name || '' );
 		var promptResult = window.jetonomyConfirm(
-			'Ban ' + name + ' from this space? They will lose access to its posts and replies until you lift the ban.',
-			{ title: 'Ban member', confirmLabel: 'Ban', danger: true }
+			banBody,
+			{
+				title:        i18n.banMemberTitle || 'Ban member',
+				confirmLabel: i18n.banLabel || 'Ban',
+				danger:       true
+			}
 		);
 
 		promptResult.then( function ( ok ) {
@@ -208,7 +215,7 @@
 			} ).then( function ( res ) {
 				if ( ! res.ok ) {
 					btn.disabled = false;
-					var msg = ( res.data && res.data.message ) || 'Ban failed. Please try again.';
+					var msg = ( res.data && res.data.message ) || ( ( data.i18n && data.i18n.banFailed ) || 'Ban failed. Please try again.' );
 					showError( btn, msg );
 					return;
 				}

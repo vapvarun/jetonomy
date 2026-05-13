@@ -684,6 +684,9 @@ class Admin {
 					'error'                   => esc_html__( 'Something went wrong.', 'jetonomy' ),
 					'importing'               => esc_html__( 'Importing...', 'jetonomy' ),
 					'importDone'              => esc_html__( 'Import complete!', 'jetonomy' ),
+					/* translators: %s: server-supplied error detail. */
+					'importErrorFormat'       => __( 'Error: %s', 'jetonomy' ),
+					'importErrorUnknown'      => esc_html__( 'Unknown error', 'jetonomy' ),
 					'selectImage'             => esc_html__( 'Select Image', 'jetonomy' ),
 					'useImage'                => esc_html__( 'Use this image', 'jetonomy' ),
 					'testEmailSent'           => esc_html__( 'Test email sent!', 'jetonomy' ),

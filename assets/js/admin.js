@@ -1252,7 +1252,9 @@
 					.then(function(r) { return r.json(); })
 					.then(function(res) {
 						if (!res.success) {
-							statusText.textContent  = 'Error: ' + (res.data || 'Unknown error');
+							var errFmt    = Jetonomy.i18n.importErrorFormat || 'Error: %s';
+							var errDetail = res.data || (Jetonomy.i18n.importErrorUnknown || 'Unknown error');
+							statusText.textContent  = errFmt.replace('%s', errDetail);
 							actionDiv.style.display = 'block';
 							return;
 						}

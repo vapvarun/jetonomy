@@ -315,6 +315,19 @@ class Template_Loader {
 				'blockFailed'        => __( 'Could not update block setting.', 'jetonomy' ),
 				'confirmLeave'       => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
 				'confirmBlock'       => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
+				// WS4-C: moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
+				'contentRemoved'     => __( 'Content removed', 'jetonomy' ),
+				'flagDismissed'      => __( 'Flag dismissed', 'jetonomy' ),
+				'failed'             => __( 'Failed', 'jetonomy' ),
+				'failedSaveProfile'  => __( 'Failed to save profile.', 'jetonomy' ),
+				'schedule'           => __( 'Schedule', 'jetonomy' ),
+				'editPost'           => __( 'Edit post', 'jetonomy' ),
+				'editReply'          => __( 'Edit reply', 'jetonomy' ),
+				// WS4-C: Pro Polls strings consumed via state.i18n in pro-view.js.
+				'failedSubmitVote'   => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
+				'voteSingular'       => __( '1 vote', 'jetonomy' ),
+				/* translators: %d: vote count. */
+				'voteFormat'         => __( '%d votes', 'jetonomy' ),
 			),
 			)
 		);
@@ -440,6 +453,21 @@ class Template_Loader {
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
 						'admin'     => esc_html__( 'Admin', 'jetonomy' ),
 					),
+					// WS4-C: composer mobile-nav close + link prompt.
+					'closeMenu'              => esc_html__( 'Close menu', 'jetonomy' ),
+					'linkPromptUrl'          => esc_html__( 'Enter URL:', 'jetonomy' ),
+					'linkPromptPlaceholder'  => esc_html__( 'https://example.com', 'jetonomy' ),
+					// WS4-C: moderation flag actions in view.js.
+					'contentRemoved'         => esc_html__( 'Content removed', 'jetonomy' ),
+					'flagDismissed'          => esc_html__( 'Flag dismissed', 'jetonomy' ),
+					'failed'                 => esc_html__( 'Failed', 'jetonomy' ),
+					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
+					// WS4-C: space-members ban dialog (translator placeholders).
+					/* translators: %s: member display name. */
+					'banConfirmFormat'       => __( 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.', 'jetonomy' ),
+					'banMemberTitle'         => esc_html__( 'Ban member', 'jetonomy' ),
+					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
+					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
 				),
 			)
 		);

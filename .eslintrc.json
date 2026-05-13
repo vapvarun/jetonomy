@@ -1,0 +1,63 @@
+{
+	"root": true,
+	"parserOptions": {
+		"ecmaVersion": 2022,
+		"sourceType": "module",
+		"ecmaFeatures": { "jsx": true }
+	},
+	"env": {
+		"browser": true,
+		"es2022": true,
+		"jquery": true
+	},
+	"globals": {
+		"wp": "readonly",
+		"jQuery": "readonly",
+		"window": "readonly",
+		"document": "readonly",
+		"fetch": "readonly",
+		"FormData": "readonly",
+		"URL": "readonly",
+		"URLSearchParams": "readonly",
+		"Promise": "readonly",
+		"Set": "readonly",
+		"Map": "readonly",
+		"jetonomyData": "readonly",
+		"jetonomyHeader": "readonly",
+		"jetonomyLoginBlock": "readonly",
+		"jetonomyModalsI18n": "readonly",
+		"jetonomyUpload": "readonly",
+		"jetonomyRest": "readonly",
+		"jetonomyProAdmin": "readonly",
+		"jetonomyConfirm": "readonly",
+		"jetonomyAlert": "readonly",
+		"jetonomyPrompt": "readonly",
+		"jetonomySpacePicker": "readonly",
+		"jetonomyPostPicker": "readonly",
+		"jetonomyOptimistic": "readonly",
+		"jetonomySmartDropdown": "readonly",
+		"bnToast": "readonly",
+		"Jetonomy": "readonly"
+	},
+	"plugins": [ "@wordpress" ],
+	"rules": {
+		"@wordpress/i18n-text-domain": [ "error", { "allowedTextDomain": "jetonomy" } ],
+		"@wordpress/valid-sprintf": "error",
+		"@wordpress/i18n-translator-comments": "error",
+		"@wordpress/i18n-no-collapsible-whitespace": "error",
+		"@wordpress/i18n-no-placeholders-only": "error",
+		"@wordpress/i18n-no-variables": "error",
+		"@wordpress/i18n-ellipsis": "error"
+	},
+	"ignorePatterns": [
+		"**/*.min.js",
+		"node_modules/**",
+		"vendor/**",
+		"build/**",
+		"assets/js/lib/**",
+		"assets/vendor/**",
+		"includes/**",
+		"languages/**",
+		"templates/**"
+	]
+}

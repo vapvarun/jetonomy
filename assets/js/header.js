@@ -255,11 +255,11 @@
 			box.appendChild(h3);
 			var tbl = document.createElement('table');
 			var shortcuts = [
-				['/ or Ctrl+K', 'Search'],
-				['j / k', 'Navigate up/down'],
-				['Enter', 'Open selected'],
-				['n', 'Home'],
-				['?', 'This help']
+				['/ or Ctrl+K', ( D.i18n && D.i18n.kbSearch ) || 'Search'],
+				['j / k',       ( D.i18n && D.i18n.kbNavigate ) || 'Navigate up/down'],
+				['Enter',       ( D.i18n && D.i18n.kbOpenSelected ) || 'Open selected'],
+				['n',           ( D.i18n && D.i18n.kbHome ) || 'Home'],
+				['?',           ( D.i18n && D.i18n.kbThisHelp ) || 'This help']
 			];
 			shortcuts.forEach(function (s) {
 				var tr = document.createElement('tr');
@@ -339,7 +339,10 @@
 		info.appendChild(nameEl);
 		var trustEl = document.createElement('span');
 		trustEl.className = 'jt-hc-trust';
-		trustEl.textContent = 'Level ' + (data.trust_level || 0) + ' · ' + (data.reputation || 0) + ' rep';
+		var trustFmt = ( D.i18n && D.i18n.trustLevelFormat ) || 'Level %1$d · %2$d rep';
+		trustEl.textContent = trustFmt
+			.replace( '%1$d', data.trust_level || 0 )
+			.replace( '%2$d', data.reputation || 0 );
 		info.appendChild(trustEl);
 		header.appendChild(info);
 		card.appendChild(header);
@@ -351,7 +354,10 @@
 		}
 		var stats = document.createElement('div');
 		stats.className = 'jt-hc-stats';
-		stats.textContent = (data.post_count || 0) + ' posts · ' + (data.reply_count || 0) + ' replies';
+		var statsFmt = ( D.i18n && D.i18n.hcStatsFormat ) || '%1$d posts · %2$d replies';
+		stats.textContent = statsFmt
+			.replace( '%1$d', data.post_count || 0 )
+			.replace( '%2$d', data.reply_count || 0 );
 		card.appendChild(stats);
 		renderPosition(card, anchor);
 		card.style.display = '';

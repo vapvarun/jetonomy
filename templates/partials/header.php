@@ -170,6 +170,16 @@ wp_localize_script(
 			'close'     => esc_html__( 'Close', 'jetonomy' ),
 			'loadFail'  => esc_html__( 'Failed to load', 'jetonomy' ),
 			'escKey'    => esc_html_x( 'ESC', 'keyboard key label shown next to the search overlay', 'jetonomy' ),
+			// WS4-C: keyboard-shortcut labels + hover-card trust line.
+			'kbSearch'         => esc_html__( 'Search', 'jetonomy' ),
+			'kbNavigate'       => esc_html__( 'Navigate up/down', 'jetonomy' ),
+			'kbOpenSelected'   => esc_html__( 'Open selected', 'jetonomy' ),
+			'kbHome'           => esc_html__( 'Home', 'jetonomy' ),
+			'kbThisHelp'       => esc_html__( 'This help', 'jetonomy' ),
+			/* translators: 1: trust level number, 2: reputation points. */
+			'trustLevelFormat' => __( 'Level %1$d · %2$d rep', 'jetonomy' ),
+			/* translators: 1: post count, 2: reply count. */
+			'hcStatsFormat'    => __( '%1$d posts · %2$d replies', 'jetonomy' ),
 		),
 	)
 );

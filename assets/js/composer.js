@@ -28,7 +28,7 @@ document.addEventListener( 'DOMContentLoaded', function() {
                 var close = document.createElement( 'button' );
                 close.className = 'jt-mobile-close';
                 close.innerHTML = '&times;';
-                close.setAttribute( 'aria-label', 'Close menu' );
+                close.setAttribute( 'aria-label', ( window.jetonomyData && window.jetonomyData.i18n && window.jetonomyData.i18n.closeMenu ) || 'Close menu' );
                 close.addEventListener( 'click', function() { nav.classList.remove( 'open' ); } );
                 nav.prepend( close );
             }
@@ -114,7 +114,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
                         return;
                     }
 
-                    window.jetonomyPrompt( 'Enter URL:', { placeholder: 'https://example.com' } ).then( ( raw ) => {
+                    window.jetonomyPrompt(
+                        jtI18n( 'linkPromptUrl', 'Enter URL:' ),
+                        { placeholder: jtI18n( 'linkPromptPlaceholder', 'https://example.com' ) }
+                    ).then( ( raw ) => {
                         if ( ! raw ) return;
                         const trimmed = raw.trim();
                         if ( ! trimmed ) return;

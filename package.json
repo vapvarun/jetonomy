@@ -5,8 +5,9 @@
   "scripts": {
     "build": "wp-scripts build",
     "start": "wp-scripts start",
-    "lint:js": "wp-scripts lint-js",
-    "lint:css": "wp-scripts lint-style"
+    "lint:js": "eslint assets/js/ --ext .js",
+    "lint:css": "wp-scripts lint-style",
+    "check:i18n": "bash bin/check-i18n.sh"
   },
   "devDependencies": {
     "@wordpress/env": "^11.3.0",

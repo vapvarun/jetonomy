@@ -1820,9 +1820,13 @@ const { state, actions } = store( 'jetonomy', {
                 if ( response.ok ) {
                     const card = el.ref.closest( '.jt-mod-flag' );
                     if ( card ) card.remove();
-                    if ( window.bnToast ) window.bnToast( apiStatus === 'valid' ? 'Content removed' : 'Flag dismissed' );
+                    if ( window.bnToast ) window.bnToast(
+                        apiStatus === 'valid'
+                            ? ( state.i18n?.contentRemoved || 'Content removed' )
+                            : ( state.i18n?.flagDismissed || 'Flag dismissed' )
+                    );
                 } else {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Failed' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.failed || 'Failed' );
                 }
             } catch {
                 if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
@@ -2268,7 +2272,7 @@ const { state, actions } = store( 'jetonomy', {
                     window.location.href = ctx.profileUrl;
                 } else {
                     const err = yield response.json().catch( () => ( {} ) );
-                    if ( window.bnToast ) window.bnToast( err.message || 'Failed to save profile.', 'error' );
+                    if ( window.bnToast ) window.bnToast( err.message || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ), 'error' );
                 }
             } catch {
                 if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.', 'error' );
