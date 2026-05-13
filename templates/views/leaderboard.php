@@ -17,7 +17,12 @@ if ( ! in_array( $period, [ 'all', 'month', 'week' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$page = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+
+// Per-page is intentionally aligned with the REST controller default
+// (Leaderboards_Controller::register_routes() `limit` arg). Keep these
+// in sync — both surfaces render the same page size so server-side and
+// client-side leaderboards stay consistent.
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
@@ -37,6 +42,26 @@ $leaders = $wpdb->get_results(
 		$offset
 	)
 ) ?: [];
+
+// Batch-fetch leader users in one query to avoid N get_userdata() calls
+// inside the render loop below. Mirrors the REST controller's batching
+// strategy so big-site leaderboard renders stay O(1) on user lookups.
+$leader_ids = array_map(
+	static fn( $r ) => (int) $r->user_id,
+	$leaders
+);
+$leader_users = ! empty( $leader_ids )
+	? get_users(
+		[
+			'include' => $leader_ids,
+			'orderby' => 'include',
+		]
+	)
+	: [];
+$leader_user_by_id = [];
+foreach ( $leader_users as $lu_obj ) {
+	$leader_user_by_id[ (int) $lu_obj->ID ] = $lu_obj;
+}
 
 $base   = \Jetonomy\base_url();
 $crumbs = [
@@ -81,7 +106,7 @@ $crumbs = [
 				</div>
 				<?php foreach ( $leaders as $rank => $leader ) : ?>
 					<?php
-					$lu = get_userdata( (int) $leader->user_id );
+					$lu = $leader_user_by_id[ (int) $leader->user_id ] ?? null;
 					if ( ! $lu ) {
 						continue;
 					}

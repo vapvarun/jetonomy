@@ -100,11 +100,33 @@ class Leaderboards_Controller extends Base_Controller {
 		$settings  = get_option( 'jetonomy_settings', [] );
 		$base_slug = $settings['base_slug'] ?? 'community';
 
+		// Batch-fetch all leader users in one query to eliminate the
+		// per-row get_userdata() N+1. get_users() also primes the user
+		// meta cache so the subsequent get_avatar_url() reads hit cache
+		// instead of issuing a fresh meta query for each leader.
+		$user_ids = array_map(
+			static fn( $r ) => (int) $r->user_id,
+			$leaders
+		);
+		$users    = ! empty( $user_ids )
+			? get_users(
+				[
+					'include' => $user_ids,
+					'orderby' => 'include',
+				]
+			)
+			: [];
+		$by_id    = [];
+		foreach ( $users as $u ) {
+			$by_id[ (int) $u->ID ] = $u;
+		}
+
 		$items = [];
 		$rank  = $offset + 1;
 
 		foreach ( $leaders as $leader ) {
-			$user = get_userdata( (int) $leader->user_id );
+			$user_id = (int) $leader->user_id;
+			$user    = $by_id[ $user_id ] ?? null;
 			if ( ! $user ) {
 				++$rank;
 				continue;
@@ -112,11 +134,11 @@ class Leaderboards_Controller extends Base_Controller {
 
 			$items[] = [
 				'rank'         => $rank,
-				'user_id'      => (int) $leader->user_id,
+				'user_id'      => $user_id,
 				'display_name' => $user->display_name,
 				'user_login'   => $user->user_login,
-				'avatar_url'   => get_avatar_url( (int) $leader->user_id, [ 'size' => 64 ] ),
-				'profile_url'  => \Jetonomy\get_profile_url( (int) $leader->user_id ),
+				'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 64 ] ),
+				'profile_url'  => \Jetonomy\get_profile_url( $user_id ),
 				'reputation'   => (int) $leader->reputation,
 				'post_count'   => (int) $leader->post_count,
 				'reply_count'  => (int) $leader->reply_count,
