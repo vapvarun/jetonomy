@@ -544,9 +544,9 @@
   .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 20px; }
   .jt-post > *:first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-post > *:last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
-  .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); position: relative; }
-  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; padding-right: 6rem; }
-  .jt-post-head > .jt-btn-sm { position: absolute; top: 20px; right: 20px; }
+  .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-5); border-bottom: 1px solid var(--jt-border); position: relative; }
+  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin: 0; padding-right: 6rem; }
+  .jt-post-head > .jt-btn-sm { position: absolute; top: var(--jt-space-5); right: var(--jt-space-5); }
   /* Meta row — author + trust + time + tags. Flex-wraps atomically
      so individual items never break mid-word on narrow viewports.
      See docs/DESIGN-SYSTEM.md §9 "Meta line". */
@@ -554,10 +554,10 @@
   .jt-meta > * { white-space: nowrap; flex-shrink: 0; }
   .jt-meta > a { min-height: var(--jt-space-8); display: inline-flex; align-items: center; }
   .jt-meta strong { color: var(--jt-text); }
-  .jt-post-body { padding: 24px; font-size: 1rem; line-height: 1.8; }
-  .jt-post-body p { margin: 0 0 12px; }
+  .jt-post-body { padding: var(--jt-space-6); font-size: 1rem; line-height: 1.8; }
+  .jt-post-body p { margin: 0 0 var(--jt-space-3); }
   .jt-post-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
-  .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: 16px; border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 12px; }
+  .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
@@ -572,21 +572,21 @@
   .jt-act .n { font-family: var(--jt-font-mono); font-weight: 700; }
 
   /* ── Replies ── */
-  .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--jt-space-4); }
+  .jt-replies-head h2, .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: var(--jt-space-2); margin: 0; }
   .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); }
 
   /* Reply card: must NOT clip overflow, otherwise the three-dot menu dropdown
      (absolute-positioned on the actions row) gets hidden the moment it extends
      past the card boundary. Border-radius is applied to the direct children
      (head + body + footer) instead of the wrapper so corners still round. */
-  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; transition: border-color var(--jt-dur); }
+  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-3); transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
   .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); }
   .jt-reply > :first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-reply > :last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
-  .jt-reply-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--jt-bg-subtle); }
+  .jt-reply-head { display: flex; align-items: center; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-3); }
@@ -990,7 +990,7 @@
      is a pill button that mirrors the read-only pill above; the active
      option uses a heavier border + filled background so the choice is
      obvious without dominating the post header. */
-  .jt-idea-status-setter { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-start: 12px; padding: 10px 12px; background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-idea-status-setter { display: flex; align-items: center; gap: var(--jt-space-3); flex-wrap: wrap; margin: 0; padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
   .jt-idea-status-setter-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-idea-status-options { display: flex; flex-wrap: wrap; gap: 6px; }
   .jt-idea-status-btn { font-family: inherit; cursor: pointer; border: 1px solid transparent; line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
@@ -999,7 +999,7 @@
   .jt-idea-status-btn.is-active { background: var(--jt-ip); color: #fff; border-color: var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
   @media (max-width: 640px) {
-    .jt-idea-status-setter { gap: 8px; padding: 10px; align-items: flex-start; flex-direction: column; }
+    .jt-idea-status-setter { gap: var(--jt-space-2); padding: var(--jt-space-3); align-items: flex-start; flex-direction: column; }
     .jt-idea-status-options { width: 100%; }
     .jt-idea-status-btn { flex: 0 0 auto; }
   }
@@ -1062,8 +1062,8 @@
   .jt-space-gate-actions { text-align: center; margin-block-start: 16px; }
 
   /* ── Reply composer wrapper ── */
-  .jt-reply-composer { margin-top: 24px; }
-  .jt-reply-composer h4 { font-weight: 600; margin-bottom: 10px; }
+  .jt-reply-composer { margin-top: var(--jt-space-6); }
+  .jt-reply-composer h3, .jt-reply-composer h4 { font-weight: 600; margin: 0 0 var(--jt-space-4); }
 
   /* ── Closed post notice ── */
   .jt-closed-notice { text-align: center; padding: 20px; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius); margin-top: 20px; }
@@ -1338,7 +1338,7 @@
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
-  .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
+  .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: var(--jt-space-2) 0 var(--jt-space-6); }
 
   /* ── Publish mode split-button ──
      The buttons pick up `.jt-btn { border-radius: var(--jt-radius-full) }`
