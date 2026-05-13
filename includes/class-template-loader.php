@@ -320,6 +320,16 @@ class Template_Loader {
 		$view_file    = JETONOMY_DIR . 'assets/js/view.js';
 		$view_mtime   = file_exists( $view_file ) ? (string) filemtime( $view_file ) : '';
 		$view_version = '' !== $view_mtime ? JETONOMY_VERSION . '+' . $view_mtime : JETONOMY_VERSION;
+
+		// WS3-A primitives (1.4.3): shared optimistic-action helper and smart
+		// dropdown positioner. Registered as classic scripts so window globals
+		// (jetonomyOptimistic, jetonomySmartDropdown) exist before any
+		// downstream consumer evaluates. Depend on jetonomy-data so they share
+		// its enqueue context; the script-module below loads after them in
+		// document order. Callsite migration lands in WS3-B.
+		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
+		wp_enqueue_script( 'jetonomy-smart-dropdown', JETONOMY_URL . 'assets/js/lib/smart-dropdown.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
+
 		wp_enqueue_script_module(
 			'jetonomy-view',
 			JETONOMY_URL . 'assets/js/view.js',
