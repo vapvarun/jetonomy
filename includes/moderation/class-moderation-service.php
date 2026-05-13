@@ -40,9 +40,11 @@ class Moderation_Service {
 	 *
 	 * @param int      $user_id
 	 * @param int|null $space_id
+	 * @param int      $limit    Max rows. 0 = unbounded (back-compat).
+	 * @param int      $offset   Row offset for pagination.
 	 * @return object[]
 	 */
-	public static function list_pending_flags( int $user_id, ?int $space_id = null ): array {
+	public static function list_pending_flags( int $user_id, ?int $space_id = null, int $limit = 0, int $offset = 0 ): array {
 		if ( ! $user_id ) {
 			return [];
 		}
@@ -51,18 +53,52 @@ class Moderation_Service {
 			if ( ! Moderation_Permissions::can_view_space_queue( $user_id, $space_id ) ) {
 				return [];
 			}
-			return Flag::list_pending_in_space( $space_id );
+			return Flag::list_pending_in_space( $space_id, $limit, $offset );
 		}
 
 		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
-			return Flag::list_pending();
+			return Flag::list_pending( $limit, $offset );
 		}
 
 		$space_ids = SpaceMember::moderated_space_ids( $user_id );
 		if ( empty( $space_ids ) ) {
 			return [];
 		}
-		return Flag::list_pending_in_spaces( $space_ids );
+		return Flag::list_pending_in_spaces( $space_ids, $limit, $offset );
+	}
+
+	/**
+	 * Pending-flag count visible to this user — paired with
+	 * list_pending_flags() for pagination totals + badges. Same scoping
+	 * rules as the list method: admin dashboard cap → global; specific
+	 * space → that space; otherwise → moderated_space_ids.
+	 *
+	 * @param int      $user_id
+	 * @param int|null $space_id Limit count to this space, or null for the
+	 *                           caller's full visible scope.
+	 * @return int
+	 */
+	public static function count_pending_flags( int $user_id, ?int $space_id = null ): int {
+		if ( ! $user_id ) {
+			return 0;
+		}
+
+		if ( null !== $space_id ) {
+			if ( ! Moderation_Permissions::can_view_space_queue( $user_id, $space_id ) ) {
+				return 0;
+			}
+			return Flag::count_pending_in_space( $space_id );
+		}
+
+		if ( Moderation_Permissions::can_view_admin_dashboard( $user_id ) ) {
+			return Flag::count_pending();
+		}
+
+		$space_ids = SpaceMember::moderated_space_ids( $user_id );
+		if ( empty( $space_ids ) ) {
+			return 0;
+		}
+		return Flag::count_pending_in_spaces( $space_ids );
 	}
 
 	/**

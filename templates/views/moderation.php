@@ -47,8 +47,21 @@ if ( ! $is_admin && ! Moderation_Permissions::can_view_any_queue( $user_id ) ) {
 	return;
 }
 
-$flags = Moderation_Service::list_pending_flags( $user_id );
-$total = count( $flags );
+// Pagination: ?paged=N from the URL, clamped to [1, total_pages].
+// PER_PAGE picked at 25 — readable on one screen on desktop, fits
+// mobile after row stacking, and keeps the COUNT query irrelevant
+// to total once a queue grows past a thousand flags.
+$per_page    = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
+$paged       = max( 1, (int) ( $_GET['paged'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$total       = Moderation_Service::count_pending_flags( $user_id );
+$total_pages = max( 1, (int) ceil( $total / $per_page ) );
+if ( $paged > $total_pages ) {
+	$paged = $total_pages;
+}
+$offset = ( $paged - 1 ) * $per_page;
+$flags  = $total > 0
+	? Moderation_Service::list_pending_flags( $user_id, null, $per_page, $offset )
+	: [];
 
 // Reason → human label map. Source of truth for the badge text;
 // matches the enum at class-moderation-controller.php:106.
@@ -176,5 +189,32 @@ $crumbs = [
 				</li>
 			<?php endforeach; ?>
 		</ul>
+
+		<?php if ( $total_pages > 1 ) :
+			$jt_base_url = $base . '/mod/';
+			$jt_prev_url = add_query_arg( 'paged', max( 1, $paged - 1 ), $jt_base_url );
+			$jt_next_url = add_query_arg( 'paged', min( $total_pages, $paged + 1 ), $jt_base_url );
+			?>
+			<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Moderation queue pagination', 'jetonomy' ); ?>">
+				<?php if ( $paged > 1 ) : ?>
+					<a class="jt-pagination-link" href="<?php echo esc_url( $jt_prev_url ); ?>" rel="prev">
+						<?php jetonomy_echo_icon( 'chevron-left', 14 ); ?>
+						<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
+					</a>
+				<?php endif; ?>
+				<span class="jt-pagination-status">
+					<?php
+					/* translators: 1: current page, 2: total pages */
+					echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $paged, $total_pages ) );
+					?>
+				</span>
+				<?php if ( $paged < $total_pages ) : ?>
+					<a class="jt-pagination-link" href="<?php echo esc_url( $jt_next_url ); ?>" rel="next">
+						<?php esc_html_e( 'Next', 'jetonomy' ); ?>
+						<?php jetonomy_echo_icon( 'chevron-right', 14 ); ?>
+					</a>
+				<?php endif; ?>
+			</nav>
+		<?php endif; ?>
 	<?php endif; ?>
 </div>
