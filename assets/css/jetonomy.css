@@ -548,6 +548,10 @@
   .jt-post-title-row { display: flex; align-items: center; gap: var(--jt-space-4); }
   .jt-post-title-row > h1 { flex: 1 1 auto; min-width: 0; }
   .jt-post-title-row > .jt-btn-sm { flex: 0 0 auto; }
+  /* When the post is untitled (feed-space) the Follow button lives on the
+     meta row instead of a dedicated title row. Push it to the trailing
+     edge so the row reads "avatar · name · time · [badges] · Follow". */
+  .jt-meta .jt-meta-follow { margin-inline-start: auto; }
   .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin: 0; }
   /* Meta row — author + trust + time + tags. Flex-wraps atomically
      so individual items never break mid-word on narrow viewports.

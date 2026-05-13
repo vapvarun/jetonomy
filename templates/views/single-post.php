@@ -177,7 +177,10 @@ if ( $space ) {
 	];
 }
 $crumbs[] = [
-	'label' => jetonomy_post_title_or_excerpt( $post ),
+	// Short label for the breadcrumb's trailing crumb — full body excerpt
+	// at 80 chars wraps awkwardly when feed posts have no title. 40 chars
+	// + ellipsis fits the crumb row without dominating it.
+	'label' => jetonomy_post_title_or_excerpt( $post, 40 ),
 	'url'   => '',
 ];
 
@@ -272,32 +275,44 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					$jt_h1_is_sr_only = ( '' === trim( (string) ( $post->title ?? '' ) ) );
 					$jt_h1_label      = jetonomy_post_title_or_excerpt( $post );
 					?>
-					<div class="jt-post-title-row">
-						<h1<?php echo $jt_h1_is_sr_only ? ' class="screen-reader-text"' : ''; ?>>
-							<?php if ( $prefix_name && ! $jt_h1_is_sr_only ) : ?>
-								<span class="jt-prefix"
-								<?php
-								if ( $prefix_color ) :
-									?>
-									style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
+					<?php
+					// Feed-space untitled posts: emit the sr-only h1 alone so
+					// the visual flow is meta-row → body. Defer the Follow
+					// button to the meta row (it lands at the trailing edge
+					// via margin-inline-start: auto). Titled posts get the
+					// usual title-row with Follow on the right.
+					$jt_show_follow = is_user_logged_in();
+					if ( $jt_show_follow ) {
+						$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
+					}
+					if ( $jt_h1_is_sr_only ) :
+						?>
+						<h1 class="screen-reader-text"><?php echo esc_html( $jt_h1_label ); ?></h1>
+					<?php else : ?>
+						<div class="jt-post-title-row">
+							<h1>
+								<?php if ( $prefix_name ) : ?>
+									<span class="jt-prefix"
+									<?php
+									if ( $prefix_color ) :
+										?>
+										style="--jt-pfx:<?php echo esc_attr( $prefix_color ); ?>"<?php endif; ?>><?php echo esc_html( $prefix_name ); ?></span>
+								<?php endif; ?>
+								<?php if ( $space && 'ideas' === ( $space->type ?? '' ) ) : ?>
+									<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
+								<?php endif; ?>
+								<?php echo esc_html( (string) ( $post->title ?? '' ) ); ?>
+							</h1>
+							<?php if ( $jt_show_follow ) : ?>
+								<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
+									data-wp-on--click="actions.followPost"
+									data-post-id="<?php echo absint( $post->id ); ?>"
+									data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
+									<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+								</button>
 							<?php endif; ?>
-							<?php if ( $space && 'ideas' === ( $space->type ?? '' ) && ! $jt_h1_is_sr_only ) : ?>
-								<?php jetonomy_render_idea_status_pill( (string) ( $post->idea_status ?? '' ) ); ?>
-							<?php endif; ?>
-							<?php echo esc_html( $jt_h1_is_sr_only ? $jt_h1_label : (string) ( $post->title ?? '' ) ); ?>
-						</h1>
-						<?php
-						if ( is_user_logged_in() ) :
-							$is_following = \Jetonomy\Models\Subscription::is_subscribed( get_current_user_id(), 'post', (int) $post->id );
-							?>
-							<button class="jt-btn jt-btn-sm <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
-								data-wp-on--click="actions.followPost"
-								data-post-id="<?php echo absint( $post->id ); ?>"
-								data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
-								<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
-							</button>
-						<?php endif; ?>
-					</div>
+						</div>
+					<?php endif; ?>
 					<?php
 					// On Ideas spaces, space moderators see a status picker so
 					// the roadmap workflow is reachable from the post page.
@@ -356,6 +371,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							<span class="jt-badge-closed">
 								<?php esc_html_e( 'Closed', 'jetonomy' ); ?>
 							</span>
+						<?php endif; ?>
+						<?php if ( $jt_h1_is_sr_only && $jt_show_follow ) : ?>
+							<button class="jt-btn jt-btn-sm jt-meta-follow <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
+								data-wp-on--click="actions.followPost"
+								data-post-id="<?php echo absint( $post->id ); ?>"
+								data-following="<?php echo esc_attr( $is_following ? '1' : '0' ); ?>">
+								<?php echo $is_following ? esc_html__( 'Following', 'jetonomy' ) : esc_html__( 'Follow', 'jetonomy' ); ?>
+							</button>
 						<?php endif; ?>
 					</div>
 				</div>
