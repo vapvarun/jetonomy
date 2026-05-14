@@ -1,14 +1,14 @@
 # Feature Audit — Jetonomy (free)
 
-> **Source of truth:** [`manifest.json`](manifest.json). This document is a human-readable view of the same data, refreshed on 2026-04-30 by `/wp-plugin-onboard --refresh`.
+> **Source of truth:** [`manifest.json`](manifest.json). This document is a human-readable view of the same data, refreshed on 2026-05-14 by `/wp-plugin-onboard --refresh` (delta on top of the 2026-04-30 base).
 
 ## Summary
 
 | Category | Count | Notes |
 |---|---|---|
-| REST endpoints | 64 | Namespace `jetonomy/v1`. 15 controllers extending `Base_Controller`. |
+| REST endpoints | 67 | Namespace `jetonomy/v1`. 15 controllers extending `Base_Controller`. +2 in 1.4.3 (DELETE /notifications/{id}, POST /notifications/bulk); existing GET /notifications gained `?filter=`. |
 | AJAX handlers | 43 | All in `includes/admin/ajax/` — admin-only. Frontend uses REST. |
-| Hooks fired | 104 | 59 actions + 43 filters + 2 deprecated aliases. |
+| Hooks fired | 108 | 62 actions + 44 filters + 2 deprecated aliases. +3 in 1.4.3 (jetonomy_post_list_results_for_space, jetonomy_post_card_after_badges, jetonomy_reputation_points_for). |
 | Tables | 23 | All `jt_*` prefix, created via `dbDelta()` in `includes/db/class-schema.php`. |
 | Capabilities | 23 | Custom + 3-layer permission engine. |
 | Blocks | 8 | PHP-registered (no `block.json`). Includes Login, Navigation, Activity, Spaces, Top Members. |
@@ -76,6 +76,22 @@ Sonnet sub-agent walked the five customer-critical flows (new post, single post 
 - [ ] **A11Y-4 — reply / new-post composer `contenteditable` missing `role="textbox"` and `aria-multiline="true"` (HIGH, deferred to 1.4.2).** Some screen readers (NVDA + Firefox in particular) don't recognise the editor as an editable field. WCAG 4.1.2.
 - [ ] **A11Y-5 — "More options" menu button has no `aria-expanded` / `aria-haspopup` (MEDIUM, deferred to 1.4.2).** Custom dropdown needs Interactivity-bound `aria-expanded` and the popup list needs `role="menu"` + `role="menuitem"` children. WCAG 4.1.2.
 - [ ] **A11Y-8 — leaderboard top-3 rank position not announced to AT (MEDIUM, deferred to 1.4.2).** Medal SVGs are `aria-hidden="true"` with no text alternative; rank 1/2/3 invisible to screen readers. Add visually-hidden `<span class="screen-reader-text">1st place</span>` for top-3. WCAG 1.3.1.
+
+## 1.4.3 feature drop (2026-05-14)
+
+Four commits between 2026-05-13 and 2026-05-14 expanded the public surface:
+
+**Top-level Admin Bar** — new `Jetonomy\Admin_Bar` class in `includes/class-admin-bar.php`, registered on `admin_bar_menu` priority 60. Adds a quick-jump menu to the WP admin bar (frontend + backend) so logged-in users can hop straight into spaces, moderation queue, and notifications without leaving wp-admin or the public theme. First top-level admin-bar integration the plugin ships — previously every nav surface was inside the `/community/*` shell.
+
+**Notifications inbox redesign** — `templates/admin/notifications.php` rewritten end-to-end. New affordances: filter tabs (all / unread / mentions / replies / system), bulk-action toolbar (select-all + mark-read + delete), per-row overflow menu, pagination. Surfaces backed by 2 new REST endpoints (`DELETE /notifications/{id}`, `POST /notifications/bulk`) and a `?filter=` query arg on the existing `GET /notifications`. New `Notification` model methods (`list_for_user_with_targets`, `counts_by_filter`, `delete_for_user`, `mark_read_for_user`, `count_for_user($filter)`) keep all per-user scoping in the model layer — no raw `$wpdb` outside `includes/db/`. The empty state uses the new unified `jetonomy_admin_empty_state()` global helper (`includes/helpers.php`, function-exists-guarded).
+
+**Configurable reputation** — `Reputation::points_for()` now passes its return value through a new `jetonomy_reputation_points_for` filter, so any layer (Pro, theme, mu-plugin) can override the points awarded for a given action. The canonical defaults are exposed via `Reputation::action_points_defaults()`, and the merged (defaults + settings + filter) map is available via `Reputation::action_points_map()`. The Settings page gained a "Reputation points" card backed by a new `reputation_points` array on the existing `jetonomy_settings` option; `sanitize_settings()` filters to known action slugs from `action_points_defaults()` so unknown keys are dropped silently.
+
+**Pro consumption hooks** — two new public hooks fired specifically so the new `site-announcements` Pro extension can hang off them: `jetonomy_post_list_results_for_space` (filter, inside `Post::list_by_space_visible()` so Pro can re-order pinned posts to the top of every feed) and `jetonomy_post_card_after_badges` (action, inside `templates/partials/post-card.php` so Pro can render an "Announcement" badge on pinned cards). Both follow the existing `consumed_by: jetonomy-pro` convention in the manifest.
+
+**a11y polish** — focus-visible drift fixed on the editor body and feed actions (commit `b0fa218`). No surface-area change; visible focus rings now match the rest of the plugin's a11y contract.
+
+**Misc fixes** — BuddyPress dark-mode propagation, composer Private-toggle spacing, Banned Users confirm copy tone (commit `e2a3cd0`). UI-only; no manifest topology change.
 
 ## How to re-run
 

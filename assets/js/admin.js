@@ -191,7 +191,7 @@
 					slug: $('#cat-slug').val(),
 					description: $('#cat-description').val(),
 					parent_id: $('#cat-parent').val(),
-					icon: $('#cat-icon').val(),
+					icon: ($('input[name="icon"]', '#jetonomy-add-category-form').filter(':checked').val() || ''),
 					color: $('#cat-color').val(),
 					visibility: $('#cat-visibility').val()
 				}).done(function(res) {
@@ -218,7 +218,15 @@
 				$('#edit-cat-slug').val($link.data('slug'));
 				$('#edit-cat-description').val($link.data('description'));
 				$('#edit-cat-parent').val($link.data('parent'));
-				$('#edit-cat-icon').val($link.data('icon'));
+				// Sync the picker selection inside the edit modal to the row's saved icon.
+				(function () {
+					var savedIcon = String($link.data('icon') || '');
+					$('input[name="icon"]', '#jetonomy-edit-category-modal').each(function () {
+						var match = this.value === savedIcon;
+						this.checked = match;
+						$(this).closest('.jt-icon-option').toggleClass('is-selected', match);
+					});
+				})();
 				$('#edit-cat-visibility').val($link.data('visibility'));
 
 				// Re-initialize color picker in modal
@@ -252,7 +260,7 @@
 					slug: $('#edit-cat-slug').val(),
 					description: $('#edit-cat-description').val(),
 					parent_id: $('#edit-cat-parent').val(),
-					icon: $('#edit-cat-icon').val(),
+					icon: ($('input[name="icon"]', '#jetonomy-edit-category-modal').filter(':checked').val() || ''),
 					color: $('#edit-cat-color').val(),
 					visibility: $('#edit-cat-visibility').val()
 				}).done(function(res) {
@@ -406,7 +414,7 @@
 					visibility: $('#space-visibility').val(),
 					join_policy: $('#space-join-policy').val(),
 					status: $('#space-status').val(),
-					icon: $('#space-icon').val(),
+					icon: ($('input[name="icon"]:checked').val() || ''),
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {
 					if (res.success) {
@@ -443,7 +451,7 @@
 					visibility: $('#space-visibility').val(),
 					join_policy: $('#space-join-policy').val(),
 					status: $('#space-status').val(),
-					icon: $('#space-icon').val(),
+					icon: ($('input[name="icon"]:checked').val() || ''),
 					cover_image: $('#space-cover-image').val()
 				}).done(function(res) {
 					if (res.success) {

@@ -14,54 +14,9 @@
 
 	var i18n = (window.jetonomyData && window.jetonomyData.i18n) || {};
 
-	form.querySelectorAll('.jt-icon-option input[type=radio]').forEach(function (radio) {
-		radio.addEventListener('change', function () {
-			form.querySelectorAll('.jt-icon-option').forEach(function (el) {
-				el.classList.toggle('is-selected', el.contains(radio) && radio.checked);
-			});
-		});
-	});
-
-	(function () {
-		var pickerWrap = form.querySelector('[data-jt-icon-picker]');
-		if (!pickerWrap) { return; }
-		var searchInput = pickerWrap.querySelector('[data-jt-icon-search]');
-		var moreBtn = pickerWrap.querySelector('[data-jt-icon-more]');
-		var emptyMsg = pickerWrap.querySelector('[data-jt-icon-empty]');
-		var options = pickerWrap.querySelectorAll('.jt-icon-option');
-		var moreOpen = false;
-		var moreLabelOpen = i18n.iconShowFewer || 'Show fewer icons';
-		var moreLabelClosed = i18n.iconShowMore || 'Show more icons';
-
-		function applyFilter() {
-			var q = (searchInput.value || '').trim().toLowerCase();
-			var anyVisible = false;
-			options.forEach(function (opt) {
-				var keywords = (opt.getAttribute('data-jt-icon-keywords') || '').toLowerCase();
-				var isExtended = '1' === opt.getAttribute('data-jt-icon-extended');
-				var isSelected = opt.classList.contains('is-selected');
-				var show;
-				if ('' === q) {
-					show = isSelected || !isExtended || moreOpen;
-				} else {
-					show = keywords.indexOf(q) !== -1;
-				}
-				opt.hidden = !show;
-				if (show) { anyVisible = true; }
-			});
-			if (emptyMsg) { emptyMsg.hidden = anyVisible; }
-			if (moreBtn) { moreBtn.hidden = '' !== q; }
-		}
-
-		if (searchInput) { searchInput.addEventListener('input', applyFilter); }
-		if (moreBtn) {
-			moreBtn.addEventListener('click', function () {
-				moreOpen = !moreOpen;
-				moreBtn.textContent = moreOpen ? moreLabelOpen : moreLabelClosed;
-				applyFilter();
-			});
-		}
-	})();
+	// Icon picker wiring moved to assets/js/jetonomy-icon-picker.js (auto-discovers
+	// every [data-jt-icon-picker] on the page). This file only owns the cover
+	// uploader + submit handler now.
 
 	var coverInput = form.querySelector('[data-jt-cover-input]');
 	var coverValue = form.querySelector('[data-jt-cover-value]');

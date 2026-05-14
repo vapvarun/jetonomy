@@ -127,8 +127,20 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="space-icon"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label></th>
-					<td><input type="text" id="space-icon" class="regular-text" value="<?php echo esc_attr( $space->icon ?? '' ); ?>" placeholder="dashicons-groups"></td>
+					<th scope="row"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></th>
+					<td>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'icon-picker',
+							array(
+								'field_name'    => 'icon',
+								'current_value' => (string) ( $space->icon ?? 'users' ),
+								'id_prefix'     => 'jt-admin-edit-space-icon',
+								'label'         => '',
+							)
+						);
+						?>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Cover Image', 'jetonomy' ); ?></th>

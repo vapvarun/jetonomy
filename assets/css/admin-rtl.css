@@ -2485,3 +2485,135 @@ tr.jetonomy-moderated td {
 .jt-fc-admin-submit {
 	margin-right: 12px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Icon picker (admin) — same partial as the frontend new-space
+   form. Tokens get hex fallbacks so the picker reads correctly
+   without the front-end stylesheet enqueued on admin pages.
+   ═══════════════════════════════════════════════════════════ */
+.jt-icon-picker-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	max-width: 560px;
+}
+
+.jt-icon-picker-search {
+	position: relative;
+}
+
+.jt-icon-picker-search input[type="search"],
+.jt-icon-picker-search .jt-input {
+	padding-inline-start: 36px;
+	max-width: 320px;
+}
+
+.jt-icon-picker-search-icon {
+	position: absolute;
+	inset-inline-start: 10px;
+	inset-block-start: 50%;
+	transform: translateY(-50%);
+	color: #646970;
+	pointer-events: none;
+	display: inline-flex;
+}
+
+.jt-icon-picker-search-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+.jt-icon-picker {
+	display: grid;
+	grid-template-columns: repeat(8, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.jt-icon-picker .jt-icon-option {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	margin: 0;
+	padding: 0;
+	border: 1px solid var(--jt-border, #dcdcde);
+	border-radius: var(--jt-radius, 6px);
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease;
+	background: var(--jt-bg, #fff);
+	font-weight: 400;
+}
+
+.jt-icon-picker .jt-icon-option:hover {
+	border-color: var(--jt-accent, #2271b1);
+	background: var(--jt-bg-hover, #f6f7f7);
+}
+
+.jt-icon-picker .jt-icon-option input[type="radio"] {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.jt-icon-picker .jt-icon-option.is-selected {
+	border-color: var(--jt-accent, #2271b1);
+	background: var(--jt-accent-muted, rgba(34, 113, 177, 0.08));
+}
+
+.jt-icon-picker .jt-icon-option[hidden] {
+	display: none;
+}
+
+.jt-icon-option-svg {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--jt-accent, #2271b1);
+}
+
+.jt-icon-option-svg svg {
+	width: 22px;
+	height: 22px;
+}
+
+.jt-icon-picker-more {
+	align-self: flex-start;
+	font-size: 0.875rem;
+}
+
+.jt-icon-picker-empty {
+	color: var(--jt-text-secondary, #50575e);
+	font-size: 0.875rem;
+	padding: 8px 4px;
+	grid-column: 1 / -1;
+	margin: 0;
+}
+
+.jt-icon-picker-label {
+	display: inline-block;
+	font-weight: 600;
+	margin-block-end: 6px;
+	color: var(--jt-text, #1d2327);
+}
+
+/* Badge row icon — keeps the table cell compact and centred. */
+.jt-badge-row-icon,
+.jt-badge-inline-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--jt-accent, #2271b1);
+}
+
+.jt-badge-row-icon svg,
+.jt-badge-inline-icon svg {
+	display: block;
+}
+
+@media (max-width: 640px) {
+	.jt-icon-picker {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+}

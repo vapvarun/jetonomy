@@ -211,6 +211,74 @@ function jetonomy_render_space_icon( $icon, int $size = 24, string $class_name =
 }
 
 /**
+ * Map legacy emoji-byte strings stored in `wp_jt_pro_badges.icon` to the
+ * Lucide slug they should render as today.
+ *
+ * Used by the badge icon helper (fallback resolution) AND by the one-shot
+ * upgrade migration that normalises saved rows. Returning null means the
+ * input wasn't a known legacy emoji — caller decides the default.
+ *
+ * @param string $icon Raw stored value (may be UTF-8 emoji, a Lucide slug, or empty).
+ * @return string|null Lucide slug to render, or null when the input isn't a recognised legacy emoji.
+ */
+function jetonomy_map_legacy_badge_emoji( string $icon ): ?string {
+	$map = array(
+		"\xE2\x9C\x8D\xEF\xB8\x8F"     => 'edit',
+		"\xF0\x9F\x93\x9D"             => 'edit',
+		"\xF0\x9F\x92\xAC"             => 'message-circle',
+		"\xF0\x9F\x8F\x86"             => 'award',
+		"\xE2\x9C\x85"                 => 'check-circle',
+		"\xE2\xAD\x90"                 => 'star',
+		"\xF0\x9F\x8C\x9F"             => 'star',
+		"\xF0\x9F\x8E\x96\xEF\xB8\x8F" => 'award',
+		"\xF0\x9F\x96\x90\xEF\xB8\x8F" => 'hand',
+		"\xF0\x9F\x9A\xA9"             => 'flag',
+	);
+	return $map[ $icon ] ?? null;
+}
+
+/**
+ * Render a badge icon — Lucide-only, with graceful fallback.
+ *
+ * Mirrors {@see jetonomy_render_space_icon()} but tuned for the small badge
+ * display sizes used in the admin table and the my-badges profile card.
+ * Resolution order: stored Lucide slug → emoji-byte mapping → 'award' default.
+ *
+ * @param mixed  $icon       The badge's `icon` column value.
+ * @param int    $size       Pixel size for the SVG.
+ * @param string $class_name Wrapper class name.
+ */
+function jetonomy_render_badge_icon( $icon, int $size = 24, string $class_name = 'jt-badge-icon' ): void {
+	$icon = is_string( $icon ) ? trim( $icon ) : '';
+
+	$lucide = '';
+	if ( '' !== $icon && preg_match( '/^[a-z0-9][a-z0-9-]{0,40}$/', $icon ) ) {
+		$svg_path = JETONOMY_DIR . 'assets/icons/' . $icon . '.svg';
+		if ( file_exists( $svg_path ) ) {
+			$lucide = $icon;
+		}
+	}
+
+	if ( '' === $lucide && '' !== $icon ) {
+		$mapped = jetonomy_map_legacy_badge_emoji( $icon );
+		if ( null !== $mapped ) {
+			$svg_path = JETONOMY_DIR . 'assets/icons/' . $mapped . '.svg';
+			if ( file_exists( $svg_path ) ) {
+				$lucide = $mapped;
+			}
+		}
+	}
+
+	if ( '' === $lucide ) {
+		$lucide = 'award';
+	}
+
+	echo '<span class="' . esc_attr( $class_name ) . '" aria-hidden="true">';
+	echo jetonomy_icon( $lucide, $size ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted local SVG.
+	echo '</span>';
+}
+
+/**
  * Format post/reply content with @mention and #hashtag auto-linking.
  *
  * Expects already-sanitized HTML (via wp_kses_post). Applies regex only

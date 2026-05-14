@@ -98,8 +98,20 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="space-icon"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label></th>
-					<td><input type="text" id="space-icon" class="regular-text" placeholder="dashicons-groups"></td>
+					<th scope="row"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></th>
+					<td>
+						<?php
+						\Jetonomy\Template_Loader::partial(
+							'icon-picker',
+							array(
+								'field_name'    => 'icon',
+								'current_value' => 'users',
+								'id_prefix'     => 'jt-admin-new-space-icon',
+								'label'         => '',
+							)
+						);
+						?>
+					</td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Cover Image', 'jetonomy' ); ?></th>

@@ -389,7 +389,7 @@
         "auth": "login_required",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "List user's notifications"
+        "audit_notes": "List user's notifications 1.4.3: gained ?filter= query arg (all|unread|mentions|replies|system)."
       },
       {
         "route": "/notifications/unread-count",
@@ -878,6 +878,32 @@
         "capability": "manage_options",
         "ownership_check": "handler_enforces",
         "audit_notes": "Update trust level"
+      },
+      {
+        "route": "/notifications/(?P<id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Notifications_Controller::delete_notification",
+        "permission": "update_permission_check",
+        "purpose": "Delete a single notification (own user only)",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": "handler_enforces",
+        "audit_notes": "1.4.3 feature: per-row delete from the notifications inbox. Handler scopes the delete to current_user_id() so users can never delete another user's notifications."
+      },
+      {
+        "route": "/notifications/bulk",
+        "methods": [
+          "POST"
+        ],
+        "handler": "Notifications_Controller::bulk_action",
+        "permission": "update_permission_check",
+        "purpose": "Bulk mark-as-read or delete a batch of notifications",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": "handler_enforces",
+        "audit_notes": "1.4.3 feature: bulk toolbar in the notifications admin template. Accepts {ids: int[], action: \"mark_read\"|\"delete\"}. Handler scopes both operations to current_user_id()."
       }
     ]
   },
@@ -1290,7 +1316,8 @@
       "group": "jetonomy_settings",
       "type": "array",
       "default": {},
-      "controls": "base_slug, default_space_type, notification_defaults, trust_thresholds, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles"
+      "controls": "base_slug, default_space_type, notification_defaults, trust_thresholds, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles, reputation_points",
+      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults()."
     },
     {
       "key": "jetonomy_email_templates",
@@ -2469,6 +2496,27 @@
       "args": "use_frontend",
       "where": "includes/admin/",
       "consumed_by": null
+    },
+    {
+      "name": "jetonomy_post_list_results_for_space",
+      "type": "filter",
+      "args": "$results, $space_id, $user_id, $is_privileged, $sort, $offset",
+      "where": "includes/models/class-post.php (Post::list_by_space_visible)",
+      "consumed_by": "jetonomy-pro/site-announcements"
+    },
+    {
+      "name": "jetonomy_post_card_after_badges",
+      "type": "action",
+      "args": "$post, $space",
+      "where": "templates/partials/post-card.php",
+      "consumed_by": "jetonomy-pro/site-announcements"
+    },
+    {
+      "name": "jetonomy_reputation_points_for",
+      "type": "filter",
+      "args": "$points, $action",
+      "where": "includes/trust/class-reputation.php (Reputation::points_for)",
+      "consumed_by": null
     }
   ],
   "buddypress_integration": {
@@ -2767,6 +2815,11 @@
     "discrepancies_2026_04_29": "Stale manifest entries surfaced during the 1.4.1 refresh - recorded but NOT fixed in code (per BUILD-LOG): (1) hooks_fired entries `jetonomy_admin_footer_text`, `jetonomy_extensions_init`, `jetonomy_footer_text`, `jetonomy_header_logo`, `jetonomy_post_response`, `jetonomy_profile_response` are documented but no longer fired anywhere in the free codebase - likely renamed during the 1.3.x cycle to `jetonomy_rest_prepare_*`. (2) cron entry `jetonomy_sync_membership` was previously documented but is no longer scheduled in `Cron::schedule()` - replaced in this refresh by `jetonomy_verification_reminder`. (3) REST entries `/votes/(?P<id>\\d+)` (DELETE) and `/tags/(?P<id>\\d+)` (GET/PATCH/DELETE) were stale stubs - actual code uses POST+DELETE on `/posts/{id}/vote` and `/replies/{id}/vote`, and `/tags/{id}` was never implemented - both removed in this refresh.",
     "changelog": [
       {
+        "date": "2026-05-14",
+        "version": "1.4.3",
+        "summary": "1.4.3 feature drop: top-level Admin Bar quick-jump (Jetonomy\\Admin_Bar), unified .jetonomy-empty-state primitive (jetonomy_admin_empty_state() global helper), Notifications admin page redesigned (filter tabs, bulk toolbar, per-row menu, pagination, ?filter= on GET, DELETE /notifications/{id}, POST /notifications/bulk), configurable reputation (Reputation::action_points_map/action_points_defaults, jetonomy_reputation_points_for filter, reputation_points settings array). New Pro-consumption hooks: jetonomy_post_list_results_for_space, jetonomy_post_card_after_badges. a11y: focus-visible drift fixed on editor body and feed actions. BuddyPress dark-mode propagation fix, composer Private toggle spacing, Banned Users confirm tone."
+      },
+      {
         "date": "2026-05-09",
         "version": "1.4.2.2",
         "summary": "1.4.2.x patch cycle: schema migration aligns idea_status ENUM with the documented 4-lane spec (planned, in_progress, shipped, declined); login block stays light in dark mode; setup wizard offers all 4 default-space-type options; manifest gains the missing POST /posts/{id}/idea-status REST endpoint and jetonomy_user_left_space hooks_fired entry."
@@ -2789,12 +2842,12 @@
     ]
   },
   "generated": {
-    "at": "2026-05-13T18:00:00Z",
-    "from": "wp-plugin-onboard skill (1.4.2.x refresh)",
+    "at": "2026-05-14T12:00:00Z",
+    "from": "wp-plugin-onboard --refresh (1.4.3 feature-drop delta: admin bar + notifications redesign + configurable reputation + Pro extension hooks)",
     "branch": "main",
     "schema_version": "v2",
-    "refresh_note": "Refreshed 2026-05-13 for the 1.4.3 release. Three i18n drift fixes in class-template-loader.php (added recipientRequired + userNotFound, kept messageSendFailed name canonical). Two pro-view.js confirm() calls migrated to window.jetonomyConfirm (Rule 10 compliance). Annotated jetonomy_after_resolve_flag as intentional dead-fire extension point. No REST/AJAX/hook topology change since 2026-05-09 — WS1-WS4 were wiring migrations, not API surface changes.",
-    "refreshed_via": "wp-plugin-onboard --refresh (wppqa-driven, undefined-ref hunt focus)"
+    "refresh_note": "Refreshed 2026-05-14 for the 1.4.3 feature drop (commits 16215a2, 6bfebca, e2a3cd0, b0fa218). NEW: Admin_Bar class (includes/class-admin-bar.php, admin_bar_menu priority 60). NEW: jetonomy_admin_empty_state() global helper (includes/helpers.php). NEW: 3 public hooks for Pro consumption (jetonomy_post_list_results_for_space, jetonomy_post_card_after_badges, jetonomy_reputation_points_for). NEW: 2 REST endpoints on Notifications_Controller (DELETE /notifications/{id}, POST /notifications/bulk) plus ?filter= on the existing GET. NEW: configurable reputation via Reputation::action_points_map() + filter + reputation_points settings array. Notifications admin template fully redesigned (filter tabs, bulk toolbar, per-row menu, pagination, empty-state primitive). See audit/wppqa-baseline-2026-05-14/SUMMARY.md for the surface-area delta.",
+    "refreshed_via": "wp-plugin-onboard --refresh (manual delta — feature-drop scope)"
   },
   "static_analysis": {
     "dead_listeners": [

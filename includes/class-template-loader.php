@@ -500,6 +500,17 @@ class Template_Loader {
 			true
 		);
 
+		// Icon picker wiring. Self-discovers every [data-jt-icon-picker] on
+		// the page so any template (frontend new-space, space-edit, or a
+		// future surface) gets search + show-more behaviour for free.
+		wp_enqueue_script(
+			'jetonomy-icon-picker',
+			JETONOMY_URL . 'assets/js/jetonomy-icon-picker.js',
+			array( 'jetonomy-data' ),
+			JETONOMY_VERSION,
+			true
+		);
+
 		// Per-route page scripts.
 		if ( 'new-space' === $data['route'] ) {
 			wp_enqueue_script(

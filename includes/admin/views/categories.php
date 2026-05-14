@@ -51,9 +51,19 @@ defined( 'ABSPATH' ) || exit;
 					<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 				</select>
 			</div>
-			<div class="jetonomy-form-field">
-				<label for="cat-icon"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
-				<input type="text" id="cat-icon" class="regular-text" placeholder="dashicons-category">
+			<div class="jetonomy-form-field jetonomy-form-field--wide">
+				<label><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
+				<?php
+				\Jetonomy\Template_Loader::partial(
+					'icon-picker',
+					array(
+						'field_name'    => 'icon',
+						'current_value' => 'folder',
+						'id_prefix'     => 'jt-admin-new-cat-icon',
+						'label'         => '',
+					)
+				);
+				?>
 			</div>
 			<div class="jetonomy-form-field">
 				<label for="cat-color"><?php esc_html_e( 'Color', 'jetonomy' ); ?></label>
@@ -264,9 +274,19 @@ endif;
 						<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
 					</select>
 				</div>
-				<div class="jetonomy-form-field">
-					<label for="edit-cat-icon"><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
-					<input type="text" id="edit-cat-icon" class="regular-text">
+				<div class="jetonomy-form-field jetonomy-form-field--wide">
+					<label><?php esc_html_e( 'Icon', 'jetonomy' ); ?></label>
+					<?php
+					\Jetonomy\Template_Loader::partial(
+						'icon-picker',
+						array(
+							'field_name'    => 'icon',
+							'current_value' => 'folder',
+							'id_prefix'     => 'jt-admin-edit-cat-icon',
+							'label'         => '',
+						)
+					);
+					?>
 				</div>
 				<div class="jetonomy-form-field">
 					<label for="edit-cat-color"><?php esc_html_e( 'Color', 'jetonomy' ); ?></label>

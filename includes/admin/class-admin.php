@@ -636,6 +636,16 @@ class Admin {
 			true
 		);
 
+		// Lucide icon picker behaviour for any admin form that renders the
+		// shared icon-picker partial (spaces, categories, badges).
+		wp_enqueue_script(
+			'jetonomy-icon-picker',
+			JETONOMY_URL . 'assets/js/jetonomy-icon-picker.js',
+			array(),
+			JETONOMY_VERSION,
+			true
+		);
+
 		wp_enqueue_style( 'wp-color-picker' );
 
 		// Code editor for custom CSS
