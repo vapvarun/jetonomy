@@ -259,6 +259,8 @@ final class Jetonomy {
 		$this->load_dependencies();
 		$this->maybe_backfill_activity();
 		$this->maybe_seed_verification_reminder_defaults();
+
+		Admin_Bar::register();
 	}
 
 	/**

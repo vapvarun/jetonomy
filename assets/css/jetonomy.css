@@ -530,7 +530,7 @@
   .jt-tag-link:hover { color: var(--jt-accent); text-decoration: underline; }
 
   /* Post-body tag row — tags moved out of byline (1.4.1 byline cleanup) */
-  .jt-post-tags { display: flex; flex-wrap: wrap; gap: 12px; margin-block: 16px 24px; padding: 0; }
+  .jt-post-tags { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-5) var(--jt-space-2); padding: 0; }
 
   /* ── Trust level badge ── */
   .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: var(--jt-white); font-family: var(--jt-font-mono); }
@@ -551,7 +551,7 @@
   .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 20px; }
   .jt-post > *:first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-post > *:last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
-  .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-5); border-bottom: 1px solid var(--jt-border); position: relative; }
+  .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-6); border-bottom: 1px solid var(--jt-border); position: relative; }
   .jt-post-title-row { display: flex; align-items: center; gap: var(--jt-space-4); }
   .jt-post-title-row > h1 { flex: 1 1 auto; min-width: 0; }
   .jt-post-title-row > .jt-btn-sm { flex: 0 0 auto; }
@@ -571,7 +571,7 @@
   .jt-post-body p { margin: 0 0 var(--jt-space-3); }
   .jt-post-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
   .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
-  .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
+  .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-4); padding-inline: var(--jt-space-6); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
   .jt-act { display: inline-flex; align-items: center; gap: var(--jt-space-2); padding-block: var(--jt-space-2); padding-inline: var(--jt-space-3); border-radius: var(--jt-radius-full); font-size: 0.8125rem; color: var(--jt-text-tertiary); font-weight: 500; transition: all 0.1s; border: none; background: none; cursor: pointer; font-family: var(--jt-font); min-block-size: 36px; }
@@ -593,16 +593,16 @@
      (absolute-positioned on the actions row) gets hidden the moment it extends
      past the card boundary. Border-radius is applied to the direct children
      (head + body + footer) instead of the wrapper so corners still round. */
-  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-3); transition: border-color var(--jt-dur); }
+  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-4); transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
   .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); }
   .jt-reply > :first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-reply > :last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
   .jt-reply-head { display: flex; align-items: center; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
-  .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
+  .jt-reply-body { padding: var(--jt-space-4) var(--jt-space-5); font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
-  .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-3); }
+  .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
   .jt-accepted-tag { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 0.9375rem; font-weight: 600; color: var(--jt-success); }
   /* Threaded reply nesting — up to 3 levels */
   .jt-nested { margin-left: 24px; position: relative; }
@@ -1681,7 +1681,7 @@
   .jt-row-excerpt { color: var(--jt-text-tertiary); margin-top: 4px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
   /* ── Replies section ── */
-  .jt-replies-section { scroll-margin-top: 80px; }
+  .jt-replies-section { scroll-margin-top: 80px; margin-block-start: var(--jt-space-8); }
   .jt-replies-controls { display: flex; align-items: center; gap: 12px; }
   .jt-replies-status { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--jt-border); }
 

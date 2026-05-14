@@ -381,7 +381,23 @@ class Post extends Model {
 				$offset
 			)
 		);
-		return $results ? $results : array();
+		$results = $results ? $results : array();
+
+		/**
+		 * Filter the result set returned for a space's post list.
+		 *
+		 * Lets Pro extensions (site-announcements / super-sticky) inject
+		 * cross-space pinned posts at the top of every space's view without
+		 * each space template needing to know about them.
+		 *
+		 * @param object[] $results       Database rows in display order.
+		 * @param int      $space_id      Space ID being viewed.
+		 * @param int      $user_id       Current viewer's user ID (0 for guest).
+		 * @param bool     $is_privileged True if viewer is moderator/admin.
+		 * @param string   $sort          Current sort order (latest|popular|oldest|newest|unanswered).
+		 * @param int      $offset        Pagination offset (0 = first page).
+		 */
+		return apply_filters( 'jetonomy_post_list_results_for_space', $results, $space_id, $user_id, $is_privileged, $sort, $offset );
 	}
 
 	/**

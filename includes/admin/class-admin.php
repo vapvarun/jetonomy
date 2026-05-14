@@ -359,6 +359,21 @@ class Admin {
 			);
 		}
 
+		// Reputation point overrides — only persist the keys we recognise so
+		// a stale POST body can't smuggle in arbitrary action names. Values
+		// are signed ints (negative penalties allowed).
+		if ( isset( $input['reputation_points'] ) ) {
+			$raw_rep   = is_array( $input['reputation_points'] ) ? $input['reputation_points'] : array();
+			$defaults  = \Jetonomy\Trust\Reputation::action_points_defaults();
+			$clean_rep = array();
+			foreach ( $defaults as $action_key => $default_val ) {
+				if ( array_key_exists( $action_key, $raw_rep ) ) {
+					$clean_rep[ $action_key ] = (int) $raw_rep[ $action_key ];
+				}
+			}
+			$clean['reputation_points'] = $clean_rep;
+		}
+
 		// ── Email tab ──
 		// Only process if email_from_name is present (Email tab was submitted).
 		if ( isset( $input['email_from_name'] ) ) {

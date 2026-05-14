@@ -58,6 +58,18 @@ if ( $prefix_name && $space ) {
 			<?php if ( ! empty( $post->is_private ) ) : ?>
 				<span class="jt-badge-private"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
 			<?php endif; ?>
+			<?php
+			/**
+			 * Fires after the built-in post-card badges (sticky, private) so
+			 * Pro extensions can append extra markers (super-sticky / pinned
+			 * site-wide / "From announcements" etc.) without forking the
+			 * post-card partial.
+			 *
+			 * @param object      $post  Post row.
+			 * @param object|null $space Space row, if loaded.
+			 */
+			do_action( 'jetonomy_post_card_after_badges', $post, $space );
+			?>
 			<?php if ( $prefix_name ) : ?>
 				<span class="jt-prefix"
 				<?php

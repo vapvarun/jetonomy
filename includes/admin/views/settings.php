@@ -392,6 +392,63 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</table>
 			</div>
 
+			<!-- Reputation Points -->
+			<?php
+			$rep_defaults  = \Jetonomy\Trust\Reputation::action_points_defaults();
+			$rep_overrides = isset( $settings['reputation_points'] ) && is_array( $settings['reputation_points'] )
+				? $settings['reputation_points']
+				: array();
+			$rep_labels    = array(
+				'post_upvoted'    => __( 'Post upvoted', 'jetonomy' ),
+				'reply_upvoted'   => __( 'Reply upvoted', 'jetonomy' ),
+				'post_downvoted'  => __( 'Post downvoted', 'jetonomy' ),
+				'reply_downvoted' => __( 'Reply downvoted', 'jetonomy' ),
+				'reply_accepted'  => __( 'Reply accepted as answer', 'jetonomy' ),
+				'idea_planned'    => __( 'Idea moved to Planned/Shipped', 'jetonomy' ),
+				'flag_validated'  => __( 'Flag confirmed (reporter)', 'jetonomy' ),
+				'post_reported'   => __( 'Post reported', 'jetonomy' ),
+				'post_removed'    => __( 'Post removed by moderator', 'jetonomy' ),
+			);
+			?>
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Reputation Points', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'How many points each action awards (or deducts). Positive numbers reward, negative numbers penalize. Leave a row at its default if you have no reason to change it.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="wp-list-table widefat fixed" style="margin:0;border:none;box-shadow:none;border-radius:0;">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Action', 'jetonomy' ); ?></th>
+							<th style="width:140px;"><?php esc_html_e( 'Points', 'jetonomy' ); ?></th>
+							<th style="width:120px;"><?php esc_html_e( 'Default', 'jetonomy' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $rep_labels as $action_key => $action_label ) : ?>
+							<?php
+							$current = array_key_exists( $action_key, $rep_overrides )
+								? (int) $rep_overrides[ $action_key ]
+								: (int) ( $rep_defaults[ $action_key ] ?? 0 );
+							$default = (int) ( $rep_defaults[ $action_key ] ?? 0 );
+							?>
+							<tr>
+								<td><strong><?php echo esc_html( $action_label ); ?></strong></td>
+								<td>
+									<input
+										type="number"
+										name="jetonomy_settings[reputation_points][<?php echo esc_attr( $action_key ); ?>]"
+										value="<?php echo (int) $current; ?>"
+										class="small-text"
+										step="1"
+									>
+								</td>
+								<td><code><?php echo esc_html( ( $default >= 0 ? '+' : '' ) . $default ); ?></code></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+
 		<?php elseif ( 'email' === $active_tab ) : ?>
 			<?php $admin_email = get_option( 'admin_email' ); ?>
 
