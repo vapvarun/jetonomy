@@ -986,7 +986,10 @@
 				var $row = $btn.closest('tr');
 				var restrictionId = $btn.data('restriction-id');
 
-				self.confirmAsync(self.i18n.confirmDelete).then(function(ok) {
+				// Pass the danger tone so the OK button renders red. Unbanning
+				// is destructive (the user immediately regains site access) and
+				// should look like every other destructive admin confirm.
+				self.confirmAsync(self.i18n.confirmUnban || self.i18n.confirmDelete, { danger: true }).then(function(ok) {
 					if (!ok) return;
 					$btn.prop('disabled', true);
 

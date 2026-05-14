@@ -333,7 +333,7 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 								</td>
 								<td><?php echo esc_html( $issuer ? $issuer->display_name : __( 'System', 'jetonomy' ) ); ?></td>
 								<td>
-									<button type="button" class="button button-small jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Unban', 'jetonomy' ); ?></button>
+									<button type="button" class="jt-btn jt-btn-sm jetonomy-unban-user" data-restriction-id="<?php echo absint( $ban->id ); ?>"><?php esc_html_e( 'Unban', 'jetonomy' ); ?></button>
 								</td>
 							</tr>
 						<?php endforeach; ?>

@@ -124,7 +124,14 @@
      anything else creates a jarring contrast against the surrounding
      theme chrome and gets reported as a bug. The host theme's dark
      toggle is the single source of truth. */
-  .jt-dark .jt-app, .jt-app.jt-dark {
+  /* BuddyPress integration surfaces (.jt-bp-forum, .jt-bp-recent, .jt-bp-topic-row,
+     etc.) render outside the .jt-app wrapper — they sit inside BP-owned templates
+     like the member profile forum tab and group discussion area. The wildcard
+     selector below makes dark-mode token overrides cascade into every BP
+     integration surface so the host theme's dark toggle reaches them without
+     enumerating each class. */
+  .jt-dark .jt-app, .jt-app.jt-dark,
+  .jt-dark [class*="jt-bp-"] {
     --jt-text: #e5e5e5;
     --jt-text-secondary: rgba(229, 229, 229, 0.75);
     /* Bumped from 0.4 → 0.6 so text using --jt-text-tertiary passes WCAG AA
@@ -1027,7 +1034,9 @@
   @media (max-width: 640px) { .jt-space-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; } .jt-space-tab { white-space: nowrap; } }
 
   /* ── Private toggle on new post form ── */
-  .jt-private-toggle { display: flex; align-items: center; }
+  /* Token-aligned gap above the Private toggle so it doesn't sit flush against
+     the preceding composer row (e.g. the Add Poll button when Pro is active). */
+  .jt-private-toggle { display: flex; align-items: center; margin-block-start: var(--jt-space-4, 16px); }
   .jt-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
   .jt-checkbox-label input[type="checkbox"] { width: 1rem; height: 1rem; accent-color: var(--jt-accent); }
 
