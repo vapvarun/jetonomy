@@ -1228,26 +1228,122 @@ tr.jetonomy-moderated td {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Empty States
+   Empty States (canonical primitive)
+   Use jetonomy_admin_empty_state() to render; standalone markup
+   inherits the same styling so legacy callsites degrade gracefully.
    ═══════════════════════════════════════════════════════════ */
 
 .jetonomy-empty-state {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
 	text-align: center;
-	padding: 40px 20px;
+	padding: 48px 24px;
+	margin: 0;
 	color: var(--jt-admin-text-wp-2);
 }
 
-.jetonomy-empty-state .dashicons {
-	font-size: 48px;
-	width: 48px;
-	height: 48px;
-	color: var(--jt-admin-success-wp);
-	margin-bottom: 12px;
+/* Compact variant for dashboard cards and narrow columns. */
+.jetonomy-empty-state--compact {
+	padding: 24px 16px;
 }
 
-.jetonomy-empty-state h2 {
-	margin: 12px 0 8px;
+/* Icon halo — covers legacy markup that ships .dashicons directly. */
+.jetonomy-empty-state .dashicons,
+.jetonomy-empty-state__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	font-size: 32px;
+	line-height: 1;
+	margin: 0 0 16px;
+	border-radius: 50%;
+	background: var(--jt-admin-blue-surface, rgba(34, 113, 177, 0.08));
+	color: var(--jt-admin-blue-wp, #2271b1);
+}
+
+/* All-clear variant: green halo for "queue empty / nothing wrong" surfaces. */
+.jetonomy-empty-state--success .dashicons,
+.jetonomy-empty-state--success .jetonomy-empty-state__icon {
+	background: rgba(76, 175, 80, 0.1);
+	color: var(--jt-admin-success-wp);
+}
+
+/* Title — applies to <h2>, <h3>, and the BEM modifier. */
+.jetonomy-empty-state h2,
+.jetonomy-empty-state h3,
+.jetonomy-empty-state__title {
+	margin: 0 0 8px;
+	padding: 0;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.4;
 	color: var(--jt-admin-text-wp);
+}
+
+/* Body copy. */
+.jetonomy-empty-state p,
+.jetonomy-empty-state__body {
+	margin: 0 0 4px;
+	max-width: 480px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--jt-admin-text-wp-2);
+}
+
+.jetonomy-empty-state p:last-child {
+	margin-bottom: 0;
+}
+
+/* Optional action row (CTAs). */
+.jetonomy-empty-state__actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+.jetonomy-empty-state__actions .button {
+	margin: 0;
+}
+
+/* Table-row variant: <tr class="jetonomy-empty-row"><td colspan="…"><div .jetonomy-empty-state></div></td></tr> */
+.jetonomy-empty-row td {
+	padding: 0;
+	background: transparent;
+}
+
+.jetonomy-empty-row .jetonomy-empty-state {
+	padding: 40px 16px;
+}
+
+/* Compact, dashboard-card, and table-row variants reduce icon footprint. */
+.jetonomy-empty-state--compact .dashicons,
+.jetonomy-empty-state--compact .jetonomy-empty-state__icon {
+	width: 40px;
+	height: 40px;
+	font-size: 22px;
+	margin-bottom: 10px;
+}
+
+@media (max-width: 600px) {
+	.jetonomy-empty-state {
+		padding: 32px 16px;
+	}
+
+	.jetonomy-empty-state__actions {
+		flex-direction: column;
+		width: 100%;
+	}
+
+	.jetonomy-empty-state__actions .button {
+		width: 100%;
+	}
 }
 
 /* ═══════════════════════════════════════════════════════════

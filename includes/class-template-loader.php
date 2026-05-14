@@ -521,7 +521,7 @@ class Template_Loader {
 			wp_enqueue_script(
 				'jetonomy-notifications-page',
 				JETONOMY_URL . 'assets/js/notifications-page.js',
-				array( 'jetonomy-data' ),
+				array( 'jetonomy-data', 'jetonomy-rest' ),
 				JETONOMY_VERSION,
 				true
 			);

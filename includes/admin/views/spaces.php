@@ -196,7 +196,16 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 			</thead>
 			<tbody>
 				<?php if ( empty( $spaces ) ) : ?>
-					<tr><td colspan="8"><?php esc_html_e( 'No spaces found.', 'jetonomy' ); ?></td></tr>
+					<?php
+					jetonomy_admin_empty_state(
+						array(
+							'colspan' => 8,
+							'icon'    => 'admin-multisite',
+							'title'   => __( 'No spaces yet', 'jetonomy' ),
+							'body'    => __( 'Spaces group your topics. Create one to start organizing the community.', 'jetonomy' ),
+						)
+					);
+					?>
 				<?php else : ?>
 					<?php
 					foreach ( $spaces as $space ) :
@@ -220,12 +229,12 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 							</td>
 							<td class="column-type">
 								<?php
-								$type_labels = [
+								$type_labels = array(
 									'forum' => __( 'Forum', 'jetonomy' ),
 									'qa'    => __( 'Q&A', 'jetonomy' ),
 									'ideas' => __( 'Ideas', 'jetonomy' ),
 									'feed'  => __( 'Feed', 'jetonomy' ),
-								];
+								);
 								?>
 								<span class="jetonomy-type-badge jetonomy-type-badge--<?php echo esc_attr( $space->type ); ?>"><?php echo esc_html( $type_labels[ $space->type ] ?? ucfirst( $space->type ) ); ?></span>
 							</td>
@@ -251,13 +260,13 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 				<div class="tablenav-pages">
 					<?php
 					$page_links = paginate_links(
-						[
+						array(
 							'base'    => add_query_arg( 'paged', '%#%' ),
 							'format'  => '',
 							'current' => $paged,
 							'total'   => $total_pages,
 							'type'    => 'array',
-						]
+						)
 					);
 					if ( $page_links ) {
 						echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $page_links ) ) . '</span>';

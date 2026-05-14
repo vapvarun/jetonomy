@@ -15,14 +15,14 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$trust_labels = [
+$trust_labels = array(
 	0 => __( 'New', 'jetonomy' ),
 	1 => __( 'Basic', 'jetonomy' ),
 	2 => __( 'Member', 'jetonomy' ),
 	3 => __( 'Regular', 'jetonomy' ),
 	4 => __( 'Leader', 'jetonomy' ),
 	5 => __( 'Elder', 'jetonomy' ),
-];
+);
 ?>
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Users', 'jetonomy' ); ?></h1>
@@ -68,7 +68,16 @@ $trust_labels = [
 		</thead>
 		<tbody>
 			<?php if ( empty( $users ) ) : ?>
-				<tr><td colspan="8"><?php esc_html_e( 'No users found.', 'jetonomy' ); ?></td></tr>
+				<?php
+				jetonomy_admin_empty_state(
+					array(
+						'colspan' => 8,
+						'icon'    => 'admin-users',
+						'title'   => __( 'No users match these filters', 'jetonomy' ),
+						'body'    => __( 'Try clearing a filter or broadening your search to see more members.', 'jetonomy' ),
+					)
+				);
+				?>
 			<?php else : ?>
 				<?php foreach ( $users as $u ) : ?>
 					<tr data-user-id="<?php echo absint( $u->user_id ); ?>">
@@ -110,13 +119,13 @@ $trust_labels = [
 			<div class="tablenav-pages">
 				<?php
 				$pagination = paginate_links(
-					[
+					array(
 						'base'    => add_query_arg( 'paged', '%#%' ),
 						'format'  => '',
 						'current' => $paged,
 						'total'   => $total_pages,
 						'type'    => 'array',
-					]
+					)
 				);
 				if ( $pagination ) {
 					echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $pagination ) ) . '</span>';

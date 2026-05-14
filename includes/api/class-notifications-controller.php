@@ -62,21 +62,58 @@ class Notifications_Controller extends Base_Controller {
 			]
 		);
 
-		// Single notification — ownership check stays inside mark_read() because
-		// it depends on the notification row's user_id field.
+		// Bulk action — mark read / delete a set of notifications in one round-trip.
+		register_rest_route(
+			$ns,
+			'/notifications/bulk',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_action' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				'args'                => [
+					'action' => [
+						'required' => true,
+						'type'     => 'string',
+						'enum'     => [ 'mark_read', 'delete' ],
+					],
+					'ids'    => [
+						'required' => true,
+						'type'     => 'array',
+						'items'    => [ 'type' => 'integer' ],
+					],
+				],
+			]
+		);
+
+		// Single notification PATCH (mark read) + DELETE (dismiss).
+		// Ownership checks live inside the callbacks since they depend on the
+		// row's user_id field, not a static cap.
 		register_rest_route(
 			$ns,
 			'/notifications/(?P<id>\d+)',
 			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'mark_read' ],
-				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				[
+					'methods'             => 'PATCH',
+					'callback'            => [ $this, 'mark_read' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_notification' ],
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				],
 			]
 		);
 	}
 
 	/**
 	 * GET /notifications — List notifications for the current user.
+	 *
+	 * Accepts `?filter=all|unread|mentions|replies|votes|badges`. Uses the
+	 * target-enriched list method so every row already carries the post /
+	 * space / reply slugs it needs — no per-row lookups required for url
+	 * resolution. Filter slugs that don't match a known bucket collapse to
+	 * `all` so the endpoint never 400s on a malformed query.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = $this->require_auth();
@@ -84,11 +121,13 @@ class Notifications_Controller extends Base_Controller {
 			return $user_id;
 		}
 
-		$pagination    = $this->get_pagination( $request );
-		$limit         = (int) $pagination['limit'];
-		$offset        = (int) $pagination['offset'];
-		$notifications = Notification::list_for_user( $user_id, $limit, $offset );
-		$total         = Notification::count_for_user( $user_id );
+		$pagination = $this->get_pagination( $request );
+		$limit      = (int) $pagination['limit'];
+		$offset     = (int) $pagination['offset'];
+		$filter     = self::sanitize_filter( (string) $request->get_param( 'filter' ) );
+
+		$notifications = Notification::list_for_user_with_targets( $user_id, $limit, $offset, $filter );
+		$total         = Notification::count_for_user( $user_id, $filter );
 
 		$items = array_map( [ $this, 'prepare_notification' ], $notifications );
 
@@ -97,8 +136,88 @@ class Notifications_Controller extends Base_Controller {
 			[
 				'total'  => $total,
 				'offset' => $offset,
+				'filter' => $filter,
 			]
 		);
+	}
+
+	/**
+	 * DELETE /notifications/{id} — Dismiss a single notification.
+	 *
+	 * Ownership is enforced via Notification::delete_for_user(): the row must
+	 * match BOTH the id and the current user. A forged id from another user
+	 * silently affects zero rows — the response still 200s with deleted=0 so
+	 * the client can detect the no-op and refresh.
+	 */
+	public function delete_notification( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$id      = absint( $request->get_param( 'id' ) );
+		$deleted = Notification::delete_for_user( $user_id, [ $id ] );
+
+		return new WP_REST_Response(
+			[
+				'success' => true,
+				'deleted' => $deleted,
+			],
+			200
+		);
+	}
+
+	/**
+	 * POST /notifications/bulk — Run an action over a set of notifications.
+	 *
+	 * Body: `{ action: 'mark_read'|'delete', ids: [int, ...] }`.
+	 *
+	 * Both actions enforce ownership inside the model (WHERE user_id = %d) so
+	 * a forged id list can never affect another user's rows. The response
+	 * returns the number of rows actually changed so the client can update
+	 * counters without a follow-up GET.
+	 */
+	public function bulk_action( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$action = (string) $request->get_param( 'action' );
+		$ids    = (array) $request->get_param( 'ids' );
+
+		if ( empty( $ids ) ) {
+			return new WP_Error( 'jetonomy_invalid_ids', __( 'No notifications selected.', 'jetonomy' ), [ 'status' => 400 ] );
+		}
+
+		if ( 'delete' === $action ) {
+			$affected = Notification::delete_for_user( $user_id, $ids );
+		} else {
+			$affected = Notification::mark_read_for_user( $user_id, $ids );
+		}
+
+		return new WP_REST_Response(
+			[
+				'success'  => true,
+				'action'   => $action,
+				'affected' => $affected,
+			],
+			200
+		);
+	}
+
+	/**
+	 * Sanitize an incoming filter slug against the canonical set.
+	 *
+	 * Kept in sync with Notification::filter_where() so the controller and the
+	 * model agree on the same vocabulary.
+	 *
+	 * @param string $filter Raw input from the query string.
+	 * @return string A known filter slug, or `all` for unknown input.
+	 */
+	private static function sanitize_filter( string $filter ): string {
+		$allowed = [ 'all', 'unread', 'mentions', 'replies', 'votes', 'badges' ];
+		return in_array( $filter, $allowed, true ) ? $filter : 'all';
 	}
 
 	/**
@@ -208,6 +327,12 @@ class Notifications_Controller extends Base_Controller {
 
 	/**
 	 * Resolve URL for a notification, handling special types like badge.
+	 *
+	 * Prefers pre-joined slug columns (`post_slug`, `space_slug`, `reply_id`,
+	 * `reply_post_slug`, `reply_space_slug`) when the row was loaded through
+	 * Notification::list_for_user_with_targets(), and falls back to per-row
+	 * model lookups for callers that loaded the row another way (e.g.
+	 * mark_read which uses Notification::find).
 	 */
 	private function resolve_notification_url( object $notification, string $object_type, int $object_id ): string {
 		if ( 'badge' === $object_type ) {
@@ -218,6 +343,18 @@ class Notifications_Controller extends Base_Controller {
 			return '';
 		}
 
+		// Fast path: pre-joined slugs come from list_for_user_with_targets().
+		$base = \Jetonomy\base_url();
+
+		if ( 'post' === $object_type && ! empty( $notification->post_slug ) && ! empty( $notification->space_slug ) ) {
+			return $base . '/s/' . $notification->space_slug . '/t/' . $notification->post_slug . '/';
+		}
+
+		if ( 'reply' === $object_type && ! empty( $notification->reply_post_slug ) && ! empty( $notification->reply_space_slug ) ) {
+			return $base . '/s/' . $notification->reply_space_slug . '/t/' . $notification->reply_post_slug . '/#reply-' . $object_id;
+		}
+
+		// Slow path: per-row model lookup for callers that didn't use the JOIN.
 		if ( $object_type && $object_id ) {
 			return $this->resolve_object_url( $object_type, $object_id );
 		}

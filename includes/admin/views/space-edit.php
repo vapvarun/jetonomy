@@ -192,7 +192,17 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</thead>
 				<tbody>
 					<?php if ( empty( $members ) ) : ?>
-						<tr class="jetonomy-no-items"><td colspan="4"><?php esc_html_e( 'No members yet.', 'jetonomy' ); ?></td></tr>
+						<?php
+						jetonomy_admin_empty_state(
+							array(
+								'colspan' => 4,
+								'variant' => 'compact',
+								'icon'    => 'groups',
+								'title'   => __( 'No members yet', 'jetonomy' ),
+								'body'    => __( 'Invite members or open this space to the wider community.', 'jetonomy' ),
+							)
+						);
+						?>
 					<?php else : ?>
 						<?php
 						foreach ( $members as $member ) :
@@ -276,7 +286,17 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</thead>
 				<tbody>
 					<?php if ( empty( $access_rules ) ) : ?>
-						<tr class="jetonomy-no-items"><td colspan="5"><?php esc_html_e( 'No access rules defined. Default permissions apply.', 'jetonomy' ); ?></td></tr>
+						<?php
+						jetonomy_admin_empty_state(
+							array(
+								'colspan' => 5,
+								'variant' => 'compact',
+								'icon'    => 'lock',
+								'title'   => __( 'No access rules', 'jetonomy' ),
+								'body'    => __( 'Default permissions apply. Add a rule to limit access by role, membership, or trust level.', 'jetonomy' ),
+							)
+						);
+						?>
 					<?php else : ?>
 						<?php foreach ( $access_rules as $rule ) : ?>
 							<?php
@@ -490,7 +510,17 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</thead>
 				<tbody>
 					<?php if ( empty( $join_requests ) ) : ?>
-						<tr class="jetonomy-no-items"><td colspan="4"><?php esc_html_e( 'No pending join requests.', 'jetonomy' ); ?></td></tr>
+						<?php
+						jetonomy_admin_empty_state(
+							array(
+								'colspan' => 4,
+								'variant' => 'success',
+								'icon'    => 'yes-alt',
+								'title'   => __( 'No pending join requests', 'jetonomy' ),
+								'body'    => __( 'New requests to join this space will appear here for review.', 'jetonomy' ),
+							)
+						);
+						?>
 					<?php else : ?>
 						<?php
 						foreach ( $join_requests as $request ) :

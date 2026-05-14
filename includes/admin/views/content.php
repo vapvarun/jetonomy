@@ -18,20 +18,20 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', [] );
+$settings  = get_option( 'jetonomy_settings', array() );
 $base_slug = $settings['base_slug'] ?? 'community';
 
-$valid_statuses = [ 'all', 'publish', 'pending', 'spam', 'trash' ];
+$valid_statuses = array( 'all', 'publish', 'pending', 'spam', 'trash' );
 $current_status = in_array( $current_status, $valid_statuses, true ) ? $current_status : 'all';
 $current_space  = absint( $current_space );
 
-$status_labels = [
+$status_labels = array(
 	'all'     => __( 'All', 'jetonomy' ),
 	'publish' => __( 'Published', 'jetonomy' ),
 	'pending' => __( 'Pending', 'jetonomy' ),
 	'spam'    => __( 'Spam', 'jetonomy' ),
 	'trash'   => __( 'Trash', 'jetonomy' ),
-];
+);
 
 $search_query = sanitize_text_field( $_GET['s'] ?? '' );
 $page_url     = admin_url( 'admin.php?page=jetonomy-content' );
@@ -100,10 +100,15 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 
 	<!-- ── Posts table ───────────────────────────────────────── -->
 	<?php if ( empty( $posts ) ) : ?>
-		<div class="jetonomy-empty-state">
-			<span class="dashicons dashicons-admin-post"></span>
-			<p><?php esc_html_e( 'No posts found matching your filters.', 'jetonomy' ); ?></p>
-		</div>
+		<?php
+		jetonomy_admin_empty_state(
+			array(
+				'icon'  => 'admin-post',
+				'title' => __( 'No posts match these filters', 'jetonomy' ),
+				'body'  => __( 'Try clearing a filter or broadening your search to see more.', 'jetonomy' ),
+			)
+		);
+		?>
 	<?php else : ?>
 
 	<div class="jt-content-table-wrap">
@@ -134,12 +139,12 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 						? home_url( "/{$base_slug}/s/{$space_slug}/t/{$post_slug}/" )
 						: '';
 
-					$status_class_map = [
+					$status_class_map = array(
 						'publish' => 'jetonomy-status-dot--active',
 						'pending' => 'jetonomy-status-dot--archived',
 						'spam'    => 'jetonomy-status-dot--locked',
 						'trash'   => 'jetonomy-status-dot--locked',
-					];
+					);
 					$status_dot_class = $status_class_map[ $p->status ] ?? '';
 
 					$row_id = 'jt-post-row-' . absint( $p->id );
@@ -324,13 +329,13 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 			<div class="tablenav-pages">
 				<?php
 				$plinks = paginate_links(
-					[
+					array(
 						'base'    => add_query_arg( 'paged', '%#%' ),
 						'format'  => '',
 						'current' => $paged,
 						'total'   => $total_pages,
 						'type'    => 'array',
-					]
+					)
 				);
 				if ( $plinks ) {
 					echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>';

@@ -117,15 +117,29 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 				</thead>
 				<tbody id="jetonomy-tags-list">
 					<?php if ( empty( $tags ) ) : ?>
-						<tr class="jetonomy-no-items">
-							<td colspan="4">
-								<?php if ( '' !== $search ) : ?>
-									<?php esc_html_e( 'No tags match that search.', 'jetonomy' ); ?>
-								<?php else : ?>
-									<?php esc_html_e( 'No tags yet. Create your first one on the left.', 'jetonomy' ); ?>
-								<?php endif; ?>
-							</td>
-						</tr>
+						<?php if ( '' !== $search ) : ?>
+							<?php
+							jetonomy_admin_empty_state(
+								array(
+									'colspan' => 4,
+									'icon'    => 'search',
+									'title'   => __( 'No tags match that search', 'jetonomy' ),
+									'body'    => __( 'Try a different keyword or clear the search to see all tags.', 'jetonomy' ),
+								)
+							);
+							?>
+						<?php else : ?>
+							<?php
+							jetonomy_admin_empty_state(
+								array(
+									'colspan' => 4,
+									'icon'    => 'tag',
+									'title'   => __( 'No tags yet', 'jetonomy' ),
+									'body'    => __( 'Tags help members find related posts. Create your first one using the form on the left.', 'jetonomy' ),
+								)
+							);
+							?>
+						<?php endif; ?>
 					<?php else : ?>
 						<?php foreach ( $tags as $tag ) : ?>
 							<tr data-id="<?php echo absint( $tag->id ); ?>" data-post-count="<?php echo absint( $tag->post_count ?? 0 ); ?>" class="jetonomy-tag-row">

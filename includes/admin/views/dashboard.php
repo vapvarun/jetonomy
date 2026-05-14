@@ -21,32 +21,32 @@ if ( ! get_option( 'jetonomy_setup_complete' ) ) : ?>
 	<?php
 endif;
 
-$stat_cards = [
-	'total_posts'   => [
+$stat_cards = array(
+	'total_posts'   => array(
 		'label' => __( 'Total Posts', 'jetonomy' ),
 		'icon'  => 'dashicons-admin-post',
-	],
-	'total_replies' => [
+	),
+	'total_replies' => array(
 		'label' => __( 'Total Replies', 'jetonomy' ),
 		'icon'  => 'dashicons-format-chat',
-	],
-	'active_spaces' => [
+	),
+	'active_spaces' => array(
 		'label' => __( 'Active Spaces', 'jetonomy' ),
 		'icon'  => 'dashicons-networking',
-	],
-	'users'         => [
+	),
+	'users'         => array(
 		'label' => __( 'Registered Users', 'jetonomy' ),
 		'icon'  => 'dashicons-admin-users',
-	],
-	'pending_flags' => [
+	),
+	'pending_flags' => array(
 		'label' => __( 'Pending Flags', 'jetonomy' ),
 		'icon'  => 'dashicons-flag',
-	],
-	'posts_today'   => [
+	),
+	'posts_today'   => array(
 		'label' => __( 'Posts Today', 'jetonomy' ),
 		'icon'  => 'dashicons-calendar-alt',
-	],
-];
+	),
+);
 ?>
 <div class="wrap jetonomy-admin">
 	<h1><?php esc_html_e( 'Jetonomy Dashboard', 'jetonomy' ); ?></h1>
@@ -80,7 +80,16 @@ $stat_cards = [
 		<div class="jetonomy-dashboard-card">
 			<h2><?php esc_html_e( 'Recent Activity', 'jetonomy' ); ?></h2>
 			<?php if ( empty( $recent_activity ) ) : ?>
-				<p class="jetonomy-empty-state"><?php esc_html_e( 'No activity recorded yet.', 'jetonomy' ); ?></p>
+				<?php
+				jetonomy_admin_empty_state(
+					array(
+						'variant' => 'compact',
+						'icon'    => 'chart-line',
+						'title'   => __( 'No activity yet', 'jetonomy' ),
+						'body'    => __( 'Member actions will appear here as your community grows.', 'jetonomy' ),
+					)
+				);
+				?>
 			<?php else : ?>
 				<table class="widefat striped">
 					<thead>
@@ -100,7 +109,7 @@ $stat_cards = [
 							$object_id   = (int) $activity->object_id;
 
 							// --- Action label mapping ---
-							$action_labels = [
+							$action_labels = array(
 								'created_post'        => __( 'Created a post', 'jetonomy' ),
 								'created_reply'       => __( 'Replied', 'jetonomy' ),
 								'voted'               => __( 'Voted', 'jetonomy' ),
@@ -111,16 +120,16 @@ $stat_cards = [
 								'reputation_changed'  => __( 'Reputation changed', 'jetonomy' ),
 								'joined_space'        => __( 'Joined a space', 'jetonomy' ),
 								'idea_status_changed' => __( 'Updated idea roadmap status', 'jetonomy' ),
-							];
+							);
 
 							$action_label = isset( $action_labels[ $action_code ] )
 								? $action_labels[ $action_code ]
 								: ucwords( str_replace( '_', ' ', $action_code ) );
 
 							// --- Dot color by action category ---
-							$create_actions   = [ 'created_post', 'created_reply', 'joined_space' ];
-							$vote_actions     = [ 'voted' ];
-							$moderate_actions = [ 'moderated_approve', 'moderated_trash', 'moderated_spam' ];
+							$create_actions   = array( 'created_post', 'created_reply', 'joined_space' );
+							$vote_actions     = array( 'voted' );
+							$moderate_actions = array( 'moderated_approve', 'moderated_trash', 'moderated_spam' );
 
 							if ( in_array( $action_code, $create_actions, true ) ) {
 								$dot_color = '#22c55e'; // green
@@ -184,7 +193,7 @@ $stat_cards = [
 								<td>
 									<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:<?php echo esc_attr( $dot_color ); ?>;margin-right:6px;vertical-align:middle;" aria-hidden="true"></span><?php echo esc_html( $action_label ); ?>
 								</td>
-								<td><?php echo wp_kses( $object_html, [ 'a' => [ 'href' => [] ] ] ); ?></td>
+								<td><?php echo wp_kses( $object_html, array( 'a' => array( 'href' => array() ) ) ); ?></td>
 								<td><?php echo esc_html( human_time_diff( strtotime( $activity->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>

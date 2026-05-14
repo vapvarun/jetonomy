@@ -72,3 +72,102 @@ if ( ! function_exists( 'jetonomy_post_title_or_excerpt' ) ) {
 		return $plain;
 	}
 }
+
+if ( ! function_exists( 'jetonomy_admin_empty_state' ) ) {
+	/**
+	 * Render the canonical admin empty-state primitive.
+	 *
+	 * Every "no data yet" surface in wp-admin should call this helper instead
+	 * of hand-writing <div class="jetonomy-empty-state">…</div> markup so that
+	 * spacing, dark mode, RTL, and mobile breakpoints stay in sync as the
+	 * design evolves.
+	 *
+	 * @param array $args {
+	 *     Render args for the empty state.
+	 *
+	 *     @type string $icon     Dashicon slug without the 'dashicons-' prefix. Default 'info-outline'.
+	 *     @type string $title    Optional headline. Default empty.
+	 *     @type string $body     Supporting copy. Default empty.
+	 *     @type array  $actions  Optional CTAs: list of { label, url, primary?, attrs? } arrays.
+	 *     @type int    $colspan  When > 0, wraps output in <tr class="jetonomy-empty-row"><td colspan="N">…</td></tr>.
+	 *     @type string $variant  'default' | 'success' | 'compact'. Default 'default'.
+	 *     @type string $class    Extra CSS classes appended to the wrapper.
+	 * }.
+	 */
+	function jetonomy_admin_empty_state( array $args = array() ): void {
+		$args = array_merge(
+			array(
+				'icon'    => 'info-outline',
+				'title'   => '',
+				'body'    => '',
+				'actions' => array(),
+				'colspan' => 0,
+				'variant' => 'default',
+				'class'   => '',
+			),
+			$args
+		);
+
+		$classes = array( 'jetonomy-empty-state' );
+		if ( in_array( $args['variant'], array( 'success', 'compact' ), true ) ) {
+			$classes[] = 'jetonomy-empty-state--' . $args['variant'];
+		}
+		if ( '' !== $args['class'] ) {
+			$classes[] = (string) $args['class'];
+		}
+
+		$colspan = (int) $args['colspan'];
+		if ( $colspan > 0 ) {
+			echo '<tr class="jetonomy-empty-row"><td colspan="' . absint( $colspan ) . '">';
+		}
+
+		echo '<div class="' . esc_attr( implode( ' ', $classes ) ) . '">';
+
+		if ( '' !== $args['icon'] ) {
+			echo '<span class="dashicons dashicons-' . esc_attr( $args['icon'] ) . ' jetonomy-empty-state__icon" aria-hidden="true"></span>';
+		}
+
+		if ( '' !== $args['title'] ) {
+			echo '<h2 class="jetonomy-empty-state__title">' . esc_html( $args['title'] ) . '</h2>';
+		}
+
+		if ( '' !== $args['body'] ) {
+			echo '<p class="jetonomy-empty-state__body">' . esc_html( $args['body'] ) . '</p>';
+		}
+
+		if ( ! empty( $args['actions'] ) && is_array( $args['actions'] ) ) {
+			$rendered = '';
+			foreach ( $args['actions'] as $action ) {
+				if ( empty( $action['label'] ) || empty( $action['url'] ) ) {
+					continue;
+				}
+				$btn_class = 'button';
+				if ( ! empty( $action['primary'] ) ) {
+					$btn_class .= ' button-primary';
+				}
+				$attrs = '';
+				if ( ! empty( $action['attrs'] ) && is_array( $action['attrs'] ) ) {
+					foreach ( $action['attrs'] as $k => $v ) {
+						$attrs .= ' ' . esc_attr( (string) $k ) . '="' . esc_attr( (string) $v ) . '"';
+					}
+				}
+				$rendered .= sprintf(
+					'<a href="%1$s" class="%2$s"%3$s>%4$s</a>',
+					esc_url( (string) $action['url'] ),
+					esc_attr( $btn_class ),
+					$attrs,
+					esc_html( (string) $action['label'] )
+				);
+			}
+			if ( '' !== $rendered ) {
+				echo '<div class="jetonomy-empty-state__actions">' . $rendered . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internals already escaped per-field above.
+			}
+		}
+
+		echo '</div>';
+
+		if ( $colspan > 0 ) {
+			echo '</td></tr>';
+		}
+	}
+}

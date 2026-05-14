@@ -106,15 +106,29 @@ defined( 'ABSPATH' ) || exit;
 		</thead>
 		<tbody id="jetonomy-categories-list">
 			<?php if ( empty( $categories ) ) : ?>
-				<tr class="jetonomy-no-items">
-					<td colspan="5">
-						<?php if ( ! empty( $search ) ) : ?>
-							<?php esc_html_e( 'No categories match that search.', 'jetonomy' ); ?>
-						<?php else : ?>
-							<?php esc_html_e( 'No categories yet. Create your first one above.', 'jetonomy' ); ?>
-						<?php endif; ?>
-					</td>
-				</tr>
+				<?php if ( ! empty( $search ) ) : ?>
+					<?php
+					jetonomy_admin_empty_state(
+						array(
+							'colspan' => 5,
+							'icon'    => 'search',
+							'title'   => __( 'No categories match that search', 'jetonomy' ),
+							'body'    => __( 'Try a different keyword or clear the search to see all categories.', 'jetonomy' ),
+						)
+					);
+					?>
+				<?php else : ?>
+					<?php
+					jetonomy_admin_empty_state(
+						array(
+							'colspan' => 5,
+							'icon'    => 'category',
+							'title'   => __( 'No categories yet', 'jetonomy' ),
+							'body'    => __( 'Categories let you group related spaces. Create your first one using the form above.', 'jetonomy' ),
+						)
+					);
+					?>
+				<?php endif; ?>
 			<?php else : ?>
 				<?php foreach ( $categories as $cat ) : ?>
 					<tr data-id="<?php echo absint( $cat->id ); ?>" class="jetonomy-category-row">

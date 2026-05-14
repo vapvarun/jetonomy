@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$settings  = get_option( 'jetonomy_settings', [] );
+$settings  = get_option( 'jetonomy_settings', array() );
 $base_slug = $settings['base_slug'] ?? 'community';
 
 $back_url = admin_url( 'admin.php?page=jetonomy-content' );
@@ -38,13 +38,13 @@ $front_url   = $space_slug && $post_slug
 	? home_url( "/{$base_slug}/s/{$space_slug}/t/{$post_slug}/" )
 	: '';
 
-$status_labels = [
+$status_labels = array(
 	'all'     => __( 'All', 'jetonomy' ),
 	'publish' => __( 'Published', 'jetonomy' ),
 	'pending' => __( 'Pending', 'jetonomy' ),
 	'spam'    => __( 'Spam', 'jetonomy' ),
 	'trash'   => __( 'Trash', 'jetonomy' ),
-];
+);
 ?>
 <div class="wrap jetonomy-admin">
 
@@ -159,10 +159,15 @@ $status_labels = [
 	</form>
 
 	<?php if ( empty( $replies ) ) : ?>
-		<div class="jetonomy-empty-state">
-			<span class="dashicons dashicons-format-chat"></span>
-			<p><?php esc_html_e( 'No replies found matching your filters.', 'jetonomy' ); ?></p>
-		</div>
+		<?php
+		jetonomy_admin_empty_state(
+			array(
+				'icon'  => 'format-chat',
+				'title' => __( 'No replies match these filters', 'jetonomy' ),
+				'body'  => __( 'Try clearing a filter or broadening your search to see more.', 'jetonomy' ),
+			)
+		);
+		?>
 	<?php else : ?>
 
 	<div class="jt-content-table-wrap">
@@ -331,13 +336,13 @@ $status_labels = [
 			<div class="tablenav-pages">
 				<?php
 				$plinks = paginate_links(
-					[
+					array(
 						'base'    => add_query_arg( 'paged', '%#%' ),
 						'format'  => '',
 						'current' => $paged,
 						'total'   => $total_pages,
 						'type'    => 'array',
-					]
+					)
 				);
 				if ( $plinks ) {
 					echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>';

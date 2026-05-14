@@ -60,10 +60,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		<!-- Pending Posts -->
 		<div class="jetonomy-tab-content">
 			<?php if ( empty( $pending_posts ) ) : ?>
-				<div class="jetonomy-empty-state">
-					<span class="dashicons dashicons-yes-alt"></span>
-					<p><?php esc_html_e( 'No pending posts. The queue is clear.', 'jetonomy' ); ?></p>
-				</div>
+				<?php
+				jetonomy_admin_empty_state(
+					array(
+						'variant' => 'success',
+						'icon'    => 'yes-alt',
+						'title'   => __( 'Queue is clear', 'jetonomy' ),
+						'body'    => __( 'No posts are waiting on moderation right now.', 'jetonomy' ),
+					)
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
@@ -113,18 +119,18 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</span>
 						<?php
 						$plinks = paginate_links(
-							[
+							array(
 								'base'    => add_query_arg(
-									[
+									array(
 										'tab'         => 'posts',
 										'paged_posts' => '%#%',
-									]
+									)
 								),
 								'format'  => '',
 								'current' => $paged_posts,
 								'total'   => (int) ceil( $total_posts / $per_page ),
 								'type'    => 'array',
-							]
+							)
 						);
 						if ( $plinks ) {
 							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
@@ -139,10 +145,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		<!-- Pending Replies -->
 		<div class="jetonomy-tab-content">
 			<?php if ( empty( $pending_replies ) ) : ?>
-				<div class="jetonomy-empty-state">
-					<span class="dashicons dashicons-yes-alt"></span>
-					<p><?php esc_html_e( 'No pending replies. The queue is clear.', 'jetonomy' ); ?></p>
-				</div>
+				<?php
+				jetonomy_admin_empty_state(
+					array(
+						'variant' => 'success',
+						'icon'    => 'yes-alt',
+						'title'   => __( 'Queue is clear', 'jetonomy' ),
+						'body'    => __( 'No replies are waiting on moderation right now.', 'jetonomy' ),
+					)
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
@@ -189,18 +201,18 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</span>
 						<?php
 						$plinks = paginate_links(
-							[
+							array(
 								'base'    => add_query_arg(
-									[
+									array(
 										'tab'           => 'replies',
 										'paged_replies' => '%#%',
-									]
+									)
 								),
 								'format'  => '',
 								'current' => $paged_replies,
 								'total'   => (int) ceil( $total_replies / $per_page ),
 								'type'    => 'array',
-							]
+							)
 						);
 						if ( $plinks ) {
 							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
@@ -215,10 +227,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		<!-- Flags -->
 		<div class="jetonomy-tab-content">
 			<?php if ( empty( $pending_flags ) ) : ?>
-				<div class="jetonomy-empty-state">
-					<span class="dashicons dashicons-yes-alt"></span>
-					<p><?php esc_html_e( 'No pending flags. Everything looks good.', 'jetonomy' ); ?></p>
-				</div>
+				<?php
+				jetonomy_admin_empty_state(
+					array(
+						'variant' => 'success',
+						'icon'    => 'yes-alt',
+						'title'   => __( 'Nothing flagged', 'jetonomy' ),
+						'body'    => __( 'No reports are open. The community is behaving.', 'jetonomy' ),
+					)
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
@@ -268,18 +286,18 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</span>
 						<?php
 						$plinks = paginate_links(
-							[
+							array(
 								'base'    => add_query_arg(
-									[
+									array(
 										'tab'         => 'flags',
 										'paged_flags' => '%#%',
-									]
+									)
 								),
 								'format'  => '',
 								'current' => $paged_flags,
 								'total'   => (int) ceil( $total_flags / $per_page ),
 								'type'    => 'array',
-							]
+							)
 						);
 						if ( $plinks ) {
 							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
@@ -294,10 +312,16 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 		<!-- Banned Users -->
 		<div class="jetonomy-tab-content">
 			<?php if ( empty( $banned_users ) ) : ?>
-				<div class="jetonomy-empty-state">
-					<span class="dashicons dashicons-yes-alt"></span>
-					<p><?php esc_html_e( 'No active bans.', 'jetonomy' ); ?></p>
-				</div>
+				<?php
+				jetonomy_admin_empty_state(
+					array(
+						'variant' => 'success',
+						'icon'    => 'yes-alt',
+						'title'   => __( 'No active bans', 'jetonomy' ),
+						'body'    => __( 'Every member is currently in good standing.', 'jetonomy' ),
+					)
+				);
+				?>
 			<?php else : ?>
 				<div class="jt-content-table-wrap">
 				<table class="wp-list-table widefat fixed striped">
@@ -352,18 +376,18 @@ $active_tab = sanitize_text_field( $_GET['tab'] ?? 'posts' );
 						</span>
 						<?php
 						$plinks = paginate_links(
-							[
+							array(
 								'base'    => add_query_arg(
-									[
+									array(
 										'tab'          => 'banned',
 										'paged_banned' => '%#%',
-									]
+									)
 								),
 								'format'  => '',
 								'current' => $paged_banned,
 								'total'   => (int) ceil( $total_banned / $per_page ),
 								'type'    => 'array',
-							]
+							)
 						);
 						if ( $plinks ) {
 							echo '<span class="pagination-links">' . wp_kses_post( implode( ' ', $plinks ) ) . '</span>'; }
