@@ -620,6 +620,7 @@
   .jt-editor-bar button { min-width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; padding: 0; }
   .jt-editor-bar button:hover, .jt-editor-bar button:focus { background: var(--jt-bg); color: var(--jt-text); border: none; }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
+  .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
@@ -961,7 +962,8 @@
   .jt-feed-card-body img { max-width: 100%; height: auto; border-radius: var(--jt-radius-sm); }
   .jt-feed-card-foot { display: flex; align-items: center; gap: 4px; margin-block-start: 14px; padding-block-start: 12px; border-block-start: 1px solid var(--jt-border); }
   .jt-feed-act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; background: transparent; border: 0; color: var(--jt-text-secondary); font: inherit; font-size: 0.875rem; cursor: pointer; border-radius: var(--jt-radius-sm); text-decoration: none; transition: background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-feed-act:hover, .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: none; }
+  .jt-feed-act:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
+  .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-feed-act.jt-voted { color: var(--jt-accent); }
   .jt-feed-act-n { font-weight: 600; font-variant-numeric: tabular-nums; }
   .jt-feed-act-permalink { margin-inline-start: auto; color: var(--jt-text-tertiary); }

@@ -544,9 +544,15 @@
   .jt-post { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 20px; }
   .jt-post > *:first-child { border-top-right-radius: var(--jt-radius-lg); border-top-left-radius: var(--jt-radius-lg); }
   .jt-post > *:last-child { border-bottom-right-radius: var(--jt-radius-lg); border-bottom-left-radius: var(--jt-radius-lg); }
-  .jt-post-head { padding: 20px; border-bottom: 1px solid var(--jt-border); position: relative; }
-  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin-bottom: 10px; padding-left: 6rem; }
-  .jt-post-head > .jt-btn-sm { position: absolute; top: 20px; left: 20px; }
+  .jt-post-head { display: flex; flex-direction: column; gap: var(--jt-space-4); padding: var(--jt-space-5); border-bottom: 1px solid var(--jt-border); position: relative; }
+  .jt-post-title-row { display: flex; align-items: center; gap: var(--jt-space-4); }
+  .jt-post-title-row > h1 { flex: 1 1 auto; min-width: 0; }
+  .jt-post-title-row > .jt-btn-sm { flex: 0 0 auto; }
+  /* When the post is untitled (feed-space) the Follow button lives on the
+     meta row instead of a dedicated title row. Push it to the trailing
+     edge so the row reads "avatar · name · time · [badges] · Follow". */
+  .jt-meta .jt-meta-follow { margin-inline-start: auto; }
+  .jt-post-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; margin: 0; }
   /* Meta row — author + trust + time + tags. Flex-wraps atomically
      so individual items never break mid-word on narrow viewports.
      See docs/DESIGN-SYSTEM.md §9 "Meta line". */
@@ -554,10 +560,10 @@
   .jt-meta > * { white-space: nowrap; flex-shrink: 0; }
   .jt-meta > a { min-height: var(--jt-space-8); display: inline-flex; align-items: center; }
   .jt-meta strong { color: var(--jt-text); }
-  .jt-post-body { padding: 24px; font-size: 1rem; line-height: 1.8; }
-  .jt-post-body p { margin: 0 0 12px; }
+  .jt-post-body { padding: var(--jt-space-6); font-size: 1rem; line-height: 1.8; }
+  .jt-post-body p { margin: 0 0 var(--jt-space-3); }
   .jt-post-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
-  .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: 16px; border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 12px; }
+  .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
@@ -572,21 +578,21 @@
   .jt-act .n { font-family: var(--jt-font-mono); font-weight: 700; }
 
   /* ── Replies ── */
-  .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: 8px; }
-  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); }
+  .jt-replies-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 var(--jt-space-4); }
+  .jt-replies-head h2, .jt-replies-head h3 { font-family: var(--jt-font-heading); font-weight: 700; display: flex; align-items: center; gap: var(--jt-space-2); margin: 0; }
+  .jt-count-pill { font-family: var(--jt-font-mono); font-size: 0.75rem; font-weight: 600; line-height: 1.4; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-accent-light); color: var(--jt-accent); min-width: 1.75em; text-align: center; }
 
   /* Reply card: must NOT clip overflow, otherwise the three-dot menu dropdown
      (absolute-positioned on the actions row) gets hidden the moment it extends
      past the card boundary. Border-radius is applied to the direct children
      (head + body + footer) instead of the wrapper so corners still round. */
-  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: 10px; transition: border-color var(--jt-dur); }
+  .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-3); transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
   .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); }
   .jt-reply > :first-child { border-top-right-radius: var(--jt-radius-lg); border-top-left-radius: var(--jt-radius-lg); }
   .jt-reply > :last-child { border-bottom-right-radius: var(--jt-radius-lg); border-bottom-left-radius: var(--jt-radius-lg); }
-  .jt-reply-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--jt-bg-subtle); }
+  .jt-reply-head { display: flex; align-items: center; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-3); }
@@ -614,6 +620,7 @@
   .jt-editor-bar button { min-width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--jt-radius-sm); color: var(--jt-text-secondary); font-size: 1rem; transition: all 0.1s; border: none; background: none; cursor: pointer; padding: 0; }
   .jt-editor-bar button:hover, .jt-editor-bar button:focus { background: var(--jt-bg); color: var(--jt-text); border: none; }
   .jt-editor-body { padding: 16px; min-height: 120px; color: var(--jt-text); outline: none; font-family: var(--jt-font); font-size: 1rem; line-height: 1.75; }
+  .jt-editor-body:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: -2px; border-radius: var(--jt-radius-sm); }
   .jt-editor-body:empty::before { content: attr(data-placeholder); color: var(--jt-text-secondary); }
   .jt-editor-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--jt-border); }
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
@@ -702,7 +709,7 @@
   @keyframes jt-spin { to { transform: rotate(-360deg); } }
 
   /* ── Empty state ── */
-  .jt-empty { background: var(--jt-bg-muted); text-align: center; padding: 60px 20px; color: var(--jt-text-tertiary); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); }
+  .jt-empty { background: var(--jt-bg-muted); text-align: center; padding: var(--jt-space-8) var(--jt-space-5); color: var(--jt-text-tertiary); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); }
   .jt-empty-icon { font-size: 3em; margin-bottom: 12px; }
   .jt-empty-text { font-size: 0.9375rem; margin-bottom: 16px; }
 
@@ -943,10 +950,11 @@
      so the visual hierarchy matches the type's contract. */
   .jt-feed { display: flex; flex-direction: column; gap: 12px; }
   .jt-feed-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); padding: 16px; }
-  .jt-feed-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-block-end: 12px; }
-  .jt-feed-card-meta { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
-  .jt-feed-card-author { font-weight: 600; color: var(--jt-text); }
-  .jt-feed-card-time { color: var(--jt-text-tertiary); font-size: 0.875rem; text-decoration: none; }
+  .jt-feed-card-head { display: flex; align-items: center; gap: var(--jt-space-3); flex-wrap: wrap; margin-block-end: var(--jt-space-3); }
+  .jt-feed-card-meta { display: inline-flex; align-items: center; gap: var(--jt-space-2); flex-wrap: wrap; min-width: 0; line-height: 1.4; }
+  .jt-feed-card-author { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); text-decoration: none; }
+  .jt-feed-card-author:hover { text-decoration: underline; color: var(--jt-text); }
+  .jt-feed-card-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; text-decoration: none; }
   .jt-feed-card-time:hover { color: var(--jt-text-secondary); text-decoration: underline; }
   .jt-feed-card-body { color: var(--jt-text); line-height: 1.6; word-break: break-word; }
   .jt-feed-card-body p { margin-block: 0 12px; }
@@ -954,7 +962,8 @@
   .jt-feed-card-body img { max-width: 100%; height: auto; border-radius: var(--jt-radius-sm); }
   .jt-feed-card-foot { display: flex; align-items: center; gap: 4px; margin-block-start: 14px; padding-block-start: 12px; border-block-start: 1px solid var(--jt-border); }
   .jt-feed-act { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; background: transparent; border: 0; color: var(--jt-text-secondary); font: inherit; font-size: 0.875rem; cursor: pointer; border-radius: var(--jt-radius-sm); text-decoration: none; transition: background var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-feed-act:hover, .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: none; }
+  .jt-feed-act:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
+  .jt-feed-act:focus-visible { background: var(--jt-bg-hover); color: var(--jt-text); outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-feed-act.jt-voted { color: var(--jt-accent); }
   .jt-feed-act-n { font-weight: 600; font-variant-numeric: tabular-nums; }
   .jt-feed-act-permalink { margin-inline-start: auto; color: var(--jt-text-tertiary); }
@@ -990,16 +999,21 @@
      is a pill button that mirrors the read-only pill above; the active
      option uses a heavier border + filled background so the choice is
      obvious without dominating the post header. */
-  .jt-idea-status-setter { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-start: 12px; padding: 10px 12px; background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
+  .jt-idea-status-setter { display: flex; align-items: center; gap: var(--jt-space-3); flex-wrap: wrap; margin: 0; padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); }
   .jt-idea-status-setter-label { font-size: 0.8125rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-idea-status-options { display: flex; flex-wrap: wrap; gap: 6px; }
-  .jt-idea-status-btn { font-family: inherit; cursor: pointer; border: 1px solid transparent; line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
-  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 24%, transparent); outline: none; }
+  /* Inactive setter buttons render neutral so the ONE active status is
+     visually obvious. Only the active button wears its semantic color
+     (planned=blue, in_progress=warn, shipped=success, declined=tertiary).
+     Hover previews the semantic color as a tint so the affordance is
+     still legible. */
+  .jt-idea-status-btn { font-family: inherit; cursor: pointer; background: var(--jt-bg); color: var(--jt-text-secondary); border: 1px solid var(--jt-border); line-height: 1.3; transition: background var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease), transform var(--jt-dur) var(--jt-ease), color var(--jt-dur) var(--jt-ease); }
+  .jt-idea-status-btn:hover, .jt-idea-status-btn:focus-visible { background: color-mix(in srgb, var(--jt-ip) 12%, transparent); color: var(--jt-ip); border-color: color-mix(in srgb, var(--jt-ip) 30%, transparent); outline: none; }
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
   .jt-idea-status-btn.is-active { background: var(--jt-ip); color: #fff; border-color: var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
   @media (max-width: 640px) {
-    .jt-idea-status-setter { gap: 8px; padding: 10px; align-items: flex-start; flex-direction: column; }
+    .jt-idea-status-setter { gap: var(--jt-space-2); padding: var(--jt-space-3); align-items: flex-start; flex-direction: column; }
     .jt-idea-status-options { width: 100%; }
     .jt-idea-status-btn { flex: 0 0 auto; }
   }
@@ -1062,8 +1076,8 @@
   .jt-space-gate-actions { text-align: center; margin-block-start: 16px; }
 
   /* ── Reply composer wrapper ── */
-  .jt-reply-composer { margin-top: 24px; }
-  .jt-reply-composer h4 { font-weight: 600; margin-bottom: 10px; }
+  .jt-reply-composer { margin-top: var(--jt-space-6); }
+  .jt-reply-composer h3, .jt-reply-composer h4 { font-weight: 600; margin: 0 0 var(--jt-space-4); }
 
   /* ── Closed post notice ── */
   .jt-closed-notice { text-align: center; padding: 20px; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius); margin-top: 20px; }
@@ -1222,18 +1236,32 @@
   /* Resolve error surfaced by assets/js/moderation.js when REST fails. */
   .jt-mod-flag-error { color: var(--jt-danger); font-size: var(--jt-text-sm); margin-top: var(--jt-space-2); }
 
-  /* Admin cross-space dashboard at /community/mod/. */
-  .jt-mod-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--jt-space-4); }
-  .jt-mod-dashboard-card { display: flex; flex-direction: column; gap: var(--jt-space-3); padding: var(--jt-space-4); text-decoration: none; color: inherit; border: 1px solid var(--jt-border); transition: border-color .15s ease, transform .15s ease; }
-  .jt-mod-dashboard-card:hover { border-color: var(--jt-accent); transform: translateY(-1px); }
-  /* 1.4.0 polish: stack badge above title so a long space title (e.g.
-     "Welcome & Introductions") never collides with the "X pending" pill.
-     Badge becomes a small chip at the top-left of the card; title wraps
-     freely on its own row beneath it. Reads cleaner at any width. */
-  .jt-mod-dashboard-card-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--jt-space-2); }
-  .jt-mod-dashboard-card-title { font-size: var(--jt-text-base); font-weight: 600; margin: 0; color: var(--jt-text); width: 100%; overflow-wrap: anywhere; word-break: break-word; }
-  .jt-mod-dashboard-card-head .jt-badge-danger { align-self: flex-start; flex-shrink: 0; }
-  .jt-mod-dashboard-card-cta { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: var(--jt-text-sm); color: var(--jt-accent); }
+  /* Cross-space moderation dashboard at /community/mod/.
+     1.4.3 redesign: the queue is rendered as a list of actual pending
+     flags, not a navigation grid of space cards. A moderator sees the
+     content excerpt, reason, reporter, and age inline — they only click
+     through to /s/:slug/mod/ when they're ready to act. */
+  .jt-mod-dashboard-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--jt-space-4); margin-block-end: var(--jt-space-5); }
+  .jt-mod-flag-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--jt-space-3); }
+  .jt-mod-flag-row { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding: var(--jt-space-4); display: flex; flex-direction: column; gap: var(--jt-space-3); transition: border-color .15s ease; }
+  .jt-mod-flag-row:hover { border-color: var(--jt-border-strong); }
+  .jt-mod-flag-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-2); }
+  .jt-mod-flag-row .jt-mod-flag-reason { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-full); background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
+  .jt-mod-flag-reason--spam { background: var(--jt-danger-light); color: var(--jt-danger); }
+  .jt-mod-flag-reason--offensive,
+  .jt-mod-flag-reason--harassment { background: var(--jt-warn-light); color: var(--jt-warn); }
+  .jt-mod-flag-reason--off_topic { background: var(--jt-accent-light); color: var(--jt-accent); }
+  .jt-mod-flag-row .jt-mod-flag-type { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--jt-text-tertiary); background: transparent; padding: 0; }
+  .jt-mod-flag-space { font-size: 0.875rem; font-weight: 500; color: var(--jt-text); text-decoration: none; }
+  .jt-mod-flag-space:hover { color: var(--jt-accent); text-decoration: underline; }
+  .jt-mod-flag-age { margin-inline-start: auto; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-mod-flag-title { font-weight: 600; font-size: 0.9375rem; color: var(--jt-text); }
+  .jt-mod-flag-excerpt { font-size: 0.9375rem; color: var(--jt-text-secondary); line-height: 1.5; word-break: break-word; }
+  .jt-mod-flag-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); border-block-start: 1px solid var(--jt-border); }
+  .jt-mod-flag-row .jt-mod-flag-reporter { margin-inline-start: 0; font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-mod-flag-row .jt-mod-flag-note { display: inline-flex; align-items: center; gap: var(--jt-space-1); font-size: 0.8125rem; color: var(--jt-text-secondary); background: transparent; padding: 0; cursor: help; }
+  .jt-mod-flag-action { display: inline-flex; align-items: center; gap: var(--jt-space-1); margin-inline-start: auto; font-size: 0.875rem; font-weight: 500; color: var(--jt-accent); text-decoration: none; }
+  .jt-mod-flag-action:hover { text-decoration: underline; }
 
   /* Sidebar links column — moderation link sits below "View all members". */
   .jt-sidebar-links { display: flex; flex-direction: column; gap: var(--jt-space-2); margin-top: var(--jt-space-3); }
@@ -1286,7 +1314,9 @@
   /* ── Reply card extras ── */
   .jt-reply-author { }
   .jt-reply-op { font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 600; }
-  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; }
+  .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
+  .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
+  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; }
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-right: auto; }
 
   /* ── Time stat on post rows ── */
@@ -1338,7 +1368,7 @@
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
   .jt-new-post-form { margin-top: 16px; }
   .jt-post-create-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
-  .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: 6px 0 24px; }
+  .jt-post-create-subtitle { color: var(--jt-text-secondary); font-size: 1rem; margin: var(--jt-space-2) 0 var(--jt-space-6); }
 
   /* ── Publish mode split-button ──
      The buttons pick up `.jt-btn { border-radius: var(--jt-radius-full) }`
@@ -1350,7 +1380,9 @@
      without proper spacing"). */
   .jt-publish-mode { position: relative; display: inline-flex; gap: 6px; align-items: center; }
   .jt-publish-mode__toggle { min-width: 34px; padding-right: 8px; padding-left: 8px; }
-  .jt-publish-mode__menu { position: absolute; bottom: calc(100% + 6px); left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
+  /* [1.4.3 WS3-B] Positioning owned by jetonomySmartDropdown (position:
+     fixed + JS-computed top/left). Keep z-index/border/background only. */
+  .jt-publish-mode__menu { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 180px; z-index: 200; overflow: hidden; }
   .jt-publish-mode__menu[hidden] { display: none; }
   .jt-publish-mode__option { display: block; width: 100%; padding: 10px 16px; background: none; border: none; text-align: right; font-size: 0.9375rem; color: var(--jt-text); cursor: pointer; transition: background var(--jt-dur); }
   .jt-publish-mode__option:hover { background: var(--jt-bg-hover); }
@@ -1407,7 +1439,7 @@
     .jt-form-actions { flex-wrap: wrap; }
     .jt-publish-mode { width: 100%; }
     .jt-publish-mode__submit { flex: 1; }
-    .jt-publish-mode__menu { left: 0; right: 0; min-width: unset; }
+    .jt-publish-mode__menu { min-width: unset; }
   }
 
   /* ── Pagination ── */
@@ -1978,10 +2010,12 @@
 /* More-trigger button — was styled for a text `…` character, now
    uses a Lucide more-horizontal SVG. Keep the min tap-target only. */
 .jt-more-trigger { min-width: var(--jt-tap); min-height: var(--jt-tap); justify-content: center; }
-/* Opens downward from the trigger. Was `bottom: 100%` which flipped the
-   menu upward; with 5+ items (Pin/Move/Merge/Delete/Admin) it pushed the
-   list onto the post title and looked misaligned (Basecamp 9803818273). */
-.jt-more-dropdown { position: absolute; top: 100%; left: 0; background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; margin-top: 0.25rem; }
+/* Positioning is owned by jetonomySmartDropdown (WS3-A primitive, wired
+   in WS3-B). It sets `position: fixed` and computes top/left so the panel
+   flips above when there's no room below and shifts to stay on-screen —
+   fixing Basecamp 9886004438 (last-reply More menu clipped). We keep
+   z-index/border/background here; everything else is JS-controlled. */
+.jt-more-dropdown { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 10rem; padding: 0.25rem 0; }
 .jt-more-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: right; padding: 0.5rem 0.75rem; border: none; background: none; color: var(--jt-text); font-size: 0.875rem; cursor: pointer; white-space: nowrap; font-family: var(--jt-font); text-decoration: none; }
 .jt-more-item:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
 .jt-more-item--danger { color: var(--jt-danger); }
