@@ -234,23 +234,63 @@ add_action( 'jetonomy_trust_level_changed', function( int $user_id, int $old, in
 
 ### `jetonomy_reputation_changed`
 
-Fires whenever a user's reputation score changes.
+Fires after a user's reputation has been adjusted and persisted.
 
 **Parameters**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `$user_id` | `int` | WP user ID |
-| `$delta` | `int` | Points added (positive) or removed (negative) |
-| `$reason` | `string` | Machine-readable reason slug (e.g. `'post_upvoted'`, `'reply_accepted'`) |
+| `$user_id` | `int` | WP user ID whose reputation changed |
+| `$action`  | `string` | Action that triggered the change (e.g. `'post_upvoted'`, `'reply_accepted'`). For revocations: `'<original_action>_revoked'`. |
+| `$delta`   | `int` | Points added (positive) or removed (negative) |
+| `$context` | `array` | Extra payload supplied by `Reputation::award_custom()`. Empty `array()` for `award()` / `revoke()`. |
 
 **Source:** `includes/trust/class-reputation.php`
 
 ```php
-add_action( 'jetonomy_reputation_changed', function( int $user_id, int $delta, string $reason ) {
+add_action( 'jetonomy_reputation_changed', function( int $user_id, string $action, int $delta, array $context ) {
     // Sync reputation to BuddyPress profile.
     bp_update_user_meta( $user_id, 'jetonomy_rep', \Jetonomy\Models\UserProfile::get_reputation( $user_id ) );
-}, 10, 3 );
+}, 10, 4 );
+```
+
+### `jetonomy_reputation_pre_change` (filter)
+
+Filters the reputation delta **before** it is persisted. Listeners can scale (campaigns / double-points), veto for sandboxed users by returning `0`, or redirect the delta into a parallel currency. Returning `0` short-circuits both the write and `jetonomy_reputation_changed`.
+
+```php
+add_filter( 'jetonomy_reputation_pre_change', function ( int $delta, int $user_id, string $action, array $context ) {
+    // Double-points weekend for upvotes.
+    if ( in_array( $action, [ 'post_upvoted', 'reply_upvoted' ], true ) && is_weekend() ) {
+        return $delta * 2;
+    }
+    return $delta;
+}, 10, 4 );
+```
+
+### `jetonomy_reputation_points_map` (filter)
+
+Filters the entire `POINTS_MAP` before per-action lookup. Lets adapters retune scoring or add brand-new action keys without forking; new keys are exposed automatically on the Settings → Reputation admin surface.
+
+```php
+add_filter( 'jetonomy_reputation_points_map', function ( array $map ) {
+    $map['reply_accepted']  = 25;       // boost
+    $map['quest_completed'] = 50;       // new action key
+    return $map;
+} );
+```
+
+### `jetonomy_leaderboard_items` (filter)
+
+Filters the ordered leaderboard rows right before the REST response. Use to inject currency totals, badge counts, levels, etc. Order is final — add fields, don't re-sort.
+
+```php
+add_filter( 'jetonomy_leaderboard_items', function ( array $items, \WP_REST_Request $request ) {
+    foreach ( $items as &$row ) {
+        $row['wbgam_coins'] = (int) wbgam_get_balance( $row['user_id'] );
+    }
+    return $items;
+}, 10, 2 );
 ```
 
 ---

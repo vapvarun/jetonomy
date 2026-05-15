@@ -148,6 +148,22 @@ class Leaderboards_Controller extends Base_Controller {
 			++$rank;
 		}
 
+		/**
+		 * Filter the leaderboard items array right before the REST response.
+		 *
+		 * Listeners can mutate any row (add currency totals, badge counts,
+		 * levels, etc.) or replace the array wholesale. The filter runs
+		 * after pagination + sort, so the order is already final — listeners
+		 * should add fields, not re-order. Keep payload small; this list
+		 * ships in the REST body.
+		 *
+		 * @since 1.4.3
+		 *
+		 * @param array<int,array<string,mixed>> $items   Ordered leaderboard rows.
+		 * @param \WP_REST_Request               $request Source REST request.
+		 */
+		$items = (array) apply_filters( 'jetonomy_leaderboard_items', $items, $request );
+
 		return $this->paginated_response(
 			$items,
 			[

@@ -62,7 +62,21 @@ class Reputation {
 	 * @return int
 	 */
 	public static function points_for( string $action ): int {
-		$default = self::POINTS_MAP[ $action ] ?? 0;
+		/**
+		 * Filter the entire reputation POINTS_MAP before per-action lookup.
+		 *
+		 * Lets integrations swap or extend the base scoring table without
+		 * editing source. WB Gamification uses this to drive per-community
+		 * scoring from its admin UI; other adapters can add new action keys
+		 * (e.g. `quest_completed`) and {@see action_points_map()} will then
+		 * expose them to the Settings → Reputation surface automatically.
+		 *
+		 * @since 1.4.3
+		 *
+		 * @param array<string,int> $map Action key → signed point delta.
+		 */
+		$map     = (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
+		$default = $map[ $action ] ?? 0;
 
 		$settings  = get_option( 'jetonomy_settings', array() );
 		$overrides = is_array( $settings ) && isset( $settings['reputation_points'] ) && is_array( $settings['reputation_points'] )
@@ -92,8 +106,9 @@ class Reputation {
 	 * @return array<string,int>
 	 */
 	public static function action_points_map(): array {
-		$map = array();
-		foreach ( self::POINTS_MAP as $action => $unused ) {
+		$base = (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
+		$map  = array();
+		foreach ( $base as $action => $unused ) {
 			$map[ $action ] = self::points_for( $action );
 		}
 		return $map;
@@ -102,10 +117,14 @@ class Reputation {
 	/**
 	 * Return the hardcoded defaults so the Settings UI can show "Reset to default" affordances.
 	 *
+	 * Filtered via `jetonomy_reputation_points_map` so adapters that add or
+	 * retune base values stay the source of truth — pressing "Reset to default"
+	 * on the admin UI resets to the adapter's number, not the bundled one.
+	 *
 	 * @return array<string,int>
 	 */
 	public static function action_points_defaults(): array {
-		return self::POINTS_MAP;
+		return (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
 	}
 
 	/**
@@ -182,6 +201,33 @@ class Reputation {
 	 * @return int $delta (echoed back for the public facade return value).
 	 */
 	private static function dispatch( int $user_id, int $delta, string $action, array $context ): int {
+		/**
+		 * Filter the reputation delta BEFORE it is persisted.
+		 *
+		 * Runs after points_for() resolves the value but before the user's
+		 * profile is written, so listeners can scale (campaigns / double-points
+		 * weekends), veto for sandboxed users (return 0), or redirect the
+		 * delta into a parallel currency system without touching Jetonomy.
+		 *
+		 * Returning 0 short-circuits both the write and the
+		 * `jetonomy_reputation_changed` action — the change effectively never
+		 * happened from Jetonomy's perspective.
+		 *
+		 * @since 1.4.3
+		 *
+		 * @param int    $delta   Signed delta about to be applied.
+		 * @param int    $user_id WP user ID being adjusted.
+		 * @param string $action  Action key triggering the change (e.g.
+		 *                        `post_upvoted`, `reply_accepted_revoked`).
+		 * @param array  $context Optional context payload supplied by callers
+		 *                        of {@see award_custom()}. Empty array for
+		 *                        award()/revoke().
+		 */
+		$delta = (int) apply_filters( 'jetonomy_reputation_pre_change', $delta, $user_id, $action, $context );
+		if ( 0 === $delta ) {
+			return 0;
+		}
+
 		UserProfile::_apply_reputation_delta( $user_id, $delta );
 
 		/**
