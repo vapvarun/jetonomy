@@ -35,6 +35,16 @@
     --jt-bg-hover: #F9FAFB;
     --jt-bg-hover: color-mix(in srgb, var(--jt-text) 4%, var(--jt-bg));
 
+    /* Elevated surface — used by components that sit ON TOP of --jt-bg
+       (ghost buttons, the font-scale pill group, action-control rounds in
+       the community nav, card containers). Themes whose `base` preset is a
+       light gray instead of pure white (e.g. BuddyX-Pro at #f7f7f9) make
+       `var(--jt-bg)` blend into the page; --jt-surface gives those
+       components a tone that is always distinct from the page background.
+       Cascade — host theme can set --surface-elevated explicitly, otherwise
+       we use pure white in light mode (overridden in dark mode below). */
+    --jt-surface: var(--surface-elevated, #ffffff);
+
     --jt-border: rgba(0,0,0,0.1);
     --jt-border: color-mix(in srgb, var(--jt-text) 10%, transparent);
     --jt-border-strong: rgba(0,0,0,0.18);
@@ -141,6 +151,9 @@
     --jt-bg-subtle: #1e1e1e;
     --jt-bg-muted: #262626;
     --jt-bg-hover: #1f1f1f;
+    /* Elevated surface in dark mode — sits one tone above --jt-bg so cards,
+       ghost buttons, and the font-scale pill group remain visible. */
+    --jt-surface: var(--surface-elevated, #1f1f1f);
     --jt-border: rgba(255, 255, 255, 0.1);
     --jt-border-strong: rgba(255, 255, 255, 0.18);
     --jt-success-light: #052e16;
@@ -354,7 +367,7 @@
   .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: none; cursor: pointer; font-family: var(--jt-font); }
   .jt-app .jt-btn-fill, .jt-app a.jt-btn-fill, .jt-app button.jt-btn-fill { background: var(--jt-accent); color: var(--jt-white); }
   .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-white); text-decoration: none; }
-  .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
+  .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-surface); }
   .jt-app .jt-btn-ghost:hover, .jt-app a.jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); text-decoration: none; }
 
   /* ── Topic list ── */

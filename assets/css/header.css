@@ -1,9 +1,14 @@
-/* Font size control — mirrors BuddyNext A/A+/A++ pattern */
+/* Font size control — mirrors BuddyNext A/A+/A++ pattern.
+   Uses --jt-surface so the pill-group container stays visible on themes
+   whose `base` preset is the same near-white tone as the page background
+   (e.g. BuddyX-Pro at #f7f7f9). Without this the group used to inherit
+   --jt-bg-muted which on BuddyX collapses to ~3% darker than the page
+   and the group reads as unstyled. See Basecamp 9891758482. */
 .jt-font-scale {
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	background: var(--jt-bg-muted, #f1f1f0);
+	background: var(--jt-surface, #ffffff);
 	border: 1px solid var(--jt-border, #e0e0e0);
 	border-radius: 6px;
 	padding: 2px;
