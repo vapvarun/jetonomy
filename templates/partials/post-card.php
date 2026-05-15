@@ -35,9 +35,20 @@ if ( $prefix_name && $space ) {
 	}
 }
 ?>
-<div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
+<?php
+$jt_row_allows_voting = jetonomy_space_allows_voting( $space );
+$jt_row_classes       = [ 'jt-row' ];
+if ( $post->is_sticky ) {
+	$jt_row_classes[] = 'pinned';
+}
+if ( ! $jt_row_allows_voting ) {
+	// Drop the 48px vote grid track so the title doesn't squash into it.
+	$jt_row_classes[] = 'jt-row--no-vote';
+}
+?>
+<div class="<?php echo esc_attr( implode( ' ', $jt_row_classes ) ); ?>"
 	data-wp-interactive="jetonomy">
-	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
+	<?php if ( $jt_row_allows_voting ) : ?>
 		<div class="jt-votes">
 			<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
 			<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>

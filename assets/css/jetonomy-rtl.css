@@ -360,6 +360,11 @@
   /* ── Topic list ── */
   .jt-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
   .jt-row { display: grid !important; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; cursor: pointer; }
+  /* When a space disables Allow Voting, the .jt-votes child is omitted —
+     drop the 48px vote track so .jt-row-main doesn't slip into it and
+     squash the title. Matches `.jt-row` and `a.jt-row` from the rules
+     above; needs `!important` to override the desktop grid declaration. */
+  .jt-row--no-vote, a.jt-row--no-vote { grid-template-columns: 1fr 80px 80px !important; }
   .jt-row:last-child { border-bottom: none; }
   .jt-row:hover { background: var(--jt-bg-hover); }
   .jt-row.pinned { background: var(--jt-accent-muted); }
@@ -776,6 +781,8 @@
     /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
        load-bearing (desktop `a.jt-row` is 0,1,1). */
     .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-3); }
+    /* Drop the 36px vote track on no-vote variant at narrow widths too. */
+    .jt-row--no-vote, a.jt-row--no-vote { grid-template-columns: 1fr 48px; }
     .jt-row .jt-votes { width: 36px; }
     .jt-row-title { font-size: var(--jt-text-base); line-height: var(--jt-leading-snug); }
     .jt-row-sub { font-size: var(--jt-text-xs); gap: var(--jt-space-2); margin-top: var(--jt-space-1); }

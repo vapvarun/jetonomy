@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.4.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-05-15 06:48:40+00:00\n"
+"POT-Creation-Date: 2026-05-15 07:36:59+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -607,7 +607,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/search.php:277
 #: includes/admin/class-admin.php:93 includes/admin/class-admin.php:94
 #: includes/admin/views/categories.php:113 includes/admin/views/spaces.php:148
-#: templates/views/search.php:160 templates/views/search.php:287
+#: templates/views/search.php:160 templates/views/search.php:291
 msgid "Spaces"
 msgstr ""
 
@@ -936,7 +936,7 @@ msgstr ""
 #: includes/admin/views/categories.php:50
 #: includes/admin/views/categories.php:273
 #: includes/admin/views/space-edit.php:104 includes/admin/views/spaces.php:75
-#: templates/partials/icon-picker.php:164 templates/partials/post-card.php:59
+#: templates/partials/icon-picker.php:164 templates/partials/post-card.php:70
 #: templates/views/single-post.php:357
 msgid "Private"
 msgstr ""
@@ -3330,7 +3330,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:280
 #: includes/class-template-loader.php:456 templates/partials/feed-card.php:39
 #: templates/partials/managed-by-card.php:23
-#: templates/partials/post-card.php:105 templates/partials/reply-card.php:47
+#: templates/partials/post-card.php:116 templates/partials/reply-card.php:47
 #: templates/views/my-spaces.php:96 templates/views/single-post.php:590
 #: templates/views/space-members.php:82
 msgid "Admin"
@@ -3686,7 +3686,7 @@ msgstr ""
 
 #: dist/jetonomy/includes/admin/views/users.php:11
 #: includes/admin/views/users.php:19 templates/partials/feed-card.php:74
-#: templates/partials/post-card.php:92
+#: templates/partials/post-card.php:103
 msgid "New"
 msgstr ""
 
@@ -3862,7 +3862,7 @@ msgstr ""
 #: includes/class-shortcodes.php:216
 #: includes/integrations/class-buddypress.php:752
 #: templates/partials/avatar.php:14 templates/partials/feed-card.php:28
-#: templates/partials/post-card.php:97 templates/partials/reply-card.php:35
+#: templates/partials/post-card.php:108 templates/partials/reply-card.php:35
 msgid "Anonymous"
 msgstr ""
 
@@ -4577,7 +4577,7 @@ msgstr ""
 
 #: dist/jetonomy/includes/class-shortcodes.php:75
 #: dist/jetonomy/templates/views/user-profile.php:386
-#: includes/class-shortcodes.php:149 templates/views/user-profile.php:485
+#: includes/class-shortcodes.php:149 templates/views/user-profile.php:491
 msgid "No posts yet."
 msgstr ""
 
@@ -4604,11 +4604,11 @@ msgstr ""
 #: includes/integrations/class-buddypress.php:952
 #: templates/partials/feed-card.php:47
 #: templates/partials/moderation/flag-card.php:95
-#: templates/partials/post-card.php:136 templates/partials/reply-card.php:65
+#: templates/partials/post-card.php:147 templates/partials/reply-card.php:65
 #: templates/views/moderation.php:162 templates/views/notifications.php:215
-#: templates/views/search.php:264 templates/views/single-post.php:352
-#: templates/views/user-profile.php:281 templates/views/user-profile.php:402
-#: templates/views/user-profile.php:521
+#: templates/views/search.php:268 templates/views/single-post.php:352
+#: templates/views/user-profile.php:283 templates/views/user-profile.php:406
+#: templates/views/user-profile.php:529
 #. translators: %s: human-readable time difference
 #. translators: %s: human-readable time difference.
 #. translators: %s: human-readable time difference
@@ -5427,9 +5427,9 @@ msgstr ""
 #: dist/jetonomy/templates/views/user-profile.php:277
 #: dist/jetonomy/templates/views/user-profile.php:368
 #: dist/jetonomy/templates/views/user-profile.php:410
-#: templates/partials/post-card.php:130 templates/views/search.php:272
-#: templates/views/space-roadmap.php:149 templates/views/user-profile.php:324
-#: templates/views/user-profile.php:464 templates/views/user-profile.php:515
+#: templates/partials/post-card.php:141 templates/views/search.php:276
+#: templates/views/space-roadmap.php:149 templates/views/user-profile.php:328
+#: templates/views/user-profile.php:470 templates/views/user-profile.php:523
 msgid "replies"
 msgstr ""
 
@@ -5537,7 +5537,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/leaderboard.php:107
 #: dist/jetonomy/templates/views/search.php:293 templates/views/category.php:85
 #: templates/views/leaderboard.php:104 templates/views/leaderboard.php:159
-#: templates/views/search.php:301
+#: templates/views/search.php:305
 msgid "posts"
 msgstr ""
 
@@ -5761,7 +5761,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/search.php:304
 #: includes/admin/class-admin.php:84 includes/admin/class-admin.php:85
 #: includes/admin/views/tags.php:46 templates/partials/compose-fields.php:118
-#: templates/views/search.php:161 templates/views/search.php:312
+#: templates/views/search.php:161 templates/views/search.php:316
 #: templates/views/single-post.php:393
 msgid "Tags"
 msgstr ""
@@ -5949,11 +5949,11 @@ msgstr ""
 msgid "No results for \"%s\""
 msgstr ""
 
-#: dist/jetonomy/templates/views/search.php:266 templates/views/search.php:276
+#: dist/jetonomy/templates/views/search.php:266 templates/views/search.php:280
 msgid "votes"
 msgstr ""
 
-#: dist/jetonomy/templates/views/search.php:321 templates/views/search.php:332
+#: dist/jetonomy/templates/views/search.php:321 templates/views/search.php:336
 msgid "Enter a search term above to find discussions, spaces, and tags."
 msgstr ""
 
@@ -6238,45 +6238,45 @@ msgid "No replies yet."
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:233
-#: templates/views/user-profile.php:271
+#: templates/views/user-profile.php:273
 #. translators: %s: post title
 msgid "on %s"
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:256
-#: templates/views/user-profile.php:297
+#: templates/views/user-profile.php:299
 msgid "No votes yet."
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:283
-#: templates/views/user-profile.php:330
+#: templates/views/user-profile.php:334
 #. translators: %s: human-readable time difference
 msgid "voted %s ago"
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:296
-#: templates/views/user-profile.php:346
+#: templates/views/user-profile.php:350
 msgid "No drafts yet. Save a post as draft and it will appear here."
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:315
-#: templates/views/user-profile.php:384
+#: templates/views/user-profile.php:388
 #. translators: %s: scheduled date/time
 msgid "Scheduled: %s"
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:319
-#: templates/views/user-profile.php:388
+#: templates/views/user-profile.php:392
 msgid "Draft"
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:346
-#: templates/views/user-profile.php:418
+#: templates/views/user-profile.php:422
 msgid "No bookmarks yet. Bookmark posts to find them here later."
 msgstr ""
 
 #: dist/jetonomy/templates/views/user-profile.php:374
-#: templates/views/user-profile.php:470
+#: templates/views/user-profile.php:476
 #. translators: %s: human-readable time difference
 msgid "saved %s ago"
 msgstr ""
@@ -8788,7 +8788,7 @@ msgstr ""
 
 #: templates/partials/feed-card.php:40
 #: templates/partials/managed-by-card.php:24
-#: templates/partials/post-card.php:106 templates/partials/reply-card.php:48
+#: templates/partials/post-card.php:117 templates/partials/reply-card.php:48
 #: templates/views/my-spaces.php:96
 msgid "Mod"
 msgstr ""
@@ -8801,7 +8801,7 @@ msgstr ""
 msgid "View replies"
 msgstr ""
 
-#: templates/partials/feed-card.php:74 templates/partials/post-card.php:91
+#: templates/partials/feed-card.php:74 templates/partials/post-card.php:102
 msgid "You have unread replies"
 msgstr ""
 
@@ -8911,11 +8911,11 @@ msgstr ""
 msgid "Harassment"
 msgstr ""
 
-#: templates/partials/post-card.php:84
+#: templates/partials/post-card.php:95
 msgid "Answered"
 msgstr ""
 
-#: templates/partials/post-card.php:86
+#: templates/partials/post-card.php:97
 msgid "Needs answer"
 msgstr ""
 

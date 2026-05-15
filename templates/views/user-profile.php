@@ -244,12 +244,14 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $user_replies as $ur ) : ?>
 							<?php
-							$ur_url   = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
-							$ur_ago   = human_time_diff( strtotime( $ur->created_at ), time() );
-							$ur_space = ! empty( $ur->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $ur->space_slug ) : null;
+							$ur_url    = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
+							$ur_ago    = human_time_diff( strtotime( $ur->created_at ), time() );
+							$ur_space  = ! empty( $ur->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $ur->space_slug ) : null;
+							$ur_voting = jetonomy_space_allows_voting( $ur_space );
+							$ur_class  = 'jt-row jt-row-clickable' . ( $ur_voting ? '' : ' jt-row--no-vote' );
 							?>
-							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
-								<?php if ( jetonomy_space_allows_voting( $ur_space ) ) : ?>
+							<div class="<?php echo esc_attr( $ur_class ); ?>" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
+								<?php if ( $ur_voting ) : ?>
 									<div class="jt-votes">
 										<span class="jt-v-num"><?php echo esc_html( (int) $ur->vote_score ); ?></span>
 									</div>
@@ -303,12 +305,14 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $user_votes as $uv ) : ?>
 							<?php
-							$uv_url   = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
-							$uv_ago   = human_time_diff( strtotime( $uv->voted_at ), time() );
-							$uv_space = ! empty( $uv->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $uv->space_slug ) : null;
+							$uv_url    = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
+							$uv_ago    = human_time_diff( strtotime( $uv->voted_at ), time() );
+							$uv_space  = ! empty( $uv->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $uv->space_slug ) : null;
+							$uv_voting = jetonomy_space_allows_voting( $uv_space );
+							$uv_class  = 'jt-row jt-row-clickable' . ( $uv_voting ? '' : ' jt-row--no-vote' );
 							?>
-							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
-								<?php if ( jetonomy_space_allows_voting( $uv_space ) ) : ?>
+							<div class="<?php echo esc_attr( $uv_class ); ?>" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
+								<?php if ( $uv_voting ) : ?>
 									<div class="jt-votes">
 										<span class="jt-v-num"><?php echo esc_html( (int) $uv->vote_score ); ?></span>
 									</div>
@@ -443,12 +447,14 @@ $crumbs = [
 						?>
 						<?php foreach ( $bookmarks as $bk_post ) : ?>
 							<?php
-							$bk_space = $bk_spaces[ (int) $bk_post->space_id ] ?? null;
-							$bk_url   = $base . '/s/' . ( $bk_space->slug ?? '' ) . '/t/' . $bk_post->slug . '/';
-							$bk_ago   = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
+							$bk_space  = $bk_spaces[ (int) $bk_post->space_id ] ?? null;
+							$bk_url    = $base . '/s/' . ( $bk_space->slug ?? '' ) . '/t/' . $bk_post->slug . '/';
+							$bk_ago    = human_time_diff( strtotime( $bk_post->bookmarked_at ), time() );
+							$bk_voting = jetonomy_space_allows_voting( $bk_space );
+							$bk_class  = 'jt-row jt-row-clickable' . ( $bk_voting ? '' : ' jt-row--no-vote' );
 							?>
-							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
-								<?php if ( jetonomy_space_allows_voting( $bk_space ) ) : ?>
+							<div class="<?php echo esc_attr( $bk_class ); ?>" data-jt-href="<?php echo esc_url( $bk_url ); ?>">
+								<?php if ( $bk_voting ) : ?>
 									<div class="jt-votes">
 										<span class="jt-v-num"><?php echo esc_html( (int) $bk_post->vote_score ); ?></span>
 									</div>
@@ -494,9 +500,11 @@ $crumbs = [
 							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
 							$post_url = $base . '/s/' . $r_post->space_slug . '/t/' . $r_post->slug . '/';
 							$r_space  = ! empty( $r_post->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $r_post->space_slug ) : null;
+							$r_voting = jetonomy_space_allows_voting( $r_space );
+							$r_class  = 'jt-row jt-row-clickable' . ( $r_voting ? '' : ' jt-row--no-vote' );
 							?>
-							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
-								<?php if ( jetonomy_space_allows_voting( $r_space ) ) : ?>
+							<div class="<?php echo esc_attr( $r_class ); ?>" data-jt-href="<?php echo esc_url( $post_url ); ?>">
+								<?php if ( $r_voting ) : ?>
 									<div class="jt-votes">
 										<span class="jt-v-num"><?php echo esc_html( (int) $r_post->vote_score ); ?></span>
 									</div>
