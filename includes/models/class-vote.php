@@ -90,6 +90,21 @@ class Vote extends Model {
 					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
 
+				/**
+				 * Fires after a fresh vote is successfully recorded.
+				 *
+				 * Symmetric pair with `jetonomy_vote_retracted`. Reputation
+				 * already rewards the RECEIVER on upvote; this hook gives WB
+				 * Gamification (and other listeners) a signal on the VOTER so
+				 * "voted 10× this week" / daily-engagement challenges can fire.
+				 *
+				 * @param int    $value       Vote value (+1 or -1).
+				 * @param string $object_type 'post' or 'reply'.
+				 * @param int    $object_id   Target object ID.
+				 * @param int    $voter_id    Voting user ID.
+				 */
+				do_action( 'jetonomy_vote_cast', (int) $value, (string) $object_type, (int) $object_id, (int) $user_id );
+
 				return [
 					'action'    => 'created',
 					'old_value' => null,
@@ -117,6 +132,20 @@ class Vote extends Model {
 					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
 
+				/**
+				 * Fires after a vote is successfully retracted (user re-clicked
+				 * the same direction to toggle their vote off). Symmetric pair
+				 * with `jetonomy_vote_cast`. The `$value` arg is the value that
+				 * was just removed so listeners can decrement counters keyed
+				 * by direction.
+				 *
+				 * @param int    $value       Vote value that was retracted (+1 or -1).
+				 * @param string $object_type 'post' or 'reply'.
+				 * @param int    $object_id   Target object ID.
+				 * @param int    $voter_id    Voting user ID.
+				 */
+				do_action( 'jetonomy_vote_retracted', (int) $old_value, (string) $object_type, (int) $object_id, (int) $user_id );
+
 				return [
 					'action'    => 'removed',
 					'old_value' => $old_value,
@@ -143,6 +172,14 @@ class Vote extends Model {
 			if ( null !== $started ) {
 				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			}
+
+			// Flipping direction (e.g. upvote → downvote) is conceptually a
+			// retract of the old value followed by a cast of the new value.
+			// Fire both so listeners that count by direction (e.g. "10 upvotes
+			// this week") and listeners that count any vote action see the
+			// correct sequence without each needing to special-case 'updated'.
+			do_action( 'jetonomy_vote_retracted', (int) $old_value, (string) $object_type, (int) $object_id, (int) $user_id );
+			do_action( 'jetonomy_vote_cast', (int) $value, (string) $object_type, (int) $object_id, (int) $user_id );
 
 			return [
 				'action'    => 'updated',

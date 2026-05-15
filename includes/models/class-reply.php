@@ -63,6 +63,27 @@ class Reply extends Model {
 			if ( $parent_post && ! empty( $data['author_id'] ) ) {
 				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
+
+			/**
+			 * Fires after a new reply is successfully published.
+			 *
+			 * Mirror of `jetonomy_post_created` for the reply side — covers the
+			 * gap where reputation awarded the post author on upvote but the
+			 * reply-creation event itself had no signal. WB Gamification needs
+			 * this for "first reply", "10 replies this week", etc.
+			 *
+			 * @param int $reply_id Inserted reply row ID.
+			 * @param int $post_id  Parent post ID.
+			 * @param int $user_id  Reply author user ID.
+			 * @param int $space_id Parent post's space ID (0 if parent missing).
+			 */
+			do_action(
+				'jetonomy_reply_created',
+				(int) $id,
+				(int) ( $data['post_id'] ?? 0 ),
+				(int) ( $data['author_id'] ?? 0 ),
+				$parent_post ? (int) $parent_post->space_id : 0
+			);
 		}
 
 		return $id;

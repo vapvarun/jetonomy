@@ -13,7 +13,7 @@ These hooks fire around the full lifecycle of posts and replies.
 
 ### `jetonomy_after_create_post`
 
-Fires immediately after a new post is saved successfully.
+Fires immediately after a new post is saved successfully **via the REST controller / Abilities API**. For a guaranteed-fires-on-every-insert variant (including programmatic Post::create from CLI scripts, demo seeder, and migrations), use [`jetonomy_post_created`](#jetonomy_post_created) below.
 
 **Parameters**
 
@@ -37,9 +37,39 @@ add_action( 'jetonomy_after_create_post', function( int $post_id, int $space_id 
 
 ---
 
+### `jetonomy_post_created`
+
+Fires from the model layer immediately after a new post is published — covers every caller path (REST, abilities, AJAX, CLI, demo seeder, migrations), not just request-bound writes. Only fires for `publish` posts; drafts and scheduled posts emit later when they transition. Use this rather than `jetonomy_after_create_post` for gamification, badge-awarding, and any listener that must observe every post regardless of how it was created.
+
+Added in **1.4.4** to close the gap where reputation rewarded upvotes on posts but the creation event itself had no observable signal.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | Inserted post row ID |
+| `$space_id` | `int` | Parent space ID |
+| `$user_id` | `int` | Author user ID |
+| `$type` | `string` | Post type — one of `topic`, `question`, `idea`, `status` |
+
+**Source:** `includes/models/class-post.php` (Post::create)
+
+```php
+add_action( 'jetonomy_post_created', function ( int $post_id, int $space_id, int $user_id, string $type ) {
+    // WB Gamification — award per-post-type points + run "first post in this space" challenges.
+    wb_gam_award_points( $user_id, 'jetonomy_post_created', [
+        'post_id'  => $post_id,
+        'space_id' => $space_id,
+        'type'     => $type,
+    ] );
+}, 10, 4 );
+```
+
+---
+
 ### `jetonomy_after_create_reply`
 
-Fires immediately after a new reply is saved successfully. The built-in Notifier also listens to this hook to dispatch reply notifications.
+Fires immediately after a new reply is saved successfully **via the REST controller / Abilities API**. The built-in Notifier also listens to this hook to dispatch reply notifications. For a model-level always-fires variant, use [`jetonomy_reply_created`](#jetonomy_reply_created) below.
 
 **Parameters**
 
@@ -55,6 +85,65 @@ add_action( 'jetonomy_after_create_reply', function( int $reply_id, int $post_id
     // Award XP in your gamification plugin.
     my_gamification_award_xp( get_current_user_id(), 5, 'reply_created' );
 }, 10, 2 );
+```
+
+---
+
+### `jetonomy_reply_created`
+
+Model-side mirror of `jetonomy_post_created` for the reply path. Fires from `Reply::create()` for every caller (REST, abilities, CLI, importers). Use this rather than `jetonomy_after_create_reply` when you need guaranteed coverage on programmatic inserts.
+
+Added in **1.4.4**.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$reply_id` | `int` | Inserted reply row ID |
+| `$post_id` | `int` | Parent post ID |
+| `$user_id` | `int` | Reply author user ID |
+| `$space_id` | `int` | Parent post's space ID (0 if the parent post couldn't be resolved) |
+
+**Source:** `includes/models/class-reply.php` (Reply::create)
+
+```php
+add_action( 'jetonomy_reply_created', function ( int $reply_id, int $post_id, int $user_id, int $space_id ) {
+    // WB Gamification — "10 replies this week" weekly challenge.
+    wb_gam_award_points( $user_id, 'jetonomy_reply_created', [
+        'reply_id' => $reply_id,
+        'post_id'  => $post_id,
+        'space_id' => $space_id,
+    ] );
+}, 10, 4 );
+```
+
+---
+
+### `jetonomy_idea_status_changed`
+
+Fires whenever an idea post's roadmap status changes — placed on the roadmap (`$old_status === ''`), moved between columns, or removed from the roadmap (`$new_status === ''`). One generic action covers every transition so listeners can score / notify / log without special-casing each lifecycle step.
+
+The 5th argument `$author_id` was added in **1.4.4** so listeners can award the original idea author when their idea ships / is planned / is declined. Pre-1.4.4 listeners that registered with 4 args keep working unchanged because WP's `do_action` drops extras.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | Idea post ID |
+| `$new_status` | `string` | New status — one of `planned`, `in_progress`, `shipped`, `declined`, or `''` when removed from the roadmap |
+| `$old_status` | `string` | Previous status (or `''` when first placed on the roadmap) |
+| `$actor_id` | `int` | Moderator who triggered the change (0 for system / CLI / migration) |
+| `$author_id` | `int` | Original idea author (recipient of any "your idea moved" reward). *(since 1.4.4)* |
+
+**Source:** `includes/models/class-post.php` (Post::set_idea_status, Post::clear_idea_status)
+
+```php
+add_action( 'jetonomy_idea_status_changed', function ( int $post_id, string $new_status, string $old_status, int $actor_id, int $author_id = 0 ) {
+    // WB Gamification — "your idea shipped" badge for the author.
+    if ( 'shipped' === $new_status && $author_id > 0 ) {
+        wb_gam_award_badge( $author_id, 'idea_shipped', [ 'post_id' => $post_id ] );
+    }
+}, 10, 5 );
 ```
 
 ---
@@ -175,6 +264,64 @@ add_action( 'jetonomy_after_vote', function( string $type, int $id, string $dire
 
 ---
 
+### `jetonomy_vote_cast`
+
+Fires every time a vote is recorded — both fresh votes and the cast half of a direction-flip (e.g. switching from upvote to downvote fires `jetonomy_vote_retracted` for the old value followed by `jetonomy_vote_cast` for the new value). Use this to award the **voter** points / count voting activity. The pair `jetonomy_vote_retracted` covers the inverse path so direction-counting listeners stay symmetric.
+
+Reputation already rewards the *receiver* on upvote; this hook is the missing observability lane on the *voter* side.
+
+Added in **1.4.4**.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$value` | `int` | Vote value — `+1` for upvote, `-1` for downvote |
+| `$object_type` | `string` | `'post'` or `'reply'` |
+| `$object_id` | `int` | ID of the voted-on item |
+| `$voter_id` | `int` | Voting user's WP ID |
+
+**Source:** `includes/models/class-vote.php` (Vote::cast)
+
+```php
+add_action( 'jetonomy_vote_cast', function ( int $value, string $object_type, int $object_id, int $voter_id ) {
+    // WB Gamification — "voted 10 times this week" challenge.
+    wb_gam_award_points( $voter_id, 'jetonomy_vote_cast', [
+        'value'       => $value,
+        'object_type' => $object_type,
+        'object_id'   => $object_id,
+    ] );
+}, 10, 4 );
+```
+
+---
+
+### `jetonomy_vote_retracted`
+
+Symmetric pair with `jetonomy_vote_cast`. Fires when a vote is removed — either the user re-clicked the same direction to toggle their vote off, OR the retract half of a direction-flip. The `$value` argument is the value that was just removed so listeners can decrement counters keyed by direction.
+
+Added in **1.4.4**.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$value` | `int` | Vote value that was retracted (`+1` or `-1`) |
+| `$object_type` | `string` | `'post'` or `'reply'` |
+| `$object_id` | `int` | ID of the previously-voted item |
+| `$voter_id` | `int` | Voting user's WP ID |
+
+**Source:** `includes/models/class-vote.php` (Vote::cast)
+
+```php
+add_action( 'jetonomy_vote_retracted', function ( int $value, string $object_type, int $object_id, int $voter_id ) {
+    // Decrement any "votes this week" counter your gamification engine maintains.
+    wb_gam_decrement_counter( $voter_id, 'votes_this_week' );
+}, 10, 4 );
+```
+
+---
+
 ## Moderation
 
 ### `jetonomy_content_moderated`
@@ -227,6 +374,37 @@ add_action( 'jetonomy_trust_level_changed', function( int $user_id, int $old, in
             $user->add_cap( 'my_plugin_advanced_features' );
         }
     }
+}, 10, 3 );
+```
+
+---
+
+### `jetonomy_trust_level_pre_change` (filter)
+
+Filters the trust level being promoted to **before** it is written to `wp_jt_user_profiles`. Listeners can return the user's current level (or any value `<=` current) to veto the promotion — used by WB Gamification to block sandboxed users (same `wb_gam_sandboxed` meta as `jetonomy_reputation_pre_change`) and to retune the trust ladder during onboarding campaigns.
+
+Fires from both code paths that move users up the ladder: the cron job `Cron::evaluate_trust_levels()` and the WP-CLI `wp jetonomy promote` command. The model's existing `jetonomy_trust_level_changed` action still fires after a successful write, so post-change listeners (activity log, notifier) keep their existing contract.
+
+Added in **1.4.4**.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$new_level` | `int` | Proposed new trust level (0–3 from auto-evaluator; 4–5 are manual-only and don't pass through this filter) |
+| `$user_id` | `int` | User being evaluated |
+| `$stats` | `array` | Stats the evaluator used: `post_count`, `days_active`, `reputation`, `replies_received` |
+
+**Source:** `includes/class-cron.php` (Cron::evaluate_trust_levels), `includes/class-cli.php` (CLI promote command)
+
+```php
+add_filter( 'jetonomy_trust_level_pre_change', function ( int $new_level, int $user_id, array $stats ) {
+    // WB Gamification — sandboxed users never get promoted, no matter how much they post.
+    if ( get_user_meta( $user_id, 'wb_gam_sandboxed', true ) ) {
+        $profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
+        return $profile ? (int) $profile->trust_level : 0; // veto: return current level
+    }
+    return $new_level;
 }, 10, 3 );
 ```
 
@@ -985,6 +1163,7 @@ These hooks are available only when **Jetonomy Pro** is active. Pro injects into
 | `jetonomy_pro_extension_enabled` | action | Fires when an extension is toggled on in admin. Params: `$extension_id (string)` |
 | `jetonomy_pro_extension_disabled` | action | Fires when an extension is toggled off. Params: `$extension_id (string)` |
 | `jetonomy_pro_message_sent` | action | Fires after a private message is sent. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)` |
+| `jetonomy_pro_dm_received` | action | Per-recipient symmetric pair with `_message_sent`. Fires once for every participant of the conversation except the sender, so listeners can award "received first DM" / "active inbox" badges. *(since 1.4.4)* Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)`, `$recipient_id (int)` |
 | `jetonomy_pro_reaction_added` | action | Fires when a reaction is added. Params: `$object_type (string)`, `$object_id (int)`, `$emoji (string)`, `$user_id (int)` |
 | `jetonomy_pro_poll_vote_cast` | action | Fires when a poll vote is cast. Params: `$poll_id (int)`, `$option_id (int)`, `$user_id (int)` |
 | `jetonomy_pro_webhook_sent` | action | Fires after a webhook is dispatched. Params: `$webhook_id (int)`, `$event (string)`, `$response_code (int)` |

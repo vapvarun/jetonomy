@@ -80,6 +80,28 @@ class Post extends Model {
 				// membership through their own workflows, and demoting an existing
 				// admin/moderator back to 'member' would be a footgun.
 				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
+
+				/**
+				 * Fires after a new post is successfully published.
+				 *
+				 * Only fires for published posts (drafts/scheduled posts emit this
+				 * later when they transition to publish via update()). The reputation
+				 * pipeline rewards upvotes downstream, but the creation event itself
+				 * had no signal until 1.4.4 — WB Gamification needs this to award
+				 * "first post", daily-engagement, and per-space activity points.
+				 *
+				 * @param int    $post_id  Inserted post row ID.
+				 * @param int    $space_id Parent space ID.
+				 * @param int    $user_id  Author user ID.
+				 * @param string $type     Post type ('topic' / 'question' / 'idea' / 'status').
+				 */
+				do_action(
+					'jetonomy_post_created',
+					(int) $id,
+					(int) ( $data['space_id'] ?? 0 ),
+					(int) ( $data['author_id'] ?? 0 ),
+					(string) ( $data['type'] ?? 'topic' )
+				);
 			}
 		}
 
@@ -654,7 +676,13 @@ class Post extends Model {
 		if ( ! in_array( $status, self::valid_idea_statuses(), true ) ) {
 			return false;
 		}
-		return static::update( $id, array( 'idea_status' => $status ) );
+		$post       = self::find( $id );
+		$old_status = $post ? ( $post->idea_status ?? null ) : null;
+		$ok         = static::update( $id, array( 'idea_status' => $status ) );
+		if ( $ok && $post && (string) $old_status !== $status ) {
+			self::fire_idea_status_changed( (int) $id, $old_status, $status, $post );
+		}
+		return $ok;
 	}
 
 	/**
@@ -672,7 +700,63 @@ class Post extends Model {
 	 * @return bool
 	 */
 	public static function clear_idea_status( int $id ): bool {
-		return static::update( $id, array( 'idea_status' => null ) );
+		$post       = self::find( $id );
+		$old_status = $post ? ( $post->idea_status ?? null ) : null;
+		$ok         = static::update( $id, array( 'idea_status' => null ) );
+		if ( $ok && $post && null !== $old_status ) {
+			self::fire_idea_status_changed( (int) $id, $old_status, null, $post );
+		}
+		return $ok;
+	}
+
+	/**
+	 * Emit `jetonomy_idea_status_changed` for any idea-status transition.
+	 *
+	 * Centralized helper so set_idea_status() and clear_idea_status() share
+	 * a single firing path. `$actor_id` resolves from get_current_user_id()
+	 * because the model has no caller-context plumbing — REST + admin AJAX
+	 * paths both run inside a request where the current user is the actor.
+	 * Background jobs / CLI scripts that mutate idea status without a user
+	 * context will report actor 0; listeners should treat 0 as "system".
+	 *
+	 * @param int         $post_id    Idea post ID.
+	 * @param string|null $old_status Previous status (null = was unassigned).
+	 * @param string|null $new_status New status (null = cleared from roadmap).
+	 * @param object      $post       The post row read before the update.
+	 */
+	private static function fire_idea_status_changed( int $post_id, ?string $old_status, ?string $new_status, object $post ): void {
+		/**
+		 * Fires whenever an idea post's roadmap status changes — including
+		 * being placed on the roadmap (old=''), moved between columns, or
+		 * removed from the roadmap (new=''). One generic action covers every
+		 * transition so WB Gamification (and other listeners) can run
+		 * "your idea was shipped" / "your idea was declined" badges without
+		 * special-casing the lifecycle.
+		 *
+		 * Reputation already awards `idea_planned` directly via its own
+		 * pipeline; this hook is the broader observability lane.
+		 *
+		 * Signature kept stable from earlier 1.4.x usages — empty string (not
+		 * null) marks "no status" so existing strict-typed listeners
+		 * (Activity_Tracker::on_idea_status_changed, Notifier) keep working
+		 * unchanged. The fifth arg `$author_id` is new in 1.4.4 and is the
+		 * recipient of any "your idea moved" reward; listeners that only
+		 * request 4 args continue to work because WP_Hook drops extras.
+		 *
+		 * @param int    $post_id    Idea post ID.
+		 * @param string $new_status New status ('' when removed from the roadmap).
+		 * @param string $old_status Previous status ('' when first placed on the roadmap).
+		 * @param int    $actor_id   Moderator who triggered the change (0 for system / CLI).
+		 * @param int    $author_id  Original idea author (recipient of any "your idea was shipped" reward). [since 1.4.4]
+		 */
+		do_action(
+			'jetonomy_idea_status_changed',
+			$post_id,
+			(string) ( $new_status ?? '' ),
+			(string) ( $old_status ?? '' ),
+			(int) get_current_user_id(),
+			(int) ( $post->author_id ?? 0 )
+		);
 	}
 
 	/**

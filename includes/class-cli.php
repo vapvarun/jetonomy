@@ -74,10 +74,15 @@ class CLI {
 			$new_level = Trust_Evaluator::evaluate_level( $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
-				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
-				\WP_CLI::log( sprintf( 'User %d: Level %d -> %d', $profile->user_id, $profile->trust_level, $new_level ) );
-				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
-				++$promoted;
+				/** This filter is documented in includes/class-cron.php */
+				$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
+
+				if ( $new_level > (int) $profile->trust_level ) {
+					$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
+					\WP_CLI::log( sprintf( 'User %d: Level %d -> %d', $profile->user_id, $profile->trust_level, $new_level ) );
+					do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
+					++$promoted;
+				}
 			}
 		}
 

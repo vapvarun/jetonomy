@@ -164,18 +164,36 @@ class Cron {
 
 			$replies_received = $replies_received_map[ (int) $profile->user_id ] ?? 0;
 
-			$new_level = Trust_Evaluator::evaluate_level(
-				[
-					'post_count'       => (int) $profile->post_count,
-					'days_active'      => $days_active,
-					'reputation'       => (int) $profile->reputation,
-					'replies_received' => $replies_received,
-				]
-			);
+			$stats = [
+				'post_count'       => (int) $profile->post_count,
+				'days_active'      => $days_active,
+				'reputation'       => (int) $profile->reputation,
+				'replies_received' => $replies_received,
+			];
+
+			$new_level = Trust_Evaluator::evaluate_level( $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
-				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
-				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
+				/**
+				 * Filter the trust level being promoted to before it is written.
+				 *
+				 * Listeners can return the user's current level to short-circuit
+				 * the promotion — used by WB Gamification to veto promotions for
+				 * sandboxed users (same `wb_gam_sandboxed` meta as the existing
+				 * `jetonomy_reputation_pre_change` filter) and to scale the
+				 * trust ladder during onboarding campaigns. Return any value
+				 * <= current trust_level to cancel the write.
+				 *
+				 * @param int   $new_level Proposed new trust level.
+				 * @param int   $user_id   User being evaluated.
+				 * @param array $stats     Stats used by the evaluator (post_count, days_active, reputation, replies_received).
+				 */
+				$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
+
+				if ( $new_level > (int) $profile->trust_level ) {
+					$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
+					do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
+				}
 			}
 		}
 	}

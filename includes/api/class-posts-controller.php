@@ -880,18 +880,10 @@ class Posts_Controller extends Base_Controller {
 			}
 		}
 
-		/**
-		 * Fires after an idea's roadmap status changes.
-		 *
-		 * Listeners (activity log, notifier) hook here to track the
-		 * curation workflow without coupling the controller to either.
-		 *
-		 * @param int    $post_id    Post ID.
-		 * @param string $new_status The new status value.
-		 * @param string $old_status The previous status value (or empty if unset).
-		 * @param int    $actor_id   User ID of the moderator who changed it.
-		 */
-		do_action( 'jetonomy_idea_status_changed', $id, $status, $previous_status, $user_id );
+		// `jetonomy_idea_status_changed` is fired from Post::set_idea_status()
+		// (the model layer) since 1.4.4 so every caller — REST, AJAX,
+		// abilities, CLI, demo seeder — emits the same event without
+		// duplicating the do_action(). Listeners stay registered the same way.
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
@@ -946,8 +938,8 @@ class Posts_Controller extends Base_Controller {
 			);
 		}
 
-		/** This filter is documented in set_idea_status() above. */
-		do_action( 'jetonomy_idea_status_changed', $id, '', $previous_status, $user_id );
+		// `jetonomy_idea_status_changed` is fired from Post::clear_idea_status()
+		// (the model layer) since 1.4.4 — see set_idea_status above.
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
