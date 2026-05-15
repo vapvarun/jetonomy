@@ -566,6 +566,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
+								<button class="jt-more-item"
+									data-wp-on--click="actions.toggleClose"
+									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html__( 'Reopen topic', 'jetonomy' ) : esc_html__( 'Close topic', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item"

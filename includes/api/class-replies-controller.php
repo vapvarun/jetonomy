@@ -94,6 +94,19 @@ class Replies_Controller extends Base_Controller {
 			)
 		);
 
+		// Unaccept action — reverse of accept. Mod safety net when an answer
+		// was accepted in error (e.g. wrong-but-friendly reply accepted over
+		// a more technically correct one).
+		register_rest_route(
+			$ns,
+			'/replies/(?P<id>\d+)/unaccept',
+			array(
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'unaccept_reply' ),
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+			)
+		);
+
 		register_rest_route(
 			$ns,
 			'/replies/(?P<id>\d+)/split',
@@ -570,6 +583,78 @@ class Replies_Controller extends Base_Controller {
 			Reputation::award( $reply_author_id, 'reply_accepted' );
 
 			// Notification handled by Notifier via jetonomy_reply_accepted hook above.
+		}
+
+		$updated_reply = Reply::find( $id );
+
+		return new WP_REST_Response( $this->prepare_reply( $updated_reply ), 200 );
+	}
+
+	/**
+	 * POST /replies/{id}/unaccept — Reverse of accept_reply().
+	 *
+	 * Mirrors accept_reply's permission gate (post author OR close_posts cap)
+	 * so the same people who can accept can also undo. Restores the previous
+	 * reputation award by deducting reply_accepted from the reply author when
+	 * a different user is doing the unaccept, matching the symmetry of
+	 * Reputation::award/revoke for vote reversals.
+	 */
+	public function unaccept_reply( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$id    = absint( $request->get_param( 'id' ) );
+		$reply = Reply::find( $id );
+
+		if ( ! $reply ) {
+			return $this->not_found( 'Reply' );
+		}
+
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$space_id        = (int) $post->space_id;
+		$post_author_id  = (int) $post->author_id;
+		$reply_author_id = (int) $reply->author_id;
+
+		$space = \Jetonomy\Models\Space::find( $space_id );
+		if ( ! $space || 'qa' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_qa_space',
+				__( 'Accepted answers only apply to Q&A spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! empty( $reply->is_accepted ) === false || (int) ( $post->accepted_reply_id ?? 0 ) !== $id ) {
+			return new \WP_Error(
+				'jetonomy_not_accepted',
+				__( 'This reply is not currently the accepted answer.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$can_unaccept = ( $post_author_id === $user_id )
+			|| $this->check_permission( 'close_posts', $space_id );
+
+		if ( ! $can_unaccept ) {
+			return $this->permission_error();
+		}
+
+		Reply::clear_accepted( $id );
+		Post::clear_accepted_reply( (int) $post->id );
+
+		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
+
+		// Revoke the reputation award that was granted when this reply was
+		// accepted (skip if the actor is the reply author — no self-credit
+		// was ever awarded, nothing to revoke).
+		if ( $reply_author_id && $reply_author_id !== $user_id ) {
+			Reputation::revoke( $reply_author_id, 'reply_accepted' );
 		}
 
 		$updated_reply = Reply::find( $id );

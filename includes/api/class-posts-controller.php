@@ -754,7 +754,15 @@ class Posts_Controller extends Base_Controller {
 	}
 
 	/**
-	 * POST /posts/{id}/close — Close a post to prevent new replies.
+	 * POST /posts/{id}/close — Toggle a topic's closed state.
+	 *
+	 * 1.4.3-dev: was one-way close; now toggles so the same route handles
+	 * both "Close topic" and "Reopen topic" from the moderator overflow menu.
+	 * When closed, the frontend hides the reply composer and renders a
+	 * "This topic is closed — no new replies" banner.
+	 *
+	 * Fires `jetonomy_post_closed_toggled` after the mutation so listeners
+	 * (audit log, BP activity stream, notifier) can react.
 	 */
 	public function close_post( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$user_id = $this->require_auth();
@@ -773,7 +781,21 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		Post::close( $id );
+		$new_value = empty( $post->is_closed ) ? 1 : 0;
+		if ( $new_value ) {
+			Post::close( $id );
+		} else {
+			Post::reopen( $id );
+		}
+
+		/**
+		 * Fires after a post is closed or reopened.
+		 *
+		 * @param int $post_id    Post ID.
+		 * @param int $new_value  1 when closed, 0 when reopened.
+		 * @param int $user_id    Acting user.
+		 */
+		do_action( 'jetonomy_post_closed_toggled', $id, $new_value, $user_id );
 
 		$updated = Post::find( $id );
 

@@ -267,6 +267,20 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Reverse of mark_accepted() — clears the is_accepted flag on a reply.
+	 *
+	 * Paired with Post::clear_accepted_reply() so the post's
+	 * accepted_reply_id denormalised pointer is also cleared. Called from
+	 * Replies_Controller::unaccept_reply when a mod overrides a wrong
+	 * acceptance.
+	 *
+	 * @param int $id Reply ID.
+	 */
+	public static function clear_accepted( int $id ): void {
+		static::update( $id, array( 'is_accepted' => 0 ) );
+	}
+
+	/**
 	 * Return the highest reply id for a post (1.4.0 C.5 fallback for posts
 	 * whose Post row didn't keep last_reply_id in sync).
 	 *

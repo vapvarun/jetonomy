@@ -1305,6 +1305,37 @@ const { state, actions } = store( 'jetonomy', {
                 errorFallback: state.i18n?.failedPin || 'Failed to toggle pin.',
             } );
         },
+
+        // ── Toggle topic closed (mod only) ──
+        *toggleClose( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            if ( ! postId ) return;
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => null,
+                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/close`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                } ),
+                onSuccess: ( data ) => {
+                    if ( window.bnToast ) {
+                        window.bnToast( data && data.is_closed
+                            ? ( state.i18n?.postClosed || 'Topic closed' )
+                            : ( state.i18n?.postReopened || 'Topic reopened' )
+                        );
+                    }
+                    setTimeout( () => window.location.reload(), 600 );
+                },
+                revert: () => { /* No optimistic UI to undo — helper will toast. */ },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedClose || 'Failed to toggle close.',
+            } );
+        },
         // ── Toggle private visibility ──
         *togglePrivate( event ) {
             const el = getElement();
@@ -1570,6 +1601,29 @@ const { state, actions } = store( 'jetonomy', {
                 revert: () => { /* No optimistic UI — helper toasts on error. */ },
                 toastOnError: true,
                 errorFallback: state.i18n?.failedSave || 'Failed to accept.',
+            } );
+        },
+
+        // ── Unaccept a previously-accepted answer (post author OR mod). ──
+        *unacceptReply( event ) {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            if ( ! replyId ) return;
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => null,
+                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/unaccept`, {
+                    method: 'POST',
+                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                    credentials: 'same-origin',
+                } ),
+                onSuccess: () => {
+                    if ( window.bnToast ) window.bnToast( state.i18n?.unaccepted || 'Reply unaccepted' );
+                    setTimeout( () => window.location.reload(), 600 );
+                },
+                revert: () => { /* No optimistic UI — helper toasts on error. */ },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Failed to unaccept.',
             } );
         },
 

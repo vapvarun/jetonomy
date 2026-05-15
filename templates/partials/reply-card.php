@@ -168,14 +168,18 @@ $jt_can_moderate_reply = $jt_reply_viewer
 			</div>
 		<?php endif; ?>
 	<?php
-	// Accept Answer button — shown to post author on Q&A spaces, for non-accepted replies.
-	if (
-		is_user_logged_in()
-		&& isset( $post, $space )
-		&& 'qa' === ( $space->type ?? '' )
-		&& get_current_user_id() === (int) $post->author_id
-		&& ! $is_accepted
-	) :
+	// Accept / Unaccept Answer button — shown on Q&A spaces to the post author
+	// AND to anyone with the close_posts capability on this space (space
+	// moderators / admins / WP admins). Mirrors the server-side gate in
+	// Replies_Controller::accept_reply() so the UI never offers an action the
+	// REST endpoint would refuse, and never hides one it would honour.
+	$jt_can_accept_answer = false;
+	if ( is_user_logged_in() && isset( $post, $space ) && 'qa' === ( $space->type ?? '' ) ) {
+		$jt_accept_viewer     = get_current_user_id();
+		$jt_can_accept_answer = ( $jt_accept_viewer === (int) $post->author_id )
+			|| \Jetonomy\Permissions\Permission_Engine::can( $jt_accept_viewer, 'close_posts', (int) $space->id );
+	}
+	if ( $jt_can_accept_answer && ! $is_accepted ) :
 		?>
 		<button class="jt-act"
 			data-wp-on--click="actions.acceptReply"
@@ -184,6 +188,15 @@ $jt_can_moderate_reply = $jt_reply_viewer
 			title="<?php esc_attr_e( 'Accept as best answer', 'jetonomy' ); ?>"
 			aria-label="<?php esc_attr_e( 'Accept as best answer', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Accept', 'jetonomy' ); ?></span>
+		</button>
+	<?php elseif ( $jt_can_accept_answer && $is_accepted ) : ?>
+		<button class="jt-act jt-act-unaccept"
+			data-wp-on--click="actions.unacceptReply"
+			data-reply-id="<?php echo (int) $reply->id; ?>"
+			data-post-id="<?php echo (int) $post->id; ?>"
+			title="<?php esc_attr_e( 'Mark this reply as no longer the accepted answer', 'jetonomy' ); ?>"
+			aria-label="<?php esc_attr_e( 'Unaccept this answer', 'jetonomy' ); ?>">
+			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Unaccept', 'jetonomy' ); ?></span>
 		</button>
 	<?php endif; ?>
 	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>

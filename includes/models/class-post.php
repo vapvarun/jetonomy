@@ -569,6 +569,16 @@ class Post extends Model {
 	}
 
 	/**
+	 * Reopen a previously-closed post. Reverse of close().
+	 *
+	 * @param int $id Post ID.
+	 * @return bool
+	 */
+	public static function reopen( int $id ): bool {
+		return static::update( $id, array( 'is_closed' => 0 ) );
+	}
+
+	/**
 	 * Pin (sticky) a post so it appears at the top of listings.
 	 *
 	 * @param int $id Post ID.
@@ -591,6 +601,24 @@ class Post extends Model {
 			array(
 				'accepted_reply_id' => $reply_id,
 				'is_resolved'       => 1,
+			)
+		);
+	}
+
+	/**
+	 * Reverse of accept_reply() — clears the accepted reply pointer and
+	 * resolved flag on a post so the Q&A surface shows "Needs answer"
+	 * again. Paired with Reply::clear_accepted() in the unaccept flow.
+	 *
+	 * @param int $id Post ID.
+	 * @return bool
+	 */
+	public static function clear_accepted_reply( int $id ): bool {
+		return static::update(
+			$id,
+			array(
+				'accepted_reply_id' => null,
+				'is_resolved'       => 0,
 			)
 		);
 	}
