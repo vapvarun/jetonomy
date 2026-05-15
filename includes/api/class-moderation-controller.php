@@ -17,6 +17,7 @@ use Jetonomy\Models\Flag;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Trust\Reputation;
+use Jetonomy\Moderation\Moderation_Service;
 use function Jetonomy\table;
 
 class Moderation_Controller extends Base_Controller {
@@ -640,24 +641,22 @@ class Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /moderation/flags/{id}/resolve — Resolve a flag as valid or dismissed.
+	 *
+	 * Routes through Moderation_Service so the global moderation queue and the
+	 * per-space moderation queue (class-space-moderation-controller.php) share
+	 * one resolution path. Without this delegation, resolving a flag here
+	 * skipped the +5 `flag_validated` reward to the reporter, the cascade that
+	 * trashes the offending content + sibling flags on the same object, and
+	 * the `jetonomy_flag_resolved` action — three behaviours the space queue
+	 * always ran. Customer report: Basecamp #9878183014.
 	 */
 	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id     = absint( $request->get_param( 'id' ) );
 		$status = sanitize_text_field( (string) $request->get_param( 'status' ) );
 
-		$flag = Flag::find( $id );
-		if ( ! $flag ) {
-			return $this->not_found( 'Flag' );
-		}
-
-		$resolved = Flag::resolve( $id, get_current_user_id(), $status );
-
-		if ( ! $resolved ) {
-			return new WP_Error(
-				'jetonomy_resolve_failed',
-				__( 'Failed to resolve flag.', 'jetonomy' ),
-				[ 'status' => 500 ]
-			);
+		$result = Moderation_Service::resolve_flag( get_current_user_id(), $id, $status );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
 		return new WP_REST_Response(
