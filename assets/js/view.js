@@ -2277,8 +2277,14 @@ const { state, actions } = store( 'jetonomy', {
         // calls composePost with extraPayload. Keeping this wrapper avoids
         // breaking any third-party customisation that already overrides it.
         *submitNewPost( event ) {
+            // Feed spaces are body-first: no Title field renders, server
+            // derives a stored title from content. Read the space type from
+            // the form's wp-context so the gate matches the partial. Forum /
+            // Q&A / Ideas keep requireTitle: true.
+            const ctx = getContext();
+            const isFeed = 'feed' === ( ctx && ctx.spaceType );
             yield actions.composePost( event, {
-                requireTitle:    true,
+                requireTitle:    ! isFeed,
                 collectTags:     true,
                 collectPrefix:   true,
                 collectPrivate:  true,

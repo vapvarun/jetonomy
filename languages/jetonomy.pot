@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.4.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-05-15 06:13:25+00:00\n"
+"POT-Creation-Date: 2026-05-15 06:48:40+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -619,7 +619,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/new-post.php:130
 #: includes/admin/class-admin.php:102 includes/admin/class-admin.php:103
 #: includes/admin/views/moderation.php:163 includes/class-privacy.php:139
-#: includes/class-privacy.php:186 templates/partials/compose-fields.php:142
+#: includes/class-privacy.php:186 templates/partials/compose-fields.php:144
 msgid "Content"
 msgstr ""
 
@@ -1045,7 +1045,7 @@ msgstr ""
 #: includes/class-template-loader.php:262
 #: includes/class-template-loader.php:385
 #: includes/class-template-loader.php:441
-#: templates/partials/compose-fields.php:235 templates/partials/composer.php:60
+#: templates/partials/compose-fields.php:237 templates/partials/composer.php:60
 #: templates/views/edit-profile.php:119 templates/views/new-space.php:124
 #: templates/views/space-edit.php:231
 msgid "Cancel"
@@ -1214,7 +1214,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:78
 #: includes/admin/views/space-edit.php:66 includes/admin/views/spaces.php:30
 #: includes/admin/views/spaces.php:199 includes/class-privacy.php:135
-#: templates/partials/compose-fields.php:87
+#: templates/partials/compose-fields.php:89
 msgid "Title"
 msgstr ""
 
@@ -1302,7 +1302,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:249 includes/admin/views/replies.php:183
 #: includes/admin/views/replies.php:328 includes/admin/views/revisions.php:83
 #: includes/class-privacy.php:143 includes/class-privacy.php:190
-#: templates/partials/compose-fields.php:200
+#: templates/partials/compose-fields.php:202
 msgid "Date"
 msgstr ""
 
@@ -1365,7 +1365,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:551 includes/admin/views/users.php:104
 #: includes/admin/views/users.php:107
 #: includes/api/class-notifications-controller.php:311
-#: includes/api/class-posts-controller.php:1081
+#: includes/api/class-posts-controller.php:1100
 #: includes/api/class-replies-controller.php:778
 msgid "ago"
 msgstr ""
@@ -3856,7 +3856,7 @@ msgstr ""
 #: dist/jetonomy/templates/partials/post-card.php:56
 #: includes/api/class-base-controller.php:329
 #: includes/api/class-oembed-controller.php:129
-#: includes/api/class-posts-controller.php:1026
+#: includes/api/class-posts-controller.php:1045
 #: includes/api/class-replies-controller.php:749
 #: includes/class-abilities.php:1232 includes/class-shortcodes.php:160
 #: includes/class-shortcodes.php:216
@@ -3880,7 +3880,7 @@ msgstr ""
 #: dist/jetonomy/includes/api/class-posts-controller.php:594
 #: dist/jetonomy/includes/api/class-spaces-controller.php:411
 #: includes/api/class-categories-controller.php:213
-#: includes/api/class-posts-controller.php:650
+#: includes/api/class-posts-controller.php:669
 #: includes/api/class-replies-controller.php:439
 #: includes/api/class-spaces-controller.php:546
 msgid "No fields provided for update."
@@ -3942,7 +3942,7 @@ msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:374
-#: includes/api/class-posts-controller.php:381
+#: includes/api/class-posts-controller.php:400
 msgid "Post title is required."
 msgstr ""
 
@@ -3953,36 +3953,36 @@ msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:461
 #: dist/jetonomy/includes/api/class-posts-controller.php:601
-#: includes/api/class-posts-controller.php:496
-#: includes/api/class-posts-controller.php:657
+#: includes/api/class-posts-controller.php:515
+#: includes/api/class-posts-controller.php:676
 msgid "Your post was blocked by our content policy."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:487
 #: dist/jetonomy/includes/class-abilities.php:1188
-#: includes/api/class-posts-controller.php:526
+#: includes/api/class-posts-controller.php:545
 #: includes/class-abilities.php:1192
 msgid "Failed to create post."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:746
-#: includes/api/class-posts-controller.php:921
+#: includes/api/class-posts-controller.php:940
 msgid "A valid target_space_id is required."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:750
-#: includes/api/class-posts-controller.php:925
+#: includes/api/class-posts-controller.php:944
 msgid "Post is already in the target space."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:803
-#: includes/api/class-posts-controller.php:978
+#: includes/api/class-posts-controller.php:997
 msgid "Cannot merge a post with itself."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:820
 #: dist/jetonomy/includes/class-template-loader.php:235
-#: includes/api/class-posts-controller.php:995
+#: includes/api/class-posts-controller.php:1014
 #: includes/class-template-loader.php:291
 msgid "Failed to merge topics."
 msgstr ""
@@ -5283,7 +5283,7 @@ msgid "Link"
 msgstr ""
 
 #: dist/jetonomy/templates/partials/composer.php:38
-#: templates/partials/compose-fields.php:159 templates/partials/composer.php:38
+#: templates/partials/compose-fields.php:161 templates/partials/composer.php:38
 msgid "Blockquote"
 msgstr ""
 
@@ -5728,12 +5728,12 @@ msgid "Posting in %s"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:86
-#: templates/partials/compose-fields.php:90
+#: templates/partials/compose-fields.php:92
 msgid "What is your question?"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:87
-#: templates/partials/compose-fields.php:91
+#: templates/partials/compose-fields.php:93
 msgid "Describe your idea"
 msgstr ""
 
@@ -5742,17 +5742,17 @@ msgid "What's on your mind?"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:90
-#: templates/partials/compose-fields.php:93
+#: templates/partials/compose-fields.php:95
 msgid "Topic title"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:98
-#: templates/partials/compose-fields.php:102
+#: templates/partials/compose-fields.php:104
 msgid "Similar topics"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:101
-#: templates/partials/compose-fields.php:105
+#: templates/partials/compose-fields.php:107
 msgid "Search all spaces"
 msgstr ""
 
@@ -5760,40 +5760,40 @@ msgstr ""
 #: dist/jetonomy/templates/views/search.php:161
 #: dist/jetonomy/templates/views/search.php:304
 #: includes/admin/class-admin.php:84 includes/admin/class-admin.php:85
-#: includes/admin/views/tags.php:46 templates/partials/compose-fields.php:116
+#: includes/admin/views/tags.php:46 templates/partials/compose-fields.php:118
 #: templates/views/search.php:161 templates/views/search.php:312
 #: templates/views/single-post.php:393
 msgid "Tags"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:109
-#: templates/partials/compose-fields.php:116
+#: templates/partials/compose-fields.php:118
 msgid "(optional, comma-separated)"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:110
-#: templates/partials/compose-fields.php:117
+#: templates/partials/compose-fields.php:119
 msgid "e.g. python, django, architecture"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:119
-#: templates/partials/compose-fields.php:128
+#: templates/partials/compose-fields.php:130
 msgid "Prefix"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:119
-#: templates/partials/compose-fields.php:128
+#: templates/partials/compose-fields.php:130
 msgid "(optional)"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:121
 #: dist/jetonomy/templates/views/space-roadmap.php:115
-#: templates/partials/compose-fields.php:130
+#: templates/partials/compose-fields.php:132
 msgid "None"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:140
-#: templates/partials/compose-fields.php:162
+#: templates/partials/compose-fields.php:164
 msgid "Write your post..."
 msgstr ""
 
@@ -5802,12 +5802,12 @@ msgid "Private — only you and moderators can see this topic"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:168
-#: templates/partials/compose-fields.php:197
+#: templates/partials/compose-fields.php:199
 msgid "Publish on"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:172
-#: templates/partials/compose-fields.php:226
+#: templates/partials/compose-fields.php:228
 msgid "Your post will be published automatically at this date and time."
 msgstr ""
 
@@ -5827,22 +5827,22 @@ msgid "Post Status"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:195
-#: templates/partials/compose-fields.php:246
+#: templates/partials/compose-fields.php:248
 msgid "More publishing options"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:203
-#: templates/partials/compose-fields.php:260
+#: templates/partials/compose-fields.php:262
 msgid "Publish now"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:207
-#: templates/partials/compose-fields.php:264
+#: templates/partials/compose-fields.php:266
 msgid "Save as draft"
 msgstr ""
 
 #: dist/jetonomy/templates/views/new-post.php:211
-#: templates/partials/compose-fields.php:268
+#: templates/partials/compose-fields.php:270
 msgid "Schedule..."
 msgstr ""
 
@@ -7549,11 +7549,11 @@ msgstr ""
 msgid "Invalid URL."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:829
+#: includes/api/class-posts-controller.php:848
 msgid "Roadmap status only applies to Ideas spaces."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:841
+#: includes/api/class-posts-controller.php:860
 msgid "Invalid roadmap status."
 msgstr ""
 
@@ -8709,35 +8709,35 @@ msgstr ""
 msgid "On topic"
 msgstr ""
 
-#: templates/partials/compose-fields.php:151
+#: templates/partials/compose-fields.php:153
 msgid "Share the details… (Markdown supported)"
 msgstr ""
 
-#: templates/partials/compose-fields.php:160
+#: templates/partials/compose-fields.php:162
 msgid "Upload image"
 msgstr ""
 
-#: templates/partials/compose-fields.php:185
+#: templates/partials/compose-fields.php:187
 msgid "Private: only you and moderators can see this topic"
 msgstr ""
 
-#: templates/partials/compose-fields.php:208
+#: templates/partials/compose-fields.php:210
 msgid "Time"
 msgstr ""
 
-#: templates/partials/compose-fields.php:209
+#: templates/partials/compose-fields.php:211
 msgid "Hour"
 msgstr ""
 
-#: templates/partials/compose-fields.php:210
+#: templates/partials/compose-fields.php:212
 msgid "HH"
 msgstr ""
 
-#: templates/partials/compose-fields.php:216
+#: templates/partials/compose-fields.php:218
 msgid "Minute"
 msgstr ""
 
-#: templates/partials/compose-fields.php:217
+#: templates/partials/compose-fields.php:219
 msgid "MM"
 msgstr ""
 

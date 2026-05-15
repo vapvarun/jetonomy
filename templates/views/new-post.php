@@ -119,12 +119,12 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 			'compose-fields',
 			[
 				'space'             => $space,
-				// Title is always collected at write time (every space type).
-				// For feed-spaces the single-post view hides the rendered h1
-				// visually (sr-only) so the page still reads body-first, but
-				// the title is real data — breadcrumbs, notifications,
-				// search, and share previews all use it.
-				'show_title'        => true,
+				// 1.4.4: Feed spaces drop the user-facing Title field — the
+				// body IS the message. Server derives a stored title from
+				// content_plain on POST so breadcrumbs, search, notifications,
+				// and OG previews still have a usable string. Forum / Q&A /
+				// Ideas continue to require an explicit title.
+				'show_title'        => 'feed' !== (string) ( $space->type ?? '' ),
 				'show_tags'         => true,
 				'show_prefix'       => true,
 				'show_private'      => true,

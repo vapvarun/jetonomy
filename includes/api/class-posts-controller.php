@@ -372,11 +372,30 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
 
-		// 1.4.3: every space type collects a user-entered title. Feed-space
-		// posts hide the rendered <h1> visually on the single-post page
-		// (sr-only) so the surface stays body-first, but the title itself
-		// is real data used by breadcrumbs, notifications, search results,
-		// emails, and OG share previews.
+		// Feed-type spaces are short-form status surfaces — the composer
+		// doesn't render a Title field, the body IS the message. Derive a
+		// stored title from the first ~80 characters of plain content so the
+		// downstream surfaces that still need one (breadcrumbs, search,
+		// notifications, OG previews) keep working. Forum / Q&A / Ideas
+		// continue to require an explicit title.
+		if ( empty( $title ) && 'feed' === ( $space->type ?? '' ) ) {
+			$plain = wp_strip_all_tags( $content );
+			$plain = trim( preg_replace( '/\s+/u', ' ', $plain ) );
+			if ( '' !== $plain ) {
+				if ( function_exists( 'mb_strlen' ) && mb_strlen( $plain ) > 80 ) {
+					$cut   = mb_substr( $plain, 0, 80 );
+					$break = mb_strrpos( $cut, ' ' );
+					$title = false !== $break && $break > 0 ? rtrim( mb_substr( $cut, 0, $break ) ) . '…' : $cut . '…';
+				} elseif ( strlen( $plain ) > 80 ) {
+					$cut   = substr( $plain, 0, 80 );
+					$break = strrpos( $cut, ' ' );
+					$title = false !== $break && $break > 0 ? rtrim( substr( $cut, 0, $break ) ) . '…' : $cut . '…';
+				} else {
+					$title = $plain;
+				}
+			}
+		}
+
 		if ( empty( $title ) ) {
 			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
 		}

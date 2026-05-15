@@ -45,10 +45,12 @@ $_space_type = (string) ( $space->type ?? '' );
 // follows the documented defaults so the partial behaves identically
 // whether called from the embed or the full page unless a caller
 // explicitly opts out.
-// 1.4.3: title is always collected. Feed spaces display the title as
-// sr-only on the post view, but the value is real data used by
-// breadcrumbs, notifications, search, and share previews.
-$_show_title        = isset( $show_title ) ? (bool) $show_title : true;
+// 1.4.4: Feed spaces drop the user-facing Title field entirely. The
+// composer renders body-first ("the post IS the message"); the server
+// derives a stored title from the first ~80 chars of content_plain so
+// breadcrumbs / search / notifications / OG previews still have a
+// usable string. Forum / Q&A / Ideas continue to collect a title.
+$_show_title        = isset( $show_title ) ? (bool) $show_title : ( 'feed' !== $_space_type );
 $_show_tags         = isset( $show_tags ) ? (bool) $show_tags : true;
 $_show_prefix       = isset( $show_prefix ) ? (bool) $show_prefix : true;
 $_show_private      = isset( $show_private ) ? (bool) $show_private : true;
