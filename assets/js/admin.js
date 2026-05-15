@@ -1186,8 +1186,8 @@
 			$(document).on('click', '.jetonomy-import-restart-btn', function() {
 				var $btn = $(this);
 				self.confirmAsync(
-					'This will discard the interrupted import progress. Continue?',
-					{ danger: true, title: 'Restart import' }
+					Jetonomy.i18n.confirmRestartImport || 'This will discard the interrupted import progress. Continue?',
+					{ danger: true, title: Jetonomy.i18n.restartImportTitle || 'Restart import' }
 				).then(function(ok) {
 					if (!ok) return;
 					self.startImport($btn.data('source'), 'forums', 0);

@@ -712,6 +712,9 @@ class Admin {
 					/* translators: %s: server-supplied error detail. */
 					'importErrorFormat'       => __( 'Error: %s', 'jetonomy' ),
 					'importErrorUnknown'      => esc_html__( 'Unknown error', 'jetonomy' ),
+					// 1.4.4 i18n sweep (#9876871333): plug the restart-import confirm + title.
+					'confirmRestartImport'    => esc_html__( 'This will discard the interrupted import progress. Continue?', 'jetonomy' ),
+					'restartImportTitle'      => esc_html__( 'Restart import', 'jetonomy' ),
 					'selectImage'             => esc_html__( 'Select Image', 'jetonomy' ),
 					'useImage'                => esc_html__( 'Use this image', 'jetonomy' ),
 					'testEmailSent'           => esc_html__( 'Test email sent!', 'jetonomy' ),

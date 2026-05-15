@@ -605,7 +605,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
             } else {
                 btn.disabled = false;
                 btn.textContent = jtI18n( 'joinSpace', 'Join Space' );
-                (window.bnToast ? window.bnToast((res.data && res.data.message) || 'Could not join space.', 'error') : null);
+                (window.bnToast ? window.bnToast((res.data && res.data.message) || jtI18n( 'couldNotJoinSpace', 'Could not join space.' ), 'error') : null);
             }
         });
     });
@@ -634,13 +634,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 btn.textContent = jtI18n( 'awaitingApproval', 'Awaiting Approval' );
                 btn.classList.remove('jt-btn-fill');
                 btn.classList.add('jt-btn-outline');
-                (window.bnToast ? window.bnToast(data.message || 'Request submitted. Awaiting approval.', 'success') : null);
+                (window.bnToast ? window.bnToast(data.message || jtI18n( 'requestSubmittedAwaiting', 'Request submitted. Awaiting approval.' ), 'success') : null);
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
                 btn.disabled = false;
                 btn.textContent = jtI18n( 'requestToJoin', 'Request to Join' );
-                (window.bnToast ? window.bnToast(data.message || 'Could not submit request.', 'error') : null);
+                (window.bnToast ? window.bnToast(data.message || jtI18n( 'couldNotSubmitRequest', 'Could not submit request.' ), 'error') : null);
             }
         });
     });
@@ -666,13 +666,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
         .then(function(res) {
             var data = res.data || {};
             if (data.status === 'pending') {
-                showGateMessage(form, data.message || 'Request submitted. Awaiting approval.', false);
+                showGateMessage(form, data.message || jtI18n( 'requestSubmittedAwaiting', 'Request submitted. Awaiting approval.' ), false);
                 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = jtI18n( 'requestSent', 'Request Sent' ); }
             } else if (res.ok && data.status === 'joined') {
                 window.location.reload();
             } else {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = jtI18n( 'requestToJoin', 'Request to Join' ); }
-                showGateMessage(form, data.message || 'Could not submit request.', true);
+                showGateMessage(form, data.message || jtI18n( 'couldNotSubmitRequest', 'Could not submit request.' ), true);
             }
         });
     });
