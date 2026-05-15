@@ -166,15 +166,24 @@ class Posts_Controller extends Base_Controller {
 			$ns,
 			'/posts/(?P<id>\d+)/idea-status',
 			array(
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'set_idea_status' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
-				'args'                => array(
-					'idea_status' => array(
-						'type'     => 'string',
-						'required' => true,
-						'enum'     => Post::valid_idea_statuses(),
+				array(
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'set_idea_status' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					'args'                => array(
+						'idea_status' => array(
+							'type'     => 'string',
+							'required' => true,
+							'enum'     => Post::valid_idea_statuses(),
+						),
 					),
+				),
+				array(
+					// DELETE clears the roadmap status (NULL), removing the
+					// idea from the kanban entirely. Same gate as setting.
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'clear_idea_status' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				),
 			)
 		);
@@ -883,6 +892,62 @@ class Posts_Controller extends Base_Controller {
 		 * @param int    $actor_id   User ID of the moderator who changed it.
 		 */
 		do_action( 'jetonomy_idea_status_changed', $id, $status, $previous_status, $user_id );
+
+		$updated = Post::find( $id );
+		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );
+	}
+
+	/**
+	 * DELETE /posts/{id}/idea-status — Clear the roadmap status (remove from kanban).
+	 *
+	 * Same gate as the POST counterpart: Ideas-space only, moderator-only.
+	 * Fires `jetonomy_idea_status_changed` with an empty new status so
+	 * activity log / notifier listeners can treat removal as a discrete event.
+	 *
+	 * @since 1.4.3
+	 */
+	public function clear_idea_status( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$id   = absint( $request->get_param( 'id' ) );
+		$post = Post::find( $id );
+
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+		if ( ! $space || 'ideas' !== ( $space->type ?? '' ) ) {
+			return new \WP_Error(
+				'jetonomy_not_ideas_space',
+				__( 'Roadmap status only applies to Ideas spaces.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( ! $this->check_permission( 'close_posts', (int) $post->space_id ) ) {
+			return $this->permission_error();
+		}
+
+		$previous_status = (string) ( $post->idea_status ?? '' );
+		if ( '' === $previous_status ) {
+			// Already cleared — return the post as-is rather than 304.
+			return new WP_REST_Response( $this->prepare_post( $post ), 200 );
+		}
+
+		if ( ! Post::clear_idea_status( $id ) ) {
+			return new \WP_Error(
+				'jetonomy_idea_status_clear_failed',
+				__( 'Could not remove the idea from the roadmap.', 'jetonomy' ),
+				array( 'status' => 500 )
+			);
+		}
+
+		/** This filter is documented in set_idea_status() above. */
+		do_action( 'jetonomy_idea_status_changed', $id, '', $previous_status, $user_id );
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );

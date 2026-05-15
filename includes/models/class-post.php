@@ -658,6 +658,24 @@ class Post extends Model {
 	}
 
 	/**
+	 * Clear the roadmap status, removing the idea from the kanban entirely.
+	 *
+	 * Paired with set_idea_status() as the off-ramp: once a moderator has
+	 * placed an idea on the roadmap, they may decide it does not belong
+	 * there at all (filed by mistake, duplicate, off-topic) — this brings
+	 * it back to the unassigned state so it no longer surfaces in any
+	 * kanban column. Mirrors the clear_accepted_reply() pattern.
+	 *
+	 * @since 1.4.3
+	 *
+	 * @param int $id Post ID.
+	 * @return bool
+	 */
+	public static function clear_idea_status( int $id ): bool {
+		return static::update( $id, array( 'idea_status' => null ) );
+	}
+
+	/**
 	 * Publish a scheduled post when its published_at time has arrived.
 	 *
 	 * @param int $id Post ID.

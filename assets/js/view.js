@@ -1638,11 +1638,13 @@ const { state, actions } = store( 'jetonomy', {
 
             const setter = btn.closest( '.jt-idea-status-setter' );
             const allBtns = setter ? setter.querySelectorAll( '.jt-idea-status-btn' ) : [];
+            const removeBtn = setter ? setter.querySelector( '.jt-idea-status-remove' ) : null;
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => {
                     // Optimistic active swap so the picker reacts instantly.
                     const prevActive = setter?.querySelector( '.jt-idea-status-btn.is-active' ) || null;
+                    const prevRemoveHidden = removeBtn?.hasAttribute( 'hidden' );
                     allBtns.forEach( ( b ) => {
                         b.classList.remove( 'is-active' );
                         b.setAttribute( 'aria-pressed', 'false' );
@@ -1650,7 +1652,10 @@ const { state, actions } = store( 'jetonomy', {
                     btn.classList.add( 'is-active' );
                     btn.setAttribute( 'aria-pressed', 'true' );
                     allBtns.forEach( ( b ) => { b.disabled = true; } );
-                    return { prevActive };
+                    // Setting a status implies the Remove off-ramp is now
+                    // relevant — re-show it after a clear-then-set cycle.
+                    if ( removeBtn ) removeBtn.hidden = false;
+                    return { prevActive, prevRemoveHidden };
                 },
                 fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
                     method: 'POST',
@@ -1681,12 +1686,72 @@ const { state, actions } = store( 'jetonomy', {
                         snap.prevActive.classList.add( 'is-active' );
                         snap.prevActive.setAttribute( 'aria-pressed', 'true' );
                     }
+                    if ( removeBtn && snap.prevRemoveHidden ) removeBtn.hidden = true;
                 },
                 onFinally: () => {
                     allBtns.forEach( ( b ) => { b.disabled = false; } );
                 },
                 toastOnError: true,
                 errorFallback: state.i18n?.failedSave || 'Could not update status.',
+            } );
+        },
+
+        // ── Clear roadmap status (remove an idea from the kanban entirely) ──
+        // Paired with setIdeaStatus. Sends DELETE to the same /idea-status
+        // endpoint, which sets the column to NULL server-side. The setter UI
+        // then re-renders with no pill active and hides the "Remove" button
+        // (the template only includes it when a status is currently set).
+        *clearIdeaStatus( event ) {
+            const ctx = getContext();
+            const postId = ctx.postId;
+            const btn = event.currentTarget || event.target;
+            if ( ! postId ) return;
+
+            const setter = btn.closest( '.jt-idea-status-setter' );
+            const allBtns = setter ? setter.querySelectorAll( '.jt-idea-status-btn' ) : [];
+            const removeBtn = setter ? setter.querySelector( '.jt-idea-status-remove' ) : null;
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => {
+                    const prevActive = setter?.querySelector( '.jt-idea-status-btn.is-active' ) || null;
+                    allBtns.forEach( ( b ) => {
+                        b.classList.remove( 'is-active' );
+                        b.setAttribute( 'aria-pressed', 'false' );
+                        b.disabled = true;
+                    } );
+                    if ( removeBtn ) {
+                        removeBtn.disabled = true;
+                        removeBtn.hidden = true;
+                    }
+                    return { prevActive };
+                },
+                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                } ),
+                onSuccess: () => {
+                    // Strip the post-header pill since the idea is no longer
+                    // on the roadmap.
+                    const pill = document.querySelector( '.jt-post-head .jt-idea-pill:not(.jt-idea-status-btn)' );
+                    if ( pill && pill.parentNode ) pill.parentNode.removeChild( pill );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.statusCleared || 'Removed from roadmap' );
+                },
+                revert: ( snap ) => {
+                    if ( snap.prevActive ) {
+                        snap.prevActive.classList.add( 'is-active' );
+                        snap.prevActive.setAttribute( 'aria-pressed', 'true' );
+                    }
+                    if ( removeBtn ) removeBtn.hidden = false;
+                },
+                onFinally: () => {
+                    allBtns.forEach( ( b ) => { b.disabled = false; } );
+                    if ( removeBtn ) removeBtn.disabled = false;
+                },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Could not remove from roadmap.',
             } );
         },
 

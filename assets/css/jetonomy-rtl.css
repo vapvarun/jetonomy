@@ -1026,6 +1026,14 @@
   .jt-idea-status-btn:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-ip); }
   .jt-idea-status-btn.is-active { background: var(--jt-ip); color: #fff; border-color: var(--jt-ip); }
   .jt-idea-status-btn[disabled] { opacity: 0.6; cursor: progress; }
+  /* Off-ramp button — clears idea_status to NULL. Sits in the same row
+     as the 4 status pills, visually de-emphasised (text-only, danger hue)
+     so moderators don't confuse "Remove from roadmap" with another lane. */
+  .jt-idea-status-remove { font-family: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; background: transparent; color: var(--jt-text-tertiary); border: 1px dashed var(--jt-border); padding: 4px 10px; border-radius: var(--jt-radius-full); line-height: 1.3; transition: color var(--jt-dur) var(--jt-ease), border-color var(--jt-dur) var(--jt-ease); }
+  .jt-idea-status-remove:hover, .jt-idea-status-remove:focus-visible { color: var(--jt-danger); border-color: var(--jt-danger); outline: none; }
+  .jt-idea-status-remove:focus-visible { box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 4px var(--jt-danger); }
+  .jt-idea-status-remove[disabled] { opacity: 0.6; cursor: progress; }
+  .jt-idea-status-remove[hidden] { display: none; }
   @media (max-width: 640px) {
     .jt-idea-status-setter { gap: var(--jt-space-2); padding: var(--jt-space-3); align-items: flex-start; flex-direction: column; }
     .jt-idea-status-options { width: 100%; }

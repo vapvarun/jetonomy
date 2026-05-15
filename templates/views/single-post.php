@@ -334,6 +334,23 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 										<?php echo esc_html( jetonomy_idea_status_label( $jt_opt ) ); ?>
 									</button>
 								<?php endforeach; ?>
+								<?php
+								// 1.4.3: off-ramp. Until 1.4.2 the 4 status pills
+								// were one-way doors — once a moderator clicked
+								// any pill the idea was on the roadmap forever
+								// (server enum rejected NULL). The "Remove from
+								// roadmap" button DELETEs /idea-status, clearing
+								// the column back to NULL so the idea returns
+								// to the space's normal feed. Only rendered
+								// when there's currently a status to clear.
+								?>
+								<button type="button"
+									class="jt-idea-status-remove"
+									data-wp-on--click="actions.clearIdeaStatus"
+									aria-label="<?php esc_attr_e( 'Remove this idea from the roadmap', 'jetonomy' ); ?>"
+									<?php echo '' === $jt_current_status ? 'hidden' : ''; ?>>
+									<?php esc_html_e( 'Remove from roadmap', 'jetonomy' ); ?>
+								</button>
 							</div>
 						</div>
 					<?php endif; ?>
