@@ -359,6 +359,23 @@ class Template_Loader {
 			$view_version
 		);
 
+		// Generic IA re-hydration helper for any markup inserted after
+		// DOMContentLoaded — pagination Load More, modal-loaded reply cards,
+		// tab switches that fetch partials, infinite scroll, notifications
+		// panel refresh, etc. Loaded as a script module so it can `import`
+		// from `@wordpress/interactivity`; exposes the global
+		// window.jetonomyHydrateInteractive( regions ) that any non-module
+		// caller can invoke after DOM mutation.
+		$hydrator_file    = JETONOMY_DIR . 'assets/js/interactivity-rehydrate.js';
+		$hydrator_mtime   = file_exists( $hydrator_file ) ? (string) filemtime( $hydrator_file ) : '';
+		$hydrator_version = '' !== $hydrator_mtime ? JETONOMY_VERSION . '+' . $hydrator_mtime : JETONOMY_VERSION;
+		wp_enqueue_script_module(
+			'jetonomy-interactivity-rehydrate',
+			JETONOMY_URL . 'assets/js/interactivity-rehydrate.js',
+			array( '@wordpress/interactivity' ),
+			$hydrator_version
+		);
+
 		// Shared global for non-Interactivity JS on community pages (link preview
 		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
 		// one place so the same contract works for the future native app.

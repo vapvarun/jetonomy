@@ -172,7 +172,7 @@ parameters:
 
 		-
 			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
-			count: 1
+			count: 2
 			path: includes/class-template-loader.php
 
 		-

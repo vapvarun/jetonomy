@@ -49,10 +49,32 @@
 				var doc = parser.parseFromString(html, 'text/html');
 				var newList = doc.querySelector(targetSel);
 				var currentList = document.querySelector(targetSel);
+				var appended = [];
 				if (newList && currentList) {
 					Array.from(newList.children).forEach(function (child) {
 						currentList.appendChild(child);
+						appended.push(child);
 					});
+				}
+				// Re-hydrate WP Interactivity API directives on appended nodes.
+				// Core's IA only scans regions once on DOMContentLoaded, so without
+				// this call every data-wp-on--click button on the new replies (vote,
+				// reply, quote, flag, three-dot menu) stays inert. The helper is a
+				// generic intra-plugin primitive — see assets/js/interactivity-
+				// rehydrate.js. Any future caller that injects [data-wp-interactive]
+				// markup post-load should call the same function.
+				if (appended.length && typeof window.jetonomyHydrateInteractive === 'function') {
+					var regions = [];
+					appended.forEach(function (n) {
+						if (n.nodeType !== 1) { return; }
+						if (n.hasAttribute('data-wp-interactive')) { regions.push(n); }
+						n.querySelectorAll('[data-wp-interactive]').forEach(function (r) {
+							regions.push(r);
+						});
+					});
+					if (regions.length) {
+						window.jetonomyHydrateInteractive(regions);
+					}
 				}
 				var newPag = doc.querySelector('.jt-pagination[data-jt-target="' + targetSel + '"]')
 					|| doc.querySelector('.jt-pagination');
