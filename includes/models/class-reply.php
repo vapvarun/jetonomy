@@ -63,6 +63,26 @@ class Reply extends Model {
 			if ( $parent_post && ! empty( $data['author_id'] ) ) {
 				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
+
+			/**
+			 * Fires after a reply is created.
+			 *
+			 * Mirrors `jetonomy_post_created` for the reply path. Listeners
+			 * should inspect $context['status'] when status matters.
+			 *
+			 * @param int   $reply_id Inserted reply ID.
+			 * @param int   $post_id  Parent post ID (0 if unset).
+			 * @param int   $user_id  Author user ID (0 if unset).
+			 * @param array $context  Inserted column data (status, parent_id,
+			 *                        content, etc.).
+			 */
+			do_action(
+				'jetonomy_reply_created',
+				(int) $id,
+				(int) ( $data['post_id'] ?? 0 ),
+				(int) ( $data['author_id'] ?? 0 ),
+				$data
+			);
 		}
 
 		return $id;

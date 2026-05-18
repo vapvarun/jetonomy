@@ -395,13 +395,15 @@ class Posts_Controller extends Base_Controller {
 
 		$content_plain = wp_strip_all_tags( $content );
 
-		// Slug generation:
-		//   1. Title present → slugify it (typical case).
-		//   2. Title empty (feed space) → build a slug from the first 40
-		//      chars of plain content so URLs still look meaningful.
-		//   3. Step 2 yielded nothing (content was image-only / sanitised to
-		//      empty) → randomised stub so the INSERT never violates the
-		//      NOT NULL slug column.
+		/*
+		 * Slug generation:
+		 *   1. Title present → slugify it (typical case).
+		 *   2. Title empty (feed space) → build a slug from the first 40
+		 *      chars of plain content so URLs still look meaningful.
+		 *   3. Step 2 yielded nothing (content was image-only / sanitised to
+		 *      empty) → randomised stub so the INSERT never violates the
+		 *      NOT NULL slug column.
+		 */
 		$slug_seed = '' !== $title
 			? sanitize_title( $title )
 			: sanitize_title( wp_strip_all_tags( substr( $content_plain, 0, 40 ) ) );
@@ -845,8 +847,18 @@ class Posts_Controller extends Base_Controller {
 		 * @param string $new_status The new status value.
 		 * @param string $old_status The previous status value (or empty if unset).
 		 * @param int    $actor_id   User ID of the moderator who changed it.
+		 * @param int    $author_id  Original post author user ID (0 if unset).
+		 *                           Lets gamification reward the author on
+		 *                           transitions without a second lookup.
 		 */
-		do_action( 'jetonomy_idea_status_changed', $id, $status, $previous_status, $user_id );
+		do_action(
+			'jetonomy_idea_status_changed',
+			$id,
+			$status,
+			$previous_status,
+			$user_id,
+			(int) ( $post->author_id ?? 0 )
+		);
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );

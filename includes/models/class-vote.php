@@ -90,6 +90,20 @@ class Vote extends Model {
 					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
 
+				/**
+				 * Fires after a voter casts a new vote.
+				 *
+				 * Lets gamification reward the voter directly (the receiver
+				 * is already covered by reputation). $vote_type is the raw
+				 * value the voter chose: 1 for an upvote, -1 for a downvote.
+				 *
+				 * @param int    $vote_type   Raw vote value (1 or -1).
+				 * @param string $object_type 'post' or 'reply'.
+				 * @param int    $object_id   Target object ID.
+				 * @param int    $voter_id    Voting user ID.
+				 */
+				do_action( 'jetonomy_vote_cast', $value, $object_type, $object_id, $user_id );
+
 				return [
 					'action'    => 'created',
 					'old_value' => null,
@@ -117,6 +131,16 @@ class Vote extends Model {
 					static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				}
 
+				/**
+				 * Fires after a voter retracts their existing vote.
+				 *
+				 * @param int    $vote_type   Raw value of the retracted vote (1 or -1).
+				 * @param string $object_type 'post' or 'reply'.
+				 * @param int    $object_id   Target object ID.
+				 * @param int    $voter_id    Voting user ID.
+				 */
+				do_action( 'jetonomy_vote_retracted', $old_value, $object_type, $object_id, $user_id );
+
 				return [
 					'action'    => 'removed',
 					'old_value' => $old_value,
@@ -143,6 +167,12 @@ class Vote extends Model {
 			if ( null !== $started ) {
 				static::db()->query( 'COMMIT' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			}
+
+			// Toggling between up <-> down is one retract + one cast on the
+			// voter side. Firing both makes downstream challenge counters
+			// (e.g. "10 votes this week") match the user's actual actions.
+			do_action( 'jetonomy_vote_retracted', $old_value, $object_type, $object_id, $user_id );
+			do_action( 'jetonomy_vote_cast', $value, $object_type, $object_id, $user_id );
 
 			return [
 				'action'    => 'updated',

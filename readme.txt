@@ -264,6 +264,18 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.4.4 - unreleased =
+
+Developer-facing release. Adds new event hooks so gamification, analytics, and integration plugins can score every forum action without polling.
+
+* Dev      - New action `jetonomy_post_created` fires from the Post model on every insert path (REST, admin, CLI, abilities, imports). Use this when you want to score the creation event itself instead of waiting on downstream votes.
+* Dev      - New action `jetonomy_reply_created` mirrors the post hook for replies; also fires from the model.
+* Dev      - New actions `jetonomy_vote_cast` and `jetonomy_vote_retracted` let gamification reward the voter directly (the receiver is already covered by reputation). Vote-flips fire one retract plus one cast so counters match the voter's actual clicks.
+* Dev      - `jetonomy_idea_status_changed` now passes the post author ID as a fifth argument so listeners can reward the author without a second lookup. Existing four-argument listeners keep working.
+* Dev      - New filter `jetonomy_trust_level_pre_change` runs on the cron and CLI auto-promotion paths and lets you veto, fast-track, or rewrite a proposed level. Returning the user's current level short-circuits the write. Manual admin overrides bypass the filter on purpose.
+* Dev      - Documented all new hooks in `docs/website/developer-guide/02-hooks-reference.md` with working WB Gamification examples.
+* Compat   - Aligned with Jetonomy Pro 1.4.4. Install both updates together.
+
 = 1.4.3 - May 2026 =
 
 Security and refactor release. All mutation REST routes now flow through a unified auth helper, the compose pipeline is a single path, and optimistic UI is one shared primitive instead of a dozen one-offs.

@@ -81,6 +81,29 @@ class Post extends Model {
 				// admin/moderator back to 'member' would be a footgun.
 				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
 			}
+
+			/**
+			 * Fires after a post is created.
+			 *
+			 * Lets gamification / analytics / external systems score the
+			 * creation event itself rather than waiting on downstream votes.
+			 * Fires for every status (publish, draft, scheduled) — listeners
+			 * should inspect $context['status'] when status matters.
+			 *
+			 * @param int   $post_id  Inserted post ID.
+			 * @param int   $space_id Parent space ID (0 if unset).
+			 * @param int   $user_id  Author user ID (0 if unset).
+			 * @param array $context  Inserted column data (status, post_type,
+			 *                        idea_status, slug, etc.) for the listener
+			 *                        to disambiguate by.
+			 */
+			do_action(
+				'jetonomy_post_created',
+				(int) $id,
+				(int) ( $data['space_id'] ?? 0 ),
+				(int) ( $data['author_id'] ?? 0 ),
+				$data
+			);
 		}
 
 		return $id;

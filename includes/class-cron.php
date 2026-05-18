@@ -164,14 +164,34 @@ class Cron {
 
 			$replies_received = $replies_received_map[ (int) $profile->user_id ] ?? 0;
 
-			$new_level = Trust_Evaluator::evaluate_level(
-				[
-					'post_count'       => (int) $profile->post_count,
-					'days_active'      => $days_active,
-					'reputation'       => (int) $profile->reputation,
-					'replies_received' => $replies_received,
-				]
-			);
+			$stats = [
+				'post_count'       => (int) $profile->post_count,
+				'days_active'      => $days_active,
+				'reputation'       => (int) $profile->reputation,
+				'replies_received' => $replies_received,
+			];
+
+			$new_level = Trust_Evaluator::evaluate_level( $stats );
+
+			/**
+			 * Filter the auto-evaluated trust level before it is written.
+			 *
+			 * Listeners can lower the level (e.g. veto promotion for
+			 * sandboxed users) or raise it (e.g. onboarding campaign that
+			 * fast-tracks the ladder). Returning the user's current level
+			 * short-circuits the write.
+			 *
+			 * Only fires on automatic promotion paths (cron + CLI
+			 * trust-evaluate). Manual admin/CLI overrides intentionally
+			 * bypass this filter.
+			 *
+			 * @param int   $new_level Level the evaluator chose.
+			 * @param int   $user_id   Target user.
+			 * @param array $stats     Stats fed to the evaluator
+			 *                         (post_count, days_active, reputation,
+			 *                         replies_received).
+			 */
+			$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
 
 			if ( $new_level > (int) $profile->trust_level ) {
 				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
