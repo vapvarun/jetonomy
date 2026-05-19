@@ -264,21 +264,9 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
-= 1.4.4 - unreleased =
-
-Developer-facing release. Adds new event hooks so gamification, analytics, and integration plugins can score every forum action without polling.
-
-* Dev      - New action `jetonomy_post_created` fires from the Post model on every insert path (REST, admin, CLI, abilities, imports). Use this when you want to score the creation event itself instead of waiting on downstream votes.
-* Dev      - New action `jetonomy_reply_created` mirrors the post hook for replies; also fires from the model.
-* Dev      - New actions `jetonomy_vote_cast` and `jetonomy_vote_retracted` let gamification reward the voter directly (the receiver is already covered by reputation). Vote-flips fire one retract plus one cast so counters match the voter's actual clicks.
-* Dev      - `jetonomy_idea_status_changed` now passes the post author ID as a fifth argument so listeners can reward the author without a second lookup. Existing four-argument listeners keep working.
-* Dev      - New filter `jetonomy_trust_level_pre_change` runs on the cron and CLI auto-promotion paths and lets you veto, fast-track, or rewrite a proposed level. Returning the user's current level short-circuits the write. Manual admin overrides bypass the filter on purpose.
-* Dev      - Documented all new hooks in `docs/website/developer-guide/02-hooks-reference.md` with working WB Gamification examples.
-* Compat   - Aligned with Jetonomy Pro 1.4.4. Install both updates together.
-
 = 1.4.3 - May 2026 =
 
-Security and refactor release. All mutation REST routes now flow through a unified auth helper, the compose pipeline is a single path, and optimistic UI is one shared primitive instead of a dozen one-offs.
+Security and refactor release. All mutation REST routes now flow through a unified auth helper, the compose pipeline is a single path, and optimistic UI is one shared primitive instead of a dozen one-offs. Ships new event hooks so gamification, analytics, and integration plugins can score every forum action without polling.
 
 * Security  - All mutation REST routes (posts, replies, votes, bookmarks, moderation, spaces, subscriptions, notifications) now use a unified `REST_Auth` permission helper that enforces login + cookie nonce + capability + post-ownership in a single contract. A CI gate (`bin/audit-rest-routes.php`) blocks new routes that skip the helper.
 * Refactor  - Compose pipeline unified across "Share an Idea", the full new-post page, and inline topic embeds. One `composePost()` path; per-surface fields supply extra payload.
@@ -292,6 +280,12 @@ Security and refactor release. All mutation REST routes now flow through a unifi
 * Fix       - "More" menu on the last reply in a thread no longer clips below the viewport — the JS positioner flips it upward automatically.
 * Fix       - Reporting a post now correctly deducts reputation from the author (previously the flag-validated action was wired to a no-op).
 * Fix       - Idea-planned action now consistently awards owner reputation across the activity log and notifications.
+* Dev       - New action `jetonomy_post_created` fires from the Post model on every insert path (REST, admin, CLI, abilities, imports). Use this when you want to score the creation event itself instead of waiting on downstream votes.
+* Dev       - New action `jetonomy_reply_created` mirrors the post hook for replies; also fires from the model.
+* Dev       - New actions `jetonomy_vote_cast` and `jetonomy_vote_retracted` let gamification reward the voter directly (the receiver is already covered by reputation). Vote-flips fire one retract plus one cast so counters match the voter's actual clicks.
+* Dev       - `jetonomy_idea_status_changed` now passes the post author ID as a fifth argument so listeners can reward the author without a second lookup. Existing four-argument listeners keep working.
+* Dev       - New filter `jetonomy_trust_level_pre_change` runs on the cron and CLI auto-promotion paths and lets you veto, fast-track, or rewrite a proposed level. Returning the user's current level short-circuits the write. Manual admin overrides bypass the filter on purpose.
+* Dev       - Documented all new hooks in `docs/website/developer-guide/02-hooks-reference.md` with working WB Gamification examples.
 * i18n      - ~30 previously-hardcoded JS strings are now translatable. ESLint gate (`no-restricted-syntax`) prevents regression by blocking raw string literals in user-facing JS APIs.
 * Compat    - Aligned with Jetonomy Pro 1.4.3. Install both updates together.
 
