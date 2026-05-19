@@ -927,9 +927,24 @@
   .jt-space-card-stats { display: flex; gap: 12px; margin-top: 6px; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
-  .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; margin-block-end: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
+  .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
+  .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }
   .jt-space-card-badge-hidden { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn, var(--jt-text-secondary)); }
+  /*
+   * Type chips. Tinted with the accent token so the chip reads as
+   * "category" rather than "warning", and stays automatically theme-
+   * adaptive — `--jt-accent-light` flips for dark mode via the same
+   * cascade that powers the rest of the UI.
+   */
+  .jt-space-card-badge-type { background: var(--jt-accent-light, var(--jt-bg-muted)); color: var(--jt-accent, var(--jt-text-secondary)); }
+  /*
+   * Policy chips. Approval-required reads as a soft warning (action
+   * still owed by the visitor); invite-only reads as informational
+   * (no action owed, just a contract statement).
+   */
+  .jt-space-card-badge-policy-approval { background: var(--jt-warn-light, var(--jt-bg-muted)); color: var(--jt-warn, var(--jt-text-secondary)); }
+  .jt-space-card-badge-policy-invite { background: var(--jt-bg-muted); color: var(--jt-text-secondary); }
 
   /* ── Space status banner ── */
   .jt-status-banner { padding: 10px 16px; border-radius: var(--jt-radius); font-size: 0.9375rem; font-weight: 500; margin-bottom: 12px; }
@@ -2084,6 +2099,39 @@
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
 	.jt-modal-actions .jt-btn { min-width: 0; width: 100%; }
+}
+
+/*
+ * Merge-picker modal — rebuilt in 1.4.3 to replace the bare prompt-style
+ * search box (one heading, one input, one stack of unstyled rows) with a
+ * proper search-and-pick experience. Every block is a class so themes and
+ * dark mode can override through tokens; no inline styles remain.
+ */
+.jt-modal-picker { width: 520px; max-width: calc(100vw - 32px); padding: 20px 20px 16px; }
+.jt-modal-picker-header { margin-bottom: 12px; }
+.jt-modal-picker-title { font-size: 1rem; font-weight: 600; color: var(--jt-text); margin: 0; line-height: 1.4; }
+.jt-modal-picker-source { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 0; font-size: 0.8125rem; color: var(--jt-text-secondary); }
+.jt-modal-picker-source-label { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.6875rem; font-weight: 600; color: var(--jt-text-tertiary); }
+.jt-modal-picker-source-name { color: var(--jt-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jt-modal-picker-search { margin-bottom: 10px; }
+.jt-modal-picker-input { width: 100%; padding: 8px 12px; font-size: 0.9375rem; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-sizing: border-box; }
+.jt-modal-picker-input:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-light, rgba(59, 130, 246, 0.18)); }
+.jt-modal-picker-results { max-height: 320px; min-height: 80px; overflow-y: auto; border: 1px solid var(--jt-border); border-radius: var(--jt-radius); background: var(--jt-bg); margin-bottom: 16px; }
+.jt-modal-picker-results.is-loading { opacity: 0.7; }
+.jt-modal-picker-hint { margin: 0; padding: 14px 14px; font-size: 0.8125rem; color: var(--jt-text-tertiary); text-align: center; }
+.jt-modal-picker-hint.is-error { color: var(--jt-danger, var(--jt-text-secondary)); }
+.jt-modal-picker-item { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 10px 12px; text-align: start; background: transparent; border: 0; border-bottom: 1px solid var(--jt-border); cursor: pointer; color: var(--jt-text); font: inherit; transition: background-color 0.15s; }
+.jt-modal-picker-item:last-child { border-bottom: 0; }
+.jt-modal-picker-item:hover { background: var(--jt-bg-hover, var(--jt-bg-muted)); }
+.jt-modal-picker-item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--jt-accent); }
+.jt-modal-picker-item.is-selected { background: var(--jt-accent-light, var(--jt-bg-muted)); }
+.jt-modal-picker-item-title { font-size: 0.9375rem; font-weight: 500; color: var(--jt-text); line-height: 1.4; }
+.jt-modal-picker-item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--jt-text-tertiary); }
+.jt-modal-picker-space-chip { display: inline-flex; padding: 2px 6px; border-radius: var(--jt-radius-sm, 4px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); font-weight: 600; letter-spacing: 0.02em; }
+.jt-modal-picker-item-stat { color: var(--jt-text-tertiary); }
+@media ( max-width: 640px ) {
+	.jt-modal-picker { padding: 16px 16px 12px; }
+	.jt-modal-picker-results { max-height: 50vh; }
 }
 
 /* ── Link Preview Cards ──

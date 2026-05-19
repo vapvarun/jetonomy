@@ -170,93 +170,237 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 
 /**
  * Post picker modal for merge — search and select a target topic.
+ *
+ * Backwards-compatible signature: existing callers passing only
+ * (title, excludePostId, spaceId) still work. New optional 4th arg
+ * `sourceTitle` shows a "From: …" banner so the moderator never has to
+ * mentally hold the source-topic title while reading candidates.
+ *
+ * All inline styles are gone — every node carries a `.jt-modal-picker-*`
+ * class instead, so themes and dark mode can override via the standard
+ * token cascade without fighting `style=""` specificity.
  */
-function jetonomyPostPicker( title, excludePostId, spaceId ) {
+function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 	return new Promise( ( resolve ) => {
 		const t = jtModalI18n();
 		const overlay = document.createElement( 'div' );
 		overlay.className = 'jt-modal-overlay';
 		const box = document.createElement( 'div' );
-		box.className = 'jt-modal-box';
-		const msg = document.createElement( 'p' );
-		msg.className = 'jt-modal-msg';
-		msg.textContent = title;
-		box.appendChild( msg );
+		box.className = 'jt-modal-box jt-modal-picker';
 
+		const header = document.createElement( 'div' );
+		header.className = 'jt-modal-picker-header';
+		const heading = document.createElement( 'h2' );
+		heading.className = 'jt-modal-picker-title';
+		heading.textContent = title;
+		header.appendChild( heading );
+		if ( sourceTitle && '' !== String( sourceTitle ).trim() ) {
+			const sourceLine = document.createElement( 'p' );
+			sourceLine.className = 'jt-modal-picker-source';
+			const fromLabel = document.createElement( 'span' );
+			fromLabel.className = 'jt-modal-picker-source-label';
+			fromLabel.textContent = t.mergeFromLabel || 'From';
+			const sourceName = document.createElement( 'span' );
+			sourceName.className = 'jt-modal-picker-source-name';
+			sourceName.textContent = sourceTitle;
+			sourceLine.append( fromLabel, sourceName );
+			header.appendChild( sourceLine );
+		}
+		box.appendChild( header );
+
+		const searchWrap = document.createElement( 'div' );
+		searchWrap.className = 'jt-modal-picker-search';
 		const searchInput = document.createElement( 'input' );
-		searchInput.type = 'text';
-		searchInput.className = 'jt-modal-input jt-input';
+		searchInput.type = 'search';
+		searchInput.className = 'jt-modal-picker-input';
 		searchInput.placeholder = t.searchTopicPlaceholder || 'Search for a topic...';
-		box.appendChild( searchInput );
+		searchInput.setAttribute( 'aria-label', t.searchTopicPlaceholder || 'Search for a topic' );
+		searchWrap.appendChild( searchInput );
+		box.appendChild( searchWrap );
 
 		const resultsList = document.createElement( 'div' );
-		resultsList.className = 'jt-modal-results';
-		resultsList.style.cssText = 'max-height:200px;overflow-y:auto;margin:8px 0;';
+		resultsList.className = 'jt-modal-picker-results';
+		resultsList.setAttribute( 'role', 'listbox' );
 		box.appendChild( resultsList );
 
-		let selectedId = null;
+		// Hint shown until the visitor has typed enough to fire a search.
+		const hint = document.createElement( 'p' );
+		hint.className = 'jt-modal-picker-hint';
+		hint.textContent = t.pickerHintTwoChars || 'Type at least 2 characters to search.';
+		resultsList.appendChild( hint );
+
+		let selectedId   = null;
+		let selectedItem = null;
+		let items        = [];
+
+		const setSelection = ( item, id ) => {
+			if ( selectedItem ) {
+				selectedItem.classList.remove( 'is-selected' );
+				selectedItem.setAttribute( 'aria-selected', 'false' );
+			}
+			selectedItem = item;
+			selectedId   = id;
+			if ( item ) {
+				item.classList.add( 'is-selected' );
+				item.setAttribute( 'aria-selected', 'true' );
+				okBtn.disabled = false;
+			} else {
+				okBtn.disabled = true;
+			}
+		};
+
 		const actionsDiv = document.createElement( 'div' );
 		actionsDiv.className = 'jt-modal-actions';
 		const cancelBtn = document.createElement( 'button' );
 		cancelBtn.className = 'jt-btn jt-btn-ghost';
+		cancelBtn.type = 'button';
 		cancelBtn.textContent = t.modalCancel || 'Cancel';
 		cancelBtn.addEventListener( 'click', () => { overlay.remove(); resolve( null ); } );
 		const okBtn = document.createElement( 'button' );
 		okBtn.className = 'jt-btn jt-btn-fill';
+		okBtn.type = 'button';
 		okBtn.textContent = t.modalMerge || 'Merge';
 		okBtn.disabled = true;
 		okBtn.addEventListener( 'click', () => { overlay.remove(); resolve( selectedId ); } );
-		actionsDiv.appendChild( cancelBtn );
-		actionsDiv.appendChild( okBtn );
+		actionsDiv.append( cancelBtn, okBtn );
 		box.appendChild( actionsDiv );
 		overlay.appendChild( box );
-		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
+
+		overlay.addEventListener( 'click', ( e ) => {
+			if ( e.target === overlay ) { overlay.remove(); resolve( null ); }
+		} );
+
+		// Esc closes, arrow keys + enter drive the list (so power users
+		// never need to round-trip through the mouse).
+		const onKey = ( e ) => {
+			if ( e.key === 'Escape' ) {
+				e.preventDefault();
+				overlay.remove();
+				document.removeEventListener( 'keydown', onKey );
+				resolve( null );
+				return;
+			}
+			if ( ! items.length ) return;
+			const idx = selectedItem ? items.indexOf( selectedItem ) : -1;
+			if ( e.key === 'ArrowDown' ) {
+				e.preventDefault();
+				const next = items[ Math.min( items.length - 1, idx + 1 ) ];
+				if ( next ) {
+					setSelection( next, next.dataset.pickerId );
+					next.scrollIntoView( { block: 'nearest' } );
+				}
+			} else if ( e.key === 'ArrowUp' ) {
+				e.preventDefault();
+				const prev = items[ Math.max( 0, idx - 1 ) ];
+				if ( prev ) {
+					setSelection( prev, prev.dataset.pickerId );
+					prev.scrollIntoView( { block: 'nearest' } );
+				}
+			} else if ( e.key === 'Enter' && document.activeElement !== okBtn && document.activeElement !== cancelBtn ) {
+				if ( selectedId ) {
+					e.preventDefault();
+					overlay.remove();
+					document.removeEventListener( 'keydown', onKey );
+					resolve( selectedId );
+				}
+			}
+		};
+		document.addEventListener( 'keydown', onKey );
+
 		document.body.appendChild( overlay );
 		searchInput.focus();
 
 		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
 			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
 
+		const renderEmpty = ( message, isError ) => {
+			while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
+			const empty = document.createElement( 'p' );
+			empty.className = isError ? 'jt-modal-picker-hint is-error' : 'jt-modal-picker-hint';
+			empty.textContent = message;
+			resultsList.appendChild( empty );
+			items = [];
+			setSelection( null, null );
+		};
+
+		const renderItem = ( p ) => {
+			const item = document.createElement( 'button' );
+			item.type = 'button';
+			item.className = 'jt-modal-picker-item';
+			item.setAttribute( 'role', 'option' );
+			item.setAttribute( 'aria-selected', 'false' );
+			item.dataset.pickerId = String( p.id );
+
+			const titleEl = document.createElement( 'span' );
+			titleEl.className = 'jt-modal-picker-item-title';
+			titleEl.textContent = p.title || '(untitled)';
+			item.appendChild( titleEl );
+
+			const metaEl = document.createElement( 'span' );
+			metaEl.className = 'jt-modal-picker-item-meta';
+
+			if ( p.space_title ) {
+				const spaceChip = document.createElement( 'span' );
+				spaceChip.className = 'jt-modal-picker-space-chip';
+				spaceChip.textContent = p.space_title;
+				metaEl.appendChild( spaceChip );
+			}
+
+			const replyCount = parseInt( p.reply_count, 10 );
+			if ( Number.isFinite( replyCount ) && replyCount > 0 ) {
+				const replyStat = document.createElement( 'span' );
+				replyStat.className = 'jt-modal-picker-item-stat';
+				const replyLabel = 1 === replyCount
+					? ( t.pickerReplySingular || '%d reply' )
+					: ( t.pickerReplyPlural || '%d replies' );
+				replyStat.textContent = replyLabel.replace( '%d', String( replyCount ) );
+				metaEl.appendChild( replyStat );
+			}
+
+			item.appendChild( metaEl );
+
+			item.addEventListener( 'click', () => setSelection( item, item.dataset.pickerId ) );
+			item.addEventListener( 'dblclick', () => {
+				setSelection( item, item.dataset.pickerId );
+				overlay.remove();
+				document.removeEventListener( 'keydown', onKey );
+				resolve( item.dataset.pickerId );
+			} );
+			return item;
+		};
+
 		let debounce = null;
 		searchInput.addEventListener( 'input', () => {
 			clearTimeout( debounce );
 			debounce = setTimeout( () => {
 				const q = searchInput.value.trim();
-				if ( q.length < 2 ) { while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild ); return; }
+				if ( q.length < 2 ) {
+					renderEmpty( t.pickerHintTwoChars || 'Type at least 2 characters to search.', false );
+					return;
+				}
+				resultsList.classList.add( 'is-loading' );
 				fetch( `${ apiBase }/search?q=${ encodeURIComponent( q ) }&type=post`, { credentials: 'same-origin' } )
 					.then( r => r.json() )
 					.then( data => {
-						while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
-						const posts = data.data || data.results || data;
+						resultsList.classList.remove( 'is-loading' );
+						const posts = ( data.data || data.results || data || [] ).filter( p => String( p.id ) !== String( excludePostId ) );
 						if ( ! Array.isArray( posts ) || posts.length === 0 ) {
-							const empty = document.createElement( 'div' );
-							empty.style.cssText = 'padding:8px;color:var(--jt-text-secondary);';
-							empty.textContent = t.noTopicsFound || 'No topics found';
-							resultsList.appendChild( empty );
+							renderEmpty( t.noTopicsFound || 'No topics found', false );
 							return;
 						}
+						while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
+						items = [];
 						posts.forEach( p => {
-							if ( String( p.id ) === String( excludePostId ) ) return;
-							const item = document.createElement( 'div' );
-							item.style.cssText = 'padding:8px 10px;cursor:pointer;border-radius:var(--jt-radius-sm,4px);';
-							item.textContent = p.title;
-							item.addEventListener( 'mouseenter', () => { item.style.background = 'var(--jt-bg-hover)'; } );
-							item.addEventListener( 'mouseleave', () => { item.style.background = selectedId === String( p.id ) ? 'var(--jt-accent-light)' : ''; } );
-							item.addEventListener( 'click', () => {
-								resultsList.querySelectorAll( 'div' ).forEach( d => { d.style.background = ''; } );
-								item.style.background = 'var(--jt-accent-light)';
-								selectedId = String( p.id );
-								okBtn.disabled = false;
-							} );
+							const item = renderItem( p );
 							resultsList.appendChild( item );
+							items.push( item );
 						} );
+						// Auto-select first item so Enter is a one-keystroke confirm.
+						setSelection( items[ 0 ], items[ 0 ].dataset.pickerId );
 					} )
 					.catch( () => {
-						while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
-						const errDiv = document.createElement( 'div' );
-						errDiv.style.cssText = 'padding:8px;color:var(--jt-danger);';
-						errDiv.textContent = t.searchFailed || 'Search failed';
-						resultsList.appendChild( errDiv );
+						resultsList.classList.remove( 'is-loading' );
+						renderEmpty( t.searchFailed || 'Search failed', true );
 					} );
 			}, 300 );
 		} );
@@ -1414,13 +1558,21 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Merge post (topic) into another ──
         *mergePost( event ) {
-            const el = getElement();
-            const postId = el.ref.dataset.postId;
-            const spaceId = el.ref.dataset.spaceId;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const postId = trigger.dataset.postId;
+            const spaceId = trigger.dataset.spaceId;
             if ( ! postId ) return;
 
+            // Resolve the source topic title once so the picker can show a
+            // "From: <title>" anchor — the moderator never has to scroll up
+            // mid-search to remember what they were merging.
+            const article    = trigger.closest( 'article' ) || trigger.closest( '.jt-post' );
+            const titleEl    = article && ( article.querySelector( '.jt-post-title' ) || article.querySelector( 'h1' ) );
+            const sourceTitle = titleEl ? titleEl.textContent.trim() : '';
+
             // Prompt for target post ID via search
-            const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId );
+            const targetId = yield jetonomyPostPicker( state.i18n?.mergeTopicTitle || 'Merge into another topic', postId, spaceId, sourceTitle );
             if ( ! targetId ) return;
 
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;

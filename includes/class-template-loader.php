@@ -463,6 +463,16 @@ class Template_Loader {
 					'searchTopicPlaceholder' => esc_html__( 'Search for a topic...', 'jetonomy' ),
 					'noTopicsFound'          => esc_html__( 'No topics found', 'jetonomy' ),
 					'searchFailed'           => esc_html__( 'Search failed', 'jetonomy' ),
+					// Merge-picker copy. `mergeFromLabel` heads the "From <topic>"
+					// banner. The hint is shown until the visitor types enough
+					// to trigger a search; the reply placeholders use %d so the
+					// translator picks singular/plural per their locale.
+					'mergeFromLabel'         => esc_html__( 'From', 'jetonomy' ),
+					'pickerHintTwoChars'     => esc_html__( 'Type at least 2 characters to search.', 'jetonomy' ),
+					/* translators: %d: number of replies on a topic. */
+					'pickerReplySingular'    => esc_html__( '%d reply', 'jetonomy' ),
+					/* translators: %d: number of replies on a topic. */
+					'pickerReplyPlural'      => esc_html__( '%d replies', 'jetonomy' ),
 					'roleLabels'             => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
