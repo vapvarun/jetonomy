@@ -357,6 +357,21 @@ class Template_Loader {
 			$view_version
 		);
 
+		// Pagination hydrator: re-wires data-wp-on--click directives on reply
+		// cards appended by the classic Load More fetch. Must be a script
+		// module so it can pull the live IA store ref via the @wordpress/
+		// interactivity import. See pagination-hydrator.js header for the
+		// fallback strategy.
+		$ph_file    = JETONOMY_DIR . 'assets/js/pagination-hydrator.js';
+		$ph_mtime   = file_exists( $ph_file ) ? (string) filemtime( $ph_file ) : '';
+		$ph_version = '' !== $ph_mtime ? JETONOMY_VERSION . '+' . $ph_mtime : JETONOMY_VERSION;
+		wp_enqueue_script_module(
+			'jetonomy-pagination-hydrator',
+			JETONOMY_URL . 'assets/js/pagination-hydrator.js',
+			array( '@wordpress/interactivity', 'jetonomy-view' ),
+			$ph_version
+		);
+
 		// Shared global for non-Interactivity JS on community pages (link preview
 		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
 		// one place so the same contract works for the future native app.

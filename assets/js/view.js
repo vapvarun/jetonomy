@@ -263,6 +263,29 @@ function jetonomyPostPicker( title, excludePostId, spaceId ) {
 	} );
 }
 
+/**
+ * Resolve the trigger element for an action handler.
+ *
+ * When the Interactivity API runtime fires the action (the normal path)
+ * `getElement().ref` is the bound click target. When the action is invoked
+ * from the pagination-hydrator fallback (Load More appended reply cards
+ * that the runtime never hydrated) `getElement()` returns nothing, so we
+ * fall back to the `currentTarget` the hydrator sets on the synthetic event.
+ *
+ * Every reply-card action passes through here so the same code path serves
+ * both the hydrated and the appended cards.
+ */
+function triggerOf( event ) {
+    try {
+        const el = getElement();
+        if ( el && el.ref ) return el.ref;
+    } catch ( e ) {
+        // getElement() throws outside an IA render scope. Fall through to
+        // the event-based fallback.
+    }
+    return ( event && event.currentTarget ) || null;
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -430,8 +453,8 @@ const { state, actions } = store( 'jetonomy', {
 
         *voteReplyUp( event ) {
             event.stopPropagation();
-            const el = getElement();
-            const btnEl = el.ref;
+            const btnEl = triggerOf( event );
+            if ( ! btnEl ) return;
             const replyId = btnEl.dataset.replyId;
             if ( ! replyId ) return;
 
@@ -492,8 +515,8 @@ const { state, actions } = store( 'jetonomy', {
 
         *voteReplyDown( event ) {
             event.stopPropagation();
-            const el = getElement();
-            const btnEl = el.ref;
+            const btnEl = triggerOf( event );
+            if ( ! btnEl ) return;
             const replyId = btnEl.dataset.replyId;
             if ( ! replyId ) return;
 
@@ -560,11 +583,12 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Inline reply edit ──
         editReply( event ) {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
-            const replyCard = el.ref.closest( '.jt-reply' );
+            const replyCard = trigger.closest( '.jt-reply' );
             if ( ! replyCard ) return;
             if ( replyCard.querySelector( '.jt-reply-editor' ) ) return;
 
@@ -1069,8 +1093,9 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Flag / report reply ──
         *flagReply( event ) {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
             const reason = yield jetonomyPrompt( state.i18n?.reportReplyPrompt || 'Why are you reporting this reply?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
@@ -1131,8 +1156,8 @@ const { state, actions } = store( 'jetonomy', {
         // viewport. `group: 'jt-more'` ensures opening one closes the prior.
         toggleMoreMenu( event ) {
             event.stopPropagation();
-            const el = getElement();
-            const trigger = el.ref;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
             const menu = trigger.closest( '.jt-more-menu' );
             if ( ! menu ) return;
             const panel = menu.querySelector( '.jt-more-dropdown' );
@@ -1435,9 +1460,10 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Split reply to new topic ──
         *splitReply( event ) {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
-            const spaceId = el.ref.dataset.spaceId;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const replyId = trigger.dataset.replyId;
+            const spaceId = trigger.dataset.spaceId;
             if ( ! replyId ) return;
 
             const title = yield jetonomyPrompt( state.i18n?.splitReplyTitle || 'Enter a title for the new topic:', '' );
@@ -1514,8 +1540,9 @@ const { state, actions } = store( 'jetonomy', {
 
         // ── Delete reply ──
         *deleteReply( event ) {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const replyId = trigger.dataset.replyId;
             if ( ! replyId ) return;
 
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
@@ -1684,10 +1711,11 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Set reply-to parent (threaded replies) ──
-        setReplyTo() {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
-            const authorName = el.ref.dataset.replyAuthor;
+        setReplyTo( event ) {
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const replyId = trigger.dataset.replyId;
+            const authorName = trigger.dataset.replyAuthor;
             state.replyToId = replyId ? parseInt( replyId, 10 ) : null;
             state.replyToAuthor = authorName || '';
             state.composerReplyTo = replyId || null;
@@ -1732,13 +1760,14 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Quote reply into composer ──
-        quoteReply() {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
-            const authorName = el.ref.dataset.replyAuthor || 'Someone';
+        quoteReply( event ) {
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const replyId = trigger.dataset.replyId;
+            const authorName = trigger.dataset.replyAuthor || 'Someone';
 
             // Find the reply body text.
-            const replyEl = el.ref.closest( '.jt-reply' );
+            const replyEl = trigger.closest( '.jt-reply' );
             if ( ! replyEl ) return;
             const bodyEl = replyEl.querySelector( '.jt-reply-body' );
             if ( ! bodyEl ) return;
