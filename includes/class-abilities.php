@@ -691,7 +691,7 @@ class Abilities {
 						'type'        => [
 							'type'        => 'string',
 							'description' => 'Space type.',
-							'enum'        => [ 'forum', 'qa', 'ideas', 'social' ],
+							'enum'        => [ 'forum', 'qa', 'ideas', 'feed' ],
 							'default'     => 'forum',
 						],
 						'visibility'  => [
@@ -1443,11 +1443,19 @@ class Abilities {
 		$title = sanitize_text_field( $input['title'] );
 		$slug  = sanitize_title( $title );
 
+		// 'social' was advertised by an earlier schema, but the spaces table
+		// ENUM only knows 'feed'. Map it so a legacy caller does not silently
+		// store an empty type (which disables the feed UX entirely).
+		$type = sanitize_text_field( $input['type'] ?? 'forum' );
+		if ( 'social' === $type ) {
+			$type = 'feed';
+		}
+
 		$data = [
 			'title'       => $title,
 			'slug'        => $slug,
 			'description' => wp_kses_post( $input['description'] ?? '' ),
-			'type'        => sanitize_text_field( $input['type'] ?? 'forum' ),
+			'type'        => $type,
 			'visibility'  => sanitize_text_field( $input['visibility'] ?? 'public' ),
 		];
 

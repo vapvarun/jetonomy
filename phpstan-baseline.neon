@@ -66,11 +66,6 @@ parameters:
 			path: includes/api/class-posts-controller.php
 
 		-
-			message: "#^Offset 'status' on array\\{space_id\\: int, author_id\\: int, title\\: non\\-falsy\\-string, slug\\: string, content\\: non\\-falsy\\-string, content_plain\\: string, type\\: non\\-falsy\\-string, is_private\\: 0\\|1, \\.\\.\\.\\} on left side of \\?\\? always exists and is not nullable\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
-
-		-
 			message: "#^Strict comparison using \\=\\=\\= between 'publish' and 'draft'\\|'pending'\\|'spam' will always evaluate to false\\.$#"
 			count: 1
 			path: includes/api/class-posts-controller.php

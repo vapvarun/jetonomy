@@ -372,13 +372,20 @@ class Posts_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Post content is required.', 'jetonomy' ) );
 		}
 
-		// 1.4.3: every space type collects a user-entered title. Feed-space
-		// posts hide the rendered <h1> visually on the single-post page
-		// (sr-only) so the surface stays body-first, but the title itself
-		// is real data used by breadcrumbs, notifications, search results,
-		// emails, and OG share previews.
+		// Feed spaces are short-form: the composer omits the title field, so a
+		// missing title is expected. Derive one from the body so breadcrumbs,
+		// notifications, search results, emails, and OG previews still have a
+		// headline, instead of forcing the member to write one for a status
+		// update. Every other space type still requires a real title.
 		if ( empty( $title ) ) {
-			return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
+			if ( 'feed' === ( $space->type ?? '' ) ) {
+				$derived = trim( wp_strip_all_tags( $content ) );
+				$title   = '' !== $derived
+					? trim( (string) mb_substr( $derived, 0, 60 ) )
+					: __( 'Status update', 'jetonomy' );
+			} else {
+				return $this->validation_error( __( 'Post title is required.', 'jetonomy' ) );
+			}
 		}
 
 		// Derive post type from space type if not provided.
@@ -503,7 +510,7 @@ class Posts_Controller extends Base_Controller {
 			}
 
 			// Per-space require_approval: hold for moderation unless moderator/admin.
-			if ( empty( $post_data['status'] ) || 'publish' === ( $post_data['status'] ?? '' ) ) {
+			if ( empty( $post_data['status'] ) || 'publish' === $post_data['status'] ) {
 				$space_settings = Space::get_settings( $space_id );
 				if ( ! empty( $space_settings['require_approval'] ) ) {
 					$member_role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
