@@ -592,6 +592,10 @@
        from space" button) are not a slip hazard. Matches the regular
        .jt-btn mobile target. Applies everywhere .jt-btn-sm is used. */
     .jt-app .jt-btn-sm { min-height: var(--jt-tap); }
+    /* Stacked list vote chevrons are 20px tall for mouse density — far too
+       small to thumb-tap, and up/down sit right on top of each other. Give
+       each the full tap token on touch so voting from a listing is reliable. */
+    .jt-v-btn { height: var(--jt-tap); }
   }
   .jt-act:hover { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: none; }
   .jt-act .n { font-family: var(--jt-font-mono); font-weight: 700; }
