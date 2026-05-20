@@ -317,6 +317,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<th><?php esc_html_e( 'Days Active', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
 							<th><?php esc_html_e( 'Replies Received', 'jetonomy' ); ?></th>
+								<th><?php esc_html_e( 'What this unlocks', 'jetonomy' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -330,6 +331,31 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][days_active]" value="<?php echo absint( $thresholds[ $level ]['days_active'] ?? $td['days_active'] ); ?>" min="0" class="small-text"></td>
 								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][reputation]" value="<?php echo absint( $thresholds[ $level ]['reputation'] ?? $td['reputation'] ); ?>" min="0" class="small-text"></td>
 								<td><input type="number" name="jetonomy_settings[trust_thresholds][<?php echo absint( $level ); ?>][replies_received]" value="<?php echo absint( $thresholds[ $level ]['replies_received'] ?? $td['replies_received'] ); ?>" min="0" class="small-text"></td>
+									<td class="description">
+										<?php
+										// Surface what each level unlocks (data from Trust_Levels::LEVELS).
+										$jt_ability_labels = array(
+											'upload_media' => __( 'Upload images', 'jetonomy' ),
+											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
+											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
+											'create_spaces' => __( 'Create spaces', 'jetonomy' ),
+											'join_spaces'  => __( 'Join private spaces', 'jetonomy' ),
+											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
+											'close_posts'  => __( 'Close topics', 'jetonomy' ),
+											'pin_posts'    => __( 'Pin topics', 'jetonomy' ),
+											'moderate'     => __( 'Moderate content', 'jetonomy' ),
+											'recategorize_posts' => __( 'Recategorize topics', 'jetonomy' ),
+											'rename_topics' => __( 'Rename topics', 'jetonomy' ),
+										);
+										$jt_unlocks        = array();
+										foreach ( ( \Jetonomy\Trust\Trust_Levels::get( $level )['abilities'] ?? array() ) as $jt_ab ) {
+											if ( isset( $jt_ability_labels[ $jt_ab ] ) ) {
+												$jt_unlocks[] = $jt_ability_labels[ $jt_ab ];
+											}
+										}
+										echo $jt_unlocks ? esc_html( implode( ', ', $jt_unlocks ) ) : esc_html__( '—', 'jetonomy' );
+										?>
+									</td>
 							</tr>
 						<?php endfor; ?>
 					</tbody>
