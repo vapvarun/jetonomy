@@ -59,6 +59,11 @@ class Search_Controller extends Base_Controller {
 						'type'    => 'integer',
 						'minimum' => 1,
 					],
+					'author'    => [
+						'type'              => 'string',
+						'description'       => 'Author name or username; resolved to author_id server-side (headless parity with the search UI).',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
 					'tag'       => [
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -83,8 +88,29 @@ class Search_Controller extends Base_Controller {
 		$date_from = $request->get_param( 'date_from' ) ? sanitize_text_field( $request->get_param( 'date_from' ) ) : null;
 		$date_to   = $request->get_param( 'date_to' ) ? sanitize_text_field( $request->get_param( 'date_to' ) ) : null;
 		$author_id = $request->get_param( 'author_id' ) ? absint( $request->get_param( 'author_id' ) ) : null;
-		$tag_slug  = $request->get_param( 'tag' ) ? sanitize_text_field( $request->get_param( 'tag' ) ) : null;
-		$sort      = $request->get_param( 'sort' ) ?? 'relevance';
+		// Headless parity with the search UI: accept an author name/username and
+		// resolve it to an id (exact login, then display-name/nicename match).
+		// `author_id` wins if both are sent.
+		$author_name = $request->get_param( 'author' ) ? sanitize_text_field( $request->get_param( 'author' ) ) : '';
+		if ( ! $author_id && '' !== $author_name ) {
+			$author_user = get_user_by( 'login', $author_name );
+			if ( ! $author_user ) {
+				$author_matches = get_users(
+					array(
+						'search'         => '*' . $author_name . '*',
+						'search_columns' => array( 'display_name', 'user_login', 'user_nicename' ),
+						'number'         => 1,
+						'fields'         => array( 'ID' ),
+					)
+				);
+				$author_user    = $author_matches ? $author_matches[0] : null;
+			}
+			if ( $author_user ) {
+				$author_id = (int) $author_user->ID;
+			}
+		}
+		$tag_slug = $request->get_param( 'tag' ) ? sanitize_text_field( $request->get_param( 'tag' ) ) : null;
+		$sort     = $request->get_param( 'sort' ) ?? 'relevance';
 
 		if ( strlen( $q ) < 2 ) {
 			return $this->validation_error( __( 'Search query must be at least 2 characters.', 'jetonomy' ) );

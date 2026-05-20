@@ -60,8 +60,12 @@ $filter_tabs = array(
 	'replies'  => __( 'Replies', 'jetonomy' ),
 	'mentions' => __( 'Mentions', 'jetonomy' ),
 	'votes'    => __( 'Votes', 'jetonomy' ),
-	'badges'   => __( 'Badges', 'jetonomy' ),
 );
+// Badges notifications are only ever produced by the Pro custom-badges extension,
+// so the tab would always be empty for a free-only site — only show it with Pro active.
+if ( defined( 'JETONOMY_PRO_VERSION' ) ) {
+	$filter_tabs['badges'] = __( 'Badges', 'jetonomy' );
+}
 
 $empty_copy = array(
 	'all'      => array( __( 'No notifications yet', 'jetonomy' ), __( 'When members reply to your posts or mention you, those updates land here.', 'jetonomy' ) ),
