@@ -159,8 +159,10 @@ class Votes_Controller extends Base_Controller {
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'vote' );
 
-		// Fire action for Notifier.
-		do_action( 'jetonomy_after_vote', $type, $id, $user_id );
+		// Fire action for Notifier. Pass the vote value so listeners can tell an
+		// upvote from a downvote — the author should not get an encouraging
+		// "voted on your post" notification when someone downvotes.
+		do_action( 'jetonomy_after_vote', $type, $id, $user_id, $value );
 
 		// Award or adjust reputation on the object author.
 		$this->maybe_adjust_reputation( $type, $value, $result, (int) $object->author_id );

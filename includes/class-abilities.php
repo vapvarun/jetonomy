@@ -1353,7 +1353,8 @@ class Abilities {
 
 		$user_vote = Vote::get_user_vote( $user_id, $object_type, $object_id );
 
-		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id );
+		// 4th arg = the resulting vote value so the Notifier can skip downvotes.
+		do_action( 'jetonomy_after_vote', $object_type, $object_id, $user_id, (int) $user_vote );
 
 		return [
 			'vote_score' => $score,

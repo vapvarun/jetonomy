@@ -221,7 +221,7 @@ class Notifier {
 		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 10, 2 );
 
 		// Vote received — notify content author
-		add_action( 'jetonomy_after_vote', [ $this, 'on_vote' ], 10, 3 );
+		add_action( 'jetonomy_after_vote', [ $this, 'on_vote' ], 10, 4 );
 
 		// Reply accepted — notify reply author
 		add_action( 'jetonomy_reply_accepted', [ $this, 'on_reply_accepted' ], 10, 2 );
@@ -411,7 +411,14 @@ class Notifier {
 	/**
 	 * Notify when content gets voted on — batches votes within the last hour.
 	 */
-	public function on_vote( string $object_type, int $object_id, int $voter_id ): void {
+	public function on_vote( string $object_type, int $object_id, int $voter_id, int $value = 1 ): void {
+		// Only an upvote earns the author a "voted on your post" notification.
+		// Downvotes (-1) and vote removals (0) must not ping the author with an
+		// encouraging-sounding message. Default 1 keeps legacy 3-arg callers safe.
+		if ( $value < 1 ) {
+			return;
+		}
+
 		$content_url = '';
 		if ( 'post' === $object_type ) {
 			$obj = Post::find( $object_id );
