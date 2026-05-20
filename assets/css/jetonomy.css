@@ -885,15 +885,16 @@
 
     /* Post / reply foot — icon-only single row on mobile. Padding
        tightened from 10px 16px to 8px so all 7–8 actions fit on a
-       390px viewport. Aggressively compact item spacing. Text labels
-       hide; `title` + `aria-label` carry the accessible name.
-       Tap target 34×34 (AA 24px + breathing room). */
+       390px viewport. Item spacing stays compact, but the tap target is
+       a full 44px (touch standard) — the row already wraps, so taller
+       buttons wrap to a second line rather than overflowing. Text labels
+       hide; `title` + `aria-label` carry the accessible name. */
     .jt-post-foot,
     .jt-reply-foot { flex-wrap: wrap; gap: 2px; padding: var(--jt-space-2); align-items: center; justify-content: flex-start; }
     .jt-post-foot .jt-act,
-    .jt-reply-foot .jt-act { padding: 6px 6px; min-height: 34px; gap: 3px; font-size: var(--jt-text-xs); }
+    .jt-reply-foot .jt-act { padding: 6px 8px; min-height: 44px; gap: 3px; font-size: var(--jt-text-xs); }
     .jt-post-foot .jt-more-trigger,
-    .jt-reply-foot .jt-more-trigger { min-width: 34px; min-height: 34px; padding: 6px; }
+    .jt-reply-foot .jt-more-trigger { min-width: 44px; min-height: 44px; padding: 6px; }
     .jt-post-foot .jt-view-count,
     .jt-reply-foot .jt-view-count { padding: 0 4px; font-size: var(--jt-text-xs); }
     .jt-post-foot .jt-reactions,
