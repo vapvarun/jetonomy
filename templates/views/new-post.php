@@ -119,12 +119,14 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 			'compose-fields',
 			[
 				'space'             => $space,
-				// Title is always collected at write time (every space type).
-				// For feed-spaces the single-post view hides the rendered h1
-				// visually (sr-only) so the page still reads body-first, but
-				// the title is real data — breadcrumbs, notifications,
-				// search, and share previews all use it.
-				'show_title'        => true,
+				// Feed spaces are short-form: hide the title field (matching the
+				// inline composer) so members post a status without a headline.
+				// The server derives a title from the body for breadcrumbs,
+				// notifications, search, and share previews. Every other space
+				// type still collects a real title at write time. Rendering the
+				// title input on feed spaces also marked it `required`, so the
+				// browser blocked an empty-title submit before JS ever ran.
+				'show_title'        => ( 'feed' !== ( $space->type ?? '' ) ),
 				'show_tags'         => true,
 				'show_prefix'       => true,
 				'show_private'      => true,

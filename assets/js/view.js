@@ -2404,8 +2404,13 @@ const { state, actions } = store( 'jetonomy', {
         // calls composePost with extraPayload. Keeping this wrapper avoids
         // breaking any third-party customisation that already overrides it.
         *submitNewPost( event ) {
+            // Feed spaces are untitled by design — the server derives a title
+            // from the body. Mirror the inline-embed behaviour so the full
+            // new-post page doesn't block a feed status update for lacking a
+            // title (the page seeds spaceType into the form's data-wp-context).
+            const requireTitle = ( 'feed' !== ( getContext().spaceType || '' ) );
             yield actions.composePost( event, {
-                requireTitle:    true,
+                requireTitle,
                 collectTags:     true,
                 collectPrefix:   true,
                 collectPrivate:  true,
