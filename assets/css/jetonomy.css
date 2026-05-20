@@ -510,6 +510,11 @@
   /* Keep the chevron from collapsing to 0 width as a flex child (Chromium SVG-in-flex quirk). */
   .jt-v-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
   .jt-act.voted { color: var(--jt-accent); }
+  /* Moderator "open reports" indicator: danger-tinted so flagged content reads
+     as needing attention; the count badge sits on the flag icon. */
+  .jt-act.jt-flagged-indicator { color: var(--jt-danger); text-decoration: none; }
+  .jt-act.jt-flagged-indicator:hover { color: var(--jt-danger); background: var(--jt-danger-light); }
+  .jt-flagged-count { font-weight: 700; font-family: var(--jt-font-mono); font-size: 0.8125rem; }
   .jt-v-num { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; }
 
   /* Vote cluster — visual grouping for up + down so they read as

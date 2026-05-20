@@ -34,7 +34,15 @@ class Flag extends Model {
 			$data
 		);
 
-		return static::insert( $data );
+		$id = static::insert( $data );
+
+		// Keep the post's denormalised open-flag counter in step (post targets,
+		// pending only). Caller-agnostic so REST, Abilities, and CLI all maintain it.
+		if ( $id && 'post' === ( $data['object_type'] ?? 'post' ) && 'pending' === ( $data['status'] ?? 'pending' ) ) {
+			Post::increment_flag_count( (int) $data['object_id'], 1 );
+		}
+
+		return $id;
 	}
 
 	/**
@@ -69,6 +77,25 @@ class Flag extends Model {
 	}
 
 	/**
+	 * Count pending flags filed against one object (post or reply). Lets the
+	 * read surfaces show moderators a "this has N open reports" indicator
+	 * without loading the flag rows.
+	 *
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Target object ID.
+	 * @return int
+	 */
+	public static function count_pending_for_object( string $object_type, int $object_id ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'pending' AND object_type = %s AND object_id = %d",
+				$object_type,
+				$object_id
+			)
+		);
+	}
+
+	/**
 	 * Resolve a flag (approve/dismiss) and record who resolved it.
 	 *
 	 * @param int    $id          Flag row ID.
@@ -77,7 +104,9 @@ class Flag extends Model {
 	 * @return bool True on success.
 	 */
 	public static function resolve( int $id, int $resolved_by, string $status ): bool {
-		return static::update(
+		$flag = static::find( $id );
+
+		$ok = static::update(
 			$id,
 			[
 				'status'      => $status,
@@ -85,6 +114,13 @@ class Flag extends Model {
 				'resolved_at' => now(),
 			]
 		);
+
+		// A pending post-flag becoming resolved drops the post's open-flag count.
+		if ( $ok && $flag && 'pending' === $flag->status && 'post' === $flag->object_type ) {
+			Post::increment_flag_count( (int) $flag->object_id, -1 );
+		}
+
+		return $ok;
 	}
 
 	/**

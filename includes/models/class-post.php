@@ -499,6 +499,24 @@ class Post extends Model {
 	}
 
 	/**
+	 * Adjust the denormalised pending-flag counter (clamped at 0). Deliberately
+	 * does NOT touch updated_at — a report isn't a content edit and shouldn't
+	 * bump the post's modified time. Maintained by Flag::create()/resolve().
+	 *
+	 * @param int $id Post ID.
+	 * @param int $by Delta (default +1).
+	 */
+	public static function increment_flag_count( int $id, int $by = 1 ): void {
+		static::db()->query(
+			static::db()->prepare(
+				'UPDATE ' . static::table() . ' SET flag_count = GREATEST(flag_count + %d, 0) WHERE id = %d',
+				$by,
+				$id
+			)
+		);
+	}
+
+	/**
 	 * Increment view_count by 1.
 	 *
 	 * @param int $id Post ID.

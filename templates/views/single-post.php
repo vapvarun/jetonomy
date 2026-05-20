@@ -545,6 +545,30 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							data-post-id="<?php echo absint( $post->id ); ?>"
 							title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
 							aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
+						<?php
+						// Moderator-only: if this topic has open reports, surface a count
+						// linking to the space moderation queue so a mod can act on it
+						// while reading, not just from the queue.
+						if ( $jt_can_moderate_here ) :
+							// Denormalised counter (maintained on flag create/resolve) — a
+							// column read, no per-post query, so this also scales to listings.
+							$jt_open_flags = (int) ( $post->flag_count ?? 0 );
+							if ( $jt_open_flags > 0 ) :
+								?>
+								<a class="jt-act jt-flagged-indicator" href="<?php echo esc_url( $base . '/s/' . ( $space->slug ?? '' ) . '/mod/' ); ?>"
+									title="
+									<?php
+									/* translators: %d: number of open reports on this topic. */
+									echo esc_attr( sprintf( _n( '%d open report - review in the moderation queue', '%d open reports - review in the moderation queue', $jt_open_flags, 'jetonomy' ), $jt_open_flags ) );
+									?>
+									">
+									<?php jetonomy_echo_icon( 'flag', 16 ); ?>
+									<span class="jt-flagged-count"><?php echo (int) $jt_open_flags; ?></span>
+								</a>
+								<?php
+							endif;
+						endif;
+						?>
 					<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( $jt_can_moderate_here || (int) $post->author_id === get_current_user_id() ) : ?>

@@ -161,6 +161,7 @@ class Schema {
   vote_score int(11) NOT NULL DEFAULT 0,
   reply_count int(11) NOT NULL DEFAULT 0,
   view_count int(11) NOT NULL DEFAULT 0,
+  flag_count int(11) NOT NULL DEFAULT 0,
   last_reply_at datetime DEFAULT NULL,
   last_reply_by bigint(20) unsigned DEFAULT NULL,
   accepted_reply_id bigint(20) unsigned DEFAULT NULL,

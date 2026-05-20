@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.4.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-05-20 16:13:59+00:00\n"
+"POT-Creation-Date: 2026-05-20 16:21:43+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1544,7 +1544,7 @@ msgstr ""
 #: includes/admin/views/users.php:64
 #: includes/integrations/class-buddypress.php:811
 #: includes/integrations/class-buddypress.php:974
-#: templates/views/notifications.php:60 templates/views/single-post.php:635
+#: templates/views/notifications.php:60 templates/views/single-post.php:655
 #: templates/views/user-profile.php:181 templates/views/user-profile.php:217
 msgid "Replies"
 msgstr ""
@@ -1780,7 +1780,7 @@ msgstr ""
 #: includes/admin/views/categories.php:172 includes/admin/views/content.php:211
 #: includes/admin/views/replies.php:238 includes/admin/views/spaces.php:237
 #: includes/admin/views/tags.php:152 templates/partials/reply-card.php:155
-#: templates/views/my-spaces.php:132 templates/views/single-post.php:560
+#: templates/views/my-spaces.php:132 templates/views/single-post.php:580
 #: templates/views/space-edit.php:60
 msgid "Edit"
 msgstr ""
@@ -1799,7 +1799,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:355 includes/admin/views/spaces.php:239
 #: includes/admin/views/tags.php:81 includes/admin/views/tags.php:153
 #: templates/partials/reply-card.php:169 templates/views/notifications.php:148
-#: templates/views/notifications.php:239 templates/views/single-post.php:588
+#: templates/views/notifications.php:239 templates/views/single-post.php:608
 #: vendor/easy-digital-downloads/edd-sl-sdk/src/Messenger.php:273
 msgid "Delete"
 msgstr ""
@@ -4645,7 +4645,7 @@ msgstr ""
 #: includes/class-template-loader.php:485 templates/partials/feed-card.php:42
 #: templates/partials/managed-by-card.php:23
 #: templates/partials/post-card.php:130 templates/partials/reply-card.php:51
-#: templates/views/my-spaces.php:96 templates/views/single-post.php:591
+#: templates/views/my-spaces.php:96 templates/views/single-post.php:611
 #: templates/views/space-members.php:82
 msgid "Admin"
 msgstr ""
@@ -6802,13 +6802,13 @@ msgstr ""
 
 #: dist/jetonomy/includes/class-template-loader.php:412
 #: dist/jetonomy/templates/views/single-post.php:483
-#: includes/class-template-loader.php:463 templates/views/single-post.php:578
+#: includes/class-template-loader.php:463 templates/views/single-post.php:598
 msgid "Move"
 msgstr ""
 
 #: dist/jetonomy/includes/class-template-loader.php:413
 #: dist/jetonomy/templates/views/single-post.php:487
-#: includes/class-template-loader.php:464 templates/views/single-post.php:582
+#: includes/class-template-loader.php:464 templates/views/single-post.php:602
 msgid "Merge"
 msgstr ""
 
@@ -8108,7 +8108,7 @@ msgstr ""
 
 #: dist/jetonomy/templates/partials/composer.php:17
 #: dist/jetonomy/templates/views/single-post.php:687
-#: templates/partials/composer.php:17 templates/views/single-post.php:787
+#: templates/partials/composer.php:17 templates/views/single-post.php:807
 msgid "Log in to reply"
 msgstr ""
 
@@ -8400,7 +8400,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:461
 #: dist/jetonomy/templates/views/single-post.php:462
 #: templates/partials/reply-card.php:149 templates/partials/reply-card.php:150
-#: templates/views/single-post.php:553 templates/views/single-post.php:554
+#: templates/views/single-post.php:573 templates/views/single-post.php:574
 msgid "More options"
 msgstr ""
 
@@ -8554,8 +8554,8 @@ msgstr ""
 #: dist/jetonomy/templates/views/edit-profile.php:74
 #: dist/jetonomy/templates/views/single-post.php:591
 #: dist/jetonomy/templates/views/single-post.php:594
-#: templates/views/edit-profile.php:74 templates/views/single-post.php:686
-#: templates/views/single-post.php:689
+#: templates/views/edit-profile.php:74 templates/views/single-post.php:706
+#: templates/views/single-post.php:709
 msgid "Accepted answer"
 msgstr ""
 
@@ -9135,7 +9135,7 @@ msgstr ""
 
 #: dist/jetonomy/templates/views/search.php:210
 #: dist/jetonomy/templates/views/single-post.php:548
-#: templates/views/search.php:221 templates/views/single-post.php:643
+#: templates/views/search.php:221 templates/views/single-post.php:663
 msgid "Newest"
 msgstr ""
 
@@ -9217,47 +9217,47 @@ msgid "Share"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:472
-#: templates/views/single-post.php:564
+#: templates/views/single-post.php:584
 msgid "Make Public"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:472
-#: templates/views/single-post.php:564
+#: templates/views/single-post.php:584
 msgid "Make Private"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:477
-#: templates/views/single-post.php:569
+#: templates/views/single-post.php:589
 msgid "Unpin"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:477
-#: templates/views/single-post.php:569
+#: templates/views/single-post.php:589
 msgid "Pin"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:547
-#: templates/views/single-post.php:642
+#: templates/views/single-post.php:662
 msgid "Oldest"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:549
-#: templates/views/single-post.php:644
+#: templates/views/single-post.php:664
 msgid "Best"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:617
-#: templates/views/single-post.php:712
+#: templates/views/single-post.php:732
 msgid "No replies yet. Be the first to reply!"
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:668
-#: templates/views/single-post.php:763
+#: templates/views/single-post.php:783
 msgid "This post is closed and no longer accepts replies."
 msgstr ""
 
 #: dist/jetonomy/templates/views/single-post.php:673
-#: templates/views/single-post.php:773
+#: templates/views/single-post.php:793
 msgid "Your Reply"
 msgstr ""
 
@@ -10315,15 +10315,22 @@ msgstr ""
 msgid "Mark as read"
 msgstr ""
 
-#: templates/views/single-post.php:572
+#: templates/views/single-post.php:559
+#. translators: %d: number of open reports on this topic.
+msgid "%d open report - review in the moderation queue"
+msgid_plural "%d open reports - review in the moderation queue"
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/views/single-post.php:592
 msgid "Reopen topic"
 msgstr ""
 
-#: templates/views/single-post.php:572
+#: templates/views/single-post.php:592
 msgid "Close topic"
 msgstr ""
 
-#: templates/views/single-post.php:768
+#: templates/views/single-post.php:788
 msgid "This topic is closed. As a moderator, you can still add a reply."
 msgstr ""
 
