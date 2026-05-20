@@ -21,6 +21,14 @@ $tags        = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $viewer_id   = get_current_user_id();
 $viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
+// Seed this card's score into the Interactivity store so the vote buttons'
+// `data-wp-text` binding renders the right number and updates optimistically on
+// click. wp_interactivity_state() merges recursively, so each card in a listing
+// contributes its own key without clobbering the others.
+if ( function_exists( 'wp_interactivity_state' ) ) {
+	wp_interactivity_state( 'jetonomy', array( 'postScores' => array( (int) $post->id => (int) $post->vote_score ) ) );
+}
+
 // Resolve prefix color from space settings.
 $prefix_name  = $post->prefix ?? null;
 $prefix_color = null;
@@ -38,10 +46,27 @@ if ( $prefix_name && $space ) {
 <div class="jt-row <?php echo $post->is_sticky ? esc_attr( 'pinned' ) : ''; ?>"
 	data-wp-interactive="jetonomy">
 	<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
-		<div class="jt-votes">
-			<span class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
-			<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
-			<span class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
+		<div class="jt-votes" role="group" aria-label="<?php esc_attr_e( 'Vote on this post', 'jetonomy' ); ?>">
+			<?php if ( $viewer_id ) : ?>
+				<button type="button" class="jt-v-btn <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+					data-wp-on--click="actions.voteUp"
+					data-post-id="<?php echo absint( $post->id ); ?>"
+					title="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"
+					aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></button>
+				<span class="jt-v-num" data-wp-text="state.postScores.<?php echo absint( $post->id ); ?>"><?php echo (int) $post->vote_score; ?></span>
+				<?php // Hide downvote on own content (self-downvote landed at -1). ?>
+				<?php if ( (int) $post->author_id !== $viewer_id ) : ?>
+					<button type="button" class="jt-v-btn <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+						data-wp-on--click="actions.voteDown"
+						data-post-id="<?php echo absint( $post->id ); ?>"
+						title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
+						aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+				<?php endif; ?>
+			<?php else : ?>
+				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-up', 14 ); ?></span>
+				<span class="jt-v-num"><?php echo (int) $post->vote_score; ?></span>
+				<span class="jt-v-btn" aria-hidden="true"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></span>
+			<?php endif; ?>
 		</div>
 	<?php endif; ?>
 	<div class="jt-row-main">
