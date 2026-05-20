@@ -16,7 +16,7 @@ if ( ! in_array( $filter, [ 'all', 'posts', 'spaces', 'tags' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$page     = max( 1, absint( wp_unslash( $_GET['pg'] ?? 1 ) ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
@@ -64,6 +64,17 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			if ( $author_id ) {
 				$where[]  = 'author_id = %d';
 				$params[] = $author_id;
+			}
+
+			// Private-post visibility guard — same single source of truth the REST
+			// controller and search adapter use, so this direct filtered query can't
+			// leak private posts. Global search page (no space context) => pass null,
+			// which applies the author-or-public rule with no privileged bypass.
+			// Columns are unambiguous across the joined tag tables, so no alias needed.
+			list( $vis_sql, $vis_params ) = \Jetonomy\Search\Fulltext_Search::visibility_clause( null );
+			if ( '' !== $vis_sql ) {
+				$where[] = $vis_sql;
+				$params  = array_merge( $params, $vis_params );
 			}
 
 			$order_by  = 'votes' === $sort ? 'vote_score DESC' : 'created_at DESC';

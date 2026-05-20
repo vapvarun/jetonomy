@@ -48,6 +48,38 @@ class Fulltext_Search implements Search_Adapter {
 		// FULLTEXT is automatic — deletion handled by model
 	}
 
+	/**
+	 * Private-post visibility guard, shared by every search query path.
+	 *
+	 * Returns a [ where_fragment, params ] pair that excludes private posts the
+	 * current viewer is not allowed to see. This is the single source of truth
+	 * for search visibility — the adapter (posts + replies), the search template's
+	 * filtered query, and the REST controller all call it so no path can leak a
+	 * private post (the bug this closes: a filtered or unfiltered search returned
+	 * other members' private posts because only the REST controller carried the
+	 * guard).
+	 *
+	 * @param int|null $space_id Space context, or null for a global search.
+	 * @param string   $alias    Table alias for the posts table (e.g. 'p'); '' if unaliased.
+	 * @return array{0:string,1:array} Empty fragment when the viewer is privileged in the space.
+	 */
+	public static function visibility_clause( ?int $space_id, string $alias = '' ): array {
+		$col       = '' !== $alias ? $alias . '.' : '';
+		$viewer_id = get_current_user_id();
+
+		$is_privileged = $space_id
+			&& \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
+		if ( $is_privileged ) {
+			return [ '', [] ];
+		}
+
+		if ( $viewer_id > 0 ) {
+			return [ "({$col}is_private = 0 OR {$col}author_id = %d)", [ $viewer_id ] ];
+		}
+
+		return [ "{$col}is_private = 0", [] ];
+	}
+
 	private function search_posts( string $term, ?int $space_id, int $limit, int $offset ): array {
 		global $wpdb;
 		$t = table( 'posts' );
@@ -64,6 +96,13 @@ class Fulltext_Search implements Search_Adapter {
 			$params[] = $space_id;
 		}
 
+		// Exclude private posts the viewer can't see (single-table query, no alias).
+		[ $vis_sql, $vis_params ] = self::visibility_clause( $space_id );
+		if ( '' !== $vis_sql ) {
+			$sql   .= ' AND ' . $vis_sql;
+			$params = array_merge( $params, $vis_params );
+		}
+
 		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
 		$params[] = $limit;
 		$params[] = $offset;
@@ -77,19 +116,30 @@ class Fulltext_Search implements Search_Adapter {
 		$rt = table( 'replies' );
 		$pt = table( 'posts' );
 
+		// Always JOIN posts so we can enforce parent-post visibility — a reply on
+		// a private post must not surface in search to anyone but its author.
 		$sql = "SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS relevance
-				FROM {$rt} r";
+				FROM {$rt} r
+				INNER JOIN {$pt} p ON r.post_id = p.id";
 
 		$params = [ $term ];
 
+		$where    = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
+		$params[] = $term;
+
 		if ( $space_id ) {
-			$sql     .= " INNER JOIN {$pt} p ON r.post_id = p.id AND p.space_id = %d";
+			$where[]  = 'p.space_id = %d';
 			$params[] = $space_id;
 		}
 
-		$sql     .= " WHERE MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AND r.status = 'publish'";
-		$params[] = $term;
+		// Exclude replies on private posts the viewer can't see (alias 'p').
+		[ $vis_sql, $vis_params ] = self::visibility_clause( $space_id, 'p' );
+		if ( '' !== $vis_sql ) {
+			$where[] = $vis_sql;
+			$params  = array_merge( $params, $vis_params );
+		}
 
+		$sql     .= ' WHERE ' . implode( ' AND ', $where );
 		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
 		$params[] = $limit;
 		$params[] = $offset;

@@ -199,16 +199,12 @@ class Search_Controller extends Base_Controller {
 		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
 		$params = [ $boolean_q ];
 
-		// Private post visibility: exclude private posts unless viewer is author or privileged.
-		$viewer_id     = get_current_user_id();
-		$is_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
-		if ( ! $is_privileged ) {
-			if ( $viewer_id > 0 ) {
-				$where[]  = '(p.is_private = 0 OR p.author_id = %d)';
-				$params[] = $viewer_id;
-			} else {
-				$where[] = 'p.is_private = 0';
-			}
+		// Private post visibility: exclude private posts unless viewer is author or
+		// privileged. Shared guard (single source of truth) — see Fulltext_Search.
+		[ $vis_sql, $vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
+		if ( '' !== $vis_sql ) {
+			$where[] = $vis_sql;
+			$params  = array_merge( $params, $vis_params );
 		}
 
 		if ( $space_id ) {
@@ -316,16 +312,11 @@ class Search_Controller extends Base_Controller {
 		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
 		$r_params = [ $boolean_q ];
 
-		// Private post visibility for replies.
-		$viewer_id    = get_current_user_id();
-		$r_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
-		if ( ! $r_privileged ) {
-			if ( $viewer_id > 0 ) {
-				$r_where[]  = '(p.is_private = 0 OR p.author_id = %d)';
-				$r_params[] = $viewer_id;
-			} else {
-				$r_where[] = 'p.is_private = 0';
-			}
+		// Private post visibility for replies — shared guard (single source of truth).
+		[ $r_vis_sql, $r_vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
+		if ( '' !== $r_vis_sql ) {
+			$r_where[] = $r_vis_sql;
+			$r_params  = array_merge( $r_params, $r_vis_params );
 		}
 
 		if ( $date_from ) {
@@ -423,15 +414,11 @@ class Search_Controller extends Base_Controller {
 		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
 		$params = [ $boolean_q ];
 
-		$viewer_id     = get_current_user_id();
-		$is_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
-		if ( ! $is_privileged ) {
-			if ( $viewer_id > 0 ) {
-				$where[]  = '(p.is_private = 0 OR p.author_id = %d)';
-				$params[] = $viewer_id;
-			} else {
-				$where[] = 'p.is_private = 0';
-			}
+		// Shared visibility guard (single source of truth) — see Fulltext_Search.
+		[ $vis_sql, $vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
+		if ( '' !== $vis_sql ) {
+			$where[] = $vis_sql;
+			$params  = array_merge( $params, $vis_params );
 		}
 
 		if ( $space_id ) {
@@ -489,15 +476,11 @@ class Search_Controller extends Base_Controller {
 		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
 		$r_params = [ $boolean_q ];
 
-		$viewer_id    = get_current_user_id();
-		$r_privileged = $space_id && \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, $space_id );
-		if ( ! $r_privileged ) {
-			if ( $viewer_id > 0 ) {
-				$r_where[]  = '(p.is_private = 0 OR p.author_id = %d)';
-				$r_params[] = $viewer_id;
-			} else {
-				$r_where[] = 'p.is_private = 0';
-			}
+		// Shared visibility guard (single source of truth) — see Fulltext_Search.
+		[ $r_vis_sql, $r_vis_params ] = \Jetonomy\Search\Fulltext_Search::visibility_clause( $space_id, 'p' );
+		if ( '' !== $r_vis_sql ) {
+			$r_where[] = $r_vis_sql;
+			$r_params  = array_merge( $r_params, $r_vis_params );
 		}
 
 		if ( $date_from ) {
