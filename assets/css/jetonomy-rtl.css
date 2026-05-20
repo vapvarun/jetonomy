@@ -1126,6 +1126,9 @@
   /* ── Leaderboard ── */
   /* Leaderboard uses jt-two-col now — no max-width needed */
   .jt-page-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
+  /* Community-home title: now visible (was screen-reader-only, which contradicted
+     the "main heading" setting). Spacing so it reads as the page heading. */
+  .jt-home-title { margin: 0 0 var(--jt-space-5, 20px); }
   .jt-page-title-sm { font-size: 1.25rem; }
   .jt-leader-stats { display: flex; gap: 16px; margin-right: auto; text-align: left; }
   .jt-leader-stat-val { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
