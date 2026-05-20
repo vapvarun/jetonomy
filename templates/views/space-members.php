@@ -126,7 +126,10 @@ $role_labels = [
 						$role_label = $role_labels[ $member->role ] ?? $member->role;
 						?>
 						<div class="jt-member-item">
-							<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $member->user_id, 'jt-avatar-md', 36, false ) ); ?>
+							<?php
+							// Trusted, fully-escaped plugin markup (incl. Lucide SVG avatar). Echo direct.
+							echo \Jetonomy\get_user_link( (int) $member->user_id, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							?>
 							<div class="jt-flex-1">
 								<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $member->user_id ) ); ?>"
 									class="jt-member-name">

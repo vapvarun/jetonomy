@@ -11,7 +11,11 @@
 	if (!body) {
 		return;
 	}
-	var darkClasses = ['wp-dark-mode-active', 'dark-mode', 'theme-dark'];
+	// Dark-mode body/html classes emitted by the themes Jetonomy mirrors.
+	// 'dark-scheme' is the Wbcom convention used by Reign AND BuddyX (without it
+	// the whole app rendered light tokens on the theme's dark background — the
+	// post title came out near-black-on-dark and was invisible).
+	var darkClasses = ['dark-scheme', 'wp-dark-mode-active', 'dark-mode', 'theme-dark', 'is-dark'];
 	function sync() {
 		var isDark = false;
 		for (var i = 0; i < darkClasses.length; i++) {

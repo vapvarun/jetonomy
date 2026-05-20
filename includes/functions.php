@@ -79,7 +79,12 @@ function get_profile_url( int $user_id ): string {
 function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int $avatar_size = 30, bool $show_name = true ): string {
 	$user = get_userdata( $user_id );
 	if ( ! $user ) {
-		return '<span class="jt-avatar ' . esc_attr( $avatar_class ) . '">??</span>';
+		// Unknown / anonymous author: show a generic user-silhouette icon rather
+		// than a "??" placeholder, so the avatar reads as a real (if nameless)
+		// person instead of looking broken.
+		return '<span class="jt-avatar jt-avatar-anon ' . esc_attr( $avatar_class ) . '">'
+			. jetonomy_icon( 'user', max( 14, (int) round( $avatar_size * 0.6 ) ) )
+			. '</span>';
 	}
 
 	$url        = get_profile_url( $user_id );

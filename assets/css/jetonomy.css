@@ -598,14 +598,23 @@
   .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-3); transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
-  .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); }
+  /* Translucent green tint (derived from --jt-success) instead of an opaque
+     light token, so the accepted-answer header reads correctly in light AND
+     dark and never paints a light block on a dark card. Hex token first as the
+     no-color-mix fallback. Matches the .jt-accepted-callout treatment. */
+  .jt-reply.accepted .jt-reply-head { background: var(--jt-success-light); background: color-mix(in srgb, var(--jt-success) 12%, transparent); }
   .jt-reply > :first-child { border-top-left-radius: var(--jt-radius-lg); border-top-right-radius: var(--jt-radius-lg); }
   .jt-reply > :last-child { border-bottom-left-radius: var(--jt-radius-lg); border-bottom-right-radius: var(--jt-radius-lg); }
-  .jt-reply-head { display: flex; align-items: center; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
+  .jt-reply-head { display: flex; align-items: center; flex-wrap: wrap; row-gap: var(--jt-space-1); gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); background: var(--jt-bg-subtle); }
+  /* Anonymous / unknown author: center the silhouette icon and keep it from
+     collapsing to 0 width as a flex child. */
+  .jt-avatar-anon { color: var(--jt-text-tertiary); }
+  .jt-avatar-anon svg { flex-shrink: 0; }
   .jt-reply-body { padding: 16px 18px; font-size: 1rem; line-height: 1.75; }
   .jt-reply-body p { margin: 0 0 10px; }
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
-  .jt-accepted-tag { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 0.9375rem; font-weight: 600; color: var(--jt-success); }
+  .jt-accepted-tag { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success); white-space: nowrap; }
+  .jt-accepted-tag svg { flex-shrink: 0; }
   /* Threaded reply nesting — up to 3 levels */
   .jt-nested { margin-left: 24px; position: relative; }
   .jt-nested::before { content: ''; position: absolute; left: -12px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: 1px; }
@@ -1554,7 +1563,7 @@
   .jt-reply-op { font-size: 0.9375rem; color: var(--jt-text-secondary); font-weight: 600; }
   .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
   .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
-  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; }
+  .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; white-space: nowrap; }
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
 
   /* ── Time stat on post rows ── */

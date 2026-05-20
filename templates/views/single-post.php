@@ -344,7 +344,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						// Tags moved out of the byline into their own row below the
 						// post body so the meta line reads cleanly as
 						// "User · time · status" without descriptor noise.
-						echo wp_kses_post( \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ) );
+						// Trusted, fully-escaped plugin markup (incl. Lucide SVG avatar). Echo direct.
+						echo \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						?>
 						<span>
 							<?php

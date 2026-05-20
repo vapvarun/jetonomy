@@ -25,7 +25,11 @@ $jt_can_moderate_reply = $jt_reply_viewer
 <div class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
 		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? esc_attr( 'is-online' ) : ''; ?>">
-			<?php echo wp_kses_post( \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, false ) ); ?>
+			<?php
+			// get_user_link() returns trusted, fully-escaped plugin markup (incl. the
+			// Lucide SVG fallback avatar, which wp_kses_post would strip). Echo direct.
+			echo \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			?>
 		</span>
 		<?php if ( $author ) : ?>
 			<a class="jt-reply-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $reply->author_id ) ); ?>">
