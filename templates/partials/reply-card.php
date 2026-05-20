@@ -197,6 +197,29 @@ $jt_can_moderate_reply = $jt_reply_viewer
 			<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Accept', 'jetonomy' ); ?></span>
 		</button>
 	<?php endif; ?>
-	<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
+	<?php
+		// Un-accept — shown on the accepted reply to the post author or a moderator
+		// (close_posts), so a wrongly-accepted answer can be reverted.
+	if (
+			is_user_logged_in()
+			&& isset( $post, $space )
+			&& 'qa' === ( $space->type ?? '' )
+			&& $is_accepted
+			&& (
+				get_current_user_id() === (int) $post->author_id
+				|| \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'close_posts', (int) ( $post->space_id ?? 0 ) )
+			)
+		) :
+		?>
+			<button class="jt-act"
+				data-wp-on--click="actions.unacceptReply"
+				data-reply-id="<?php echo (int) $reply->id; ?>"
+				data-post-id="<?php echo (int) $post->id; ?>"
+				title="<?php esc_attr_e( 'Remove accepted answer', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Remove accepted answer', 'jetonomy' ); ?>">
+			<?php jetonomy_echo_icon( 'x-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Unaccept', 'jetonomy' ); ?></span>
+			</button>
+		<?php endif; ?>
+		<?php do_action( 'jetonomy_reply_actions', $reply ); ?>
 	</div>
 </div>

@@ -287,6 +287,15 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Clear the accepted flag on a reply (reverse of mark_accepted()).
+	 *
+	 * @param int $id Reply ID.
+	 */
+	public static function unmark_accepted( int $id ): void {
+		static::update( $id, array( 'is_accepted' => 0 ) );
+	}
+
+	/**
 	 * Return the highest reply id for a post (1.4.0 C.5 fallback for posts
 	 * whose Post row didn't keep last_reply_id in sync).
 	 *

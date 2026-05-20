@@ -88,9 +88,16 @@ class Replies_Controller extends Base_Controller {
 			$ns,
 			'/replies/(?P<id>\d+)/accept',
 			array(
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => array( $this, 'accept_reply' ),
-				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				array(
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'accept_reply' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				),
+				array(
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'unaccept_reply' ),
+					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+				),
 			)
 		);
 
@@ -570,6 +577,65 @@ class Replies_Controller extends Base_Controller {
 			Reputation::award( $reply_author_id, 'reply_accepted' );
 
 			// Notification handled by Notifier via jetonomy_reply_accepted hook above.
+		}
+
+		$updated_reply = Reply::find( $id );
+
+		return new WP_REST_Response( $this->prepare_reply( $updated_reply ), 200 );
+	}
+
+	/**
+	 * DELETE /replies/{id}/accept — Un-accept a reply (clear the accepted answer).
+	 *
+	 * Reverse of accept_reply(): the reply stops being the accepted answer, the
+	 * post returns to unresolved, and the reputation awarded on acceptance is
+	 * revoked so trust scores stay honest. Same gate as accepting — the post
+	 * author or anyone who can close posts in the space.
+	 */
+	public function unaccept_reply( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$id    = absint( $request->get_param( 'id' ) );
+		$reply = Reply::find( $id );
+		if ( ! $reply ) {
+			return $this->not_found( 'Reply' );
+		}
+
+		$post = Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return $this->not_found( 'Post' );
+		}
+
+		$space_id        = (int) $post->space_id;
+		$post_author_id  = (int) $post->author_id;
+		$reply_author_id = (int) $reply->author_id;
+
+		// Only post author or a moderator/admin may un-accept (mirrors accept).
+		$can_unaccept = ( $post_author_id === $user_id )
+			|| $this->check_permission( 'close_posts', $space_id );
+		if ( ! $can_unaccept ) {
+			return $this->permission_error();
+		}
+
+		if ( empty( $reply->is_accepted ) ) {
+			return new \WP_Error(
+				'jetonomy_not_accepted',
+				__( 'This reply is not the accepted answer.', 'jetonomy' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		Reply::unmark_accepted( $id );
+		Post::clear_accepted_reply( (int) $post->id );
+
+		do_action( 'jetonomy_reply_unaccepted', $id, (int) $post->id );
+
+		// Revoke the reputation granted on acceptance (skip self, mirroring accept).
+		if ( $reply_author_id && $reply_author_id !== $user_id ) {
+			Reputation::revoke( $reply_author_id, 'reply_accepted' );
 		}
 
 		$updated_reply = Reply::find( $id );

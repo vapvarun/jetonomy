@@ -325,6 +325,7 @@ class Template_Loader {
 				'schedule'           => __( 'Schedule', 'jetonomy' ),
 				'editPost'           => __( 'Edit post', 'jetonomy' ),
 				'editReply'          => __( 'Edit reply', 'jetonomy' ),
+				'unaccepted'         => __( 'Marked as unanswered', 'jetonomy' ),
 				'topicClosed'        => __( 'Topic closed', 'jetonomy' ),
 				'topicReopened'      => __( 'Topic reopened', 'jetonomy' ),
 				'failedClose'        => __( 'Failed to update topic.', 'jetonomy' ),

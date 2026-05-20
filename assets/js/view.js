@@ -1787,6 +1787,32 @@ const { state, actions } = store( 'jetonomy', {
             } );
         },
 
+        // ── Un-accept reply (author / moderator) ──
+        // DELETE /replies/:id/accept clears the accepted answer. Reload so the
+        // "ACCEPTED ANSWER" callout, the green border, and the Accept buttons on
+        // the other replies all return to the unresolved state.
+        *unacceptReply( event ) {
+            const el = getElement();
+            const replyId = el.ref.dataset.replyId;
+            if ( ! replyId ) return;
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => null,
+                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+                    method: 'DELETE',
+                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
+                    credentials: 'same-origin',
+                } ),
+                onSuccess: () => {
+                    if ( window.bnToast ) window.bnToast( state.i18n?.unaccepted || 'Marked as unanswered' );
+                    setTimeout( () => window.location.reload(), 600 );
+                },
+                revert: () => { /* No optimistic UI — helper toasts on error. */ },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedSave || 'Failed to update.',
+            } );
+        },
+
         // ── Set roadmap status on an idea (moderator only, Ideas spaces) ──
         *setIdeaStatus( event ) {
             const ctx = getContext();

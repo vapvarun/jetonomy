@@ -619,6 +619,22 @@ class Post extends Model {
 	}
 
 	/**
+	 * Clear the accepted answer and mark the post unresolved (reverse of accept_reply()).
+	 *
+	 * @param int $id Post ID.
+	 * @return bool
+	 */
+	public static function clear_accepted_reply( int $id ): bool {
+		return static::update(
+			$id,
+			array(
+				'accepted_reply_id' => null,
+				'is_resolved'       => 0,
+			)
+		);
+	}
+
+	/**
 	 * Roadmap statuses an idea (a post on a `type=ideas` space) can be in.
 	 *
 	 * Mirrors the `idea_status` enum in `class-schema.php`. Order is the
