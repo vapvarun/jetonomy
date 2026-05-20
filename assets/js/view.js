@@ -1709,7 +1709,7 @@ const { state, actions } = store( 'jetonomy', {
                 } );
 
                 if ( res.ok ) {
-                    const replyEl = el.ref.closest( '.jt-reply' );
+                    const replyEl = trigger.closest( '.jt-reply' );
                     if ( replyEl ) {
                         replyEl.style.opacity = '0.3';
                         replyEl.style.pointerEvents = 'none';
