@@ -26,6 +26,33 @@ $date_from = isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GE
 $date_to = isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $author_id = isset( $_GET['author_id'] ) ? absint( $_GET['author_id'] ) : 0;
+// Author filter is by NAME for humans (a member can't know a numeric user ID).
+// Resolve a typed name to an author_id: exact login first, then a display-name
+// match. `author_id` (programmatic / REST) still works and takes precedence.
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$author_name = isset( $_GET['author'] ) ? sanitize_text_field( wp_unslash( $_GET['author'] ) ) : '';
+if ( ! $author_id && '' !== $author_name ) {
+	$jt_author_user = get_user_by( 'login', $author_name );
+	if ( ! $jt_author_user ) {
+		$jt_author_matches = get_users(
+			array(
+				'search'         => '*' . $author_name . '*',
+				'search_columns' => array( 'display_name', 'user_login', 'user_nicename' ),
+				'number'         => 1,
+				'fields'         => array( 'ID', 'display_name' ),
+			)
+		);
+		$jt_author_user    = $jt_author_matches ? $jt_author_matches[0] : null;
+	}
+	if ( $jt_author_user ) {
+		$author_id   = (int) $jt_author_user->ID;
+		$author_name = $jt_author_user->display_name;
+	}
+} elseif ( $author_id && '' === $author_name ) {
+	// author_id came from the URL — show the name in the input.
+	$jt_author_user = get_userdata( $author_id );
+	$author_name    = $jt_author_user ? $jt_author_user->display_name : '';
+}
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $tag_slug = isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '';
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -46,7 +73,7 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 	}
 
 	if ( in_array( $filter, [ 'all', 'posts' ], true ) ) {
-		if ( $date_from || $date_to || $author_id || $tag_slug || 'relevance' !== $sort ) {
+		if ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort ) {
 			// Use direct filtered query when advanced filters are active.
 			global $wpdb;
 			$posts_tbl = \Jetonomy\table( 'posts' );
@@ -198,7 +225,7 @@ $crumbs = [
 				<!-- Advanced filters -->
 				<details class="jt-search-filters jt-mb-20" 
 				<?php
-				if ( $date_from || $date_to || $author_id || $tag_slug || 'relevance' !== $sort ) :
+				if ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort ) :
 					?>
 					open<?php endif; ?>>
 					<summary class="jt-search-filters-toggle"><?php esc_html_e( 'Filters', 'jetonomy' ); ?> <?php jetonomy_echo_icon( 'chevron-down', 12 ); ?></summary>
@@ -214,6 +241,9 @@ $crumbs = [
 							</label>
 							<label><?php esc_html_e( 'Tag', 'jetonomy' ); ?>
 								<input type="text" name="tag" value="<?php echo esc_attr( $tag_slug ); ?>" placeholder="<?php esc_attr_e( 'e.g. javascript', 'jetonomy' ); ?>" class="jt-input jt-input-sm">
+							</label>
+							<label><?php esc_html_e( 'Author', 'jetonomy' ); ?>
+								<input type="text" name="author" value="<?php echo esc_attr( $author_name ); ?>" placeholder="<?php esc_attr_e( 'Name or username', 'jetonomy' ); ?>" class="jt-input jt-input-sm" autocomplete="off">
 							</label>
 							<label><?php esc_html_e( 'Sort', 'jetonomy' ); ?>
 								<select name="sort" class="jt-input jt-input-sm">
