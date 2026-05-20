@@ -34,7 +34,12 @@ $author_name = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
 		echo \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 		<div class="jt-feed-card-meta">
-			<a class="jt-feed-card-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $post->author_id ) ); ?>"><?php echo esc_html( $author_name ); ?></a>
+			<?php if ( $author ) : ?>
+				<a class="jt-feed-card-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $post->author_id ) ); ?>"><?php echo esc_html( $author_name ); ?></a>
+			<?php else : ?>
+				<?php // Deleted/anonymous author: plain text, not an empty-href link (which would reload the page on click). ?>
+				<span class="jt-feed-card-author"><?php echo esc_html( $author_name ); ?></span>
+			<?php endif; ?>
 			<?php
 			$jt_role = \Jetonomy\get_space_role_label( (int) $post->author_id, (int) $post->space_id );
 			if ( null !== $jt_role ) :
