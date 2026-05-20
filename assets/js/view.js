@@ -1225,7 +1225,7 @@ const { state, actions } = store( 'jetonomy', {
                     body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason } ),
                 } );
                 if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
@@ -1253,7 +1253,7 @@ const { state, actions } = store( 'jetonomy', {
                     body: JSON.stringify( { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason } ),
                 } );
                 if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
@@ -1280,7 +1280,7 @@ const { state, actions } = store( 'jetonomy', {
                     body: JSON.stringify( { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason } ),
                 } );
                 if ( res.ok ) {
-                    if ( window.bnToast ) window.bnToast( 'Reported \u2014 thank you' );
+                    if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
