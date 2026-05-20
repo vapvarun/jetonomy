@@ -325,6 +325,9 @@ class Template_Loader {
 				'schedule'           => __( 'Schedule', 'jetonomy' ),
 				'editPost'           => __( 'Edit post', 'jetonomy' ),
 				'editReply'          => __( 'Edit reply', 'jetonomy' ),
+				'topicClosed'        => __( 'Topic closed', 'jetonomy' ),
+				'topicReopened'      => __( 'Topic reopened', 'jetonomy' ),
+				'failedClose'        => __( 'Failed to update topic.', 'jetonomy' ),
 				// WS4-C: Pro Polls strings consumed via state.i18n in pro-view.js.
 				'failedSubmitVote'   => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
 				'voteSingular'       => __( '1 vote', 'jetonomy' ),

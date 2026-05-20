@@ -780,7 +780,10 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
-		Post::close( $id );
+		// Toggle: reopen if already closed, close if open (mirrors pin_post). One
+		// route serves both so the frontend's single Close/Reopen control works.
+		$new_value = $post->is_closed ? 0 : 1;
+		Post::update( $id, array( 'is_closed' => $new_value ) );
 
 		$updated = Post::find( $id );
 

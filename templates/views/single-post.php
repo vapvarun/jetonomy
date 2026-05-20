@@ -567,6 +567,9 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<button class="jt-more-item"
 									data-wp-on--click="actions.pinPost"
 									data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'pin', 16 ); ?> <?php echo $post->is_sticky ? esc_html__( 'Unpin', 'jetonomy' ) : esc_html__( 'Pin', 'jetonomy' ); ?></button>
+									<button class="jt-more-item"
+										data-wp-on--click="actions.toggleClose"
+										data-post-id="<?php echo absint( $post->id ); ?>"><?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo ! empty( $post->is_closed ) ? esc_html__( 'Reopen topic', 'jetonomy' ) : esc_html__( 'Close topic', 'jetonomy' ); ?></button>
 							<?php endif; ?>
 							<?php if ( $jt_can_moderate_here ) : ?>
 								<button class="jt-more-item"
@@ -755,11 +758,16 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			</div>
 
 			<!-- Composer -->
-			<?php if ( $post->is_closed ) : ?>
+			<?php if ( $post->is_closed && ! $jt_can_moderate_here ) : ?>
 				<div class="jt-closed-notice">
 					<?php esc_html_e( 'This post is closed and no longer accepts replies.', 'jetonomy' ); ?>
 				</div>
 			<?php elseif ( is_user_logged_in() ) : ?>
+				<?php if ( $post->is_closed ) : ?>
+					<div class="jt-closed-notice jt-closed-notice--staff">
+						<?php esc_html_e( 'This topic is closed. As a moderator, you can still add a reply.', 'jetonomy' ); ?>
+					</div>
+				<?php endif; ?>
 				<div class="jt-reply-composer" id="jt-composer">
 					<h3>
 						<?php esc_html_e( 'Your Reply', 'jetonomy' ); ?>

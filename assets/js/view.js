@@ -1474,6 +1474,41 @@ const { state, actions } = store( 'jetonomy', {
                 errorFallback: state.i18n?.failedPin || 'Failed to toggle pin.',
             } );
         },
+
+        // ── Close / reopen topic (moderators) ──
+        // POSTs to /posts/:id/close, which toggles is_closed server-side. We
+        // reload on success because closing/reopening flips the composer guard
+        // and the closed banner — let the page re-render rather than mirror that
+        // state across the whole post view.
+        *toggleClose( event ) {
+            const el = getElement();
+            const postId = el.ref.dataset.postId;
+            if ( ! postId ) return;
+
+            yield window.jetonomyOptimistic.gen( {
+                apply: () => null,
+                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/close`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': state._nonce || state.nonce,
+                    },
+                    credentials: 'same-origin',
+                } ),
+                onSuccess: ( data ) => {
+                    if ( window.bnToast ) {
+                        window.bnToast( data && data.is_closed
+                            ? ( state.i18n?.topicClosed || 'Topic closed' )
+                            : ( state.i18n?.topicReopened || 'Topic reopened' )
+                        );
+                    }
+                    setTimeout( () => window.location.reload(), 600 );
+                },
+                revert: () => { /* No optimistic UI to undo — helper will toast. */ },
+                toastOnError: true,
+                errorFallback: state.i18n?.failedClose || 'Failed to update topic.',
+            } );
+        },
         // ── Toggle private visibility ──
         *togglePrivate( event ) {
             const el = getElement();
