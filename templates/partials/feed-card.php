@@ -60,13 +60,26 @@ $author_name = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
 	<footer class="jt-feed-card-foot">
 		<?php if ( jetonomy_space_allows_voting( $space ) ) : ?>
 		<button type="button"
-			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'jt-voted' ) : ''; ?>"
+			class="jt-feed-act <?php echo 1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
 			data-wp-on--click="actions.voteUp"
 			data-post-id="<?php echo absint( $post->id ); ?>"
 			aria-label="<?php esc_attr_e( 'Upvote', 'jetonomy' ); ?>">
 			<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
-			<span class="jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
+			<span class="n jt-feed-act-n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
 		</button>
+			<?php
+			// Downvote — keep both directions available (respect negative voices),
+			// hidden only on the member's own post to block self-downvote.
+			if ( (int) $post->author_id !== $viewer_id ) :
+				?>
+		<button type="button"
+			class="jt-feed-act <?php echo -1 === $viewer_vote ? esc_attr( 'voted' ) : ''; ?>"
+			data-wp-on--click="actions.voteDown"
+			data-post-id="<?php echo absint( $post->id ); ?>"
+			aria-label="<?php esc_attr_e( 'Downvote', 'jetonomy' ); ?>">
+				<?php jetonomy_echo_icon( 'chevron-down', 16 ); ?>
+		</button>
+			<?php endif; ?>
 		<?php endif; ?>
 
 		<a class="jt-feed-act" href="<?php echo esc_url( $post_url . '#replies' ); ?>"
