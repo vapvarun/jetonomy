@@ -168,12 +168,19 @@ $jt_can_moderate_reply = $jt_reply_viewer
 			</div>
 		<?php endif; ?>
 	<?php
-	// Accept Answer button — shown to post author on Q&A spaces, for non-accepted replies.
+	// Accept Answer button — Q&A spaces, for non-accepted replies. Shown to the
+	// post author OR anyone who can close posts in the space (space moderators
+	// and admins), mirroring Replies_Controller::accept_reply()'s permission gate
+	// so the button appears exactly when the action would succeed. Space-role
+	// moderators hold `close_posts` but not `moderate`, so this uses close_posts.
 	if (
 		is_user_logged_in()
 		&& isset( $post, $space )
 		&& 'qa' === ( $space->type ?? '' )
-		&& get_current_user_id() === (int) $post->author_id
+		&& (
+			get_current_user_id() === (int) $post->author_id
+			|| \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'close_posts', (int) ( $post->space_id ?? 0 ) )
+		)
 		&& ! $is_accepted
 	) :
 		?>
