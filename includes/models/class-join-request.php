@@ -77,7 +77,8 @@ class JoinRequest extends Model {
 	 * @return bool
 	 */
 	public static function approve( int $id, int $reviewed_by ): bool {
-		return self::update(
+		$request = self::find( $id );
+		$ok      = self::update(
 			$id,
 			[
 				'status'      => 'approved',
@@ -85,6 +86,12 @@ class JoinRequest extends Model {
 				'reviewed_at' => now(),
 			]
 		);
+		if ( $ok && $request ) {
+			// Tell the requester their request was approved — no listener existed,
+			// so a member never learned the outcome unless they revisited the space.
+			do_action( 'jetonomy_join_request_approved', (int) $request->space_id, (int) $request->user_id, $reviewed_by );
+		}
+		return $ok;
 	}
 
 	/**
@@ -95,7 +102,8 @@ class JoinRequest extends Model {
 	 * @return bool
 	 */
 	public static function deny( int $id, int $reviewed_by ): bool {
-		return self::update(
+		$request = self::find( $id );
+		$ok      = self::update(
 			$id,
 			[
 				'status'      => 'denied',
@@ -103,5 +111,9 @@ class JoinRequest extends Model {
 				'reviewed_at' => now(),
 			]
 		);
+		if ( $ok && $request ) {
+			do_action( 'jetonomy_join_request_denied', (int) $request->space_id, (int) $request->user_id, $reviewed_by );
+		}
+		return $ok;
 	}
 }

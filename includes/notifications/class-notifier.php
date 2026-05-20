@@ -240,6 +240,8 @@ class Notifier {
 
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
+		add_action( 'jetonomy_join_request_approved', [ $this, 'on_join_request_approved' ], 10, 3 );
+		add_action( 'jetonomy_join_request_denied', [ $this, 'on_join_request_denied' ], 10, 3 );
 
 		// New user registered through the Login block — branded welcome email.
 		// Intentionally registered at priority 20 so integrators can short-
@@ -1000,6 +1002,42 @@ class Notifier {
 		 * @param \WP_User  $user Recipient.
 		 */
 		return (string) apply_filters( 'jetonomy_email_html', $html, $type, $user );
+	}
+
+	/**
+	 * Notify the requester that their join request was approved.
+	 */
+	public function on_join_request_approved( int $space_id, int $user_id, int $reviewed_by ): void {
+		$space = Space::find( $space_id );
+		$name  = $space ? $space->title : __( 'the space', 'jetonomy' );
+		$url   = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
+		$this->create_and_maybe_email(
+			$user_id,
+			$reviewed_by,
+			'join_request_result',
+			'space',
+			$space_id,
+			/* translators: %s: space name */
+			sprintf( __( 'Your request to join %s was approved', 'jetonomy' ), $name ),
+			$url
+		);
+	}
+
+	/**
+	 * Notify the requester that their join request was declined.
+	 */
+	public function on_join_request_denied( int $space_id, int $user_id, int $reviewed_by ): void {
+		$space = Space::find( $space_id );
+		$name  = $space ? $space->title : __( 'the space', 'jetonomy' );
+		$this->create_and_maybe_email(
+			$user_id,
+			$reviewed_by,
+			'join_request_result',
+			'space',
+			$space_id,
+			/* translators: %s: space name */
+			sprintf( __( 'Your request to join %s was not approved', 'jetonomy' ), $name )
+		);
 	}
 
 	/**
