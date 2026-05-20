@@ -3,7 +3,7 @@
  * Plugin Name: Jetonomy
  * Plugin URI:  https://store.wbcomdesigns.com/jetonomy/
  * Description: Next-gen discussion platform for WordPress - forums, Q&A, and more.
- * Version:     1.4.3
+ * Version:     1.4.4
  * Requires at least: 6.7
  * Requires PHP: 8.1
  * Author:      Wbcom Designs
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'JETONOMY_VERSION', '1.4.3' );
+define( 'JETONOMY_VERSION', '1.4.4' );
 define( 'JETONOMY_DB_VERSION', '1.4.3.0' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
@@ -349,6 +349,116 @@ function jetonomy_render_idea_status_pill( string $status ): void {
 	echo '<span class="jt-idea-pill jt-idea-pill-' . esc_attr( $status ) . '">'
 		. esc_html( jetonomy_idea_status_label( $status ) )
 		. '</span>';
+}
+
+/**
+ * Customer-facing label for a space `type` enum value.
+ *
+ * Mirrors the schema enum in `class-schema.php` (forum | qa | ideas | feed).
+ * Unknown values fall back to "Forum" so the badge never renders empty —
+ * matches the schema DEFAULT.
+ *
+ * @param string $type Space type enum value.
+ * @return string Translated label.
+ */
+function jetonomy_space_type_label( string $type ): string {
+	switch ( $type ) {
+		case 'qa':
+			return _x( 'Q&A', 'space type label', 'jetonomy' );
+		case 'ideas':
+			return _x( 'Ideas', 'space type label', 'jetonomy' );
+		case 'feed':
+			return _x( 'Feed', 'space type label', 'jetonomy' );
+		case 'forum':
+		default:
+			return _x( 'Forum', 'space type label', 'jetonomy' );
+	}
+}
+
+/**
+ * Lucide icon name to pair with a space `type` badge.
+ *
+ * Kept in one place so the directory cards, the space header, and any
+ * future admin chip all show the same glyph for a given type.
+ */
+function jetonomy_space_type_icon( string $type ): string {
+	switch ( $type ) {
+		case 'qa':
+			return 'book-open';
+		case 'ideas':
+			return 'lightbulb';
+		case 'feed':
+			return 'rss';
+		case 'forum':
+		default:
+			return 'message-circle';
+	}
+}
+
+/**
+ * Customer-facing label for a space `join_policy` enum value.
+ *
+ * Mirrors the schema enum in `class-schema.php` (open | approval | invite).
+ * "Open" returns an empty string by design — the default policy is the
+ * implicit zero state and we don't want every card to carry a noisy
+ * "Open" pill.
+ */
+function jetonomy_space_join_policy_label( string $join_policy ): string {
+	switch ( $join_policy ) {
+		case 'approval':
+			return __( 'Approval required', 'jetonomy' );
+		case 'invite':
+			return __( 'Invite only', 'jetonomy' );
+		case 'open':
+		default:
+			return '';
+	}
+}
+
+/**
+ * Render the type + join-policy badges on a space directory card.
+ *
+ * Pairs with the existing "Hidden" badge in `home.php` and `category.php`
+ * so all three pieces of space metadata sit in the same horizontal strip.
+ *
+ *   - Type badge always renders. Default `forum` is shown explicitly so
+ *     mixed-type listings stay visually consistent (every card carries
+ *     exactly one type chip; readers don't have to infer the absence as
+ *     "this one is the default").
+ *   - Join-policy badge only renders for `approval` / `invite` (the
+ *     default `open` is left implicit per the label helper above).
+ *
+ * Echoes nothing when `$space` is missing the relevant fields, so the
+ * helper is safe to drop into any template that already received a
+ * Space model row.
+ *
+ * @param object|null $space Space model row (or null/missing fields).
+ */
+function jetonomy_render_space_meta_badges( $space ): void {
+	if ( ! is_object( $space ) ) {
+		return;
+	}
+
+	$type        = isset( $space->type ) ? (string) $space->type : '';
+	$join_policy = isset( $space->join_policy ) ? (string) $space->join_policy : '';
+
+	if ( '' !== $type ) {
+		$icon  = jetonomy_space_type_icon( $type );
+		$label = jetonomy_space_type_label( $type );
+		echo '<span class="jt-space-card-badge jt-space-card-badge-type jt-space-card-badge-type-' . esc_attr( $type ) . '">';
+		jetonomy_echo_icon( $icon, 12 );
+		echo esc_html( $label );
+		echo '</span>';
+	}
+
+	$policy_label = jetonomy_space_join_policy_label( $join_policy );
+	if ( '' !== $policy_label ) {
+		$icon = 'invite' === $join_policy ? 'key' : 'user-check';
+		echo '<span class="jt-space-card-badge jt-space-card-badge-policy jt-space-card-badge-policy-' . esc_attr( $join_policy ) . '" aria-label="' . esc_attr( $policy_label ) . '">';
+		jetonomy_echo_icon( $icon, 12 );
+		echo esc_html( $policy_label );
+		echo '</span>';
+	}
 }
 
 /**

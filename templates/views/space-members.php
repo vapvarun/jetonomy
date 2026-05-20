@@ -27,7 +27,7 @@ if ( ! $space ) {
 // Pagination. 25/page is readable on desktop, fits mobile, keeps the
 // COUNT(*) query trivial against the new space_role_joined index.
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );
-$jt_members_paged    = max( 1, (int) ( $_GET['paged'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$jt_members_paged    = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $jt_members_total    = \Jetonomy\Models\SpaceMember::count_by_space( (int) $space->id );
 $jt_members_pages    = max( 1, (int) ceil( $jt_members_total / $jt_members_per_page ) );
 if ( $jt_members_paged > $jt_members_pages ) {

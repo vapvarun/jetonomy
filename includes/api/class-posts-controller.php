@@ -815,7 +815,11 @@ class Posts_Controller extends Base_Controller {
 
 		$status          = sanitize_key( (string) $request->get_param( 'idea_status' ) );
 		$previous_status = (string) ( $post->idea_status ?? '' );
-		if ( ! Post::set_idea_status( $id, $status ) ) {
+		// `set_idea_status` is the canonical write site — it fires
+		// `jetonomy_idea_status_changed` itself so the seeder / CLI /
+		// abilities paths emit the same event without coupling each
+		// caller to do_action.
+		if ( ! Post::set_idea_status( $id, $status, (int) $user_id ) ) {
 			return $this->validation_error( __( 'Invalid roadmap status.', 'jetonomy' ) );
 		}
 
@@ -829,19 +833,6 @@ class Posts_Controller extends Base_Controller {
 				\Jetonomy\Trust\Reputation::award( $author_id, 'idea_planned' );
 			}
 		}
-
-		/**
-		 * Fires after an idea's roadmap status changes.
-		 *
-		 * Listeners (activity log, notifier) hook here to track the
-		 * curation workflow without coupling the controller to either.
-		 *
-		 * @param int    $post_id    Post ID.
-		 * @param string $new_status The new status value.
-		 * @param string $old_status The previous status value (or empty if unset).
-		 * @param int    $actor_id   User ID of the moderator who changed it.
-		 */
-		do_action( 'jetonomy_idea_status_changed', $id, $status, $previous_status, $user_id );
 
 		$updated = Post::find( $id );
 		return new WP_REST_Response( $this->prepare_post( $updated ), 200 );

@@ -81,6 +81,29 @@ class Post extends Model {
 				// admin/moderator back to 'member' would be a footgun.
 				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
 			}
+
+			/**
+			 * Fires after a post is created.
+			 *
+			 * Lets gamification / analytics / external systems score the
+			 * creation event itself rather than waiting on downstream votes.
+			 * Fires for every status (publish, draft, scheduled) — listeners
+			 * should inspect $context['status'] when status matters.
+			 *
+			 * @param int   $post_id  Inserted post ID.
+			 * @param int   $space_id Parent space ID (0 if unset).
+			 * @param int   $user_id  Author user ID (0 if unset).
+			 * @param array $context  Inserted column data (status, post_type,
+			 *                        idea_status, slug, etc.) for the listener
+			 *                        to disambiguate by.
+			 */
+			do_action(
+				'jetonomy_post_created',
+				(int) $id,
+				(int) ( $data['space_id'] ?? 0 ),
+				(int) ( $data['author_id'] ?? 0 ),
+				$data
+			);
 		}
 
 		return $id;
@@ -622,11 +645,59 @@ class Post extends Model {
 	 * @param string $status One of self::valid_idea_statuses().
 	 * @return bool True on success, false if the status is invalid.
 	 */
-	public static function set_idea_status( int $id, string $status ): bool {
+	public static function set_idea_status( int $id, string $status, int $actor_id = 0 ): bool {
 		if ( ! in_array( $status, self::valid_idea_statuses(), true ) ) {
 			return false;
 		}
-		return static::update( $id, array( 'idea_status' => $status ) );
+
+		$post = self::find( $id );
+		if ( ! $post ) {
+			return false;
+		}
+		$previous = (string) ( $post->idea_status ?? '' );
+
+		// No-op transitions don't write or fire — idempotent.
+		if ( $previous === $status ) {
+			return true;
+		}
+
+		$result = static::update( $id, array( 'idea_status' => $status ) );
+		if ( ! $result ) {
+			return false;
+		}
+
+		/**
+		 * Fires after an idea's roadmap status changes.
+		 *
+		 * Lives on the model so every write path — REST controller, the
+		 * setup wizard's demo seeder, CLI, abilities, future imports —
+		 * emits the same event. Listeners (activity log, notifier,
+		 * gamification) hook here without caring how the transition was
+		 * triggered.
+		 *
+		 * Re-fires from the REST controller are tolerated: the controller
+		 * snapshots `$previous_status` before this call, so a duplicate
+		 * fire would carry the same args. Until the controller is migrated
+		 * to call the model directly, the controller's own fire stays so
+		 * existing listeners (activity tracker, notifier) keep getting the
+		 * `$actor_id` that the model doesn't always have.
+		 *
+		 * @param int    $post_id    Post ID.
+		 * @param string $new_status The new status value.
+		 * @param string $old_status The previous status value (or empty if unset).
+		 * @param int    $actor_id   User ID of the actor who changed it (0 when called from a non-user context like the seeder).
+		 * @param int    $author_id  Original post author user ID (0 if unset).
+		 */
+		do_action(
+			'jetonomy_idea_status_changed',
+			$id,
+			$status,
+			$previous,
+			$actor_id,
+			(int) ( $post->author_id ?? 0 )
+		);
+
+		return true;
 	}
 
 	/**

@@ -1,4 +1,4 @@
-Jetonomy exposes 53 hooks in the free plugin and 8 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
+Jetonomy exposes 58 hooks in the free plugin and 9 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
 
 **Hook naming prefix:** `jetonomy_`
 **Namespace:** `Jetonomy\`
@@ -13,7 +13,7 @@ These hooks fire around the full lifecycle of posts and replies.
 
 ### `jetonomy_after_create_post`
 
-Fires immediately after a new post is saved successfully.
+Fires immediately after a new post is saved successfully via REST.
 
 **Parameters**
 
@@ -35,11 +35,45 @@ add_action( 'jetonomy_after_create_post', function( int $post_id, int $space_id 
 }, 10, 2 );
 ```
 
+For a hook that fires on every insert path (REST, admin, CLI, abilities, import) see `jetonomy_post_created` below.
+
+---
+
+### `jetonomy_post_created`
+
+Fires from the `Post` model right after a row is inserted, so it covers every insert path — REST, admin AJAX, WP-CLI, Abilities, imports. Use this when you want to score the creation event itself regardless of how it was triggered.
+
+Fires for every status. Listeners that only care about published posts should inspect `$context['status']`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | Inserted post ID |
+| `$space_id` | `int` | Parent space ID (`0` if unset) |
+| `$user_id` | `int` | Author user ID (`0` if unset) |
+| `$context` | `array` | The inserted column data (status, post_type, idea_status, slug, etc.) |
+
+**Source:** `includes/models/class-post.php`
+
+```php
+// WB Gamification example: award points the moment a post lands, not when it gets upvoted.
+add_action( 'jetonomy_post_created', function( int $post_id, int $space_id, int $user_id, array $context ) {
+    if ( $user_id <= 0 || 'publish' !== ( $context['status'] ?? 'publish' ) ) {
+        return;
+    }
+    wb_gam_award_points( $user_id, 'forum_post_created', [
+        'post_id'  => $post_id,
+        'space_id' => $space_id,
+    ] );
+}, 10, 4 );
+```
+
 ---
 
 ### `jetonomy_after_create_reply`
 
-Fires immediately after a new reply is saved successfully. The built-in Notifier also listens to this hook to dispatch reply notifications.
+Fires immediately after a new reply is saved successfully via REST. The built-in Notifier also listens to this hook to dispatch reply notifications.
 
 **Parameters**
 
@@ -55,6 +89,37 @@ add_action( 'jetonomy_after_create_reply', function( int $reply_id, int $post_id
     // Award XP in your gamification plugin.
     my_gamification_award_xp( get_current_user_id(), 5, 'reply_created' );
 }, 10, 2 );
+```
+
+For a hook that fires on every insert path see `jetonomy_reply_created` below.
+
+---
+
+### `jetonomy_reply_created`
+
+Mirrors `jetonomy_post_created` for the reply path. Fires from the `Reply` model so every insert path (REST, admin AJAX, CLI, Abilities, imports) is covered.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$reply_id` | `int` | Inserted reply ID |
+| `$post_id` | `int` | Parent post ID (`0` if unset) |
+| `$user_id` | `int` | Author user ID (`0` if unset) |
+| `$context` | `array` | The inserted column data (status, parent_id, content, etc.) |
+
+**Source:** `includes/models/class-reply.php`
+
+```php
+add_action( 'jetonomy_reply_created', function( int $reply_id, int $post_id, int $user_id, array $context ) {
+    if ( $user_id <= 0 || 'publish' !== ( $context['status'] ?? 'publish' ) ) {
+        return;
+    }
+    wb_gam_award_points( $user_id, 'forum_reply_created', [
+        'reply_id' => $reply_id,
+        'post_id'  => $post_id,
+    ] );
+}, 10, 4 );
 ```
 
 ---
@@ -148,7 +213,7 @@ add_action( 'jetonomy_reply_accepted', function( int $reply_id, int $post_id ) {
 
 ### `jetonomy_after_vote`
 
-Fires after a vote is cast or changed on a post or reply.
+Fires after a vote is cast or changed on a post or reply via REST. Use this for receiver-side analytics; for voter-side gamification see `jetonomy_vote_cast` / `jetonomy_vote_retracted` below.
 
 **Parameters**
 
@@ -171,6 +236,93 @@ add_action( 'jetonomy_after_vote', function( string $type, int $id, string $dire
         }
     }
 }, 10, 4 );
+```
+
+---
+
+### `jetonomy_vote_cast`
+
+Fires when a voter casts a new vote (or flips an existing one). Used by gamification to reward the voter directly. Reputation handles the receiver; this hook is the missing voter-side signal.
+
+When a voter flips from upvote to downvote (or vice versa) a `jetonomy_vote_retracted` fires for the old value, then `jetonomy_vote_cast` fires for the new value.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$vote_type` | `int` | Raw vote value the voter chose (`1` for upvote, `-1` for downvote) |
+| `$object_type` | `string` | `'post'` or `'reply'` |
+| `$object_id` | `int` | Target object ID |
+| `$voter_id` | `int` | Voting user ID |
+
+**Source:** `includes/models/class-vote.php`
+
+```php
+// "Voted 10x this week" challenge.
+add_action( 'jetonomy_vote_cast', function( int $vote_type, string $object_type, int $object_id, int $voter_id ) {
+    wb_gam_award_points( $voter_id, 'forum_vote_cast', [
+        'vote_type'   => $vote_type,
+        'object_type' => $object_type,
+        'object_id'   => $object_id,
+    ] );
+}, 10, 4 );
+```
+
+---
+
+### `jetonomy_vote_retracted`
+
+Fires when a voter retracts an existing vote (clicks the same arrow again or flips to the opposite arrow).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$vote_type` | `int` | Raw value of the retracted vote (`1` or `-1`) |
+| `$object_type` | `string` | `'post'` or `'reply'` |
+| `$object_id` | `int` | Target object ID |
+| `$voter_id` | `int` | Voting user ID |
+
+**Source:** `includes/models/class-vote.php`
+
+```php
+add_action( 'jetonomy_vote_retracted', function( int $vote_type, string $object_type, int $object_id, int $voter_id ) {
+    wb_gam_revoke_points( $voter_id, 'forum_vote_cast', [
+        'object_type' => $object_type,
+        'object_id'   => $object_id,
+    ] );
+}, 10, 4 );
+```
+
+---
+
+## Ideas / Roadmap
+
+### `jetonomy_idea_status_changed`
+
+Fires after an idea's roadmap status changes (e.g. `planned` → `in_progress` → `shipped`). Use this to reward the post author on every transition, not just `planned`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | Post ID |
+| `$new_status` | `string` | New `idea_status` value |
+| `$old_status` | `string` | Previous value (empty if unset) |
+| `$actor_id` | `int` | Moderator who changed it |
+| `$author_id` | `int` | Original post author (`0` if unset) — added so listeners can reward the author without a second lookup |
+
+**Source:** `includes/api/class-posts-controller.php`
+
+```php
+add_action( 'jetonomy_idea_status_changed', function( int $post_id, string $new_status, string $old_status, int $actor_id, int $author_id ) {
+    if ( $author_id <= 0 || $author_id === $actor_id ) {
+        return; // Author can't farm their own status changes.
+    }
+    if ( 'shipped' === $new_status ) {
+        wb_gam_award_points( $author_id, 'idea_shipped', [ 'post_id' => $post_id ] );
+    }
+}, 10, 5 );
 ```
 
 ---
@@ -203,6 +355,39 @@ add_action( 'jetonomy_content_moderated', function( string $action, string $type
 ---
 
 ## Trust & Reputation
+
+### `jetonomy_trust_level_pre_change`
+
+Filter (not action). Lets you intercept an automatic trust-level promotion before it is written — to veto promotions for sandboxed users, fast-track a cohort during onboarding, or apply per-tenant ladder rules.
+
+Only fires on automatic promotion paths: the daily cron evaluator and `wp jetonomy trust-evaluate`. Manual admin/CLI overrides bypass this filter on purpose so admins can always force-set a level.
+
+Returning the user's current level short-circuits the write (no DB update, no `jetonomy_trust_level_changed` action).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$new_level` | `int` | Level the evaluator chose (the proposed level) |
+| `$user_id` | `int` | Target user ID |
+| `$stats` | `array` | Stats fed to the evaluator: `post_count`, `days_active`, `reputation`, `replies_received` |
+
+**Returns:** `int` — the level to actually write.
+
+**Source:** `includes/class-cron.php`, `includes/class-cli.php`
+
+```php
+// WB Gamification example: veto auto-promotion for users in the sandbox.
+add_filter( 'jetonomy_trust_level_pre_change', function( int $new_level, int $user_id, array $stats ): int {
+    if ( get_user_meta( $user_id, 'wb_gam_sandboxed', true ) ) {
+        $current = (int) \Jetonomy\Models\UserProfile::find( $user_id )->trust_level;
+        return $current; // short-circuit the write.
+    }
+    return $new_level;
+}, 10, 3 );
+```
+
+---
 
 ### `jetonomy_trust_level_changed`
 
@@ -945,6 +1130,7 @@ These hooks are available only when **Jetonomy Pro** is active. Pro injects into
 | `jetonomy_pro_extension_enabled` | action | Fires when an extension is toggled on in admin. Params: `$extension_id (string)` |
 | `jetonomy_pro_extension_disabled` | action | Fires when an extension is toggled off. Params: `$extension_id (string)` |
 | `jetonomy_pro_message_sent` | action | Fires after a private message is sent. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)` |
+| `jetonomy_pro_dm_received` | action | Fires once per recipient when a DM is delivered. Counterpart to `jetonomy_pro_message_sent` — lets you build "received first DM" or "active inbox" rules. Skipped for system messages. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)`, `$recipient_id (int)` |
 | `jetonomy_pro_reaction_added` | action | Fires when a reaction is added. Params: `$object_type (string)`, `$object_id (int)`, `$emoji (string)`, `$user_id (int)` |
 | `jetonomy_pro_poll_vote_cast` | action | Fires when a poll vote is cast. Params: `$poll_id (int)`, `$option_id (int)`, `$user_id (int)` |
 | `jetonomy_pro_webhook_sent` | action | Fires after a webhook is dispatched. Params: `$webhook_id (int)`, `$event (string)`, `$response_code (int)` |

@@ -17,7 +17,7 @@ if ( ! in_array( $period, [ 'all', 'month', 'week' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$page = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+$page = max( 1, absint( wp_unslash( $_GET['pg'] ?? 1 ) ) );
 
 // Per-page is intentionally aligned with the REST controller default
 // (Leaderboards_Controller::register_routes() `limit` arg). Keep these

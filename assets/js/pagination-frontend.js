@@ -49,10 +49,20 @@
 				var doc = parser.parseFromString(html, 'text/html');
 				var newList = doc.querySelector(targetSel);
 				var currentList = document.querySelector(targetSel);
+				var appended = [];
 				if (newList && currentList) {
 					Array.from(newList.children).forEach(function (child) {
 						currentList.appendChild(child);
+						appended.push(child);
 					});
+				}
+				// Restore click-action behaviour on the appended cards. The WP
+				// Interactivity API only walks data-wp-* directives at boot and
+				// doesn't observe post-boot DOM inserts, so without this call
+				// every action button (vote, reply, quote, flag, edit, delete,
+				// split, more-menu) on the new replies would be inert.
+				if (appended.length && typeof window.jetonomyHydrateInteractive === 'function') {
+					window.jetonomyHydrateInteractive(appended);
 				}
 				var newPag = doc.querySelector('.jt-pagination[data-jt-target="' + targetSel + '"]')
 					|| doc.querySelector('.jt-pagination');

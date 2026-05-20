@@ -2,18 +2,18 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.4.2"
+        "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-05-09T10:40:23+00:00",
-        "manifest_at": "2026-05-09T05:30:00Z",
+        "at": "2026-05-20T11:52:35+00:00",
+        "manifest_at": "2026-05-14T12:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 85,
+            "total": 87,
             "covered": 31,
-            "uncovered": 54,
+            "uncovered": 56,
             "skipped": 0,
             "covered_items": [
                 {
@@ -411,6 +411,16 @@
                     "method": "POST",
                     "route": "/admin/users/trust-level",
                     "stub_command": "bin/qa-stub-gen.php rest POST \"/admin/users/trust-level\""
+                },
+                {
+                    "method": "DELETE",
+                    "route": "/notifications/(?P<id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/notifications/(?P<id>\\d+)\""
+                },
+                {
+                    "method": "POST",
+                    "route": "/notifications/bulk",
+                    "stub_command": "bin/qa-stub-gen.php rest POST \"/notifications/bulk\""
                 }
             ]
         },
@@ -599,7 +609,7 @@
             "total": 1,
             "covered": 0,
             "uncovered": 1,
-            "skipped": 104,
+            "skipped": 107,
             "covered_items": [],
             "uncovered_items": [
                 {
@@ -707,15 +717,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 149,
+        "items_total": 151,
         "items_covered": 36,
-        "items_uncovered": 113,
-        "items_skipped": 104,
-        "coverage_percent": 24.199999999999999
+        "items_uncovered": 115,
+        "items_skipped": 107,
+        "coverage_percent": 23.800000000000001
     },
     "drift": {
         "previous_uncovered": 113,
-        "current_uncovered": 113,
-        "delta": 0
+        "current_uncovered": 115,
+        "delta": 2
     }
 }

@@ -52,7 +52,7 @@ if ( ! $is_admin && ! Moderation_Permissions::can_view_any_queue( $user_id ) ) {
 // mobile after row stacking, and keeps the COUNT query irrelevant
 // to total once a queue grows past a thousand flags.
 $per_page    = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
-$paged       = max( 1, (int) ( $_GET['paged'] ?? 1 ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$paged       = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $total       = Moderation_Service::count_pending_flags( $user_id );
 $total_pages = max( 1, (int) ceil( $total / $per_page ) );
 if ( $paged > $total_pages ) {

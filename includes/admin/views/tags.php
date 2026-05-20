@@ -216,26 +216,37 @@ $sort_link = function ( $col, $label ) use ( $orderby, $order, $search, $per_pag
 	</div><!-- /.jetonomy-categories-layout -->
 
 	<!-- Edit Tag Modal -->
-	<div class="jetonomy-modal" id="jetonomy-edit-tag-modal" style="display:none;">
-		<div class="jetonomy-modal__overlay"></div>
-		<div class="jetonomy-modal__content">
-			<h2><?php esc_html_e( 'Edit Tag', 'jetonomy' ); ?></h2>
-			<input type="hidden" id="edit-tag-id">
-			<div class="jetonomy-form-grid">
-				<div class="jetonomy-form-field">
-					<label for="edit-tag-name"><?php esc_html_e( 'Name', 'jetonomy' ); ?> <span class="required">*</span></label>
-					<input type="text" id="edit-tag-name" class="regular-text" required>
-				</div>
-				<div class="jetonomy-form-field">
-					<label for="edit-tag-slug"><?php esc_html_e( 'Slug', 'jetonomy' ); ?></label>
-					<input type="text" id="edit-tag-slug" class="regular-text">
+	<div class="jetonomy-modal" id="jetonomy-edit-tag-modal" role="dialog" aria-modal="true" aria-labelledby="jetonomy-edit-tag-title" style="display:none;">
+		<div class="jetonomy-modal__overlay jetonomy-modal-close"></div>
+		<div class="jetonomy-modal__content jetonomy-modal__content--compact">
+			<header class="jetonomy-modal__header">
+				<h2 id="jetonomy-edit-tag-title" class="jetonomy-modal__title"><?php esc_html_e( 'Edit Tag', 'jetonomy' ); ?></h2>
+				<button type="button" class="jetonomy-modal__close-icon jetonomy-modal-close" aria-label="<?php esc_attr_e( 'Close', 'jetonomy' ); ?>">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</header>
+			<div class="jetonomy-modal__body">
+				<input type="hidden" id="edit-tag-id">
+				<div class="jetonomy-form-grid">
+					<div class="jetonomy-form-field">
+						<label for="edit-tag-name"><?php esc_html_e( 'Name', 'jetonomy' ); ?> <span class="required">*</span></label>
+						<input type="text" id="edit-tag-name" class="regular-text" required>
+						<p class="jetonomy-form-field__hint"><?php esc_html_e( 'Shown on posts and in the tag directory.', 'jetonomy' ); ?></p>
+					</div>
+					<div class="jetonomy-form-field">
+						<label for="edit-tag-slug"><?php esc_html_e( 'Slug', 'jetonomy' ); ?></label>
+						<input type="text" id="edit-tag-slug" class="regular-text">
+						<p class="jetonomy-form-field__hint"><?php esc_html_e( 'URL fragment, e.g. /tag/example. Lowercase, hyphens only.', 'jetonomy' ); ?></p>
+					</div>
 				</div>
 			</div>
-			<p class="jetonomy-modal__actions">
-				<button type="button" class="button button-primary" id="jetonomy-update-tag"><?php esc_html_e( 'Update Tag', 'jetonomy' ); ?></button>
-				<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></button>
-				<span class="spinner"></span>
-			</p>
+			<footer class="jetonomy-modal__actions">
+				<span class="spinner jetonomy-modal__spinner"></span>
+				<div class="jetonomy-modal__actions-buttons">
+					<button type="button" class="button jetonomy-modal-close"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></button>
+					<button type="button" class="button button-primary" id="jetonomy-update-tag"><?php esc_html_e( 'Update Tag', 'jetonomy' ); ?></button>
+				</div>
+			</footer>
 		</div>
 	</div>
 </div>

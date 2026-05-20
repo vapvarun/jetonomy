@@ -1177,13 +1177,84 @@
 	border-bottom: 1px solid var(--jt-admin-surface-wp);
 }
 
+/*
+ * Compact variant used by the Edit Tag modal (1.4.3 rework).
+ * Splits the modal into header / body / footer regions so the title,
+ * fields, and actions each carry their own breathing room — the older
+ * layout stacked everything in a single 28px-padded block which read
+ * as crowded once helper text was added.
+ */
+.jetonomy-modal__content--compact {
+	max-width: 480px;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.jetonomy-modal__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 18px 24px;
+	border-bottom: 1px solid var(--jt-admin-surface-wp);
+}
+.jetonomy-modal__title {
+	margin: 0;
+	padding: 0;
+	font-size: 1.0625rem;
+	font-weight: 600;
+	border: 0;
+}
+.jetonomy-modal__close-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: 6px;
+	color: var(--jt-admin-text-secondary, #6b7280);
+	font-size: 22px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background-color 0.15s, color 0.15s;
+}
+.jetonomy-modal__close-icon:hover,
+.jetonomy-modal__close-icon:focus {
+	background: var(--jt-admin-surface-wp);
+	color: var(--jt-admin-text, #1f2937);
+	outline: none;
+}
+.jetonomy-modal__body {
+	padding: 18px 24px;
+}
+.jetonomy-form-field__hint {
+	margin: 4px 0 0;
+	font-size: 12px;
+	color: var(--jt-admin-text-secondary, #6b7280);
+	line-height: 1.4;
+}
+
 .jetonomy-modal__actions {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
-	margin-top: 16px;
-	padding-top: 16px;
+	padding: 14px 24px;
 	border-top: 1px solid var(--jt-admin-surface-wp);
+}
+.jetonomy-modal__content--compact .jetonomy-modal__actions {
+	margin-top: 0;
+}
+.jetonomy-modal__actions-buttons {
+	display: inline-flex;
+	gap: 8px;
+}
+.jetonomy-modal__spinner.spinner {
+	float: none;
+	margin: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -246,7 +246,7 @@ class Template_Loader {
 				'currentPostId' => 0,
 				'postScores'    => new \stdClass(),
 				'replyScores'   => new \stdClass(),
-				'currentSort'   => sanitize_text_field( $_GET['sort'] ?? 'latest' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'currentSort'   => sanitize_text_field( wp_unslash( $_GET['sort'] ?? 'latest' ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'isLoggedIn'        => is_user_logged_in(),
 			'loginUrl'          => wp_login_url( home_url( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) ),
 			'unreadCount'       => 0,
@@ -359,6 +359,21 @@ class Template_Loader {
 			$view_version
 		);
 
+		// Pagination hydrator: re-wires data-wp-on--click directives on reply
+		// cards appended by the classic Load More fetch. Must be a script
+		// module so it can pull the live IA store ref via the @wordpress/
+		// interactivity import. See pagination-hydrator.js header for the
+		// fallback strategy.
+		$ph_file    = JETONOMY_DIR . 'assets/js/pagination-hydrator.js';
+		$ph_mtime   = file_exists( $ph_file ) ? (string) filemtime( $ph_file ) : '';
+		$ph_version = '' !== $ph_mtime ? JETONOMY_VERSION . '+' . $ph_mtime : JETONOMY_VERSION;
+		wp_enqueue_script_module(
+			'jetonomy-pagination-hydrator',
+			JETONOMY_URL . 'assets/js/pagination-hydrator.js',
+			array( '@wordpress/interactivity', 'jetonomy-view' ),
+			$ph_version
+		);
+
 		// Shared global for non-Interactivity JS on community pages (link preview
 		// cards, similar-topics typeahead). Keeps the REST nonce + base URL in
 		// one place so the same contract works for the future native app.
@@ -450,6 +465,16 @@ class Template_Loader {
 					'searchTopicPlaceholder' => esc_html__( 'Search for a topic...', 'jetonomy' ),
 					'noTopicsFound'          => esc_html__( 'No topics found', 'jetonomy' ),
 					'searchFailed'           => esc_html__( 'Search failed', 'jetonomy' ),
+					// Merge-picker copy. `mergeFromLabel` heads the "From <topic>"
+					// banner. The hint is shown until the visitor types enough
+					// to trigger a search; the reply placeholders use %d so the
+					// translator picks singular/plural per their locale.
+					'mergeFromLabel'         => esc_html__( 'From', 'jetonomy' ),
+					'pickerHintTwoChars'     => esc_html__( 'Type at least 2 characters to search.', 'jetonomy' ),
+					/* translators: %d: number of replies on a topic. */
+					'pickerReplySingular'    => esc_html__( '%d reply', 'jetonomy' ),
+					/* translators: %d: number of replies on a topic. */
+					'pickerReplyPlural'      => esc_html__( '%d replies', 'jetonomy' ),
 					'roleLabels'             => array(
 						'member'    => esc_html__( 'Member', 'jetonomy' ),
 						'moderator' => esc_html__( 'Moderator', 'jetonomy' ),
@@ -1244,6 +1269,7 @@ class Template_Loader {
 		$path = file_exists( $theme_path ) ? $theme_path : $plugin_path;
 
 		if ( file_exists( $path ) ) {
+			// phpcs:ignore WordPress.PHP.DontExtract.extract_extract -- Template rendering: expose $args as locals to the included template.
 			extract( $args, EXTR_SKIP );
 			include $path;
 		}
