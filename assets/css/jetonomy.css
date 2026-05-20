@@ -749,7 +749,13 @@
 
   @media (max-width: 900px) {
     .jt-two-col { grid-template-columns: 1fr; }
-    .jt-sidebar { display: none; }
+    /* Stack the sidebar below content — never hide it. The About card,
+       space stats, and the Members / Moderation / Edit-space links are
+       unique content + navigation; the old `display:none` stranded every
+       tablet and phone user without them. Drop sticky so it flows in the
+       single-column order instead of pinning to the viewport. */
+    .jt-two-col > .jt-sidebar,
+    .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jt-space-head { flex-direction: column; text-align: center; }
     .jt-space-nums { margin-left: 0; }
