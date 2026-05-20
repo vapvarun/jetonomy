@@ -507,6 +507,8 @@
   .jt-v-btn { width: 26px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--jt-text-secondary); font-size: 0.8125rem; border-radius: 3px; transition: all 0.1s; border: none; background: none; cursor: pointer; }
   .jt-v-btn:hover { color: var(--jt-text-secondary); background: var(--jt-accent-muted); }
   .jt-v-btn.jt-voted, .jt-v-btn.voted { color: var(--jt-accent); }
+  /* Keep the chevron from collapsing to 0 width as a flex child (Chromium SVG-in-flex quirk). */
+  .jt-v-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
   .jt-act.voted { color: var(--jt-accent); }
   .jt-v-num { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 700; }
 
