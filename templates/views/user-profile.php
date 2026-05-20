@@ -33,6 +33,22 @@ $profile_user_id = (int) $user->ID;
 $base            = \Jetonomy\base_url();
 $initials        = strtoupper( substr( $user->display_name, 0, 2 ) );
 
+// Memoised slug -> Space lookup. The Posts/Replies/Votes tabs each need the full
+// space object (for jetonomy_space_allows_voting) per row, but a user's activity
+// spans only a handful of distinct spaces — caching by slug turns a per-row query
+// (N+1 on a busy profile) into one load per distinct space.
+$jt_profile_space_cache = array();
+$jt_space_by_slug       = function ( $slug ) use ( &$jt_profile_space_cache ) {
+	$slug = (string) $slug;
+	if ( '' === $slug ) {
+		return null;
+	}
+	if ( ! array_key_exists( $slug, $jt_profile_space_cache ) ) {
+		$jt_profile_space_cache[ $slug ] = \Jetonomy\Models\Space::find_by_slug( $slug );
+	}
+	return $jt_profile_space_cache[ $slug ];
+};
+
 $wp_date_format = get_option( 'date_format' );
 $wp_time_format = get_option( 'time_format' );
 
@@ -246,7 +262,7 @@ $crumbs = [
 							<?php
 							$ur_url   = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
 							$ur_ago   = human_time_diff( strtotime( $ur->created_at ), time() );
-							$ur_space = ! empty( $ur->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $ur->space_slug ) : null;
+							$ur_space = $jt_space_by_slug( $ur->space_slug ?? '' );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $ur_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $ur_space ) ) : ?>
@@ -305,7 +321,7 @@ $crumbs = [
 							<?php
 							$uv_url   = $base . '/s/' . ( $uv->space_slug ?? '' ) . '/t/' . ( $uv->post_slug ?? '' ) . '/';
 							$uv_ago   = human_time_diff( strtotime( $uv->voted_at ), time() );
-							$uv_space = ! empty( $uv->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $uv->space_slug ) : null;
+							$uv_space = $jt_space_by_slug( $uv->space_slug ?? '' );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $uv_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $uv_space ) ) : ?>
@@ -493,7 +509,7 @@ $crumbs = [
 							<?php
 							$time_ago = human_time_diff( strtotime( $r_post->created_at ), time() );
 							$post_url = $base . '/s/' . $r_post->space_slug . '/t/' . $r_post->slug . '/';
-							$r_space  = ! empty( $r_post->space_slug ) ? \Jetonomy\Models\Space::find_by_slug( $r_post->space_slug ) : null;
+							$r_space  = $jt_space_by_slug( $r_post->space_slug ?? '' );
 							?>
 							<div class="jt-row jt-row-clickable" data-jt-href="<?php echo esc_url( $post_url ); ?>">
 								<?php if ( jetonomy_space_allows_voting( $r_space ) ) : ?>
