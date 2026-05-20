@@ -81,6 +81,29 @@ $crumbs = [
 			</h1>
 		</div>
 
+		<!-- Period filter — switches the board between all-time and recent activity. -->
+		<div class="jt-bar jt-mb-20">
+			<div class="jt-pills">
+				<?php
+				$jt_lb_periods = array(
+					'all'   => __( 'All time', 'jetonomy' ),
+					'month' => __( 'This month', 'jetonomy' ),
+					'week'  => __( 'This week', 'jetonomy' ),
+				);
+				foreach ( $jt_lb_periods as $jt_lb_key => $jt_lb_label ) :
+					$jt_lb_url = 'all' === $jt_lb_key
+						? $base . '/leaderboard/'
+						: add_query_arg( 'period', $jt_lb_key, $base . '/leaderboard/' );
+					?>
+					<a href="<?php echo esc_url( $jt_lb_url ); ?>"
+						class="jt-pill <?php echo $period === $jt_lb_key ? esc_attr( 'on' ) : ''; ?>"
+						<?php echo $period === $jt_lb_key ? 'aria-current="true"' : ''; ?>>
+						<?php echo esc_html( $jt_lb_label ); ?>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</div>
+
 		<?php if ( empty( $leaders ) ) : ?>
 			<?php
 			\Jetonomy\Template_Loader::partial(

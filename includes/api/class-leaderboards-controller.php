@@ -63,8 +63,22 @@ class Leaderboards_Controller extends Base_Controller {
 		$limit  = (int) $request->get_param( 'limit' );
 		$offset = (int) $request->get_param( 'offset' );
 		$period = $request->get_param( 'period' ) ?? 'all';
+		if ( ! in_array( $period, array( 'all', 'month', 'week' ), true ) ) {
+			$period = 'all';
+		}
 
 		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
+
+		// Period filter on recent activity, matching the server-rendered
+		// leaderboard template. Previously the REST endpoint accepted `period`
+		// and echoed it back but never applied it, so it always returned the
+		// all-time board.
+		$period_where = '';
+		if ( 'week' === $period ) {
+			$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
+		} elseif ( 'month' === $period ) {
+			$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
+		}
 
 		/**
 		 * Filter user/leaderboard query parameters before execution.
@@ -85,13 +99,13 @@ class Leaderboards_Controller extends Base_Controller {
 		$offset       = (int) $args['offset'];
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}" );
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}{$period_where}" );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$leaders = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$profiles_tbl} ORDER BY {$order_by_sql} LIMIT %d OFFSET %d",
+				"SELECT * FROM {$profiles_tbl}{$period_where} ORDER BY {$order_by_sql} LIMIT %d OFFSET %d",
 				$limit,
 				$offset
 			)
