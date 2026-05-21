@@ -88,6 +88,19 @@ The Email Digest settings page shows send statistics for the last 90 days:
 
 Open rates and click rates are available if you use a supported ESP adapter (SendGrid, Mailgun, SES, or Postmark) - basic `wp_mail` delivery does not provide tracking data.
 
+## REST API
+
+Email Digest exposes endpoints under `jetonomy/v1`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/users/me/digest-preferences` | Read the current member's digest frequency and section choices |
+| `PATCH` | `/users/me/digest-preferences` | Update the current member's digest preferences |
+| `POST` | `/admin/digest/test` | Send a test digest (admin) |
+| `GET` | `/admin/digest/stats` | Read digest send statistics (admin) |
+
+Members manage their own preferences; the `/admin/*` routes require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
+
 ## What's Next?
 
 Connect your community to external tools like Slack, CRMs, and Zapier using outbound webhooks.

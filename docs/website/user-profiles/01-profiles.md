@@ -52,6 +52,10 @@ Lists every reply the member has posted across all spaces, paginated 20 per page
 
 Shows the content this member has voted on. The tab is visible to the member themselves and to WordPress Administrators. Other members cannot see this tab - voting is semi-private.
 
+### Bookmarks
+
+Lists the topics this member has bookmarked, at `/community/u/their-username/bookmarks/`. Like Drafts, this tab appears only on the member's own profile. Bookmarks are private to the member who saved them, so no one else (including administrators viewing the public profile) sees this tab. It gives members a quick personal reading list of posts they wanted to come back to. See [Bookmarks & Following](../discussions/04-bookmarks-following.md) for how members save and manage bookmarks.
+
 ### Drafts
 
 Shows unpublished draft topics saved by this member. This tab is visible only to the profile owner and WordPress Administrators. Drafts are never exposed publicly.

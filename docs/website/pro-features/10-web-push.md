@@ -12,7 +12,7 @@ Reach members with browser push notifications - even when they have closed your 
 
 ## Why Web Push Matters
 
-Email notifications have open rates around 20–30%. Browser push notifications have open rates above 60% because they appear immediately on the member's screen - no inbox, no subject line, no waiting. For time-sensitive events like a reply to your question or a mention from a teammate, push gets the message there instantly.
+Email notifications have open rates around 20-30%. Browser push notifications have open rates above 60% because they appear immediately on the member's screen - no inbox, no subject line, no waiting. For time-sensitive events like a reply to your question or a mention from a teammate, push gets the message there instantly.
 
 ## Enabling Web Push
 
@@ -73,6 +73,19 @@ Web Push works on all major modern browsers without any app installation:
 | Safari | Yes (macOS 13+) | Yes (iOS 16.4+) |
 
 > **Tip:** Safari on iOS requires members to add your site to their Home Screen before push notifications work. This is an Apple platform limitation - not a Jetonomy limitation.
+
+## REST API
+
+Web Push registers these endpoints under `jetonomy/v1`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/push/subscribe` | Register the current member's browser push subscription |
+| `DELETE` | `/push/subscribe` | Remove the current member's push subscription |
+| `GET` | `/push/vapid-key` | Fetch the public VAPID key the browser needs to subscribe |
+| `GET` | `/push/service-worker.js` | Serve the service worker script |
+
+Subscribe and unsubscribe require the member to be logged in; the VAPID key and service worker are served for the page to register push. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 
 ## What's Next?
 

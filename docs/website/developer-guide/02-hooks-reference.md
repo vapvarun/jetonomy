@@ -477,16 +477,18 @@ Fires after a user successfully joins a space.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `$user_id` | `int` | WP user ID of the new member |
 | `$space_id` | `int` | ID of the space joined |
+| `$user_id` | `int` | WP user ID of the new member |
+| `$role` | `string` | The member's role in the space (e.g. `member`) |
 
 **Source:** `includes/models/class-space-member.php`
 
 ```php
-add_action( 'jetonomy_user_joined_space', function( int $user_id, int $space_id ) {
+// Note the argument order: $space_id comes first, then $user_id, then $role.
+add_action( 'jetonomy_user_joined_space', function( int $space_id, int $user_id, string $role ) {
     // Auto-subscribe the user to a MailChimp list tied to this space.
     my_mailchimp_subscribe( $user_id, "space_{$space_id}" );
-}, 10, 2 );
+}, 10, 3 );
 ```
 
 ---
@@ -1163,6 +1165,935 @@ Fires inside the Search controller before the SQL is built. Use this to modify s
 
 ---
 
+## Registration & Boot Hooks
+
+### `jetonomy_admin_license_tab_content`
+
+Fires inside the Settings page License tab placeholder. Use this to render a license activation form or status block.
+
+**Parameters**
+
+None.
+
+**Source:** `includes/admin/views/settings.php`
+
+---
+
+## User Lifecycle Hooks
+
+### `jetonomy_user_registered`
+
+Fires after a new user account is created via the REST registration endpoint.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | WP user ID of the newly registered user |
+
+**Source:** `includes/api/class-auth-controller.php`
+
+---
+
+### `jetonomy_user_pending_verification`
+
+Fires after a new user is created but email verification is required and the account is in a pending state.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | WP user ID of the pending user |
+
+**Source:** `includes/api/class-auth-controller.php`
+
+---
+
+### `jetonomy_email_verified`
+
+Fires after a user successfully verifies their email address via the verification token link.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | WP user ID of the verified user |
+
+**Source:** `includes/api/class-auth-controller.php`
+
+---
+
+### `jetonomy_verification_reminder_sent`
+
+Fires after the cron-driven single-shot verification reminder email is dispatched to an unverified user.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | WP user ID of the nudged user |
+| `$user` | `WP_User` | WP_User object for the nudged user |
+
+**Source:** `includes/notifications/class-verification-reminder.php`
+
+---
+
+## Content Lifecycle Hooks
+
+### `jetonomy_before_create_post`
+
+Filter (not action). Runs immediately before a new post row is inserted. Modify the data array to change what gets written, or use it to pre-process content.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Column data about to be inserted (keys: `title`, `content`, `status`, `space_id`, `author_id`, `post_type`, etc.) |
+| `$author_id` | `int` | Author user ID (convenience copy from `$data['author_id']`) |
+| `$space_id` | `int` | Target space ID (convenience copy from `$data['space_id']`) |
+
+**Return:** `array` Modified data array.
+
+**Source:** `includes/models/class-post.php`
+
+---
+
+### `jetonomy_before_create_reply`
+
+Filter (not action). Runs immediately before a new reply row is inserted.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Column data about to be inserted (keys: `content`, `status`, `post_id`, `author_id`, `parent_id`, etc.) |
+| `$author_id` | `int` | Author user ID (convenience copy from `$data['author_id']`) |
+| `$post_id` | `int` | Parent post ID (convenience copy from `$data['post_id']`) |
+
+**Return:** `array` Modified data array.
+
+**Source:** `includes/models/class-reply.php`
+
+---
+
+### `jetonomy_before_delete_post`
+
+Filter (not action). Fires before a post is permanently deleted. Return `false` to abort the delete.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$proceed` | `bool` | `true` to allow deletion; return `false` to cancel |
+| `$post_id` | `int` | ID of the post about to be deleted |
+
+**Return:** `bool`
+
+**Source:** `includes/models/class-post.php`
+
+---
+
+### `jetonomy_before_delete_reply`
+
+Filter (not action). Fires before a reply is permanently deleted. Return `false` to abort.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$proceed` | `bool` | `true` to allow deletion |
+| `$reply_id` | `int` | ID of the reply about to be deleted |
+
+**Return:** `bool`
+
+**Source:** `includes/models/class-reply.php`
+
+---
+
+### `jetonomy_reply_unaccepted`
+
+Fires after the accepted-answer mark is removed from a reply.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$reply_id` | `int` | ID of the reply that was un-accepted |
+| `$post_id` | `int` | ID of the parent post |
+
+**Source:** `includes/api/class-replies-controller.php`
+
+---
+
+### `jetonomy_scheduled_post_published`
+
+Fires after a scheduled post is automatically published by the cron handler when its `published_at` datetime passes.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | ID of the published post |
+| `$space_id` | `int` | ID of the space the post belongs to |
+
+**Source:** `includes/models/class-post.php`
+
+---
+
+## Moderation & Flagging Hooks
+
+### `jetonomy_flag_created`
+
+Fires after a new flag is saved against a post or reply.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$flag_id` | `int` | ID of the created flag record |
+| `$object_type` | `string` | `'post'` or `'reply'` |
+
+**Source:** `includes/api/class-moderation-controller.php`
+
+---
+
+### `jetonomy_flag_resolved`
+
+Fires after a flag is resolved (approved, dismissed, or actioned). For a version that includes the full flag object see `jetonomy_after_resolve_flag` below.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$flag_id` | `int` | ID of the resolved flag |
+| `$status` | `string` | Resolution status (e.g. `'approved'`, `'dismissed'`) |
+| `$user_id` | `int` | ID of the moderator who resolved it |
+
+**Source:** `includes/moderation/class-moderation-service.php`
+
+---
+
+### `jetonomy_after_resolve_flag`
+
+Fires after a flag is resolved and provides the full flag object plus context. Counterpart to `jetonomy_flag_resolved` - use this when you need to read the flag's fields without a second lookup.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$flag` | `object` | The full flag row object (post-resolution state) |
+| `$context` | `array` | Associative array with keys `status` (string) and `user_id` (int) |
+
+**Source:** `includes/moderation/class-moderation-service.php`
+
+---
+
+## Space Membership Hooks
+
+### `jetonomy_before_join_space`
+
+Filter (not action). Fires before a user is added to a space. Return `false` to block the join.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$proceed` | `bool` | `true` to allow the join |
+| `$user_id` | `int` | User attempting to join |
+| `$space_id` | `int` | Target space ID |
+| `$role` | `string` | Role being assigned (e.g. `'member'`, `'admin'`) |
+
+**Return:** `bool`
+
+**Source:** `includes/models/class-space-member.php`
+
+---
+
+### `jetonomy_user_left_space`
+
+Fires after a user is removed from a space.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space_id` | `int` | ID of the space the user left |
+| `$user_id` | `int` | WP user ID of the departing member |
+
+**Source:** `includes/models/class-space-member.php`
+
+---
+
+### `jetonomy_space_member_joined`
+
+Alias of `jetonomy_user_joined_space` without the role argument, matching the Pro webhooks listener contract. Fires at the same time as `jetonomy_user_joined_space`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space_id` | `int` | ID of the space |
+| `$user_id` | `int` | WP user ID of the new member |
+
+**Source:** `includes/models/class-space-member.php`
+
+---
+
+### `jetonomy_space_member_left`
+
+Alias of `jetonomy_user_left_space`, matching the Pro webhooks listener contract.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space_id` | `int` | ID of the space |
+| `$user_id` | `int` | WP user ID of the departing member |
+
+**Source:** `includes/models/class-space-member.php`
+
+---
+
+### `jetonomy_join_request_created`
+
+Fires after a join request is submitted for a private space.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space_id` | `int` | ID of the space being requested |
+| `$user_id` | `int` | ID of the requesting user |
+| `$message` | `string` | Optional message submitted with the request (empty string if none) |
+
+**Source:** `includes/api/class-spaces-controller.php`
+
+---
+
+## Voting Hooks
+
+### `jetonomy_before_vote`
+
+Filter (not action). Fires before a vote is recorded. Return `false` to block the vote entirely.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$proceed` | `bool` | `true` to allow the vote |
+| `$user_id` | `int` | Voting user ID |
+| `$object_type` | `string` | `'post'` or `'reply'` |
+| `$object_id` | `int` | Target object ID |
+| `$value` | `int` | Vote value: `1` for upvote, `-1` for downvote |
+
+**Return:** `bool`
+
+**Source:** `includes/models/class-vote.php`
+
+---
+
+## Trust & Reputation Hooks
+
+### `jetonomy_reputation_points_for`
+
+Filter (not action). Filters the point value for a specific reputation action before it is applied. Allows per-site tuning of the reputation ladder without editing plugin settings.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$points` | `int` | Default point value for the action |
+| `$action` | `string` | Action slug (e.g. `'post_upvoted'`, `'reply_accepted'`, `'flag_validated'`) |
+
+**Return:** `int`
+
+**Source:** `includes/trust/class-reputation.php`
+
+```php
+add_filter( 'jetonomy_reputation_points_for', function( int $points, string $action ): int {
+    // Double the reward for accepted answers on this site.
+    if ( 'reply_accepted' === $action ) {
+        return $points * 2;
+    }
+    return $points;
+}, 10, 2 );
+```
+
+---
+
+## Email & Notification Filter Hooks
+
+### `jetonomy_email_subject`
+
+Filter (not action). Filters the email subject line before the notification is sent.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$subject` | `string` | Rendered subject string |
+| `$type` | `string` | Notification type slug (e.g. `'reply_to_post'`, `'mention'`, `'accepted_answer'`) |
+| `$user` | `WP_User` | Notification recipient |
+
+**Return:** `string`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_body`
+
+Filter (not action). Filters the plain-text email body before the notification is sent.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$body` | `string` | Plain-text body string |
+| `$type` | `string` | Notification type slug |
+| `$user` | `WP_User` | Notification recipient |
+
+**Return:** `string`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_html`
+
+Filter (not action). Filters the fully rendered HTML of the notification email just before it is passed to `wp_mail()`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$html` | `string` | Full rendered HTML string |
+| `$type` | `string` | Notification type slug |
+| `$user` | `WP_User` | Notification recipient |
+
+**Return:** `string`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_headers`
+
+Filter (not action). Filters the headers array passed to `wp_mail()` for all notification emails. Note: for adding a Reply-To header for reply-by-email support, use `jetonomy_notification_email_headers` instead (also available).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$headers` | `array` | Array of mail header strings |
+| `$type` | `string` | Notification type slug |
+| `$user` | `WP_User` | Notification recipient |
+
+**Return:** `array`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_logo_url`
+
+Filter (not action). Filters the logo URL rendered inside notification emails. Return an empty string to suppress the logo.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$url` | `string` | Logo URL (empty string if none configured) |
+| `$type` | `string` | Notification type slug providing context for per-type overrides |
+
+**Return:** `string`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_accent_color`
+
+Filter (not action). Filters the hex accent color used in notification email templates for buttons and highlights.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$color` | `string` | Hex color string (e.g. `'#3B82F6'`) |
+| `$type` | `string` | Notification type slug |
+
+**Return:** `string`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_template_context`
+
+Filter (not action). Filters the full template context array before it is passed to the email template renderer. Use this to inject extra variables into any notification email template.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$ctx` | `array` | Template variables array (keys vary by notification type) |
+| `$type` | `string` | Notification type slug |
+| `$user` | `WP_User` | Notification recipient |
+
+**Return:** `array`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_email_template_path`
+
+Filter (not action). Filters the resolved filesystem path to the email template file before it is loaded.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$path` | `string` | Absolute path to the email template `.php` file |
+| `$type` | `string` | Notification type slug |
+
+**Return:** `string`
+
+**Source:** `includes/notifications/class-notifier.php`
+
+---
+
+### `jetonomy_disposable_email_domains`
+
+Filter (not action). Filters the list of blocked disposable email domains used during registration validation.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$domains` | `array` | Array of blocked domain strings (e.g. `['mailinator.com', 'guerrillamail.com']`) |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-auth-controller.php`
+
+---
+
+## REST Response Filter Hooks
+
+### `jetonomy_rest_prepare_post`
+
+Filter (not action). Filters the prepared post data array before it is returned in any REST response. Use this for fine-grained control over individual fields. For appending extension-level payload use `jetonomy_post_response` instead.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared REST response data for the post |
+| `$post` | `object` | Raw post row object |
+| `$request` | `WP_REST_Request\|null` | The current request, or `null` in non-request contexts |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-posts-controller.php`
+
+---
+
+### `jetonomy_rest_prepare_reply`
+
+Filter (not action). Filters the prepared reply data array before it is returned in any REST response.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared REST response data for the reply |
+| `$reply` | `object` | Raw reply row object |
+| `$request` | `WP_REST_Request\|null` | The current request, or `null` in non-request contexts |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-replies-controller.php`
+
+---
+
+### `jetonomy_rest_prepare_space`
+
+Filter (not action). Filters the prepared space data array before it is returned in any REST response.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared REST response data for the space |
+| `$space` | `object` | Raw space row object |
+| `$request` | `WP_REST_Request\|null` | The current request, or `null` |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-spaces-controller.php`
+
+---
+
+### `jetonomy_rest_prepare_user`
+
+Filter (not action). Filters the prepared user data array before it is returned in any REST response.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared REST response data for the user |
+| `$wp_user` | `WP_User` | WP user object |
+| `$request` | `WP_REST_Request\|null` | The current request, or `null` |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-users-controller.php`
+
+---
+
+### `jetonomy_rest_prepare_notification`
+
+Filter (not action). Filters the prepared notification data array before it is returned in any REST response.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared REST response data for the notification |
+| `$notification` | `object` | Raw notification row object |
+| `$request` | `WP_REST_Request\|null` | The current request, or `null` |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-notifications-controller.php`
+
+---
+
+### `jetonomy_post_response`
+
+Filter (not action). Alias filter matching the Pro custom-fields listener contract. Lets extensions append per-post payload (custom field values, reactions, polls) to the REST response. The `$context` array carries `object_type` and `object_id` so generic extension handlers can route on type.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared REST response data |
+| `$context` | `array` | Associative array with keys `object_type` (`'post'`) and `object_id` (int) |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-posts-controller.php`
+
+---
+
+### `jetonomy_profile_response`
+
+Filter (not action). Lets extensions append data to user profile REST responses (custom fields, badges).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | Prepared profile response data |
+| `$context` | `array` | Associative array with keys `object_type` (`'user'`) and `object_id` (int) |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-users-controller.php`
+
+---
+
+### `jetonomy_oembed_response`
+
+Filter (not action). Filters the oEmbed response data for a forum post before it is returned.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$data` | `array` | oEmbed response fields (title, url, thumbnail_url, etc.) |
+| `$post` | `object` | The post row object |
+| `$space` | `object` | The parent space row object |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-oembed-controller.php`
+
+---
+
+## Link Preview Filter Hooks
+
+### `jetonomy_link_preview_data`
+
+Filter (not action). Filters the extracted link preview data (OG metadata) for a URL before it is cached and returned.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$out` | `array` | Extracted metadata: `title`, `description`, `image`, `url`, `site_name` |
+| `$url` | `string` | The URL being previewed |
+
+**Return:** `array`
+
+**Source:** `includes/services/links/class-preview-service.php`
+
+---
+
+### `jetonomy_link_preview_cache_ttl`
+
+Filter (not action). Filters the cache TTL (in seconds) for link preview results.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$ttl` | `int` | Cache duration in seconds (default: 3600) |
+| `$url` | `string` | The URL being previewed |
+
+**Return:** `int`
+
+**Source:** `includes/services/links/class-preview-service.php`
+
+---
+
+### `jetonomy_link_preview_providers`
+
+Filter (not action). Filters the list of registered link preview provider handlers.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$providers` | `array` | Ordered list of provider objects/callables |
+
+**Return:** `array`
+
+**Source:** `includes/services/links/class-preview-service.php`
+
+---
+
+### `jetonomy_link_preview_user_agent`
+
+Filter (not action). Filters the User-Agent header used when fetching remote URLs for link preview extraction.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$ua` | `string` | User-Agent string |
+| `$url` | `string` | The URL about to be fetched |
+
+**Return:** `string`
+
+**Source:** `includes/services/links/class-html-fetcher.php`
+
+---
+
+## Template Filter Hooks
+
+### `jetonomy_show_sidebar`
+
+Filter (not action). Return `false` to hide the sidebar entirely on the current page.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$show` | `bool` | `true` by default |
+
+**Return:** `bool`
+
+**Source:** `templates/partials/sidebar.php`
+
+---
+
+### `jetonomy_sidebar_auth_card`
+
+Filter (not action). Filters whether the default anonymous-user auth card is rendered in the sidebar. Return `false` (or an HTML string to replace it) to suppress or override it. Jetonomy Pro's White Label extension uses this to inject a custom card via `jetonomy_sidebar_before`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$show` | `bool` | `true` to render the default auth card |
+
+**Return:** `bool`
+
+**Source:** `includes/class-blocks.php`
+
+---
+
+### `jetonomy_sidebar_about_after_meta`
+
+Fires inside the sidebar "About this space" card, after the meta row (member count, post count). Only fires on space-scoped pages where a space object is available.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$space` | `object` | Current space row object |
+
+**Source:** `templates/partials/sidebar.php`
+
+---
+
+### `jetonomy_header_logo`
+
+Filter (not action). Filters the URL of the logo shown in the community header bar. Return an empty string to hide the logo.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$url` | `string` | Default logo URL (empty string if none set) |
+
+**Return:** `string`
+
+**Source:** `includes/functions.php`
+
+---
+
+### `jetonomy_footer_text`
+
+Filter (not action). Filters the text shown in the community footer. Return an empty string to suppress the footer text.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$text` | `string` | Default footer text |
+
+**Return:** `string`
+
+**Source:** `includes/functions.php`
+
+---
+
+### `jetonomy_new_post_submit_action`
+
+Filter (not action). Filters the Interactivity API store action name wired to the new-post form's submit event. Jetonomy Pro overrides this to `'actions.submitNewPostWithPoll'` when the polls extension is active.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$action` | `string` | Default action name: `'actions.submitNewPost'` |
+
+**Return:** `string`
+
+**Source:** `templates/views/new-post.php`
+
+---
+
+### `jetonomy_search_filters`
+
+Fires inside the search results page, inside the filter panel, after the built-in filters. Use this to render additional search filter controls.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$q` | `string` | Current search query string |
+| `$filter` | `string` | Active content-type filter (`'all'`, `'posts'`, `'replies'`, `'spaces'`, `'users'`) |
+| `$context` | `array` | Other active filter values: `date_from`, `date_to`, `author_id`, `tag_slug`, `sort` |
+
+**Source:** `templates/views/search.php`
+
+---
+
+## Permissions Filter Hooks
+
+### `jetonomy_space_role_permissions`
+
+Filter (not action). Filters the permissions array for a given space role. Use this to grant or revoke individual permissions for custom role configurations.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$permissions` | `array` | Array of allowed action strings for the role (e.g. `['create_posts', 'vote', 'flag']`) |
+| `$role` | `string` | Role name: `'member'`, `'moderator'`, or `'admin'` |
+| `$space_id` | `int` | ID of the space the check applies to |
+
+**Return:** `array`
+
+**Source:** `includes/permissions/class-permission-engine.php`
+
+---
+
+### `jetonomy_use_frontend_space_edit`
+
+Filter (not action). Filters whether the space settings form should be served via the frontend (in-page) UI rather than redirecting to the admin panel. Return `false` to force the admin redirect.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$use_frontend` | `bool` | `true` by default (uses frontend form) |
+| `$space` | `object` | Space row object |
+
+**Return:** `bool`
+
+**Source:** `includes/functions.php`
+
+---
+
+## Theme Integration Filter Hooks
+
+### `jetonomy_theme_light_tokens`
+
+Filter (not action). Filters the CSS custom property token map written for light mode. Return a modified array to override or add tokens injected into the page `<head>`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$tokens` | `array` | Associative array of `['--token-name' => 'value']` pairs |
+
+**Return:** `array`
+
+**Source:** `includes/integrations/class-theme-integration.php`
+
+---
+
+### `jetonomy_theme_dark_tokens`
+
+Filter (not action). Filters the CSS custom property token map written for dark mode.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$tokens` | `array` | Associative array of `['--token-name' => 'value']` pairs |
+
+**Return:** `array`
+
+**Source:** `includes/integrations/class-theme-integration.php`
+
+---
+
+## Admin Filter Hooks
+
+### `jetonomy_admin_footer_text`
+
+Filter (not action). Filters the footer text shown at the bottom of all Jetonomy admin pages (replaces the default WordPress "Thank you" text).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$text` | `string` | Default footer text string |
+
+**Return:** `string`
+
+**Source:** `includes/admin/class-admin.php`
+
+---
+
 ## Pro Hooks
 
 These hooks are available only when **Jetonomy Pro** is active. Pro injects into core admin via the standard admin hooks (`jetonomy_admin_dashboard_widgets`, `jetonomy_admin_settings_tabs`) and registers its own extension lifecycle events.
@@ -1173,11 +2104,187 @@ These hooks are available only when **Jetonomy Pro** is active. Pro injects into
 | `jetonomy_pro_extension_enabled` | action | Fires when an extension is toggled on in admin. Params: `$extension_id (string)` |
 | `jetonomy_pro_extension_disabled` | action | Fires when an extension is toggled off. Params: `$extension_id (string)` |
 | `jetonomy_pro_message_sent` | action | Fires after a private message is sent. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)` |
-| `jetonomy_pro_dm_received` | action | Fires once per recipient when a DM is delivered. Counterpart to `jetonomy_pro_message_sent` — lets you build "received first DM" or "active inbox" rules. Skipped for system messages. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)`, `$recipient_id (int)` |
-| `jetonomy_pro_reaction_added` | action | Fires when a reaction is added. Params: `$object_type (string)`, `$object_id (int)`, `$emoji (string)`, `$user_id (int)` |
-| `jetonomy_pro_poll_vote_cast` | action | Fires when a poll vote is cast. Params: `$poll_id (int)`, `$option_id (int)`, `$user_id (int)` |
+| `jetonomy_pro_dm_received` | action | Fires once per recipient when a DM is delivered. Counterpart to `jetonomy_pro_message_sent` - lets you build "received first DM" or "active inbox" rules. Skipped for system messages. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)`, `$recipient_id (int)` |
 | `jetonomy_pro_webhook_sent` | action | Fires after a webhook is dispatched. Params: `$webhook_id (int)`, `$event (string)`, `$response_code (int)` |
 | `jetonomy_pro_digest_sent` | action | Fires after an email digest is sent. Params: `$user_id (int)`, `$frequency (string)` |
+
+---
+
+### `jetonomy_pro_conversation_created`
+
+Fires after a new private conversation is created (both direct and group).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$conversation_id` | `int` | ID of the newly created conversation |
+| `$user_id` | `int` | ID of the user who created the conversation |
+| `$participants` | `array` | Array of all participant user IDs (includes creator) |
+
+**Source:** `jetonomy-pro/includes/extensions/private-messaging/class-extension.php`
+
+---
+
+### `jetonomy_pro_message_notified`
+
+Fires after in-app and/or email notifications are dispatched to conversation participants for a new message. The `$preview` string is the truncated message preview sent in the notification.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$conversation_id` | `int` | ID of the conversation |
+| `$sender_id` | `int` | WP user ID of the message sender |
+| `$preview` | `string` | Truncated plain-text preview of the message |
+
+**Source:** `jetonomy-pro/includes/extensions/private-messaging/class-extension.php`
+
+---
+
+### `jetonomy_pro_poll_created`
+
+Fires after a poll is created and attached to a post.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$poll_id` | `int` | ID of the newly created poll |
+| `$post_id` | `int` | ID of the post the poll is attached to |
+| `$user_id` | `int` | ID of the user who created the poll |
+
+**Source:** `jetonomy-pro/includes/extensions/polls/class-extension.php`
+
+---
+
+### `jetonomy_pro_poll_voted`
+
+Fires after a user casts a vote on a poll.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$poll_id` | `int` | ID of the poll |
+| `$user_id` | `int` | ID of the voting user |
+| `$option_ids` | `array` | Array of option IDs the user voted for (multi-select polls may have more than one) |
+
+**Source:** `jetonomy-pro/includes/extensions/polls/class-extension.php`
+
+---
+
+### `jetonomy_pro_poll_unvoted`
+
+Fires after a user removes their vote from a poll.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$poll_id` | `int` | ID of the poll |
+| `$user_id` | `int` | ID of the user who removed their vote |
+
+**Source:** `jetonomy-pro/includes/extensions/polls/class-extension.php`
+
+---
+
+### `jetonomy_pro_badge_earned`
+
+Fires after a badge is awarded to a user (both manual awards via the REST API and auto-awards from the daily cron evaluator).
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$user_id` | `int` | ID of the user who earned the badge |
+| `$badge_id` | `int` | ID of the badge definition |
+| `$badge` | `object` | Full badge row object (name, description, icon, criteria, etc.) |
+
+**Source:** `jetonomy-pro/includes/extensions/custom-badges/class-extension.php`
+
+---
+
+### `jetonomy_pro_field_created`
+
+Fires after a custom field definition is created.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$field_id` | `int` | ID of the newly created custom field |
+| `$context` | `array` | Creation context, including `object_type` (`'post'`, `'user'`, or `'space'`) and the full field data |
+
+**Source:** `jetonomy-pro/includes/extensions/custom-fields/class-extension.php`
+
+---
+
+### `jetonomy_pro_reaction_toggled`
+
+Fires after an emoji reaction is added or removed. The `$action` parameter tells you which direction the toggle went.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$object_type` | `string` | `'post'` or `'reply'` |
+| `$object_id` | `int` | ID of the object that was reacted to |
+| `$emoji` | `string` | The emoji slug or character (e.g. `'thumbs_up'`, `'+1'`) |
+| `$user_id` | `int` | ID of the reacting user |
+| `$action` | `string` | `'added'` or `'removed'` |
+
+**Source:** `jetonomy-pro/includes/extensions/reactions/class-extension.php`
+
+---
+
+### `jetonomy_pro_ai_all_providers_failed`
+
+Fires when every configured AI provider has been tried and all returned an error or exception. Use this to log failures or alert an ops channel.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$feature` | `string` | The feature that requested AI (`'summary'`, `'spam'`, `'moderation'`, `'suggestion'`) |
+| `$exception` | `\Throwable` | The last exception thrown |
+
+**Source:** `jetonomy-pro/includes/extensions/ai/` (class-summarizer.php, class-spam-detector.php, class-moderator.php, class-suggester.php)
+
+---
+
+### `jetonomy_create_reply_from_email`
+
+Fired by the Pro Reply-by-Email extension to request that the free plugin create a reply from an inbound email. The free plugin listens to this action and routes it through the standard reply creation path so all free-side hooks (moderation, notifications, reputation) still fire.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | ID of the post to reply to |
+| `$user_id` | `int` | ID of the user whose email was matched |
+| `$content` | `string` | Cleaned plain-text or HTML content extracted from the email |
+| `$source` | `string` | Source label; always `'reply_by_email'` for replies created via this hook |
+
+**Source:** `jetonomy-pro/includes/extensions/reply-by-email/class-extension.php`
+
+---
+
+### `jetonomy_pro_reaction_icon_renderer`
+
+Filter (not action). Filters the renderer strategy used for a reaction icon. The default renderer is `'emoji'`, which uses the native platform emoji. Override with a custom renderer slug to swap in SVG icons or image sprites.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$renderer` | `string` | Current renderer slug (`'emoji'` by default) |
+| `$slug` | `string` | The reaction slug being rendered (e.g. `'+1'`, `'heart'`) |
+| `$size` | `int` | Requested icon size in pixels |
+
+**Return:** `string` Renderer slug to use.
+
+**Source:** `jetonomy-pro/includes/extensions/reactions/class-extension.php`
 
 ---
 

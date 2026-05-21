@@ -12,6 +12,8 @@ The composer is the box you type in when you create a new post or reply. Jetonom
 - What the "New" pill on the topic card means and when it clears
 - How the "Managed by" sidebar surfaces space admins and moderators
 - Where role pills appear and what they tell members
+- How link previews turn a pasted URL into a rich card
+- How members add images, and which capability gates uploads
 - How the composer behaves with markdown vs the WYSIWYG editor
 
 ## @mention Autocomplete
@@ -111,6 +113,58 @@ In addition to the sidebar card, admins and moderators now have role pills next 
 | Member | (no pill) | n/a |
 
 The pills are visible to everyone, including signed-out visitors. They make it obvious when an answer comes from staff vs from another member, which matters for support spaces and Q&A spaces where members weigh staff replies more heavily.
+
+## Link Previews
+
+Paste a URL on its own line in a post or reply and Jetonomy automatically fetches the page's metadata and renders a rich preview card beneath it, the same style of card you see when you share a link on LinkedIn or Twitter. Members get context (title, description, thumbnail, site name) without leaving the thread.
+
+### How It Works
+
+When a link sits alone on its own line (not inline inside a sentence), Jetonomy calls `GET /jetonomy/v1/link-preview?url=...` and renders the result as a card. The card shows:
+
+- Thumbnail image (when the page provides one)
+- Page title
+- Short description
+- Site name and favicon
+
+The preview endpoint pulls metadata from Open Graph and Twitter Card tags, so it covers almost any site with social tags (news outlets, blogs, GitHub, LinkedIn, Instagram, Facebook, and more). For the major sanctioned oEmbed hosts (YouTube, Vimeo, TikTok, Spotify, SoundCloud, Reddit, and the rest of the WordPress oEmbed registry) it returns a true rich embed instead of a static card.
+
+### Behavior and Limits
+
+- Up to **3 preview cards** render per post or reply, so a message full of links does not turn into a wall of cards.
+- Results are cached on the server (roughly 12 hours for a successful fetch, a few minutes for a failed one), so a 200-reply thread does not refetch the same link 200 times.
+- Mentions (`@name`) and tag links never turn into preview cards, only standalone web URLs do.
+
+### Developer Filters
+
+The link preview pipeline is fully filterable:
+
+| Filter | Purpose |
+|---|---|
+| `jetonomy_link_preview_providers` | Add or reorder host-specific providers (e.g. a custom intranet URL rewriter) ahead of the defaults |
+| `jetonomy_link_preview_data` | Final mutation of the preview data right before it is cached and returned |
+| `jetonomy_link_preview_cache_ttl` | Override the cache lifetime, in seconds |
+| `jetonomy_link_preview_user_agent` | Override the user agent used when fetching the page (some corporate firewalls only allow specific agents) |
+
+## Media Uploads
+
+The composer lets members add images to posts and replies in three ways:
+
+- **Toolbar button** - click the image button in the composer toolbar to open a file picker.
+- **Drag and drop** - drag an image straight from your desktop onto the editor.
+- **Paste** - paste a screenshot or copied image directly from your clipboard.
+
+Uploads go to `POST /jetonomy/v1/media`, which stores the file as a standard WordPress attachment and returns its URL so the image drops into the editor inline. Every uploaded image is given alt text automatically (derived from the file name) for accessibility and SEO, and members can supply their own alt text.
+
+### Who Can Upload
+
+Uploading is gated by capability. A member can upload media if they have any one of:
+
+- `upload_files` - the standard WordPress capability (Author and above)
+- `jetonomy_upload_media` - the Jetonomy role-map capability, granted to the Contributor role and automatically granted at Trust Level 1
+- `jetonomy_create_posts` or `jetonomy_create_replies` - anyone who can post or reply
+
+In practice this means most contributing members can attach images, and members earn the upload capability automatically as they reach Trust Level 1 even if their WordPress role would not otherwise allow it.
 
 ## Markdown and WYSIWYG
 

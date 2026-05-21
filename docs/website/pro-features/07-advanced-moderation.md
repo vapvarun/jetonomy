@@ -59,11 +59,11 @@ Example: `\b(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b`
 
 ### Link Limit
 
-Triggers when a post or reply contains more than a set number of links. New spammers often post content with 5–10 outbound links. A limit of 3 catches most of these while allowing legitimate "here are some resources" posts.
+Triggers when a post or reply contains more than a set number of links. New spammers often post content with 5-10 outbound links. A limit of 3 catches most of these while allowing legitimate "here are some resources" posts.
 
 ### Spam Score
 
-Jetonomy calculates a spam probability score (0–100) for each post based on content patterns, account age, and posting frequency. Set a threshold - any post above that score triggers the rule.
+Jetonomy calculates a spam probability score (0-100) for each post based on content patterns, account age, and posting frequency. Set a threshold - any post above that score triggers the rule.
 
 A threshold of 80 is a good starting point. Lower it only if you are seeing spam slip through.
 
@@ -89,6 +89,20 @@ Choose the least restrictive action that solves the problem. Use **Flag** for bo
 The rules list shows a **Triggered** count for each rule - how many times it has fired since the rule was created. Click a rule to see a breakdown by action, by space, and a timeline chart.
 
 Use this data to tune your rules. A rule that triggers 500 times in a week and sends everything to Spam probably needs a higher threshold - it is catching legitimate content.
+
+## REST API
+
+Advanced Moderation manages rules under `jetonomy/v1`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/moderation/rules` | List all moderation rules |
+| `POST` | `/moderation/rules` | Create a rule |
+| `PATCH` | `/moderation/rules/{id}` | Update a rule |
+| `DELETE` | `/moderation/rules/{id}` | Delete a rule |
+| `GET` | `/moderation/rules/{id}/stats` | Get a rule's trigger statistics |
+
+All routes require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 
 ## What's Next?
 

@@ -39,6 +39,20 @@ Both methods open a composer. Members type the recipient's name (autocomplete se
 
 For group conversations, members add multiple recipients before sending. The group conversation shows all participants' avatars at the top of the thread.
 
+## Group Conversations
+
+A conversation is either **direct** (1:1) or a **group** with multiple participants. Add several recipients in the composer to start a group thread, and every participant sees the same shared history.
+
+Group threads keep a complete record. When a member leaves a group, their past messages stay in place attributed to them with a "left the conversation" note - Jetonomy does not delete the messages, so the thread always reads coherently. Creating a direct message to someone you already have a 1:1 thread with reuses that existing thread instead of starting a duplicate.
+
+## Archive, Leave, and Mute
+
+Each of these is a per-member setting - your choice never changes the conversation for the other participants.
+
+- **Mute** - silences notifications for a conversation while keeping it in your inbox. New messages still arrive; you just are not pinged. Unmute from the same menu.
+- **Archive** - hides a conversation from your main inbox to keep it tidy. Archived conversations stay fully intact and reappear (or can be reopened) when there is new activity; nothing is deleted.
+- **Leave** - removes you from a group conversation. You stop receiving its messages, but the thread and your past messages remain for everyone still in it. Leaving applies to group conversations.
+
 ## Unread Counts and Notifications
 
 A red badge on the Messages nav icon shows the total number of unread conversations. The count updates every 30 seconds via polling. It drops to zero when a member opens and reads the conversation.
@@ -65,17 +79,19 @@ Private Messaging adds endpoints under `jetonomy/v1`:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/conversations` | List your conversations (paginated) |
-| `POST` | `/conversations` | Start a new conversation |
+| `GET` | `/conversations` | List your conversations (paginated, filterable) |
+| `POST` | `/conversations` | Start a new direct or group conversation |
 | `GET` | `/conversations/{id}` | Get conversation details and participant list |
+| `PATCH` | `/conversations/{id}` | Update your settings on the conversation (mute) |
 | `GET` | `/conversations/{id}/messages` | List messages (cursor-based pagination) |
 | `POST` | `/conversations/{id}/messages` | Send a message |
-| `POST` | `/conversations/{id}/read` | Mark conversation as read |
-| `DELETE` | `/conversations/{id}` | Leave a conversation |
-| `POST` | `/blocks` | Block a user from messaging you |
-| `DELETE` | `/blocks/{user_id}` | Unblock a user |
+| `GET` | `/conversations/unread-count` | Your total unread conversation count (30s cache) |
+| `POST` | `/conversations/{id}/mute` | Mute or unmute the conversation for you |
+| `POST` | `/conversations/{id}/archive` | Archive or unarchive the conversation for you |
+| `POST` | `/conversations/{id}/leave` | Leave a group conversation |
+| `POST` | `/conversations/{id}/block` | Block or unblock the other participant (direct only) |
 
-All endpoints require authentication. The `jetonomy_send_messages` capability controls who can start conversations - by default all Trust Level 1+ members.
+All endpoints require authentication, and member operations on a conversation require you to be a participant. Starting a conversation and sending messages require Trust Level 1 or higher (admins and moderators bypass this). See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 
 **Example - start a conversation:**
 

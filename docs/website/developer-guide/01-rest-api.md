@@ -64,6 +64,7 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 | DELETE | `/spaces/{id}/members/{user_id}` | Moderator / Admin | Remove a member |
 | POST | `/spaces/{id}/invite` | Moderator / Admin | Generate an invite link |
 | GET | `/invite/{token}` | Public | Resolve an invite token |
+| GET | `/spaces/{id}/privileged-members` | Public | List admins and moderators of a space |
 
 **GET /spaces - parameters**
 
@@ -99,6 +100,7 @@ Posts are individual discussion threads (topics) inside a Space.
 | POST | `/posts/{id}/pin` | Moderator / Admin | Toggle pinned status |
 | POST | `/posts/{id}/move` | Moderator / Admin | Move to another space |
 | POST | `/posts/{id}/merge` | Moderator / Admin | Merge into another post |
+| POST | `/posts/{id}/idea-status` | Space Moderator | Set the roadmap status on an idea-type post (`planned`, `in_progress`, `shipped`, `declined`) |
 | GET | `/posts/drafts` | Logged in | List current user's drafts |
 | GET | `/link-preview` | Public | Fetch OG metadata for a URL |
 
@@ -163,6 +165,7 @@ Replies are threaded responses to a Post.
 | PATCH | `/replies/{id}` | Author / Moderator | Update a reply |
 | DELETE | `/replies/{id}` | Author / Moderator | Delete a reply |
 | POST | `/replies/{id}/accept` | Post author / Moderator | Accept as answer |
+| POST | `/replies/{id}/split` | Moderator / Admin | Split this reply into a new standalone post |
 
 **GET /posts/{post_id}/replies - parameters**
 
@@ -192,7 +195,9 @@ Votes record up/down signals on Posts and Replies. Calling the endpoint again wi
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | POST | `/posts/{id}/vote` | Logged in | Cast or toggle a post vote |
+| DELETE | `/posts/{id}/vote` | Logged in | Remove vote from a post |
 | POST | `/replies/{id}/vote` | Logged in | Cast or toggle a reply vote |
+| DELETE | `/replies/{id}/vote` | Logged in | Remove vote from a reply |
 
 **Body for both vote endpoints**
 
@@ -267,6 +272,8 @@ const data = await res.json();
 | GET | `/notifications/unread-count` | Logged in | Get unread count (cached 30s) |
 | POST | `/notifications/mark-all-read` | Logged in | Mark all notifications read |
 | PATCH | `/notifications/{id}` | Logged in | Mark a single notification read |
+| DELETE | `/notifications/{id}` | Logged in (own only) | Delete a single notification |
+| POST | `/notifications/bulk` | Logged in (own only) | Bulk mark-as-read or delete a batch of notifications |
 
 **GET /notifications - parameters**
 
@@ -284,9 +291,8 @@ Subscriptions track which Spaces or Posts a user follows for new-content notific
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/subscriptions` | Logged in | List current user's subscriptions |
+| POST | `/subscriptions` | Logged in | Create a subscription to a space or post |
 | DELETE | `/subscriptions/{id}` | Logged in | Remove a subscription |
-
-To create a subscription, use the `POST /spaces/{id}/members` endpoint (joining a space auto-subscribes you) or the follow/unfollow UI action in the frontend which calls this API internally.
 
 ---
 
@@ -305,8 +311,11 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
 | POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag |
-| POST | `/moderation/ban` | Moderator | Ban a user |
+| POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, or silence) |
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
+| GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
+| POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
+| POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`) |
 
 **POST /moderation/bulk - body**
 
@@ -372,10 +381,12 @@ Returns per-item results so partial failures are visible:
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/users/me` | Logged in | Get the current user's profile |
+| PATCH | `/users/me` | Logged in (own account) | Update the current user's profile |
 | GET | `/users/{id}` | Public | Get a user's public profile |
 | PATCH | `/users/{id}` | Owner / Admin | Update a user profile |
 | GET | `/users/by-login/{login}` | Public | Look up a user by login slug |
 | GET | `/users/{id}/posts` | Public | List posts by this user |
+| GET | `/users/suggest` | Public | Typeahead - suggest users by name or login prefix |
 
 **PATCH /users/{id} - updatable fields**
 
@@ -406,6 +417,57 @@ The Updates endpoint powers the "N new replies" banner in single-post view. It i
 |-----------|------|-------------|
 | `since` | string | ISO 8601 timestamp. Returns items created after this time. |
 | `post_id` | int | If provided, returns new reply count for that post |
+
+---
+
+## Bookmarks
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/bookmarks` | Logged in | List the current user's bookmarked posts |
+| POST | `/bookmarks` | Logged in | Toggle a bookmark on a post (adds if absent, removes if present) |
+| DELETE | `/bookmarks/{post_id}` | Logged in | Remove a specific bookmark by post ID |
+
+---
+
+## Media
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/media` | Logged in (`jetonomy_upload_media`) | Upload an image, video, or file attachment |
+
+---
+
+## oEmbed
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/oembed` | Public | oEmbed endpoint for forum posts - returns embed metadata for the given post URL |
+
+---
+
+## Authentication and Registration
+
+These endpoints are unauthenticated and rate-limited. They are used by the headless frontend or when the native WordPress login form is not in use.
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/auth/login` | Public (rate limited) | Log in and receive an authentication cookie |
+| POST | `/auth/register` | Public (rate limited) | Register a new user account |
+| POST | `/auth/lost-password` | Public (rate limited) | Request a password reset email |
+| GET | `/auth/verify-email` | Public | Verify an email confirmation token |
+| POST | `/auth/resend-verification` | Public (rate limited) | Resend the email verification message |
+
+---
+
+## Admin
+
+These endpoints require the `manage_options` capability (administrators only).
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/admin/recount` | Admin (`manage_options`) | Rebuild all denormalized counters (reply counts, vote scores, post counts) |
+| POST | `/admin/users/trust-level` | Admin (`manage_options`) | Manually set a user's trust level |
 
 ---
 
@@ -463,6 +525,121 @@ const res  = await fetch(
 );
 const data = await res.json();
 ```
+
+### Polls (`polls` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/posts/{post_id}/poll` | Public | Get a post's poll and current results |
+| POST | `/posts/{post_id}/poll` | Logged in (can post) | Create a poll on a post |
+| POST | `/polls/{id}/vote` | Logged in | Cast a vote on a poll option |
+| DELETE | `/polls/{id}/vote` | Logged in | Retract a vote |
+| PATCH | `/polls/{id}` | Author / Moderator | Update or close a poll |
+
+### Reactions (`reactions` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/posts/{id}/reactions` | Public | List reactions on a post |
+| POST | `/posts/{id}/reactions` | Logged in | Toggle an emoji reaction on a post |
+| GET | `/replies/{id}/reactions` | Public | List reactions on a reply |
+| POST | `/replies/{id}/reactions` | Logged in | Toggle an emoji reaction on a reply |
+
+### Custom Badges (`custom-badges` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/badges` | Logged in | List all defined badges |
+| POST | `/badges` | Admin (`manage_options`) | Create a new badge definition |
+| PATCH | `/badges/{id}` | Admin (`manage_options`) | Update a badge definition |
+| DELETE | `/badges/{id}` | Admin (`manage_options`) | Delete a badge definition |
+| POST | `/users/{user_id}/badges` | Admin (`manage_options`) | Manually award a badge to a user |
+
+### Custom Fields (`custom-fields` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/custom-fields` | Logged in | List all custom field definitions |
+| POST | `/custom-fields` | Admin (`manage_options`) | Create a custom field definition |
+| PATCH | `/custom-fields/{id}` | Admin (`manage_options`) | Update a custom field definition |
+| DELETE | `/custom-fields/{id}` | Admin (`manage_options`) | Delete a custom field definition |
+| POST | `/custom-field-values` | Logged in | Set a custom field value on a post, reply, or user profile |
+
+### Email Digest (`email-digest` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/users/me/digest-preferences` | Logged in | Get the current user's digest frequency and topic preferences |
+| PATCH | `/users/me/digest-preferences` | Logged in | Update digest frequency and topics |
+| POST | `/admin/digest/test` | `jetonomy_manage_settings` | Send a test digest email |
+| GET | `/admin/digest/stats` | `jetonomy_manage_settings` | Digest delivery statistics |
+
+### Webhooks (`webhooks` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/webhooks` | Admin (`manage_options`) | List all registered webhook endpoints |
+| POST | `/webhooks` | Admin (`manage_options`) | Register a new webhook endpoint |
+| DELETE | `/webhooks/{id}` | Admin (`manage_options`) | Delete a webhook endpoint |
+
+### White Label (`white-label` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/settings/white-label` | Admin (`manage_options`) | Get current white-label settings (logo, colors, footer text) |
+| PATCH | `/settings/white-label` | Admin (`manage_options`) | Save white-label settings |
+
+### AI (`ai` extension)
+
+All AI endpoints require the `manage_options` capability.
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/ai/providers` | Admin | List configured AI providers and their status |
+| POST | `/ai/suggestions` | Admin | Generate AI-powered content suggestions |
+| POST | `/ai/spam-detection` | Admin | Run AI spam detection on a piece of content |
+| GET | `/ai/usage` | Admin | Get per-request AI usage statistics |
+| GET | `/ai/usage/summary` | Admin | Get monthly usage summary grouped by provider |
+
+### Web Push (`web-push` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/push/subscribe` | Logged in | Register a browser push subscription |
+| DELETE | `/push/subscribe` | Logged in | Remove a push subscription |
+| GET | `/push/vapid-key` | Logged in | Get the public VAPID key needed to subscribe |
+| GET | `/push/service-worker.js` | Public | Serves the push service-worker script |
+
+### SEO Pro (`seo-pro` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/spaces/{id}/seo` | Space Admin | Get SEO metadata for a space (title, description, OG image) |
+| POST | `/spaces/{id}/seo` | Space Admin | Save SEO metadata for a space |
+
+### Reply by Email (`reply-by-email` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/reply-by-email/process` | Shared secret (webhook) | Inbound webhook endpoint for processing email replies - authenticated via a shared secret header, not a user session |
+
+### Advanced Moderation (`advanced-moderation` extension)
+
+All advanced moderation endpoints require the `manage_options` capability.
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/moderation/rules` | Admin | List all auto-moderation rules |
+| POST | `/moderation/rules` | Admin | Create a new auto-moderation rule |
+| PATCH | `/moderation/rules/{id}` | Admin | Update an auto-moderation rule |
+| DELETE | `/moderation/rules/{id}` | Admin | Delete an auto-moderation rule |
+| GET | `/moderation/rules/{id}/stats` | Admin | Get trigger statistics for a specific rule |
+
+### Analytics - additional endpoint (`analytics` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/analytics/diff-report` | Admin (`manage_options`) | Per-metric drift report comparing the direct-query path against the event-driven aggregate path; returns `from_query`, `from_events`, `drift_pct`, and `within_tolerance` for each metric |
 
 ### Community Announcements (`site-announcements` extension)
 

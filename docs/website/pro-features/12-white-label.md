@@ -75,6 +75,33 @@ White Label also affects transactional emails and digests. In **Settings → Bra
 - **Email footer** - Replaces the default Jetonomy email footer with your own text or HTML.
 - **Logo in emails** - Upload a logo displayed at the top of notification emails.
 
+## Branding Settings Reference
+
+White Label stores its configuration in the `jetonomy_pro_white_label` option. The settings worth calling out:
+
+| Setting | What it does |
+|---------|--------------|
+| `header_logo_url` | The logo actually **displayed** in the community header. This is the image members see at the top of every community page. |
+| `logo_url` | The **fallback / Open Graph** logo. Used for social share cards (OG image) and anywhere a logo is needed but no header logo is set. Keep this set even if you customize the header separately. |
+| `accent_color` | A global accent colour override. Recolours Pro-rebranded surfaces - including email accents - in one place so your brand colour is consistent across the community and its emails. |
+| `custom_css` | Freeform CSS injected on every community page. It loads **after** Jetonomy's own stylesheet, so your rules always win - use it for brand colour and spacing tweaks without touching theme files. |
+| `sidebar_auth_card_html` | Custom HTML for the community sidebar's sign-in / call-to-action card. When set, it **replaces** Jetonomy's default auth card with your own markup; leave it empty to keep the default card. |
+| `footer_text` | Replaces the "Powered by Jetonomy" footer text. |
+| `email_logo_url` | Logo shown at the top of notification and digest emails. |
+
+> **Tip:** `header_logo_url` and `logo_url` are deliberately separate. Set `header_logo_url` for the on-page logo and `logo_url` for the share-card / fallback image - they are often different sizes and aspect ratios.
+
+## REST API
+
+White Label exposes its settings under `jetonomy/v1`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/settings/white-label` | Read the current white-label settings |
+| `PATCH` | `/settings/white-label` | Save white-label settings |
+
+Both routes require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
+
 ## What's Next?
 
 You have covered all 12 Pro features. Return to the beginning of the Pro section to explore Emoji Reactions and other extensions.

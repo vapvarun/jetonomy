@@ -66,6 +66,33 @@ Once closed, the poll shows a **Closed** badge and no further votes are accepted
 
 > **Note:** If you set a close date and later want to extend it, edit the post and update the date in the poll settings.
 
+## Multi-Select Voting
+
+A poll is either **single choice** or **multiple choice**, set when you build it:
+
+- **Single choice** records exactly one option per member. Voting for a different option moves the vote.
+- **Multiple choice** lets each member pick several options at once. Each option toggles independently - a member can hold any number of selections, and clicking a chosen option a second time clears just that one.
+
+Because of this, the total vote count on a multiple-choice poll can be higher than the number of voters - one member can contribute several votes.
+
+## Polls Admin
+
+Enabling the extension adds a **Polls** submenu under the Jetonomy admin menu (`jetonomy-pro-polls`). It lists every poll in your community with its post, type, total votes, and close state, so you can review and close polls without opening each topic.
+
+## REST API
+
+Polls registers these endpoints under `jetonomy/v1`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/polls` | Create a poll on a post |
+| `GET` | `/polls/{id}` | Get a poll's options and live vote counts |
+| `POST` | `/polls/{id}/vote` | Cast a vote - pass `option_id` for single choice or `option_ids` (array) for multiple choice |
+| `DELETE` | `/polls/{id}/vote` | Remove your vote(s) from the poll |
+| `PATCH` | `/polls/{id}` | Update a poll (for example, change the close date) |
+
+Creating a poll and voting require the member to be logged in; poll creation additionally requires the right to post in the target space. See the [REST API reference](../developer-guide/01-rest-api.md) for full request and response payloads.
+
 ## What's Next?
 
 Collect structured information about your members with custom profile fields.

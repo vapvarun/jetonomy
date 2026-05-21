@@ -7,7 +7,8 @@ Notifications keep your community members in the loop without requiring them to 
 - How the notification bell works and where it appears
 - Every notification type and when each one fires
 - How to mark notifications as read
-- How to view the full notifications history
+- How to view, filter, and delete notifications on the full notifications page
+- How the verification reminder email nudges members who never confirmed their address
 - Where members set their personal notification preferences
 
 ## The Notification Bell
@@ -54,7 +55,43 @@ Unread notifications are highlighted with a subtle background tint in the dropdo
 
 The dropdown shows your most recent notifications, roughly the last 10 to 20 items depending on screen size. To see your full notification history, click **See all notifications** at the bottom of the dropdown or navigate directly to `/community/notifications/`.
 
-The full page lists every notification you have received, paginated in groups of 25. You can filter by read / unread status. Notifications older than 90 days are automatically cleaned up from the database by a background cron job.
+The full page lists every notification you have received, paginated 25 per page. Notifications older than 90 days are automatically cleaned up from the database by a background cron job.
+
+### Filter Tabs
+
+The page has a row of filter tabs across the top so members can focus on one kind of update at a time. Each tab shows a count badge of how many notifications match it, so you can see at a glance where the activity is.
+
+| Tab | What it shows |
+|-----|---------------|
+| All | Every notification you have received |
+| Unread | Only notifications you have not opened yet |
+| Mentions | Notifications where someone @-mentioned you |
+| Replies | Replies to your posts and to your replies |
+| Votes | Upvotes and downvotes on your posts and replies |
+| Badges | Badges you have earned (only shown when Jetonomy Pro is active) |
+
+Switching tabs reloads the list filtered to that type and keeps your place. The **Badges** tab appears only on communities running Jetonomy Pro, since badges are a Pro feature.
+
+### Deleting Notifications
+
+Members can clear out notifications they no longer need, not just mark them read.
+
+- **Delete one:** Open the **...** actions menu on any notification row and choose **Delete**. The row is removed immediately.
+- **Bulk delete:** Tick the checkbox on one or more rows. A toolbar appears at the top of the list showing how many you have selected, with **Mark read** and **Delete** buttons that apply to every selected row at once. A **Select all on page** checkbox selects the whole visible page in one tick.
+
+Deleting is permanent for that member's own inbox. It does not affect anyone else's notifications or the underlying post or reply.
+
+> **Note:** Per-notification delete and the bulk-delete toolbar were added in 1.4.3.
+
+## The Verification Reminder Email
+
+When a community requires email verification at signup (**Jetonomy → Settings → Email**), some members register but never click the verification link in their welcome email. Jetonomy sends those members a single follow-up reminder email nudging them to finish verifying, so they do not get stuck unable to participate.
+
+- The reminder is sent once per member. It will never email the same person twice.
+- It goes out a configurable number of hours after registration. Set the delay in `jetonomy_settings.verification_reminder_hours`. Setting it to `0` disables the reminder entirely.
+- It respects each member's email opt-out, so anyone who has opted out of community email is skipped.
+- It uses the same branded email template as your other Jetonomy emails, so the subject and body can be customised under **Settings → Email → Email Templates**.
+- The reminder only runs while email verification is switched on. Turn verification off and there is nothing to remind about.
 
 ## Per-User Notification Preferences
 

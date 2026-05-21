@@ -78,6 +78,61 @@ This is always recommended on. Disable it only if you are running a very specifi
 
 > **Note:** Even with guest access enabled, anonymous posting is not supported. "Guest access" means read-only browsing for logged-out visitors.
 
+## Require Email Verification
+
+**Setting:** `require_email_verification`
+**Default:** off
+**Location:** General tab → Access section
+
+When this is on, new members who register through Jetonomy's Login block receive a confirmation email immediately after sign-up. They cannot log in until they click the verification link in that email. Existing members are not affected - this setting applies only to accounts created after you enable it.
+
+A follow-up reminder is sent automatically if the member has not confirmed within the configured window.
+
+**Setting:** `verification_reminder_hours`
+**Default:** `24`
+**Location:** Stored in `jetonomy_settings['verification_reminder_hours']`
+
+This controls how many hours after registration the reminder email is sent. The reminder runs on an hourly WP-Cron schedule (hook: `jetonomy_verification_reminder`). The email template can be customized on the **Settings → Email** screen under the "Verification reminder" row.
+
+> **Note:** If you use a third-party registration flow (WooCommerce, Restrict Content Pro, LearnDash) instead of Jetonomy's Login block, those plugins handle their own email verification. This setting only applies to registrations that go through the Jetonomy Login block.
+
+## Rebuild Counters
+
+**Location:** Dashboard → Quick Actions, or via WP-CLI / REST API
+
+Jetonomy stores denormalized counters (reply counts per post, post counts per space, member counts per space, vote scores) for performance. These counters are updated in real time on every write, but they can drift from true values after bulk database edits, server failures, or plugin imports.
+
+Use **Rebuild Counters** to recalculate all denormalized values from the canonical tables.
+
+**WP-CLI:**
+
+```bash
+wp --path="/path/to/wordpress" jetonomy recount
+wp --path="/path/to/wordpress" jetonomy recount --type=posts   # posts only
+wp --path="/path/to/wordpress" jetonomy recount --type=spaces  # spaces only
+wp --path="/path/to/wordpress" jetonomy recount --type=votes   # votes only
+wp --path="/path/to/wordpress" jetonomy recount --type=users   # user profile counters only
+```
+
+**REST API (site admin only):**
+
+```
+POST /jetonomy/v1/admin/recount
+{ "type": "all" }
+```
+
+Valid `type` values: `all`, `posts`, `spaces`, `votes`, `users`. Omit or pass `all` to rebuild everything. The response reports how many rows were updated per step. On a large community (100,000+ posts), a full recount may take 10-60 seconds - run it during low-traffic hours.
+
+> **Tip:** After running an import from bbPress, wpForo, or Asgaros, always run a full recount. The importers insert rows directly and skip the counter-update logic.
+
+## Admin Bar Shortcut
+
+All logged-in members see a **Community** menu in the WordPress admin bar. This menu links to the community home, your notification inbox, and your profile.
+
+Members who have the `jetonomy_manage_spaces` or `manage_options` capability also see an admin sub-section with direct links to: Manage Spaces, Add New Space, Categories, Moderation Queue, Posts and Replies, and Settings.
+
+The admin bar menu appears on both the public site and inside wp-admin, so you can jump from any page in the dashboard directly into the community and back.
+
 ## Settings Save Confirmations
 
 After you click **Save Changes**, a confirmation banner appears at the top of the settings page. The banner stays visible until you dismiss it - it does not disappear automatically. This ensures you always have a clear signal that your changes were saved.

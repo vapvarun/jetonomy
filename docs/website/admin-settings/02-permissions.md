@@ -105,6 +105,43 @@ For high-traffic communities, raise these limits. For communities experiencing s
 - Raise `max_flags` threshold at Level 0 to prevent easy reputational attacks
 - Lower post rate limits if you see spam bursts
 
+## Reputation Points
+
+**Setting:** `jetonomy_settings['reputation_points']`
+**Location:** Permissions tab → Reputation Points section
+
+Every community action awards or deducts a fixed number of reputation points. You can override any default value on this screen. Positive numbers reward the action; negative numbers penalize it.
+
+| Action key | Label | Default |
+|---|---|---|
+| `post_upvoted` | Post upvoted | +10 |
+| `reply_upvoted` | Reply upvoted | +5 |
+| `post_downvoted` | Post downvoted | -2 |
+| `reply_downvoted` | Reply downvoted | -2 |
+| `reply_accepted` | Reply accepted as answer | +15 |
+| `idea_planned` | Idea moved to Planned/Shipped | +20 |
+| `flag_validated` | Flag confirmed (reporter) | +5 |
+| `post_reported` | Post reported | -10 |
+| `post_removed` | Post removed by moderator | -20 |
+
+The **Default** column shows each value before any override is saved. You can restore a row to its default by deleting your override and saving again.
+
+Lookup order at runtime: saved admin override in `jetonomy_settings['reputation_points']` → hardcoded defaults above → 0. This means a site with no overrides still scores correctly out of the box.
+
+### Developer hook: `jetonomy_reputation_points_for`
+
+```php
+add_filter( 'jetonomy_reputation_points_for', function( int $points, string $action ): int {
+    // Double the reward for replies accepted as answers.
+    if ( 'reply_accepted' === $action ) {
+        return $points * 2;
+    }
+    return $points;
+}, 10, 2 );
+```
+
+The filter runs after the admin override and hardcoded fallback resolve, so `$points` already reflects any per-site override. Return an `int`.
+
 ## What's Next?
 
 Configure which notification types are enabled by default and set your community email identity.

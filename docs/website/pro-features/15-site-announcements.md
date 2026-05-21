@@ -54,4 +54,4 @@ Open the post and click **Unpin from community** in the action bar. The post ret
 ## Related
 
 - [Topic Management](../discussions/06-topic-management.md) - space-level pinning, closing, moving, and merging topics
-- [Developer Guide: REST API](../developer-guide/01-rest-api.md) - the `jetonomy-pro/v1/site-announcements` endpoints
+- [Developer Guide: REST API](../developer-guide/01-rest-api.md) - the `site-announcements` endpoints. Pinning and unpinning require the `jetonomy_manage_spaces` capability (Administrator by default); listing the current pins is public.

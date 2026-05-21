@@ -56,6 +56,23 @@ Encouraging consistent tag use - especially in high-traffic spaces - pays divide
 
 > **Note:** Tags are shared across all spaces. There is one global tag namespace. A tag created in your Support space appears on the same tag page as the same tag used in your Ideas space.
 
+## Admin Tag Management
+
+Members create tags on the fly as they post, but admins get a dedicated management screen for the whole global tag namespace at **Jetonomy → Tags** in the WordPress admin. Managing tags here requires the `jetonomy_manage_settings` capability.
+
+The page lists every tag with its post count and gives you these controls:
+
+| Action | What it does |
+|--------|-------------|
+| Add New Tag | Create a tag directly from the admin (name, optional slug) without having to post first |
+| Edit | Rename a tag or change its slug. The change applies everywhere the tag is used |
+| Delete | Remove a single tag. You can force-delete a tag even when posts are still attached to it |
+| Bulk Delete | Tick multiple tags, choose **Delete** from the bulk-action dropdown, and click **Apply** to clear several at once |
+
+The list also has a search box and a per-page picker, and it paginates so it stays fast even on communities with thousands of tags.
+
+Use this screen to clean up duplicate or misspelled tags (for example merging "stripe" and "Stripe" by deleting the stray one), retire tags that are no longer relevant, or pre-create the canonical tags you want members to reuse. Because the namespace is global, an edit or delete here affects every space at once.
+
 ## What's Next?
 
 Learn how Jetonomy's trust system automatically identifies your most reliable members and gives them more capabilities over time.

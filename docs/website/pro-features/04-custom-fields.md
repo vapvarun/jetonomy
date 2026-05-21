@@ -83,6 +83,7 @@ Custom Fields adds field-aware parameters to the existing profile and post endpo
 | `GET` | `/posts/{id}` | Post response includes `custom_fields` if any post-level fields are configured |
 | `GET` | `/posts` | List response includes `custom_fields` on each post |
 | `GET` | `/custom-fields` | List all defined fields and their settings |
+| `POST` | `/custom-field-values` | Set a single field value on a target object (user or post) |
 
 **Example - read a profile with custom fields:**
 
@@ -112,6 +113,12 @@ PATCH /wp-json/jetonomy/v1/users/45
 ```
 
 Members can only update their own fields. Admins can update any member's fields.
+
+**Setting one value at a time:** if you want to set a single field on a single object rather than sending the whole `custom_fields` object, `POST /custom-field-values` with the field key, the target object type and ID, and the value. This is the lightweight path used by the edit-profile form and is handy for partial updates from custom tooling.
+
+**How fields surface in output:** once a field is configured, its value is embedded automatically in the relevant REST responses - the `custom_fields` object on `/users` and `/posts` (and their list endpoints) - and rendered on the matching frontend surface (the member profile for profile fields, the post for post fields), subject to the field's visibility setting. You do not register a separate read endpoint per field; the value rides along with the object it belongs to.
+
+See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 
 ## What's Next?
 

@@ -10,6 +10,7 @@ The moderation queue is your single dashboard for everything that needs human re
 - How to use bulk actions for efficiency
 - How per-space moderation differs from global moderation
 - How Akismet-held content appears in the queue
+- How to ban a member when content-level actions are not enough
 
 ## Accessing the Moderation Queue
 
@@ -70,6 +71,32 @@ If the Akismet Anti-Spam plugin is active and configured on your site, Jetonomy 
 You can review Akismet-held items and restore any that were incorrectly caught by clicking **Not Spam**. This action publishes the content and updates Akismet's model.
 
 > **Note:** Akismet integration requires the Akismet plugin to be installed, activated, and connected with a valid API key. Jetonomy does not bundle Akismet - it integrates with it automatically when present.
+
+## Banning Members
+
+Approve, Mark as Spam, and Trash all act on individual pieces of content. Banning acts on the person. When a member is not just posting one bad item but is repeatedly disruptive, you ban the account so they cannot keep posting. Banning requires the `jetonomy_moderate` capability, the same capability that gates the moderation queue itself.
+
+You can ban a member from the moderation tools and from the **Jetonomy → Users** admin page, which lists every community member with a Ban / Unban control on each row.
+
+### Ban Types
+
+Jetonomy supports three levels of restriction so the response fits the situation:
+
+| Type | Effect |
+|------|--------|
+| Global ban | The member is blocked from posting anywhere in the community |
+| Space ban | The member is blocked from a single space but can still participate elsewhere |
+| Silence | The member can still read but cannot post or reply |
+
+### Duration
+
+A ban can be permanent or time-limited. Pick a preset of 1 day, 7 days, or 30 days, or set a custom number of days. Time-limited bans lift themselves automatically when they expire, so you do not have to remember to unban a member after a cooling-off period. You can also record a reason with the ban for your own records.
+
+### Lifting a Ban
+
+To remove a ban before it expires, click **Unban** on the member's row. The restriction is cleared and the member can participate again immediately.
+
+> **Tip:** Reach for a ban only when content-level actions are not enough. For a single bad post, Trash or Mark as Spam is the right tool. For a member who keeps coming back, a global ban (permanent or timed) stops the behavior at the source. The full member list and per-member history live on the **Jetonomy → Users** admin page.
 
 ## What's Next?
 

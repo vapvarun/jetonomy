@@ -84,6 +84,20 @@ Badges appear on member profile pages in a dedicated **Badges** section. Members
 
 The three most recently earned badges also appear in the member's hover card, which pops up when anyone hovers their username throughout the community.
 
+## REST API
+
+Custom Badges registers these endpoints under `jetonomy/v1`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/badges` | List all defined badges and their settings |
+| `POST` | `/badges` | Create a badge |
+| `PATCH` | `/badges/{id}` | Update a badge |
+| `DELETE` | `/badges/{id}` | Delete a badge |
+| `POST` | `/users/{id}/badges` | Award a badge to a member |
+
+Badges can be created, edited, and awarded entirely through REST, so you can automate awards from your own tooling or grant a badge as part of an external workflow. Listing badges is open to any logged-in member; creating, editing, deleting, and awarding require `manage_options`. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
+
 ## What's Next?
 
 Get a data-driven view of your community's health with the Analytics Dashboard.

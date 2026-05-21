@@ -56,40 +56,27 @@ Different spaces have different tones. A Support space might not need a Celebrat
 <!-- TODO screenshot needed: Space settings panel - Reactions tab (was ../images/pro-reactions-space-settings.png) -->
 ## REST API
 
-The Reactions extension adds four endpoints under `jetonomy/v1`:
+The Reactions extension registers these endpoints under `jetonomy/v1`:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/reactions/{type}/{id}` | Get all reactions for a post or reply |
-| `POST` | `/reactions/{type}/{id}` | Add or replace your reaction |
-| `DELETE` | `/reactions/{type}/{id}` | Remove your reaction |
-| `GET` | `/reactions/summary/{type}/{id}` | Aggregated counts by emoji |
+| `GET` | `/posts/{id}/reactions` | Get the reactions and counts for a post |
+| `POST` | `/posts/{id}/reactions` | Toggle your reaction on a post (add, replace, or remove) |
+| `GET` | `/replies/{id}/reactions` | Get the reactions and counts for a reply |
+| `POST` | `/replies/{id}/reactions` | Toggle your reaction on a reply |
 
-`{type}` is either `post` or `reply`. `{id}` is the numeric ID of the item.
+`{id}` is the numeric ID of the post or reply. A single `POST` toggles your reaction: sending a new emoji replaces your previous one, and sending your current emoji again clears it.
 
-**Example - add a reaction:**
+**Example - toggle a reaction:**
 
 ```json
-POST /wp-json/jetonomy/v1/reactions/post/42
+POST /wp-json/jetonomy/v1/posts/42/reactions
 {
   "emoji": "rocket"
 }
 ```
 
-**Example - get reaction summary:**
-
-```json
-GET /wp-json/jetonomy/v1/reactions/summary/post/42
-
-{
-  "like": 14,
-  "love": 6,
-  "rocket": 23,
-  "celebrate": 2
-}
-```
-
-All reaction endpoints require the user to be logged in. Reading summaries is open to any authenticated user; adding and removing reactions requires `jetonomy_create_posts` capability.
+Reading reactions is open to any visitor; toggling a reaction requires the `jetonomy_vote` capability (logged-in members by default). See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 
 ## What's Next?
 

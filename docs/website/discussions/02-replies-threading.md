@@ -55,20 +55,31 @@ Sort preference is stored per-session - if you change it on one topic, it persis
 
 ## Accepted Answers in Q&A Spaces
 
-In Q&A spaces, the topic author can mark one reply as the accepted answer. This signals to other members that the question has been solved.
+In Q&A spaces, the person who asked the question (the topic author) decides which reply is the accepted answer. This signals to everyone else that the question has been solved and surfaces the winning reply at the top of the thread.
 
-**How to accept an answer:**
+### Marking an Answer as Accepted
 
-1. Open your question (you must be the post author).
+As the asker, you are the one who confirms which reply actually solved your problem:
+
+1. Open your own question. You must be the post author (space moderators and admins can also accept on your behalf, see below).
 2. Find the reply that best answers your question.
-3. Click the **Accept** button (the checkmark icon below the reply's vote controls).
-4. The reply is immediately pinned to the top of the reply list, above all other replies and sort orders.
+3. Click the **Accept** button, the checkmark icon shown below the reply, on each reply in a Q&A space.
+4. The reply is immediately pinned to the top of the reply list, above all other replies and regardless of the current sort order.
 
-The accepted reply is highlighted with a green "Accepted Answer" badge. The reply author receives a notification and a +15 reputation bonus.
+**What changes the moment you accept:**
 
-You can change the accepted answer at any time by clicking Accept on a different reply. The previous acceptance is removed.
+- The reply gets a green **Accepted** tag and the whole thread is marked as resolved.
+- An "Accepted answer" callout box appears at the top of the topic, so anyone landing on the question sees the solution first without scrolling.
+- The reply's author receives a notification and a +15 reputation bonus (you do not earn reputation for accepting your own reply).
 
-> **Tip:** Space moderators can also accept answers on any Q&A topic in their space - useful for resolving unanswered questions on behalf of absent authors.
+### Changing or Removing the Accepted Answer
+
+The acceptance is never locked in. As the asker you stay in control:
+
+- **Switch answers:** Click **Accept** on a different reply. The previous reply automatically loses its accepted status, so there is only ever one accepted answer at a time.
+- **Unaccept entirely:** On the currently accepted reply, click the **Unaccept** button (the x-circle icon). This clears the accepted answer, returns the question to the unresolved state, removes the callout, and revokes the reputation that was awarded when it was accepted, so trust scores stay honest.
+
+> **Tip:** Space moderators (and admins) can also accept or unaccept answers on any Q&A topic in their space, useful for resolving questions on behalf of an asker who never came back to mark a solution.
 
 ## Editing Your Own Replies
 
