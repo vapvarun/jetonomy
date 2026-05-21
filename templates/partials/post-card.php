@@ -78,7 +78,7 @@ if ( $prefix_name && $space ) {
 		?>
 		<a class="jt-row-title jt-row-title-link" href="<?php echo esc_url( $post_url ); ?>">
 			<?php if ( $post->is_sticky ) : ?>
-				<span aria-hidden="true"><?php jetonomy_echo_icon( 'pin', 14 ); ?></span>
+				<span class="jt-badge-pinned"><?php jetonomy_echo_icon( 'pin', 12 ); ?> <?php esc_html_e( 'Pinned', 'jetonomy' ); ?></span>
 			<?php endif; ?>
 			<?php if ( ! empty( $post->is_private ) ) : ?>
 				<span class="jt-badge-private"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>

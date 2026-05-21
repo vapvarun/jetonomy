@@ -870,6 +870,31 @@ class Posts_Controller extends Base_Controller {
 
 		// Toggle: unpin if already pinned, pin if not.
 		$new_value = $post->is_sticky ? 0 : 1;
+
+		// Cap the number of pinned topics per space so the top of a space
+		// stays scarce. Default 3, filterable per space. Only checked when
+		// pinning (not when unpinning), and a post already counted toward the
+		// cap can always be unpinned.
+		if ( 1 === $new_value ) {
+			$max = (int) apply_filters( 'jetonomy_max_space_pins', 3, (int) $post->space_id );
+			if ( $max > 0 && Post::count_sticky_in_space( (int) $post->space_id ) >= $max ) {
+				return new WP_Error(
+					'jetonomy_pin_limit',
+					sprintf(
+						/* translators: %d: maximum number of pinned topics allowed per space */
+						_n(
+							'You can pin up to %d topic in a space. Unpin one first.',
+							'You can pin up to %d topics in a space. Unpin one first.',
+							$max,
+							'jetonomy'
+						),
+						$max
+					),
+					array( 'status' => 400 )
+				);
+			}
+		}
+
 		Post::update( $id, array( 'is_sticky' => $new_value ) );
 
 		$updated = Post::find( $id );

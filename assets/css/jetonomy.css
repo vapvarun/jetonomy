@@ -996,6 +996,11 @@
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-danger { display: inline-flex; align-items: center; background: var(--jt-danger); color: var(--jt-white); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); white-space: nowrap; }
   .jt-badge-private { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  /* Pinned (sticky) topic marker — same shape as the private badge but in the
+     accent colour, since pinning is informational, not a warning. Labelled
+     (not an aria-hidden bare icon) so it reads as "Pinned" for everyone. */
+  .jt-badge-pinned { background: var(--jt-accent-muted); color: var(--jt-accent); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  .jt-badge-pinned svg { flex-shrink: 0; }
   .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 

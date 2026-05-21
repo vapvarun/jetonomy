@@ -358,6 +358,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
+						<?php if ( ! empty( $post->is_sticky ) ) : ?>
+							<span class="jt-badge-pinned">
+								<?php jetonomy_echo_icon( 'pin', 14 ); ?> <?php esc_html_e( 'Pinned', 'jetonomy' ); ?>
+							</span>
+						<?php endif; ?>
 						<?php if ( $post->is_resolved ) : ?>
 							<span class="jt-badge-resolved">
 								<?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Resolved', 'jetonomy' ); ?>

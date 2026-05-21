@@ -242,19 +242,19 @@ class Post extends Model {
 
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'vote_score DESC';
+				$order_by = 'is_sticky DESC, vote_score DESC';
 				break;
 
 			case 'oldest':
-				$order_by = 'created_at ASC';
+				$order_by = 'is_sticky DESC, created_at ASC';
 				break;
 
 			case 'newest':
-				$order_by = 'created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC';
 				break;
 
 			case 'unanswered':
-				$order_by = 'created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC';
 				// On Q&A spaces "unanswered" means "no accepted answer yet";
 				// elsewhere it means "no replies yet". The same pill label
 				// covers both because each space type's contract makes the
@@ -345,19 +345,19 @@ class Post extends Model {
 
 		switch ( $sort ) {
 			case 'popular':
-				$order_by = 'vote_score DESC';
+				$order_by = 'is_sticky DESC, vote_score DESC';
 				break;
 
 			case 'oldest':
-				$order_by = 'created_at ASC';
+				$order_by = 'is_sticky DESC, created_at ASC';
 				break;
 
 			case 'newest':
-				$order_by = 'created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC';
 				break;
 
 			case 'unanswered':
-				$order_by = 'created_at DESC';
+				$order_by = 'is_sticky DESC, created_at DESC';
 				// On Q&A spaces "unanswered" means "no accepted answer yet";
 				// elsewhere it means "no replies yet". The same pill label
 				// covers both because each space type's contract makes the
@@ -617,6 +617,25 @@ class Post extends Model {
 	 */
 	public static function pin( int $id ): bool {
 		return static::update( $id, array( 'is_sticky' => 1 ) );
+	}
+
+	/**
+	 * Count the currently pinned (sticky) published topics in a space.
+	 *
+	 * Used to enforce the per-space pin cap so the top of a space stays
+	 * scarce. Indexed by `space_sticky_reply (space_id, is_sticky, ...)`.
+	 *
+	 * @param int $space_id Space ID.
+	 * @return int Number of sticky published posts in the space.
+	 */
+	public static function count_sticky_in_space( int $space_id ): int {
+		$table = static::table();
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				"SELECT COUNT(*) FROM {$table} WHERE space_id = %d AND is_sticky = 1 AND status = 'publish'",
+				$space_id
+			)
+		);
 	}
 
 	/**
