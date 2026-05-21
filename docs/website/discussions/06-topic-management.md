@@ -68,16 +68,16 @@ The original reply is removed from the source topic. A moderator note appears in
 
 ## Pinning and Unpinning Topics
 
-Pinned topics appear at the top of the space listing, above all other topics, regardless of sort order. Use pinning for announcements, community rules, or important reference threads.
+Pinned topics appear at the top of the space listing, above all other topics, **regardless of which sort tab is selected** (Latest, Popular, or Unanswered). Use pinning for space rules, important reference threads, or a "start here" topic. Pinning here affects **only this space** - to feature a post across the whole community, see [Community Announcements](../pro-features/15-site-announcements.md) (Pro, admins only).
 
 1. Open the topic.
-2. Click the **...** menu and select **Pin Topic**.
+2. Click the **...** menu and select **Pin**.
 
-The topic moves to the top of the listing immediately and shows a pin icon to indicate its status.
+The topic moves to the top of the listing immediately and shows a green **Pinned** badge - on both the listing row and the topic's own header - so members can see at a glance that it is pinned.
 
-To unpin, open the same menu and select **Unpin Topic**.
+To unpin, open the same menu and select **Unpin**.
 
-There is no limit to the number of pinned topics per space, but use pinning sparingly. Too many pinned topics reduce their signal value and push regular content below the fold.
+Each space allows up to **3 pinned topics** by default. Once the limit is reached, pinning another topic returns "You can pin up to 3 topics in a space. Unpin one first." The cap keeps the top of the space scarce and meaningful; developers can change it with the [`jetonomy_max_space_pins`](../developer-guide/02-hooks-reference.md) filter.
 
 ## Closing Topics
 

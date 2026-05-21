@@ -464,6 +464,28 @@ const res  = await fetch(
 const data = await res.json();
 ```
 
+### Community Announcements (`site-announcements` extension)
+
+> **Namespace:** these routes live under `jetonomy-pro/v1`, not `jetonomy/v1`.
+
+All routes require the `manage_options` or `jetonomy_manage_spaces` capability (administrators by default).
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/site-announcements` | List the currently pinned (announced) posts |
+| POST | `/site-announcements/{id}` | Pin a post site-wide (capped at 5; returns `400` past the cap) |
+| DELETE | `/site-announcements/{id}` | Remove a post from the announcements |
+
+```javascript
+// Pin post 395 to the whole community
+await fetch( '/wp-json/jetonomy-pro/v1/site-announcements/395', {
+    method:  'POST',
+    headers: { 'X-WP-Nonce': nonce },
+} );
+```
+
+This is distinct from the free space-level pin (`POST /posts/{id}/pin`), which only stickies a topic within its own space.
+
 ---
 
 ## Error Responses

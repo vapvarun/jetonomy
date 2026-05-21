@@ -565,6 +565,34 @@ Fires after a reply is split into a new standalone post.
 
 ---
 
+### `jetonomy_max_space_pins` (filter)
+
+Filters the maximum number of topics that can be pinned (made sticky) in a
+single space. Returning `0` (or a negative value) disables the cap entirely.
+Default is `3`.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$max` | `int` | Default maximum (3) |
+| `$space_id` | `int` | The space the pin is being attempted in |
+
+```php
+// Allow up to 5 pinned topics in every space.
+add_filter( 'jetonomy_max_space_pins', fn() => 5 );
+
+// Different caps per space.
+add_filter( 'jetonomy_max_space_pins', function ( $max, $space_id ) {
+	return 10 === (int) $space_id ? 8 : $max;
+}, 10, 2 );
+```
+
+This only governs the space-level pin (`is_sticky`). Community announcements
+("Pin to community", Pro) have their own separate cap.
+
+---
+
 ## Template Hooks
 
 These hooks fire inside the PHP templates and let you inject content without overriding template files.
@@ -630,6 +658,21 @@ Fires inside the single-post view, after the post meta line.
 Fires inside the single-post view, inside the post action toolbar.
 
 **Source:** `templates/views/single-post.php`
+
+---
+
+### `jetonomy_post_card_after_badges`
+
+Fires right after the built-in status badges (sticky/Pinned, private) so add-ons can append their own markers - for example the Pro "Announcement" badge for community-pinned posts. As of 1.4.4 this fires in **both** the listing card and the single-post header, so a badge added here appears consistently on both surfaces.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post` | `object` | The post row being rendered |
+| `$space` | `object\|null` | The post's space, if loaded |
+
+**Source:** `templates/partials/post-card.php`, `templates/views/single-post.php`
 
 ---
 
