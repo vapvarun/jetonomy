@@ -373,6 +373,14 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								<?php esc_html_e( 'Closed', 'jetonomy' ); ?>
 							</span>
 						<?php endif; ?>
+						<?php
+						/**
+						 * Mirror the listing-card badge hook on the single-post
+						 * header so Pro markers (notably the site-wide
+						 * "Announcement" badge) show here too, not just in listings.
+						 */
+						do_action( 'jetonomy_post_card_after_badges', $post, $space );
+						?>
 						<?php if ( $jt_h1_is_sr_only && $jt_show_follow ) : ?>
 							<button class="jt-btn jt-btn-sm jt-meta-follow <?php echo esc_attr( $is_following ? 'jt-btn-fill jt-following' : 'jt-btn-ghost' ); ?>"
 								data-wp-on--click="actions.followPost"
