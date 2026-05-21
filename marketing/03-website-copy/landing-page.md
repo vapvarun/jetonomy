@@ -1,6 +1,6 @@
 # Jetonomy - Landing Page Copy
 
-**Version:** 1.4.2
+**Version:** 1.4.4
 **Last updated:** May 2026
 
 ---
@@ -25,7 +25,7 @@ See Pro Features
 
 ## SOCIAL PROOF BAR
 
-**24** custom database tables &nbsp;&nbsp; | &nbsp;&nbsp; **6** trust levels &nbsp;&nbsp; | &nbsp;&nbsp; **90+** REST API endpoints &nbsp;&nbsp; | &nbsp;&nbsp; Sub-200ms at 50K topics &nbsp;&nbsp; | &nbsp;&nbsp; **4** space types
+**24** custom database tables &nbsp;&nbsp; | &nbsp;&nbsp; **6** trust levels &nbsp;&nbsp; | &nbsp;&nbsp; **90+** REST API endpoints &nbsp;&nbsp; | &nbsp;&nbsp; Sub-200ms at 50K topics &nbsp;&nbsp; | &nbsp;&nbsp; **5** space types
 
 ---
 
@@ -47,9 +47,9 @@ Jetonomy inherits your theme's fonts, colors, and spacing via CSS custom propert
 
 ## FEATURE GRID
 
-### Forum, Q&A, Ideas, and Show & Tell - in one plugin
+### Five space types - one plugin
 
-**Forum spaces** for open discussion. **Q&A spaces** where the best answer gets marked and rises to the top. **Ideas spaces** where members vote on what gets built next, with a public roadmap view. **Show & Tell spaces** for short-form content cards - news, links, team updates - without the overhead of a full forum thread. Run one type or all four on the same site.
+**Forum spaces** for open discussion. **Q&A spaces** where the best answer gets marked and rises to the top. **Ideas spaces** where members vote on what gets built next, with a public roadmap view. **Show & Tell spaces** for short-form content cards - news, links, and team updates without the overhead of a full forum thread. **Social Feed spaces** for short chronological posts, reactions, and quick community updates. Run any combination on the same site, each with its own visibility and join policy.
 
 ### Three-layer permissions
 
@@ -79,17 +79,21 @@ Jetonomy registers 19 abilities across 5 categories: content, spaces, users, mod
 
 Gate spaces by MemberPress or Paid Memberships Pro membership level. Access rules automatically adjust when a membership activates, upgrades, or expires. No manual syncing, no custom code.
 
-### Self-hosted AI moderation (Pro, new in 1.3.0)
+### Self-hosted AI moderation (Pro)
 
-Jetonomy Pro now includes an AI layer that reads every new post and reply for spam, abuse, and rule violations before it is published. Four providers supported out of the box: OpenAI, Anthropic, any OpenAI-compatible endpoint, and - for communities that cannot send content to a third-party API - **self-hosted Ollama** running on the same server as WordPress. No network hop, no API key, no data leaves your machine. Every model decision is logged for compliance review.
+Jetonomy Pro includes an AI layer that reads every new post and reply for spam, abuse, and rule violations before it is published. Four providers are supported: OpenAI, Anthropic, any OpenAI-compatible endpoint, and self-hosted Ollama running on the same server as WordPress. With Ollama, no content leaves your machine, no API key is required, and every model decision is logged for compliance review.
 
-### Quote replies, topic prefixes, private topics (new in 1.2.0)
+### Discussion controls built in
 
-Fine-grained controls for how members post. Select any passage and click Quote to insert a styled blockquote linked back to the source. Space owners define colored prefixes like Bug, Question, or Solved to classify topics at a glance in the listing. Mark sensitive topics as private so only you and space moderators can see them. And as members type a new topic title, Jetonomy shows similar existing topics inline to cut duplicates before they happen.
+Select any passage and click Quote to insert a styled blockquote linked back to the source. Space owners define colored prefixes like Bug, Question, or Solved to classify topics at a glance in the listing. Mark sensitive topics as private so only you and space moderators can see them. As members type a new topic title, Jetonomy shows similar existing topics inline to cut duplicates before they happen.
 
-### Show & Tell, Ideas roadmap, Q&A Answered badge (new in 1.4.2)
+### Community-wide announcements (Pro)
 
-A fourth space type arrives: **Show & Tell** for short-form content cards. Members post links, screenshots, and updates without needing a full forum subject line. **Ideas spaces** gain a real roadmap with four status lanes - Planned, In Progress, Shipped, Declined - so members see exactly where their votes land. **Q&A spaces** now show an "Answered" badge directly in the space listing, so members can tell at a glance which questions are resolved. **Multisite network activation** provisions tables on every existing and future subsite automatically. A full **i18n and accessibility sweep** makes the interface translatable and keyboard-navigable across all surfaces.
+Admins can pin any post as a site-wide announcement. It appears at the top of every space listing across the entire community, no matter which space it was posted in. Up to five active announcements at a time. Ideal for rule changes, planned downtime notices, or major product updates.
+
+### Five space types, scale features, and accessibility
+
+Five space types in a single plugin: Forum, Q&A, Ideas with a real roadmap, Show & Tell, and Social Feed. Ideas spaces have four status lanes - Planned, In Progress, Shipped, Declined - so members see exactly where their votes land. Q&A spaces show an "Answered" badge in the listing so members can skip resolved questions. Background cleanup jobs batch at 500 rows per run so large communities never hit cron timeouts. Network activation provisions tables on every existing and future subsite. The interface is fully translatable and keyboard-navigable.
 
 ---
 
@@ -110,7 +114,7 @@ Top answers surface automatically in Q&A spaces. Flagged content goes to a moder
 
 | | Free | Pro |
 |---|---|---|
-| Forum, Q&A, Ideas, and Show & Tell spaces | Yes | Yes |
+| Forum, Q&A, Ideas, Show & Tell, and Social Feed spaces | Yes | Yes |
 | Voting and reputation | Yes | Yes |
 | 6 trust levels with auto-promotion | Yes | Yes |
 | Full moderation queue and flagging | Yes | Yes |
@@ -121,23 +125,24 @@ Top answers surface automatically in Q&A spaces. Flagged content goes to a moder
 | Schema.org and SEO markup | Yes | Yes |
 | 48+ REST API endpoints (90+ with Pro) | Yes | Yes |
 | Template overrides | Yes | Yes |
-| WordPress Abilities API (19 abilities) | Yes | Yes |
+| WordPress Abilities API (20 abilities) | Yes | Yes |
 | Multisite network activation (tables on every subsite) | Yes | Yes |
 | Translatable interface with keyboard accessibility | Yes | Yes |
-| AI integration (spam, moderation, summaries - with self-hosted Ollama) | - | Yes |
-| Private messaging | - | Yes |
 | Emoji reactions | - | Yes |
+| Private messaging | - | Yes |
 | Polls | - | Yes |
 | Community analytics dashboard | - | Yes |
 | Email digest (daily and weekly) | - | Yes |
 | Custom badges with criteria engine | - | Yes |
 | Advanced auto-moderation rules | - | Yes |
 | Custom fields for posts, profiles, spaces | - | Yes |
-| SEO controls per space | - | Yes |
+| Per-space SEO controls | - | Yes |
 | Reply by email | - | Yes |
 | Web push notifications | - | Yes |
 | Webhooks | - | Yes |
 | White label | - | Yes |
+| Site-wide announcements (pinned across every space) | - | Yes |
+| AI integration (spam, moderation, summaries - self-hosted Ollama supported) | - | Yes |
 | WooCommerce, LearnDash, and RCP integrations | - | Yes |
 
 The free plugin covers everything a real community needs. Pro adds the tools that help larger communities grow faster.
@@ -147,7 +152,7 @@ The free plugin covers everything a real community needs. Pro adds the tools tha
 ## FAQ
 
 ### Is Jetonomy really free?
-Yes. The free plugin is available at wbcomdesigns.com and includes forums, Q&A, ideas, Show & Tell, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 14 additional modules, including AI integration with self-hosted Ollama support.
+Yes. The free plugin is available at wbcomdesigns.com and includes all five space types, voting, trust levels, moderation, search, notifications, importers, and the full REST API. There are no paywalls or feature locks in the free version. Jetonomy Pro is a separate paid plugin that adds 15 additional modules, including AI integration with self-hosted Ollama support, site-wide announcements, private messaging, and more.
 
 ### Will it slow down my WordPress site?
 Jetonomy does not use wp_posts or wp_postmeta for community content. It uses 24 custom MySQL tables with indexes designed for forum query patterns. Reply counts and vote scores are stored as denormalized counters. No COUNT queries on page load. With Redis, pages load in under 200ms at 50,000 topics.
@@ -169,10 +174,10 @@ Your data stays in the database until you choose to remove it. If you delete the
 ## FINAL CTA SECTION
 
 ### Headline
-Start your community today - it's free.
+Start your community today - it is free.
 
 ### Body
-Download Jetonomy from wbcomdesigns.com and have a forum running in about 5 minutes. If you outgrow the free version, Pro is waiting.
+Download Jetonomy from wbcomdesigns.com and have a forum running in about 5 minutes. If you outgrow the free version, Pro is waiting with 15 additional modules.
 
 ### Primary CTA
 Download Free from wbcomdesigns.com

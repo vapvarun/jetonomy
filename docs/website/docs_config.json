@@ -9,79 +9,79 @@
     {
       "slug": "getting-started",
       "name": "Getting Started",
-      "description": "Install, configure, and launch your community in minutes.",
+      "description": "Install Jetonomy, run the setup wizard, and launch your WordPress forum or Q&A community in minutes.",
       "order": 1
     },
     {
       "slug": "spaces-and-categories",
       "name": "Spaces & Categories",
-      "description": "Organize your community into discussion spaces.",
+      "description": "Organize your community into categories and Forum, Q&A, Ideas, Show & Tell, or Social Feed spaces with membership and join controls.",
       "order": 2
     },
     {
       "slug": "discussions",
       "name": "Discussions & Topics",
-      "description": "Create topics, reply, vote, and manage conversations.",
+      "description": "Create topics, post threaded replies, upvote and downvote, accept answers, and save drafts in your community.",
       "order": 3
     },
     {
       "slug": "search-and-discovery",
       "name": "Search & Discovery",
-      "description": "Find content with full-text search, tags, and filters.",
+      "description": "Help members find discussions with full-text search, cross-space tags, and filters.",
       "order": 4
     },
     {
       "slug": "moderation-and-trust",
       "name": "Moderation & Trust",
-      "description": "Keep your community safe with trust levels and moderation tools.",
+      "description": "Keep your community safe with trust levels 0 to 5, content flagging, a moderation queue, anti-spam, and member banning.",
       "order": 5
     },
     {
       "slug": "notifications",
       "name": "Notifications & Email",
-      "description": "Stay informed with in-app and email notifications.",
+      "description": "Bring members back with in-app notifications, email alerts, and Pro private messaging, digests, and web push.",
       "order": 6
     },
     {
       "slug": "user-profiles",
       "name": "User Profiles & Leaderboard",
-      "description": "Member profiles, reputation, and community rankings.",
+      "description": "Member profiles, reputation scores, online status, and a leaderboard that ranks your top contributors.",
       "order": 7
     },
     {
       "slug": "pro-features",
       "name": "Pro Features",
-      "description": "Premium extensions: reactions, messaging, polls, badges, analytics, and more.",
+      "description": "Jetonomy Pro extensions: private messaging, polls, reactions, custom badges, advanced moderation, analytics, webhooks, and AI.",
       "order": 8
     },
     {
       "slug": "integrations",
       "name": "Integrations",
-      "description": "Connect with membership plugins, themes, and third-party services.",
+      "description": "Gate spaces with MemberPress, Paid Memberships Pro, WooCommerce, LearnDash, and Tutor LMS, and connect BuddyPress and FluentCommunity.",
       "order": 9
     },
     {
       "slug": "admin-settings",
       "name": "Admin Settings",
-      "description": "Configure every aspect of your Jetonomy community.",
+      "description": "Configure permissions, email, appearance, SEO, anti-spam, access control, and the activity log from wp-admin.",
       "order": 10
     },
     {
       "slug": "migration",
       "name": "Migration",
-      "description": "Import from bbPress, wpForo, and other forum plugins.",
+      "description": "Import your existing forum from bbPress or wpForo without losing topics, replies, or members.",
       "order": 11
     },
     {
       "slug": "why-jetonomy",
       "name": "Why Jetonomy",
-      "description": "How Jetonomy compares to bbPress, wpForo, and other solutions.",
+      "description": "How Jetonomy compares to bbPress and wpForo, and how it scales to communities with thousands of topics.",
       "order": 12
     },
     {
       "slug": "developer-guide",
       "name": "Developer Guide",
-      "description": "REST API, hooks, template overrides, and extending Jetonomy.",
+      "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides.",
       "order": 13
     }
   ]

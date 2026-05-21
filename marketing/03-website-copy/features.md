@@ -1,6 +1,6 @@
 # Jetonomy - Feature Highlights
 
-**Version:** 1.4.2
+**Version:** 1.4.4
 **Last updated:** May 2026
 
 ---
@@ -9,9 +9,9 @@
 
 ### Spaces
 
-**What it does:** Spaces are the containers for your community. Create Forum spaces for open discussion, Q&A spaces where the best answer gets marked and surfaced, Ideas spaces where members vote on what gets built next, or Show & Tell spaces for short-form content cards with an optional title and inline media. Each space can have its own visibility (public, private, or hidden), join policy (open, approval-required, or invite-only), and per-space moderators.
+**What it does:** Spaces are the containers for your community. Five types are available: Forum for open discussion, Q&A where the best answer gets marked and surfaced, Ideas where members vote on what gets built next, Show & Tell for short-form content cards with an optional title and inline media, and Social Feed for short chronological posts with reactions and quick community updates. Each space can have its own visibility (public, private, or hidden), join policy (open, approval-required, or invite-only), and per-space moderators.
 
-**Why it matters:** You can run one community with completely different rules for different parts. A public support forum, a private staff area, and a customer ideas board can all live on the same site under the same /community/ path - each with its own access controls.
+**Why it matters:** You can run one community with completely different rules for different parts. A public support forum, a private staff area, a customer ideas board, and a company news feed can all live on the same site under the same /community/ path - each with its own access controls.
 
 ---
 
@@ -163,7 +163,7 @@
 
 ---
 
-## PRO - Reactions, Messaging, Polls, Badges, Analytics, Webhooks
+## PRO - 15 Extensions for Larger Communities
 
 ### Emoji Reactions (Pro)
 
@@ -277,19 +277,25 @@
 
 ---
 
-## NEW IN 1.3.0 - AI INTEGRATION (PRO)
+### AI Integration (Pro)
 
-### AI-Powered Spam Detection, Moderation, and Summaries (Pro)
+**What it does:** Every new post and reply is scored by a language model before it is published. AI spam detection catches subtly rewritten affiliate spam and context-aware abuse that pattern matching misses. Content moderation flags posts against a rule set you describe in plain English. Reply suggestions draft answers for knowledge-base communities. Thread summaries pin a short summary at the top of long topics so new readers do not have to scroll.
 
-**What it does:** Every new post and reply is scored by a language model before it is published. AI spam detection catches subtly rewritten affiliate spam and context-aware abuse that pattern matching misses. AI content moderation flags content against a rule set you describe in plain English. Reply suggestions draft answers for knowledge-base communities. Thread summaries pin a short summary at the top of long topics so new readers do not have to scroll.
+**Providers:** OpenAI, Anthropic, any OpenAI-compatible endpoint, or self-hosted Ollama running on the same server as WordPress.
 
-**Providers:** OpenAI, Anthropic, any OpenAI-compatible endpoint, or self-hosted **Ollama** running on the same server as WordPress.
-
-**Why it matters:** Moderation is the single biggest burden on community owners. Trust levels handle most of the work, Akismet handles known spam, and AI handles the gray zone: context-aware spam, subtle abuse, and the long tail of judgment calls. With the Ollama provider, everything runs on your own server. No content leaves your machine, and there is no per-request API bill. For communities that cannot send content to a third-party API (legal, health, enterprise internal), this is the difference between shipping AI moderation and not shipping it at all.
+**Why it matters:** Moderation is the single biggest burden on community owners. Trust levels handle most of the work, and AI handles the gray zone: context-aware spam, subtle abuse, and the long tail of judgment calls. With the Ollama provider, everything runs on your own server. No content leaves your machine, no per-request API bill, and every decision is logged for compliance review.
 
 ---
 
-## NEW IN 1.2.0 - DISCUSSION CONTROLS (FREE)
+### Site Announcements (Pro)
+
+**What it does:** Admins can pin any post as a community-wide announcement. Pinned announcements appear at the top of every space listing across the entire site, regardless of which space the post was originally created in. Up to five active announcements at a time.
+
+**Why it matters:** When you need to reach every community member - a rule change, a planned maintenance window, a major product update - a space-scoped sticky post leaves some members out. Site Announcements guarantee the message is visible everywhere, without spamming individual spaces or sending a blast email.
+
+---
+
+## DISCUSSION CONTROLS (FREE)
 
 ### Private Topics
 
@@ -299,9 +305,9 @@
 
 ### Topic Prefixes
 
-**What it does:** Space owners define colored labels like `Bug`, `Question`, `Solved`, or `Announcement`. Members pick a prefix when creating a topic and it appears as a colored tag in the space listing. Click any prefix to filter the listing.
+**What it does:** Space owners define colored labels like Bug, Question, Solved, or Announcement. Members pick a prefix when creating a topic and it appears as a colored tag in the space listing. Click any prefix to filter the listing.
 
-**Why it matters:** Prefixes turn a wall of topic titles into a scannable, classifiable list. A support space with `Bug` in red, `Solved` in green, and `Discussion` in grey becomes instantly navigable for moderators and readers alike.
+**Why it matters:** Prefixes turn a wall of topic titles into a scannable, classifiable list. A support space with Bug in red, Solved in green, and Discussion in grey becomes instantly navigable for moderators and readers alike.
 
 ### Similar Topics Detection
 
@@ -311,25 +317,33 @@
 
 ### Quote Replies
 
-**What it does:** Select any passage in a reply and click Quote to insert a styled blockquote into your reply composer with attribution linked back to the source. Or click Quote in a reply's `...` menu to quote the full body.
+**What it does:** Select any passage in a reply and click Quote to insert a styled blockquote into your reply composer with attribution linked back to the source. Or click Quote in a reply's action menu to quote the full body.
 
 **Why it matters:** Long threads stay readable when each reply quotes the specific passage it is responding to. Quote Replies gives readers the context without forcing them to scroll back up a thousand replies.
 
 ---
 
-## NEW IN 1.4.2 - SPACE TYPES, SCALE, AND ACCESSIBILITY (FREE)
+## SPACE TYPES, SCALE, AND ACCESSIBILITY (FREE)
 
 ### Show & Tell Spaces
 
-**What it does:** A fourth space type designed for short-form content. Posts use inline content cards with an optional title and rich content area. No long subject lines required. Great for sharing links, screenshots, team updates, and news.
+**What it does:** A space type designed for short-form content. Posts use inline content cards with an optional title and rich content area. No long subject lines required. Great for sharing links, screenshots, team updates, and news.
 
 **Why it matters:** Not every community conversation fits a forum thread structure. Show & Tell gives members a low-friction way to share quick content - and gives moderators a dedicated space to separate short posts from in-depth discussions.
 
 ---
 
+### Social Feed Spaces
+
+**What it does:** A chronological stream of short posts with emoji reactions and quick commenting. No threading depth required. Members scroll and react rather than open threads.
+
+**Why it matters:** Some communities want a lively, low-effort stream alongside deeper forum discussions. Social Feed gives members a familiar format for quick updates and reactions without creating noise in structured Q&A or Ideas spaces.
+
+---
+
 ### Ideas Spaces with Real Roadmap Lanes
 
-**What it does:** Ideas spaces now include a full roadmap view with four status lanes: Planned, In Progress, Shipped, and Declined. Members can see exactly where each idea stands. Admins drag ideas between lanes or update status from the moderation view.
+**What it does:** Ideas spaces include a full roadmap view with four status lanes: Planned, In Progress, Shipped, and Declined. Members can see exactly where each idea stands. Admins drag ideas between lanes or update status from the moderation view.
 
 **Why it matters:** Telling a member "your idea is under review" is not the same as showing them it moved from Planned to In Progress this week. Visible status lanes turn the ideas board into a real product roadmap - one that builds trust because members can see their input making a difference.
 
@@ -337,7 +351,7 @@
 
 ### Q&A "Answered" Badge in Space Listings
 
-**What it does:** Q&A spaces now show an "Answered" badge on any post that has an accepted answer, visible directly in the space listing. Posts without an accepted answer are clearly distinguishable at a glance.
+**What it does:** Q&A spaces show an "Answered" badge on any post that has an accepted answer, visible directly in the space listing. Posts without an accepted answer are clearly distinguishable at a glance.
 
 **Why it matters:** Members scanning the space listing can skip posts that are already resolved and focus on open questions. This reduces duplicate answers and helps new members find authoritative replies before posting.
 
@@ -345,7 +359,7 @@
 
 ### Cleanup Cron Batching for Large Communities
 
-**What it does:** Background cleanup jobs now process records in batches of 500 per run, with a filter (`jetonomy_cron_batch_size`) to adjust the batch size. Previously, cleanup jobs could time out on large installs with tens of thousands of rows to process.
+**What it does:** Background cleanup jobs process records in batches of 500 per run, with a filter (jetonomy_cron_batch_size) to adjust the batch size. Previously, cleanup jobs could time out on large installs with tens of thousands of rows to process.
 
 **Why it matters:** Communities with 10,000+ posts, activity log entries, or read-status records no longer face cron timeouts or partial cleanups. The filter gives developers control over the batch size when needed.
 
@@ -353,14 +367,14 @@
 
 ### Multisite Network Activation
 
-**What it does:** Activating Jetonomy network-wide now installs the required database tables on every existing subsite and on any new subsite created in the future. Previously, tables had to be installed manually per subsite.
+**What it does:** Activating Jetonomy network-wide installs the required database tables on every existing subsite and on any new subsite created in the future.
 
 **Why it matters:** Network operators running Jetonomy across 10, 50, or 500 subsites no longer need to activate site-by-site. New subsites get fully provisioned database tables automatically.
 
 ---
 
-### Internationalization and Accessibility Sweep
+### Internationalization and Accessibility
 
-**What it does:** The majority of user-facing strings across space listings, filter controls, bulk actions, and selection interfaces are now translatable. Keyboard focus indicators are visible throughout the frontend. All filter controls, bulk action dropdowns, and select-all checkboxes have proper aria-labels.
+**What it does:** All user-facing strings across space listings, filter controls, bulk actions, and selection interfaces are translatable. Keyboard focus indicators are visible throughout the frontend. All filter controls, bulk action dropdowns, and select-all checkboxes have proper aria-labels.
 
-**Why it matters:** Communities with non-English-speaking members can now translate the interface fully via standard WordPress translation workflows. Members who navigate by keyboard or use assistive technologies get clear focus indicators and labeled controls on every surface.
+**Why it matters:** Communities with non-English-speaking members can translate the interface via standard WordPress translation workflows. Members who navigate by keyboard or use assistive technologies get clear focus indicators and labeled controls on every surface.

@@ -1,6 +1,6 @@
 # Jetonomy - Product Descriptions
 
-**Version:** 1.4.2
+**Version:** 1.4.4
 **Last updated:** May 2026
 
 ---
@@ -9,9 +9,9 @@
 
 ### Character limit: 150 characters
 
-Forums, Q&A, idea boards, and Show & Tell for WordPress. Custom tables, 6 trust levels, 90+ REST endpoints, and a design that fits any theme.
+Forums, Q&A, idea boards, Show & Tell, and Social Feed for WordPress. Custom tables, 6 trust levels, 90+ REST endpoints, and a design that fits any theme.
 
-*(143 characters)*
+*(156 characters - trim "and Social Feed" if the directory enforces 150)*
 
 ---
 
@@ -23,12 +23,13 @@ Jetonomy adds a complete community platform to any WordPress site. Create discus
 
 Unlike older forum plugins, Jetonomy stores community data in 24 dedicated MySQL tables - not in wp_posts. That means your site stays fast, WordPress stays clean, and your community scales without architectural changes.
 
-**Four types of community spaces**
+**Five types of community spaces**
 
 - **Forum** - open discussion. Topics, threaded replies, voting, subscriptions.
-- **Q&A** - the author marks the accepted answer. It's highlighted at the top and earns the replier reputation. Voted answers surface automatically. Posts with an accepted answer display an "Answered" badge in the listing.
+- **Q&A** - the author marks the accepted answer. It is highlighted at the top and earns the replier reputation. Voted answers surface automatically. Posts with an accepted answer display an "Answered" badge in the listing.
 - **Ideas** - members submit and vote on ideas. Admins move them through status lanes: Planned, In Progress, Shipped, Declined. A public roadmap view shows progress at a glance.
 - **Show & Tell** - short-form content cards with an optional title. Ideal for sharing links, screenshots, and updates without the structure of a full forum thread.
+- **Social Feed** - a chronological stream of short posts with emoji reactions and quick commenting. Low friction for members who want to share something without starting a thread.
 
 **A trust system that reduces moderation work**
 
@@ -36,13 +37,13 @@ Jetonomy includes 6 trust levels: Newcomer, Member, Regular, Trusted, Leader, an
 
 There is nothing to configure. It works from day one.
 
-**New in 1.4.2**
+**New in 1.4.4**
 
-Version 1.4.2 adds Show & Tell as a fourth space type, a real roadmap with status lanes for Ideas spaces, and an "Answered" badge on resolved Q&A posts in the listing view. Cleanup cron jobs now batch at 500 rows per run so large communities no longer hit timeouts. Network activation on multisite installs tables on every existing and future subsite automatically. A full accessibility and i18n sweep makes the interface keyboard-navigable and translatable across all surfaces.
+Version 1.4.4 includes the Social Feed space type, site-wide announcements via Jetonomy Pro (pin a post to the top of every space simultaneously), and continued stability improvements. Earlier releases added Show & Tell spaces, Ideas roadmap lanes, the Q&A Answered badge, batched cron cleanup for large communities, multisite network activation, and a full accessibility and i18n sweep.
 
 **AI-powered moderation - on your own server**
 
-New in Pro 1.3.0: an AI layer that reads every new post and reply for spam, abuse, and rule violations before publish. Four providers supported (OpenAI, Anthropic, custom endpoint, and self-hosted Ollama). For privacy-sensitive communities, run Ollama on the same server as WordPress. No data leaves your machine, no per-request API bill, and every decision is logged for compliance review.
+Jetonomy Pro includes an AI layer that reads every new post and reply for spam, abuse, and rule violations before publish. Four providers are supported (OpenAI, Anthropic, custom endpoint, and self-hosted Ollama). For privacy-sensitive communities, run Ollama on the same server as WordPress. No data leaves your machine, no per-request API bill, and every decision is logged for compliance review.
 
 **Performance built in**
 
@@ -56,7 +57,7 @@ New in Pro 1.3.0: an AI layer that reads every new post and reply for spam, abus
 
 48+ endpoints in the free plugin under the jetonomy/v1 namespace, 90+ endpoints with Pro. Cursor-based pagination, JSON schema validation, and complete documentation. Every feature is accessible programmatically.
 
-Jetonomy also registers 19 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
+Jetonomy also registers 20 abilities via the WordPress Abilities API (WP 6.9+), so AI agents and automation tools can discover and interact with your community without custom integration code.
 
 **Works with your theme**
 
@@ -72,7 +73,7 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 
 **What's included in the free plugin**
 
-- Forum, Q&A, Ideas, and Show & Tell spaces with categories and sub-spaces
+- Forum, Q&A, Ideas, Show & Tell, and Social Feed spaces with categories and sub-spaces
 - Space visibility settings (public, private, hidden) and join policies
 - Voting, reputation, and 6 trust levels with automatic promotion
 - Moderation queue, flagging, bans, silencing, and revision history
@@ -83,7 +84,7 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 - 48+ REST API endpoints with cursor-based pagination
 - Template overrides via your-theme/jetonomy/ directory
 - bbPress and wpForo importers with dry run and progress tracking
-- WordPress Abilities API support (19 abilities)
+- WordPress Abilities API support (20 abilities)
 - Three-layer permissions (WP capabilities, space roles, trust levels)
 - MemberPress and Paid Memberships Pro integration for space gating
 - Multisite network activation (tables installed on all existing and future subsites)
@@ -92,7 +93,7 @@ Built-in importers for both. Auto-detects your source, runs a dry run first, sho
 
 **Jetonomy Pro (sold separately)**
 
-Pro adds 14 modules on top of the free core: AI integration (spam detection, content moderation, reply suggestions, thread summaries - with OpenAI, Anthropic, and self-hosted Ollama support), private messaging, emoji reactions, polls, community analytics dashboard, email digest, custom badges with a criteria engine, advanced auto-moderation rules, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+Pro adds 15 modules on top of the free core: emoji reactions, private messaging, polls, community analytics dashboard, email digest, custom badges with a criteria engine, advanced auto-moderation rules, custom fields, per-space SEO controls, reply by email, web push notifications, webhooks, white label, site-wide announcements (pin a post to every space simultaneously), and AI integration (spam detection, content moderation, reply suggestions, thread summaries - with OpenAI, Anthropic, and self-hosted Ollama support). Pro also unlocks integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 **Requirements**
 
@@ -114,9 +115,9 @@ Jetonomy takes a different approach.
 
 Community content lives in 24 dedicated MySQL tables with indexes designed for actual forum query patterns. There are no joins back to wp_posts on every page load. Reply counts and vote scores are stored directly on each record - no COUNT queries. At 50,000 topics with object caching, pages load in under 200ms.
 
-**Four community modes**
+**Five community modes**
 
-Create Forum spaces for open discussion, Q&A spaces where the best answer is highlighted at the top (and the person who wrote it earns reputation), Ideas spaces where members submit requests and vote on what gets built next, or Show & Tell spaces for short-form content cards. A public roadmap view tracks each idea through status lanes. You can run all four modes on the same site with different access controls for each.
+Create Forum spaces for open discussion, Q&A spaces where the best answer is highlighted at the top (and the person who wrote it earns reputation), Ideas spaces where members submit requests and vote on what gets built next, Show & Tell spaces for short-form content cards, or Social Feed spaces for a quick chronological stream. A public roadmap view tracks each idea through status lanes. You can run all five modes on the same site with different access controls for each.
 
 **A trust system that does the moderation work**
 
@@ -130,7 +131,7 @@ The frontend uses CSS custom properties that pull values from your theme's theme
 
 48+ endpoints in free (90+ with Pro) under the jetonomy/v1 namespace with cursor-based pagination and JSON schema validation. Full template override support via your-theme/jetonomy/. Action and filter hooks throughout. An adapter pattern for search, email, real-time updates, and membership integrations means you can swap components without touching the core.
 
-For sites running WordPress 6.9+, Jetonomy registers 19 abilities via the WordPress Abilities API, so AI agents and automation tools can discover and interact with your community without custom code.
+For sites running WordPress 6.9+, Jetonomy registers 20 abilities via the WordPress Abilities API, so AI agents and automation tools can discover and interact with your community without custom code.
 
 **Migration included**
 
@@ -138,6 +139,6 @@ Built-in importers for bbPress and wpForo. Auto-detection, dry run mode, and pro
 
 **Free, with a clear upgrade path**
 
-The free plugin at wbcomdesigns.com includes everything described above - spaces, voting, trust levels, moderation, search, notifications, SEO, REST API, and importers. Jetonomy Pro adds 14 additional modules including AI integration (self-hosted Ollama-powered moderation), private messaging, polls, analytics, badges, webhooks, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
+The free plugin at wbcomdesigns.com includes everything described above - spaces, voting, trust levels, moderation, search, notifications, SEO, REST API, and importers. Jetonomy Pro adds 15 additional modules including AI integration (self-hosted Ollama-powered moderation), private messaging, polls, analytics, badges, webhooks, site-wide announcements, and integrations with WooCommerce, LearnDash, and Restrict Content Pro.
 
 **Requirements:** PHP 8.1+, WordPress 6.7+, MySQL 5.7+.

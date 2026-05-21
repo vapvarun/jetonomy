@@ -1,13 +1,13 @@
 # Jetonomy vs bbPress vs wpForo - Feature Comparison
 
-**Version:** 1.4.2
+**Version:** 1.4.4
 **Last updated:** May 2026
 
 ---
 
 ## Notes on methodology
 
-This comparison reflects the state of each plugin as of March 2026. bbPress is compared against its current stable release (2.6.x) plus officially supported add-ons. wpForo is compared against wpForo 2.x with its bundled add-ons. Where a feature requires a paid add-on to enable, it is noted.
+This comparison reflects the state of each plugin as of May 2026. bbPress is compared against its current stable release (2.6.x) plus officially supported add-ons. wpForo is compared against wpForo 2.x with its bundled add-ons. Where a feature requires a paid add-on to enable, it is noted.
 
 This comparison is honest. Where competitors do something well, that is noted. The goal is to help you make an informed decision, not to make competitors look bad.
 
@@ -17,7 +17,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 
 | | Jetonomy | bbPress | wpForo |
 |---|---|---|---|
-| Data storage | 24 custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
+| Data storage | 24+ custom MySQL tables | WordPress CPTs (wp_posts + wp_postmeta) | Custom tables |
 | Avoids wp_postmeta bloat | Yes | No - heavy wp_postmeta use | Yes |
 | Denormalized counters (no COUNT on load) | Yes | No | Partial |
 | Object cache support (Redis/Memcached) | Yes | Partial (WP object cache) | Partial |
@@ -39,7 +39,9 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Forum spaces | Yes | Yes (Forums) | Yes |
 | Q&A spaces with accepted answers | Yes | No (add-on required) | Yes |
 | Ideas / roadmap spaces with status lanes | Yes | No | No |
-| Short-form / Show & Tell spaces | Yes | No | No |
+| Show & Tell spaces (short-form content cards) | Yes | No | No |
+| Social Feed spaces (chronological stream) | Yes | No | No |
+| Site-wide announcements (pinned across all spaces) | Jetonomy Pro | No | No |
 | Categories for grouping spaces | Yes | Yes | Yes |
 | Sub-spaces (nested) | Yes - 3 tiers | Yes | Yes |
 | Space visibility (public/private/hidden) | Yes | Partial | Yes |
@@ -154,11 +156,11 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Template override system | Yes - theme/jetonomy/ | Yes - theme/bbpress/ | Partial |
 | Action and filter hooks | Yes - throughout | Yes - throughout | Yes |
 | Adapter pattern for integrations | Yes (search, email, realtime, membership) | No | No |
-| WordPress Abilities API support | Yes - 19 abilities | No | No |
+| WordPress Abilities API support | Yes - 20 abilities (free + Pro) | No | No |
 | Clean uninstall (removes all data) | Yes | Partial | Yes |
 | Composer autoloader | No | No | No |
 
-**Honest note:** bbPress has an extensive ecosystem of hooks built up over 15+ years. If you need a specific hook that bbPress exposes, there is a good chance it already exists. Jetonomy's hook library is complete but newer.
+**Honest note:** bbPress has an extensive ecosystem of hooks built up over 15+ years. If you need a specific hook that bbPress exposes, there is a good chance it already exists. Jetonomy's hook library is complete but newer. Jetonomy also ships 14 WP-CLI commands for headless testing and automation, which neither competitor offers.
 
 ---
 
@@ -210,7 +212,7 @@ This comparison is honest. Where competitors do something well, that is noted. T
 | Pro pricing | See wbcomdesigns.com | Add-ons sold separately | Paid plans available |
 | Lifetime license available | Yes (Pro) | N/A | No |
 
-**Honest note:** bbPress itself is free and the add-on ecosystem is broad, but individual add-ons from third parties cost money and add maintenance overhead. wpForo's paid plans bundle add-ons at a set price. Jetonomy Pro bundles all 14 modules (including AI Integration) in a single license.
+**Honest note:** bbPress itself is free and the add-on ecosystem is broad, but individual add-ons from third parties cost money and add maintenance overhead. wpForo's paid plans bundle add-ons at a set price. Jetonomy Pro bundles all 15 modules (including AI integration and site-wide announcements) in a single license.
 
 ---
 
@@ -219,9 +221,10 @@ This comparison is honest. Where competitors do something well, that is noted. T
 **Choose Jetonomy if:**
 - Performance at scale matters - custom tables and denormalized counters make a measurable difference above a few thousand topics
 - You want automated spam control that requires no configuration
-- You need Q&A, Ideas, or Show & Tell spaces alongside standard forums
-- Your developers want a clean REST API and adapter pattern
-- You're migrating from bbPress or wpForo and want a built-in path
+- You need Q&A, Ideas, Show & Tell, or Social Feed spaces alongside standard forums
+- You need site-wide announcements that reach members across every space (Pro)
+- Your developers want a clean REST API, adapter pattern, and WP-CLI automation tools
+- You are migrating from bbPress or wpForo and want a built-in path
 - You need true multisite network activation with tables provisioned on every subsite
 
 **Choose bbPress if:**
