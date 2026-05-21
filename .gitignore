@@ -23,3 +23,6 @@ plan/1.4.1-baselines/*
 
 # wbcom-docs MCP generated artifact (sibling of canonical image_map.json)
 docs/website/image-mapping.json
+
+# Playwright MCP scratch (screenshots, snapshots, console logs)
+.playwright-mcp/
