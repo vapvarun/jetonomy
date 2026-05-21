@@ -126,3 +126,10 @@ If the topic is pending approval, it does not appear in the listing, does not in
 Learn how replies work, how threading is structured, and how to accept answers in Q&A spaces.
 
 [Replies & Threading →](02-replies-threading.md)
+
+## Related Pro Features
+
+These Pro extensions add to the discussion experience:
+
+- [Polls](../pro-features/03-polls.md) - attach a single or multi-select poll to any topic.
+- [Reactions](../pro-features/01-reactions.md) - emoji reactions on posts and replies.

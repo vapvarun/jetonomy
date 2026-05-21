@@ -87,3 +87,7 @@ See the [Hooks Reference](../developer-guide/02-hooks-reference.md) for the full
 Learn how tags work across spaces and how members can browse tag pages to find related content.
 
 [Tags →](02-tags.md)
+
+## Related Pro Features
+
+- [SEO Pro](../pro-features/14-seo-pro.md) - per-space meta, schema.org markup, OG/Twitter cards, and sitemaps so search engines surface your community.

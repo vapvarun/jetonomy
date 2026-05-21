@@ -142,3 +142,9 @@ After you click **Save Changes**, a confirmation banner appears at the top of th
 Configure trust level thresholds and rate limits to control who can do what in your community.
 
 [Permission Settings →](02-permissions.md)
+
+## Related Pro Features
+
+- [White Label](../pro-features/12-white-label.md) - replace Jetonomy branding with your own.
+- [Analytics](../pro-features/06-analytics.md) - community health and engagement dashboard.
+- [Webhooks](../pro-features/09-webhooks.md) - send community events to external services.

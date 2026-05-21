@@ -103,3 +103,7 @@ To remove a ban before it expires, click **Unban** on the member's row. The rest
 Learn about Jetonomy's built-in anti-spam tools - reCAPTCHA, Turnstile, and rate limiting - that reduce how much reaches the moderation queue in the first place.
 
 [Anti-Spam Protection →](04-anti-spam.md)
+
+## Related Pro Features
+
+- [Advanced Moderation](../pro-features/07-advanced-moderation.md) - automated content rules that act before items ever reach the queue.

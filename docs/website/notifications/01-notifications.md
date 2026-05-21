@@ -111,3 +111,12 @@ Members cannot disable notifications for direct mentions. The @mention notificat
 Learn how to configure email notification delivery, set community-wide defaults, and understand which notification types support email.
 
 [Email Notifications →](02-email-settings.md)
+
+## Related Pro Features
+
+Pro adds more ways to reach and message members:
+
+- [Private Messaging](../pro-features/02-private-messaging.md) - one-to-one and group direct messages.
+- [Email Digest](../pro-features/08-email-digest.md) - scheduled activity summary emails.
+- [Web Push](../pro-features/10-web-push.md) - browser push notifications.
+- [Reply by Email](../pro-features/11-reply-by-email.md) - reply to threads straight from your inbox.

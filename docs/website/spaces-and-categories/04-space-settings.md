@@ -132,3 +132,7 @@ You can manually deactivate or delete any invite link at any time.
 Learn how to create topics and posts inside your spaces.
 
 [Creating Topics →](../discussions/01-creating-topics.md)
+
+## Related Pro Features
+
+- [Custom Fields](../pro-features/04-custom-fields.md) - add structured fields to posts and profiles, configurable per space.

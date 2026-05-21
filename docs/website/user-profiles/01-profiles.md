@@ -79,3 +79,7 @@ WordPress Administrators can edit any member's profile from the standard WordPre
 See how your top contributors rank against each other on the community leaderboard.
 
 [Leaderboard →](02-leaderboard.md)
+
+## Related Pro Features
+
+- [Custom Badges](../pro-features/05-custom-badges.md) - award badges automatically or by hand to recognize members.
