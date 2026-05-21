@@ -58,10 +58,10 @@ Click the toggle switch on an active card. The page reloads and the extension is
 | Reply By Email | Communication | Members reply to threads by replying to notification emails |
 | AI Integration | AI | Spam detection, post summarization, semantic search, content suggestions |
 
-For detailed setup instructions for each extension, see the [Pro Features documentation](../pro-features/index.md).
+For detailed setup instructions for each extension, see the [Pro Features documentation](../pro-features/00-getting-started-pro.md).
 
 ## What's Next?
 
 For the full feature documentation for each Pro extension, see the Pro Features section.
 
-[Pro Features →](../pro-features/index.md)
+[Pro Features →](../pro-features/00-getting-started-pro.md)
