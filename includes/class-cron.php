@@ -15,11 +15,26 @@ use function Jetonomy\table;
 
 class Cron {
 
-	public function __construct() {
-		// Register cron schedules
-		add_filter( 'cron_schedules', [ $this, 'add_schedules' ] );
+	private const AS_GROUP = 'jetonomy';
 
-		// Hook cron events
+	/**
+	 * Recurring actions Jetonomy schedules. hook => interval (seconds).
+	 *
+	 * Run via Action Scheduler so background work doesn't drop on quiet sites
+	 * (WP-Cron only fires on page views — bad for trust evaluation, ban expiry,
+	 * activity pruning, scheduled-post publishing at the scale targets).
+	 */
+	private const RECURRING = [
+		'jetonomy_trust_evaluation'      => 12 * HOUR_IN_SECONDS,
+		'jetonomy_cleanup_expired'       => HOUR_IN_SECONDS,
+		'jetonomy_prune_activity'        => DAY_IN_SECONDS,
+		'jetonomy_cleanup_notifications' => WEEK_IN_SECONDS,
+		'jetonomy_publish_scheduled'     => HOUR_IN_SECONDS,
+		'jetonomy_verification_reminder' => HOUR_IN_SECONDS,
+	];
+
+	public function __construct() {
+		// Handler listeners — fire whether scheduled via AS or (legacy) WP-Cron.
 		add_action( 'jetonomy_trust_evaluation', [ $this, 'evaluate_trust_levels' ] );
 		add_action( 'jetonomy_cleanup_expired', [ $this, 'cleanup_expired_restrictions' ] );
 		add_action( 'jetonomy_prune_activity', [ $this, 'prune_activity_log' ] );
@@ -27,86 +42,67 @@ class Cron {
 		add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
 		add_action( 'jetonomy_verification_reminder', [ Verification_Reminder::class, 'run' ] );
 
-		// Self-heal: schedule the verification-reminder cron lazily on
-		// every request so existing installs upgrading to 1.4.1 pick up
-		// the new hook without having to deactivate/reactivate. Cheap —
-		// `wp_next_scheduled` is a single transient lookup.
-		add_action( 'init', [ $this, 'maybe_schedule_verification_reminder' ] );
+		// Self-heal: ensure every recurring action is registered with AS on every
+		// request. Cheap (memoized lookup); covers fresh installs, upgrades from
+		// 1.4.3 (legacy WP-Cron schedules), and customers who manually cleared cron.
+		add_action( 'init', [ self::class, 'ensure_scheduled' ] );
 	}
 
 	/**
 	 * Schedule all cron events on plugin activation.
+	 *
+	 * During activation the plugins_loaded hook hasn't fired, so Action Scheduler
+	 * may not yet have declared its global functions. ensure_scheduled() guards
+	 * for that — anything not scheduled here will be picked up on the next init.
 	 */
 	public static function schedule(): void {
-		// Ensure weekly schedule exists before scheduling weekly events.
-		$schedules = wp_get_schedules();
-		if ( ! isset( $schedules['weekly'] ) ) {
-			add_filter(
-				'cron_schedules',
-				function ( $s ) {
-					$s['weekly'] = [
-						'interval' => WEEK_IN_SECONDS,
-						'display'  => 'Once Weekly',
-					];
-					return $s;
-				}
-			);
-		}
-
-		if ( ! wp_next_scheduled( 'jetonomy_trust_evaluation' ) ) {
-			wp_schedule_event( time(), 'twicedaily', 'jetonomy_trust_evaluation' );
-		}
-		if ( ! wp_next_scheduled( 'jetonomy_cleanup_expired' ) ) {
-			wp_schedule_event( time(), 'hourly', 'jetonomy_cleanup_expired' );
-		}
-		if ( ! wp_next_scheduled( 'jetonomy_prune_activity' ) ) {
-			wp_schedule_event( time(), 'daily', 'jetonomy_prune_activity' );
-		}
-		if ( ! wp_next_scheduled( 'jetonomy_cleanup_notifications' ) ) {
-			wp_schedule_event( time(), 'weekly', 'jetonomy_cleanup_notifications' );
-		}
-		if ( ! wp_next_scheduled( 'jetonomy_publish_scheduled' ) ) {
-			wp_schedule_event( time(), 'hourly', 'jetonomy_publish_scheduled' );
-		}
-		if ( ! wp_next_scheduled( 'jetonomy_verification_reminder' ) ) {
-			// Stagger by an hour so the cron isn't competing with everything
-			// else activate() just scheduled at time().
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_verification_reminder' );
-		}
+		self::ensure_scheduled();
 	}
 
 	/**
 	 * Unschedule all cron events on plugin deactivation.
+	 *
+	 * Clears both AS-scheduled actions (current) and any legacy WP-Cron entries
+	 * (idempotent — safe to call regardless of which scheduler the install was on).
 	 */
 	public static function unschedule(): void {
-		wp_clear_scheduled_hook( 'jetonomy_trust_evaluation' );
-		wp_clear_scheduled_hook( 'jetonomy_cleanup_expired' );
-		wp_clear_scheduled_hook( 'jetonomy_prune_activity' );
-		wp_clear_scheduled_hook( 'jetonomy_cleanup_notifications' );
-		wp_clear_scheduled_hook( 'jetonomy_publish_scheduled' );
-		wp_clear_scheduled_hook( 'jetonomy_verification_reminder' );
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			foreach ( array_keys( self::RECURRING ) as $hook ) {
+				as_unschedule_all_actions( $hook, [], self::AS_GROUP );
+			}
+		}
+		foreach ( array_keys( self::RECURRING ) as $hook ) {
+			wp_clear_scheduled_hook( $hook );
+		}
 	}
 
 	/**
-	 * Lazy-schedule the verification-reminder cron on every request so
-	 * existing installs upgrading to 1.4.1 pick up the new hook without
-	 * needing a deactivate/reactivate cycle. `wp_next_scheduled()` is a
-	 * cheap transient lookup, so the no-op path is essentially free.
+	 * Idempotent scheduler — ensures every recurring action exists in AS exactly
+	 * once. On first run after upgrade from <1.4.4, also wipes the legacy WP-Cron
+	 * registrations so the same handler doesn't fire from two schedulers.
 	 */
-	public function maybe_schedule_verification_reminder(): void {
-		if ( ! wp_next_scheduled( 'jetonomy_verification_reminder' ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'jetonomy_verification_reminder' );
+	public static function ensure_scheduled(): void {
+		if ( ! function_exists( 'as_schedule_recurring_action' ) ) {
+			return; // AS not booted yet (e.g. activation request before plugins_loaded). Retry next request.
 		}
-	}
 
-	public function add_schedules( array $schedules ): array {
-		if ( ! isset( $schedules['weekly'] ) ) {
-			$schedules['weekly'] = [
-				'interval' => WEEK_IN_SECONDS,
-				'display'  => 'Once Weekly',
-			];
+		// One-time migration: drop legacy WP-Cron registrations so AS owns these hooks.
+		if ( ! get_option( 'jetonomy_cron_as_migrated' ) ) {
+			foreach ( array_keys( self::RECURRING ) as $hook ) {
+				wp_clear_scheduled_hook( $hook );
+			}
+			update_option( 'jetonomy_cron_as_migrated', 1, false );
 		}
-		return $schedules;
+
+		$now = time();
+		foreach ( self::RECURRING as $hook => $interval ) {
+			if ( as_has_scheduled_action( $hook, [], self::AS_GROUP ) ) {
+				continue;
+			}
+			// Verification reminder starts +1h so it doesn't compete with everything else at time().
+			$start = ( 'jetonomy_verification_reminder' === $hook ) ? $now + HOUR_IN_SECONDS : $now;
+			as_schedule_recurring_action( $start, $interval, $hook, [], self::AS_GROUP );
+		}
 	}
 
 	/**

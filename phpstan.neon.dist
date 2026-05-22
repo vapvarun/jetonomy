@@ -10,6 +10,7 @@ parameters:
         - includes/
     scanFiles:
         - jetonomy.php
+        - libs/action-scheduler/functions.php
     scanDirectories:
         - /tmp/bp-stubs/buddypress
     ignoreErrors:
