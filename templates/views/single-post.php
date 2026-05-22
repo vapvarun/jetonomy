@@ -553,11 +553,24 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						title="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"
 						aria-label="<?php echo $is_bookmarked ? esc_attr__( 'Remove bookmark', 'jetonomy' ) : esc_attr__( 'Bookmark', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'bookmark', 16 ); ?></button>
 					<?php if ( (int) $post->author_id !== get_current_user_id() ) : ?>
-						<button class="jt-act"
+						<?php
+						// Mark the report button if the current user already filed
+						// an open flag on this post. Without this, the user can
+						// click, fill the reason form, hit submit and only THEN
+						// learn the server rejected it as a duplicate — wasted UX.
+						// Mirrors the bookmark "is_bookmarked" pattern above.
+						$jt_already_flagged = (bool) \Jetonomy\Models\Flag::find_by_reporter_and_object(
+							get_current_user_id(),
+							'post',
+							(int) $post->id
+						);
+						?>
+						<button class="jt-act <?php echo $jt_already_flagged ? 'is-flagged' : ''; ?>"
 							data-wp-on--click="actions.flagPost"
 							data-post-id="<?php echo absint( $post->id ); ?>"
-							title="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"
-							aria-label="<?php esc_attr_e( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
+							data-flagged="<?php echo esc_attr( $jt_already_flagged ? '1' : '0' ); ?>"
+							title="<?php echo $jt_already_flagged ? esc_attr__( 'You have reported this', 'jetonomy' ) : esc_attr__( 'Report', 'jetonomy' ); ?>"
+							aria-label="<?php echo $jt_already_flagged ? esc_attr__( 'You have reported this', 'jetonomy' ) : esc_attr__( 'Report', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'flag', 16 ); ?></button>
 						<?php
 						// Moderator-only: if this topic has open reports, surface a count
 						// linking to the space moderation queue so a mod can act on it

@@ -1214,6 +1214,14 @@ const { state, actions } = store( 'jetonomy', {
             const postId = el.ref.dataset.postId;
             if ( ! postId ) return;
 
+            // Short-circuit if the user already reported this post in the
+            // current render. Saves them filling the reason form just to get
+            // a server-side "already flagged" rejection.
+            if ( '1' === el.ref.dataset.flagged ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.alreadyReported || 'You already reported this.' );
+                return;
+            }
+
             const reason = yield jetonomyPrompt( state.i18n?.reportPrompt || 'Why are you reporting this post?', state.i18n?.reportPlaceholder || 'Describe the issue...' );
             if ( reason === null ) return; // Cancelled
 
@@ -1225,6 +1233,12 @@ const { state, actions } = store( 'jetonomy', {
                     body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason } ),
                 } );
                 if ( res.ok ) {
+                    // Reflect "already reported" state inline so the next click
+                    // hits the short-circuit above without a page reload.
+                    el.ref.dataset.flagged = '1';
+                    el.ref.classList.add( 'is-flagged' );
+                    el.ref.title = state.i18n?.alreadyReported || 'You have reported this';
+                    el.ref.setAttribute( 'aria-label', el.ref.title );
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
                     const err = yield res.json().catch( () => ( {} ) );

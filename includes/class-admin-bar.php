@@ -101,6 +101,35 @@ class Admin_Bar {
 			);
 		}
 
+		// Context-aware "Edit this space" entry — shown on any space-context
+		// route to a member who can administer THIS space. Gated by the same
+		// Permission_Engine::is_space_admin check as the /edit/ template, so
+		// non-admins never see a link they can't open. Space admins who are
+		// not site admins still get the shortcut without having to go to
+		// wp-admin first.
+		$route        = (string) get_query_var( 'jetonomy_route' );
+		$space_routes = array( 'space', 'space-members', 'space-roadmap', 'space-moderation', 'new-post', 'post' );
+		if ( in_array( $route, $space_routes, true ) ) {
+			$space_slug = (string) get_query_var(
+				'post' === $route ? 'jetonomy_space_slug' : 'jetonomy_slug'
+			);
+			if ( '' !== $space_slug && class_exists( '\Jetonomy\Models\Space' ) ) {
+				$space = \Jetonomy\Models\Space::find_by_slug( $space_slug );
+				if ( $space && class_exists( '\Jetonomy\Permissions\Permission_Engine' )
+					&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( (int) $user->ID, (int) $space->id )
+				) {
+					$wp_admin_bar->add_menu(
+						array(
+							'parent' => 'jetonomy-community',
+							'id'     => 'jetonomy-community-edit-space',
+							'title'  => __( 'Edit this space', 'jetonomy' ),
+							'href'   => esc_url( $base . '/s/' . rawurlencode( $space->slug ) . '/edit/' ),
+						)
+					);
+				}
+			}
+		}
+
 		if ( ! $is_admin ) {
 			return;
 		}
