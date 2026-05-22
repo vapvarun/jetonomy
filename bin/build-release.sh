@@ -190,6 +190,8 @@ REQUIRED_FILES=(
 	"libs/edd-sl-sdk/edd-sl-sdk.php"
 	"libs/edd-sl-sdk/assets/build/js/edd-sl-sdk.js"
 	"libs/edd-sl-sdk/assets/build/css/style-edd-sl-sdk.css"
+	"libs/action-scheduler/action-scheduler.php"
+	"libs/action-scheduler/functions.php"
 )
 for f in "${REQUIRED_FILES[@]}"; do
 	if [ ! -f "$STAGE/$f" ]; then

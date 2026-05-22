@@ -65,6 +65,16 @@ function plugin_dir_path( string $f ): string { return dirname( $f ) . '/'; }
 function plugin_dir_url( string $f ): string { return 'https://example.test/wp-content/plugins/' . basename( dirname( $f ) ) . '/'; }
 function plugin_basename( string $f ): string { return basename( dirname( $f ) ) . '/' . basename( $f ); }
 function plugins_url( string $p = '', string $f = '' ): string { return 'https://example.test/wp-content/plugins/' . $p; }
+function trailingslashit( string $p ): string { return rtrim( $p, '/\\' ) . '/'; }
+function untrailingslashit( string $p ): string { return rtrim( $p, '/\\' ); }
+function register_post_type( ...$a ) { return new \stdClass(); }
+function register_taxonomy( ...$a ) { return new \stdClass(); }
+function register_post_status( ...$a ): void {}
+function wp_using_ext_object_cache( $u = null ): bool { return false; }
+function _doing_it_wrong( ...$a ): void {}
+function _deprecated_function( ...$a ): void {}
+function _deprecated_argument( ...$a ): void {}
+function _deprecated_hook( ...$a ): void {}
 
 function get_option( string $k, $d = false ) { return $GLOBALS['__options'][ $k ] ?? $d; }
 function update_option( string $k, $v, $autoload = null ): bool { $GLOBALS['__options'][ $k ] = $v; return true; }

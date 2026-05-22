@@ -22,6 +22,17 @@ define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
 
+// Action Scheduler — bundled in free so Pro extensions (email digest, badges,
+// AI, reply-by-email, web-push, webhooks) and any future cron-heavy work get
+// reliable background processing instead of WP-Cron's "next page view" model.
+// AS self-resolves to the highest registered version when multiple plugins ship it.
+// JETONOMY_SMOKE_TEST guard: tools/smoke-test.php boots with a minimal WP stub
+// that doesn't carry AS's required functions/constants (EP_NONE, register_post_type
+// with full args, etc.). Real WordPress always has these, so this is smoke-only.
+if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
+	require_once JETONOMY_DIR . 'libs/action-scheduler/action-scheduler.php';
+}
+
 require_once JETONOMY_DIR . 'includes/class-autoloader.php';
 Jetonomy\Autoloader::register();
 

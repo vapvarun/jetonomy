@@ -67,6 +67,13 @@ foreach ( array(
 // that fataled in 1.3.5).
 $GLOBALS['__options'] = array( 'jetonomy_db_version' => '0.0.0' );
 
+// Third-party bundled libs (Action Scheduler etc.) skip themselves when this
+// sentinel is set. They're stable upstream code; the smoke test's job is to
+// catch fatals in OUR code, not to re-stub every WP function they touch.
+if ( ! defined( 'JETONOMY_SMOKE_TEST' ) ) {
+	define( 'JETONOMY_SMOKE_TEST', true );
+}
+
 require __DIR__ . '/wp-stubs.php';
 
 try {
