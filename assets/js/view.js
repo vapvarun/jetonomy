@@ -2503,6 +2503,40 @@ const { state, actions } = store( 'jetonomy', {
                 }
             } );
 
+            // Pro custom-field inputs (jt_cf[<slug>] and jt_cf[<slug>][]).
+            // Empty object when Pro / custom-fields disabled — no inputs render
+            // and the extra PATCH below is skipped. Multi-checkbox values are
+            // joined with commas to match the storage convention used by
+            // Pro's rest_update_my_fields handler.
+            const customFields = {};
+            form.querySelectorAll( '[name^="jt_cf["]' ).forEach( input => {
+                const m = input.name.match( /^jt_cf\[([^\]]+)\](\[\])?$/ );
+                if ( ! m ) return;
+                const slug = m[ 1 ];
+                const isMulti = '[]' === m[ 2 ];
+                if ( 'checkbox' === input.type ) {
+                    if ( isMulti ) {
+                        if ( input.checked ) {
+                            customFields[ slug ] = customFields[ slug ]
+                                ? customFields[ slug ] + ',' + input.value
+                                : input.value;
+                        } else if ( ! ( slug in customFields ) ) {
+                            customFields[ slug ] = '';
+                        }
+                    } else {
+                        customFields[ slug ] = input.checked ? input.value : '';
+                    }
+                } else if ( 'radio' === input.type ) {
+                    if ( input.checked ) {
+                        customFields[ slug ] = input.value;
+                    } else if ( ! ( slug in customFields ) ) {
+                        customFields[ slug ] = '';
+                    }
+                } else {
+                    customFields[ slug ] = input.value;
+                }
+            } );
+
             const payload = { display_name: displayName, bio };
             if ( Object.keys( notifPrefs ).length > 0 ) {
                 payload.notification_preferences = notifPrefs;
@@ -2518,12 +2552,39 @@ const { state, actions } = store( 'jetonomy', {
                         body: JSON.stringify( payload ),
                     }
                 );
-                if ( response.ok ) {
-                    window.location.href = ctx.profileUrl;
-                } else {
+                if ( ! response.ok ) {
                     const err = yield response.json().catch( () => ( {} ) );
                     if ( window.bnToast ) window.bnToast( err.message || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ), 'error' );
+                    return;
                 }
+
+                // Persist Pro custom-field values via Pro's dedicated endpoint.
+                // 404 means the extension is off — silent skip so free still
+                // redirects. Validation errors surface as a toast but don't
+                // block the redirect: the core profile already saved.
+                if ( Object.keys( customFields ).length > 0 ) {
+                    const cfResponse = yield fetch(
+                        `${ state.apiBase }/users/me/fields`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
+                            credentials: 'same-origin',
+                            body: JSON.stringify( customFields ),
+                        }
+                    );
+                    if ( ! cfResponse.ok && 404 !== cfResponse.status ) {
+                        const cfErr = yield cfResponse.json().catch( () => ( {} ) );
+                        if ( window.bnToast ) {
+                            window.bnToast(
+                                cfErr.message || ( state.i18n?.failedSaveProfile || 'Some custom fields could not be saved.' ),
+                                'error'
+                            );
+                        }
+                    }
+                }
+
+                document.dispatchEvent( new CustomEvent( 'jetonomy:profileSaved', { detail: { form, payload, customFields } } ) );
+                window.location.href = ctx.profileUrl;
             } catch {
                 if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.', 'error' );
             } finally {
