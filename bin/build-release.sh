@@ -177,7 +177,20 @@ if [ -f "$STAGE/composer.json" ]; then
 fi
 
 # --- 5. sanity — required files present -----------------------------------
-REQUIRED_FILES=( "$MAIN_FILE" "readme.txt" "includes/functions.php" "includes/class-autoloader.php" "includes/class-jetonomy.php" )
+# Bundled SDKs (EDD SL SDK, etc.) MUST ship in the zip. They live under libs/
+# and are committed to git so they don't depend on the build machine having
+# them in vendor/. The 1.4.2 release shipped without edd-sl-sdk.js because
+# the SDK was in vendor/ (gitignored) and the build box happened not to have it.
+REQUIRED_FILES=(
+	"$MAIN_FILE"
+	"readme.txt"
+	"includes/functions.php"
+	"includes/class-autoloader.php"
+	"includes/class-jetonomy.php"
+	"libs/edd-sl-sdk/edd-sl-sdk.php"
+	"libs/edd-sl-sdk/assets/build/js/edd-sl-sdk.js"
+	"libs/edd-sl-sdk/assets/build/css/style-edd-sl-sdk.css"
+)
 for f in "${REQUIRED_FILES[@]}"; do
 	if [ ! -f "$STAGE/$f" ]; then
 		echo "FAIL: required file missing from staging: $f" >&2

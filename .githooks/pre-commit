@@ -61,7 +61,7 @@ else
     INLINE_OFFENDERS=""
     for f in $STAGED_PHP; do
         case "$f" in
-            vendor/*|dist/*|node_modules/*|build/*|tests/*|tools/*|qa/*) continue ;;
+            vendor/*|libs/*|dist/*|node_modules/*|build/*|tests/*|tools/*|qa/*) continue ;;
             */templates/emails/*) continue ;;
         esac
         # `|| true` so a clean file (zero matches) doesn't trip set -e.

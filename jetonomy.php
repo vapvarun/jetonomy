@@ -64,8 +64,9 @@ add_action(
 	}
 );
 
-if ( file_exists( JETONOMY_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php' ) ) {
-	require_once JETONOMY_DIR . 'vendor/easy-digital-downloads/edd-sl-sdk/edd-sl-sdk.php';
+// SDK lives at libs/ (committed, ships in zip). Pro reads it via the same path.
+if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' ) ) {
+	require_once JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php';
 }
 
 // Auto-activate the preset license key on first load so downloads work.
