@@ -42,10 +42,11 @@ class Cron {
 		add_action( 'jetonomy_publish_scheduled', [ $this, 'publish_scheduled_posts' ] );
 		add_action( 'jetonomy_verification_reminder', [ Verification_Reminder::class, 'run' ] );
 
-		// Self-heal: ensure every recurring action is registered with AS on every
-		// request. Cheap (memoized lookup); covers fresh installs, upgrades from
-		// 1.4.3 (legacy WP-Cron schedules), and customers who manually cleared cron.
-		add_action( 'init', [ self::class, 'ensure_scheduled' ] );
+		// Self-heal: ensure every recurring action is registered. We hook the
+		// 'action_scheduler_init' action AS fires once its data store is ready
+		// (not 'init', which can run before AS's data store is wired up and
+		// would emit "called incorrectly" notices on every page load).
+		add_action( 'action_scheduler_init', [ self::class, 'ensure_scheduled' ] );
 	}
 
 	/**
