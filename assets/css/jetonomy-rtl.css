@@ -587,6 +587,15 @@
      pointer precision is finer there. */
   @media (hover: none) {
     .jt-act { min-block-size: 44px; padding-inline: var(--jt-space-4); }
+    /* Small buttons have no min-height for mouse density; on touch they
+       need the full tap target so per-row controls (e.g. the member "Ban
+       from space" button) are not a slip hazard. Matches the regular
+       .jt-btn mobile target. Applies everywhere .jt-btn-sm is used. */
+    .jt-app .jt-btn-sm { min-height: var(--jt-tap); }
+    /* Stacked list vote chevrons are 20px tall for mouse density — far too
+       small to thumb-tap, and up/down sit right on top of each other. Give
+       each the full tap token on touch so voting from a listing is reliable. */
+    .jt-v-btn { height: var(--jt-tap); }
   }
   .jt-act:hover { background: var(--jt-bg-muted); color: var(--jt-text-secondary); border: none; }
   .jt-act .n { font-family: var(--jt-font-mono); font-weight: 700; }
@@ -749,7 +758,13 @@
 
   @media (max-width: 900px) {
     .jt-two-col { grid-template-columns: 1fr; }
-    .jt-sidebar { display: none; }
+    /* Stack the sidebar below content — never hide it. The About card,
+       space stats, and the Members / Moderation / Edit-space links are
+       unique content + navigation; the old `display:none` stranded every
+       tablet and phone user without them. Drop sticky so it flows in the
+       single-column order instead of pinning to the viewport. */
+    .jt-two-col > .jt-sidebar,
+    .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jt-space-head { flex-direction: column; text-align: center; }
     .jt-space-nums { margin-right: 0; }
@@ -827,7 +842,7 @@
        three buttons (View / Remove / Dismiss) fit a moderation card
        row without "Remove Content" wrapping to 2 lines. */
     .jt-app .jt-btn { padding: var(--jt-space-2) var(--jt-space-4); font-size: var(--jt-text-sm); min-height: var(--jt-tap); }
-    .jt-app .jt-btn-sm { padding: 4px var(--jt-space-3); font-size: var(--jt-text-xs); min-height: 32px; }
+    .jt-app .jt-btn-sm { padding: 4px var(--jt-space-3); font-size: var(--jt-text-xs); min-height: var(--jt-tap); }
 
     /* Leaderboard rows — tighten stats, hide per-row rep/posts labels
        (they repeat 20× per page) and show a single sticky header row
@@ -879,15 +894,16 @@
 
     /* Post / reply foot — icon-only single row on mobile. Padding
        tightened from 10px 16px to 8px so all 7–8 actions fit on a
-       390px viewport. Aggressively compact item spacing. Text labels
-       hide; `title` + `aria-label` carry the accessible name.
-       Tap target 34×34 (AA 24px + breathing room). */
+       390px viewport. Item spacing stays compact, but the tap target is
+       a full 44px (touch standard) — the row already wraps, so taller
+       buttons wrap to a second line rather than overflowing. Text labels
+       hide; `title` + `aria-label` carry the accessible name. */
     .jt-post-foot,
     .jt-reply-foot { flex-wrap: wrap; gap: 2px; padding: var(--jt-space-2); align-items: center; justify-content: flex-start; }
     .jt-post-foot .jt-act,
-    .jt-reply-foot .jt-act { padding: 6px 6px; min-height: 34px; gap: 3px; font-size: var(--jt-text-xs); }
+    .jt-reply-foot .jt-act { padding: 6px 8px; min-height: 44px; gap: 3px; font-size: var(--jt-text-xs); }
     .jt-post-foot .jt-more-trigger,
-    .jt-reply-foot .jt-more-trigger { min-width: 34px; min-height: 34px; padding: 6px; }
+    .jt-reply-foot .jt-more-trigger { min-width: 44px; min-height: 44px; padding: 6px; }
     .jt-post-foot .jt-view-count,
     .jt-reply-foot .jt-view-count { padding: 0 4px; font-size: var(--jt-text-xs); }
     .jt-post-foot .jt-reactions,
@@ -980,6 +996,11 @@
   .jt-badge-closed { background: var(--jt-bg-muted); color: var(--jt-text-tertiary); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); }
   .jt-badge-danger { display: inline-flex; align-items: center; background: var(--jt-danger); color: var(--jt-white); font-size: 0.8125rem; font-weight: 700; padding: 3px 10px; border-radius: var(--jt-radius-full); white-space: nowrap; }
   .jt-badge-private { background: var(--jt-warn-light); color: var(--jt-warn); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  /* Pinned (sticky) topic marker — same shape as the private badge but in the
+     accent colour, since pinning is informational, not a warning. Labelled
+     (not an aria-hidden bare icon) so it reads as "Pinned" for everyone. */
+  .jt-badge-pinned { background: var(--jt-accent-muted); color: var(--jt-accent); font-size: 0.8125rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); display: inline-flex; align-items: center; gap: 3px; }
+  .jt-badge-pinned svg { flex-shrink: 0; }
   .jt-prefix { --jt-pfx: var(--jt-accent); background: color-mix(in srgb, var(--jt-pfx) 15%, transparent); color: var(--jt-pfx); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: var(--jt-radius-sm); text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
   .jt-badge-accent { font-size: 0.8125rem; font-weight: 600; background: var(--jt-accent-muted); color: var(--jt-text-secondary); padding: 2px 8px; border-radius: var(--jt-radius-full); }
 
