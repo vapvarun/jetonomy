@@ -266,36 +266,49 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.4.4 - May 2026 =
 
-Admin polish on top of the security and refactor work - a unified Lucide icon picker and reusable empty-state across every admin surface, a redesigned notifications page, and configurable reputation.
+Admin polish on top of the security and refactor work, plus Action Scheduler bundling for reliable background work, dependable License screen, and end-to-end fixes for custom profile fields, reputation fairness, and automated moderation.
 
+* New       - Action Scheduler 3.9.3 is now bundled directly in the plugin so background work runs reliably without WooCommerce or any other plugin installed.
+* New       - "Edit this space" entry in the WordPress admin bar plus an inline "Edit space" link on space pages for users who can administer a space, so space admins reach the front-end edit page in one click from desktop and mobile.
 * New       - Configurable reputation - point values for posts, replies, votes, and accepted answers are now editable in Settings instead of being hardcoded.
 * New       - Front-end admin bar shortcuts for moderators - jump to the moderation queue and space tools from any community page.
+* Improve   - Six recurring crons (trust evaluation, ban expiry, activity pruning, notification cleanup, scheduled-post publishing, verification reminder) now run via Action Scheduler instead of WP-Cron so quiet sites no longer drop scheduled work.
+* Improve   - The Report button on a post now tells you when you have already reported it instead of letting you fill the reason form a second time only to be rejected as a duplicate.
+* Improve   - "More about you" section heading replaces the developer-style "Profile Fields" label on the Edit Profile page and reads as a real section break with a divider on top.
+* Improve   - Custom profile field text reads cleanly in dark mode instead of being washed out by theme CSS.
+* Improve   - Destructive actions in dark mode (Block user and similar) use a brighter red so labels pass WCAG AA contrast.
+* Improve   - Award Badge admin confirm uses the same buttons as every other Jetonomy admin confirm.
 * Improve   - Unified Lucide icon picker across every admin surface (categories, space create, space edit, badges) so icon selection looks and behaves the same everywhere.
 * Improve   - Redesigned notifications page with a cleaner layout and filter tabs (all, unread, mentions, replies, votes, badges).
 * Improve   - Reusable admin empty-state so "nothing here yet" screens are consistent across the plugin.
 * Improve   - Single Idea page spacing tightened to match the rest of the post surface.
+* Fix       - The License screen no longer 404s `edd-sl-sdk.js` on customer installs - the EDD SL SDK is now committed to the plugin and ships in every release zip.
+* Fix       - Custom profile fields you type into the Edit Profile page now save and persist on reload instead of being silently discarded.
+* Fix       - Reporting a post applies the documented -10 reputation deduction at report time, and dismissing the flag restores the deduction so false reports no longer leave permanent damage.
+* Fix       - Moderation rules with action "Flag for Review" now actually create a flag record and surface the content in the moderation queue instead of being silently discarded.
+* Fix       - Action Scheduler no longer logs "called incorrectly" notices on every page load when bundled.
 * Fix       - BuddyPress dark mode now propagates correctly to community surfaces.
 * Fix       - Composer Private toggle spacing corrected and the Banned Users confirmation uses a calmer tone.
 * Fix       - Keyboard focus rings no longer drift on the editor body and feed actions (accessibility).
-* Dev       - New filter `jetonomy_reputation_points_for` lets you adjust the points awarded per action; Jetonomy Pro uses it to apply admin-configured values.
-* Security  - All mutation REST routes (posts, replies, votes, bookmarks, moderation, spaces, subscriptions, notifications) now use a unified `REST_Auth` permission helper that enforces login + cookie nonce + capability + post-ownership in a single contract. A CI gate (`bin/audit-rest-routes.php`) blocks new routes that skip the helper.
-* Refactor  - Compose pipeline unified across "Share an Idea", the full new-post page, and inline topic embeds. One `composePost()` path; per-surface fields supply extra payload.
-* Refactor  - Feed-space posts keep a real title (used by breadcrumbs, notifications, search, emails, and share previews) but hide it visually on the single-post page so the surface stays body-first, Twitter-style. The inline composer publishes status updates cleanly.
-* Refactor  - Single `optimisticAction()` JS helper replaces ~11 hand-rolled optimistic-update sites (votes, bookmarks, follow, subscribe, reactions, etc.). Failures revert without a page reload.
-* Refactor  - Single `smartDropdown()` JS helper replaces ~4 floating-panel implementations (post menus, reply menus, conversation actions, reaction picker). Auto-flips upward near the viewport edge.
-* Refactor  - `Reputation::award()` / `revoke()` / `award_custom()` is the sole public mutator for trust points. The internal helper was renamed so accidental bypass is impossible.
 * Fix       - Private ideas now stay private when published via the inline composer (previously leaked to public on the first save).
 * Fix       - Polls accept votes again (previously failed silently due to nonce drift between the legacy submitter and the unified compose path).
 * Fix       - Downvote on a reply reverts cleanly when the server rejects the action (no more "needs refresh" UX).
-* Fix       - "More" menu on the last reply in a thread no longer clips below the viewport — the JS positioner flips it upward automatically.
-* Fix       - Reporting a post now correctly deducts reputation from the author (previously the flag-validated action was wired to a no-op).
+* Fix       - "More" menu on the last reply in a thread no longer clips below the viewport - the JS positioner flips it upward automatically.
 * Fix       - Idea-planned action now consistently awards owner reputation across the activity log and notifications.
+* Dev       - `bin/build-release.sh` now asserts the bundled SDK and Action Scheduler files are present in staging before producing the zip, so a clean clone can never again build a broken release artifact.
+* Dev       - New filter `jetonomy_reputation_points_for` lets you adjust the points awarded per action; Jetonomy Pro uses it to apply admin-configured values.
 * Dev       - New action `jetonomy_post_created` fires from the Post model on every insert path (REST, admin, CLI, abilities, imports). Use this when you want to score the creation event itself instead of waiting on downstream votes.
 * Dev       - New action `jetonomy_reply_created` mirrors the post hook for replies; also fires from the model.
 * Dev       - New actions `jetonomy_vote_cast` and `jetonomy_vote_retracted` let gamification reward the voter directly (the receiver is already covered by reputation). Vote-flips fire one retract plus one cast so counters match the voter's actual clicks.
 * Dev       - `jetonomy_idea_status_changed` now passes the post author ID as a fifth argument so listeners can reward the author without a second lookup. Existing four-argument listeners keep working.
 * Dev       - New filter `jetonomy_trust_level_pre_change` runs on the cron and CLI auto-promotion paths and lets you veto, fast-track, or rewrite a proposed level. Returning the user's current level short-circuits the write. Manual admin overrides bypass the filter on purpose.
 * Dev       - Documented all new hooks in `docs/website/developer-guide/02-hooks-reference.md` with working WB Gamification examples.
+* Security  - All mutation REST routes (posts, replies, votes, bookmarks, moderation, spaces, subscriptions, notifications) now use a unified `REST_Auth` permission helper that enforces login + cookie nonce + capability + post-ownership in a single contract. A CI gate (`bin/audit-rest-routes.php`) blocks new routes that skip the helper.
+* Refactor  - Compose pipeline unified across "Share an Idea", the full new-post page, and inline topic embeds. One `composePost()` path; per-surface fields supply extra payload.
+* Refactor  - Feed-space posts keep a real title (used by breadcrumbs, notifications, search, emails, and share previews) but hide it visually on the single-post page so the surface stays body-first, Twitter-style. The inline composer publishes status updates cleanly.
+* Refactor  - Single `optimisticAction()` JS helper replaces ~11 hand-rolled optimistic-update sites (votes, bookmarks, follow, subscribe, reactions, etc.). Failures revert without a page reload.
+* Refactor  - Single `smartDropdown()` JS helper replaces ~4 floating-panel implementations (post menus, reply menus, conversation actions, reaction picker). Auto-flips upward near the viewport edge.
+* Refactor  - `Reputation::award()` / `revoke()` / `award_custom()` is the sole public mutator for trust points. The internal helper was renamed so accidental bypass is impossible.
 * i18n      - ~30 previously-hardcoded JS strings are now translatable. ESLint gate (`no-restricted-syntax`) prevents regression by blocking raw string literals in user-facing JS APIs.
 * Compat    - Aligned with Jetonomy Pro 1.4.4. Install both updates together.
 
