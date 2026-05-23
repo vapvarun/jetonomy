@@ -1639,6 +1639,14 @@
      that beat .jt-input on specificity. Anchor color + background + caret to
      the design tokens with !important so dark mode reads correctly under any
      active theme. Same pattern the border / box-shadow lines already use. */
+  /* Custom-fields section header on the front-end Edit Profile page. Pro's
+     custom-fields extension renders a wrapper with this title above the
+     admin-defined fields. Style as a labelled section divider so the user
+     sees "new section" rather than treating field-name labels as a wall of
+     headings. Matches the visual weight of .jt-label so the form's flat
+     structure is preserved. */
+  .jt-custom-fields { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--jt-border); }
+  .jt-custom-fields-title { font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin: 0 0 12px; padding: 0; }
   .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: left; }
   .jt-input:focus { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
   .jt-input:focus-visible { outline: 2px solid var(--jt-accent) !important; outline-offset: 2px !important; }

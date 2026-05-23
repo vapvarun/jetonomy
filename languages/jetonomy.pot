@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.4.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-05-23 12:43:28+00:00\n"
+"POT-Creation-Date: 2026-05-23 14:02:24+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1543,7 +1543,7 @@ msgstr ""
 #: includes/admin/views/users.php:63
 #: includes/integrations/class-buddypress.php:799
 #: templates/partials/sidebar.php:110 templates/views/search.php:197
-#: templates/views/search.php:281 templates/views/space.php:204
+#: templates/views/search.php:281 templates/views/space.php:227
 #: templates/views/user-profile.php:193 templates/views/user-profile.php:230
 msgid "Posts"
 msgstr ""
@@ -3101,7 +3101,7 @@ msgstr ""
 #: includes/admin/views/space-edit.php:94 includes/admin/views/spaces.php:64
 #: includes/admin/views/spaces.php:166 includes/admin/views/spaces.php:247
 #: templates/partials/icon-picker.php:73 templates/partials/sidebar.php:121
-#: templates/views/space-roadmap.php:117 templates/views/space.php:277
+#: templates/views/space-roadmap.php:117 templates/views/space.php:300
 msgid "Ideas"
 msgstr ""
 
@@ -4690,7 +4690,7 @@ msgstr ""
 #: includes/class-template-loader.php:755
 #: includes/class-template-loader.php:889 templates/partials/sidebar.php:114
 #: templates/views/my-spaces.php:141 templates/views/space-members.php:74
-#: templates/views/space-members.php:93 templates/views/space.php:208
+#: templates/views/space-members.php:93 templates/views/space.php:231
 msgid "Members"
 msgstr ""
 
@@ -4754,7 +4754,7 @@ msgstr ""
 #: dist/jetonomy/includes/admin/views/spaces.php:86
 #: dist/jetonomy/templates/views/space.php:217
 #: includes/admin/views/space-edit.php:115 includes/admin/views/spaces.php:86
-#: templates/views/space.php:217
+#: templates/views/space.php:240
 msgid "Invite Only"
 msgstr ""
 
@@ -6225,7 +6225,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/space.php:132
 #: dist/jetonomy/templates/views/space.php:246 includes/class-abilities.php:583
 #: includes/class-template-loader.php:462 templates/views/space.php:132
-#: templates/views/space.php:246
+#: templates/views/space.php:269
 msgid "Join Space"
 msgstr ""
 
@@ -6840,7 +6840,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:389
 #: dist/jetonomy/templates/views/space.php:258
 #: includes/class-template-loader.php:267 templates/views/single-post.php:306
-#: templates/views/single-post.php:389 templates/views/space.php:258
+#: templates/views/single-post.php:389 templates/views/space.php:281
 msgid "Follow"
 msgstr ""
 
@@ -6849,7 +6849,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/single-post.php:389
 #: dist/jetonomy/templates/views/space.php:258
 #: includes/class-template-loader.php:268 templates/views/single-post.php:306
-#: templates/views/single-post.php:389 templates/views/space.php:258
+#: templates/views/single-post.php:389 templates/views/space.php:281
 msgid "Following"
 msgstr ""
 
@@ -7326,7 +7326,7 @@ msgstr ""
 
 #: dist/jetonomy/includes/class-template-loader.php:464
 #: dist/jetonomy/templates/views/space.php:226
-#: includes/class-template-loader.php:464 templates/views/space.php:226
+#: includes/class-template-loader.php:464 templates/views/space.php:249
 msgid "Awaiting Approval"
 msgstr ""
 
@@ -7470,7 +7470,7 @@ msgstr ""
 #: includes/class-template-loader.php:758
 #: includes/class-template-loader.php:894 templates/views/space-roadmap.php:98
 #: templates/views/space-roadmap.php:111 templates/views/space-roadmap.php:120
-#: templates/views/space.php:280
+#: templates/views/space.php:303
 msgid "Roadmap"
 msgstr ""
 
@@ -7515,6 +7515,7 @@ msgstr ""
 #: dist/jetonomy/templates/partials/sidebar.php:160
 #: includes/class-template-loader.php:803
 #: includes/class-template-loader.php:1054 templates/partials/sidebar.php:160
+#: templates/views/space.php:219
 msgid "Edit space"
 msgstr ""
 
@@ -8428,7 +8429,7 @@ msgstr ""
 
 #: dist/jetonomy/includes/notifications/class-notifier.php:929
 #: dist/jetonomy/templates/views/space.php:338
-#: includes/notifications/class-notifier.php:929 templates/views/space.php:338
+#: includes/notifications/class-notifier.php:929 templates/views/space.php:361
 msgid "New Post"
 msgstr ""
 
@@ -11660,7 +11661,7 @@ msgstr[1] ""
 
 #: dist/jetonomy/templates/views/space-roadmap.php:115
 #: dist/jetonomy/templates/views/space.php:275
-#: templates/views/space-roadmap.php:115 templates/views/space.php:275
+#: templates/views/space-roadmap.php:115 templates/views/space.php:298
 msgid "Space sections"
 msgstr ""
 
@@ -11703,7 +11704,7 @@ msgstr ""
 
 #: dist/jetonomy/templates/views/space.php:112
 #: dist/jetonomy/templates/views/space.php:235 templates/views/space.php:112
-#: templates/views/space.php:235
+#: templates/views/space.php:258
 msgid "Join"
 msgstr ""
 
@@ -11711,59 +11712,59 @@ msgstr ""
 msgid "This space is private. Join to access posts and discussions."
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:267 templates/views/space.php:267
+#: dist/jetonomy/templates/views/space.php:267 templates/views/space.php:290
 msgid "This space is archived. New posts and replies are no longer accepted."
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:269 templates/views/space.php:269
+#: dist/jetonomy/templates/views/space.php:269 templates/views/space.php:292
 msgid "This space is locked. New posts and replies are not allowed."
 msgstr ""
 
 #: dist/jetonomy/templates/views/space.php:289
-#: dist/jetonomy/templates/views/tag.php:94 templates/views/space.php:289
+#: dist/jetonomy/templates/views/tag.php:94 templates/views/space.php:312
 #: templates/views/tag.php:94
 msgid "Latest"
 msgstr ""
 
 #: dist/jetonomy/templates/views/space.php:290
-#: dist/jetonomy/templates/views/tag.php:95 templates/views/space.php:290
+#: dist/jetonomy/templates/views/tag.php:95 templates/views/space.php:313
 #: templates/views/tag.php:95
 msgid "Popular"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:291 templates/views/space.php:291
+#: dist/jetonomy/templates/views/space.php:291 templates/views/space.php:314
 msgid "Unanswered"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:309 templates/views/space.php:309
+#: dist/jetonomy/templates/views/space.php:309 templates/views/space.php:332
 msgid "+ Ask a Question"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:310 templates/views/space.php:310
+#: dist/jetonomy/templates/views/space.php:310 templates/views/space.php:333
 msgid "+ Share an Idea"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:311 templates/views/space.php:311
+#: dist/jetonomy/templates/views/space.php:311 templates/views/space.php:334
 msgid "+ New Status"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:313 templates/views/space.php:313
+#: dist/jetonomy/templates/views/space.php:313 templates/views/space.php:336
 msgid "+ New Post"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:318 templates/views/space.php:318
+#: dist/jetonomy/templates/views/space.php:318 templates/views/space.php:341
 msgid "Log in to post"
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:327 templates/views/space.php:327
+#: dist/jetonomy/templates/views/space.php:327 templates/views/space.php:350
 msgid "Every question has an accepted answer."
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:328 templates/views/space.php:328
+#: dist/jetonomy/templates/views/space.php:328 templates/views/space.php:351
 msgid "No posts without replies yet."
 msgstr ""
 
-#: dist/jetonomy/templates/views/space.php:330 templates/views/space.php:330
+#: dist/jetonomy/templates/views/space.php:330 templates/views/space.php:353
 msgid "No posts yet. Be the first to start a discussion!"
 msgstr ""
 
