@@ -120,6 +120,31 @@ class Flag extends Model {
 			Post::increment_flag_count( (int) $flag->object_id, -1 );
 		}
 
+		// Fairness contract: if a pending post-flag is dismissed (moderator
+		// ruled the report invalid), restore the -10 the author lost at
+		// report time. Without this, malicious or repeated false reports can
+		// permanently damage an author's reputation even after a moderator
+		// clears them, with no manual repair path short of CLI.
+		//
+		// Guarded on the prior status being 'pending' so re-dismissing an
+		// already-dismissed flag doesn't double-restore. Self-flags (reporter
+		// equals author) are excluded because the original report awarded no
+		// deduction either — symmetry with the report-create path.
+		if ( $ok && $flag
+			&& 'pending' === $flag->status
+			&& 'dismissed' === $status
+			&& 'post' === $flag->object_type
+		) {
+			$post = Post::find( (int) $flag->object_id );
+			if ( $post ) {
+				$author_id   = (int) $post->author_id;
+				$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+				if ( $author_id > 0 && $author_id !== $reporter_id ) {
+					\Jetonomy\Trust\Reputation::revoke( $author_id, 'post_reported' );
+				}
+			}
+		}
+
 		return $ok;
 	}
 
