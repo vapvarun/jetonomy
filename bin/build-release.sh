@@ -156,7 +156,7 @@ CHANGELOG.md
 .distignore
 .wp-env.json
 .playwright-mcp/
-build/
+/build/
 verify-*.png
 verify-*.jpg
 verify-*.log
