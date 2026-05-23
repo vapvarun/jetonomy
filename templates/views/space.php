@@ -190,12 +190,35 @@ $crumbs[] = [
 			<?php if ( ! empty( $space->cover_image ) ) : ?>
 			<div class="jt-space-cover" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')"></div>
 		<?php endif; ?>
+		<?php
+		$_jt_can_edit_space = is_user_logged_in()
+			&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $_jt_user_id, (int) $space->id );
+		?>
 		<div class="jt-space-head">
 				<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
 				<div>
 						<h1><?php echo esc_html( $space->title ); ?></h1>
 					<?php if ( ! empty( $space->description ) ) : ?>
 						<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
+					<?php endif; ?>
+					<?php if ( $_jt_can_edit_space ) : ?>
+						<?php
+						/*
+						 * Inline Edit Space CTA for users who can administer THIS space.
+						 * The admin-bar entry alone is not enough - WordPress hides the
+						 * admin bar at mobile widths under most themes, leaving phone-only
+						 * space admins with no path to /edit/. This inline button always
+						 * shows, gated by the same Permission_Engine::is_space_admin check
+						 * as the admin-bar entry and the front-end edit template.
+						 */
+						?>
+						<p class="jt-space-edit-cta">
+							<a class="jt-btn jt-btn-sm jt-btn-ghost"
+								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
+								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
+								<?php esc_html_e( 'Edit space', 'jetonomy' ); ?>
+							</a>
+						</p>
 					<?php endif; ?>
 				</div>
 				<div class="jt-space-nums">

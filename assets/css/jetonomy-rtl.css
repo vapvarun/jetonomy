@@ -1635,11 +1635,15 @@
   .jt-form-group { margin-bottom: 16px; }
   .jt-label { display: block; font-size: 0.9375rem; font-weight: 600; color: var(--jt-text); margin-bottom: 6px; }
   .jt-label-hint { font-size: 0.8125rem; font-weight: 400; color: var(--jt-text-tertiary); }
-  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: right; }
+  /* Themes like Reign ship aggressive input[type="text"] color/background rules
+     that beat .jt-input on specificity. Anchor color + background + caret to
+     the design tokens with !important so dark mode reads correctly under any
+     active theme. Same pattern the border / box-shadow lines already use. */
+  .jt-input { width: 100%; padding: 11px 16px; border: 1.5px solid var(--jt-border-strong) !important; border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; caret-color: var(--jt-text); transition: border-color 0.15s, box-shadow 0.15s; box-shadow: none !important; outline: none !important; -webkit-appearance: none; text-align: right; }
   .jt-input:focus { outline: none !important; border-color: var(--jt-accent) !important; box-shadow: 0 0 0 3px var(--jt-accent-muted) !important; }
   .jt-input:focus-visible { outline: 2px solid var(--jt-accent) !important; outline-offset: 2px !important; }
-  .jt-input::placeholder { color: var(--jt-text-secondary); }
-  .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text); background: var(--jt-bg); transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
+  .jt-input::placeholder { color: var(--jt-text-secondary) !important; }
+  .jt-select { padding: 11px 16px; border: 1.5px solid var(--jt-border-strong); border-radius: var(--jt-radius); font-family: var(--jt-font); font-size: 1rem; color: var(--jt-text) !important; background: var(--jt-bg) !important; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
   .jt-select:focus { outline: none; border-color: var(--jt-accent); box-shadow: 0 0 0 3px var(--jt-accent-muted); }
   .jt-select:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; align-items: center; }
