@@ -36,6 +36,11 @@ parameters:
 			path: includes/admin/views/space-edit.php
 
 		-
+			message: "#^Call to static method get\\(\\) on an unknown class BP_Groups_Group\\.$#"
+			count: 1
+			path: includes/admin/views/space-edit.php
+
+		-
 			message: "#^Property Jetonomy\\\\API\\\\Api\\:\\:\\$controllers is never read, only written\\.$#"
 			count: 1
 			path: includes/api/class-api.php
@@ -176,32 +181,92 @@ parameters:
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
-			count: 2
-			path: includes/integrations/class-buddypress.php
-
-		-
-			message: "#^Negated boolean expression is always false\\.$#"
-			count: 4
-			path: includes/integrations/class-buddypress.php
-
-		-
-			message: "#^Property BP_Groups_Group\\:\\:\\$description \\(string\\) in isset\\(\\) is not nullable\\.$#"
+			message: "#^Function bp_core_get_userlink not found\\.$#"
 			count: 1
 			path: includes/integrations/class-buddypress.php
 
 		-
-			message: "#^Property BP_Groups_Group\\:\\:\\$name \\(string\\) on left side of \\?\\? is not nullable\\.$#"
+			message: "#^Function bp_core_load_template not found\\.$#"
+			count: 4
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_core_new_nav_item not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_core_new_subnav_item not found\\.$#"
+			count: 4
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_displayed_user_id not found\\.$#"
+			count: 4
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_get_current_group_id not found\\.$#"
+			count: 3
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_get_current_group_slug not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_is_active not found\\.$#"
+			count: 3
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_is_group not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function bp_is_my_profile not found\\.$#"
+			count: 3
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function buddypress not found\\.$#"
 			count: 2
 			path: includes/integrations/class-buddypress.php
 
 		-
-			message: "#^Property BP_Groups_Group\\:\\:\\$status \\(string\\) on left side of \\?\\? is not nullable\\.$#"
+			message: "#^Function groups_delete_groupmeta not found\\.$#"
 			count: 2
 			path: includes/integrations/class-buddypress.php
 
 		-
-			message: "#^Variable \\$data in empty\\(\\) always exists and is not falsy\\.$#"
+			message: "#^Function groups_get_current_group not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function groups_get_group not found\\.$#"
+			count: 6
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function groups_get_groupmeta not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function groups_update_groupmeta not found\\.$#"
+			count: 2
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Function is_buddypress not found\\.$#"
+			count: 1
+			path: includes/integrations/class-buddypress.php
+
+		-
+			message: "#^Parameter \\$group of method Jetonomy\\\\Integrations\\\\BuddyPress\\:\\:get_group_url\\(\\) has invalid type BP_Groups_Group\\.$#"
 			count: 1
 			path: includes/integrations/class-buddypress.php
 
