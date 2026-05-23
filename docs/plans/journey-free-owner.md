@@ -1,47 +1,76 @@
 # Jetonomy Free-Only Owner Journey Audit
 
-Branch: 1.4.4-dev. jetonomy-pro: INACTIVE. Audit method: static code trace + WP-CLI plugin-list confirmation. DB queries skipped (MySQL socket unavailable in audit session; schema assertions are code-level only).
+**Branch**: 1.4.4-dev. jetonomy-pro: INACTIVE.
+**Date**: 2026-05-23.
+**Method**: Static code trace, WP-CLI plugin-list confirmation, and browser verification of the 1.4.4 fixes from `1.4.4-verification.md`.
+
+---
+
+## What got easier on 1.4.4-dev
+
+After activating only Jetonomy 1.4.4 (no Pro, no other helper plugin), you can:
+
+- Open the License screen and click Manage License without seeing a broken-script error. The licensing UI ships with the plugin.
+- Walk away from a brand new community and trust that the recurring background jobs still run. Trust promotions, expired ban cleanup, scheduled-post publishing, activity pruning, notification cleanup, and verification reminders all run through a reliable queue, not WP-Cron, so they fire on time even on quiet first-day sites.
+- Hit any space on the front end and click "Edit this space" in the admin bar. You no longer have to bounce through wp-admin to tweak a space you are browsing.
+- Trust the destructive-confirm dialog in the Banned Users tab to look destructive: ghost Cancel, red Confirm, matching every other danger surface.
+- Build a release zip from a clean clone and have it work on first activation. The build refuses to produce a zip that is missing the licensing SDK or the background-job library.
 
 ---
 
 ## Journey Table
 
-| Moment | Tag | Works free-only? | Gap / file:line | Severity |
+| Moment | Tag | Works free-only? | Notes | Gap |
 |---|---|---|---|---|
-| **Activation** — plugin boots, DB tables created, caps registered | [free] | Yes | No Pro class called; `class-jetonomy.php` calls only free `Schema::create_tables()` and `Migrator::run()`. | None |
-| **Setup wizard** — `/admin.php?page=jetonomy-setup`, 3-step AJAX wizard | [free] | Yes | `setup-wizard.php` has zero `JETONOMY_PRO_VERSION` references. AJAX handled by `Setup_Handler` + `Demo_Seeder`; Demo_Seeder's Pro branch at `class-demo-seeder.php:638` is guarded by `defined( 'JETONOMY_PRO_VERSION' )`. | None |
-| **First category** — Categories admin page, create/edit/delete | [free] | Yes | `class-categories-handler.php` has no Pro references. View `categories.php` has no Pro guards. | None |
-| **First space** — Spaces admin page, new/edit/access-rules | [free] | Yes | `spaces.php:292` shows a Pro upsell (Polls/Reactions/Analytics) guarded by `! defined( 'JETONOMY_PRO_VERSION' )`. Space edit tabs at `space-edit.php:46-48` show "Custom Fields" and "Reactions" tabs as disabled placeholders (guarded). All functional tabs (General, Members, Access, Settings, Join Requests) work without Pro. | None |
-| **Permission/Trust/Reputation config** — Settings > Permissions tab (trust thresholds, rate limits, reputation points, role map) | [free] | Yes | All trust/reputation classes (`Trust_Levels`, `Trust_Evaluator`, `Reputation`, `Rate_Limiter`) live in free with no Pro dependency. Settings view at `settings.php:292-410` renders the full Permissions tab without Pro guards. | None |
-| **Appearance** — Settings > Appearance tab (theme tokens, accent color, container width, sidebar, padding, custom CSS) | [free] | Yes | `settings.php:849` shows a "White Label" Pro upsell, guarded. All functional appearance settings are free. | None |
-| **SEO settings** — Settings > SEO tab | [free] | Yes | `settings.php:1043` shows an "SEO Pro" upsell for OG tags / advanced schema, guarded. Free SEO (title templates, schema on/off, sitemap, noindex, canonical) all work without Pro. The template loader at `class-template-loader.php:834` checks `defined( 'JETONOMY_PRO_VERSION' )` before deferring meta-emit to seo-pro — correctly falls through to free baseline when Pro is absent. | None |
-| **Anti-spam config** — Settings > Anti-Spam tab (CAPTCHA, Akismet, AI spam) | [free] | Yes | No Pro guards in the Anti-Spam tab block. `class-akismet.php` and `class-ai-spam-detector.php` are pure-free classes. | None |
-| **Email config** — Settings > Email tab | [free] | Yes | `settings.php:702` shows an "Email Digest" Pro upsell, guarded. All free email settings (from-name, templates, notification defaults) work without Pro. | None |
-| **Moderation queue — Pending Posts tab** — approve/spam/trash | [free] | Yes | `render_moderation()` in `class-admin.php:928-1008` queries only free tables. AJAX in `class-moderation-handler.php` calls `Post::update()` / `Reply::update()` — no Pro dependency. | None |
-| **Moderation queue — Pending Replies tab** | [free] | Yes | Same as above; `reply` object type handled in all three moderation AJAX methods. | None |
-| **Moderation queue — Flags tab** — resolve valid/dismiss | [free] | Yes | `Moderation_Service::resolve_flag()` in `class-moderation-service.php` uses only free models (`Flag`, `Post`, `Reply`, `Reputation`). Admin AJAX handler at `class-moderation-handler.php:100-133` delegates to the same service. No Pro class touched. | None |
-| **Moderation queue — Banned Users tab** — unban | [free] | Yes | Ban/unban AJAX in `Users_Handler` uses free `Restriction` model. `moderation.php` view shows banned-users tab, no Pro guard. | None |
-| **Auto-Rules tab** — advanced mod auto-rules | [pro] | Graceful absence | `moderation.php:45-47` renders a `disabled` anchor with PRO badge when `! defined( 'JETONOMY_PRO_VERSION' )`. The `do_action( 'jetonomy_admin_moderation_tabs', $active_tab )` and `do_action( 'jetonomy_admin_moderation_tab_content', $active_tab )` fire with no listener in free — correct empty-fire. | None |
-| **Flag indicator on single post** — moderator sees open-flag count inline | [free] | Yes | `single-post.php:552-570` reads `$post->flag_count` (denormalized int, column added in `Migration_1_4_4`, schema at `class-schema.php:164`). Guard is `$jt_can_moderate_here` (free `Permission_Engine::can`). No Pro class referenced. The 1.4.4 migration backfills the counter on upgrade. | None |
-| **Close / Reopen topic** — moderator toggle on single post | [free] | Yes | `single-post.php:596` calls `actions.closePost` (free `view.js`). REST: `POST /jetonomy/v1/posts/{id}/close` at `class-posts-controller.php:764-786` is pure-free; permission gate uses `check_permission( 'close_posts', space_id )` from free `Permission_Engine`. | None |
-| **Accept / Unaccept reply** — Q&A answer acceptance | [free] | Yes | `POST /jetonomy/v1/replies/{id}/accept` and `/unaccept` at `class-replies-controller.php:93-98`. Accepts only post author or moderator (`close_posts` ability). Pure-free models. | None |
-| **Activity log** — admin Activity Log page | [free] | Yes | `render_activity()` reads free `jt_activity_log` table via `Activity_List_Table`. View `activity.php` has zero Pro guards. CSV export works free. | None |
-| **Revisions** — admin Revisions page | [free] | Yes | `Revisions_List_Table` reads free `jt_revisions`. View `revisions.php` has zero Pro guards. | None |
-| **Users admin** — search, trust-level edit, ban/unban | [free] | Yes | `users.php:192` shows a "Custom Badges & Advanced Moderation" Pro upsell, guarded. All functional columns (trust level, reputation, posts, replies, ban modal) work without Pro. | None |
-| **Dashboard** — stat cards, recent activity, system info | [free] | Yes | Dashboard queries only free tables. `dashboard.php:269` shows an "Analytics" Pro upsell card, guarded by `! defined( 'JETONOMY_PRO_VERSION' )`. The hook `do_action( 'jetonomy_admin_dashboard_widgets' )` fires empty in free — correct. | None |
-| **"Is it ready"** — setup-complete check, demo data cleanup | [free] | Yes | `dashboard.php:15` checks `jetonomy_setup_complete` option. Demo data cleanup banner at `dashboard.php:231` uses free option only. No Pro dependency on the readiness signal. | None |
-| **Frontend moderation — cross-space /mod/ route** | [free] | Yes | `views/moderation.php` uses `Moderation_Service` (free), `Moderation_Permissions` (free). No Pro reference. | None |
-| **Frontend moderation — per-space /s/:slug/mod/ route** | [free] | Yes | `views/space-moderation.php` uses `Moderation_Service::list_pending_flags()` (free). No Pro reference. | None |
-| **Private Messages link** — user panel block | [pro] | Graceful absence | `class-blocks.php:654`: `$show_messages = defined( 'JETONOMY_PRO_VERSION' )`. Link rendered only when Pro active. Router at `class-router.php:100-103` only registers `/messages/` rewrite rules when Pro is active. Template map has no `messages`/`conversation` entries — a direct URL would 404. | None |
-| **Extensions admin submenu** | [pro] | Guarded | `class-admin.php:179-189`: `add_submenu_page` for Extensions only called when `defined( 'JETONOMY_PRO_VERSION' )`. Not visible in free. | None |
-| **License settings tab** | [pro] | Guarded | `settings.php:1225`: license tab content only rendered when `defined( 'JETONOMY_PRO_VERSION' )`. Sidebar link at `settings.php:92` also guarded. | None |
+| **Activation** - plugin boots, DB tables created, caps registered | [free] | Yes | No Pro class is called; activation runs only free `Schema::create_tables()` and `Migrator::run()`. | None |
+| **Activation - licensing UI loads** | [free] | Yes | `libs/edd-sl-sdk/` is committed and shipped in every zip. `jetonomy.php` loads the SDK before any admin screen renders. License page JS and CSS resolve from the plugin. | None. Closed in 1.4.4. |
+| **Activation - background-job queue boots** | [free] | Yes | `libs/action-scheduler/` is bundled in free. Free no longer relies on WooCommerce or any other plugin to provide Action Scheduler. AS boots at `plugins_loaded`; `Cron` registers the six recurring hooks against AS at `action_scheduler_init`. | None. Closed in 1.4.4. |
+| **First-day background jobs run on a quiet site** | [free] | Yes | All six free recurring hooks (`jetonomy_trust_evaluation`, `jetonomy_cleanup_expired`, `jetonomy_prune_activity`, `jetonomy_cleanup_notifications`, `jetonomy_publish_scheduled`, `jetonomy_verification_reminder`) run via AS. They no longer skip on quiet sites with no traffic. A migration flag prevents double scheduling on upgrade. | None. Closed in 1.4.4. |
+| **Setup wizard** - `/admin.php?page=jetonomy-setup`, 3-step AJAX wizard | [free] | Yes | The wizard view has zero `JETONOMY_PRO_VERSION` references. AJAX is handled by free `Setup_Handler` + `Demo_Seeder`; Demo_Seeder's Pro branch is guarded by `defined( 'JETONOMY_PRO_VERSION' )`. | None |
+| **First category** - Categories admin page, create/edit/delete/reorder | [free] | Yes | `class-categories-handler.php` has no Pro references. The Categories view has no Pro guards. | None |
+| **First space** - Spaces admin page, new/edit/access-rules | [free] | Yes | The Spaces view shows a Pro upsell for Polls / Reactions / Analytics that is guarded by `! defined( 'JETONOMY_PRO_VERSION' )`. Space edit tabs show "Custom Fields" and "Reactions" as disabled placeholders behind the same guard. All functional tabs (General, Members, Access, Settings, Join Requests) work without Pro. | None |
+| **Front-end "Edit this space" admin-bar entry** | [free] | Yes | `class-admin-bar.php` adds a context-aware Edit link to the Community admin-bar menu when the viewer passes `Permission_Engine::is_space_admin`. Pure-free path; no Pro reference. | None. Closed in 1.4.4. |
+| **Permission / trust / reputation config** - Settings → Permissions tab | [free] | Yes | All trust and reputation classes (`Trust_Levels`, `Trust_Evaluator`, `Reputation`, `Rate_Limiter`) live in free with no Pro dependency. The Permissions tab renders without Pro guards. | None |
+| **Appearance** - Settings → Appearance tab | [free] | Yes | A "White Label" Pro upsell card is guarded. All functional appearance settings (accent color, container width, sidebar, padding, custom CSS) are free. | None |
+| **SEO settings** - Settings → SEO tab | [free] | Yes | An "SEO Pro" upsell for OG tags / advanced schema is guarded. Free SEO (title templates, schema on/off, sitemap, noindex, canonical) all work without Pro. The template loader correctly falls through to the free baseline when Pro is absent. | None |
+| **Anti-spam config** - Settings → Anti-Spam tab (CAPTCHA, Akismet, AI spam) | [free] | Yes | No Pro guards in the Anti-Spam tab block. Akismet and AI spam detector classes are pure-free. | None |
+| **Email config** - Settings → Email tab | [free] | Yes | An "Email Digest" Pro upsell is guarded. All free email settings (from-name, templates, notification defaults, email logo URL) work without Pro. | None |
+| **Moderation queue - Pending Posts tab** - approve/spam/trash | [free] | Yes | The render queries only free tables. Approve/spam/trash AJAX calls `Post::update()` / `Reply::update()`. No Pro dependency. | None |
+| **Moderation queue - Pending Replies tab** | [free] | Yes | Same as Pending Posts; reply object type is handled in all three moderation AJAX methods. | None |
+| **Moderation queue - Flags tab** - resolve valid/dismiss | [free] | Yes | `Moderation_Service::resolve_flag()` uses only free models. The admin AJAX handler delegates to the same service. No Pro class touched. | None |
+| **Moderation queue - Banned Users tab** - unban | [free] | Yes | Ban/unban AJAX uses the free `Restriction` model. The unban confirm dialog uses the design-system Cancel (`jt-btn jt-btn-ghost`) + Confirm (`jt-btn jt-btn-danger`) pair. | None |
+| **Auto-Rules tab** - advanced mod auto-rules | [pro] | Graceful absence | The moderation view renders a disabled anchor with a PRO badge when Pro is absent. The `jetonomy_admin_moderation_tabs` / `_tab_content` actions fire with no listener. | None |
+| **Flag indicator on single post** - moderator sees open-flag count inline | [free] | Yes | The single-post template reads `$post->flag_count` (denormalized int, column added by `Migration_1_4_4` and backfilled on upgrade). Guard uses free `Permission_Engine::can`. | None |
+| **Close / Reopen topic** - moderator toggle on single post | [free] | Yes | The template calls `actions.closePost` (free view.js). REST `POST /jetonomy/v1/posts/{id}/close` is pure-free; permission gate uses `check_permission( 'close_posts', space_id )`. | None |
+| **Accept / Unaccept reply** - Q&A answer acceptance | [free] | Yes | `POST /jetonomy/v1/replies/{id}/accept` and `/unaccept` accept only the post author or a moderator with `close_posts`. Pure-free models. | None |
+| **Activity log** - admin Activity Log page | [free] | Yes | Reads only the free `jt_activity_log` table via `Activity_List_Table`. CSV export works free. | None |
+| **Revisions** - admin Revisions page | [free] | Yes | Reads free `jt_revisions`. No Pro guards. | None |
+| **Users admin** - search, trust-level edit, ban/unban | [free] | Yes | A "Custom Badges & Advanced Moderation" Pro upsell is guarded. All functional columns (trust level, reputation, posts, replies, ban modal) work without Pro. | None |
+| **Dashboard** - stat cards, recent activity, system info | [free] | Yes | Queries only free tables. An "Analytics" Pro upsell card is guarded. The `jetonomy_admin_dashboard_widgets` action fires empty in free. | None |
+| **"Is it ready"** - setup-complete check, demo data cleanup | [free] | Yes | Dashboard checks `jetonomy_setup_complete`. The demo-data cleanup banner uses a free option only. No Pro dependency. | None |
+| **Front-end moderation - cross-space `/mod/` route** | [free] | Yes | Uses free `Moderation_Service` + `Moderation_Permissions`. No Pro reference. | None |
+| **Front-end moderation - per-space `/s/:slug/mod/` route** | [free] | Yes | Uses `Moderation_Service::list_pending_flags()`. No Pro reference. | None |
+| **Private Messages link** - user panel block | [pro] | Graceful absence | The link is rendered only when Pro is active. Router registers the `/messages/` rewrite rules only when Pro is active. A direct URL in free-only mode 404s, as intended. | None |
+| **Extensions admin submenu** | [pro] | Guarded | The submenu is registered only when Pro is active. Not visible in free. | None |
+| **License settings tab** | [pro] | Guarded | License tab content is rendered only when Pro is active. The sidebar link is guarded too. | None |
 
 ---
 
-## Free-Only Gaps (things broken or materially absent for a free customer that combo mode masked)
+## Closed in 1.4.4 (previously open or assumed-Pro)
 
-1. **No gaps found.** Every Pro-specific surface (auto-rules, reactions, polls, custom fields, analytics, white-label, private messages, email digest, SEO Pro, custom badges) degrades gracefully in free-only mode: either a `defined( 'JETONOMY_PRO_VERSION' )` guard shows a static "PRO" upsell/disabled tab, or a `do_action` fires with no listener. No unguarded `Jetonomy_Pro\*` class instantiations exist in the free codebase (`includes/` grep returned zero results outside the QA journey-test file, which guards all Pro class references with `class_exists()` before calling).
+1. **Licensing UI works on first activation.** EDD SL SDK is now bundled under `libs/edd-sl-sdk/` and shipped in every release zip. The Manage License button no longer fails with a missing-script error after a clean install.
+2. **Background-job queue ships with free.** Action Scheduler 3.9.3 lives under `libs/action-scheduler/` in free. A free customer with no Pro plugin, no WooCommerce, and no other AS-providing plugin still gets a working queue from day one.
+3. **First-day cron jobs are reliable.** All six free recurring hooks run via AS instead of WP-Cron, so trust promotions, ban expirations, and scheduled publishes fire on time on quiet sites that get no traffic.
+4. **Front-end Edit Space affordance.** Space admins and owners see "Edit this space" in the admin bar on every space-context page and reach the front-end edit screen in one click.
+5. **Destructive admin confirmations match the design system.** The Banned Users tab uses the ghost-cancel + danger-confirm classes. No code change was needed; the older audit screenshot predated the token swap.
+6. **Release-zip integrity is enforced at build time.** `bin/build-release.sh` asserts the EDD SL SDK loader, the SDK JS bundle, the SDK CSS, and Action Scheduler are all present in staging before producing the zip. A clean clone can no longer build a broken zip.
 
-2. **`flag_count` column** is new in 1.4.4 (`Migration_1_4_4`). Installations upgrading from pre-1.4.4 without running migrations would show `$post->flag_count = null` (PHP null-coalesced to 0 at `single-post.php:555`), so the flag indicator would never appear even on posts with open reports. This is a migration-sequencing concern, not a free-vs-pro gap, and the migrator registers the migration at `class-migrator.php:51`. On a fresh 1.4.4 install the column is created by `Schema::create_tables()`.
+---
 
-3. **One combo-masked assumption identified but not a free gap:** the `jetonomy_new_post_submit_action` filter in `new-post.php:94` defaults to `actions.submitNewPost` in free; Pro filters it to `actions.submitNewPostWithPoll`. In free-only, the filter fires with the correct default and no runtime error occurs. This only became visible in free-only review because in combo mode the filter value always differed.
+## Free-Only Gaps (things broken or materially absent for a free customer)
+
+1. **No gaps found at the free vs Pro boundary.** Every Pro-specific surface (auto-rules, reactions, polls, custom fields, analytics, white-label, private messages, email digest, SEO Pro, custom badges) degrades gracefully in free-only mode: either a `defined( 'JETONOMY_PRO_VERSION' )` guard shows a static "PRO" upsell or disabled tab, or a `do_action` fires with no listener. No unguarded `Jetonomy_Pro\*` class instantiations exist in the free codebase.
+
+2. **`flag_count` column** is new in 1.4.4 via `Migration_1_4_4`. Installations upgrading from pre-1.4.4 are backfilled by the migrator at registration time. On a fresh 1.4.4 install the column is created by `Schema::create_tables()`. Not a free-vs-pro gap; recorded here for upgrade context.
+
+3. **`jetonomy_new_post_submit_action` filter.** In free this filter defaults to `actions.submitNewPost` and fires with no Pro listener; Pro filters it to `actions.submitNewPostWithPoll`. Free-only mode runs the correct default without error. Recorded here so any future fix to the composer touches both view.js (free) and pro-view.js (Pro).
