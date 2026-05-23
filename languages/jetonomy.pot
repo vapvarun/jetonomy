@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.4.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-05-23 14:02:24+00:00\n"
+"POT-Creation-Date: 2026-05-23 15:32:32+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2140,8 +2140,8 @@ msgstr ""
 #: includes/admin/views/space-edit.php:551 includes/admin/views/users.php:104
 #: includes/admin/views/users.php:107
 #: includes/api/class-notifications-controller.php:311
-#: includes/api/class-posts-controller.php:1085
-#: includes/api/class-replies-controller.php:759
+#: includes/api/class-posts-controller.php:1111
+#: includes/api/class-replies-controller.php:777
 msgid "ago"
 msgstr ""
 
@@ -5624,8 +5624,8 @@ msgstr ""
 #: dist/jetonomy/templates/partials/reply-card.php:39
 #: includes/api/class-base-controller.php:329
 #: includes/api/class-oembed-controller.php:129
-#: includes/api/class-posts-controller.php:1030
-#: includes/api/class-replies-controller.php:730
+#: includes/api/class-posts-controller.php:1056
+#: includes/api/class-replies-controller.php:748
 #: includes/class-abilities.php:1232 includes/class-shortcodes.php:160
 #: includes/class-shortcodes.php:216
 #: includes/integrations/class-buddypress.php:752
@@ -5649,8 +5649,8 @@ msgstr ""
 #: dist/jetonomy/includes/api/class-replies-controller.php:433
 #: dist/jetonomy/includes/api/class-spaces-controller.php:546
 #: includes/api/class-categories-controller.php:213
-#: includes/api/class-posts-controller.php:657
-#: includes/api/class-replies-controller.php:433
+#: includes/api/class-posts-controller.php:683
+#: includes/api/class-replies-controller.php:451
 #: includes/api/class-spaces-controller.php:546
 msgid "No fields provided for update."
 msgstr ""
@@ -5773,19 +5773,19 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:220
-#: includes/api/class-posts-controller.php:220
+#: includes/api/class-posts-controller.php:221
 msgid "Invalid URL."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:346
-#: includes/api/class-posts-controller.php:346
+#: includes/api/class-posts-controller.php:347
 msgid "This space is archived or locked and no longer accepts new posts."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:355
 #: dist/jetonomy/includes/api/class-replies-controller.php:202
 #: dist/jetonomy/includes/api/class-votes-controller.php:131
-#: includes/api/class-posts-controller.php:355
+#: includes/api/class-posts-controller.php:356
 #: includes/api/class-replies-controller.php:202
 #: includes/api/class-votes-controller.php:131
 msgid "Rate limit exceeded. Please try again later."
@@ -5793,52 +5793,52 @@ msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:366
 #: dist/jetonomy/includes/api/class-replies-controller.php:213
-#: includes/api/class-posts-controller.php:366
+#: includes/api/class-posts-controller.php:367
 #: includes/api/class-replies-controller.php:213
 msgid "Security check failed. Please refresh the page and try again."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:372
-#: includes/api/class-posts-controller.php:372
+#: includes/api/class-posts-controller.php:373
 msgid "Post content is required."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:385
-#: includes/api/class-posts-controller.php:385
+#: includes/api/class-posts-controller.php:386
 msgid "Status update"
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:387
-#: includes/api/class-posts-controller.php:387
+#: includes/api/class-posts-controller.php:388
 msgid "Post title is required."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:503
 #: dist/jetonomy/includes/api/class-posts-controller.php:664
-#: includes/api/class-posts-controller.php:503
-#: includes/api/class-posts-controller.php:664
+#: includes/api/class-posts-controller.php:505
+#: includes/api/class-posts-controller.php:690
 msgid "Your post was blocked by our content policy."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:533
 #: dist/jetonomy/includes/class-abilities.php:1192
-#: includes/api/class-posts-controller.php:533
+#: includes/api/class-posts-controller.php:538
 #: includes/class-abilities.php:1192
 msgid "Failed to create post."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:817
-#: includes/api/class-posts-controller.php:817
+#: includes/api/class-posts-controller.php:843
 msgid "Roadmap status only applies to Ideas spaces."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:833
-#: includes/api/class-posts-controller.php:833
+#: includes/api/class-posts-controller.php:859
 msgid "Invalid roadmap status."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:885
-#: includes/api/class-posts-controller.php:885
+#: includes/api/class-posts-controller.php:911
 #. translators: %d: maximum number of pinned topics allowed per space
 msgid "You can pin up to %d topic in a space. Unpin one first."
 msgid_plural "You can pin up to %d topics in a space. Unpin one first."
@@ -5846,23 +5846,23 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:925
-#: includes/api/class-posts-controller.php:925
+#: includes/api/class-posts-controller.php:951
 msgid "A valid target_space_id is required."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:929
-#: includes/api/class-posts-controller.php:929
+#: includes/api/class-posts-controller.php:955
 msgid "Post is already in the target space."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:982
-#: includes/api/class-posts-controller.php:982
+#: includes/api/class-posts-controller.php:1008
 msgid "Cannot merge a post with itself."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-posts-controller.php:999
 #: dist/jetonomy/includes/class-template-loader.php:291
-#: includes/api/class-posts-controller.php:999
+#: includes/api/class-posts-controller.php:1025
 #: includes/class-template-loader.php:291
 msgid "Failed to merge topics."
 msgstr ""
@@ -5880,55 +5880,55 @@ msgstr ""
 #: dist/jetonomy/includes/api/class-replies-controller.php:227
 #: dist/jetonomy/includes/api/class-replies-controller.php:389
 #: includes/api/class-replies-controller.php:227
-#: includes/api/class-replies-controller.php:389
+#: includes/api/class-replies-controller.php:407
 msgid "Reply content is required."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:278
 #: dist/jetonomy/includes/api/class-replies-controller.php:426
 #: includes/api/class-replies-controller.php:278
-#: includes/api/class-replies-controller.php:426
+#: includes/api/class-replies-controller.php:444
 msgid "Reply published_at cannot precede the parent post date."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:295
 #: dist/jetonomy/includes/api/class-replies-controller.php:394
 #: includes/api/class-replies-controller.php:295
-#: includes/api/class-replies-controller.php:394
+#: includes/api/class-replies-controller.php:412
 msgid "Your reply was blocked by our content policy."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:324
 #: dist/jetonomy/includes/class-abilities.php:1294
-#: includes/api/class-replies-controller.php:324
+#: includes/api/class-replies-controller.php:325
 #: includes/class-abilities.php:1294
 msgid "Failed to create reply."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:344
 #: dist/jetonomy/includes/notifications/class-notifier.php:439
-#: includes/api/class-replies-controller.php:344
+#: includes/api/class-replies-controller.php:362
 #: includes/notifications/class-notifier.php:439
 msgid "your reply"
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:554
-#: includes/api/class-replies-controller.php:554
+#: includes/api/class-replies-controller.php:572
 msgid "Accepted answers only apply to Q&A spaces."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:626
-#: includes/api/class-replies-controller.php:626
+#: includes/api/class-replies-controller.php:644
 msgid "This reply is not the accepted answer."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:674
-#: includes/api/class-replies-controller.php:674
+#: includes/api/class-replies-controller.php:692
 msgid "A title is required for the new topic."
 msgstr ""
 
 #: dist/jetonomy/includes/api/class-replies-controller.php:691
-#: includes/api/class-replies-controller.php:691
+#: includes/api/class-replies-controller.php:709
 msgid "Failed to split reply into new topic."
 msgstr ""
 
@@ -11838,6 +11838,11 @@ msgstr ""
 #: templates/views/user-profile.php:486
 #. translators: %s: human-readable time difference
 msgid "saved %s ago"
+msgstr ""
+
+#: includes/api/class-posts-controller.php:556
+#: includes/api/class-replies-controller.php:342
+msgid "Flagged automatically by a moderation rule."
 msgstr ""
 
 #. Plugin URI of the plugin/theme
