@@ -300,6 +300,7 @@ class Replies_Controller extends Base_Controller {
 		if ( 'spam' === $moderation_action ) {
 			$reply_data['status'] = 'spam';
 		}
+		// 'flag' is handled AFTER Reply::create — see auto-flag block below.
 
 		// Per-space require_approval: hold for moderation unless moderator/admin.
 		if ( empty( $reply_data['status'] ) || 'publish' === ( $reply_data['status'] ?? '' ) ) {
@@ -328,6 +329,23 @@ class Replies_Controller extends Base_Controller {
 
 		// Increment rate limit counter.
 		\Jetonomy\Permissions\Rate_Limiter::increment( $user_id, 'create_replies' );
+
+		// Auto-flag a reply when a moderation rule asked to flag the content.
+		// The reply still publishes; a Flag record surfaces it in the queue.
+		if ( 'flag' === $moderation_action && $reply_id > 0 ) {
+			$auto_flag_id = \Jetonomy\Models\Flag::create(
+				array(
+					'reporter_id' => 0,
+					'object_type' => 'reply',
+					'object_id'   => (int) $reply_id,
+					'reason'      => 'other',
+					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
+				)
+			);
+			if ( $auto_flag_id ) {
+				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
+			}
+		}
 
 		// For backdated replies, roll the parent's last_reply_at back to the reply's
 		// date so stale "just now" stamps don't surface on historical topics.

@@ -19,6 +19,7 @@ use Jetonomy\Models\Revision;
 use Jetonomy\Models\Subscription;
 use Jetonomy\Models\Tag;
 use Jetonomy\Models\UserProfile;
+use Jetonomy\Models\Flag;
 
 class Posts_Controller extends Base_Controller {
 
@@ -488,6 +489,7 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		// Skip moderation pipeline for draft posts — they're not published yet.
+		$moderation_action = null;
 		if ( 'draft' !== ( $post_data['status'] ?? '' ) ) {
 			/**
 			 * Check content against moderation rules before insertion.
@@ -508,6 +510,9 @@ class Posts_Controller extends Base_Controller {
 			if ( 'spam' === $moderation_action ) {
 				$post_data['status'] = 'spam';
 			}
+			// 'flag' is handled AFTER Post::create so we have a real $post_id
+			// to attach the Flag record to. The post still publishes; the
+			// flag surfaces it in the moderation queue for review.
 
 			// Per-space require_approval: hold for moderation unless moderator/admin.
 			if ( empty( $post_data['status'] ) || 'publish' === $post_data['status'] ) {
@@ -533,6 +538,27 @@ class Posts_Controller extends Base_Controller {
 				__( 'Failed to create post.', 'jetonomy' ),
 				array( 'status' => 500 )
 			);
+		}
+
+		// Auto-flag: a moderation rule asked to flag this content. The post is
+		// already created and published; we now file a flag against it so it
+		// appears in the moderation queue with `reporter_id = 0` (system
+		// reporter). Flag::create handles the post.flag_count increment itself.
+		// No reputation deduction here — that's a user-action penalty, distinct
+		// from an automated review request.
+		if ( 'flag' === $moderation_action && $post_id > 0 ) {
+			$auto_flag_id = Flag::create(
+				array(
+					'reporter_id' => 0,
+					'object_type' => 'post',
+					'object_id'   => (int) $post_id,
+					'reason'      => 'other',
+					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
+				)
+			);
+			if ( $auto_flag_id ) {
+				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'post' );
+			}
 		}
 
 		// Fire action for Activity_Tracker, Notifier, and other listeners.
