@@ -62,7 +62,18 @@ class Reputation {
 	 * @return int
 	 */
 	public static function points_for( string $action ): int {
-		$default = self::POINTS_MAP[ $action ] ?? 0;
+		/**
+		 * Filter the entire reputation POINTS_MAP before per-action resolution.
+		 *
+		 * Use this to add new action keys or wholesale-replace the scoring table
+		 * (e.g. per-community ladders). The `jetonomy_reputation_points_for`
+		 * filter still runs afterwards on the resolved value for the requested
+		 * action, so this filter and that one compose.
+		 *
+		 * @param array<string,int> $map Default POINTS_MAP keyed by action slug.
+		 */
+		$map     = (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
+		$default = $map[ $action ] ?? 0;
 
 		$settings  = get_option( 'jetonomy_settings', array() );
 		$overrides = is_array( $settings ) && isset( $settings['reputation_points'] ) && is_array( $settings['reputation_points'] )
@@ -92,8 +103,9 @@ class Reputation {
 	 * @return array<string,int>
 	 */
 	public static function action_points_map(): array {
-		$map = array();
-		foreach ( self::POINTS_MAP as $action => $unused ) {
+		$base = (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
+		$map  = array();
+		foreach ( $base as $action => $unused ) {
 			$map[ $action ] = self::points_for( $action );
 		}
 		return $map;
@@ -105,7 +117,7 @@ class Reputation {
 	 * @return array<string,int>
 	 */
 	public static function action_points_defaults(): array {
-		return self::POINTS_MAP;
+		return (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
 	}
 
 	/**
@@ -182,6 +194,25 @@ class Reputation {
 	 * @return int $delta (echoed back for the public facade return value).
 	 */
 	private static function dispatch( int $user_id, int $delta, string $action, array $context ): int {
+		/**
+		 * Filter the reputation delta immediately before it is persisted.
+		 *
+		 * Use this to scale deltas during campaigns ("double points weekend"),
+		 * veto for sandboxed users (return 0), or redirect rep to an external
+		 * scoring engine. Fires before `UserProfile::_apply_reputation_delta`
+		 * so a 0 return prevents the write entirely.
+		 *
+		 * @param int    $delta   Signed point delta about to be applied.
+		 * @param int    $user_id WP user ID whose reputation will change.
+		 * @param string $action  Action key (or `<action>_revoked` for revocations).
+		 * @param array  $context Optional context payload (e.g. badge_id).
+		 */
+		$delta = (int) apply_filters( 'jetonomy_reputation_pre_change', $delta, $user_id, $action, $context );
+
+		if ( 0 === $delta ) {
+			return 0;
+		}
+
 		UserProfile::_apply_reputation_delta( $user_id, $delta );
 
 		/**

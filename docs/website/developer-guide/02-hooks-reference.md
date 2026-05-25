@@ -426,16 +426,17 @@ Fires whenever a user's reputation score changes.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `$user_id` | `int` | WP user ID |
+| `$action` | `string` | Action slug that triggered the change (e.g. `'post_upvoted'`, `'reply_accepted'`). Revocations append `_revoked` (e.g. `'post_upvoted_revoked'`). |
 | `$delta` | `int` | Points added (positive) or removed (negative) |
-| `$reason` | `string` | Machine-readable reason slug (e.g. `'post_upvoted'`, `'reply_accepted'`) |
+| `$context` | `array` | Optional context payload supplied by `Reputation::award_custom()` (e.g. `[ 'badge_id' => 42 ]`). Empty array for `award()` / `revoke()` calls. |
 
 **Source:** `includes/trust/class-reputation.php`
 
 ```php
-add_action( 'jetonomy_reputation_changed', function( int $user_id, int $delta, string $reason ) {
+add_action( 'jetonomy_reputation_changed', function( int $user_id, string $action, int $delta, array $context ) {
     // Sync reputation to BuddyPress profile.
     bp_update_user_meta( $user_id, 'jetonomy_rep', \Jetonomy\Models\UserProfile::get_reputation( $user_id ) );
-}, 10, 3 );
+}, 10, 4 );
 ```
 
 ---
@@ -1494,9 +1495,32 @@ Filter (not action). Fires before a vote is recorded. Return `false` to block th
 
 ## Trust & Reputation Hooks
 
+### `jetonomy_reputation_points_map`
+
+Filter (not action). Filters the entire `POINTS_MAP` (action → delta) before per-action resolution. Use this to add new action keys or wholesale-replace the scoring table per community. Composes with `jetonomy_reputation_points_for`, which runs afterwards on the resolved value for the requested action.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$map` | `array<string,int>` | Default `POINTS_MAP` keyed by action slug. |
+
+**Return:** `array<string,int>`
+
+**Source:** `includes/trust/class-reputation.php`
+
+```php
+add_filter( 'jetonomy_reputation_points_map', function( array $map ): array {
+    // Boost the entire ladder by 50% for this community.
+    return array_map( fn( int $points ) => (int) round( $points * 1.5 ), $map );
+} );
+```
+
+---
+
 ### `jetonomy_reputation_points_for`
 
-Filter (not action). Filters the point value for a specific reputation action before it is applied. Allows per-site tuning of the reputation ladder without editing plugin settings.
+Filter (not action). Filters the point value for a specific reputation action after the map / settings override resolves. Allows per-site tuning of the reputation ladder without editing plugin settings.
 
 **Parameters**
 
@@ -1516,6 +1540,66 @@ add_filter( 'jetonomy_reputation_points_for', function( int $points, string $act
         return $points * 2;
     }
     return $points;
+}, 10, 2 );
+```
+
+---
+
+### `jetonomy_reputation_pre_change`
+
+Filter (not action). Filters the signed delta immediately before it is persisted to `user_profiles.reputation`. Returning `0` short-circuits the write entirely — the `jetonomy_reputation_changed` action will not fire and no DB row is touched. Use this to scale deltas during campaigns, veto changes for sandboxed users, or redirect reputation to an external scoring engine.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$delta` | `int` | Signed point delta about to be applied. |
+| `$user_id` | `int` | WP user ID whose reputation will change. |
+| `$action` | `string` | Action slug (revocations append `_revoked`). |
+| `$context` | `array` | Optional context payload (e.g. `[ 'badge_id' => 42 ]`). |
+
+**Return:** `int` — return `0` to veto the change.
+
+**Source:** `includes/trust/class-reputation.php`
+
+```php
+add_filter( 'jetonomy_reputation_pre_change', function( int $delta, int $user_id, string $action, array $context ): int {
+    // Veto rep changes for sandboxed users.
+    if ( get_user_meta( $user_id, 'wb_gam_sandboxed', true ) ) {
+        return 0;
+    }
+    // Double points during a weekend campaign.
+    if ( wb_gam_campaign_active( 'double_points' ) ) {
+        return $delta * 2;
+    }
+    return $delta;
+}, 10, 4 );
+```
+
+---
+
+### `jetonomy_leaderboard_items`
+
+Filter (not action). Filters the leaderboard response rows in `GET /jetonomy/v1/leaderboards` immediately before they are wrapped in the paginated envelope. Use this to enrich each row with cross-engine totals (badge count, level name, alternate currency) without a second REST round-trip.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$items` | `array` | Leaderboard rows. Each row has `rank`, `user_id`, `display_name`, `user_login`, `avatar_url`, `profile_url`, `reputation`, `post_count`, `reply_count`, `trust_level`. |
+| `$request` | `WP_REST_Request` | Original REST request — inspect `get_param('period')`, etc. |
+
+**Return:** `array`
+
+**Source:** `includes/api/class-leaderboards-controller.php`
+
+```php
+add_filter( 'jetonomy_leaderboard_items', function( array $items, WP_REST_Request $request ): array {
+    foreach ( $items as &$row ) {
+        $row['wb_gam_points'] = (int) WB_Gam\Points::for_user( $row['user_id'] );
+        $row['wb_gam_badges_count'] = (int) WB_Gam\Badges::count_for_user( $row['user_id'] );
+    }
+    return $items;
 }, 10, 2 );
 ```
 

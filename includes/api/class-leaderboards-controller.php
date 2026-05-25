@@ -162,6 +162,19 @@ class Leaderboards_Controller extends Base_Controller {
 			++$rank;
 		}
 
+		/**
+		 * Filter the leaderboard response rows before they are paginated.
+		 *
+		 * Lets host plugins enrich each row with cross-engine totals (badge
+		 * count, level name, alternate currency) without a second REST
+		 * round-trip. Reorder, prune, or add keys as needed — the contract
+		 * with paginated_response is just that $items is an array of arrays.
+		 *
+		 * @param array            $items   Leaderboard rows.
+		 * @param WP_REST_Request  $request Original REST request.
+		 */
+		$items = (array) apply_filters( 'jetonomy_leaderboard_items', $items, $request );
+
 		return $this->paginated_response(
 			$items,
 			[
