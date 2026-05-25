@@ -295,6 +295,10 @@ Background work that runs on time, a License screen that always loads, custom pr
 * Fix       - Idea-planned reputation awards consistently across the activity log and notifications.
 * Security  - All write requests share a single permission contract enforcing login, nonce, capability, and ownership in one check.
 * Dev       - New filter `jetonomy_reputation_points_for` lets you override per-action point values; Jetonomy Pro uses it for the Settings UI.
+* Dev       - New filter `jetonomy_reputation_points_map` lets integrations wholesale-replace the POINTS_MAP (e.g. WB Gamification per-community ladders).
+* Dev       - New filter `jetonomy_reputation_pre_change` runs immediately before the DB write; return 0 to veto a delta (campaigns, sandboxed users).
+* Dev       - New filter `jetonomy_leaderboard_items` lets host plugins enrich GET /leaderboards rows with cross-engine totals (badge count, level, alt currency) without a second REST round-trip.
+* Dev       - `jetonomy_reputation_changed` documented signature aligned to the 4-arg shape the action has always fired (`$user_id`, `$action`, `$delta`, `$context`); previous 3-arg docs example was wrong.
 * Dev       - New actions `jetonomy_post_created`, `jetonomy_reply_created`, `jetonomy_vote_cast`, `jetonomy_vote_retracted` for gamification integrations.
 * Dev       - `jetonomy_idea_status_changed` now passes the post author ID as a fifth argument.
 * Dev       - New filter `jetonomy_trust_level_pre_change` lets you veto or override auto-promotions.
