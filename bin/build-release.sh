@@ -121,7 +121,8 @@ cat > "$EXCLUDES_FILE" <<'EOF'
 .claude/
 node_modules/
 tests/
-plans/
+plan/
+audit/
 marketing/
 bin/
 tools/
