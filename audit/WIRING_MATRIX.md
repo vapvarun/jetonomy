@@ -7,7 +7,11 @@
 
 ## 1. Executive Summary
 
-Of the 31 features traced, **24 are 100% wired**, **3 are PARTIAL**, and **4 carry a real BROKEN wire**.
+Of the 31 features traced, **24 are 100% wired**, **4 are PARTIAL**, and **3 carry a real BROKEN wire**
+(the original count was 4 broken / 3 partial; on hands-on verification the `require_approval` "broken"
+finding turned out to be a false positive — it is fully wired — so it moves to partial. **Status 2026-05-31:
+all 3 real broken wires are now FIXED** — web-push arity `aa9f928`, reply-by-email listener `04b4d64`,
+AI "Use as reply" pending).
 Overall wiring health is strong: the entire free core (16 features) is solid except for one missing
 admin UI and one capability-name drift, while the Pro suite's defects cluster in newer integration
 extensions (AI, Reply-by-Email, Web Push) where backend pipelines were built but the final hop — a JS
@@ -22,7 +26,7 @@ service class).
 | 1. Spaces & membership (free) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ WIRED |
 | 2. Categories (free) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ WIRED |
 | 3. Posts & Discussions (free) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ WIRED |
-| 4. Replies & Threading (free) | ✅ | ❌ | ✅ | ✅ | ✅ | 🟡 | ❌ BROKEN |
+| 4. Replies & Threading (free) | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | 🟡 PARTIAL (require_approval verified wired; only the split-cap drift remains) |
 | 5. Votes (free) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ WIRED |
 | 6. Tags & Discovery (free) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ WIRED |
 | 7. Reputation & Trust (free) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ WIRED |
