@@ -2401,6 +2401,44 @@ const { state, actions } = store( 'jetonomy', {
             };
             if ( publishedAt ) payload.published_at = publishedAt;
             if ( captchaToken ) payload.captcha_token = captchaToken;
+
+            // Pro custom-field inputs (jt_cf[<slug>] / jt_cf[<slug>][]). Empty
+            // when the extension is off (no inputs render) so the key is omitted
+            // and the server listener no-ops. Mirrors the collection used by the
+            // profile-save action so the storage format matches Pro's
+            // validate/sanitize/upsert (multi-checkbox values comma-joined).
+            const customFields = {};
+            form.querySelectorAll( '[name^="jt_cf["]' ).forEach( ( input ) => {
+                const m = input.name.match( /^jt_cf\[([^\]]+)\](\[\])?$/ );
+                if ( ! m ) return;
+                const slug = m[ 1 ];
+                const isMulti = '[]' === m[ 2 ];
+                if ( 'checkbox' === input.type ) {
+                    if ( isMulti ) {
+                        if ( input.checked ) {
+                            customFields[ slug ] = customFields[ slug ]
+                                ? customFields[ slug ] + ',' + input.value
+                                : input.value;
+                        } else if ( ! ( slug in customFields ) ) {
+                            customFields[ slug ] = '';
+                        }
+                    } else {
+                        customFields[ slug ] = input.checked ? input.value : '';
+                    }
+                } else if ( 'radio' === input.type ) {
+                    if ( input.checked ) {
+                        customFields[ slug ] = input.value;
+                    } else if ( ! ( slug in customFields ) ) {
+                        customFields[ slug ] = '';
+                    }
+                } else {
+                    customFields[ slug ] = input.value;
+                }
+            } );
+            if ( Object.keys( customFields ).length > 0 ) {
+                payload.custom_fields = customFields;
+            }
+
             if ( typeof o.extraPayload === 'function' ) {
                 const extras = o.extraPayload( form ) || {};
                 Object.assign( payload, extras );
