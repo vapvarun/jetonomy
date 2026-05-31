@@ -302,6 +302,15 @@ final class Jetonomy {
 	}
 
 	private function maybe_redirect_to_setup(): void {
+		// init() runs on plugins_loaded, which fires for every request — admin
+		// AND frontend. Without this guard a logged-out visitor, bot, or asset
+		// request hitting the site first both gets wrongly bounced into wp-admin
+		// and consumes the one-shot transient, so the admin never lands on the
+		// wizard. Only act on admin requests; the transient survives until the
+		// next admin pageview. (ajax/cron/REST are excluded below for safety.)
+		if ( ! is_admin() ) {
+			return;
+		}
 		if ( ! get_transient( 'jetonomy_activation_redirect' ) ) {
 			return;
 		}
