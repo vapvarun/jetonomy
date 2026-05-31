@@ -92,6 +92,16 @@ $bn_active = did_action( 'buddynext_loaded' );
 	?>
 
 	<?php if ( ! empty( $space ) && isset( $space->id ) ) : ?>
+		<?php
+		/**
+		 * Insert a custom widget or ad before the About card. Fires in space scope.
+		 * Use jetonomy_show_sidebar_about to hide the About card.
+		 *
+		 * @param object $space Current space object.
+		 */
+		do_action( 'jetonomy_sidebar_before_about', $space );
+		?>
+		<?php if ( apply_filters( 'jetonomy_show_sidebar_about', true, $space ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
@@ -165,19 +175,41 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 	</div>
 
+		<?php endif; // jetonomy_show_sidebar_about. ?>
+
 		<?php
 		/**
-		 * Managed-by sidebar card (1.4.0 G1) — admins + moderators of the
-		 * current space, ordered admins-first then by join time. Reads from
-		 * the cached `SpaceMember::list_privileged` so a sidebar render
-		 * costs one indexed query, then nothing for 60s. Same visibility as
-		 * the About card above.
+		 * Insert a custom widget or ad before the Managed-by card. Always fires
+		 * (even when the section is hidden or empty). Use
+		 * jetonomy_show_sidebar_managed_by to hide the section.
+		 *
+		 * @param object $space Current space object.
 		 */
-		if ( class_exists( '\\Jetonomy\\Models\\SpaceMember' ) && isset( $space->id ) ) {
-			$members = \Jetonomy\Models\SpaceMember::list_privileged( (int) $space->id );
-			include __DIR__ . '/managed-by-card.php';
-			unset( $members );
-		}
+		do_action( 'jetonomy_sidebar_before_managed_by', $space );
+		?>
+		<?php if ( apply_filters( 'jetonomy_show_sidebar_managed_by', true, $space ) ) : ?>
+			<?php
+			/**
+			 * Managed-by sidebar card (1.4.0 G1) — admins + moderators of the
+			 * current space, ordered admins-first then by join time. Reads from
+			 * the cached `SpaceMember::list_privileged` so a sidebar render
+			 * costs one indexed query, then nothing for 60s. Same visibility as
+			 * the About card above.
+			 */
+			if ( class_exists( '\\Jetonomy\\Models\\SpaceMember' ) && isset( $space->id ) ) {
+				$members = \Jetonomy\Models\SpaceMember::list_privileged( (int) $space->id );
+				include __DIR__ . '/managed-by-card.php';
+				unset( $members );
+			}
+			?>
+		<?php endif; // jetonomy_show_sidebar_managed_by. ?>
+		<?php
+		/**
+		 * Insert a custom widget or ad after the Managed-by card. Always fires.
+		 *
+		 * @param object $space Current space object.
+		 */
+		do_action( 'jetonomy_sidebar_after_managed_by', $space );
 		?>
 
 		<?php
@@ -192,7 +224,18 @@ $bn_active = did_action( 'buddynext_loaded' );
 		?>
 	<?php endif; ?>
 
-	<?php if ( ! empty( $trending ) ) : ?>
+	<?php
+	/**
+	 * Insert a custom widget or ad before the Trending section. Always fires
+	 * (even when the section is hidden or empty) so an injected block can
+	 * always render. Use jetonomy_show_sidebar_trending to hide the section.
+	 *
+	 * @param object|null $space Current space object, or null.
+	 */
+	do_action( 'jetonomy_sidebar_before_trending', $space ?? null );
+	?>
+	<?php if ( apply_filters( 'jetonomy_show_sidebar_trending', true, $space ?? null ) ) : ?>
+		<?php if ( ! empty( $trending ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
@@ -236,8 +279,28 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 	</div>
 	<?php endif; ?>
+	<?php endif; ?>
+	<?php
+	/**
+	 * Insert a custom widget or ad after the Trending section. Always fires.
+	 *
+	 * @param object|null $space Current space object, or null.
+	 */
+	do_action( 'jetonomy_sidebar_after_trending', $space ?? null );
+	?>
 
-	<?php if ( ! empty( $leaders ) ) : ?>
+	<?php
+	/**
+	 * Insert a custom widget or ad before the Top Members section. Always fires
+	 * (even when the section is hidden or empty). Use
+	 * jetonomy_show_sidebar_top_members to hide the section.
+	 *
+	 * @param object|null $space Current space object, or null.
+	 */
+	do_action( 'jetonomy_sidebar_before_top_members', $space ?? null );
+	?>
+	<?php if ( apply_filters( 'jetonomy_show_sidebar_top_members', true, $space ?? null ) ) : ?>
+		<?php if ( ! empty( $leaders ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card jt-mb-md' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
@@ -272,8 +335,28 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 	</div>
 	<?php endif; ?>
+	<?php endif; ?>
+	<?php
+	/**
+	 * Insert a custom widget or ad after the Top Members section. Always fires.
+	 *
+	 * @param object|null $space Current space object, or null.
+	 */
+	do_action( 'jetonomy_sidebar_after_top_members', $space ?? null );
+	?>
 
-	<?php if ( ! empty( $popular_tags ) ) : ?>
+	<?php
+	/**
+	 * Insert a custom widget or ad before the Popular Tags section. Always fires
+	 * (even when the section is hidden or empty). Use
+	 * jetonomy_show_sidebar_popular_tags to hide the section.
+	 *
+	 * @param object|null $space Current space object, or null.
+	 */
+	do_action( 'jetonomy_sidebar_before_popular_tags', $space ?? null );
+	?>
+	<?php if ( apply_filters( 'jetonomy_show_sidebar_popular_tags', true, $space ?? null ) ) : ?>
+		<?php if ( ! empty( $popular_tags ) ) : ?>
 	<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card' : 'jt-card' ); ?>">
 		<div class="<?php echo esc_attr( $bn_active ? 'bn-sidebar-card__header' : '' ); ?>">
 			<?php if ( ! $bn_active ) : ?>
@@ -294,6 +377,15 @@ $bn_active = did_action( 'buddynext_loaded' );
 		</div>
 	</div>
 	<?php endif; ?>
+	<?php endif; ?>
+	<?php
+	/**
+	 * Insert a custom widget or ad after the Popular Tags section. Always fires.
+	 *
+	 * @param object|null $space Current space object, or null.
+	 */
+	do_action( 'jetonomy_sidebar_after_popular_tags', $space ?? null );
+	?>
 
 	<?php
 	/**
