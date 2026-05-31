@@ -186,8 +186,9 @@ module.exports = function( grunt ) {
 		} );
 	} );
 
-	// Build task: RTL + minify + pot
-	grunt.registerTask( 'build', [ 'rtlcss', 'cssmin', 'uglify', 'makepot' ] );
+	// Build task: pot first, then RTL + minify.
+	// makepot scans source PHP, so it runs before the minifiers touch assets.
+	grunt.registerTask( 'build', [ 'makepot', 'rtlcss', 'cssmin', 'uglify' ] );
 
 	// Dist task: CI check + build + package zip
 	grunt.registerTask( 'dist', [ 'ci-check', 'build', 'clean:dist', 'copy:dist', 'compress:dist' ] );
