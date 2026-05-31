@@ -37,6 +37,17 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="quote" title="<?php esc_attr_e( 'Blockquote', 'jetonomy' ); ?>">&ldquo;&rdquo;</button>
 		<button type="button" class="jt-editor-bar-btn" data-cmd="image" title="<?php esc_attr_e( 'Upload Image', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'image', 16 ); ?></button>
+		<?php
+		/**
+		 * Fires inside the composer toolbar, after the built-in formatting
+		 * buttons. Extensions can add tools here (e.g. the Pro AI "Suggest a
+		 * reply" button). Receives the target post ID + parent reply ID.
+		 *
+		 * @param int $post_id  Post the reply belongs to.
+		 * @param int $reply_to Parent reply ID (0 for a top-level reply).
+		 */
+		do_action( 'jetonomy_composer_toolbar', $_post_id, $_reply_to );
+		?>
 	</div>
 	<div class="jt-editor-body"
 		contenteditable="true"
