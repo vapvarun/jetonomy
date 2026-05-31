@@ -220,6 +220,10 @@ class Notifier {
 		// Reply created — notify post author + subscribers
 		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 10, 2 );
 
+		// Reply submitted by email (Reply-by-Email Pro extension fires this).
+		// Nothing in free listened before, so emailed replies were silently lost.
+		add_action( 'jetonomy_create_reply_from_email', [ $this, 'on_reply_from_email' ], 10, 4 );
+
 		// Vote received — notify content author
 		add_action( 'jetonomy_after_vote', [ $this, 'on_vote' ], 10, 4 );
 
@@ -247,6 +251,49 @@ class Notifier {
 		// Intentionally registered at priority 20 so integrators can short-
 		// circuit earlier and swap in their own welcome without double-sending.
 		add_action( 'jetonomy_user_registered', [ $this, 'on_user_registered' ], 20, 1 );
+	}
+
+	/**
+	 * Create a forum reply from an inbound email.
+	 *
+	 * The Reply-by-Email Pro extension fires `jetonomy_create_reply_from_email`
+	 * after it parses + validates an inbound message, but nothing in free
+	 * listened, so emailed replies were silently discarded. This mirrors the
+	 * REST controller's canonical post-create side-effects: row creation via
+	 * Reply::create() (counters + content_plain handled there), the
+	 * `jetonomy_after_create_reply` action (notifications), and @mention parsing.
+	 *
+	 * @param int    $post_id Forum post ID.
+	 * @param int    $user_id Author user ID.
+	 * @param string $content Sanitized reply content.
+	 * @param string $source  Origin marker (e.g. 'reply_by_email').
+	 */
+	public function on_reply_from_email( int $post_id, int $user_id, string $content, string $source = '' ): void {
+		if ( $post_id <= 0 || $user_id <= 0 || '' === trim( $content ) ) {
+			return;
+		}
+
+		$reply_id = \Jetonomy\Models\Reply::create(
+			[
+				'post_id'       => $post_id,
+				'author_id'     => $user_id,
+				'content'       => $content,
+				'content_plain' => wp_strip_all_tags( $content ),
+			]
+		);
+
+		if ( is_wp_error( $reply_id ) || ! $reply_id ) {
+			return;
+		}
+
+		// Canonical post-create side-effects (same as the REST controller).
+		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
+
+		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
+		if ( ! empty( $mentioned ) ) {
+			$post = \Jetonomy\Models\Post::find( $post_id );
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ) );
+		}
 	}
 
 	/**
