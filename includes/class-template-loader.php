@@ -565,7 +565,7 @@ class Template_Loader {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'space-edit' === $data['route'] ) {
+		} elseif ( 'edit-space' === $data['route'] ) {
 			wp_enqueue_script(
 				'jetonomy-space-edit',
 				JETONOMY_URL . 'assets/js/space-edit.js',
