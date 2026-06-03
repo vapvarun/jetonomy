@@ -2004,6 +2004,41 @@
       "consumed_by": "jetonomy-pro"
     },
     {
+      "name": "jetonomy_after_create_space",
+      "type": "action",
+      "args": "space_id, request",
+      "where": "includes/api/class-spaces-controller.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_update_space",
+      "type": "action",
+      "args": "space, context{space_id,user_id,request}",
+      "where": "includes/api/class-spaces-controller.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_new_space_fields",
+      "type": "action",
+      "args": "none",
+      "where": "templates/views/new-space.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_space_edit_fields",
+      "type": "action",
+      "args": "space",
+      "where": "templates/views/space-edit.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_space_display_fields",
+      "type": "action",
+      "args": "space",
+      "where": "templates/views/space.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
       "name": "jetonomy_post_updated",
       "type": "action",
       "args": "post_id",
