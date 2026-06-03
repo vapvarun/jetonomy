@@ -29,6 +29,10 @@ if ( ! in_array( $default_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) 
 	$default_type = 'forum';
 }
 
+// Top-level categories for the Category select — mirrors the edit form (G5) so
+// the create form (G6) exposes the same space options the backend accepts.
+$categories = \Jetonomy\Models\Category::list_top_level();
+
 $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
@@ -81,6 +85,36 @@ $crumbs = array(
 						<option value="ideas" <?php selected( $default_type, 'ideas' ); ?>><?php esc_html_e( 'Ideas: feedback voted by members', 'jetonomy' ); ?></option>
 						<option value="feed" <?php selected( $default_type, 'feed' ); ?>><?php esc_html_e( 'Feed: short-form posts', 'jetonomy' ); ?></option>
 					</select>
+				</div>
+
+				<div class="jt-form-row">
+					<label for="jt-ns-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
+					<select id="jt-ns-visibility" name="visibility" class="jt-input">
+						<option value="public"><?php esc_html_e( 'Public: anyone can read', 'jetonomy' ); ?></option>
+						<option value="private"><?php esc_html_e( 'Private: members only', 'jetonomy' ); ?></option>
+					</select>
+				</div>
+
+				<div class="jt-form-row">
+					<label for="jt-ns-join-policy"><?php esc_html_e( 'Join policy', 'jetonomy' ); ?></label>
+					<select id="jt-ns-join-policy" name="join_policy" class="jt-input">
+						<option value="open"><?php esc_html_e( 'Open: anyone can join', 'jetonomy' ); ?></option>
+						<option value="approval"><?php esc_html_e( 'Approval required', 'jetonomy' ); ?></option>
+						<option value="invite"><?php esc_html_e( 'Invite only', 'jetonomy' ); ?></option>
+					</select>
+				</div>
+
+				<div class="jt-form-row">
+					<label for="jt-ns-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
+					<select id="jt-ns-category" name="category_id" class="jt-input">
+						<option value="0"><?php esc_html_e( 'No category', 'jetonomy' ); ?></option>
+						<?php foreach ( $categories as $cat ) : ?>
+							<option value="<?php echo absint( $cat->id ); ?>">
+								<?php echo esc_html( $cat->name ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+					<p class="jt-form-help"><?php esc_html_e( 'Group this space under a top-level category on the community home.', 'jetonomy' ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
