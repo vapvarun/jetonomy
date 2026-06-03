@@ -201,6 +201,16 @@ $crumbs[] = [
 					<?php if ( ! empty( $space->description ) ) : ?>
 						<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
 					<?php endif; ?>
+					<?php
+					/**
+					 * Fires in the space header to display custom field values
+					 * (context = space). Pro custom-fields renders the saved
+					 * values here. Mirrors jetonomy_profile_display_fields.
+					 *
+					 * @param object $space The space being viewed.
+					 */
+					do_action( 'jetonomy_space_display_fields', $space );
+					?>
 					<?php if ( $_jt_can_edit_space ) : ?>
 						<?php
 						/*

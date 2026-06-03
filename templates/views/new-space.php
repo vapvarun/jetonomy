@@ -150,6 +150,16 @@ $crumbs = array(
 					?>
 				</div>
 
+				<?php
+				/**
+				 * Fires inside the create-space form, after the built-in fields.
+				 * Pro custom-fields (context = space) renders its inputs here;
+				 * new-space.js bundles them into the create request as
+				 * `custom_fields`. Mirrors jetonomy_new_post_fields.
+				 */
+				do_action( 'jetonomy_new_space_fields' );
+				?>
+
 				<div class="jt-form-actions">
 					<button type="submit" class="jt-btn jt-btn-fill">
 						<?php esc_html_e( 'Create space', 'jetonomy' ); ?>

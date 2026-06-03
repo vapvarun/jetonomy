@@ -223,6 +223,18 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 				</div>
 			</div>
 
+			<?php
+			/**
+			 * Fires inside the edit-space form, after the built-in fields. Pro
+			 * custom-fields (context = space) renders its inputs here, pre-filled
+			 * with the space's saved values; space-edit.js bundles them into the
+			 * PATCH request as `custom_fields`.
+			 *
+			 * @param object $space The space being edited.
+			 */
+			do_action( 'jetonomy_space_edit_fields', $space );
+			?>
+
 			<div class="jt-form-actions">
 				<button type="submit" class="jt-btn jt-btn-fill">
 					<?php esc_html_e( 'Save changes', 'jetonomy' ); ?>
