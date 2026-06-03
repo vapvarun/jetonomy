@@ -13,40 +13,6 @@
 
 	var i18n = (window.jetonomyData && window.jetonomyData.i18n) || {};
 
-	// Collect Pro custom-field inputs (jt_cf[<slug>] / jt_cf[<slug>][]) into a
-	// { slug: value } map, mirroring the new-post composer so the storage format
-	// matches Pro's validate/sanitize/upsert (multi-checkbox values comma-joined).
-	// Empty when the custom-fields extension is off (no inputs render).
-	function collectCustomFields(scope) {
-		var cf = {};
-		scope.querySelectorAll('[name^="jt_cf["]').forEach(function (input) {
-			var m = input.name.match(/^jt_cf\[([^\]]+)\](\[\])?$/);
-			if (!m) { return; }
-			var slug = m[1];
-			var isMulti = m[2] === '[]';
-			if (input.type === 'checkbox') {
-				if (isMulti) {
-					if (input.checked) {
-						cf[slug] = cf[slug] ? cf[slug] + ',' + input.value : input.value;
-					} else if (!(slug in cf)) {
-						cf[slug] = '';
-					}
-				} else {
-					cf[slug] = input.checked ? input.value : '';
-				}
-			} else if (input.type === 'radio') {
-				if (input.checked) {
-					cf[slug] = input.value;
-				} else if (!(slug in cf)) {
-					cf[slug] = '';
-				}
-			} else {
-				cf[slug] = input.value;
-			}
-		});
-		return cf;
-	}
-
 	// Icon picker wiring moved to assets/js/jetonomy-icon-picker.js (auto-discovers
 	// every [data-jt-icon-picker] on the page). This file only owns the cover
 	// uploader + submit handler now.
@@ -115,7 +81,7 @@
 			if (/^jt_cf\[/.test(k)) { return; } // collected separately below
 			if (v) { payload[k] = v; }
 		});
-		var customFields = collectCustomFields(form);
+		var customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields(form) : {};
 		if (Object.keys(customFields).length > 0) { payload.custom_fields = customFields; }
 		window.jetonomyRest.restFetch('/spaces', {
 			method: 'POST',
