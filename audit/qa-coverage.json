@@ -5,7 +5,7 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-05-20T11:52:35+00:00",
+        "at": "2026-06-03T14:39:34+00:00",
         "manifest_at": "2026-05-14T12:00:00Z",
         "manifest_branch": "main"
     },
@@ -609,7 +609,7 @@
             "total": 1,
             "covered": 0,
             "uncovered": 1,
-            "skipped": 107,
+            "skipped": 112,
             "covered_items": [],
             "uncovered_items": [
                 {
@@ -720,12 +720,12 @@
         "items_total": 151,
         "items_covered": 36,
         "items_uncovered": 115,
-        "items_skipped": 107,
+        "items_skipped": 112,
         "coverage_percent": 23.800000000000001
     },
     "drift": {
-        "previous_uncovered": 113,
+        "previous_uncovered": 115,
         "current_uncovered": 115,
-        "delta": 2
+        "delta": 0
     }
 }
