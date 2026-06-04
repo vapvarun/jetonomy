@@ -755,7 +755,7 @@
           "GET"
         ],
         "handler": "Updates_Controller::get_updates",
-        "permission": "Visibility::rest_check",
+        "permission": "Visibility::rest_check + handler: post-scope follows Permission_Engine::can_read_post (anon OK on readable posts); global/space scopes require_auth",
         "purpose": "Get activity updates since timestamp",
         "auth": "public",
         "capability": null,

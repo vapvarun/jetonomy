@@ -56,14 +56,31 @@ class Updates_Controller extends Base_Controller {
 	 * Returns `Cache-Control: no-cache` as this is per-user real-time data.
 	 */
 	public function get_updates( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$user_id = $this->require_auth();
-		if ( is_wp_error( $user_id ) ) {
-			return $user_id;
-		}
-
 		$since = $request->get_param( 'since' );
 		$scope = $request->get_param( 'scope' ) ?? 'global';
 		$id    = $request->get_param( 'id' ) ? absint( $request->get_param( 'id' ) ) : null;
+
+		// Post-scope polling returns only the new-reply ID list for a single
+		// post, so it follows the same visibility contract as reading the post
+		// itself (Permission_Engine::can_read_post) — anonymous visitors on a
+		// public community can poll posts they can read. Without this, every
+		// logged-out visitor on a single-post page got a 401 each poll cycle
+		// and the new-replies banner never worked for them. Global and space
+		// scopes aggregate activity-log data and stay login-only.
+		if ( 'post' === $scope && $id ) {
+			$post = \Jetonomy\Models\Post::find( $id );
+			if ( ! $post ) {
+				return $this->not_found( 'Post' );
+			}
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+				return $this->permission_error();
+			}
+		} else {
+			$user_id = $this->require_auth();
+			if ( is_wp_error( $user_id ) ) {
+				return $user_id;
+			}
+		}
 
 		// Normalize `since` to MySQL datetime format.
 		$since_dt = $this->normalize_datetime( $since );

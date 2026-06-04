@@ -271,6 +271,7 @@ Each site in a Multisite network gets its own independent community. Network act
 * New      - jetonomy_composer_toolbar action for adding buttons to the post composer toolbar.
 * Improve  - Frontend create-space form now exposes Visibility, Join policy, and Category.
 * Fix      - Reply-by-email: emailed replies are created again (missing listener wired).
+* Fix      - Logged-out visitors on public communities no longer trigger 401 errors from reply polling; the new-replies banner now works for them on posts they can read.
 * Fix      - Inline post editor can edit Pro custom fields; custom_fields included on PATCH.
 * Fix      - New-post composer includes custom field values in the payload.
 * Fix      - Category icons render through the icon helper on home and category views; duplicate category title removed.
