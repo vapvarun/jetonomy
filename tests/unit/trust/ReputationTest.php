@@ -223,4 +223,62 @@ class ReputationTest extends WP_UnitTestCase {
 		$this->assertEquals( 0, $result );
 		$this->assertFalse( $fired );
 	}
+
+	public function test_points_map_filter_overrides_scoring(): void {
+		$cb = function ( $map ) {
+			$map['post_upvoted'] = 25;
+			$map['wb_gam_custom_action'] = 7;
+			return $map;
+		};
+		add_filter( 'jetonomy_reputation_points_map', $cb );
+
+		$this->assertEquals( 25, Reputation::points_for( 'post_upvoted' ) );
+		$this->assertEquals( 7, Reputation::points_for( 'wb_gam_custom_action' ) );
+
+		remove_filter( 'jetonomy_reputation_points_map', $cb );
+		$this->assertEquals( 10, Reputation::points_for( 'post_upvoted' ) );
+	}
+
+	public function test_pre_change_filter_can_veto_award(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+
+		$cb = '__return_zero';
+		add_filter( 'jetonomy_reputation_pre_change', $cb );
+
+		$fired = false;
+		add_action(
+			'jetonomy_reputation_changed',
+			function () use ( &$fired ) {
+				$fired = true;
+			}
+		);
+
+		$result = Reputation::award( $user_id, 'post_upvoted' );
+		remove_filter( 'jetonomy_reputation_pre_change', $cb );
+
+		$this->assertEquals( 0, $result, 'Vetoed award must return 0' );
+		$this->assertFalse( $fired, 'jetonomy_reputation_changed must not fire when vetoed' );
+
+		$profile = UserProfile::find_by_user( $user_id );
+		$this->assertEquals( 0, (int) $profile->reputation, 'Vetoed delta must not persist' );
+	}
+
+	public function test_pre_change_filter_can_scale_award(): void {
+		$user_id = $this->factory()->user->create();
+		UserProfile::find_or_create( $user_id );
+
+		$cb = function ( $delta, $uid, $action, $context ) {
+			return $delta * 2; // double-points campaign
+		};
+		add_filter( 'jetonomy_reputation_pre_change', $cb, 10, 4 );
+
+		$result = Reputation::award( $user_id, 'post_upvoted' );
+		remove_filter( 'jetonomy_reputation_pre_change', $cb, 10 );
+
+		$this->assertEquals( 20, $result );
+
+		$profile = UserProfile::find_by_user( $user_id );
+		$this->assertEquals( 20, (int) $profile->reputation );
+	}
 }
