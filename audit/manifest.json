@@ -2874,7 +2874,8 @@
       "v2 schema sections added on 2026-04-30 refresh. All `static_analysis.*` arrays default to []; populated entries are confirmed findings.",
       "dead_listeners: free's 6 candidates (jetonomy_cleanup_expired, jetonomy_cleanup_notifications, jetonomy_prune_activity, jetonomy_publish_scheduled, jetonomy_trust_evaluation, jetonomy_verification_reminder) are wp_schedule_event() cron hooks, not dead - fired by WP-Cron, not direct do_action.",
       "grid_track_overflow_risks: 4 bare 1fr tracks in fixed-column grids. Risk rated low (current cell content fits). Fix on next CSS sweep - convert to minmax(0, 1fr) for content-overflow safety."
-    ]
+    ],
+    "layout_css_helper_2026_06_04": "Layout_CSS::container_max_width(?array $settings = null): ?string is the single source of truth for the container_width setting ('full' -> '100%', 'custom' -> clamped 600-2400px, 'theme' -> null). Consumed by build_rules() (frontend body.jt-page overrides) AND by jetonomy-pro analytics admin page (extensions/analytics enqueue_assets). Pro will break if the signature/semantics change."
   },
   "generated": {
     "at": "2026-05-14T12:00:00Z",
