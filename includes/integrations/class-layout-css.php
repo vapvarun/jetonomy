@@ -56,34 +56,6 @@ class Layout_CSS {
 	}
 
 	/**
-	 * Resolve the container width setting to a CSS max-width value.
-	 *
-	 * Single source of truth for the `container_width` setting — consumed by
-	 * the frontend rules below AND by Pro surfaces (e.g. the Analytics admin
-	 * page), so the resolved value is never duplicated or hard-coded.
-	 *
-	 * @param array<string, mixed>|null $settings Saved jetonomy_settings, or
-	 *                                            null to read the option.
-	 * @return string|null '100%' (full), 'NNNpx' (custom, clamped 600–2400),
-	 *                     or null for Theme Default (no override).
-	 */
-	public static function container_max_width( ?array $settings = null ): ?string {
-		if ( null === $settings ) {
-			$settings = get_option( 'jetonomy_settings', array() );
-			$settings = is_array( $settings ) ? $settings : array();
-		}
-
-		$width = isset( $settings['container_width'] ) ? (string) $settings['container_width'] : 'theme';
-		if ( 'full' === $width ) {
-			return '100%';
-		}
-		if ( 'custom' === $width ) {
-			return max( 600, min( 2400, absint( $settings['container_width_custom'] ?? 1280 ) ) ) . 'px';
-		}
-		return null;
-	}
-
-	/**
 	 * Compose the CSS string from saved settings. Returns an empty string
 	 * when every setting is at its default — callers should treat empty
 	 * output as a no-op.
@@ -98,8 +70,12 @@ class Layout_CSS {
 		// Targets common WordPress theme container classes inside community pages.
 		// `body.jt-page` keeps every override scoped to Jetonomy routes only, so
 		// the same theme class on a regular WP page is untouched.
-		$value = self::container_max_width( $settings );
-		if ( null !== $value ) {
+		$width = isset( $settings['container_width'] ) ? (string) $settings['container_width'] : 'theme';
+		if ( 'full' === $width || 'custom' === $width ) {
+			$value = 'full' === $width
+				? '100%'
+				: max( 600, min( 2400, absint( $settings['container_width_custom'] ?? 1280 ) ) ) . 'px';
+
 			$css .= 'body.jt-page .site-content,'
 				. 'body.jt-page .entry-content,'
 				. 'body.jt-page .content-area,'
