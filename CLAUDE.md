@@ -1,6 +1,33 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory - 64 REST endpoints, 43 AJAX handlers, 104 hooks fired (59 actions + 43 filters + 2 deprecated aliases), 23 tables, 23 capabilities, 8 blocks, 9 shortcodes, 14 WP-CLI commands, 6 cron hooks, 14 admin pages. v2 schema with `static_analysis` populated (zero dead listeners after 1.4.2; 4 grid 1fr risks documented as design notes since the CSS already implements `minmax(0, 1fr)`). See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md) and [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md). End-to-end customer flows live as runnable PHP scenarios under `includes/cli/scenarios/` and as the pre-release smoke runbook (`/jetonomy-smoke`). For an interactive graph view, run `cd audit && python3 -m http.server 8765` and open <http://localhost:8765/graph.html>. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory - 66 REST routes, 43 AJAX handlers, 141 hooks fired, 23 tables, 23 capabilities, 8 blocks, 9 shortcodes, 14 WP-CLI commands, 6 cron hooks, 13 admin pages. **Coverage-gated refresh completed 2026-06-04 (pre-1.4.5): hooks_fired reconciled (+29 missing since 1.4.3/1.4.4 incl. WB Gam filters + sidebar hooks, -1 stale), all other categories verified exact vs ground-truth grep (see `generated.refresh_2026_06_04`). SaaS feature audit: `audit/FEATURE_GAP_ANALYSIS.md`.** v2 schema with `static_analysis` populated (zero dead listeners after 1.4.2; 4 grid 1fr risks documented as design notes since the CSS already implements `minmax(0, 1fr)`). See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md) and [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md). End-to-end customer flows live as runnable PHP scenarios under `includes/cli/scenarios/` and as the pre-release smoke runbook (`/jetonomy-smoke`). For an interactive graph view, run `cd audit && python3 -m http.server 8765` and open <http://localhost:8765/graph.html>. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+
+## Stability & Manifest-First Rules (enforced)
+
+Jetonomy free + pro run on many live sites. Treat every change as production. Be
+extra careful; never fix blindly.
+
+1. **Manifest is the starting point.** Before adding ANY function, hook, REST
+   route, or helper, check `audit/manifest.json` (and the Pro manifest for
+   cross-plugin work) to confirm one does not already exist. Reuse the existing
+   helper instead of writing a parallel one. The manifest exists so free and pro
+   do not grow duplicate/similar functions.
+2. **Keep the manifest in sync.** When you add a hook / endpoint / listener,
+   update the manifest in the same change (a targeted manual delta is fine —
+   `hooks_fired` in free, `free_filters_hooked` in pro). A full
+   `/wp-plugin-onboard --refresh` reconciles at release.
+3. **No duplicate code, no dead code.** If the same logic appears twice,
+   consolidate to one implementation (PHP helper, or a shared JS lib such as
+   `assets/js/lib/custom-fields.js` → `window.jetonomyCollectCustomFields`).
+   Don't leave unreachable fallback branches behind once a guard makes them moot.
+4. **Verify root cause, then fix.** Reproduce first (code or browser). Bug
+   reports can be wrong — a 400/40x may be intended behaviour (e.g. accept-reply
+   is Q&A-only). Don't "fix" a correct guard.
+5. **Local CI before declaring done** (not just the pre-commit hook):
+   - `php bin/audit-rest-routes.php includes/` and `... ../jetonomy-pro/includes/` → both OK
+   - `wp jetonomy qa-actions` → 210/210
+   - free+pro boot smoke (`../jetonomy-pro/tools/smoke-test.php`)
+   - browser-verify every frontend/template change (incl. 390px mobile)
 
 ## Build Rule (enforced)
 
@@ -25,6 +52,8 @@
 ## REST Mutation Auth Gate (manual until CI lands)
 
 **Every mutation route MUST use `\Jetonomy\API\REST_Auth::auth_mutation()` or `auth_public_write()`.** No raw `is_user_logged_in`, `current_user_can`, closures, or class methods as `permission_callback` on mutation routes. The audit script verifies this.
+
+**Pro extensions** must NOT reference `REST_Auth::auth_mutation()` directly at route registration (the eager static call fatals the whole REST API if free's class isn't loaded yet — Basecamp 9953887096). They use the lazy base-class wrapper `Jetonomy_Pro\Extension::rest_auth_mutation( $caps )`, which resolves `REST_Auth` at request time behind `class_exists()` and fails closed. `bin/audit-rest-routes.php` accepts `rest_auth_mutation` as an approved callback.
 
 ```
 php bin/audit-rest-routes.php includes/                  # free

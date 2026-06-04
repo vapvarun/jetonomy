@@ -401,10 +401,18 @@ function check_hooks_fired( array $m, string $corpus ): array {
 			continue;
 		}
 
+		// Covered when a test/journey fires the hook directly OR registers a
+		// listener against it (add_action/add_filter + assertions through the
+		// production code path that fires it — the standard unit-test shape
+		// for filter contracts, e.g. ReputationTest's pre_change veto test).
 		$fired = strpos( $corpus, "do_action( '{$name}'" ) !== false
 			|| strpos( $corpus, "do_action('{$name}'" ) !== false
 			|| strpos( $corpus, "apply_filters( '{$name}'" ) !== false
-			|| strpos( $corpus, "apply_filters('{$name}'" ) !== false;
+			|| strpos( $corpus, "apply_filters('{$name}'" ) !== false
+			|| strpos( $corpus, "add_action( '{$name}'" ) !== false
+			|| strpos( $corpus, "add_action('{$name}'" ) !== false
+			|| strpos( $corpus, "add_filter( '{$name}'" ) !== false
+			|| strpos( $corpus, "add_filter('{$name}'" ) !== false;
 
 		$record = array( 'name' => $name, 'consumer_count' => count( $consumed_by ) );
 		if ( $fired ) {

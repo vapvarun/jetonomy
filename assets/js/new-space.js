@@ -77,7 +77,12 @@
 		btn.disabled = true;
 		var fd = new FormData(form);
 		var payload = {};
-		fd.forEach(function (v, k) { if (v) { payload[k] = v; } });
+		fd.forEach(function (v, k) {
+			if (/^jt_cf\[/.test(k)) { return; } // collected separately below
+			if (v) { payload[k] = v; }
+		});
+		var customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields(form) : {};
+		if (Object.keys(customFields).length > 0) { payload.custom_fields = customFields; }
 		window.jetonomyRest.restFetch('/spaces', {
 			method: 'POST',
 			body: payload

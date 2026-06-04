@@ -92,11 +92,19 @@ $community_title = ! empty( $settings['community_title'] ) ? $settings['communit
 					<section class="jt-mb-md">
 						<div class="jt-cat-row">
 							<?php if ( ! empty( $category->icon ) ) : ?>
-								<span class="jt-cat-emoji"><?php echo esc_html( $category->icon ); ?></span>
+								<?php jetonomy_render_space_icon( (string) $category->icon, 20, 'jt-cat-emoji' ); ?>
 							<?php endif; ?>
-							<h2 class="jt-cat-name">
-								<?php echo esc_html( $category->name ); ?>
-							</h2>
+							<?php
+							// Suppress a redundant heading when a category is named the
+							// same as the page title (e.g. a "Community" category under
+							// the "Community" home title). The section still lists its
+							// spaces; only the duplicate label is hidden.
+							if ( 0 !== strcasecmp( trim( (string) $category->name ), trim( (string) $community_title ) ) ) :
+								?>
+								<h2 class="jt-cat-name">
+									<?php echo esc_html( $category->name ); ?>
+								</h2>
+							<?php endif; ?>
 							<?php if ( ! empty( $category->description ) ) : ?>
 								<span class="jt-cat-desc">&mdash; <?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>

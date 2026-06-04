@@ -1367,6 +1367,17 @@ const { state, actions } = store( 'jetonomy', {
             // the user just types and the image stays visible in place.
             bodyEl.style.display = 'none';
 
+            // Pro custom-fields renders a hidden, pre-filled editable block
+            // ([data-jt-post-edit-fields]) after the body, plus a read-only
+            // display block (.jt-custom-fields--display). Reveal the editable
+            // block inside the editor so additional fields can be changed, and
+            // hide the read-only copy while editing. Remember the block's home
+            // so Cancel can put it back exactly where it was.
+            const fieldsBlock = article.querySelector( '[data-jt-post-edit-fields]' );
+            const displayBlock = article.querySelector( '.jt-custom-fields--display' );
+            const fieldsHome = fieldsBlock ? fieldsBlock.parentNode : null;
+            const fieldsNext = fieldsBlock ? fieldsBlock.nextSibling : null;
+
             const editor = document.createElement( 'div' );
             editor.className = 'jt-post-editor';
             editor.style.cssText = 'margin:8px 0';
@@ -1396,7 +1407,13 @@ const { state, actions } = store( 'jetonomy', {
             saveBtn.type = 'button';
 
             btnRow.append( cancelBtn, saveBtn );
-            editor.append( editable, btnRow );
+            editor.append( editable );
+            if ( fieldsBlock ) {
+                fieldsBlock.hidden = false;
+                editor.append( fieldsBlock );
+                if ( displayBlock ) displayBlock.style.display = 'none';
+            }
+            editor.append( btnRow );
             bodyEl.after( editor );
             // Move caret to end of existing content so the user can continue
             // typing without losing position — UX parity with textarea focus.
@@ -1409,6 +1426,13 @@ const { state, actions } = store( 'jetonomy', {
             sel.addRange( range );
 
             cancelBtn.addEventListener( 'click', () => {
+                // Put the editable fields block back where Pro rendered it and
+                // re-hide it; restore the read-only display copy.
+                if ( fieldsBlock && fieldsHome ) {
+                    fieldsBlock.hidden = true;
+                    fieldsHome.insertBefore( fieldsBlock, fieldsNext );
+                }
+                if ( displayBlock ) displayBlock.style.display = '';
                 editor.remove();
                 bodyEl.style.display = '';
             } );
@@ -1426,6 +1450,17 @@ const { state, actions } = store( 'jetonomy', {
                 saveBtn.disabled = true;
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
+                // Collect Pro custom-field inputs from the revealed edit block via
+                // the shared collector (window.jetonomyCollectCustomFields). Omitted
+                // entirely when the extension is off (no block, no inputs).
+                const body = { content };
+                if ( fieldsBlock && window.jetonomyCollectCustomFields ) {
+                    const customFields = window.jetonomyCollectCustomFields( fieldsBlock );
+                    if ( Object.keys( customFields ).length > 0 ) {
+                        body.custom_fields = customFields;
+                    }
+                }
+
                 try {
                     const res = await fetch( `${ state.apiBase }/posts/${ postId }`, {
                         method: 'PATCH',
@@ -1434,7 +1469,7 @@ const { state, actions } = store( 'jetonomy', {
                             'X-WP-Nonce': state._nonce || state.nonce,
                         },
                         credentials: 'same-origin',
-                        body: JSON.stringify( { content } ),
+                        body: JSON.stringify( body ),
                     } );
 
                     if ( res.ok ) {
@@ -2401,6 +2436,15 @@ const { state, actions } = store( 'jetonomy', {
             };
             if ( publishedAt ) payload.published_at = publishedAt;
             if ( captchaToken ) payload.captcha_token = captchaToken;
+
+            // Pro custom-field inputs collected via the shared collector
+            // (window.jetonomyCollectCustomFields). Empty when the extension is off
+            // (no inputs) so the key is omitted and the server listener no-ops.
+            const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
+            if ( Object.keys( customFields ).length > 0 ) {
+                payload.custom_fields = customFields;
+            }
+
             if ( typeof o.extraPayload === 'function' ) {
                 const extras = o.extraPayload( form ) || {};
                 Object.assign( payload, extras );
@@ -2517,39 +2561,11 @@ const { state, actions } = store( 'jetonomy', {
                 }
             } );
 
-            // Pro custom-field inputs (jt_cf[<slug>] and jt_cf[<slug>][]).
-            // Empty object when Pro / custom-fields disabled — no inputs render
-            // and the extra PATCH below is skipped. Multi-checkbox values are
-            // joined with commas to match the storage convention used by
-            // Pro's rest_update_my_fields handler.
-            const customFields = {};
-            form.querySelectorAll( '[name^="jt_cf["]' ).forEach( input => {
-                const m = input.name.match( /^jt_cf\[([^\]]+)\](\[\])?$/ );
-                if ( ! m ) return;
-                const slug = m[ 1 ];
-                const isMulti = '[]' === m[ 2 ];
-                if ( 'checkbox' === input.type ) {
-                    if ( isMulti ) {
-                        if ( input.checked ) {
-                            customFields[ slug ] = customFields[ slug ]
-                                ? customFields[ slug ] + ',' + input.value
-                                : input.value;
-                        } else if ( ! ( slug in customFields ) ) {
-                            customFields[ slug ] = '';
-                        }
-                    } else {
-                        customFields[ slug ] = input.checked ? input.value : '';
-                    }
-                } else if ( 'radio' === input.type ) {
-                    if ( input.checked ) {
-                        customFields[ slug ] = input.value;
-                    } else if ( ! ( slug in customFields ) ) {
-                        customFields[ slug ] = '';
-                    }
-                } else {
-                    customFields[ slug ] = input.value;
-                }
-            } );
+            // Pro custom-field inputs collected via the shared collector
+            // (window.jetonomyCollectCustomFields). Empty object when Pro /
+            // custom-fields disabled — no inputs render and the extra PATCH below
+            // is skipped.
+            const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
 
             const payload = { display_name: displayName, bio };
             if ( Object.keys( notifPrefs ).length > 0 ) {

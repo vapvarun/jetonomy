@@ -755,7 +755,7 @@
           "GET"
         ],
         "handler": "Updates_Controller::get_updates",
-        "permission": "Visibility::rest_check",
+        "permission": "Visibility::rest_check + handler: post-scope follows Permission_Engine::can_read_post (anon OK on readable posts); global/space scopes require_auth",
         "purpose": "Get activity updates since timestamp",
         "auth": "public",
         "capability": null,
@@ -1743,13 +1743,6 @@
   "services": [],
   "hooks_fired": [
     {
-      "name": "jetonomy_extensions_init",
-      "type": "action",
-      "args": "none",
-      "where": "includes/class-jetonomy.php",
-      "consumed_by": "jetonomy-pro"
-    },
-    {
       "name": "jetonomy_admin_dashboard_after_stats",
       "type": "action",
       "args": "none",
@@ -2001,6 +1994,41 @@
       "type": "action",
       "args": "post_id",
       "where": "templates/post-meta.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_create_space",
+      "type": "action",
+      "args": "space_id, request",
+      "where": "includes/api/class-spaces-controller.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_after_update_space",
+      "type": "action",
+      "args": "space, context{space_id,user_id,request}",
+      "where": "includes/api/class-spaces-controller.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_new_space_fields",
+      "type": "action",
+      "args": "none",
+      "where": "templates/views/new-space.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_space_edit_fields",
+      "type": "action",
+      "args": "space",
+      "where": "templates/views/space-edit.php",
+      "consumed_by": "jetonomy-pro"
+    },
+    {
+      "name": "jetonomy_space_display_fields",
+      "type": "action",
+      "args": "space",
+      "where": "templates/views/space.php",
       "consumed_by": "jetonomy-pro"
     },
     {
@@ -2517,6 +2545,186 @@
       "args": "$points, $action",
       "where": "includes/trust/class-reputation.php (Reputation::points_for)",
       "consumed_by": null
+    },
+    {
+      "name": "jetonomy_after_delete_post",
+      "type": "action",
+      "where": "includes/api/class-posts-controller.php:778",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_after_delete_reply",
+      "type": "action",
+      "where": "includes/api/class-replies-controller.php:528",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_composer_toolbar",
+      "type": "action",
+      "where": "templates/partials/composer.php:49",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_cron_batch_size",
+      "type": "filter",
+      "where": "includes/class-cron.php:121",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_join_request_approved",
+      "type": "action",
+      "where": "includes/models/class-join-request.php:92",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_join_request_denied",
+      "type": "action",
+      "where": "includes/models/class-join-request.php:115",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_leaderboard_items",
+      "type": "filter",
+      "where": "includes/api/class-leaderboards-controller.php:176",
+      "consumed_by": [
+        "wb-gamification"
+      ]
+    },
+    {
+      "name": "jetonomy_max_space_pins",
+      "type": "filter",
+      "where": "includes/api/class-posts-controller.php:905",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_moderation_per_page",
+      "type": "filter",
+      "where": "templates/views/moderation.php:54",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_reply_unaccepted",
+      "type": "action",
+      "where": "includes/api/class-replies-controller.php:652",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_reputation_points_map",
+      "type": "filter",
+      "where": "includes/trust/class-reputation.php:75",
+      "consumed_by": [
+        "wb-gamification"
+      ]
+    },
+    {
+      "name": "jetonomy_reputation_pre_change",
+      "type": "filter",
+      "where": "includes/trust/class-reputation.php:210",
+      "consumed_by": [
+        "wb-gamification"
+      ]
+    },
+    {
+      "name": "jetonomy_show_sidebar_about",
+      "type": "filter",
+      "where": "templates/partials/sidebar.php:104",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_show_sidebar_managed_by",
+      "type": "filter",
+      "where": "templates/partials/sidebar.php:190",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_show_sidebar_popular_tags",
+      "type": "filter",
+      "where": "templates/partials/sidebar.php:358",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_show_sidebar_top_members",
+      "type": "filter",
+      "where": "templates/partials/sidebar.php:302",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_show_sidebar_trending",
+      "type": "filter",
+      "where": "templates/partials/sidebar.php:237",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_after_managed_by",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:212",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_after_popular_tags",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:387",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_after_top_members",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:345",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_after_trending",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:289",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_before_about",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:102",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_before_managed_by",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:188",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_before_popular_tags",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:356",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_before_top_members",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:300",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_sidebar_before_trending",
+      "type": "action",
+      "where": "templates/partials/sidebar.php:235",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_space_member_joined",
+      "type": "action",
+      "where": "includes/models/class-space-member.php:69",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_space_member_left",
+      "type": "action",
+      "where": "includes/models/class-space-member.php:116",
+      "consumed_by": []
+    },
+    {
+      "name": "jetonomy_space_members_per_page",
+      "type": "filter",
+      "where": "templates/views/space-members.php:29",
+      "consumed_by": []
     }
   ],
   "buddypress_integration": {
@@ -2842,12 +3050,14 @@
     ]
   },
   "generated": {
-    "at": "2026-05-14T12:00:00Z",
+    "at": "2026-06-04T00:00:00Z",
     "from": "wp-plugin-onboard --refresh (1.4.3 feature-drop delta: admin bar + notifications redesign + configurable reputation + Pro extension hooks)",
     "branch": "main",
     "schema_version": "v2",
     "refresh_note": "Refreshed 2026-05-14 for the 1.4.3 feature drop (commits 16215a2, 6bfebca, e2a3cd0, b0fa218). NEW: Admin_Bar class (includes/class-admin-bar.php, admin_bar_menu priority 60). NEW: jetonomy_admin_empty_state() global helper (includes/helpers.php). NEW: 3 public hooks for Pro consumption (jetonomy_post_list_results_for_space, jetonomy_post_card_after_badges, jetonomy_reputation_points_for). NEW: 2 REST endpoints on Notifications_Controller (DELETE /notifications/{id}, POST /notifications/bulk) plus ?filter= on the existing GET. NEW: configurable reputation via Reputation::action_points_map() + filter + reputation_points settings array. Notifications admin template fully redesigned (filter tabs, bulk toolbar, per-row menu, pagination, empty-state primitive). See audit/wppqa-baseline-2026-05-14/SUMMARY.md for the surface-area delta.",
-    "refreshed_via": "wp-plugin-onboard --refresh (manual delta — feature-drop scope)"
+    "refreshed_via": "wp-plugin-onboard --refresh (manual delta — feature-drop scope)",
+    "static_analysis_refresh_2026_06_03": "1.5.0-dev bug-sweep refresh. Phase-0 wppqa baseline saved to audit/wppqa-baseline-2026-06-03/SUMMARY.md (authoritative current bug state). grid_track_overflow_risks cleared: all 4 flagged selectors (.jt-stats-bar, .jt-badges, .jt-kanban, tablet) verified to already use repeat(N, minmax(0, 1fr)) in jetonomy.css:691/697/705/774 — the 617/623/631/694 line refs were 1.4.3-era stale. dead_listeners still 1 (jetonomy_after_resolve_flag — intentional extension point, not a bug). No new issues from the bug sweep; wppqa errors are heuristic false positives (REST-JS request-payload reads), vendored libs/, or pre-existing CSS. Space-field hooks added to hooks_fired this session.",
+    "refresh_2026_06_04": "Pre-1.4.5 release refresh: coverage-gated hooks_fired reconcile - added 29 fired hooks missing since 1.4.3/1.4.4 (WB Gam filters, sidebar visibility/extension hooks, join-request + space-member events, delete post/reply); removed stale jetonomy_extensions_init (no longer in code). REST(66 routes incl /media via rest_base), tables(23), admin_pages(13 slugs), shortcodes(9) verified exact vs ground-truth grep. wp_cli(14)/blocks(8)/cron(6) registered dynamically (dispatcher loop / register_block_type / schedules array) - manifest counts verified correct. wppqa 2026-06-04 baseline identical to 2026-06-03 (all known FPs)."
   },
   "static_analysis": {
     "dead_listeners": [
@@ -2865,32 +3075,7 @@
     "js_only_activation": [],
     "rest_hang_risks": [],
     "visual_required_no_enforcement": [],
-    "grid_track_overflow_risks": [
-      {
-        "file": "assets/css/jetonomy.css:617",
-        "selector": ".jt-stats-bar",
-        "track_rule": "grid-template-columns: repeat(4, 1fr)",
-        "suggestion": "repeat(4, minmax(0, 1fr))"
-      },
-      {
-        "file": "assets/css/jetonomy.css:623",
-        "selector": ".jt-badges",
-        "track_rule": "grid-template-columns: repeat(3, 1fr)",
-        "suggestion": "repeat(3, minmax(0, 1fr))"
-      },
-      {
-        "file": "assets/css/jetonomy.css:631",
-        "selector": ".jt-kanban",
-        "track_rule": "grid-template-columns: repeat(4, 1fr)",
-        "suggestion": "repeat(4, minmax(0, 1fr))"
-      },
-      {
-        "file": "assets/css/jetonomy.css:694",
-        "selector": ".jt-kanban (tablet)",
-        "track_rule": "grid-template-columns: repeat(2, 1fr)",
-        "suggestion": "repeat(2, minmax(0, 1fr))"
-      }
-    ],
+    "grid_track_overflow_risks": [],
     "hook_signature_drift": []
   }
 }

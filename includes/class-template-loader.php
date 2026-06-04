@@ -372,6 +372,13 @@ class Template_Loader {
 		wp_enqueue_script( 'jetonomy-optimistic', JETONOMY_URL . 'assets/js/lib/optimistic.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
 		wp_enqueue_script( 'jetonomy-smart-dropdown', JETONOMY_URL . 'assets/js/lib/smart-dropdown.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
 
+		// Shared Pro custom-field collector (window.jetonomyCollectCustomFields).
+		// Single implementation consumed by the post composer + inline editor
+		// (view.js module) and the create/edit space forms (classic scripts), so
+		// the jt_cf -> custom_fields mapping lives in exactly one place. Loaded as
+		// a classic script so it is defined before any consumer runs.
+		wp_enqueue_script( 'jetonomy-custom-fields', JETONOMY_URL . 'assets/js/lib/custom-fields.min.js', array( 'jetonomy-data' ), JETONOMY_VERSION, true );
+
 		wp_enqueue_script_module(
 			'jetonomy-view',
 			JETONOMY_URL . 'assets/js/view.js',
@@ -561,15 +568,15 @@ class Template_Loader {
 			wp_enqueue_script(
 				'jetonomy-new-space',
 				JETONOMY_URL . 'assets/js/new-space.js',
-				array( 'jetonomy-data' ),
+				array( 'jetonomy-data', 'jetonomy-custom-fields' ),
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'space-edit' === $data['route'] ) {
+		} elseif ( 'edit-space' === $data['route'] ) {
 			wp_enqueue_script(
 				'jetonomy-space-edit',
 				JETONOMY_URL . 'assets/js/space-edit.js',
-				array( 'jetonomy-data' ),
+				array( 'jetonomy-data', 'jetonomy-custom-fields' ),
 				JETONOMY_VERSION,
 				true
 			);

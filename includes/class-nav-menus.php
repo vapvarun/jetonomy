@@ -16,6 +16,30 @@ class Nav_Menus {
 
 	public function __construct() {
 		add_action( 'admin_head-nav-menus.php', [ $this, 'add_meta_box' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+	}
+
+	/**
+	 * Enqueue the Community meta box script on the Menus admin page only.
+	 *
+	 * Wires the "Select All" checkbox, which renders markup but had no
+	 * handler bound (the checkbox did nothing). Loaded only on
+	 * nav-menus.php so it never runs on other admin screens.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 */
+	public function enqueue_assets( string $hook ): void {
+		if ( 'nav-menus.php' !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'jetonomy-admin-nav-menus',
+			JETONOMY_URL . 'assets/js/admin-nav-menus.js',
+			[ 'jquery' ],
+			JETONOMY_VERSION,
+			true
+		);
 	}
 
 	/**

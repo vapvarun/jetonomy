@@ -40,7 +40,7 @@ $crumbs = [
 		<main>
 			<div class="jt-cat-page-row">
 				<?php if ( ! empty( $category->icon ) ) : ?>
-					<span class="jt-cat-page-emoji"><?php echo esc_html( $category->icon ); ?></span>
+					<?php jetonomy_render_space_icon( (string) $category->icon, 32, 'jt-cat-page-emoji' ); ?>
 				<?php endif; ?>
 				<div>
 					<h1 class="jt-page-title"><?php echo esc_html( $category->name ); ?></h1>

@@ -140,8 +140,12 @@
 		var payload = {};
 		fd.forEach(function (v, k) {
 			if (k === 'posts_per_page' || k === 'enable_prefixes') { return; }
+			if (/^jt_cf\[/.test(k)) { return; } // collected separately below
 			payload[k] = v;
 		});
+
+		var customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields(form) : {};
+		if (Object.keys(customFields).length > 0) { payload.custom_fields = customFields; }
 
 		var settings = {};
 		var ppp = form.querySelector('[name=posts_per_page]').value.trim();

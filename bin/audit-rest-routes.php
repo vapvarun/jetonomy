@@ -74,6 +74,14 @@ $approved_callbacks = array(
 	'Jetonomy\\API\\REST_Auth::auth_public_write',
 	'\\Jetonomy\\API\\REST_Auth::auth_mutation',
 	'\\Jetonomy\\API\\REST_Auth::auth_public_write',
+	// Pro extensions call this thin base-class delegate
+	// (Jetonomy_Pro\Extension::rest_auth_mutation) instead of REST_Auth::auth_mutation
+	// directly. It resolves REST_Auth lazily at request time behind class_exists()
+	// — preventing the route-registration fatal when the free helper is an older
+	// build (BC card 9953887096) — and otherwise falls back to an inline login +
+	// nonce + capability check that fails closed. Same auth contract as
+	// auth_mutation(), so it is an approved mutation callback.
+	'rest_auth_mutation',
 );
 
 /** Tokens / strings that mark a route as a mutation. */

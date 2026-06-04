@@ -452,6 +452,17 @@ class Spaces_Controller extends Base_Controller {
 
 		$space = Space::find( $id );
 
+		/**
+		 * Fires after a space is created. Lets extensions persist data tied to
+		 * the new space (e.g. Pro custom fields bundle a `custom_fields` map
+		 * into the create request, mirroring posts).
+		 *
+		 * @since 1.5.0
+		 * @param int             $id      The new space ID.
+		 * @param WP_REST_Request $request The create request.
+		 */
+		do_action( 'jetonomy_after_create_space', $id, $request );
+
 		return new WP_REST_Response( $this->prepare_space( $space ), 201 );
 	}
 
@@ -550,6 +561,24 @@ class Spaces_Controller extends Base_Controller {
 		Space::update( $id, $data );
 
 		$updated = Space::find( $id );
+
+		/**
+		 * Fires after a space is updated. Mirror of jetonomy_after_update_post:
+		 * receives the updated space object plus a context array carrying the
+		 * request so extensions (e.g. Pro custom fields) can persist edits.
+		 *
+		 * @since 1.5.0
+		 * @param object                                     $updated Space object.
+		 * @param array{user_id:int,request:WP_REST_Request} $context Context.
+		 */
+		do_action(
+			'jetonomy_after_update_space',
+			$updated,
+			array(
+				'user_id' => get_current_user_id(),
+				'request' => $request,
+			)
+		);
 
 		return new WP_REST_Response( $this->prepare_space( $updated ), 200 );
 	}

@@ -323,11 +323,54 @@ class REST_Tests {
 		$this->check( 'B9: PATCH /replies/{id} → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 		$this->check( 'B9: response has id', isset( $data['id'] ), 'response missing id' );
 
-		// 10. Accept reply as answer.
-		$r = $this->rest( 'POST', "/replies/{$this->reply_id}/accept" );
-		$data = $r->get_data();
-		$this->check( 'B10: POST /replies/{id}/accept → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
-		$this->check( 'B10: is_accepted = true', ! empty( $data['is_accepted'] ), 'is_accepted was not true' );
+		// 10. Accept reply as answer. Accepted answers are a Q&A-only workflow —
+		// accept_reply() returns 400 on forum/discussion spaces by design, and the
+		// shared fixture space is a discussion space. Stand up a dedicated Q&A
+		// space + post + reply so this check exercises accept correctly, then
+		// register all three for cleanup (reply, post, space — reversed order).
+		$qa_suffix     = time();
+		$qa_space      = $this->rest( 'POST', '/spaces', [
+			'title' => 'QA REST Accept Space ' . $qa_suffix,
+			'type'  => 'qa',
+		] );
+		$qa_space_data = $qa_space->get_data();
+
+		if ( 201 !== $qa_space->get_status() || empty( $qa_space_data['id'] ) ) {
+			$this->check( 'B10: Q&A space created for accept test', false, wp_json_encode( $qa_space_data ) );
+		} else {
+			$qa_space_id     = (int) $qa_space_data['id'];
+			$this->cleanup[] = [ 'type' => 'space_rest', 'id' => $qa_space_id ];
+
+			$qa_post    = $this->rest( 'POST', "/spaces/{$qa_space_id}/posts", [
+				'title'   => 'QA REST Accept Post ' . $qa_suffix,
+				'content' => '<p>Question awaiting an accepted answer.</p>',
+				'type'    => 'discussion',
+			] );
+			$qa_post_id = (int) ( $qa_post->get_data()['id'] ?? 0 );
+			if ( $qa_post_id ) {
+				$this->cleanup[] = [ 'type' => 'post_rest', 'id' => $qa_post_id ];
+			}
+
+			$qa_reply_id = 0;
+			if ( $qa_post_id ) {
+				$qa_reply    = $this->rest( 'POST', "/posts/{$qa_post_id}/replies", [
+					'content' => '<p>The accepted answer.</p>',
+				] );
+				$qa_reply_id = (int) ( $qa_reply->get_data()['id'] ?? 0 );
+				if ( $qa_reply_id ) {
+					$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $qa_reply_id ];
+				}
+			}
+
+			if ( $qa_reply_id ) {
+				$r    = $this->rest( 'POST', "/replies/{$qa_reply_id}/accept" );
+				$data = $r->get_data();
+				$this->check( 'B10: POST /replies/{id}/accept → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+				$this->check( 'B10: is_accepted = true', ! empty( $data['is_accepted'] ), 'is_accepted was not true' );
+			} else {
+				$this->check( 'B10: Q&A accept fixture created (post + reply)', false, 'could not create post/reply in the Q&A space' );
+			}
+		}
 
 		// 11. Create second reply for the split test.
 		$r = $this->rest( 'POST', "/posts/{$this->post_id}/replies", [
@@ -826,6 +869,10 @@ class REST_Tests {
 
 				case 'reply_rest':
 					$this->rest( 'DELETE', "/replies/{$item['id']}" );
+					break;
+
+				case 'space_rest':
+					$this->rest( 'DELETE', "/spaces/{$item['id']}" );
 					break;
 
 				case 'flag_db':

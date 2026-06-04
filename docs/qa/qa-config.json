@@ -1,0 +1,26 @@
+{
+  "$schema": "https://wpmediaverse.com/schemas/wp-plugin-qa-config-v1.json",
+  "slug": "jetonomy",
+  "name": "Jetonomy",
+  "version_constant": "JETONOMY_VERSION",
+  "main_file": "jetonomy.php",
+  "base_url": "http://forums.local",
+  "wp_path": "/Users/varundubey/Local Sites/forums/app/public",
+  "autologin_param": "autologin",
+  "rest_namespace": "jetonomy/v1",
+  "front_routes": ["/community/", "/community/leaderboard/", "/community/search/", "/community/notifications/"],
+  "pair": {
+    "pro_slug": "jetonomy-pro",
+    "pro_version_constant": "JETONOMY_PRO_VERSION",
+    "pro_main_file": "jetonomy-pro.php",
+    "lockstep": true
+  },
+  "basecamp": {
+    "project_id": 46596502,
+    "bugs_column_id": 9706083723,
+    "ready_for_testing_column_id": 9706083581
+  },
+  "modes": ["free", "combo"],
+  "report_path": "docs/qa/.last-smoke-pass.json",
+  "supplements_path": null
+}

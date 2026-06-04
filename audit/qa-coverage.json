@@ -5,8 +5,8 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-05-20T11:52:35+00:00",
-        "manifest_at": "2026-05-14T12:00:00Z",
+        "at": "2026-06-04T04:27:07+00:00",
+        "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
@@ -606,11 +606,24 @@
             ]
         },
         "hooks_fired": {
-            "total": 1,
-            "covered": 0,
+            "total": 4,
+            "covered": 3,
             "uncovered": 1,
-            "skipped": 107,
-            "covered_items": [],
+            "skipped": 137,
+            "covered_items": [
+                {
+                    "name": "jetonomy_leaderboard_items",
+                    "consumer_count": 1
+                },
+                {
+                    "name": "jetonomy_reputation_points_map",
+                    "consumer_count": 1
+                },
+                {
+                    "name": "jetonomy_reputation_pre_change",
+                    "consumer_count": 1
+                }
+            ],
             "uncovered_items": [
                 {
                     "name": "jetonomy_user_left_space",
@@ -717,15 +730,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 151,
-        "items_covered": 36,
+        "items_total": 154,
+        "items_covered": 39,
         "items_uncovered": 115,
-        "items_skipped": 107,
-        "coverage_percent": 23.800000000000001
+        "items_skipped": 137,
+        "coverage_percent": 25.300000000000001
     },
     "drift": {
-        "previous_uncovered": 113,
+        "previous_uncovered": 118,
         "current_uncovered": 115,
-        "delta": 2
+        "delta": -3
     }
 }
