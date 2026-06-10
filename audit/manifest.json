@@ -327,6 +327,19 @@
         "audit_notes": "Get current user"
       },
       {
+        "route": "/users/me",
+        "methods": [
+          "PATCH"
+        ],
+        "handler": "Users_Controller::update_current_user",
+        "permission": "REST_Auth::auth_mutation",
+        "purpose": "Update own profile (display_name, bio, avatar_url, settings, notification_preferences)",
+        "auth": "logged_in",
+        "capability": null,
+        "ownership_check": "self-only (require_auth)",
+        "audit_notes": "Was missing from the manifest (delta added 1.5.0). avatar_url is consumed at render since 1.5.0 by Jetonomy\\Avatar (pre_get_avatar_data filter, Gravatar fallback) - local avatar upload flows POST /media then PATCH here (#9966775705)."
+      },
+      {
         "route": "/users/(?P<id>\\d+)",
         "methods": [
           "GET"

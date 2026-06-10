@@ -489,6 +489,10 @@ final class Jetonomy {
 		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
 		Captcha\Captcha_Manager::init();
 
+		// Local avatars — resolves jt_user_profiles.avatar_url for every
+		// get_avatar()/get_avatar_url() caller, Gravatar fallback.
+		Avatar::init();
+
 		new Notifications\Notifier();
 		new Cron();
 		new Privacy();

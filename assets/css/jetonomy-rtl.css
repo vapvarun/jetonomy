@@ -1626,6 +1626,10 @@
   .jt-avatar-row { display: flex; align-items: center; gap: 12px; }
   .jt-avatar-round { border-radius: 50%; }
   .jt-avatar-hint { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-avatar-controls { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .jt-avatar-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* .jt-btn's display beats the UA [hidden] rule — make hidden stick. */
+  .jt-avatar-buttons button[hidden] { display: none; }
 
   /* ── Composer login ── */
   .jt-editor-login { text-align: center; padding: 20px; }

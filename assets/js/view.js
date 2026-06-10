@@ -2546,6 +2546,55 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Profile save ──
+        // ── Local avatar (#9966775705) ──
+        // Upload goes through the existing POST /media pipeline (uploads
+        // gate + auto-alt); the resulting URL is staged in the hidden
+        // avatar_url input and persisted by saveProfile's PATCH /users/me.
+        chooseAvatar() {
+            document.getElementById( 'jt-avatar-file' )?.click();
+        },
+
+        *avatarFileSelected( event ) {
+            const input = event.target;
+            const file  = input.files && input.files[0];
+            if ( ! file ) return;
+            if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.failedSaveProfile || 'Failed to save profile.', 'error' );
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append( 'file', file );
+
+            const result = yield window.jetonomyRest.restFetch( '/media', { method: 'POST', body: fd } );
+            input.value  = '';
+
+            if ( ! result.ok || ! result.data || ! result.data.url ) {
+                const msg = ( result.data && result.data.message ) || state.i18n?.failedSaveProfile || 'Failed to save profile.';
+                if ( window.bnToast ) window.bnToast( msg, 'error' );
+                return;
+            }
+
+            const form   = input.closest( 'form' );
+            const hidden = form?.querySelector( '[name="avatar_url"]' );
+            if ( hidden ) hidden.value = result.data.url;
+
+            const preview = document.getElementById( 'jt-avatar-preview' );
+            if ( preview ) preview.src = result.data.url;
+            document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
+        },
+
+        removeAvatar( event ) {
+            const btn    = event.target.closest( 'button' );
+            const form   = btn?.closest( 'form' );
+            const hidden = form?.querySelector( '[name="avatar_url"]' );
+            if ( hidden ) hidden.value = '';
+
+            const preview = document.getElementById( 'jt-avatar-preview' );
+            if ( preview && preview.dataset.defaultSrc ) preview.src = preview.dataset.defaultSrc;
+            btn?.setAttribute( 'hidden', '' );
+        },
+
         *saveProfile( event ) {
             event.preventDefault();
             const ctx = getContext();
@@ -2573,6 +2622,12 @@ const { state, actions } = store( 'jetonomy', {
             const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
 
             const payload = { display_name: displayName, bio };
+            // Local avatar (#9966775705): the hidden input carries the URL of
+            // the uploaded attachment ('' = removed → Gravatar fallback).
+            const avatarInput = form.querySelector( '[name="avatar_url"]' );
+            if ( avatarInput ) {
+                payload.avatar_url = avatarInput.value || '';
+            }
             if ( Object.keys( notifPrefs ).length > 0 ) {
                 payload.notification_preferences = notifPrefs;
             }

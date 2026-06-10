@@ -51,13 +51,32 @@ $base         = \Jetonomy\base_url();
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Avatar', 'jetonomy' ); ?></label>
 			<div class="jt-avatar-row">
-				<img src="<?php echo esc_url( get_avatar_url( $current_user->ID, [ 'size' => 64 ] ) ); ?>" width="64" height="64" class="jt-avatar-round" alt="">
-				<span class="jt-avatar-hint">
-					<?php
-					/* translators: %s: link to Gravatar */
-					printf( esc_html__( 'Change your avatar at %s', 'jetonomy' ), '<a href="https://gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar.com</a>' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted static HTML link.
-					?>
-				</span>
+				<?php
+				$jt_default_avatar = get_avatar_url(
+					$current_user->ID,
+					[
+						'size'          => 64,
+						'force_default' => true,
+					]
+				);
+				?>
+				<img id="jt-avatar-preview"
+					src="<?php echo esc_url( get_avatar_url( $current_user->ID, [ 'size' => 64 ] ) ); ?>"
+					data-default-src="<?php echo esc_url( $jt_default_avatar ); ?>"
+					width="64" height="64" class="jt-avatar-round" alt="">
+				<div class="jt-avatar-controls">
+					<input type="hidden" name="avatar_url" value="<?php echo esc_url( $profile->avatar_url ?? '' ); ?>">
+					<input type="file" id="jt-avatar-file" accept="image/png,image/jpeg,image/gif,image/webp" hidden
+						data-wp-on--change="actions.avatarFileSelected">
+					<div class="jt-avatar-buttons">
+						<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm"
+							data-wp-on--click="actions.chooseAvatar"><?php esc_html_e( 'Upload photo', 'jetonomy' ); ?></button>
+						<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" id="jt-avatar-remove"
+							data-wp-on--click="actions.removeAvatar"
+							<?php echo empty( $profile->avatar_url ) ? 'hidden' : ''; ?>><?php esc_html_e( 'Remove photo', 'jetonomy' ); ?></button>
+					</div>
+					<span class="jt-avatar-hint"><?php esc_html_e( 'JPG, PNG, GIF or WebP. Without a photo, your Gravatar is used.', 'jetonomy' ); ?></span>
+				</div>
 			</div>
 		</div>
 
