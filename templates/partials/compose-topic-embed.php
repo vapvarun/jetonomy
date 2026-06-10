@@ -182,7 +182,9 @@ $_partial_space = $_space ? $_space : (object) array(
 				'show_private'             => true,
 				'show_scheduler'           => false,
 				'show_publish_menu'        => false,
-				'show_captcha'             => false,
+				// The posts endpoint verifies CAPTCHA for low-trust users,
+				// so the embed needs the widget just like the full page.
+				'show_captcha'             => true,
 				'body_mode'                => 'textarea',
 				'submit_label'             => '',
 				// Picker mode flips title visibility in response to space

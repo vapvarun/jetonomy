@@ -98,4 +98,20 @@ class Turnstile_Adapter implements Captcha_Adapter {
 	public function get_site_key(): string {
 		return $this->site_key;
 	}
+
+	/**
+	 * Visible widget container. The Turnstile api.js auto-renders every
+	 * `.cf-turnstile` element on load and injects its own hidden
+	 * `cf-turnstile-response` input inside the container, which the submit
+	 * JS reads scoped to the surrounding form.
+	 *
+	 * `data-size="flexible"` lets the widget shrink to the form's width on
+	 * mobile instead of overflowing at its fixed 300px default.
+	 *
+	 * @since 1.5.0
+	 * @return string
+	 */
+	public function render_widget(): string {
+		return '<div class="cf-turnstile jt-captcha-widget" data-sitekey="' . esc_attr( $this->site_key ) . '" data-size="flexible"></div>';
+	}
 }

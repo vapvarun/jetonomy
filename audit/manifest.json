@@ -799,7 +799,7 @@
         "auth": "public_rate_limited",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Login endpoint (rate-limited)"
+        "audit_notes": "Login endpoint (rate-limited). 1.5.0: accepts optional captcha_token, verified via Captcha_Manager::verify_or_skip(0, ...) - parity with register/lost-password (#9977126420)."
       },
       {
         "route": "/auth/register",

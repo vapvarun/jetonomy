@@ -43,4 +43,17 @@ interface Captcha_Adapter {
 	 * @return string
 	 */
 	public function get_site_key(): string;
+
+	/**
+	 * HTML for the visible widget container, or '' for invisible providers.
+	 *
+	 * Turnstile only renders (and only populates its hidden
+	 * `cf-turnstile-response` input) when an explicit container element is
+	 * in the DOM, so every form whose endpoint verifies a token must print
+	 * this. reCAPTCHA v3 is fully invisible and returns ''.
+	 *
+	 * @since 1.5.0
+	 * @return string Escaped HTML, safe to echo.
+	 */
+	public function render_widget(): string;
 }

@@ -55,11 +55,14 @@
 	 * treats empty token + null adapter as a skip; nothing breaks).
 	 *
 	 * Mirrors the pattern in assets/js/view.js for posts/replies so all
-	 * three submit surfaces use the same CAPTCHA wiring.
+	 * submit surfaces use the same CAPTCHA wiring.
 	 *
+	 * @param {Element} form The submitting form — the Turnstile response
+	 *                       input is read scoped to it, because each of the
+	 *                       block's panels renders its own widget.
 	 * @return {Promise<string>}
 	 */
-	function getCaptchaToken() {
+	function getCaptchaToken( form ) {
 		var captcha = window.jetonomyCaptcha;
 		if ( ! captcha || ! captcha.provider ) {
 			return Promise.resolve( '' );
@@ -74,7 +77,7 @@
 			} );
 		}
 		if ( captcha.provider === 'turnstile' ) {
-			var ts = document.querySelector( '[name="cf-turnstile-response"]' );
+			var ts = ( form || document ).querySelector( '[name="cf-turnstile-response"]' );
 			return Promise.resolve( ts ? ts.value : '' );
 		}
 		return Promise.resolve( '' );
@@ -129,11 +132,17 @@
 			remember:      ( form.querySelector( '[name="remember"]' ) || {} ).checked === true,
 		};
 
-		fetch( restUrl + '/auth/login', {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: authHeaders(),
-			body: JSON.stringify( body ),
+		getCaptchaToken( form ).then( function ( captchaToken ) {
+			if ( captchaToken ) {
+				body.captcha_token = captchaToken;
+			}
+
+			return fetch( restUrl + '/auth/login', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: authHeaders(),
+				body: JSON.stringify( body ),
+			} );
 		} )
 			.then( function ( res ) {
 				return res.json().then( function ( json ) {
@@ -241,7 +250,7 @@
 			loaded_at: parseInt( ( form.querySelector( '[name="loaded_at"]' ) || {} ).value || '0', 10 ) || 0,
 		};
 
-		getCaptchaToken().then( function ( captchaToken ) {
+		getCaptchaToken( form ).then( function ( captchaToken ) {
 			if ( captchaToken ) {
 				body.captcha_token = captchaToken;
 			}
@@ -295,7 +304,7 @@
 
 		var restUrl = restBase( block );
 
-		getCaptchaToken().then( function ( captchaToken ) {
+		getCaptchaToken( form ).then( function ( captchaToken ) {
 			var body = {
 				user_login: ( form.querySelector( '[name="user_login"]' ) || {} ).value || '',
 			};

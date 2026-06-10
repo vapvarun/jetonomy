@@ -45,6 +45,11 @@ class Auth_Controller extends Base_Controller {
 							'type'    => 'boolean',
 							'default' => false,
 						],
+						'captcha_token' => [
+							'required' => false,
+							'type'     => 'string',
+							'default'  => '',
+						],
 					],
 				],
 			]
@@ -203,6 +208,20 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_missing_credentials',
 				__( 'Enter your username and password.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// CAPTCHA gate (1.5.0 — parity with register/lost-password, the one
+		// auth endpoint that was missing it). Anonymous user_id 0;
+		// verify_or_skip returns null when no adapter is configured.
+		$token          = (string) $request->get_param( 'captcha_token' );
+		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
+		if ( false === $captcha_result ) {
+			return new WP_Error(
+				'jetonomy_captcha_failed',
+				__( 'CAPTCHA verification failed. Please try again.', 'jetonomy' ),
 				[ 'status' => 400 ]
 			);
 		}

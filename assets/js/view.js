@@ -2149,13 +2149,16 @@ const { state, actions } = store( 'jetonomy', {
                 ? rawParentId
                 : null;
 
-            // Get CAPTCHA token if a provider is active.
+            // Get CAPTCHA token if a provider is active. The Turnstile input
+            // is scoped to THIS composer's widget — a thread page can hold
+            // several reply composers, each with its own container.
             let captchaToken = '';
             if ( window.jetonomyCaptcha ) {
                 if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
                     captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
                 } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
-                    const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
+                    const tsScope = editorWrap || document;
+                    const tsInput = tsScope.querySelector( '[name="cf-turnstile-response"]' );
                     captchaToken = tsInput ? ( tsInput.value || '' ) : '';
                 }
             }
@@ -2414,12 +2417,14 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             // ── CAPTCHA ───────────────────────────────────────────────────────
+            // Turnstile input is read scoped to THIS form — the login block
+            // or another composer on the same page has its own widget.
             let captchaToken = '';
             if ( o.collectCaptcha && window.jetonomyCaptcha ) {
                 if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
                     captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
                 } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
-                    const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
+                    const tsInput = form.querySelector( '[name="cf-turnstile-response"]' );
                     captchaToken  = tsInput ? ( tsInput.value || '' ) : '';
                 }
             }
@@ -2700,7 +2705,7 @@ const { state, actions } = store( 'jetonomy', {
                 collectPrefix:   false,
                 collectPrivate:  true, // regression #9886339472 — embed must respect private flag.
                 collectSchedule: false,
-                collectCaptcha:  false,
+                collectCaptcha:  true, // posts endpoint verifies for low-trust users (#9977126420).
                 bodySource:      'textarea',
                 errorSink:       'context',
             } );

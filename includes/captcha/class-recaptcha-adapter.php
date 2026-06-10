@@ -101,4 +101,15 @@ class Recaptcha_Adapter implements Captcha_Adapter {
 	public function get_site_key(): string {
 		return $this->site_key;
 	}
+
+	/**
+	 * reCAPTCHA v3 is invisible — tokens come from grecaptcha.execute(), no
+	 * container element is needed.
+	 *
+	 * @since 1.5.0
+	 * @return string
+	 */
+	public function render_widget(): string {
+		return '';
+	}
 }

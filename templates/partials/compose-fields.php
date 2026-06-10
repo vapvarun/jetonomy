@@ -17,7 +17,7 @@
  *   - bool         $show_private     Show "private" checkbox for logged-in viewers. Default: true.
  *   - bool         $show_scheduler   Show date/time scheduler panel. Default: false.
  *   - bool         $show_publish_menu Show publish-mode dropdown (publish/draft/schedule). Default: false.
- *   - bool         $show_captcha     Reserved — captcha widget renders elsewhere, this just keeps the flag visible.
+ *   - bool         $show_captcha     Print the active CAPTCHA provider's widget container before the submit row (1.5.0). Default: false.
  *   - string       $fields_hook      Action hook name fired after the body. Default: 'jetonomy_new_post_fields'.
  *   - string       $body_mode        'editor' (contenteditable) | 'textarea'. Default: 'editor'.
  *   - string       $submit_label     Submit button label (when this partial owns the submit row). Default: '' (caller renders submit).
@@ -54,8 +54,9 @@ $_show_prefix       = isset( $show_prefix ) ? (bool) $show_prefix : true;
 $_show_private      = isset( $show_private ) ? (bool) $show_private : true;
 $_show_scheduler    = isset( $show_scheduler ) ? (bool) $show_scheduler : false;
 $_show_publish_menu = isset( $show_publish_menu ) ? (bool) $show_publish_menu : false;
-// CAPTCHA widget itself is owned by the surrounding form; this flag is
-// here so Pro extensions can read it via the fields_hook if they need to.
+// When true, the active provider's widget container prints before the
+// submit row (Turnstile needs an explicit container to render + produce
+// its token; reCAPTCHA v3 returns '' so nothing prints). #9977126420.
 $_show_captcha             = isset( $show_captcha ) ? (bool) $show_captcha : false;
 $_fields_hook              = isset( $fields_hook ) && is_string( $fields_hook ) && '' !== $fields_hook
 	? $fields_hook
@@ -227,6 +228,10 @@ do_action( $_fields_hook, $space );
 			</p>
 		</div>
 	</div>
+<?php endif; ?>
+
+<?php if ( $_show_captcha ) : ?>
+	<?php echo \Jetonomy\Captcha\Captcha_Manager::render_widget(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr. ?>
 <?php endif; ?>
 
 <?php if ( '' !== $_submit_label ) : ?>
