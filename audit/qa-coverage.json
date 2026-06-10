@@ -5,14 +5,14 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-04T04:27:07+00:00",
+        "at": "2026-06-10T18:30:20+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 87,
-            "covered": 31,
+            "total": 88,
+            "covered": 32,
             "uncovered": 56,
             "skipped": 0,
             "covered_items": [
@@ -102,6 +102,10 @@
                 },
                 {
                     "method": "GET",
+                    "route": "/users/me"
+                },
+                {
+                    "method": "PATCH",
                     "route": "/users/me"
                 },
                 {
@@ -730,15 +734,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 154,
-        "items_covered": 39,
+        "items_total": 155,
+        "items_covered": 40,
         "items_uncovered": 115,
         "items_skipped": 137,
-        "coverage_percent": 25.300000000000001
+        "coverage_percent": 25.800000000000001
     },
     "drift": {
-        "previous_uncovered": 118,
+        "previous_uncovered": 115,
         "current_uncovered": 115,
-        "delta": -3
+        "delta": 0
     }
 }
