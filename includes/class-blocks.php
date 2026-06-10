@@ -765,16 +765,16 @@ class Blocks {
 			$show_register_tab = $wp_can_register;
 		}
 		// 1.4.0 A.3 commit 3: both Login and Register tabs use REST. Block
-		// only exposes the REST endpoint base + a wp_rest nonce; the legacy
-		// `data-ajax-url` + per-action nonces are gone.
-		$rest_url   = esc_url_raw( rest_url( 'jetonomy/v1' ) );
-		$rest_nonce = wp_create_nonce( 'wp_rest' );
+		// only exposes the REST endpoint base; no nonce — the auth endpoints
+		// are public (REST_Auth::auth_public_write) and sending X-WP-Nonce
+		// from cached pages made core's rest_cookie_check_errors() fail with
+		// "Cookie check failed" for logged-out visitors (#9977381553).
+		$rest_url = esc_url_raw( rest_url( 'jetonomy/v1' ) );
 
 		ob_start();
 		?>
 		<div class="wp-block-jetonomy-login jt-login-block jt-app"
-			data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
-			data-rest-nonce="<?php echo esc_attr( $rest_nonce ); ?>">
+			data-rest-url="<?php echo esc_attr( $rest_url ); ?>">
 			<h3 class="jt-login-title"><?php echo esc_html( $title ); ?></h3>
 
 			<?php if ( $show_register_tab ) : ?>

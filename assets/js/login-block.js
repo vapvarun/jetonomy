@@ -81,6 +81,36 @@
 	}
 
 	/**
+	 * REST base URL for the auth endpoints, derived from the block wrapper.
+	 *
+	 * @param {Element} block Login block root.
+	 * @return {string}
+	 */
+	function restBase( block ) {
+		return block.dataset.restUrl
+			? block.dataset.restUrl.replace( /\/+$/, '' )
+			: '/wp-json/jetonomy/v1';
+	}
+
+	/**
+	 * Headers for the public auth endpoints (login / register /
+	 * lost-password / resend-verification).
+	 *
+	 * Deliberately NO X-WP-Nonce. These endpoints are public
+	 * (REST_Auth::auth_public_write) and don't use cookie auth. When the
+	 * header is present, WP core's rest_cookie_check_errors() verifies it,
+	 * and for logged-out visitors the anonymous-session nonce goes stale on
+	 * cached pages → "Cookie check failed" 403 (Basecamp #9977381553).
+	 * Omitting the header takes core's "no nonce → treat as logged out"
+	 * path, which is exactly what these forms are.
+	 *
+	 * @return {Object}
+	 */
+	function authHeaders() {
+		return { 'Content-Type': 'application/json' };
+	}
+
+	/**
 	 * REST login submit (1.4.0 A.2 commit 2).
 	 *
 	 * Body shape: { user_login, user_password, remember? }
@@ -91,10 +121,7 @@
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var restUrl = block.dataset.restUrl
-			? block.dataset.restUrl.replace( /\/+$/, '' )
-			: '/wp-json/jetonomy/v1';
-		var nonce = block.dataset.restNonce || '';
+		var restUrl = restBase( block );
 
 		var body = {
 			user_login:    ( form.querySelector( '[name="login"]' )    || {} ).value || '',
@@ -105,9 +132,7 @@
 		fetch( restUrl + '/auth/login', {
 			method: 'POST',
 			credentials: 'same-origin',
-			headers: nonce
-				? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-				: { 'Content-Type': 'application/json' },
+			headers: authHeaders(),
 			body: JSON.stringify( body ),
 		} )
 			.then( function ( res ) {
@@ -166,18 +191,13 @@
 		btn.style.padding = '0';
 		btn.style.font = 'inherit';
 		btn.addEventListener( 'click', function () {
-			var restUrl = block.dataset.restUrl
-				? block.dataset.restUrl.replace( /\/+$/, '' )
-				: '/wp-json/jetonomy/v1';
-			var nonce = block.dataset.restNonce || '';
+			var restUrl = restBase( block );
 			btn.disabled = true;
 			btn.textContent = sendingLabel;
 			fetch( restUrl + '/auth/resend-verification', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: nonce
-					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-					: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 				body: JSON.stringify( { user_login: userLogin } ),
 			} ).then( function ( res ) {
 				return res.json().catch( function () { return {}; } );
@@ -208,10 +228,7 @@
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var restUrl = block.dataset.restUrl
-			? block.dataset.restUrl.replace( /\/+$/, '' )
-			: '/wp-json/jetonomy/v1';
-		var nonce = block.dataset.restNonce || '';
+		var restUrl = restBase( block );
 
 		var body = {
 			username: ( form.querySelector( '[name="username"]' ) || {} ).value || '',
@@ -232,9 +249,7 @@
 			return fetch( restUrl + '/auth/register', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: nonce
-					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-					: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 				body: JSON.stringify( body ),
 			} );
 		} ).then( function ( res ) {
@@ -278,10 +293,7 @@
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var restUrl = block.dataset.restUrl
-			? block.dataset.restUrl.replace( /\/+$/, '' )
-			: '/wp-json/jetonomy/v1';
-		var nonce = block.dataset.restNonce || '';
+		var restUrl = restBase( block );
 
 		getCaptchaToken().then( function ( captchaToken ) {
 			var body = {
@@ -294,9 +306,7 @@
 			return fetch( restUrl + '/auth/lost-password', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: nonce
-					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-					: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 				body: JSON.stringify( body ),
 			} );
 		} ).then( function ( res ) {
