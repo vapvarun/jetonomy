@@ -531,16 +531,7 @@ class Template_Loader {
 		// rest_cookie_invalid_nonce. Depends on `jetonomy-data` for restBase
 		// + restNonce. See includes/api/class-rest-auth.php for the matching
 		// server-side permission helper.
-		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
-		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
-		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
-		wp_enqueue_script(
-			'jetonomy-rest',
-			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
-			array( 'jetonomy-data' ),
-			$jr_version,
-			true
-		);
+		self::enqueue_rest_client();
 
 		// Pagination "Load More" auto-scroll handler. Self-discovers all
 		// .jt-pagination containers on the page; safe to always enqueue.
@@ -741,6 +732,45 @@ class Template_Loader {
 		} else {
 			get_footer();
 		}
+	}
+
+	/**
+	 * Enqueue the unified REST fetch client (window.jetonomyRest) plus the
+	 * minimal `jetonomyData` payload it reads (restBase + restNonce).
+	 *
+	 * Idempotent and additive. On community routes render() has already
+	 * registered + localized the full jetonomyData payload, so the minimal
+	 * localize only fires on embed surfaces (compose-topic shortcode/block
+	 * on a regular WP page) where no other Jetonomy script has run. Without
+	 * this, view.js actions that go through restFetch fail before the
+	 * request is made (Basecamp #9967059857).
+	 *
+	 * @since 1.5.0
+	 */
+	public static function enqueue_rest_client(): void {
+		if ( ! wp_script_is( 'jetonomy-data', 'registered' ) ) {
+			wp_register_script( 'jetonomy-data', '', array(), JETONOMY_VERSION, false );
+			wp_localize_script(
+				'jetonomy-data',
+				'jetonomyData',
+				array(
+					'restBase'  => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
+					'restNonce' => wp_create_nonce( 'wp_rest' ),
+				)
+			);
+		}
+		wp_enqueue_script( 'jetonomy-data' );
+
+		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
+		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
+		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
+		wp_enqueue_script(
+			'jetonomy-rest',
+			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
+			array( 'jetonomy-data' ),
+			$jr_version,
+			true
+		);
 	}
 
 	private static function set_seo_meta( array $data ): void {

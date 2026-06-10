@@ -161,7 +161,6 @@ $_partial_space = $_space ? $_space : (object) array(
 	<?php endif; ?>
 
 	<form class="jt-compose-topic-form"
-		onsubmit="return false;"
 		data-wp-on--submit="actions.composeTopicSubmit">
 
 		<?php

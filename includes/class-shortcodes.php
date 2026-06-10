@@ -482,6 +482,12 @@ class Shortcodes {
 			wp_enqueue_script_module( 'jetonomy-compose-topic' );
 		}
 
+		// composePost submits through window.jetonomyRest.restFetch, which is
+		// only enqueued on community routes by Template_Loader::render(). The
+		// embed can land on any WP page, so pull in the client (plus the
+		// minimal jetonomyData payload) here too. Basecamp #9967059857.
+		Template_Loader::enqueue_rest_client();
+
 		// Seed the Interactivity API state with the REST base + nonce.
 		// Template_Loader seeds the full state on community pages; here we
 		// need the minimum needed for submit (apiBase, nonce, communityBase,
