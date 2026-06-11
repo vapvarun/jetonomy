@@ -347,7 +347,13 @@ $crumbs[] = [
 						?>
 					</a>
 				<?php elseif ( ! is_user_logged_in() ) : ?>
-					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-ghost">
+					<?php
+					// Logged-out members still come here to contribute — the
+					// primary action shouldn't read as a faint secondary control.
+					// Use the filled button so "Log in to post" has the same
+					// visual weight as the New Post action it stands in for.
+					?>
+					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-fill">
 						<?php esc_html_e( 'Log in to post', 'jetonomy' ); ?>
 					</a>
 				<?php endif; ?>
