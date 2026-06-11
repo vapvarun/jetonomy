@@ -275,6 +275,7 @@ A stability and accuracy release: the plugin pair was audited end to end, dead w
 * New      - jetonomy_post_publish_transition and jetonomy_reply_publish_transition hooks fire on every publish/unpublish transition with a +/-1 delta and the original creation date.
 * Improve  - Resolving a flag as valid through the REST API now applies the full contract on every surface: content trashed, related flags cleared, reporter rewarded, webhook event fired.
 * Improve  - Invite links, avatar resolution, and approval-hold checks consolidated into single owners; the approval check now evaluates the author instead of the current user.
+* Fix      - Block titles (login "Join the conversation", navigation, user panel, feed) stay legible on themes whose content-heading styles previously repainted them dark-on-dark.
 * Fix      - Analytics counting stays accurate through the content lifecycle: pending posts count on approval, trashed posts decrement their original day.
 * Fix      - Database version constant bumped so the 1.5.0 migration runs automatically on upgrade.
 * Dev      - Removed three never-wired tables (space tags, user interests) with a guarded migration, the GET /space-tags route, three dead admin AJAX actions, and 30+ zero-reference methods.

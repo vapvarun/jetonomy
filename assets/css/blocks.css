@@ -218,6 +218,22 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	margin: 2px 0 14px;
 }
 
+/* Theme-proof block titles. A bare title class (e.g. .jt-login-title,
+   specificity 0,1,0) loses to the content-heading rules every theme ships -
+   .entry-content h3 / .widget h3 are (0,2,1) - so the theme repaints our
+   block titles with its own heading colour. When the block sits on a dark
+   surface that colour is dark-on-dark (the "Join the conversation" title
+   vanished on Reign). Re-assert the block text token through the block
+   root + .jt-app (0,3,0), which outranks any normal content-heading rule
+   without !important. All four block roots carry .jt-app. */
+.jt-nav-block.jt-app .jt-nav-title,
+.jt-login-block.jt-app .jt-login-title,
+.jt-user-panel.jt-app .jt-userpanel-title,
+.jt-feed-block.jt-app .jt-feed-title,
+.jt-compose-topic-embed.jt-compose-topic-login .jt-compose-topic-login-title {
+	color: var(--jtb-text);
+}
+
 .jt-login-tabs {
 	display: flex;
 	gap: 2px;
