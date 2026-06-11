@@ -14,6 +14,7 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Flag;
+use Jetonomy\Moderation\Moderation_Service;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Trust\Reputation;
@@ -594,6 +595,13 @@ class Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /moderation/flags/{id}/resolve — Resolve a flag as valid or dismissed.
+	 *
+	 * Delegates to Moderation_Service::resolve_flag — the single owner of the
+	 * resolution contract (content trash on valid, related-flag clearing,
+	 * reporter reputation award, jetonomy_flag_resolved hook). This route
+	 * previously called Flag::resolve() directly, so flags resolved through
+	 * the global REST surface skipped all of those side effects while the
+	 * admin-AJAX, CLI, and space-moderation surfaces applied them.
 	 */
 	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id     = absint( $request->get_param( 'id' ) );
@@ -604,14 +612,10 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'Flag' );
 		}
 
-		$resolved = Flag::resolve( $id, get_current_user_id(), $status );
+		$resolved = Moderation_Service::resolve_flag( get_current_user_id(), $id, $status );
 
-		if ( ! $resolved ) {
-			return new WP_Error(
-				'jetonomy_resolve_failed',
-				__( 'Failed to resolve flag.', 'jetonomy' ),
-				[ 'status' => 500 ]
-			);
+		if ( is_wp_error( $resolved ) ) {
+			return $resolved;
 		}
 
 		return new WP_REST_Response(

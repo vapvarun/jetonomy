@@ -107,19 +107,25 @@ class PostCreateValidatorTest extends WP_UnitTestCase {
 
 		$row = Post::find( $id );
 		$this->assertIsObject( $row, 'Row must exist in storage.' );
-		$this->assertSame( '', trim( (string) $row->title ), 'Stored title must be the empty string verbatim.' );
+		// Contract since 72ad312 (2026-05-20): feed posts with no title get a
+		// server-derived headline from the body (<=60 chars) so breadcrumbs,
+		// notifications, search results, and OG previews have one. The earlier
+		// WS1 empty-title-verbatim contract was deliberately reversed.
+		$this->assertSame(
+			'Just shipped 1.4.3 — the compose pipeline is unified.',
+			(string) $row->title,
+			'Short feed body becomes the derived title verbatim.'
+		);
 	}
 
-	public function test_feed_space_no_synthetic_title_generated(): void {
+	public function test_feed_space_derives_title_from_long_body(): void {
 		$space_id = $this->make_space( 'feed' );
 
 		$res = $this->dispatch_create(
 			$space_id,
 			array(
 				'title'   => '',
-				// Long body — the legacy derive_title_from_content() would
-				// have minted the first ~80 chars as the title; the new
-				// path must NOT do that.
+				// Long body — derived headline must be capped at 60 chars.
 				'content' => 'This is a long status update with multiple sentences. It would have been turned into a synthetic title by the old code path. We must not do that anymore.',
 			)
 		);
@@ -128,8 +134,11 @@ class PostCreateValidatorTest extends WP_UnitTestCase {
 		$id  = (int) $res->get_data()['id'];
 		$row = Post::find( $id );
 
-		$this->assertSame( '', trim( (string) $row->title ), 'No synthetic title may be derived for feed-space posts.' );
-		$this->assertStringNotContainsString( 'This is a long status update', (string) $row->title );
+		// Contract since 72ad312 (2026-05-20): long feed bodies derive a
+		// 60-char headline. Assert the truncation contract precisely.
+		$expected = trim( (string) mb_substr( 'This is a long status update with multiple sentences. It would have been turned into a synthetic title by the old code path. We must not do that anymore.', 0, 60 ) );
+		$this->assertSame( $expected, (string) $row->title, 'Derived title must be the first 60 chars of the stripped body, trimmed.' );
+		$this->assertLessThanOrEqual( 60, mb_strlen( (string) $row->title ) );
 	}
 
 	public function test_non_feed_space_rejects_empty_title(): void {

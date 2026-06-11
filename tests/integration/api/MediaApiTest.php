@@ -47,7 +47,8 @@ class MediaApiTest extends WP_UnitTestCase {
 		$response = $this->server->dispatch( new WP_REST_Request( 'POST', $this->route ) );
 
 		$this->assertSame( 401, $response->get_status() );
-		$this->assertSame( 'jetonomy_unauthenticated', $response->get_data()['code'] );
+		// REST_Auth::auth_mutation uses core-style codes since the auth migration.
+		$this->assertSame( 'rest_not_logged_in', $response->get_data()['code'] );
 	}
 
 	public function test_user_without_any_upload_cap_is_rejected_with_403(): void {
@@ -59,7 +60,7 @@ class MediaApiTest extends WP_UnitTestCase {
 		$response = $this->server->dispatch( new WP_REST_Request( 'POST', $this->route ) );
 
 		$this->assertSame( 403, $response->get_status() );
-		$this->assertSame( 'jetonomy_forbidden', $response->get_data()['code'] );
+		$this->assertSame( 'rest_forbidden', $response->get_data()['code'] );
 
 		remove_role( 'jt_no_caps' );
 	}

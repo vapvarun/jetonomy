@@ -174,6 +174,13 @@ class RestAuthMigrationTest extends WP_UnitTestCase {
 		}
 
 		$user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		// Subscribers hold several jetonomy_* caps by ROLE design (members
+		// can flag, vote, etc. — see Capabilities::CAPABILITY_MAP). To test
+		// the 403 gate, explicitly DENY this cap on the user; add_cap with
+		// false overrides the role grant in WP's cap resolution.
+		( new \WP_User( $user_id ) )->add_cap( $cap, false );
+
 		wp_set_current_user( $user_id );
 		$_COOKIE[ LOGGED_IN_COOKIE ] = 'dev-cookie';
 		unset( $_SERVER['HTTP_AUTHORIZATION'], $_SERVER['PHP_AUTH_USER'] );
