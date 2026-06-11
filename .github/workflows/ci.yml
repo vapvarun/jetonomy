@@ -277,6 +277,7 @@ jobs:
           CODE_ERRORS=$(echo "$RESULT" | awk -F',' -v noise="$NOISE" '
             /^FILE:/ { file=$0; gsub(/^FILE: /, "", file); next }
             $3 == "ERROR" {
+              if (file ~ /^libs\//) next   # vendored third-party (action-scheduler, edd-sl-sdk) — ships in dist, not ours to fix
               if (file ~ /^tests\//) next
               if (file ~ /^bin\//) next
               if (file ~ /^tools\//) next
