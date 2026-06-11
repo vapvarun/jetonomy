@@ -468,7 +468,6 @@
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 36px; }
   .jt-my-spaces-section:last-child { margin-block-end: 0; }
-  .jt-section-title { font-size: 0.8125rem; font-weight: 700; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); }
   .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; color: var(--jt-accent); background: var(--jt-accent-muted); border-radius: var(--jt-radius); }
   .jt-space-card-icon svg { width: 22px; height: 22px; }
   .jt-space-card-icon.dashicons { font-size: 22px; }
@@ -1163,8 +1162,10 @@
   /* Leaderboard uses jt-two-col now — no max-width needed */
   .jt-page-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
   /* Community-home title: now visible (was screen-reader-only, which contradicted
-     the "main heading" setting). Spacing so it reads as the page heading. */
-  .jt-home-title { margin: 0 0 var(--jt-space-5, 20px); }
+     the "main heading" setting). Spacing so it reads as the page heading.
+     .jt-app prefix: a bare class (0,1,0) loses its margin to the
+     .jt-app h1 reset (0,1,1). */
+  .jt-app .jt-home-title { margin: 0 0 var(--jt-space-5, 20px); }
   /* Newcomer welcome hero (1.5.0) — anon-only orientation block. Tokens only,
      so it inverts cleanly in dark mode. */
   .jt-home-welcome {
@@ -1180,7 +1181,7 @@
     background: var(--jt-bg-subtle, var(--jt-bg));
   }
   .jt-home-welcome-body { flex: 1 1 320px; min-width: 0; }
-  .jt-home-welcome-title { margin: 0 0 0.35rem; font-size: 1.25rem; }
+  .jt-app .jt-home-welcome-title { margin: 0 0 0.35rem; font-size: 1.25rem; }
   .jt-home-welcome-sub { margin: 0 0 0.75rem; color: var(--jt-text-secondary); max-width: 60ch; }
   .jt-home-welcome-pulse { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--jt-text-tertiary); }
   .jt-home-welcome-pulse .jt-pulse-stat strong { color: var(--jt-text); font-weight: 700; }
@@ -1612,7 +1613,9 @@
   .jt-search-page-icon { flex-shrink: 0; color: var(--jt-text-tertiary); }
   .jt-search-page-input input { flex: 1; border: none !important; background: none !important; outline: none !important; padding: 0 !important; margin: 0 !important; font-family: inherit; font-size: inherit; color: var(--jt-text); box-shadow: none !important; }
   .jt-search-page-input input::placeholder { color: var(--jt-text-tertiary); }
-  .jt-section-label { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 8px; }
+  /* Same uppercase-label treatment as .jt-card h4 — same 12px gap contract.
+     .jt-app prefix so the margin survives the .jt-app h3 reset. */
+  .jt-app .jt-section-label { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 12px; }
   .jt-search-result-count { color: var(--jt-text-tertiary); }
 
   /* ── Tag page ── */
