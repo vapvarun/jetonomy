@@ -273,6 +273,7 @@ A stability and accuracy release: the plugin pair was audited end to end, dead w
 * New      - Tag pages have a "Start a discussion tagged X" button that opens the composer with the tag pre-filled.
 * Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
 * Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.
+* Improve  - Logged-out visitors clicking the vote control on a post are now taken to log in (with a return link) instead of nothing happening.
 * Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
 * New      - First-time visitors get a welcome banner on the community home with a one-line intro, a live member/post/this-week pulse, and a "Create free account" call-to-action. Filterable copy; hidden for logged-in members.
 * New      - Space cards now show an "Active N ago" recency signal so you can tell at a glance which spaces are alive.

@@ -518,6 +518,10 @@
   /* Keep the chevron from collapsing to 0 width as a flex child (Chromium SVG-in-flex quirk). */
   .jt-v-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
   .jt-act.voted { color: var(--jt-accent); }
+  /* Logged-out vote control is a "Log in to vote" link (1.5.0) — match the
+     button look (no underline, inherited colour, pointer). */
+  .jt-act.jt-act-login { text-decoration: none; color: var(--jt-text-secondary); cursor: pointer; }
+  .jt-act.jt-act-login:hover { color: var(--jt-accent); }
   /* Moderator "open reports" indicator: danger-tinted so flagged content reads
      as needing attention; the count badge sits on the flag icon. */
   .jt-act.jt-flagged-indicator { color: var(--jt-danger); text-decoration: none; }

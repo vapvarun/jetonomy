@@ -521,10 +521,18 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							</button>
 								<?php endif; ?>
 							<?php else : ?>
-							<span class="jt-act">
+								<?php
+								// Logged-out: the vote control was an inert read-only
+								// span — clicking it did nothing, leaving a visitor who
+								// wanted to vote stuck. Make it a link to log in (and
+								// return here), so the intent has somewhere to go.
+								?>
+							<a class="jt-act jt-act-login" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"
+								title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
+								aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-							</span>
+							</a>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
