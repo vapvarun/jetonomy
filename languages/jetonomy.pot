@@ -2,9 +2,9 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Jetonomy 1.4.5\n"
+"Project-Id-Version: Jetonomy 1.5.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-06-11 12:46:11+00:00\n"
+"POT-Creation-Date: 2026-06-11 13:35:24+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -2943,7 +2943,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/space-members.php:207
 #: dist/jetonomy/templates/views/tag.php:148
 #: includes/admin/views/revisions.php:192 templates/views/moderation.php:204
-#: templates/views/space-members.php:207 templates/views/tag.php:175
+#: templates/views/space-members.php:210 templates/views/tag.php:175
 msgid "Previous"
 msgstr ""
 
@@ -10936,7 +10936,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/leaderboard.php:178
 #: dist/jetonomy/templates/views/space-members.php:190
 #: templates/views/leaderboard.php:129 templates/views/leaderboard.php:181
-#: templates/views/space-members.php:190
+#: templates/views/space-members.php:194
 msgid "rep"
 msgstr ""
 
@@ -11016,7 +11016,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/moderation.php:210
 #: dist/jetonomy/templates/views/space-members.php:213
 #: dist/jetonomy/templates/views/tag.php:154 templates/views/moderation.php:210
-#: templates/views/space-members.php:213 templates/views/tag.php:181
+#: templates/views/space-members.php:216 templates/views/tag.php:181
 #. translators: 1: current page, 2: total pages
 msgid "Page %1$d of %2$d"
 msgstr ""
@@ -11024,7 +11024,7 @@ msgstr ""
 #: dist/jetonomy/templates/views/moderation.php:215
 #: dist/jetonomy/templates/views/space-members.php:218
 #: dist/jetonomy/templates/views/tag.php:159 templates/views/moderation.php:215
-#: templates/views/space-members.php:218 templates/views/tag.php:186
+#: templates/views/space-members.php:221 templates/views/tag.php:186
 msgid "Next"
 msgstr ""
 
@@ -11654,7 +11654,7 @@ msgid "Ban from space"
 msgstr ""
 
 #: dist/jetonomy/templates/views/space-members.php:203
-#: templates/views/space-members.php:203
+#: templates/views/space-members.php:206
 msgid "Members pagination"
 msgstr ""
 
