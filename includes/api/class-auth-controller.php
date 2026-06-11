@@ -178,6 +178,54 @@ class Auth_Controller extends Base_Controller {
 				],
 			]
 		);
+
+		// Fresh wp_rest nonce for the current session (1.5.0). The client
+		// fetch wrapper (assets/js/jetonomy-rest.js) retries 403
+		// rest_cookie_invalid_nonce responses against this route — until now
+		// the route didn't exist, so the retry silently 404'd and stale
+		// nonces on cached pages ate mutations. Same model as core's
+		// admin-ajax `rest-nonce` refresh: the nonce is tied to the caller's
+		// existing session cookie, so handing it back to the session owner
+		// grants nothing new.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/nonce',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_nonce' ],
+					'permission_callback' => '__return_true',
+				],
+			]
+		);
+	}
+
+	/**
+	 * GET /jetonomy/v1/auth/nonce — fresh wp_rest nonce for this session.
+	 *
+	 * Chicken-and-egg subtlety: this request itself carries no (valid)
+	 * nonce, so core's rest_cookie_check_errors() has already downgraded
+	 * the request to user 0 — minting here would produce an ANONYMOUS
+	 * nonce that can never verify against the caller's logged-in cookie.
+	 * Re-validate the auth cookie directly (the same trust basis core's
+	 * own admin-ajax `rest-nonce` refresh uses: cookie alone, no nonce)
+	 * and mint for that user. Safe: the response is only a nonce usable
+	 * by the same session, and cross-origin callers can't read it.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_nonce(): WP_REST_Response {
+		if ( ! is_user_logged_in() ) {
+			$cookie_user = wp_validate_auth_cookie( '', 'logged_in' );
+			if ( $cookie_user ) {
+				wp_set_current_user( $cookie_user );
+			}
+		}
+
+		$response = rest_ensure_response( [ 'nonce' => wp_create_nonce( 'wp_rest' ) ] );
+		// A nonce response must never come from a page/CDN cache.
+		$response->header( 'Cache-Control', 'no-cache, no-store, must-revalidate' );
+		return $response;
 	}
 
 	/**

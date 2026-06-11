@@ -640,6 +640,15 @@ class REST_Tests {
 		} else {
 			$this->check( 'E30: space join (skipped — test user not created)', true );
 		}
+
+		// 31. GET /auth/nonce — session nonce refresh (1.5.0). Backs the
+		// restFetch 403-retry path; must return a verifiable wp_rest nonce
+		// for the calling session. @covers GET /auth/nonce
+		$r     = $this->rest( 'GET', '/auth/nonce' );
+		$data  = $r->get_data();
+		$nonce = is_array( $data ) ? (string) ( $data['nonce'] ?? '' ) : '';
+		$this->check( 'E31: GET /auth/nonce → 200 with nonce', 200 === $r->get_status() && '' !== $nonce, "HTTP {$r->get_status()}" );
+		$this->check( 'E31: refreshed nonce verifies for wp_rest', false !== wp_verify_nonce( $nonce, 'wp_rest' ), 'wp_verify_nonce failed' );
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────

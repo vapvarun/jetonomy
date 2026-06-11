@@ -5,7 +5,7 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-11T03:45:33+00:00",
+        "at": "2026-06-11T03:49:41+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
@@ -611,8 +611,8 @@
         },
         "hooks_fired": {
             "total": 6,
-            "covered": 3,
-            "uncovered": 3,
+            "covered": 5,
+            "uncovered": 1,
             "skipped": 137,
             "covered_items": [
                 {
@@ -626,6 +626,14 @@
                 {
                     "name": "jetonomy_reputation_pre_change",
                     "consumer_count": 1
+                },
+                {
+                    "name": "jetonomy_post_publish_transition",
+                    "consumer_count": 1
+                },
+                {
+                    "name": "jetonomy_reply_publish_transition",
+                    "consumer_count": 1
                 }
             ],
             "uncovered_items": [
@@ -633,16 +641,6 @@
                     "name": "jetonomy_user_left_space",
                     "consumer_count": 1,
                     "stub_command": "bin/qa-stub-gen.php hook jetonomy_user_left_space"
-                },
-                {
-                    "name": "jetonomy_post_publish_transition",
-                    "consumer_count": 1,
-                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_post_publish_transition"
-                },
-                {
-                    "name": "jetonomy_reply_publish_transition",
-                    "consumer_count": 1,
-                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_reply_publish_transition"
                 }
             ],
             "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
@@ -745,14 +743,14 @@
     "summary": {
         "categories_checked": 5,
         "items_total": 157,
-        "items_covered": 40,
-        "items_uncovered": 117,
+        "items_covered": 42,
+        "items_uncovered": 115,
         "items_skipped": 137,
-        "coverage_percent": 25.5
+        "coverage_percent": 26.800000000000001
     },
     "drift": {
-        "previous_uncovered": 115,
-        "current_uncovered": 117,
-        "delta": 2
+        "previous_uncovered": 117,
+        "current_uncovered": 115,
+        "delta": -2
     }
 }

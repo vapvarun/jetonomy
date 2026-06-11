@@ -854,6 +854,19 @@
         "audit_notes": "Email verification token"
       },
       {
+        "route": "/auth/nonce",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Auth_Controller::get_nonce",
+        "permission": "__return_true",
+        "purpose": "Fresh wp_rest nonce for the calling session (no-cache headers)",
+        "auth": "public",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "1.5.0 - backs jetonomy-rest.js 403 retry (rest_cookie_invalid_nonce). Re-validates the logged_in cookie before minting because core downgrades nonce-less REST requests to user 0; same trust basis as core admin-ajax rest-nonce."
+      },
+      {
         "route": "/auth/resend-verification",
         "methods": [
           "POST"
