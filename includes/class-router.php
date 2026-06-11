@@ -16,8 +16,39 @@ class Router {
 	public function __construct() {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
+		add_filter( 'request', [ $this, 'maybe_serve_front_page' ] );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
+	}
+
+	/**
+	 * Serve the community home on the site front page when the
+	 * "Community as homepage" setting is enabled.
+	 *
+	 * Purely additive by design: it fires ONLY for the bare front-page
+	 * request, where WP's parsed query vars are completely empty. Every
+	 * other request — feeds (feed=...), pagination (paged=...), posts,
+	 * pages, attachments, and all /{base}/* community routes — carries
+	 * query vars and passes through untouched, so no existing route,
+	 * rewrite rule, or permalink behaviour changes. With the injected
+	 * route var, template_redirect renders the home view through the
+	 * exact same Template_Loader path as /{base}/ itself.
+	 *
+	 * @param array $query_vars Parsed request vars from WP::parse_request().
+	 * @return array Unchanged vars, or vars + jetonomy_route=home on the front page.
+	 */
+	public function maybe_serve_front_page( array $query_vars ): array {
+		if ( ! empty( $query_vars ) ) {
+			return $query_vars;
+		}
+
+		$settings = get_option( 'jetonomy_settings', [] );
+		if ( empty( $settings['front_page'] ) ) {
+			return $query_vars;
+		}
+
+		$query_vars['jetonomy_route'] = 'home';
+		return $query_vars;
 	}
 
 	public function add_rewrite_rules(): void {

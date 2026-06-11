@@ -146,6 +146,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><?php esc_html_e( 'Community as Homepage', 'jetonomy' ); ?></th>
+						<td>
+							<label for="front_page">
+								<input type="checkbox" id="front_page" name="jetonomy_settings[front_page]" value="1" <?php checked( ! empty( $settings['front_page'] ) ); ?>>
+								<?php esc_html_e( 'Show the community home on the site front page.', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Visitors to your site root see the community home page. This takes precedence over the WordPress "Your homepage displays" setting. All community URLs, posts, pages, and feeds keep working unchanged.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="default_space_type"><?php esc_html_e( 'Default Space Type', 'jetonomy' ); ?></label></th>
 						<td>
 							<select id="default_space_type" name="jetonomy_settings[default_space_type]">
