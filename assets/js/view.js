@@ -430,6 +430,138 @@ function triggerOf( event ) {
     return ( event && event.currentTarget ) || null;
 }
 
+
+// ── Avatar square-crop helpers (1.5.0) ─────────────────────────────────────
+// Plain module-scope state: the crop dialog is a single instance per page.
+const avatarCrop = { file: null, input: null, url: '', scale: 1, x: 0, y: 0, bound: false };
+
+function avatarCropLayout() {
+    const viewport = document.getElementById( 'jt-crop-viewport' );
+    const img      = document.getElementById( 'jt-crop-image' );
+    if ( ! viewport || ! img || ! img.naturalWidth ) return;
+
+    const vp   = viewport.clientWidth;
+    // Cover the square viewport at scale 1, scale up from there.
+    const base = ( vp / Math.min( img.naturalWidth, img.naturalHeight ) ) * avatarCrop.scale;
+    const w    = img.naturalWidth * base;
+    const h    = img.naturalHeight * base;
+
+    // Clamp the pan so the image always covers the viewport.
+    const maxX = Math.max( 0, ( w - vp ) / 2 );
+    const maxY = Math.max( 0, ( h - vp ) / 2 );
+    avatarCrop.x = Math.min( maxX, Math.max( -maxX, avatarCrop.x ) );
+    avatarCrop.y = Math.min( maxY, Math.max( -maxY, avatarCrop.y ) );
+
+    img.style.width     = w + 'px';
+    img.style.height    = h + 'px';
+    img.style.transform = 'translate(calc(-50% + ' + avatarCrop.x + 'px), calc(-50% + ' + avatarCrop.y + 'px))';
+}
+
+function avatarCropBindDrag() {
+    if ( avatarCrop.bound ) return;
+    avatarCrop.bound = true;
+
+    // Native Esc fires 'close' without going through our cancel action -
+    // release the object URL and reset the file input there too.
+    document.getElementById( 'jt-avatar-crop' )?.addEventListener( 'close', () => {
+        if ( avatarCrop.url ) URL.revokeObjectURL( avatarCrop.url );
+        if ( avatarCrop.input ) avatarCrop.input.value = '';
+        avatarCrop.url = '';
+    } );
+
+    const viewport = document.getElementById( 'jt-crop-viewport' );
+    if ( ! viewport ) return;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let originX = 0;
+    let originY = 0;
+    viewport.addEventListener( 'pointerdown', ( e ) => {
+        dragging = true;
+        startX   = e.clientX;
+        startY   = e.clientY;
+        originX  = avatarCrop.x;
+        originY  = avatarCrop.y;
+        viewport.setPointerCapture( e.pointerId );
+        e.preventDefault();
+    } );
+    viewport.addEventListener( 'pointermove', ( e ) => {
+        if ( ! dragging ) return;
+        avatarCrop.x = originX + ( e.clientX - startX );
+        avatarCrop.y = originY + ( e.clientY - startY );
+        avatarCropLayout();
+    } );
+    const end = () => { dragging = false; };
+    viewport.addEventListener( 'pointerup', end );
+    viewport.addEventListener( 'pointercancel', end );
+}
+
+function avatarCropRender() {
+    return new Promise( ( resolve ) => {
+        const viewport = document.getElementById( 'jt-crop-viewport' );
+        const img      = document.getElementById( 'jt-crop-image' );
+        if ( ! viewport || ! img || ! img.naturalWidth ) {
+            resolve( null );
+            return;
+        }
+        const vp    = viewport.clientWidth;
+        const base  = ( vp / Math.min( img.naturalWidth, img.naturalHeight ) ) * avatarCrop.scale;
+        const size  = 512;
+        // Viewport center maps to image center + pan offset (in display px).
+        const srcW  = vp / base;
+        const srcX  = ( img.naturalWidth / 2 ) - ( avatarCrop.x / base ) - ( srcW / 2 );
+        const srcY  = ( img.naturalHeight / 2 ) - ( avatarCrop.y / base ) - ( srcW / 2 );
+
+        const canvas  = document.createElement( 'canvas' );
+        canvas.width  = size;
+        canvas.height = size;
+        const ctx2d   = canvas.getContext( '2d' );
+        ctx2d.imageSmoothingQuality = 'high';
+        ctx2d.drawImage( img, srcX, srcY, srcW, srcW, 0, 0, size, size );
+
+        const isPng = avatarCrop.file && 'image/png' === avatarCrop.file.type;
+        canvas.toBlob( resolve, isPng ? 'image/png' : 'image/jpeg', 0.9 );
+    } );
+}
+
+function avatarCropClose() {
+    const dialog = document.getElementById( 'jt-avatar-crop' );
+    if ( dialog && dialog.open ) dialog.close();
+    if ( avatarCrop.url ) URL.revokeObjectURL( avatarCrop.url );
+    if ( avatarCrop.input ) avatarCrop.input.value = '';
+    avatarCrop.file  = null;
+    avatarCrop.input = null;
+    avatarCrop.url   = '';
+}
+
+// Upload a (possibly cropped) avatar file via the shared media pipeline and
+// stage the URL in the form. Generator so store actions can yield* into it.
+function* avatarUpload( file, input ) {
+    if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
+        if ( window.bnToast ) window.bnToast( state.i18n?.failedSaveProfile || 'Failed to save profile.', 'error' );
+        return;
+    }
+    const fd = new FormData();
+    fd.append( 'file', file );
+
+    const result = yield window.jetonomyRest.restFetch( '/media', { method: 'POST', body: fd } );
+    input.value  = '';
+
+    if ( ! result.ok || ! result.data || ! result.data.url ) {
+        const msg = ( result.data && result.data.message ) || state.i18n?.failedSaveProfile || 'Failed to save profile.';
+        if ( window.bnToast ) window.bnToast( msg, 'error' );
+        return;
+    }
+
+    const form   = input.closest( 'form' );
+    const hidden = form?.querySelector( '[name="avatar_url"]' );
+    if ( hidden ) hidden.value = result.data.url;
+
+    const preview = document.getElementById( 'jt-avatar-preview' );
+    if ( preview ) preview.src = result.data.url;
+    document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -2526,30 +2658,62 @@ const { state, actions } = store( 'jetonomy', {
             const input = event.target;
             const file  = input.files && input.files[0];
             if ( ! file ) return;
-            if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
-                if ( window.bnToast ) window.bnToast( state.i18n?.failedSaveProfile || 'Failed to save profile.', 'error' );
+
+            // Animated GIFs lose their animation when redrawn to a canvas,
+            // so they skip the cropper and upload as chosen. Everything
+            // else goes through the square-crop dialog first.
+            if ( 'image/gif' === file.type || ! window.HTMLDialogElement ) {
+                yield* avatarUpload( file, input );
                 return;
             }
 
-            const fd = new FormData();
-            fd.append( 'file', file );
-
-            const result = yield window.jetonomyRest.restFetch( '/media', { method: 'POST', body: fd } );
-            input.value  = '';
-
-            if ( ! result.ok || ! result.data || ! result.data.url ) {
-                const msg = ( result.data && result.data.message ) || state.i18n?.failedSaveProfile || 'Failed to save profile.';
-                if ( window.bnToast ) window.bnToast( msg, 'error' );
+            const dialog = document.getElementById( 'jt-avatar-crop' );
+            const img    = document.getElementById( 'jt-crop-image' );
+            if ( ! dialog || ! img ) {
+                yield* avatarUpload( file, input );
                 return;
             }
 
-            const form   = input.closest( 'form' );
-            const hidden = form?.querySelector( '[name="avatar_url"]' );
-            if ( hidden ) hidden.value = result.data.url;
+            avatarCrop.file  = file;
+            avatarCrop.input = input;
+            avatarCrop.scale = 1;
+            avatarCrop.x     = 0;
+            avatarCrop.y     = 0;
 
-            const preview = document.getElementById( 'jt-avatar-preview' );
-            if ( preview ) preview.src = result.data.url;
-            document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
+            const url = URL.createObjectURL( file );
+            yield new Promise( ( resolve, reject ) => {
+                img.onload  = resolve;
+                img.onerror = reject;
+                img.src     = url;
+            } ).catch( () => {} );
+            avatarCrop.url = url;
+
+            const zoom = document.getElementById( 'jt-crop-zoom' );
+            if ( zoom ) zoom.value = '100';
+            avatarCropBindDrag();
+            // Layout AFTER showModal - a closed <dialog> is display:none, so
+            // the viewport measures 0 wide until it is actually open.
+            dialog.showModal();
+            avatarCropLayout();
+        },
+
+        avatarCropZoom( event ) {
+            avatarCrop.scale = Math.max( 1, parseInt( event.target.value, 10 ) / 100 );
+            avatarCropLayout();
+        },
+
+        avatarCropCancel() {
+            avatarCropClose();
+        },
+
+        *avatarCropApply() {
+            const blob = yield avatarCropRender();
+            const { file, input } = avatarCrop;
+            avatarCropClose();
+            if ( ! blob || ! file || ! input ) return;
+            const name    = file.name.replace( /\.[a-z0-9]+$/i, '' ) + ( 'image/png' === blob.type ? '.png' : '.jpg' );
+            const cropped = new File( [ blob ], name, { type: blob.type } );
+            yield* avatarUpload( cropped, input );
         },
 
         removeAvatar( event ) {

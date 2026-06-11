@@ -18,7 +18,7 @@ Every member has a profile page at `/community/u/their-username/`. Anyone can vi
 
 The profile header shows:
 
-- **Avatar** - pulled from WordPress Gravatar by default. Members can upload a custom avatar if your theme supports it.
+- **Avatar** - pulled from WordPress Gravatar by default. Members can upload a custom photo from the Edit Profile page and crop it square before it is saved.
 - **Display name** - the name shown across all community activity
 - **Username** - the login handle used in @mentions and the profile URL
 - **Bio** - a short text description the member writes themselves
@@ -70,6 +70,7 @@ Editable fields:
 
 - Display name
 - Bio
+- Avatar - upload a JPG, PNG, GIF, or WebP. After choosing a non-GIF image, a crop dialog opens: drag to reposition, use the slider to zoom, then **Crop and upload** saves a square avatar (animated GIFs upload as-is to preserve animation). The "Remove photo" button reverts to the Gravatar.
 - Notification preferences (email and in-app toggles per type)
 
 WordPress Administrators can edit any member's profile from the standard WordPress Users admin as well.

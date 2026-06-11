@@ -268,6 +268,7 @@ Each site in a Multisite network gets its own independent community. Network act
 
 A stability and accuracy release: the plugin pair was audited end to end, dead weight removed, and every cross-surface contract verified.
 
+* New      - Avatar square-crop: uploading a profile photo opens a drag-and-zoom crop dialog so avatars are saved square; animated GIFs upload unchanged.
 * New      - Space RSS feeds: every public space serves RSS 2.0 at /community/s/{slug}/feed/ with auto-discovery on the space page; private spaces stay private.
 * New      - GET /auth/nonce endpoint: long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
 * New      - Conversations admin page (with Pro): paginated messaging oversight in wp-admin with thread detail and a compliance purge action.

@@ -332,6 +332,8 @@
     margin-bottom: 16px;
   }
   @media (max-width: 640px) {
+  .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
+
     .jt-space-cover { height: 120px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
   }
 
@@ -1624,7 +1626,51 @@
 
   /* ── Edit profile ── */
   .jt-avatar-row { display: flex; align-items: center; gap: 12px; }
-  .jt-avatar-round { border-radius: 50%; }
+  .jt-avatar-round { border-radius: 50%; object-fit: cover; }
+
+  /* Avatar square-crop dialog (1.5.0) */
+  .jt-crop-dialog {
+    border: 1px solid var(--jt-border);
+    border-radius: var(--jt-radius-lg, 12px);
+    background: var(--jt-surface, var(--jt-bg));
+    color: var(--jt-text);
+    padding: var(--jt-space-xl, 20px);
+    max-width: 340px;
+    width: calc(100vw - 32px);
+    box-shadow: var(--jt-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.2));
+  }
+  .jt-crop-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .jt-crop-dialog__title { margin: 0 0 4px; font-size: 1.0625rem; }
+  .jt-crop-dialog__hint { margin: 0 0 12px; font-size: 0.8125rem; color: var(--jt-text-secondary); }
+  .jt-crop-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--jt-radius-md, 8px);
+    background: var(--jt-bg-subtle, var(--jt-bg));
+    cursor: grab;
+    touch-action: none;
+  }
+  .jt-crop-viewport:active { cursor: grabbing; }
+  .jt-crop-viewport img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    max-width: none;
+    user-select: none;
+    pointer-events: none;
+  }
+  .jt-crop-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+  }
+  .jt-crop-zoom { display: block; margin: 14px 0 16px; }
+  .jt-crop-zoom input[type='range'] { width: 100%; accent-color: var(--jt-accent); }
+  .jt-crop-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; }
   .jt-avatar-hint { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-avatar-controls { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   .jt-avatar-buttons { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -75,9 +75,30 @@ $base         = \Jetonomy\base_url();
 							data-wp-on--click="actions.removeAvatar"
 							<?php echo empty( $profile->avatar_url ) ? 'hidden' : ''; ?>><?php esc_html_e( 'Remove photo', 'jetonomy' ); ?></button>
 					</div>
-					<span class="jt-avatar-hint"><?php esc_html_e( 'JPG, PNG, GIF or WebP. Without a photo, your Gravatar is used.', 'jetonomy' ); ?></span>
+					<span class="jt-avatar-hint"><?php esc_html_e( 'JPG, PNG, GIF or WebP. Square images look best - you can crop after choosing a photo. Without a photo, your Gravatar is used.', 'jetonomy' ); ?></span>
 				</div>
 			</div>
+
+			<dialog id="jt-avatar-crop" class="jt-crop-dialog" aria-labelledby="jt-crop-title">
+				<h3 id="jt-crop-title" class="jt-crop-dialog__title"><?php esc_html_e( 'Crop your photo', 'jetonomy' ); ?></h3>
+				<p class="jt-crop-dialog__hint"><?php esc_html_e( 'Drag to reposition. Use the slider to zoom.', 'jetonomy' ); ?></p>
+				<div class="jt-crop-viewport" id="jt-crop-viewport">
+					<img id="jt-crop-image" src="" alt="" draggable="false">
+					<div class="jt-crop-ring" aria-hidden="true"></div>
+				</div>
+				<label class="jt-crop-zoom">
+					<span class="jt-sr-only"><?php esc_html_e( 'Zoom', 'jetonomy' ); ?></span>
+					<input type="range" id="jt-crop-zoom" min="100" max="300" value="100" step="1"
+						aria-label="<?php esc_attr_e( 'Zoom', 'jetonomy' ); ?>"
+						data-wp-on--input="actions.avatarCropZoom">
+				</label>
+				<div class="jt-crop-dialog__actions">
+					<button type="button" class="jt-btn jt-btn-ghost"
+						data-wp-on--click="actions.avatarCropCancel"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></button>
+					<button type="button" class="jt-btn jt-btn-fill"
+						data-wp-on--click="actions.avatarCropApply"><?php esc_html_e( 'Crop and upload', 'jetonomy' ); ?></button>
+				</div>
+			</dialog>
 		</div>
 
 		<?php
