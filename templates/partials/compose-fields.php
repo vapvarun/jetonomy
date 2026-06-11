@@ -115,7 +115,7 @@ $_post_type               = $_space_type_to_post_type[ $_space_type ] ?? 'topic'
 <?php if ( $_show_tags ) : ?>
 	<div class="jt-form-group">
 		<label for="jt-post-tags" class="jt-label"><?php esc_html_e( 'Tags', 'jetonomy' ); ?> <span class="jt-label-hint"><?php esc_html_e( '(optional, comma-separated)', 'jetonomy' ); ?></span></label>
-		<input type="text" id="jt-post-tags" name="tags" class="jt-input" placeholder="<?php esc_attr_e( 'e.g. python, django, architecture', 'jetonomy' ); ?>">
+		<input type="text" id="jt-post-tags" name="tags" class="jt-input" value="<?php echo esc_attr( isset( $tags_value ) ? (string) $tags_value : '' ); ?>" placeholder="<?php esc_attr_e( 'e.g. python, django, architecture', 'jetonomy' ); ?>">
 	</div>
 <?php endif; ?>
 

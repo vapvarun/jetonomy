@@ -54,10 +54,11 @@ $crumbs = array(
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				[
-					'icon'      => 'edit',
-					'message'   => __( 'No drafts yet. Save a post as a draft and it will appear here.', 'jetonomy' ),
-					'cta_label' => __( 'Browse the community', 'jetonomy' ),
-					'cta_url'   => $base . '/',
+					'icon'        => 'edit',
+					'message'     => __( 'No drafts yet.', 'jetonomy' ),
+					'description' => __( 'Start writing a post and choose "Save draft" — it will wait for you here until you publish.', 'jetonomy' ),
+					'cta_label'   => __( 'Start a post', 'jetonomy' ),
+					'cta_url'     => $base . '/',
 				]
 			);
 			?>

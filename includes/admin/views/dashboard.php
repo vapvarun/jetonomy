@@ -61,6 +61,13 @@ $stat_cards = array(
 				<div class="jetonomy-stat-card__content">
 					<div class="jetonomy-stat-card__value"><?php echo esc_html( number_format_i18n( $stats[ $key ] ) ); ?></div>
 					<div class="jetonomy-stat-card__label"><?php echo esc_html( $card['label'] ); ?></div>
+					<?php
+					// A warning-styled "Pending Flags" count is an alert with no
+					// action — give the owner a one-click path to the queue.
+					if ( 'pending_flags' === $key && $stats[ $key ] > 0 ) :
+						?>
+						<a class="jetonomy-stat-card__cta" href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-moderation' ) ); ?>"><?php esc_html_e( 'Review flags →', 'jetonomy' ); ?></a>
+					<?php endif; ?>
 				</div>
 			</div>
 		<?php endforeach; ?>

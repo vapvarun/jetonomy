@@ -428,6 +428,22 @@
 	margin-top: 2px;
 }
 
+/* "Review flags →" link inside the Pending Flags stat card (1.5.0). */
+.jetonomy-stat-card__cta {
+	display: inline-block;
+	margin-top: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: none;
+	letter-spacing: 0;
+	color: var(--jt-admin-accent, #2271b1);
+	text-decoration: none;
+}
+.jetonomy-stat-card__cta:hover,
+.jetonomy-stat-card__cta:focus-visible {
+	text-decoration: underline;
+}
+
 /* ═══════════════════════════════════════════════════════════
    Dashboard Grid
    ═══════════════════════════════════════════════════════════ */

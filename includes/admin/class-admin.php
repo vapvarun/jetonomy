@@ -803,6 +803,8 @@ class Admin {
 				'i18n'               => array(
 					'confirmDelete'           => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
 					'confirmBan'              => esc_html__( 'Are you sure you want to ban this user?', 'jetonomy' ),
+					'confirmSpam'             => esc_html__( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
+					'confirmTrash'            => esc_html__( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 					'saving'                  => esc_html__( 'Saving...', 'jetonomy' ),
 					'saved'                   => esc_html__( 'Saved!', 'jetonomy' ),
 					'deleted'                 => esc_html__( 'Deleted.', 'jetonomy' ),

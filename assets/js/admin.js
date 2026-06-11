@@ -921,41 +921,56 @@
 				var objectId = $btn.data('id');
 
 				var ajaxAction;
+				var confirmMsg = '';
 				switch (action) {
 					case 'approve':
 						ajaxAction = 'jetonomy_approve_content';
 						break;
 					case 'spam':
 						ajaxAction = 'jetonomy_spam_content';
+						confirmMsg = self.i18n.confirmSpam;
 						break;
 					case 'trash':
 						ajaxAction = 'jetonomy_trash_content';
+						confirmMsg = self.i18n.confirmTrash;
 						break;
 					default:
 						return;
 				}
 
-				$btn.prop('disabled', true);
-				$row.find('.jetonomy-moderate-btn').prop('disabled', true);
+				// Spam / Trash are destructive — they pull content from the
+				// community. Confirm before firing (Approve is safe, no prompt).
+				var run = function() {
+					$btn.prop('disabled', true);
+					$row.find('.jetonomy-moderate-btn').prop('disabled', true);
 
-				self.ajax(ajaxAction, {
-					object_type: objectType,
-					object_id: objectId
-				}).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						$row.addClass('jetonomy-moderated');
-						setTimeout(function() {
-							$row.fadeOut(300, function() { $(this).remove(); });
-						}, 500);
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
+					self.ajax(ajaxAction, {
+						object_type: objectType,
+						object_id: objectId
+					}).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.addClass('jetonomy-moderated');
+							setTimeout(function() {
+								$row.fadeOut(300, function() { $(this).remove(); });
+							}, 500);
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+							$row.find('.jetonomy-moderate-btn').prop('disabled', false);
+						}
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
 						$row.find('.jetonomy-moderate-btn').prop('disabled', false);
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
-					$row.find('.jetonomy-moderate-btn').prop('disabled', false);
-				});
+					});
+				};
+
+				if ('' !== confirmMsg) {
+					self.confirmAsync(confirmMsg, { danger: true }).then(function(ok) {
+						if (ok) { run(); }
+					});
+				} else {
+					run();
+				}
 			});
 
 			// Resolve Flag

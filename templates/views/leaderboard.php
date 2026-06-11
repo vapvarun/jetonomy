@@ -109,9 +109,12 @@ $crumbs = [
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				[
-					'icon'      => 'award',
-					'icon_size' => 48,
-					'message'   => __( 'No members yet.', 'jetonomy' ),
+					'icon'        => 'award',
+					'icon_size'   => 48,
+					'message'     => __( 'No members yet.', 'jetonomy' ),
+					'description' => __( 'Reputation is earned by posting, getting replies, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ),
+					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
+					'cta_url'     => \Jetonomy\base_url() . '/',
 				]
 			);
 			?>

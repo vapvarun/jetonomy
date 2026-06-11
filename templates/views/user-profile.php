@@ -251,7 +251,9 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No replies yet.', 'jetonomy' ),
+							'message' => $is_own
+								? __( 'You have not replied to anything yet — jump into a discussion and your replies will show here.', 'jetonomy' )
+								: __( 'No replies yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]
 					);
@@ -310,7 +312,9 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No votes yet.', 'jetonomy' ),
+							'message' => $is_own
+								? __( 'You have not voted yet — upvote posts and replies you find helpful and they will show here.', 'jetonomy' )
+								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]
 					);

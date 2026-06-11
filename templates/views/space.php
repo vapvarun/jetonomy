@@ -355,20 +355,42 @@ $crumbs[] = [
 
 			<?php if ( empty( $posts ) ) : ?>
 				<?php
+				// Empty copy + CTA speak the space's own language: a Q&A space
+				// invites a question, a feed invites an update, an ideas space
+				// invites an idea — "No posts yet" reads as generic and dead.
+				$_jt_space_type = (string) ( $space->type ?? 'forum' );
 				if ( 'unanswered' === $sort ) {
-					$_jt_no_posts_msg = ( 'qa' === ( $space->type ?? '' ) )
+					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
 						: __( 'No posts without replies yet.', 'jetonomy' );
 				} else {
-					$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+					switch ( $_jt_space_type ) {
+						case 'qa':
+							$_jt_no_posts_msg = __( 'No questions yet. Ask the first one and get answers from the community.', 'jetonomy' );
+							break;
+						case 'feed':
+							$_jt_no_posts_msg = __( 'Nothing posted yet. Share the first update.', 'jetonomy' );
+							break;
+						case 'ideas':
+							$_jt_no_posts_msg = __( 'No ideas yet. Suggest the first one and let the community vote.', 'jetonomy' );
+							break;
+						default:
+							$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+					}
 				}
-				$_jt_can_post = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				$_jt_cta_by_type = [
+					'qa'    => __( 'Ask a question', 'jetonomy' ),
+					'feed'  => __( 'Share an update', 'jetonomy' ),
+					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
+				];
+				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
+				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[
 						'icon'      => 'empty-posts',
 						'message'   => $_jt_no_posts_msg,
-						'cta_label' => $_jt_can_post ? __( 'New Post', 'jetonomy' ) : '',
+						'cta_label' => $_jt_can_post ? $_jt_post_cta : '',
 						'cta_url'   => $_jt_can_post ? ( $space_url . 'new/' ) : '',
 					]
 				);

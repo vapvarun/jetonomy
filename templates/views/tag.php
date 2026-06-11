@@ -85,6 +85,33 @@ $crumbs = [
 					echo esc_html( sprintf( _n( '%d post', '%d posts', (int) $tag->post_count, 'jetonomy' ), (int) $tag->post_count ) );
 					?>
 				</span>
+				<?php
+				// A tag page was a browse-only dead end — no way to contribute
+				// to the topic. Give logged-in members a one-click path into the
+				// composer with this tag pre-filled. Tags are cross-space, so we
+				// target the space where the tag already lives (the newest
+				// tagged post's space); hidden silently when none is known.
+				$jt_tag_post_space = '';
+				foreach ( $posts as $jt_pp ) {
+					if ( ! empty( $jt_pp->space_slug ) ) {
+						$jt_tag_post_space = (string) $jt_pp->space_slug;
+						break;
+					}
+				}
+				if ( is_user_logged_in() && '' !== $jt_tag_post_space ) :
+					$jt_tag_compose_url = add_query_arg(
+						'tag',
+						rawurlencode( $tag->slug ),
+						$base . '/s/' . rawurlencode( $jt_tag_post_space ) . '/new/'
+					);
+					?>
+					<a href="<?php echo esc_url( $jt_tag_compose_url ); ?>" class="jt-btn jt-btn-fill jt-btn-sm jt-ml-auto">
+						<?php
+						/* translators: %s: tag name */
+						echo esc_html( sprintf( __( 'Start a discussion tagged %s', 'jetonomy' ), $tag->name ) );
+						?>
+					</a>
+				<?php endif; ?>
 			</div>
 
 			<div class="jt-bar">

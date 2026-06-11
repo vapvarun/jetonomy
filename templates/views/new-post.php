@@ -128,6 +128,10 @@ if ( function_exists( 'wp_interactivity_state' ) ) {
 				// browser blocked an empty-title submit before JS ever ran.
 				'show_title'        => ( 'feed' !== ( $space->type ?? '' ) ),
 				'show_tags'         => true,
+				// Prefill the tags field when arriving from a tag page's
+				// "Start a discussion tagged #x" CTA (?tag=slug). Tag pages are
+				// otherwise a browse dead-end with no contribution path.
+				'tags_value'        => isset( $_GET['tag'] ) ? sanitize_text_field( wp_unslash( $_GET['tag'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only prefill, no state change.
 				'show_prefix'       => true,
 				'show_private'      => true,
 				'show_scheduler'    => true,

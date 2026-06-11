@@ -60,7 +60,7 @@ $jt_es_wrapper = 'compact' === $jt_es_variant ? 'jt-empty-compact' : 'jt-empty';
 	<?php endif; ?>
 	<?php if ( '' !== $jt_es_cta_label && '' !== $jt_es_cta_url ) : ?>
 		<p class="jt-empty-cta">
-			<a href="<?php echo esc_url( $jt_es_cta_url ); ?>" class="jt-btn jt-btn-primary">
+			<a href="<?php echo esc_url( $jt_es_cta_url ); ?>" class="jt-btn jt-btn-fill">
 				<?php echo esc_html( $jt_es_cta_label ); ?>
 			</a>
 		</p>
