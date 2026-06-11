@@ -254,6 +254,21 @@ if [ "${#CRUFT[@]}" -gt 0 ]; then
 	exit 40
 fi
 
+# --- 5d. contract audit (key/hook contract drift, free+pro pair) ----------
+# Static scan for orphan option/meta keys, hooks consumed-never-fired, and
+# AJAX wiring drift. Baseline: .contract-audit-baseline.json (triaged
+# 2026-06-11). New unbaselined errors = contract drift since last release.
+CONTRACT_AUDIT="$HOME/.claude/skills/wp-contract-audit/scripts/contract-audit.php"
+if [ -f "$CONTRACT_AUDIT" ]; then
+	echo "==> contract audit (pair: jetonomy-pro)"
+	if ! php "$CONTRACT_AUDIT" "$ROOT" --pair="$ROOT/../jetonomy-pro"; then
+		echo "FAIL: contract audit found unbaselined errors - fix or baseline (with a real reason) before release." >&2
+		exit 41
+	fi
+else
+	echo "==> contract audit SKIPPED (skill script not on this machine)"
+fi
+
 # --- 6. syntax lint every PHP in the staging ------------------------------
 echo "==> php -l on staged PHP files"
 LINT_FAILED=0
