@@ -514,15 +514,9 @@ class Posts_Controller extends Base_Controller {
 			// to attach the Flag record to. The post still publishes; the
 			// flag surfaces it in the moderation queue for review.
 
-			// Per-space require_approval: hold for moderation unless moderator/admin.
-			if ( empty( $post_data['status'] ) || 'publish' === $post_data['status'] ) {
-				$space_settings = Space::get_settings( $space_id );
-				if ( ! empty( $space_settings['require_approval'] ) ) {
-					$member_role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
-					if ( ! in_array( $member_role, array( 'moderator', 'admin' ), true ) && ! current_user_can( 'manage_options' ) ) {
-						$post_data['status'] = 'pending';
-					}
-				}
+			// Per-space require_approval: hold unless the author is space staff.
+			if ( $this->should_hold_for_approval( (string) ( $post_data['status'] ?? '' ), $space_id, $user_id ) ) {
+				$post_data['status'] = 'pending';
 			}
 		}
 

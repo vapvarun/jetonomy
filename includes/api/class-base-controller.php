@@ -70,14 +70,39 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * they own the moderation workflow, so running their writes through Akismet
 	 * creates false positives and blocks staff responses. Lower-trust members
 	 * still get the full spam pipeline.
+	 *
+	 * Thin alias over the engine's privilege check so there is exactly one
+	 * definition of "space staff" (1.5.0 consolidation, audit B).
 	 */
 	protected function author_bypasses_spam_check( int $user_id, int $space_id ): bool {
-		if ( user_can( $user_id, 'manage_options' ) ) {
-			return true;
+		return \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
+	}
+
+	/**
+	 * Should this write be held for moderation under the space's
+	 * require_approval setting?
+	 *
+	 * One shared definition for the post + reply create paths (1.5.0
+	 * consolidation — the previous copy-pasted blocks also checked
+	 * current_user_can() instead of the AUTHOR's capabilities, which
+	 * diverges on imports and on-behalf writes; audit B).
+	 *
+	 * @param string $requested_status Status the caller asked for ('' = default publish).
+	 * @param int    $space_id         Space ID.
+	 * @param int    $author_id        Content author user ID.
+	 * @return bool True when the content must be created as `pending`.
+	 */
+	protected function should_hold_for_approval( string $requested_status, int $space_id, int $author_id ): bool {
+		if ( '' !== $requested_status && 'publish' !== $requested_status ) {
+			return false; // Drafts/scheduled content is not publish-bound yet.
 		}
 
-		$role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
-		return in_array( $role, array( 'admin', 'moderator' ), true );
+		$settings = \Jetonomy\Models\Space::get_settings( $space_id );
+		if ( empty( $settings['require_approval'] ) ) {
+			return false;
+		}
+
+		return ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $author_id, $space_id );
 	}
 
 	/**

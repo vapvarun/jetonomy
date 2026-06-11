@@ -302,15 +302,9 @@ class Replies_Controller extends Base_Controller {
 		}
 		// 'flag' is handled AFTER Reply::create — see auto-flag block below.
 
-		// Per-space require_approval: hold for moderation unless moderator/admin.
-		if ( empty( $reply_data['status'] ) || 'publish' === ( $reply_data['status'] ?? '' ) ) {
-			$space_settings = \Jetonomy\Models\Space::get_settings( $space_id );
-			if ( ! empty( $space_settings['require_approval'] ) ) {
-				$member_role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
-				if ( ! in_array( $member_role, array( 'moderator', 'admin' ), true ) && ! current_user_can( 'manage_options' ) ) {
-					$reply_data['status'] = 'pending';
-				}
-			}
+		// Per-space require_approval: hold unless the author is space staff.
+		if ( $this->should_hold_for_approval( (string) ( $reply_data['status'] ?? '' ), $space_id, $user_id ) ) {
+			$reply_data['status'] = 'pending';
 		}
 
 		$reply_id = Reply::create( $reply_data );

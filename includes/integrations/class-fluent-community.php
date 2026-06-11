@@ -1467,44 +1467,13 @@ class Fluent_Community {
 	 * @return string
 	 */
 	public function filter_avatar_url( $url, $id_or_email ): string {
-		$user_id = $this->resolve_user_id( $id_or_email );
+		// Shared resolver — Avatar owns the id/email/object disambiguation
+		// for every avatar filter in the plugin (1.5.0 consolidation).
+		$user_id = \Jetonomy\Avatar::resolve_user_id( $id_or_email );
 		if ( $user_id <= 0 ) {
 			return (string) $url;
 		}
 		$fc = $this->fc_avatar_for_user( $user_id );
 		return $fc ? $fc : (string) $url;
-	}
-
-	/**
-	 * Resolve a WP user ID from the many forms WordPress passes to avatar filters.
-	 *
-	 * @param mixed $id_or_email Int, email, WP_User, WP_Comment, WP_Post, or similar.
-	 * @return int 0 if unresolvable.
-	 */
-	private function resolve_user_id( $id_or_email ): int {
-		if ( is_numeric( $id_or_email ) ) {
-			return (int) $id_or_email;
-		}
-		if ( is_object( $id_or_email ) ) {
-			if ( isset( $id_or_email->user_id ) ) {
-				return (int) $id_or_email->user_id;
-			}
-			if ( isset( $id_or_email->ID ) ) {
-				return (int) $id_or_email->ID;
-			}
-			if ( isset( $id_or_email->user_email ) ) {
-				$u = get_user_by( 'email', $id_or_email->user_email );
-				return $u ? (int) $u->ID : 0;
-			}
-			if ( isset( $id_or_email->comment_author_email ) ) {
-				$u = get_user_by( 'email', $id_or_email->comment_author_email );
-				return $u ? (int) $u->ID : 0;
-			}
-		}
-		if ( is_string( $id_or_email ) && is_email( $id_or_email ) ) {
-			$u = get_user_by( 'email', $id_or_email );
-			return $u ? (int) $u->ID : 0;
-		}
-		return 0;
 	}
 }

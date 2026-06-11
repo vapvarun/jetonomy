@@ -944,50 +944,24 @@ class Spaces_Controller extends Base_Controller {
 	public function use_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$token = sanitize_text_field( $request->get_param( 'token' ) );
 
-		$invite = InviteLink::find_by_token( $token );
-		if ( ! $invite ) {
-			return new WP_Error( 'jetonomy_invalid_invite', __( 'Invalid invite link.', 'jetonomy' ), [ 'status' => 404 ] );
-		}
+		// Shared token → membership flow (also drives the invite landing
+		// template; audit B consolidation).
+		$result = InviteLink::accept( $token, get_current_user_id() );
 
-		if ( ! InviteLink::is_valid( $invite ) ) {
-			return new WP_Error( 'jetonomy_invite_expired', __( 'This invite link has expired or reached its usage limit.', 'jetonomy' ), [ 'status' => 410 ] );
+		if ( is_wp_error( $result ) ) {
+			if ( 'jetonomy_login_required' === $result->get_error_code() ) {
+				// The landing template uses the error's space context; the
+				// API contract is just the 401.
+				return new WP_Error( 'jetonomy_login_required', $result->get_error_message(), [ 'status' => 401 ] );
+			}
+			return $result;
 		}
-
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return new WP_Error( 'jetonomy_login_required', __( 'Please log in to use this invite.', 'jetonomy' ), [ 'status' => 401 ] );
-		}
-
-		$space_id = (int) $invite->space_id;
-		$space    = Space::find( $space_id );
-
-		if ( ! $space ) {
-			return new WP_Error( 'jetonomy_space_not_found', __( 'The space for this invite no longer exists.', 'jetonomy' ), [ 'status' => 404 ] );
-		}
-
-		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
-			return new WP_REST_Response(
-				[
-					'status'     => 'already_member',
-					'space_id'   => $space_id,
-					'space_slug' => $space->slug,
-				],
-				200
-			);
-		}
-
-		// Add user as member and increment usage.
-		$add_result = SpaceMember::add( $space_id, $user_id, 'member' );
-		if ( is_wp_error( $add_result ) ) {
-			return $add_result;
-		}
-		InviteLink::use_invite( (int) $invite->id );
 
 		return new WP_REST_Response(
 			[
-				'status'     => 'joined',
-				'space_id'   => $space_id,
-				'space_slug' => $space->slug,
+				'status'     => $result['status'],
+				'space_id'   => (int) $result['space']->id,
+				'space_slug' => $result['space']->slug,
 			],
 			200
 		);

@@ -66,11 +66,6 @@ parameters:
 			path: includes/api/class-posts-controller.php
 
 		-
-			message: "#^Strict comparison using \\=\\=\\= between 'publish' and 'draft'\\|'pending'\\|'spam' will always evaluate to false\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_avatar\\.$#"
 			count: 1
 			path: includes/api/class-replies-controller.php
@@ -92,16 +87,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$trust_level\\.$#"
-			count: 1
-			path: includes/api/class-replies-controller.php
-
-		-
-			message: "#^Offset 'status' on array\\{post_id\\: int, author_id\\: int, content\\: non\\-falsy\\-string, content_plain\\: string, status\\: 'pending'\\|'spam', parent_id\\?\\: int\\<min, \\-1\\>\\|int\\<1, max\\>, created_at\\?\\: string\\} on left side of \\?\\? always exists and is not nullable\\.$#"
-			count: 1
-			path: includes/api/class-replies-controller.php
-
-		-
-			message: "#^Strict comparison using \\=\\=\\= between 'publish' and 'pending'\\|'spam' will always evaluate to false\\.$#"
 			count: 1
 			path: includes/api/class-replies-controller.php
 
