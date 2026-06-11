@@ -2638,6 +2638,24 @@
       ]
     },
     {
+      "name": "jetonomy_post_publish_transition",
+      "type": "action",
+      "args": "post_id, delta, created_at",
+      "where": "includes/models/class-post.php (Post::create when created publish; Post::update on publish transitions)",
+      "consumed_by": [
+        "jetonomy-pro (analytics aggregate)"
+      ]
+    },
+    {
+      "name": "jetonomy_reply_publish_transition",
+      "type": "action",
+      "args": "reply_id, delta, created_at",
+      "where": "includes/models/class-reply.php (Reply::create when created publish; Reply::update on publish transitions)",
+      "consumed_by": [
+        "jetonomy-pro (analytics aggregate)"
+      ]
+    },
+    {
       "name": "jetonomy_show_sidebar_about",
       "type": "filter",
       "where": "templates/partials/sidebar.php:104",

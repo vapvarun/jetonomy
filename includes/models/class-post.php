@@ -80,6 +80,25 @@ class Post extends Model {
 				// membership through their own workflows, and demoting an existing
 				// admin/moderator back to 'member' would be a footgun.
 				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
+
+				/**
+				 * Fires when a post enters or leaves `publish`.
+				 *
+				 * Fired here for posts created directly as publish;
+				 * Post::update() fires it for later transitions
+				 * (pending→publish approval, publish→trash, restore).
+				 * Date-bucketed consumers (Pro analytics aggregate) key on
+				 * $created_at so a deletion decrements the same calendar
+				 * bucket the creation incremented — keeping the aggregate in
+				 * lockstep with `WHERE status = 'publish'` query paths.
+				 *
+				 * @since 1.5.0
+				 *
+				 * @param int    $post_id    Post ID.
+				 * @param int    $delta      +1 entering publish, -1 leaving it.
+				 * @param string $created_at Post creation datetime (MySQL, UTC).
+				 */
+				do_action( 'jetonomy_post_publish_transition', (int) $id, 1, (string) $data['created_at'] );
 			}
 
 			/**
@@ -149,6 +168,9 @@ class Post extends Model {
 			if ( ! empty( $post->author_id ) ) {
 				UserProfile::increment_post_count( (int) $post->author_id, $delta );
 			}
+
+			/** This action is documented in includes/models/class-post.php (Post::create) */
+			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $post->created_at ?? '' ) );
 		}
 
 		return $result;

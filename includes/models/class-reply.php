@@ -64,6 +64,23 @@ class Reply extends Model {
 				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
 
+			if ( 'publish' === ( $data['status'] ?? 'publish' ) ) {
+				/**
+				 * Fires when a reply enters or leaves `publish`.
+				 *
+				 * Mirrors `jetonomy_post_publish_transition` for the reply
+				 * path — fired here for replies created directly as publish;
+				 * Reply::update() fires it for later transitions.
+				 *
+				 * @since 1.5.0
+				 *
+				 * @param int    $reply_id   Reply ID.
+				 * @param int    $delta      +1 entering publish, -1 leaving it.
+				 * @param string $created_at Reply creation datetime (MySQL, UTC).
+				 */
+				do_action( 'jetonomy_reply_publish_transition', (int) $id, 1, (string) $data['created_at'] );
+			}
+
 			/**
 			 * Fires after a reply is created.
 			 *
@@ -119,6 +136,9 @@ class Reply extends Model {
 			if ( ! empty( $reply->author_id ) ) {
 				UserProfile::increment_reply_count( (int) $reply->author_id, $delta );
 			}
+
+			/** This action is documented in includes/models/class-reply.php (Reply::create) */
+			do_action( 'jetonomy_reply_publish_transition', $id, $delta, (string) ( $reply->created_at ?? '' ) );
 		}
 
 		return $result;

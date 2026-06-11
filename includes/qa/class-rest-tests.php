@@ -43,6 +43,13 @@ class REST_Tests {
 	private array $cleanup = [];
 
 	/**
+	 * Post fixture created by H48, reused as H49's reply parent.
+	 *
+	 * @var int
+	 */
+	private int $h48_post_id = 0;
+
+	/**
 	 * WordPress administrator ID (user ID 1 or first admin found).
 	 *
 	 * @var int
@@ -133,6 +140,8 @@ class REST_Tests {
 		$this->run_group_f();
 		$this->run_group_g();
 		$this->test_subscriber_actions();
+		$this->test_hook_jetonomy_post_publish_transition_H48();
+		$this->test_hook_jetonomy_reply_publish_transition_H49();
 
 		$this->cleanup();
 
@@ -966,5 +975,102 @@ class REST_Tests {
 		}
 
 		return $response;
+	}
+
+
+	/**
+	 * @covers do_action( 'jetonomy_post_publish_transition' )
+	 *
+	 * Hook fired at: includes/models/class-post.php (Post::create when
+	 * created publish; Post::update on publish transitions). (H48)
+	 * Consumers: 1 (Pro analytics aggregate — the delta/created_at
+	 * contract below is exactly what keeps the aggregate in lockstep
+	 * with status='publish' query paths; audit A3).
+	 */
+	private function test_hook_jetonomy_post_publish_transition_H48(): void {
+		$events   = [];
+		$listener = function ( $id, $delta, $created_at ) use ( &$events ) {
+			$events[] = [ (int) $id, (int) $delta, (string) $created_at ];
+		};
+		add_action( 'jetonomy_post_publish_transition', $listener, 10, 3 );
+
+		// Publish create → +1 carrying created_at.
+		$post_id = \Jetonomy\Models\Post::create(
+			[
+				'space_id'      => (int) $this->space->id,
+				'author_id'     => $this->admin_id,
+				'title'         => 'QA H48 publish transition',
+				'slug'          => 'qa-h48-transition-' . wp_rand(),
+				'content'       => 'transition fixture',
+				'content_plain' => 'transition fixture',
+				'type'          => 'topic',
+			]
+		);
+		$created_ok = ! is_wp_error( $post_id ) && (int) $post_id > 0;
+		if ( $created_ok ) {
+			$this->cleanup[]   = [ 'type' => 'post_rest', 'id' => (int) $post_id ];
+			$this->h48_post_id = (int) $post_id;
+		}
+		$this->check(
+			'H48: publish create fires +1 with created_at',
+			$created_ok && 1 === count( $events ) && 1 === $events[0][1] && '' !== $events[0][2],
+			'expected one +1 event with a created_at payload'
+		);
+
+		// Publish → trash → -1; trash → pending stays silent; approval → +1.
+		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'trash' ] );
+		$this->check( 'H48: trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
+
+		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'pending' ] );
+		$this->check( 'H48: trash→pending stays silent (no publish edge)', 2 === count( $events ) );
+
+		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'publish' ] );
+		$this->check( 'H48: pending→publish approval fires +1', 3 === count( $events ) && 1 === $events[2][1] );
+
+		remove_action( 'jetonomy_post_publish_transition', $listener, 10 );
+	}
+
+
+	/**
+	 * @covers do_action( 'jetonomy_reply_publish_transition' )
+	 *
+	 * Hook fired at: includes/models/class-reply.php (Reply::create when
+	 * created publish; Reply::update on publish transitions). (H49)
+	 * Consumers: 1 (Pro analytics aggregate).
+	 */
+	private function test_hook_jetonomy_reply_publish_transition_H49(): void {
+		if ( $this->h48_post_id <= 0 ) {
+			$this->check( 'H49: reply publish transition', false, 'H48 parent-post fixture missing' );
+			return;
+		}
+
+		$events   = [];
+		$listener = function ( $id, $delta, $created_at ) use ( &$events ) {
+			$events[] = [ (int) $id, (int) $delta, (string) $created_at ];
+		};
+		add_action( 'jetonomy_reply_publish_transition', $listener, 10, 3 );
+
+		$reply_id = \Jetonomy\Models\Reply::create(
+			[
+				'post_id'       => $this->h48_post_id,
+				'author_id'     => $this->admin_id,
+				'content'       => 'transition reply fixture',
+				'content_plain' => 'transition reply fixture',
+			]
+		);
+		$created_ok = ! is_wp_error( $reply_id ) && (int) $reply_id > 0;
+		if ( $created_ok ) {
+			$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => (int) $reply_id ];
+		}
+		$this->check(
+			'H49: reply publish create fires +1 with created_at',
+			$created_ok && 1 === count( $events ) && 1 === $events[0][1] && '' !== $events[0][2],
+			'expected one +1 event with a created_at payload'
+		);
+
+		\Jetonomy\Models\Reply::update( (int) $reply_id, [ 'status' => 'trash' ] );
+		$this->check( 'H49: reply trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
+
+		remove_action( 'jetonomy_reply_publish_transition', $listener, 10 );
 	}
 }
