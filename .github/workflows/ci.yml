@@ -277,17 +277,11 @@ jobs:
           CODE_ERRORS=$(echo "$RESULT" | awk -F',' -v noise="$NOISE" '
             /^FILE:/ { file=$0; gsub(/^FILE: /, "", file); next }
             $3 == "ERROR" {
-              if (file ~ /^libs\//) next   # vendored third-party (action-scheduler, edd-sl-sdk) — ships in dist, not ours to fix
-              if (file ~ /^tests\//) next
-              if (file ~ /^bin\//) next
-              if (file ~ /^tools\//) next
-              if (file ~ /^\.githooks\//) next
-              if (file ~ /^plans\//) next
-              if (file ~ /^docs\//) next
-              if (file ~ /^marketing\//) next
-              if (file ~ /^dist\//) next
-              if (file ~ /^vendor\//) next
-              if (file ~ /^node_modules\//) next
+              # Segment match, not ^-anchored: PCP emits ABSOLUTE paths on the
+              # runner (/home/runner/work/...), so the old ^dir/ excludes never
+              # matched there. libs/ = vendored third-party (action-scheduler,
+              # edd-sl-sdk) — ships in dist, not ours to fix.
+              if (file ~ /(^|\/)(libs|tests|bin|tools|\.githooks|plans|docs|marketing|dist|vendor|node_modules)\//) next
               match_noise = 0
               split(noise, n, "|")
               for (k in n) { if ($4 ~ n[k]) { match_noise = 1; break } }
