@@ -5,7 +5,7 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-11T04:03:08+00:00",
+        "at": "2026-06-11T04:41:10+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
@@ -428,9 +428,9 @@
             ]
         },
         "ajax": {
-            "total": 43,
+            "total": 40,
             "covered": 0,
-            "uncovered": 43,
+            "uncovered": 40,
             "skipped": 0,
             "covered_items": [],
             "uncovered_items": [
@@ -539,16 +539,8 @@
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_search_users"
                 },
                 {
-                    "action": "jetonomy_run_import",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_run_import"
-                },
-                {
                     "action": "jetonomy_import_batch",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_batch"
-                },
-                {
-                    "action": "jetonomy_import_progress",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_progress"
                 },
                 {
                     "action": "jetonomy_test_email",
@@ -583,10 +575,6 @@
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_reply"
                 },
                 {
-                    "action": "jetonomy_get_replies",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_get_replies"
-                },
-                {
                     "action": "jetonomy_approve_join_request",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_join_request"
                 },
@@ -612,7 +600,7 @@
             "total": 6,
             "covered": 5,
             "uncovered": 1,
-            "skipped": 137,
+            "skipped": 136,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -741,15 +729,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 157,
+        "items_total": 154,
         "items_covered": 43,
-        "items_uncovered": 114,
-        "items_skipped": 137,
-        "coverage_percent": 27.399999999999999
+        "items_uncovered": 111,
+        "items_skipped": 136,
+        "coverage_percent": 27.899999999999999
     },
     "drift": {
-        "previous_uncovered": 115,
-        "current_uncovered": 114,
-        "delta": -1
+        "previous_uncovered": 114,
+        "current_uncovered": 111,
+        "delta": -3
     }
 }

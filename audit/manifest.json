@@ -36,7 +36,7 @@
           "DELETE"
         ],
         "handler": "Spaces_Controller::get_item,update_item,delete_item",
-        "permission": "Visibility::rest_check,update_permission_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "Get, update, or delete a space",
         "auth": "public_with_handler",
         "capability": "space_admin",
@@ -50,7 +50,7 @@
           "POST"
         ],
         "handler": "Spaces_Controller::get_members,join_space",
-        "permission": "Visibility::rest_check,require_login_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "List space members or join space",
         "auth": "public_with_handler",
         "capability": "space_member",
@@ -77,7 +77,7 @@
           "DELETE"
         ],
         "handler": "Spaces_Controller::update_member_role,leave_space",
-        "permission": "require_login_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Update member role or leave space",
         "auth": "login_required",
         "capability": "space_admin",
@@ -90,7 +90,7 @@
           "POST"
         ],
         "handler": "Spaces_Controller::generate_invite",
-        "permission": "require_login_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Generate invite link for space",
         "auth": "login_required",
         "capability": "space_admin",
@@ -117,7 +117,7 @@
           "POST"
         ],
         "handler": "Posts_Controller::list_items,create_item",
-        "permission": "Visibility::rest_check,login_permission_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "List posts in space or create new post",
         "auth": "public_with_handler",
         "capability": "create_posts",
@@ -145,7 +145,7 @@
           "DELETE"
         ],
         "handler": "Posts_Controller::get_item,update_item,delete_item",
-        "permission": "Visibility::rest_check,login_permission_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "Get, update, or delete a single post",
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
@@ -158,7 +158,7 @@
           "POST"
         ],
         "handler": "Posts_Controller::close_post",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Close/lock a post",
         "auth": "login_required",
         "capability": "ownership_or_edit_others",
@@ -171,7 +171,7 @@
           "POST"
         ],
         "handler": "Posts_Controller::pin_post",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Pin post to top of space",
         "auth": "login_required",
         "capability": "edit_others_posts",
@@ -184,7 +184,7 @@
           "POST"
         ],
         "handler": "Posts_Controller::move_post",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Move post to another space",
         "auth": "login_required",
         "capability": "edit_others_posts",
@@ -197,7 +197,7 @@
           "POST"
         ],
         "handler": "Posts_Controller::merge_post",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Merge post with another post",
         "auth": "login_required",
         "capability": "edit_others_posts",
@@ -211,7 +211,7 @@
           "DELETE"
         ],
         "handler": "Votes_Controller::vote_post,unvote_post",
-        "permission": "login_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Vote on / unvote a post",
         "auth": "login_required",
         "capability": null,
@@ -224,12 +224,12 @@
           "POST"
         ],
         "handler": "Posts_Controller::set_idea_status",
-        "permission": "login_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Set the roadmap status (planned, in_progress, shipped, declined) on an Ideas-type post. Fires jetonomy_idea_status_changed.",
         "auth": "logged_in",
         "capability": null,
         "ownership_check": "moderator-of-space",
-        "audit_notes": "Added 1.4.2 with the Ideas roadmap. Outer gate is login_permission_check; inner gate is check_permission('close_posts', $space_id) which requires space trust level 3 (moderator). Validates via Post::valid_idea_statuses() so adding a new lane requires no controller change. Returns 400 if the post's space type is not 'ideas'."
+        "audit_notes": "Added 1.4.2 with the Ideas roadmap. Outer gate is REST_Auth::auth_mutation (closure); inner gate is check_permission('close_posts', $space_id) which requires space trust level 3 (moderator). Validates via Post::valid_idea_statuses() so adding a new lane requires no controller change. Returns 400 if the post's space type is not 'ideas'."
       },
       {
         "route": "/link-preview",
@@ -251,7 +251,7 @@
           "POST"
         ],
         "handler": "Replies_Controller::list_items,create_item",
-        "permission": "Visibility::rest_check,login_permission_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "List replies or create new reply",
         "auth": "public_with_handler",
         "capability": "create_replies",
@@ -266,7 +266,7 @@
           "DELETE"
         ],
         "handler": "Replies_Controller::get_item,update_item,delete_item",
-        "permission": "__return_true,update_permission_check",
+        "permission": "__return_true,REST_Auth::auth_mutation (closure)",
         "purpose": "Get, update, or delete a reply",
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
@@ -279,7 +279,7 @@
           "POST"
         ],
         "handler": "Replies_Controller::accept_answer",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Mark reply as accepted answer",
         "auth": "login_required",
         "capability": "post_author",
@@ -292,7 +292,7 @@
           "POST"
         ],
         "handler": "Replies_Controller::split_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Split reply into new post",
         "auth": "login_required",
         "capability": "edit_others_posts",
@@ -306,7 +306,7 @@
           "DELETE"
         ],
         "handler": "Votes_Controller::vote_reply,unvote_reply",
-        "permission": "login_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Vote on / unvote a reply",
         "auth": "login_required",
         "capability": null,
@@ -397,7 +397,7 @@
           "GET"
         ],
         "handler": "Notifications_Controller::list_items",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "List notifications for current user",
         "auth": "login_required",
         "capability": null,
@@ -410,7 +410,7 @@
           "GET"
         ],
         "handler": "Notifications_Controller::get_unread_count",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Get unread notification count",
         "auth": "login_required",
         "capability": null,
@@ -423,7 +423,7 @@
           "POST"
         ],
         "handler": "Notifications_Controller::mark_all_read",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Mark all notifications as read",
         "auth": "login_required",
         "capability": null,
@@ -436,7 +436,7 @@
           "PATCH"
         ],
         "handler": "Notifications_Controller::update_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Mark single notification as read",
         "auth": "login_required",
         "capability": null,
@@ -450,7 +450,7 @@
           "POST"
         ],
         "handler": "Subscriptions_Controller::list_items,create_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "List or create subscription",
         "auth": "login_required",
         "capability": null,
@@ -463,7 +463,7 @@
           "DELETE"
         ],
         "handler": "Subscriptions_Controller::delete_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Unsubscribe from space or post",
         "auth": "login_required",
         "capability": null,
@@ -490,7 +490,7 @@
           "POST"
         ],
         "handler": "Categories_Controller::list_items,create_item",
-        "permission": "Visibility::rest_check,manage_permission_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "List categories or create new",
         "auth": "public_with_handler",
         "capability": "jetonomy_manage_categories",
@@ -505,7 +505,7 @@
           "DELETE"
         ],
         "handler": "Categories_Controller::get_item,update_item,delete_item",
-        "permission": "Visibility::rest_check,manage_permission_check",
+        "permission": "Visibility::rest_check,REST_Auth::auth_mutation (closure)",
         "purpose": "Get, update, or delete category",
         "auth": "public_with_handler",
         "capability": "jetonomy_manage_categories",
@@ -558,7 +558,7 @@
           "DELETE"
         ],
         "handler": "Bookmarks_Controller::delete_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Remove bookmark",
         "auth": "login_required",
         "capability": null,
@@ -571,7 +571,7 @@
           "GET"
         ],
         "handler": "Moderation_Controller::list_queue",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "List flagged content in moderation queue",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -584,7 +584,7 @@
           "POST"
         ],
         "handler": "Moderation_Controller::approve_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Approve flagged content",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -597,7 +597,7 @@
           "POST"
         ],
         "handler": "Moderation_Controller::spam_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Mark content as spam",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -610,7 +610,7 @@
           "POST"
         ],
         "handler": "Moderation_Controller::trash_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Move content to trash",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -637,7 +637,7 @@
           "GET"
         ],
         "handler": "Moderation_Controller::list_flags",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "List all flags for moderation",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -650,7 +650,7 @@
           "POST"
         ],
         "handler": "Moderation_Controller::resolve_flag",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Resolve/dismiss a flag",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -690,7 +690,7 @@
           "POST"
         ],
         "handler": "Moderation_Controller::list_bans,ban_user",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "List bans or ban user",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -703,7 +703,7 @@
           "DELETE"
         ],
         "handler": "Moderation_Controller::unban_user",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Unban user",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
@@ -716,7 +716,7 @@
           "GET"
         ],
         "handler": "Space_Moderation_Controller::list_flags",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "List flags in specific space",
         "auth": "login_required",
         "capability": "space_admin",
@@ -729,7 +729,7 @@
           "POST"
         ],
         "handler": "Space_Moderation_Controller::resolve_flag",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Resolve flag in space",
         "auth": "login_required",
         "capability": "space_admin",
@@ -742,7 +742,7 @@
           "POST"
         ],
         "handler": "Space_Moderation_Controller::moderate_item",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Moderate content in specific space",
         "auth": "login_required",
         "capability": "space_admin",
@@ -781,7 +781,7 @@
           "POST"
         ],
         "handler": "Media_Controller::upload_media",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Upload media (image, video, file)",
         "auth": "login_required",
         "capability": null,
@@ -872,7 +872,7 @@
           "POST"
         ],
         "handler": "Admin_Controller::recount",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Rebuild all content counters",
         "auth": "login_required",
         "capability": "manage_options",
@@ -885,7 +885,7 @@
           "POST"
         ],
         "handler": "Admin_Controller::update_trust_level",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Update user trust level",
         "auth": "login_required",
         "capability": "manage_options",
@@ -898,7 +898,7 @@
           "DELETE"
         ],
         "handler": "Notifications_Controller::delete_notification",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Delete a single notification (own user only)",
         "auth": "login_required",
         "capability": null,
@@ -911,7 +911,7 @@
           "POST"
         ],
         "handler": "Notifications_Controller::bulk_action",
-        "permission": "update_permission_check",
+        "permission": "REST_Auth::auth_mutation (closure)",
         "purpose": "Bulk mark-as-read or delete a batch of notifications",
         "auth": "login_required",
         "capability": null,
@@ -924,203 +924,203 @@
     {
       "action": "jetonomy_create_category",
       "handler": "Admin\\Ajax\\Categories_Handler::create",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_categories",
       "purpose": "Create category"
     },
     {
       "action": "jetonomy_update_category",
       "handler": "Admin\\Ajax\\Categories_Handler::update",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_categories",
       "purpose": "Update category"
     },
     {
       "action": "jetonomy_delete_category",
       "handler": "Admin\\Ajax\\Categories_Handler::delete",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_categories",
       "purpose": "Delete category"
     },
     {
       "action": "jetonomy_reorder_categories",
       "handler": "Admin\\Ajax\\Categories_Handler::reorder",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_categories",
       "purpose": "Reorder categories"
     },
     {
       "action": "jetonomy_create_tag",
       "handler": "Admin\\Ajax\\Tags_Handler::create",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Create tag"
     },
     {
       "action": "jetonomy_update_tag",
       "handler": "Admin\\Ajax\\Tags_Handler::update",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Update tag"
     },
     {
       "action": "jetonomy_delete_tag",
       "handler": "Admin\\Ajax\\Tags_Handler::delete",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Delete tag"
     },
     {
       "action": "jetonomy_bulk_delete_tags",
       "handler": "Admin\\Ajax\\Tags_Handler::bulk_delete",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Bulk delete tags"
     },
     {
       "action": "jetonomy_create_space",
       "handler": "Admin\\Ajax\\Spaces_Handler::create",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Create space"
     },
     {
       "action": "jetonomy_update_space",
       "handler": "Admin\\Ajax\\Spaces_Handler::update",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Update space"
     },
     {
       "action": "jetonomy_delete_space",
       "handler": "Admin\\Ajax\\Spaces_Handler::delete",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Delete space"
     },
     {
       "action": "jetonomy_add_space_member",
       "handler": "Admin\\Ajax\\Spaces_Handler::add_member",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Add member to space"
     },
     {
       "action": "jetonomy_remove_space_member",
       "handler": "Admin\\Ajax\\Spaces_Handler::remove_member",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Remove member from space"
     },
     {
       "action": "jetonomy_change_member_role",
       "handler": "Admin\\Ajax\\Spaces_Handler::change_role",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Change member role"
     },
     {
       "action": "jetonomy_add_access_rule",
       "handler": "Admin\\Ajax\\Spaces_Handler::add_access_rule",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Add space access rule"
     },
     {
       "action": "jetonomy_delete_access_rule",
       "handler": "Admin\\Ajax\\Spaces_Handler::delete_access_rule",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Delete space access rule"
     },
     {
       "action": "jetonomy_sync_access_rule",
       "handler": "Admin\\Ajax\\Spaces_Handler::sync_access_rule",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Sync access rules"
     },
     {
       "action": "jetonomy_approve_content",
       "handler": "Admin\\Ajax\\Moderation_Handler::approve",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_moderate",
       "purpose": "Approve flagged content"
     },
     {
       "action": "jetonomy_spam_content",
       "handler": "Admin\\Ajax\\Moderation_Handler::spam",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_moderate",
       "purpose": "Mark content as spam"
     },
     {
       "action": "jetonomy_trash_content",
       "handler": "Admin\\Ajax\\Moderation_Handler::trash",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_moderate",
       "purpose": "Trash content"
     },
     {
       "action": "jetonomy_resolve_flag",
       "handler": "Admin\\Ajax\\Moderation_Handler::resolve_flag",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_moderate",
       "purpose": "Resolve flag"
     },
     {
       "action": "jetonomy_bulk_content_action",
       "handler": "Admin\\Ajax\\Moderation_Handler::bulk_action",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_moderate",
       "purpose": "Bulk moderation action"
     },
     {
       "action": "jetonomy_ban_user",
       "handler": "Admin\\Ajax\\Users_Handler::ban",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
       "purpose": "Ban user"
     },
     {
       "action": "jetonomy_unban_user",
       "handler": "Admin\\Ajax\\Users_Handler::unban",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
       "purpose": "Unban user"
     },
     {
       "action": "jetonomy_change_trust_level",
       "handler": "Admin\\Ajax\\Users_Handler::change_trust_level",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_users",
       "purpose": "Change user trust level"
     },
     {
       "action": "jetonomy_search_users",
       "handler": "Admin\\Ajax\\Users_Handler::search",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Search users"
     },
     {
       "action": "jetonomy_import_batch",
       "handler": "Admin\\Ajax\\Import_Handler::batch",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Process import batch"
     },
     {
       "action": "jetonomy_test_email",
       "handler": "Admin\\Ajax\\Settings_Handler::test_email",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Send test email"
     },
     {
       "action": "jetonomy_email_preview",
       "handler": "Admin\\Ajax\\Settings_Handler::email_preview",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Preview email template"
     },
@@ -1134,70 +1134,70 @@
     {
       "action": "jetonomy_flush_rules",
       "handler": "Admin\\Ajax\\Settings_Handler::flush_rules",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Flush rewrite rules"
     },
     {
       "action": "jetonomy_update_post",
       "handler": "Admin\\Ajax\\Content_Handler::update_post",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Update post from admin"
     },
     {
       "action": "jetonomy_delete_post",
       "handler": "Admin\\Ajax\\Content_Handler::delete_post",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Delete post from admin"
     },
     {
       "action": "jetonomy_update_reply",
       "handler": "Admin\\Ajax\\Content_Handler::update_reply",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Update reply from admin"
     },
     {
       "action": "jetonomy_delete_reply",
       "handler": "Admin\\Ajax\\Content_Handler::delete_reply",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_settings",
       "purpose": "Delete reply from admin"
     },
     {
       "action": "jetonomy_approve_join_request",
       "handler": "Admin\\Ajax\\Content_Handler::approve_join_request",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Approve join request"
     },
     {
       "action": "jetonomy_deny_join_request",
       "handler": "Admin\\Ajax\\Content_Handler::deny_join_request",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "jetonomy_manage_spaces",
       "purpose": "Deny join request"
     },
     {
       "action": "jetonomy_setup_save",
       "handler": "Admin\\Ajax\\Setup_Handler::save",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_setup",
       "capability": "manage_options",
       "purpose": "Save setup wizard data"
     },
     {
       "action": "jetonomy_setup_create_sample",
       "handler": "Admin\\Ajax\\Setup_Handler::create_sample",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_setup",
       "capability": "manage_options",
       "purpose": "Create sample data"
     },
     {
       "action": "jetonomy_cleanup_sample_data",
       "handler": "Admin\\Ajax\\Setup_Handler::cleanup_sample",
-      "nonce": "jetonomy_nonce",
+      "nonce": "jetonomy_admin",
       "capability": "manage_options",
       "purpose": "Clean up sample data"
     }
