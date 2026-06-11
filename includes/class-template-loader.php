@@ -205,13 +205,8 @@ class Template_Loader {
 		}
 		$dynamic_css .= '.jt-container{--jt-container-width:' . esc_attr( $container_width ) . ';}';
 
-		// Accent color override.
-		if ( ! empty( $settings['accent_color'] ) && '#0073aa' !== $settings['accent_color'] ) {
-			$accent = sanitize_hex_color( $settings['accent_color'] );
-			if ( $accent ) {
-				$dynamic_css .= ':root,.jt-app{--jt-accent:' . $accent . ';}';
-			}
-		}
+		// Color palette overrides (accent + text/background/subtle/border).
+		$dynamic_css .= self::palette_css( $settings );
 
 		// Inherit fonts: when enabled, don't override theme fonts.
 		if ( ! empty( $settings['inherit_fonts'] ) ) {
@@ -730,6 +725,82 @@ class Template_Loader {
 		} else {
 			get_footer();
 		}
+	}
+
+	/**
+	 * Build the root token overrides for the admin-chosen color palette
+	 * (Settings → Appearance → Color Palette).
+	 *
+	 * Emits one `:root,.jt-app{...}` block containing only the colors the
+	 * site owner actually set — an empty field means "keep the default", so
+	 * a site with no palette saved gets an empty string and zero behaviour
+	 * change. Derived tokens (text-secondary/tertiary, bg-hover, hover
+	 * accents) recompute automatically because they are color-mix()
+	 * expressions over these root tokens. Dark mode is unaffected: the
+	 * `.jt-dark .jt-app` token block outranks `:root,.jt-app` by
+	 * specificity, so the palette only restyles light mode.
+	 *
+	 * The legacy accent default `#0073aa` is treated as "unset" — it was the
+	 * pre-palette field default and was never emitted as an override.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param array $settings The jetonomy_settings option array.
+	 * @return string CSS block, or '' when no palette color is set.
+	 */
+	public static function palette_css( array $settings ): string {
+		$vars = '';
+		foreach ( self::palette_tokens( $settings ) as $token => $hex ) {
+			$vars .= $token . ':' . $hex . ';';
+		}
+
+		return '' !== $vars ? ':root,.jt-app{' . $vars . '}' : '';
+	}
+
+	/**
+	 * Resolve the admin-chosen palette as a `--jt-*` token => hex map.
+	 *
+	 * Shared by palette_css() (frontend emission) and by
+	 * Theme_Integration::output_color_bridge(), which subtracts these
+	 * tokens from its automatic theme bridge so an explicit owner choice
+	 * always outranks inherited theme colors. Empty when "Inherit theme
+	 * colors" is on or when no palette field is set.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param array $settings The jetonomy_settings option array.
+	 * @return array<string,string> Token name => sanitized hex color.
+	 */
+	public static function palette_tokens( array $settings ): array {
+		// "Inherit theme colors" wins over the manual palette (same
+		// precedence the accent field always had via CSS order).
+		if ( ! empty( $settings['inherit_colors'] ) ) {
+			return array();
+		}
+
+		$map = array(
+			'accent_color'    => '--jt-accent',
+			'text_color'      => '--jt-text',
+			'bg_color'        => '--jt-bg',
+			'bg_subtle_color' => '--jt-bg-subtle',
+			'border_color'    => '--jt-border',
+		);
+
+		$tokens = array();
+		foreach ( $map as $key => $token ) {
+			if ( empty( $settings[ $key ] ) ) {
+				continue;
+			}
+			if ( 'accent_color' === $key && '#0073aa' === $settings[ $key ] ) {
+				continue;
+			}
+			$hex = sanitize_hex_color( (string) $settings[ $key ] );
+			if ( $hex ) {
+				$tokens[ $token ] = $hex;
+			}
+		}
+
+		return $tokens;
 	}
 
 	/**

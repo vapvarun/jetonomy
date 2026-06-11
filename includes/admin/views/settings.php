@@ -751,11 +751,49 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							</fieldset>
 						</td>
 					</tr>
+					</table>
+			</div>
+
+			<!-- Color Palette -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Color Palette', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly — useful when your theme has no color tokens for Jetonomy to inherit. Applied when "Inherit theme colors" is off. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table">
 					<tr>
-						<th scope="row"><label for="accent_color"><?php esc_html_e( 'Custom Accent Color', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="accent_color"><?php esc_html_e( 'Accent', 'jetonomy' ); ?></label></th>
 						<td>
 							<input type="text" id="accent_color" name="jetonomy_settings[accent_color]" value="<?php echo esc_attr( $settings['accent_color'] ?? '#0073aa' ); ?>" class="jetonomy-color-picker">
-							<p class="description"><?php esc_html_e( 'Applied when "Inherit theme colors" is off.', 'jetonomy' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Buttons, links, active states, and notification emails.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="text_color"><?php esc_html_e( 'Text', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="text_color" name="jetonomy_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Body copy and headings. Secondary and muted text derive from it.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="bg_color"><?php esc_html_e( 'Background', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="bg_color" name="jetonomy_settings[bg_color]" value="<?php echo esc_attr( $settings['bg_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Cards and content surfaces.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="bg_subtle_color"><?php esc_html_e( 'Subtle Background', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="bg_subtle_color" name="jetonomy_settings[bg_subtle_color]" value="<?php echo esc_attr( $settings['bg_subtle_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Secondary surfaces — table headers, code, quiet panels.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="border_color"><?php esc_html_e( 'Border', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="border_color" name="jetonomy_settings[border_color]" value="<?php echo esc_attr( $settings['border_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Card outlines, dividers, and input borders.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 				</table>

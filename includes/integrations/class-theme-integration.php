@@ -65,6 +65,16 @@ class Theme_Integration {
 		$light = $this->resolve_token_map( false );
 		$dark  = $this->resolve_token_map( true );
 
+		// An explicitly chosen admin palette (Settings → Appearance →
+		// Color Palette) outranks automatic theme bridging, token by
+		// token — the bridge keeps covering tokens the owner left empty.
+		// Light mode only: the palette never touches dark tokens.
+		$jt_settings = get_option( 'jetonomy_settings', array() );
+		$palette     = \Jetonomy\Template_Loader::palette_tokens( is_array( $jt_settings ) ? $jt_settings : array() );
+		if ( ! empty( $palette ) ) {
+			$light = array_diff_key( $light, $palette );
+		}
+
 		/**
 		 * Filter the resolved light-mode token → hex map before injection.
 		 *

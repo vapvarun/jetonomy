@@ -458,6 +458,10 @@ class Admin {
 			$clean['inherit_fonts']  = ! empty( $input['inherit_fonts'] );
 			$clean['inherit_colors'] = ! empty( $input['inherit_colors'] );
 			$clean['accent_color']   = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
+			// Color palette — empty string means "no override, keep the default".
+			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
+				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
+			}
 			$clean['layout_density'] = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
 			$clean['custom_css']     = wp_strip_all_tags( $input['custom_css'] ?? '' );
 
