@@ -226,13 +226,12 @@ class Privacy {
 		$wpdb->delete( table( 'read_status' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'space_members' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'votes' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'user_interests' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'activity_log' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'restrictions' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'flags' ), [ 'reporter_id' => $uid ] );
 		$wpdb->delete( table( 'join_requests' ), [ 'user_id' => $uid ] );
 
-		$removed += 11; // Tables cleaned
+		$removed += 10; // Tables cleaned
 
 		return [
 			'items_removed'  => $removed,
@@ -260,7 +259,6 @@ class Privacy {
 			'read_status',
 			'space_members',
 			'votes',
-			'user_interests',
 			'activity_log',
 			'restrictions',
 			'join_requests',

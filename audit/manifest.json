@@ -526,19 +526,6 @@
         "audit_notes": "List tags (only GET registered - no POST/PATCH/DELETE in current code). 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode."
       },
       {
-        "route": "/space-tags",
-        "methods": [
-          "GET"
-        ],
-        "handler": "Tags_Controller::list_space_tags",
-        "permission": "Visibility::rest_check",
-        "purpose": "List tags for a space",
-        "auth": "public",
-        "capability": null,
-        "ownership_check": null,
-        "audit_notes": "List space tags. 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode."
-      },
-      {
         "route": "/leaderboards",
         "methods": [
           "GET"
@@ -1544,18 +1531,6 @@
     {
       "name": "{prefix}jt_post_tags",
       "purpose": "Post tags"
-    },
-    {
-      "name": "{prefix}jt_space_tags",
-      "purpose": "Space tags"
-    },
-    {
-      "name": "{prefix}jt_space_tag_map",
-      "purpose": "Space tag mapping"
-    },
-    {
-      "name": "{prefix}jt_user_interests",
-      "purpose": "User interests"
     },
     {
       "name": "{prefix}jt_activity_log",

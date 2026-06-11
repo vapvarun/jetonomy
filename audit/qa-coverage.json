@@ -5,14 +5,14 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-11T03:49:41+00:00",
+        "at": "2026-06-11T03:54:31+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 88,
-            "covered": 32,
+            "total": 89,
+            "covered": 33,
             "uncovered": 56,
             "skipped": 0,
             "covered_items": [
@@ -143,6 +143,10 @@
                 {
                     "method": "POST",
                     "route": "/moderation/flags/(?P<id>\\d+)/resolve"
+                },
+                {
+                    "method": "GET",
+                    "route": "/auth/nonce"
                 }
             ],
             "uncovered_items": [
@@ -742,15 +746,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 157,
-        "items_covered": 42,
+        "items_total": 158,
+        "items_covered": 43,
         "items_uncovered": 115,
         "items_skipped": 137,
-        "coverage_percent": 26.800000000000001
+        "coverage_percent": 27.199999999999999
     },
     "drift": {
-        "previous_uncovered": 117,
+        "previous_uncovered": 115,
         "current_uncovered": 115,
-        "delta": -2
+        "delta": 0
     }
 }
