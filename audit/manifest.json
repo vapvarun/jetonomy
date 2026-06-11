@@ -1381,14 +1381,6 @@
       "attrs": [
         "widget_id"
       ]
-    },
-    {
-      "tag": "jetonomy_recent_activity",
-      "handler": "Shortcodes::recent_activity",
-      "attrs": [
-        "limit",
-        "space_id"
-      ]
     }
   ],
   "blocks": [
@@ -3041,6 +3033,7 @@
     ]
   },
   "generated": {
+    "refresh_2026_06_11": "Coverage-gated refresh after the full-audit fix series (audit/full-audit-2026-06-11.md). wppqa baseline: audit/wppqa-baseline-2026-06-11. All categories within gate vs ground-truth grep: rest 68/69 calls (multi-config registrations), ajax 40/40 (comment-text hits excluded), hooks_fired 142/140+dynamic, tables 20 (3 dead tables dropped in Migration_1_5_0), blocks 8/8, shortcodes 8/8 (stale jetonomy_recent_activity entry removed), cron 6 (Action Scheduler map in class-cron.php - wp_schedule_event grep finds 0 by design), wp_cli 14 (dynamic dispatcher loop), admin_pages 14/14.",
     "at": "2026-06-04T00:00:00Z",
     "from": "wp-plugin-onboard --refresh (1.4.3 feature-drop delta: admin bar + notifications redesign + configurable reputation + Pro extension hooks)",
     "branch": "main",
