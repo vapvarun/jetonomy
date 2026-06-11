@@ -215,7 +215,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-weight: 700;
 	letter-spacing: -0.01em;
 	color: var(--jtb-text);
-	margin: 2px 0 14px;
+	margin: 2px 0 12px;
 }
 
 /* Theme-proof block titles. A bare title class (e.g. .jt-login-title,
@@ -232,6 +232,26 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-feed-block.jt-app .jt-feed-title,
 .jt-compose-topic-embed.jt-compose-topic-login .jt-compose-topic-login-title {
 	color: var(--jtb-text);
+}
+
+/* Margins need the same re-assertion: jetonomy.css resets .jt-app h1-h4 to
+   margin: 0 at (0,1,1), which silently beats every bare title class above and
+   leaves widget titles flush against their content. Uniform contract: 12px
+   between a widget title and its first content line (same as .jt-card h4). */
+.jt-nav-block.jt-app .jt-nav-title {
+	margin: 0 0 12px;
+}
+.jt-login-block.jt-app .jt-login-title {
+	margin: 2px 0 12px;
+}
+.jt-user-panel.jt-app .jt-userpanel-title {
+	margin: 0 0 2px; /* name/handle lockup - meta line is part of the title group */
+}
+.jt-feed-block.jt-app .jt-feed-title {
+	margin: 0; /* spacing owned by .jt-feed-header padding + border */
+}
+.jt-compose-topic-embed.jt-compose-topic-login .jt-compose-topic-login-title {
+	margin: 0; /* spacing owned by the parent flex gap */
 }
 
 .jt-login-tabs {
