@@ -34,11 +34,23 @@
 	}
 
 	function sync() {
-		var isDark = attrDark();
-		for (var i = 0; !isDark && i < darkClasses.length; i++) {
-			if (html.classList.contains(darkClasses[i])
-				|| body.classList.contains(darkClasses[i])) {
-				isDark = true;
+		var isDark;
+		if ( html.hasAttribute( 'data-bx-mode' ) ) {
+			// Color-mode era: the attribute is the single source of truth.
+			// These themes may still carry stale legacy dark classes (e.g. a
+			// dark-scheme class persisted by the pre-8.0 toggle's cookie, or
+			// emitted for a legacy scheme mod) while PAINTING light from the
+			// attribute — trusting the class here put dark Jetonomy cards on
+			// a light page.
+			isDark = attrDark();
+		} else {
+			// Legacy era (no data-bx-mode): dark classes are the signal.
+			isDark = false;
+			for (var i = 0; !isDark && i < darkClasses.length; i++) {
+				if (html.classList.contains(darkClasses[i])
+					|| body.classList.contains(darkClasses[i])) {
+					isDark = true;
+				}
 			}
 		}
 		body.classList.toggle('jt-dark', !!isDark);
