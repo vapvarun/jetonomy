@@ -2319,6 +2319,8 @@
 
 /* ── Notification preferences grid ── */
 .jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
+.jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
+.jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
 .jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
 .jt-notif-row:last-child { border-bottom: none; }
 .jt-notif-header { font-weight: 600; background: var(--jt-bg-subtle); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--jt-text-secondary); }

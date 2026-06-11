@@ -205,6 +205,7 @@ class Users_Controller extends Base_Controller {
 					'trust_level_name'    => Trust_Levels::name( $trust_level ),
 					'spaces_joined_count' => $spaces_count,
 					'settings'            => UserProfile::get_settings( $user_id ),
+					'email_opt_out'       => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
 				]
 			),
 			200
@@ -337,6 +338,17 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
+		// Master email opt-out (global kill-switch the verification reminder
+		// and future digests honour). Stored as user meta, not in the
+		// settings JSON, because the reminder reads get_user_meta directly.
+		if ( null !== $request->get_param( 'email_opt_out' ) ) {
+			if ( $request->get_param( 'email_opt_out' ) ) {
+				update_user_meta( $user_id, 'jetonomy_email_opt_out', 1 );
+			} else {
+				delete_user_meta( $user_id, 'jetonomy_email_opt_out' );
+			}
+		}
+
 		// update display_name via wp_update_user.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
@@ -369,6 +381,7 @@ class Users_Controller extends Base_Controller {
 					'display_name'     => $wp_user->display_name,
 					'trust_level_name' => Trust_Levels::name( (int) ( $profile->trust_level ?? 0 ) ),
 					'settings'         => UserProfile::get_settings( $user_id ),
+					'email_opt_out'    => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
 				]
 			),
 			200
@@ -484,21 +497,25 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function get_update_args(): array {
 		return [
-			'display_name' => [
+			'display_name'  => [
 				'type'     => 'string',
 				'required' => false,
 			],
-			'bio'          => [
+			'bio'           => [
 				'type'     => 'string',
 				'required' => false,
 			],
-			'avatar_url'   => [
+			'avatar_url'    => [
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
 			],
-			'settings'     => [
+			'settings'      => [
 				'type'     => 'object',
+				'required' => false,
+			],
+			'email_opt_out' => [
+				'type'     => 'boolean',
 				'required' => false,
 			],
 		];

@@ -1318,6 +1318,22 @@
       "default": {},
       "controls": "user_welcome, reply_to_post, reply_to_reply, mention, accepted_answer, new_post_in_sub, badge_earned, vote_on_post, moderation, join_request, verification_reminder",
       "notes": "1.4.1 A8: `verification_reminder` row added to the editor allowlist + view + sample fixtures; defaults centralized via `Notifier::get_default_template()`; per-row Reset-to-default button gated by `wp_ajax_jetonomy_email_reset` (cap jetonomy_manage_settings, nonce jetonomy_admin)."
+    },
+    {
+      "key": "jetonomy_bp_broadcast",
+      "group": "jetonomy_integrations",
+      "type": "string",
+      "default": "1",
+      "controls": "Broadcast Jetonomy topics to the paired BuddyPress group activity stream. '0' disables.",
+      "notes": "1.5.0: surfaced in Settings > Integrations (tab shown only when BuddyPress Groups active); own settings group so other tabs' saves never reset it. Read by Integrations\\BuddyPress::broadcast_enabled()."
+    },
+    {
+      "key": "jetonomy_bp_comment_bridge",
+      "group": "jetonomy_integrations",
+      "type": "string",
+      "default": "1",
+      "controls": "Mirror BuddyPress activity comments on broadcast items back as Jetonomy replies. '0' disables.",
+      "notes": "1.5.0: surfaced in Settings > Integrations. Read by Integrations\\BuddyPress::comment_bridge_enabled()."
     }
   ],
   "shortcodes": [

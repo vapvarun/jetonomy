@@ -31,6 +31,13 @@ class Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
+		// Email opt-out field on the WP user-profile screen — the admin
+		// entry point for the jetonomy_email_opt_out meta (members set it on
+		// the frontend Edit Profile page; owners see/toggle it here).
+		add_action( 'show_user_profile', array( $this, 'render_email_optout_field' ) );
+		add_action( 'edit_user_profile', array( $this, 'render_email_optout_field' ) );
+		add_action( 'personal_options_update', array( $this, 'save_email_optout_field' ) );
+		add_action( 'edit_user_profile_update', array( $this, 'save_email_optout_field' ) );
 		// A6: persist the per-page screen option for the Activity Log table.
 		add_filter( 'set-screen-option', array( $this, 'save_activity_screen_option' ), 10, 3 );
 
@@ -232,6 +239,44 @@ class Admin {
 				'default'           => array(),
 			)
 		);
+
+		// BuddyPress integration toggles. Standalone options (read by
+		// Integrations\BuddyPress) in their OWN settings group + form, so a
+		// save on any other settings tab can never reset them. Only present
+		// when BuddyPress Groups is active — the only context where the
+		// broadcast / comment-bridge behaviour exists.
+		if ( function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
+			register_setting(
+				'jetonomy_integrations',
+				'jetonomy_bp_broadcast',
+				array(
+					'type'              => 'string',
+					'sanitize_callback' => array( $this, 'sanitize_bool_option' ),
+					'default'           => '1',
+				)
+			);
+			register_setting(
+				'jetonomy_integrations',
+				'jetonomy_bp_comment_bridge',
+				array(
+					'type'              => 'string',
+					'sanitize_callback' => array( $this, 'sanitize_bool_option' ),
+					'default'           => '1',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Normalise a checkbox option to the '1' / '0' string the BuddyPress
+	 * integration reads. The Integrations form ships a hidden '0' input
+	 * before each checkbox, so the option is always present in POST.
+	 *
+	 * @param mixed $value Raw submitted value.
+	 * @return string '1' or '0'.
+	 */
+	public function sanitize_bool_option( $value ): string {
+		return '1' === (string) $value ? '1' : '0';
 	}
 
 	/**
@@ -567,6 +612,61 @@ class Admin {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Render the Jetonomy email opt-out field on the WP user-profile screen.
+	 *
+	 * The frontend Edit Profile page is the member's entry point; this is the
+	 * owner/admin entry point for the same `jetonomy_email_opt_out` meta the
+	 * verification reminder honours. Visible to the user on their own profile
+	 * and to any user who can edit the target profile.
+	 *
+	 * @param \WP_User $user The user being edited.
+	 */
+	public function render_email_optout_field( $user ): void {
+		if ( ! ( $user instanceof \WP_User ) ) {
+			return;
+		}
+		$opted_out = (bool) get_user_meta( $user->ID, 'jetonomy_email_opt_out', true );
+		?>
+		<h2><?php esc_html_e( 'Jetonomy', 'jetonomy' ); ?></h2>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Community emails', 'jetonomy' ); ?></th>
+				<td>
+					<label for="jetonomy_email_opt_out">
+						<input type="checkbox" name="jetonomy_email_opt_out" id="jetonomy_email_opt_out" value="1" <?php checked( $opted_out ); ?> />
+						<?php esc_html_e( 'Pause all Jetonomy email notifications for this user.', 'jetonomy' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'When enabled, the email verification reminder and other Jetonomy emails are suppressed. Web notifications are unaffected.', 'jetonomy' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+		wp_nonce_field( 'jetonomy_email_optout_' . $user->ID, 'jetonomy_email_optout_nonce' );
+	}
+
+	/**
+	 * Persist the email opt-out field from the WP user-profile screen.
+	 *
+	 * @param int $user_id The user being saved.
+	 */
+	public function save_email_optout_field( int $user_id ): void {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return;
+		}
+		$nonce = isset( $_POST['jetonomy_email_optout_nonce'] )
+			? sanitize_text_field( wp_unslash( $_POST['jetonomy_email_optout_nonce'] ) )
+			: '';
+		if ( ! wp_verify_nonce( $nonce, 'jetonomy_email_optout_' . $user_id ) ) {
+			return;
+		}
+		if ( ! empty( $_POST['jetonomy_email_opt_out'] ) ) {
+			update_user_meta( $user_id, 'jetonomy_email_opt_out', 1 );
+		} else {
+			delete_user_meta( $user_id, 'jetonomy_email_opt_out' );
+		}
 	}
 
 	public function enqueue_assets( string $hook ): void {

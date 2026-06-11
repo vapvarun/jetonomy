@@ -143,6 +143,16 @@ $base         = \Jetonomy\base_url();
 					</div>
 				<?php endforeach; ?>
 			</div>
+			<?php
+			// Master email kill-switch. Honoured by every outbound email
+			// (verification reminder today, digests later). Persisted as the
+			// jetonomy_email_opt_out user meta the reminder already reads.
+			$jt_email_opt_out = (bool) get_user_meta( $current_user->ID, 'jetonomy_email_opt_out', true );
+			?>
+			<label class="jt-notif-optout">
+				<input type="checkbox" name="email_opt_out" value="1" <?php checked( $jt_email_opt_out ); ?>>
+				<span><?php esc_html_e( 'Pause all email notifications. You will still see web notifications in the community.', 'jetonomy' ); ?></span>
+			</label>
 		</div>
 
 		<?php

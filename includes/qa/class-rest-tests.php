@@ -612,6 +612,18 @@ class REST_Tests {
 		// Queue cleanup: restore original bio.
 		$this->cleanup[] = [ 'type' => 'restore_bio', 'id' => $this->admin_id ];
 
+		// 27b. Email opt-out round-trips through PATCH /users/me (1.5.0).
+		// The verification reminder honours jetonomy_email_opt_out user meta;
+		// this is the REST write path behind the profile master toggle.
+		$r = $this->rest( 'PATCH', '/users/me', [ 'email_opt_out' => true ] );
+		$set = (bool) get_user_meta( $this->admin_id, 'jetonomy_email_opt_out', true );
+		$this->check( 'E27b: PATCH email_opt_out=true sets meta', 200 === $r->get_status() && $set, 'meta not set' );
+		$me = $this->rest( 'GET', '/users/me' )->get_data();
+		$this->check( 'E27b: GET /users/me reflects email_opt_out', ! empty( $me['email_opt_out'] ), 'GET did not echo opt-out' );
+		$r = $this->rest( 'PATCH', '/users/me', [ 'email_opt_out' => false ] );
+		$cleared = '' === (string) get_user_meta( $this->admin_id, 'jetonomy_email_opt_out', true );
+		$this->check( 'E27b: PATCH email_opt_out=false clears meta', 200 === $r->get_status() && $cleared, 'meta not cleared' );
+
 		// 28. Mark all notifications read.
 		$r = $this->rest( 'POST', '/notifications/mark-all-read' );
 		$data = $r->get_data();

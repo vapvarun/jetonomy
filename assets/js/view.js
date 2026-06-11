@@ -2764,6 +2764,13 @@ const { state, actions } = store( 'jetonomy', {
                 payload.notification_preferences = notifPrefs;
             }
 
+            // Master email opt-out checkbox. Always sent (boolean) so
+            // unchecking clears the meta, not only checking sets it.
+            const optOut = form.querySelector( '[name="email_opt_out"]' );
+            if ( optOut ) {
+                payload.email_opt_out = optOut.checked;
+            }
+
             try {
                 const response = yield fetch(
                     `${ state.apiBase }/users/me`,
