@@ -74,6 +74,19 @@ communities that already own a payment stack; not yet a turnkey SaaS replacement
 
 ## 3. Critical Gaps (must-have)
 
+> **SCOPE CORRECTION (2026-06-11, Varun).** Most of the "gaps" below are deliberately
+> **out of scope for Jetonomy** — they belong to sibling products in the Wbcom suite, and
+> building them into Jetonomy would duplicate those products ("waste"):
+>
+> - **BuddyNext** owns: member directory + member search, SSO / social login, read/unread
+>   (activity) tracking, and **payments / billing UI** (BuddyNext ships membership plans).
+> - **Eventonomy** owns: events / calendar / RSVP.
+>
+> Jetonomy stays the focused discussion / Q&A engine. The only row below that remains a
+> genuine Jetonomy consideration is **native full-text search** — and even that is *in-scope
+> but low priority*: the current search is already good, so pursue only on explicit request.
+> Treat the rest of this section as a competitive-landscape reference, **not** a Jetonomy roadmap.
+
 | Feature | Domain | Why it matters | Effort |
 |---|---|---|---|
 | Native payments / checkout (Stripe/PayPal) | Monetization | Confirmed absent (grep returned zero). No SaaS revenue engine; depends entirely on third-party membership plugins | L |
