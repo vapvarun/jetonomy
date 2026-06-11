@@ -276,15 +276,22 @@ class Moderation_Service {
 	}
 
 	/**
-	 * Change status of a post or reply (approve / spam / trash) with permission.
+	 * Change status of a post or reply (approve / spam / hold / trash) with permission.
 	 *
 	 * Mirrors the existing controller::set_status behaviour and adds the
 	 * spam reputation penalty when applicable.
 	 *
-	 * @param int    $user_id
+	 * The single owner of the status-change contract: REST, admin AJAX, CLI,
+	 * and automated reviewers (Pro AI batch review) all route through here so
+	 * counters, reputation, and the jetonomy_content_moderated hook stay
+	 * consistent. `$user_id === 0` is the SYSTEM actor (cron / automated
+	 * moderation) and bypasses the per-user permission check — never pass 0
+	 * for an end-user request.
+	 *
+	 * @param int    $user_id Acting user ID, or 0 for the system actor.
 	 * @param string $type   'post' or 'reply'
 	 * @param int    $id     Object row ID.
-	 * @param string $action 'approve' | 'spam' | 'trash'
+	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
 	 * @return true|WP_Error
 	 */
 	public static function set_object_status( int $user_id, string $type, int $id, string $action ) {
@@ -298,6 +305,7 @@ class Moderation_Service {
 		$map = [
 			'approve' => 'publish',
 			'spam'    => 'spam',
+			'hold'    => 'pending',
 			'trash'   => 'trash',
 		];
 		if ( ! isset( $map[ $action ] ) ) {
@@ -308,7 +316,7 @@ class Moderation_Service {
 			);
 		}
 
-		if ( ! Moderation_Permissions::can_act_on_object( $user_id, $type, $id ) ) {
+		if ( 0 !== $user_id && ! Moderation_Permissions::can_act_on_object( $user_id, $type, $id ) ) {
 			return new WP_Error(
 				'jetonomy_forbidden',
 				__( 'You cannot moderate this content.', 'jetonomy' ),
