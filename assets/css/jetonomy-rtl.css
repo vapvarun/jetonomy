@@ -975,6 +975,9 @@
   .jt-space-card-stats { display: flex; gap: 12px; margin-top: 6px; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
+  /* Recency signal on space cards (1.5.0) — pushed to the end, lighter, so a
+     newcomer can tell at a glance which spaces are alive. */
+  .jt-space-card-activity { margin-inline-start: auto; font-style: italic; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
   .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }

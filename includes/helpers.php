@@ -171,3 +171,29 @@ if ( ! function_exists( 'jetonomy_admin_empty_state' ) ) {
 		}
 	}
 }
+
+if ( ! function_exists( 'jetonomy_space_activity_label' ) ) {
+	/**
+	 * Human-readable "Active N ago" label for a space, from last_activity_at.
+	 *
+	 * Visitors decide where to engage by whether a space is alive — lifetime
+	 * post/member totals can't tell a dormant space from a thriving one. This
+	 * surfaces recency on the space cards (home + category listings).
+	 *
+	 * @since 1.5.0
+	 * @param object $space Space row (expects ->last_activity_at, may be null/empty).
+	 * @return string e.g. "Active 2 hours ago", or '' when no activity is recorded.
+	 */
+	function jetonomy_space_activity_label( $space ): string {
+		$ts = isset( $space->last_activity_at ) ? (string) $space->last_activity_at : '';
+		if ( '' === $ts || '0000-00-00 00:00:00' === $ts ) {
+			return '';
+		}
+		$time = strtotime( $ts );
+		if ( ! $time ) {
+			return '';
+		}
+		/* translators: %s: human-readable time difference, e.g. "2 hours". */
+		return sprintf( __( 'Active %s ago', 'jetonomy' ), human_time_diff( $time, time() ) );
+	}
+}

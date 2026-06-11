@@ -60,6 +60,14 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 							<strong><?php echo (int) $space->member_count; ?></strong>
 							<?php echo esc_html( _n( 'member', 'members', (int) $space->member_count, 'jetonomy' ) ); ?>
 						</span>
+						<?php
+						// Recency tells a newcomer the space is alive — totals alone
+						// can't distinguish a dormant space from a thriving one.
+						$jt_activity = jetonomy_space_activity_label( $space );
+						if ( '' !== $jt_activity ) :
+							?>
+							<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
+						<?php endif; ?>
 					</div>
 				</div>
 			</div>

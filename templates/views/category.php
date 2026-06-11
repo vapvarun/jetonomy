@@ -87,6 +87,12 @@ $crumbs = [
 									<div class="jt-space-card-stats">
 										<span class="jt-space-card-stat"><strong><?php echo esc_html( (int) $space->post_count ); ?></strong> <?php esc_html_e( 'posts', 'jetonomy' ); ?></span>
 										<span class="jt-space-card-stat"><strong><?php echo esc_html( (int) $space->member_count ); ?></strong> <?php esc_html_e( 'members', 'jetonomy' ); ?></span>
+										<?php
+										$jt_activity = jetonomy_space_activity_label( $space );
+										if ( '' !== $jt_activity ) :
+											?>
+											<span class="jt-space-card-stat jt-space-card-activity"><?php echo esc_html( $jt_activity ); ?></span>
+										<?php endif; ?>
 									</div>
 								</div>
 							</div>

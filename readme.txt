@@ -274,6 +274,7 @@ A stability and accuracy release: the plugin pair was audited end to end, dead w
 * Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
 * Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.
 * Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
+* New      - Space cards now show an "Active N ago" recency signal so you can tell at a glance which spaces are alive.
 * New      - Avatar square-crop: uploading a profile photo opens a drag-and-zoom crop dialog so avatars are saved square; animated GIFs upload unchanged.
 * New      - Space RSS feeds: every public space serves RSS 2.0 at /community/s/{slug}/feed/ with auto-discovery on the space page; private spaces stay private.
 * New      - GET /auth/nonce endpoint: long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
