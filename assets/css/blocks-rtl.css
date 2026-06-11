@@ -864,10 +864,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
  * their OS happens to be in dark mode. */
 .jt-dark .jt-nav-block,
 .jt-dark .jt-login-block,
+.jt-dark .jt-user-panel,
 .jt-dark .jt-feed-block,
+.jt-dark .jt-shortcode,
 [data-theme="dark"] .jt-nav-block,
 [data-theme="dark"] .jt-login-block,
-[data-theme="dark"] .jt-feed-block {
+[data-theme="dark"] .jt-user-panel,
+[data-theme="dark"] .jt-feed-block,
+[data-theme="dark"] .jt-shortcode {
 	--jtb-bg:      var(--bg, #0b0f1a);
 	--jtb-text:    var(--text-1, #e7ebf3);
 	--jtb-border:  color-mix(in srgb, var(--jtb-text) 16%, transparent);
