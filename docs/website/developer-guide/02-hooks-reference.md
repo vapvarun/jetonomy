@@ -209,6 +209,37 @@ add_action( 'jetonomy_reply_accepted', function( int $reply_id, int $post_id ) {
 
 ---
 
+### `jetonomy_post_publish_transition`
+
+*New in 1.5.0.* Fires whenever a post enters or leaves the `publish` status - on publish-at-creation, on approval from the pending queue, on trashing a published post, and on restore. Consumers that maintain published-content counters subscribe here instead of guessing from create/update events; Jetonomy Pro's analytics aggregator uses it to keep daily totals accurate when content is trashed or approved later.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | ID of the post |
+| `$delta` | `int` | `+1` when the post became published, `-1` when it left published |
+| `$created_at` | `string` | The post's original `created_at` datetime - attribute the delta to this date, not today |
+
+**Source:** `includes/models/class-post.php`
+
+```php
+add_action( 'jetonomy_post_publish_transition', function( int $post_id, int $delta, string $created_at ) {
+    // Keep an external "published posts per day" metric honest.
+    my_metrics_adjust( 'posts_published', $delta, substr( $created_at, 0, 10 ) );
+}, 10, 3 );
+```
+
+---
+
+### `jetonomy_reply_publish_transition`
+
+*New in 1.5.0.* The reply mirror of `jetonomy_post_publish_transition` - same parameters and semantics with a reply ID.
+
+**Source:** `includes/models/class-reply.php`
+
+---
+
 ## Voting
 
 ### `jetonomy_after_vote`

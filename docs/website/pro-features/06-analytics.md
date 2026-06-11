@@ -52,6 +52,8 @@ The top row shows four headline numbers for your selected range:
 
 Below the headline row, a line chart shows daily post and reply volume over the selected range. Spikes are easy to spot - hover any point to see the exact date and count.
 
+**Counting semantics (improved in 1.5.0):** the daily totals count *published* content and stay accurate through the whole content lifecycle. A post created as pending counts on the day it was created once a moderator approves it; trashing a published post removes it from its original day's total (never producing negative days); restoring adds it back. Earlier versions counted at creation only, so moderated or trashed content slowly drifted the totals.
+
 ## Top Spaces
 
 A ranked table shows your most active spaces sorted by total posts + replies in the period. Columns include post count, reply count, unique contributors, and engagement rate (replies per post).

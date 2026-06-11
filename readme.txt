@@ -264,6 +264,21 @@ Each site in a Multisite network gets its own independent community. Network act
 
 == Changelog ==
 
+= 1.5.0 - June 2026 =
+
+A stability and accuracy release: the plugin pair was audited end to end, dead weight removed, and every cross-surface contract verified.
+
+* New      - GET /auth/nonce endpoint: long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
+* New      - Conversations admin page (with Pro): paginated messaging oversight in wp-admin with thread detail and a compliance purge action.
+* New      - jetonomy_post_publish_transition and jetonomy_reply_publish_transition hooks fire on every publish/unpublish transition with a +/-1 delta and the original creation date.
+* Improve  - Resolving a flag as valid through the REST API now applies the full contract on every surface: content trashed, related flags cleared, reporter rewarded, webhook event fired.
+* Improve  - Invite links, avatar resolution, and approval-hold checks consolidated into single owners; the approval check now evaluates the author instead of the current user.
+* Fix      - Analytics counting stays accurate through the content lifecycle: pending posts count on approval, trashed posts decrement their original day.
+* Fix      - Database version constant bumped so the 1.5.0 migration runs automatically on upgrade.
+* Dev      - Removed three never-wired tables (space tags, user interests) with a guarded migration, the GET /space-tags route, three dead admin AJAX actions, and 30+ zero-reference methods.
+* Dev      - PHPUnit suite green across PHP 8.1-8.4 x WP 6.7-6.9; contract-audit baseline and release gate added; CI now runs on dev branches with the full non-pro test matrix.
+* Compat   - Aligned with Jetonomy Pro 1.5.0. Install both updates together.
+
 = 1.4.5 - June 2026 =
 
 * New      - Custom fields on spaces: Pro custom fields now render and save on the create-space form, edit-space screen, and space sidebar.

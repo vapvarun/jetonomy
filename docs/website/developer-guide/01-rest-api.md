@@ -254,13 +254,8 @@ const data = await res.json();
 |--------|-------|------|-------------|
 | GET | `/tags` | Public | List all global tags |
 | POST | `/tags` | Logged in (trust level 1+) | Create a tag |
-| GET | `/space-tags` | Public | List tags filtered to a space |
 
-**GET /space-tags - parameters**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `space_id` | int | Required. Filter tags by space. |
+> **Removed in 1.5.0:** the `GET /space-tags` route. It read tables that were never wired to any feature; tags have always been global. Existing integrations calling it receive a 404 and should switch to `GET /tags`.
 
 ---
 
@@ -310,12 +305,14 @@ All moderation endpoints require the `jetonomy_moderate` capability (granted to 
 | POST | `/flags` | Logged in | Submit a flag on a post or reply |
 | GET | `/posts/{id}/flags` *(new in 1.4.1)* | Moderator | The flags raised against a specific post |
 | GET | `/moderation/flags` | Moderator | List all open flags |
-| POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag |
+| POST | `/moderation/flags/{id}/resolve` | Moderator | Resolve a flag (`valid` or `dismissed`) |
 | POST | `/moderation/ban` | Moderator | Ban a user (global ban, space ban, or silence) |
 | DELETE | `/moderation/ban/{id}` | Moderator | Remove a ban |
 | GET | `/spaces/{id}/moderation/flags` | Space Admin | List flags filed within a specific space |
 | POST | `/spaces/{id}/moderation/flags/{flag_id}/resolve` | Space Admin | Resolve a flag within a specific space |
 | POST | `/spaces/{id}/moderation/{action}/{type}/{obj_id}` | Space Admin | Moderate content in a specific space (`action`: `approve`, `spam`, or `trash`; `type`: `post` or `reply`) |
+
+Resolving a flag as `valid` applies the full resolution contract on every surface (1.5.0 fix): the flagged content is trashed, any other pending flags on the same object are cleared with it, the reporter earns +5 reputation, and the `jetonomy_flag_resolved` action fires (so Pro webhooks see the event). Earlier versions skipped these side effects when the flag was resolved through this global REST route specifically.
 
 **POST /moderation/bulk - body**
 
@@ -453,10 +450,13 @@ These endpoints are unauthenticated and rate-limited. They are used by the headl
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | POST | `/auth/login` | Public (rate limited) | Log in and receive an authentication cookie |
+| GET | `/auth/nonce` *(new in 1.5.0)* | Logged in (cookie) | Mint a fresh REST nonce for the current session |
 | POST | `/auth/register` | Public (rate limited) | Register a new user account |
 | POST | `/auth/lost-password` | Public (rate limited) | Request a password reset email |
 | GET | `/auth/verify-email` | Public | Verify an email confirmation token |
 | POST | `/auth/resend-verification` | Public (rate limited) | Resend the email verification message |
+
+**GET /auth/nonce** backs the frontend's automatic session recovery: when a long-lived tab's REST nonce expires (403 `rest_cookie_invalid_nonce`), the bundled `restFetch` client calls this endpoint, receives a fresh nonce minted against the still-valid login cookie, and retries the original request once - so members never lose a reply to "Cookie nonce is invalid". The endpoint re-validates the login cookie itself and sends no-cache headers; it never mints a nonce for an anonymous session.
 
 ---
 
