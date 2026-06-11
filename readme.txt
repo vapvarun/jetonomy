@@ -269,6 +269,7 @@ Each site in a Multisite network gets its own independent community. Network act
 A stability and accuracy release: the plugin pair was audited end to end, dead weight removed, and every cross-surface contract verified.
 
 * New      - Empty pages now guide you forward: drafts, search, leaderboard, profile tabs and space listings show a real styled call-to-action and next step instead of a dead end.
+* New      - Remove a bookmark directly from the My Bookmarks page — the card drops off the list when you do.
 * New      - Tag pages have a "Start a discussion tagged X" button that opens the composer with the tag pre-filled.
 * Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
 * Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.

@@ -69,7 +69,13 @@ $crumbs = array(
 					// the site. Bookmark::list_by_user already filters to
 					// status='publish', so every row is a normal published
 					// topic and post-card renders correctly.
-					\Jetonomy\Template_Loader::partial( 'post-card', array( 'post' => $bookmarked_post ) );
+					\Jetonomy\Template_Loader::partial(
+						'post-card',
+						array(
+							'post'                 => $bookmarked_post,
+							'show_bookmark_toggle' => true,
+						)
+					);
 					?>
 				<?php endforeach; ?>
 			</div>

@@ -1322,6 +1322,18 @@ const { state, actions } = store( 'jetonomy', {
                             : ( state.i18n?.bookmarkRemoved || 'Bookmark removed' )
                         );
                     }
+                    // On the My Bookmarks page (context="list"), removing a
+                    // bookmark should drop the card it no longer belongs to —
+                    // otherwise an unbookmarked post lingers on the list of
+                    // bookmarks, which reads as broken.
+                    if ( ! data.bookmarked && 'list' === btnEl.dataset.bookmarkContext ) {
+                        const card = btnEl.closest( '.jt-row' );
+                        if ( card ) {
+                            card.style.transition = 'opacity 200ms';
+                            card.style.opacity = '0';
+                            setTimeout( () => card.remove(), 220 );
+                        }
+                    }
                 },
                 revert: ( snap ) => {
                     btnEl.dataset.bookmarked = snap.wasBookmarked ? '1' : '0';

@@ -2755,6 +2755,29 @@
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
 .jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+/* Bookmarks page: the per-card "Remove bookmark" toggle (1.5.0). The card is
+   a CSS grid, so a plain child lands in an implicit cell — pin it top-right
+   instead. Scoped with :has() so only cards that carry the toggle are
+   affected (the My Bookmarks list), never every post row. */
+.jt-row:has(.jt-bookmark-toggle) { position: relative; }
+.jt-bookmark-toggle {
+	position: absolute;
+	top: 0.5rem;
+	inset-inline-end: 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--jt-accent);
+	cursor: pointer;
+	border-radius: var(--jt-radius-sm, 4px);
+}
+.jt-bookmark-toggle:hover,
+.jt-bookmark-toggle:focus-visible { background: var(--jt-bg-hover, rgba(0,0,0,0.05)); }
 
 /* ── Jetonomy Navigation block — Category → Space tree ── */
 .jt-nav-block {

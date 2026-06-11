@@ -11,15 +11,19 @@ $profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $space   = \Jetonomy\Models\Space::find( (int) $post->space_id );
 // 1.4.0 C.5: caller passes `has_unread` from the bulk read-status map.
 // Boolean signal — pill text reads "New" regardless of how many.
-$has_unread  = isset( $has_unread ) ? (bool) $has_unread : false;
-$initials    = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
-$trust       = $profile ? (int) $profile->trust_level : 0;
-$base        = \Jetonomy\base_url();
-$post_url    = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
-$time_ago    = human_time_diff( strtotime( $post->created_at ), time() );
-$tags        = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
-$viewer_id   = get_current_user_id();
-$viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
+$has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
+// 1.5.0: the My Bookmarks page passes show_bookmark_toggle so each card
+// offers a one-click "Remove bookmark" — the bookmarks list was otherwise a
+// dead end (no way to manage the very bookmarks it exists to show).
+$show_bookmark_toggle = isset( $show_bookmark_toggle ) ? (bool) $show_bookmark_toggle : false;
+$initials             = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
+$trust                = $profile ? (int) $profile->trust_level : 0;
+$base                 = \Jetonomy\base_url();
+$post_url             = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
+$time_ago             = human_time_diff( strtotime( $post->created_at ), time() );
+$tags                 = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
+$viewer_id            = get_current_user_id();
+$viewer_vote          = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
 // Seed this card's score into the Interactivity store so the vote buttons'
 // `data-wp-text` binding renders the right number and updates optimistically on
@@ -162,4 +166,16 @@ if ( $prefix_name && $space ) {
 			?>
 		</div>
 	</div>
+	<?php if ( $show_bookmark_toggle ) : ?>
+		<button type="button"
+			class="jt-act jt-bookmark-toggle bookmarked"
+			data-wp-on--click="actions.toggleBookmark"
+			data-post-id="<?php echo absint( $post->id ); ?>"
+			data-bookmarked="1"
+			data-bookmark-context="list"
+			title="<?php esc_attr_e( 'Remove bookmark', 'jetonomy' ); ?>"
+			aria-label="<?php esc_attr_e( 'Remove bookmark', 'jetonomy' ); ?>">
+			<?php jetonomy_echo_icon( 'bookmark', 16 ); ?>
+		</button>
+	<?php endif; ?>
 </div>
