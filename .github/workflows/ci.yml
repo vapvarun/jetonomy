@@ -273,7 +273,13 @@ jobs:
       - name: Run Plugin Check
         run: |
           RESULT=$(wp plugin check jetonomy --path=/tmp/wp --format=csv 2>&1)
-          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected|DirectDB.UnescapedDBParameter|PreparedSQL.NotPrepared|MissingTranslatorsComment|Heredoc.NotAllowed|EscapeOutput'
+          # wp_function_not_compatible_with_requires_wp: PCP flags the WP 7.0
+          # Abilities API calls in class-abilities.php against 'Requires at
+          # least: 6.7'. Those calls are hook-gated — they only run inside
+          # wp_abilities_api_init / wp_abilities_api_categories_init, which
+          # core fires exclusively on WP >= 7.0 — so they can never execute on
+          # an older WP. PCP's static scan cannot see hook gating.
+          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected|wp_function_not_compatible_with_requires_wp|DirectDB.UnescapedDBParameter|PreparedSQL.NotPrepared|MissingTranslatorsComment|Heredoc.NotAllowed|EscapeOutput'
           CODE_ERRORS=$(echo "$RESULT" | awk -F',' -v noise="$NOISE" '
             /^FILE:/ { file=$0; gsub(/^FILE: /, "", file); next }
             $3 == "ERROR" {
