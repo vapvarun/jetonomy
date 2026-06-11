@@ -94,24 +94,6 @@ class Reputation {
 	}
 
 	/**
-	 * Return every action key with its current point value.
-	 *
-	 * Used by the Settings admin UI so the renderer never has to peek at the
-	 * private POINTS_MAP constant. Keys are the canonical action identifiers;
-	 * values reflect any per-site override that has already been applied.
-	 *
-	 * @return array<string,int>
-	 */
-	public static function action_points_map(): array {
-		$base = (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
-		$map  = array();
-		foreach ( $base as $action => $unused ) {
-			$map[ $action ] = self::points_for( $action );
-		}
-		return $map;
-	}
-
-	/**
 	 * Return the hardcoded defaults so the Settings UI can show "Reset to default" affordances.
 	 *
 	 * @return array<string,int>

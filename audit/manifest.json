@@ -1104,25 +1104,11 @@
       "purpose": "Search users"
     },
     {
-      "action": "jetonomy_run_import",
-      "handler": "Admin\\Ajax\\Import_Handler::run_import",
-      "nonce": "jetonomy_nonce",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Run import"
-    },
-    {
       "action": "jetonomy_import_batch",
       "handler": "Admin\\Ajax\\Import_Handler::batch",
       "nonce": "jetonomy_nonce",
       "capability": "jetonomy_manage_settings",
       "purpose": "Process import batch"
-    },
-    {
-      "action": "jetonomy_import_progress",
-      "handler": "Admin\\Ajax\\Import_Handler::progress",
-      "nonce": "jetonomy_nonce",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Get import progress"
     },
     {
       "action": "jetonomy_test_email",
@@ -1179,13 +1165,6 @@
       "nonce": "jetonomy_nonce",
       "capability": "jetonomy_manage_settings",
       "purpose": "Delete reply from admin"
-    },
-    {
-      "action": "jetonomy_get_replies",
-      "handler": "Admin\\Ajax\\Content_Handler::get_replies",
-      "nonce": "jetonomy_nonce",
-      "capability": "jetonomy_manage_settings",
-      "purpose": "Get replies for post"
     },
     {
       "action": "jetonomy_approve_join_request",
@@ -1784,13 +1763,6 @@
       "args": "none",
       "where": "includes/admin/views/extensions.php",
       "consumed_by": "jetonomy-pro"
-    },
-    {
-      "name": "jetonomy_admin_render_license",
-      "type": "action",
-      "args": "none",
-      "where": "includes/admin/views/settings.php",
-      "consumed_by": null
     },
     {
       "name": "jetonomy_admin_settings_tab_content",

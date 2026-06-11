@@ -273,22 +273,6 @@ class Space extends Model {
 	}
 
 	/**
-	 * Cheap COUNT(*) partner for {@see self::list_all()} — used by
-	 * pagination totals without materialising every row.
-	 *
-	 * @param string $status Row status value to filter by.
-	 * @return int
-	 */
-	public static function count_all( string $status = 'active' ): int {
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE status = %s',
-				$status
-			)
-		);
-	}
-
-	/**
 	 * Hydrate space rows for a given set of IDs.
 	 *
 	 * Single indexed query — used by paths that already know which spaces they

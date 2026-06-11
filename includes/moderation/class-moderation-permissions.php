@@ -136,20 +136,4 @@ class Moderation_Permissions {
 		}
 		return Permission_Engine::is_space_privileged( $user_id, $space_id );
 	}
-
-	/**
-	 * Ban / unban / silence actions stay admin-only.
-	 *
-	 * These are global user-state mutations. Space-level mods should
-	 * escalate to admins for them.
-	 *
-	 * @param int $user_id
-	 * @return bool
-	 */
-	public static function can_issue_ban( int $user_id ): bool {
-		if ( ! $user_id ) {
-			return false;
-		}
-		return user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'jetonomy_moderate' );
-	}
 }

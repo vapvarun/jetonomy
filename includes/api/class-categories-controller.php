@@ -69,16 +69,6 @@ class Categories_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission check for write operations.
-	 */
-	public function manage_permission_check(): bool|WP_Error {
-		if ( ! current_user_can( 'jetonomy_manage_categories' ) ) {
-			return $this->permission_error();
-		}
-		return true;
-	}
-
-	/**
 	 * GET /categories — List all top-level categories with nested children.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response {

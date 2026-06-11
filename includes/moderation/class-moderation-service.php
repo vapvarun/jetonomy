@@ -102,53 +102,6 @@ class Moderation_Service {
 	}
 
 	/**
-	 * Count pending flags per space for every space the user may moderate.
-	 *
-	 * Used by the admin cross-space dashboard.
-	 *
-	 * @param int $user_id
-	 * @return array<int, array{space_id:int, title:string, slug:string, pending:int}>
-	 */
-	public static function dashboard_summary( int $user_id ): array {
-		$flags = self::list_pending_flags( $user_id, null );
-		if ( empty( $flags ) ) {
-			return [];
-		}
-
-		$by_space = [];
-		foreach ( $flags as $flag ) {
-			$space_id = Flag_Scope::space_id( $flag );
-			if ( null === $space_id ) {
-				continue;
-			}
-			$by_space[ $space_id ] = ( $by_space[ $space_id ] ?? 0 ) + 1;
-		}
-
-		$summary = [];
-		foreach ( $by_space as $space_id => $count ) {
-			$space = Space::find( $space_id );
-			if ( ! $space ) {
-				continue;
-			}
-			$summary[] = [
-				'space_id' => (int) $space_id,
-				'title'    => (string) $space->title,
-				'slug'     => (string) $space->slug,
-				'pending'  => (int) $count,
-			];
-		}
-
-		usort(
-			$summary,
-			static function ( $a, $b ) {
-				return $b['pending'] <=> $a['pending'];
-			}
-		);
-
-		return $summary;
-	}
-
-	/**
 	 * Resolve a flag (valid / dismissed) with permission check.
 	 *
 	 * @param int    $user_id

@@ -19,7 +19,6 @@ class Content_Handler {
 		add_action( 'wp_ajax_jetonomy_delete_post', [ $this, 'ajax_delete_post' ] );
 		add_action( 'wp_ajax_jetonomy_update_reply', [ $this, 'ajax_update_reply' ] );
 		add_action( 'wp_ajax_jetonomy_delete_reply', [ $this, 'ajax_delete_reply' ] );
-		add_action( 'wp_ajax_jetonomy_get_replies', [ $this, 'ajax_get_replies' ] );
 		add_action( 'wp_ajax_jetonomy_bulk_content_action', [ $this, 'ajax_bulk_content_action' ] );
 	}
 
@@ -121,33 +120,6 @@ class Content_Handler {
 
 		Reply::update( $id, [ 'status' => $status ] );
 		wp_send_json_success();
-	}
-
-	public function ajax_get_replies(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$post_id = absint( $_POST['post_id'] ?? 0 );
-		if ( ! $post_id ) {
-			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
-		}
-
-		$replies = Reply::list_by_post( $post_id, 'oldest', 100, 0, 0 );
-		$items   = [];
-		foreach ( $replies as $r ) {
-			$author  = get_userdata( (int) $r->author_id );
-			$items[] = [
-				'id'          => (int) $r->id,
-				'author_name' => $author ? $author->display_name : __( 'Unknown', 'jetonomy' ),
-				'content'     => $r->content ?? '',
-				'status'      => $r->status ?? 'publish',
-				'created_at'  => $r->created_at ?? '',
-			];
-		}
-
-		wp_send_json_success( $items );
 	}
 
 	public function ajax_bulk_content_action(): void {

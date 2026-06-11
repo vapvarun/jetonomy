@@ -14,29 +14,12 @@ use Jetonomy\Import\Import_Manager;
 class Import_Handler {
 
 	public function __construct() {
-		// Import AJAX (legacy single-shot kept for CLI / backwards compat)
-		add_action( 'wp_ajax_jetonomy_run_import', [ $this, 'ajax_run_import' ] );
-		// Batched import
+		// Batched import is the only client flow; the legacy single-shot
+		// run_import and progress-poll actions had no JS caller anywhere
+		// (the "kept for CLI" claim was wrong — CLI calls
+		// Import_Manager::run() directly) and were removed in 1.5.0
+		// (audit C).
 		add_action( 'wp_ajax_jetonomy_import_batch', [ $this, 'ajax_import_batch' ] );
-		add_action( 'wp_ajax_jetonomy_import_progress', [ $this, 'ajax_import_progress' ] );
-	}
-
-	public function ajax_run_import(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$source = sanitize_text_field( wp_unslash( $_POST['source'] ?? '' ) );
-		Import_Manager::init();
-		$result = Import_Manager::run( $source );
-
-		if ( null === $result ) {
-			wp_send_json_error( __( 'Unknown import source.', 'jetonomy' ) );
-		}
-
-		flush_rewrite_rules();
-		wp_send_json_success( $result );
 	}
 
 	/**
@@ -139,17 +122,5 @@ class Import_Handler {
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
 			]
 		);
-	}
-
-	/**
-	 * AJAX: Return current import progress for polling.
-	 */
-	public function ajax_import_progress(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'jetonomy' ) ), 403 );
-		}
-		$progress = \Jetonomy\Import\Importer::get_progress();
-		wp_send_json_success( $progress );
 	}
 }

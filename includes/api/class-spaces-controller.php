@@ -192,20 +192,6 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission check: requires login.
-	 */
-	public function require_login_check(): bool|WP_Error {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'jetonomy_unauthorized',
-				__( 'You must be logged in.', 'jetonomy' ),
-				[ 'status' => 401 ]
-			);
-		}
-		return true;
-	}
-
-	/**
 	 * Permission check: site admin (manage_options) + jetonomy_create_spaces
 	 * cap-holders always qualify. Beyond that, the admin can opt-in specific
 	 * WP roles (Editor, Author, Contributor, etc.) via Settings → General.
@@ -242,20 +228,6 @@ class Spaces_Controller extends Base_Controller {
 		}
 		if ( count( array_intersect( (array) $user->roles, $allowed_roles ) ) === 0 ) {
 			return $this->permission_error();
-		}
-		return true;
-	}
-
-	/**
-	 * Permission check: requires login. Space-admin check is done inside the handler.
-	 */
-	public function update_permission_check(): bool|WP_Error {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'jetonomy_unauthorized',
-				__( 'You must be logged in.', 'jetonomy' ),
-				[ 'status' => 401 ]
-			);
 		}
 		return true;
 	}

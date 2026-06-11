@@ -1310,17 +1310,6 @@ class Admin {
 		do_action( 'jetonomy_admin_render_extensions' );
 	}
 
-	/**
-	 * Render the License page — content provided by Pro via hook.
-	 */
-	public function render_license(): void {
-		/**
-		 * Fires to render the License page content.
-		 * Hooked by Jetonomy Pro to display the license form.
-		 */
-		do_action( 'jetonomy_admin_render_license' );
-	}
-
 	// ── Helpers ──
 
 	private function get_all_categories_nested(): array {
@@ -1344,31 +1333,21 @@ class Admin {
 	// AJAX: Spaces
 	// ═══════════════════════════════════════════════════════════════
 
-
-
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Space Members (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
-
-
 
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Access Rules (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
 
-
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Users
 	// ═══════════════════════════════════════════════════════════════
 
-
-
-
-
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Misc
 	// ═══════════════════════════════════════════════════════════════
-
 
 	// ═══════════════════════════════════════════════════════════════
 	// Content Management

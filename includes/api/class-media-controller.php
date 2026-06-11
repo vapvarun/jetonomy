@@ -43,43 +43,6 @@ class Media_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission check.
-	 *
-	 * Mirrors the cap matrix from the legacy `Jetonomy\Media::handle_upload`
-	 * so existing roles keep the same behaviour:
-	 *   - `upload_files` (Author+) — wp-core grant
-	 *   - `jetonomy_upload_media` (Contributor+) — Jetonomy role map
-	 *   - `jetonomy_create_posts` (Subscriber+) — anyone who can post
-	 *   - `jetonomy_create_replies` (Subscriber+) — anyone who can reply
-	 *
-	 * Trust-level promotion already grants `jetonomy_upload_media` at TL 1, so
-	 * the trust path is covered by the cap check — no separate trust gate.
-	 *
-	 * @param WP_REST_Request $request Unused but required by the contract.
-	 * @return bool|WP_Error
-	 */
-	public function upload_permissions_check( WP_REST_Request $request ) {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'jetonomy_unauthenticated',
-				__( 'You must be logged in to upload images.', 'jetonomy' ),
-				[ 'status' => 401 ]
-			);
-		}
-
-		$can_upload = current_user_can( 'upload_files' )
-			|| current_user_can( 'jetonomy_upload_media' )
-			|| current_user_can( 'jetonomy_create_posts' )
-			|| current_user_can( 'jetonomy_create_replies' );
-
-		if ( ! $can_upload ) {
-			return $this->permission_error();
-		}
-
-		return true;
-	}
-
-	/**
 	 * POST /jetonomy/v1/media — accept a multipart `file` field, store it as a
 	 * WordPress attachment, return `{ id, url, alt, mime, width, height }`.
 	 *

@@ -254,52 +254,6 @@ class Moderation_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission callback for POST /moderation/ban (1.4.0 C.3).
-	 *
-	 * Global bans + silences stay cap-only — they're sitewide actions and
-	 * should not delegate to per-space mods. Space-bans accept ANY of:
-	 * - jetonomy_moderate cap (global mod)
-	 * - manage_options (WP admin)
-	 * - space-admin role for the supplied space_id (delegated authority)
-	 *
-	 * The handler trusts these gates because $request->get_param('space_id')
-	 * is the same id the permission check used.
-	 */
-	public function require_ban_permission( WP_REST_Request $request ): bool|WP_Error {
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return $this->permission_error();
-		}
-		if ( current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-		$type     = sanitize_text_field( (string) $request->get_param( 'type' ) );
-		$space_id = (int) $request->get_param( 'space_id' );
-		if ( 'space_ban' === $type && $space_id > 0
-			&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $user_id, $space_id ) ) {
-			return true;
-		}
-		return $this->permission_error();
-	}
-
-	/**
-	 * Permission callback: requires auth + jetonomy_flag capability.
-	 */
-	public function require_flag(): bool|WP_Error {
-		$user_id = $this->require_auth();
-		if ( is_wp_error( $user_id ) ) {
-			return $user_id;
-		}
-		if ( Restriction::is_silenced( $user_id ) ) {
-			return new WP_Error( 'silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
-		}
-		if ( ! current_user_can( 'jetonomy_flag' ) ) {
-			return $this->permission_error();
-		}
-		return true;
-	}
-
-	/**
 	 * GET /moderation/queue — Fetch pending posts, replies, and flag count.
 	 */
 	public function get_queue( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -686,7 +640,7 @@ class Moderation_Controller extends Base_Controller {
 		$space_id   = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
 		$expires_at = $request->get_param( 'expires_at' ) ? sanitize_text_field( (string) $request->get_param( 'expires_at' ) ) : null;
 
-		// Cap matrix mirroring the legacy require_ban_permission():
+		// Ban cap matrix:
 		// - jetonomy_moderate OR manage_options always passes.
 		// - space_ban additionally accepts the space-admin delegate from the
 		// body-supplied space_id.

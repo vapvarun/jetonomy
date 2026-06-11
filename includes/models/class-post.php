@@ -488,17 +488,6 @@ class Post extends Model {
 	}
 
 	/**
-	 * Toggle private visibility on a post.
-	 *
-	 * @param int  $id         Post ID.
-	 * @param bool $is_private True to make private, false to make public.
-	 * @return bool
-	 */
-	public static function set_private( int $id, bool $is_private = true ): bool {
-		return static::update( $id, array( 'is_private' => $is_private ? 1 : 0 ) );
-	}
-
-	/**
 	 * Adjust reply_count and update last_reply_at and updated_at.
 	 *
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent

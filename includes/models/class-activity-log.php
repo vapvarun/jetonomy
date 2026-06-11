@@ -60,30 +60,4 @@ class ActivityLog extends Model {
 			)
 		);
 	}
-
-	/**
-	 * Get activity since a timestamp (for polling).
-	 */
-	public static function list_since( string $since, int $limit = 50 ): array {
-		return self::db()->get_results(
-			self::db()->prepare(
-				'SELECT * FROM ' . self::table() . ' WHERE created_at > %s ORDER BY created_at DESC LIMIT %d',
-				$since,
-				$limit
-			)
-		);
-	}
-
-	/**
-	 * Prune old entries.
-	 */
-	public static function prune( int $days = 90 ): int {
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
-		return (int) self::db()->query(
-			self::db()->prepare(
-				'DELETE FROM ' . self::table() . ' WHERE created_at < %s',
-				$cutoff
-			)
-		);
-	}
 }

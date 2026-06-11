@@ -5,15 +5,15 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-11T03:54:31+00:00",
+        "at": "2026-06-11T04:03:08+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 89,
+            "total": 88,
             "covered": 33,
-            "uncovered": 56,
+            "uncovered": 55,
             "skipped": 0,
             "covered_items": [
                 {
@@ -279,11 +279,6 @@
                     "method": "GET",
                     "route": "/tags",
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/tags\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/space-tags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/space-tags\""
                 },
                 {
                     "method": "GET",
@@ -746,15 +741,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 158,
+        "items_total": 157,
         "items_covered": 43,
-        "items_uncovered": 115,
+        "items_uncovered": 114,
         "items_skipped": 137,
-        "coverage_percent": 27.199999999999999
+        "coverage_percent": 27.399999999999999
     },
     "drift": {
         "previous_uncovered": 115,
-        "current_uncovered": 115,
-        "delta": 0
+        "current_uncovered": 114,
+        "delta": -1
     }
 }

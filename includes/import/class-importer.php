@@ -57,15 +57,6 @@ abstract class Importer {
 	abstract public function run_batch( string $phase, int $offset, int $batch_size ): array;
 
 	/**
-	 * Get the import phases in order.
-	 *
-	 * @return string[]
-	 */
-	public function get_phases(): array {
-		return [ 'forums', 'topics', 'replies', 'profiles', 'recount' ];
-	}
-
-	/**
 	 * Save progress to wp_options for polling.
 	 */
 	public function save_progress( array $progress ): void {

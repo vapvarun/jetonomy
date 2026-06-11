@@ -35,19 +35,6 @@ class WP_Mail_Adapter implements Email_Adapter {
 		return wp_mail( $to, $subject, $html, $headers );
 	}
 
-	public function send_batch( array $messages ): array {
-		$results = [];
-		foreach ( $messages as $key => $msg ) {
-			$results[ $key ] = $this->send(
-				$msg['to'],
-				$msg['subject'],
-				$msg['html'],
-				$msg['plain'] ?? ''
-			);
-		}
-		return $results;
-	}
-
 	public function register_hooks(): void {
 		// Set HTML content type for wp_mail when sending Jetonomy emails
 	}

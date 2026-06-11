@@ -70,16 +70,6 @@ class Admin_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission: require manage_options (site admin).
-	 */
-	public function require_manage_options(): bool|WP_Error {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return $this->permission_error();
-		}
-		return true;
-	}
-
-	/**
 	 * POST /admin/recount — Rebuild denormalized counters.
 	 */
 	public function recount( WP_REST_Request $request ): WP_REST_Response|WP_Error {

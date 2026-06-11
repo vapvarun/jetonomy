@@ -207,18 +207,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Permission callback: require login or return WP_Error.
-	 *
-	 * @return bool|\WP_Error
-	 */
-	public function login_permission_check(): bool|\WP_Error {
-		if ( is_user_logged_in() ) {
-			return true;
-		}
-		return new \WP_Error( 'jetonomy_unauthorized', __( 'You must be logged in.', 'jetonomy' ), [ 'status' => 401 ] );
-	}
-
-	/**
 	 * Standard pagination args for route registration — supports cursor and legacy offset.
 	 */
 	public function get_collection_params(): array {

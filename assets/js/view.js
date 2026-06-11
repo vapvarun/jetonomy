@@ -437,13 +437,8 @@ const { state, actions } = store( 'jetonomy', {
         // Reply vote scores
         replyScores: {},
         // Current sort
-        currentSort: 'latest',
         // Loading states
         isLoading: false,
-        // Notification count
-        unreadCount: 0,
-        // Composer visibility
-        composerVisible: false,
         composerReplyTo: null,
         // Threaded reply-to tracking
         replyToId: null,
@@ -1931,35 +1926,8 @@ const { state, actions } = store( 'jetonomy', {
             ctx.collapsed = ! ctx.collapsed;
         },
 
-        // ── Sort ──
-        changeSort( event ) {
-            const sort = event.target.dataset.sort;
-            if ( ! sort || sort === state.currentSort ) return;
-
-            state.currentSort = sort;
-            // Reload page with new sort param
-            const url = new URL( window.location );
-            url.searchParams.set( 'sort', sort );
-            window.location = url.toString();
-        },
-
         // ── Composer ──
-        showReplyComposer( event ) {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
-            state.composerVisible = true;
-            state.composerReplyTo = replyId || null;
-            // Scroll to composer
-            const composer = document.getElementById( 'jt-composer' );
-            if ( composer ) {
-                composer.scrollIntoView( { behavior: 'smooth', block: 'center' } );
-                const input = composer.querySelector( '[contenteditable]' );
-                if ( input ) input.focus();
-            }
-        },
-
         cancelReplyComposer() {
-            state.composerVisible = false;
             state.composerReplyTo = null;
             state.replyToId = null;
             state.replyToAuthor = '';
@@ -2682,27 +2650,6 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
-        // ── Notification polling ──
-        *pollNotifications() {
-            if ( ! state.nonce ) return;
-
-            try {
-                const response = yield fetch(
-                    `${ state.apiBase }/notifications/unread-count`,
-                    {
-                        headers: { 'X-WP-Nonce': state.nonce },
-                        credentials: 'same-origin',
-                    }
-                );
-                if ( response.ok ) {
-                    const data = yield response.json();
-                    state.unreadCount = data.count || 0;
-                }
-            } catch {
-                // Silent fail for polling
-            }
-        },
-
         // ── Compose Topic embed (1.3.7, refactored 1.4.3) ──
         // Inline topic composer usable on any WordPress page — fixed-space or
         // member picker. Submission goes through the shared composePost
@@ -2768,13 +2715,9 @@ const { state, actions } = store( 'jetonomy', {
     },
 
     callbacks: {
-        // Start polling on init
-        startPolling() {
-            // Poll every 30 seconds
-            setInterval( () => {
-                actions.pollNotifications();
-            }, 30000 );
-        },
+        // (Notification polling lives in header.js — the old
+        // startPolling/pollNotifications chain here had no data-wp-init
+        // consumer and was removed in 1.5.0; audit C.)
 
         // On mobile, the profile tabs row is horizontally scrollable to fit
         // all five tabs. When the viewer lands on a sub-page whose tab sits
