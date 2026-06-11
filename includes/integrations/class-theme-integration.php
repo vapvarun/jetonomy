@@ -73,6 +73,13 @@ class Theme_Integration {
 		$palette     = \Jetonomy\Template_Loader::palette_tokens( is_array( $jt_settings ) ? $jt_settings : array() );
 		if ( ! empty( $palette ) ) {
 			$light = array_diff_key( $light, $palette );
+			// The bridge derives --jt-accent-hover from the THEME accent;
+			// with the palette accent in charge, that derivation would be a
+			// mismatched leftover. Drop it — Jetonomy's own color-mix()
+			// default recomputes the hover from the palette accent.
+			if ( isset( $palette['--jt-accent'] ) ) {
+				unset( $light['--jt-accent-hover'] );
+			}
 		}
 
 		/**
