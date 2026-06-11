@@ -185,11 +185,14 @@ $role_labels = [
 									<?php esc_html_e( 'Ban from space', 'jetonomy' ); ?>
 								</button>
 							<?php endif; ?>
-							<?php if ( $mp ) : ?>
-								<span class="jt-member-rep">
-									<?php echo esc_html( (int) $mp->reputation ); ?> <span class="jt-member-rep-label"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
-								</span>
-							<?php endif; ?>
+							<?php
+							// Always show reputation, defaulting to 0 when the member
+							// has no profile row yet — hiding it entirely read as
+							// ambiguous (is it zero, or just missing?).
+							?>
+							<span class="jt-member-rep">
+								<?php echo esc_html( $mp ? (int) $mp->reputation : 0 ); ?> <span class="jt-member-rep-label"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
+							</span>
 						</div>
 					<?php endforeach; ?>
 				</div>
