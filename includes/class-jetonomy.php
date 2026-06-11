@@ -127,6 +127,7 @@ final class Jetonomy {
 		// callback firing before the user visits a community URL. The deferred
 		// init:99 flush in load_dependencies() still covers version bumps afterwards.
 		require_once JETONOMY_DIR . 'includes/class-router.php';
+		require_once JETONOMY_DIR . 'includes/class-feed.php';
 		( new Router() )->add_rewrite_rules();
 		flush_rewrite_rules();
 		update_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION, true );
@@ -367,6 +368,7 @@ final class Jetonomy {
 
 		// Non-namespaced files still need explicit require
 		require_once JETONOMY_DIR . 'includes/class-router.php';
+		require_once JETONOMY_DIR . 'includes/class-feed.php';
 		require_once JETONOMY_DIR . 'includes/class-template-loader.php';
 		new Router();
 

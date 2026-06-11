@@ -914,10 +914,15 @@ class Template_Loader {
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 						if ( $space ) {
 							$is_private = ! empty( $space->visibility ) && 'public' !== $space->visibility;
-							$title      = $space->title;
-							$desc       = wp_strip_all_tags( $space->description ?? '' );
-							$image      = $space->cover_image ?? '';
-							$image_alt  = $space->title;
+
+							// Feed auto-discovery for readers/browsers (1.5.0).
+							if ( 'space' === $data['route'] ) {
+								\Jetonomy\Feed::discovery_link( $space );
+							}
+							$title     = $space->title;
+							$desc      = wp_strip_all_tags( $space->description ?? '' );
+							$image     = $space->cover_image ?? '';
+							$image_alt = $space->title;
 
 							switch ( $data['route'] ) {
 								case 'space-members':

@@ -127,6 +127,18 @@ The Invite Links table shows each link's current usage count against its limit. 
 
 You can manually deactivate or delete any invite link at any time.
 
+## Space RSS Feeds
+
+*New in 1.5.0.* Every public space publishes an RSS 2.0 feed of its latest 20 topics at:
+
+```
+https://your-site.com/community/s/{space-slug}/feed/
+```
+
+Feed readers and browsers discover it automatically from the space page. Members and visitors can follow a single space from any RSS reader without creating an account - useful for announcement spaces, changelogs, and "follow this team" workflows.
+
+Privacy is preserved: the feed serves only what a logged-out visitor could already read. Private and hidden spaces return 404 from their feed URL, and switching the whole community to private mode disables all feeds. Developers can adjust feed contents with the `jetonomy_space_feed_posts` filter.
+
 ## What's Next?
 
 Learn how to create topics and posts inside your spaces.

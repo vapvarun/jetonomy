@@ -2599,6 +2599,14 @@
       ]
     },
     {
+      "name": "jetonomy_space_feed_posts",
+      "type": "filter",
+      "args": "posts, space",
+      "where": "includes/class-feed.php (Feed::render)",
+      "consumed_by": null,
+      "notes": "1.5.0 - extension point for the space RSS feed item list (max 20, newest first)."
+    },
+    {
       "name": "jetonomy_reply_publish_transition",
       "type": "action",
       "args": "reply_id, delta, created_at",

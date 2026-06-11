@@ -232,6 +232,19 @@ add_action( 'jetonomy_post_publish_transition', function( int $post_id, int $del
 
 ---
 
+### `jetonomy_space_feed_posts`
+
+*New in 1.5.0.* Filters the posts included in a space RSS feed (`/community/s/{slug}/feed/`) before rendering - newest first, capped at 20.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$posts` | `array` | Post rows to render as feed items |
+| `$space` | `object` | The space the feed belongs to |
+
+**Source:** `includes/class-feed.php`
+
+---
+
 ### `jetonomy_reply_publish_transition`
 
 *New in 1.5.0.* The reply mirror of `jetonomy_post_publish_transition` - same parameters and semantics with a reply ID.

@@ -88,6 +88,9 @@ class Router {
 		// Front-end edit space (G5) — /community/s/:slug/edit/
 		add_rewrite_rule( "^{$base}/s/([^/]+)/edit/?$", 'index.php?jetonomy_route=edit-space&jetonomy_slug=$matches[1]', 'top' );
 
+		// Space RSS feed (1.5.0) — /community/s/:slug/feed/
+		add_rewrite_rule( "^{$base}/s/([^/]+)/feed/?$", 'index.php?jetonomy_route=space-feed&jetonomy_slug=$matches[1]', 'top' );
+
 		// Tags
 		add_rewrite_rule( "^{$base}/tag/([^/]+)/?$", 'index.php?jetonomy_route=tag&jetonomy_slug=$matches[1]', 'top' );
 
@@ -151,6 +154,11 @@ class Router {
 			'space_slug' => get_query_var( 'jetonomy_space_slug', '' ),
 			'tab'        => get_query_var( 'jetonomy_tab', '' ),
 		];
+
+		// Space RSS feed renders XML and exits before any template work.
+		if ( 'space-feed' === $route ) {
+			Feed::render( (string) $data['slug'] );
+		}
 
 		// Load the template (template may call status_header(404) inside)
 		Template_Loader::render( $data );

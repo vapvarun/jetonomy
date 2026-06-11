@@ -649,6 +649,30 @@ class REST_Tests {
 		$nonce = is_array( $data ) ? (string) ( $data['nonce'] ?? '' ) : '';
 		$this->check( 'E31: GET /auth/nonce → 200 with nonce', 200 === $r->get_status() && '' !== $nonce, "HTTP {$r->get_status()}" );
 		$this->check( 'E31: refreshed nonce verifies for wp_rest', false !== wp_verify_nonce( $nonce, 'wp_rest' ), 'wp_verify_nonce failed' );
+
+		// 32. Space RSS feed (1.5.0) — loopback HTTP because the feed is a
+		// rewrite route, not REST. A public space serves RSS 2.0; a private/
+		// hidden space must 404 (anonymous-reader gate; feeds cannot auth).
+		global $wpdb;
+		$public_slug  = $wpdb->get_var( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE visibility = 'public' ORDER BY id LIMIT 1" );
+		$private_slug = $wpdb->get_var( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE visibility IN ('private','hidden') ORDER BY id LIMIT 1" );
+		if ( $public_slug ) {
+			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', [ 'timeout' => 10 ] );
+			$code = (int) wp_remote_retrieve_response_code( $feed );
+			$body = (string) wp_remote_retrieve_body( $feed );
+			$type = (string) wp_remote_retrieve_header( $feed, 'content-type' );
+			$this->check( 'E32: public space feed → 200 RSS', 200 === $code && false !== strpos( $body, '<rss' ), "HTTP {$code}" );
+			$this->check( 'E32: feed content-type is application/rss+xml', false !== strpos( $type, 'application/rss+xml' ), $type );
+		} else {
+			$this->check( 'E32: space feed (skipped — no public space)', true );
+		}
+		if ( $private_slug ) {
+			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $private_slug ) . '/feed/', [ 'timeout' => 10 ] );
+			$code = (int) wp_remote_retrieve_response_code( $feed );
+			$this->check( 'E32: private space feed → 404 (no leak)', 404 === $code, "HTTP {$code}" );
+		} else {
+			$this->check( 'E32: private feed gate (skipped — no private space)', true );
+		}
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
