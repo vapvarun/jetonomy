@@ -1161,6 +1161,27 @@
   /* Community-home title: now visible (was screen-reader-only, which contradicted
      the "main heading" setting). Spacing so it reads as the page heading. */
   .jt-home-title { margin: 0 0 var(--jt-space-5, 20px); }
+  /* Newcomer welcome hero (1.5.0) — anon-only orientation block. Tokens only,
+     so it inverts cleanly in dark mode. */
+  .jt-home-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--jt-border);
+    border-radius: var(--jt-radius-lg, 12px);
+    background: var(--jt-bg-subtle, var(--jt-bg));
+  }
+  .jt-home-welcome-body { flex: 1 1 320px; min-width: 0; }
+  .jt-home-welcome-title { margin: 0 0 0.35rem; font-size: 1.25rem; }
+  .jt-home-welcome-sub { margin: 0 0 0.75rem; color: var(--jt-text-secondary); max-width: 60ch; }
+  .jt-home-welcome-pulse { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--jt-text-tertiary); }
+  .jt-home-welcome-pulse .jt-pulse-stat strong { color: var(--jt-text); font-weight: 700; }
+  .jt-pulse-stat--live strong { color: var(--jt-accent); }
+  .jt-home-welcome-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
   .jt-page-title-sm { font-size: 1.25rem; }
   .jt-leader-stats { display: flex; gap: 16px; margin-right: auto; text-align: left; }
   .jt-leader-stat-val { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
@@ -2993,6 +3014,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-success);
 }
 @media (max-width: 640px) {
+	/* Welcome hero stacks; actions go full-width so the CTA stays tappable. */
+	.jt-home-welcome { flex-direction: column; align-items: stretch; }
+	.jt-home-welcome-actions { width: 100%; }
+	.jt-home-welcome-actions .jt-btn { flex: 1 1 auto; justify-content: center; }
 	.jt-login-block {
 		padding: 0.85rem;
 	}

@@ -274,6 +274,7 @@ A stability and accuracy release: the plugin pair was audited end to end, dead w
 * Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
 * Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.
 * Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
+* New      - First-time visitors get a welcome banner on the community home with a one-line intro, a live member/post/this-week pulse, and a "Create free account" call-to-action. Filterable copy; hidden for logged-in members.
 * New      - Space cards now show an "Active N ago" recency signal so you can tell at a glance which spaces are alive.
 * New      - Avatar square-crop: uploading a profile photo opens a drag-and-zoom crop dialog so avatars are saved square; animated GIFs upload unchanged.
 * New      - Space RSS feeds: every public space serves RSS 2.0 at /community/s/{slug}/feed/ with auto-discovery on the space page; private spaces stay private.

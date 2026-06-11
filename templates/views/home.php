@@ -82,6 +82,44 @@ $settings        = get_option( 'jetonomy_settings', array() );
 $community_title = ! empty( $settings['community_title'] ) ? $settings['community_title'] : __( 'Community', 'jetonomy' );
 ?>
 <h1 class="jt-page-title jt-home-title"><?php echo esc_html( $community_title ); ?></h1>
+<?php
+// Newcomer welcome — the home was a wall of space cards with no orientation
+// for a first-time visitor (the top expectation-audit finding). Show a short
+// value-prop + live community pulse + join CTA to logged-out visitors only;
+// members don't need re-introducing. Copy is filterable so owners can set
+// their own without touching the template.
+if ( ! is_user_logged_in() ) :
+	$jt_welcome_heading = (string) apply_filters(
+		'jetonomy_home_welcome_heading',
+		/* translators: %s: community title. */
+		sprintf( __( 'Welcome to %s', 'jetonomy' ), $community_title )
+	);
+	$jt_welcome_sub = (string) apply_filters(
+		'jetonomy_home_welcome_subheading',
+		! empty( $settings['community_tagline'] )
+			? (string) $settings['community_tagline']
+			: __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the spaces you care about.', 'jetonomy' )
+	);
+	$jt_pulse       = jetonomy_community_pulse();
+	?>
+	<section class="jt-home-welcome" aria-label="<?php esc_attr_e( 'Welcome', 'jetonomy' ); ?>">
+		<div class="jt-home-welcome-body">
+			<h2 class="jt-home-welcome-title"><?php echo esc_html( $jt_welcome_heading ); ?></h2>
+			<p class="jt-home-welcome-sub"><?php echo esc_html( $jt_welcome_sub ); ?></p>
+			<div class="jt-home-welcome-pulse">
+				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['members'] ) ); ?></strong> <?php echo esc_html( _n( 'member', 'members', $jt_pulse['members'], 'jetonomy' ) ); ?></span>
+				<span class="jt-pulse-stat"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts'] ) ); ?></strong> <?php echo esc_html( _n( 'post', 'posts', $jt_pulse['posts'], 'jetonomy' ) ); ?></span>
+				<?php if ( $jt_pulse['posts_week'] > 0 ) : ?>
+					<span class="jt-pulse-stat jt-pulse-stat--live"><strong><?php echo esc_html( number_format_i18n( $jt_pulse['posts_week'] ) ); ?></strong> <?php esc_html_e( 'this week', 'jetonomy' ); ?></span>
+				<?php endif; ?>
+			</div>
+		</div>
+		<div class="jt-home-welcome-actions">
+			<a class="jt-btn jt-btn-fill" href="<?php echo esc_url( wp_registration_url() ); ?>"><?php esc_html_e( 'Create free account', 'jetonomy' ); ?></a>
+			<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( wp_login_url( \Jetonomy\base_url() . '/' ) ); ?>"><?php esc_html_e( 'Log in', 'jetonomy' ); ?></a>
+		</div>
+	</section>
+<?php endif; ?>
 <div class="jt-two-col">
 		<main>
 			<?php if ( empty( $categories ) && empty( $uncategorized_spaces ) ) : ?>
