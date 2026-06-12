@@ -282,19 +282,58 @@ class Moderation_Service {
 	 * spam reputation penalty when applicable.
 	 *
 	 * The single owner of the status-change contract: REST, admin AJAX, CLI,
-	 * and automated reviewers (Pro AI batch review) all route through here so
-	 * counters, reputation, and the jetonomy_content_moderated hook stay
-	 * consistent. `$user_id === 0` is the SYSTEM actor (cron / automated
-	 * moderation) and bypasses the per-user permission check — never pass 0
-	 * for an end-user request.
+	 * and automated reviewers all route through here so counters, reputation,
+	 * and the jetonomy_content_moderated hook stay consistent.
 	 *
-	 * @param int    $user_id Acting user ID, or 0 for the system actor.
+	 * SECURITY: $user_id 0 (anonymous) is always rejected here. Callers pass
+	 * get_current_user_id() directly, so a system bypass keyed on 0 would turn
+	 * any future permission_callback mistake into anonymous moderation.
+	 * Automated actors (cron / AI review) use system_set_object_status().
+	 *
+	 * @param int    $user_id Acting user ID (must be > 0).
 	 * @param string $type   'post' or 'reply'
 	 * @param int    $id     Object row ID.
 	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
 	 * @return true|WP_Error
 	 */
 	public static function set_object_status( int $user_id, string $type, int $id, string $action ) {
+		if ( $user_id <= 0 || ! Moderation_Permissions::can_act_on_object( $user_id, $type, $id ) ) {
+			return new WP_Error(
+				'jetonomy_forbidden',
+				__( 'You cannot moderate this content.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		return self::apply_object_status( $user_id, $type, $id, $action );
+	}
+
+	/**
+	 * Status change by the SYSTEM actor (cron / automated moderation such as
+	 * the Pro AI batch reviewer). Skips the per-user permission check and
+	 * records the action as user 0. PHP-internal entry point only — never
+	 * wire this to a REST/AJAX handler.
+	 *
+	 * @param string $type   'post' or 'reply'
+	 * @param int    $id     Object row ID.
+	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
+	 * @return true|WP_Error
+	 */
+	public static function system_set_object_status( string $type, int $id, string $action ) {
+		return self::apply_object_status( 0, $type, $id, $action );
+	}
+
+	/**
+	 * Shared status-change implementation. Permission decisions live in the
+	 * two public entry points above.
+	 *
+	 * @param int    $user_id Acting user ID (0 = system actor).
+	 * @param string $type   'post' or 'reply'
+	 * @param int    $id     Object row ID.
+	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
+	 * @return true|WP_Error
+	 */
+	private static function apply_object_status( int $user_id, string $type, int $id, string $action ) {
 		if ( ! in_array( $type, [ 'post', 'reply' ], true ) ) {
 			return new WP_Error(
 				'jetonomy_validation',
@@ -313,14 +352,6 @@ class Moderation_Service {
 				'jetonomy_validation',
 				__( 'Invalid action.', 'jetonomy' ),
 				[ 'status' => 400 ]
-			);
-		}
-
-		if ( 0 !== $user_id && ! Moderation_Permissions::can_act_on_object( $user_id, $type, $id ) ) {
-			return new WP_Error(
-				'jetonomy_forbidden',
-				__( 'You cannot moderate this content.', 'jetonomy' ),
-				[ 'status' => 403 ]
 			);
 		}
 

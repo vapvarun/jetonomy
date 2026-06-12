@@ -791,7 +791,7 @@ class REST_Tests {
 		$sub_post_id = $r->get_data()['id'] ?? 0;
 		$this->check( 'H35: Subscriber creates post → 201', $r->get_status() === 201 );
 		if ( $sub_post_id ) {
-			$this->cleanup[] = [ 'post', $sub_post_id ];
+			$this->cleanup[] = [ 'type' => 'post_rest', 'id' => $sub_post_id ];
 		}
 
 		// H36: Subscriber can create a reply on their own post.
@@ -802,7 +802,7 @@ class REST_Tests {
 			$sub_reply_id = $r->get_data()['id'] ?? 0;
 			$this->check( 'H36: Subscriber creates reply → 201', $r->get_status() === 201 );
 			if ( $sub_reply_id ) {
-				$this->cleanup[] = [ 'reply', $sub_reply_id ];
+				$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $sub_reply_id ];
 			}
 		}
 
@@ -894,8 +894,9 @@ class REST_Tests {
 		if ( $sub_post_id ) {
 			$r = $this->rest( 'DELETE', '/posts/' . $sub_post_id, [], $this->test_user_id );
 			$this->check( 'H47: Subscriber deletes own post → 200', $r->get_status() === 200 );
-			// Remove from cleanup since we just deleted it.
-			$this->cleanup = array_filter( $this->cleanup, fn( $item ) => ! ( $item[0] === 'post' && $item[1] === $sub_post_id ) );
+			// Remove from cleanup since we just deleted it. Entries are
+			// associative ([type, id]) and posts are pushed as 'post_rest'.
+			$this->cleanup = array_filter( $this->cleanup, fn( $item ) => ! ( 'post_rest' === ( $item['type'] ?? '' ) && $sub_post_id === ( $item['id'] ?? 0 ) ) );
 		}
 
 		// Restore admin.
