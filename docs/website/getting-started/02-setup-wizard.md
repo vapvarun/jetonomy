@@ -1,3 +1,11 @@
+---
+title: "Setup Wizard"
+category: "getting-started"
+order: 2
+---
+
+# Setup Wizard
+
 After you activate Jetonomy, a three-step wizard walks you through the only decisions you need to make before your community goes live. The whole process takes about two minutes.
 
 ![Jetonomy setup wizard with step-by-step configuration](../images/setup-wizard.png)
@@ -15,6 +23,8 @@ Click the blue notice at the top of your WordPress dashboard, or go to **Jetonom
 The wizard runs in a full-screen overlay. You can close it at any time. Your progress is saved, and you can return to finish it later.
 
 ## Step 1: Community URL
+
+![Setup wizard Step 1: the community URL slug field with a default-space-type selector below it](../images/getting-started/setup-wizard-step-1-url.png)
 
 Choose the slug where your community will live on your site.
 
@@ -41,6 +51,8 @@ You can create spaces of any type regardless of what you choose here. This setti
 
 ## Step 2: First Space
 
+![Setup wizard Step 2: the choice between Path A (create your first space) and Path B (load sample data)](../images/getting-started/setup-wizard-step-2-first-space.png)
+
 This step gets real content into your community so it is ready to share the moment you finish. Choose the path that fits where you are right now.
 
 ### Path A: Create Your First Space
@@ -57,10 +69,10 @@ Your space is created and visible immediately after you finish the wizard.
 
 Choose this if you want to explore Jetonomy's features before committing to a structure.
 
-Jetonomy seeds your site with:
+Jetonomy seeds your site with a complete, realistic community:
 
-- **2 categories** - "Product & Engineering" and "Community"
-- **6 spaces** - one of each type (Forum, Q&A, Ideas, Feed) plus two extra forum spaces with varied content
+- **Four categories** - Start Here, Product & Engineering, Community, and Help & Support
+- **A full set of spaces across all four types** - Forum, Q&A, Ideas, and Feed - so you can see how each type behaves (for example, "Feature Requests" is an Ideas space with a roadmap, "Bug Reports" is a Q&A space with accepted answers, and "Announcements" is a Feed space)
 - **Demo users** with realistic avatars, trust level badges, and posting history
 - **Sample posts and replies** - enough content to see voting, accepted answers, tags, and notifications working in context
 

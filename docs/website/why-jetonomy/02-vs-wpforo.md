@@ -1,6 +1,6 @@
 How Jetonomy compares to wpForo - two modern forum plugins with different approaches.
 
-![Jetonomy community home page showcasing the modern forum interface](../images/community-home.png)
+![Jetonomy Q&A space showing an accepted-answer callout - a feature wpForo's basic question/answer mode does not offer](../images/why-jetonomy/qa-accepted-answer.png)
 
 ## What You Will Learn
 
@@ -19,13 +19,13 @@ How Jetonomy compares to wpForo - two modern forum plugins with different approa
 | Trust system | Manual user groups | Auto-promoting trust levels (0-5) |
 | Q&A mode | Basic question/answer | Full Q&A with accepted answers |
 | Idea boards | Not built-in | Built-in with status workflow |
-| Real-time UI | Page reload | WordPress Interactivity API |
-| Search | Built-in search | FULLTEXT with advanced filters |
+| Real-time UI | Page reload | Real-time updates with no page reload |
+| Search | Built-in search | Full-text search with advanced filters |
 | Anti-spam | reCAPTCHA v2 | reCAPTCHA v3 + Turnstile (invisible) |
 | Topic management | Move topics | Move + merge + split |
 | Draft posts | Not available | Save as draft + scheduling |
 | REST API | Limited | 68+ endpoints (127+ with Pro) |
-| Theme integration | Custom styling | CSS custom properties via theme.json |
+| Theme integration | Custom styling | Inherits your theme's colors automatically (theme.json design tokens) |
 | Membership gating | Built-in groups | Adapter system (MemberPress, PMPro, WooCommerce, LearnDash) |
 | Analytics | Basic stats | Full dashboard with export (Pro) |
 | Migration | N/A | Built-in wpForo importer |
@@ -34,15 +34,17 @@ How Jetonomy compares to wpForo - two modern forum plugins with different approa
 
 ### WordPress-Native Architecture
 
-wpForo was originally built as a standalone forum that happens to run inside WordPress. Jetonomy was built WordPress-first - it uses the Interactivity API, theme.json design tokens, wp_cache, WP-Cron, and the WordPress REST API as its foundation.
+wpForo was originally built as a standalone forum that happens to run inside WordPress. Jetonomy was built WordPress-first - it uses the same building blocks WordPress itself uses: real-time updates with no page reload (the WordPress Interactivity API), colors that adapt to your theme automatically (theme.json design tokens), WordPress's own caching and scheduled-task systems, and the WordPress REST API as its foundation.
 
-This means Jetonomy integrates more deeply with WordPress features like block themes, site editing, and the Abilities API.
+This means Jetonomy integrates more deeply with WordPress features like block themes, the Site Editor, and the new WordPress Abilities API (the standard way AI assistants and apps can take actions on your site).
 
 ### Trust Over Roles
 
 wpForo uses manual user groups (similar to WordPress roles). You create groups, assign permissions, and manually move users between groups.
 
 Jetonomy automates this entirely. New members start restricted and earn trust through participation. The community moderates itself as members advance through trust levels. You configure the thresholds once and the system handles promotions automatically.
+
+![A trust-level badge shown next to a member's name on a reply](../images/why-jetonomy/trust-level-badge.png)
 
 ### Invisible Anti-Spam
 
@@ -62,3 +64,4 @@ If you are running wpForo and want to migrate, Jetonomy includes a built-in wpFo
 
 - [Importing from wpForo](../migration/02-wpforo-import.md) - step-by-step migration guide
 - [Scalability](03-scalability.md) - how Jetonomy handles growth
+- [Why Jetonomy overview](00-overview.md) - what makes Jetonomy different at a glance

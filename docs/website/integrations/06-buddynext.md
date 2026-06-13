@@ -1,6 +1,6 @@
 When BuddyNext is active alongside Jetonomy, the two plugins integrate automatically - sharing design tokens and letting BuddyNext own the page header and navigation, without any configuration.
 
-![Jetonomy admin settings showing BuddyNext integration status](../images/admin-settings.png)
+![The Jetonomy admin settings screen](../images/admin-settings.png)
 
 ## What You Will Learn
 
@@ -11,7 +11,7 @@ When BuddyNext is active alongside Jetonomy, the two plugins integrate automatic
 
 ## Auto-Detection
 
-Jetonomy checks for BuddyNext on every load via the `buddynext_loaded` action. When detected, the integration layer activates automatically. There are no settings to configure and no toggles to enable.
+Jetonomy detects BuddyNext automatically - there are no settings to configure and no toggles to enable. When BuddyNext is active, Jetonomy adopts its colors and typography and lets BuddyNext own the page header and navigation.
 
 > **Note:** The integration activates only when BuddyNext 1.0 or higher is active and the BuddyNext community hub feature is enabled.
 

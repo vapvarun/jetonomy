@@ -9,9 +9,11 @@ Expose your community to AI agents and automation through the WordPress Abilitie
 
 ## What Is the Abilities API?
 
-WordPress 7.0 introduced the Abilities API - a machine-readable registry of "things a site can do", each with a name, description, JSON-Schema input/output contracts, and a permission callback. AI agents, MCP servers, and automation tools discover abilities at runtime and call them without knowing your REST routes.
+The WordPress Abilities API is a machine-readable registry of "things a site can do", each with a name, description, JSON-Schema input/output contracts, and a permission callback. AI agents, MCP servers, and automation tools discover abilities at runtime and call them without knowing your REST routes.
 
-Jetonomy registers its abilities only when the API exists, so nothing changes on WordPress 6.7-6.9 - the registration hooks (`wp_abilities_api_init`) simply never fire there.
+**Where the API comes from:** the Abilities API ships in WordPress core from version 7.0 onward. On earlier versions (6.7-6.9) it is available as the standalone **WordPress Abilities API** feature plugin - install and activate that plugin and the API works the same way.
+
+Jetonomy registers its abilities only when the API is actually present. It hooks the API's own `wp_abilities_api_init` / `wp_abilities_api_categories_init` actions, which fire whether the API came from core (7.0+) or from the feature plugin on an older release. If neither core nor the plugin provides the API, those hooks never fire and Jetonomy simply does not register abilities - no errors, no changed behaviour, and the REST API remains the way to drive the community.
 
 ## Free Abilities
 

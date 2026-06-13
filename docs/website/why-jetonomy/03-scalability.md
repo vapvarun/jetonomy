@@ -25,7 +25,7 @@ Jetonomy stores all community data in 20 dedicated tables with the `wp_jt_` pref
 
 - **Posts table:** `vote_score`, `reply_count`, `view_count`, `last_reply_at` are real columns - not meta. Sorting by popularity is a simple `ORDER BY vote_score DESC` with an index hit.
 - **Replies table:** Indexed by `post_id` and `parent_id` for fast threaded reply loading.
-- **Votes table:** Composite key on `(user_id, object_type, object_id)` - checking "did this user vote?" is a single index lookup.
+- **Votes table:** A combined index on who voted and what they voted on means "did this user already vote?" is answered with a single fast lookup instead of a scan.
 
 Your WordPress `wp_posts` table stays clean. Your forum can grow without slowing down the rest of your site.
 
@@ -39,7 +39,9 @@ Jetonomy uses cursor-based pagination: "give me 20 topics after ID 9980." The da
 
 A topic with 400 replies does not load all 400 at once. Jetonomy loads the first 10 and last 10 replies, with a "load more" gap in between. Members see the opening conversation and the latest activity immediately.
 
-When they click the gap, only the missing replies are fetched via the REST API - no full page reload.
+When they click the gap, only the missing replies are fetched in the background - no full page reload.
+
+![A 400-reply topic showing the first replies, a "load more" gap, and the latest replies - smart reply loading in action](../images/why-jetonomy/smart-reply-loading.png)
 
 ### Built-In Caching
 
@@ -57,6 +59,8 @@ Jetonomy does not run `COUNT(*)` queries to show "42 replies" on a topic card. T
 
 ## Real-World Performance
 
+![Bar chart of topic-listing page-load times across four community sizes, with and without Redis object cache](../images/why-jetonomy/scalability-benchmark-chart.png)
+
 | Community Size | Page Load (no cache) | Page Load (Redis) |
 |---------------|---------------------|-------------------|
 | 100 topics, 500 replies | ~120ms | ~80ms |
@@ -65,6 +69,8 @@ Jetonomy does not run `COUNT(*)` queries to show "42 replies" on a topic card. T
 | 50,000 topics, 200,000 replies | ~500ms | ~200ms |
 
 These are topic listing page loads (20 topics per page) on a standard VPS (2 CPU, 4GB RAM, SSD). Single topic pages with 30 replies load in similar times.
+
+> **About these numbers:** Measured on Jetonomy 1.5 with PHP 8.2, MySQL 8, and the default theme, on a 2 CPU / 4GB RAM SSD VPS. Real-world times vary with your host, theme, and other active plugins - treat these as a relative guide to how Jetonomy scales, not a guaranteed figure for your site.
 
 > **Tip:** For the best performance on communities with 5,000+ members, enable an object cache plugin like WP Redis or W3 Total Cache with Memcached.
 
@@ -89,5 +95,6 @@ No special configuration needed. Jetonomy works well on shared hosting with defa
 
 ## What's Next?
 
+- [Why Jetonomy overview](00-overview.md) - what makes Jetonomy different at a glance
 - [Installation](../getting-started/01-installation.md) - get started
 - [General Settings](../admin-settings/01-general.md) - configure pagination and access controls

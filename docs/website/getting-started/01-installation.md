@@ -1,3 +1,11 @@
+---
+title: "Installation"
+category: "getting-started"
+order: 1
+---
+
+# Installation
+
 Get Jetonomy running on your WordPress site in under five minutes. This guide covers system requirements, how to install, and what happens the moment you activate.
 
 ![Jetonomy setup wizard guiding you through initial configuration](../images/setup-wizard.png)
@@ -49,13 +57,13 @@ wp plugin install jetonomy --activate
 
 Jetonomy sets everything up automatically the first time you activate it. You do not need to run any SQL or configure anything manually.
 
-**Database tables created (20 total):**
+**Database tables created:**
 
-Jetonomy creates 20 custom tables under the `wp_jt_` prefix, one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more.
+Jetonomy creates its own set of custom tables under the `wp_jt_` prefix - one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more. It does not use WordPress custom post types.
 
 **WordPress capabilities registered:**
 
-Jetonomy registers 23 custom capabilities (`jetonomy_read`, `jetonomy_create_posts`, `jetonomy_moderate`, and others) and maps them to your existing WordPress roles automatically.
+Jetonomy registers its own custom capabilities (`jetonomy_read`, `jetonomy_create_posts`, `jetonomy_moderate`, and others) and maps them to your existing WordPress roles automatically.
 
 **Permalink rules flushed:**
 

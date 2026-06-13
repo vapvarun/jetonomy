@@ -35,6 +35,28 @@ This is the email address that appears in the **From** field. Use a dedicated ad
 
 > **Warning:** The From address must be a verified sender with your email service provider. Using an unverified address causes high bounce rates and spam scoring. If you use Gmail SMTP, the From address must match your Google account.
 
+## Branding the Email
+
+Two optional fields let you brand every notification email with your own logo and footer line. Both live on the Email tab and are empty by default - leave them blank to send plain, text-only emails.
+
+### Email Logo
+
+**Setting:** `email_logo_url`
+**Default:** Empty (your site name is shown as text instead)
+**Location:** Email tab → Sender section
+
+Paste the full URL to a logo image (for example `https://yoursite.com/logo.png`). The image appears at the top of every notification email. A landscape logo around 200x40px in PNG or SVG works best. If you leave this empty, Jetonomy shows your community name as plain text at the top instead.
+
+> **Tip:** Use an absolute `https://` URL hosted on your own site or media library. Relative paths and `http://` URLs are blocked by many email clients.
+
+### Footer Text
+
+**Setting:** `email_footer_text`
+**Default:** Empty (placeholder text: "You received this because you are a member of the community.")
+**Location:** Email tab → Footer Text section
+
+A short line shown at the very bottom of every branded notification email - typically a reminder of why the member is receiving it. If you leave it blank, the placeholder line above is used.
+
 ## Notification Toggles
 
 **Setting:** `notification_defaults`

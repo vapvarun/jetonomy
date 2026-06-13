@@ -1,5 +1,7 @@
 Categories let you group related spaces under a shared label so members can browse a subset of your community without seeing everything at once.
 
+> This is the admin reference for the Categories screen. For how categories fit alongside spaces in your community structure, see [Categories](../spaces-and-categories/00-categories.md) in the Spaces & Categories guide.
+
 ## What You Will Learn
 
 - How to create, edit, and delete categories
@@ -19,6 +21,8 @@ The Categories screen is split into two panels side by side:
 
 - **Left - Add New Category form** for creating a new category
 - **Right - Categories table** listing existing categories and their children
+
+![Categories admin screen showing the two-panel layout: the Add New Category form on the left and the drag-to-reorder categories table on the right](../images/admin-categories.png)
 
 ## Creating a Category
 

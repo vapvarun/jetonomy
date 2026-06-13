@@ -1,6 +1,6 @@
 When FluentCommunity is active alongside Jetonomy, the two plugins coexist as one product. Members navigate between the social feed and the forum without noticing two separate systems, and admins pair spaces in one click.
 
-![Jetonomy admin settings showing the FluentCommunity integration tab](../images/admin-settings.png)
+![Jetonomy Settings - FluentCommunity tab showing the space pairings table that maps each FluentCommunity space to a Jetonomy space](images/fluent-community-pairings.png)
 
 ## What You Will Learn
 
@@ -12,9 +12,11 @@ When FluentCommunity is active alongside Jetonomy, the two plugins coexist as on
 
 ## Auto-Detection
 
-Jetonomy checks for FluentCommunity on every load via `class_exists( 'FluentCommunity\\App\\App' )`. When detected, the integration layer activates automatically. There are no toggles to flip and no bootstrap code to add.
+Jetonomy detects FluentCommunity automatically - there is nothing to install or configure to turn the integration on. As soon as both plugins are active, the connecting surfaces (the Discussions tab, the cross-profile links, member sync, and activity broadcast) become available.
 
-The integration is read-only toward FluentCommunity's database: every write goes through FluentCommunity's own helpers (`addToSpace`) and the Feed model, never via direct SQL. Deactivate FluentCommunity at any time and both plugins continue to work independently.
+Jetonomy never writes directly to FluentCommunity's database; it only adds members and feed posts through FluentCommunity's own functions. You can deactivate FluentCommunity at any time and both plugins keep working independently, with no leftover data.
+
+> **Developer note:** detection runs on every page load via `class_exists( 'FluentCommunity\App\App' )`. All writes go through FluentCommunity's public helpers (`addToSpace`) and the Feed model - never raw SQL.
 
 ## Pairing Spaces
 

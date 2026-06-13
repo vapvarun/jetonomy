@@ -1,3 +1,9 @@
+---
+title: "Creating Spaces"
+category: "spaces-and-categories"
+order: 1
+---
+
 Spaces are the discussion areas inside your community - each one has its own topic listing, member list, and settings. This guide shows you how to create, configure, and manage them.
 
 ![Admin space editor with name, description, and settings fields](../images/admin-space-edit.png)
@@ -13,7 +19,7 @@ Spaces are the discussion areas inside your community - each one has its own top
 
 A space is a focused discussion area organized around a single topic or purpose. Examples: a "General Discussion" space, a "Product Feedback" space, a "Help & Support" space.
 
-Every space belongs to a category. Categories are the top-level groupings (like tabs or sections) that members see on the community home page. A space without a category will not appear in the community navigation.
+Every space belongs to a category. Categories are the top-level groupings (like tabs or sections) that members see on the community home page. A space without a category will not appear in the community navigation, so set your categories up first. See [Categories](00-categories.md) for how to create and organize them.
 
 > **Tip:** Plan your space structure before creating anything. Too many spaces fragment your community early. Start with three to five and add more as demand grows.
 
@@ -45,6 +51,8 @@ Both paths show the same fields and produce the same result. The rest of this se
 **Visibility** - Controls who can see the space and its content. Options: Public, Private, or Hidden. See [Membership & Join Policies](03-membership-policies.md) for details.
 
 **Join Policy** - Controls how members gain access. Options: Open, Approval Required, or Invite Only.
+
+> **Defaults:** if you leave Visibility and Join Policy untouched, a new space is **Public + Open** - anyone can find, read, and join it. Change them for private or invite-only spaces. Note that Hidden visibility always forces Invite Only; see [Membership & Join Policies](03-membership-policies.md).
 
 Click **Save Space** to publish it immediately.
 

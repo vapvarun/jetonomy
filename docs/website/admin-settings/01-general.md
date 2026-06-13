@@ -4,8 +4,9 @@ The General settings tab is the first place to go after installation. It control
 
 - How to change your community's base URL slug
 - What the default space type setting controls
+- How to set your community's display title
 - How to configure pagination for posts and replies
-- How guest access and login requirements work
+- How the Public / Private access control works
 
 ![General settings](../images/admin-general.png)
 
@@ -22,6 +23,14 @@ This is the URL prefix for all Jetonomy pages on your site. With the default val
 You can change this to any URL-safe string, for example `forum`, `hub`, or `discuss`. Jetonomy automatically flushes rewrite rules when you change the base URL and save settings.
 
 > **Warning:** Changing the base URL after your community has content will break all existing links. If you must change it on a live site, set up 301 redirects from the old slug to the new one.
+
+## Community Title
+
+**Setting:** `community_title`
+**Default:** `Community`
+**Location:** General tab → Community URL section
+
+The display name of your community. It is shown as the main heading at the top of the community home page. Change it to your brand or community name (for example "Acme Support Forum" or "The Builders Hub"). This is a display label only - it does not change the base URL or any links.
 
 ## Default Space Type
 
@@ -56,17 +65,20 @@ Controls how many posts appear per page in space listings and search results. A 
 
 Controls how many replies load per page inside a single post view. This value also controls how many additional replies load each time a member clicks **Load More** in a thread. Pagination starts at the oldest replies and works forward. Members can jump to the last page to see the most recent replies.
 
-## Guest Access
+## Guest Access (Public / Private)
 
 **Setting:** `guest_read`
-**Default:** `true` (on)
-**Location:** General tab → Access section
+**Default:** Public (guest reading on)
+**Location:** General tab → **Access Control** card
 
-When enabled, logged-out visitors can read all public spaces and posts without signing in. They see a prompt to log in when they try to vote, reply, or follow a space.
+This is the single control that decides whether logged-out visitors can read your community. On the **Access Control** card it appears as two radio buttons - **Public community** and **Private community** - not a checkbox.
 
-Turn this off if your community is members-only and you do not want any content visible to search engines or unregistered visitors.
+- **Public community** (default) - logged-out visitors can read all public spaces, posts, and member profiles. They see a prompt to log in when they try to vote, reply, or follow a space.
+- **Private community** - every community page redirects guests to sign-in, and the REST API rejects unauthenticated requests. Choose this for members-only communities you do not want indexed by search engines.
 
-> **Note:** Even with guest access enabled, anonymous posting is not supported. "Guest access" means read-only browsing for logged-out visitors. Visitors must always log in to post, reply, or vote.
+> **Note:** Even in Public mode, anonymous posting is not supported. "Public" means read-only browsing for logged-out visitors. Visitors must always log in to post, reply, or vote.
+
+This Public/Private toggle is the same `guest_read` setting documented in full - including exactly which pages stay reachable in Private mode and how the REST API behaves - on the [Access Control](07-access-control.md) page.
 
 ## Community as Homepage
 

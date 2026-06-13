@@ -16,6 +16,10 @@ The community leaderboard is available at `/community/leaderboard/`. Any member 
 
 Members are ranked by total reputation score, highest first. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
 
+### How Reputation Is Earned
+
+Reputation is what drives a member's position on the board. Members earn it through quality participation - upvotes on their topics and replies, and having an answer accepted on a question. Downvotes and moderator removals subtract from it. The exact point values are defaults you can adjust under **Jetonomy → Settings**, so you can tune what your community rewards. See [Voting & Reputation](../discussions/03-voting.md) for the full list of actions and their default point values.
+
 ## Time Period Filter
 
 The leaderboard page has a row of period pills at the top that scope which members appear:
@@ -35,7 +39,7 @@ Every row on the leaderboard displays:
 | Column | Description |
 |--------|-------------|
 | Rank | Position number (1, 2, 3...) |
-| Avatar | Member's initials avatar (no online status dot on the leaderboard) |
+| Avatar | Member's initials avatar - their first two initials, not the uploaded photo, so the board stays fast (no online status dot on the leaderboard) |
 | Name | Display name, linked to their profile page |
 | Reputation | Total reputation score |
 | Posts | Total published topic count |

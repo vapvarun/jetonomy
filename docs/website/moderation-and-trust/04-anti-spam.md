@@ -81,8 +81,12 @@ You can adjust the default thresholds at **Jetonomy → Settings → Permissions
 
 > **Tip:** Rate limiting is your best defense against coordinated spam from many new accounts. Even if a bot farm passes CAPTCHA, each account can only post 3 topics before hitting the daily limit.
 
+## Rate Limit Settings
+
+These rate limits live alongside the trust system. The per-day caps shown above are the Trust Level 0 defaults; every trust level above TL0 is exempt. See [Trust Levels](01-trust-levels.md) for how a member graduates out of rate limiting by earning their way to TL1, and where the "Rate limit lifted" capability fits in the wider trust ladder.
+
 ## What's Next?
 
-Learn how in-app notifications keep your members engaged and informed about replies, mentions, and votes.
+When spam prevention is not enough and you need to act on a specific member, the next guide covers banning.
 
-[Notifications →](../notifications/01-notifications.md)
+[Banning Members →](05-banning-members.md)

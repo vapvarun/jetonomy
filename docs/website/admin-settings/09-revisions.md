@@ -33,6 +33,8 @@ Each row shows the post title, the editor, when the change was saved, and the si
 
 ## Side-by-Side Diff
 
+![Revisions diff view showing the before and after versions of a post side by side, with added text highlighted green and removed text highlighted red](../images/admin-revisions.png)
+
 Click any revision to open the diff view. Pick two revisions from the same post and you'll see:
 
 - The before version on the left, after on the right

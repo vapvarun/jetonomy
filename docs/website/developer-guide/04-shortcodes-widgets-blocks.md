@@ -1,11 +1,12 @@
-Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site - sidebars, pages, posts, or block-based layouts.
+Jetonomy includes eight shortcodes, four classic widgets, and eight Gutenberg blocks so you can embed community content anywhere on your WordPress site - sidebars, pages, posts, or block-based layouts.
 
 ## What You Will Learn
 
-- How to use the seven built-in shortcodes and their attributes
+- How to use the eight built-in shortcodes and their attributes
 - How to add the four classic widgets to sidebar areas
 - How to insert the eight Gutenberg blocks in the block editor
 - How shortcodes and blocks share the same rendering logic
+- Which surfaces are block-only and which are shortcode-only
 
 ## At a Glance
 
@@ -18,6 +19,7 @@ Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg bl
 | Shortcode | `[jetonomy_user_profile]` | Single user profile card | 1.2 |
 | Shortcode | `[jetonomy_space_members]` | Members of one space | 1.2 |
 | Shortcode | `[jetonomy_compose_topic]` | **New in 1.3.7** - inline topic composer (fixed space or member picker) | 1.3.7 |
+| Shortcode | `[jetonomy_widget]` | Embed any of the four classic widgets on a page or page-builder canvas | 1.4.0 |
 | Block | `jetonomy/forum-feed` | Live post feed | 1.3.0 |
 | Block | `jetonomy/trending` | Trending topics with time-decayed hot score | 1.3.6 |
 | Block | `jetonomy/space-list` | Space grid | 1.3.0 |
@@ -26,6 +28,13 @@ Jetonomy includes seven shortcodes, four classic widgets, and eight Gutenberg bl
 | Block | `jetonomy/user-panel` | Logged-in sidebar profile card | 1.3.5 |
 | Block | `jetonomy/login` | Inline login/register panel | 1.3.5 |
 | Block | `jetonomy/compose-topic` | **New in 1.3.7** - topic composer embeddable anywhere | 1.3.7 |
+
+### Block-only vs shortcode-only
+
+Most surfaces are available as **both** a block and a shortcode (Forum Feed, Trending, Space List, Leaderboard, Compose Topic). Three are available one way only:
+
+- **Block-only (no shortcode twin):** `jetonomy/navigation`, `jetonomy/user-panel`, `jetonomy/login`. To place these outside the block editor, add the block inside a reusable/synced pattern or a block-based template part.
+- **Shortcode-only (no block twin):** `[jetonomy_user_profile]`, `[jetonomy_space_members]`, `[jetonomy_widget]`. Use these in classic editors, page builders, and widget areas.
 
 ## Shortcodes
 
@@ -328,11 +337,17 @@ Most community themes render the space list with a hand-maintained nav menu. Tha
 
 Scales to sites with thousands of spaces - the rendered tree uses Jetonomy's cached category/space index, not a per-request DB scan.
 
+This block is block-only - there is no shortcode twin - so the rendered output is shown here:
+
+![Jetonomy Navigation block rendered in a community sidebar as a permission-aware Category to Space tree](../images/developer-guide/block-navigation.png)
+
 ---
 
 ### `jetonomy/user-panel` *(1.3.5+)*
 
 Renders a compact profile card for logged-in viewers - avatar, display name, notifications count, quick links to Profile / Notifications / Messages / Edit Profile / Logout. Empty for logged-out viewers so the sidebar layout doesn't shift.
+
+![Jetonomy User Panel block showing a logged-in member's avatar, name, notifications count, and quick links](../images/developer-guide/block-user-panel.png)
 
 **Block Attributes**
 
@@ -347,6 +362,8 @@ Auto-injects at the top of the community sidebar for logged-in viewers so admins
 ### `jetonomy/login` *(1.3.5+)*
 
 Renders an inline login and register panel for the community sidebar. Logged-out viewers see Login and Register tabs without leaving the page. Logged-in viewers get nothing rendered - no layout shift when state changes.
+
+![Jetonomy Login block showing the Login and Register tabs rendered inline on a community page](../images/developer-guide/block-login.png)
 
 **Block Attributes**
 

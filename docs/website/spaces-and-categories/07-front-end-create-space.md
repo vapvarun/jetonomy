@@ -6,6 +6,8 @@ order: 7
 
 Since Jetonomy 1.4.0, members with the right role can create a new space without ever opening wp-admin. The front-end Create Space page lives at `/community/new-space/` and gives community owners a way to delegate space creation to trusted regulars, team leads, or paying members without handing out WordPress admin access.
 
+![Front-end Create Space form at /community/new-space/ showing the Title, Description, Type, Visibility, Join policy, Category, and Icon fields](../images/spaces-and-categories/new-space-form.png)
+
 ## What You Will Learn
 
 - Where the Create Space page lives and who can reach it
@@ -57,6 +59,8 @@ The form does its own validation in the browser before submission, then again on
 
 The icon field is not a free-text field. Jetonomy ships with a Lucide icon picker so every space gets a consistent, professionally-drawn icon.
 
+![Lucide icon picker open, showing the 16 default icons, the Show more button, and the search field at the top](../images/spaces-and-categories/icon-picker.png)
+
 The picker shows 16 default icons up front, covering the most common community space themes: users, hand, megaphone, message-circle, help-circle, lightbulb, star, rocket, book-open, award, shield, pin, bookmark, home, hash, and folder.
 
 Click "Show more" to reveal another 8 icons for less common topics. If none of those fit, the search field at the top filters the entire Lucide catalogue by name, so typing "music" surfaces the music note icon, "camera" surfaces the camera icon, and so on.
@@ -87,7 +91,7 @@ There is no approval queue. The space is live the moment the form is submitted. 
 A few rules that surprise people on first use:
 
 - **Creating is not moderating.** A role granted "create spaces" is automatically space admin only for the spaces it creates. It cannot moderate other spaces it did not create.
-- **Visibility is per-space, not per-role.** A role allowed to create spaces can create a Hidden space. There is no built-in per-visibility gate; restrict who can create spaces at all via the Front-end space creation roles setting if that matters for your community.
+- **Visibility is per-space, not per-role.** A role allowed to create spaces can create a space of any visibility, including Hidden. There is no built-in per-visibility gate; restrict who can create spaces at all via the Front-end space creation roles setting if that matters for your community. One rule does apply to the combination, though: a Hidden space must use the Invite Only join policy. Picking Hidden with Open or Approval Required on the front-end form is rejected on save with "Hidden spaces must use the invite-only join policy" - set the join policy to Invite Only when you choose Hidden. See [Membership & Join Policies](03-membership-policies.md) for the full explanation.
 - **Deactivating a member who created a space does not delete the space.** The space remains; ownership transfers to the next admin in the space, or to the site administrator if there is no other admin.
 - **Slug collisions are checked across the whole site.** A member trying to create a space with a slug another space already uses will see an inline error, even if they cannot see the other space.
 

@@ -1,6 +1,6 @@
 Gate Jetonomy spaces by WooCommerce Membership plan or active WooCommerce Subscription - so customers unlock discussion areas the moment their membership or subscription becomes active.
 
-![Jetonomy admin settings for WooCommerce integration setup](../images/admin-settings.png)
+![The Jetonomy admin settings screen](../images/admin-settings.png)
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
@@ -31,15 +31,14 @@ The WooCommerce adapter activates only when WooCommerce is active **and** either
 1. Install and activate **Jetonomy Pro**, ensure WooCommerce is active, and ensure WooCommerce Memberships or WooCommerce Subscriptions is active.
 2. Go to **Jetonomy → Spaces** and open the space you want to gate.
 3. Click the **Access Rules** tab.
-4. Click **Add Rule**.
-5. Set **Rule Type** to **WooCommerce**.
-6. Select the Membership plan or Subscription product from the dropdown.
-7. Set the action to **Grant**.
-8. Save the space.
+4. Set **Rule Type** to **WooCommerce**.
+5. Pick the Membership plan or Subscription product in the **Value** field.
+6. Set **Grants** to **Participate** and **Space Role** to **Member** for a standard gated space.
+7. Click **Add Rule**.
 
 The Access Rule takes effect immediately. Members who already hold the membership or active subscription are granted access in the background within a few seconds of saving.
 
-> **Tip:** You can add multiple WooCommerce rules to a single space. Access is granted if the member matches any one of the listed memberships or subscriptions.
+> **Tip:** You can add multiple WooCommerce rules to a single space. Access is granted if the member matches any one of the listed memberships or subscriptions. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
 
 ## Auto-Activate
 
@@ -64,7 +63,7 @@ Access is revoked through the same status hooks. A WooCommerce Membership moving
 
 ## Combining with Other Rules
 
-WooCommerce rules stack with MemberPress, PMPro, and trust-level rules in the same space. A member gains access if they satisfy any Grant rule - regardless of which rule type it is.
+WooCommerce rules stack with MemberPress, PMPro, and trust-level rules in the same space. A member gains access if they satisfy any rule - regardless of which rule type it is.
 
 Example: gate a "Premium VIP" space to either MemberPress VIP level OR a specific WooCommerce product purchase. Members who qualify through either path are both added automatically.
 

@@ -30,18 +30,24 @@ Clicking a notification in the dropdown marks it as read and navigates you to th
 
 Jetonomy fires a notification for each of the following events:
 
-| Event | Who receives it | Channels |
+Jetonomy ships with ten notification types. The **Channels** column shows the default channels for each type; "In-app" means it appears in the bell, "email" means it also sends an email by default. Every type can be turned on or off per channel, both site-wide by an admin and per-member. See the Preferences section below.
+
+| Event | Who receives it | Channels (default) |
 |-------|-----------------|---------|
 | Someone replies to your topic | Topic author | In-app, email |
-| Someone replies to your reply (threaded) | Reply author | In-app, email |
+| Someone replies to your reply (threaded) | Reply author | In-app |
 | Someone mentions you with @username | Mentioned member | In-app, email |
 | Your reply is accepted as an answer (Q&A) | Reply author | In-app, email |
-| A new topic is posted in a space you follow | All followers of that space | In-app, email |
-| Your topic or reply receives an upvote | Content author | In-app |
-| Your topic or reply receives a downvote | Content author | In-app |
 | An idea's status changes (Ideas spaces) | Idea author | In-app, email |
+| A new topic is posted in a space you follow | All followers of that space | In-app |
+| You earn a badge (Jetonomy Pro) | The member | In-app |
+| Your topic or reply receives a vote | Content author | In-app |
+| A moderator reviews or acts on your content | Content author | In-app, email |
+| A member requests to join a space you manage | Space managers | In-app, email |
 
-Upvote and downvote notifications can be turned off per-member if members prefer not to see them. See the Preferences section below.
+> **Note:** The badge notification only fires on communities running Jetonomy Pro. Votes are reported through a single "vote on your post" notification (it covers both upvotes and downvotes).
+
+These channels are the defaults that ship with Jetonomy. An administrator can change the site-wide default for any type under **Jetonomy → Settings → Email**, and each member can override their own preferences. The full default table lives in [Email Notifications](02-email-settings.md).
 
 ## Marking Notifications as Read
 
@@ -56,6 +62,8 @@ Unread notifications are highlighted with a subtle background tint in the dropdo
 The dropdown shows your most recent notifications, roughly the last 10 to 20 items depending on screen size. To see your full notification history, click **See all notifications** at the bottom of the dropdown or navigate directly to `/community/notifications/`.
 
 The full page lists every notification you have received, loading 20 at a time with a **Load More** button at the bottom. A weekly background job marks unread notifications older than 30 days as read. Notifications are not auto-deleted from the database.
+
+![Full notifications page showing the All / Unread / Mentions / Replies / Votes / Badges filter tabs with count badges, and the bulk-select toolbar with Mark read and Delete buttons above selected rows](../images/notifications-full-page.png)
 
 ### Filter Tabs
 
@@ -97,10 +105,13 @@ When a community requires email verification at signup (**Jetonomy → Settings 
 
 Each member can control which notification types they receive. Go to **Profile → Edit Profile → Notifications** (at `/community/u/your-username/edit/`).
 
+![Edit Profile Notifications tab showing the per-type Web and Email toggle grid with the Pause all email notifications switch below it](../images/edit-profile-notifications.png)
+
 Options are:
 
 - In-app notifications on/off per type
 - Email notifications on/off per type (see [Email Notifications](02-email-settings.md) for the full email guide)
+- A single **Pause all email notifications** toggle at the bottom of the same Notifications tab. Turning it on snoozes every email type at once while still showing web notifications in the community, so a member can step away from email without losing their per-type settings. Turning it back off restores their previous choices.
 
 Members cannot disable notifications for direct mentions. The @mention notification is always delivered to ensure important communications reach their target.
 

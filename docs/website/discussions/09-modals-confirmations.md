@@ -27,6 +27,8 @@ These look like system pop-ups. They sit outside your theme, look different on e
 
 Jetonomy now uses its own modal toolkit for every "Are you sure?" prompt across the plugin. The modals look like your community, behave consistently, and play nicely with screen readers and keyboards.
 
+![Themed danger confirmation modal reading "Delete this post?" with a red Delete button and a Cancel button](../images/discussions/confirm-modal.png)
+
 ## Where You'll See Jetonomy Modals
 
 Anywhere the community needs to confirm an action or collect a short answer:

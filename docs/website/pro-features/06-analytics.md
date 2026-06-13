@@ -38,7 +38,7 @@ Use the date range picker at the top right to select any custom range. Preset sh
 
 All charts and tables update instantly when you change the range.
 
-<!-- TODO screenshot needed: Date range picker on the analytics page (was ../images/pro-analytics-date-filter.png) -->
+![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.png)
 ## Overview Metrics
 
 The top row shows four headline numbers for your selected range:

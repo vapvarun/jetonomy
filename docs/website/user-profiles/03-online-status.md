@@ -14,6 +14,8 @@ The online status green dot shows which members are currently active in your com
 
 A green dot appears on a member's avatar when they have been active in the community within the last 5 minutes. Active means any authenticated page load or interaction - visiting a topic, posting a reply, casting a vote, or navigating between pages.
 
+![Close-up of a member avatar with the green online status dot in the lower corner](../images/online-status-dot.png)
+
 After 5 minutes of inactivity, the dot disappears automatically on the next page load that renders it.
 
 There is no manual "appear offline" or "appear online" toggle. Online status reflects real activity.

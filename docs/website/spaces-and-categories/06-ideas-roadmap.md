@@ -16,6 +16,8 @@ Every Ideas space includes a built-in roadmap view. Instead of scrolling through
 
 ## What the Roadmap Shows
 
+![Ideas roadmap view with four status lanes - Planned, In Progress, Shipped, and Declined - each holding idea cards sorted by vote score](../images/spaces-and-categories/ideas-roadmap.png)
+
 The roadmap is a dedicated view of an Ideas space that groups all ideas by their current status. Access it at:
 
 ```
@@ -50,6 +52,8 @@ Any space moderator or admin can change an idea's status:
 3. Select a new status from the dropdown: Planned, In Progress, Shipped, or Declined.
 4. Click **Update Status**.
 
+![Single idea view with the inline Status dropdown open in the post meta area, showing the Planned, In Progress, Shipped, and Declined options](../images/spaces-and-categories/idea-status-dropdown.png)
+
 The status change saves immediately. A system entry appears in the reply thread showing what the status changed from and to, with a timestamp. This gives the idea's full history in one place.
 
 You can also update status from the space admin panel at **Jetonomy → Spaces → [Space Name] → Posts**. The status column is editable inline from that view, which is useful for processing a batch of ideas at once.
@@ -80,6 +84,6 @@ Ideas can be moved between statuses at any time. Moving a shipped idea back to I
 
 ## What's Next?
 
-Learn about space membership policies - who can see a space, who can join, and how invite links work.
+The roadmap is a deep-dive on the Ideas space type. To set up a space without leaving the front end, see the front-end create flow.
 
-[Membership & Join Policies →](03-membership-policies.md)
+[Create a Space from the Front-End →](07-front-end-create-space.md)

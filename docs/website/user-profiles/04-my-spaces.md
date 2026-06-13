@@ -28,6 +28,8 @@ If your theme overrides the header template, the link may not appear automatical
 
 ## The Two Sections
 
+![My Spaces page showing the "Spaces you run" section with Admin and Mod role badges and Edit, Mod queue, and Members quick-action buttons, above the "Spaces you're in" section](../images/my-spaces.png)
+
 The page is split into two sections, stacked top to bottom.
 
 ### Spaces You Run
@@ -82,6 +84,8 @@ Action buttons appear only on rows in the "Spaces you run" section. Member rows 
 
 Brand-new members often land on My Spaces before they have joined anything. When you neither run nor belong to any space, the page shows a single full-page empty state - "You are not in any spaces yet" with a **Browse spaces** button that goes to the community home.
 
+![My Spaces empty state showing "You are not in any spaces yet" with a Browse spaces button](../images/my-spaces-empty.png)
+
 Otherwise, empty sections are simply hidden: if you run spaces but belong to none as a regular member (or vice versa), only the section with content renders. There is no per-section "collapsed" placeholder and no "Create a space" button on this page.
 
 ## Privacy
@@ -103,6 +107,6 @@ The page loads all of your spaces with one indexed query per role bucket (the sp
 
 ## What's Next?
 
-The My Spaces page is one entry into your community life. The full profile page covers everything else: activity feed, badges, trust level, and account settings.
+The My Spaces page is one entry into your community life. The full profile page covers the rest of what a member does: their posts, replies, votes, bookmarks, and drafts, alongside their reputation score and trust level. (Profile badges are added by the [Custom Badges](../pro-features/05-custom-badges.md) Pro extension.)
 
 [Your Profile Page →](01-profiles.md)

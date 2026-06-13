@@ -2,6 +2,8 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 
 ![Import tool interface with source selection and progress tracking](../images/admin-import.png)
 
+> **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
+
 ## What You Will Learn
 
 - What data the bbPress importer brings over and what it leaves behind
@@ -16,7 +18,7 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 |---|---|---|
 | Forums | Jetonomy Spaces | Forum description → space description |
 | Topics | Jetonomy Posts | Topic title + content preserved |
-| Replies | Jetonomy Replies | Imported as flat replies on the post (bbPress reply threading is not preserved) |
+| Replies | Jetonomy Replies | Imported as flat replies on the post (bbPress reply threading is flattened) |
 | User accounts | Linked to existing WP users | Matched by user ID |
 | Sticky topics | Pinned posts | Preserved |
 
@@ -29,6 +31,8 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 - bbPress private messages (import to Jetonomy Pro private messaging separately)
 - Custom bbPress meta fields (use the `jetonomy_importers` filter to extend)
 - Forum avatars (WordPress avatars carry over via Gravatar/WP user accounts)
+
+> **What to do about the gaps:** Jetonomy replies are flat by design - every reply attaches to the topic, not to another reply - so the conversation stays intact even though bbPress's nested threading is not carried over. Topic tags are not imported; if tags matter to you, re-tag your highest-value topics by hand after the import (it is usually a small number that drive most of the traffic).
 
 ## Pre-Import Checklist
 
@@ -49,6 +53,8 @@ Complete these steps before starting the import:
 3. Click **Start Import**.
 
 The importer processes records in batches of 500. A progress bar shows completion percentage, current batch, and estimated time remaining.
+
+![bbPress import in progress, showing the Forums to Topics to Replies to Profiles to Finalize step tracker and a progress bar](../images/migration/import-progress-tracker.png)
 
 Do not close the browser tab while the import is running. If the page refreshes or you navigate away, the import will pause - but can be resumed (see below).
 
@@ -75,13 +81,15 @@ These are estimates for a typical shared hosting server. Dedicated servers will 
 
 ## Resuming a Paused Import
 
-If the import stops (browser closed, timeout, server restart), return to **Jetonomy → Import**. The importer stores its progress in the database. Click **Resume Import** to continue from the last completed batch.
+If the import stops (browser closed, timeout, server restart), return to **Jetonomy → Import**. The card shows an **Import Interrupted** badge with the phase it stopped at. Click **Resume Import** to continue from the last completed batch, or **Start Over** to begin again from scratch.
+
+![bbPress import card showing the Import Interrupted badge with Resume Import and Start Over buttons](../images/migration/import-interrupted-resume.png)
 
 You can safely resume multiple times. Records that were already imported are skipped.
 
 ## Running via WP-CLI
 
-For large communities, WP-CLI is more reliable than the browser-based importer:
+For large communities, WP-CLI is more reliable than the browser-based importer. Run it from your server's command line (SSH); on most managed hosts you point it at the WordPress install with `--path`. The valid source value is `bbpress` (lowercase) - if you mistype it, the command lists the sources it recognizes.
 
 ```bash
 wp --path="/path/to/wordpress" jetonomy import bbpress
@@ -109,6 +117,10 @@ After the import completes, verify the following:
 - [ ] If you used bbPress shortcodes on pages, remove or replace them - they will output raw shortcode text now that bbPress is still active
 
 > **Note:** After a successful import, you can deactivate bbPress. Your community data is now in Jetonomy's tables and bbPress is no longer needed.
+
+## Re-running an Import
+
+Once bbPress has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge that shows the date of the last import and how many records it brought over. The Start button becomes **Re-Import**, and Jetonomy warns you before you proceed because **re-importing creates duplicate content** - it does not detect and skip what you already imported. Only re-import if the first import had a real problem; otherwise leave it alone.
 
 ## What's Next?
 

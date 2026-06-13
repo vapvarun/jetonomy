@@ -66,6 +66,8 @@ Shows unpublished draft topics saved by this member. This tab is visible only to
 
 Members can edit their own profile at `/community/u/their-username/edit/`. This page is accessible from the **Edit Profile** button on the profile page header.
 
+![Edit Profile page with display name, bio, avatar upload, and notification preference fields](../images/edit-profile.png)
+
 Editable fields:
 
 - Display name
@@ -73,7 +75,36 @@ Editable fields:
 - Avatar - upload a JPG, PNG, GIF, or WebP. After choosing a non-GIF image, a crop dialog opens: drag to reposition, use the slider to zoom, then **Crop and upload** saves a square avatar (animated GIFs upload as-is to preserve animation). The "Remove photo" button reverts to the Gravatar.
 - Notification preferences (email and in-app toggles per type)
 
+![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.png)
+
 WordPress Administrators can edit any member's profile from the standard WordPress Users admin as well.
+
+## Embedding Profiles on a Page
+
+You do not have to send members to the full profile page to surface profile information. Two shortcodes let you drop a compact member card or a space member roster onto any WordPress page, post, or widget area. Both are **shortcode-only** - there is no matching Gutenberg block, so add them with a Shortcode block or directly in the editor.
+
+### Member profile card
+
+```
+[jetonomy_user_profile user_id="0"]
+```
+
+Renders a small card with the member's display name, trust level badge, a short bio excerpt, and their reputation and post count. Set `user_id` to a specific member's ID, or leave it as `0` (the default) to show the **currently logged-in member's** card - handy for a "your profile at a glance" panel on a members-only page.
+
+### Space member roster
+
+```
+[jetonomy_space_members space_id="5" count="20"]
+```
+
+Lists the members of one space, ranked by reputation. Drop it on a space landing page or an "About this community" page so visitors can see who is active.
+
+| Attribute | Default | What it does |
+|-----------|---------|--------------|
+| `space_id` | `0` | The ID of the space whose members to list. Required - leave it unset and nothing renders. |
+| `count` | `10` | How many members to show, highest reputation first. |
+
+> **Note:** The roster attribute is `count`, not `limit`.
 
 ## What's Next?
 

@@ -42,6 +42,16 @@ Developers can hide it with the `jetonomy_show_sidebar_popular_tags` filter:
 add_filter( 'jetonomy_show_sidebar_popular_tags', '__return_false' );
 ```
 
+To inject custom markup (an ad, a banner, a related-tags block) directly around the Popular Tags section, hook the `jetonomy_sidebar_before_popular_tags` or `jetonomy_sidebar_after_popular_tags` actions. Each receives the current space object, or `null` when the sidebar renders outside a space:
+
+```php
+add_action( 'jetonomy_sidebar_after_popular_tags', function ( $space ) {
+    // Echo your own markup below the Popular Tags list here.
+} );
+```
+
+Headless and app consumers can read the same tag list over REST: `GET /jetonomy/v1/tags` returns tags ordered by popularity (or alphabetically with `?sort=alphabetical`), with a `limit` of up to 100. See the [Hooks Reference](../developer-guide/02-hooks-reference.md) for the full parameter list.
+
 ## How Tags Improve Your Community
 
 Tags work across space boundaries. A tag named "onboarding" can tie together a tutorial in your Guides space, a question in your Q&A space, and a feature idea in your Ideas space. Members following that tag see the full picture regardless of which space each post lives in.
@@ -53,6 +63,8 @@ Encouraging consistent tag use - especially in high-traffic spaces - pays divide
 ## Admin Tag Management
 
 Members create tags on the fly as they post, but admins get a dedicated management screen for the whole global tag namespace at **Jetonomy → Tags** in the WordPress admin. Managing tags here requires the `jetonomy_manage_settings` capability.
+
+![Jetonomy Tags admin screen: a table of tags with post counts, a bulk-action dropdown, a search box, and the Add New Tag form](../images/search-and-discovery/admin-tags.png)
 
 The page lists every tag with its post count and gives you these controls:
 
@@ -69,6 +81,6 @@ Use this screen to clean up duplicate or misspelled tags (for example merging "s
 
 ## What's Next?
 
-Learn how Jetonomy's trust system automatically identifies your most reliable members and gives them more capabilities over time.
+Learn how trending surfaces the discussions your community is talking about right now, and how to place a trending list anywhere on your site.
 
-[Trust Levels & Reputation →](../moderation-and-trust/01-trust-levels.md)
+[Trending →](03-trending.md)

@@ -2,7 +2,7 @@ Attach a poll to any topic and let your community vote - perfect for decisions, 
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-<!-- TODO screenshot needed: Poll attached to a community post with percentage bars (was ../images/pro-polls-result-bars.png) -->
+![A poll attached to a community post, showing each option as a horizontal percentage bar with its vote count](../images/pro-polls-result-bars.png)
 ## What You Will Learn
 
 - How to enable Polls
@@ -31,7 +31,7 @@ The poll builder lets you:
 - Choose **Single choice** (members pick one) or **Multiple choice** (members pick several).
 - Optionally set a **Close date** - the poll stops accepting votes automatically at that date and time.
 
-<!-- TODO screenshot needed: Poll builder in the post composer (was ../images/pro-polls-composer.png) -->
+![The poll builder open in the post composer, with the option list, the single/multiple choice selector, and the optional close-date field](../images/pro-polls-composer.png)
 The poll is attached to the topic and saved together when you click **Post**. You cannot attach a poll to a reply - only to top-level topics.
 
 > **Tip:** You can add or remove a poll from an existing topic by editing the post. Removing a poll permanently deletes all votes cast on it.
@@ -51,7 +51,7 @@ Members who have not voted see the options. Members who have voted see the live 
 
 Results display as horizontal percentage bars with the option label, the percentage, and the raw vote count. Bars fill in proportion to the leading option.
 
-<!-- TODO screenshot needed: Poll results with percentage bars and vote counts (was ../images/pro-polls-results.png) -->
+![Voted poll results with horizontal percentage bars, each option's percentage and raw vote count, and the total vote tally below](../images/pro-polls-results.png)
 The total vote count appears below the bar chart. If the poll has a close date, a countdown shows how much time remains.
 
 ## Closing a Poll
@@ -78,6 +78,8 @@ Because of this, the total vote count on a multiple-choice poll can be higher th
 ## Polls Admin
 
 Enabling the extension adds a **Polls** submenu under the Jetonomy admin menu (`jetonomy-pro-polls`). It lists every poll in your community with its post, type, total votes, and close state, so you can review and close polls without opening each topic.
+
+![The Polls admin list page, showing every poll with its post, type, total votes, and close state](../images/pro-polls-admin.png)
 
 ## REST API
 

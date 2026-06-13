@@ -36,7 +36,7 @@ Trust levels and reputation points are invisible to casual members. Badges are v
 4. Set the award conditions (see below).
 5. Click **Save Badge**.
 
-<!-- TODO screenshot needed: Badge editor with tier selector and criteria settings (was ../images/pro-badges-editor.png) -->
+![The Create Badge editor, showing the name, description, icon upload, Bronze/Silver/Gold tier selector, and auto-award criteria settings](../images/pro-badges-editor.png)
 ## Award Conditions
 
 ### Auto-Award

@@ -20,12 +20,14 @@ The Appearance tab gives you a set of override controls on top of that inheritan
 ## Accent Color
 
 **Setting:** `accent_color`
-**Default:** Inherited from theme (`--wp--preset--color--primary`)
+**Default:** `#0073aa` shown in the picker; the live community inherits your theme's primary color while **Inherit Colors from Theme** is on
 **Location:** Appearance tab → Colors section
 
-The accent color drives buttons, links, vote arrows, trust-level highlights, and other interactive elements. Leave this blank to inherit from your theme. Set a specific hex value to override the theme's primary color just for Jetonomy.
+The accent color drives buttons, links, vote arrows, trust-level highlights, and other interactive elements.
 
-This value is injected as `--jt-accent` on the `.jt-app` element at runtime, so it overrides the theme-inherited value.
+When you first open the picker it shows a blue value (`#0073aa`). Do not be alarmed - while **Inherit Colors from Theme** (below) is on, that stored value is ignored and the live community pulls its accent from your theme's primary color (`--wp--preset--color--primary`). The picker value only takes effect once you turn Inherit Colors off, at which point it is injected as `--jt-accent` on the `.jt-app` element and overrides the theme.
+
+To set a custom accent: turn **Inherit Colors from Theme** off, then pick your color here.
 
 > **Tip:** Use a color that has at least a 4.5:1 contrast ratio against white (WCAG AA). The community UI places accent colors on white backgrounds frequently.
 

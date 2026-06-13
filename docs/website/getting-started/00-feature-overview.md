@@ -1,3 +1,11 @@
+---
+title: "Feature Overview"
+category: "getting-started"
+order: 0
+---
+
+# Feature Overview
+
 Everything Jetonomy does, on one page. This is the fastest way to see whether Jetonomy fits your community - it groups every feature by what it actually does for you, links straight to the deep-dive guide for each area, and marks which features are free and which are Jetonomy Pro.
 
 ![The Jetonomy community home page showing categories, spaces, and recent activity](../images/community-home.png)
@@ -38,7 +46,7 @@ What is included:
 
 Pro adds:
 
-- **Custom Fields** - structured fields on member profiles so you collect exactly the information your community needs. See [Custom Fields](../pro-features/04-custom-fields.md).
+- **Custom Fields** - structured fields on posts, member profiles, and spaces so you collect exactly the information your community needs. See [Custom Fields](../pro-features/04-custom-fields.md).
 
 ## Moderation & Trust
 
@@ -143,7 +151,7 @@ What is included:
 - **REST API** - 48+ free endpoints under `jetonomy/v1`, 90+ with Pro active. See [REST API](../developer-guide/01-rest-api.md).
 - **Hooks** - 58 free hooks plus 9 in Pro for actions and filters. See [Hooks Reference](../developer-guide/02-hooks-reference.md).
 - **WP-CLI** - 14 free command roots and 15 in Pro for headless automation. See [WP-CLI](../developer-guide/10-wp-cli.md).
-- **Blocks and shortcodes** - eight Gutenberg blocks, four widgets, and seven shortcodes to embed community content anywhere. See [Shortcodes, Widgets & Blocks](../developer-guide/04-shortcodes-widgets-blocks.md).
+- **Blocks and shortcodes** - eight Gutenberg blocks, four classic widgets, and eight shortcodes to embed community content anywhere. The four widgets are Recent Posts, Leaderboard, Active Spaces, and User Stats (Active Spaces and User Stats are reachable only through the `[jetonomy_widget]` shortcode). Most surfaces are available as both a block and a shortcode, with three exceptions each way: Navigation, Login, and User Panel are block-only, while `[jetonomy_user_profile]`, `[jetonomy_space_members]`, and `[jetonomy_widget]` are shortcode-only. See [Shortcodes, Widgets & Blocks](../developer-guide/04-shortcodes-widgets-blocks.md).
 
 Pro adds:
 

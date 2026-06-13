@@ -6,6 +6,8 @@ order: 8
 
 Since Jetonomy 1.4.0, space owners and moderators can edit their space directly from the front-end. They click an **Edit space** button in the space header and adjust the title, description, cover image, icon, type, visibility, join policy, category, posts-per-page, and prefixes without ever loading wp-admin.
 
+![Front-end Edit Space page at /community/s/<slug>/edit/ with the Edit space button visible in the space header and the editable fields below](../images/spaces-and-categories/edit-space-form.png)
+
 ## What You Will Learn
 
 - Where the Edit space button appears and who sees it
@@ -76,6 +78,8 @@ These rules exist because the most common community support ticket pre-1.4.0 was
 ## Archive vs Delete
 
 The bottom of the Edit space page has two destructive actions, kept visually separate from the save button.
+
+![Bottom of the front-end Edit Space page showing the cover-image upload field with a Remove cover link, and the separated Archive space and Delete space actions](../images/spaces-and-categories/edit-space-cover-danger.png)
 
 **Archive space** marks the space read-only. Existing posts and replies stay visible to anyone who could see them before. New posts and replies are disabled. The space disappears from category listings but is still reachable at its original URL. Archive is reversible: re-opening the editor and clicking **Unarchive** restores everything.
 

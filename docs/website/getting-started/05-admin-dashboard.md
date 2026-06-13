@@ -1,4 +1,14 @@
+---
+title: "Admin Dashboard"
+category: "getting-started"
+order: 4
+---
+
+# Admin Dashboard
+
 The Jetonomy admin dashboard is your first stop after logging in to wp-admin. It shows a live snapshot of community health and gives you one-click access to the most common management tasks.
+
+![The Jetonomy admin dashboard: six stat cards across the top, the Recent Activity feed on the left, and the Quick Actions, Demo Data, and System Info panels in the right sidebar](../images/getting-started/admin-dashboard.png)
 
 ## What You Will Learn
 
@@ -81,6 +91,6 @@ When Pro is not active, a small card in the sidebar describes what the Analytics
 
 ## What's Next?
 
-Configure the General settings to set your community URL and access controls.
+Give members a sign-in experience that matches your community by adding in-page login and registration.
 
-[General Settings →](../admin-settings/01-general.md)
+[In-Page Authentication →](04-in-page-auth.md)

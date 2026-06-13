@@ -2,6 +2,10 @@ Connect LifterLMS course and membership enrollment to Jetonomy spaces - students
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
+
+> LifterLMS works exactly like the other LMS integrations. The course picker, the **Sync Members** button, and the Auto-Create card are shown in the [LearnDash guide](04-learndash.md), which is the lead LMS reference for this section.
+
 ## What You Will Learn
 
 - How to gate a space by LifterLMS course or membership enrollment
@@ -16,11 +20,11 @@ Jetonomy Pro detects LifterLMS automatically when both plugins are active. A **L
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LifterLMS Course** from the rule type dropdown.
-3. Start typing the course name - a searchable dropdown shows all published courses and memberships.
-4. Select the course, set Grants to **Participate** and Space Role to **Member**.
+3. Start typing the course name - a searchable dropdown shows all published courses and memberships (see the [course picker screenshot](04-learndash.md#gating-a-space-by-course-enrollment)).
+4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
 5. Click **Add Rule**.
 
-LifterLMS memberships also appear in the search - select a membership to gate a space by membership level instead of individual course enrollment.
+LifterLMS memberships also appear in the search - select a membership to gate a space by membership level instead of individual course enrollment. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
 
 ## Syncing Existing Students
 

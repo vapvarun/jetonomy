@@ -1,3 +1,9 @@
+---
+title: "Topic Management"
+category: "discussions"
+order: 6
+---
+
 Space moderators have a full toolkit for organizing, curating, and controlling discussions. Every action in this guide requires moderator permission on the space where the topic lives - or site-wide admin access.
 
 ![Admin moderation panel with content review and bulk action controls](../images/admin-moderation.png)
@@ -104,7 +110,7 @@ Deleted topics can be recovered by a site admin from **Jetonomy → Content** in
 
 Permanent deletion removes the topic, all replies, all votes, all bookmarks, and all associated notifications from the database. It cannot be undone.
 
-> **Note:** When you delete a topic, the topic author's reputation is reduced by 20 points to reflect the removed content.
+> **Note:** When you delete a topic, the topic author's reputation is reduced (a default of 20 points) to reflect the removed content. The penalty amount is admin-configurable under [Settings → Permissions → Reputation Points](../admin-settings/02-permissions.md#reputation-points).
 
 ## What's Next?
 

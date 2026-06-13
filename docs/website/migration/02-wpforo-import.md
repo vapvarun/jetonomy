@@ -2,6 +2,8 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 
 ![Import tool with wpForo source selected and migration progress](../images/admin-import.png)
 
+> **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
+
 ## What You Will Learn
 
 - What the wpForo importer brings over and how wpForo structures map to Jetonomy
@@ -36,9 +38,11 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 
 wpForo and Jetonomy structure their data differently in a few key areas:
 
-**Multi-board support** - wpForo supports multiple boards, each with its own set of forums, topics, and posts stored in separate database tables (e.g., `wp_wpforo1_forums` for board 1, `wp_wpforo2_forums` for board 2). The importer automatically detects all active boards and imports each into its own Jetonomy category. Single-board installs work without any extra configuration.
+**Multi-board support** - wpForo lets you run multiple boards, each with its own set of forums and topics. The importer automatically detects all of your active boards and imports each one into its own Jetonomy category. Single-board installs work without any extra configuration.
 
-**Forums and categories** - Within each board, wpForo uses a hierarchical forums table. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates a Jetonomy category per board and one space per wpForo forum. Sub-forum nesting is not preserved - every forum (parent or child) becomes a flat space under the board's category.
+**Forums and categories** - Within each board, wpForo nests forums inside forums. Jetonomy separates categories (top-level groups) from spaces (discussion areas), so the importer creates one Jetonomy category per board and one space per wpForo forum. Sub-forum nesting is not preserved - every forum (parent or child) becomes a flat space under the board's category.
+
+> **For developers:** wpForo stores each board's data in its own set of tables (`wp_wpforo1_*`, `wp_wpforo2_*`, and so on) and tracks boards in `wpforo_boards`. The importer reads `wpforo_boards` to discover boards and auto-detects the table prefix, so a custom prefix needs no configuration.
 
 **Post structure** - In wpForo, the first "post" of a topic is a reply in the same table. In Jetonomy, topics and replies are separate entities. The importer promotes the first wpForo post as the Jetonomy post body and imports subsequent posts as replies.
 
@@ -62,9 +66,11 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 
 The wpForo importer runs the entire import in a single pass - the progress bar advances in one step from start to complete. (The bbPress importer, by contrast, runs in true incremental batches.) Because it is single-pass, larger wpForo databases are best imported via WP-CLI to avoid browser timeouts.
 
-## Dry-Run Mode
+## Preview Before You Import
 
-> **Important:** Dry-run is **not supported** for the wpForo importer. The `--dry-run` flag exists on the CLI command, but the wpForo importer ignores it and writes data regardless. Do not rely on `wp jetonomy import wpforo --dry-run` to preview the import without making changes - it will perform the real import. Always take a database backup before running the wpForo importer.
+**Always take a full database backup before you run the wpForo import** - that is your way to undo if you want to start over. There is no preview mode for wpForo: only the bbPress importer supports a true `--dry-run` that counts records without writing them. The wpForo importer always writes data, so a backup (not a dry run) is your safety net.
+
+> **Heads up:** The `--dry-run` flag is accepted on the `wp jetonomy import wpforo` command, but the wpForo importer does not act on it - it performs the real import either way. Do not use it expecting a preview.
 
 ## Estimated Import Times
 
@@ -80,6 +86,8 @@ The wpForo importer runs the entire import in a single pass - the progress bar a
 The wpForo import runs as a single pass, so there is no mid-import resume point. If it is interrupted (timeout, server restart, or closed browser), it cannot be resumed partway through - return to **Jetonomy → Import** and click **Start Over** to run it again. For this reason, run large wpForo imports via WP-CLI, which is not subject to browser timeouts.
 
 ## Running via WP-CLI
+
+Run this from your server's command line (SSH); on most managed hosts you point it at the WordPress install with `--path`. The valid source value is `wpforo` (lowercase) - if you mistype it, the command lists the sources it recognizes.
 
 ```bash
 wp --path="/path/to/wordpress" jetonomy import wpforo
@@ -104,7 +112,11 @@ After the import completes:
 - [ ] Remove or update any wpForo shortcodes on pages and widgets
 - [ ] Consider deactivating wpForo after confirming the import - it is no longer needed
 
-> **Note:** If your wpForo installation used a third-party plugin for member ratings or post reactions, those values are not included in the standard import. You can extend the importer using the `jetonomy_importers` filter.
+> **Note:** If your wpForo installation used a third-party plugin for member ratings or post reactions, those values are not included in the standard import. Developers can extend the importer through the `jetonomy_importers` filter.
+
+## Re-running an Import
+
+Once wpForo has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge showing the date and record count of the last import, and the Start button becomes **Re-Import**. Jetonomy warns you first because **re-importing creates duplicate content** - it does not skip what you already brought over. Only re-import if the first attempt had a real problem.
 
 ## What's Next?
 

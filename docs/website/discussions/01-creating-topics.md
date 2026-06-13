@@ -1,3 +1,9 @@
+---
+title: "Creating Topics"
+category: "discussions"
+order: 1
+---
+
 A topic is the primary unit of discussion in Jetonomy - every conversation, question, idea, or update starts here. This guide walks through everything that happens from the moment a member clicks "New Post" to when their topic goes live.
 
 ![New post form with title, content editor, tags, and publish options](../images/new-post-form.png)
@@ -125,6 +131,11 @@ If the topic is pending approval, it does not appear in the listing, does not in
 Learn how replies work, how threading is structured, and how to accept answers in Q&A spaces.
 
 [Replies & Threading →](02-replies-threading.md)
+
+## Related
+
+- [Embedding the Composer](10-embedding-the-composer.md) - drop a "start a topic" box onto any WordPress page, post, or landing page using the Compose Topic block or the `[jetonomy_compose_topic]` shortcode.
+- You can also surface existing discussions on any page with the Forum Feed and Trending blocks (and their `[jetonomy_recent_posts]` / `[jetonomy_trending_posts]` shortcodes) - see [Shortcodes, Widgets & Blocks](../developer-guide/04-shortcodes-widgets-blocks.md).
 
 ## Related Pro Features
 

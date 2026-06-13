@@ -2,6 +2,8 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 
 ![Import tool with Asgaros source selected and migration progress](../images/admin-import.png)
 
+> **New to migration?** Read the [Migration overview](00-overview.md) first - it explains how to read the import screen (stat previews, status badges, the progress tracker) and the backup rule that applies to every import.
+
 ## What You Will Learn
 
 - What the Asgaros importer brings over and what it leaves behind
@@ -32,9 +34,11 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 
 ## Asgaros Data Structure Differences
 
-**Forum hierarchy** - Asgaros stores forums in a single table with a `parent_forum` column. The importer creates one Jetonomy category ("Imported from Asgaros") and one space per Asgaros forum, importing parent forums before their children so the parent/child relationship is preserved as Jetonomy sub-spaces.
+**Forum hierarchy** - Asgaros keeps your forums and sub-forums in a single nested list. The importer creates one Jetonomy category ("Imported from Asgaros") and one space per Asgaros forum, importing parent forums before their children so your sub-forums come across as Jetonomy sub-spaces.
 
-**Post structure** - In Asgaros, the first post of a topic and its replies all live in the `forum_posts` table. The importer promotes the first post as the Jetonomy post body and imports the remaining posts as replies.
+**Post structure** - In Asgaros, a topic's opening message and all its replies are stored together. The importer promotes the opening message as the Jetonomy post body and imports the remaining messages as replies.
+
+> **For developers:** Asgaros stores forums in one table with a `parent_forum` column (hence the parent-before-child import order), and stores the opening post plus all replies together in the `forum_posts` table.
 
 ## Pre-Import Checklist
 
@@ -44,6 +48,12 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 4. **Disable page caching** if active, to avoid stale data during the import.
 
 > **Tip:** For large Asgaros communities, run the import via WP-CLI to avoid browser timeouts.
+
+## Preview Before You Import
+
+**Always take a full database backup before you run the Asgaros import** - that is your way to undo if you want to start over. There is no preview mode for Asgaros: only the bbPress importer supports a true `--dry-run` that counts records without writing them. The Asgaros importer always writes data, so a backup (not a dry run) is your safety net.
+
+> **Heads up:** The `--dry-run` flag is accepted on the `wp jetonomy import asgaros` command, but the Asgaros importer does not act on it - it performs the real import either way. Do not use it expecting a preview.
 
 ## Running the Import
 
@@ -64,6 +74,8 @@ The Asgaros importer runs the entire import in a single pass - the progress bar 
 
 ## Running via WP-CLI
 
+Run this from your server's command line (SSH); on most managed hosts you point it at the WordPress install with `--path`. The valid source value is `asgaros` (lowercase) - if you mistype it, the command lists the sources it recognizes.
+
 ```bash
 wp --path="/path/to/wordpress" jetonomy import asgaros
 ```
@@ -82,6 +94,10 @@ After the import completes:
 - [ ] Assign Space Moderator roles to your former forum moderators (moderator assignments are not imported)
 - [ ] Go to **Settings → Permalinks** and click Save to flush rewrite rules (the Asgaros importer does not flush them automatically, so this step is needed if new spaces return a 404)
 - [ ] Consider deactivating Asgaros after confirming the import - it is no longer needed
+
+## Re-running an Import
+
+Once Asgaros has been imported, its card on **Jetonomy → Import** changes to a **Previously Imported** badge showing the date and record count of the last import, and the Start button becomes **Re-Import**. Jetonomy warns you first because **re-importing creates duplicate content** - it does not skip what you already brought over. Only re-import if the first attempt had a real problem.
 
 ## What's Next?
 

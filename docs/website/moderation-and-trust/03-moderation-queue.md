@@ -9,7 +9,7 @@ The moderation queue is your single dashboard for everything that needs human re
 - What actions you can take on each item
 - How per-space moderation differs from global moderation
 - How Akismet-held content appears in the queue
-- How to ban a member when content-level actions are not enough
+- Where to ban a member when content-level actions are not enough
 
 ## Accessing the Moderation Queue
 
@@ -39,7 +39,7 @@ These are live topics and replies that members have flagged for review. Flagged 
 
 ### Banned Users
 
-A list of members who are currently banned, with the option to lift each ban. See [Banning Members](#banning-members) below.
+A list of members who are currently banned, with the option to lift each ban. See [Banning Members](05-banning-members.md) for the full ban workflow.
 
 ## Available Actions
 
@@ -68,6 +68,8 @@ The queue shows content from all spaces by default. Use the **Space** filter dro
 
 Space moderators who do not have global admin access see only their own spaces' items when they visit `/community/mod/`. They do not see content from spaces they do not moderate.
 
+![Frontend moderation dashboard at /community/mod/ as a space moderator sees it, scoped to their own spaces](../images/frontend-mod-queue.png)
+
 > **Fixed in 1.4.1:** moderators of multiple spaces now see every queue they own when they visit `/community/mod/`. Earlier versions could redirect a multi-space moderator away from the dashboard if access checks ran in the wrong order. If you have moderators who report "I can see one space's queue but not the others," update to 1.4.1 and the dashboard will load all of them.
 
 ## Akismet Integration
@@ -83,29 +85,11 @@ Spam-flagged content is set to a Spam status rather than surfaced as a dedicated
 
 ## Banning Members
 
-Approve, Mark as Spam, and Trash all act on individual pieces of content. Banning acts on the person. When a member is not just posting one bad item but is repeatedly disruptive, you ban the account so they cannot keep posting. Banning requires the `jetonomy_moderate` capability, the same capability that gates the moderation queue itself.
+Approve, Mark as Spam, and Trash all act on individual pieces of content. When a member is repeatedly disruptive, content-level actions are not enough and you need to act on the person instead. The **Banned Users** tab here shows everyone who is currently banned, with an Unban control on each row.
 
-You can ban a member from the moderation tools and from the **Jetonomy → Users** admin page, which lists every community member with a Ban / Unban control on each row.
+Banning is a subsystem of its own - three ban types, durations, auto-expiry, and the **Jetonomy → Users** admin page - covered in full in its own guide.
 
-### Ban Types
-
-Jetonomy supports three levels of restriction so the response fits the situation:
-
-| Type | Effect |
-|------|--------|
-| Global ban | The member is blocked from posting anywhere in the community |
-| Space ban | The member is blocked from a single space but can still participate elsewhere |
-| Silence | The member can still read but cannot post or reply |
-
-### Duration
-
-A ban can be permanent or time-limited. Pick a preset of 1 day, 7 days, or 30 days, or set a custom number of days. Time-limited bans lift themselves automatically when they expire, so you do not have to remember to unban a member after a cooling-off period. You can also record a reason with the ban for your own records.
-
-### Lifting a Ban
-
-To remove a ban before it expires, click **Unban** on the member's row. The restriction is cleared and the member can participate again immediately.
-
-> **Tip:** Reach for a ban only when content-level actions are not enough. For a single bad post, Trash or Mark as Spam is the right tool. For a member who keeps coming back, a global ban (permanent or timed) stops the behavior at the source. The full member list and per-member history live on the **Jetonomy → Users** admin page.
+[Banning Members →](05-banning-members.md)
 
 ## What's Next?
 

@@ -1,10 +1,12 @@
 ---
 title: "In-Page Authentication"
 category: "getting-started"
-order: 4
+order: 5
 ---
 
-Before Jetonomy 1.4.0, anything that required a logged-in member bounced visitors to `wp-login.php`. That meant signing in to upvote a post or reply to a thread sent visitors to a generic WordPress login screen, then back to the community after a redirect. From 1.4.0 onward, Jetonomy handles Login, Register, and Forgot Password in-page through its own `/auth/*` REST endpoints, with forms that match your theme and the rest of the community UI.
+# In-Page Authentication
+
+Jetonomy can handle Login, Register, and Forgot Password right inside your community pages, with forms that match your theme instead of bouncing members to the generic WordPress login screen. It does this through its own `/auth/*` REST endpoints, so signing in to upvote a post or reply to a thread happens in place, without a jarring redirect to `wp-login.php` and back. This is an optional enhancement you can set up at any time after launch.
 
 ## What You Will Learn
 
@@ -15,6 +17,8 @@ Before Jetonomy 1.4.0, anything that required a logged-in member bounced visitor
 - How to customize the auth surface with theme tokens
 
 ## Where the Forms Appear
+
+![The Jetonomy Login block rendered inline on a page, showing the Login, Register, and Lost Password tabs](../images/getting-started/login-block-tabs.png)
 
 In-page auth is delivered by the **Login block** (`wp:jetonomy/login`). Place the block on any page or template, and it renders Login, Register, and Lost Password tabs inline, styled to match your community. The forms submit to Jetonomy's own `/auth/*` REST endpoints, so a visitor signs in or registers without ever leaving the page the block is on.
 
@@ -87,6 +91,8 @@ The auth surface uses the same `--jt-*` design tokens as the rest of Jetonomy. T
 
 ### Light Auth Surface in Dark Mode
 
+![The Login block staying light while the surrounding community page is in dark mode](../images/getting-started/login-block-light-in-dark-mode.png)
+
 There's one intentional exception: the Login block stays in light mode even when the rest of your community is in dark mode. This is a deliberate UX choice. Sign-in forms in dark mode are statistically harder to read and easier to mistype, especially on mobile. Keeping the auth surface light maintains form readability where it matters most: at the point of conversion.
 
 If you want to override this and run a dark auth surface (for a fully dark community theme), you can do it via CSS:
@@ -104,6 +110,6 @@ All auth form labels are translatable through the standard WordPress translation
 
 ## What's Next?
 
-Learn how Jetonomy's in-product modal toolkit replaces native browser dialogs across the community.
+With onboarding complete, fine-tune your community in the settings screens, starting with General settings for your community URL and access controls.
 
-[Modals and Confirmations](../discussions/09-modals-confirmations.md)
+[General Settings →](../admin-settings/01-general.md)

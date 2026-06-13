@@ -1,4 +1,4 @@
-Jetonomy's search finds content across your entire community in real time - topics, replies, spaces, and tags - and lets you narrow results with powerful filters so members always land on exactly what they need.
+Jetonomy's search finds content across your entire community in real time - topics, spaces, and tags - and lets you narrow results with powerful filters so members always land on exactly what they need.
 
 ## What You Will Learn
 
@@ -38,6 +38,8 @@ Click any pill to filter. The URL updates so you can share a filtered search lin
 ## Advanced Filters
 
 Click the **Filters** disclosure to expand the advanced filter bar. It auto-expands whenever any filter is already active. These filters stack - you can combine them in any combination.
+
+![Search page with the Filters disclosure expanded, showing the Date from, Date to, Author, Tag, and Sort order controls](../images/search-and-discovery/search-advanced-filters.png)
 
 ### Date Range
 
