@@ -1164,4 +1164,31 @@ class Demo_Content {
 			'<p>Trust levels are earned automatically through participation, so there is nothing to configure per user. If you want to grant an ability sooner, assign a space role instead — that takes effect immediately and is independent of trust level.</p>',
 		);
 	}
+
+	/**
+	 * Realistic tag vocabulary for the model community.
+	 *
+	 * The generator creates a {@see \Jetonomy\Models\Tag} for each name and
+	 * attaches 1–3 relevant tags to most topics so the frontend tag pages and
+	 * the tag cloud read like a real community rather than an empty stub. Names
+	 * are display names — the Tag model derives the slug via sanitize_title().
+	 *
+	 * @return array<int, string>
+	 */
+	public static function tags(): array {
+		return array(
+			'getting-started',
+			'moderation',
+			'integrations',
+			'api',
+			'billing',
+			'mobile',
+			'search',
+			'roadmap',
+			'migration',
+			'performance',
+			'email',
+			'webhooks',
+		);
+	}
 }

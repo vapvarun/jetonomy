@@ -17,6 +17,7 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Models\Vote;
 use Jetonomy\Models\Flag;
+use Jetonomy\Models\Tag;
 use function Jetonomy\table;
 
 /**
@@ -74,6 +75,8 @@ class Demo_Seeder {
 			'polls'      => array(),
 			'badges'     => array(),
 			'threads'    => array(),
+			'tags'       => array(),
+			'post_tags'  => array(),
 		);
 
 		// ── Users ────────────────────────────────────────────────────────────
@@ -157,6 +160,25 @@ class Demo_Seeder {
 
 		// ── Posts + replies ──────────────────────────────────────────────────────
 
+		// Create the curated tag vocabulary up front. Tag::find_or_create()
+		// reuses an existing row when the slug already exists, so the seeder
+		// only tracks ids it can safely remove on cleanup: a tag is recorded
+		// in the manifest only when it did not exist before this run.
+		$tag_ids = array(); // slug → id, every tag (created or reused) for attaching.
+		foreach ( Demo_Content::tags() as $tag_name ) {
+			$slug         = sanitize_title( $tag_name );
+			$pre_existing = Tag::exists( $slug );
+			$tid          = Tag::find_or_create( $tag_name );
+			if ( $tid <= 0 ) {
+				continue;
+			}
+			$tag_ids[ $slug ] = $tid;
+			if ( ! $pre_existing ) {
+				$demo['tags'][] = $tid;
+			}
+		}
+		$tag_id_pool = array_values( $tag_ids );
+
 		$anchors          = Demo_Content::anchor_topics();
 		$accepted_bodies  = Demo_Content::accepted_answers();
 		$reply_pool       = Demo_Content::reply_pool();
@@ -180,13 +202,22 @@ class Demo_Seeder {
 				++$topic_index;
 				$author_id  = $by_login[ $topic['author'] ] ?? self::pick( $member_ids );
 				$created_at = self::backdate( $now );
-				$post_id    = Post::create(
+
+				// The title is stored exactly as curated — clean, with no numeric
+				// suffix. Slug uniqueness across the seed is guaranteed by a
+				// structural suffix on the SLUG only (e.g. "...-s9t1"), which
+				// reads as a deliberate slug token rather than a trailing index
+				// the way a bare "-9-1" did. Never push the index into the title.
+				$clean_title = $topic['title'];
+				$unique_slug = sanitize_title( $clean_title ) . '-s' . $space_id . 't' . $topic_index;
+
+				$post_id = Post::create(
 					array(
 						'space_id'      => $space_id,
 						'author_id'     => $author_id,
 						'type'          => $post_type,
-						'title'         => $topic['title'],
-						'slug'          => sanitize_title( $topic['title'] ) . '-' . $space_id . '-' . $topic_index,
+						'title'         => $clean_title,
+						'slug'          => $unique_slug,
 						'content'       => $topic['content'],
 						'content_plain' => wp_strip_all_tags( $topic['content'] ),
 						'status'        => 'publish',
@@ -197,6 +228,22 @@ class Demo_Seeder {
 					continue;
 				}
 				$demo['posts'][] = (int) $post_id;
+
+				// Attach 1–3 relevant tags to most topics (deterministic 5-in-6
+				// keyed on the topic index so a handful stay untagged — a real
+				// community is never 100% tagged). Tag::attach_to_post() inserts
+				// the jt_post_tags link (INSERT IGNORE) and bumps post_count.
+				if ( ! empty( $tag_id_pool ) && 0 !== $topic_index % 6 ) {
+					$how_many = wp_rand( 1, 3 );
+					$chosen   = self::sample( $tag_id_pool, $how_many );
+					foreach ( $chosen as $tid ) {
+						Tag::attach_to_post( (int) $post_id, (int) $tid );
+						$demo['post_tags'][] = array(
+							'post_id' => (int) $post_id,
+							'tag_id'  => (int) $tid,
+						);
+					}
+				}
 
 				// Roadmap statuses on idea spaces — spread across the kanban.
 				if ( 'idea' === $post_type && 0 === $topic_index % 2 ) {
@@ -707,6 +754,22 @@ class Demo_Seeder {
 		$votes_t = table( 'votes' );
 		self::delete_in( $votes_t, 'object_id', $post_ids, "AND object_type = 'post'" );
 		self::delete_in( $votes_t, 'object_id', $reply_ids, "AND object_type = 'reply'" );
+
+		// --- Tags + post-tag links ---
+		// Remove the post-to-tag links for every seeded post, then remove the
+		// tag definitions this seeder actually created (tracked ids only — tags
+		// that pre-existed the seed are left intact). Existence-checked so old
+		// manifests / fresh installs without the tables stay quiet.
+		$post_tags_t = table( 'post_tags' );
+		$tags_t      = table( 'tags' );
+		$tag_ids     = array_filter( array_map( 'absint', $manifest['tags'] ?? array() ) );
+
+		if ( $post_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $post_tags_t ) ) === $post_tags_t ) {
+			self::delete_in( $post_tags_t, 'post_id', $post_ids );
+		}
+		if ( $tag_ids && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $tags_t ) ) === $tags_t ) {
+			self::delete_in( $tags_t, 'id', $tag_ids );
+		}
 
 		// --- Replies / Posts ---
 
