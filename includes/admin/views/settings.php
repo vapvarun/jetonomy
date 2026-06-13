@@ -72,7 +72,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 		<aside class="jt-settings-sidebar">
 			<div class="jt-settings-sidebar-brand">
-				<span class="dashicons dashicons-admin-settings jt-settings-brand-icon" aria-hidden="true"></span>
+				<img class="jt-settings-brand-icon" src="<?php echo esc_url( JETONOMY_URL . 'assets/images/jetonomy-mark.svg' ); ?>" width="36" height="36" alt="" aria-hidden="true" />
 				<div class="jt-settings-brand-text">
 					<p class="jt-settings-brand-name">Jetonomy</p>
 					<p class="jt-settings-brand-sub"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></p>

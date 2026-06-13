@@ -56,7 +56,13 @@ class Admin {
 
 	public function add_menu(): void {
 		$menu_label = apply_filters( 'jetonomy_admin_menu_label', __( 'Jetonomy', 'jetonomy' ) );
-		$menu_icon  = apply_filters( 'jetonomy_admin_menu_icon', 'dashicons-groups' );
+
+		// Brand mark (mono members glyph) as a data-URI so WordPress recolors it
+		// for default/hover/current menu states. Single solid color is required
+		// for the admin-menu filter to tint cleanly.
+		$menu_glyph = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g fill="#a7aaad"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></svg>';
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encoding an inline SVG as a data-URI menu icon, not obfuscation.
+		$menu_icon = apply_filters( 'jetonomy_admin_menu_icon', 'data:image/svg+xml;base64,' . base64_encode( $menu_glyph ) );
 
 		add_menu_page(
 			$menu_label,
