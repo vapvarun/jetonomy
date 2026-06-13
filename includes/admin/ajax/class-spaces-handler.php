@@ -14,6 +14,7 @@ use Jetonomy\Models\Space;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\JoinRequest;
+use Jetonomy\Models\InviteLink;
 use function Jetonomy\now;
 
 class Spaces_Handler {
@@ -34,6 +35,20 @@ class Spaces_Handler {
 		// Join Requests AJAX
 		add_action( 'wp_ajax_jetonomy_approve_join_request', array( $this, 'ajax_approve_join_request' ) );
 		add_action( 'wp_ajax_jetonomy_deny_join_request', array( $this, 'ajax_deny_join_request' ) );
+		// Invite Links AJAX
+		add_action( 'wp_ajax_jetonomy_generate_invite', array( $this, 'ajax_generate_invite' ) );
+		add_action( 'wp_ajax_jetonomy_list_invites', array( $this, 'ajax_list_invites' ) );
+		add_action( 'wp_ajax_jetonomy_revoke_invite', array( $this, 'ajax_revoke_invite' ) );
+	}
+
+	/**
+	 * Build the public invite URL for a token, mirroring
+	 * Spaces_Controller::generate_invite() exactly.
+	 */
+	private function invite_url( string $token ): string {
+		$settings  = get_option( 'jetonomy_settings', array() );
+		$base_slug = $settings['base_slug'] ?? 'community';
+		return home_url( '/' . $base_slug . '/invite/' . $token . '/' );
 	}
 
 	public function ajax_create_space(): void {
@@ -551,5 +566,90 @@ class Spaces_Handler {
 		JoinRequest::deny( $request_id, get_current_user_id() );
 
 		wp_send_json_success( array( 'message' => __( 'Join request denied.', 'jetonomy' ) ) );
+	}
+
+	/**
+	 * Generate a new invite link for a space.
+	 */
+	public function ajax_generate_invite(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$space_id = absint( $_POST['space_id'] ?? 0 );
+		if ( ! $space_id ) {
+			wp_send_json_error( __( 'Missing space ID.', 'jetonomy' ) );
+		}
+
+		$max_uses   = absint( $_POST['max_uses'] ?? 0 );
+		$expires_at = sanitize_text_field( wp_unslash( $_POST['expires_at'] ?? '' ) );
+
+		$token  = InviteLink::generate( $space_id, get_current_user_id(), $max_uses, $expires_at ?: null );
+		$invite = InviteLink::find_by_token( $token );
+
+		wp_send_json_success(
+			array(
+				'id'         => $invite ? (int) $invite->id : 0,
+				'token'      => $token,
+				'invite_url' => $this->invite_url( $token ),
+				'max_uses'   => $max_uses,
+				'expires_at' => $expires_at ?: null,
+				'message'    => __( 'Invite link generated.', 'jetonomy' ),
+			)
+		);
+	}
+
+	/**
+	 * List active invite links for a space.
+	 */
+	public function ajax_list_invites(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$space_id = absint( $_POST['space_id'] ?? 0 );
+		if ( ! $space_id ) {
+			wp_send_json_error( __( 'Missing space ID.', 'jetonomy' ) );
+		}
+
+		$invites = array();
+		foreach ( InviteLink::list_by_space( $space_id ) as $invite ) {
+			$invites[] = array(
+				'id'         => (int) $invite->id,
+				'invite_url' => $this->invite_url( (string) $invite->token ),
+				'max_uses'   => (int) $invite->max_uses,
+				'used_count' => (int) $invite->use_count,
+				'expires_at' => $invite->expires_at,
+				'is_valid'   => InviteLink::is_valid( $invite ),
+			);
+		}
+
+		wp_send_json_success( array( 'invites' => $invites ) );
+	}
+
+	/**
+	 * Revoke (delete) an invite link, scoped to its owning space.
+	 */
+	public function ajax_revoke_invite(): void {
+		check_ajax_referer( 'jetonomy_admin', 'nonce' );
+		if ( ! current_user_can( 'jetonomy_manage_spaces' ) ) {
+			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
+		}
+
+		$space_id = absint( $_POST['space_id'] ?? 0 );
+		$id       = absint( $_POST['id'] ?? 0 );
+
+		if ( ! $space_id || ! $id ) {
+			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
+		}
+
+		$result = InviteLink::revoke( $id, $space_id );
+		if ( ! $result ) {
+			wp_send_json_error( __( 'Failed to revoke invite link.', 'jetonomy' ) );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'Invite link revoked.', 'jetonomy' ) ) );
 	}
 }

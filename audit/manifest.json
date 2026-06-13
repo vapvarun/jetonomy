@@ -1200,6 +1200,27 @@
 			"nonce": "jetonomy_admin",
 			"capability": "manage_options",
 			"purpose": "Clean up sample data"
+		},
+		{
+			"action": "jetonomy_generate_invite",
+			"handler": "Admin\\Ajax\\Spaces_Handler::generate_invite",
+			"nonce": "jetonomy_admin",
+			"capability": "jetonomy_manage_spaces",
+			"purpose": "Generate space invite link"
+		},
+		{
+			"action": "jetonomy_list_invites",
+			"handler": "Admin\\Ajax\\Spaces_Handler::list_invites",
+			"nonce": "jetonomy_admin",
+			"capability": "jetonomy_manage_spaces",
+			"purpose": "List space invite links"
+		},
+		{
+			"action": "jetonomy_revoke_invite",
+			"handler": "Admin\\Ajax\\Spaces_Handler::revoke_invite",
+			"nonce": "jetonomy_admin",
+			"capability": "jetonomy_manage_spaces",
+			"purpose": "Revoke space invite link"
 		}
 	],
 	"admin_pages": [

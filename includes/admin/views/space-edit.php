@@ -246,6 +246,50 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<?php endif; ?>
 				</tbody>
 			</table>
+
+			<hr>
+
+			<h2><?php esc_html_e( 'Invite Links', 'jetonomy' ); ?></h2>
+			<?php if ( 'invite' !== ( $space->join_policy ?? 'open' ) ) : ?>
+				<p class="description"><?php esc_html_e( "Invite links work with any join policy; set Join Policy to 'Invite only' to require them.", 'jetonomy' ); ?></p>
+			<?php endif; ?>
+
+			<div class="jetonomy-inline-form" id="jetonomy-generate-invite-form">
+				<div class="jetonomy-form-row">
+					<label for="invite-max-uses"><?php esc_html_e( 'Max uses', 'jetonomy' ); ?>
+						<input type="number" id="invite-max-uses" class="small-text" min="0" step="1" value="0" placeholder="0">
+					</label>
+					<label for="invite-expires-at"><?php esc_html_e( 'Expires', 'jetonomy' ); ?>
+						<input type="date" id="invite-expires-at">
+					</label>
+					<button type="button" class="button button-primary" id="jetonomy-generate-invite" data-space-id="<?php echo absint( $space->id ); ?>"><?php esc_html_e( 'Generate invite link', 'jetonomy' ); ?></button>
+				</div>
+				<p class="description"><?php esc_html_e( 'Max uses 0 means unlimited. Leave Expires blank for no expiry.', 'jetonomy' ); ?></p>
+			</div>
+
+			<table class="wp-list-table widefat fixed striped" id="jetonomy-invites-table" data-space-id="<?php echo absint( $space->id ); ?>">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Invite Link', 'jetonomy' ); ?></th>
+						<th style="width:120px;"><?php esc_html_e( 'Uses', 'jetonomy' ); ?></th>
+						<th style="width:140px;"><?php esc_html_e( 'Expires', 'jetonomy' ); ?></th>
+						<th style="width:120px;"><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					jetonomy_admin_empty_state(
+						array(
+							'colspan' => 4,
+							'variant' => 'compact',
+							'icon'    => 'admin-links',
+							'title'   => __( 'No invite links yet', 'jetonomy' ),
+							'body'    => __( 'Generate a link to invite people directly into this space.', 'jetonomy' ),
+						)
+					);
+					?>
+				</tbody>
+			</table>
 		</div>
 
 	<?php elseif ( 'access' === $active_tab ) : ?>

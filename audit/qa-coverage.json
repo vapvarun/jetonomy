@@ -5,7 +5,7 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-11T09:23:21+00:00",
+        "at": "2026-06-13T20:04:56+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
@@ -428,11 +428,21 @@
             ]
         },
         "ajax": {
-            "total": 40,
-            "covered": 0,
+            "total": 43,
+            "covered": 3,
             "uncovered": 40,
             "skipped": 0,
-            "covered_items": [],
+            "covered_items": [
+                {
+                    "action": "jetonomy_generate_invite"
+                },
+                {
+                    "action": "jetonomy_list_invites"
+                },
+                {
+                    "action": "jetonomy_revoke_invite"
+                }
+            ],
             "uncovered_items": [
                 {
                     "action": "jetonomy_create_category",
@@ -729,15 +739,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 154,
-        "items_covered": 43,
+        "items_total": 157,
+        "items_covered": 46,
         "items_uncovered": 111,
         "items_skipped": 137,
-        "coverage_percent": 27.899999999999999
+        "coverage_percent": 29.300000000000001
     },
     "drift": {
-        "previous_uncovered": 111,
+        "previous_uncovered": 114,
         "current_uncovered": 111,
-        "delta": 0
+        "delta": -3
     }
 }

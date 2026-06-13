@@ -855,6 +855,14 @@ class Admin {
 					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
 					'reloadPage'              => esc_html__( 'Reload page', 'jetonomy' ),
 					'importConnectionLost'    => esc_html__( 'Connection lost. You can resume this import later.', 'jetonomy' ),
+					'inviteCopied'            => esc_html__( 'Invite link copied to clipboard.', 'jetonomy' ),
+					'inviteRevokeConfirm'     => esc_html__( 'Revoke this invite link? Anyone holding it will no longer be able to join.', 'jetonomy' ),
+					'inviteNoLinks'           => esc_html__( 'No invite links yet.', 'jetonomy' ),
+					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
+					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
+					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
+					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
+					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
 				),
 			)
 		);

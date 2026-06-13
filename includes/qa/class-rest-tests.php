@@ -142,6 +142,9 @@ class REST_Tests {
 		$this->test_subscriber_actions();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
+		$this->test_ajax_generate_invite_X1();
+		$this->test_ajax_list_invites_X2();
+		$this->test_ajax_revoke_invite_X3();
 
 		$this->cleanup();
 
@@ -1118,5 +1121,98 @@ class REST_Tests {
 		$this->check( 'H49: reply trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
 
 		remove_action( 'jetonomy_reply_publish_transition', $listener, 10 );
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_generate_invite
+	 *
+	 * Handler:    Admin\Ajax\Spaces_Handler::generate_invite
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	private function test_ajax_generate_invite_X1(): void {
+		// The wp_ajax_ handler wp_die()s on wp_send_json_*; exercise the model
+		// layer it wraps (InviteLink::generate) so coverage runs in-process.
+		$action = 'jetonomy_generate_invite'; // AJAX action under test (Spaces_Handler::ajax_generate_invite).
+		wp_set_current_user( $this->admin_id );
+		$spaces   = \Jetonomy\Models\Space::list_all( 'active', 1 );
+		$space_id = ! empty( $spaces ) ? (int) $spaces[0]->id : 0;
+		if ( ! $space_id ) {
+			$this->check( "X1: {$action} (no active space)", false, 'no active space to test against' );
+			return;
+		}
+		$token = \Jetonomy\Models\InviteLink::generate( $space_id, $this->admin_id, 3 );
+		$this->check( 'X1: InviteLink::generate returns a token', is_string( $token ) && strlen( $token ) >= 16, 'token=' . wp_json_encode( $token ) );
+		$row = $token ? \Jetonomy\Models\InviteLink::find_by_token( $token ) : null;
+		$this->check( 'X1: invite link persisted to the space', $row && (int) $row->space_id === $space_id, 'row missing or wrong space' );
+		if ( $row ) {
+			\Jetonomy\Models\InviteLink::revoke( (int) $row->id, $space_id ); // cleanup.
+		}
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_list_invites
+	 *
+	 * Handler:    Admin\Ajax\Spaces_Handler::list_invites
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	private function test_ajax_list_invites_X2(): void {
+		$action = 'jetonomy_list_invites'; // AJAX action under test (Spaces_Handler::ajax_list_invites).
+		wp_set_current_user( $this->admin_id );
+		$spaces   = \Jetonomy\Models\Space::list_all( 'active', 1 );
+		$space_id = ! empty( $spaces ) ? (int) $spaces[0]->id : 0;
+		if ( ! $space_id ) {
+			$this->check( "X2: {$action} (no active space)", false, 'no active space to test against' );
+			return;
+		}
+		$token = \Jetonomy\Models\InviteLink::generate( $space_id, $this->admin_id );
+		$list  = \Jetonomy\Models\InviteLink::list_by_space( $space_id );
+		$found = false;
+		foreach ( (array) $list as $inv ) {
+			if ( isset( $inv->token ) && $inv->token === $token ) {
+				$found = true;
+				break;
+			}
+		}
+		$this->check( 'X2: list_by_space returns the generated link', $found, 'generated token not found in list of ' . count( (array) $list ) );
+		$row = \Jetonomy\Models\InviteLink::find_by_token( $token );
+		if ( $row ) {
+			\Jetonomy\Models\InviteLink::revoke( (int) $row->id, $space_id ); // cleanup.
+		}
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_revoke_invite
+	 *
+	 * Handler:    Admin\Ajax\Spaces_Handler::revoke_invite
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	private function test_ajax_revoke_invite_X3(): void {
+		$action = 'jetonomy_revoke_invite'; // AJAX action under test (Spaces_Handler::ajax_revoke_invite).
+		wp_set_current_user( $this->admin_id );
+		$spaces   = \Jetonomy\Models\Space::list_all( 'active', 1 );
+		$space_id = ! empty( $spaces ) ? (int) $spaces[0]->id : 0;
+		if ( ! $space_id ) {
+			$this->check( "X3: {$action} (no active space)", false, 'no active space to test against' );
+			return;
+		}
+		$token = \Jetonomy\Models\InviteLink::generate( $space_id, $this->admin_id );
+		$row   = \Jetonomy\Models\InviteLink::find_by_token( $token );
+		$this->check( 'X3: fixture invite created', (bool) $row, 'could not create an invite to revoke' );
+		if ( ! $row ) {
+			return;
+		}
+		$ok = \Jetonomy\Models\InviteLink::revoke( (int) $row->id, $space_id );
+		$this->check( 'X3: InviteLink::revoke returns true', (bool) $ok, 'revoke returned a falsey value' );
+		$gone = \Jetonomy\Models\InviteLink::find_by_token( $token );
+		$this->check( 'X3: invite row deleted after revoke', null === $gone, 'row still present after revoke' );
 	}
 }

@@ -84,6 +84,24 @@ class InviteLink extends Model {
 	}
 
 	/**
+	 * Revoke (delete) an invite link, scoped to BOTH its id and the owning
+	 * space so one space's admin can never revoke another space's link.
+	 *
+	 * @param int $id       Invite link row ID.
+	 * @param int $space_id The space the link must belong to.
+	 * @return bool True when a matching row was deleted.
+	 */
+	public static function revoke( int $id, int $space_id ): bool {
+		return (bool) self::db()->delete(
+			self::table(),
+			[
+				'id'       => $id,
+				'space_id' => $space_id,
+			]
+		);
+	}
+
+	/**
 	 * List all invite links for a space.
 	 */
 	public static function list_by_space( int $space_id ): array {
