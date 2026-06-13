@@ -10,11 +10,11 @@ Remove all Jetonomy branding and present your community as entirely your own pro
 - How to enable White Label
 - How to remove Jetonomy branding from the frontend and admin
 - How to set a custom admin menu label and icon
-- How to control branding for headless or REST API clients
+- How to rebrand transactional emails and digests
 
 ## Why White Label Matters
 
-You built your community. Your members know your brand - not the plugin powering it. White Label means your community looks like yours from every angle: the frontend pages, the admin sidebar, and the REST API responses. This is especially important for agencies delivering client projects and for SaaS products embedding community features under their own brand.
+You built your community. Your members know your brand - not the plugin powering it. White Label means your community looks like yours from every angle: the frontend pages, the admin sidebar, and the notification emails. This is especially important for agencies delivering client projects and for SaaS products embedding community features under their own brand.
 
 ## Enabling White Label
 
@@ -30,7 +30,6 @@ Go to **Jetonomy → Settings → Branding**.
 |---------|---------|-----------------|
 | **"Powered by Jetonomy" footer** | Shown | Remove the attribution link from the community footer |
 | **Jetonomy logo in community nav** | Shown | Replace with your own logo or hide entirely |
-| **HTML `data-plugin` attribute** | `jetonomy` | Change or remove the attribute on the `.jt-app` wrapper |
 | **Custom CSS injection** | Empty | Add CSS that loads on every community page |
 
 Upload your own logo (SVG or PNG, max 400×100 px) to replace the Jetonomy logo in the community navigation bar. Leave the logo field blank to show no logo at all.
@@ -50,23 +49,6 @@ In **Jetonomy → Settings → Branding → Admin Menu**:
 The label change applies to the top-level menu item and the browser window title on all Jetonomy admin pages.
 
 <!-- TODO screenshot needed: WordPress admin sidebar showing custom menu label and icon (was ../images/pro-white-label-admin-menu.png) -->
-## REST API Branding
-
-By default, Jetonomy's REST API responses include a `powered_by` key in the root namespace response:
-
-```json
-GET /wp-json/jetonomy/v1/
-
-{
-  "name": "Jetonomy API",
-  "powered_by": "Jetonomy"
-}
-```
-
-With White Label enabled, you can override both the `name` and `powered_by` values in **Settings → Branding → REST API Label**. Set them to your product name, or leave them blank to omit those fields entirely from the response.
-
-This is particularly useful for headless community builds where the REST API is consumed by a custom frontend - clients see your brand name, not Jetonomy's.
-
 ## Email Branding
 
 White Label also affects transactional emails and digests. In **Settings → Branding → Email**:

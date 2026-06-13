@@ -15,7 +15,7 @@ Jetonomy registers its abilities only when the API exists, so nothing changes on
 
 ## Free Abilities
 
-All free abilities live under the `jetonomy/` namespace, grouped into categories (`jetonomy-content`, `jetonomy-spaces`, `jetonomy-users`, `jetonomy-moderation`, `jetonomy-discovery`).
+All free abilities live under the `jetonomy/` namespace, grouped into categories (`jetonomy-content`, `jetonomy-spaces`, `jetonomy-users`, `jetonomy-moderation`, `jetonomy-search`).
 
 | Ability | What it does |
 |---------|--------------|

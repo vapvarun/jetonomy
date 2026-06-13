@@ -7,16 +7,14 @@ Tags connect related discussions across your entire community. A member searchin
 - How to add tags when creating a topic
 - How tag pills work on topic listings
 - How tag pages bring together content from multiple spaces
-- How the Popular Tags sidebar widget helps members discover content
+- How the Popular Tags sidebar section helps members discover content
 - Why consistent tagging improves search and community quality
 
 ## Adding Tags to a Topic
 
-When creating or editing a topic, the **Tags** field appears below the content editor. Type a tag name and press Enter or comma to add it. You can add up to five tags per topic.
+When creating or editing a topic, the **Tags** field appears below the content editor. Type one or more tag names separated by commas - for example `python, django, architecture`.
 
-As you type, Jetonomy shows a live dropdown of existing tags that match your input. Select an existing tag whenever possible - reusing tags makes the tag page more useful for everyone who follows that topic.
-
-To remove a tag, click the X on its pill in the field.
+Reuse existing tag names whenever possible - reusing tags makes the tag page more useful for everyone who follows that topic, and matching an existing name (rather than a typo) keeps related posts together.
 
 > **Tip:** In Q&A spaces, good tags are the fastest route to an answer. A question tagged with "payments" and "stripe" will appear on both tag pages, doubling its chance of being seen by someone who can help.
 
@@ -28,25 +26,21 @@ Tags in listings are a fast way to browse by topic without running a search. If 
 
 ## Tag Pages
 
-Every tag has a dedicated page at `/community/tag/tag-slug/`. The tag page shows all published topics across all spaces that carry that tag, sorted by newest by default.
+Every tag has a dedicated page at `/community/tag/tag-slug/`. The tag page shows all published topics across all spaces that carry that tag, sorted by **Latest** (newest first) by default.
 
-Members can switch the sort order to Most Voted to find the best content on that topic, or use the date filter to narrow to recent discussions.
+Members can switch the sort to **Popular** to find the best content on that topic - Popular orders by net vote score.
 
 Tag pages are publicly accessible by default. If your community is private, tag pages respect the space access rules - topics in private spaces are not shown on tag pages to members who do not have access to those spaces.
 
-## Popular Tags Sidebar Widget
+## Popular Tags Sidebar
 
-The **Popular Tags** widget lists the tags used most frequently across your community. Add it to your sidebar from **Appearance → Widgets** and select the **Jetonomy: Popular Tags** widget.
+The **Popular Tags** section in the community sidebar lists the most frequently used tags across your community (up to 15), each linking to its tag page with a post count. It appears automatically - there is nothing to configure.
 
-Configuration options:
+Developers can hide it with the `jetonomy_show_sidebar_popular_tags` filter:
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| Title | Popular Tags | Widget heading text |
-| Count | 10 | Number of tags to display |
-| Show count | Yes | Display the number of posts per tag |
-
-The widget refreshes its data hourly via WordPress transients so it does not run a query on every page load.
+```php
+add_filter( 'jetonomy_show_sidebar_popular_tags', '__return_false' );
+```
 
 ## How Tags Improve Your Community
 

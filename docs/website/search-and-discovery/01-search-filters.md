@@ -13,7 +13,6 @@ Jetonomy's search finds content across your entire community in real time - topi
 The search bar sits in the community navigation, visible on every page. Type any keyword and press Enter or click the search icon. Jetonomy searches across:
 
 - Topic titles and content
-- Reply content
 - Space names and descriptions
 - Tag names
 
@@ -21,7 +20,7 @@ Results appear on the search results page at `/community/search/`. Each result c
 
 ![Search results page](../images/search-results.png)
 
-> **Tip:** Phrase searches work well in Jetonomy. Wrap your query in quotes - `"email digest"` - to find that exact phrase rather than posts containing both words separately.
+> **Tip:** Every word you type is required (AND), matched as a prefix - searching `email digest` finds posts containing both `email...` and `digest...`. Short words (under 4 characters) are ignored, so lead with the distinctive terms.
 
 ## Filter Pills
 
@@ -38,15 +37,15 @@ Click any pill to filter. The URL updates so you can share a filtered search lin
 
 ## Advanced Filters
 
-Click the **Filters** button to expand the advanced filter bar. These filters stack - you can combine them in any combination.
+Click the **Filters** disclosure to expand the advanced filter bar. It auto-expands whenever any filter is already active. These filters stack - you can combine them in any combination.
 
 ### Date Range
 
-Choose a preset (Last 7 days, Last 30 days, Last year) or set a custom From / To date. Jetonomy filters by the post's original publish date, not its last reply date.
+Set a **Date from** and / or **Date to** date to restrict results to a window. Jetonomy filters by the post's original publish date, not its last reply date.
 
 ### Author
 
-Type a username to filter results to a specific author. Jetonomy auto-suggests matching members as you type. This is useful for reviewing a particular member's contributions or finding your own older posts.
+Type a name or username to filter results to a specific author. Jetonomy resolves it to the matching member when you submit the search (there is no live typeahead). This is useful for reviewing a particular member's contributions or finding your own older posts.
 
 ### Tag
 
@@ -64,20 +63,28 @@ Relevance is the default because it surfaces the best textual match. Switch to N
 
 ### Collapsing the Filter Bar
 
-Click **Filters** again to collapse the bar. Your active filters remain applied - the pill count badge on the Filters button shows how many filters are currently active.
+Click **Filters** again to collapse the bar. Your active filters remain applied even while the bar is collapsed.
 
 ## For Developers: Extending Search Filters
 
-The `jetonomy_search_filters` hook lets you add custom filter parameters to the search query. This is how Pro extensions like analytics-based filtering hook into the search pipeline.
+To modify the search query itself, use the `jetonomy_search_query_args` filter. It receives the assembled query arguments (`q`, `space_id`, `date_from`, `date_to`, `author_id`, `tag_slug`, `sort`) and must return the array.
 
 ```php
-add_filter( 'jetonomy_search_filters', function( $filters, $query_args ) {
-    // Add a custom filter to restrict to a specific space.
+add_filter( 'jetonomy_search_query_args', function( $args ) {
+    // Restrict the query to a specific space.
     if ( ! empty( $_GET['space_id'] ) ) {
-        $filters['space_id'] = absint( $_GET['space_id'] );
+        $args['space_id'] = absint( $_GET['space_id'] );
     }
-    return $filters;
-}, 10, 2 );
+    return $args;
+} );
+```
+
+To render extra controls in the filter bar, hook the `jetonomy_search_filters` action. It is a `do_action` (it returns nothing) fired just after the filter form, with three arguments: the query string `$q`, the active `$filter` pill, and an array of the current filter values.
+
+```php
+add_action( 'jetonomy_search_filters', function( $q, $filter, $filters ) {
+    // Echo your own markup for an extra filter control here.
+}, 10, 3 );
 ```
 
 See the [Hooks Reference](../developer-guide/02-hooks-reference.md) for the full parameter list.

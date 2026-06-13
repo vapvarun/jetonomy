@@ -7,7 +7,7 @@ The Access Control setting decides whether your community is open to the public 
 - How REST API access changes between the two modes
 - When to switch and what to expect
 
-Go to **Jetonomy → Settings → General → Access Control** to choose the mode.
+Go to **Jetonomy → Settings → General** and find the **Access Control** card to choose the mode. It is one card on the General tab, not a separate sub-page.
 
 ## Public Mode (default)
 

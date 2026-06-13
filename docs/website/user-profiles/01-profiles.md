@@ -36,7 +36,7 @@ Below the header, four stats appear at a glance:
 | Replies | Number of published replies |
 | Trust Level | Current trust level badge and name |
 
-The reputation score links to the leaderboard. The trust level badge uses the same color coding as it does on reply cards - grey for TL0, scaling up to gold for TL5.
+The trust level badge uses the same color coding as it does on reply cards - grey for TL0, scaling up to gold for TL5.
 
 ## Profile Tabs
 

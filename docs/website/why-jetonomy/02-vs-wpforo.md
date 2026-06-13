@@ -24,7 +24,7 @@ How Jetonomy compares to wpForo - two modern forum plugins with different approa
 | Anti-spam | reCAPTCHA v2 | reCAPTCHA v3 + Turnstile (invisible) |
 | Topic management | Move topics | Move + merge + split |
 | Draft posts | Not available | Save as draft + scheduling |
-| REST API | Limited | 48+ endpoints (90+ with Pro) |
+| REST API | Limited | 68+ endpoints (127+ with Pro) |
 | Theme integration | Custom styling | CSS custom properties via theme.json |
 | Membership gating | Built-in groups | Adapter system (MemberPress, PMPro, WooCommerce, LearnDash) |
 | Analytics | Basic stats | Full dashboard with export (Pro) |

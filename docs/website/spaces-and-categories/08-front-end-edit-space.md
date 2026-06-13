@@ -41,12 +41,11 @@ Every space setting that is editable in wp-admin is editable from the front-end.
 | Cover image | A wide banner image shown above the space header |
 | Icon | The Lucide icon shown next to the title |
 | Category | Which community category the space belongs to |
-| Type | Forum, Q&A, Ideas, Show & Tell, or Social Feed |
+| Type | Forum, Q&A, Ideas, or Feed |
 | Visibility | Public, Private, or Hidden |
 | Join policy | Open, Approval Required, or Invite Only |
-| Posts per page | 10, 25, or 50 |
+| Posts per page | A number from 1 to 100; leave blank to use the site default |
 | Post prefixes | Optional tags shown in front of post titles (e.g. "Bug", "Idea") |
-| Welcome message | Text shown to new members the first time they enter the space |
 
 Changing the type after creation is supported but rarely a good idea. Switching a Q&A space to a Forum keeps every existing post but stops showing the "Mark as answer" affordance. The editor warns you before saving a type change.
 
@@ -58,11 +57,11 @@ Changing the icon takes effect immediately on save. Cached pages and listings pi
 
 ## Cover Image Upload
 
-The cover image field accepts a JPEG, PNG, or WebP file up to 5 MB. Recommended dimensions are 1600 x 400 pixels.
+The cover image field accepts a standard image file. Recommended dimensions are around 1600 x 400 pixels - that is guidance for how the banner is cropped, not an enforced limit.
 
-Cover image upload works for any member with edit permission in the space, even if they do not have WordPress's `upload_files` capability. Jetonomy handles its own media path for community uploads, so granting "edit this space" does not require granting site-wide media upload rights.
+Uploads go into the standard WordPress media library at `/wp-content/uploads/YYYY/MM/`, the same place every other site image lives. The space stores only the resulting image URL, so the upload is reusable like any other attachment. The upload endpoint is gated by the logged-in member's edit permission in the space rather than by WordPress's `upload_files` capability, so a space owner can set a cover without site-wide media upload rights.
 
-Uploaded covers are stored under `/wp-content/uploads/jetonomy/covers/<space-id>/`. Removing or replacing a cover deletes the old file. There is a **Remove cover** link below the upload field that clears the image without setting a new one.
+There is a **Remove cover** link below the upload field that clears the image reference from the space. Removing a cover only clears the reference; it does not delete the underlying attachment from the media library.
 
 ## Role-Protection Rules
 

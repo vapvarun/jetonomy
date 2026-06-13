@@ -253,7 +253,6 @@ const data = await res.json();
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/tags` | Public | List all global tags |
-| POST | `/tags` | Logged in (trust level 1+) | Create a tag |
 
 > **Removed in 1.5.0:** the `GET /space-tags` route. It read tables that were never wired to any feature; tags have always been global. Existing integrations calling it receive a 404 and should switch to `GET /tags`.
 
@@ -341,7 +340,7 @@ Returns per-item results so partial failures are visible:
 {
     object_type: 'post',   // or 'reply'
     object_id:   42,
-    reason:      'spam',   // spam | off-topic | inappropriate | other
+    reason:      'spam',   // spam | offensive | off_topic | harassment | other
 }
 ```
 
@@ -482,10 +481,15 @@ The following endpoints are available only when **Jetonomy Pro** is active and t
 | GET | `/conversations` | Logged in | List conversations |
 | POST | `/conversations` | Trust Level 1+ | Start a new conversation |
 | GET | `/conversations/{id}` | Participant | Get conversation details |
-| PATCH | `/conversations/{id}` | Participant | Mute/unmute a conversation |
+| PATCH | `/conversations/{id}` | Participant | Update conversation settings (`is_muted` boolean); see also the dedicated `POST /conversations/{id}/mute` |
 | GET | `/conversations/{id}/messages` | Participant | List messages (paginated) |
 | POST | `/conversations/{id}/messages` | Participant + TL 1+ | Send a message |
+| POST | `/conversations/{id}/mute` | Participant | Mute/unmute the conversation (`muted` boolean) |
+| POST | `/conversations/{id}/archive` | Participant | Archive/unarchive the conversation for the caller (`archived` boolean) |
+| POST | `/conversations/{id}/leave` | Participant | Leave a group conversation |
+| POST | `/conversations/{id}/block` | Participant | Block/unblock the other participant (`blocked` boolean) |
 | GET | `/conversations/unread-count` | Logged in | Unread message count (30s cache) |
+| GET | `/messaging/recipient-suggestions` | Logged in | Typeahead for the DM composer, scoped to shared-space members (`q` required, 3-64 chars) |
 
 **POST /conversations - body**
 
@@ -571,8 +575,8 @@ const data = await res.json();
 |--------|-------|------|-------------|
 | GET | `/users/me/digest-preferences` | Logged in | Get the current user's digest frequency and topic preferences |
 | PATCH | `/users/me/digest-preferences` | Logged in | Update digest frequency and topics |
-| POST | `/admin/digest/test` | `jetonomy_manage_settings` | Send a test digest email |
-| GET | `/admin/digest/stats` | `jetonomy_manage_settings` | Digest delivery statistics |
+| POST | `/admin/digest/test` | `manage_options` | Send a test digest email |
+| GET | `/admin/digest/stats` | `manage_options` | Digest delivery statistics |
 
 ### Webhooks (`webhooks` extension)
 

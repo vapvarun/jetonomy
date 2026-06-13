@@ -11,7 +11,7 @@ Go to **Jetonomy → Categories** to access this screen.
 
 ## Required Capability
 
-Creating, editing, and deleting categories requires `jetonomy_manage_spaces`. WordPress Administrators and Editors receive this capability automatically.
+The Categories admin page requires `jetonomy_manage_settings`, which is administrator-only by default. Both `jetonomy_manage_settings` and `jetonomy_manage_spaces` are granted only to administrators - Editors do not receive either capability, so they cannot open this page.
 
 ## Page Layout
 

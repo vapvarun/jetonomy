@@ -20,7 +20,7 @@ When you are composing a new topic and want to save your progress without publis
 
 Your draft is saved immediately and you are returned to the space listing. No notification is sent to other members. The topic does not appear in the space listing.
 
-> **Tip:** You can also save a draft at any time during composition by pressing **Ctrl+S** (Windows/Linux) or **Cmd+S** (Mac). The draft saves silently in the background without closing the composer.
+> **Tip:** Press **Ctrl+Enter** (Windows/Linux) or **Cmd+Enter** (Mac) to trigger the composer's primary action without reaching for the mouse. This clicks the split-button's current primary button - for a new post that submits it; while editing a draft it runs whichever action the button currently shows.
 
 ## Finding Your Drafts
 
@@ -68,13 +68,11 @@ To cancel a scheduled post and convert it back to a draft, open it and click **U
 
 ## How Scheduled Publishing Works
 
-Jetonomy checks for scheduled posts using WordPress Cron (WP-Cron). The check runs every hour.
+Jetonomy publishes scheduled posts through Action Scheduler - the same background queue that powers WooCommerce - which runs its own queue runner rather than relying purely on page views. The check runs every hour. (WP-Cron remains a legacy fallback for older installs.)
 
-This means a post scheduled for 9:00 AM may publish at any point between 9:00 AM and 10:00 AM, depending on when the next site visitor triggers a cron run.
+This means a post scheduled for 9:00 AM may publish at any point during the following hour rather than exactly on the minute.
 
-> **Note:** If your site uses a server-side cron (via `crontab`) instead of WP-Cron, scheduled posts will publish more precisely, within one minute of the scheduled time. Ask your host or developer to configure a real cron job if timing precision matters for your community.
-
-If a post's scheduled time is missed (for example, because WP-Cron did not run during a low-traffic period), Jetonomy will publish it the next time cron runs. It never silently drops a scheduled post.
+If a post's scheduled time is missed (for example, because the queue did not run during a low-traffic period), Jetonomy will publish it on the next run. It never silently drops a scheduled post.
 
 ## The Split-Button UI
 

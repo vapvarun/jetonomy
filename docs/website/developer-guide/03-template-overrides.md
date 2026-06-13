@@ -64,8 +64,14 @@ You do not need to copy all of these. Only create the files you want to customiz
 | `views/space.php` | `space` | `/community/s/{slug}/` |
 | `views/space-members.php` | `space-members` | `/community/s/{slug}/members/` |
 | `views/space-roadmap.php` | `space-roadmap` | `/community/s/{slug}/roadmap/` |
+| `views/space-edit.php` | `edit-space` | `/community/s/{slug}/edit/` |
+| `views/space-moderation.php` | `space-moderation` | `/community/s/{slug}/mod/` |
 | `views/single-post.php` | `post` | `/community/s/{slug}/t/{slug}/` |
 | `views/new-post.php` | `new-post` | `/community/s/{slug}/new/` |
+| `views/new-space.php` | `new-space` | `/community/new-space/` |
+| `views/my-spaces.php` | `my-spaces` | `/community/my-spaces/` |
+| `views/drafts.php` | `drafts` | `/community/drafts/` |
+| `views/bookmarks.php` | `bookmarks` | `/community/bookmarks/` |
 | `views/user-profile.php` | `profile` | `/community/u/{login}/` |
 | `views/edit-profile.php` | `edit-profile` | `/community/u/{login}/edit/` |
 | `views/leaderboard.php` | `leaderboard` | `/community/leaderboard/` |

@@ -35,7 +35,7 @@ When a MemberPress membership **activates**, Jetonomy automatically adds the mem
 
 When a membership **expires, cancels, or is paused**, Jetonomy fires `jetonomy_membership_deactivated` and removes the member from any spaces gated exclusively to that level. Their posts and replies remain intact.
 
-This is handled by the `MemberPress_Adapter` class, which hooks into MemberPress's `mepr-event-transaction-completed` and `mepr-event-subscription-expired` events.
+This is handled by the `MemberPress_Adapter` class. It hooks `mepr-txn-status-complete` for activation, and `mepr-txn-status-refunded`, `mepr-txn-expired`, and `mepr_subscription_transition_status` for deactivation.
 
 ## Visibility Behavior
 

@@ -26,7 +26,7 @@ The green dot is shown in these locations:
 |----------|-------|
 | Reply cards (author avatar) | Yes |
 | Member profile page (header avatar) | Yes |
-| Sidebar Top Members widget | Yes |
+| Sidebar Leaderboard widget | No (the widget lists names and scores only, no avatars) |
 | Topic listing rows (author credit) | No |
 | Search results (author credit) | No |
 
@@ -42,7 +42,7 @@ When a logged-in member loads any community page, Jetonomy records a timestamp o
 
 If a member loads 10 pages in 30 seconds, Jetonomy writes to the database once. This keeps the `wp_jt_user_profiles` table write volume proportional to the number of unique active members, not the total number of page views.
 
-The online status check itself (reading whether a member is active) is cached for 60 seconds using WordPress transients. On a page with 10 reply cards by different authors, Jetonomy makes at most a small batch of cache reads rather than 10 individual queries.
+The online status check itself (reading whether a member is active) is cached for 60 seconds using the WordPress object cache. On a page with 10 reply cards by different authors, Jetonomy makes at most a small batch of cache reads rather than 10 individual queries.
 
 ## No Setup Required
 

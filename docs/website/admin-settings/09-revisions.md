@@ -47,7 +47,7 @@ Like the Activity Log, the Revisions page is read-only. To roll back to a prior 
 
 ## Permission
 
-Only users with the `jetonomy_manage_revisions` capability (admin and moderator roles by default) can see this page. Members can see their own edit history on each individual post, but not the cross-post Revisions admin view.
+Only users with the `jetonomy_manage_settings` capability (administrators only by default) can see this page. Members can see their own edit history on each individual post, but not the cross-post Revisions admin view.
 
 ## Storage
 

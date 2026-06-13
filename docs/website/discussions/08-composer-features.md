@@ -14,7 +14,7 @@ The composer is the box you type in when you create a new post or reply. Jetonom
 - Where role pills appear and what they tell members
 - How link previews turn a pasted URL into a rich card
 - How members add images, and which capability gates uploads
-- How the composer behaves with markdown vs the WYSIWYG editor
+- How the composer's formatting toolbar and markdown shortcuts work
 
 ## @mention Autocomplete
 
@@ -46,7 +46,7 @@ If you start typing a name that does not match anyone in your shared spaces, the
 
 1. Open any topic and start a reply.
 2. Type `@` followed by the first few letters of the person's name or username.
-3. The dropdown appears under your cursor with up to 8 matching members.
+3. The dropdown appears under your cursor with up to 10 matching members.
 4. Use the arrow keys to highlight a name, or click directly.
 5. Press Enter (or click) to insert the mention.
 6. Publish the reply. The mentioned member receives a notification within seconds.
@@ -100,7 +100,7 @@ For owners, this surfaces your community staff and gives them visibility. Member
 
 ### Customizing the Card
 
-The card is rendered from `templates/parts/space-sidebar-managed-by.php`. You can override it in your theme at `theme/jetonomy/parts/space-sidebar-managed-by.php` to change the layout, hide certain roles, or add extra links.
+The card is rendered from `templates/partials/managed-by-card.php`. You can override it in your theme at `theme/jetonomy/partials/managed-by-card.php` to change the layout, hide certain roles, or add extra links.
 
 ## Role Pills on Posts and Replies
 
@@ -166,16 +166,15 @@ Uploading is gated by capability. A member can upload media if they have any one
 
 In practice this means most contributing members can attach images, and members earn the upload capability automatically as they reach Trust Level 1 even if their WordPress role would not otherwise allow it.
 
-## Markdown and WYSIWYG
+## The Formatting Toolbar
 
-The composer supports two input modes, controlled per-space in **Space Settings → Editor**:
+The composer is a single rich-text editor with a small formatting toolbar - there is no separate "plain text" vs "WYSIWYG" mode to choose between. The toolbar buttons are: **bold**, **italic**, **inline code** (`</>`), **link**, **blockquote**, and **image upload**.
 
-- **Plain text with markdown** - members type using common markdown shortcuts (`**bold**`, `*italic*`, `[link](url)`). Lightweight, fast, ideal for technical communities.
-- **WYSIWYG** - a TinyMCE-style toolbar with buttons for formatting, lists, links, and image uploads. Friendlier for non-technical members.
+Members who prefer to type can also use common markdown shortcuts (`**bold**`, `*italic*`, `` `code` ``, `> quote`) directly in the editor. The toolbar and the markdown shortcuts produce the same formatted result.
 
-Both modes support the same paste handling, the same image uploads, and the same @mention autocomplete. Switching modes does not lose existing content; markdown is converted to HTML and vice versa on save.
+Paste handling, image uploads, and @mention autocomplete all work the same way regardless of whether you click a toolbar button or type the markup yourself.
 
-For a deeper walkthrough of editor settings see [Space Settings](../spaces-and-categories/04-space-settings.md).
+For more on the content editor and its fields, see [Creating Topics](01-creating-topics.md#content).
 
 ## What's Next?
 

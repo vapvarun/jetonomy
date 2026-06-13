@@ -31,11 +31,13 @@ The default is `community`, which gives you `yoursite.com/community/`. You can c
 - **Forum** - open-ended threaded discussion
 - **Q&A** - questions with votable answers; the best answer can be marked accepted
 - **Ideas** - feature requests and votes with a status-lane roadmap
-- **Show & Tell** - short-form cards for sharing projects and work
+- **Feed** - short-form cards for status updates, introductions, and sharing work
 
 You can create spaces of any type regardless of what you choose here. This setting just controls the default when you click "Add Space" later.
 
 > **Tip:** You can change your community URL slug later in **Jetonomy → Settings → General**. Jetonomy automatically flushes permalink rules when you save.
+
+> **Make the community your homepage:** Under **Jetonomy → Settings → General → Community Setup**, enable **Show the community home on the site front page** to serve the community home at your site root. This takes precedence over the WordPress "Your homepage displays" setting, and all other community URLs, posts, and feeds keep working unchanged.
 
 ## Step 2: First Space
 
@@ -46,9 +48,8 @@ This step gets real content into your community so it is ready to share the mome
 Choose this if you are setting up a production site and want to start with your own content.
 
 1. Enter a name for your first space (e.g., "General Discussion").
-2. Choose its type: **Forum**, **Q&A**, or **Ideas**.
-3. Set a join policy: **Open** (anyone can join), **Request to join** (members need approval), or **Invite only**.
-4. Click **Create Space**.
+2. The space uses the default type you picked in Step 1 (**Forum**, **Q&A**, **Ideas**, or **Feed**). You can change a space's type any time under **Jetonomy → Spaces → Edit**.
+3. Click **Create Space**.
 
 Your space is created and visible immediately after you finish the wizard.
 
@@ -58,8 +59,8 @@ Choose this if you want to explore Jetonomy's features before committing to a st
 
 Jetonomy seeds your site with:
 
-- **2 categories** - "Product Support" and "Community"
-- **5 spaces** - one of each type (Forum, Q&A, Ideas) plus two extras with varied content
+- **2 categories** - "Product & Engineering" and "Community"
+- **6 spaces** - one of each type (Forum, Q&A, Ideas, Feed) plus two extra forum spaces with varied content
 - **Demo users** with realistic avatars, trust level badges, and posting history
 - **Sample posts and replies** - enough content to see voting, accepted answers, tags, and notifications working in context
 
@@ -81,9 +82,9 @@ Everything you configured in the wizard can be changed later:
 | Setting | Where to change it |
 |---|---|
 | Community URL slug | Jetonomy → Settings → General |
-| Default space type | Jetonomy → Settings → Spaces |
+| Default space type | Jetonomy → Settings → General (Community Setup) |
 | Space name, type, join policy | Jetonomy → Spaces → Edit |
-| Email notifications | Jetonomy → Settings → Notifications |
+| Email notifications | Jetonomy → Settings → Email (Notification Defaults) |
 
 ## What's Next?
 

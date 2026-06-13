@@ -47,7 +47,6 @@ The content field supports rich text via a Markdown toolbar. You do not need to 
 | Link | Insert a hyperlink |
 | Quote | Block quote |
 | Image | Upload an image from your device |
-| Code block | Multi-line code with syntax highlighting |
 
 You can also type Markdown directly if you prefer:
 - `**bold**` → **bold**
@@ -69,7 +68,7 @@ As you type the title, Jetonomy searches for existing topics with similar titles
 
 If you see your question already answered in the list, click the match to jump to the existing topic instead of submitting a duplicate. If none of the matches fit, keep typing - the search re-runs after every few characters.
 
-Similar Topics detection runs entirely on the client against the search index - no additional page load.
+Similar Topics detection runs a lightweight, debounced search request (about 400ms after you stop typing) against the server search index, so it does not reload the page.
 
 ### Prefix Selector
 

@@ -47,11 +47,15 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 |------|----------|
 | **Text** | Short single-line answers (job title, company, username) |
 | **Textarea** | Longer free-form text (bio supplement, expertise description) |
-| **Select** | Predefined options (country, role, industry) |
-| **Checkbox** | Yes/no toggle (newsletter opt-in, open to work) |
+| **Number** | Numeric values (years of experience, team size) |
+| **Email** | Contact email address |
 | **URL** | Website, GitHub, LinkedIn, portfolio links |
+| **Select** | Predefined options as a dropdown, single choice (country, role, industry) |
+| **Checkbox** | Yes/no toggle (newsletter opt-in, open to work) |
+| **Radio** | Predefined options as radio buttons, single choice |
+| **Date** | A calendar date (joined date, availability) |
 
-For the **Select** type, you define the options in the field editor - one per line. The member sees a dropdown.
+For the **Select** and **Radio** types, you define the options in the field editor - one per line. Select renders a dropdown; Radio renders a set of radio buttons.
 
 ## Visibility Options
 

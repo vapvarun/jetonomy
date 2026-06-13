@@ -27,7 +27,7 @@ You can change this to any URL-safe string, for example `forum`, `hub`, or `disc
 
 **Setting:** `default_space_type`
 **Default:** `forum`
-**Options:** Forum, Q&A, Ideas, Show & Tell
+**Options:** Forum, Q&A, Ideas, Feed
 
 When you create a new space in the admin, this setting pre-fills the **Type** dropdown. It is a convenience setting only - you can always change the type on any individual space. It does not affect existing spaces.
 
@@ -36,7 +36,7 @@ Choose the type that best matches the primary purpose of your community:
 - **Forum** - open discussion, replies sorted by date
 - **Q&A** - questions and answers, accepted answers float to top
 - **Ideas** - feature requests and votes, status workflow
-- **Show & Tell** - short-form cards, optional title, chronological feed
+- **Feed** - short-form cards, optional title, chronological feed
 
 ## Posts Per Page
 
@@ -51,7 +51,7 @@ Controls how many posts appear per page in space listings and search results. A 
 ## Replies Per Page
 
 **Setting:** `replies_per_page`
-**Default:** `20`
+**Default:** `30`
 **Location:** General tab → Pagination section
 
 Controls how many replies load per page inside a single post view. This value also controls how many additional replies load each time a member clicks **Load More** in a thread. Pagination starts at the oldest replies and works forward. Members can jump to the last page to see the most recent replies.
@@ -66,17 +66,23 @@ When enabled, logged-out visitors can read all public spaces and posts without s
 
 Turn this off if your community is members-only and you do not want any content visible to search engines or unregistered visitors.
 
-## Require Login to Participate
+> **Note:** Even with guest access enabled, anonymous posting is not supported. "Guest access" means read-only browsing for logged-out visitors. Visitors must always log in to post, reply, or vote.
 
-**Setting:** `require_login`
-**Default:** `true` (on)
-**Location:** General tab → Access section
+## Community as Homepage
 
-When enabled, any action that writes data (posting, replying, voting, following) requires the user to be logged in. Guests are routed to Jetonomy's in-page sign-in form (no wp-login.php bounce) and returned to whatever they were doing once they sign in.
+**Setting:** `front_page`
+**Default:** off
+**Location:** General tab → Community Setup section
 
-This is always recommended on. Disable it only if you are running a very specific open-participation setup where anonymous contributions make sense.
+When enabled, visitors to your site root see the community home page instead of the WordPress front page. This takes precedence over the WordPress **Settings → Reading → Your homepage displays** setting. All community URLs, posts, pages, and feeds keep working unchanged.
 
-> **Note:** Even with guest access enabled, anonymous posting is not supported. "Guest access" means read-only browsing for logged-out visitors.
+## Front-end Space Creation
+
+**Setting:** `frontend_space_creation_roles`
+**Default:** empty (admin-only)
+**Location:** General tab → Community Setup section
+
+Controls which WordPress roles may create spaces from the front end at `/community/new-space/`. Tick any roles you trust to create spaces. Site administrators always qualify regardless of the selection. Leave every box unticked to keep front-end space creation admin-only.
 
 ## Require Email Verification
 

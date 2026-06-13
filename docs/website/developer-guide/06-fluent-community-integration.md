@@ -29,7 +29,7 @@ No autoload entry beyond this gate. Deactivate FluentCommunity and nothing from 
 
 ## Persisted State
 
-Two WordPress options hold the entire integration footprint. No custom tables, no post meta, no user meta.
+Four WordPress options hold the entire integration footprint. No custom tables, no post meta, no user meta.
 
 | Option | Type | Default | Purpose |
 |--------|------|---------|---------|

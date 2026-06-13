@@ -1,4 +1,4 @@
-Move your existing wpForo community into Jetonomy - forums, topics, replies, user profiles, and reputation data - using the built-in wpForo importer.
+Move your existing wpForo community into Jetonomy - forums, topics, replies, and user profiles - using the built-in wpForo importer.
 
 ![Import tool with wpForo source selected and migration progress](../images/admin-import.png)
 
@@ -6,8 +6,8 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, use
 
 - What the wpForo importer brings over and how wpForo structures map to Jetonomy
 - How to prepare your site before running the import
-- How to start, monitor, and resume the import
-- How wpForo-specific fields (reputation, badges, user roles) are handled
+- How to start and monitor the import
+- How wpForo's multi-board and forum structures map onto Jetonomy
 - What to verify after the import
 
 ## What Gets Imported
@@ -15,18 +15,18 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, use
 | wpForo Data | Imported As | Notes |
 |---|---|---|
 | Forums | Jetonomy Spaces | Forum name, slug, description preserved |
-| Sub-forums | Jetonomy Sub-spaces | Nested up to 2 levels |
 | Topics | Jetonomy Posts | Title and first post content preserved |
-| Replies (posts) | Jetonomy Replies | Threaded up to 3 levels; deeper threads flattened |
-| Tags | Jetonomy Tags | Applied to corresponding posts |
+| Replies (posts) | Jetonomy Replies | Reply parent relationships preserved |
 | User accounts | Linked to existing WP users | Matched by WP user ID |
-| User reputation | Reputation score | wpForo points mapped to Jetonomy score (1:1) |
-| User roles (Moderator) | Space Moderator role | Per-forum moderator assignments preserved |
 | Liked posts | Vote score | wpForo likes mapped to upvotes |
 | Pinned topics | Pinned posts | Preserved |
 | Closed topics | Closed posts | Preserved |
 
 **Not imported:**
+- wpForo sub-forum hierarchy (all forums, including sub-forums, are flattened into spaces under the board's category)
+- wpForo topic tags
+- wpForo user reputation / points
+- wpForo user roles and moderator assignments (assign Space Moderator roles manually after import)
 - wpForo private conversations (different data structure; import to Jetonomy Pro private messaging separately)
 - wpForo groups and group memberships (map manually to Jetonomy spaces)
 - wpForo custom user groups beyond standard roles
@@ -38,11 +38,11 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 
 **Multi-board support** - wpForo supports multiple boards, each with its own set of forums, topics, and posts stored in separate database tables (e.g., `wp_wpforo1_forums` for board 1, `wp_wpforo2_forums` for board 2). The importer automatically detects all active boards and imports each into its own Jetonomy category. Single-board installs work without any extra configuration.
 
-**Forums and categories** - Within each board, wpForo uses a hierarchical forums table. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates a Jetonomy category per board and spaces from the forums within each board.
+**Forums and categories** - Within each board, wpForo uses a hierarchical forums table. Jetonomy separates categories (top-level groups) from spaces (discussion areas). The importer creates a Jetonomy category per board and one space per wpForo forum. Sub-forum nesting is not preserved - every forum (parent or child) becomes a flat space under the board's category.
 
 **Post structure** - In wpForo, the first "post" of a topic is a reply in the same table. In Jetonomy, topics and replies are separate entities. The importer promotes the first wpForo post as the Jetonomy post body and imports subsequent posts as replies.
 
-**Reputation** - wpForo tracks reputation as a single integer. Jetonomy maps it directly as the starting reputation score. Trust levels are re-evaluated by the cron job after import based on your configured thresholds.
+**Reputation** - wpForo reputation and points are not imported. After import, trust levels are re-evaluated by the cron job based on activity within Jetonomy and your configured thresholds.
 
 ## Pre-Import Checklist
 
@@ -58,22 +58,13 @@ wpForo and Jetonomy structure their data differently in a few key areas:
 
 1. Go to **Jetonomy → Import** in your WordPress admin.
 2. Select **wpForo** as the source.
-3. (Optional) Enable **Dry Run** to preview the import before writing any data.
-4. Click **Start Import**.
+3. Click **Start Import**.
 
-The importer processes in batches of 50 records. A progress indicator shows total records, completed batches, and estimated time remaining.
+The wpForo importer runs the entire import in a single pass - the progress bar advances in one step from start to complete. (The bbPress importer, by contrast, runs in true incremental batches.) Because it is single-pass, larger wpForo databases are best imported via WP-CLI to avoid browser timeouts.
 
 ## Dry-Run Mode
 
-Run a dry run before your first import. It analyzes your wpForo database and reports:
-
-- Board hierarchy and how it maps to Jetonomy categories and spaces
-- Total topic, reply, and user counts
-- Estimated import duration
-- Any encoding issues or records with missing user references
-- A preview of the first 10 forum-to-space mappings
-
-No data is written during a dry run. Run it as many times as needed.
+> **Important:** Dry-run is **not supported** for the wpForo importer. The `--dry-run` flag exists on the CLI command, but the wpForo importer ignores it and writes data regardless. Do not rely on `wp jetonomy import wpforo --dry-run` to preview the import without making changes - it will perform the real import. Always take a database backup before running the wpForo importer.
 
 ## Estimated Import Times
 
@@ -86,49 +77,30 @@ No data is written during a dry run. Run it as many times as needed.
 
 ## Resuming a Paused Import
 
-If the import pauses (due to a timeout, server restart, or closed browser), return to **Jetonomy → Import** and click **Resume Import**. Progress is stored in the database. Already-imported records are skipped automatically.
+The wpForo import runs as a single pass, so there is no mid-import resume point. If it is interrupted (timeout, server restart, or closed browser), it cannot be resumed partway through - return to **Jetonomy → Import** and click **Start Over** to run it again. For this reason, run large wpForo imports via WP-CLI, which is not subject to browser timeouts.
 
 ## Running via WP-CLI
 
 ```bash
-wp --path="/path/to/wordpress" jetonomy import run --source=wpforo
+wp --path="/path/to/wordpress" jetonomy import wpforo
 ```
 
-Optional flags:
+WP-CLI is the recommended way to import larger wpForo databases - it is not subject to browser timeouts and prints an `Imported / Skipped / Errors` summary when finished.
 
-```bash
-# Dry run
-wp jetonomy import run --source=wpforo --dry-run
+> **Note:** The `--dry-run` flag is accepted by the command but is **not honored** by the wpForo importer - it will still write data. Take a backup first.
 
-# Set batch size (default 50; larger batches are faster on good servers)
-wp jetonomy import run --source=wpforo --batch-size=100
+## Space Types After Import
 
-# Resume from a specific batch offset
-wp jetonomy import run --source=wpforo --offset=200
-```
-
-## Handling wpForo's Custom Post Formats
-
-wpForo supports "post types" (Normal, Question/Answer, Debate). The importer maps them to Jetonomy space types:
-
-| wpForo Board Type | Jetonomy Space Type |
-|---|---|
-| Standard | Forum |
-| Q&A | Q&A |
-| Debate | Forum (closest match) |
-
-If you had a mix of types in a single wpForo board, the importer uses the board's configured type as the Jetonomy space type.
+All imported wpForo forums become standard **Forum** spaces in Jetonomy. wpForo post types (Normal, Question/Answer, Debate) are not mapped to Jetonomy space types - if you want a space to behave as Q&A, change its type in **Jetonomy → Spaces** after the import.
 
 ## Post-Import Checklist
 
 After the import completes:
 
-- [ ] Visit your community home and confirm spaces match your old wpForo boards
+- [ ] Visit your community home and confirm spaces match your old wpForo forums
 - [ ] Open several posts from different spaces and verify content is intact
-- [ ] Check that Q&A spaces show accepted answers correctly
-- [ ] Verify user reputation scores on a few known high-reputation members
-- [ ] Confirm that forum moderators have the Moderator role in their spaces
-- [ ] Go to **Settings → Permalinks** and click Save to flush rewrite rules
+- [ ] Assign Space Moderator roles to your former forum moderators (moderator assignments are not imported)
+- [ ] Go to **Settings → Permalinks** and click Save to flush rewrite rules (the wpForo importer does not flush them automatically, so this step is needed if new spaces return a 404)
 - [ ] Remove or update any wpForo shortcodes on pages and widgets
 - [ ] Consider deactivating wpForo after confirming the import - it is no longer needed
 
@@ -136,6 +108,10 @@ After the import completes:
 
 ## What's Next?
 
-Now that your community is live, configure who can read it and how members earn trust.
+Migrating from Asgaros Forum instead? The process is similar with a few Asgaros-specific mappings.
+
+[Importing from Asgaros →](03-asgaros-import.md)
+
+Already imported? Configure who can read your community and how members earn trust.
 
 [General Settings →](../admin-settings/01-general.md)

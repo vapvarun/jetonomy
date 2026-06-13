@@ -19,9 +19,9 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 
 ## Choosing a Provider
 
-**Setting:** `antispam_provider`
-**Default:** None
-**Options:** None, Google reCAPTCHA v3, Cloudflare Turnstile
+**Setting:** `captcha_provider`
+**Default:** None (`none`)
+**Options:** None (`none`), Google reCAPTCHA v3 (`recaptcha_v3`), Cloudflare Turnstile (`turnstile`)
 
 | Provider | How It Works | User Visibility |
 |---|---|---|
@@ -47,7 +47,7 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 
 ## Score Threshold (reCAPTCHA v3 Only)
 
-**Setting:** `recaptcha_score_threshold`
+**Setting:** `captcha_score_threshold`
 **Default:** `0.5`
 **Range:** 0.1 to 0.9
 

@@ -21,7 +21,7 @@ Most WordPress forum plugins (including bbPress) store every topic and reply as 
 
 ### Custom Database Tables
 
-Jetonomy stores all community data in 24 dedicated tables with the `wp_jt_` prefix. Each table has purpose-built columns and indexes:
+Jetonomy stores all community data in 20 dedicated tables with the `wp_jt_` prefix. Each table has purpose-built columns and indexes:
 
 - **Posts table:** `vote_score`, `reply_count`, `view_count`, `last_reply_at` are real columns - not meta. Sorting by popularity is a simple `ORDER BY vote_score DESC` with an index hit.
 - **Replies table:** Indexed by `post_id` and `parent_id` for fast threaded reply loading.

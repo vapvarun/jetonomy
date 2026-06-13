@@ -39,27 +39,25 @@ A few important notes:
 
 ## The Form Fields
 
-The front-end form mirrors the wp-admin space editor field-for-field. There is no "lite" version of space creation.
+The front-end form covers the fields a member needs to launch a space. The slug is generated automatically from the title, and posts-per-page is set later on the Edit Space page rather than at creation time.
 
 | Field | What it controls |
 |---|---|
 | Title | The display name shown in listings and the space header. Required. |
-| Slug | The URL segment under `/community/s/`. Generated from the title; you can edit it. Must be unique. |
 | Description | One or two sentences shown on the space card and the space header. |
-| Icon | A visual icon shown next to the title everywhere the space appears. |
-| Category | Which top-level community category the space belongs to. Optional but recommended for navigation. |
-| Type | Forum, Q&A, Ideas, Show & Tell, or Social Feed. Cannot be changed after creation. |
+| Type | Forum, Q&A, Ideas, or Feed. Cannot be changed after creation. |
 | Visibility | Public, Private, or Hidden. |
 | Join policy | Open, Approval Required, or Invite Only. |
-| Posts per page | 10, 25, or 50. Defaults to the community-wide value. |
+| Category | Which top-level community category the space belongs to. Optional but recommended for navigation. |
+| Icon | A visual icon shown next to the title everywhere the space appears. |
 
-The form does its own validation in the browser before submission, then again on the server. Submitting with an empty title or a slug that already exists returns an inline error rather than a generic failure.
+The form does its own validation in the browser before submission, then again on the server. Submitting with an empty title returns an inline error rather than a generic failure. The slug is derived from the title automatically and made unique by the server.
 
 ## The Visual Icon Picker
 
 The icon field is not a free-text field. Jetonomy ships with a Lucide icon picker so every space gets a consistent, professionally-drawn icon.
 
-The picker shows 16 default icons up front, covering the most common community space themes: messages, lightbulb, sparkles, code, life-buoy, megaphone, palette, briefcase, gamepad, book, heart, globe, target, rocket, trophy, and users.
+The picker shows 16 default icons up front, covering the most common community space themes: users, hand, megaphone, message-circle, help-circle, lightbulb, star, rocket, book-open, award, shield, pin, bookmark, home, hash, and folder.
 
 Click "Show more" to reveal another 8 icons for less common topics. If none of those fit, the search field at the top filters the entire Lucide catalogue by name, so typing "music" surfaces the music note icon, "camera" surfaces the camera icon, and so on.
 
@@ -75,22 +73,21 @@ Submitting the form does five things in one transaction:
 4. Flushes the relevant rewrite caches so the space URL resolves immediately
 5. Redirects the user to the new space at `/community/s/<slug>/`
 
-There is no approval queue. The space is live the moment the form is submitted. If your community needs an approval step before new spaces appear, file a ticket and we will surface the existing `jetonomy_can_create_space` filter as a setting.
+There is no approval queue. The space is live the moment the form is submitted. Who may reach the form at all is gated by the `jetonomy_create_spaces` capability plus the Front-end space creation roles setting, so you control space creation by role rather than by an after-the-fact approval step.
 
 ## Validation Hints
 
 - Title is required and cannot be a duplicate of an existing space title within the same category.
-- Slug is required, must be lowercase, and must be unique across the whole community. Jetonomy auto-generates a safe slug from the title; you only need to edit it if you want a specific URL.
+- The slug is generated automatically from the title and made unique by the server. There is no slug field on the create form; you can edit the slug later from the Edit Space page.
 - Description is optional but space cards look better with one.
 - Category, Type, Visibility, and Join policy default to the community-wide defaults set in **Jetonomy → Settings**.
-- Posts per page defaults to the community-wide value and is read from the same setting.
 
 ## Permission Gotchas
 
 A few rules that surprise people on first use:
 
 - **Creating is not moderating.** A role granted "create spaces" is automatically space admin only for the spaces it creates. It cannot moderate other spaces it did not create.
-- **Visibility is per-space, not per-role.** A role allowed to create spaces can create a Hidden space. If you want to restrict that, use the `jetonomy_can_create_space_with_visibility` filter (developer docs).
+- **Visibility is per-space, not per-role.** A role allowed to create spaces can create a Hidden space. There is no built-in per-visibility gate; restrict who can create spaces at all via the Front-end space creation roles setting if that matters for your community.
 - **Deactivating a member who created a space does not delete the space.** The space remains; ownership transfers to the next admin in the space, or to the site administrator if there is no other admin.
 - **Slug collisions are checked across the whole site.** A member trying to create a space with a slug another space already uses will see an inline error, even if they cannot see the other space.
 
@@ -111,10 +108,10 @@ The front-end form covers everything a member or space owner needs. The wp-admin
 
 ## Developer Hooks
 
-Two hooks come up most often when customising this page:
+The two controls that come up most often when customising this page:
 
-- `jetonomy_use_frontend_space_edit` (filter) - returns true to route both the Create and Edit space flows through the front-end UI. Default true.
-- `jetonomy_can_create_space` (filter) - boolean override per user. Useful if you need a per-user gate (e.g. paid membership) on top of the role-based default.
+- `jetonomy_create_spaces` (capability) - granted to roles via the Front-end space creation roles setting. A user without this capability never sees the Create Space link or page. This is the primary gate.
+- `jetonomy_use_frontend_space_edit` (filter) - returns true to route both the Create and Edit space flows through the front-end UI. Default true. Return false to send these flows to wp-admin instead.
 
 See the Developer Reference for the full signatures and examples.
 

@@ -9,7 +9,7 @@ The space type you choose determines how posts are structured, how replies work,
 - The unique features each type unlocks
 - How to change a space type after creation
 
-## The Five Space Types
+## The Four Space Types
 
 ### Forum
 
@@ -66,26 +66,9 @@ For a full guide to the Ideas roadmap view, see [Ideas Roadmap](06-ideas-roadmap
 
 > **Tip:** Pick the `lightbulb` icon from the Lucide icon picker and name the space something like "Ideas & Feedback" to set the right expectation before members click through.
 
-### Show & Tell
+### Feed
 
-Show & Tell is designed for members to share work, projects, and creations with the community. Think of it as a portfolio wall where members post a short card showcasing something they made, and others react, comment, and vote.
-
-**How it works:**
-
-- The post title is optional. A strong visual or a single-sentence description is all a member needs to post.
-- Posts appear as cards in a clean grid or list feed, sorted chronologically by default.
-- Replies are supported for comments and feedback, threaded up to three levels deep.
-- Voting is available. The Popular sort surfaces the most appreciated posts.
-
-Use Show & Tell for: member projects, weekly challenges, course work showcases, portfolio highlights, "what I built" feeds.
-
-> **Tip:** Show & Tell works well paired with a Q&A or Forum space in the same community. Members can share work in Show & Tell and ask follow-up questions in a companion space.
-
-For a full guide to Show & Tell, see [Show & Tell Spaces](05-show-and-tell.md).
-
-### Social Feed
-
-Social Feed is designed for short-form status updates - brief posts without a required title. It behaves more like an activity stream than a traditional forum.
+Feed is designed for short-form status updates - brief posts without a required title. Posts render as feed cards rather than the row list used by Forum and Q&A, so it behaves more like an activity stream than a traditional forum.
 
 **How it works:**
 
@@ -94,9 +77,7 @@ Social Feed is designed for short-form status updates - brief posts without a re
 - Replies work the same as Forum type, threaded up to three levels deep.
 - Voting is available, but the feed sort does not default to Best - it defaults to Latest.
 
-Use Social Feed for: member introductions, community announcements, daily check-ins, open-ended community updates.
-
-> **Note:** Social Feed is available in Jetonomy 1.0. Advanced social features including @mentions in feeds and rich link previews are planned for version 1.1.
+Use Feed for: member introductions, community announcements, daily check-ins, showcasing work, open-ended community updates.
 
 ## Changing the Space Type
 

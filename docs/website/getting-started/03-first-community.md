@@ -36,7 +36,7 @@ A space is where discussions happen. Each space has a type that shapes how membe
 | **Forum** | General discussion, announcements, support | Threaded replies, newest/popular sort |
 | **Q&A** | Technical help, knowledge bases | Votable answers, accepted answer highlight |
 | **Ideas** | Feature requests, roadmaps | Status lanes (Planned, In Progress, Shipped, Declined) with roadmap view |
-| **Show & Tell** | Project showcases, member work | Card feed with optional title, reactions, and votes |
+| **Feed** | Status updates, introductions, sharing work | Card feed with optional title and votes |
 
 To create a space, you can use either the wp-admin form or the front-end Create Space page. Both produce the same result.
 
@@ -50,7 +50,7 @@ To create a space, you can use either the wp-admin form or the front-end Create 
 6. Set the join policy: **Open**, **Request to join**, or **Invite only**.
 7. Click **Save Space**.
 
-**From the front end** (so non-admin owners can create spaces too): visit `/community/new-space/` while signed in. The form is identical and is available to any role you've enabled under **Settings → Front-end space creation**.
+**From the front end** (so non-admin owners can create spaces too): visit `/community/new-space/` while signed in. The form is identical and is available to any role you've enabled under **Jetonomy → Settings → General**, in the **Front-end space creation** field.
 
 Your space is immediately available on the community frontend under its category.
 

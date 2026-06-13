@@ -16,6 +16,18 @@ The community leaderboard is available at `/community/leaderboard/`. Any member 
 
 Members are ranked by total reputation score, highest first. The leaderboard updates in real time as reputation changes - there is no daily cache delay between earning reputation and appearing in the rankings.
 
+## Time Period Filter
+
+The leaderboard page has a row of period pills at the top that scope which members appear:
+
+| Pill | What it shows |
+|------|---------------|
+| All time | Every member, ranked by reputation (the default) |
+| This month | Only members active within the last 30 days, ranked by reputation |
+| This week | Only members active within the last 7 days, ranked by reputation |
+
+The month and week filters narrow the board to recently active members - ranking is still by total reputation score within each window, not by reputation earned during that period.
+
 ## What Each Row Shows
 
 Every row on the leaderboard displays:
@@ -23,13 +35,12 @@ Every row on the leaderboard displays:
 | Column | Description |
 |--------|-------------|
 | Rank | Position number (1, 2, 3...) |
-| Avatar | Member's profile picture with online status dot |
+| Avatar | Member's initials avatar (no online status dot on the leaderboard) |
 | Name | Display name, linked to their profile page |
-| Trust badge | Colored trust level badge |
 | Reputation | Total reputation score |
 | Posts | Total published topic count |
 
-Clicking a member's name or avatar goes directly to their profile page.
+Clicking a member's name goes directly to their profile page.
 
 ## Top 3 Medal Positions
 
@@ -45,16 +56,16 @@ Medal icons draw the eye immediately when someone opens the leaderboard page. Be
 
 ## The Leaderboard Sidebar Widget
 
-Add the **Jetonomy: Top Members** widget to any sidebar from **Appearance → Widgets**. The widget shows the top 5 members by reputation with their avatars and scores - a compact preview of the leaderboard without requiring members to visit the full page.
+Add the **Jetonomy: Leaderboard** widget to any sidebar from **Appearance → Widgets**. The widget shows the top 5 members by reputation, listing each member's name and reputation score - a compact preview of the leaderboard without requiring members to visit the full page. (Its default heading text is "Top Members".)
 
 Configuration options:
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | Title | Top Members | Widget heading text |
-| Count | 5 | Number of members to show (max 10) |
+| Count | 5 | Number of members to show (max 20) |
 
-The widget data is cached for 5 minutes to keep database queries low on high-traffic sites.
+The widget runs a single direct `LIMIT` query to fetch the top members by reputation.
 
 ## Why the Leaderboard Improves Community Quality
 

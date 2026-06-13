@@ -44,6 +44,6 @@ If you need to undo something a member or staff user did, do it in the relevant 
 
 ## Performance
 
-The log is paginated server-side at 50 entries per page. Filters apply at the database level, so even on a community with hundreds of thousands of entries, filtered queries return in under a second on a normal host.
+The log is paginated server-side at 20 entries per page by default (adjustable via the per-page screen option). Filters apply at the database level, so even on a community with hundreds of thousands of entries, filtered queries return in under a second on a normal host.
 
 There's no automatic cleanup - entries are kept indefinitely. If you want to prune the log, you can do it via WP-CLI; reach out via support if you need a recipe.

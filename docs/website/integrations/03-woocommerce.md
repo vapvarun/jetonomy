@@ -1,4 +1,4 @@
-Gate Jetonomy spaces by WooCommerce product purchase or active WooCommerce Subscription - so customers unlock discussion areas the moment they buy.
+Gate Jetonomy spaces by WooCommerce Membership plan or active WooCommerce Subscription - so customers unlock discussion areas the moment their membership or subscription becomes active.
 
 ![Jetonomy admin settings for WooCommerce integration setup](../images/admin-settings.png)
 
@@ -6,42 +6,48 @@ Gate Jetonomy spaces by WooCommerce product purchase or active WooCommerce Subsc
 
 ## What You Will Learn
 
-- Which WooCommerce products Jetonomy Pro supports as access gates
-- How to set up an Access Rule tied to a product or subscription
-- How access activates on purchase and revokes on refund or subscription expiry
-- How to combine product gates with membership-level gates
+- Which WooCommerce levels Jetonomy Pro supports as access gates
+- How to set up an Access Rule tied to a membership plan or subscription
+- How access activates and revokes on membership and subscription status changes
+- How to combine WooCommerce gates with membership-level gates
 
-## Supported Product Types
+## Supported Gate Types
 
-| Product Type | Supported | Notes |
+The WooCommerce adapter activates only when WooCommerce is active **and** either WooCommerce Memberships **or** WooCommerce Subscriptions is also active. What you can select as a gate is a Membership plan or a Subscription product - not a plain Simple or Variable product.
+
+| Gate Type | Supported | Notes |
 |---|---|---|
-| Simple product | Yes | Access granted on order complete, permanent |
-| Variable product | Yes | Gate by parent product - any variation grants access |
-| WooCommerce Subscriptions | Yes | Access active while subscription is active; revoked on pause, cancel, or expiry |
-| Grouped product | No | Gate individual products within the group instead |
+| WooCommerce Memberships plan | Yes | Access tracks the membership status (active/paused/cancelled) |
+| WooCommerce Subscription product | Yes | Access active while the subscription is active; revoked on hold, cancel, or expiry |
+| Variable-subscription product | Yes | Selectable like any other subscription product |
+| Plain Simple product | No | Use a WooCommerce Memberships plan tied to that product instead |
+| Plain Variable product | No | Use a WooCommerce Memberships plan instead |
+| Grouped product | No | Gate via a Membership plan instead |
 
-> **Note:** WooCommerce Subscriptions (the WooCommerce.com extension) is required for subscription-based gating. Simple product gating works with WooCommerce alone.
+> **Note:** Either WooCommerce Memberships **or** WooCommerce Subscriptions (both WooCommerce.com extensions) is required. WooCommerce on its own does not enable space gating - the adapter stays inactive until one of the two is present.
 
 ## Setting Up an Access Rule
 
-1. Install and activate **Jetonomy Pro** and ensure WooCommerce is active.
+1. Install and activate **Jetonomy Pro**, ensure WooCommerce is active, and ensure WooCommerce Memberships or WooCommerce Subscriptions is active.
 2. Go to **Jetonomy → Spaces** and open the space you want to gate.
 3. Click the **Access Rules** tab.
 4. Click **Add Rule**.
-5. Set **Rule Type** to **WooCommerce Product**.
-6. Search for and select the product by name.
+5. Set **Rule Type** to **WooCommerce**.
+6. Select the Membership plan or Subscription product from the dropdown.
 7. Set the action to **Grant**.
 8. Save the space.
 
-The Access Rule takes effect immediately. Members who have already purchased the product are granted access in the background within a few seconds of saving.
+The Access Rule takes effect immediately. Members who already hold the membership or active subscription are granted access in the background within a few seconds of saving.
 
-> **Tip:** You can add multiple product rules to a single space. Access is granted if the member has purchased any one of the listed products.
+> **Tip:** You can add multiple WooCommerce rules to a single space. Access is granted if the member matches any one of the listed memberships or subscriptions.
 
-## Auto-Activate on Purchase
+## Auto-Activate
 
-When a customer's order status reaches **Completed**, Jetonomy Pro adds them to any spaces that grant access on that product. They receive a Jetonomy notification welcoming them to the space.
+Jetonomy Pro listens to WooCommerce Memberships and WooCommerce Subscriptions status changes - not to raw order status transitions.
 
-If you use WooCommerce Subscriptions, Jetonomy Pro also listens to subscription status changes:
+For WooCommerce Memberships, when a membership becomes active Jetonomy Pro adds the member to any spaces that grant access on that plan and sends a welcome notification.
+
+For WooCommerce Subscriptions, access tracks the subscription status:
 
 | Subscription Status | Access |
 |---|---|
@@ -49,13 +55,12 @@ If you use WooCommerce Subscriptions, Jetonomy Pro also listens to subscription 
 | On-hold | Revoked |
 | Cancelled | Revoked |
 | Expired | Revoked |
-| Pending-cancel | Retained until expiry date |
 
-## Auto-Revoke on Refund
+## Auto-Revoke
 
-When an order is refunded, Jetonomy Pro removes the customer from any spaces gated to that product. The order status transition to **Refunded** triggers the revocation.
+Access is revoked through the same status hooks. A WooCommerce Membership moving out of active status, or a subscription moving to on-hold, cancelled, or expired, removes the member from any spaces gated exclusively to that level.
 
-> **Note:** A partial refund does not revoke access. Only a full refund (entire order) triggers the remove. If you need partial-refund gating, use WooCommerce Subscriptions and cancel the subscription manually.
+> **Note:** Revocation is driven by membership and subscription status changes, not by order Refunded transitions. Refunding a one-off order does not by itself revoke access - the gating membership or subscription has to change status.
 
 ## Combining with Other Rules
 
@@ -65,11 +70,11 @@ Example: gate a "Premium VIP" space to either MemberPress VIP level OR a specifi
 
 ## Troubleshooting
 
-**Rule Type dropdown does not show WooCommerce Product** - Confirm Jetonomy Pro is active and WooCommerce is active. Navigate to **Jetonomy → Extensions** and check that the WooCommerce integration is listed.
+**Rule Type dropdown does not show WooCommerce** - Confirm Jetonomy Pro is active, WooCommerce is active, and WooCommerce Memberships or WooCommerce Subscriptions is active. The adapter stays inactive (and the rule type is hidden) until one of those two extensions is present.
 
-**Subscription product not gating correctly** - Confirm WooCommerce Subscriptions (by WooCommerce.com) is installed and active. WooCommerce Memberships (a separate product) is not required.
+**No plans or products to select** - The dropdown lists WooCommerce Memberships plans and Subscription (including variable-subscription) products only. If it is empty, create a Membership plan or a Subscription product first. Plain Simple and Variable products are not selectable.
 
-**Member not removed after refund** - Verify the order status actually moved to Refunded, not just to Cancelled or On-Hold. Only a full Refunded status triggers access revocation.
+**Member not removed after a refund** - Access is tied to the gating membership or subscription status, not the order. Verify the WooCommerce Membership moved out of active status, or the subscription moved to on-hold, cancelled, or expired. A refunded order alone does not revoke access.
 
 ## What's Next?
 

@@ -60,7 +60,7 @@ RCP rules stack with all other Access Rule types in Jetonomy. A member gains acc
 
 **RCP Level not appearing in Rule Type dropdown** - Confirm Jetonomy Pro is active and Restrict Content Pro is active. Check that at least one subscription level exists in **Restrict Content → Subscription Levels**.
 
-**Member not removed after subscription expires** - RCP can be configured to change status on expiry, grace periods, or manual review. Jetonomy listens to the `rcp_set_status` action. If a custom RCP workflow bypasses this action, auto-removal will not fire.
+**Member not removed after subscription expires** - RCP can be configured to change status on expiry, grace periods, or manual review. Jetonomy listens to RCP 3.x membership API actions: `rcp_membership_post_activate`, `rcp_membership_post_cancel`, and `rcp_transition_membership_status` (which removes access on `expired`, `cancelled`, and `pending`). If a custom RCP workflow bypasses these actions, auto-removal will not fire.
 
 **Access still active after cancellation** - Check whether the user holds a second active RCP subscription that also grants access to the space via a separate rule.
 

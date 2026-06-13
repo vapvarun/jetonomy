@@ -39,7 +39,7 @@ Jetonomy fires a notification for each of the following events:
 | A new topic is posted in a space you follow | All followers of that space | In-app, email |
 | Your topic or reply receives an upvote | Content author | In-app |
 | Your topic or reply receives a downvote | Content author | In-app |
-| An idea's status changes (Ideas spaces) | Idea author + all followers of that space | Activity log, email digest, in-app inbox |
+| An idea's status changes (Ideas spaces) | Idea author | In-app, email |
 
 Upvote and downvote notifications can be turned off per-member if members prefer not to see them. See the Preferences section below.
 
@@ -55,7 +55,7 @@ Unread notifications are highlighted with a subtle background tint in the dropdo
 
 The dropdown shows your most recent notifications, roughly the last 10 to 20 items depending on screen size. To see your full notification history, click **See all notifications** at the bottom of the dropdown or navigate directly to `/community/notifications/`.
 
-The full page lists every notification you have received, paginated 25 per page. Notifications older than 90 days are automatically cleaned up from the database by a background cron job.
+The full page lists every notification you have received, loading 20 at a time with a **Load More** button at the bottom. A weekly background job marks unread notifications older than 30 days as read. Notifications are not auto-deleted from the database.
 
 ### Filter Tabs
 

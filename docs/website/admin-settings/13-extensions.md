@@ -10,7 +10,7 @@ Go to **Jetonomy → Extensions** to access this screen. This menu item is added
 
 ## Required Capability
 
-Toggling extensions requires `manage_options`. Only WordPress Administrators can enable or disable extensions.
+The Extensions screen is gated by `jetonomy_manage_settings`, which is administrator-only by default. Only WordPress Administrators can open the screen and enable or disable extensions.
 
 ## The Extension Grid
 

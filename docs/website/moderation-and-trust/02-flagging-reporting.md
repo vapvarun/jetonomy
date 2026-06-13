@@ -12,9 +12,9 @@ Flagging lets any logged-in member report content that breaks your community rul
 
 ## How to Flag Content
 
-Every topic and every reply has a **...** (more actions) menu. Open it and click **Report**. A small modal appears asking for a reason. Type a brief description of the problem - for example, "This contains spam links" or "This is abusive toward another member" - and click **Submit Report**.
+Every topic and every reply has a **...** (more actions) menu. Open it and click **Report**. A prompt dialog appears asking why you are reporting the content. Type a brief description of the problem - for example, "This contains spam links" or "This is abusive toward another member" - and confirm.
 
-The flag is saved immediately. You receive a confirmation message and the modal closes.
+The flag is saved immediately and you receive a confirmation message. The text you type is stored as the flag's description; the member-side report files every flag under the **Other** reason category, and moderators see that category alongside your description when they review it.
 
 > **Tip:** A good flag reason helps moderators act faster. "Spam" alone works, but "Contains a link to a commercial site unrelated to this community" gives the moderator everything they need without having to investigate.
 
@@ -41,7 +41,7 @@ Moderators see all of this information when they review the flag in the moderati
 
 Flagging alone does not change the visibility of a post or reply. The content stays live and readable by all members until a moderator reviews it and takes action. This is intentional - hiding content automatically on a single flag would allow abuse of the flagging system.
 
-A moderator can then approve the flag (confirming the content breaks the rules) and take action, or dismiss the flag (marking it unfounded). See the [Moderation Queue](03-moderation-queue.md) guide for the full review workflow.
+A moderator can then mark the flag **Valid** (confirming the content breaks the rules, which trashes it) or **Dismiss** it (marking it unfounded, leaving the content live). See the [Moderation Queue](03-moderation-queue.md) guide for the full review workflow.
 
 > **Note:** If the same piece of content receives multiple flags from different members, all flags are grouped under that content item in the moderation queue. Moderators see the total flag count and each individual reason.
 

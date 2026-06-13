@@ -1,4 +1,4 @@
-Jetonomy exposes 58 hooks in the free plugin and 9 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
+Jetonomy fires over 140 hooks in the free plugin, plus another two dozen in Jetonomy Pro. This page documents the most useful ones; every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
 
 **Hook naming prefix:** `jetonomy_`
 **Namespace:** `Jetonomy\`

@@ -73,6 +73,7 @@ Trust Level 0 members (brand-new accounts) are subject to posting rate limits re
 |--------------|---------------|
 | Topics per day | 3 |
 | Replies per day | 10 |
+| Votes per day | 5 |
 
 Limits reset after 24 hours. Members at Trust Level 1 and above are exempt from all rate limits.
 

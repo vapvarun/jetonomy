@@ -7,7 +7,7 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 - What data the bbPress importer brings over and what it leaves behind
 - How to prepare your site before running the import
 - How to start the import, monitor progress, and resume if it stops
-- How to use the dry-run option to estimate time and check for issues
+- How to use the CLI dry-run option to validate before writing data
 - What to verify after the import completes
 
 ## What Gets Imported
@@ -16,15 +16,15 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 |---|---|---|
 | Forums | Jetonomy Spaces | Forum description → space description |
 | Topics | Jetonomy Posts | Topic title + content preserved |
-| Replies | Jetonomy Replies | Threaded up to 3 levels; deeper threads flattened |
-| Tags | Jetonomy Tags | Applied to posts |
+| Replies | Jetonomy Replies | Imported as flat replies on the post (bbPress reply threading is not preserved) |
 | User accounts | Linked to existing WP users | Matched by user ID |
-| User activity counts | Reputation score | Approximate mapping |
-| Votes (if present) | Jetonomy votes | Only if bbPress vote plugin data is in standard tables |
-| Forum moderators | Space Moderator role | Matched to WP users by ID |
 | Sticky topics | Pinned posts | Preserved |
 
 **Not imported:**
+- bbPress topic tags
+- bbPress user activity counts / reputation
+- bbPress votes (no standard bbPress vote data is read)
+- Forum moderator assignments (assign Space Moderator roles manually after import)
 - bbPress subscriptions (replaced by Jetonomy follow/subscribe)
 - bbPress private messages (import to Jetonomy Pro private messaging separately)
 - Custom bbPress meta fields (use the `jetonomy_importers` filter to extend)
@@ -46,23 +46,21 @@ Complete these steps before starting the import:
 
 1. Go to **Jetonomy → Import** in your WordPress admin.
 2. Select **bbPress** as the source.
-3. (Optional) Enable **Dry Run** to preview results without writing any data.
-4. Click **Start Import**.
+3. Click **Start Import**.
 
-The importer processes records in batches of 50. A progress bar shows completion percentage, current batch, and estimated time remaining.
+The importer processes records in batches of 500. A progress bar shows completion percentage, current batch, and estimated time remaining.
 
 Do not close the browser tab while the import is running. If the page refreshes or you navigate away, the import will pause - but can be resumed (see below).
 
 ## Dry-Run Mode
 
-Enable **Dry Run** before your first real import. In dry-run mode, Jetonomy reads all your bbPress data, validates it, and reports:
+Dry-run mode is available via WP-CLI only (`--dry-run`). It runs the import logic without writing any data and reports the imported / skipped / error totals it would have produced:
 
-- Total record counts (forums, topics, replies, users)
-- Estimated import time
-- Any data integrity issues (orphaned topics, missing user accounts, encoding problems)
-- A preview of the first 10 forum-to-space mappings
+```bash
+wp jetonomy import bbpress --dry-run
+```
 
-Dry-run mode makes no database writes. Run it as many times as you need.
+The summary line looks like `[DRY RUN] Import complete. Imported: 1240, Skipped: 12, Errors: 0`. No database writes are made, so you can run it as many times as you need.
 
 ## Estimated Import Times
 
@@ -86,23 +84,17 @@ You can safely resume multiple times. Records that were already imported are ski
 For large communities, WP-CLI is more reliable than the browser-based importer:
 
 ```bash
-wp --path="/path/to/wordpress" jetonomy import run --source=bbpress
+wp --path="/path/to/wordpress" jetonomy import bbpress
 ```
 
-Optional flags:
+The only flag is `--dry-run`:
 
 ```bash
-# Dry run
-wp jetonomy import run --source=bbpress --dry-run
-
-# Set batch size (default 50)
-wp jetonomy import run --source=bbpress --batch-size=100
-
-# Resume from a specific batch offset
-wp jetonomy import run --source=bbpress --offset=500
+# Dry run — validate and count without writing any data
+wp jetonomy import bbpress --dry-run
 ```
 
-WP-CLI runs without a timeout limit and outputs a progress line for each batch.
+WP-CLI runs without a browser timeout limit and prints an `Imported / Skipped / Errors` summary when the import finishes.
 
 ## Post-Import Checklist
 
@@ -111,9 +103,9 @@ After the import completes, verify the following:
 - [ ] Navigate to your community home - spaces should match your old bbPress forums
 - [ ] Open several posts and confirm content and replies are intact
 - [ ] Check that user profiles show post counts
-- [ ] Verify that moderators have the Moderator role in their respective spaces
+- [ ] Assign Space Moderator roles to your former forum moderators (moderator assignments are not imported)
 - [ ] Test creating a new post as a regular user
-- [ ] Visit **Jetonomy → Settings → Permalinks** and click Save to flush rewrite rules
+- [ ] If new spaces return a 404, visit **Jetonomy → Settings → Permalinks** and click Save to flush rewrite rules (normally done automatically on import completion)
 - [ ] If you used bbPress shortcodes on pages, remove or replace them - they will output raw shortcode text now that bbPress is still active
 
 > **Note:** After a successful import, you can deactivate bbPress. Your community data is now in Jetonomy's tables and bbPress is no longer needed.

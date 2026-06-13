@@ -1,4 +1,4 @@
-Jetonomy uses a universal adapter pattern for every external integration point. Instead of hard-coding a dependency on a specific search engine, email provider, membership plugin, or real-time service, each integration is represented by a PHP interface. You implement the interface, register your adapter, and Jetonomy uses it everywhere.
+Jetonomy uses a universal adapter pattern for every external integration point. Instead of hard-coding a dependency on a specific search engine, email provider, membership plugin, or AI provider, each integration is represented by a PHP interface. You implement the interface, register your adapter, and Jetonomy uses it everywhere.
 
 All adapters are managed through the static `Adapter_Registry` class (`includes/adapters/class-adapter-registry.php`).
 
@@ -11,7 +11,7 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 | `Search_Adapter` | `interface-search-adapter.php` | Full-text search for posts, replies, spaces |
 | `Email_Adapter` | `interface-email-adapter.php` | Outbound notification emails |
 | `Membership_Adapter` | `interface-membership-adapter.php` | Membership level checks and gating |
-| `Realtime_Adapter` | `interface-realtime-adapter.php` | Live event broadcasting to connected clients |
+| `AI_Adapter` | `interface-ai-adapter.php` | AI chat completions and embeddings (text generation, moderation, semantic features) |
 
 ---
 
@@ -22,9 +22,9 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 | `Fulltext_Search` (`Jetonomy\Search\`) | Search | Always (MySQL FULLTEXT - built-in) |
 | `WP_Mail_Adapter` | Email | Always (uses `wp_mail()`) |
 | `WP_Roles_Adapter` | Membership | Always (WP role-based membership fallback) |
-| `Polling_Adapter` | Realtime | Always (long-polling fallback via `/updates` endpoint) |
 | `MemberPress_Adapter` | Membership | MemberPress plugin is active |
 | `PMPro_Adapter` | Membership | Paid Memberships Pro is active |
+| `Ollama_AI_Adapter` | AI | A local Ollama endpoint is configured |
 
 ## Pro Adapters (Jetonomy Pro)
 
@@ -37,8 +37,11 @@ All adapters are managed through the static `Adapter_Registry` class (`includes/
 | `LifterLMS_Adapter` | Membership | LifterLMS is active |
 | `Sensei_Adapter` | Membership | Sensei LMS is active |
 | `MasterStudy_Adapter` | Membership | MasterStudy LMS is active |
+| `OpenAI_AI_Adapter` | AI | The AI extension is enabled with an OpenAI provider configured |
+| `Anthropic_AI_Adapter` | AI | The AI extension is enabled with an Anthropic provider configured |
+| `Custom_AI_Adapter` | AI | The AI extension is enabled with a custom OpenAI-compatible provider configured |
 
-Pro registers these via `Adapter_Registry::register_membership()` at `plugins_loaded` priority 20.
+Pro registers membership adapters via `Adapter_Registry::register_membership()` and AI adapters via `Adapter_Registry::register_ai()` at `plugins_loaded` priority 20.
 
 ---
 
@@ -49,19 +52,21 @@ Pro registers these via `Adapter_Registry::register_membership()` at `plugins_lo
 \Jetonomy\Adapters\Adapter_Registry::register_search( 'my-search', $adapter );
 \Jetonomy\Adapters\Adapter_Registry::register_email( 'my-mailer', $adapter );
 \Jetonomy\Adapters\Adapter_Registry::register_membership( 'my-membership', $adapter );
-\Jetonomy\Adapters\Adapter_Registry::register_realtime( 'my-pusher', $adapter );
+\Jetonomy\Adapters\Adapter_Registry::register_ai( 'my-ai', $adapter );
 
 // Retrieve the active adapter (first registered adapter where is_active() returns true).
 $search     = \Jetonomy\Adapters\Adapter_Registry::get_search();
 $email      = \Jetonomy\Adapters\Adapter_Registry::get_email();
 $membership = \Jetonomy\Adapters\Adapter_Registry::get_membership();
-$realtime   = \Jetonomy\Adapters\Adapter_Registry::get_realtime();
+$ai         = \Jetonomy\Adapters\Adapter_Registry::get_ai();
 
 // Retrieve a specific adapter by ID.
-$mp = \Jetonomy\Adapters\Adapter_Registry::get_membership( 'memberpress' );
+$mp     = \Jetonomy\Adapters\Adapter_Registry::get_membership( 'memberpress' );
+$openai = \Jetonomy\Adapters\Adapter_Registry::get_ai( 'openai' );
 
-// List all registered membership adapters.
-$all = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+// List all registered membership / AI adapters.
+$all    = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();
+$all_ai = \Jetonomy\Adapters\Adapter_Registry::get_all_ai();
 ```
 
 The Registry returns `null` when no active adapter is found for a type - always null-check before calling methods.
@@ -354,65 +359,105 @@ class My_Membership_Adapter implements \Jetonomy\Adapters\Membership_Adapter {
 
 ---
 
-## Realtime Adapter Interface
+## AI Adapter Interface
 
 ```php
 namespace Jetonomy\Adapters;
 
-interface Realtime_Adapter {
+interface AI_Adapter {
+    /** Whether this adapter is configured and ready. */
     public function is_active(): bool;
 
-    /**
-     * Broadcast an event to all clients subscribed to a channel.
-     *
-     * @param string $channel Channel name (e.g. 'post.42', 'space.7').
-     * @param string $event   Event type (e.g. 'new-reply', 'post-updated').
-     * @param array  $data    Event payload.
-     */
-    public function publish( string $channel, string $event, array $data ): void;
+    /** Unique provider identifier (e.g. 'openai', 'anthropic', 'ollama'). */
+    public function get_id(): string;
+
+    /** Human-readable provider name. */
+    public function get_name(): string;
 
     /**
-     * Return configuration passed to the frontend JavaScript client.
-     * Keys depend on your provider (e.g. 'key', 'cluster' for Pusher).
+     * Send a chat completion request.
      *
-     * @return array
+     * @param array $messages Array of ['role' => 'system'|'user'|'assistant', 'content' => string].
+     * @param array $options  Optional: model, temperature, max_tokens, json_mode.
+     * @return array{content: string, usage: array{prompt_tokens: int, completion_tokens: int, total_tokens: int}, model: string}
+     * @throws \RuntimeException On API failure.
      */
-    public function get_client_config(): array;
+    public function chat( array $messages, array $options = [] ): array;
+
+    /**
+     * Generate embeddings for text.
+     *
+     * @param string $text    Input text.
+     * @param array  $options Optional: model.
+     * @return array{embedding: float[], model: string, usage: array{total_tokens: int}}
+     * @throws \RuntimeException On API failure or if provider does not support embeddings.
+     */
+    public function embed( string $text, array $options = [] ): array;
+
+    /** Return supported models as id => display_name. */
+    public function get_models(): array;
+
+    /** Test the connection (validates API key + reachability). Returns ['ok' => bool, 'error'? => string, 'model'? => string]. */
+    public function test(): array;
 }
 ```
 
-The built-in `Polling_Adapter` uses the `/updates` REST endpoint as a fallback. If you register a WebSocket-based adapter (Pusher, Ably, Soketi), the frontend Interactivity API store picks up the client config from `get_client_config()` and switches to push-based updates automatically.
+The built-in `Ollama_AI_Adapter` (free) talks to a local Ollama endpoint and activates only when one is configured. Jetonomy Pro's AI extension registers `OpenAI_AI_Adapter`, `Anthropic_AI_Adapter`, and `Custom_AI_Adapter` (any OpenAI-compatible endpoint). `Adapter_Registry::get_ai()` returns the first registered adapter whose `is_active()` returns `true`; pass an explicit ID to target a specific provider.
 
-### Example: Pusher Adapter
+### Example: Custom AI Adapter
 
 ```php
-class Pusher_Adapter implements \Jetonomy\Adapters\Realtime_Adapter {
-
-    private \Pusher\Pusher $pusher;
-
-    public function __construct() {
-        $this->pusher = new \Pusher\Pusher(
-            get_option( 'my_plugin_pusher_key' ),
-            get_option( 'my_plugin_pusher_secret' ),
-            get_option( 'my_plugin_pusher_app_id' ),
-            [ 'cluster' => get_option( 'my_plugin_pusher_cluster', 'mt1' ), 'useTLS' => true ]
-        );
-    }
+class My_AI_Adapter implements \Jetonomy\Adapters\AI_Adapter {
 
     public function is_active(): bool {
-        return class_exists( '\Pusher\Pusher' )
-            && ! empty( get_option( 'my_plugin_pusher_key' ) );
+        return ! empty( get_option( 'my_plugin_ai_key' ) );
     }
 
-    public function publish( string $channel, string $event, array $data ): void {
-        $this->pusher->trigger( $channel, $event, $data );
+    public function get_id(): string {
+        return 'my-ai';
     }
 
-    public function get_client_config(): array {
+    public function get_name(): string {
+        return 'My AI Provider';
+    }
+
+    public function chat( array $messages, array $options = [] ): array {
+        $response = wp_remote_post( 'https://api.example.com/v1/chat', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . get_option( 'my_plugin_ai_key' ),
+                'Content-Type'  => 'application/json',
+            ],
+            'body' => wp_json_encode( [
+                'model'    => $options['model'] ?? 'default',
+                'messages' => $messages,
+            ] ),
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            throw new \RuntimeException( $response->get_error_message() );
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
         return [
-            'key'     => get_option( 'my_plugin_pusher_key' ),
-            'cluster' => get_option( 'my_plugin_pusher_cluster', 'mt1' ),
+            'content' => $body['choices'][0]['message']['content'] ?? '',
+            'usage'   => $body['usage'] ?? [ 'prompt_tokens' => 0, 'completion_tokens' => 0, 'total_tokens' => 0 ],
+            'model'   => $body['model'] ?? ( $options['model'] ?? 'default' ),
         ];
+    }
+
+    public function embed( string $text, array $options = [] ): array {
+        throw new \RuntimeException( 'Embeddings not supported.' );
+    }
+
+    public function get_models(): array {
+        return [ 'default' => 'Default Model' ];
+    }
+
+    public function test(): array {
+        return $this->is_active()
+            ? [ 'ok' => true ]
+            : [ 'ok' => false, 'error' => 'API key not configured.' ];
     }
 }
 ```
@@ -448,20 +493,20 @@ add_action( 'jetonomy_post_deleted', function( int $post_id ) {
 } );
 ```
 
-### Realtime: Broadcast new replies
+### AI: Summarize a new post on demand
 
 ```php
-add_action( 'jetonomy_after_create_reply', function( int $reply_id, int $post_id ) {
-    $rt = \Jetonomy\Adapters\Adapter_Registry::get_realtime();
-    if ( ! $rt ) return;
+add_action( 'jetonomy_after_create_post', function( int $post_id, int $space_id ) {
+    $ai = \Jetonomy\Adapters\Adapter_Registry::get_ai();
+    if ( ! $ai ) return;
 
-    $reply = \Jetonomy\Models\Reply::find( $reply_id );
-    if ( $reply ) {
-        $rt->publish( 'post.' . $post_id, 'new-reply', [
-            'reply_id'   => $reply_id,
-            'author_id'  => $reply->author_id,
-            'created_at' => $reply->created_at,
+    $post = \Jetonomy\Models\Post::find( $post_id );
+    if ( $post ) {
+        $result = $ai->chat( [
+            [ 'role' => 'system', 'content' => 'Summarize the following topic in one sentence.' ],
+            [ 'role' => 'user',   'content' => wp_strip_all_tags( $post->content ) ],
         ] );
+        // Persist $result['content'] wherever you need it.
     }
 }, 10, 2 );
 ```
@@ -493,10 +538,10 @@ add_action( 'plugins_loaded', function() {
     $adapter->register_hooks();
     \Jetonomy\Adapters\Adapter_Registry::register_membership( 'my-membership', $adapter );
 
-    // Realtime - replace long-polling with WebSockets.
-    \Jetonomy\Adapters\Adapter_Registry::register_realtime(
-        'pusher',
-        new My_Plugin\Pusher_Adapter()
+    // AI - add a custom AI provider for chat completions / embeddings.
+    \Jetonomy\Adapters\Adapter_Registry::register_ai(
+        'my-ai',
+        new My_Plugin\My_AI_Adapter()
     );
 }, 9 ); // Priority 9 ensures search adapter runs before built-in defaults at priority 10.
 ```

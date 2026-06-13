@@ -18,7 +18,7 @@ Every notification type that appears in the in-app bell can also send an email. 
 | Notification type | Email sent by default |
 |-------------------|-----------------------|
 | Reply to your topic | Yes |
-| Reply to your reply | Yes |
+| Reply to your reply | No |
 | @mention | Yes |
 | Answer accepted (Q&A) | Yes |
 | New post in followed space | No |
@@ -40,13 +40,30 @@ Two improvements landed in 1.4.1 that are worth knowing about:
 
 Defaults now have a single source of truth so reset always restores the exact copy the plugin ships with - even if a future update changes the default wording, your reset still gets the version you'd see on a fresh install.
 
+### Template Placeholders
+
+You can use these placeholders in any subject or body. They are replaced with the real values when the email is sent:
+
+| Placeholder | Replaced with |
+|-------------|---------------|
+| `{site}` | Your site name |
+| `{user}` | The recipient's display name |
+| `{message}` | The notification summary text |
+| `{type}` | The notification type key |
+| `{url}` | A direct link to the relevant content |
+| `{post_title}` | The title of the related topic or idea |
+| `{actor_display_name}` | The member who triggered the notification |
+| `{reply_excerpt}` | A short excerpt of the reply |
+| `{space_title}` | The space the activity happened in |
+
+Any placeholder with no value for a given event renders as an empty string, so it never shows up as literal `{post_title}` text in the email.
+
 ## Configuring Default Settings
 
 Go to **Jetonomy → Settings → Email** to set the community-wide defaults.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Email notifications enabled | Yes | Master switch - turns off all notification email for the site |
 | Default: reply notifications | Yes | Whether new members receive reply emails by default |
 | Default: mention notifications | Yes | Whether new members receive mention emails by default |
 | Default: followed space notifications | No | Whether new members receive followed-space emails by default |
@@ -64,7 +81,7 @@ Members can disable all notification emails at once with the **Pause all email**
 
 ## One-Click Unsubscribe
 
-Every notification email sent by Jetonomy includes an unsubscribe link in the footer. Clicking it takes the member to a confirmation page where they can unsubscribe from that specific notification type or from all notification emails in one click.
+Every notification email sent by Jetonomy includes an unsubscribe link in the footer. Clicking it immediately unsubscribes the member from that one notification type and shows a confirmation message.
 
 No login is required to unsubscribe - the link contains a signed token that authenticates the action. This keeps unsubscribe rates low and means members who receive an email do not need to remember their password to opt out.
 

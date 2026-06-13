@@ -27,7 +27,7 @@ When writing a new topic, click **+ Add Poll** beneath the content editor.
 
 The poll builder lets you:
 
-- Write up to 10 options (minimum 2 required).
+- Write up to 20 options (minimum 2 required).
 - Choose **Single choice** (members pick one) or **Multiple choice** (members pick several).
 - Optionally set a **Close date** - the poll stops accepting votes automatically at that date and time.
 
@@ -85,8 +85,8 @@ Polls registers these endpoints under `jetonomy/v1`:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/polls` | Create a poll on a post |
-| `GET` | `/polls/{id}` | Get a poll's options and live vote counts |
+| `POST` | `/posts/{post_id}/poll` | Create a poll on a post |
+| `GET` | `/posts/{post_id}/poll` | Get a poll's options and live vote counts |
 | `POST` | `/polls/{id}/vote` | Cast a vote - pass `option_id` for single choice or `option_ids` (array) for multiple choice |
 | `DELETE` | `/polls/{id}/vote` | Remove your vote(s) from the poll |
 | `PATCH` | `/polls/{id}` | Update a poll (for example, change the close date) |

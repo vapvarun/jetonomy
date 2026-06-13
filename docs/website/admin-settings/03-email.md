@@ -48,11 +48,14 @@ Each notification type has an independent toggle for both **web** (in-app bell) 
 | Reply to a reply you made | On | Off |
 | @mention | On | On |
 | Accepted answer (Q&A) | On | On |
-| Vote on your post | On | Off |
-| Badge earned | On | Off |
+| Your idea roadmap status changed | On | On |
 | New post in followed space | On | Off |
+| Badge earned | On | Off |
+| Vote on your post | On | Off |
+| Moderator action on your content | On | On |
+| Space join request | On | On |
 
-Turning off a type at the site level disables it globally - individual members cannot re-enable a type you have disabled here. Use this to prevent email overload from noisy notification types.
+The values you set here are the starting defaults for new members. Individual members can still override any type from their own notification settings. Use these defaults to keep noisy notification types quiet out of the box without locking members out of re-enabling them.
 
 > **Note:** Vote and badge notifications default to web-only because they can occur frequently. Email for every vote would quickly train members to ignore your community emails entirely.
 

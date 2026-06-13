@@ -20,7 +20,7 @@ Every post and every reply in your community shows a reaction strip. Members cli
 
 The reaction counts are displayed as chips directly below the post body. Each chip shows the emoji and the total count. Hovering a chip reveals the names of recent reactors.
 
-<!-- TODO screenshot needed: Reaction strip showing six emoji options (was ../images/pro-reactions-strip.png) -->
+<!-- TODO screenshot needed: Reaction strip showing eight emoji options (was ../images/pro-reactions-strip.png) -->
 ## Enabling Reactions
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
@@ -31,18 +31,20 @@ The reaction counts are displayed as chips directly below the post body. Each ch
 
 ## Default Emoji Set
 
-Jetonomy ships with six Fluent 3D emojis (Microsoft, MIT licensed) out of the box:
+Jetonomy ships with eight emoji reactions out of the box:
 
 | Emoji | Label | Use case |
 |-------|-------|----------|
 | Like | Thumbs up | General agreement |
 | Love | Heart | Enthusiasm, appreciation |
-| Thinking | Thinking face | Interesting, thought-provoking |
+| Haha | Laughing face | Humor, something funny |
 | Celebrate | Party popper | Wins, announcements |
+| Thinking | Thinking face | Interesting, thought-provoking |
+| Watching | Eyes | Following along, keeping an eye on it |
 | Rocket | Rocket | Fast, shipped, love it |
-| Sad | Sad face | Empathy, condolences |
+| Dislike | Thumbs down | Disagreement |
 
-All six are enabled globally by default. You can adjust which ones appear per space.
+All eight are enabled globally by default. You can adjust which ones appear per space.
 
 ## Per-Space Customization
 

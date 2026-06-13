@@ -78,19 +78,20 @@ Beyond join policy, each space has two additional settings that control what mem
 
 | Setting | Effect |
 |---------|--------|
-| Anyone (members) | All members can post |
-| Members with trust level 1+ | New members (trust level 0) cannot post |
-| Moderators only | Only space moderators and admins can post |
+| (Use Global Default) | Falls back to the community-wide Who Can Post setting |
+| Members Only | All members of the space can post |
+| Moderators & Admins | Only space moderators and admins can post |
+| Admins Only | Only space admins (and site admins) can post |
 
 **Who Can Reply** - Controls who can reply to existing topics.
 
 | Setting | Effect |
 |---------|--------|
-| Anyone (members) | All members can reply |
-| Members with trust level 1+ | New members cannot reply |
-| Moderators only | Only space moderators and admins can reply |
+| (Use Global Default) | Falls back to the community-wide Who Can Reply setting |
+| Members Only | All members of the space can reply |
+| Moderators & Admins | Only space moderators and admins can reply |
 
-These settings let you create announcement-only spaces (post and reply both set to Moderators only), or read-heavy Q&A spaces where only trusted members can contribute.
+These settings let you create announcement-only spaces (post set to Moderators & Admins, reply set to Moderators & Admins), or read-heavy Q&A spaces where only trusted members can contribute.
 
 ## Space Member Roles
 

@@ -80,12 +80,12 @@ Each rule has three parts:
 
 | Type | What it checks |
 |------|---------------|
+| Everyone | Matches every visitor, including logged-out users |
 | Logged In | User is authenticated |
 | WordPress Role | User has a specific WP role (e.g. Editor) |
 | Capability | User has a specific WP capability |
 | Trust Level | User's Jetonomy trust level (0–5) |
-| MemberPress | User has an active MemberPress membership |
-| Paid Memberships Pro | User has an active PMPro level |
+| Membership | User has an active membership. The specific provider - MemberPress or Paid Memberships Pro in free, plus WooCommerce Memberships, Restrict Content Pro, and LearnDash in Pro - is chosen within the rule via the matching membership adapter |
 
 **Access Grant** - What to allow:
 

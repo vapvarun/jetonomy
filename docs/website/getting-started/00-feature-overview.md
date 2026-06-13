@@ -32,7 +32,7 @@ Spaces are how you keep a large community navigable. Group them into categories,
 What is included:
 
 - **Categories and spaces** - top-level categories that group focused discussion spaces. See [Creating Spaces](../spaces-and-categories/01-creating-spaces.md).
-- **Five space types** - Forum, Q&A, Ideas, Show & Tell, and Social Feed, each changing how posts and replies behave. See [Space Types](../spaces-and-categories/02-space-types.md).
+- **Four space types** - Forum, Q&A, Ideas, and Feed, each changing how posts and replies behave. See [Space Types](../spaces-and-categories/02-space-types.md).
 - **Membership and join policies** - public, private, or hidden visibility paired with open, approval-required, or invite-only join rules. See [Membership & Join Policies](../spaces-and-categories/03-membership-policies.md).
 - **Invites** - invite-link landing pages so the right people get in without manual setup. See [Membership & Join Policies](../spaces-and-categories/03-membership-policies.md).
 
