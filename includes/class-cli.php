@@ -261,8 +261,11 @@ class CLI {
 	/**
 	 * Seed a realistic multi-user demo community.
 	 *
-	 * Creates 5 demo users, 2 categories, 5 spaces, 11 posts, 18+ replies,
-	 * votes, flags, badges, and Pro data (reactions, poll) if Jetonomy Pro is active.
+	 * Default mode seeds the full "model community": 4 categories, 20 spaces
+	 * (one private/approval), ~20 users, ~220 topics, 700-900 replies, accepted
+	 * answers, idea roadmap statuses, votes, pending flags, badges, and Pro data
+	 * (reactions, polls, DM threads) when Jetonomy Pro is active. Timestamps are
+	 * backdated across ~90 days using a fixed seed for reproducible builds.
 	 *
 	 * ## OPTIONS
 	 *
@@ -270,15 +273,37 @@ class CLI {
 	 * : Auto-cleanup existing demo data before seeding. Without this flag the
 	 *   command aborts if demo data already exists.
 	 *
+	 * [--model]
+	 * : Full reset before seeding. Truncates ALL Jetonomy content (categories,
+	 *   spaces, posts, replies, votes, flags, members, etc.) and deletes prior
+	 *   demo users, then seeds the model dataset. Dev-only: refuses to run on a
+	 *   production environment. Implies a full clean slate.
+	 *
 	 * ## EXAMPLES
 	 *     wp jetonomy demo-seed
 	 *     wp jetonomy demo-seed --force
+	 *     wp jetonomy demo-seed --model --force
 	 *
 	 * @subcommand demo-seed
 	 */
 	public function demo_seed( $args, $assoc_args ): void {
+		$model = ! empty( $assoc_args['model'] );
+
+		if ( $model ) {
+			if ( 'production' === wp_get_environment_type() ) {
+				\WP_CLI::error( '--model performs a destructive full reset and is blocked on production environments.' );
+				return;
+			}
+			\WP_CLI::log( 'Full reset: truncating all Jetonomy content and removing prior demo users...' );
+			if ( ! Demo_Seeder::reset_all() ) {
+				\WP_CLI::error( 'Full reset was blocked (non-local environment).' );
+				return;
+			}
+			\WP_CLI::log( 'Done.' );
+		}
+
 		$existing = get_option( 'jetonomy_demo_data', [] );
-		if ( ! empty( $existing ) ) {
+		if ( ! $model && ! empty( $existing ) ) {
 			if ( empty( $assoc_args['force'] ) ) {
 				\WP_CLI::error( 'Demo data already exists. Run with --force to replace it, or run `wp jetonomy demo-cleanup` first.' );
 				return;
