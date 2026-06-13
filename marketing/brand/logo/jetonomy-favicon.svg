@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Jetonomy">
+  <defs>
+    <linearGradient id="jtGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="120" fill="url(#jtGrad)"/>
+  <!-- Slightly larger single member for legibility at 16px; back member kept subtle. -->
+  <g fill="#FFFFFF">
+    <g opacity="0.75">
+      <circle cx="334" cy="200" r="48"/>
+      <path d="M272 332a62 66 0 0 1 124 0v2a6 6 0 0 1-6 6H278a6 6 0 0 1-6-6z"/>
+    </g>
+    <circle cx="200" cy="216" r="66"/>
+    <path d="M108 372a92 96 0 0 1 184 0v4a10 10 0 0 1-10 10H118a10 10 0 0 1-10-10z"/>
+  </g>
+</svg>
