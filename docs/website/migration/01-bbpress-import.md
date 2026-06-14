@@ -54,8 +54,6 @@ Complete these steps before starting the import:
 
 The importer processes records in batches of 500. A progress bar shows completion percentage, current batch, and estimated time remaining.
 
-![bbPress import in progress, showing the Forums to Topics to Replies to Profiles to Finalize step tracker and a progress bar](../images/migration/import-progress-tracker.png)
-
 Do not close the browser tab while the import is running. If the page refreshes or you navigate away, the import will pause - but can be resumed (see below).
 
 ## Dry-Run Mode
@@ -82,8 +80,6 @@ These are estimates for a typical shared hosting server. Dedicated servers will 
 ## Resuming a Paused Import
 
 If the import stops (browser closed, timeout, server restart), return to **Jetonomy → Import**. The card shows an **Import Interrupted** badge with the phase it stopped at. Click **Resume Import** to continue from the last completed batch, or **Start Over** to begin again from scratch.
-
-![bbPress import card showing the Import Interrupted badge with Resume Import and Start Over buttons](../images/migration/import-interrupted-resume.png)
 
 You can safely resume multiple times. Records that were already imported are skipped.
 

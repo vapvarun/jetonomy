@@ -2,7 +2,6 @@ Let members reply to community discussions directly from their email client - no
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![A notification email with a Reply to this post call to action that posts the member's reply straight back into the community](../images/pro-reply-by-email-flow.png)
 ## What You Will Learn
 
 - How Reply by Email works end to end

@@ -2,7 +2,6 @@ Reach members with browser push notifications - even when they have closed your 
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![A browser push notification from the community appearing on a desktop screen, with the community logo, the event title, and a short message](../images/pro-web-push-notification.png)
 ## What You Will Learn
 
 - How to generate VAPID keys and enable Web Push

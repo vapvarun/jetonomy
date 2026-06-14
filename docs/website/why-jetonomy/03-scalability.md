@@ -41,8 +41,6 @@ A topic with 400 replies does not load all 400 at once. Jetonomy loads the first
 
 When they click the gap, only the missing replies are fetched in the background - no full page reload.
 
-![A 400-reply topic showing the first replies, a "load more" gap, and the latest replies - smart reply loading in action](../images/why-jetonomy/smart-reply-loading.png)
-
 ### Built-In Caching
 
 Jetonomy uses WordPress object cache (`wp_cache`) throughout:
@@ -58,8 +56,6 @@ If you run an object cache plugin (Redis, Memcached), Jetonomy benefits automati
 Jetonomy does not run `COUNT(*)` queries to show "42 replies" on a topic card. The `reply_count` column is updated incrementally when replies are created or deleted. Displaying a list of 20 topics with accurate counts requires zero extra queries.
 
 ## Real-World Performance
-
-![Bar chart of topic-listing page-load times across four community sizes, with and without Redis object cache](../images/why-jetonomy/scalability-benchmark-chart.png)
 
 | Community Size | Page Load (no cache) | Page Load (Redis) |
 |---------------|---------------------|-------------------|
