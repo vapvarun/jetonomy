@@ -42,20 +42,20 @@ $jt_install_msg   = isset( $_GET['jt_msg'] ) ? sanitize_text_field( wp_unslash( 
 			$jt_unlocks = (string) ( $jt_c['unlocks'] ?? '' );
 
 			if ( 'active' === $jt_status ) {
-				$jt_badge_color = 'var(--jt-success,#1a7f37)';
-				$jt_badge_label = __( 'Connected', 'jetonomy' );
+				$jt_badge_variant = 'active';
+				$jt_badge_label   = __( 'Active', 'jetonomy' );
 			} elseif ( 'installed_inactive' === $jt_status ) {
-				$jt_badge_color = 'var(--jt-warn,#dba617)';
-				$jt_badge_label = __( 'Installed, not active', 'jetonomy' );
+				$jt_badge_variant = 'pending';
+				$jt_badge_label   = __( 'Inactive', 'jetonomy' );
 			} else {
-				$jt_badge_color = 'var(--jt-text-tertiary,#646970)';
-				$jt_badge_label = __( 'Not installed', 'jetonomy' );
+				$jt_badge_variant = 'archived';
+				$jt_badge_label   = __( 'Not installed', 'jetonomy' );
 			}
 			?>
 			<tr>
 				<th scope="row">
-					<?php echo esc_html( $jt_label ); ?>
-					<span style="display:inline-block;margin-inline-start:8px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600;color:#fff;background:<?php echo esc_attr( $jt_badge_color ); ?>;"><?php echo esc_html( $jt_badge_label ); ?></span>
+					<?php echo esc_html( $jt_label ); ?><br>
+					<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $jt_badge_variant ); ?>" style="margin-top:6px;"><?php echo esc_html( $jt_badge_label ); ?></span>
 				</th>
 				<td>
 					<?php if ( '' !== $jt_why ) : ?>
