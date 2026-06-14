@@ -1,7 +1,7 @@
 # Learnomy LMS Adapter — Implementation Plan
 
 **Target version:** 1.5.0-dev
-**Status:** PLANNED — BLOCKED on Learnomy-side public contract. The Jetonomy engine and all five touch points are verified and ready; the Learnomy-side API (access-check helpers, active-membership listing, catalog API, and especially an enrollment-changed hook) is **unverifiable in this checkout because Learnomy is not installed**, and is a hard blocker.
+**Status:** IMPLEMENTED + verified against Learnomy 1.1.1 (2026-06-14). Learnomy free+pro were installed in the forums dev site; the full public contract was confirmed with **no Learnomy-side changes needed**. Adapter: `jetonomy-pro/includes/adapters/class-learnomy-adapter.php`, registered in `class-jetonomy-pro.php`; 3 free-side config edits done (space-edit prefix map, class-admin labels, settings role regex). Verified end-to-end: enrolled user gated TRUE / non-enrolled FALSE, label + catalog resolve, member-sync adds/removes on `learnomy_student_enrolled` / `_unenrolled` / `_enrollment_expired` + `learnomy_subscription_created|cancelled|expired`. Real symbols: `Enrollment::is_enrolled()` / `get_distinct_for_user()`, `Subscription::get_active_for_user()`, `Course::list_published()`/`find()`, `MembershipPlan::get_active()`/`find()` — Learnomy uses custom `wp_lrn_*` tables (NOT CPTs), so labels come from `->title`.
 
 ## 0. What is verified true in the repo right now
 

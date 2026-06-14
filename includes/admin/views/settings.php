@@ -213,7 +213,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								}
 								if ( preg_match( '/^(bp_|bbp_|spectator|participant|moderator|keymaster|board_)/i', $jt_rk ) ) {
 									$jt_role_groups['community']['keys'][] = $jt_rk;
-								} elseif ( preg_match( '/^(ld_|tutor_|lms_|instructor|teacher|student|group_leader|memberpress|pmpro|wlm_)/i', $jt_rk ) ) {
+								} elseif ( preg_match( '/^(ld_|tutor_|lms_|lrn_|instructor|teacher|student|group_leader|memberpress|pmpro|wlm_)/i', $jt_rk ) ) {
 									$jt_role_groups['lms_memberships']['keys'][] = $jt_rk;
 								} elseif ( preg_match( '/^(shop_|customer|wc_|edd_|wpforms)/i', $jt_rk ) ) {
 									$jt_role_groups['commerce']['keys'][] = $jt_rk;

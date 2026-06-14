@@ -365,6 +365,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 									'tutor_course_'    => array( 'tutor', __( 'Tutor Course', 'jetonomy' ) ),
 									'sensei_course_'   => array( 'sensei', __( 'Sensei Course', 'jetonomy' ) ),
 									'ms_course_'       => array( 'masterstudy', __( 'MasterStudy Course', 'jetonomy' ) ),
+									'lrn_course_'      => array( 'learnomy', __( 'Learnomy Course', 'jetonomy' ) ),
+									'lrn_membership_'  => array( 'learnomy', __( 'Learnomy Membership', 'jetonomy' ) ),
 									'llms_course_'     => array( 'lifterlms', __( 'LifterLMS Course', 'jetonomy' ) ),
 									'llms_membership_' => array( 'lifterlms', __( 'LifterLMS Membership', 'jetonomy' ) ),
 									'ld_course_'       => array( 'learndash', __( 'LearnDash Course', 'jetonomy' ) ),

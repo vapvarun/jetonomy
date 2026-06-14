@@ -785,6 +785,7 @@ class Admin {
 			'lifterlms'   => __( 'LifterLMS Course', 'jetonomy' ),
 			'sensei'      => __( 'Sensei Course', 'jetonomy' ),
 			'masterstudy' => __( 'MasterStudy Course', 'jetonomy' ),
+			'learnomy'    => __( 'Learnomy Course', 'jetonomy' ),
 		);
 
 		$membership_adapters = array();
