@@ -93,6 +93,11 @@ class Media_Controller extends Base_Controller {
 		}
 		update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
 
+		// Mark this as a Jetonomy community upload so it can be kept out of the
+		// admin Media Library by default (member uploads should not drown the
+		// site owner's own media). Optional space context if the caller sends it.
+		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, (int) $request->get_param( 'space_id' ) );
+
 		$meta = wp_get_attachment_metadata( $attachment_id );
 
 		return rest_ensure_response(
