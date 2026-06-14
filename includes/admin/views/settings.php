@@ -1113,6 +1113,26 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'CAPTCHA Provider', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Protect post and reply forms from bots. Trusted members (trust level 2+) are always exempt.', 'jetonomy' ); ?></p>
 				</div>
+				<?php
+				// Inline validation: warn when the provider/keys are in a state that renders nothing.
+				$jt_cap_provider = $settings['captcha_provider'] ?? 'none';
+				$jt_cap_site     = trim( (string) ( $settings['captcha_site_key'] ?? '' ) );
+				$jt_cap_secret   = trim( (string) ( $settings['captcha_secret_key'] ?? '' ) );
+				$jt_cap_warning  = '';
+				if ( 'none' !== $jt_cap_provider && ( '' === $jt_cap_site || '' === $jt_cap_secret ) ) {
+					$jt_cap_warning = __( 'A CAPTCHA provider is selected but the Site Key and/or Secret Key is empty. The CAPTCHA will not render until both keys are filled in.', 'jetonomy' );
+				} elseif ( 'none' === $jt_cap_provider && ( '' !== $jt_cap_site || '' !== $jt_cap_secret ) ) {
+					$jt_cap_warning = __( 'CAPTCHA keys are saved but the Provider is set to Disabled, so no CAPTCHA renders. Select Cloudflare Turnstile or reCAPTCHA above to activate it.', 'jetonomy' );
+				}
+				if ( '' !== $jt_cap_warning ) :
+					?>
+					<p class="jt-captcha-config-warning" style="margin:0 0 16px;padding:10px 12px;background:var(--jt-warn-light,#fff8e5);border-inline-start:3px solid var(--jt-warn,#dba617);border-radius:4px;font-size:13px;">
+						<strong><?php esc_html_e( 'Heads up:', 'jetonomy' ); ?></strong>
+						<?php echo esc_html( $jt_cap_warning ); ?>
+					</p>
+					<?php
+				endif;
+				?>
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label for="captcha_provider"><?php esc_html_e( 'Provider', 'jetonomy' ); ?></label></th>
