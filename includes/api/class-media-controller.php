@@ -38,6 +38,79 @@ class Media_Controller extends Base_Controller {
 					// cap-OR semantics REST_Auth can't express in a single call.
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 				],
+				[
+					// GET /jetonomy/v1/media — list community uploads (owner view).
+					// Read-only listing scoped to Jetonomy member uploads.
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_media' ],
+					'permission_callback' => static function () {
+						return current_user_can( 'jetonomy_manage_settings' );
+					},
+					'args'                => [
+						'page'     => [
+							'type'    => 'integer',
+							'default' => 1,
+						],
+						'per_page' => [
+							'type'    => 'integer',
+							'default' => 24,
+						],
+						'author'   => [ 'type' => 'integer' ],
+						'space_id' => [ 'type' => 'integer' ],
+						'search'   => [ 'type' => 'string' ],
+						'order'    => [
+							'type'    => 'string',
+							'enum'    => [ 'asc', 'desc' ],
+							'default' => 'desc',
+						],
+					],
+				],
+			]
+		);
+	}
+
+	/**
+	 * GET /jetonomy/v1/media — paginated list of community uploads, scoped to
+	 * Jetonomy member uploads (the same set hidden from the main Media Library).
+	 *
+	 * @param WP_REST_Request $request Query params: page, per_page, author, space_id, search, order.
+	 * @return WP_REST_Response
+	 */
+	public function list_media( WP_REST_Request $request ) {
+		$result = \Jetonomy\Media_Library::query(
+			[
+				'page'     => (int) $request->get_param( 'page' ),
+				'per_page' => (int) $request->get_param( 'per_page' ),
+				'author'   => (int) $request->get_param( 'author' ),
+				'space_id' => (int) $request->get_param( 'space_id' ),
+				'search'   => (string) $request->get_param( 'search' ),
+				'order'    => (string) $request->get_param( 'order' ),
+			]
+		);
+
+		$items = array_map(
+			static function ( $att ) {
+				$id = (int) $att->ID;
+				return [
+					'id'       => $id,
+					'url'      => (string) wp_get_attachment_url( $id ),
+					'thumb'    => (string) wp_get_attachment_image_url( $id, 'medium' ),
+					'title'    => get_the_title( $id ),
+					'mime'     => (string) get_post_mime_type( $id ),
+					'author'   => (int) $att->post_author,
+					'space_id' => (int) get_post_meta( $id, '_jetonomy_space_id', true ),
+					'date'     => mysql_to_rfc3339( $att->post_date_gmt ),
+				];
+			},
+			$result['items']
+		);
+
+		return $this->paginated_response(
+			$items,
+			[
+				'total'  => (int) $result['total'],
+				'page'   => (int) $result['page'],
+				'offset' => ( (int) $result['page'] - 1 ) * (int) $result['per_page'],
 			]
 		);
 	}

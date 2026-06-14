@@ -1274,6 +1274,13 @@
 			"source": "includes/admin/class-admin.php"
 		},
 		{
+			"title": "Community Media",
+			"slug": "jetonomy-community-media",
+			"parent": "jetonomy",
+			"capability": "jetonomy_manage_settings",
+			"source": "includes/class-media-library.php"
+		},
+		{
 			"title": "Activity Log",
 			"slug": "jetonomy-activity",
 			"parent": "jetonomy",

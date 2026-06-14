@@ -53,6 +53,118 @@ class Media_Library {
 		add_action( 'pre_get_posts', array( $this, 'filter_list_query' ) );
 		add_action( 'restrict_manage_posts', array( $this, 'render_list_filter' ) );
 		add_action( 'admin_init', array( $this, 'maybe_backfill' ) );
+		// Dedicated, paginated Community Media admin view (priority 20 so the
+		// parent Jetonomy menu is already registered).
+		add_action( 'admin_menu', array( $this, 'register_admin_page' ), 20 );
+	}
+
+	/**
+	 * Bounded query for community uploads — the single source of truth for the
+	 * Community Media admin view and the REST list endpoint. Always paginated;
+	 * never an unbounded SELECT.
+	 *
+	 * @param array $args page, per_page, author, space_id, search, orderby, order.
+	 * @return array{items: \WP_Post[], total: int, total_pages: int, page: int, per_page: int}
+	 */
+	public static function query( array $args = array() ): array {
+		$page     = max( 1, (int) ( $args['page'] ?? 1 ) );
+		$per_page = min( 100, max( 1, (int) ( $args['per_page'] ?? 24 ) ) );
+		$orderby  = in_array( $args['orderby'] ?? 'date', array( 'date', 'title' ), true ) ? (string) $args['orderby'] : 'date';
+		$order    = 'ASC' === strtoupper( (string) ( $args['order'] ?? 'DESC' ) ) ? 'ASC' : 'DESC';
+
+		$meta_query = array(
+			array(
+				'key'     => self::META_FLAG,
+				'compare' => 'EXISTS',
+			),
+		);
+		if ( ! empty( $args['space_id'] ) ) {
+			$meta_query[] = array(
+				'key'   => self::META_SPACE,
+				'value' => (int) $args['space_id'],
+			);
+		}
+
+		$q_args = array(
+			'post_type'              => 'attachment',
+			'post_status'            => 'inherit',
+			'posts_per_page'         => $per_page,
+			'paged'                  => $page,
+			'orderby'                => $orderby,
+			'order'                  => $order,
+			'update_post_term_cache' => false,
+			'meta_query'             => $meta_query, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- scoping to community uploads is the feature.
+		);
+		if ( isset( $args['author'] ) && 0 !== (int) $args['author'] ) {
+			$q_args['author'] = (int) $args['author'];
+		}
+		if ( ! empty( $args['search'] ) ) {
+			$q_args['s'] = sanitize_text_field( (string) $args['search'] );
+		}
+
+		$query = new \WP_Query( $q_args );
+
+		return array(
+			'items'       => $query->posts,
+			'total'       => (int) $query->found_posts,
+			'total_pages' => (int) $query->max_num_pages,
+			'page'        => $page,
+			'per_page'    => $per_page,
+		);
+	}
+
+	/**
+	 * Register the Community Media submenu under the Jetonomy menu.
+	 */
+	public function register_admin_page(): void {
+		add_submenu_page(
+			'jetonomy',
+			__( 'Community Media', 'jetonomy' ),
+			__( 'Community Media', 'jetonomy' ),
+			'jetonomy_manage_settings',
+			'jetonomy-community-media',
+			array( $this, 'render_admin_page' )
+		);
+	}
+
+	/**
+	 * Render the Community Media admin page (paginated grid + space/member
+	 * filters + recency sort).
+	 */
+	public function render_admin_page(): void {
+		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only GET filters, no state change.
+		$jt_page   = max( 1, (int) ( $_GET['paged'] ?? 1 ) );
+		$jt_member = isset( $_GET['jt_member'] ) ? sanitize_text_field( wp_unslash( $_GET['jt_member'] ) ) : '';
+		$jt_space  = isset( $_GET['jt_space'] ) ? (int) $_GET['jt_space'] : 0;
+		$jt_sort   = ( 'oldest' === ( $_GET['jt_sort'] ?? '' ) ) ? 'oldest' : 'recent';
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		// Resolve a member search to an author id; -1 forces an empty result so
+		// "no such member" reads as zero uploads rather than all uploads.
+		$author_id = 0;
+		if ( '' !== $jt_member ) {
+			$jt_user   = get_user_by( 'login', $jt_member );
+			$jt_user   = $jt_user ? $jt_user : get_user_by( 'email', $jt_member );
+			$author_id = $jt_user ? (int) $jt_user->ID : -1;
+		}
+
+		$jt_result = self::query(
+			array(
+				'page'     => $jt_page,
+				'per_page' => 24,
+				'author'   => $author_id,
+				'space_id' => $jt_space,
+				'order'    => 'oldest' === $jt_sort ? 'ASC' : 'DESC',
+			)
+		);
+
+		$jt_spaces = \Jetonomy\Models\Space::list_all( 'active', 200, 0 );
+
+		include JETONOMY_DIR . 'includes/admin/views/community-media.php';
 	}
 
 	/**

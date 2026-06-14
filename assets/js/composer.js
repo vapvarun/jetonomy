@@ -242,8 +242,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
             ? jetonomyUpload.restNonce
             : '';
 
+        // Tag the upload with its originating space (if the composer is inside
+        // one) so the Community Media admin view can filter by space.
+        var spaceEl = ( editor && editor.closest ) ? editor.closest( '[data-space-id]' ) : null;
+        var spaceId = spaceEl ? spaceEl.getAttribute( 'data-space-id' ) : '';
+
         var formData = new FormData();
         formData.append( 'file', file );
+        if ( spaceId ) {
+            formData.append( 'space_id', spaceId );
+        }
 
         // restFetch handles nonce injection + the 403/invalid-nonce refresh
         // path centrally so this upload no longer has to remember the
