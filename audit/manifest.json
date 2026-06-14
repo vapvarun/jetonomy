@@ -1966,8 +1966,8 @@
 		{
 			"name": "jetonomy_notification_created",
 			"type": "action",
-			"args": "notification_id",
-			"where": "includes/notifications/class-notifier.php",
+			"args": "notification_id, user_id, type, object_type, object_id, message, link",
+			"where": "includes/notifications/class-notifier.php, includes/class-mentions.php",
 			"consumed_by": "jetonomy-pro"
 		},
 		{

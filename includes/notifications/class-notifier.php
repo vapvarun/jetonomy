@@ -753,7 +753,15 @@ class Notifier {
 				]
 			);
 
-			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
+			/**
+			 * Fires after a web notification row is created.
+			 *
+			 * $message (rendered human sentence) and $url (deep link) are
+			 * appended so consumers can mirror the notification 1:1 without
+			 * re-deriving them. Backward-compatible: existing 5-arg listeners
+			 * are unaffected.
+			 */
+			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
 		}
 
 		// Check email preference.

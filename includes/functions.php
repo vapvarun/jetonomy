@@ -66,6 +66,55 @@ function get_profile_url( int $user_id ): string {
 }
 
 /**
+ * Resolve a deep-link URL for a notification's target object.
+ *
+ * Single source of truth for notification deep links. Used by the notifier,
+ * the mentions dispatcher, and the notifications REST controller, and passed
+ * as the `$link` argument of the `jetonomy_notification_created` action so
+ * consumers (e.g. BuddyNext's central notification center) can mirror the
+ * notification 1:1 without re-deriving the URL from object IDs.
+ *
+ * @param string $object_type 'post', 'reply', or 'user'.
+ * @param int    $object_id   The target object ID.
+ * @return string Deep-link URL, or '' if unresolvable.
+ */
+function notification_deep_link( string $object_type, int $object_id ): string {
+	if ( 'post' === $object_type ) {
+		$post = Models\Post::find( $object_id );
+		if ( ! $post ) {
+			return '';
+		}
+		$space = Models\Space::find( (int) $post->space_id );
+		if ( ! $space ) {
+			return '';
+		}
+		return base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+	}
+
+	if ( 'reply' === $object_type ) {
+		$reply = Models\Reply::find( $object_id );
+		if ( ! $reply ) {
+			return '';
+		}
+		$post = Models\Post::find( (int) $reply->post_id );
+		if ( ! $post ) {
+			return '';
+		}
+		$space = Models\Space::find( (int) $post->space_id );
+		if ( ! $space ) {
+			return '';
+		}
+		return base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/#reply-' . $object_id;
+	}
+
+	if ( 'user' === $object_type ) {
+		return get_profile_url( $object_id );
+	}
+
+	return '';
+}
+
+/**
  * Get a linked avatar + name for a user.
  *
  * Returns HTML with avatar and display name wrapped in a profile link.

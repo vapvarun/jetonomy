@@ -370,41 +370,6 @@ class Notifications_Controller extends Base_Controller {
 	 * @return string URL or empty string if unresolvable.
 	 */
 	private function resolve_object_url( string $object_type, int $object_id ): string {
-		$settings  = get_option( 'jetonomy_settings', [] );
-		$base_slug = $settings['base_slug'] ?? 'community';
-
-		if ( 'post' === $object_type ) {
-			$post = Post::find( $object_id );
-			if ( ! $post ) {
-				return '';
-			}
-			$space = Space::find( (int) $post->space_id );
-			if ( ! $space ) {
-				return '';
-			}
-			return home_url( '/' . $base_slug . '/s/' . $space->slug . '/t/' . $post->slug . '/' );
-		}
-
-		if ( 'reply' === $object_type ) {
-			$reply = Reply::find( $object_id );
-			if ( ! $reply ) {
-				return '';
-			}
-			$post = Post::find( (int) $reply->post_id );
-			if ( ! $post ) {
-				return '';
-			}
-			$space = Space::find( (int) $post->space_id );
-			if ( ! $space ) {
-				return '';
-			}
-			return home_url( '/' . $base_slug . '/s/' . $space->slug . '/t/' . $post->slug . '/#reply-' . $object_id );
-		}
-
-		if ( 'user' === $object_type ) {
-			return \Jetonomy\get_profile_url( $object_id );
-		}
-
-		return '';
+		return \Jetonomy\notification_deep_link( $object_type, $object_id );
 	}
 }
