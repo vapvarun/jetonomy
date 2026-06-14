@@ -1,7 +1,5 @@
 When FluentCommunity is active alongside Jetonomy, the two plugins coexist as one product. Members navigate between the social feed and the forum without noticing two separate systems, and admins pair spaces in one click.
 
-![Jetonomy Settings - FluentCommunity tab showing the space pairings table that maps each FluentCommunity space to a Jetonomy space](images/fluent-community-pairings.png)
-
 ## What You Will Learn
 
 - How the integration auto-detects FluentCommunity

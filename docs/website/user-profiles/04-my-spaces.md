@@ -84,8 +84,6 @@ Action buttons appear only on rows in the "Spaces you run" section. Member rows 
 
 Brand-new members often land on My Spaces before they have joined anything. When you neither run nor belong to any space, the page shows a single full-page empty state - "You are not in any spaces yet" with a **Browse spaces** button that goes to the community home.
 
-![My Spaces empty state showing "You are not in any spaces yet" with a Browse spaces button](../images/my-spaces-empty.png)
-
 Otherwise, empty sections are simply hidden: if you run spaces but belong to none as a regular member (or vice versa), only the section with content renders. There is no per-section "collapsed" placeholder and no "Create a space" button on this page.
 
 ## Privacy

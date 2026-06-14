@@ -2,8 +2,6 @@ Feature an important post at the top of every space across your whole community.
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![A space listing with an Announcement-badged post pinned at the very top, above that space's own topics](../images/pro-site-announcements-listing.png)
-
 ## What You Will Learn
 
 - How to enable Site Announcements
@@ -44,8 +42,6 @@ Community announcements are **administrator-only**. The control is gated by the 
 2. In the action bar below the post, click **Pin to community**.
 
 The post is immediately featured across the community. The button changes to **Unpin from community**, and an **Announcement** badge appears on the post.
-
-![The action bar below a post showing the Pin to community button an administrator clicks to feature the post community-wide](../images/pro-site-announcements-button.png)
 
 ## Where Announcements Appear
 

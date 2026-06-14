@@ -79,8 +79,6 @@ These rules exist because the most common community support ticket pre-1.4.0 was
 
 The bottom of the Edit space page has two destructive actions, kept visually separate from the save button.
 
-![Bottom of the front-end Edit Space page showing the cover-image upload field with a Remove cover link, and the separated Archive space and Delete space actions](../images/spaces-and-categories/edit-space-cover-danger.png)
-
 **Archive space** marks the space read-only. Existing posts and replies stay visible to anyone who could see them before. New posts and replies are disabled. The space disappears from category listings but is still reachable at its original URL. Archive is reversible: re-opening the editor and clicking **Unarchive** restores everything.
 
 Use archive when:

@@ -20,8 +20,6 @@ Banning requires the `jetonomy_moderate` capability - the same capability that g
 
 Clicking **Ban** on a member's row opens the Ban User dialog with three choices:
 
-![Ban User dialog showing the Type selector (Global Ban, Silence, Space Ban), a Reason field, and the Duration selector with Permanent, 1 Day, 7 Days, and 30 Days presets](../images/ban-dialog.png)
-
 ### Ban Types
 
 Jetonomy supports three levels of restriction so the response fits the situation:

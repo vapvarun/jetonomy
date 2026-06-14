@@ -52,8 +52,6 @@ Any space moderator or admin can change an idea's status:
 3. Select a new status from the dropdown: Planned, In Progress, Shipped, or Declined.
 4. Click **Update Status**.
 
-![Single idea view with the inline Status dropdown open in the post meta area, showing the Planned, In Progress, Shipped, and Declined options](../images/spaces-and-categories/idea-status-dropdown.png)
-
 The status change saves immediately. A system entry appears in the reply thread showing what the status changed from and to, with a timestamp. This gives the idea's full history in one place.
 
 You can also update status from the space admin panel at **Jetonomy → Spaces → [Space Name] → Posts**. The status column is editable inline from that view, which is useful for processing a batch of ideas at once.

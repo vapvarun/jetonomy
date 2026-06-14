@@ -39,7 +39,6 @@ SEO Pro lets you upload a custom Open Graph image per space - a 1200x630 image u
 
 If you skip these fields, Jetonomy falls back to the meta title/description and uses the default OG image from your main settings.
 
-![An Open Graph share-card preview for a space using its custom 1200x630 card image, title, and description](../images/pro-seo-og-preview.png)
 ## Schema.org Structured Data
 
 For every space and every post, Jetonomy Pro emits JSON-LD structured data:

@@ -2,7 +2,6 @@ Remove all Jetonomy branding and present your community as entirely your own pro
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-![A community front end rebranded with a custom logo and brand colours, with no Jetonomy attribution in the footer](../images/pro-white-label-frontend.png)
 ## What You Will Learn
 
 - How to enable White Label
@@ -46,7 +45,6 @@ In **Jetonomy → Settings → Branding → Admin Menu**:
 
 The label change applies to the top-level menu item and the browser window title on all Jetonomy admin pages.
 
-![The WordPress admin sidebar showing the Jetonomy menu renamed to a custom label with a custom Dashicon](../images/pro-white-label-admin-menu.png)
 ## Email Branding
 
 White Label also affects transactional emails and digests. In **Settings → Branding → Email**:

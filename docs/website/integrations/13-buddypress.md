@@ -1,7 +1,5 @@
 When BuddyPress is active alongside Jetonomy, groups and forum spaces feel like one membership. Members who join a group are enrolled in the paired forum space, new topics are announced on the group activity stream, and comments on those activities flow back to the topic as replies.
 
-![The Discussion Forum section inside a BuddyPress group's Manage - Details screen, with the No forum / Create new / Link existing choices](images/buddypress-group-forum-setting.png)
-
 ## What You Will Learn
 
 - How the integration auto-detects BuddyPress

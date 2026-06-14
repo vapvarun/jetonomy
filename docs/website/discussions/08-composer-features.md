@@ -18,8 +18,6 @@ The composer is the box you type in when you create a new post or reply. It work
 
 ## @mention Autocomplete
 
-![Reply composer with the @mention autocomplete dropdown open, listing matching members with avatars](../images/discussions/mention-autocomplete.png)
-
 Type `@` anywhere in the composer and Jetonomy opens a dropdown of matching people. Keep typing to narrow the list, then click a result or press Enter to insert the mention.
 
 The inserted mention is a clickable link to the user's profile, and the moment your post or reply is published, Jetonomy fires a notification to the mentioned member. They see it in the bell menu and, if they have email notifications on, in their inbox.
@@ -121,8 +119,6 @@ The pills are visible to everyone, including signed-out visitors. They make it o
 ## Link Previews
 
 Paste a URL on its own line in a post or reply and Jetonomy automatically fetches the page's metadata and renders a rich preview card beneath it, the same style of card you see when you share a link on LinkedIn or Twitter. Members get context (title, description, thumbnail, site name) without leaving the thread.
-
-![A pasted link rendered as a rich preview card showing thumbnail, page title, description, and site name](../images/discussions/link-preview-card.png)
 
 ### How It Works
 
