@@ -56,10 +56,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 	// Integrations tab appears only when BuddyPress Groups is active — the
 	// only context where the broadcast / comment-bridge toggles apply.
 	$jt_bp_active = function_exists( 'bp_is_active' ) && bp_is_active( 'groups' );
-	if ( $jt_bp_active ) {
-		$tab_icons['integrations']  = 'dashicons-networking';
-		$tab_labels['integrations'] = __( 'Integrations', 'jetonomy' );
-	}
+	// Integrations tab is always available (Wbcom stack companions); the
+	// BuddyPress broadcast / comment-bridge toggles inside it render only when
+	// BP Groups is active.
+	$tab_icons['integrations']  = 'dashicons-networking';
+	$tab_labels['integrations'] = __( 'Integrations', 'jetonomy' );
 	?>
 
 	<?php settings_errors(); ?>
@@ -1308,8 +1309,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<?php do_action( 'jetonomy_admin_license_tab_content' ); ?>
 			</div>
 
-		<?php elseif ( 'integrations' === $active_tab && $jt_bp_active ) : ?>
+		<?php elseif ( 'integrations' === $active_tab ) : ?>
 
+			<?php require __DIR__ . '/../../integrations/views/companion-cards.php'; ?>
+
+			<?php if ( $jt_bp_active ) : ?>
 			<form method="post" action="options.php" id="jetonomy-integrations-form">
 				<?php settings_fields( 'jetonomy_integrations' ); ?>
 				<div class="jt-settings-card">
@@ -1347,6 +1351,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
 				</div>
 			</form>
+			<?php endif; ?>
 
 		<?php endif; ?>
 

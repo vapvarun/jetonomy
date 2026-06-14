@@ -1,7 +1,7 @@
 # Shared "Integrations / Stack" Tab — Cross-Promote + 1-Click Free Install
 
 **Target version:** 1.5.x (after 1.5.0)
-**Status:** PLAN — needs owner sign-off + a store-side catalog endpoint before build.
+**Status:** IMPLEMENTED 2026-06-14 — built **self-contained** (mirrors Learnomy's `includes/integrations/` pattern), NOT the external shared-lib design sketched below. Ships `Jetonomy\Integrations\Companion_Registry` + `Companion_Installer` + an Integrations-tab card grid offering WB Gamification, WPMediaVerse, and Learnomy via the EDD free-install flow (`activate_license` -> `get_version` -> `Plugin_Upgrader` -> activate), `install_plugins` cap + nonce, store allowlisted to wbcomdesigns.com. No store-side catalog endpoint needed (registry is a local declarative array, filterable via `jetonomy_companions`). The shared-lib/remote-catalog notes below are retained only as a possible future consolidation.
 **Card:** "Add shared Wbcom 'Integrations' tab (cross-promote + 1-click free install of the Academy Stack incl. Learnomy)".
 
 ## Goal

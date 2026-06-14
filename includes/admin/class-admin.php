@@ -28,6 +28,9 @@ class Admin {
 		// A6: intercepts the CSV export request before any output is sent so
 		// the download streams cleanly without admin-header HTML interleaving.
 		add_action( 'admin_init', array( $this, 'maybe_export_activity_csv' ) );
+		// One-click install/activate of Wbcom stack companions from the
+		// Integrations settings tab (self-contained — see includes/integrations/).
+		add_action( 'admin_post_jetonomy_install_companion', array( $this, 'handle_install_companion' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
@@ -50,6 +53,38 @@ class Admin {
 		new Ajax\Settings_Handler();
 		new Ajax\Content_Handler();
 		new Ajax\Setup_Handler();
+	}
+
+	/**
+	 * admin-post handler: install (or activate) a Wbcom stack companion from the
+	 * Integrations settings tab, then redirect back with a result flag.
+	 */
+	public function handle_install_companion(): void {
+		$slug = isset( $_POST['companion'] ) ? sanitize_key( wp_unslash( $_POST['companion'] ) ) : '';
+		$tier = isset( $_POST['tier'] ) && 'pro' === $_POST['tier'] ? 'pro' : 'free';
+
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			wp_die( esc_html__( 'You do not have permission to install plugins.', 'jetonomy' ), 403 );
+		}
+		check_admin_referer( 'jetonomy_install_companion_' . $slug );
+
+		$license = isset( $_POST['license'] ) ? sanitize_text_field( wp_unslash( $_POST['license'] ) ) : '';
+		$result  = \Jetonomy\Integrations\Companion_Installer::install( $slug, $tier, $license );
+
+		$args = array(
+			'page' => 'jetonomy-settings',
+			'tab'  => 'integrations',
+		);
+		if ( is_wp_error( $result ) ) {
+			$args['jt_install'] = 'error';
+			$args['jt_msg']     = rawurlencode( $result->get_error_message() );
+		} else {
+			$args['jt_install'] = 'ok';
+			$args['jt_done']    = $slug;
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
 	}
 
 	// ── Menu ──
