@@ -125,12 +125,8 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
 		document.body.appendChild( overlay );
 
-		// Derive API base: prefer the interactive element's data attribute, fall back to wpApiSettings.
-		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
-			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
-
-		fetch( apiBase + '/spaces', { credentials: 'same-origin' } )
-			.then( ( r ) => r.json() )
+		window.jetonomyRest.restFetch( '/spaces' )
+			.then( ( r ) => r.data || {} )
 			.then( ( data ) => {
 				while ( select.firstChild ) select.removeChild( select.firstChild );
 				const defaultOpt = document.createElement( 'option' );
@@ -310,8 +306,6 @@ function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 		document.body.appendChild( overlay );
 		searchInput.focus();
 
-		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
-			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
 
 		const renderEmpty = ( message, isError ) => {
 			while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
@@ -379,8 +373,8 @@ function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 					return;
 				}
 				resultsList.classList.add( 'is-loading' );
-				fetch( `${ apiBase }/search?q=${ encodeURIComponent( q ) }&type=post`, { credentials: 'same-origin' } )
-					.then( r => r.json() )
+				window.jetonomyRest.restFetch( `/search?q=${ encodeURIComponent( q ) }&type=post` )
+					.then( r => r.data || {} )
 					.then( data => {
 						resultsList.classList.remove( 'is-loading' );
 						const posts = ( data.data || data.results || data || [] ).filter( p => String( p.id ) !== String( excludePostId ) );
@@ -2663,17 +2657,15 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
-                const response = yield fetch(
-                    `${ state.apiBase }/users/me`,
+                const response = yield window.jetonomyRest.restFetch(
+                    `/users/me`,
                     {
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( payload ),
+                        body: payload,
                     }
                 );
                 if ( ! response.ok ) {
-                    const err = yield response.json().catch( () => ( {} ) );
+                    const err = response.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ), 'error' );
                     return;
                 }
@@ -2683,17 +2675,15 @@ const { state, actions } = store( 'jetonomy', {
                 // redirects. Validation errors surface as a toast but don't
                 // block the redirect: the core profile already saved.
                 if ( Object.keys( customFields ).length > 0 ) {
-                    const cfResponse = yield fetch(
-                        `${ state.apiBase }/users/me/fields`,
+                    const cfResponse = yield window.jetonomyRest.restFetch(
+                        `/users/me/fields`,
                         {
                             method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
-                            credentials: 'same-origin',
-                            body: JSON.stringify( customFields ),
+                            body: customFields,
                         }
                     );
                     if ( ! cfResponse.ok && 404 !== cfResponse.status ) {
-                        const cfErr = yield cfResponse.json().catch( () => ( {} ) );
+                        const cfErr = cfResponse.data || {};
                         if ( window.bnToast ) {
                             window.bnToast(
                                 cfErr.message || ( state.i18n?.failedSaveProfile || 'Some custom fields could not be saved.' ),
@@ -2805,12 +2795,11 @@ const { state, actions } = store( 'jetonomy', {
             setInterval( async () => {
                 try {
                     const since = new Date( lastCheck ).toISOString();
-                    const response = await fetch(
-                        `${ state.apiBase }/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`,
-                        { headers: { 'X-WP-Nonce': state.nonce }, credentials: 'same-origin' }
+                    const response = await window.jetonomyRest.restFetch(
+                        `/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`
                     );
                     if ( ! response.ok ) return;
-                    const data = await response.json();
+                    const data = response.data || {};
                     const newReplies = ( data.data || [] ).length;
 
                     if ( newReplies > 0 ) {
@@ -2841,10 +2830,6 @@ const { state, actions } = store( 'jetonomy', {
    GET /jetonomy/v1/link-preview (Jetonomy\Services\Links\Preview_Data) so the
    same endpoint drives the native mobile app. */
 ( function() {
-    const DATA     = window.jetonomyData || {};
-    const API_BASE = DATA.restBase || '/wp-json/jetonomy/v1';
-    const NONCE    = DATA.restNonce || '';
-
     const MAX_PER_CONTAINER = 3;
     const DESC_MAX          = 200;
     // Embed HTML comes from the REST response, which is kses-sanitised on the
@@ -2866,12 +2851,9 @@ const { state, actions } = store( 'jetonomy', {
     }
 
     function fetchPreview( href ) {
-        const headers = { 'Accept': 'application/json' };
-        if ( NONCE ) headers[ 'X-WP-Nonce' ] = NONCE;
-        return fetch( API_BASE + '/link-preview?url=' + encodeURIComponent( href ), {
-            headers,
-            credentials: 'same-origin',
-        } ).then( r => r.ok ? r.json() : null );
+        return window.jetonomyRest.restFetch( '/link-preview?url=' + encodeURIComponent( href ), {
+            headers: { 'Accept': 'application/json' },
+        } ).then( r => r.ok ? r.data : null );
     }
 
     function el( tag, cls, text ) {
@@ -3030,7 +3012,6 @@ const { state, actions } = store( 'jetonomy', {
         if ( titleInput && similarPanel && similarResults ) {
             let debounceTimer = null;
             const spaceId = titleInput.dataset.spaceId;
-            const SIMILAR_API = API_BASE;
             // Derive community base from breadcrumb or form context.
             const formEl = document.getElementById( 'jt-new-post-form' );
             const ctxData = formEl ? JSON.parse( formEl.dataset.wpContext || '{}' ) : {};
@@ -3070,13 +3051,13 @@ const { state, actions } = store( 'jetonomy', {
                 }
 
                 const useAllSpaces = allSpacesCheck && allSpacesCheck.checked;
-                let url = SIMILAR_API + '/search?q=' + encodeURIComponent( q ) + '&type=post';
+                let path = '/search?q=' + encodeURIComponent( q ) + '&type=post';
                 if ( ! useAllSpaces && spaceId ) {
-                    url += '&space_id=' + spaceId;
+                    path += '&space_id=' + spaceId;
                 }
 
-                fetch( url, { credentials: 'same-origin' } )
-                    .then( function( r ) { return r.json(); } )
+                window.jetonomyRest.restFetch( path )
+                    .then( function( r ) { return r.data || {}; } )
                     .then( function( res ) {
                         const posts = res.data || [];
                         similarResults.textContent = '';
