@@ -83,6 +83,17 @@ All 36 view.js raw `fetch()` migrated to `window.jetonomyRest.restFetch` across 
 Pre-existing inconsistency noted: `space-members.js` uses `restFetch` but was enqueued without the `jetonomy-rest` dep (works only via global load) — left as-is, fold into 1b.
 Cleanup TODO (lint:js): leftover unused `apiBase`/`nonce` locals elsewhere are pre-existing, not from this change.
 
+#### Phase 2 + Rail B — DONE (2026-06-17, commit 085f732): working client-side navigation
+Shipped, browser-verified free+Pro. Root-cause of the spike blocker: the region element needs BOTH `data-wp-interactive` AND `data-wp-router-region` — with only the latter the router didn't recognise it and mangled the diff. Fix:
+- `@wordpress/interactivity-router` added as a dynamic dep of jetonomy-view.
+- View wrapped in `<div data-wp-interactive="jetonomy" data-wp-router-region="jetonomy/main">` (grid on inner .jt-two-col, so no layout impact).
+- `data-wp-on--click="actions.navigate"` delegated on #jetonomy-app — wires every internal link, no per-template edits.
+- `navigate` action = the Rail B guard: client-navs ONLY the global-bundle routes (home, /search/, /leaderboard/, /category|tag|u|s/{slug}); everything needing a per-route script full-loads. Bails on anchors/modified/new-tab/cross-origin; falls back to location.href on error; real <a href> preserved.
+
+Verified: home<->leaderboard<->space swap with NO reload (window marker survives), URL+title update, region renders, **interactivity preserved on swapped content (vote POST 200 on a client-navigated space)**, /t/ post link FULL-loads (guard). 0 console errors. qa-actions 230/230.
+
+REMAINING GAP (load-more + a11y card 10000879711): the iAPI store (view.js) auto-hydrates swapped content, but CLASSIC scripts do NOT re-bind after a client nav — `pagination-frontend.js` (Load More) and `header.js` handlers won't attach to router-swapped views. Either convert them to modules that re-init on navigation, or re-run their init in a router-navigation hook. Also pending: active-nav highlight + a11y focus management on navigation. This is the next slice.
+
 #### Phase 2 — SPIKE RESULT (2026-06-17): FEASIBLE, with a region-placement blocker
 Proven live (browser): a `navigate` action that dynamic-imports `@wordpress/interactivity-router` + a `data-wp-router-region="jetonomy/main"` wrapper + 3 wired same-script nav links produced real client-side navigation — NO full reload (window marker survived), URL + document title + active-nav all updated, 0 console errors. Confirms the iAPI router drives classic server-rendered PHP (no block requirement) — resolves R1's biggest unknown.
 
