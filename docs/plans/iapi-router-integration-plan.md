@@ -65,7 +65,15 @@ Behavior preserved: distinct network-vs-HTTP error messaging via `res.status ===
 - 6 admin AJAX files (`admin-*.js`, `setup-wizard.js`) — admin-ajax is acceptable per Feature Acceptance Rule 2.
 - `pagination-frontend.js` (fetches HTML, not JSON), `moderation.js:102` (the intentional fallback branch).
 
-**Deferred to Phase 1b (after Rail A):** `view.js` (~40 sites) — shared Pro store (R1) + `optimistic()` Response-contract coupling.
+**Phase 1b (view.js — shared Pro store, R1) — IN PROGRESS:**
+- view.js has 36 raw `fetch`: 10 `optimistic()`-wrapped (Category A) + ~23 direct generator/await (Category B) + ~3 edge.
+- Structural unblocker DONE: `optimistic.js` now accepts both a native `Response` and a `restFetch` result `{ok,status,data}` (duck-typed on `.json`), backward compatible. `optimistic.min.js` must be rebuilt with terser — grunt `uglify` globs `assets/js/*.js` only, NOT `lib/` (pre-existing Gruntfile gap; worth fixing separately).
+- DONE + verified (free+Pro): vote cluster (voteUp/Down, voteReplyUp/Down) -> restFetch. `POST /posts/834/vote` 200, score 5->6->5, no console errors. Commit 9a78c7e.
+- REMAINING (32 sites) — migrate with the same recipe, verify per feature free+Pro:
+  - Category A (6 left): subscriptions toggle, bookmarks, pin, close, accept-reply (×2), idea-status.
+  - Category B (~23): subscription GET/DELETE/POST, flags (create/list), post fetch, move/merge/split, reply edit/delete, link-preview, space subscribe, instant search.
+  - NOTE: view.js is a SCRIPT MODULE; it cannot declare `jetonomy-rest` (classic) as a dep — relies on runtime availability (already the case; view.js used restFetch pre-existing). Confirm `jetonomy-rest` is enqueued on every route view.js runs.
+  - Verification matrix (free+Pro each): voting (done), subscribe/unsubscribe, bookmark, pin/close, accept answer, idea status, flag, move/merge/split, reply edit/delete, link preview.
 
 Pre-existing inconsistency noted: `space-members.js` uses `restFetch` but was enqueued without the `jetonomy-rest` dep (works only via global load) — left as-is, fold into 1b.
 Cleanup TODO (lint:js): leftover unused `apiBase`/`nonce` locals elsewhere are pre-existing, not from this change.
