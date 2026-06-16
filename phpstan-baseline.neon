@@ -150,10 +150,6 @@ parameters:
 			count: 1
 			path: includes/class-template-loader.php
 
-		-
-			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
-			count: 1
-			path: includes/class-template-loader.php
 
 		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"

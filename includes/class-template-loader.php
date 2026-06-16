@@ -375,7 +375,15 @@ class Template_Loader {
 		wp_enqueue_script_module(
 			'jetonomy-view',
 			JETONOMY_URL . 'assets/js/view.js',
-			array( '@wordpress/interactivity' ),
+			array(
+				array( 'id' => '@wordpress/interactivity' ),
+				// iAPI client-side router, dynamically imported by the `navigate`
+				// action so it only loads the first time a client nav fires.
+				array(
+					'id'     => '@wordpress/interactivity-router',
+					'import' => 'dynamic',
+				),
+			),
 			$view_version
 		);
 
@@ -677,7 +685,11 @@ class Template_Loader {
 			get_header();
 		}
 
-		echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy">';
+		// data-wp-on--click on the app wrapper delegates every internal link
+		// click to actions.navigate (Phase 2 client-side routing). The action
+		// route-guards which targets are safe to swap vs. full-load, and always
+		// preserves the real <a href> as the fallback.
+		echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy" data-wp-on--click="actions.navigate">';
 
 		/**
 		 * Fires inside the Jetonomy app wrapper, before the header partial and
@@ -700,8 +712,15 @@ class Template_Loader {
 			include $header_path;
 		}
 
-		// Load the main template
+		// Load the main template, wrapped in an iAPI router region so client-side
+		// navigation swaps only the view content while the header/nav above stays
+		// put. The region element carries BOTH data-wp-interactive and
+		// data-wp-router-region (the router only recognises a region when both are
+		// present). The grid lives on the view's inner .jt-two-col, so this plain
+		// wrapper does not affect layout. Region id must match across every route.
+		echo '<div data-wp-interactive="jetonomy" data-wp-router-region="jetonomy/main">';
 		include $template_path;
+		echo '</div>'; // [data-wp-router-region]
 
 		echo '</div>'; // .jt-container
 

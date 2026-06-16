@@ -584,6 +584,59 @@ const { state, actions } = store( 'jetonomy', {
     },
 
     actions: {
+        // ── Client-side navigation (Phase 2) ──
+        //
+        // Delegated from data-wp-on--click on #jetonomy-app: every internal link
+        // click bubbles here. We swap the [data-wp-router-region="jetonomy/main"]
+        // content via the iAPI router ONLY for routes served by the always-present
+        // global bundle (Rail B); anything needing a per-route script (post view
+        // -> prismjs, forms, moderation, messages, notifications, edit screens)
+        // falls through to a normal full-page load. The real <a href> is always
+        // preserved, so JS-off, router errors, and modified clicks all degrade to
+        // classic navigation — a link is never left dead.
+        *navigate( event ) {
+            const link = event.target?.closest?.( 'a' );
+            const href = link?.href;
+            if ( ! href ) return;
+            // Ignore in-page anchors and JS-hook links (href="#" / "#foo"):
+            // the skip-link, search-overlay toggle, dropdown triggers and user
+            // menu all use those and have their own handlers.
+            const rawHref = link.getAttribute( 'href' );
+            if ( ! rawHref || '#' === rawHref.charAt( 0 ) ) return;
+            // Let the browser handle new-tab / modified / download / cross-origin.
+            if (
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+                event.button !== 0 ||
+                link.hasAttribute( 'download' ) ||
+                ( link.target && link.target !== '_self' ) ||
+                link.origin !== window.location.origin
+            ) {
+                return;
+            }
+            // Rail B route guard: only client-nav routes that need nothing beyond
+            // the global bundle. Resolve the path relative to the community base.
+            const base = ( state.communityBase || '' )
+                .replace( /^https?:\/\/[^/]+/, '' )
+                .replace( /\/+$/, '' );
+            let rest = link.pathname;
+            if ( base && rest.indexOf( base ) === 0 ) {
+                rest = rest.slice( base.length );
+            }
+            rest = rest.replace( /^\/+|\/+$/g, '' );
+            const seg = '' === rest ? [] : rest.split( '/' );
+            const safe =
+                0 === seg.length ||                                          // home
+                ( 1 === seg.length && [ 'search', 'leaderboard' ].includes( seg[ 0 ] ) ) ||
+                ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) );
+            if ( ! safe ) return; // full-page load for script-heavy routes
+            event.preventDefault();
+            try {
+                const router = yield import( '@wordpress/interactivity-router' );
+                yield router.actions.navigate( href );
+            } catch ( e ) {
+                window.location.href = href; // never strand the user
+            }
+        },
         // ── Voting ──
         *voteUp( event ) {
             event.stopPropagation();
