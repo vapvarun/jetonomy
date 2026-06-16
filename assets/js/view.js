@@ -2100,16 +2100,11 @@ const { state, actions } = store( 'jetonomy', {
             const apiStatus = flagAction === 'approved' ? 'valid' : 'dismissed';
 
             try {
-                const response = yield fetch(
-                    `${ state.apiBase }/moderation/flags/${ flagId }/resolve`,
+                const response = yield window.jetonomyRest.restFetch(
+                    `/moderation/flags/${ flagId }/resolve`,
                     {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state._nonce || state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { status: apiStatus } ),
+                        body: { status: apiStatus },
                     }
                 );
                 if ( response.ok ) {
@@ -2165,27 +2160,22 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
-                const response = yield fetch(
-                    `${ state.apiBase }/posts/${ postId }/replies`,
+                const response = yield window.jetonomyRest.restFetch(
+                    `/posts/${ postId }/replies`,
                     {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( {
+                        body: {
                             content: body.innerHTML,
                             ...( parentId && { parent_id: parentId } ),
                             ...( captchaToken && { captcha_token: captchaToken } ),
-                        } ),
+                        },
                     }
                 );
 
                 if ( response.ok ) {
                     window.location.reload();
                 } else {
-                    const err = yield response.json().catch( () => ( {} ) );
+                    const err = response.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to post reply.' );
                 }
             } catch {
