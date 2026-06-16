@@ -896,21 +896,16 @@ const { state, actions } = store( 'jetonomy', {
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
                 try {
-                    const res = await fetch( `${ state.apiBase }/replies/${ replyId }`, {
+                    const res = await window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
                         method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state._nonce || state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { content } ),
+                        body: { content },
                     } );
 
                     if ( res.ok ) {
                         // Reload so the display filter (wpautop) renders paragraphs.
                         window.location.reload();
                     } else {
-                        const err = await res.json().catch( () => ( {} ) );
+                        const err = res.data || {};
                         if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
                         saveBtn.textContent = state.i18n?.save || 'Save';
@@ -1547,20 +1542,15 @@ const { state, actions } = store( 'jetonomy', {
                 }
 
                 try {
-                    const res = await fetch( `${ state.apiBase }/posts/${ postId }`, {
+                    const res = await window.jetonomyRest.restFetch( `/posts/${ postId }`, {
                         method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state._nonce || state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( body ),
+                        body,
                     } );
 
                     if ( res.ok ) {
                         window.location.reload();
                     } else {
-                        const err = await res.json().catch( () => ( {} ) );
+                        const err = res.data || {};
                         if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
                         saveBtn.textContent = state.i18n?.save || 'Save';
@@ -1641,18 +1631,13 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! postId ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }`, {
                     method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { is_private: ! isPrivate } ),
+                    body: { is_private: ! isPrivate },
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( data.is_private ? ( state.i18n?.madePrivate || 'Topic is now private' ) : ( state.i18n?.madePublic || 'Topic is now public' ) );
                     }
@@ -1683,18 +1668,13 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! spaceId ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/move`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/move`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { target_space_id: parseInt( spaceId, 10 ) } ),
+                    body: { target_space_id: parseInt( spaceId, 10 ) },
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( state.i18n?.topicMoved || 'Topic moved successfully.' );
                     }
@@ -1737,18 +1717,13 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/merge`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/merge`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { target_post_id: parseInt( targetId, 10 ) } ),
+                    body: { target_post_id: parseInt( targetId, 10 ) },
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( state.i18n?.topicMerged || 'Topics merged successfully.' );
                     }
@@ -1786,18 +1761,13 @@ const { state, actions } = store( 'jetonomy', {
                     body.space_id = parseInt( spaceId, 10 );
                 }
 
-                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }/split`, {
+                const res = yield window.jetonomyRest.restFetch( `/replies/${ replyId }/split`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( body ),
+                    body,
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( state.i18n?.replySplit || 'Reply split into new topic.' );
                     }
@@ -1828,12 +1798,8 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }`, {
                     method: 'DELETE',
-                    headers: {
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } );
 
                 if ( res.ok ) {
@@ -1859,12 +1825,8 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }`, {
+                const res = yield window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
                     method: 'DELETE',
-                    headers: {
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } );
 
                 if ( res.ok ) {
