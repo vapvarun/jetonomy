@@ -957,12 +957,9 @@ const { state, actions } = store( 'jetonomy', {
             let subscriptionId = null;
             if ( wasFollowing ) {
                 try {
-                    const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=post&object_id=${ postId }`, {
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                    } );
+                    const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=post&object_id=${ postId }` );
                     if ( res.ok ) {
-                        const data = yield res.json();
+                        const data = res.data || {};
                         const subs = data.data || [];
                         if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
                     }
@@ -979,16 +976,12 @@ const { state, actions } = store( 'jetonomy', {
                     return { wasFollowing };
                 },
                 fetch: () => wasFollowing
-                    ? fetch( `${ state.apiBase }/subscriptions/${ subscriptionId }`, {
+                    ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
                         method: 'DELETE',
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
                     } )
-                    : fetch( `${ state.apiBase }/subscriptions`, {
+                    : window.jetonomyRest.restFetch( `/subscriptions`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), via: 'both' } ),
+                        body: { object_type: 'post', object_id: parseInt( postId ), via: 'both' },
                     } ),
                 revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
                 toastOnError: true,
@@ -1021,12 +1014,9 @@ const { state, actions } = store( 'jetonomy', {
             let subscriptionId = null;
             if ( wasFollowing ) {
                 try {
-                    const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=space&object_id=${ spaceId }`, {
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                    } );
+                    const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=space&object_id=${ spaceId }` );
                     if ( res.ok ) {
-                        const data = yield res.json();
+                        const data = res.data || {};
                         const subs = data.data || [];
                         if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
                     }
@@ -1040,16 +1030,12 @@ const { state, actions } = store( 'jetonomy', {
                     return { wasFollowing };
                 },
                 fetch: () => wasFollowing
-                    ? fetch( `${ state.apiBase }/subscriptions/${ subscriptionId }`, {
+                    ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
                         method: 'DELETE',
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
                     } )
-                    : fetch( `${ state.apiBase }/subscriptions`, {
+                    : window.jetonomyRest.restFetch( `/subscriptions`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' } ),
+                        body: { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' },
                     } ),
                 onSuccess: () => {
                     if ( window.bnToast ) {
