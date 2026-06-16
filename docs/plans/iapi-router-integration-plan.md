@@ -65,6 +65,11 @@ Behavior preserved: distinct network-vs-HTTP error messaging via `res.status ===
 - 6 admin AJAX files (`admin-*.js`, `setup-wizard.js`) — admin-ajax is acceptable per Feature Acceptance Rule 2.
 - `pagination-frontend.js` (fetches HTML, not JSON), `moderation.js:102` (the intentional fallback branch).
 
+**Phase 1b (view.js — shared Pro store, R1) — COMPLETE (2026-06-16):**
+All 36 view.js raw `fetch()` migrated to `window.jetonomyRest.restFetch` across 8 commits, each browser-verified free+Pro before commit. view.js now has ZERO raw fetch. Frontend-wide: every customer-facing surface (view store, composer, header, space-edit) is on restFetch; only intentional exclusions remain (login-block public auth, admin AJAX, pagination HTML, moderation fallback). Verified actions: voting, bookmark, pin/unpin, follow post/space (GET+POST+DELETE), report (201), reply submit (201) + delete (200), togglePrivate (PATCH), profile save (PATCH /users/me), similar-topics search (GET). optimistic.js dual-contract shipped + terser-rebuilt. Commits: 9a78c7e, 0e44a63, 18a7985, f77b325, 2b3a4f8, 20569d4, 656dd0f.
+
+--- original in-progress notes below (historical) ---
+
 **Phase 1b (view.js — shared Pro store, R1) — IN PROGRESS:**
 - view.js has 36 raw `fetch`: 10 `optimistic()`-wrapped (Category A) + ~23 direct generator/await (Category B) + ~3 edge.
 - Structural unblocker DONE: `optimistic.js` now accepts both a native `Response` and a `restFetch` result `{ok,status,data}` (duck-typed on `.json`), backward compatible. `optimistic.min.js` must be rebuilt with terser — grunt `uglify` globs `assets/js/*.js` only, NOT `lib/` (pre-existing Gruntfile gap; worth fixing separately).
