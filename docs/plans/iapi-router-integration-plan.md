@@ -83,6 +83,13 @@ All 36 view.js raw `fetch()` migrated to `window.jetonomyRest.restFetch` across 
 Pre-existing inconsistency noted: `space-members.js` uses `restFetch` but was enqueued without the `jetonomy-rest` dep (works only via global load) — left as-is, fold into 1b.
 Cleanup TODO (lint:js): leftover unused `apiBase`/`nonce` locals elsewhere are pre-existing, not from this change.
 
+#### Phase 2 — SPIKE RESULT (2026-06-17): FEASIBLE, with a region-placement blocker
+Proven live (browser): a `navigate` action that dynamic-imports `@wordpress/interactivity-router` + a `data-wp-router-region="jetonomy/main"` wrapper + 3 wired same-script nav links produced real client-side navigation — NO full reload (window marker survived), URL + document title + active-nav all updated, 0 console errors. Confirms the iAPI router drives classic server-rendered PHP (no block requirement) — resolves R1's biggest unknown.
+
+BLOCKER: with the region placed as a sibling of `.jt-community-nav` + a `<template>` inside `.jt-container`, navigation DROPPED the region content (destination view rendered empty) and the diff also touched the nav (active state changed) — i.e. region scoping was wrong, likely a Preact positional-diff mismatch. Fix direction: header/nav OUTSIDE the region's parent; region = clean consistent subtree; confirm destination region is matched+inserted; maybe explicit `data-wp-interactive` on the region or `attachTo`. Prototype code was REVERTED (uncommitted) — empty-content state breaks nav, not shippable until region structure is fixed. This region/layout restructure overlaps Rail B.
+
+Working recipe (mechanically confirmed): (1) `array('id'=>'@wordpress/interactivity-router','import'=>'dynamic')` in jetonomy-view module deps; (2) defensive `navigate` generator (sync href read, skip modified/new-tab/cross-origin, preventDefault, dynamic-import, fall back to location.href on error); (3) `data-wp-router-region` wrapper; (4) wire only same-script-set links.
+
 ### Phase 2 — Router spike + single-pair prototype
 - Prototype `actions.navigate` between TWO same-script-set views (e.g. home feed -> single topic) on `1.5.0-dev`.
 - Verify: scroll/focus, no-JS `<a href>` fallback (R6), no console errors, Pro active.
