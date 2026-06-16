@@ -147,7 +147,7 @@ wp_enqueue_style(
 wp_enqueue_script(
 	'jetonomy-header',
 	JETONOMY_URL . 'assets/js/header.js',
-	array(),
+	array( 'jetonomy-rest' ),
 	JETONOMY_VERSION,
 	true
 );

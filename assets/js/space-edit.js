@@ -51,23 +51,19 @@
 			coverStatus.textContent = i18n.uploading || 'Uploading...';
 			var fd = new FormData();
 			fd.append('file', file);
-			fetch(form.dataset.jtRestBase + '/media', {
+			window.jetonomyRest.restFetch('/media', {
 				method: 'POST',
-				credentials: 'same-origin',
-				headers: { 'X-WP-Nonce': form.dataset.jtRestNonce },
 				body: fd
-			}).then(function (r) {
-				return r.json().then(function (b) { return { ok: r.ok, body: b }; });
 			}).then(function (res) {
-				if (!res.ok || !res.body || !res.body.url) {
-					coverStatus.textContent = (res.body && res.body.message) || (i18n.uploadFailed || 'Upload failed.');
+				if (!res.ok || !res.data || !res.data.url) {
+					coverStatus.textContent = res.status === 0
+						? (i18n.networkError || 'Network error.')
+						: ((res.data && res.data.message) || (i18n.uploadFailed || 'Upload failed.'));
 					return;
 				}
-				setPreview(res.body.url);
+				setPreview(res.data.url);
 				coverStatus.textContent = i18n.uploaded || 'Uploaded.';
 				setTimeout(function () { coverStatus.textContent = ''; }, 2000);
-			}).catch(function () {
-				coverStatus.textContent = i18n.networkError || 'Network error.';
 			});
 			coverInput.value = '';
 		});
@@ -163,29 +159,20 @@
 		settings.prefixes = prefixes;
 		payload.settings = settings;
 
-		fetch(form.dataset.jtRestBase + '/spaces/' + form.dataset.jtSpaceId, {
+		window.jetonomyRest.restFetch('/spaces/' + form.dataset.jtSpaceId, {
 			method: 'PATCH',
-			credentials: 'same-origin',
-			headers: {
-				'X-WP-Nonce': form.dataset.jtRestNonce,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(payload)
-		}).then(function (r) {
-			return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+			body: payload
 		}).then(function (res) {
 			btn.disabled = false;
 			if (!res.ok) {
-				errBox.textContent = (res.body && res.body.message) || (i18n.saveFailed || 'Could not save changes.');
+				errBox.textContent = res.status === 0
+					? (i18n.networkErrorRetry || 'Network error. Please try again.')
+					: ((res.data && res.data.message) || (i18n.saveFailed || 'Could not save changes.'));
 				errBox.hidden = false;
 				return;
 			}
 			savedBox.hidden = false;
 			setTimeout(function () { savedBox.hidden = true; }, 2500);
-		}).catch(function () {
-			btn.disabled = false;
-			errBox.textContent = i18n.networkErrorRetry || 'Network error. Please try again.';
-			errBox.hidden = false;
 		});
 	});
 })();

@@ -305,13 +305,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
             if ( q.length < 2 ) { dropdown.style.display = 'none'; return; }
 
             timer = setTimeout( function() {
-                var apiBase = ( typeof jetonomyUpload !== 'undefined' && jetonomyUpload.apiBase )
-                    ? jetonomyUpload.apiBase
-                    : '/wp-json/jetonomy/v1';
-
-                fetch( apiBase + '/search?q=' + encodeURIComponent( q ) + '&type=all&limit=5' )
-                .then( function( r ) { return r.json(); } )
-                .then( function( res ) {
+                window.jetonomyRest.restFetch( '/search?q=' + encodeURIComponent( q ) + '&type=all&limit=5' )
+                .then( function( result ) {
+                    var res = result.data || {};
                     var posts = ( res.data && res.data.posts ) ? res.data.posts : ( res.data || [] );
                     if ( ! posts.length ) { dropdown.style.display = 'none'; return; }
 
@@ -705,7 +701,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
     'use strict';
 
     var apiBase = ( window.jetonomyData && window.jetonomyData.restBase ) || '';
-    var nonce   = ( window.jetonomyData && window.jetonomyData.restNonce ) || '';
     if ( ! apiBase ) {
         return;
     }
@@ -819,20 +814,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
             return;
         }
         lastQuery = query;
-        var url = apiBase + '/users/suggest?q=' + encodeURIComponent( query );
+        var path = '/users/suggest?q=' + encodeURIComponent( query );
         if ( spaceId ) {
-            url += '&space_id=' + encodeURIComponent( spaceId );
+            path += '&space_id=' + encodeURIComponent( spaceId );
         }
-        fetch( url, {
-            credentials: 'same-origin',
-            headers: { 'X-WP-Nonce': nonce, 'Accept': 'application/json' }
-        } ).then( function ( r ) { return r.ok ? r.json() : []; } )
-        .then( function ( data ) {
+        window.jetonomyRest.restFetch( path, {
+            headers: { 'Accept': 'application/json' }
+        } ).then( function ( result ) {
+            var data = result.ok ? result.data : [];
             matches = Array.isArray( data ) ? data : [];
             selectedIndex = 0;
-            renderMatches();
-        } ).catch( function () {
-            matches = [];
             renderMatches();
         } );
     }

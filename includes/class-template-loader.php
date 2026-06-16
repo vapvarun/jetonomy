@@ -560,7 +560,7 @@ class Template_Loader {
 			wp_enqueue_script(
 				'jetonomy-space-edit',
 				JETONOMY_URL . 'assets/js/space-edit.js',
-				array( 'jetonomy-data', 'jetonomy-custom-fields' ),
+				array( 'jetonomy-data', 'jetonomy-custom-fields', 'jetonomy-rest' ),
 				JETONOMY_VERSION,
 				true
 			);
@@ -579,7 +579,7 @@ class Template_Loader {
 		wp_enqueue_script(
 			'jetonomy-composer',
 			JETONOMY_URL . 'assets/js/composer.js',
-			array( 'jetonomy-modals' ),
+			array( 'jetonomy-modals', 'jetonomy-rest' ),
 			JETONOMY_VERSION,
 			true
 		);
