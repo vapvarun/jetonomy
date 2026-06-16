@@ -598,6 +598,12 @@ const { state, actions } = store( 'jetonomy', {
             const link = event.target?.closest?.( 'a' );
             const href = link?.href;
             if ( ! href ) return;
+            // Respect any handler that already claimed this click. A direct
+            // listener (e.g. Load More's fetch-and-append, which preventDefaults)
+            // fires before this delegated handler on #jetonomy-app, so bailing on
+            // defaultPrevented stops us double-handling content links that own
+            // their own behaviour.
+            if ( event.defaultPrevented ) return;
             // Ignore in-page anchors and JS-hook links (href="#" / "#foo"):
             // the skip-link, search-overlay toggle, dropdown triggers and user
             // menu all use those and have their own handlers.
@@ -633,6 +639,29 @@ const { state, actions } = store( 'jetonomy', {
             try {
                 const router = yield import( '@wordpress/interactivity-router' );
                 yield router.actions.navigate( href );
+
+                // The iAPI store auto-hydrates swapped content, but classic
+                // content scripts (Load More, link previews) bind on page load
+                // and don't observe the swap. Fire a hook they re-init from.
+                document.dispatchEvent(
+                    new CustomEvent( 'jetonomy:navigated', { detail: { href } } )
+                );
+
+                // A11y: move focus + scroll to the freshly-swapped region so
+                // keyboard + screen-reader users land on the new content, and
+                // sync the persistent nav's active state (it lives outside the
+                // region, so the server-rendered .active class is now stale).
+                const region = document.querySelector( '[data-wp-router-region="jetonomy/main"]' );
+                if ( region ) {
+                    if ( ! region.hasAttribute( 'tabindex' ) ) {
+                        region.setAttribute( 'tabindex', '-1' );
+                    }
+                    region.focus( { preventScroll: true } );
+                }
+                window.scrollTo( 0, 0 );
+                document.querySelectorAll( '.jt-community-nav-links a, .jt-mobile-tabs a' ).forEach( ( a ) => {
+                    a.classList.toggle( 'active', a.pathname === window.location.pathname );
+                } );
             } catch ( e ) {
                 window.location.href = href; // never strand the user
             }

@@ -92,4 +92,9 @@
 	} else {
 		initAll();
 	}
+
+	// Re-bind after an iAPI client-side navigation swaps in a new view. bind()
+	// is idempotent (dataset.jtBound guard), so re-running initAll only wires
+	// the freshly-swapped .jt-pagination containers.
+	document.addEventListener('jetonomy:navigated', initAll);
 })();
