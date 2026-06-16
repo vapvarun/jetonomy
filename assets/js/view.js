@@ -1270,11 +1270,9 @@ const { state, actions } = store( 'jetonomy', {
                         : ( state.i18n?.bookmark || 'Bookmark' );
                     return { wasBookmarked };
                 },
-                fetch: () => fetch( `${ state.apiBase }/bookmarks`, {
+                fetch: () => window.jetonomyRest.restFetch( `/bookmarks`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { post_id: parseInt( postId ) } ),
+                    body: { post_id: parseInt( postId ) },
                 } ),
                 onSuccess: ( data ) => {
                     if ( ! data ) return;
@@ -1608,13 +1606,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/pin`, {
+                fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/pin`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -1643,13 +1636,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/close`, {
+                fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/close`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -1928,10 +1916,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+                fetch: () => window.jetonomyRest.restFetch( `/replies/${ replyId }/accept`, {
                     method: 'POST',
-                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: () => {
                     if ( window.bnToast ) window.bnToast( state.i18n?.accepted || 'Accepted' );
@@ -1954,10 +1940,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+                fetch: () => window.jetonomyRest.restFetch( `/replies/${ replyId }/accept`, {
                     method: 'DELETE',
-                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: () => {
                     if ( window.bnToast ) window.bnToast( state.i18n?.unaccepted || 'Marked as unanswered' );
@@ -1994,14 +1978,9 @@ const { state, actions } = store( 'jetonomy', {
                     allBtns.forEach( ( b ) => { b.disabled = true; } );
                     return { prevActive };
                 },
-                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
+                fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/idea-status`, {
                     method: 'POST',
-                    headers: {
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { idea_status: newStatus } ),
+                    body: { idea_status: newStatus },
                 } ),
                 onSuccess: () => {
                     // Mirror the change to the post-header pill so the read-
