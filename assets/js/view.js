@@ -1317,11 +1317,9 @@ const { state, actions } = store( 'jetonomy', {
             if ( reason === null ) return; // Cancelled
 
             try {
-                const res = yield fetch( `${ state.apiBase }/flags`, {
+                const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason } ),
+                    body: { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason },
                 } );
                 if ( res.ok ) {
                     // Reflect "already reported" state inline so the next click
@@ -1332,7 +1330,7 @@ const { state, actions } = store( 'jetonomy', {
                     el.ref.setAttribute( 'aria-label', el.ref.title );
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
@@ -1351,16 +1349,14 @@ const { state, actions } = store( 'jetonomy', {
             if ( reason === null ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/flags`, {
+                const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason } ),
+                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
@@ -1378,16 +1374,14 @@ const { state, actions } = store( 'jetonomy', {
             if ( reason === null ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/flags`, {
+                const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason } ),
+                    body: { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
@@ -1664,7 +1658,7 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     setTimeout( () => window.location.reload(), 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.failedTogglePrivate || 'Failed to change visibility.' );
                     }
@@ -1709,7 +1703,7 @@ const { state, actions } = store( 'jetonomy', {
                         window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
                     }, 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.moveFailed || 'Failed to move topic.' );
                     }
@@ -1763,7 +1757,7 @@ const { state, actions } = store( 'jetonomy', {
                         window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
                     }, 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.mergeFailed || 'Failed to merge topics.' );
                     }
@@ -1812,7 +1806,7 @@ const { state, actions } = store( 'jetonomy', {
                         window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
                     }, 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.splitFailed || 'Failed to split reply.' );
                     }
@@ -1847,7 +1841,7 @@ const { state, actions } = store( 'jetonomy', {
                     const base = state.communityBase || '/community';
                     window.location.href = spaceSlug ? `${ base }/s/${ spaceSlug }/` : `${ base }/`;
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
@@ -1881,7 +1875,7 @@ const { state, actions } = store( 'jetonomy', {
                         setTimeout( () => replyEl.remove(), 300 );
                     }
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
