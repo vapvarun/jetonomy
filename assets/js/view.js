@@ -619,17 +619,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, downWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/posts/${ postId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: 1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/posts/${ postId }/vote`,
+                    { method: 'POST', body: { value: 1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -684,17 +676,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, upWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/posts/${ postId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: -1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/posts/${ postId }/vote`,
+                    { method: 'POST', body: { value: -1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -749,17 +733,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, downWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/replies/${ replyId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: 1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/replies/${ replyId }/vote`,
+                    { method: 'POST', body: { value: 1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -814,17 +790,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, upWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/replies/${ replyId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: -1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/replies/${ replyId }/vote`,
+                    { method: 'POST', body: { value: -1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {

@@ -73,12 +73,18 @@
 		try {
 			var response = await opts.fetch();
 			var data = null;
-			if ( isJson( response ) ) {
-				try {
-					data = await response.json();
-				} catch ( _e ) {
-					data = null;
+			if ( response && typeof response.json === 'function' ) {
+				// Native fetch Response — parse the JSON body if present.
+				if ( isJson( response ) ) {
+					try {
+						data = await response.json();
+					} catch ( _e ) {
+						data = null;
+					}
 				}
+			} else if ( response && typeof response === 'object' && 'data' in response ) {
+				// restFetch-style result: { ok, status, data } already parsed.
+				data = response.data;
 			}
 			if ( response.ok ) {
 				callSafe( opts.onSuccess, data, response, snapshot );
