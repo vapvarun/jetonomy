@@ -96,7 +96,15 @@ Transitional safety (live-site framework): keep the route guard as a SHRINKING f
 
 Migration order (one per commit, browser-verified free+Pro each): space-edit -> new-space -> space-members -> notifications-page -> moderation -> prismjs -> remove guard. Each: convert script to module, enqueue as module w/ loadOnClientNavigation, drop route from the allow-list, verify client-nav into it loads the asset + feature works.
 
-Open decision for owner: (1) prismjs Class C strategy (lazy module vs global); (2) do the full migration now, or land it module-by-module across the next sessions.
+Decisions taken (2026-06-17): prismjs = load globally; pace = incremental, one per commit.
+
+CRITICAL FINDING (verified in WP core `interactivity-router/index.js` lines 645-659 + `add_client_navigation_support_to_script_module` API): `loadOnClientNavigation` only loads a module the FIRST time it's needed — the router skips already-resolved modules (`!resolvedScriptModules.has(url)`). ES modules are singletons: they execute once. The per-route scripts are IMPERATIVE (`form.addEventListener(...)` on the element present at execution). So loadOnClientNavigation alone binds the form on the first visit to a route but NOT on a second visit to the same route with different content (edit space A -> back -> edit space B = B's form unbound). loadOnClientNavigation solves LOADING, not RE-EXECUTION. The originally-requested "just make them modules + loadOnClientNavigation" is therefore insufficient for imperative scripts.
+
+Correct framework options (pick one direction):
+- **Option 1 — Declarative iAPI (best long-term, biggest):** fold each per-route surface's logic into the GLOBAL `jetonomy` store as actions + move its DOM bindings to `data-wp-on--*` directives in the template. The router's Preact reconciliation then re-hydrates them automatically on EVERY navigation. Bonus: no per-route script to load at all (logic lives in the already-global view.js store), so loadOnClientNavigation AND the allow-list both disappear. This is the WP-sanctioned architecture and the true "framework" answer.
+- **Option 2 — Module + idempotent re-init hook (pragmatic middle):** convert each per-route script to a module that exposes an `init()` and runs it both on load AND on `jetonomy:navigated` (idempotent, guard already-bound nodes — the pagination-frontend pattern). Enqueue with loadOnClientNavigation so it loads on demand; the re-init hook fixes the re-execution gap. Less rewrite than Option 1, but keeps imperative code.
+
+Recommendation for a framework: Option 1 where the surface is small/form-like (space-edit, new-space, space-members), Option 2 for vendor/large (prismjs already chosen global). Migrate one surface per commit, browser-verified incl. the SECOND-visit case, shrinking the guard each time.
 
 #### Phase 2 + Rail B — DONE (2026-06-17, commit 085f732): working client-side navigation
 Shipped, browser-verified free+Pro. Root-cause of the spike blocker: the region element needs BOTH `data-wp-interactive` AND `data-wp-router-region` — with only the latter the router didn't recognise it and mangled the diff. Fix:
