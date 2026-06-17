@@ -556,6 +556,50 @@ function* avatarUpload( file, input ) {
     document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
 }
 
+/**
+ * Append a freshly-posted TOP-LEVEL reply in place instead of full-reloading
+ * the thread. Re-fetches the current thread (HTML, not JSON — same approach as
+ * the Load More handler), lifts out the server-rendered card for the new reply,
+ * appends it to #jt-replies-container, and hydrates it so its action buttons
+ * (vote/reply/quote/more) work immediately. Returns true on success; on any
+ * miss (paginated thread where the reply isn't on this page, markup change,
+ * network error) returns false so the caller can fall back to a reload.
+ *
+ * @param {number|string} newId Reply id from the create response.
+ * @return {Promise<boolean>}
+ */
+async function appendNewReply( newId ) {
+    try {
+        const container = document.getElementById( 'jt-replies-container' );
+        if ( ! container || ! newId ) return false;
+        if ( container.querySelector( '[data-reply-id="' + newId + '"]' ) ) return true; // already there
+        const res = await fetch( window.location.href, { credentials: 'same-origin' } );
+        if ( ! res.ok ) return false;
+        const doc = new DOMParser().parseFromString( await res.text(), 'text/html' );
+        const fresh = doc.getElementById( 'jt-replies-container' );
+        const marker = fresh?.querySelector( '[data-reply-id="' + newId + '"]' );
+        if ( ! marker ) return false;
+        // Climb to the top-level wrapper (direct child of the container).
+        let node = marker;
+        while ( node && node.parentElement !== fresh ) node = node.parentElement;
+        if ( ! node ) return false;
+        const adopted = document.importNode( node, true );
+        container.appendChild( adopted );
+        if ( typeof window.jetonomyHydrateInteractive === 'function' ) {
+            window.jetonomyHydrateInteractive( [ adopted ] );
+        }
+        // Bump any reply-count pills so the header stays in sync.
+        document.querySelectorAll( '.jt-replies-section .jt-count-pill' ).forEach( ( pill ) => {
+            const n = parseInt( pill.textContent, 10 );
+            if ( ! isNaN( n ) ) pill.textContent = String( n + 1 );
+        } );
+        adopted.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+        return true;
+    } catch ( e ) {
+        return false;
+    }
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -2249,7 +2293,26 @@ const { state, actions } = store( 'jetonomy', {
                 );
 
                 if ( response.ok ) {
-                    window.location.reload();
+                    const payload = response.data || {};
+                    // Held for moderation -> not visible yet; tell the user, clear,
+                    // don't append.
+                    if ( 'pending' === payload.status || 'spam' === payload.status ) {
+                        body.innerHTML = '';
+                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your reply is awaiting moderation and will appear once approved.' );
+                    } else {
+                        // Top-level replies append in place; nested replies and any
+                        // append miss fall back to a full reload.
+                        const appended = ! parentId && payload.id
+                            ? yield appendNewReply( payload.id )
+                            : false;
+                        if ( appended ) {
+                            body.innerHTML = '';
+                            state.replyToId = null;
+                            state.replyToAuthor = '';
+                        } else {
+                            window.location.reload();
+                        }
+                    }
                 } else {
                     const err = response.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to post reply.' );
