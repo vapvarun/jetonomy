@@ -721,17 +721,16 @@ const { state, actions } = store( 'jetonomy', {
             }
             rest = rest.replace( /^\/+|\/+$/g, '' );
             const seg = '' === rest ? [] : rest.split( '/' );
-            // TRANSITIONAL allow-list: routes proven to need nothing beyond the
-            // global bundle. Grows as per-route surfaces are migrated into the
-            // global store (declarative), then this whole guard is deleted once
-            // every route is covered. space-members joined once its role/ban
-            // logic became actions.changeMemberRole / actions.banMember.
-            const safe =
-                0 === seg.length ||                                          // home
-                ( 1 === seg.length && [ 'search', 'leaderboard', 'mod', 'notifications', 'new-space' ].includes( seg[ 0 ] ) ) ||
-                ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) ) ||
-                ( 3 === seg.length && 's' === seg[ 0 ] && [ 'members', 'mod', 'edit' ].includes( seg[ 2 ] ) ); // members/moderation/edit-space (declarative)
-            if ( ! safe ) return; // full-page load for script-heavy routes
+            // Every route now runs on the global iAPI store (declarative; the
+            // router re-hydrates on navigation) EXCEPT the two rich-editor pages:
+            //   - single topic  (/s/{slug}/t/{slug}/)  reply composer + Prism
+            //   - new post       (/s/{slug}/new/)       topic composer
+            // Their editor scripts (composer.js, vendor Prism) bind on load and
+            // don't re-init on client nav, and full-loading an editor page is the
+            // right call anyway (clean editor + highlighter init). So those two
+            // full-load; default is client-side navigation — no allow-list to keep.
+            const editorRoute = 's' === seg[ 0 ] && [ 't', 'new' ].includes( seg[ 2 ] );
+            if ( editorRoute ) return; // full-page load
             event.preventDefault();
             try {
                 const router = yield import( '@wordpress/interactivity-router' );
