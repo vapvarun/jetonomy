@@ -162,6 +162,7 @@ $role_labels = [
 								<select
 									id="jt-member-role-<?php echo absint( $member->user_id ); ?>"
 									class="jt-member-role-select"
+									data-wp-on--change="actions.changeMemberRole"
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
 									data-prev-role="<?php echo esc_attr( (string) $member->role ); ?>">
@@ -178,7 +179,7 @@ $role_labels = [
 								// is closed. Site-wide bans / silences stay cap-only.
 								?>
 								<button type="button"
-									class="jt-btn jt-btn-sm jt-member-ban-btn"
+									class="jt-btn jt-btn-sm jt-member-ban-btn" data-wp-on--click="actions.banMember"
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
 									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">

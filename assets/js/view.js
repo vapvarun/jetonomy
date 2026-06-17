@@ -674,10 +674,16 @@ const { state, actions } = store( 'jetonomy', {
             }
             rest = rest.replace( /^\/+|\/+$/g, '' );
             const seg = '' === rest ? [] : rest.split( '/' );
+            // TRANSITIONAL allow-list: routes proven to need nothing beyond the
+            // global bundle. Grows as per-route surfaces are migrated into the
+            // global store (declarative), then this whole guard is deleted once
+            // every route is covered. space-members joined once its role/ban
+            // logic became actions.changeMemberRole / actions.banMember.
             const safe =
                 0 === seg.length ||                                          // home
                 ( 1 === seg.length && [ 'search', 'leaderboard' ].includes( seg[ 0 ] ) ) ||
-                ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) );
+                ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) ) ||
+                ( 3 === seg.length && 's' === seg[ 0 ] && 'members' === seg[ 2 ] ); // space-members (declarative)
             if ( ! safe ) return; // full-page load for script-heavy routes
             event.preventDefault();
             try {
@@ -710,6 +716,108 @@ const { state, actions } = store( 'jetonomy', {
                 window.location.href = href; // never strand the user
             }
         },
+        // ── Space members: role change + ban ──
+        // Declarative replacement for the former classic space-members.js. Lives
+        // in the global store so it loads on every route and the router
+        // re-hydrates the directives on client navigation — no per-route script.
+        *changeMemberRole() {
+            const select  = getElement().ref;
+            const spaceId = select.getAttribute( 'data-space-id' );
+            const userId  = select.getAttribute( 'data-user-id' );
+            const role    = select.value;
+            const prev    = select.getAttribute( 'data-prev-role' ) || '';
+            if ( ! spaceId || ! userId || ! role || prev === role ) return;
+
+            const i18n   = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const labels = i18n.roleLabels || { member: 'Member', moderator: 'Moderator', admin: 'Admin' };
+            const row    = select.closest( '.jt-member-item' );
+            const nameEl = row && row.querySelector( '.jt-member-name, .jt-member-display-name, [data-member-name]' );
+            const name   = nameEl ? nameEl.textContent.trim() : '';
+
+            const confirmBody = ( i18n.confirmRoleChange || 'Change %name% from %from% to %to%?' )
+                .replace( '%name%', name || 'this member' )
+                .replace( '%from%', labels[ prev ] || prev )
+                .replace( '%to%', labels[ role ] || role );
+            const confirmed = 'function' === typeof window.jetonomyConfirm
+                ? yield window.jetonomyConfirm( confirmBody, {
+                    title: i18n.confirmRoleChangeTitle || 'Change role',
+                    confirmLabel: i18n.confirmLabel || 'Change role',
+                    cancelLabel: i18n.cancelLabel || 'Cancel',
+                } )
+                : true;
+            if ( ! confirmed ) { select.value = prev; return; }
+
+            const oldErr = row && row.querySelector( '.jt-member-role-error' );
+            if ( oldErr ) oldErr.remove();
+            select.disabled = true;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members/' + userId, {
+                method: 'PATCH',
+                body: { role },
+            } );
+            select.disabled = false;
+            if ( ! res.ok ) {
+                select.value = prev;
+                if ( row ) {
+                    const p = document.createElement( 'p' );
+                    p.className = 'jt-member-role-error';
+                    p.setAttribute( 'role', 'alert' );
+                    p.textContent = ( res.data && res.data.message ) || i18n.roleUpdateFailed || 'Could not update role. Please try again.';
+                    row.appendChild( p );
+                }
+                return;
+            }
+            if ( row ) {
+                let badge = row.querySelector( '.jt-member-badge' );
+                if ( 'moderator' === role || 'admin' === role ) {
+                    if ( ! badge ) {
+                        badge = document.createElement( 'span' );
+                        badge.className = 'jt-badge-accent jt-member-badge';
+                        const anchor = row.querySelector( '.jt-member-role-select' );
+                        if ( anchor ) anchor.parentNode.insertBefore( badge, anchor );
+                        else row.appendChild( badge );
+                    }
+                    badge.textContent = labels[ role ] || role;
+                } else if ( badge ) {
+                    badge.remove();
+                }
+            }
+            select.setAttribute( 'data-prev-role', role );
+        },
+
+        *banMember() {
+            const btn     = getElement().ref;
+            const spaceId = btn.getAttribute( 'data-space-id' );
+            const userId  = btn.getAttribute( 'data-user-id' );
+            const name    = btn.getAttribute( 'data-user-name' );
+            if ( ! spaceId || ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+
+            const i18n    = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const banBody = ( i18n.banConfirmFormat || 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.' ).replace( '%s', name || '' );
+            const ok = yield window.jetonomyConfirm( banBody, {
+                title: i18n.banMemberTitle || 'Ban member',
+                confirmLabel: i18n.banLabel || 'Ban',
+                danger: true,
+            } );
+            if ( ! ok ) return;
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/moderation/ban', {
+                method: 'POST',
+                body: { user_id: parseInt( userId, 10 ), space_id: parseInt( spaceId, 10 ), type: 'space_ban' },
+            } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            const row = btn.closest( '.jt-member-item' );
+            if ( row ) {
+                row.style.opacity = '0.5';
+                const note = document.createElement( 'span' );
+                note.className = 'jt-member-banned-note';
+                note.textContent = i18n.memberBanned || 'Banned';
+                row.appendChild( note );
+            }
+            btn.remove();
+        },
+
         // ── Voting ──
         *voteUp( event ) {
             event.stopPropagation();

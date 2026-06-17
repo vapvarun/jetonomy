@@ -605,21 +605,10 @@ class Template_Loader {
 			)
 		);
 
-		// Enqueue role-dropdown handler on the space-members route (only
-		// rendered for space admins, but the JS binds via delegation and is
-		// a no-op when no select is present — safe to always enqueue here).
-		if ( 'space-members' === $data['route'] ) {
-			$sm_file    = JETONOMY_DIR . 'assets/js/space-members.js';
-			$sm_mtime   = file_exists( $sm_file ) ? (string) filemtime( $sm_file ) : '';
-			$sm_version = '' !== $sm_mtime ? JETONOMY_VERSION . '+' . $sm_mtime : JETONOMY_VERSION;
-			wp_enqueue_script(
-				'jetonomy-space-members',
-				JETONOMY_URL . 'assets/js/space-members.js',
-				array( 'jetonomy-data', 'jetonomy-modals' ),
-				$sm_version,
-				true
-			);
-		}
+		// Space-members role change + ban are now declarative actions in the
+		// global jetonomy store (actions.changeMemberRole / actions.banMember),
+		// so no per-route script is enqueued — the router re-hydrates the
+		// directives on client navigation. (Was assets/js/space-members.js.)
 
 		// Enqueue moderation queue resolver on moderation routes.
 		if ( in_array( $data['route'], array( 'moderation', 'space-moderation' ), true ) ) {
