@@ -183,7 +183,28 @@ class Reply extends Model {
 			return $proceed;
 		}
 
-		return parent::delete( $id );
+		// Load before deletion so a hard delete reverses the same counters a
+		// published reply incremented in create(). REST deletes go through
+		// update( status => trash ), which already handles this; the direct
+		// delete path (CLI content journey, QA fixtures, abilities) must mirror
+		// it so post + author reply_count stay consistent across every delete
+		// mechanism.
+		$reply  = self::find( $id );
+		$result = parent::delete( $id );
+
+		if ( $result && $reply && 'publish' === ( $reply->status ?? '' ) ) {
+			if ( ! empty( $reply->post_id ) ) {
+				Post::increment_reply_count( (int) $reply->post_id, -1 );
+			}
+			if ( ! empty( $reply->author_id ) ) {
+				UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
+			}
+
+			/** This action is documented in includes/models/class-reply.php (Reply::create) */
+			do_action( 'jetonomy_reply_publish_transition', $id, -1, (string) ( $reply->created_at ?? '' ) );
+		}
+
+		return $result;
 	}
 
 	/**
