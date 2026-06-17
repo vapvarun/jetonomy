@@ -88,6 +88,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 		</header>
 
 		<form id="jt-space-edit-form" class="jt-form jt-card"
+			data-wp-on--submit="actions.saveSpace"
 			data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>"
 			data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>"
 			data-jt-space-id="<?php echo (int) $space->id; ?>"
@@ -114,9 +115,9 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					<div class="jt-cover-actions">
 						<label class="jt-btn jt-btn-ghost jt-cover-pick">
 							<?php esc_html_e( 'Choose image', 'jetonomy' ); ?>
-							<input type="file" accept="image/*" data-jt-cover-input hidden>
+							<input type="file" accept="image/*" data-jt-cover-input data-wp-on--change="actions.uploadCover" hidden>
 						</label>
-						<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove <?php echo empty( $space->cover_image ) ? 'hidden' : ''; ?>>
+						<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove data-wp-on--click="actions.removeCover" <?php echo empty( $space->cover_image ) ? 'hidden' : ''; ?>>
 							<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
 						</button>
 						<span class="jt-cover-status" data-jt-cover-status></span>
@@ -196,7 +197,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 
 			<div class="jt-form-row jt-prefixes-row">
 				<label class="jt-prefix-toggle">
-					<input type="checkbox" name="enable_prefixes" value="1" <?php checked( $prefixes_on ); ?> data-jt-prefix-toggle>
+					<input type="checkbox" name="enable_prefixes" value="1" <?php checked( $prefixes_on ); ?> data-jt-prefix-toggle data-wp-on--change="actions.togglePrefixConfig">
 					<?php esc_html_e( 'Enable topic prefixes', 'jetonomy' ); ?>
 				</label>
 				<p class="jt-form-help"><?php esc_html_e( 'Colored labels members can pin to topics, e.g. Bug, Suggestion, Solved.', 'jetonomy' ); ?></p>
@@ -210,14 +211,14 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 								<div class="jt-prefix-row">
 									<input type="text" class="jt-input jt-prefix-name" value="<?php echo esc_attr( $pfx['name'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Label', 'jetonomy' ); ?>" maxlength="50">
 									<input type="color" class="jt-prefix-color" value="<?php echo esc_attr( $pfx['color'] ?? '#3B82F6' ); ?>">
-									<button type="button" class="jt-btn jt-btn-ghost jt-prefix-remove" aria-label="<?php esc_attr_e( 'Remove prefix', 'jetonomy' ); ?>">&times;</button>
+									<button type="button" class="jt-btn jt-btn-ghost jt-prefix-remove" data-wp-on--click="actions.removePrefixRow" aria-label="<?php esc_attr_e( 'Remove prefix', 'jetonomy' ); ?>">&times;</button>
 								</div>
 								<?php
 							endforeach;
 						endif;
 						?>
 					</div>
-					<button type="button" class="jt-btn jt-btn-ghost" data-jt-prefix-add>
+					<button type="button" class="jt-btn jt-btn-ghost" data-jt-prefix-add data-wp-on--click="actions.addPrefixRow">
 						<?php esc_html_e( '+ Add prefix', 'jetonomy' ); ?>
 					</button>
 				</div>

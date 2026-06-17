@@ -728,9 +728,9 @@ const { state, actions } = store( 'jetonomy', {
             // logic became actions.changeMemberRole / actions.banMember.
             const safe =
                 0 === seg.length ||                                          // home
-                ( 1 === seg.length && [ 'search', 'leaderboard', 'mod', 'notifications' ].includes( seg[ 0 ] ) ) ||
+                ( 1 === seg.length && [ 'search', 'leaderboard', 'mod', 'notifications', 'new-space' ].includes( seg[ 0 ] ) ) ||
                 ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) ) ||
-                ( 3 === seg.length && 's' === seg[ 0 ] && [ 'members', 'mod' ].includes( seg[ 2 ] ) ); // space-members + space-moderation (declarative)
+                ( 3 === seg.length && 's' === seg[ 0 ] && [ 'members', 'mod', 'edit' ].includes( seg[ 2 ] ) ); // members/moderation/edit-space (declarative)
             if ( ! safe ) return; // full-page load for script-heavy routes
             event.preventDefault();
             try {
@@ -923,6 +923,104 @@ const { state, actions } = store( 'jetonomy', {
                 return;
             }
             window.location.href = ( form.dataset.jtCommunityBase || '' ) + '/s/' + res.data.slug + '/';
+        },
+
+        // ── Edit space (edit-space form; declarative, was space-edit.js) ──
+        togglePrefixConfig() {
+            const toggle = getElement().ref;
+            const config = toggle.closest( 'form' )?.querySelector( '[data-jt-prefix-config]' );
+            if ( config ) config.hidden = ! toggle.checked;
+        },
+        addPrefixRow() {
+            const list = getElement().ref.closest( 'form' )?.querySelector( '[data-jt-prefix-list]' );
+            if ( ! list ) return;
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const row = document.createElement( 'div' );
+            row.className = 'jt-prefix-row';
+            const nameInput = document.createElement( 'input' );
+            nameInput.type = 'text';
+            nameInput.className = 'jt-input jt-prefix-name';
+            nameInput.placeholder = i18n.prefixLabel || 'Label';
+            nameInput.maxLength = 50;
+            const colorInput = document.createElement( 'input' );
+            colorInput.type = 'color';
+            colorInput.className = 'jt-prefix-color';
+            colorInput.value = '#3B82F6';
+            const removeBtn = document.createElement( 'button' );
+            removeBtn.type = 'button';
+            removeBtn.className = 'jt-btn jt-btn-ghost jt-prefix-remove';
+            removeBtn.setAttribute( 'aria-label', i18n.removePrefix || 'Remove prefix' );
+            removeBtn.setAttribute( 'data-wp-on--click', 'actions.removePrefixRow' );
+            removeBtn.textContent = '×';
+            row.appendChild( nameInput );
+            row.appendChild( colorInput );
+            row.appendChild( removeBtn );
+            list.appendChild( row );
+            // Wire the new row's remove button (iAPI doesn't hydrate post-boot inserts).
+            if ( 'function' === typeof window.jetonomyHydrateInteractive ) {
+                window.jetonomyHydrateInteractive( [ row ] );
+            }
+        },
+        // Uses triggerOf (event-based) not getElement(), because dynamically-added
+        // rows are wired by jetonomyHydrateInteractive, where getElement() has no
+        // IA render scope. triggerOf falls back to event.currentTarget there.
+        removePrefixRow( event ) {
+            const row = triggerOf( event )?.closest( '.jt-prefix-row' );
+            if ( row ) row.remove();
+        },
+        *saveSpace( event ) {
+            event.preventDefault();
+            const form     = getElement().ref;
+            const errBox   = form.querySelector( '[data-jt-error]' );
+            const savedBox = form.querySelector( '[data-jt-saved]' );
+            const btn      = form.querySelector( 'button[type="submit"]' );
+            const i18n     = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            if ( errBox ) errBox.hidden = true;
+            if ( savedBox ) savedBox.hidden = true;
+            if ( btn ) btn.disabled = true;
+
+            const payload = {};
+            new FormData( form ).forEach( ( v, k ) => {
+                if ( 'posts_per_page' === k || 'enable_prefixes' === k ) return;
+                if ( /^jt_cf\[/.test( k ) ) return;
+                payload[ k ] = v;
+            } );
+            const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
+            if ( Object.keys( customFields ).length > 0 ) payload.custom_fields = customFields;
+
+            const settings = {};
+            const pppEl = form.querySelector( '[name=posts_per_page]' );
+            const ppp = pppEl ? pppEl.value.trim() : '';
+            settings.posts_per_page = '' === ppp ? '' : parseInt( ppp, 10 );
+            const toggle = form.querySelector( '[data-jt-prefix-toggle]' );
+            settings.enable_prefixes = toggle && toggle.checked ? 1 : 0;
+            const prefixes = [];
+            form.querySelectorAll( '.jt-prefix-row' ).forEach( ( row ) => {
+                const name = row.querySelector( '.jt-prefix-name' )?.value.trim();
+                const color = row.querySelector( '.jt-prefix-color' )?.value;
+                if ( name ) prefixes.push( { name, color } );
+            } );
+            settings.prefixes = prefixes;
+            payload.settings = settings;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + form.dataset.jtSpaceId, {
+                method: 'PATCH',
+                body: payload,
+            } );
+            if ( btn ) btn.disabled = false;
+            if ( ! res.ok ) {
+                if ( errBox ) {
+                    errBox.textContent = 0 === res.status
+                        ? ( i18n.networkErrorRetry || 'Network error. Please try again.' )
+                        : ( ( res.data && res.data.message ) || i18n.saveFailed || 'Could not save changes.' );
+                    errBox.hidden = false;
+                }
+                return;
+            }
+            if ( savedBox ) {
+                savedBox.hidden = false;
+                setTimeout( () => { savedBox.hidden = true; }, 2500 );
+            }
         },
 
         // ── Notifications page (declarative; was notifications-page.js) ──

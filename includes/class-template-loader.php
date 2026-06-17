@@ -555,23 +555,11 @@ class Template_Loader {
 			true
 		);
 
-		// Per-route page scripts.
-		// new-space create + cover upload are now declarative actions in the
-		// global jetonomy store (actions.createSpace / uploadCover / removeCover),
-		// shared with edit-space — no per-route script. (Was new-space.js.)
-		if ( 'edit-space' === $data['route'] ) {
-			wp_enqueue_script(
-				'jetonomy-space-edit',
-				JETONOMY_URL . 'assets/js/space-edit.js',
-				array( 'jetonomy-data', 'jetonomy-custom-fields', 'jetonomy-rest' ),
-				JETONOMY_VERSION,
-				true
-			);
-		}
-		// Notifications-page actions (mark-all/read/delete/bulk/menu) are now
-		// declarative actions in the global jetonomy store, so the router
-		// re-hydrates them on client navigation — no per-route script.
-		// (Was assets/js/notifications-page.js.)
+		// Per-route page scripts: NONE remain. Every former per-route surface
+		// (new-space, edit-space, space-members, notifications, moderation) is now
+		// a declarative action in the global jetonomy store, so the iAPI router
+		// re-hydrates them on client navigation. The only non-global asset left is
+		// vendor Prism on the post route (still full-loaded by the route guard).
 
 		// Enqueue composer enhancement script (depends on the shared modal
 		// toolkit for the link-insert prompt).
