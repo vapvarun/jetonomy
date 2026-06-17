@@ -572,15 +572,11 @@ class Template_Loader {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'notifications' === $data['route'] ) {
-			wp_enqueue_script(
-				'jetonomy-notifications-page',
-				JETONOMY_URL . 'assets/js/notifications-page.js',
-				array( 'jetonomy-data', 'jetonomy-rest' ),
-				JETONOMY_VERSION,
-				true
-			);
 		}
+		// Notifications-page actions (mark-all/read/delete/bulk/menu) are now
+		// declarative actions in the global jetonomy store, so the router
+		// re-hydrates them on client navigation — no per-route script.
+		// (Was assets/js/notifications-page.js.)
 
 		// Enqueue composer enhancement script (depends on the shared modal
 		// toolkit for the link-insert prompt).

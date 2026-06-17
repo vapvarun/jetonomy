@@ -600,6 +600,31 @@ async function appendNewReply( newId ) {
     }
 }
 
+/** Mark a notifications-page row read in place (ported from notifications-page.js). */
+function notifMarkRowRead( row ) {
+    row.classList.remove( 'unread' );
+    row.setAttribute( 'data-jt-notif-read', '1' );
+    const dot = row.querySelector( '.jt-notif-dot' );
+    if ( dot ) dot.remove();
+    const markBtn = row.querySelector( '[data-jt-notif-action="mark_read"]' );
+    if ( markBtn ) {
+        const li = markBtn.closest( 'li' );
+        if ( li ) li.remove();
+    }
+}
+
+/** Refresh the notifications bulk toolbar count + visibility from current checks. */
+function notifUpdateBulkbar() {
+    const bulkbar = document.querySelector( '[data-jt-notif-bulkbar]' );
+    const list = document.querySelector( '[data-jt-notif-list]' );
+    if ( ! bulkbar || ! list ) return;
+    const checked = list.querySelectorAll( '.jt-notif-cb:checked' );
+    const countEl = bulkbar.querySelector( '[data-jt-notif-selected-count]' );
+    if ( countEl ) countEl.textContent = String( checked.length );
+    if ( checked.length > 0 ) bulkbar.removeAttribute( 'hidden' );
+    else bulkbar.setAttribute( 'hidden', '' );
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -681,7 +706,7 @@ const { state, actions } = store( 'jetonomy', {
             // logic became actions.changeMemberRole / actions.banMember.
             const safe =
                 0 === seg.length ||                                          // home
-                ( 1 === seg.length && [ 'search', 'leaderboard', 'mod' ].includes( seg[ 0 ] ) ) ||
+                ( 1 === seg.length && [ 'search', 'leaderboard', 'mod', 'notifications' ].includes( seg[ 0 ] ) ) ||
                 ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) ) ||
                 ( 3 === seg.length && 's' === seg[ 0 ] && [ 'members', 'mod' ].includes( seg[ 2 ] ) ); // space-members + space-moderation (declarative)
             if ( ! safe ) return; // full-page load for script-heavy routes
@@ -816,6 +841,91 @@ const { state, actions } = store( 'jetonomy', {
                 row.appendChild( note );
             }
             btn.remove();
+        },
+
+        // ── Notifications page (declarative; was notifications-page.js) ──
+        *markAllNotifsRead() {
+            const btn = getElement().ref;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/notifications/mark-all-read', { method: 'POST' } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            document.querySelectorAll( '[data-jt-notif-list] .jt-notif-item.unread' ).forEach( notifMarkRowRead );
+            btn.remove();
+        },
+        toggleNotifMenu( event ) {
+            event.stopPropagation();
+            const trigger = getElement().ref;
+            const menu = trigger.closest( '[data-jt-notif-menu]' );
+            const panel = menu && menu.querySelector( '.jt-notif-item__menu-list' );
+            if ( ! panel ) return;
+            panel.removeAttribute( 'hidden' );
+            if ( ! trigger._jtDropdown ) {
+                trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
+                    placement: 'bottom-end',
+                    group: 'jt-notif',
+                    closeOnOutside: true,
+                    closeOnEscape: true,
+                } );
+                panel.style.display = 'none';
+            }
+            trigger._jtDropdown.toggle();
+        },
+        *markNotifRead() {
+            const row = getElement().ref.closest( '.jt-notif-item' );
+            const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
+            if ( ! id ) return;
+            const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'PATCH' } );
+            if ( res.ok ) notifMarkRowRead( row );
+        },
+        *deleteNotif() {
+            const row = getElement().ref.closest( '.jt-notif-item' );
+            const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
+            if ( ! id ) return;
+            // Optimistic remove — re-insert on failure so the user can retry.
+            const next = row.nextSibling;
+            const parent = row.parentNode;
+            row.style.display = 'none';
+            const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'DELETE' } );
+            if ( res.ok ) {
+                row.remove();
+                if ( ! document.querySelector( '[data-jt-notif-list] .jt-notif-item' ) ) {
+                    window.location.reload(); // render the server empty state
+                }
+            } else {
+                row.style.display = '';
+                if ( parent && next ) parent.insertBefore( row, next );
+            }
+        },
+        toggleNotifSelectAll() {
+            const selectAll = getElement().ref;
+            document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = selectAll.checked; } );
+            notifUpdateBulkbar();
+        },
+        updateNotifSelection() {
+            notifUpdateBulkbar();
+        },
+        *bulkNotifs() {
+            const btn = getElement().ref;
+            const action = btn.getAttribute( 'data-jt-notif-bulk' );
+            const ids = [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ]
+                .map( ( cb ) => parseInt( cb.value, 10 ) ).filter( ( id ) => id > 0 );
+            if ( ! ids.length ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/notifications/bulk', { method: 'POST', body: { action, ids } } );
+            btn.disabled = false;
+            if ( ! res.ok ) return;
+            ids.forEach( ( id ) => {
+                const row = document.querySelector( '[data-jt-notif-list] .jt-notif-item[data-jt-notif-id="' + id + '"]' );
+                if ( ! row ) return;
+                if ( 'delete' === action ) row.remove();
+                else notifMarkRowRead( row );
+            } );
+            const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
+            if ( selectAll ) selectAll.checked = false;
+            notifUpdateBulkbar();
+            if ( ! document.querySelector( '[data-jt-notif-list] .jt-notif-item' ) ) {
+                window.location.reload();
+            }
         },
 
         // ── Voting ──
