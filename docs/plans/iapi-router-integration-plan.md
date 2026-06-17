@@ -83,7 +83,10 @@ All 36 view.js raw `fetch()` migrated to `window.jetonomyRest.restFetch` across 
 Pre-existing inconsistency noted: `space-members.js` uses `restFetch` but was enqueued without the `jetonomy-rest` dep (works only via global load) — left as-is, fold into 1b.
 Cleanup TODO (lint:js): leftover unused `apiBase`/`nonce` locals elsewhere are pre-existing, not from this change.
 
-#### Rail B v2 — FRAMEWORK-GRADE design (remove the JS allow-list) — PLAN, not yet built
+#### Rail B v2 — COMPLETE (2026-06-17, commit 0d9def9)
+All 5 per-route surfaces are declarative iAPI in the global store; all 5 classic per-route scripts deleted (space-members, moderation, notifications-page, new-space, space-edit). The transitional allow-list is gone — replaced by a minimal deny-list: every route client-navs EXCEPT the two rich-editor pages (single topic /t/, new post /new/) which full-load (composer.js + Prism bind on load; full-loading an editor page is correct UX). Adding a route never touches navigate logic. qa-actions 231/231; each surface browser-verified free+Pro incl. client-nav + (where relevant) re-visit. Optional future: convert composer.js to re-init on jetonomy:navigated to let the editor routes client-nav too — not needed (full-load is the right call).
+
+#### Rail B v2 — FRAMEWORK-GRADE design (remove the JS allow-list) — original design notes
 Context: this is a framework for many sites, so the route allow-list in `navigate()` (a hardcoded JS list of "safe" routes) is patchwork and must go. Goal: client-side navigation works for EVERY route with ZERO route knowledge in JS — adding a route or a per-route script never touches the navigate logic.
 
 Root constraint: `loadOnClientNavigation` is a SCRIPT-MODULE feature. The per-route scripts the allow-list gates are CLASSIC scripts: `new-space.js`, `space-edit.js`, `notifications-page.js`, `space-members.js`, moderation resolver, and `prismjs` (vendor). So the correct fix is a migration, classified by how each asset behaves:
