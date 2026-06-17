@@ -625,6 +625,28 @@ function notifUpdateBulkbar() {
     else bulkbar.setAttribute( 'hidden', '' );
 }
 
+/** Set the cover-image preview within a form. Shared by the new-space +
+ * edit-space cover uploaders (data-jt-cover-* markup is identical on both). */
+function jtSetCoverPreview( form, url ) {
+    const value  = form.querySelector( '[data-jt-cover-value]' );
+    const prev   = form.querySelector( '[data-jt-cover-preview]' );
+    const remove = form.querySelector( '[data-jt-cover-remove]' );
+    if ( value ) value.value = url;
+    if ( ! prev ) return;
+    if ( url ) {
+        prev.hidden = false;
+        let img = prev.querySelector( 'img' );
+        if ( ! img ) { img = document.createElement( 'img' ); img.alt = ''; prev.appendChild( img ); }
+        img.src = url;
+        if ( remove ) remove.hidden = false;
+    } else {
+        prev.hidden = true;
+        if ( remove ) remove.hidden = true;
+        const existing = prev.querySelector( 'img' );
+        if ( existing ) existing.remove();
+    }
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -841,6 +863,66 @@ const { state, actions } = store( 'jetonomy', {
                 row.appendChild( note );
             }
             btn.remove();
+        },
+
+        // ── Space cover image (shared by new-space + edit-space forms) ──
+        *uploadCover() {
+            const input = getElement().ref;
+            const form  = input.closest( 'form' );
+            const file  = input.files && input.files[ 0 ];
+            if ( ! form || ! file ) return;
+            const i18n   = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const status = form.querySelector( '[data-jt-cover-status]' );
+            if ( status ) status.textContent = i18n.uploading || 'Uploading...';
+            const fd = new FormData();
+            fd.append( 'file', file );
+            input.value = '';
+            const res = yield window.jetonomyRest.restFetch( '/media', { method: 'POST', body: fd } );
+            if ( ! res.ok || ! res.data || ! res.data.url ) {
+                if ( status ) status.textContent = 0 === res.status
+                    ? ( i18n.networkError || 'Network error.' )
+                    : ( ( res.data && res.data.message ) || i18n.uploadFailed || 'Upload failed.' );
+                return;
+            }
+            jtSetCoverPreview( form, res.data.url );
+            if ( status ) {
+                status.textContent = i18n.uploaded || 'Uploaded.';
+                setTimeout( () => { status.textContent = ''; }, 2000 );
+            }
+        },
+        removeCover() {
+            const form = getElement().ref.closest( 'form' );
+            if ( form ) jtSetCoverPreview( form, '' );
+        },
+
+        // ── Create space (new-space form; declarative, was new-space.js) ──
+        *createSpace( event ) {
+            event.preventDefault();
+            const form   = getElement().ref;
+            const errBox = form.querySelector( '[data-jt-error]' );
+            const btn    = form.querySelector( 'button[type="submit"]' );
+            const i18n   = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            if ( errBox ) errBox.hidden = true;
+            if ( btn ) btn.disabled = true;
+
+            const payload = {};
+            new FormData( form ).forEach( ( v, k ) => {
+                if ( /^jt_cf\[/.test( k ) ) return; // collected separately
+                if ( v ) payload[ k ] = v;
+            } );
+            const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
+            if ( Object.keys( customFields ).length > 0 ) payload.custom_fields = customFields;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces', { method: 'POST', body: payload } );
+            if ( ! res.ok || ! res.data || ! res.data.slug ) {
+                if ( errBox ) {
+                    errBox.textContent = ( res.data && res.data.message ) || i18n.createSpaceFailed || 'Could not create the space. Please try again.';
+                    errBox.hidden = false;
+                }
+                if ( btn ) btn.disabled = false;
+                return;
+            }
+            window.location.href = ( form.dataset.jtCommunityBase || '' ) + '/s/' + res.data.slug + '/';
         },
 
         // ── Notifications page (declarative; was notifications-page.js) ──

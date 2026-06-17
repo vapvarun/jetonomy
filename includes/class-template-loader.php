@@ -556,15 +556,10 @@ class Template_Loader {
 		);
 
 		// Per-route page scripts.
-		if ( 'new-space' === $data['route'] ) {
-			wp_enqueue_script(
-				'jetonomy-new-space',
-				JETONOMY_URL . 'assets/js/new-space.js',
-				array( 'jetonomy-data', 'jetonomy-custom-fields' ),
-				JETONOMY_VERSION,
-				true
-			);
-		} elseif ( 'edit-space' === $data['route'] ) {
+		// new-space create + cover upload are now declarative actions in the
+		// global jetonomy store (actions.createSpace / uploadCover / removeCover),
+		// shared with edit-space — no per-route script. (Was new-space.js.)
+		if ( 'edit-space' === $data['route'] ) {
 			wp_enqueue_script(
 				'jetonomy-space-edit',
 				JETONOMY_URL . 'assets/js/space-edit.js',
