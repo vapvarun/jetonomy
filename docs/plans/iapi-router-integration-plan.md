@@ -83,6 +83,21 @@ All 36 view.js raw `fetch()` migrated to `window.jetonomyRest.restFetch` across 
 Pre-existing inconsistency noted: `space-members.js` uses `restFetch` but was enqueued without the `jetonomy-rest` dep (works only via global load) — left as-is, fold into 1b.
 Cleanup TODO (lint:js): leftover unused `apiBase`/`nonce` locals elsewhere are pre-existing, not from this change.
 
+#### Rail B v2 — FRAMEWORK-GRADE design (remove the JS allow-list) — PLAN, not yet built
+Context: this is a framework for many sites, so the route allow-list in `navigate()` (a hardcoded JS list of "safe" routes) is patchwork and must go. Goal: client-side navigation works for EVERY route with ZERO route knowledge in JS — adding a route or a per-route script never touches the navigate logic.
+
+Root constraint: `loadOnClientNavigation` is a SCRIPT-MODULE feature. The per-route scripts the allow-list gates are CLASSIC scripts: `new-space.js`, `space-edit.js`, `notifications-page.js`, `space-members.js`, moderation resolver, and `prismjs` (vendor). So the correct fix is a migration, classified by how each asset behaves:
+
+- **Class A — needs on-demand LOAD (not present on initial page):** new-space, space-edit, notifications-page, space-members, moderation. Convert each classic script -> ES script module, keep the existing per-route server enqueue but as `wp_enqueue_script_module` with the router's `loadOnClientNavigation` option. The router then loads them automatically when navigating into that route (it reads the module markers in the fetched HTML). WP-native, declarative, future-proof.
+- **Class B — already GLOBAL, only needs re-init:** pagination-frontend (done — listens for `jetonomy:navigated`). Any other global classic script that binds content uses the same `jetonomy:navigated` re-init hook. No module conversion needed.
+- **Class C — vendor (prismjs):** can't cleanly be a module. Wrap in a tiny jetonomy module that lazy-imports/inits Prism on `jetonomy:navigated` when a `<pre><code>` exists. (Alternative: load Prism globally — simpler, small, but ships on every page. Decision needed.)
+
+Transitional safety (live-site framework): keep the route guard as a SHRINKING fallback during migration — a route stays in the "full-load" set until its script is migrated + browser-verified, then drops out of the set. When the set is empty, delete the guard. Nothing breaks mid-migration.
+
+Migration order (one per commit, browser-verified free+Pro each): space-edit -> new-space -> space-members -> notifications-page -> moderation -> prismjs -> remove guard. Each: convert script to module, enqueue as module w/ loadOnClientNavigation, drop route from the allow-list, verify client-nav into it loads the asset + feature works.
+
+Open decision for owner: (1) prismjs Class C strategy (lazy module vs global); (2) do the full migration now, or land it module-by-module across the next sessions.
+
 #### Phase 2 + Rail B — DONE (2026-06-17, commit 085f732): working client-side navigation
 Shipped, browser-verified free+Pro. Root-cause of the spike blocker: the region element needs BOTH `data-wp-interactive` AND `data-wp-router-region` — with only the latter the router didn't recognise it and mangled the diff. Fix:
 - `@wordpress/interactivity-router` added as a dynamic dep of jetonomy-view.
