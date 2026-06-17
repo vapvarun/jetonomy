@@ -94,7 +94,13 @@ Root constraint: `loadOnClientNavigation` is a SCRIPT-MODULE feature. The per-ro
 
 Transitional safety (live-site framework): keep the route guard as a SHRINKING fallback during migration — a route stays in the "full-load" set until its script is migrated + browser-verified, then drops out of the set. When the set is empty, delete the guard. Nothing breaks mid-migration.
 
-Migration order (one per commit, browser-verified free+Pro each): space-edit -> new-space -> space-members -> notifications-page -> moderation -> prismjs -> remove guard. Each: convert script to module, enqueue as module w/ loadOnClientNavigation, drop route from the allow-list, verify client-nav into it loads the asset + feature works.
+Migration progress + per-surface findings (2026-06-17):
+- DONE 1/5 — space-members (commit a2dff4b): role/ban -> actions.changeMemberRole / banMember, deleted space-members.js, verified on a client-navigated page. Clean pattern.
+- notifications-page: BIGGER than it looks — not just REST calls. It's a menu open/close state machine + bulk-select state + select-all + outside-click/Escape + empty-state reload. Full declarative rewrite is large; best done as a dedicated pass (consider reusing jetonomySmartDropdown for the per-row menu to avoid re-implementing dropdown logic).
+- moderation: DUPLICATION to resolve FIRST, not a straight convert. flag-card.php (admin dashboard + per-space queue) uses moderation.js (.jt-mod-resolve + per-card data-resolve-endpoint, params valid/dismissed). moderation.php ALSO uses view.js actions.resolveFlag (/moderation/flags/{id}/resolve, params approved/dismissed). Two resolve paths, two endpoints, two param vocabularies. The framework-correct move is to CONSOLIDATE into one general resolve action (single endpoint contract + one param vocabulary) used by both surfaces, THEN delete moderation.js. Converting moderation.js as-is would entrench the duplication.
+- new-space / space-edit: forms with dynamic fields (custom fields, cover upload; space-edit also has a dynamic prefix-row builder needing data-wp-each). Larger; space-edit is the hardest.
+
+Recommended remaining order (each its own focused pass/commit, browser-verified free+Pro incl. client-nav + re-visit): moderation (consolidate dup) -> notifications-page -> new-space -> space-edit -> prismjs global -> delete the allow-list guard.
 
 Decisions taken (2026-06-17): prismjs = load globally; pace = incremental, one per commit.
 
