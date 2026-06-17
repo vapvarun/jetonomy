@@ -111,6 +111,7 @@ if ( 'post' === $flag->object_type ) {
 		<?php endif; ?>
 		<button type="button"
 			class="jt-btn jt-btn-fill jt-btn-danger jt-mod-resolve"
+			data-wp-on--click="actions.resolveFlag"
 			data-flag-id="<?php echo absint( $flag->id ); ?>"
 			data-resolution="valid">
 			<?php jetonomy_echo_icon( 'trash', 14 ); ?>
@@ -118,6 +119,7 @@ if ( 'post' === $flag->object_type ) {
 		</button>
 		<button type="button"
 			class="jt-btn jt-btn-ghost jt-mod-resolve"
+			data-wp-on--click="actions.resolveFlag"
 			data-flag-id="<?php echo absint( $flag->id ); ?>"
 			data-resolution="dismissed">
 			<?php esc_html_e( 'Dismiss', 'jetonomy' ); ?>

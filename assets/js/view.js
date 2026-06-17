@@ -681,9 +681,9 @@ const { state, actions } = store( 'jetonomy', {
             // logic became actions.changeMemberRole / actions.banMember.
             const safe =
                 0 === seg.length ||                                          // home
-                ( 1 === seg.length && [ 'search', 'leaderboard' ].includes( seg[ 0 ] ) ) ||
+                ( 1 === seg.length && [ 'search', 'leaderboard', 'mod' ].includes( seg[ 0 ] ) ) ||
                 ( 2 === seg.length && [ 'category', 'tag', 'u', 's' ].includes( seg[ 0 ] ) ) ||
-                ( 3 === seg.length && 's' === seg[ 0 ] && 'members' === seg[ 2 ] ); // space-members (declarative)
+                ( 3 === seg.length && 's' === seg[ 0 ] && [ 'members', 'mod' ].includes( seg[ 2 ] ) ); // space-members + space-moderation (declarative)
             if ( ! safe ) return; // full-page load for script-heavy routes
             event.preventDefault();
             try {
@@ -2317,37 +2317,57 @@ const { state, actions } = store( 'jetonomy', {
             // The contenteditable body dispatches this on every keystroke.
         },
 
-        // ── Moderation ──
-        *dismissFlag( event ) {
-            const el = getElement();
-            const flagId = el.ref.dataset.flagId;
-            const flagAction = el.ref.dataset.action; // 'approved' or 'dismissed'
-            if ( ! flagId ) return;
+        // ── Moderation: resolve a queued flag ──
+        // Declarative replacement for the former classic moderation.js, used by
+        // templates/partials/moderation/flag-card.php on the space queue. The card
+        // carries an absolute data-resolve-endpoint prefix (so per-space queues
+        // work); restFetch is path-based (owns restBase), so we trim restBase back
+        // to a path. Status enum is the canonical server vocabulary: valid |
+        // dismissed. (Replaces the dead dismissFlag action + moderation.js.)
+        *resolveFlag() {
+            const btn  = getElement().ref;
+            const card = btn.closest( '.jt-mod-flag' );
+            if ( ! card ) return;
+            const flagId     = btn.getAttribute( 'data-flag-id' );
+            const resolution = btn.getAttribute( 'data-resolution' );
+            const endpoint   = card.getAttribute( 'data-resolve-endpoint' );
+            if ( ! flagId || ! resolution || ! endpoint ) return;
 
-            // Map template values to API-expected enum: 'valid' or 'dismissed'.
-            const apiStatus = flagAction === 'approved' ? 'valid' : 'dismissed';
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
+            let path = endpoint + flagId + '/resolve';
+            if ( base && 0 === path.indexOf( base ) ) path = path.slice( base.length );
 
-            try {
-                const response = yield window.jetonomyRest.restFetch(
-                    `/moderation/flags/${ flagId }/resolve`,
-                    {
-                        method: 'POST',
-                        body: { status: apiStatus },
-                    }
-                );
-                if ( response.ok ) {
-                    const card = el.ref.closest( '.jt-mod-flag' );
-                    if ( card ) card.remove();
-                    if ( window.bnToast ) window.bnToast(
-                        apiStatus === 'valid'
-                            ? ( state.i18n?.contentRemoved || 'Content removed' )
-                            : ( state.i18n?.flagDismissed || 'Flag dismissed' )
-                    );
-                } else {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.failed || 'Failed' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+            const buttons = card.querySelectorAll( '.jt-mod-resolve' );
+            buttons.forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch( path, {
+                method: 'POST',
+                body: { status: resolution },
+            } );
+            if ( ! res.ok ) {
+                buttons.forEach( ( b ) => { b.disabled = false; } );
+                const existing = card.querySelector( '.jt-mod-flag-error' );
+                if ( existing ) existing.remove();
+                const p = document.createElement( 'p' );
+                p.className = 'jt-mod-flag-error';
+                p.setAttribute( 'role', 'alert' );
+                p.textContent = ( res.data && res.data.message ) || i18n.resolveFailed || 'Could not resolve flag. Please try again.';
+                card.appendChild( p );
+                return;
+            }
+            // Remove the resolved card; if the queue is now empty, swap in the
+            // empty state (ported from moderation.js removeCard()).
+            const container = card.parentNode;
+            card.remove();
+            if ( container && ! container.querySelector( '.jt-mod-flag' ) && container.parentNode ) {
+                const wrapper = document.createElement( 'div' );
+                wrapper.className = 'jt-empty';
+                const msg = document.createElement( 'div' );
+                msg.className = 'jt-empty-text';
+                msg.textContent = i18n.queueClean || 'Queue cleared.';
+                wrapper.appendChild( msg );
+                container.parentNode.replaceChild( wrapper, container );
             }
         },
 

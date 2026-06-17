@@ -610,19 +610,10 @@ class Template_Loader {
 		// so no per-route script is enqueued — the router re-hydrates the
 		// directives on client navigation. (Was assets/js/space-members.js.)
 
-		// Enqueue moderation queue resolver on moderation routes.
-		if ( in_array( $data['route'], array( 'moderation', 'space-moderation' ), true ) ) {
-			$mod_file    = JETONOMY_DIR . 'assets/js/moderation.js';
-			$mod_mtime   = file_exists( $mod_file ) ? (string) filemtime( $mod_file ) : '';
-			$mod_version = '' !== $mod_mtime ? JETONOMY_VERSION . '+' . $mod_mtime : JETONOMY_VERSION;
-			wp_enqueue_script(
-				'jetonomy-moderation',
-				JETONOMY_URL . 'assets/js/moderation.js',
-				array( 'jetonomy-data' ),
-				$mod_version,
-				true
-			);
-		}
+		// Moderation queue resolve is now a declarative action in the global
+		// jetonomy store (actions.resolveFlag, used by moderation/flag-card.php),
+		// so the router re-hydrates it on client navigation — no per-route script.
+		// (Was assets/js/moderation.js.)
 
 		// Enqueue Prism.js for code syntax highlighting on post pages (only if files exist).
 		$prism_dir = JETONOMY_DIR . 'assets/vendor/prismjs/';
