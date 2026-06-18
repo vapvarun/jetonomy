@@ -261,7 +261,8 @@ class Schema {
   notify_via ENUM('web','email','both') NOT NULL DEFAULT 'web',
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
-  UNIQUE KEY user_object (user_id,object_type,object_id)
+  UNIQUE KEY user_object (user_id,object_type,object_id),
+  KEY object_lookup (object_type,object_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 9. jt_read_status
