@@ -167,29 +167,32 @@ class Updates_Controller extends Base_Controller {
 	 * @return array
 	 */
 	private function get_space_updates( \wpdb $wpdb, int $space_id, string $since ): array {
-		$log_table   = table( 'activity_log' );
-		$posts_table = table( 'posts' );
+		$log_table     = table( 'activity_log' );
+		$posts_table   = table( 'posts' );
+		$replies_table = table( 'replies' );
 
-		// Fetch post IDs in this space efficiently (no JOIN on activity_log).
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$post_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT id FROM {$posts_table} WHERE space_id = %d",
-				$space_id
-			)
-		);
-
-		if ( empty( $post_ids ) ) {
-			return [];
-		}
-
-		$placeholders = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
-
+		// Match the (small, recent) "created_at > since" slice against the space
+		// via IN(subquery) rather than materialising every post id in the space
+		// into a literal IN() list. A 10k-post space previously built a
+		// ~20k-placeholder prepared statement on EVERY poll (plus the array_fill
+		// / implode to construct it). Subqueries are semi-joined by MySQL and
+		// ride the posts.space_id / replies.post_id indexes; created_at is
+		// filtered first so the subqueries run against few rows.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT action, object_type, object_id, created_at FROM {$log_table} WHERE created_at > %s AND ( (object_type = 'post' AND object_id IN ({$placeholders})) OR (object_type = 'reply' AND object_id IN ({$placeholders})) ) ORDER BY created_at DESC LIMIT 50", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				array_merge( [ $since ], $post_ids, $post_ids )
+				"SELECT action, object_type, object_id, created_at
+				 FROM {$log_table}
+				 WHERE created_at > %s
+				   AND (
+				     ( object_type = 'post' AND object_id IN ( SELECT id FROM {$posts_table} WHERE space_id = %d ) )
+				     OR ( object_type = 'reply' AND object_id IN ( SELECT r.id FROM {$replies_table} r INNER JOIN {$posts_table} p ON r.post_id = p.id WHERE p.space_id = %d ) )
+				   )
+				 ORDER BY created_at DESC
+				 LIMIT 50", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$since,
+				$space_id,
+				$space_id
 			)
 		) ?: [];
 
