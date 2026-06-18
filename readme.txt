@@ -266,29 +266,36 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.5.0 - June 2026 =
 
-A stability and accuracy release: the plugin pair was audited end to end, dead weight removed, and every cross-surface contract verified.
+Instant in-place navigation across the community, built on the WordPress Interactivity API, plus an end-to-end audit that removed dead weight and verified every cross-surface contract.
 
-* New      - Empty pages now guide you forward: drafts, search, leaderboard, profile tabs and space listings show a real styled call-to-action and next step instead of a dead end.
-* New      - Remove a bookmark directly from the My Bookmarks page — the card drops off the list when you do.
-* New      - Tag pages have a "Start a discussion tagged X" button that opens the composer with the tag pre-filled.
-* Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
-* Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.
-* Improve  - Logged-out visitors clicking the vote control on a post are now taken to log in (with a return link) instead of nothing happening.
-* Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
+* New      - Instant navigation: moving between the home feed, categories, spaces, profiles, search, leaderboard, notifications and messages swaps the view in place instead of reloading the whole page, with the address bar and browser back/forward kept in sync. Built on the WordPress Interactivity API client-side navigation and applied uniformly across every community view.
 * New      - First-time visitors get a welcome banner on the community home with a one-line intro, a live member/post/this-week pulse, and a "Create free account" call-to-action. Filterable copy; hidden for logged-in members.
+* New      - Empty pages now guide you forward: drafts, search, leaderboard, profile tabs and space listings show a real styled call-to-action and next step instead of a dead end.
+* New      - Community Media: a member-facing dashboard to browse and manage your own uploads, kept out of the wp-admin Media Library.
+* New      - One-click install of the Wbcom stack companions straight from Settings > Integrations.
 * New      - Space cards now show an "Active N ago" recency signal so you can tell at a glance which spaces are alive.
 * New      - Avatar square-crop: uploading a profile photo opens a drag-and-zoom crop dialog so avatars are saved square; animated GIFs upload unchanged.
 * New      - Space RSS feeds: every public space serves RSS 2.0 at /community/s/{slug}/feed/ with auto-discovery on the space page; private spaces stay private.
-* New      - GET /auth/nonce endpoint: long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
+* New      - Remove a bookmark directly from the My Bookmarks page - the card drops off the list when you do.
+* New      - Tag pages have a "Start a discussion tagged X" button that opens the composer with the tag pre-filled.
 * New      - Conversations admin page (with Pro): paginated messaging oversight in wp-admin with thread detail and a compliance purge action.
-* New      - jetonomy_post_publish_transition and jetonomy_reply_publish_transition hooks fire on every publish/unpublish transition with a +/-1 delta and the original creation date.
+* New      - Learnomy LMS access rules: spaces can be gated by Learnomy course level through the access-rule engine.
+* Improve  - Posting a reply now adds it to the thread in place instead of reloading the page.
+* Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
+* Improve  - Logged-out visitors clicking the vote control on a post are now taken to log in (with a return link) instead of nothing happening.
+* Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.
 * Improve  - Resolving a flag as valid through the REST API now applies the full contract on every surface: content trashed, related flags cleared, reporter rewarded, webhook event fired.
-* Improve  - Invite links, avatar resolution, and approval-hold checks consolidated into single owners; the approval check now evaluates the author instead of the current user.
+* Improve  - Settings warns when your CAPTCHA provider and keys are mismatched.
 * Fix      - Members can now pause all email notifications from Edit Profile (and admins per user); the verification reminder honoured this preference but nothing could set it.
+* Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
+* Fix      - Long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
 * Fix      - BuddyPress broadcast and activity-comment bridge now have on/off controls under Settings > Integrations (shown when BuddyPress is active); previously only changeable via WP-CLI.
 * Fix      - Block titles (login "Join the conversation", navigation, user panel, feed) stay legible on themes whose content-heading styles previously repainted them dark-on-dark.
 * Fix      - Analytics counting stays accurate through the content lifecycle: pending posts count on approval, trashed posts decrement their original day.
+* Fix      - The approval-hold check now evaluates the post author instead of the current user.
 * Fix      - Database version constant bumped so the 1.5.0 migration runs automatically on upgrade.
+* Dev      - Frontend REST calls route through a single client with automatic nonce-refresh on expiry; community views are fully declarative via the Interactivity API, so client-side navigation needs no per-route scripts.
+* Dev      - jetonomy_post_publish_transition and jetonomy_reply_publish_transition hooks fire on every publish/unpublish transition with a +/-1 delta and the original creation date.
 * Dev      - Removed three never-wired tables (space tags, user interests) with a guarded migration, the GET /space-tags route, three dead admin AJAX actions, and 30+ zero-reference methods.
 * Dev      - PHPUnit suite green across PHP 8.1-8.4 x WP 6.7-6.9; contract-audit baseline and release gate added; CI now runs on dev branches with the full non-pro test matrix.
 * Compat   - Aligned with Jetonomy Pro 1.5.0. Install both updates together.
