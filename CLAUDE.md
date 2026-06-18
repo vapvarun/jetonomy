@@ -135,6 +135,9 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 ## Documentation
 - **Implementation Plans**: `docs/plans/` (only future / unshipped plans kept; shipped ones are pruned each release)
 - **Design Prototypes**: `docs/prototype/` (open HTML files in browser)
+- **Standards**: `docs/standards/` — normative engineering standards every change must honour (canonical sources in `~/.claude/workflows/`).
+  - `frontend-interactivity.md` — **Frontend Interactivity & Client-Side Navigation Standard** (WP Interactivity API router, declarative regions, `jetonomy:navigated` re-init, no per-route/inline scripts, restFetch, verify-after-client-nav). Jetonomy is the reference implementation. Any new interactive frontend surface MUST pass its Section 5 checklist before release.
+  - `background-jobs.md` — **Background-Jobs Standard** (lazy-on-read first, AS-first with WP-Cron fallback, schedule on `action_scheduler_init` not `plugins_loaded`, one group per plugin, no idle polling, clear both schedulers on deactivate). `includes/class-cron.php` is the reference. Known gap: no cron-health Tools note yet (standard §4). Any new job MUST pass its Section 6 checklist.
 
 ## URL Structure
 ```
