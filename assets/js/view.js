@@ -3347,41 +3347,71 @@ const { state, actions } = store( 'jetonomy', {
             active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
         },
 
-        // Poll for new replies and show a sticky banner
+        // Poll for new replies and show a sticky banner. Adaptive + visibility-
+        // aware: pauses entirely while the tab is hidden, and backs the interval
+        // off when nothing new arrives, so an abandoned tab stops hammering
+        // /updates. Resets to the fast cadence on activity or when refocused.
         initReplyPolling() {
             const repliesSection = document.getElementById( 'jt-replies-container' );
             if ( ! repliesSection || ! state.currentPostId ) return;
 
+            const MIN_INTERVAL = 15000;   // active cadence
+            const MAX_INTERVAL = 120000;  // idle ceiling (doubles 15->30->60->120)
+            let interval  = MIN_INTERVAL;
             let lastCheck = Date.now();
+            let timer     = null;
 
-            setInterval( async () => {
+            const schedule = () => {
+                clearTimeout( timer );
+                // Paused while hidden; the visibilitychange handler resumes it.
+                if ( document.hidden ) return;
+                timer = setTimeout( poll, interval );
+            };
+
+            const poll = async () => {
                 try {
                     const since = new Date( lastCheck ).toISOString();
                     const response = await window.jetonomyRest.restFetch(
                         `/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`
                     );
-                    if ( ! response.ok ) return;
-                    const data = response.data || {};
-                    const newReplies = ( data.data || [] ).length;
+                    if ( response.ok ) {
+                        const data = response.data || {};
+                        const newReplies = ( data.data || [] ).length;
 
-                    if ( newReplies > 0 ) {
-                        let banner = document.querySelector( '.jt-new-replies-banner' );
-                        if ( ! banner ) {
-                            banner = document.createElement( 'div' );
-                            banner.className = 'jt-new-replies-banner';
-                            banner.addEventListener( 'click', () => {
-                                window.location.reload();
-                            } );
-                            repliesSection.parentElement.appendChild( banner );
+                        if ( newReplies > 0 ) {
+                            let banner = document.querySelector( '.jt-new-replies-banner' );
+                            if ( ! banner ) {
+                                banner = document.createElement( 'div' );
+                                banner.className = 'jt-new-replies-banner';
+                                banner.addEventListener( 'click', () => {
+                                    window.location.reload();
+                                } );
+                                repliesSection.parentElement.appendChild( banner );
+                            }
+                            banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                            interval = MIN_INTERVAL;                      // activity -> fast again
+                        } else {
+                            interval = Math.min( interval * 2, MAX_INTERVAL ); // idle -> back off
                         }
-                        banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                        lastCheck = Date.now();
                     }
-
-                    lastCheck = Date.now();
                 } catch {
-                    // silent
+                    // silent — transient network blip; keep current cadence
                 }
-            }, 15000 );
+                schedule();
+            };
+
+            document.addEventListener( 'visibilitychange', () => {
+                if ( document.hidden ) {
+                    clearTimeout( timer );           // pause; no work in the background
+                } else {
+                    clearTimeout( timer );
+                    interval = MIN_INTERVAL;         // resume fast + catch up now
+                    poll();
+                }
+            } );
+
+            schedule();
         },
     },
 } );
