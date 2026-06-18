@@ -200,12 +200,20 @@ a ready-to-paste system-cron command built from the site's own URL:
 **Jetonomy**
 | Pattern | File |
 |---|---|
-| AS-first recurring, scheduled on `action_scheduler_init` | `jetonomy/includes/class-cron.php` |
+| AS-first recurring, scheduled on `action_scheduler_init` (correct timing) | `jetonomy/includes/class-cron.php` |
 | Deferred scheduling helper (`plugins_loaded`-safe `when_ready()`) | `jetonomy-pro/includes/class-queue.php` |
-| Reactive single-shot + batch fan-out | `jetonomy-pro/includes/class-queue.php::async()/batch()` |
-| Self-(un)scheduling on feature toggle | `jetonomy-pro/includes/extensions/ai/class-batch-reviewer.php` |
-| Bundled Action Scheduler (always present) | `jetonomy/jetonomy.php` (loads `libs/action-scheduler`) |
-| Cron health + Tools note | **GAP — not yet implemented (see §4); add for 1.5.x** |
+| Reactive single-shot + batch fan-out primitives | `jetonomy-pro/includes/class-queue.php::async()/batch()` |
+| Reactive single-shot on earn + safety-net reconcile (6h, above hourly) | `jetonomy-pro/includes/extensions/custom-badges/class-extension.php` |
+| Bundled Action Scheduler (always present, fallback unneeded) | `jetonomy/jetonomy.php` (loads `libs/action-scheduler`) |
+
+**Known gaps (tracked, fix in 1.5.x):**
+- **Cron-health Tools note (§4)** — not implemented in free or pro. Add a Tools
+  status line that warns only when `DISABLE_WP_CRON` is set AND actions are overdue.
+- **AI batch reviewer idle-polls (§2 anti-pattern)** —
+  `jetonomy-pro/includes/extensions/ai/class-batch-reviewer.php` schedules a
+  5-minute recurring action whenever AI review is enabled, firing whether or not
+  content is pending. Move it to reactive (enqueue/arm on content-needing-review,
+  the way custom-badges does async-on-earn) so it is dormant when idle.
 
 ## 8. Adoption per plugin
 
