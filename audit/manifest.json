@@ -1859,6 +1859,28 @@
 			"consumed_by": "jetonomy-pro"
 		},
 		{
+			"name": "jetonomy_fanout_post_subscribers",
+			"type": "action",
+			"args_count": 2,
+			"args_signature": [
+				"int $post_id",
+				"int $space_id"
+			],
+			"where": "includes/notifications/class-notifier.php:226",
+			"consumed_by": "jetonomy"
+		},
+		{
+			"name": "jetonomy_fanout_reply_subscribers",
+			"type": "action",
+			"args_count": 2,
+			"args_signature": [
+				"int $reply_id",
+				"int $post_id"
+			],
+			"where": "includes/notifications/class-notifier.php:227",
+			"consumed_by": "jetonomy"
+		},
+		{
 			"name": "jetonomy_after_post_article",
 			"type": "action",
 			"args": "post_id",

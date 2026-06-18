@@ -1,753 +1,756 @@
 {
-    "schema_version": "v1",
-    "plugin": {
-        "slug": "jetonomy",
-        "version": "1.4.3"
-    },
-    "generated": {
-        "at": "2026-06-13T20:04:56+00:00",
-        "manifest_at": "2026-06-04T00:00:00Z",
-        "manifest_branch": "main"
-    },
-    "categories": {
-        "rest": {
-            "total": 88,
-            "covered": 33,
-            "uncovered": 55,
-            "skipped": 0,
-            "covered_items": [
-                {
-                    "method": "GET",
-                    "route": "/spaces"
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces"
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)"
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces/(?P<id>\\d+)/members"
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces/(?P<space_id>\\d+)/posts"
-                },
-                {
-                    "method": "GET",
-                    "route": "/posts/(?P<id>\\d+)"
-                },
-                {
-                    "method": "PATCH",
-                    "route": "/posts/(?P<id>\\d+)"
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/posts/(?P<id>\\d+)"
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<id>\\d+)/close"
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<id>\\d+)/pin"
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<id>\\d+)/move"
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<id>\\d+)/vote"
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/posts/(?P<id>\\d+)/vote"
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<post_id>\\d+)/replies"
-                },
-                {
-                    "method": "GET",
-                    "route": "/replies/(?P<id>\\d+)"
-                },
-                {
-                    "method": "PATCH",
-                    "route": "/replies/(?P<id>\\d+)"
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/replies/(?P<id>\\d+)"
-                },
-                {
-                    "method": "POST",
-                    "route": "/replies/(?P<id>\\d+)/accept"
-                },
-                {
-                    "method": "POST",
-                    "route": "/replies/(?P<id>\\d+)/split"
-                },
-                {
-                    "method": "POST",
-                    "route": "/replies/(?P<id>\\d+)/vote"
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/replies/(?P<id>\\d+)/vote"
-                },
-                {
-                    "method": "GET",
-                    "route": "/users/me"
-                },
-                {
-                    "method": "PATCH",
-                    "route": "/users/me"
-                },
-                {
-                    "method": "GET",
-                    "route": "/users/(?P<id>\\d+)"
-                },
-                {
-                    "method": "GET",
-                    "route": "/notifications"
-                },
-                {
-                    "method": "POST",
-                    "route": "/notifications/mark-all-read"
-                },
-                {
-                    "method": "GET",
-                    "route": "/subscriptions"
-                },
-                {
-                    "method": "POST",
-                    "route": "/subscriptions"
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/subscriptions/(?P<id>\\d+)"
-                },
-                {
-                    "method": "POST",
-                    "route": "/bookmarks"
-                },
-                {
-                    "method": "POST",
-                    "route": "/flags"
-                },
-                {
-                    "method": "POST",
-                    "route": "/moderation/flags/(?P<id>\\d+)/resolve"
-                },
-                {
-                    "method": "GET",
-                    "route": "/auth/nonce"
-                }
-            ],
-            "uncovered_items": [
-                {
-                    "method": "PATCH",
-                    "route": "/spaces/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/spaces/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/spaces/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/spaces/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)/members",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/members\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)/privileged-members",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/privileged-members\""
-                },
-                {
-                    "method": "PATCH",
-                    "route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)\""
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces/(?P<id>\\d+)/invite",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/invite\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/invite/(?P<token>[a-zA-Z0-9]+)",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/invite/(?P<token>[a-zA-Z0-9]+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<space_id>\\d+)/posts",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<space_id>\\d+)/posts\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/posts/drafts",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/posts/drafts\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<id>\\d+)/merge",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/posts/(?P<id>\\d+)/merge\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/posts/(?P<id>\\d+)/idea-status",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/posts/(?P<id>\\d+)/idea-status\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/link-preview",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/link-preview\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/posts/(?P<post_id>\\d+)/replies",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/posts/(?P<post_id>\\d+)/replies\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/users/(?P<id>\\d+)/posts",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/users/(?P<id>\\d+)/posts\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/users/suggest",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/users/suggest\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/notifications/unread-count",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/notifications/unread-count\""
-                },
-                {
-                    "method": "PATCH",
-                    "route": "/notifications/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/notifications/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/search",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/search\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/categories",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/categories\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/categories",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/categories\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/categories/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/categories/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "PATCH",
-                    "route": "/categories/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest PATCH \"/categories/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/categories/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/categories/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/tags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/tags\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/leaderboards",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/leaderboards\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/bookmarks",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/bookmarks\""
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/bookmarks/(?P<post_id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/bookmarks/(?P<post_id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/moderation/queue",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/queue\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/flags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/flags\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/moderation/flags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/flags\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/moderation/bulk",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/bulk\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/posts/(?P<id>\\d+)/flags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/posts/(?P<id>\\d+)/flags\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/moderation/ban",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/ban\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/moderation/ban",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/ban\""
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/moderation/ban/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/moderation/ban/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/spaces/(?P<id>\\d+)/moderation/flags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/moderation/flags\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/updates",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/updates\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/oembed",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/oembed\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/media",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/media\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/auth/login",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/login\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/auth/register",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/register\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/auth/lost-password",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/lost-password\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/auth/verify-email",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/auth/verify-email\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/auth/resend-verification",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/resend-verification\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/admin/recount",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/admin/recount\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/admin/users/trust-level",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/admin/users/trust-level\""
-                },
-                {
-                    "method": "DELETE",
-                    "route": "/notifications/(?P<id>\\d+)",
-                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/notifications/(?P<id>\\d+)\""
-                },
-                {
-                    "method": "POST",
-                    "route": "/notifications/bulk",
-                    "stub_command": "bin/qa-stub-gen.php rest POST \"/notifications/bulk\""
-                }
-            ]
+  "schema_version": "v1",
+  "plugin": {
+    "slug": "jetonomy",
+    "version": "1.4.3"
+  },
+  "generated": {
+    "at": "2026-06-18T10:46:18.289Z",
+    "manifest_at": "2026-06-04T00:00:00Z",
+    "manifest_branch": "main"
+  },
+  "categories": {
+    "rest": {
+      "total": 88,
+      "covered": 33,
+      "uncovered": 55,
+      "skipped": 0,
+      "covered_items": [
+        {
+          "method": "GET",
+          "route": "/spaces"
         },
-        "ajax": {
-            "total": 43,
-            "covered": 3,
-            "uncovered": 40,
-            "skipped": 0,
-            "covered_items": [
-                {
-                    "action": "jetonomy_generate_invite"
-                },
-                {
-                    "action": "jetonomy_list_invites"
-                },
-                {
-                    "action": "jetonomy_revoke_invite"
-                }
-            ],
-            "uncovered_items": [
-                {
-                    "action": "jetonomy_create_category",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_category"
-                },
-                {
-                    "action": "jetonomy_update_category",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_category"
-                },
-                {
-                    "action": "jetonomy_delete_category",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_category"
-                },
-                {
-                    "action": "jetonomy_reorder_categories",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_reorder_categories"
-                },
-                {
-                    "action": "jetonomy_create_tag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_tag"
-                },
-                {
-                    "action": "jetonomy_update_tag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_tag"
-                },
-                {
-                    "action": "jetonomy_delete_tag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_tag"
-                },
-                {
-                    "action": "jetonomy_bulk_delete_tags",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_delete_tags"
-                },
-                {
-                    "action": "jetonomy_create_space",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_space"
-                },
-                {
-                    "action": "jetonomy_update_space",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_space"
-                },
-                {
-                    "action": "jetonomy_delete_space",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_space"
-                },
-                {
-                    "action": "jetonomy_add_space_member",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_space_member"
-                },
-                {
-                    "action": "jetonomy_remove_space_member",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_remove_space_member"
-                },
-                {
-                    "action": "jetonomy_change_member_role",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_member_role"
-                },
-                {
-                    "action": "jetonomy_add_access_rule",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_access_rule"
-                },
-                {
-                    "action": "jetonomy_delete_access_rule",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_access_rule"
-                },
-                {
-                    "action": "jetonomy_sync_access_rule",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_sync_access_rule"
-                },
-                {
-                    "action": "jetonomy_approve_content",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_content"
-                },
-                {
-                    "action": "jetonomy_spam_content",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_spam_content"
-                },
-                {
-                    "action": "jetonomy_trash_content",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_trash_content"
-                },
-                {
-                    "action": "jetonomy_resolve_flag",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_resolve_flag"
-                },
-                {
-                    "action": "jetonomy_bulk_content_action",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_content_action"
-                },
-                {
-                    "action": "jetonomy_ban_user",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_ban_user"
-                },
-                {
-                    "action": "jetonomy_unban_user",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_unban_user"
-                },
-                {
-                    "action": "jetonomy_change_trust_level",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_trust_level"
-                },
-                {
-                    "action": "jetonomy_search_users",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_search_users"
-                },
-                {
-                    "action": "jetonomy_import_batch",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_batch"
-                },
-                {
-                    "action": "jetonomy_test_email",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_test_email"
-                },
-                {
-                    "action": "jetonomy_email_preview",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_email_preview"
-                },
-                {
-                    "action": "jetonomy_email_reset",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_email_reset"
-                },
-                {
-                    "action": "jetonomy_flush_rules",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_flush_rules"
-                },
-                {
-                    "action": "jetonomy_update_post",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_post"
-                },
-                {
-                    "action": "jetonomy_delete_post",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_post"
-                },
-                {
-                    "action": "jetonomy_update_reply",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_reply"
-                },
-                {
-                    "action": "jetonomy_delete_reply",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_reply"
-                },
-                {
-                    "action": "jetonomy_approve_join_request",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_join_request"
-                },
-                {
-                    "action": "jetonomy_deny_join_request",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_deny_join_request"
-                },
-                {
-                    "action": "jetonomy_setup_save",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_save"
-                },
-                {
-                    "action": "jetonomy_setup_create_sample",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_create_sample"
-                },
-                {
-                    "action": "jetonomy_cleanup_sample_data",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_cleanup_sample_data"
-                }
-            ]
+        {
+          "method": "POST",
+          "route": "/spaces"
         },
-        "hooks_fired": {
-            "total": 6,
-            "covered": 5,
-            "uncovered": 1,
-            "skipped": 137,
-            "covered_items": [
-                {
-                    "name": "jetonomy_leaderboard_items",
-                    "consumer_count": 1
-                },
-                {
-                    "name": "jetonomy_reputation_points_map",
-                    "consumer_count": 1
-                },
-                {
-                    "name": "jetonomy_reputation_pre_change",
-                    "consumer_count": 1
-                },
-                {
-                    "name": "jetonomy_post_publish_transition",
-                    "consumer_count": 1
-                },
-                {
-                    "name": "jetonomy_reply_publish_transition",
-                    "consumer_count": 1
-                }
-            ],
-            "uncovered_items": [
-                {
-                    "name": "jetonomy_user_left_space",
-                    "consumer_count": 1,
-                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_user_left_space"
-                }
-            ],
-            "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
+        {
+          "method": "GET",
+          "route": "/spaces/(?P<id>\\d+)"
         },
-        "cron": {
-            "total": 6,
-            "covered": 0,
-            "uncovered": 6,
-            "skipped": 0,
-            "covered_items": [],
-            "uncovered_items": [
-                {
-                    "hook": "jetonomy_trust_evaluation",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_trust_evaluation"
-                },
-                {
-                    "hook": "jetonomy_cleanup_expired",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_cleanup_expired"
-                },
-                {
-                    "hook": "jetonomy_prune_activity",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_prune_activity"
-                },
-                {
-                    "hook": "jetonomy_cleanup_notifications",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_cleanup_notifications"
-                },
-                {
-                    "hook": "jetonomy_publish_scheduled",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_publish_scheduled"
-                },
-                {
-                    "hook": "jetonomy_verification_reminder",
-                    "stub_command": "bin/qa-stub-gen.php cron jetonomy_verification_reminder"
-                }
-            ]
+        {
+          "method": "POST",
+          "route": "/spaces/(?P<id>\\d+)/members"
         },
-        "wp_cli": {
-            "total": 14,
-            "covered": 5,
-            "uncovered": 9,
-            "skipped": 0,
-            "covered_items": [
-                {
-                    "command": "jetonomy space"
-                },
-                {
-                    "command": "jetonomy user"
-                },
-                {
-                    "command": "jetonomy member"
-                },
-                {
-                    "command": "jetonomy notification"
-                },
-                {
-                    "command": "jetonomy config"
-                }
-            ],
-            "uncovered_items": [
-                {
-                    "command": "jetonomy category",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy category"
-                },
-                {
-                    "command": "jetonomy post",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy post"
-                },
-                {
-                    "command": "jetonomy reply",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy reply"
-                },
-                {
-                    "command": "jetonomy tag",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy tag"
-                },
-                {
-                    "command": "jetonomy vote",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy vote"
-                },
-                {
-                    "command": "jetonomy flag",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy flag"
-                },
-                {
-                    "command": "jetonomy mod",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy mod"
-                },
-                {
-                    "command": "jetonomy scenario",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy scenario"
-                },
-                {
-                    "command": "jetonomy qa-actions",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy qa-actions"
-                }
-            ]
+        {
+          "method": "POST",
+          "route": "/spaces/(?P<space_id>\\d+)/posts"
+        },
+        {
+          "method": "GET",
+          "route": "/posts/(?P<id>\\d+)"
+        },
+        {
+          "method": "PATCH",
+          "route": "/posts/(?P<id>\\d+)"
+        },
+        {
+          "method": "DELETE",
+          "route": "/posts/(?P<id>\\d+)"
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<id>\\d+)/close"
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<id>\\d+)/pin"
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<id>\\d+)/move"
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<id>\\d+)/vote"
+        },
+        {
+          "method": "DELETE",
+          "route": "/posts/(?P<id>\\d+)/vote"
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<post_id>\\d+)/replies"
+        },
+        {
+          "method": "GET",
+          "route": "/replies/(?P<id>\\d+)"
+        },
+        {
+          "method": "PATCH",
+          "route": "/replies/(?P<id>\\d+)"
+        },
+        {
+          "method": "DELETE",
+          "route": "/replies/(?P<id>\\d+)"
+        },
+        {
+          "method": "POST",
+          "route": "/replies/(?P<id>\\d+)/accept"
+        },
+        {
+          "method": "POST",
+          "route": "/replies/(?P<id>\\d+)/split"
+        },
+        {
+          "method": "POST",
+          "route": "/replies/(?P<id>\\d+)/vote"
+        },
+        {
+          "method": "DELETE",
+          "route": "/replies/(?P<id>\\d+)/vote"
+        },
+        {
+          "method": "GET",
+          "route": "/users/me"
+        },
+        {
+          "method": "PATCH",
+          "route": "/users/me"
+        },
+        {
+          "method": "GET",
+          "route": "/users/(?P<id>\\d+)"
+        },
+        {
+          "method": "GET",
+          "route": "/notifications"
+        },
+        {
+          "method": "POST",
+          "route": "/notifications/mark-all-read"
+        },
+        {
+          "method": "GET",
+          "route": "/subscriptions"
+        },
+        {
+          "method": "POST",
+          "route": "/subscriptions"
+        },
+        {
+          "method": "DELETE",
+          "route": "/subscriptions/(?P<id>\\d+)"
+        },
+        {
+          "method": "POST",
+          "route": "/bookmarks"
+        },
+        {
+          "method": "POST",
+          "route": "/flags"
+        },
+        {
+          "method": "POST",
+          "route": "/moderation/flags/(?P<id>\\d+)/resolve"
+        },
+        {
+          "method": "GET",
+          "route": "/auth/nonce"
         }
+      ],
+      "uncovered_items": [
+        {
+          "method": "PATCH",
+          "route": "/spaces/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/spaces/(?P<id>\\d+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/spaces/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/spaces/(?P<id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/spaces/(?P<id>\\d+)/members",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/members\""
+        },
+        {
+          "method": "GET",
+          "route": "/spaces/(?P<id>\\d+)/privileged-members",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/privileged-members\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/spaces/(?P<id>\\d+)/invite",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/invite\""
+        },
+        {
+          "method": "GET",
+          "route": "/invite/(?P<token>[a-zA-Z0-9]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/invite/(?P<token>[a-zA-Z0-9]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/spaces/(?P<space_id>\\d+)/posts",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<space_id>\\d+)/posts\""
+        },
+        {
+          "method": "GET",
+          "route": "/posts/drafts",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/posts/drafts\""
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<id>\\d+)/merge",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/posts/(?P<id>\\d+)/merge\""
+        },
+        {
+          "method": "POST",
+          "route": "/posts/(?P<id>\\d+)/idea-status",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/posts/(?P<id>\\d+)/idea-status\""
+        },
+        {
+          "method": "GET",
+          "route": "/link-preview",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/link-preview\""
+        },
+        {
+          "method": "GET",
+          "route": "/posts/(?P<post_id>\\d+)/replies",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/posts/(?P<post_id>\\d+)/replies\""
+        },
+        {
+          "method": "GET",
+          "route": "/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/users/by-login/(?P<login>[a-zA-Z0-9_\\-.]+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/users/(?P<id>\\d+)/posts",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/users/(?P<id>\\d+)/posts\""
+        },
+        {
+          "method": "GET",
+          "route": "/users/suggest",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/users/suggest\""
+        },
+        {
+          "method": "GET",
+          "route": "/notifications/unread-count",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/notifications/unread-count\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/notifications/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/notifications/(?P<id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/search",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/search\""
+        },
+        {
+          "method": "GET",
+          "route": "/categories",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/categories\""
+        },
+        {
+          "method": "POST",
+          "route": "/categories",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/categories\""
+        },
+        {
+          "method": "GET",
+          "route": "/categories/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/categories/(?P<id>\\d+)\""
+        },
+        {
+          "method": "PATCH",
+          "route": "/categories/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest PATCH \"/categories/(?P<id>\\d+)\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/categories/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/categories/(?P<id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/tags",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/tags\""
+        },
+        {
+          "method": "GET",
+          "route": "/leaderboards",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/leaderboards\""
+        },
+        {
+          "method": "GET",
+          "route": "/bookmarks",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/bookmarks\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/bookmarks/(?P<post_id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/bookmarks/(?P<post_id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/moderation/queue",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/queue\""
+        },
+        {
+          "method": "POST",
+          "route": "/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/approve/(?P<type>post|reply)/(?P<id>\\d+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/spam/(?P<type>post|reply)/(?P<id>\\d+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/trash/(?P<type>post|reply)/(?P<id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/flags",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/flags\""
+        },
+        {
+          "method": "GET",
+          "route": "/moderation/flags",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/flags\""
+        },
+        {
+          "method": "POST",
+          "route": "/moderation/bulk",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/bulk\""
+        },
+        {
+          "method": "GET",
+          "route": "/posts/(?P<id>\\d+)/flags",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/posts/(?P<id>\\d+)/flags\""
+        },
+        {
+          "method": "GET",
+          "route": "/moderation/ban",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/moderation/ban\""
+        },
+        {
+          "method": "POST",
+          "route": "/moderation/ban",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/moderation/ban\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/moderation/ban/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/moderation/ban/(?P<id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/spaces/(?P<id>\\d+)/moderation/flags",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/moderation/flags\""
+        },
+        {
+          "method": "POST",
+          "route": "/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/moderation/flags/(?P<flag_id>\\d+)/resolve\""
+        },
+        {
+          "method": "POST",
+          "route": "/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/moderation/(?P<action>approve|spam|trash)/(?P<type>post|reply)/(?P<obj_id>\\d+)\""
+        },
+        {
+          "method": "GET",
+          "route": "/updates",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/updates\""
+        },
+        {
+          "method": "GET",
+          "route": "/oembed",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/oembed\""
+        },
+        {
+          "method": "POST",
+          "route": "/media",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/media\""
+        },
+        {
+          "method": "POST",
+          "route": "/auth/login",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/login\""
+        },
+        {
+          "method": "POST",
+          "route": "/auth/register",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/register\""
+        },
+        {
+          "method": "POST",
+          "route": "/auth/lost-password",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/lost-password\""
+        },
+        {
+          "method": "GET",
+          "route": "/auth/verify-email",
+          "stub_command": "bin/qa-stub-gen.php rest GET \"/auth/verify-email\""
+        },
+        {
+          "method": "POST",
+          "route": "/auth/resend-verification",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/auth/resend-verification\""
+        },
+        {
+          "method": "POST",
+          "route": "/admin/recount",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/admin/recount\""
+        },
+        {
+          "method": "POST",
+          "route": "/admin/users/trust-level",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/admin/users/trust-level\""
+        },
+        {
+          "method": "DELETE",
+          "route": "/notifications/(?P<id>\\d+)",
+          "stub_command": "bin/qa-stub-gen.php rest DELETE \"/notifications/(?P<id>\\d+)\""
+        },
+        {
+          "method": "POST",
+          "route": "/notifications/bulk",
+          "stub_command": "bin/qa-stub-gen.php rest POST \"/notifications/bulk\""
+        }
+      ]
     },
-    "summary": {
-        "categories_checked": 5,
-        "items_total": 157,
-        "items_covered": 46,
-        "items_uncovered": 111,
-        "items_skipped": 137,
-        "coverage_percent": 29.300000000000001
+    "ajax": {
+      "total": 43,
+      "covered": 3,
+      "uncovered": 40,
+      "skipped": 0,
+      "covered_items": [
+        {
+          "action": "jetonomy_generate_invite"
+        },
+        {
+          "action": "jetonomy_list_invites"
+        },
+        {
+          "action": "jetonomy_revoke_invite"
+        }
+      ],
+      "uncovered_items": [
+        {
+          "action": "jetonomy_create_category",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_category"
+        },
+        {
+          "action": "jetonomy_update_category",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_category"
+        },
+        {
+          "action": "jetonomy_delete_category",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_category"
+        },
+        {
+          "action": "jetonomy_reorder_categories",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_reorder_categories"
+        },
+        {
+          "action": "jetonomy_create_tag",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_tag"
+        },
+        {
+          "action": "jetonomy_update_tag",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_tag"
+        },
+        {
+          "action": "jetonomy_delete_tag",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_tag"
+        },
+        {
+          "action": "jetonomy_bulk_delete_tags",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_delete_tags"
+        },
+        {
+          "action": "jetonomy_create_space",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_create_space"
+        },
+        {
+          "action": "jetonomy_update_space",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_space"
+        },
+        {
+          "action": "jetonomy_delete_space",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_space"
+        },
+        {
+          "action": "jetonomy_add_space_member",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_space_member"
+        },
+        {
+          "action": "jetonomy_remove_space_member",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_remove_space_member"
+        },
+        {
+          "action": "jetonomy_change_member_role",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_member_role"
+        },
+        {
+          "action": "jetonomy_add_access_rule",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_add_access_rule"
+        },
+        {
+          "action": "jetonomy_delete_access_rule",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_access_rule"
+        },
+        {
+          "action": "jetonomy_sync_access_rule",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_sync_access_rule"
+        },
+        {
+          "action": "jetonomy_approve_content",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_content"
+        },
+        {
+          "action": "jetonomy_spam_content",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_spam_content"
+        },
+        {
+          "action": "jetonomy_trash_content",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_trash_content"
+        },
+        {
+          "action": "jetonomy_resolve_flag",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_resolve_flag"
+        },
+        {
+          "action": "jetonomy_bulk_content_action",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_bulk_content_action"
+        },
+        {
+          "action": "jetonomy_ban_user",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_ban_user"
+        },
+        {
+          "action": "jetonomy_unban_user",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_unban_user"
+        },
+        {
+          "action": "jetonomy_change_trust_level",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_change_trust_level"
+        },
+        {
+          "action": "jetonomy_search_users",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_search_users"
+        },
+        {
+          "action": "jetonomy_import_batch",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_batch"
+        },
+        {
+          "action": "jetonomy_test_email",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_test_email"
+        },
+        {
+          "action": "jetonomy_email_preview",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_email_preview"
+        },
+        {
+          "action": "jetonomy_email_reset",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_email_reset"
+        },
+        {
+          "action": "jetonomy_flush_rules",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_flush_rules"
+        },
+        {
+          "action": "jetonomy_update_post",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_post"
+        },
+        {
+          "action": "jetonomy_delete_post",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_post"
+        },
+        {
+          "action": "jetonomy_update_reply",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_reply"
+        },
+        {
+          "action": "jetonomy_delete_reply",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_reply"
+        },
+        {
+          "action": "jetonomy_approve_join_request",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_join_request"
+        },
+        {
+          "action": "jetonomy_deny_join_request",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_deny_join_request"
+        },
+        {
+          "action": "jetonomy_setup_save",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_save"
+        },
+        {
+          "action": "jetonomy_setup_create_sample",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_setup_create_sample"
+        },
+        {
+          "action": "jetonomy_cleanup_sample_data",
+          "stub_command": "bin/qa-stub-gen.php ajax jetonomy_cleanup_sample_data"
+        }
+      ]
     },
-    "drift": {
-        "previous_uncovered": 114,
-        "current_uncovered": 111,
-        "delta": -3
+    "hooks_fired": {
+      "total": 6,
+      "covered": 2,
+      "uncovered": 4,
+      "skipped": 139,
+      "covered_items": [
+        {
+          "name": "jetonomy_post_publish_transition",
+          "consumer_count": 1
+        },
+        {
+          "name": "jetonomy_reply_publish_transition",
+          "consumer_count": 1
+        }
+      ],
+      "uncovered_items": [
+        {
+          "name": "jetonomy_user_left_space",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook jetonomy_user_left_space"
+        },
+        {
+          "name": "jetonomy_leaderboard_items",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook jetonomy_leaderboard_items"
+        },
+        {
+          "name": "jetonomy_reputation_points_map",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook jetonomy_reputation_points_map"
+        },
+        {
+          "name": "jetonomy_reputation_pre_change",
+          "consumer_count": 1,
+          "stub_command": "bin/qa-stub-gen.php hook jetonomy_reputation_pre_change"
+        }
+      ],
+      "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
+    },
+    "cron": {
+      "total": 6,
+      "covered": 0,
+      "uncovered": 6,
+      "skipped": 0,
+      "covered_items": [],
+      "uncovered_items": [
+        {
+          "hook": "jetonomy_trust_evaluation",
+          "stub_command": "bin/qa-stub-gen.php cron jetonomy_trust_evaluation"
+        },
+        {
+          "hook": "jetonomy_cleanup_expired",
+          "stub_command": "bin/qa-stub-gen.php cron jetonomy_cleanup_expired"
+        },
+        {
+          "hook": "jetonomy_prune_activity",
+          "stub_command": "bin/qa-stub-gen.php cron jetonomy_prune_activity"
+        },
+        {
+          "hook": "jetonomy_cleanup_notifications",
+          "stub_command": "bin/qa-stub-gen.php cron jetonomy_cleanup_notifications"
+        },
+        {
+          "hook": "jetonomy_publish_scheduled",
+          "stub_command": "bin/qa-stub-gen.php cron jetonomy_publish_scheduled"
+        },
+        {
+          "hook": "jetonomy_verification_reminder",
+          "stub_command": "bin/qa-stub-gen.php cron jetonomy_verification_reminder"
+        }
+      ]
+    },
+    "wp_cli": {
+      "total": 14,
+      "covered": 5,
+      "uncovered": 9,
+      "skipped": 0,
+      "covered_items": [
+        {
+          "command": "jetonomy space"
+        },
+        {
+          "command": "jetonomy user"
+        },
+        {
+          "command": "jetonomy member"
+        },
+        {
+          "command": "jetonomy notification"
+        },
+        {
+          "command": "jetonomy config"
+        }
+      ],
+      "uncovered_items": [
+        {
+          "command": "jetonomy category",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy category"
+        },
+        {
+          "command": "jetonomy post",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy post"
+        },
+        {
+          "command": "jetonomy reply",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy reply"
+        },
+        {
+          "command": "jetonomy tag",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy tag"
+        },
+        {
+          "command": "jetonomy vote",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy vote"
+        },
+        {
+          "command": "jetonomy flag",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy flag"
+        },
+        {
+          "command": "jetonomy mod",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy mod"
+        },
+        {
+          "command": "jetonomy scenario",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy scenario"
+        },
+        {
+          "command": "jetonomy qa-actions",
+          "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy qa-actions"
+        }
+      ]
     }
+  },
+  "summary": {
+    "categories_checked": 5,
+    "items_total": 157,
+    "items_covered": 43,
+    "items_uncovered": 114,
+    "items_skipped": 139,
+    "coverage_percent": 27.4
+  },
+  "drift": {
+    "previous_uncovered": 114,
+    "current_uncovered": 114,
+    "delta": 0
+  }
 }
