@@ -4,7 +4,7 @@
  *
  * A single declarative, filterable catalog of the Wbcom plugins Jetonomy pairs
  * with (WB Gamification, WPMediaVerse, Learnomy, …). Each entry is DATA, not
- * code — Pro and third parties extend the list via the `jetonomy_companions`
+ * code - Pro and third parties extend the list via the `jetonomy_companions`
  * filter. Every UI + integration decision keys off `status()` / `is_active()`
  * (a runtime capability probe), never a hardcoded plugin path, so "works
  * standalone" and "no duplication" both hold: capability present -> delegate;
@@ -59,7 +59,7 @@ final class Companion_Registry {
 				),
 				'wpmediaverse'    => array(
 					'label'     => __( 'MediaVerse', 'jetonomy' ),
-					'why'       => __( 'A social media layer — photo and video feeds alongside your community discussions.', 'jetonomy' ),
+					'why'       => __( 'A social media layer - photo and video feeds alongside your community discussions.', 'jetonomy' ),
 					'detect'    => static fn() => defined( 'MVS_VERSION' ) || function_exists( 'mvs' ),
 					'free'      => array(
 						'item_id'  => 1660826,
@@ -71,7 +71,7 @@ final class Companion_Registry {
 				),
 				'buddynext'       => array(
 					'label'     => __( 'BuddyNext', 'jetonomy' ),
-					'why'       => __( 'Community engine — profiles, activity feeds, and member spaces.', 'jetonomy' ),
+					'why'       => __( 'Community engine - profiles, activity feeds, and member spaces.', 'jetonomy' ),
 					'detect'    => static fn() => defined( 'BUDDYNEXT_VERSION' ),
 					'free'      => array(
 						'item_id'  => 1664401,
