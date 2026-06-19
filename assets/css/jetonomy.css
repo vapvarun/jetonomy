@@ -341,12 +341,18 @@
 
   /* ── Space cover image ── */
   .jt-space-cover {
-    height: 200px;
+    height: 160px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: var(--jt-radius, 6px);
-    margin-bottom: 16px;
+    border-radius: var(--jt-radius-lg) var(--jt-radius-lg) 0 0;
+    margin-bottom: 0;
+  }
+  /* Tonal cover fallback — a space with no cover image still gets a branded
+     banner (matches BuddyNext's gradient space cover), so the header reads as a
+     premium surface instead of a bare text block. */
+  .jt-space-cover--tonal {
+    background-image: linear-gradient(135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface)));
   }
   @media (max-width: 640px) {
   .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
@@ -355,11 +361,12 @@
   }
 
   /* ── Space header ── */
-  .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  /* Space header icon — Lucide SVG container. Lands as a 40px accent
-     square so the icon reads at the same weight emoji used to. */
-  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--jt-accent); flex-shrink: 0; }
-  .jt-space-emoji svg { width: 32px; height: 32px; }
+  .jt-space-head { display: flex; align-items: flex-end; gap: 16px; padding: 0 4px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
+  /* Space header icon — now a surface avatar tile that overlaps the cover
+     (BuddyNext space-avatar pattern): white surface, ring, soft shadow, pulled
+     up over the cover's lower edge so the header reads as one composed unit. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin-top: -40px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 4px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; position: relative; z-index: 1; }
+  .jt-space-emoji svg { width: 34px; height: 34px; }
   .jt-space-emoji.dashicons { font-size: 32px; width: auto; height: auto; }
   .jt-space-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
@@ -794,7 +801,8 @@
     .jt-two-col > .jt-sidebar,
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .jt-space-head { flex-direction: column; text-align: center; }
+    .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
+    .jt-space-emoji { margin-top: -52px; }
     .jt-space-nums { margin-left: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
