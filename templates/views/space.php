@@ -188,18 +188,21 @@ $crumbs[] = [
 <div class="jt-two-col">
 		<main>
 			<?php if ( ! empty( $space->cover_image ) ) : ?>
-			<div class="jt-space-cover" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')"></div>
+			<div class="jt-space-cover jt-space-cover--image" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')">
 		<?php else : ?>
-			<div class="jt-space-cover jt-space-cover--tonal" aria-hidden="true"></div>
+			<div class="jt-space-cover jt-space-cover--tonal">
 		<?php endif; ?>
+			<div class="jt-space-cover__identity">
+				<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
+				<h1 class="jt-space-cover__title"><?php echo esc_html( $space->title ); ?></h1>
+			</div>
+		</div>
 		<?php
 		$_jt_can_edit_space = is_user_logged_in()
 			&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $_jt_user_id, (int) $space->id );
 		?>
 		<div class="jt-space-head">
-				<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
-				<div>
-						<h1><?php echo esc_html( $space->title ); ?></h1>
+				<div class="jt-space-head__meta">
 					<?php if ( ! empty( $space->description ) ) : ?>
 						<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
 					<?php endif; ?>
