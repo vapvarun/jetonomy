@@ -280,6 +280,7 @@ Instant in-place navigation across the community, built on the WordPress Interac
 * New      - Tag pages have a "Start a discussion tagged X" button that opens the composer with the tag pre-filled.
 * New      - Conversations admin page (with Pro): paginated messaging oversight in wp-admin with thread detail and a compliance purge action.
 * New      - Learnomy LMS access rules: spaces can be gated by Learnomy course level through the access-rule engine.
+* New      - Space moderators can approve or deny join requests from the community front-end (on the space Members page), not only in wp-admin; approving admits the member and the requester is notified by email.
 * Improve  - Posting a reply now adds it to the thread in place instead of reloading the page.
 * Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
 * Improve  - Logged-out visitors clicking the vote control on a post are now taken to log in (with a return link) instead of nothing happening.
@@ -287,6 +288,7 @@ Instant in-place navigation across the community, built on the WordPress Interac
 * Improve  - Resolving a flag as valid through the REST API now applies the full contract on every surface: content trashed, related flags cleared, reporter rewarded, webhook event fired.
 * Improve  - Settings warns when your CAPTCHA provider and keys are mismatched.
 * Improve  - Private spaces are now discoverable in the directory and search, shown with a Join or Request-to-join action, while their posts stay members-only; only hidden spaces are kept out of listings.
+* Improve  - The front-end edit-space form now exposes the "Require moderator approval for new posts" setting, so space owners can toggle it without opening wp-admin.
 * Fix      - Members can now pause all email notifications from Edit Profile (and admins per user); the verification reminder honoured this preference but nothing could set it.
 * Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
 * Fix      - Long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".

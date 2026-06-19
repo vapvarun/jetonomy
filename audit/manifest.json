@@ -71,6 +71,45 @@
 				"audit_notes": "Public read so anonymous visitors see the same 'Managed by' sidebar as members. 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode."
 			},
 			{
+				"route": "/spaces/(?P<id>\\d+)/join-requests",
+				"methods": [
+					"GET"
+				],
+				"handler": "Spaces_Controller::get_join_requests",
+				"permission": "Visibility::rest_check",
+				"purpose": "List pending join requests for a space (space moderators/admins)",
+				"auth": "login_required",
+				"capability": "space_privileged",
+				"ownership_check": "is_space_privileged",
+				"audit_notes": "Front-end twin of the wp-admin Join Requests tab; is_space_privileged checked inside the handler."
+			},
+			{
+				"route": "/spaces/(?P<id>\\d+)/join-requests/(?P<request_id>\\d+)/approve",
+				"methods": [
+					"POST"
+				],
+				"handler": "Spaces_Controller::approve_join_request",
+				"permission": "REST_Auth::auth_mutation('read')",
+				"purpose": "Approve a pending join request and admit the member",
+				"auth": "login_required",
+				"capability": "space_privileged",
+				"ownership_check": "is_space_privileged",
+				"audit_notes": "Reuses JoinRequest::approve + SpaceMember::add; fires jetonomy_join_request_approved (Notifier in-app + email)."
+			},
+			{
+				"route": "/spaces/(?P<id>\\d+)/join-requests/(?P<request_id>\\d+)/deny",
+				"methods": [
+					"POST"
+				],
+				"handler": "Spaces_Controller::deny_join_request",
+				"permission": "REST_Auth::auth_mutation('read')",
+				"purpose": "Deny a pending join request",
+				"auth": "login_required",
+				"capability": "space_privileged",
+				"ownership_check": "is_space_privileged",
+				"audit_notes": "Reuses JoinRequest::deny; fires jetonomy_join_request_denied (Notifier in-app + email)."
+			},
+			{
 				"route": "/spaces/(?P<id>\\d+)/members/(?P<user_id>\\d+)",
 				"methods": [
 					"PATCH",

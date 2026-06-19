@@ -58,6 +58,19 @@ $category       = $space->category_id ? \Jetonomy\Models\Category::find( (int) $
 $base           = \Jetonomy\base_url();
 $viewer_id      = get_current_user_id();
 $viewer_is_sadm = \Jetonomy\Permissions\Permission_Engine::is_space_admin( $viewer_id, (int) $space->id );
+$viewer_is_priv = \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $viewer_id, (int) $space->id );
+
+// Pending join requests, surfaced to space moderators/admins on the front-end
+// (mirrors the wp-admin Join Requests tab). Capped to keep the panel and its
+// COUNT cheap on approval-gated spaces with a large backlog; the wp-admin tab
+// remains the full-history surface.
+$jt_pending_requests = [];
+$jt_pending_cap      = (int) apply_filters( 'jetonomy_space_pending_requests_shown', 50 );
+if ( $viewer_is_priv ) {
+	$jt_pending_all      = \Jetonomy\Models\JoinRequest::list_pending_for_space( (int) $space->id );
+	$jt_pending_total    = count( $jt_pending_all );
+	$jt_pending_requests = array_slice( $jt_pending_all, 0, $jt_pending_cap );
+}
 
 $crumbs = [];
 if ( $category ) {
@@ -100,6 +113,58 @@ $role_labels = [
 					</p>
 				</div>
 			</div>
+
+			<?php if ( $viewer_is_priv && ! empty( $jt_pending_requests ) ) : ?>
+				<section class="jt-card jt-pending-requests" aria-label="<?php esc_attr_e( 'Pending join requests', 'jetonomy' ); ?>">
+					<h2 class="jt-pending-requests-title">
+						<?php esc_html_e( 'Pending join requests', 'jetonomy' ); ?>
+						<span class="jt-badge-accent"><?php echo esc_html( number_format_i18n( (int) $jt_pending_total ) ); ?></span>
+					</h2>
+					<div class="jt-pending-list" data-jt-pending-list>
+						<?php foreach ( $jt_pending_requests as $jt_req ) : ?>
+							<?php
+							$jt_req_uid  = (int) $jt_req->user_id;
+							$jt_req_user = get_userdata( $jt_req_uid );
+							$jt_req_prof = \Jetonomy\Models\UserProfile::find_by_user( $jt_req_uid );
+							$jt_req_name = ( $jt_req_prof && ! empty( $jt_req_prof->display_name ) )
+								? $jt_req_prof->display_name
+								: ( $jt_req_user ? $jt_req_user->display_name : __( 'Unknown member', 'jetonomy' ) );
+							?>
+							<div class="jt-member-item jt-pending-item" data-jt-pending-row data-request-id="<?php echo absint( $jt_req->id ); ?>">
+								<?php echo \Jetonomy\get_user_link( $jt_req_uid, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+								<div class="jt-flex-1">
+									<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $jt_req_uid ) ); ?>" class="jt-member-name"><?php echo esc_html( $jt_req_name ); ?></a>
+									<?php if ( ! empty( $jt_req->message ) ) : ?>
+										<div class="jt-pending-message"><?php echo esc_html( wp_trim_words( (string) $jt_req->message, 30 ) ); ?></div>
+									<?php endif; ?>
+								</div>
+								<div class="jt-pending-actions">
+									<button type="button" class="jt-btn jt-btn-sm jt-btn-primary"
+										data-wp-on--click="actions.approveJoinRequest"
+										data-space-id="<?php echo absint( $space->id ); ?>"
+										data-request-id="<?php echo absint( $jt_req->id ); ?>">
+										<?php esc_html_e( 'Approve', 'jetonomy' ); ?>
+									</button>
+									<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost"
+										data-wp-on--click="actions.denyJoinRequest"
+										data-space-id="<?php echo absint( $space->id ); ?>"
+										data-request-id="<?php echo absint( $jt_req->id ); ?>">
+										<?php esc_html_e( 'Deny', 'jetonomy' ); ?>
+									</button>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<?php if ( $jt_pending_total > count( $jt_pending_requests ) ) : ?>
+						<p class="jt-form-help">
+							<?php
+							/* translators: 1: shown count, 2: total count */
+							echo esc_html( sprintf( __( 'Showing %1$d of %2$d pending requests. Manage the rest from the admin Join Requests tab.', 'jetonomy' ), count( $jt_pending_requests ), (int) $jt_pending_total ) );
+							?>
+						</p>
+					<?php endif; ?>
+				</section>
+			<?php endif; ?>
 
 			<?php if ( empty( $members ) ) : ?>
 				<?php

@@ -688,6 +688,50 @@ class REST_Tests {
 		} else {
 			$this->check( 'E32: private feed gate (skipped — no private space)', true );
 		}
+
+		// 33. Join-request moderation (1.5.0) — list + approve + deny as a space
+		// admin. Front-end twin of the wp-admin Join Requests tab.
+		// @covers GET /spaces/(?P<id>\d+)/join-requests
+		// @covers POST /spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/approve
+		// @covers POST /spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/deny
+		if ( $this->test_user_id ) {
+			$space_id = (int) $this->space->id;
+			global $wpdb;
+
+			// Approve path: seed a pending request, list it, approve it, assert
+			// the requester becomes a member.
+			\Jetonomy\Models\SpaceMember::remove( $space_id, $this->test_user_id );
+			$req_id = \Jetonomy\Models\JoinRequest::create_request( $space_id, $this->test_user_id, 'QA approve' );
+
+			$r    = $this->rest( 'GET', "/spaces/{$space_id}/join-requests", [], $this->admin_id );
+			$data = $r->get_data();
+			$this->check(
+				'E33: GET /spaces/{id}/join-requests → 200 list',
+				200 === $r->get_status() && isset( $data['data'] ) && is_array( $data['data'] ),
+				"HTTP {$r->get_status()}"
+			);
+
+			$r        = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req_id}/approve", [], $this->admin_id );
+			$approved = 200 === $r->get_status() && \Jetonomy\Models\SpaceMember::is_member( $space_id, $this->test_user_id );
+			$this->check( 'E33: POST join-requests/{id}/approve → 200 + member added', $approved, "HTTP {$r->get_status()}" );
+			if ( $approved ) {
+				$this->cleanup[] = [ 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id ];
+			}
+
+			// Deny path: seed a second request, deny it, assert no membership granted.
+			\Jetonomy\Models\SpaceMember::remove( $space_id, $this->test_user_id );
+			$req2_id = \Jetonomy\Models\JoinRequest::create_request( $space_id, $this->test_user_id, 'QA deny' );
+			$r       = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req2_id}/deny", [], $this->admin_id );
+			$this->check(
+				'E33: POST join-requests/{id}/deny → 200, no membership',
+				200 === $r->get_status() && ! \Jetonomy\Models\SpaceMember::is_member( $space_id, $this->test_user_id ),
+				"HTTP {$r->get_status()}"
+			);
+
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}jt_join_requests WHERE id IN (%d, %d)", $req_id, $req2_id ) );
+		} else {
+			$this->check( 'E33: join-request moderation (skipped — no test user)', true );
+		}
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────
