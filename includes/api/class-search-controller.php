@@ -233,6 +233,16 @@ class Search_Controller extends Base_Controller {
 			$params  = array_merge( $params, $vis_params );
 		}
 
+		// Space-level content gate: never surface a post whose parent space the
+		// viewer cannot read (private/hidden unless member). Composes with the
+		// per-post is_private guard above. Single source of truth:
+		// Space::content_visibility_sql (mirrors Permission_Engine::can read).
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$where[] = $space_vis_sql;
+			$params  = array_merge( $params, $space_vis_params );
+		}
+
 		if ( $space_id ) {
 			$where[]  = 'p.space_id = %d';
 			$params[] = $space_id;
@@ -299,14 +309,14 @@ class Search_Controller extends Base_Controller {
 			$all_params      = array_merge( $select_params, [ $tag_slug ], $params );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
 				...$all_params
 			);
 		} else {
 			$all_params = array_merge( $select_params, $params );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p LEFT JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
 				...$all_params
 			);
 		}
@@ -328,6 +338,7 @@ class Search_Controller extends Base_Controller {
 	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): array {
 		$replies_table = table( 'replies' );
 		$posts_table   = table( 'posts' );
+		$spaces_table  = table( 'spaces' );
 
 		// Same AND-required prefix boolean as search_posts so the reply
 		// search widget and the Abilities API adapter rank replies by
@@ -343,6 +354,13 @@ class Search_Controller extends Base_Controller {
 		if ( '' !== $r_vis_sql ) {
 			$r_where[] = $r_vis_sql;
 			$r_params  = array_merge( $r_params, $r_vis_params );
+		}
+
+		// Space-level content gate (parent post's space). See search_posts().
+		[ $r_space_vis_sql, $r_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		if ( '1=1' !== $r_space_vis_sql ) {
+			$r_where[] = $r_space_vis_sql;
+			$r_params  = array_merge( $r_params, $r_space_vis_params );
 		}
 
 		if ( $date_from ) {
@@ -371,7 +389,7 @@ class Search_Controller extends Base_Controller {
 		$all_params   = array_merge( $score_params, $r_params );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
-			"SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql} ORDER BY match_score DESC, r.created_at DESC LIMIT 20",
+			"SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY match_score DESC, r.created_at DESC LIMIT 20",
 			...$all_params
 		);
 
@@ -389,12 +407,18 @@ class Search_Controller extends Base_Controller {
 		$spaces_table = table( 'spaces' );
 		$like         = '%' . $wpdb->esc_like( $q ) . '%';
 
+		// Listing gate: space SEARCH mirrors the directory — public + discoverable
+		// private spaces (content stays gated), hidden withheld from non-members.
+		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::listing_visibility_sql( get_current_user_id() );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public' LIMIT 20",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND {$vis_sql} LIMIT 20",
 				$like,
-				$like
+				$like,
+				...$vis_params
 			)
 		) ?: [];
 	}
@@ -434,8 +458,9 @@ class Search_Controller extends Base_Controller {
 	 * @return int
 	 */
 	private function count_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null ): int {
-		$posts_table = table( 'posts' );
-		$boolean_q   = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
+		$posts_table  = table( 'posts' );
+		$spaces_table = table( 'spaces' );
+		$boolean_q    = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
 		$where  = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
 		$params = [ $boolean_q ];
@@ -445,6 +470,14 @@ class Search_Controller extends Base_Controller {
 		if ( '' !== $vis_sql ) {
 			$where[] = $vis_sql;
 			$params  = array_merge( $params, $vis_params );
+		}
+
+		// Space-level content gate — mirror search_posts() so the total never
+		// counts posts in spaces the viewer cannot read.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$where[] = $space_vis_sql;
+			$params  = array_merge( $params, $space_vis_params );
 		}
 
 		if ( $space_id ) {
@@ -474,7 +507,7 @@ class Search_Controller extends Base_Controller {
 			return (int) $wpdb->get_var(
 				$wpdb->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT COUNT(*) FROM {$posts_table} p INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql}",
+					"SELECT COUNT(*) FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql}",
 					...$all_params
 				)
 			);
@@ -484,7 +517,7 @@ class Search_Controller extends Base_Controller {
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$posts_table} p WHERE {$where_sql}",
+				"SELECT COUNT(*) FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql}",
 				...$params
 			)
 		);
@@ -497,6 +530,7 @@ class Search_Controller extends Base_Controller {
 	private function count_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): int {
 		$replies_table = table( 'replies' );
 		$posts_table   = table( 'posts' );
+		$spaces_table  = table( 'spaces' );
 		$boolean_q     = \Jetonomy\Search\Fulltext_Search::build_boolean_query( $q );
 
 		$r_where  = [ 'MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE)', "r.status = 'publish'", "p.status = 'publish'" ];
@@ -507,6 +541,14 @@ class Search_Controller extends Base_Controller {
 		if ( '' !== $r_vis_sql ) {
 			$r_where[] = $r_vis_sql;
 			$r_params  = array_merge( $r_params, $r_vis_params );
+		}
+
+		// Space-level content gate — mirror search_replies() so the total never
+		// counts replies on posts in spaces the viewer cannot read.
+		[ $r_space_vis_sql, $r_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		if ( '1=1' !== $r_space_vis_sql ) {
+			$r_where[] = $r_space_vis_sql;
+			$r_params  = array_merge( $r_params, $r_space_vis_params );
 		}
 
 		if ( $date_from ) {
@@ -532,7 +574,7 @@ class Search_Controller extends Base_Controller {
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id WHERE {$where_sql}",
+				"SELECT COUNT(*) FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql}",
 				...$r_params
 			)
 		);
@@ -545,12 +587,17 @@ class Search_Controller extends Base_Controller {
 		$spaces_table = table( 'spaces' );
 		$like         = '%' . $wpdb->esc_like( $q ) . '%';
 
+		// Listing gate — mirror search_spaces() so the total matches the rows.
+		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::listing_visibility_sql( get_current_user_id() );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public'",
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND {$vis_sql}",
 				$like,
-				$like
+				$like,
+				...$vis_params
 			)
 		);
 	}

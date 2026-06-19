@@ -169,6 +169,14 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			</div>
 
 			<div class="jt-form-row">
+				<label class="jt-checkbox-label">
+					<input type="checkbox" id="jt-se-require-approval" value="1" <?php checked( ! empty( $space_settings['require_approval'] ) ); ?>>
+					<?php esc_html_e( 'New posts require moderator approval before publishing', 'jetonomy' ); ?>
+				</label>
+				<p class="jt-form-help"><?php esc_html_e( 'Hold new posts in the moderation queue until a moderator approves them.', 'jetonomy' ); ?></p>
+			</div>
+
+			<div class="jt-form-row">
 				<label for="jt-se-category"><?php esc_html_e( 'Category', 'jetonomy' ); ?></label>
 				<select id="jt-se-category" name="category_id" class="jt-input">
 					<option value="0"><?php esc_html_e( 'No category', 'jetonomy' ); ?></option>

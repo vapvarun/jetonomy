@@ -130,6 +130,20 @@ class Shortcodes {
 			$args[] = absint( $atts['space_id'] );
 		}
 
+		// Space-visibility + per-post is_private gate so the recent-posts
+		// shortcode (and the forum-feed / trending blocks + recent-posts widget
+		// that delegate to it) never leak private/hidden-space posts.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$where .= ' AND ' . $space_vis_sql;
+			$args   = array_merge( $args, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$where .= ' AND ' . $priv_sql;
+			$args   = array_merge( $args, $priv_params );
+		}
+
 		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC';
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

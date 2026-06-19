@@ -133,6 +133,41 @@ class Spaces_Controller extends Base_Controller {
 			]
 		);
 
+		// Join-request moderation — list pending (privileged read) plus
+		// approve / deny actions. Mirrors the wp-admin Join Requests tab so a
+		// space moderator who is NOT a WP admin can manage requests from the
+		// community front-end. Approve/deny reuse the same JoinRequest model +
+		// SpaceMember::add path as the admin AJAX handler, so the
+		// jetonomy_join_request_approved/denied notifications (and requester
+		// email) fire identically on every surface.
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/join-requests',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_join_requests' ],
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+			]
+		);
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/approve',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'approve_join_request' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+			]
+		);
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/deny',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'deny_join_request' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+			]
+		);
+
 		// Invite link routes.
 		register_rest_route(
 			$ns,
@@ -781,6 +816,132 @@ class Spaces_Controller extends Base_Controller {
 			],
 			200
 		);
+	}
+
+	/**
+	 * GET /spaces/{id}/join-requests — Pending join requests (space mods only).
+	 *
+	 * Front-end twin of the wp-admin Join Requests tab. Gated to space
+	 * moderators/admins (not just WP admins) so space owners can triage from
+	 * the community front-end.
+	 */
+	public function get_join_requests( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id    = absint( $request->get_param( 'id' ) );
+		$space = Space::find( $id );
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
+		}
+		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
+			return $this->permission_error();
+		}
+
+		$items = [];
+		foreach ( JoinRequest::list_pending_for_space( $id ) as $row ) {
+			$uid     = (int) $row->user_id;
+			$user    = get_userdata( $uid );
+			$profile = UserProfile::find_by_user( $uid );
+			$items[] = [
+				'id'           => (int) $row->id,
+				'user_id'      => $uid,
+				'display_name' => ( $profile && ! empty( $profile->display_name ) )
+					? $profile->display_name
+					: ( $user ? $user->display_name : __( 'Unknown member', 'jetonomy' ) ),
+				'avatar_url'   => get_avatar_url( $uid, [ 'size' => 48 ] ),
+				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
+				'message'      => (string) ( $row->message ?? '' ),
+				'created_at'   => (string) $row->created_at,
+			];
+		}
+
+		return new WP_REST_Response(
+			[
+				'data' => $items,
+				'meta' => [ 'total' => count( $items ) ],
+			],
+			200
+		);
+	}
+
+	/**
+	 * POST /spaces/{id}/join-requests/{request_id}/approve — Approve + admit.
+	 */
+	public function approve_join_request( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		[ $space, $jr, $err ] = $this->resolve_join_request( $request );
+		if ( $err ) {
+			return $err;
+		}
+
+		// Mark approved (fires jetonomy_join_request_approved -> Notifier in-app
+		// + email) then admit the requester. Same two-step the admin AJAX
+		// handler and the CLI member journey run.
+		JoinRequest::approve( (int) $jr->id, get_current_user_id() );
+		$added = SpaceMember::add( (int) $space->id, (int) $jr->user_id, 'member' );
+		if ( is_wp_error( $added ) ) {
+			return $added;
+		}
+
+		return new WP_REST_Response(
+			[
+				'status'     => 'approved',
+				'request_id' => (int) $jr->id,
+				'space_id'   => (int) $space->id,
+				'user_id'    => (int) $jr->user_id,
+			],
+			200
+		);
+	}
+
+	/**
+	 * POST /spaces/{id}/join-requests/{request_id}/deny — Deny a pending request.
+	 */
+	public function deny_join_request( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		[ $space, $jr, $err ] = $this->resolve_join_request( $request );
+		if ( $err ) {
+			return $err;
+		}
+
+		JoinRequest::deny( (int) $jr->id, get_current_user_id() );
+
+		return new WP_REST_Response(
+			[
+				'status'     => 'denied',
+				'request_id' => (int) $jr->id,
+				'space_id'   => (int) $space->id,
+				'user_id'    => (int) $jr->user_id,
+			],
+			200
+		);
+	}
+
+	/**
+	 * Shared guard for approve/deny — resolve + authorize a pending request.
+	 *
+	 * @param WP_REST_Request $request Request carrying id + request_id.
+	 * @return array{0:?object,1:?object,2:?WP_Error} [ space, join_request, error ].
+	 */
+	private function resolve_join_request( WP_REST_Request $request ): array {
+		$id         = absint( $request->get_param( 'id' ) );
+		$request_id = absint( $request->get_param( 'request_id' ) );
+		$space      = Space::find( $id );
+		if ( ! $space ) {
+			return [ null, null, $this->not_found( 'Space' ) ];
+		}
+		if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( get_current_user_id(), $id ) ) {
+			return [ null, null, $this->permission_error() ];
+		}
+		$jr = JoinRequest::find( $request_id );
+		if ( ! $jr || (int) $jr->space_id !== $id || 'pending' !== $jr->status ) {
+			return [
+				null,
+				null,
+				new WP_Error(
+					'jetonomy_join_request_not_found',
+					__( 'Join request not found or already processed.', 'jetonomy' ),
+					[ 'status' => 404 ]
+				),
+			];
+		}
+		return [ $space, $jr, null ];
 	}
 
 	/**

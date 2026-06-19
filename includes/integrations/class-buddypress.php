@@ -891,19 +891,38 @@ class BuddyPress {
 		global $wpdb;
 		$base = \Jetonomy\base_url();
 		$p    = $wpdb->prefix;
+
+		// Space-visibility + per-post is_private gate on the PARENT post so a
+		// member's replies in private/hidden spaces (or under private posts)
+		// don't leak to non-member / non-author profile visitors.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+		$gate_sql                             = '';
+		$gate_params                          = array();
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$replies = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT r.id, r.content_plain, r.created_at, r.post_id,
 				        p.title AS post_title, p.slug AS post_slug, p.space_id,
 				        s.slug AS space_slug, s.title AS space_title
 				 FROM {$p}jt_replies r
 				 INNER JOIN {$p}jt_posts p ON p.id = r.post_id
 				 INNER JOIN {$p}jt_spaces s ON s.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish'
+				 WHERE r.author_id = %d AND r.status = 'publish'{$gate_sql}
 				 ORDER BY r.created_at DESC
 				 LIMIT 10",
-				$user_id
+				$user_id,
+				...$gate_params
 			)
 		);
 

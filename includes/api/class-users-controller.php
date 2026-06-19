@@ -403,16 +403,36 @@ class Users_Controller extends Base_Controller {
 		$offset     = (int) $pagination['offset'];
 
 		global $wpdb;
-		$tbl = table( 'posts' );
+		$tbl        = table( 'posts' );
+		$spaces_tbl = table( 'spaces' );
+
+		// Space-visibility + per-post is_private gate so private/hidden-space
+		// posts (and private posts in public spaces) stay hidden from
+		// non-members / non-authors. Cross-space context → $space_id null.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = [];
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE author_id = %d AND status = 'publish' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT p.* FROM {$tbl} p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, [ $limit, $offset ] )
 			)
 		) ?: [];
 
@@ -420,8 +440,11 @@ class Users_Controller extends Base_Controller {
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$tbl} WHERE author_id = %d AND status = 'publish'",
-				$id
+				"SELECT COUNT(*) FROM {$tbl} p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}",
+				$id,
+				...$gate_params
 			)
 		);
 

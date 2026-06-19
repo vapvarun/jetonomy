@@ -85,6 +85,39 @@ class Asgaros_Importer extends Importer {
 		return $this->results();
 	}
 
+	/**
+	 * Map an Asgaros forum's access to a Jetonomy [visibility, join_policy].
+	 *
+	 * Asgaros stores per-forum read access in its usergroups addon tables, NOT
+	 * on the `forum_forums` row, so it cannot be reliably derived here. The
+	 * default is the historical public/open; site owners that ran restricted
+	 * Asgaros forums must remap via the `jetonomy_import_space_visibility`
+	 * filter (which also fires for the wpForo importer). Routing through the
+	 * filter — rather than a hardcoded literal — is what stops the previous
+	 * SILENT downgrade: the access decision is now an explicit, overridable hook.
+	 *
+	 * @param object $forum Source Asgaros forum row.
+	 * @return array{visibility:string,join_policy:string}
+	 */
+	private static function map_access( object $forum ): array {
+		$access = apply_filters(
+			'jetonomy_import_space_visibility',
+			[
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			],
+			'asgaros',
+			$forum
+		);
+
+		// Validate against the schema enums so a stray filter return can never
+		// persist an invalid visibility/join_policy.
+		return [
+			'visibility'  => in_array( $access['visibility'] ?? '', [ 'public', 'private', 'hidden' ], true ) ? $access['visibility'] : 'public',
+			'join_policy' => in_array( $access['join_policy'] ?? '', [ 'open', 'approval', 'invite' ], true ) ? $access['join_policy'] : 'open',
+		];
+	}
+
 	private function import_forums( int $cat_id ): void {
 		global $wpdb;
 		$p = $wpdb->prefix;
@@ -104,6 +137,7 @@ class Asgaros_Importer extends Importer {
 				}
 			}
 
+			$access   = self::map_access( $forum );
 			$space_id = Space::create(
 				[
 					'category_id' => $cat_id,
@@ -113,8 +147,8 @@ class Asgaros_Importer extends Importer {
 					'title'       => $forum->name,
 					'slug'        => sanitize_title( $forum->name ) ?: 'forum-' . $forum->id,
 					'description' => wp_strip_all_tags( $forum->description ?? '' ),
-					'visibility'  => 'public',
-					'join_policy' => 'open',
+					'visibility'  => $access['visibility'],
+					'join_policy' => $access['join_policy'],
 					'sort_order'  => (int) ( $forum->sort ?? 0 ),
 				]
 			);

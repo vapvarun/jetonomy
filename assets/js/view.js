@@ -627,6 +627,33 @@ function notifUpdateBulkbar() {
 
 /** Set the cover-image preview within a form. Shared by the new-space +
  * edit-space cover uploaders (data-jt-cover-* markup is identical on both). */
+// Approve/deny a pending join request from the space-members mod panel.
+// Returns a promise so the Interactivity action can `yield` it. On success
+// the row is removed; when the last row goes, the whole panel is removed.
+function jtModerateJoinRequest( btn, action ) {
+    const spaceId   = btn && btn.getAttribute( 'data-space-id' );
+    const requestId = btn && btn.getAttribute( 'data-request-id' );
+    if ( ! spaceId || ! requestId ) return Promise.resolve();
+    const row = btn.closest( '[data-jt-pending-row]' );
+    if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = true; } );
+    return window.jetonomyRest.restFetch(
+        '/spaces/' + parseInt( spaceId, 10 ) + '/join-requests/' + parseInt( requestId, 10 ) + '/' + action,
+        { method: 'POST', body: {} }
+    ).then( ( res ) => {
+        if ( ! res || ! res.ok ) {
+            if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
+            return;
+        }
+        if ( ! row ) return;
+        const list = row.parentNode;
+        row.remove();
+        if ( list && ! list.querySelector( '[data-jt-pending-row]' ) ) {
+            const section = list.closest( '.jt-pending-requests' );
+            if ( section ) section.remove();
+        }
+    } );
+}
+
 function jtSetCoverPreview( form, url ) {
     const value  = form.querySelector( '[data-jt-cover-value]' );
     const prev   = form.querySelector( '[data-jt-cover-preview]' );
@@ -864,6 +891,23 @@ const { state, actions } = store( 'jetonomy', {
             btn.remove();
         },
 
+        // ── Join requests (space-members mod panel) ──
+        *approveJoinRequest() {
+            yield jtModerateJoinRequest( getElement().ref, 'approve' );
+        },
+        *denyJoinRequest() {
+            const btn  = getElement().ref;
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            if ( 'function' === typeof window.jetonomyConfirm ) {
+                const ok = yield window.jetonomyConfirm(
+                    i18n.denyJoinBody || 'Deny this join request? The member can request again later.',
+                    { title: i18n.denyJoinTitle || 'Deny request', confirmLabel: i18n.denyLabel || 'Deny', danger: true }
+                );
+                if ( ! ok ) return;
+            }
+            yield jtModerateJoinRequest( btn, 'deny' );
+        },
+
         // ── Space cover image (shared by new-space + edit-space forms) ──
         *uploadCover() {
             const input = getElement().ref;
@@ -1000,6 +1044,8 @@ const { state, actions } = store( 'jetonomy', {
                 if ( name ) prefixes.push( { name, color } );
             } );
             settings.prefixes = prefixes;
+            const reqApproval = form.querySelector( '#jt-se-require-approval' );
+            settings.require_approval = reqApproval && reqApproval.checked ? 1 : 0;
             payload.settings = settings;
 
             const res = yield window.jetonomyRest.restFetch( '/spaces/' + form.dataset.jtSpaceId, {

@@ -220,6 +220,23 @@ class Vote extends Model {
 		$posts_tbl  = table( 'posts' );
 		$spaces_tbl = table( 'spaces' );
 
+		// Space-visibility + per-post is_private gate: posts the voter upvoted
+		// that live in a private/hidden space (or are private posts) must not
+		// leak to non-member / non-author viewers of this user's Votes tab.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = array();
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return static::db()->get_results(
 			static::db()->prepare(
@@ -229,12 +246,11 @@ class Vote extends Model {
 				 FROM {$votes_tbl} v
 				 INNER JOIN {$posts_tbl} p ON p.id = v.object_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE v.user_id = %d AND v.object_type = 'post' AND v.value > 0
+				 WHERE v.user_id = %d AND v.object_type = 'post' AND v.value > 0{$gate_sql}
 				 ORDER BY v.created_at DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		) ?: [];
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
