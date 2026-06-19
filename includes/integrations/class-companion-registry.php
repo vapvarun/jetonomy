@@ -58,7 +58,7 @@ final class Companion_Registry {
 					'unlocks'   => __( 'Gamified points and badges across your community.', 'jetonomy' ),
 				),
 				'wpmediaverse'    => array(
-					'label'     => __( 'WPMediaVerse', 'jetonomy' ),
+					'label'     => __( 'MediaVerse', 'jetonomy' ),
 					'why'       => __( 'A social media layer — photo and video feeds alongside your community discussions.', 'jetonomy' ),
 					'detect'    => static fn() => defined( 'MVS_VERSION' ) || function_exists( 'mvs' ),
 					'free'      => array(
@@ -68,6 +68,18 @@ final class Companion_Registry {
 					),
 					'store_url' => 'https://wbcomdesigns.com',
 					'unlocks'   => __( 'Media-rich social posting next to your spaces.', 'jetonomy' ),
+				),
+				'buddynext'       => array(
+					'label'     => __( 'BuddyNext', 'jetonomy' ),
+					'why'       => __( 'Community engine — profiles, activity feeds, and member spaces.', 'jetonomy' ),
+					'detect'    => static fn() => defined( 'BUDDYNEXT_VERSION' ),
+					'free'      => array(
+						'item_id'  => 1664401,
+						'key'      => 'buddynext9a3c7e1d5f2b8a4c6e0d9b7f1a2c8e55',
+						'basename' => 'buddynext/buddynext.php',
+					),
+					'store_url' => 'https://wbcomdesigns.com/downloads/buddynext/',
+					'unlocks'   => __( 'Community feed + member profiles around your spaces.', 'jetonomy' ),
 				),
 				'learnomy'        => array(
 					'label'     => __( 'Learnomy', 'jetonomy' ),
@@ -80,6 +92,30 @@ final class Companion_Registry {
 					),
 					'store_url' => 'https://wbcomdesigns.com',
 					'unlocks'   => __( 'Course-gated spaces via the built-in Learnomy access adapter.', 'jetonomy' ),
+				),
+				'wp-career-board' => array(
+					'label'     => __( 'WP Career Board', 'jetonomy' ),
+					'why'       => __( 'Job listings and applicant management with employer profiles.', 'jetonomy' ),
+					'detect'    => static fn() => defined( 'WCB_VERSION' ) || class_exists( '\\WCB\\Core\\Plugin' ),
+					'free'      => array(
+						'item_id'  => 1659888,
+						'key'      => 'wbcomfree5b8c1e7a9d3f2a4c6e0d1b7f9c2a6e00',
+						'basename' => 'wp-career-board/wp-career-board.php',
+					),
+					'store_url' => 'https://wbcomdesigns.com/downloads/wp-career-board/',
+					'unlocks'   => __( 'Job posts surfaced as discussion topics.', 'jetonomy' ),
+				),
+				'wb-listora'      => array(
+					'label'     => __( 'Listora', 'jetonomy' ),
+					'why'       => __( 'Member-submitted directory listings.', 'jetonomy' ),
+					'detect'    => static fn() => defined( 'WB_LISTORA_VERSION' ),
+					'free'      => array(
+						'item_id'  => 1662779,
+						'key'      => 'wbcomfree8a5d1c7e3f2b9a4c6e0d1b7f9c2a6e55',
+						'basename' => 'wb-listora/wb-listora.php',
+					),
+					'store_url' => 'https://wbcomdesigns.com/downloads/listora/',
+					'unlocks'   => __( 'Member listings shared into your community.', 'jetonomy' ),
 				),
 			)
 		);
