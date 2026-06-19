@@ -341,34 +341,66 @@
 
   /* ── Space cover image ── */
   .jt-space-cover {
-    height: 160px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 180px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border-radius: var(--jt-radius-lg) var(--jt-radius-lg) 0 0;
+    overflow: hidden;
     margin-bottom: 0;
   }
   /* Tonal cover fallback — a space with no cover image still gets a branded
-     banner (matches BuddyNext's gradient space cover), so the header reads as a
-     premium surface instead of a bare text block. */
+     banner (matches BuddyNext's gradient space cover). */
   .jt-space-cover--tonal {
     background-image: linear-gradient(135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface)));
   }
+  /* Scrim — only on photo covers, so the overlaid avatar + title stay legible. */
+  .jt-space-cover--image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 38%, transparent 70%);
+    pointer-events: none;
+  }
+  /* Identity overlaid on the cover's lower edge: avatar tile + title — the
+     BuddyNext space-header pattern (identity lives ON the cover, not below it). */
+  .jt-space-cover__identity {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: var(--jt-space-4);
+  }
+  .jt-space-cover__title {
+    margin: 0;
+    font-family: var(--jt-font-heading);
+    font-weight: 700;
+    font-size: var(--jt-text-2xl);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--jt-text);
+  }
+  .jt-space-cover--image .jt-space-cover__title { color: #fff; }
+  /* Space avatar tile — surface fill, ring, soft shadow; reads on tonal + photo. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 3px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; }
+  .jt-space-emoji svg { width: 32px; height: 32px; }
+  .jt-space-emoji.dashicons { font-size: 30px; width: auto; height: auto; }
+
   @media (max-width: 640px) {
   .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
 
-    .jt-space-cover { height: 120px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
+    .jt-space-cover { min-height: 150px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
+    .jt-space-cover__identity { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
   }
 
-  /* ── Space header ── */
-  .jt-space-head { display: flex; align-items: flex-end; gap: 16px; padding: 0 4px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  /* Space header icon — now a surface avatar tile that overlaps the cover
-     (BuddyNext space-avatar pattern): white surface, ring, soft shadow, pulled
-     up over the cover's lower edge so the header reads as one composed unit. */
-  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin-top: -40px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 4px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; position: relative; z-index: 1; }
-  .jt-space-emoji svg { width: 34px; height: 34px; }
-  .jt-space-emoji.dashicons { font-size: 32px; width: auto; height: auto; }
-  .jt-space-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  /* ── Space header (below the cover) — description + stats + follow ── */
+  .jt-space-head { display: flex; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 4px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
+  .jt-space-head__meta { flex: 1 1 auto; min-width: 0; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
   .jt-space-nums { display: flex; gap: 20px; margin-left: auto; }
   .jt-num { text-align: center; }
@@ -802,7 +834,6 @@
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
-    .jt-space-emoji { margin-top: -52px; }
     .jt-space-nums { margin-left: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
