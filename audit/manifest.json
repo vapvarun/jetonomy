@@ -2501,6 +2501,27 @@
 			"consumed_by": null
 		},
 		{
+			"name": "jetonomy_space_listing_visibility_sql",
+			"type": "filter",
+			"args": "result, user_id, alias",
+			"where": "includes/models/class-space.php",
+			"consumed_by": null
+		},
+		{
+			"name": "jetonomy_import_space_visibility",
+			"type": "filter",
+			"args": "access, source, forum",
+			"where": "includes/import/",
+			"consumed_by": null
+		},
+		{
+			"name": "jetonomy_import_wpforo_guest_group",
+			"type": "filter",
+			"args": "guest_group",
+			"where": "includes/import/class-wpforo-importer.php",
+			"consumed_by": null
+		},
+		{
 			"name": "jetonomy_show_community_nav",
 			"type": "filter",
 			"args": "show",

@@ -466,6 +466,23 @@ class Reply extends Model {
 		$posts_tbl   = \Jetonomy\table( 'posts' );
 		$spaces_tbl  = \Jetonomy\table( 'spaces' );
 
+		// Space-visibility + per-post is_private gate on the PARENT post: a
+		// reply in a private/hidden space (or under a private post) must not
+		// surface to non-member / non-author viewers of this user's profile.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = array();
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return static::db()->get_results(
 			static::db()->prepare(
@@ -478,12 +495,11 @@ class Reply extends Model {
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish'
+				 WHERE r.author_id = %d AND r.status = 'publish'{$gate_sql}
 				 ORDER BY r.created_at DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

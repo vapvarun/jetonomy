@@ -47,6 +47,23 @@ $offset      = ( $paged - 1 ) * $per_page;
 $total_posts = (int) $tag->post_count;
 $total_pages = (int) ceil( max( 1, $total_posts ) / $per_page );
 
+// Space-visibility + per-post is_private gate so a tag page never leaks posts
+// from private/hidden spaces (or private posts in public spaces) to viewers
+// who aren't members / authors.
+[ $jt_space_vis_sql, $jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+[ $jt_priv_sql, $jt_priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+$jt_gate_sql    = '';
+$jt_gate_params = array();
+if ( '1=1' !== $jt_space_vis_sql ) {
+	$jt_gate_sql   .= ' AND ' . $jt_space_vis_sql;
+	$jt_gate_params = array_merge( $jt_gate_params, $jt_space_vis_params );
+}
+if ( '' !== $jt_priv_sql ) {
+	$jt_gate_sql   .= ' AND ' . $jt_priv_sql;
+	$jt_gate_params = array_merge( $jt_gate_params, $jt_priv_params );
+}
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $posts = $wpdb->get_results(
 	$wpdb->prepare(
@@ -54,12 +71,11 @@ $posts = $wpdb->get_results(
 		"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 		 INNER JOIN {$post_tags_tbl} pt ON pt.post_id = p.id
 		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE pt.tag_id = %d AND p.status = 'publish'
+		 WHERE pt.tag_id = %d AND p.status = 'publish'{$jt_gate_sql}
 		 ORDER BY {$order_by}
 		 LIMIT %d OFFSET %d",
 		(int) $tag->id,
-		$per_page,
-		$offset
+		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
 	)
 ) ?: [];
 

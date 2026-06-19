@@ -65,6 +65,24 @@ $offset   = ( $page - 1 ) * $per_page;
 global $wpdb;
 $posts_tbl  = \Jetonomy\table( 'posts' );
 $spaces_tbl = \Jetonomy\table( 'spaces' );
+
+// Space-visibility + per-post is_private gate: a non-member viewing another
+// user's profile must not see that user's posts in private/hidden spaces, nor
+// their private posts in public spaces.
+[ $jt_space_vis_sql, $jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+[ $jt_priv_sql, $jt_priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+$jt_gate_sql    = '';
+$jt_gate_params = array();
+if ( '1=1' !== $jt_space_vis_sql ) {
+	$jt_gate_sql   .= ' AND ' . $jt_space_vis_sql;
+	$jt_gate_params = array_merge( $jt_gate_params, $jt_space_vis_params );
+}
+if ( '' !== $jt_priv_sql ) {
+	$jt_gate_sql   .= ' AND ' . $jt_priv_sql;
+	$jt_gate_params = array_merge( $jt_gate_params, $jt_priv_params );
+}
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $recent_posts = $wpdb->get_results(
 	$wpdb->prepare(
@@ -72,12 +90,11 @@ $recent_posts = $wpdb->get_results(
 		"SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
 		 FROM {$posts_tbl} p
 		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.author_id = %d AND p.status = 'publish'
+		 WHERE p.author_id = %d AND p.status = 'publish'{$jt_gate_sql}
 		 ORDER BY p.created_at DESC
 		 LIMIT %d OFFSET %d",
 		(int) $user->ID,
-		$per_page,
-		$offset
+		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
 	)
 ) ?: [];
 

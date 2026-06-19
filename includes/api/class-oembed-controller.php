@@ -103,7 +103,7 @@ class OEmbed_Controller extends Base_Controller {
 		}
 
 		$post = Post::find_by_slug( $parsed['post_slug'] );
-		if ( ! $post || 'publish' !== $post->status || ! empty( $post->is_private ) ) {
+		if ( ! $post || 'publish' !== $post->status ) {
 			return new WP_Error(
 				'jetonomy_oembed_not_found',
 				__( 'Thread not found.', 'jetonomy' ),
@@ -114,6 +114,19 @@ class OEmbed_Controller extends Base_Controller {
 		$space = Space::find( (int) $post->space_id );
 		if ( ! $space || $space->slug !== $parsed['space_slug'] ) {
 			// Cross-space slug collision guard — the URL says one space, the post lives in another.
+			return new WP_Error(
+				'jetonomy_oembed_not_found',
+				__( 'Thread not found.', 'jetonomy' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Content gate — an oEmbed unfurl must not leak a thread whose parent
+		// space the viewer cannot read (private/hidden unless member), nor an
+		// is_private post. Canonical single-row check covers both axes; a
+		// public-space thread still unfurls for anonymous consumers (Slack/X)
+		// because can_read_post( 0, … ) passes for public spaces.
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 			return new WP_Error(
 				'jetonomy_oembed_not_found',
 				__( 'Thread not found.', 'jetonomy' ),

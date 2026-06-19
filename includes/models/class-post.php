@@ -550,14 +550,36 @@ class Post extends Model {
 	 * @return object[]
 	 */
 	public static function list_by_author( int $user_id, int $limit = 20, int $offset = 0 ): array {
-		$table   = static::table();
+		$table      = static::table();
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		// Public method surfaced to other viewers (BP/FluentCommunity profile
+		// tabs, etc.): gate by space visibility + per-post is_private so an
+		// author's posts in private/hidden spaces (or their private posts in
+		// public spaces) stay hidden from non-member / non-author viewers.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = array();
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
 		$results = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table} WHERE author_id = %d AND status = 'publish' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT p.* FROM {$table} p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$user_id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		);
 		return $results ? $results : array();
@@ -591,6 +613,20 @@ class Post extends Model {
 		if ( null !== $space_id && $space_id > 0 ) {
 			$where .= ' AND p.space_id = %d';
 			$args[] = $space_id;
+		}
+
+		// Space-visibility + per-post is_private gate so trending never surfaces
+		// posts from private/hidden spaces (or private posts in public spaces)
+		// to viewers who aren't members / authors.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$where .= ' AND ' . $space_vis_sql;
+			$args   = array_merge( $args, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$where .= ' AND ' . $priv_sql;
+			$args   = array_merge( $args, $priv_params );
 		}
 
 		$args[] = $limit;

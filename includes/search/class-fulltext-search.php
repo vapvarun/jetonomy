@@ -82,25 +82,38 @@ class Fulltext_Search implements Search_Adapter {
 
 	private function search_posts( string $term, ?int $space_id, int $limit, int $offset ): array {
 		global $wpdb;
-		$t = table( 'posts' );
+		$t  = table( 'posts' );
+		$st = table( 'spaces' );
 
-		$sql = "SELECT *, MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE) AS relevance
-				FROM {$t}
-				WHERE MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)
-				AND status = 'publish'";
+		// JOIN spaces so the space-visibility gate can run; alias posts as `p`
+		// (spaces shares an `author_id` column, so an unaliased query would be
+		// ambiguous once joined).
+		$sql = "SELECT p.*, MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE) AS relevance
+				FROM {$t} p
+				INNER JOIN {$st} s ON s.id = p.space_id
+				WHERE MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)
+				AND p.status = 'publish'";
 
 		$params = [ $term, $term ];
 
 		if ( $space_id ) {
-			$sql     .= ' AND space_id = %d';
+			$sql     .= ' AND p.space_id = %d';
 			$params[] = $space_id;
 		}
 
-		// Exclude private posts the viewer can't see (single-table query, no alias).
-		[ $vis_sql, $vis_params ] = self::visibility_clause( $space_id );
+		// Exclude private posts the viewer can't see (per-post is_private axis).
+		[ $vis_sql, $vis_params ] = self::visibility_clause( $space_id, 'p' );
 		if ( '' !== $vis_sql ) {
 			$sql   .= ' AND ' . $vis_sql;
 			$params = array_merge( $params, $vis_params );
+		}
+
+		// Space-level content gate — exclude posts whose parent space the viewer
+		// cannot read (private/hidden unless member). Single source of truth.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$sql   .= ' AND ' . $space_vis_sql;
+			$params = array_merge( $params, $space_vis_params );
 		}
 
 		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
@@ -115,12 +128,15 @@ class Fulltext_Search implements Search_Adapter {
 		global $wpdb;
 		$rt = table( 'replies' );
 		$pt = table( 'posts' );
+		$st = table( 'spaces' );
 
 		// Always JOIN posts so we can enforce parent-post visibility — a reply on
 		// a private post must not surface in search to anyone but its author.
+		// JOIN spaces too so the parent space's visibility can be enforced.
 		$sql = "SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS relevance
 				FROM {$rt} r
-				INNER JOIN {$pt} p ON r.post_id = p.id";
+				INNER JOIN {$pt} p ON r.post_id = p.id
+				INNER JOIN {$st} s ON s.id = p.space_id";
 
 		$params = [ $term ];
 
@@ -139,6 +155,14 @@ class Fulltext_Search implements Search_Adapter {
 			$params  = array_merge( $params, $vis_params );
 		}
 
+		// Space-level content gate — exclude replies on posts whose parent space
+		// the viewer cannot read. Single source of truth.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$where[] = $space_vis_sql;
+			$params  = array_merge( $params, $space_vis_params );
+		}
+
 		$sql     .= ' WHERE ' . implode( ' AND ', $where );
 		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
 		$params[] = $limit;
@@ -153,14 +177,16 @@ class Fulltext_Search implements Search_Adapter {
 		$t    = table( 'spaces' );
 		$like = '%' . $wpdb->esc_like( $query ) . '%';
 
+		// Listing gate — discoverable spaces (public + private); hidden withheld
+		// from non-members. Mirrors the directory so search and browse agree.
+		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::listing_visibility_sql( get_current_user_id() );
+		$args                     = array_merge( [ $like, $like ], $vis_params, [ $limit, $offset ] );
+
 		return $wpdb->get_results(
 			$wpdb->prepare(
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$t} WHERE (title LIKE %s OR description LIKE %s) AND visibility = 'public' AND status = 'active' ORDER BY member_count DESC LIMIT %d OFFSET %d",
-				$like,
-				$like,
-				$limit,
-				$offset
+				"SELECT * FROM {$t} WHERE (title LIKE %s OR description LIKE %s) AND {$vis_sql} AND status = 'active' ORDER BY member_count DESC LIMIT %d OFFSET %d",
+				...$args
 			)
 		) ?: [];
 	}
