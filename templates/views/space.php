@@ -189,6 +189,8 @@ $crumbs[] = [
 		<main>
 			<?php if ( ! empty( $space->cover_image ) ) : ?>
 			<div class="jt-space-cover" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')"></div>
+		<?php else : ?>
+			<div class="jt-space-cover jt-space-cover--tonal" aria-hidden="true"></div>
 		<?php endif; ?>
 		<?php
 		$_jt_can_edit_space = is_user_logged_in()

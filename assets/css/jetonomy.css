@@ -67,6 +67,23 @@
     --jt-radius-lg: var(--r-lg, calc(var(--jt-radius) * 1.5));
     --jt-radius-full: var(--r-full, 9999px);
 
+    /* Surface — a card is a distinct surface that sits on the page, not the
+       page colour itself. BuddyNext (the Community OS) owns --surface/--canvas;
+       read it first so cards match exactly when running on it, with a matching
+       standalone fallback (clean white card lifting off a faintly tinted
+       canvas). Shared Wbcom standard: cards read --jt-surface, never --jt-bg. */
+    --jt-surface: var(--surface, var(--jt-bg));
+    --jt-canvas: var(--canvas, color-mix(in srgb, var(--jt-text) 2%, var(--jt-bg)));
+
+    /* Elevation — soft, layered shadows matching BuddyNext's --bn-shadow-*.
+       Shared standard: components pick a token, never a literal box-shadow, so
+       elevation is uniform across BuddyNext, Jetonomy, MediaVerse, Listora, and
+       Career Board. BuddyNext-first, with a matching standalone fallback. */
+    --jt-shadow-xs: var(--bn-shadow-xs, 0 1px 2px rgba(16, 24, 40, 0.04));
+    --jt-shadow-sm: var(--bn-shadow-sm, 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 4px rgba(16, 24, 40, 0.04));
+    --jt-shadow-md: var(--bn-shadow-md, 0 2px 4px rgba(16, 24, 40, 0.04), 0 8px 16px rgba(16, 24, 40, 0.06));
+    --jt-shadow-lg: var(--bn-shadow-lg, 0 8px 16px rgba(16, 24, 40, 0.06), 0 24px 48px rgba(16, 24, 40, 0.08));
+
     /* Spacing scale — used across every component for uniform rhythm.
        Do not add `px` values directly to components; pick a token. */
     --jt-space-1: 4px;
@@ -324,12 +341,18 @@
 
   /* ── Space cover image ── */
   .jt-space-cover {
-    height: 200px;
+    height: 160px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: var(--jt-radius, 6px);
-    margin-bottom: 16px;
+    border-radius: var(--jt-radius-lg) var(--jt-radius-lg) 0 0;
+    margin-bottom: 0;
+  }
+  /* Tonal cover fallback — a space with no cover image still gets a branded
+     banner (matches BuddyNext's gradient space cover), so the header reads as a
+     premium surface instead of a bare text block. */
+  .jt-space-cover--tonal {
+    background-image: linear-gradient(135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface)));
   }
   @media (max-width: 640px) {
   .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
@@ -338,11 +361,12 @@
   }
 
   /* ── Space header ── */
-  .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  /* Space header icon — Lucide SVG container. Lands as a 40px accent
-     square so the icon reads at the same weight emoji used to. */
-  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--jt-accent); flex-shrink: 0; }
-  .jt-space-emoji svg { width: 32px; height: 32px; }
+  .jt-space-head { display: flex; align-items: flex-end; gap: 16px; padding: 0 4px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
+  /* Space header icon — now a surface avatar tile that overlaps the cover
+     (BuddyNext space-avatar pattern): white surface, ring, soft shadow, pulled
+     up over the cover's lower edge so the header reads as one composed unit. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px; margin-top: -40px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 4px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; position: relative; z-index: 1; }
+  .jt-space-emoji svg { width: 34px; height: 34px; }
   .jt-space-emoji.dashicons { font-size: 32px; width: auto; height: auto; }
   .jt-space-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
@@ -472,8 +496,8 @@
   .jt-space-card-icon svg { width: 22px; height: 22px; }
   .jt-space-card-icon.dashicons { font-size: 22px; }
   .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-  .jt-space-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, box-shadow 0.15s ease; display: flex; flex-direction: column; }
-  .jt-space-card:hover { border-color: var(--jt-accent); box-shadow: 0 2px 8px rgb(0 0 0 / 0.04); }
+  .jt-space-card { background: var(--jt-surface); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: var(--jt-shadow-sm); transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; display: flex; flex-direction: column; }
+  .jt-space-card:hover { border-color: var(--jt-accent); box-shadow: var(--jt-shadow-md); }
   .jt-space-card-link { display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 14px; text-decoration: none; color: inherit; flex: 1 1 auto; }
   .jt-space-card-link:hover { color: inherit; }
   .jt-space-card-head { display: flex; align-items: flex-start; gap: 12px; }
@@ -669,7 +693,7 @@
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
 
   /* ── Card (sidebar) ── */
-  .jt-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding-block: var(--jt-space-5); padding-inline: var(--jt-space-5); }
+  .jt-card { background: var(--jt-surface); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); box-shadow: var(--jt-shadow-sm); padding-block: var(--jt-space-5); padding-inline: var(--jt-space-5); }
   @media (max-width: 640px) {
     .jt-card { padding-block: var(--jt-space-4); padding-inline: var(--jt-space-4); }
   }
@@ -777,7 +801,8 @@
     .jt-two-col > .jt-sidebar,
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .jt-space-head { flex-direction: column; text-align: center; }
+    .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
+    .jt-space-emoji { margin-top: -52px; }
     .jt-space-nums { margin-left: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
@@ -2008,12 +2033,12 @@
   /* ── 2. Hover States — ALL Interactive Elements ── */
 
   /* Space cards — lift on hover */
-  .jt-space-card { transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .jt-space-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .jt-space-card { transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease; box-shadow: var(--jt-shadow-sm); }
+  .jt-space-card:hover { transform: translateY(-1px); box-shadow: var(--jt-shadow-md); }
 
   /* Topic rows — lift on hover */
   a.jt-row { transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.15s; }
-  a.jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  a.jt-row:hover { box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
 
   /* Leaderboard rows — hover background */
   .jt-leader { transition: background 0.15s; padding: 8px 12px; margin: 0 -12px; border-radius: var(--jt-radius); }
@@ -2044,8 +2069,8 @@
   .jt-pill:active { transform: scale(0.95); }
 
   /* Cards — lift and shadow on hover */
-  .jt-card { transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .jt-card:hover { border-color: var(--jt-border-strong); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .jt-card { transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s; box-shadow: var(--jt-shadow-sm); }
+  .jt-card:hover { border-color: var(--jt-border-strong); box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
 
   /* ── 3. Community Nav — Active State Animation ── */
   .jt-community-nav-links a { position: relative; }
