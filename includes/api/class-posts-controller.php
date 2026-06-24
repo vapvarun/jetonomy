@@ -220,6 +220,14 @@ class Posts_Controller extends Base_Controller {
 		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
 			return new \WP_Error( 'invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
+		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
+		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
+		// unauthenticated in public mode, so resolve + reject internal addresses
+		// before fetching (the fetcher repeats the check on every redirect hop).
+		$guard = \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
 
 		$service = new \Jetonomy\Services\Links\Preview_Service();
 		$preview = $service->fetch( $url );
