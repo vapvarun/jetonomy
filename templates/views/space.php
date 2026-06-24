@@ -167,9 +167,15 @@ $posts       = \Jetonomy\Models\Post::list_by_space_visible(
 	$limit,
 	$offset
 );
-$category    = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base        = \Jetonomy\base_url();
-$space_url   = $base . '/s/' . $space->slug . '/';
+// "Load More" must reflect whether more posts actually exist, not whether this
+// page happened to fill up. count($posts) >= $limit showed the button on a space
+// with EXACTLY $limit posts and then loaded an empty page (Basecamp). Compare the
+// real total (same visibility population as the listing) against what's shown.
+$_jt_total    = \Jetonomy\Models\Post::count_by_space_visible( (int) $space->id, (int) $_jt_user_id, (bool) $_jt_is_priv, $sort );
+$_jt_has_more = ( $paged * $limit ) < $_jt_total;
+$category     = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$base         = \Jetonomy\base_url();
+$space_url    = $base . '/s/' . $space->slug . '/';
 
 $crumbs = [];
 if ( $category ) {
@@ -462,7 +468,7 @@ $crumbs[] = [
 					<?php endforeach; ?>
 				</div>
 
-				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $posts ) >= $limit ] ); ?>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => $_jt_has_more ] ); ?>
 			<?php endif; ?>
 		</main>
 
