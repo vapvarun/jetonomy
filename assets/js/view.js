@@ -1121,6 +1121,27 @@ const { state, actions } = store( 'jetonomy', {
                 if ( parent && next ) parent.insertBefore( row, next );
             }
         },
+        // ── Publish a draft / scheduled post now (drafts tab) ──
+        *publishDraft( event ) {
+            // The draft row is whole-row clickable (opens the draft); keep the
+            // button's click from bubbling into that navigation.
+            if ( event ) { event.stopPropagation(); event.preventDefault(); }
+            const btn = getElement().ref;
+            const row = btn.closest( '.jt-row--draft' );
+            const id = row && parseInt( row.getAttribute( 'data-jt-post-id' ), 10 );
+            if ( ! id || btn.disabled ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { status: 'publish' } } );
+            if ( res.ok ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.draftPublished || 'Published.' );
+                row.remove();
+                // Last draft gone — reload so the server renders the empty state.
+                if ( ! document.querySelector( '.jt-row--draft' ) ) window.location.reload();
+            } else {
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
+            }
+        },
         toggleNotifSelectAll() {
             const selectAll = getElement().ref;
             document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = selectAll.checked; } );

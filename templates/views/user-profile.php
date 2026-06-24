@@ -407,6 +407,7 @@ $crumbs = [
 						$dr_row_class = 'jt-row jt-row--draft' . ( '' !== $dr_url ? ' jt-row-clickable' : '' );
 						?>
 						<div class="<?php echo esc_attr( $dr_row_class ); ?>"
+							data-jt-post-id="<?php echo (int) $dr_post->id; ?>"
 							<?php if ( '' !== $dr_url ) : ?>
 								data-jt-href="<?php echo esc_url( $dr_url ); ?>"
 							<?php endif; ?>>
@@ -444,6 +445,11 @@ $crumbs = [
 									echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $dr_ago ) );
 									?>
 								</div>
+								<button type="button"
+									class="jt-btn jt-btn-fill jt-btn-sm jt-draft-publish"
+									data-wp-on--click="actions.publishDraft">
+									<?php esc_html_e( 'Publish now', 'jetonomy' ); ?>
+								</button>
 							</div>
 						</div>
 					<?php endforeach; ?>

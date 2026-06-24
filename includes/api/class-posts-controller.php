@@ -626,6 +626,19 @@ class Posts_Controller extends Base_Controller {
 			return $this->permission_error();
 		}
 
+		// Publish-now: an author (or moderator) can publish their own draft
+		// immediately instead of waiting for the scheduled cron run. This is the
+		// only status transition exposed through update, and it runs the exact
+		// same path as a scheduled publish (Post::publish_draft -> counts +
+		// jetonomy_after_create_post). Edits and publishing are separate calls:
+		// the drafts UI sends status=publish alone.
+		if ( 'publish' === $request->get_param( 'status' ) && 'draft' === ( $post->status ?? '' ) ) {
+			if ( ! Post::publish_draft( $id ) ) {
+				return $this->validation_error( __( 'Could not publish this draft.', 'jetonomy' ) );
+			}
+			return new WP_REST_Response( $this->prepare_post( Post::find( $id ) ), 200 );
+		}
+
 		$update_data = array();
 
 		if ( null !== $request->get_param( 'title' ) ) {
@@ -1233,6 +1246,12 @@ class Posts_Controller extends Base_Controller {
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'status'       => array(
+				'type'        => 'string',
+				'required'    => false,
+				'enum'        => array( 'publish' ),
+				'description' => 'Publish a draft now. Only "publish" is accepted, and only when the post is currently a draft.',
 			),
 		);
 	}

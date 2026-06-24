@@ -806,9 +806,18 @@ class Post extends Model {
 	 * @param int $id Post ID.
 	 * @return bool True if published.
 	 */
-	public static function publish_scheduled( int $id ): bool {
+	/**
+	 * Publish a draft post now, with the full create-post side-effects.
+	 *
+	 * Shared core for both the scheduled-cron publish and a manual "publish now"
+	 * from the drafts UI / REST, so the two paths never drift.
+	 *
+	 * @param int $id Post ID.
+	 * @return bool True if a draft was published, false if it was not a draft.
+	 */
+	public static function publish_draft( int $id ): bool {
 		$post = static::find( $id );
-		if ( ! $post || 'draft' !== ( $post->status ?? '' ) || empty( $post->published_at ) ) {
+		if ( ! $post || 'draft' !== ( $post->status ?? '' ) ) {
 			return false;
 		}
 
@@ -832,22 +841,33 @@ class Post extends Model {
 		// to prevent double-counting" note in class-posts-controller.php after
 		// Post::create().
 
-		$space_id = (int) $post->space_id;
-
 		// Fire the canonical post-creation side-effect hook so a post going live
-		// on schedule runs the SAME listeners a normally-published post does:
-		// activity log, subscriber notifications, @mention processing,
-		// auto-subscribe, BuddyPress / FluentCommunity broadcasts, and Pro
-		// polls / custom-fields / custom-badges / webhooks. A draft never fired
-		// this hook, so there is no double-fire. The null request argument
-		// matches the established programmatic fire in class-abilities.php
-		// (jetonomy_after_create_post is documented as ($post_id, $space_id,
-		// $request|null)); request-reading listeners no-op safely on null.
-		do_action( 'jetonomy_after_create_post', $id, $space_id, null );
+		// runs the SAME listeners a normally-published post does: activity log,
+		// subscriber notifications, @mention processing, auto-subscribe,
+		// BuddyPress / FluentCommunity broadcasts, and Pro polls / custom-fields /
+		// custom-badges / webhooks. A draft never fired this hook, so there is no
+		// double-fire. The null request argument matches the established
+		// programmatic fire in class-abilities.php (jetonomy_after_create_post is
+		// documented as ($post_id, $space_id, $request|null)); request-reading
+		// listeners no-op safely on null.
+		do_action( 'jetonomy_after_create_post', $id, (int) $post->space_id, null );
+
+		return true;
+	}
+
+	public static function publish_scheduled( int $id ): bool {
+		$post = static::find( $id );
+		if ( ! $post || 'draft' !== ( $post->status ?? '' ) || empty( $post->published_at ) ) {
+			return false;
+		}
+
+		if ( ! self::publish_draft( $id ) ) {
+			return false;
+		}
 
 		// Keep the scheduled-specific extension point so an integration can still
 		// distinguish "published on schedule" from "published immediately".
-		do_action( 'jetonomy_scheduled_post_published', $id, $space_id );
+		do_action( 'jetonomy_scheduled_post_published', $id, (int) $post->space_id );
 
 		return true;
 	}
