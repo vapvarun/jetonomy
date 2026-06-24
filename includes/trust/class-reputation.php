@@ -31,6 +31,12 @@ class Reputation {
 	 * Some entries are populated for use by WS4-B (currently un-wired callsites).
 	 */
 	private const POINTS_MAP = array(
+		// Small participation award for publishing content. Quality signals
+		// (upvotes/accepts) still dominate; keep these low so the rep economy
+		// isn't gamed by volume. Owners can retune or zero them out via the
+		// reputation_points setting / jetonomy_reputation_points_map filter.
+		'post_created'    => 2,
+		'reply_created'   => 1,
 		'post_upvoted'    => 10,
 		'reply_upvoted'   => 5,
 		'post_downvoted'  => -2,
