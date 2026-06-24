@@ -432,14 +432,14 @@
      re-assert the few plugin buttons that intentionally carry a fill or surface.
      Only <button> needs this; <a class="jt-btn"> is not matched by the theme's
      `button` selector. */
-  .jt-app button { background-color: transparent !important; background-image: none !important; color: inherit !important; box-shadow: none !important; }
+  .jt-app button { background-color: transparent !important; background-image: none !important; color: inherit !important; box-shadow: none !important; border-color: var(--jt-border) !important; }
   /* Re-assert the plugin's own intentional button surfaces/text that the reset
      above (and the theme) would otherwise flatten. Each carries !important to
      beat the blanket; the design tokens keep them theme-adaptive. */
   .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-white) !important; }
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-white) !important; }
-  .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; }
-  .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; }
+  .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
+  .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
      raised surface + accent underline. */
   .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,
