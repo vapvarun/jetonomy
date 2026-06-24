@@ -110,7 +110,7 @@ class Permission_Engine {
 	 */
 	private static function resolve( int $user_id, string $action, ?int $space_id ): bool {
 		// Layer 0: IP ban check.
-		$ip = $_SERVER['REMOTE_ADDR'] ?? '';
+		$ip = \Jetonomy\client_ip();
 		if ( $ip && Restriction::is_ip_banned( $ip ) ) {
 			return false;
 		}

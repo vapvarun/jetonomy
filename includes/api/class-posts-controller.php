@@ -369,7 +369,7 @@ class Posts_Controller extends Base_Controller {
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip(
 			$user_id,
 			$captcha_token,
-			sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) )
+			\Jetonomy\client_ip()
 		);
 		if ( false === $captcha_result ) {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
@@ -426,7 +426,7 @@ class Posts_Controller extends Base_Controller {
 		// (flagging legitimate staff replies) erode trust in the admin workflow.
 		$akismet_spam = false;
 		if ( ! $this->author_bypasses_spam_check( $user_id, $space_id ) ) {
-			$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+			$ip           = \Jetonomy\client_ip();
 			$user         = get_userdata( $user_id );
 			$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
 				$content,

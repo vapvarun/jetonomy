@@ -264,7 +264,7 @@ class Auth_Controller extends Base_Controller {
 		// auth endpoint that was missing it). Anonymous user_id 0;
 		// verify_or_skip returns null when no adapter is configured.
 		$token          = (string) $request->get_param( 'captcha_token' );
-		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$remote_ip      = \Jetonomy\client_ip();
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
 		if ( false === $captcha_result ) {
 			return new WP_Error(
@@ -423,9 +423,7 @@ class Auth_Controller extends Base_Controller {
 		// CAPTCHA — closes the silent gap from the legacy handler. verify_or_skip
 		// returns null when the feature is disabled OR the caller is trusted; we
 		// treat null + true as pass, false as reject.
-		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
-			: '';
+		$remote_ip      = \Jetonomy\client_ip();
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
 		if ( false === $captcha_result ) {
 			return new WP_Error(
@@ -758,9 +756,7 @@ class Auth_Controller extends Base_Controller {
 
 		// CAPTCHA gate (parity with register). Anonymous user_id 0; verify_or_skip
 		// returns null when no adapter is configured.
-		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
-			: '';
+		$remote_ip      = \Jetonomy\client_ip();
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
 		if ( false === $captcha_result ) {
 			return new WP_Error(
@@ -802,9 +798,7 @@ class Auth_Controller extends Base_Controller {
 	 * @return bool True when within limit, false when exhausted.
 	 */
 	protected static function check_rate_limit( string $bucket, int $max = 5, int $seconds = MINUTE_IN_SECONDS ): bool {
-		$ip  = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
-			: 'unknown';
+		$ip  = \Jetonomy\client_ip() ?: 'unknown';
 		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
 		$now = time();
 

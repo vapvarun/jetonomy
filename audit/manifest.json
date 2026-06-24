@@ -1983,6 +1983,20 @@
 			"consumed_by": null
 		},
 		{
+			"name": "jetonomy_trusted_proxies",
+			"type": "filter",
+			"args": "proxies",
+			"where": "includes/functions.php Jetonomy\\client_ip() — site owner declares trusted reverse-proxy / CDN IPs so X-Forwarded-For is honoured for IP-bans + rate limiting. Empty by default (XFF ignored; REMOTE_ADDR used).",
+			"consumed_by": null
+		},
+		{
+			"name": "jetonomy_client_ip",
+			"type": "filter",
+			"args": "ip, remote_addr",
+			"where": "includes/functions.php Jetonomy\\client_ip() — final resolved client IP; override for proxy setups the default trusted-proxy logic doesn't cover.",
+			"consumed_by": null
+		},
+		{
 			"name": "jetonomy_email_verified",
 			"type": "action",
 			"args": "user_id",

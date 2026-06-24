@@ -33,6 +33,67 @@ function now(): string {
 }
 
 /**
+ * Resolve the requesting client's IP, honouring a trusted reverse-proxy chain.
+ *
+ * Single source of truth for "who is this request from" — used by IP-bans and
+ * rate limiting. Defaults to REMOTE_ADDR, the only value an attacker cannot
+ * forge. X-Forwarded-For is honoured ONLY when the request demonstrably arrived
+ * through a proxy the site owner declared via `jetonomy_trusted_proxies`;
+ * otherwise the header is attacker-controlled and trusting it would let anyone
+ * spoof their IP to dodge a ban or reset a rate-limit bucket. Behind a CDN /
+ * reverse proxy the owner adds the edge IP(s) to the filter and bans/limits then
+ * see the real visitor. `jetonomy_client_ip` allows a full override.
+ *
+ * @return string Client IP (may be empty if REMOTE_ADDR is unset, e.g. CLI).
+ */
+function client_ip(): string {
+	$remote = isset( $_SERVER['REMOTE_ADDR'] )
+		? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
+		: '';
+
+	$ip = $remote;
+
+	/**
+	 * Trusted reverse-proxy / CDN addresses (exact REMOTE_ADDR match). Empty by
+	 * default so X-Forwarded-For is ignored unless the request really came from
+	 * a declared proxy.
+	 *
+	 * @param string[] $proxies Trusted proxy IPs.
+	 */
+	$trusted = (array) apply_filters( 'jetonomy_trusted_proxies', array() );
+
+	if ( '' !== $remote && ! empty( $trusted ) && in_array( $remote, $trusted, true ) ) {
+		$xff = isset( $_SERVER['HTTP_X_FORWARDED_FOR'] )
+			? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_X_FORWARDED_FOR'] ) )
+			: '';
+		if ( '' !== $xff ) {
+			// XFF is "client, proxy1, proxy2…". Walk right-to-left, skip our own
+			// trusted proxies, and take the first remaining address — the real
+			// client as seen at our edge. A spoofed left-hand entry can't promote
+			// itself past a trusted hop.
+			foreach ( array_reverse( array_map( 'trim', explode( ',', $xff ) ) ) as $candidate ) {
+				if ( '' === $candidate || in_array( $candidate, $trusted, true ) ) {
+					continue;
+				}
+				if ( filter_var( $candidate, FILTER_VALIDATE_IP ) ) {
+					$ip = $candidate;
+				}
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Final resolved client IP. Override for setups the trusted-proxy logic
+	 * above does not cover.
+	 *
+	 * @param string $ip     Resolved IP.
+	 * @param string $remote Raw REMOTE_ADDR.
+	 */
+	return (string) apply_filters( 'jetonomy_client_ip', $ip, $remote );
+}
+
+/**
  * Get the profile URL for a user.
  *
  * Returns the Jetonomy profile URL by default, but can be filtered
