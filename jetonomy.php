@@ -84,6 +84,12 @@ if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' ) ) {
 add_action(
 	'admin_init',
 	function () {
+		// Owner opt-out: define JETONOMY_NO_LICENSE_PHONE_HOME to disable the
+		// store call entirely (air-gapped / privacy-strict installs).
+		if ( defined( 'JETONOMY_NO_LICENSE_PHONE_HOME' ) && JETONOMY_NO_LICENSE_PHONE_HOME ) {
+			return;
+		}
+
 		$preset_key = 'wbcomfreec7e2a9b45d8f1c3e6a0b9d2f7c4e8a11';
 		$option     = 'jetonomy_license_key';
 		$activated  = 'jetonomy_preset_activated';
@@ -93,14 +99,24 @@ add_action(
 			return;
 		}
 
+		// Back off after any attempt so a server that can't reach the store does
+		// NOT repeat a blocking request on every admin pageview (the previous
+		// behaviour: 15s hang per page whenever egress failed). At most one
+		// attempt per 12h until activation succeeds.
+		if ( get_transient( 'jetonomy_preset_activation_backoff' ) ) {
+			return;
+		}
+		set_transient( 'jetonomy_preset_activation_backoff', 1, 12 * HOUR_IN_SECONDS );
+
 		// Store the key so the SDK can find it.
 		update_option( $option, $preset_key, false );
 
-		// Activate with the EDD store.
+		// Activate with the EDD store. Short timeout so a slow/unreachable store
+		// can't stall the admin for 15 seconds.
 		$response = wp_remote_post(
 			'https://wbcomdesigns.com',
 			array(
-				'timeout' => 15,
+				'timeout' => 5,
 				'body'    => array(
 					'edd_action' => 'activate_license',
 					'license'    => $preset_key,
@@ -114,15 +130,9 @@ add_action(
 			$body = json_decode( wp_remote_retrieve_body( $response ), true );
 			if ( 'valid' === ( $body['license'] ?? '' ) ) {
 				update_option( $activated, 1, false );
-				// Auto-enable usage tracking checkbox.
-				update_option(
-					$option . '_allow_tracking',
-					array(
-						'allowed'   => true,
-						'timestamp' => time(),
-					),
-					false
-				);
+				// NOTE: usage tracking is NOT auto-enabled here. Enrolling a site
+				// in tracking without explicit consent is a privacy overreach;
+				// the owner opts in via the settings toggle instead.
 			}
 		}
 	}
