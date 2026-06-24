@@ -106,12 +106,20 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validate and normalize a backdate string (e.g. `published_at`) to `Y-m-d H:i:s`.
+	 * Validate and normalize a backdate string (e.g. `published_at`) to a UTC
+	 * `Y-m-d H:i:s` for storage.
 	 *
-	 * Accepts anything PHP's `DateTimeImmutable::createFromFormat` understands (ISO 8601
-	 * with or without a trailing `Z`, MySQL datetime, or `DateTime::__construct` fallback).
-	 * Returns `null` when the input is empty (treat as "use default"), or `WP_Error` when
-	 * non-empty but unparsable.
+	 * Timezone contract (matches the WordPress core post scheduler):
+	 *  - A naive wall-clock value (`Y-m-d H:i:s`, `Y-m-dTH:i:s`, or date-only
+	 *    `Y-m-d`) is interpreted in the SITE timezone — the Settings -> General
+	 *    timezone via {@see wp_timezone()} — then converted to UTC. So "3 PM"
+	 *    means 3 PM in the site's timezone regardless of the author's location
+	 *    or the server's clock.
+	 *  - A value carrying an explicit offset or `Z` (`...+05:30`, `...Z`) is an
+	 *    absolute instant; its own offset is honoured and converted to UTC.
+	 *
+	 * Returns `null` when the input is empty (treat as "use default"), or
+	 * `WP_Error` when non-empty but unparsable.
 	 *
 	 * Gated to users who can `manage_options` — normal authors cannot forge dates via
 	 * the public API. Moderators with `edit_others_posts` also pass via the caller check.
@@ -122,23 +130,35 @@ abstract class Base_Controller extends WP_REST_Controller {
 			return null;
 		}
 
-		$formats = array(
-			'Y-m-d H:i:s',
-			'Y-m-d\TH:i:s',
-			'Y-m-d\TH:i:sP',
-			'Y-m-d\TH:i:s\Z',
-			'Y-m-d',
-		);
+		$utc = new \DateTimeZone( 'UTC' );
+
+		// An explicit timezone designator (trailing `Z` or `±HH:MM` / `±HHMM`)
+		// makes the value an absolute instant — parse in UTC and let the offset
+		// in the string do the work. Everything else is a naive wall-clock value
+		// interpreted in the SITE timezone so the WP timezone setting is always
+		// respected.
+		$has_tz     = (bool) preg_match( '/(Z|[+-]\d{2}:?\d{2})$/', $raw );
+		$parse_zone = $has_tz ? $utc : wp_timezone();
+
+		// Leading `!` resets every field not present in the format to the Unix
+		// epoch, so a date-only input ('Y-m-d') yields 00:00:00 instead of
+		// leaking the server's current time-of-day.
+		$formats = $has_tz
+			? array( '!Y-m-d\TH:i:sP', '!Y-m-d\TH:i:s\Z' )
+			: array( '!Y-m-d H:i:s', '!Y-m-d\TH:i:s', '!Y-m-d' );
+
 		foreach ( $formats as $format ) {
-			$dt = \DateTimeImmutable::createFromFormat( $format, $raw, new \DateTimeZone( 'UTC' ) );
+			$dt = \DateTimeImmutable::createFromFormat( $format, $raw, $parse_zone );
 			if ( $dt instanceof \DateTimeImmutable ) {
-				return $dt->format( 'Y-m-d H:i:s' );
+				return $dt->setTimezone( $utc )->format( 'Y-m-d H:i:s' );
 			}
 		}
 
+		// Fallback: hand the raw string to the parser, still anchoring a naive
+		// value to the site timezone before normalizing to UTC.
 		try {
-			$dt = new \DateTimeImmutable( $raw, new \DateTimeZone( 'UTC' ) );
-			return $dt->format( 'Y-m-d H:i:s' );
+			$dt = new \DateTimeImmutable( $raw, $parse_zone );
+			return $dt->setTimezone( $utc )->format( 'Y-m-d H:i:s' );
 		} catch ( \Exception $e ) {
 			return new WP_Error(
 				'jetonomy_invalid_published_at',

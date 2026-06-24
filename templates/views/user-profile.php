@@ -416,7 +416,12 @@ $crumbs = [
 									<?php if ( $is_scheduled ) : ?>
 										<span class="jt-badge jt-badge--scheduled">
 											<?php
-											$sched_date = date_i18n( $datetime_format, strtotime( $dr_post->published_at ) );
+											// published_at is stored in UTC; render it in the
+											// site timezone (Settings -> General). get_date_from_gmt()
+											// is the canonical UTC-to-site-local formatter —
+											// date_i18n( strtotime( $utc ) ) would print the raw
+											// UTC clock time, showing the wrong scheduled time.
+											$sched_date = get_date_from_gmt( $dr_post->published_at, $datetime_format );
 											/* translators: %s: scheduled date/time */
 											echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), $sched_date ) );
 											?>

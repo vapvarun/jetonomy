@@ -2996,6 +2996,12 @@ const { state, actions } = store( 'jetonomy', {
                 const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
                 const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
                 const timeVal   = hourVal && minuteVal ? `${ hourVal }:${ minuteVal }` : '';
+                // Send the plain wall-clock value the user picked. The server
+                // interprets it in the SITE timezone (the WordPress Settings ->
+                // General timezone) and converts to UTC for storage, matching
+                // the core post scheduler. We intentionally do NOT stamp the
+                // browser's timezone here — the scheduled time means "this time
+                // in the site's timezone", regardless of where the author is.
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
                 } else if ( dateVal ) {

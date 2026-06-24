@@ -150,7 +150,6 @@ parameters:
 			count: 1
 			path: includes/class-template-loader.php
 
-
 		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
 			count: 2
@@ -182,13 +181,8 @@ parameters:
 			path: includes/integrations/class-buddypress.php
 
 		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
-			count: 1
-			path: includes/models/class-post.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$space_id\\.$#"
-			count: 2
+			count: 1
 			path: includes/models/class-post.php
 
 		-

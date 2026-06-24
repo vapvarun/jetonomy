@@ -812,19 +812,42 @@ class Post extends Model {
 			return false;
 		}
 
+		// Clear published_at on the same write so the post stops rendering a
+		// "scheduled" badge and can never be re-selected by get_due_scheduled()
+		// (which keys on `published_at IS NOT NULL`). $wpdb->update() emits a
+		// real SQL NULL for a null value.
 		static::update(
 			$id,
 			array(
-				'status'     => 'publish',
-				'updated_at' => now(),
+				'status'       => 'publish',
+				'published_at' => null,
+				'updated_at'   => now(),
 			)
 		);
 
-		// Increment counters now that it's published.
-		Space::increment_post_count( (int) $post->space_id );
-		UserProfile::increment_post_count( (int) $post->author_id );
+		// Do NOT increment post counts here. Post::update() already applies a
+		// +1 delta on the draft->publish transition (see the $was_publish/
+		// $is_publish branch in update()). Incrementing again double-counted
+		// every scheduled post permanently. Mirrors the "intentionally removed
+		// to prevent double-counting" note in class-posts-controller.php after
+		// Post::create().
 
-		do_action( 'jetonomy_scheduled_post_published', $id, (int) $post->space_id );
+		$space_id = (int) $post->space_id;
+
+		// Fire the canonical post-creation side-effect hook so a post going live
+		// on schedule runs the SAME listeners a normally-published post does:
+		// activity log, subscriber notifications, @mention processing,
+		// auto-subscribe, BuddyPress / FluentCommunity broadcasts, and Pro
+		// polls / custom-fields / custom-badges / webhooks. A draft never fired
+		// this hook, so there is no double-fire. The null request argument
+		// matches the established programmatic fire in class-abilities.php
+		// (jetonomy_after_create_post is documented as ($post_id, $space_id,
+		// $request|null)); request-reading listeners no-op safely on null.
+		do_action( 'jetonomy_after_create_post', $id, $space_id, null );
+
+		// Keep the scheduled-specific extension point so an integration can still
+		// distinguish "published on schedule" from "published immediately".
+		do_action( 'jetonomy_scheduled_post_published', $id, $space_id );
 
 		return true;
 	}
