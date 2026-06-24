@@ -31,12 +31,14 @@ class Media_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'upload_image' ],
-					// REST_Auth enforces login + nonce upfront. The fine-grained
-					// cap matrix (upload_files OR jetonomy_upload_media OR
-					// jetonomy_create_posts OR jetonomy_create_replies) is
-					// re-checked in upload_image() so the handler keeps the same
-					// cap-OR semantics REST_Auth can't express in a single call.
-					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					// Login + nonce + the upload-capability matrix in one call:
+					// auth_mutation() passes only when the user holds ANY of these
+					// caps, so a read-only subscriber can no longer push files into
+					// the media library. upload_image() adds the restriction
+					// (ban/silence) re-check that capabilities alone don't express.
+					'permission_callback' => REST_Auth::auth_mutation(
+						array( 'upload_files', 'jetonomy_upload_media', 'jetonomy_create_posts', 'jetonomy_create_replies' )
+					),
 				],
 				[
 					// GET /jetonomy/v1/media — list community uploads (owner view).
@@ -127,6 +129,19 @@ class Media_Controller extends Base_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function upload_image( WP_REST_Request $request ) {
+		// Capabilities are enforced by the route's auth_mutation matrix; here we
+		// add the restriction layer caps don't cover. A silenced member (can log
+		// in, cannot create content) or a banned account whose session outlived
+		// the ban must not be able to push files into the media library.
+		$uid = get_current_user_id();
+		if ( \Jetonomy\Models\Restriction::is_banned( $uid ) || \Jetonomy\Models\Restriction::is_silenced( $uid ) ) {
+			return new WP_Error(
+				'jetonomy_upload_forbidden',
+				__( 'You are not allowed to upload media.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		if ( empty( $_FILES['file'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing — REST nonce already verified by core.
 			return new WP_Error(
 				'jetonomy_no_file',

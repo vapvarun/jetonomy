@@ -819,13 +819,13 @@
 				"methods": [
 					"POST"
 				],
-				"handler": "Media_Controller::upload_media",
-				"permission": "REST_Auth::auth_mutation (closure)",
+				"handler": "Media_Controller::upload_image",
+				"permission": "REST_Auth::auth_mutation (cap-OR closure)",
 				"purpose": "Upload media (image, video, file)",
 				"auth": "login_required",
-				"capability": null,
+				"capability": "upload_files | jetonomy_upload_media | jetonomy_create_posts | jetonomy_create_replies (ANY)",
 				"ownership_check": null,
-				"audit_notes": "Upload media"
+				"audit_notes": "Upload media. Capability matrix enforced in the permission_callback (was auth_mutation('read') — any logged-in user; F13); upload_image() additionally re-checks Restriction::is_banned/is_silenced and returns 403."
 			},
 			{
 				"route": "/auth/login",
