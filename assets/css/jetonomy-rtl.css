@@ -564,6 +564,15 @@
   .jt-row-stat { text-align: center; }
   .jt-row-stat-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
   .jt-row-stat-l { font-size: 0.9375rem; color: var(--jt-text-secondary); }
+  /* Drafts-tab rows have a 2-column shape (title | actions), not the 4-column
+     topic-listing grid. Without this the title lands in the 48px icon column and
+     wraps one word per line, with a huge gap before the meta column (Basecamp
+     drafts-tab alignment). The `.jt-row.jt-row--draft` (0,2,0) specificity beats
+     both the base and the mobile `.jt-row` (0,1,0) templates at every breakpoint,
+     and the stat rule (0,3,0) overrides the mobile `.jt-row-stat:last-child`
+     display:none so the time + Publish-now button stay visible. */
+  .jt-row.jt-row--draft { grid-template-columns: 1fr auto; }
+  .jt-row.jt-row--draft .jt-row-stat { display: flex; align-items: center; gap: var(--jt-space-3); text-align: end; }
 
   /* ── Vote buttons ── */
   .jt-votes { display: flex; flex-direction: column; align-items: center; gap: 1px; position: relative; z-index: 1; }
@@ -874,6 +883,11 @@
     /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
        load-bearing (desktop `a.jt-row` is 0,1,1). */
     .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-3); }
+    /* Drafts rows stack on mobile: the inline title|actions shape squeezes the
+       title to a per-word column at 390px. One column = title full width, then
+       the time + Publish-now actions row beneath it. */
+    .jt-row.jt-row--draft { grid-template-columns: 1fr; }
+    .jt-row.jt-row--draft .jt-row-stat { justify-content: flex-start; margin-top: var(--jt-space-2); }
     .jt-row .jt-votes { width: 36px; }
     .jt-row-title { font-size: var(--jt-text-base); line-height: var(--jt-leading-snug); }
     .jt-row-sub { font-size: var(--jt-text-xs); gap: var(--jt-space-2); margin-top: var(--jt-space-1); }
