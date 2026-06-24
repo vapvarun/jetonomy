@@ -136,13 +136,29 @@ class Votes_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Vote value must be 1 or -1.', 'jetonomy' ) );
 		}
 
+		$is_self = (int) ( $object->author_id ?? 0 ) === $user_id;
+
 		// Self-downvote block: an author downvoting their own post or reply
 		// drives the displayed score negative in a way that contradicts "I'm
 		// posting my view" (see Basecamp 9803889865 — admin voting down own
-		// topic left it at −1). Self-upvote stays allowed — that's a valid
-		// "I stand behind this" gesture.
-		if ( -1 === $value && (int) ( $object->author_id ?? 0 ) === $user_id ) {
+		// topic left it at −1).
+		if ( -1 === $value && $is_self ) {
 			return $this->validation_error( __( 'You cannot downvote your own content.', 'jetonomy' ) );
+		}
+
+		// Self-upvote is allowed by default — a valid "I stand behind this"
+		// gesture. Site owners who run a stricter rep economy can block it.
+		/**
+		 * Whether a member may upvote their own content.
+		 *
+		 * @param bool   $allowed Default true.
+		 * @param int    $user_id Voting user.
+		 * @param string $type    'post' or 'reply'.
+		 * @param int    $id      Object ID.
+		 */
+		if ( 1 === $value && $is_self
+			&& ! apply_filters( 'jetonomy_allow_self_upvote', true, $user_id, $type, $id ) ) {
+			return $this->validation_error( __( 'You cannot upvote your own content.', 'jetonomy' ) );
 		}
 
 		$result = Vote::cast( $user_id, $type, $id, $value );

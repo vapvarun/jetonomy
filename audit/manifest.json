@@ -1997,6 +1997,13 @@
 			"consumed_by": null
 		},
 		{
+			"name": "jetonomy_allow_self_upvote",
+			"type": "filter",
+			"args": "allowed, user_id, type, id",
+			"where": "includes/api/class-votes-controller.php — whether a member may upvote their own content (default true). Return false to block self-upvote for a stricter reputation economy. Self-downvote is always blocked.",
+			"consumed_by": null
+		},
+		{
 			"name": "jetonomy_email_verified",
 			"type": "action",
 			"args": "user_id",
