@@ -597,15 +597,17 @@ final class Jetonomy {
 		$token   = sanitize_text_field( wp_unslash( $_GET['jetonomy_unsubscribe'] ) );
 		$user_id = absint( $_GET['uid'] );
 		$type    = sanitize_key( wp_unslash( $_GET['type'] ?? '' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- one-click email unsubscribe is authenticated by the signed token, not a nonce.
+		$expires = isset( $_GET['jetonomy_unsub_exp'] ) ? absint( $_GET['jetonomy_unsub_exp'] ) : 0;
 
 		if ( ! $user_id || ! $type ) {
 			return;
 		}
 
-		// Verify token.
-		$expected = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
-		if ( ! hash_equals( $expected, $token ) ) {
-			wp_die( esc_html__( 'Invalid unsubscribe link.', 'jetonomy' ), '', array( 'response' => 403 ) );
+		// Verify the signed, time-limited token (legacy non-expiring links still
+		// accepted during the deprecation window — see Notifier::verify_unsubscribe).
+		if ( ! Notifications\Notifier::verify_unsubscribe( $user_id, $type, $token, $expires ) ) {
+			wp_die( esc_html__( 'This unsubscribe link is invalid or has expired.', 'jetonomy' ), '', array( 'response' => 403 ) );
 		}
 
 		// Disable this notification type for the user.

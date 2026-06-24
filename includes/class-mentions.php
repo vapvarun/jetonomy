@@ -107,11 +107,14 @@ class Mentions {
 						$site_name = get_bloginfo( 'name' );
 						$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
 
-						// Build List-Unsubscribe headers (RFC 8058).
-						$unsub_token = wp_hash( $uid . ':mention:unsubscribe' );
+						// Build List-Unsubscribe headers (RFC 8058) with a signed,
+						// time-limited unsubscribe token.
+						$unsub_exp   = \Jetonomy\Notifications\Notifier::unsubscribe_expiry();
+						$unsub_token = \Jetonomy\Notifications\Notifier::unsubscribe_token( $uid, 'mention', $unsub_exp );
 						$unsub_url   = add_query_arg(
 							[
 								'jetonomy_unsubscribe' => $unsub_token,
+								'jetonomy_unsub_exp'   => $unsub_exp,
 								'uid'                  => $uid,
 								'type'                 => 'mention',
 							],

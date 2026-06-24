@@ -20,8 +20,56 @@ use function Jetonomy\now;
 
 class Notifier {
 
+	/** Days an email unsubscribe link stays valid. */
+	private const UNSUB_TTL_DAYS = 60;
+
 	public function __construct() {
 		$this->register_hooks();
+	}
+
+	/**
+	 * Expiry (unix timestamp) for a freshly-minted unsubscribe link.
+	 *
+	 * @return int
+	 */
+	public static function unsubscribe_expiry(): int {
+		return time() + self::UNSUB_TTL_DAYS * DAY_IN_SECONDS;
+	}
+
+	/**
+	 * Signed, time-limited token for an email unsubscribe link. The expiry is
+	 * part of the signed payload, so a recipient cannot extend their own link.
+	 *
+	 * @param int    $user_id User the link belongs to.
+	 * @param string $type    Notification type (or 'mention').
+	 * @param int    $expires Expiry unix timestamp (from unsubscribe_expiry()).
+	 * @return string
+	 */
+	public static function unsubscribe_token( int $user_id, string $type, int $expires ): string {
+		return wp_hash( $user_id . ':' . $type . ':' . $expires . ':unsubscribe' );
+	}
+
+	/**
+	 * Verify an unsubscribe token. Honours the signed expiry; falls back to the
+	 * legacy non-expiring token so links in already-sent emails keep working
+	 * during the deprecation window.
+	 *
+	 * @param int    $user_id User id from the URL.
+	 * @param string $type    Notification type from the URL.
+	 * @param string $token   Token from the URL.
+	 * @param int    $expires Expiry timestamp from the URL (0 for a legacy link).
+	 * @return bool
+	 */
+	public static function verify_unsubscribe( int $user_id, string $type, string $token, int $expires ): bool {
+		if ( $expires > 0 ) {
+			if ( time() > $expires ) {
+				return false; // Link has expired.
+			}
+			return hash_equals( self::unsubscribe_token( $user_id, $type, $expires ), $token );
+		}
+		// Legacy link (no exp param). TODO: drop after 2 releases once historic
+		// emails have aged out, leaving only expiring links.
+		return hash_equals( wp_hash( $user_id . ':' . $type . ':unsubscribe' ), $token );
 	}
 
 	/**
@@ -886,11 +934,13 @@ class Notifier {
 			return;
 		}
 
-		// Build unsubscribe URL.
-		$unsub_token = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
+		// Build unsubscribe URL (signed, time-limited token).
+		$unsub_exp   = self::unsubscribe_expiry();
+		$unsub_token = self::unsubscribe_token( $user_id, $type, $unsub_exp );
 		$unsub_url   = add_query_arg(
 			[
 				'jetonomy_unsubscribe' => $unsub_token,
+				'jetonomy_unsub_exp'   => $unsub_exp,
 				'uid'                  => $user_id,
 				'type'                 => $type,
 			],
