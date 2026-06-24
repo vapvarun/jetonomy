@@ -10,8 +10,14 @@
     --jt-font-heading: var(--font-display, var(--wp--preset--font-family--heading, inherit));
     --jt-font-mono: var(--wp--preset--font-family--monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
 
-    /* Colors — BuddyNext first, then WP theme.json, then neutral fallback */
-    --jt-accent: var(--brand, var(--wp--preset--color--primary, #3B82F6));
+    /* Colors — adopt the active theme's own token system first so the plugin
+       reads as native (and follows the theme's dark mode automatically when the
+       theme flips its tokens), then BuddyNext, then WP theme.json, then a
+       neutral fallback:
+         BuddyX / BuddyX Pro 5.1+ → --bx-color-* (flip on [data-bx-mode="dark"])
+         BuddyNext               → --brand / --text-1 / --bg
+         Any block theme         → --wp--preset--color--* */
+    --jt-accent: var(--bx-color-accent, var(--brand, var(--wp--preset--color--primary, #3B82F6)));
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
     --jt-accent-light: #EFF6FF;
@@ -19,7 +25,7 @@
     --jt-accent-muted: #DBEAFE;
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 15%, white);
 
-    --jt-text: var(--text-1, var(--wp--preset--color--contrast, #1a1a1a));
+    --jt-text: var(--bx-color-fg, var(--text-1, var(--wp--preset--color--contrast, #1a1a1a)));
     --jt-text-secondary: #4B5563;
     --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
     /* Bumped from 60% → 65% so any text using --jt-text-tertiary against
@@ -27,7 +33,7 @@
     --jt-text-tertiary: #6B7280;
     --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 65%, transparent);
 
-    --jt-bg: var(--bg, var(--wp--preset--color--base, #ffffff));
+    --jt-bg: var(--bx-color-bg-elevated, var(--bg, var(--wp--preset--color--base, #ffffff)));
     --jt-bg-subtle: #F9FAFB;
     --jt-bg-subtle: color-mix(in srgb, var(--jt-text) 3%, var(--jt-bg));
     --jt-bg-muted: #F3F4F6;
@@ -37,6 +43,7 @@
 
     --jt-border: rgba(0,0,0,0.1);
     --jt-border: color-mix(in srgb, var(--jt-text) 10%, transparent);
+    --jt-border: var(--bx-color-border, color-mix(in srgb, var(--jt-text) 10%, transparent));
     --jt-border-strong: rgba(0,0,0,0.18);
     --jt-border-strong: color-mix(in srgb, var(--jt-text) 18%, transparent);
 
