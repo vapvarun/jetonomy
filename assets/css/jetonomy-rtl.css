@@ -421,6 +421,36 @@
   .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
   .jt-app .jt-btn-ghost:hover, .jt-app a.jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); text-decoration: none; }
 
+  /* ── Cross-theme <button> insulation (premium, uniform look in any theme) ──
+     Aggressive themes paint every bare <button> with their own accent via a
+     high-specificity `button:not(...)` chain — BuddyX 5.1's bx-tokens-applied.css
+     uses `button:not([class*="wp-"])…` at ~(0,6,1), which outranks the plugin's
+     button classes and turns every icon / action / menu / reaction button into a
+     solid accent pill (392 buttons repainted on a single thread). The theme rule
+     is NOT !important, so a scoped !important reset on .jt-app buttons wins no
+     matter the theme's selector specificity. Neutralize the theme paint, then
+     re-assert the few plugin buttons that intentionally carry a fill or surface.
+     Only <button> needs this; <a class="jt-btn"> is not matched by the theme's
+     `button` selector. */
+  .jt-app button { background-color: transparent !important; background-image: none !important; color: inherit !important; box-shadow: none !important; }
+  /* Re-assert the plugin's own intentional button surfaces/text that the reset
+     above (and the theme) would otherwise flatten. Each carries !important to
+     beat the blanket; the design tokens keep them theme-adaptive. */
+  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-white) !important; }
+  .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-white) !important; }
+  .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; }
+  .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; }
+  /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
+     raised surface + accent underline. */
+  .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,
+  .jt-app button.jt-font-scale__btn.active { background-color: var(--jt-bg) !important; color: var(--jt-text) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 -2px 0 var(--jt-accent) !important; }
+  /* Icon/action toolbar hover feedback. */
+  .jt-app button.jt-act:hover { background-color: var(--jt-bg-muted) !important; color: var(--jt-text-secondary) !important; }
+  /* Dropdown menu items: hover surface + danger text. */
+  .jt-app button.jt-more-item:hover { background-color: var(--jt-bg-hover) !important; }
+  .jt-app button.jt-more-item--danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-more-item--danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; }
+
   /* ── Topic list ── */
   .jt-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
   .jt-row { display: grid !important; grid-template-columns: 48px 1fr 80px 80px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--jt-border); transition: background 0.1s; cursor: pointer; }
