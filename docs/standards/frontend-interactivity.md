@@ -28,6 +28,32 @@ Ref: <https://developer.wordpress.org/block-editor/reference-guides/interactivit
 
 ---
 
+## 1a. Scope — frontend heavy-lifting only
+
+The Interactivity API (and its client-side router) is a **frontend** tool for
+genuinely interactive, repeatedly-used surfaces — listings, threads, profiles,
+dashboards. It is **never** the tool for:
+
+- **Admin / `wp-admin` screens** — use standard WordPress admin patterns
+  (settings forms, `admin-ajax`, redirects).
+- **One-time / single-use pages** — setup wizards, onboarding, activation
+  screens. These run once per site; the SPA router buys nothing and adds a
+  document-level click interceptor that can throw on unload (e.g. WP 7.0's
+  `AbortError: Transition was skipped`).
+
+Standalone admin pages that call `wp_head()` inherit the **entire** global head
+pipeline, so any site-wide Interactivity enqueue rides along even when the page
+itself uses none of it. Keep such pages on plain WordPress: their own enqueued
+CSS/JS + `admin-ajax`, no `data-wp-*` regions. If a third-party plugin drags the
+router onto an admin page anyway, that is the third party's bug to fix, not a
+reason to adopt the Interactivity API where it does not belong.
+
+Reference: the Jetonomy setup wizard (`includes/admin/views/setup-wizard.php`)
+is a deliberately plain server-rendered page using `wp_localize_script` +
+`admin-ajax` — no Interactivity API.
+
+---
+
 ## 2. The model
 
 - **One router region per layout.** Wrap the main view in a single element that
