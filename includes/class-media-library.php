@@ -67,10 +67,11 @@ class Media_Library {
 	 * @return array{items: \WP_Post[], total: int, total_pages: int, page: int, per_page: int}
 	 */
 	public static function query( array $args = array() ): array {
-		$page     = max( 1, (int) ( $args['page'] ?? 1 ) );
-		$per_page = min( 100, max( 1, (int) ( $args['per_page'] ?? 24 ) ) );
-		$orderby  = in_array( $args['orderby'] ?? 'date', array( 'date', 'title' ), true ) ? (string) $args['orderby'] : 'date';
-		$order    = 'ASC' === strtoupper( (string) ( $args['order'] ?? 'DESC' ) ) ? 'ASC' : 'DESC';
+		$page       = max( 1, (int) ( $args['page'] ?? 1 ) );
+		$per_page   = min( 100, max( 1, (int) ( $args['per_page'] ?? 24 ) ) );
+		$orderby_in = (string) ( $args['orderby'] ?? 'date' );
+		$orderby    = in_array( $orderby_in, array( 'date', 'title' ), true ) ? $orderby_in : 'date';
+		$order      = 'ASC' === strtoupper( (string) ( $args['order'] ?? 'DESC' ) ) ? 'ASC' : 'DESC';
 
 		$meta_query = array(
 			array(
