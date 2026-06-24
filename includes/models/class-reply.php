@@ -422,6 +422,30 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Whether a reply id appears anywhere in a threaded tree (any nesting depth).
+	 *
+	 * Canonical membership test for a `get_threaded()` result so callers don't
+	 * each hand-roll a recursive walker. Used by the single-post view to decide
+	 * whether the Q&A accepted-answer callout is a duplicate of an inline reply
+	 * on the current page.
+	 *
+	 * @param array $tree Threaded nodes (each may carry a ->children array).
+	 * @param int   $id   Reply id to search for.
+	 * @return bool
+	 */
+	public static function tree_contains( array $tree, int $id ): bool {
+		foreach ( $tree as $node ) {
+			if ( (int) $node->id === $id ) {
+				return true;
+			}
+			if ( ! empty( $node->children ) && self::tree_contains( $node->children, $id ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Recursively build threaded tree from grouped replies.
 	 *
 	 * @param array $by_parent Replies grouped by parent_id.
