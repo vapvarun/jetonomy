@@ -762,10 +762,14 @@ class Notifier {
 			return;
 		}
 
+		// Keyed on the canonical moderation action vocabulary fired by
+		// Moderation_Service ('approve'|'spam'|'trash'|'hold') — every fire site
+		// now funnels through that choke-point, so these keys always match.
 		$action_labels = [
-			'approved' => __( 'approved', 'jetonomy' ),
-			'spam'     => __( 'marked as spam', 'jetonomy' ),
-			'trash'    => __( 'removed', 'jetonomy' ),
+			'approve' => __( 'approved', 'jetonomy' ),
+			'spam'    => __( 'marked as spam', 'jetonomy' ),
+			'trash'   => __( 'removed', 'jetonomy' ),
+			'hold'    => __( 'held for review', 'jetonomy' ),
 		];
 
 		$this->create_and_maybe_email(

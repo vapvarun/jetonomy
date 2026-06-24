@@ -1564,24 +1564,23 @@ class Abilities {
 		$object_id   = (int) $input['object_id'];
 		$action      = sanitize_text_field( $input['action'] );
 
-		$status_map = [
-			'approve' => 'publish',
-			'trash'   => 'trash',
-			'spam'    => 'spam',
-		];
-		$new_status = $status_map[ $action ] ?? 'publish';
-
-		if ( 'post' === $object_type ) {
-			Post::update( $object_id, [ 'status' => $new_status ] );
-		} elseif ( 'reply' === $object_type ) {
-			Reply::update( $object_id, [ 'status' => $new_status ] );
+		// Route through the moderation choke-point so flag resolution, reputation,
+		// and the canonical jetonomy_content_moderated action fire identically to
+		// the REST and admin paths. The ability's permission_callback already
+		// gated on `jetonomy_moderate`, which can_act_on_object() honours.
+		$result = \Jetonomy\Moderation\Moderation_Service::set_object_status(
+			get_current_user_id(),
+			$object_type,
+			$object_id,
+			$action
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
-
-		do_action( 'jetonomy_content_moderated', $action, $object_type, $object_id, get_current_user_id() );
 
 		return [
 			'success'    => true,
-			'new_status' => $new_status,
+			'new_status' => \Jetonomy\Moderation\Moderation_Service::status_for_action( $action ),
 		];
 	}
 

@@ -1881,9 +1881,9 @@
 			"args_signature": [
 				"int $post_id",
 				"int $space_id",
-				"WP_REST_Request $request"
+				"WP_REST_Request|null $request"
 			],
-			"where": "includes/api/class-posts-controller.php:529",
+			"where": "includes/api/class-posts-controller.php (REST create); includes/models/class-post.php Post::publish_scheduled() (cron-published scheduled post, $request null); includes/class-abilities.php (programmatic create, $request null)",
 			"consumed_by": "jetonomy-pro"
 		},
 		{
@@ -1971,8 +1971,15 @@
 		{
 			"name": "jetonomy_content_moderated",
 			"type": "action",
-			"args": "type, id, action, moderator_id",
-			"where": "includes/admin/ajax/class-moderation-handler.php",
+			"args": "action, type, id, moderator_id",
+			"where": "includes/moderation/class-moderation-service.php apply_object_status() — single choke-point; REST mod controller, admin AJAX content handler, abilities, and space-mod all funnel through here. Canonical action vocabulary: approve|spam|trash|hold.",
+			"consumed_by": null
+		},
+		{
+			"name": "jetonomy_moderation_flag_resolution",
+			"type": "filter",
+			"args": "flag_status, action, type, id, user_id",
+			"where": "includes/moderation/class-moderation-service.php apply_object_status() — filters the status applied to an object's pending flags when content is moderated directly (default approve=dismissed, spam/trash=valid, hold=''). Return '' to leave flags pending.",
 			"consumed_by": null
 		},
 		{

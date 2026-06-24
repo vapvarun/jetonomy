@@ -220,13 +220,17 @@ class Moderation_Service {
 
 		if ( 'valid' === $status ) {
 			$trash = self::set_object_status( $user_id, $type, $object_id, 'trash' );
-			// Already-deleted content makes the report moot, not failed —
-			// keep the flag valid and let the cascade clean up siblings.
-			if ( is_wp_error( $trash ) && 'jetonomy_not_found' !== $trash->get_error_code() ) {
-				return $trash;
+			if ( is_wp_error( $trash ) ) {
+				// Already-deleted content makes the report moot, not failed.
+				if ( 'jetonomy_not_found' !== $trash->get_error_code() ) {
+					return $trash;
+				}
+				// set_object_status() bailed (content already gone) before its
+				// flag-sync ran, so clear the remaining pending siblings here for
+				// this edge case. On the normal path apply_object_status() has
+				// already resolved them — no double work.
+				Flag::resolve_siblings_for( $type, $object_id, $user_id, 'valid', $flag_id );
 			}
-
-			Flag::resolve_siblings_for( $type, $object_id, $user_id, 'valid', $flag_id );
 
 			// Reward the original reporter when their flag is confirmed valid.
 			// Skip self-flags (reporter == author) — that's a moderation
@@ -309,18 +313,46 @@ class Moderation_Service {
 	}
 
 	/**
-	 * Status change by the SYSTEM actor (cron / automated moderation such as
-	 * the Pro AI batch reviewer). Skips the per-user permission check and
-	 * records the action as user 0. PHP-internal entry point only — never
-	 * wire this to a REST/AJAX handler.
+	 * Status change by a TRUSTED internal caller that has already authorized the
+	 * request — cron / automated moderation (Pro AI batch reviewer) or an admin
+	 * AJAX handler that ran its own capability check. Skips the per-user
+	 * `can_act_on_object` check (the caller owns authorization) but still runs
+	 * the full choke-point side-effects: status write, pending-flag resolution,
+	 * reputation, and the `jetonomy_content_moderated` action.
 	 *
-	 * @param string $type   'post' or 'reply'
-	 * @param int    $id     Object row ID.
-	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
+	 * Never wire this directly to a public REST/AJAX route without a prior
+	 * capability + nonce check in the caller.
+	 *
+	 * @param string $type     'post' or 'reply'
+	 * @param int    $id       Object row ID.
+	 * @param string $action   'approve' | 'spam' | 'hold' | 'trash'
+	 * @param int    $actor_id Acting user ID to record (0 = system/cron). The
+	 *                         caller passes the authenticated user for audit and
+	 *                         self-action suppression (e.g. don't notify yourself).
 	 * @return true|WP_Error
 	 */
-	public static function system_set_object_status( string $type, int $id, string $action ) {
-		return self::apply_object_status( 0, $type, $id, $action );
+	public static function system_set_object_status( string $type, int $id, string $action, int $actor_id = 0 ) {
+		return self::apply_object_status( $actor_id, $type, $id, $action );
+	}
+
+	/**
+	 * Canonical moderation-action → content-status map. The single source of
+	 * truth for how a moderation verb translates to a stored status, shared by
+	 * apply_object_status() and any caller that needs to report the resulting
+	 * status (e.g. the moderate ability's output). Returns '' for an unknown
+	 * action so callers can treat that as a validation failure.
+	 *
+	 * @param string $action 'approve' | 'spam' | 'hold' | 'trash'
+	 * @return string Stored status ('publish'|'spam'|'pending'|'trash'), or '' if invalid.
+	 */
+	public static function status_for_action( string $action ): string {
+		$map = [
+			'approve' => 'publish',
+			'spam'    => 'spam',
+			'hold'    => 'pending',
+			'trash'   => 'trash',
+		];
+		return $map[ $action ] ?? '';
 	}
 
 	/**
@@ -341,13 +373,8 @@ class Moderation_Service {
 				[ 'status' => 400 ]
 			);
 		}
-		$map = [
-			'approve' => 'publish',
-			'spam'    => 'spam',
-			'hold'    => 'pending',
-			'trash'   => 'trash',
-		];
-		if ( ! isset( $map[ $action ] ) ) {
+		$new_status = self::status_for_action( $action );
+		if ( '' === $new_status ) {
 			return new WP_Error(
 				'jetonomy_validation',
 				__( 'Invalid action.', 'jetonomy' ),
@@ -360,13 +387,42 @@ class Moderation_Service {
 			if ( ! $row ) {
 				return new WP_Error( 'jetonomy_not_found', __( 'Post not found.', 'jetonomy' ), [ 'status' => 404 ] );
 			}
-			Post::update( $id, [ 'status' => $map[ $action ] ] );
+			Post::update( $id, [ 'status' => $new_status ] );
 		} else {
 			$row = Reply::find( $id );
 			if ( ! $row ) {
 				return new WP_Error( 'jetonomy_not_found', __( 'Reply not found.', 'jetonomy' ), [ 'status' => 404 ] );
 			}
-			Reply::update( $id, [ 'status' => $map[ $action ] ] );
+			Reply::update( $id, [ 'status' => $new_status ] );
+		}
+
+		// Single place every moderation path resolves pending flags. REST,
+		// admin AJAX (single + bulk), abilities, space-mod, and resolve_flag all
+		// funnel through here, so directly actioning content can no longer leave
+		// orphan 'pending' flags in the queue pointing at already-removed content
+		// (Basecamp flag/moderation sync gap). resolve_siblings_for() is a single
+		// bulk UPDATE, so this stays one extra query per object.
+		$flag_resolution = [
+			'approve' => 'dismissed', // Content found acceptable — reports dismissed.
+			'spam'    => 'valid',     // Reports confirmed.
+			'trash'   => 'valid',     // Reports confirmed.
+			// 'hold' intentionally absent: still under review, leave flags pending.
+		];
+		$flag_status = $flag_resolution[ $action ] ?? '';
+		/**
+		 * Filter the status applied to an object's pending flags when it is
+		 * moderated directly (outside the flag-resolution flow). Return '' to
+		 * leave the flags pending (e.g. a custom "needs second review" policy).
+		 *
+		 * @param string $flag_status Default resolution for this action ('valid', 'dismissed', or '').
+		 * @param string $action      Moderation action: approve|spam|trash|hold.
+		 * @param string $type        'post' or 'reply'.
+		 * @param int    $id          Object row ID.
+		 * @param int    $user_id     Acting user ID (0 = system actor).
+		 */
+		$flag_status = (string) apply_filters( 'jetonomy_moderation_flag_resolution', $flag_status, $action, $type, $id, $user_id );
+		if ( '' !== $flag_status ) {
+			Flag::resolve_siblings_for( $type, $id, $user_id, $flag_status, 0 );
 		}
 
 		if ( 'spam' === $action && ! empty( $row->author_id ) ) {
