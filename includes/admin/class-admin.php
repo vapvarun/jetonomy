@@ -821,6 +821,8 @@ class Admin {
 			'sensei'      => __( 'Sensei Course', 'jetonomy' ),
 			'masterstudy' => __( 'MasterStudy Course', 'jetonomy' ),
 			'learnomy'    => __( 'Learnomy Course', 'jetonomy' ),
+			'suremembers' => __( 'SureMembers Access Group', 'jetonomy' ),
+			'wpfusion'    => __( 'WP Fusion Tag', 'jetonomy' ),
 		);
 
 		$membership_adapters = array();
