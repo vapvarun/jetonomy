@@ -315,14 +315,36 @@ $crumbs[] = [
 			</div>
 			<?php endif; ?>
 
-			<?php if ( 'ideas' === ( $space->type ?? '' ) ) : ?>
+			<?php
+			// Space sub-navigation. Ideas spaces keep their Ideas + Roadmap tabs;
+			// every space type now also exposes a Members tab for logged-in users
+			// so space moderators can reach the members page (and its pending
+			// join-request approval panel) without knowing the direct URL. (#10013900410)
+			$jt_is_ideas     = 'ideas' === ( $space->type ?? '' );
+			$jt_show_members = is_user_logged_in();
+			if ( $jt_is_ideas || $jt_show_members ) :
+				$jt_primary_labels = [
+					'forum' => __( 'Discussions', 'jetonomy' ),
+					'qa'    => __( 'Questions', 'jetonomy' ),
+					'ideas' => __( 'Ideas', 'jetonomy' ),
+					'feed'  => __( 'Posts', 'jetonomy' ),
+				];
+				$jt_primary_label  = $jt_primary_labels[ $space->type ?? 'forum' ] ?? __( 'Discussions', 'jetonomy' );
+				?>
 				<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Space sections', 'jetonomy' ); ?>">
 					<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab on" aria-current="page">
-						<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>
+						<?php echo esc_html( $jt_primary_label ); ?>
 					</a>
-					<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab">
-						<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
-					</a>
+					<?php if ( $jt_is_ideas ) : ?>
+						<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab">
+							<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
+					<?php if ( $jt_show_members ) : ?>
+						<a href="<?php echo esc_url( $space_url . 'members/' ); ?>" class="jt-space-tab">
+							<?php esc_html_e( 'Members', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
 				</nav>
 			<?php endif; ?>
 
