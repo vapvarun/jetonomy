@@ -186,6 +186,18 @@ class Router {
 			'tab'        => get_query_var( 'jetonomy_tab', '' ),
 		];
 
+		// A resolved Jetonomy route is a real page. WordPress may have flagged
+		// the main query as 404 — e.g. `?paged=2` on a route whose underlying
+		// main object is a single page — which makes the notifications / listing
+		// "Load More" fetches 404 from page 2 on. Clear the inherited 404 and
+		// assert a 200 before rendering; templates still call status_header( 404 )
+		// themselves for genuinely missing content (unknown space / post).
+		global $wp_query;
+		if ( $wp_query instanceof \WP_Query && $wp_query->is_404() ) {
+			$wp_query->is_404 = false;
+		}
+		status_header( 200 );
+
 		// Space RSS feed renders XML and exits before any template work.
 		if ( 'space-feed' === $route ) {
 			Feed::render( (string) $data['slug'] );
