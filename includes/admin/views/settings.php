@@ -12,6 +12,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 ?>
 <div class="wrap jetonomy-admin">
 	<?php
+	// Screen-reader page heading + the WP notice anchor. Without `.wp-header-end`
+	// WordPress core relocates admin notices to just after the first <h2> it
+	// finds, which on the Integrations tab is the family-header title — so the
+	// "settings saved" / companion notice rendered inside `.jt-fam-header__body`.
+	// Anchoring here keeps every tab's notices at the top of the page.
+	?>
+	<h1 class="screen-reader-text"><?php esc_html_e( 'Jetonomy Settings', 'jetonomy' ); ?></h1>
+	<hr class="wp-header-end">
+	<?php
 	ob_start();
 	do_action( 'jetonomy_admin_settings_tabs', $active_tab );
 	$advanced_tabs_html = ob_get_clean();
