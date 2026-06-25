@@ -10,6 +10,7 @@
 			this.bindDashboard();
 			this.bindCategoryActions();
 			this.bindSpaceActions();
+			this.bindInviteLinks();
 			this.bindModerationActions();
 			this.bindUserActions();
 			this.bindImport();
@@ -906,6 +907,150 @@
 		},
 
 		// ═══════════════════════════════════════════════════════════
+		//  Invite Links
+		// ═══════════════════════════════════════════════════════════
+
+		bindInviteLinks: function() {
+			var self = this;
+			var $table = $('#jetonomy-invites-table');
+			if (!$table.length) {
+				return;
+			}
+			var spaceId = $table.data('space-id');
+
+			// Build a single <tr> for an invite row.
+			function rowHtml(invite) {
+				var i18n = self.i18n;
+				var uses = invite.max_uses > 0
+					? (invite.used_count + ' / ' + invite.max_uses)
+					: (invite.used_count + ' / ' + (i18n.inviteUnlimited || 'Unlimited'));
+				var expires = invite.expires_at ? invite.expires_at : (i18n.inviteNever || 'Never');
+				if (!invite.is_valid) {
+					expires = (i18n.inviteExpired || 'Expired');
+				}
+				var $tr = $('<tr>').attr('data-invite-id', invite.id);
+				$('<td>').append($('<code>').text(invite.invite_url)).appendTo($tr);
+				$('<td>').text(uses).appendTo($tr);
+				$('<td>').text(expires).appendTo($tr);
+				var $actions = $('<td>');
+				$('<button>', { type: 'button', 'class': 'button button-small jetonomy-copy-invite' })
+					.attr('data-url', invite.invite_url)
+					.text(i18n.copy || 'Copy')
+					.appendTo($actions);
+				$('<button>', { type: 'button', 'class': 'button button-small button-link-delete jetonomy-revoke-invite' })
+					.attr('data-id', invite.id)
+					.text(' ' + (i18n.revoke || 'Revoke'))
+					.appendTo($actions);
+				$actions.appendTo($tr);
+				return $tr;
+			}
+
+			// Load existing links for this space on tab render.
+			function loadInvites() {
+				self.ajax('jetonomy_list_invites', { space_id: spaceId }).done(function(res) {
+					if (!res.success || !res.data || !res.data.invites || !res.data.invites.length) {
+						return;
+					}
+					var $tbody = $table.find('tbody');
+					$tbody.find('.jetonomy-empty-row').remove();
+					res.data.invites.forEach(function(invite) {
+						$tbody.append(rowHtml(invite));
+					});
+				});
+			}
+			loadInvites();
+
+			// Copy a link to the clipboard.
+			function copyToClipboard(text) {
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(text).then(function() {
+						self.toast(self.i18n.inviteCopied || 'Copied.');
+					}).catch(function() {
+						self.toast(self.i18n.error, 'error');
+					});
+					return;
+				}
+				var $tmp = $('<textarea>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
+				$tmp[0].select();
+				try {
+					document.execCommand('copy');
+					self.toast(self.i18n.inviteCopied || 'Copied.');
+				} catch (e) {
+					self.toast(self.i18n.error, 'error');
+				}
+				$tmp.remove();
+			}
+
+			// Generate a new invite link.
+			$(document).on('click', '#jetonomy-generate-invite', function() {
+				var $btn = $(this);
+				var maxUses = parseInt($('#invite-max-uses').val(), 10) || 0;
+				var expiresAt = $('#invite-expires-at').val() || '';
+
+				$btn.prop('disabled', true);
+
+				self.ajax('jetonomy_generate_invite', {
+					space_id: spaceId,
+					max_uses: maxUses,
+					expires_at: expiresAt
+				}).done(function(res) {
+					if (res.success) {
+						self.toast(res.data.message || self.i18n.saved);
+						var $tbody = $table.find('tbody');
+						$tbody.find('.jetonomy-empty-row').remove();
+						$tbody.prepend(rowHtml({
+							id: res.data.id,
+							invite_url: res.data.invite_url,
+							max_uses: res.data.max_uses,
+							used_count: 0,
+							expires_at: res.data.expires_at,
+							is_valid: true
+						}));
+						copyToClipboard(res.data.invite_url);
+					} else {
+						self.toast(res.data || self.i18n.error, 'error');
+					}
+				}).fail(function() {
+					self.toast(self.i18n.error, 'error');
+				}).always(function() {
+					$btn.prop('disabled', false);
+				});
+			});
+
+			// Copy an existing link.
+			$(document).on('click', '.jetonomy-copy-invite', function() {
+				copyToClipboard($(this).data('url'));
+			});
+
+			// Revoke a link.
+			$(document).on('click', '.jetonomy-revoke-invite', function() {
+				var $btn = $(this);
+				var $row = $btn.closest('tr');
+				var id = $btn.data('id');
+
+				self.confirmAsync(self.i18n.inviteRevokeConfirm, { danger: true }).then(function(ok) {
+					if (!ok) return;
+					self.ajax('jetonomy_revoke_invite', {
+						space_id: spaceId,
+						id: id
+					}).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.fadeOut(300, function() {
+								$(this).remove();
+								if (!$table.find('tbody tr').length) {
+									location.reload();
+								}
+							});
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+						}
+					});
+				});
+			});
+		},
+
+		// ═══════════════════════════════════════════════════════════
 		//  Moderation
 		// ═══════════════════════════════════════════════════════════
 
@@ -921,41 +1066,56 @@
 				var objectId = $btn.data('id');
 
 				var ajaxAction;
+				var confirmMsg = '';
 				switch (action) {
 					case 'approve':
 						ajaxAction = 'jetonomy_approve_content';
 						break;
 					case 'spam':
 						ajaxAction = 'jetonomy_spam_content';
+						confirmMsg = self.i18n.confirmSpam;
 						break;
 					case 'trash':
 						ajaxAction = 'jetonomy_trash_content';
+						confirmMsg = self.i18n.confirmTrash;
 						break;
 					default:
 						return;
 				}
 
-				$btn.prop('disabled', true);
-				$row.find('.jetonomy-moderate-btn').prop('disabled', true);
+				// Spam / Trash are destructive — they pull content from the
+				// community. Confirm before firing (Approve is safe, no prompt).
+				var run = function() {
+					$btn.prop('disabled', true);
+					$row.find('.jetonomy-moderate-btn').prop('disabled', true);
 
-				self.ajax(ajaxAction, {
-					object_type: objectType,
-					object_id: objectId
-				}).done(function(res) {
-					if (res.success) {
-						self.toast(res.data.message);
-						$row.addClass('jetonomy-moderated');
-						setTimeout(function() {
-							$row.fadeOut(300, function() { $(this).remove(); });
-						}, 500);
-					} else {
-						self.toast(res.data || self.i18n.error, 'error');
+					self.ajax(ajaxAction, {
+						object_type: objectType,
+						object_id: objectId
+					}).done(function(res) {
+						if (res.success) {
+							self.toast(res.data.message);
+							$row.addClass('jetonomy-moderated');
+							setTimeout(function() {
+								$row.fadeOut(300, function() { $(this).remove(); });
+							}, 500);
+						} else {
+							self.toast(res.data || self.i18n.error, 'error');
+							$row.find('.jetonomy-moderate-btn').prop('disabled', false);
+						}
+					}).fail(function() {
+						self.toast(self.i18n.error, 'error');
 						$row.find('.jetonomy-moderate-btn').prop('disabled', false);
-					}
-				}).fail(function() {
-					self.toast(self.i18n.error, 'error');
-					$row.find('.jetonomy-moderate-btn').prop('disabled', false);
-				});
+					});
+				};
+
+				if ('' !== confirmMsg) {
+					self.confirmAsync(confirmMsg, { danger: true }).then(function(ok) {
+						if (ok) { run(); }
+					});
+				} else {
+					run();
+				}
 			});
 
 			// Resolve Flag

@@ -65,6 +65,24 @@ $offset   = ( $page - 1 ) * $per_page;
 global $wpdb;
 $posts_tbl  = \Jetonomy\table( 'posts' );
 $spaces_tbl = \Jetonomy\table( 'spaces' );
+
+// Space-visibility + per-post is_private gate: a non-member viewing another
+// user's profile must not see that user's posts in private/hidden spaces, nor
+// their private posts in public spaces.
+[ $jt_space_vis_sql, $jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+[ $jt_priv_sql, $jt_priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+$jt_gate_sql    = '';
+$jt_gate_params = array();
+if ( '1=1' !== $jt_space_vis_sql ) {
+	$jt_gate_sql   .= ' AND ' . $jt_space_vis_sql;
+	$jt_gate_params = array_merge( $jt_gate_params, $jt_space_vis_params );
+}
+if ( '' !== $jt_priv_sql ) {
+	$jt_gate_sql   .= ' AND ' . $jt_priv_sql;
+	$jt_gate_params = array_merge( $jt_gate_params, $jt_priv_params );
+}
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $recent_posts = $wpdb->get_results(
 	$wpdb->prepare(
@@ -72,12 +90,11 @@ $recent_posts = $wpdb->get_results(
 		"SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
 		 FROM {$posts_tbl} p
 		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.author_id = %d AND p.status = 'publish'
+		 WHERE p.author_id = %d AND p.status = 'publish'{$jt_gate_sql}
 		 ORDER BY p.created_at DESC
 		 LIMIT %d OFFSET %d",
 		(int) $user->ID,
-		$per_page,
-		$offset
+		...array_merge( $jt_gate_params, array( $per_page, $offset ) )
 	)
 ) ?: [];
 
@@ -251,7 +268,9 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No replies yet.', 'jetonomy' ),
+							'message' => $is_own
+								? __( 'You have not replied to anything yet — jump into a discussion and your replies will show here.', 'jetonomy' )
+								: __( 'No replies yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]
 					);
@@ -310,7 +329,9 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'message' => __( 'No votes yet.', 'jetonomy' ),
+							'message' => $is_own
+								? __( 'You have not voted yet — upvote posts and replies you find helpful and they will show here.', 'jetonomy' )
+								: __( 'No votes yet.', 'jetonomy' ),
 							'variant' => 'compact',
 						]
 					);
@@ -386,6 +407,7 @@ $crumbs = [
 						$dr_row_class = 'jt-row jt-row--draft' . ( '' !== $dr_url ? ' jt-row-clickable' : '' );
 						?>
 						<div class="<?php echo esc_attr( $dr_row_class ); ?>"
+							data-jt-post-id="<?php echo (int) $dr_post->id; ?>"
 							<?php if ( '' !== $dr_url ) : ?>
 								data-jt-href="<?php echo esc_url( $dr_url ); ?>"
 							<?php endif; ?>>
@@ -395,7 +417,12 @@ $crumbs = [
 									<?php if ( $is_scheduled ) : ?>
 										<span class="jt-badge jt-badge--scheduled">
 											<?php
-											$sched_date = date_i18n( $datetime_format, strtotime( $dr_post->published_at ) );
+											// published_at is stored in UTC; render it in the
+											// site timezone (Settings -> General). get_date_from_gmt()
+											// is the canonical UTC-to-site-local formatter —
+											// date_i18n( strtotime( $utc ) ) would print the raw
+											// UTC clock time, showing the wrong scheduled time.
+											$sched_date = get_date_from_gmt( $dr_post->published_at, $datetime_format );
 											/* translators: %s: scheduled date/time */
 											echo esc_html( sprintf( __( 'Scheduled: %s', 'jetonomy' ), $sched_date ) );
 											?>
@@ -418,6 +445,11 @@ $crumbs = [
 									echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $dr_ago ) );
 									?>
 								</div>
+								<button type="button"
+									class="jt-btn jt-btn-fill jt-btn-sm jt-draft-publish"
+									data-wp-on--click="actions.publishDraft">
+									<?php esc_html_e( 'Publish now', 'jetonomy' ); ?>
+								</button>
 							</div>
 						</div>
 					<?php endforeach; ?>

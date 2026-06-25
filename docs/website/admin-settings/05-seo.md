@@ -88,7 +88,6 @@ These patterns control the `<title>` tag on Jetonomy pages. Use the available to
 | `{post_title}` | The post title |
 | `{space_name}` | The space name |
 | `{site_name}` | Your WordPress site name |
-| `{page_number}` | Current page number (reply pagination) |
 
 **Default post title pattern:** `{post_title} - {space_name} | {site_name}`
 
@@ -99,7 +98,7 @@ These patterns control the `<title>` tag on Jetonomy pages. Use the available to
 ## Noindex Controls
 
 **Settings:** `seo_noindex_profiles`, `seo_noindex_search`
-**Default:** Off for profiles, On for search
+**Default:** On for both profiles and search
 **Location:** SEO tab → Robots section
 
 **Noindex user profiles** - When enabled, Jetonomy adds `<meta name="robots" content="noindex">` to all `/community/u/*/` pages. Enable this if you prefer profiles not to appear in search results (common for privacy-sensitive communities).
@@ -130,11 +129,11 @@ Leave this empty if the community has no Twitter / X presence - Jetonomy simply 
 
 ### Default Share Image
 
-**Setting:** `seo_default_share_image`
+**Setting:** `seo_default_og_image`
 **Default:** Empty
 **Location:** SEO tab → Default share image
 
-Pick an image from the WordPress media library to use as the fallback `og:image` whenever a specific post does not have an image of its own. Posts that already include their own image continue to use that image - this setting only kicks in when there is nothing else to show.
+Paste the absolute URL of an image to use as the fallback `og:image` whenever a specific post does not have an image of its own. This is a plain URL field, not a media-library picker. Posts that already include their own image continue to use that image - this setting only kicks in when there is nothing else to show. When left empty, Jetonomy falls back to the WordPress site logo / icon.
 
 **Recommended specs:**
 
@@ -146,6 +145,20 @@ Pick an image from the WordPress media library to use as the fallback `og:image`
 | Aspect ratio | 1.91:1 |
 
 Twitter / X, Facebook, LinkedIn, and Slack all read this image when generating link previews, so picking a branded fallback (logo + community name on a clean background) keeps shared links recognizable.
+
+## Social Embeds (Instagram & Facebook)
+
+**Settings:** `fb_app_id`, `fb_app_secret`
+**Location:** SEO tab → Social Embeds section
+
+When members paste a link, Jetonomy turns it into a rich embed. YouTube, Vimeo, TikTok, Twitter/X, Spotify, SoundCloud, and TED Talks embed automatically with no setup required.
+
+Instagram and Facebook are the exception: Meta deprecated anonymous oEmbed access in October 2020, so those two providers require a free Meta Developer App.
+
+- **Facebook App ID** (`fb_app_id`) - the numeric App ID from your Meta Developer dashboard.
+- **Facebook App Secret** (`fb_app_secret`) - the App Secret. It is stored in `wp_options` and never exposed to the frontend.
+
+Leave both fields empty if you do not need Instagram or Facebook embeds - every other provider keeps working without them.
 
 ## What's Next?
 

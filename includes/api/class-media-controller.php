@@ -31,52 +31,90 @@ class Media_Controller extends Base_Controller {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'upload_image' ],
-					// REST_Auth enforces login + nonce upfront. The fine-grained
-					// cap matrix (upload_files OR jetonomy_upload_media OR
-					// jetonomy_create_posts OR jetonomy_create_replies) is
-					// re-checked in upload_image() so the handler keeps the same
-					// cap-OR semantics REST_Auth can't express in a single call.
-					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+					// Login + nonce + the upload-capability matrix in one call:
+					// auth_mutation() passes only when the user holds ANY of these
+					// caps, so a read-only subscriber can no longer push files into
+					// the media library. upload_image() adds the restriction
+					// (ban/silence) re-check that capabilities alone don't express.
+					'permission_callback' => REST_Auth::auth_mutation(
+						array( 'upload_files', 'jetonomy_upload_media', 'jetonomy_create_posts', 'jetonomy_create_replies' )
+					),
+				],
+				[
+					// GET /jetonomy/v1/media — list community uploads (owner view).
+					// Read-only listing scoped to Jetonomy member uploads.
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'list_media' ],
+					'permission_callback' => static function () {
+						return current_user_can( 'jetonomy_manage_settings' );
+					},
+					'args'                => [
+						'page'     => [
+							'type'    => 'integer',
+							'default' => 1,
+						],
+						'per_page' => [
+							'type'    => 'integer',
+							'default' => 24,
+						],
+						'author'   => [ 'type' => 'integer' ],
+						'space_id' => [ 'type' => 'integer' ],
+						'search'   => [ 'type' => 'string' ],
+						'order'    => [
+							'type'    => 'string',
+							'enum'    => [ 'asc', 'desc' ],
+							'default' => 'desc',
+						],
+					],
 				],
 			]
 		);
 	}
 
 	/**
-	 * Permission check.
+	 * GET /jetonomy/v1/media — paginated list of community uploads, scoped to
+	 * Jetonomy member uploads (the same set hidden from the main Media Library).
 	 *
-	 * Mirrors the cap matrix from the legacy `Jetonomy\Media::handle_upload`
-	 * so existing roles keep the same behaviour:
-	 *   - `upload_files` (Author+) — wp-core grant
-	 *   - `jetonomy_upload_media` (Contributor+) — Jetonomy role map
-	 *   - `jetonomy_create_posts` (Subscriber+) — anyone who can post
-	 *   - `jetonomy_create_replies` (Subscriber+) — anyone who can reply
-	 *
-	 * Trust-level promotion already grants `jetonomy_upload_media` at TL 1, so
-	 * the trust path is covered by the cap check — no separate trust gate.
-	 *
-	 * @param WP_REST_Request $request Unused but required by the contract.
-	 * @return bool|WP_Error
+	 * @param WP_REST_Request $request Query params: page, per_page, author, space_id, search, order.
+	 * @return WP_REST_Response
 	 */
-	public function upload_permissions_check( WP_REST_Request $request ) {
-		if ( ! is_user_logged_in() ) {
-			return new WP_Error(
-				'jetonomy_unauthenticated',
-				__( 'You must be logged in to upload images.', 'jetonomy' ),
-				[ 'status' => 401 ]
-			);
-		}
+	public function list_media( WP_REST_Request $request ) {
+		$result = \Jetonomy\Media_Library::query(
+			[
+				'page'     => (int) $request->get_param( 'page' ),
+				'per_page' => (int) $request->get_param( 'per_page' ),
+				'author'   => (int) $request->get_param( 'author' ),
+				'space_id' => (int) $request->get_param( 'space_id' ),
+				'search'   => (string) $request->get_param( 'search' ),
+				'order'    => (string) $request->get_param( 'order' ),
+			]
+		);
 
-		$can_upload = current_user_can( 'upload_files' )
-			|| current_user_can( 'jetonomy_upload_media' )
-			|| current_user_can( 'jetonomy_create_posts' )
-			|| current_user_can( 'jetonomy_create_replies' );
+		$items = array_map(
+			static function ( $att ) {
+				$id = (int) $att->ID;
+				return [
+					'id'       => $id,
+					'url'      => (string) wp_get_attachment_url( $id ),
+					'thumb'    => (string) wp_get_attachment_image_url( $id, 'medium' ),
+					'title'    => get_the_title( $id ),
+					'mime'     => (string) get_post_mime_type( $id ),
+					'author'   => (int) $att->post_author,
+					'space_id' => (int) get_post_meta( $id, '_jetonomy_space_id', true ),
+					'date'     => mysql_to_rfc3339( $att->post_date_gmt ),
+				];
+			},
+			$result['items']
+		);
 
-		if ( ! $can_upload ) {
-			return $this->permission_error();
-		}
-
-		return true;
+		return $this->paginated_response(
+			$items,
+			[
+				'total'  => (int) $result['total'],
+				'page'   => (int) $result['page'],
+				'offset' => ( (int) $result['page'] - 1 ) * (int) $result['per_page'],
+			]
+		);
 	}
 
 	/**
@@ -91,6 +129,19 @@ class Media_Controller extends Base_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function upload_image( WP_REST_Request $request ) {
+		// Capabilities are enforced by the route's auth_mutation matrix; here we
+		// add the restriction layer caps don't cover. A silenced member (can log
+		// in, cannot create content) or a banned account whose session outlived
+		// the ban must not be able to push files into the media library.
+		$uid = get_current_user_id();
+		if ( \Jetonomy\Models\Restriction::is_banned( $uid ) || \Jetonomy\Models\Restriction::is_silenced( $uid ) ) {
+			return new WP_Error(
+				'jetonomy_upload_forbidden',
+				__( 'You are not allowed to upload media.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		if ( empty( $_FILES['file'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing — REST nonce already verified by core.
 			return new WP_Error(
 				'jetonomy_no_file',
@@ -129,6 +180,11 @@ class Media_Controller extends Base_Controller {
 			$alt_text = '' !== $base ? ucfirst( $base ) : __( 'Uploaded image', 'jetonomy' );
 		}
 		update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+
+		// Mark this as a Jetonomy community upload so it can be kept out of the
+		// admin Media Library by default (member uploads should not drown the
+		// site owner's own media). Optional space context if the caller sends it.
+		\Jetonomy\Media_Library::tag_upload( (int) $attachment_id, (int) $request->get_param( 'space_id' ) );
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
 

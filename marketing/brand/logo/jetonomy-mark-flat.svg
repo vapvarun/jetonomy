@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Jetonomy">
+  <rect x="36" y="36" width="440" height="440" rx="120" fill="#3B82F6"/>
+  <g fill="#FFFFFF">
+    <g opacity="0.82">
+      <circle cx="324" cy="206" r="44"/>
+      <path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/>
+    </g>
+    <circle cx="206" cy="220" r="60"/>
+    <path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/>
+  </g>
+</svg>

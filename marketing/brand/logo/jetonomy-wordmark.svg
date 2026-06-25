@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 130" width="560" height="130" role="img" aria-label="Jetonomy">
+  <defs>
+    <linearGradient id="jtGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <text x="0" y="100" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif" font-weight="800" font-size="116" letter-spacing="-6">
+    <tspan fill="#1F2733">Jet</tspan><tspan fill="url(#jtGrad)">onomy</tspan>
+  </text>
+</svg>

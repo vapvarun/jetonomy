@@ -70,6 +70,9 @@ class Mentions {
 				mb_substr( $context_title, 0, 50 )
 			);
 
+			// Resolve the deep link once — reused for the action payload and the email CTA.
+			$content_url = notification_deep_link( $object_type, $object_id );
+
 			$notification_id = Models\Notification::create(
 				[
 					'user_id'     => $uid,
@@ -82,7 +85,7 @@ class Mentions {
 				]
 			);
 
-			do_action( 'jetonomy_notification_created', $notification_id, $uid, 'mention', $object_type, $object_id );
+			do_action( 'jetonomy_notification_created', $notification_id, $uid, 'mention', $object_type, $object_id, $message, $content_url );
 
 			// Check user email preference for mentions.
 			$profile    = Models\UserProfile::find_by_user( $uid );
@@ -104,11 +107,14 @@ class Mentions {
 						$site_name = get_bloginfo( 'name' );
 						$subject   = sprintf( '[%s] %s', $site_name, wp_strip_all_tags( $message ) );
 
-						// Build List-Unsubscribe headers (RFC 8058).
-						$unsub_token = wp_hash( $uid . ':mention:unsubscribe' );
+						// Build List-Unsubscribe headers (RFC 8058) with a signed,
+						// time-limited unsubscribe token.
+						$unsub_exp   = \Jetonomy\Notifications\Notifier::unsubscribe_expiry();
+						$unsub_token = \Jetonomy\Notifications\Notifier::unsubscribe_token( $uid, 'mention', $unsub_exp );
 						$unsub_url   = add_query_arg(
 							[
 								'jetonomy_unsubscribe' => $unsub_token,
+								'jetonomy_unsub_exp'   => $unsub_exp,
 								'uid'                  => $uid,
 								'type'                 => 'mention',
 							],
@@ -119,29 +125,7 @@ class Mentions {
 							'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
 						];
 
-						// Build content URL for the mentioned object.
-						$content_url = '';
-						if ( 'post' === $object_type ) {
-							$post_obj = Models\Post::find( $object_id );
-							if ( $post_obj && $post_obj->space_id ) {
-								$space_obj = Models\Space::find( (int) $post_obj->space_id );
-								if ( $space_obj ) {
-									$content_url = base_url() . '/s/' . $space_obj->slug . '/t/' . $post_obj->slug . '/';
-								}
-							}
-						} elseif ( 'reply' === $object_type ) {
-							$reply_obj = Models\Reply::find( $object_id );
-							if ( $reply_obj && $reply_obj->post_id ) {
-								$post_obj = Models\Post::find( (int) $reply_obj->post_id );
-								if ( $post_obj && $post_obj->space_id ) {
-									$space_obj = Models\Space::find( (int) $post_obj->space_id );
-									if ( $space_obj ) {
-										$content_url = base_url() . '/s/' . $space_obj->slug . '/t/' . $post_obj->slug . '/';
-									}
-								}
-							}
-						}
-
+						// $content_url already resolved above via notification_deep_link().
 						$html = Notifications\Notifier::render_email_template( 'mention', $message, $user, $unsub_url, $content_url );
 						$email_adapter->send( $user->user_email, $subject, $html, wp_strip_all_tags( $message ), $headers );
 					}

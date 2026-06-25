@@ -147,18 +147,6 @@ final class Preview_Service {
 	}
 
 	/**
-	 * Clear the cache for a single URL — used after a successful report-abuse
-	 * moderator override, or during admin "refresh preview" actions.
-	 */
-	public function forget( string $url ): void {
-		$url = $this->normalize_url( $url );
-		if ( '' === $url ) {
-			return;
-		}
-		delete_transient( self::CACHE_PREFIX . md5( $url ) );
-	}
-
-	/**
 	 * @return array<Provider_Interface>
 	 */
 	private function get_providers(): array {

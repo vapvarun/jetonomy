@@ -167,9 +167,15 @@ $posts       = \Jetonomy\Models\Post::list_by_space_visible(
 	$limit,
 	$offset
 );
-$category    = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
-$base        = \Jetonomy\base_url();
-$space_url   = $base . '/s/' . $space->slug . '/';
+// "Load More" must reflect whether more posts actually exist, not whether this
+// page happened to fill up. count($posts) >= $limit showed the button on a space
+// with EXACTLY $limit posts and then loaded an empty page (Basecamp). Compare the
+// real total (same visibility population as the listing) against what's shown.
+$_jt_total    = \Jetonomy\Models\Post::count_by_space_visible( (int) $space->id, (int) $_jt_user_id, (bool) $_jt_is_priv, $sort );
+$_jt_has_more = ( $paged * $limit ) < $_jt_total;
+$category     = $space->category_id ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$base         = \Jetonomy\base_url();
+$space_url    = $base . '/s/' . $space->slug . '/';
 
 $crumbs = [];
 if ( $category ) {
@@ -188,16 +194,21 @@ $crumbs[] = [
 <div class="jt-two-col">
 		<main>
 			<?php if ( ! empty( $space->cover_image ) ) : ?>
-			<div class="jt-space-cover" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')"></div>
+			<div class="jt-space-cover jt-space-cover--image" style="background-image:url('<?php echo esc_url( $space->cover_image ); ?>')">
+		<?php else : ?>
+			<div class="jt-space-cover jt-space-cover--tonal">
 		<?php endif; ?>
+			<div class="jt-space-cover__identity">
+				<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
+				<h1 class="jt-space-cover__title"><?php echo esc_html( $space->title ); ?></h1>
+			</div>
+		</div>
 		<?php
 		$_jt_can_edit_space = is_user_logged_in()
 			&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $_jt_user_id, (int) $space->id );
 		?>
 		<div class="jt-space-head">
-				<?php jetonomy_render_space_icon( $space->icon ?? '', 32, 'jt-space-emoji' ); ?>
-				<div>
-						<h1><?php echo esc_html( $space->title ); ?></h1>
+				<div class="jt-space-head__meta">
 					<?php if ( ! empty( $space->description ) ) : ?>
 						<p class="jt-space-desc"><?php echo esc_html( $space->description ); ?></p>
 					<?php endif; ?>
@@ -304,14 +315,36 @@ $crumbs[] = [
 			</div>
 			<?php endif; ?>
 
-			<?php if ( 'ideas' === ( $space->type ?? '' ) ) : ?>
+			<?php
+			// Space sub-navigation. Ideas spaces keep their Ideas + Roadmap tabs;
+			// every space type now also exposes a Members tab for logged-in users
+			// so space moderators can reach the members page (and its pending
+			// join-request approval panel) without knowing the direct URL. (#10013900410)
+			$jt_is_ideas     = 'ideas' === ( $space->type ?? '' );
+			$jt_show_members = is_user_logged_in();
+			if ( $jt_is_ideas || $jt_show_members ) :
+				$jt_primary_labels = [
+					'forum' => __( 'Discussions', 'jetonomy' ),
+					'qa'    => __( 'Questions', 'jetonomy' ),
+					'ideas' => __( 'Ideas', 'jetonomy' ),
+					'feed'  => __( 'Posts', 'jetonomy' ),
+				];
+				$jt_primary_label  = $jt_primary_labels[ $space->type ?? 'forum' ] ?? __( 'Discussions', 'jetonomy' );
+				?>
 				<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Space sections', 'jetonomy' ); ?>">
 					<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab on" aria-current="page">
-						<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>
+						<?php echo esc_html( $jt_primary_label ); ?>
 					</a>
-					<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab">
-						<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
-					</a>
+					<?php if ( $jt_is_ideas ) : ?>
+						<a href="<?php echo esc_url( $space_url . 'roadmap/' ); ?>" class="jt-space-tab">
+							<?php esc_html_e( 'Roadmap', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
+					<?php if ( $jt_show_members ) : ?>
+						<a href="<?php echo esc_url( $space_url . 'members/' ); ?>" class="jt-space-tab">
+							<?php esc_html_e( 'Members', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
 				</nav>
 			<?php endif; ?>
 
@@ -347,7 +380,13 @@ $crumbs[] = [
 						?>
 					</a>
 				<?php elseif ( ! is_user_logged_in() ) : ?>
-					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-ghost">
+					<?php
+					// Logged-out members still come here to contribute — the
+					// primary action shouldn't read as a faint secondary control.
+					// Use the filled button so "Log in to post" has the same
+					// visual weight as the New Post action it stands in for.
+					?>
+					<a href="<?php echo esc_url( wp_login_url( $space_url ) ); ?>" class="jt-btn jt-btn-fill">
 						<?php esc_html_e( 'Log in to post', 'jetonomy' ); ?>
 					</a>
 				<?php endif; ?>
@@ -355,20 +394,42 @@ $crumbs[] = [
 
 			<?php if ( empty( $posts ) ) : ?>
 				<?php
+				// Empty copy + CTA speak the space's own language: a Q&A space
+				// invites a question, a feed invites an update, an ideas space
+				// invites an idea — "No posts yet" reads as generic and dead.
+				$_jt_space_type = (string) ( $space->type ?? 'forum' );
 				if ( 'unanswered' === $sort ) {
-					$_jt_no_posts_msg = ( 'qa' === ( $space->type ?? '' ) )
+					$_jt_no_posts_msg = ( 'qa' === $_jt_space_type )
 						? __( 'Every question has an accepted answer.', 'jetonomy' )
 						: __( 'No posts without replies yet.', 'jetonomy' );
 				} else {
-					$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+					switch ( $_jt_space_type ) {
+						case 'qa':
+							$_jt_no_posts_msg = __( 'No questions yet. Ask the first one and get answers from the community.', 'jetonomy' );
+							break;
+						case 'feed':
+							$_jt_no_posts_msg = __( 'Nothing posted yet. Share the first update.', 'jetonomy' );
+							break;
+						case 'ideas':
+							$_jt_no_posts_msg = __( 'No ideas yet. Suggest the first one and let the community vote.', 'jetonomy' );
+							break;
+						default:
+							$_jt_no_posts_msg = __( 'No posts yet. Be the first to start a discussion!', 'jetonomy' );
+					}
 				}
-				$_jt_can_post = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
+				$_jt_cta_by_type = [
+					'qa'    => __( 'Ask a question', 'jetonomy' ),
+					'feed'  => __( 'Share an update', 'jetonomy' ),
+					'ideas' => __( 'Suggest an idea', 'jetonomy' ),
+				];
+				$_jt_post_cta    = $_jt_cta_by_type[ $_jt_space_type ] ?? __( 'New Post', 'jetonomy' );
+				$_jt_can_post    = is_user_logged_in() && ( $_jt_is_member || $_jt_is_admin || 'open' === $_jt_join_policy );
 				\Jetonomy\Template_Loader::partial(
 					'empty-state',
 					[
 						'icon'      => 'empty-posts',
 						'message'   => $_jt_no_posts_msg,
-						'cta_label' => $_jt_can_post ? __( 'New Post', 'jetonomy' ) : '',
+						'cta_label' => $_jt_can_post ? $_jt_post_cta : '',
 						'cta_url'   => $_jt_can_post ? ( $space_url . 'new/' ) : '',
 					]
 				);
@@ -429,7 +490,7 @@ $crumbs[] = [
 					<?php endforeach; ?>
 				</div>
 
-				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $posts ) >= $limit ] ); ?>
+				<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => $_jt_has_more ] ); ?>
 			<?php endif; ?>
 		</main>
 

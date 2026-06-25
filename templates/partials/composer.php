@@ -55,6 +55,12 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 		data-wp-on--input="actions.onEditorInput"
 		id="jt-composer-<?php echo (int) $_post_id; ?>"
 		aria-label="<?php esc_attr_e( 'Reply editor', 'jetonomy' ); ?>"></div>
+	<?php
+	// The replies endpoint verifies CAPTCHA for low-trust users; Turnstile
+	// needs this container to render and produce its token. Empty string
+	// when CAPTCHA is off or the provider is invisible. #9977126420.
+	echo \Jetonomy\Captcha\Captcha_Manager::render_widget(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr.
+	?>
 	<div class="jt-editor-foot">
 		<?php
 		// 1.4.1 platform-aware hint: phones / tablets do not have a Ctrl key,

@@ -220,6 +220,14 @@ class Posts_Controller extends Base_Controller {
 		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
 			return new \WP_Error( 'invalid_url', __( 'Invalid URL.', 'jetonomy' ), array( 'status' => 400 ) );
 		}
+		// SSRF guard: wp_http_validate_url() misses 169.254/16 (cloud metadata),
+		// 100.64/10 and IPv6 loopback/ULA/link-local. This endpoint is reachable
+		// unauthenticated in public mode, so resolve + reject internal addresses
+		// before fetching (the fetcher repeats the check on every redirect hop).
+		$guard = \Jetonomy\Services\Links\Url_Guard::check_remote_url( $url );
+		if ( is_wp_error( $guard ) ) {
+			return $guard;
+		}
 
 		$service = new \Jetonomy\Services\Links\Preview_Service();
 		$preview = $service->fetch( $url );
@@ -361,7 +369,7 @@ class Posts_Controller extends Base_Controller {
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip(
 			$user_id,
 			$captcha_token,
-			sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ) )
+			\Jetonomy\client_ip()
 		);
 		if ( false === $captcha_result ) {
 			return $this->validation_error( __( 'Security check failed. Please refresh the page and try again.', 'jetonomy' ) );
@@ -418,7 +426,7 @@ class Posts_Controller extends Base_Controller {
 		// (flagging legitimate staff replies) erode trust in the admin workflow.
 		$akismet_spam = false;
 		if ( ! $this->author_bypasses_spam_check( $user_id, $space_id ) ) {
-			$ip           = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+			$ip           = \Jetonomy\client_ip();
 			$user         = get_userdata( $user_id );
 			$akismet_spam = \Jetonomy\Moderation\Akismet::check_spam(
 				$content,
@@ -514,15 +522,9 @@ class Posts_Controller extends Base_Controller {
 			// to attach the Flag record to. The post still publishes; the
 			// flag surfaces it in the moderation queue for review.
 
-			// Per-space require_approval: hold for moderation unless moderator/admin.
-			if ( empty( $post_data['status'] ) || 'publish' === $post_data['status'] ) {
-				$space_settings = Space::get_settings( $space_id );
-				if ( ! empty( $space_settings['require_approval'] ) ) {
-					$member_role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
-					if ( ! in_array( $member_role, array( 'moderator', 'admin' ), true ) && ! current_user_can( 'manage_options' ) ) {
-						$post_data['status'] = 'pending';
-					}
-				}
+			// Per-space require_approval: hold unless the author is space staff.
+			if ( $this->should_hold_for_approval( (string) ( $post_data['status'] ?? '' ), $space_id, $user_id ) ) {
+				$post_data['status'] = 'pending';
 			}
 		}
 
@@ -630,6 +632,19 @@ class Posts_Controller extends Base_Controller {
 
 		if ( ! $can_edit ) {
 			return $this->permission_error();
+		}
+
+		// Publish-now: an author (or moderator) can publish their own draft
+		// immediately instead of waiting for the scheduled cron run. This is the
+		// only status transition exposed through update, and it runs the exact
+		// same path as a scheduled publish (Post::publish_draft -> counts +
+		// jetonomy_after_create_post). Edits and publishing are separate calls:
+		// the drafts UI sends status=publish alone.
+		if ( 'publish' === $request->get_param( 'status' ) && 'draft' === ( $post->status ?? '' ) ) {
+			if ( ! Post::publish_draft( $id ) ) {
+				return $this->validation_error( __( 'Could not publish this draft.', 'jetonomy' ) );
+			}
+			return new WP_REST_Response( $this->prepare_post( Post::find( $id ) ), 200 );
 		}
 
 		$update_data = array();
@@ -1239,6 +1254,12 @@ class Posts_Controller extends Base_Controller {
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'status'       => array(
+				'type'        => 'string',
+				'required'    => false,
+				'enum'        => array( 'publish' ),
+				'description' => 'Publish a draft now. Only "publish" is accepted, and only when the post is currently a draft.',
 			),
 		);
 	}

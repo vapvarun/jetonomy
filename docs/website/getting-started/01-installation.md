@@ -1,3 +1,11 @@
+---
+title: "Installation"
+category: "getting-started"
+order: 1
+---
+
+# Installation
+
 Get Jetonomy running on your WordPress site in under five minutes. This guide covers system requirements, how to install, and what happens the moment you activate.
 
 ![Jetonomy setup wizard guiding you through initial configuration](../images/setup-wizard.png)
@@ -49,13 +57,13 @@ wp plugin install jetonomy --activate
 
 Jetonomy sets everything up automatically the first time you activate it. You do not need to run any SQL or configure anything manually.
 
-**Database tables created (24 total):**
+**Database tables created:**
 
-Jetonomy creates 24 custom tables under the `wp_jt_` prefix, one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more.
+Jetonomy creates its own set of custom tables under the `wp_jt_` prefix - one for each data entity: categories, spaces, posts, replies, votes, user profiles, notifications, subscriptions, tags, moderation flags, revisions, invite links, bookmarks, and more. It does not use WordPress custom post types.
 
 **WordPress capabilities registered:**
 
-Jetonomy registers 20 custom capabilities (`jetonomy_read`, `jetonomy_create_posts`, `jetonomy_moderate`, and others) and maps them to your existing WordPress roles automatically.
+Jetonomy registers its own custom capabilities (`jetonomy_read`, `jetonomy_create_posts`, `jetonomy_moderate`, and others) and maps them to your existing WordPress roles automatically.
 
 **Permalink rules flushed:**
 
@@ -65,10 +73,14 @@ Your community URLs (e.g. `yoursite.com/community/`) are registered and rewrite 
 
 **Cron jobs scheduled:**
 
-Two background jobs are scheduled via WP-Cron:
+Six background jobs are scheduled via WP-Cron:
 
-- **Trust level evaluation** - runs every 12 hours to promote members who have earned higher trust levels.
-- **Notification digests** - runs daily and weekly (Jetonomy Pro).
+- **Trust level evaluation** - promotes members who have earned higher trust levels.
+- **Expired restriction cleanup** - lifts temporary restrictions once they expire.
+- **Activity log pruning** - trims old activity-log rows to keep the table lean.
+- **Notification cleanup** - removes stale read notifications.
+- **Scheduled post publishing** - publishes posts queued for a future date.
+- **Verification reminders** - nudges members who have not completed verification.
 
 After activation, you will see a blue notice at the top of your dashboard:
 
@@ -90,7 +102,7 @@ If you prefer per-site activation rather than network activation, install and ac
 
 ## Uninstalling
 
-If you deactivate Jetonomy, your data is preserved. Only a full uninstall (delete) removes the `wp_jt_*` tables, all plugin options, and all registered capabilities, giving you a clean removal with no database debris.
+If you deactivate Jetonomy, your data is preserved. Only a full uninstall (delete) removes the `wp_jt_*` tables, all plugin options, and all registered capabilities, giving you a clean removal with no database debris. Jetonomy Pro behaves the same way: uninstalling it removes every `wp_jt_pro_*` table, its options and user meta, and its scheduled tasks (fully covered as of 1.5.0).
 
 ## What's Next?
 

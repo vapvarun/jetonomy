@@ -267,10 +267,13 @@ $crumbs = [
 					\Jetonomy\Template_Loader::partial(
 						'empty-state',
 						[
-							'icon'    => 'empty-search',
+							'icon'        => 'empty-search',
 							/* translators: %s: search query */
-							'message' => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
-							'tone'    => 'warn',
+							'message'     => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
+							'description' => __( 'Try different or fewer keywords (search needs at least 2 characters), or browse the community.', 'jetonomy' ),
+							'cta_label'   => __( 'Browse all spaces', 'jetonomy' ),
+							'cta_url'     => \Jetonomy\base_url() . '/',
+							'tone'        => 'warn',
 						]
 					);
 					?>

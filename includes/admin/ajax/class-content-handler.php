@@ -11,15 +11,26 @@ defined( 'ABSPATH' ) || exit;
 
 use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
+use Jetonomy\Moderation\Moderation_Service;
 
 class Content_Handler {
+
+	/**
+	 * Map a raw target status to the canonical moderation action vocabulary the
+	 * Moderation_Service choke-point expects.
+	 */
+	private const STATUS_TO_ACTION = [
+		'trash'   => 'trash',
+		'spam'    => 'spam',
+		'publish' => 'approve',
+		'pending' => 'hold',
+	];
 
 	public function __construct() {
 		add_action( 'wp_ajax_jetonomy_update_post', [ $this, 'ajax_update_post' ] );
 		add_action( 'wp_ajax_jetonomy_delete_post', [ $this, 'ajax_delete_post' ] );
 		add_action( 'wp_ajax_jetonomy_update_reply', [ $this, 'ajax_update_reply' ] );
 		add_action( 'wp_ajax_jetonomy_delete_reply', [ $this, 'ajax_delete_reply' ] );
-		add_action( 'wp_ajax_jetonomy_get_replies', [ $this, 'ajax_get_replies' ] );
 		add_action( 'wp_ajax_jetonomy_bulk_content_action', [ $this, 'ajax_bulk_content_action' ] );
 	}
 
@@ -69,9 +80,16 @@ class Content_Handler {
 			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
 		}
 
-		Post::update( $id, [ 'status' => $status ] );
-
-		do_action( 'jetonomy_content_moderated', $status, 'post', $id, get_current_user_id() );
+		// Route through the moderation choke-point so the status write, pending
+		// flag resolution, reputation, and the canonical jetonomy_content_moderated
+		// action all happen — identical to the REST and abilities paths. The admin
+		// capability + nonce above is the authorization, so use the trusted system
+		// entry with this admin recorded as the actor.
+		$action = self::STATUS_TO_ACTION[ $status ] ?? 'trash';
+		$result = Moderation_Service::system_set_object_status( 'post', $id, $action, get_current_user_id() );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
 
 		wp_send_json_success();
 	}
@@ -119,35 +137,15 @@ class Content_Handler {
 			wp_send_json_error( __( 'Invalid reply ID.', 'jetonomy' ) );
 		}
 
-		Reply::update( $id, [ 'status' => $status ] );
+		// Route through the moderation choke-point (flag resolution + canonical
+		// action), authorized by the admin cap + nonce above.
+		$action = self::STATUS_TO_ACTION[ $status ] ?? 'trash';
+		$result = Moderation_Service::system_set_object_status( 'reply', $id, $action, get_current_user_id() );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
 		wp_send_json_success();
-	}
-
-	public function ajax_get_replies(): void {
-		check_ajax_referer( 'jetonomy_admin', 'nonce' );
-		if ( ! current_user_can( 'jetonomy_manage_settings' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'jetonomy' ) );
-		}
-
-		$post_id = absint( $_POST['post_id'] ?? 0 );
-		if ( ! $post_id ) {
-			wp_send_json_error( __( 'Invalid post ID.', 'jetonomy' ) );
-		}
-
-		$replies = Reply::list_by_post( $post_id, 'oldest', 100, 0, 0 );
-		$items   = [];
-		foreach ( $replies as $r ) {
-			$author  = get_userdata( (int) $r->author_id );
-			$items[] = [
-				'id'          => (int) $r->id,
-				'author_name' => $author ? $author->display_name : __( 'Unknown', 'jetonomy' ),
-				'content'     => $r->content ?? '',
-				'status'      => $r->status ?? 'publish',
-				'created_at'  => $r->created_at ?? '',
-			];
-		}
-
-		wp_send_json_success( $items );
 	}
 
 	public function ajax_bulk_content_action(): void {
@@ -164,14 +162,21 @@ class Content_Handler {
 			wp_send_json_error( __( 'Invalid bulk action.', 'jetonomy' ) );
 		}
 
+		// Each item goes through the moderation choke-point so bulk actions resolve
+		// pending flags and fire the canonical action just like single-item ones.
+		// $action is validated against the STATUS_TO_ACTION keys above, so the
+		// lookup always resolves.
+		$obj_type   = 'post' === $type ? 'post' : 'reply';
+		$mod_action = self::STATUS_TO_ACTION[ $action ];
+		$actor_id   = get_current_user_id();
+		$updated    = 0;
 		foreach ( $ids as $id ) {
-			if ( 'post' === $type ) {
-				Post::update( $id, [ 'status' => $action ] );
-			} else {
-				Reply::update( $id, [ 'status' => $action ] );
+			$result = Moderation_Service::system_set_object_status( $obj_type, $id, $mod_action, $actor_id );
+			if ( ! is_wp_error( $result ) ) {
+				++$updated;
 			}
 		}
 
-		wp_send_json_success( [ 'updated' => count( $ids ) ] );
+		wp_send_json_success( [ 'updated' => $updated ] );
 	}
 }

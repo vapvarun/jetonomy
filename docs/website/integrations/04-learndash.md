@@ -2,6 +2,10 @@ Connect LearnDash course and group enrollment to Jetonomy spaces - students get 
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
+
+LearnDash is the lead LMS integration in this section. The other four LMS guides (Tutor, LifterLMS, Sensei, MasterStudy) work the same way and link back here for the screenshots and the shared Access Rules walkthrough.
+
 ## What You Will Learn
 
 - How to gate a Jetonomy space by LearnDash course enrollment
@@ -16,13 +20,15 @@ Jetonomy Pro detects LearnDash automatically when both plugins are active. A **L
 
 ## Gating a Space by Course Enrollment
 
+![The Access Rules course picker with a searchable dropdown autocompleting course names as you type](images/course-search-autocomplete.png)
+
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **LearnDash Course** from the rule type dropdown.
 3. Start typing the course name - a searchable dropdown shows all published LearnDash courses.
-4. Select the course, set Grants to **Participate** and Space Role to **Member**.
+4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
 5. Click **Add Rule**.
 
-The rule appears in the table showing the course name and a **Sync Members** button.
+The rule appears in the table showing the course name and a **Sync Members** button. For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
 
 ## Gating a Space by LearnDash Group
 
@@ -41,6 +47,8 @@ If students are already enrolled before the rule was created, click the **Sync M
 New enrollments and removals are handled automatically after the rule is created.
 
 ## Auto-Create Spaces for New Courses
+
+The **Auto-Create Spaces for Courses** card and the integration status table both live on the Integrations tab shown in the screenshot at the top of this guide (**Jetonomy → Settings → Integrations**).
 
 1. Go to **Jetonomy → Settings → Integrations**.
 2. Enable the **LearnDash** toggle under Auto-Create Spaces for Courses.

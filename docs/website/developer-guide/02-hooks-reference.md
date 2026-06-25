@@ -1,4 +1,4 @@
-Jetonomy exposes 58 hooks in the free plugin and 9 additional hooks in Jetonomy Pro. Every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
+Jetonomy fires over 140 hooks in the free plugin, plus another two dozen in Jetonomy Pro. This page documents the most useful ones; every hook follows the `jetonomy_` prefix convention. Use them in your theme's `functions.php`, a site-specific mu-plugin, or a companion plugin.
 
 **Hook naming prefix:** `jetonomy_`
 **Namespace:** `Jetonomy\`
@@ -206,6 +206,50 @@ add_action( 'jetonomy_reply_accepted', function( int $reply_id, int $post_id ) {
     my_badges_award( get_current_user_id(), 'answer-accepted' );
 }, 10, 2 );
 ```
+
+---
+
+### `jetonomy_post_publish_transition`
+
+*New in 1.5.0.* Fires whenever a post enters or leaves the `publish` status - on publish-at-creation, on approval from the pending queue, on trashing a published post, and on restore. Consumers that maintain published-content counters subscribe here instead of guessing from create/update events; Jetonomy Pro's analytics aggregator uses it to keep daily totals accurate when content is trashed or approved later.
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$post_id` | `int` | ID of the post |
+| `$delta` | `int` | `+1` when the post became published, `-1` when it left published |
+| `$created_at` | `string` | The post's original `created_at` datetime - attribute the delta to this date, not today |
+
+**Source:** `includes/models/class-post.php`
+
+```php
+add_action( 'jetonomy_post_publish_transition', function( int $post_id, int $delta, string $created_at ) {
+    // Keep an external "published posts per day" metric honest.
+    my_metrics_adjust( 'posts_published', $delta, substr( $created_at, 0, 10 ) );
+}, 10, 3 );
+```
+
+---
+
+### `jetonomy_space_feed_posts`
+
+*New in 1.5.0.* Filters the posts included in a space RSS feed (`/community/s/{slug}/feed/`) before rendering - newest first, capped at 20.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `$posts` | `array` | Post rows to render as feed items |
+| `$space` | `object` | The space the feed belongs to |
+
+**Source:** `includes/class-feed.php`
+
+---
+
+### `jetonomy_reply_publish_transition`
+
+*New in 1.5.0.* The reply mirror of `jetonomy_post_publish_transition` - same parameters and semantics with a reply ID.
+
+**Source:** `includes/models/class-reply.php`
 
 ---
 

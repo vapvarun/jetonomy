@@ -50,7 +50,13 @@ class SchemaTest extends WP_UnitTestCase {
 		$prefix = $wpdb->prefix;
 
 		$expected = Schema::get_table_names();
-		$this->assertCount( 23, $expected );
+		// 1.5.0: jt_space_tags, jt_space_tag_map, and jt_user_interests were
+		// removed (never wired to any feature — audit A5; Migration_1_5_0
+		// drops them on upgrade), taking the schema from 23 to 20 tables.
+		$this->assertCount( 20, $expected );
+		foreach ( [ 'jt_space_tags', 'jt_space_tag_map', 'jt_user_interests' ] as $removed ) {
+			$this->assertNotContains( $removed, $expected, "Removed table '{$removed}' must not be re-added to the schema." );
+		}
 
 		foreach ( $expected as $table_suffix ) {
 			$full_name = $prefix . $table_suffix;

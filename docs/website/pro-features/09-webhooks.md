@@ -2,8 +2,6 @@ Automatically send community events to any external URL - connect Jetonomy to Sl
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-> **As of 1.4.1, every documented event actually fires.** Earlier versions registered listeners against hook names the free plugin never emitted, so deployments would test the webhook UI, see "delivered," and never receive a single real-world event afterwards. Free 1.4.1 ships the lifecycle action contract Pro now hooks into. If you previously configured webhooks and saw zero deliveries despite real activity, update both plugins to 1.4.1 and the existing webhooks will start working without any reconfiguration.
-
 ![Webhook management page listing configured endpoints](../images/pro-webhooks.png)
 ## What You Will Learn
 
@@ -37,7 +35,7 @@ Jetonomy lives inside WordPress - but your business does not. Your team lives in
 
 4. Click **Save Webhook**.
 
-<!-- TODO screenshot needed: Webhook editor with URL, events, and secret fields (was ../images/pro-webhooks-editor.png) -->
+![The Add Webhook form, with the URL, Events, Secret, and Active fields](../images/pro-webhooks-editor.png)
 ## Available Events
 
 Subscribe to any combination of these events:
@@ -132,6 +130,10 @@ Failed deliveries are retried up to three times with exponential backoff (5 min,
 - **CRM sync** - Push `member.joined` events to HubSpot or Salesforce to trigger a welcome sequence.
 - **Zapier** - Connect any event to thousands of apps via a Zapier webhook trigger - no custom code needed.
 - **Analytics pipeline** - Stream all events to a data warehouse like BigQuery or Amplitude for long-term retention and custom analysis.
+
+## Upgrading From Older Versions
+
+On Jetonomy 1.4.1 and newer every event in the list above fires reliably for real community activity. If you configured webhooks on an older version and saw zero deliveries despite real activity, update both the free and Pro plugins together to 1.4.1 or later - your existing webhooks start delivering without any reconfiguration.
 
 ## What's Next?
 

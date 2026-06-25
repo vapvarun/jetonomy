@@ -205,22 +205,23 @@ class Template_Loader {
 		}
 		$dynamic_css .= '.jt-container{--jt-container-width:' . esc_attr( $container_width ) . ';}';
 
-		// Accent color override.
-		if ( ! empty( $settings['accent_color'] ) && '#0073aa' !== $settings['accent_color'] ) {
-			$accent = sanitize_hex_color( $settings['accent_color'] );
-			if ( $accent ) {
-				$dynamic_css .= ':root,.jt-app{--jt-accent:' . $accent . ';}';
-			}
-		}
+		// Color palette overrides (accent + text/background/subtle/border).
+		$dynamic_css .= self::palette_css( $settings );
 
 		// Inherit fonts: when enabled, don't override theme fonts.
 		if ( ! empty( $settings['inherit_fonts'] ) ) {
 			$dynamic_css .= ':root,.jt-app{--jt-font:inherit;--jt-font-heading:inherit;}';
 		}
 
-		// Inherit colors: when enabled, use WP theme preset colors only.
+		// Inherit colors: when enabled, adopt the active host theme's colors.
+		// Must chain through each theme's own token system first — BuddyX / BuddyX
+		// Pro expose `--bx-color-*` (NOT the WP presets), BuddyNext exposes
+		// `--brand`/`--text-1`/`--bg`, and Reign maps its palette onto the WP
+		// `--wp--preset--color--*`. Falling straight to the WP preset (as this
+		// did) made Jetonomy render its generic blue on BuddyX instead of the
+		// theme accent. Mirrors the static chain in jetonomy.css.
 		if ( ! empty( $settings['inherit_colors'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--wp--preset--color--primary,#3B82F6);--jt-text:var(--wp--preset--color--contrast,#1a1a1a);--jt-bg:var(--wp--preset--color--base,#ffffff);}';
+			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--bx-color-accent,var(--reign-colors-theme,var(--brand,var(--wp--preset--color--primary,var(--ast-global-color-0,var(--global-palette1,var(--theme-palette-color-1,var(--wp--preset--color--accent,#3B82F6))))))));--jt-text:var(--bx-color-fg,var(--text-1,var(--wp--preset--color--contrast,#1a1a1a)));--jt-bg:var(--bx-color-bg-elevated,var(--bg,var(--wp--preset--color--base,#ffffff)));}';
 		}
 
 		// Layout density.
@@ -239,118 +240,116 @@ class Template_Loader {
 		wp_interactivity_state(
 			'jetonomy',
 			array(
-				'apiBase'       => rest_url( 'jetonomy/v1' ),
-				'_nonce'        => wp_create_nonce( 'wp_rest' ),
-				'nonce'         => wp_create_nonce( 'wp_rest' ),
-				'communityBase' => home_url( '/' . ( $settings['base_slug'] ?? 'community' ) ),
-				'currentPostId' => 0,
-				'postScores'    => new \stdClass(),
-				'replyScores'   => new \stdClass(),
-				'currentSort'   => sanitize_text_field( wp_unslash( $_GET['sort'] ?? 'latest' ) ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			'isLoggedIn'        => is_user_logged_in(),
-			'loginUrl'          => wp_login_url( home_url( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) ),
-			'unreadCount'       => 0,
-			'isSubmitting'      => false,
-			'submitLabel'       => __( 'Post Topic', 'jetonomy' ),
-			'submitError'       => '',
-			'msgComposeOpen'    => false,
-			'i18n'              => array(
-				'voteRecorded'          => __( 'Vote recorded', 'jetonomy' ),
-				'statusUpdated'         => __( 'Roadmap status updated', 'jetonomy' ),
-				'accepted'              => __( 'Accepted', 'jetonomy' ),
-				'reply'                 => __( 'Reply', 'jetonomy' ),
-				'cancel'                => __( 'Cancel', 'jetonomy' ),
-				'save'                  => __( 'Save', 'jetonomy' ),
-				'saving'                => __( 'Saving...', 'jetonomy' ),
-				'failedSave'            => __( 'Failed to save.', 'jetonomy' ),
-				'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
-				'follow'                => __( 'Follow', 'jetonomy' ),
-				'following'             => __( 'Following', 'jetonomy' ),
-				'followingSpace'        => __( 'Following space', 'jetonomy' ),
-				'unfollowedSpace'       => __( 'Unfollowed space', 'jetonomy' ),
-				'copyLink'              => __( 'Copy link', 'jetonomy' ),
-				'bookmark'              => __( 'Bookmark', 'jetonomy' ),
-				'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
-				'bookmarked'            => __( 'Bookmarked', 'jetonomy' ),
-				'bookmarkRemoved'       => __( 'Bookmark removed', 'jetonomy' ),
-				'reportPrompt'          => __( 'Why are you reporting this post?', 'jetonomy' ),
-				'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
-				'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
-				'postPinned'            => __( 'Post pinned', 'jetonomy' ),
-				'postUnpinned'          => __( 'Post unpinned', 'jetonomy' ),
-				'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
-				'confirmDeletePost'     => __( 'Are you sure you want to delete this topic?', 'jetonomy' ),
-				'confirmDeleteReply'    => __( 'Are you sure you want to delete this reply?', 'jetonomy' ),
-				'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
-				'moveTopicTitle'        => __( 'Move topic to another space', 'jetonomy' ),
-				'topicMoved'            => __( 'Topic moved successfully.', 'jetonomy' ),
-				'moveFailed'            => __( 'Failed to move topic.', 'jetonomy' ),
-				'mergeTopicTitle'       => __( 'Merge into another topic', 'jetonomy' ),
-				'confirmMerge'          => __( 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', 'jetonomy' ),
-				'topicMerged'           => __( 'Topics merged successfully.', 'jetonomy' ),
-				'mergeFailed'           => __( 'Failed to merge topics.', 'jetonomy' ),
-				'splitReplyTitle'       => __( 'Enter a title for the new topic:', 'jetonomy' ),
-				'replySplit'            => __( 'Reply split into new topic.', 'jetonomy' ),
-				'splitFailed'           => __( 'Failed to split reply.', 'jetonomy' ),
-				'replyingTo'            => __( 'Replying to', 'jetonomy' ),
-				'cancelReply'           => __( 'Cancel reply', 'jetonomy' ),
-				'posting'               => __( 'Posting...', 'jetonomy' ),
-				'postTopic'             => __( 'Post Topic', 'jetonomy' ),
-				'newReply'              => __( '%d new reply. Click to refresh.', 'jetonomy' ),
-				'newReplies'            => __( '%d new replies. Click to refresh.', 'jetonomy' ),
-				'linkCopied'            => __( 'Link copied', 'jetonomy' ),
-				'linkCopyFailed'        => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
-				'titleRequired'         => __( 'Please enter a title for your topic.', 'jetonomy' ),
-				'bodyRequired'          => __( 'Please add some details before posting.', 'jetonomy' ),
-				'loginRequired'         => __( 'Please sign in to use this.', 'jetonomy' ),
-				// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
-				'messageSending'        => __( 'Sending...', 'jetonomy' ),
-				'messageSend'           => __( 'Send', 'jetonomy' ),
-				'messageSendFailed'     => __( 'Failed to send. Please try again.', 'jetonomy' ),
-				'noMessageMatches'      => __( 'No matches. You can only message people who share at least one space with you.', 'jetonomy' ),
-				'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
-				'userNotFound'          => __( 'User not found: ', 'jetonomy' ),
-				// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
-				'muteFailed'            => __( 'Could not update mute setting.', 'jetonomy' ),
-				'archiveFailed'         => __( 'Could not archive the conversation.', 'jetonomy' ),
-				'leaveFailed'           => __( 'Could not leave the conversation.', 'jetonomy' ),
-				'blockFailed'           => __( 'Could not update block setting.', 'jetonomy' ),
-				'confirmLeave'          => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
-				'confirmBlock'          => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
-				// WS4-C: moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
-				'contentRemoved'        => __( 'Content removed', 'jetonomy' ),
-				'flagDismissed'         => __( 'Flag dismissed', 'jetonomy' ),
-				'failed'                => __( 'Failed', 'jetonomy' ),
-				'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
-				'schedule'              => __( 'Schedule', 'jetonomy' ),
-				'editPost'              => __( 'Edit post', 'jetonomy' ),
-				'editReply'             => __( 'Edit reply', 'jetonomy' ),
-				'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
-				// 1.4.4 i18n sweep — keys view.js reads via state.i18n that were
-				// missing here, so they always rendered the English fallback even
-				// on a translated locale.
-				'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
-				'chooseSpace'           => __( 'Choose a space first.', 'jetonomy' ),
-				'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
-				'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
-				'scheduleDateRequired'  => __( 'Please choose a publish date and time.', 'jetonomy' ),
-				'failedTogglePrivate'   => __( 'Failed to change visibility.', 'jetonomy' ),
-				'madePrivate'           => __( 'Topic is now private', 'jetonomy' ),
-				'madePublic'            => __( 'Topic is now public', 'jetonomy' ),
-				'pendingNotice'         => __( 'Your post is awaiting moderation and will appear once approved.', 'jetonomy' ),
-				'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
-				'reportReplyPrompt'     => __( 'Why are you reporting this reply?', 'jetonomy' ),
-				'reportUserPrompt'      => __( 'Why are you reporting this user?', 'jetonomy' ),
-				'reportUserPlaceholder' => __( 'Describe the issue...', 'jetonomy' ),
-				'topicClosed'           => __( 'Topic closed', 'jetonomy' ),
-				'topicReopened'         => __( 'Topic reopened', 'jetonomy' ),
-				'failedClose'           => __( 'Failed to update topic.', 'jetonomy' ),
-				// WS4-C: Pro Polls strings consumed via state.i18n in pro-view.js.
-				'failedSubmitVote'      => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
-				'voteSingular'          => __( '1 vote', 'jetonomy' ),
-				/* translators: %d: vote count. */
-				'voteFormat'            => __( '%d votes', 'jetonomy' ),
-			),
+				'apiBase'        => rest_url( 'jetonomy/v1' ),
+				'_nonce'         => wp_create_nonce( 'wp_rest' ),
+				'nonce'          => wp_create_nonce( 'wp_rest' ),
+				'communityBase'  => home_url( '/' . ( $settings['base_slug'] ?? 'community' ) ),
+				'currentPostId'  => 0,
+				'postScores'     => new \stdClass(),
+				'replyScores'    => new \stdClass(),
+				'isLoggedIn'     => is_user_logged_in(),
+				'loginUrl'       => wp_login_url( home_url( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) ),
+				'isSubmitting'   => false,
+				'submitLabel'    => __( 'Post Topic', 'jetonomy' ),
+				'submitError'    => '',
+				'msgComposeOpen' => false,
+				'i18n'           => array(
+					'voteRecorded'          => __( 'Vote recorded', 'jetonomy' ),
+					'statusUpdated'         => __( 'Roadmap status updated', 'jetonomy' ),
+					'accepted'              => __( 'Accepted', 'jetonomy' ),
+					'reply'                 => __( 'Reply', 'jetonomy' ),
+					'cancel'                => __( 'Cancel', 'jetonomy' ),
+					'save'                  => __( 'Save', 'jetonomy' ),
+					'saving'                => __( 'Saving...', 'jetonomy' ),
+					'failedSave'            => __( 'Failed to save.', 'jetonomy' ),
+					'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
+					'follow'                => __( 'Follow', 'jetonomy' ),
+					'following'             => __( 'Following', 'jetonomy' ),
+					'followingSpace'        => __( 'Following space', 'jetonomy' ),
+					'unfollowedSpace'       => __( 'Unfollowed space', 'jetonomy' ),
+					'copyLink'              => __( 'Copy link', 'jetonomy' ),
+					'bookmark'              => __( 'Bookmark', 'jetonomy' ),
+					'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
+					'bookmarked'            => __( 'Bookmarked', 'jetonomy' ),
+					'bookmarkRemoved'       => __( 'Bookmark removed', 'jetonomy' ),
+					'reportPrompt'          => __( 'Why are you reporting this post?', 'jetonomy' ),
+					'reportedThankYou'      => __( 'Reported. Thank you.', 'jetonomy' ),
+					'failedReport'          => __( 'Failed to submit report.', 'jetonomy' ),
+					'postPinned'            => __( 'Post pinned', 'jetonomy' ),
+					'postUnpinned'          => __( 'Post unpinned', 'jetonomy' ),
+					'failedPin'             => __( 'Failed to toggle pin.', 'jetonomy' ),
+					'confirmDeletePost'     => __( 'Are you sure you want to delete this topic?', 'jetonomy' ),
+					'confirmDeleteReply'    => __( 'Are you sure you want to delete this reply?', 'jetonomy' ),
+					'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
+					'moveTopicTitle'        => __( 'Move topic to another space', 'jetonomy' ),
+					'topicMoved'            => __( 'Topic moved successfully.', 'jetonomy' ),
+					'moveFailed'            => __( 'Failed to move topic.', 'jetonomy' ),
+					'mergeTopicTitle'       => __( 'Merge into another topic', 'jetonomy' ),
+					'confirmMerge'          => __( 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.', 'jetonomy' ),
+					'topicMerged'           => __( 'Topics merged successfully.', 'jetonomy' ),
+					'mergeFailed'           => __( 'Failed to merge topics.', 'jetonomy' ),
+					'splitReplyTitle'       => __( 'Enter a title for the new topic:', 'jetonomy' ),
+					'replySplit'            => __( 'Reply split into new topic.', 'jetonomy' ),
+					'splitFailed'           => __( 'Failed to split reply.', 'jetonomy' ),
+					'replyingTo'            => __( 'Replying to', 'jetonomy' ),
+					'cancelReply'           => __( 'Cancel reply', 'jetonomy' ),
+					'posting'               => __( 'Posting...', 'jetonomy' ),
+					'postTopic'             => __( 'Post Topic', 'jetonomy' ),
+					'newReply'              => __( '%d new reply. Click to refresh.', 'jetonomy' ),
+					'newReplies'            => __( '%d new replies. Click to refresh.', 'jetonomy' ),
+					'linkCopied'            => __( 'Link copied', 'jetonomy' ),
+					'linkCopyFailed'        => __( 'Could not copy the link. Copy it from the address bar.', 'jetonomy' ),
+					'titleRequired'         => __( 'Please enter a title for your topic.', 'jetonomy' ),
+					'bodyRequired'          => __( 'Please add some details before posting.', 'jetonomy' ),
+					'loginRequired'         => __( 'Please sign in to use this.', 'jetonomy' ),
+					// Pro Private Messaging composer (consumed by jetonomy-pro/assets/js/pro-view.js).
+					'messageSending'        => __( 'Sending...', 'jetonomy' ),
+					'messageSend'           => __( 'Send', 'jetonomy' ),
+					'messageSendFailed'     => __( 'Failed to send. Please try again.', 'jetonomy' ),
+					'noMessageMatches'      => __( 'No matches. You can only message people who share at least one space with you.', 'jetonomy' ),
+					'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
+					'userNotFound'          => __( 'User not found: ', 'jetonomy' ),
+					// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
+					'muteFailed'            => __( 'Could not update mute setting.', 'jetonomy' ),
+					'archiveFailed'         => __( 'Could not archive the conversation.', 'jetonomy' ),
+					'leaveFailed'           => __( 'Could not leave the conversation.', 'jetonomy' ),
+					'blockFailed'           => __( 'Could not update block setting.', 'jetonomy' ),
+					'confirmLeave'          => __( 'Leave this conversation? You will not receive new messages.', 'jetonomy' ),
+					'confirmBlock'          => __( 'Block this user? They will no longer be able to message you here.', 'jetonomy' ),
+					// WS4-C: moderation flag toasts + profile-save failure (consumed by view.js via state.i18n).
+					'contentRemoved'        => __( 'Content removed', 'jetonomy' ),
+					'flagDismissed'         => __( 'Flag dismissed', 'jetonomy' ),
+					'failed'                => __( 'Failed', 'jetonomy' ),
+					'failedSaveProfile'     => __( 'Failed to save profile.', 'jetonomy' ),
+					'schedule'              => __( 'Schedule', 'jetonomy' ),
+					'editPost'              => __( 'Edit post', 'jetonomy' ),
+					'editReply'             => __( 'Edit reply', 'jetonomy' ),
+					'unaccepted'            => __( 'Marked as unanswered', 'jetonomy' ),
+					// 1.4.4 i18n sweep — keys view.js reads via state.i18n that were
+					// missing here, so they always rendered the English fallback even
+					// on a translated locale.
+					'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
+					'chooseSpace'           => __( 'Choose a space first.', 'jetonomy' ),
+					'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
+					'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
+					'scheduleDateRequired'  => __( 'Please choose a publish date and time.', 'jetonomy' ),
+					'failedTogglePrivate'   => __( 'Failed to change visibility.', 'jetonomy' ),
+					'madePrivate'           => __( 'Topic is now private', 'jetonomy' ),
+					'madePublic'            => __( 'Topic is now public', 'jetonomy' ),
+					'pendingNotice'         => __( 'Your post is awaiting moderation and will appear once approved.', 'jetonomy' ),
+					'reportPlaceholder'     => __( 'Describe the issue...', 'jetonomy' ),
+					'reportReplyPrompt'     => __( 'Why are you reporting this reply?', 'jetonomy' ),
+					'reportUserPrompt'      => __( 'Why are you reporting this user?', 'jetonomy' ),
+					'reportUserPlaceholder' => __( 'Describe the issue...', 'jetonomy' ),
+					'topicClosed'           => __( 'Topic closed', 'jetonomy' ),
+					'topicReopened'         => __( 'Topic reopened', 'jetonomy' ),
+					'failedClose'           => __( 'Failed to update topic.', 'jetonomy' ),
+					// WS4-C: Pro Polls strings consumed via state.i18n in pro-view.js.
+					'failedSubmitVote'      => __( 'Failed to submit vote. Please try again.', 'jetonomy' ),
+					'voteSingular'          => __( '1 vote', 'jetonomy' ),
+					/* translators: %d: vote count. */
+					'voteFormat'            => __( '%d votes', 'jetonomy' ),
+				),
 			)
 		);
 
@@ -382,7 +381,15 @@ class Template_Loader {
 		wp_enqueue_script_module(
 			'jetonomy-view',
 			JETONOMY_URL . 'assets/js/view.js',
-			array( '@wordpress/interactivity' ),
+			array(
+				array( 'id' => '@wordpress/interactivity' ),
+				// iAPI client-side router, dynamically imported by the `navigate`
+				// action so it only loads the first time a client nav fires.
+				array(
+					'id'     => '@wordpress/interactivity-router',
+					'import' => 'dynamic',
+				),
+			),
 			$view_version
 		);
 
@@ -531,16 +538,7 @@ class Template_Loader {
 		// rest_cookie_invalid_nonce. Depends on `jetonomy-data` for restBase
 		// + restNonce. See includes/api/class-rest-auth.php for the matching
 		// server-side permission helper.
-		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
-		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
-		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
-		wp_enqueue_script(
-			'jetonomy-rest',
-			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
-			array( 'jetonomy-data' ),
-			$jr_version,
-			true
-		);
+		self::enqueue_rest_client();
 
 		// Pagination "Load More" auto-scroll handler. Self-discovers all
 		// .jt-pagination containers on the page; safe to always enqueue.
@@ -563,39 +561,18 @@ class Template_Loader {
 			true
 		);
 
-		// Per-route page scripts.
-		if ( 'new-space' === $data['route'] ) {
-			wp_enqueue_script(
-				'jetonomy-new-space',
-				JETONOMY_URL . 'assets/js/new-space.js',
-				array( 'jetonomy-data', 'jetonomy-custom-fields' ),
-				JETONOMY_VERSION,
-				true
-			);
-		} elseif ( 'edit-space' === $data['route'] ) {
-			wp_enqueue_script(
-				'jetonomy-space-edit',
-				JETONOMY_URL . 'assets/js/space-edit.js',
-				array( 'jetonomy-data', 'jetonomy-custom-fields' ),
-				JETONOMY_VERSION,
-				true
-			);
-		} elseif ( 'notifications' === $data['route'] ) {
-			wp_enqueue_script(
-				'jetonomy-notifications-page',
-				JETONOMY_URL . 'assets/js/notifications-page.js',
-				array( 'jetonomy-data', 'jetonomy-rest' ),
-				JETONOMY_VERSION,
-				true
-			);
-		}
+		// Per-route page scripts: NONE remain. Every former per-route surface
+		// (new-space, edit-space, space-members, notifications, moderation) is now
+		// a declarative action in the global jetonomy store, so the iAPI router
+		// re-hydrates them on client navigation. The only non-global asset left is
+		// vendor Prism on the post route (still full-loaded by the route guard).
 
 		// Enqueue composer enhancement script (depends on the shared modal
 		// toolkit for the link-insert prompt).
 		wp_enqueue_script(
 			'jetonomy-composer',
 			JETONOMY_URL . 'assets/js/composer.js',
-			array( 'jetonomy-modals' ),
+			array( 'jetonomy-modals', 'jetonomy-rest' ),
 			JETONOMY_VERSION,
 			true
 		);
@@ -613,35 +590,15 @@ class Template_Loader {
 			)
 		);
 
-		// Enqueue role-dropdown handler on the space-members route (only
-		// rendered for space admins, but the JS binds via delegation and is
-		// a no-op when no select is present — safe to always enqueue here).
-		if ( 'space-members' === $data['route'] ) {
-			$sm_file    = JETONOMY_DIR . 'assets/js/space-members.js';
-			$sm_mtime   = file_exists( $sm_file ) ? (string) filemtime( $sm_file ) : '';
-			$sm_version = '' !== $sm_mtime ? JETONOMY_VERSION . '+' . $sm_mtime : JETONOMY_VERSION;
-			wp_enqueue_script(
-				'jetonomy-space-members',
-				JETONOMY_URL . 'assets/js/space-members.js',
-				array( 'jetonomy-data', 'jetonomy-modals' ),
-				$sm_version,
-				true
-			);
-		}
+		// Space-members role change + ban are now declarative actions in the
+		// global jetonomy store (actions.changeMemberRole / actions.banMember),
+		// so no per-route script is enqueued — the router re-hydrates the
+		// directives on client navigation. (Was assets/js/space-members.js.)
 
-		// Enqueue moderation queue resolver on moderation routes.
-		if ( in_array( $data['route'], array( 'moderation', 'space-moderation' ), true ) ) {
-			$mod_file    = JETONOMY_DIR . 'assets/js/moderation.js';
-			$mod_mtime   = file_exists( $mod_file ) ? (string) filemtime( $mod_file ) : '';
-			$mod_version = '' !== $mod_mtime ? JETONOMY_VERSION . '+' . $mod_mtime : JETONOMY_VERSION;
-			wp_enqueue_script(
-				'jetonomy-moderation',
-				JETONOMY_URL . 'assets/js/moderation.js',
-				array( 'jetonomy-data' ),
-				$mod_version,
-				true
-			);
-		}
+		// Moderation queue resolve is now a declarative action in the global
+		// jetonomy store (actions.resolveFlag, used by moderation/flag-card.php),
+		// so the router re-hydrates it on client navigation — no per-route script.
+		// (Was assets/js/moderation.js.)
 
 		// Enqueue Prism.js for code syntax highlighting on post pages (only if files exist).
 		$prism_dir = JETONOMY_DIR . 'assets/vendor/prismjs/';
@@ -693,7 +650,11 @@ class Template_Loader {
 			get_header();
 		}
 
-		echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy">';
+		// data-wp-on--click on the app wrapper delegates every internal link
+		// click to actions.navigate (Phase 2 client-side routing). The action
+		// route-guards which targets are safe to swap vs. full-load, and always
+		// preserves the real <a href> as the fallback.
+		echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy" data-wp-on--click="actions.navigate">';
 
 		/**
 		 * Fires inside the Jetonomy app wrapper, before the header partial and
@@ -716,8 +677,15 @@ class Template_Loader {
 			include $header_path;
 		}
 
-		// Load the main template
+		// Load the main template, wrapped in an iAPI router region so client-side
+		// navigation swaps only the view content while the header/nav above stays
+		// put. The region element carries BOTH data-wp-interactive and
+		// data-wp-router-region (the router only recognises a region when both are
+		// present). The grid lives on the view's inner .jt-two-col, so this plain
+		// wrapper does not affect layout. Region id must match across every route.
+		echo '<div data-wp-interactive="jetonomy" data-wp-router-region="jetonomy/main">';
 		include $template_path;
+		echo '</div>'; // [data-wp-router-region]
 
 		echo '</div>'; // .jt-container
 
@@ -741,6 +709,121 @@ class Template_Loader {
 		} else {
 			get_footer();
 		}
+	}
+
+	/**
+	 * Build the root token overrides for the admin-chosen color palette
+	 * (Settings → Appearance → Color Palette).
+	 *
+	 * Emits one `:root,.jt-app{...}` block containing only the colors the
+	 * site owner actually set — an empty field means "keep the default", so
+	 * a site with no palette saved gets an empty string and zero behaviour
+	 * change. Derived tokens (text-secondary/tertiary, bg-hover, hover
+	 * accents) recompute automatically because they are color-mix()
+	 * expressions over these root tokens. Dark mode is unaffected: the
+	 * `.jt-dark .jt-app` token block outranks `:root,.jt-app` by
+	 * specificity, so the palette only restyles light mode.
+	 *
+	 * The legacy accent default `#0073aa` is treated as "unset" — it was the
+	 * pre-palette field default and was never emitted as an override.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param array $settings The jetonomy_settings option array.
+	 * @return string CSS block, or '' when no palette color is set.
+	 */
+	public static function palette_css( array $settings ): string {
+		$vars = '';
+		foreach ( self::palette_tokens( $settings ) as $token => $hex ) {
+			$vars .= $token . ':' . $hex . ';';
+		}
+
+		return '' !== $vars ? ':root,.jt-app{' . $vars . '}' : '';
+	}
+
+	/**
+	 * Resolve the admin-chosen palette as a `--jt-*` token => hex map.
+	 *
+	 * Shared by palette_css() (frontend emission) and by
+	 * Theme_Integration::output_color_bridge(), which subtracts these
+	 * tokens from its automatic theme bridge so an explicit owner choice
+	 * always outranks inherited theme colors. Empty when "Inherit theme
+	 * colors" is on or when no palette field is set.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @param array $settings The jetonomy_settings option array.
+	 * @return array<string,string> Token name => sanitized hex color.
+	 */
+	public static function palette_tokens( array $settings ): array {
+		// "Inherit theme colors" wins over the manual palette (same
+		// precedence the accent field always had via CSS order).
+		if ( ! empty( $settings['inherit_colors'] ) ) {
+			return array();
+		}
+
+		$map = array(
+			'accent_color'    => '--jt-accent',
+			'text_color'      => '--jt-text',
+			'bg_color'        => '--jt-bg',
+			'bg_subtle_color' => '--jt-bg-subtle',
+			'border_color'    => '--jt-border',
+		);
+
+		$tokens = array();
+		foreach ( $map as $key => $token ) {
+			if ( empty( $settings[ $key ] ) ) {
+				continue;
+			}
+			if ( 'accent_color' === $key && '#0073aa' === $settings[ $key ] ) {
+				continue;
+			}
+			$hex = sanitize_hex_color( (string) $settings[ $key ] );
+			if ( $hex ) {
+				$tokens[ $token ] = $hex;
+			}
+		}
+
+		return $tokens;
+	}
+
+	/**
+	 * Enqueue the unified REST fetch client (window.jetonomyRest) plus the
+	 * minimal `jetonomyData` payload it reads (restBase + restNonce).
+	 *
+	 * Idempotent and additive. On community routes render() has already
+	 * registered + localized the full jetonomyData payload, so the minimal
+	 * localize only fires on embed surfaces (compose-topic shortcode/block
+	 * on a regular WP page) where no other Jetonomy script has run. Without
+	 * this, view.js actions that go through restFetch fail before the
+	 * request is made (Basecamp #9967059857).
+	 *
+	 * @since 1.5.0
+	 */
+	public static function enqueue_rest_client(): void {
+		if ( ! wp_script_is( 'jetonomy-data', 'registered' ) ) {
+			wp_register_script( 'jetonomy-data', '', array(), JETONOMY_VERSION, false );
+			wp_localize_script(
+				'jetonomy-data',
+				'jetonomyData',
+				array(
+					'restBase'  => esc_url_raw( rest_url( 'jetonomy/v1' ) ),
+					'restNonce' => wp_create_nonce( 'wp_rest' ),
+				)
+			);
+		}
+		wp_enqueue_script( 'jetonomy-data' );
+
+		$jr_file    = JETONOMY_DIR . 'assets/js/jetonomy-rest.js';
+		$jr_mtime   = file_exists( $jr_file ) ? (string) filemtime( $jr_file ) : '';
+		$jr_version = '' !== $jr_mtime ? JETONOMY_VERSION . '+' . $jr_mtime : JETONOMY_VERSION;
+		wp_enqueue_script(
+			'jetonomy-rest',
+			JETONOMY_URL . 'assets/js/jetonomy-rest.js',
+			array( 'jetonomy-data' ),
+			$jr_version,
+			true
+		);
 	}
 
 	private static function set_seo_meta( array $data ): void {
@@ -886,10 +969,15 @@ class Template_Loader {
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
 						if ( $space ) {
 							$is_private = ! empty( $space->visibility ) && 'public' !== $space->visibility;
-							$title      = $space->title;
-							$desc       = wp_strip_all_tags( $space->description ?? '' );
-							$image      = $space->cover_image ?? '';
-							$image_alt  = $space->title;
+
+							// Feed auto-discovery for readers/browsers (1.5.0).
+							if ( 'space' === $data['route'] ) {
+								\Jetonomy\Feed::discovery_link( $space );
+							}
+							$title     = $space->title;
+							$desc      = wp_strip_all_tags( $space->description ?? '' );
+							$image     = $space->cover_image ?? '';
+							$image_alt = $space->title;
 
 							switch ( $data['route'] ) {
 								case 'space-members':

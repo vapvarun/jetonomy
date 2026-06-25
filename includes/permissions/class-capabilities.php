@@ -62,31 +62,4 @@ class Capabilities {
 			}
 		}
 	}
-
-	/**
-	 * Remove all Jetonomy capabilities from all mapped roles.
-	 *
-	 * Used during plugin uninstall or deactivation.
-	 */
-	public static function unregister(): void {
-		$all_caps = array_unique( array_merge( ...array_values( self::ROLE_MAP ) ) );
-		foreach ( array_keys( self::ROLE_MAP ) as $role_name ) {
-			$role = get_role( $role_name );
-			if ( ! $role ) {
-				continue;
-			}
-			foreach ( $all_caps as $cap ) {
-				$role->remove_cap( $cap );
-			}
-		}
-	}
-
-	/**
-	 * Return a flat, deduplicated list of all Jetonomy capabilities.
-	 *
-	 * @return string[]
-	 */
-	public static function get_all(): array {
-		return array_unique( array_merge( ...array_values( self::ROLE_MAP ) ) );
-	}
 }

@@ -2,6 +2,8 @@
 
 > **Source of truth:** [`manifest.json`](manifest.json). This document is a human-readable view of the same data, refreshed on 2026-05-14 by `/wp-plugin-onboard --refresh` (delta on top of the 2026-04-30 base).
 
+> **1.5.0-dev delta (2026-06-11):** the full-audit fix series changed the inventory — read [`full-audit-2026-06-11.md`](full-audit-2026-06-11.md) for the complete findings. Net feature-level changes: **removed** jt_space_tags / jt_space_tag_map / jt_user_interests tables (never wired, Migration_1_5_0 drops them), GET /space-tags, 3 dead AJAX actions (run_import, import_progress, get_replies), 9 superseded REST permission callbacks, ~17 dead model methods, the jetonomy_recent_activity shortcode entry (was never registered). **Added** GET /auth/nonce (session nonce refresh backing the restFetch 403 retry), jetonomy_post_publish_transition / jetonomy_reply_publish_transition hooks (consumed by Pro analytics), captcha_token on /auth/login, Captcha_Adapter::render_widget() (Turnstile containers on every captcha-verified form), Avatar class (local avatar resolution via pre_get_avatar_data, jt_user_profiles.avatar_url now consumed), InviteLink::accept() (single owner of the invite flow), Template_Loader::enqueue_rest_client() (REST client on embed surfaces). Counts in the Summary table below predate this delta — the manifest is current.
+
 ## Summary
 
 | Category | Count | Notes |

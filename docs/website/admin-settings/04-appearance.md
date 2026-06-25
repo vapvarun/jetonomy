@@ -20,12 +20,14 @@ The Appearance tab gives you a set of override controls on top of that inheritan
 ## Accent Color
 
 **Setting:** `accent_color`
-**Default:** Inherited from theme (`--wp--preset--color--primary`)
+**Default:** `#0073aa` shown in the picker; the live community inherits your theme's primary color while **Inherit Colors from Theme** is on
 **Location:** Appearance tab → Colors section
 
-The accent color drives buttons, links, vote arrows, trust-level highlights, and other interactive elements. Leave this blank to inherit from your theme. Set a specific hex value to override the theme's primary color just for Jetonomy.
+The accent color drives buttons, links, vote arrows, trust-level highlights, and other interactive elements.
 
-This value is injected as `--jt-accent` on the `.jt-app` element at runtime, so it overrides the theme-inherited value.
+When you first open the picker it shows a blue value (`#0073aa`). Do not be alarmed - while **Inherit Colors from Theme** (below) is on, that stored value is ignored and the live community pulls its accent from your theme's primary color (`--wp--preset--color--primary`). The picker value only takes effect once you turn Inherit Colors off, at which point it is injected as `--jt-accent` on the `.jt-app` element and overrides the theme.
+
+To set a custom accent: turn **Inherit Colors from Theme** off, then pick your color here.
 
 > **Tip:** Use a color that has at least a 4.5:1 contrast ratio against white (WCAG AA). The community UI places accent colors on white backgrounds frequently.
 
@@ -49,6 +51,19 @@ When on, the `--jt-accent` token pulls from `--wp--preset--color--primary` in yo
 
 Turn this off if you have set a custom accent color above and do not want theme updates to override it.
 
+## Color Palette
+
+**Location:** Appearance tab → Color Palette section
+
+Beyond the accent color, you can set the community's core surface colors directly. This is useful when your theme has no color tokens for Jetonomy to inherit. These overrides apply when **Inherit Colors from Theme** is off. Leave any field empty to keep the default - secondary shades (hover, muted text) derive automatically.
+
+Each field accepts a hex color value:
+
+- **Text** (`text_color`) - Body copy and headings. Secondary and muted text derive from it.
+- **Background** (`bg_color`) - Cards and content surfaces.
+- **Subtle Background** (`bg_subtle_color`) - Secondary surfaces such as table headers, code, and quiet panels.
+- **Border** (`border_color`) - Card outlines, dividers, and input borders.
+
 ## Layout
 
 Jetonomy 1.4.0 added a Layout panel with three controls that decide how the community canvas sits inside your active theme. Every option defaults to **Theme Default**, so existing installs see no visual change after the upgrade. When you do change a value, Jetonomy emits a small block of CSS scoped to `body.jt-page` - the rules only apply on community routes and never leak into the rest of your site.
@@ -68,7 +83,7 @@ Controls how wide the community canvas can grow before it stops expanding.
 
 ### Theme Sidebar
 
-**Setting:** `theme_sidebar`
+**Setting:** `sidebar_visibility`
 **Default:** Theme Default
 **Options:** Theme Default, Hide on community pages
 **Location:** Appearance tab → Layout section
@@ -80,7 +95,7 @@ Decides whether the host theme's sidebar shows on community routes.
 
 ### Page Padding
 
-**Setting:** `page_padding`
+**Setting:** `padding_preset`
 **Default:** Theme Default
 **Options:** Theme Default, None, Comfortable
 **Location:** Appearance tab → Layout section
@@ -97,12 +112,14 @@ Adjusts the inline padding around the community canvas.
 
 **Setting:** `layout_density`
 **Default:** `comfortable`
-**Options:** Comfortable, Compact
+**Options:** Compact, Comfortable, Spacious
 **Location:** Appearance tab → Layout section
+
+**Compact** - Reduced padding and tighter spacing. Fits more content on screen at once. Best for high-volume spaces where members scan many posts quickly.
 
 **Comfortable** - Standard spacing between post cards, reply cards, and interface elements. Best for general communities and long-form discussion.
 
-**Compact** - Reduced padding and tighter spacing. Fits more content on screen at once. Best for high-volume spaces where members scan many posts quickly.
+**Spacious** - Extra-roomy spacing between cards and interface elements. Best for low-volume, reading-focused communities that favor breathing room over density.
 
 When you change this setting, Jetonomy adds `data-jt-density="compact"` (or `"comfortable"`) to the `.jt-app` wrapper element. CSS rules keyed to this attribute apply the appropriate spacing.
 

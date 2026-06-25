@@ -1,3 +1,9 @@
+---
+title: "Voting & Reputation"
+category: "discussions"
+order: 3
+---
+
 Voting is the engine behind Jetonomy's quality signals. It surfaces the best content, rewards helpful members, and gives you a community where the most useful posts rise to the top naturally, without moderator intervention.
 
 ![Topic page showing upvote and downvote buttons with vote scores on replies](../images/single-topic-replies.png)
@@ -47,6 +53,8 @@ When you receive votes on your content, your Jetonomy reputation score changes. 
 | Your reply is accepted as an answer (Q&A) | +15 |
 | Your post or reply is downvoted | -2 |
 | Your post is deleted by a moderator | -20 |
+
+These are the **defaults**. Every value is **admin-configurable per site** under **Jetonomy → Settings → Permissions → Reputation Points** - positive numbers reward, negative numbers penalize, and any row you leave alone keeps its default. See [Permissions Settings → Reputation Points](../admin-settings/02-permissions.md#reputation-points) for the full table and how to change a value.
 
 Reputation is calculated and stored in real time. The moment someone votes on your content, your reputation score updates. There is no batch processing.
 

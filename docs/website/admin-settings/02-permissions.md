@@ -17,12 +17,12 @@ Jetonomy uses six trust levels (0 through 5) to gradually extend posting privile
 
 | Level | Name | Earned By |
 |---|---|---|
-| 0 | New Member | Default on registration |
-| 1 | Basic | Automatic - light activity |
-| 2 | Member | Automatic - consistent participation |
-| 3 | Regular | Automatic - high engagement and reputation |
-| 4 | Trusted | Manual - granted by moderator or admin |
-| 5 | Leader | Manual - granted by admin only |
+| 0 | Newcomer | Default on registration |
+| 1 | Member | Automatic - light activity |
+| 2 | Regular | Automatic - consistent participation |
+| 3 | Trusted | Automatic - high engagement and reputation |
+| 4 | Leader | Manual - granted by moderator or admin |
+| 5 | Moderator | Manual - granted by admin only |
 
 The cron job runs every 12 hours and re-evaluates every member against the configured thresholds. Demotion is also possible - if a member is muted or receives too many spam flags, their trust level can drop.
 
@@ -35,20 +35,19 @@ Each auto-promotion level (1, 2, and 3) has a configurable set of thresholds. A 
 
 | Threshold | Description | Configurable |
 |---|---|---|
-| `min_posts` | Minimum posts created | Yes |
-| `min_days` | Minimum days since registration | Yes |
-| `min_visits` | Minimum session visits | Yes |
-| `min_reputation` | Minimum reputation score | Yes |
-| `max_flags` | Maximum accepted spam flags before block | Yes |
+| `posts` | Minimum posts created | Yes |
+| `days_active` | Minimum days since registration | Yes |
+| `reputation` | Minimum reputation score | Yes |
+| `replies_received` | Minimum replies received on own posts | Yes |
 
-**Default thresholds (Level 1 example):**
+**Default thresholds (Level 1):**
 
 | Threshold | Default Value |
 |---|---|
-| `min_posts` | 1 |
-| `min_days` | 1 |
-| `min_visits` | 3 |
-| `min_reputation` | 0 |
+| `posts` | 5 |
+| `days_active` | 3 |
+| `reputation` | 0 |
+| `replies_received` | 10 |
 
 For small communities (under 200 members), lower the thresholds. Members can feel stuck if Level 1 requirements take weeks to meet. For larger communities, raise the thresholds to protect against spam waves.
 
@@ -98,11 +97,11 @@ For high-traffic communities, raise these limits. For communities experiencing s
 **Small community (under 500 members):**
 - Lower all trust thresholds significantly - active members should reach Level 2 within a week
 - Keep rate limits at defaults - spam volume is low
-- Consider setting `min_days` to 0 for Level 1 to avoid frustrating early adopters
+- Consider setting `days_active` to 0 for Level 1 to avoid frustrating early adopters
 
 **Large community (10,000+ members):**
 - Keep thresholds at defaults or raise them - organic promotion still happens, just slower
-- Raise `max_flags` threshold at Level 0 to prevent easy reputational attacks
+- Raise the `reputation` and `posts` thresholds to make higher levels harder to reach
 - Lower post rate limits if you see spam bursts
 
 ## Reputation Points

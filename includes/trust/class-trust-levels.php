@@ -153,16 +153,4 @@ class Trust_Levels {
 	public static function name( int $level ): string {
 		return self::LEVELS[ $level ]['name'] ?? '';
 	}
-
-	/**
-	 * Determine whether a trust level can be earned automatically.
-	 *
-	 * Levels 0–3 are auto-earned; levels 4–5 must be manually granted.
-	 *
-	 * @param int $level Trust level.
-	 * @return bool
-	 */
-	public static function can_auto_earn( int $level ): bool {
-		return $level >= 0 && $level <= 3;
-	}
 }

@@ -33,6 +33,8 @@ Each row shows the post title, the editor, when the change was saved, and the si
 
 ## Side-by-Side Diff
 
+![Revisions diff view showing the before and after versions of a post side by side, with added text highlighted green and removed text highlighted red](../images/admin-revisions.png)
+
 Click any revision to open the diff view. Pick two revisions from the same post and you'll see:
 
 - The before version on the left, after on the right
@@ -47,7 +49,7 @@ Like the Activity Log, the Revisions page is read-only. To roll back to a prior 
 
 ## Permission
 
-Only users with the `jetonomy_manage_revisions` capability (admin and moderator roles by default) can see this page. Members can see their own edit history on each individual post, but not the cross-post Revisions admin view.
+Only users with the `jetonomy_manage_settings` capability (administrators only by default) can see this page. Members can see their own edit history on each individual post, but not the cross-post Revisions admin view.
 
 ## Storage
 

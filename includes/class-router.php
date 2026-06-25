@@ -16,8 +16,39 @@ class Router {
 	public function __construct() {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
+		add_filter( 'request', [ $this, 'maybe_serve_front_page' ] );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
+	}
+
+	/**
+	 * Serve the community home on the site front page when the
+	 * "Community as homepage" setting is enabled.
+	 *
+	 * Purely additive by design: it fires ONLY for the bare front-page
+	 * request, where WP's parsed query vars are completely empty. Every
+	 * other request — feeds (feed=...), pagination (paged=...), posts,
+	 * pages, attachments, and all /{base}/* community routes — carries
+	 * query vars and passes through untouched, so no existing route,
+	 * rewrite rule, or permalink behaviour changes. With the injected
+	 * route var, template_redirect renders the home view through the
+	 * exact same Template_Loader path as /{base}/ itself.
+	 *
+	 * @param array $query_vars Parsed request vars from WP::parse_request().
+	 * @return array Unchanged vars, or vars + jetonomy_route=home on the front page.
+	 */
+	public function maybe_serve_front_page( array $query_vars ): array {
+		if ( ! empty( $query_vars ) ) {
+			return $query_vars;
+		}
+
+		$settings = get_option( 'jetonomy_settings', [] );
+		if ( empty( $settings['front_page'] ) ) {
+			return $query_vars;
+		}
+
+		$query_vars['jetonomy_route'] = 'home';
+		return $query_vars;
 	}
 
 	public function add_rewrite_rules(): void {
@@ -88,6 +119,9 @@ class Router {
 		// Front-end edit space (G5) — /community/s/:slug/edit/
 		add_rewrite_rule( "^{$base}/s/([^/]+)/edit/?$", 'index.php?jetonomy_route=edit-space&jetonomy_slug=$matches[1]', 'top' );
 
+		// Space RSS feed (1.5.0) — /community/s/:slug/feed/
+		add_rewrite_rule( "^{$base}/s/([^/]+)/feed/?$", 'index.php?jetonomy_route=space-feed&jetonomy_slug=$matches[1]', 'top' );
+
 		// Tags
 		add_rewrite_rule( "^{$base}/tag/([^/]+)/?$", 'index.php?jetonomy_route=tag&jetonomy_slug=$matches[1]', 'top' );
 
@@ -151,6 +185,23 @@ class Router {
 			'space_slug' => get_query_var( 'jetonomy_space_slug', '' ),
 			'tab'        => get_query_var( 'jetonomy_tab', '' ),
 		];
+
+		// A resolved Jetonomy route is a real page. WordPress may have flagged
+		// the main query as 404 — e.g. `?paged=2` on a route whose underlying
+		// main object is a single page — which makes the notifications / listing
+		// "Load More" fetches 404 from page 2 on. Clear the inherited 404 and
+		// assert a 200 before rendering; templates still call status_header( 404 )
+		// themselves for genuinely missing content (unknown space / post).
+		global $wp_query;
+		if ( $wp_query instanceof \WP_Query && $wp_query->is_404() ) {
+			$wp_query->is_404 = false;
+		}
+		status_header( 200 );
+
+		// Space RSS feed renders XML and exits before any template work.
+		if ( 'space-feed' === $route ) {
+			Feed::render( (string) $data['slug'] );
+		}
 
 		// Load the template (template may call status_header(404) inside)
 		Template_Loader::render( $data );

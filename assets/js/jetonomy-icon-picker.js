@@ -85,4 +85,9 @@
 	// Expose a small re-scan hook for templates that inject pickers after
 	// page load (e.g. an admin modal that lazily reveals its form).
 	window.jetonomyIconPickerScan = bootAll;
+
+	// Re-scan after an iAPI client-side navigation swaps in a new view, so the
+	// new-space / edit-space pickers bind without a full reload. bootAll +
+	// initPicker are idempotent (dataset.jtIconPickerInit guard).
+	document.addEventListener('jetonomy:navigated', bootAll);
 })();

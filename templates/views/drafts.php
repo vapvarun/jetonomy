@@ -29,6 +29,12 @@ $offset   = ( $page - 1 ) * $per_page;
 
 $drafts = \Jetonomy\Models\Post::list_drafts_by_user( $user_id, $per_page, $offset );
 
+// has_more compares the real total against what is shown — never count( $drafts ),
+// which showed a phantom "Load More" when the draft count was an exact multiple
+// of $per_page (Basecamp).
+$total    = \Jetonomy\Models\Post::count_drafts_by_user( $user_id );
+$has_more = ( $page * $per_page ) < $total;
+
 $crumbs = array(
 	array(
 		'label' => __( 'My drafts', 'jetonomy' ),
@@ -54,10 +60,11 @@ $crumbs = array(
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				[
-					'icon'      => 'edit',
-					'message'   => __( 'No drafts yet. Save a post as a draft and it will appear here.', 'jetonomy' ),
-					'cta_label' => __( 'Browse the community', 'jetonomy' ),
-					'cta_url'   => $base . '/',
+					'icon'        => 'edit',
+					'message'     => __( 'No drafts yet.', 'jetonomy' ),
+					'description' => __( 'Start writing a post and choose "Save draft" — it will wait for you here until you publish.', 'jetonomy' ),
+					'cta_label'   => __( 'Start a post', 'jetonomy' ),
+					'cta_url'     => $base . '/',
 				]
 			);
 			?>
@@ -74,7 +81,7 @@ $crumbs = array(
 					?>
 				<?php endforeach; ?>
 			</div>
-			<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $drafts ) >= $per_page ) ); ?>
+			<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => $has_more ) ); ?>
 		<?php endif; ?>
 	</main>
 

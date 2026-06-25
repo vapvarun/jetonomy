@@ -38,7 +38,7 @@ Use the date range picker at the top right to select any custom range. Preset sh
 
 All charts and tables update instantly when you change the range.
 
-<!-- TODO screenshot needed: Date range picker on the analytics page (was ../images/pro-analytics-date-filter.png) -->
+![The analytics date-range picker, showing the preset shortcuts (Last 7 days, Last 30 days, Last 90 days, This month, Last month) and the custom range option](../images/pro-analytics-date-filter.png)
 ## Overview Metrics
 
 The top row shows four headline numbers for your selected range:
@@ -51,6 +51,8 @@ The top row shows four headline numbers for your selected range:
 | **Growth Rate** | Percentage change vs the previous equal-length period |
 
 Below the headline row, a line chart shows daily post and reply volume over the selected range. Spikes are easy to spot - hover any point to see the exact date and count.
+
+**Counting semantics (improved in 1.5.0):** the daily totals count *published* content and stay accurate through the whole content lifecycle. A post created as pending counts on the day it was created once a moderator approves it; trashing a published post removes it from its original day's total (never producing negative days); restoring adds it back. Earlier versions counted at creation only, so moderated or trashed content slowly drifted the totals.
 
 ## Top Spaces
 

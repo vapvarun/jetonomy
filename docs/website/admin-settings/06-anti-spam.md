@@ -19,9 +19,9 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 
 ## Choosing a Provider
 
-**Setting:** `antispam_provider`
-**Default:** None
-**Options:** None, Google reCAPTCHA v3, Cloudflare Turnstile
+**Setting:** `captcha_provider`
+**Default:** None (`none`)
+**Options:** None (`none`), Google reCAPTCHA v3 (`recaptcha_v3`), Cloudflare Turnstile (`turnstile`)
 
 | Provider | How It Works | User Visibility |
 |---|---|---|
@@ -45,9 +45,25 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 6. Set the **Score Threshold** (see below).
 7. Save settings.
 
+### Site Key and Secret Key
+
+Both supported providers (reCAPTCHA v3 and Turnstile) use the same two fields on this tab to store the credentials you copy from the provider's dashboard:
+
+**Setting:** `captcha_site_key`
+**Default:** Empty
+**Location:** Anti-Spam tab → Site Key field
+
+The public key that the protection widget loads in the browser. Safe to expose - it is meant to be visible in page source.
+
+**Setting:** `captcha_secret_key`
+**Default:** Empty
+**Location:** Anti-Spam tab → Secret Key field
+
+The private key Jetonomy uses server-side to verify each submission with the provider. Keep it confidential - it is rendered as a masked password field and is never exposed to the browser.
+
 ## Score Threshold (reCAPTCHA v3 Only)
 
-**Setting:** `recaptcha_score_threshold`
+**Setting:** `captcha_score_threshold`
 **Default:** `0.5`
 **Range:** 0.1 to 0.9
 

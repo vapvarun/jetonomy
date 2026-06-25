@@ -15,20 +15,20 @@ The Users screen and its actions are gated by:
 
 | Action | Required Capability |
 |---|---|
-| View the Users page | `jetonomy_moderate` |
+| View the Users page | `jetonomy_manage_settings` |
 | Ban or unban a member | `jetonomy_moderate` |
 | Silence a member | `jetonomy_moderate` |
 | Change trust level | `jetonomy_manage_settings` |
 | Search users (AJAX picker in other admin screens) | `jetonomy_manage_spaces` |
 
-WordPress Administrators and Editors have `jetonomy_moderate` automatically. See **Settings → Permissions → WordPress Role Mapping** for the full capability table.
+The Users page menu is administrator-only (`jetonomy_manage_settings`). Editors receive `jetonomy_moderate` automatically, which powers the inline ban and silence actions, but it does not open the Users page menu. See **Settings → Permissions → WordPress Role Mapping** for the full capability table.
 
 ## Searching and Filtering
 
 The toolbar at the top of the Users screen has two controls:
 
 1. **Search box** - searches by username or display name. Type at least two characters; results update on submit.
-2. **Trust Level filter** - dropdown to show only members at a specific trust level (0 = New through 5 = Elder). Select "All Trust Levels" to show everyone.
+2. **Trust Level filter** - dropdown to show only members at a specific trust level (0 = Newcomer through 5 = Moderator). Select "All Trust Levels" to show everyone.
 
 The paginator at the bottom shows total user count and lets you move between pages.
 
@@ -55,7 +55,7 @@ Opens the standard WordPress user edit screen for that member. This is the right
 
 ### Change Trust Level
 
-Opens an inline dropdown directly in the table row. Choose any level from 0 (New) to 5 (Elder) and click **Save**. The change takes effect immediately and is logged in the activity log.
+Opens an inline dropdown directly in the table row. Choose any level from 0 (Newcomer) to 5 (Moderator) and click **Save**. The change takes effect immediately and is logged in the activity log.
 
 Trust levels 0 through 3 are normally earned automatically by the trust cron job. Use this override to:
 - Promote a long-standing member to Level 4 or 5 (manual tiers)
@@ -102,12 +102,12 @@ Temporary bans (1d, 7d, 30d) expire automatically - you do not need to remove th
 
 | Level | Name | How Earned |
 |---|---|---|
-| 0 | New | Default on registration |
-| 1 | Basic | Auto - light participation |
-| 2 | Member | Auto - consistent participation |
-| 3 | Regular | Auto - high engagement |
+| 0 | Newcomer | Default on registration |
+| 1 | Member | Auto - light participation |
+| 2 | Regular | Auto - consistent participation |
+| 3 | Trusted | Auto - high engagement |
 | 4 | Leader | Manual only (moderator or admin) |
-| 5 | Elder | Manual only (admin only) |
+| 5 | Moderator | Manual only (admin only) |
 
 Thresholds for levels 1-3 are configured on **Settings → Permissions → Trust Level Thresholds**.
 

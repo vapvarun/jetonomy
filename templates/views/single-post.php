@@ -158,6 +158,18 @@ $jt_role_walker   = function ( array $list ) use ( &$jt_role_warm_ids, &$jt_role
 $jt_role_walker( $reply_batch );
 \Jetonomy\Models\SpaceMember::warm_role_cache( (int) $post->space_id, $jt_role_warm_ids );
 
+// Q&A accepted-answer placement. The accepted reply already renders inline in
+// the chronological thread with its own "Accepted" styling (reply-card.php).
+// The pinned callout above the thread exists only to surface that answer when
+// it is buried on a LATER page — so we suppress the callout whenever the
+// accepted reply is already visible on the current page. Skipping it in the
+// render loop instead would desync pagination (the offset slice would render
+// one short) and orphan the accepted reply's child replies, which breaks on
+// the 200-400 reply threads this is built for.
+$jt_accepted_reply_id = (int) ( $post->accepted_reply_id ?? 0 );
+$jt_accepted_on_page  = $jt_accepted_reply_id
+	&& \Jetonomy\Models\Reply::tree_contains( $reply_batch, $jt_accepted_reply_id );
+
 // Current user vote on post.
 $user_id        = get_current_user_id();
 $user_post_vote = $user_id ? \Jetonomy\Models\Vote::get_user_vote( $user_id, 'post', (int) $post->id ) : null;
@@ -521,10 +533,18 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 							</button>
 								<?php endif; ?>
 							<?php else : ?>
-							<span class="jt-act">
+								<?php
+								// Logged-out: the vote control was an inert read-only
+								// span — clicking it did nothing, leaving a visitor who
+								// wanted to vote stuck. Make it a link to log in (and
+								// return here), so the intent has somewhere to go.
+								?>
+							<a class="jt-act jt-act-login" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"
+								title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
+								aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
 								<span class="n"><?php echo esc_html( (int) $post->vote_score ); ?></span>
-							</span>
+							</a>
 							<?php endif; ?>
 						</div>
 					<?php endif; ?>
@@ -719,17 +739,19 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 
 				<?php
 				// Q&A: surface the accepted answer above the chronological
-				// thread so members read it first regardless of sort. The
-				// reply still renders in its original position below — this
-				// is a pinned echo, not a relocation, so the conversation
-				// flow stays intact for the curious.
+				// thread so members read it first regardless of sort — but only
+				// when it is NOT already visible on the current page. When the
+				// accepted reply falls on this page it renders inline with its
+				// own "Accepted" styling, so a pinned echo here would just be a
+				// duplicate card ($jt_accepted_on_page computed above).
 				$jt_accepted_reply = null;
 				if (
 					$space
 					&& 'qa' === ( $space->type ?? '' )
-					&& ! empty( $post->accepted_reply_id )
+					&& $jt_accepted_reply_id
+					&& ! $jt_accepted_on_page
 				) {
-					$jt_accepted_reply = \Jetonomy\Models\Reply::find( (int) $post->accepted_reply_id );
+					$jt_accepted_reply = \Jetonomy\Models\Reply::find( $jt_accepted_reply_id );
 				}
 				if ( $jt_accepted_reply ) :
 					?>

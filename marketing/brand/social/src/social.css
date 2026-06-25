@@ -1,0 +1,31 @@
+/* Jetonomy social banner styles. Each .banner is rendered at its exact px size
+   via Playwright and screenshotted to ../<name>.png. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap');
+
+:root{
+  --blue:#3B82F6; --violet:#7C3AED; --ink:#1F2733; --muted:#6B7280;
+  --grad:linear-gradient(135deg,#3B82F6 0%,#7C3AED 100%);
+  --grad-soft:linear-gradient(135deg,#EEF2FF 0%,#F5F3FF 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.banner{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;color:var(--ink)}
+.banner.dark{background:#16181D;color:#fff}
+.banner.brand{background:var(--grad);color:#fff}
+.banner.soft{background:var(--grad-soft)}
+.pad{padding:0 9%}
+.mark{position:absolute}
+.lockup{display:flex;align-items:center;gap:.5em}
+.wm{font-weight:800;letter-spacing:-.04em;line-height:1}
+.wm .a{color:var(--ink)} .wm .b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.dark .wm .a{color:#fff} .dark .wm .b{background:linear-gradient(135deg,#60A5FA,#A78BFA);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .wm .a,.brand .wm .b{color:#fff;background:none;-webkit-background-clip:initial}
+.tag{color:var(--muted);font-weight:500}
+.dark .tag{color:#9AA1AB} .brand .tag{color:rgba(255,255,255,.85)}
+.headline{font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.sub{font-weight:500;line-height:1.4}
+.blob{position:absolute;border-radius:50%;filter:blur(2px);opacity:.18;background:var(--grad)}
+.pills{display:flex;gap:14px;flex-wrap:wrap}
+.pill{background:rgba(59,130,246,.10);color:var(--blue);font-weight:600;border-radius:999px;padding:10px 22px}
+.dark .pill{background:rgba(255,255,255,.08);color:#A5C8FF}
+.brand .pill{background:rgba(255,255,255,.16);color:#fff}

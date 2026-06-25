@@ -55,11 +55,14 @@
 	 * treats empty token + null adapter as a skip; nothing breaks).
 	 *
 	 * Mirrors the pattern in assets/js/view.js for posts/replies so all
-	 * three submit surfaces use the same CAPTCHA wiring.
+	 * submit surfaces use the same CAPTCHA wiring.
 	 *
+	 * @param {Element} form The submitting form — the Turnstile response
+	 *                       input is read scoped to it, because each of the
+	 *                       block's panels renders its own widget.
 	 * @return {Promise<string>}
 	 */
-	function getCaptchaToken() {
+	function getCaptchaToken( form ) {
 		var captcha = window.jetonomyCaptcha;
 		if ( ! captcha || ! captcha.provider ) {
 			return Promise.resolve( '' );
@@ -74,10 +77,40 @@
 			} );
 		}
 		if ( captcha.provider === 'turnstile' ) {
-			var ts = document.querySelector( '[name="cf-turnstile-response"]' );
+			var ts = ( form || document ).querySelector( '[name="cf-turnstile-response"]' );
 			return Promise.resolve( ts ? ts.value : '' );
 		}
 		return Promise.resolve( '' );
+	}
+
+	/**
+	 * REST base URL for the auth endpoints, derived from the block wrapper.
+	 *
+	 * @param {Element} block Login block root.
+	 * @return {string}
+	 */
+	function restBase( block ) {
+		return block.dataset.restUrl
+			? block.dataset.restUrl.replace( /\/+$/, '' )
+			: '/wp-json/jetonomy/v1';
+	}
+
+	/**
+	 * Headers for the public auth endpoints (login / register /
+	 * lost-password / resend-verification).
+	 *
+	 * Deliberately NO X-WP-Nonce. These endpoints are public
+	 * (REST_Auth::auth_public_write) and don't use cookie auth. When the
+	 * header is present, WP core's rest_cookie_check_errors() verifies it,
+	 * and for logged-out visitors the anonymous-session nonce goes stale on
+	 * cached pages → "Cookie check failed" 403 (Basecamp #9977381553).
+	 * Omitting the header takes core's "no nonce → treat as logged out"
+	 * path, which is exactly what these forms are.
+	 *
+	 * @return {Object}
+	 */
+	function authHeaders() {
+		return { 'Content-Type': 'application/json' };
 	}
 
 	/**
@@ -91,10 +124,7 @@
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var restUrl = block.dataset.restUrl
-			? block.dataset.restUrl.replace( /\/+$/, '' )
-			: '/wp-json/jetonomy/v1';
-		var nonce = block.dataset.restNonce || '';
+		var restUrl = restBase( block );
 
 		var body = {
 			user_login:    ( form.querySelector( '[name="login"]' )    || {} ).value || '',
@@ -102,13 +132,17 @@
 			remember:      ( form.querySelector( '[name="remember"]' ) || {} ).checked === true,
 		};
 
-		fetch( restUrl + '/auth/login', {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: nonce
-				? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-				: { 'Content-Type': 'application/json' },
-			body: JSON.stringify( body ),
+		getCaptchaToken( form ).then( function ( captchaToken ) {
+			if ( captchaToken ) {
+				body.captcha_token = captchaToken;
+			}
+
+			return fetch( restUrl + '/auth/login', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: authHeaders(),
+				body: JSON.stringify( body ),
+			} );
 		} )
 			.then( function ( res ) {
 				return res.json().then( function ( json ) {
@@ -166,18 +200,13 @@
 		btn.style.padding = '0';
 		btn.style.font = 'inherit';
 		btn.addEventListener( 'click', function () {
-			var restUrl = block.dataset.restUrl
-				? block.dataset.restUrl.replace( /\/+$/, '' )
-				: '/wp-json/jetonomy/v1';
-			var nonce = block.dataset.restNonce || '';
+			var restUrl = restBase( block );
 			btn.disabled = true;
 			btn.textContent = sendingLabel;
 			fetch( restUrl + '/auth/resend-verification', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: nonce
-					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-					: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 				body: JSON.stringify( { user_login: userLogin } ),
 			} ).then( function ( res ) {
 				return res.json().catch( function () { return {}; } );
@@ -208,10 +237,7 @@
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var restUrl = block.dataset.restUrl
-			? block.dataset.restUrl.replace( /\/+$/, '' )
-			: '/wp-json/jetonomy/v1';
-		var nonce = block.dataset.restNonce || '';
+		var restUrl = restBase( block );
 
 		var body = {
 			username: ( form.querySelector( '[name="username"]' ) || {} ).value || '',
@@ -224,7 +250,7 @@
 			loaded_at: parseInt( ( form.querySelector( '[name="loaded_at"]' ) || {} ).value || '0', 10 ) || 0,
 		};
 
-		getCaptchaToken().then( function ( captchaToken ) {
+		getCaptchaToken( form ).then( function ( captchaToken ) {
 			if ( captchaToken ) {
 				body.captcha_token = captchaToken;
 			}
@@ -232,9 +258,7 @@
 			return fetch( restUrl + '/auth/register', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: nonce
-					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-					: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 				body: JSON.stringify( body ),
 			} );
 		} ).then( function ( res ) {
@@ -278,12 +302,9 @@
 		var unlock = lockSubmit( form );
 		setMessage( form, '', false );
 
-		var restUrl = block.dataset.restUrl
-			? block.dataset.restUrl.replace( /\/+$/, '' )
-			: '/wp-json/jetonomy/v1';
-		var nonce = block.dataset.restNonce || '';
+		var restUrl = restBase( block );
 
-		getCaptchaToken().then( function ( captchaToken ) {
+		getCaptchaToken( form ).then( function ( captchaToken ) {
 			var body = {
 				user_login: ( form.querySelector( '[name="user_login"]' ) || {} ).value || '',
 			};
@@ -294,9 +315,7 @@
 			return fetch( restUrl + '/auth/lost-password', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: nonce
-					? { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce }
-					: { 'Content-Type': 'application/json' },
+				headers: authHeaders(),
 				body: JSON.stringify( body ),
 			} );
 		} ).then( function ( res ) {

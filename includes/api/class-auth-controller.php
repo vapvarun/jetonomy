@@ -45,6 +45,11 @@ class Auth_Controller extends Base_Controller {
 							'type'    => 'boolean',
 							'default' => false,
 						],
+						'captcha_token' => [
+							'required' => false,
+							'type'     => 'string',
+							'default'  => '',
+						],
 					],
 				],
 			]
@@ -173,6 +178,54 @@ class Auth_Controller extends Base_Controller {
 				],
 			]
 		);
+
+		// Fresh wp_rest nonce for the current session (1.5.0). The client
+		// fetch wrapper (assets/js/jetonomy-rest.js) retries 403
+		// rest_cookie_invalid_nonce responses against this route — until now
+		// the route didn't exist, so the retry silently 404'd and stale
+		// nonces on cached pages ate mutations. Same model as core's
+		// admin-ajax `rest-nonce` refresh: the nonce is tied to the caller's
+		// existing session cookie, so handing it back to the session owner
+		// grants nothing new.
+		register_rest_route(
+			$this->namespace,
+			'/' . $this->rest_base . '/nonce',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_nonce' ],
+					'permission_callback' => '__return_true',
+				],
+			]
+		);
+	}
+
+	/**
+	 * GET /jetonomy/v1/auth/nonce — fresh wp_rest nonce for this session.
+	 *
+	 * Chicken-and-egg subtlety: this request itself carries no (valid)
+	 * nonce, so core's rest_cookie_check_errors() has already downgraded
+	 * the request to user 0 — minting here would produce an ANONYMOUS
+	 * nonce that can never verify against the caller's logged-in cookie.
+	 * Re-validate the auth cookie directly (the same trust basis core's
+	 * own admin-ajax `rest-nonce` refresh uses: cookie alone, no nonce)
+	 * and mint for that user. Safe: the response is only a nonce usable
+	 * by the same session, and cross-origin callers can't read it.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_nonce(): WP_REST_Response {
+		if ( ! is_user_logged_in() ) {
+			$cookie_user = wp_validate_auth_cookie( '', 'logged_in' );
+			if ( $cookie_user ) {
+				wp_set_current_user( $cookie_user );
+			}
+		}
+
+		$response = rest_ensure_response( [ 'nonce' => wp_create_nonce( 'wp_rest' ) ] );
+		// A nonce response must never come from a page/CDN cache.
+		$response->header( 'Cache-Control', 'no-cache, no-store, must-revalidate' );
+		return $response;
 	}
 
 	/**
@@ -203,6 +256,20 @@ class Auth_Controller extends Base_Controller {
 			return new WP_Error(
 				'jetonomy_missing_credentials',
 				__( 'Enter your username and password.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// CAPTCHA gate (1.5.0 — parity with register/lost-password, the one
+		// auth endpoint that was missing it). Anonymous user_id 0;
+		// verify_or_skip returns null when no adapter is configured.
+		$token          = (string) $request->get_param( 'captcha_token' );
+		$remote_ip      = \Jetonomy\client_ip();
+		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
+		if ( false === $captcha_result ) {
+			return new WP_Error(
+				'jetonomy_captcha_failed',
+				__( 'CAPTCHA verification failed. Please try again.', 'jetonomy' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -356,9 +423,7 @@ class Auth_Controller extends Base_Controller {
 		// CAPTCHA — closes the silent gap from the legacy handler. verify_or_skip
 		// returns null when the feature is disabled OR the caller is trusted; we
 		// treat null + true as pass, false as reject.
-		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
-			: '';
+		$remote_ip      = \Jetonomy\client_ip();
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
 		if ( false === $captcha_result ) {
 			return new WP_Error(
@@ -691,9 +756,7 @@ class Auth_Controller extends Base_Controller {
 
 		// CAPTCHA gate (parity with register). Anonymous user_id 0; verify_or_skip
 		// returns null when no adapter is configured.
-		$remote_ip      = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
-			: '';
+		$remote_ip      = \Jetonomy\client_ip();
 		$captcha_result = \Jetonomy\Captcha\Captcha_Manager::verify_or_skip( 0, $token, $remote_ip );
 		if ( false === $captcha_result ) {
 			return new WP_Error(
@@ -735,9 +798,7 @@ class Auth_Controller extends Base_Controller {
 	 * @return bool True when within limit, false when exhausted.
 	 */
 	protected static function check_rate_limit( string $bucket, int $max = 5, int $seconds = MINUTE_IN_SECONDS ): bool {
-		$ip  = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) )
-			: 'unknown';
+		$ip  = \Jetonomy\client_ip() ?: 'unknown';
 		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
 		$now = time();
 

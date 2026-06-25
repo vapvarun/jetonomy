@@ -1,5 +1,7 @@
 Jetonomy ships a full WP-CLI surface covering every core domain of the plugin: 14 command roots in the free plugin and 15 command roots in Jetonomy Pro, totalling 75+ subcommands across both plugins.
 
+The 14 free roots are the 13 domain commands listed under [Free Commands](#free-commands) below (`category`, `space`, `post`, `reply`, `vote`, `flag`, `member`, `mod`, `notification`, `config`, `tag`, `user`, `scenario`), plus the standalone `qa-actions` command, documented under [Testing and QA Commands](#testing-and-qa-commands).
+
 All free commands live under `wp jetonomy <subject> <subcommand>`.
 All Pro commands live under `wp jetonomy-pro <subject> <subcommand>` (note the separate root - Pro commands require both plugins active).
 

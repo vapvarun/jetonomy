@@ -90,6 +90,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 			<?php if ( $counts['unread'] > 0 ) : ?>
 				<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm jt-mark-all-read"
 					data-jt-mark-all-read
+					data-wp-on--click="actions.markAllNotifsRead"
 					aria-label="<?php esc_attr_e( 'Mark all notifications as read', 'jetonomy' ); ?>">
 					<?php esc_html_e( 'Mark all as read', 'jetonomy' ); ?>
 				</button>
@@ -140,15 +141,15 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 
 		<div class="jt-notif-bulkbar" data-jt-notif-bulkbar hidden>
 			<label class="jt-notif-bulkbar__selectall">
-				<input type="checkbox" data-jt-notif-selectall>
+				<input type="checkbox" data-jt-notif-selectall data-wp-on--change="actions.toggleNotifSelectAll">
 				<span><?php esc_html_e( 'Select all on page', 'jetonomy' ); ?></span>
 			</label>
 			<span class="jt-notif-bulkbar__count" data-jt-notif-selected-count>0</span>
 			<div class="jt-notif-bulkbar__actions">
-				<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" data-jt-notif-bulk="mark_read">
+				<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm" data-jt-notif-bulk="mark_read" data-wp-on--click="actions.bulkNotifs">
 					<?php esc_html_e( 'Mark read', 'jetonomy' ); ?>
 				</button>
-				<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm jt-btn-danger" data-jt-notif-bulk="delete">
+				<button type="button" class="jt-btn jt-btn-ghost jt-btn-sm jt-btn-danger" data-jt-notif-bulk="delete" data-wp-on--click="actions.bulkNotifs">
 					<?php esc_html_e( 'Delete', 'jetonomy' ); ?>
 				</button>
 			</div>
@@ -198,7 +199,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 					data-jt-notif-id="<?php echo esc_attr( (int) $notif->id ); ?>"
 					data-jt-notif-read="<?php echo esc_attr( $notif->is_read ? '1' : '0' ); ?>">
 					<label class="jt-notif-item__select" aria-label="<?php esc_attr_e( 'Select notification', 'jetonomy' ); ?>">
-						<input type="checkbox" class="jt-notif-cb" data-jt-notif-cb value="<?php echo esc_attr( (int) $notif->id ); ?>">
+						<input type="checkbox" class="jt-notif-cb" data-jt-notif-cb data-wp-on--change="actions.updateNotifSelection" value="<?php echo esc_attr( (int) $notif->id ); ?>">
 					</label>
 					<a href="<?php echo esc_url( $notif_url ); ?>" class="jt-notif-item__link">
 						<span class="jt-avatar jt-avatar-sm jt-flex-shrink-0" aria-hidden="true">
@@ -225,7 +226,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						<?php endif; ?>
 					</a>
 					<div class="jt-notif-item__menu" data-jt-notif-menu>
-						<button type="button" class="jt-notif-item__menu-trigger" data-jt-notif-menu-trigger
+						<button type="button" class="jt-notif-item__menu-trigger" data-jt-notif-menu-trigger data-wp-on--click="actions.toggleNotifMenu"
 							aria-haspopup="true" aria-expanded="false"
 							aria-label="<?php esc_attr_e( 'Notification actions', 'jetonomy' ); ?>">
 							<?php jetonomy_echo_icon( 'more-horizontal', 18 ); ?>
@@ -233,13 +234,13 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						<ul class="jt-notif-item__menu-list" role="menu" hidden>
 							<?php if ( ! $notif->is_read ) : ?>
 								<li role="none">
-									<button type="button" role="menuitem" data-jt-notif-action="mark_read">
+									<button type="button" role="menuitem" data-jt-notif-action="mark_read" data-wp-on--click="actions.markNotifRead">
 										<?php esc_html_e( 'Mark as read', 'jetonomy' ); ?>
 									</button>
 								</li>
 							<?php endif; ?>
 							<li role="none">
-								<button type="button" role="menuitem" data-jt-notif-action="delete" class="jt-notif-menu-danger">
+								<button type="button" role="menuitem" data-jt-notif-action="delete" data-wp-on--click="actions.deleteNotif" class="jt-notif-menu-danger">
 									<?php esc_html_e( 'Delete', 'jetonomy' ); ?>
 								</button>
 							</li>

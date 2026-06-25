@@ -36,10 +36,14 @@
 		panel.hidden = isOpen;
 		if (!isOpen && !notifLoaded) {
 			notifLoaded = true;
-			fetch(D.restNotif + '?limit=5', {
-				headers: { 'X-WP-Nonce': D.nonce }
-			}).then(function (r) { return r.json(); }).then(function (resp) {
+			window.jetonomyRest.restFetch('/notifications?limit=5').then(function (res) {
 				var body = panel.querySelector('.jt-notif-panel-body');
+				if (!res.ok) {
+					body.textContent = D.i18n.loadFail;
+					body.className = 'jt-notif-panel-body jt-notif-panel-empty';
+					return;
+				}
+				var resp = res.data || {};
 				var data = resp.data || resp;
 				if (!data || !data.length) {
 					body.textContent = D.i18n.noNotifs;
@@ -62,17 +66,13 @@
 					a.appendChild(time);
 					body.appendChild(a);
 				});
-			}).catch(function () {
-				var body = panel.querySelector('.jt-notif-panel-body');
-				body.textContent = D.i18n.loadFail;
-				body.className = 'jt-notif-panel-body jt-notif-panel-empty';
 			});
 		}
 	};
 
 	window.jtMarkAllRead = function () {
-		fetch(D.restMarkRead, {
-			method: 'POST', headers: { 'X-WP-Nonce': D.nonce }
+		window.jetonomyRest.restFetch('/notifications/mark-all-read', {
+			method: 'POST'
 		}).then(function () {
 			var badge = document.querySelector('.jt-community-nav-badge');
 			if (badge) { badge.remove(); }
@@ -89,11 +89,9 @@
 		var id = item.getAttribute('data-jt-notif-id');
 		if (!id) { return; }
 		item.classList.remove('unread');
-		fetch(D.restNotif + '/' + encodeURIComponent(id), {
-			method: 'PATCH',
-			headers: { 'X-WP-Nonce': D.nonce },
-			credentials: 'same-origin'
-		}).catch(function () { /* UI already updated */ });
+		window.jetonomyRest.restFetch('/notifications/' + encodeURIComponent(id), {
+			method: 'PATCH'
+		});
 		var badge = document.querySelector('.jt-community-nav-badge');
 		if (badge) {
 			var next = parseInt(badge.textContent, 10) - 1;
@@ -172,9 +170,8 @@
 			var q = input.value.trim();
 			if (q.length < 2) { results.textContent = ''; return; }
 			searchTimer = setTimeout(function () {
-				fetch(D.restSearch + '?q=' + encodeURIComponent(q) + '&per_page=6', {
-					headers: { 'X-WP-Nonce': D.nonce }
-				}).then(function (r) { return r.json(); }).then(function (data) {
+				window.jetonomyRest.restFetch('/search?q=' + encodeURIComponent(q) + '&per_page=6').then(function (res) {
+					var data = res.data || [];
 					results.textContent = '';
 					if (!data.length) {
 						results.textContent = D.i18n.noResults;
@@ -312,12 +309,12 @@
 		card.textContent = '...';
 		renderPosition(card, anchor);
 		card.style.display = '';
-		fetch(D.restBase + '/users/' + userId, {
-			headers: { 'X-WP-Nonce': D.nonce }
-		}).then(function (r) { return r.json(); }).then(function (data) {
+		window.jetonomyRest.restFetch('/users/' + userId).then(function (res) {
+			if (!res.ok) { card.style.display = 'none'; return; }
+			var data = res.data;
 			hcCache[userId] = data;
 			renderHoverCard(card, data, anchor);
-		}).catch(function () { card.style.display = 'none'; });
+		});
 	}
 	function renderHoverCard(card, data, anchor) {
 		card.textContent = '';
@@ -387,9 +384,8 @@
 			if (!login) { return; }
 			var cachedId = hcCache['login_' + login];
 			if (cachedId) { showHoverCard(link, cachedId); return; }
-			fetch(D.restBase + '/users/by-login/' + encodeURIComponent(login), {
-				headers: { 'X-WP-Nonce': D.nonce }
-			}).then(function (r) { return r.json(); }).then(function (data) {
+			window.jetonomyRest.restFetch('/users/by-login/' + encodeURIComponent(login)).then(function (res) {
+				var data = res.data || {};
 				if (data.id) {
 					hcCache[data.id] = data;
 					hcCache['login_' + login] = data.id;

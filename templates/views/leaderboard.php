@@ -7,9 +7,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-global $wpdb;
-$profiles_tbl = \Jetonomy\table( 'user_profiles' );
-
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $period = isset( $_GET['period'] ) ? sanitize_key( $_GET['period'] ) : 'all';
 if ( ! in_array( $period, [ 'all', 'month', 'week' ], true ) ) {
@@ -26,22 +23,14 @@ $page = max( 1, absint( wp_unslash( $_GET['pg'] ?? 1 ) ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
-$period_where = '';
-if ( 'week' === $period ) {
-	$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
-} elseif ( 'month' === $period ) {
-	$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
-}
-
-// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$leaders = $wpdb->get_results(
-	$wpdb->prepare(
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		"SELECT * FROM {$profiles_tbl}{$period_where} ORDER BY reputation DESC LIMIT %d OFFSET %d",
-		$per_page,
-		$offset
-	)
-) ?: [];
+// Page slice + real total come from the model so the server-rendered board
+// and the REST endpoint share one query and one pagination rule. has_more
+// compares the real total against what is shown — never count( $leaders ),
+// which rendered a phantom "Load More" when the total was an exact multiple
+// of $per_page (Basecamp).
+$leaders      = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $per_page, $offset );
+$_jt_total    = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
+$_jt_has_more = ( $page * $per_page ) < $_jt_total;
 
 // Batch-fetch leader users in one query to avoid N get_userdata() calls
 // inside the render loop below. Mirrors the REST controller's batching
@@ -109,9 +98,12 @@ $crumbs = [
 			\Jetonomy\Template_Loader::partial(
 				'empty-state',
 				[
-					'icon'      => 'award',
-					'icon_size' => 48,
-					'message'   => __( 'No members yet.', 'jetonomy' ),
+					'icon'        => 'award',
+					'icon_size'   => 48,
+					'message'     => __( 'No members yet.', 'jetonomy' ),
+					'description' => __( 'Reputation is earned by posting, getting replies, having answers accepted, and receiving votes. Be the first to start.', 'jetonomy' ),
+					'cta_label'   => __( 'Browse the community', 'jetonomy' ),
+					'cta_url'     => \Jetonomy\base_url() . '/',
 				]
 			);
 			?>
@@ -127,20 +119,25 @@ $crumbs = [
 						<div class="jt-leader-stat-lbl"><?php esc_html_e( 'posts', 'jetonomy' ); ?></div>
 					</div>
 				</div>
+				<?php /* Appendable list — pagination-frontend.js targets .jt-leaderboard-list to inject page 2+ rows. */ ?>
+				<div class="jt-leaderboard-list">
 				<?php foreach ( $leaders as $rank => $leader ) : ?>
 					<?php
 					$lu = $leader_user_by_id[ (int) $leader->user_id ] ?? null;
 					if ( ! $lu ) {
 						continue;
 					}
+					// Absolute rank across pages so medals + numbering stay correct
+					// when "Load More" appends page 2+ into this same list.
+					$abs_rank    = $offset + (int) $rank;
 					$trust       = (int) $leader->trust_level;
 					$initials    = strtoupper( substr( $lu->display_name, 0, 2 ) );
 					$medal_class = '';
-					if ( 0 === $rank ) {
+					if ( 0 === $abs_rank ) {
 						$medal_class = 'jt-medal jt-medal-gold';
-					} elseif ( 1 === $rank ) {
+					} elseif ( 1 === $abs_rank ) {
 						$medal_class = 'jt-medal jt-medal-silver';
-					} elseif ( 2 === $rank ) {
+					} elseif ( 2 === $abs_rank ) {
 						$medal_class = 'jt-medal jt-medal-bronze';
 					}
 					?>
@@ -157,7 +154,7 @@ $crumbs = [
 								jetonomy_echo_icon( 'award', 20 );
 								echo '</span>';
 							} else {
-								echo (int) ( $rank + 1 );
+								echo (int) ( $abs_rank + 1 );
 							}
 							?>
 						</span>
@@ -184,9 +181,18 @@ $crumbs = [
 						</div>
 					</div>
 				<?php endforeach; ?>
+				</div><!-- .jt-leaderboard-list -->
 			</div>
 
-			<?php \Jetonomy\Template_Loader::partial( 'pagination', [ 'has_more' => count( $leaders ) >= $per_page ] ); ?>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'pagination',
+				[
+					'has_more' => $_jt_has_more,
+					'target'   => '.jt-leaderboard-list',
+				]
+			);
+			?>
 		<?php endif; ?>
 </main>
 

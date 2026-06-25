@@ -20,8 +20,56 @@ use function Jetonomy\now;
 
 class Notifier {
 
+	/** Days an email unsubscribe link stays valid. */
+	private const UNSUB_TTL_DAYS = 60;
+
 	public function __construct() {
 		$this->register_hooks();
+	}
+
+	/**
+	 * Expiry (unix timestamp) for a freshly-minted unsubscribe link.
+	 *
+	 * @return int
+	 */
+	public static function unsubscribe_expiry(): int {
+		return time() + self::UNSUB_TTL_DAYS * DAY_IN_SECONDS;
+	}
+
+	/**
+	 * Signed, time-limited token for an email unsubscribe link. The expiry is
+	 * part of the signed payload, so a recipient cannot extend their own link.
+	 *
+	 * @param int    $user_id User the link belongs to.
+	 * @param string $type    Notification type (or 'mention').
+	 * @param int    $expires Expiry unix timestamp (from unsubscribe_expiry()).
+	 * @return string
+	 */
+	public static function unsubscribe_token( int $user_id, string $type, int $expires ): string {
+		return wp_hash( $user_id . ':' . $type . ':' . $expires . ':unsubscribe' );
+	}
+
+	/**
+	 * Verify an unsubscribe token. Honours the signed expiry; falls back to the
+	 * legacy non-expiring token so links in already-sent emails keep working
+	 * during the deprecation window.
+	 *
+	 * @param int    $user_id User id from the URL.
+	 * @param string $type    Notification type from the URL.
+	 * @param string $token   Token from the URL.
+	 * @param int    $expires Expiry timestamp from the URL (0 for a legacy link).
+	 * @return bool
+	 */
+	public static function verify_unsubscribe( int $user_id, string $type, string $token, int $expires ): bool {
+		if ( $expires > 0 ) {
+			if ( time() > $expires ) {
+				return false; // Link has expired.
+			}
+			return hash_equals( self::unsubscribe_token( $user_id, $type, $expires ), $token );
+		}
+		// Legacy link (no exp param). TODO: drop after 2 releases once historic
+		// emails have aged out, leaving only expiring links.
+		return hash_equals( wp_hash( $user_id . ':' . $type . ':unsubscribe' ), $token );
 	}
 
 	/**
@@ -220,6 +268,12 @@ class Notifier {
 		// Reply created — notify post author + subscribers
 		add_action( 'jetonomy_after_create_reply', [ $this, 'on_reply_created' ], 10, 2 );
 
+		// Background fan-out handlers — fired from Action Scheduler (or the
+		// WP-Cron fallback) when a subscriber set is too large to notify inline
+		// in the create request. Same callbacks the inline path uses.
+		add_action( 'jetonomy_fanout_post_subscribers', [ $this, 'fanout_post_subscribers' ], 10, 2 );
+		add_action( 'jetonomy_fanout_reply_subscribers', [ $this, 'fanout_reply_subscribers' ], 10, 2 );
+
 		// Reply submitted by email (Reply-by-Email Pro extension fires this).
 		// Nothing in free listened before, so emailed replies were silently lost.
 		add_action( 'jetonomy_create_reply_from_email', [ $this, 'on_reply_from_email' ], 10, 4 );
@@ -328,9 +382,65 @@ class Notifier {
 	}
 
 	/**
+	 * Notify up to this many subscribers inline in the create request; beyond
+	 * it the fan-out is deferred to the background queue so the author's write
+	 * returns fast.
+	 */
+	private const FANOUT_INLINE_MAX = 25;
+
+	/**
+	 * Enqueue a fan-out hook to run off the request path, so a write into a
+	 * large space/thread returns immediately and the subscriber loop runs on the
+	 * next tick instead of blocking the author.
+	 *
+	 * Uses a WP-Cron single event: it persists to the cron option (verifiable
+	 * and reliable in every context, CLI included) and fires on the next page
+	 * load, which on an active community is within seconds. This is the
+	 * reactive-single-shot mechanism from the background-jobs standard. Action
+	 * Scheduler was intentionally not used here because its enqueue is not
+	 * observably persisted outside a normal web request, which risks silently
+	 * dropping the fan-out — and a lost notification is worse than a slightly
+	 * delayed one.
+	 *
+	 * @param string $hook Action hook name.
+	 * @param array  $args Positional args passed to the callback.
+	 * @return bool True if the work was scheduled (caller then skips inline run).
+	 */
+	private function enqueue_fanout( string $hook, array $args ): bool {
+		// Don't stack a duplicate if an identical fan-out is already queued.
+		if ( wp_next_scheduled( $hook, $args ) ) {
+			return true;
+		}
+		return false !== wp_schedule_single_event( time(), $hook, $args );
+	}
+
+	/**
 	 * Notify space subscribers when a new post is created.
+	 *
+	 * Small spaces fan out inline (instant); larger ones defer to the background
+	 * queue so a post into a big space never blocks the author's write request.
 	 */
 	public function on_post_created( int $post_id, int $space_id ): void {
+		$post = Post::find( $post_id );
+		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
+			return;
+		}
+
+		if ( Subscription::count_subscribers( 'space', $space_id ) > self::FANOUT_INLINE_MAX
+			&& $this->enqueue_fanout( 'jetonomy_fanout_post_subscribers', array( $post_id, $space_id ) ) ) {
+			return;
+		}
+
+		$this->fanout_post_subscribers( $post_id, $space_id );
+	}
+
+	/**
+	 * Fan out the new-post notification to every space subscriber.
+	 *
+	 * Runs inline for small spaces and from Action Scheduler for large ones; the
+	 * body is identical either way, so the notifications produced are the same.
+	 */
+	public function fanout_post_subscribers( int $post_id, int $space_id ): void {
 		$post = Post::find( $post_id );
 		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
 			return;
@@ -365,6 +475,11 @@ class Notifier {
 
 	/**
 	 * Notify when someone replies to a post.
+	 *
+	 * Single-recipient notifications (post author, parent-reply author) always
+	 * fire inline. The subscriber fan-out runs inline for small threads and
+	 * defers to the background queue for large ones so a reply on a hot thread
+	 * never blocks the replier's write.
 	 */
 	public function on_reply_created( int $reply_id, int $post_id ): void {
 		$reply = Reply::find( $reply_id );
@@ -373,29 +488,11 @@ class Notifier {
 			return;
 		}
 
-		$actor_id = (int) $reply->author_id;
-		$post_url = $this->get_post_url( $post );
+		$actor_id  = (int) $reply->author_id;
+		$post_url  = $this->get_post_url( $post );
+		$ctx_extra = $this->reply_notification_context( $reply, $post );
 
-		// Build enriched context so the reply-to-post template (and any
-		// admin-customised subject/body) can reference post_title /
-		// actor_display_name / reply_excerpt / space_title directly.
-		$space         = $post->space_id ? Space::find( (int) $post->space_id ) : null;
-		$reply_plain   = isset( $reply->content_plain ) && '' !== (string) $reply->content_plain
-			? (string) $reply->content_plain
-			: wp_strip_all_tags( (string) ( $reply->content ?? '' ) );
-		$reply_excerpt = wp_trim_words( $reply_plain, 30, '…' );
-		// Feed-space posts (1.4.3 WS1) are stored untitled — fall back to
-		// the post-title-or-excerpt helper so the email subject line and
-		// the "On topic" block in templates/emails/reply-to-post.php always
-		// have a human-readable label.
-		$ctx_extra = array(
-			'post_title'         => jetonomy_post_title_or_excerpt( $post ),
-			'actor_display_name' => $this->get_display_name( $actor_id ),
-			'reply_excerpt'      => $reply_excerpt,
-			'space_title'        => $space ? (string) $space->title : '',
-		);
-
-		// 1. Notify post author (if not the replier)
+		// 1. Notify post author (if not the replier).
 		if ( (int) $post->author_id !== $actor_id ) {
 			$this->create_and_maybe_email(
 				(int) $post->author_id,
@@ -413,7 +510,52 @@ class Notifier {
 			);
 		}
 
-		// 2. Notify subscribers (excluding author and replier)
+		// 2. Notify parent reply author (reply-to-reply) — single recipient.
+		if ( ! empty( $reply->parent_id ) ) {
+			$parent_reply = Reply::find( (int) $reply->parent_id );
+			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id ) {
+				$this->create_and_maybe_email(
+					(int) $parent_reply->author_id,
+					$actor_id,
+					'reply_to_reply',
+					'reply',
+					$reply_id,
+					sprintf(
+						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
+						$this->get_display_name( $actor_id ),
+						mb_substr( $post->title, 0, 50 )
+					),
+					$post_url,
+					$ctx_extra
+				);
+			}
+		}
+
+		// 3. Notify post subscribers — inline for small threads, deferred for large.
+		if ( Subscription::count_subscribers( 'post', $post_id ) > self::FANOUT_INLINE_MAX
+			&& $this->enqueue_fanout( 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ) ) ) {
+			return;
+		}
+
+		$this->fanout_reply_subscribers( $reply_id, $post_id );
+	}
+
+	/**
+	 * Fan out the reply notification to post subscribers (excluding the replier
+	 * and the post author, who are notified directly). Inline for small threads,
+	 * from Action Scheduler for large ones; identical body either way.
+	 */
+	public function fanout_reply_subscribers( int $reply_id, int $post_id ): void {
+		$reply = Reply::find( $reply_id );
+		$post  = Post::find( $post_id );
+		if ( ! $reply || ! $post ) {
+			return;
+		}
+
+		$actor_id  = (int) $reply->author_id;
+		$post_url  = $this->get_post_url( $post );
+		$ctx_extra = $this->reply_notification_context( $reply, $post );
+
 		$subscribers = Subscription::get_subscribers( 'post', $post_id );
 		foreach ( $subscribers as $sub_user_id ) {
 			if ( $sub_user_id === $actor_id || $sub_user_id === (int) $post->author_id ) {
@@ -434,27 +576,28 @@ class Notifier {
 				$ctx_extra
 			);
 		}
+	}
 
-		// 3. Notify parent reply author (reply-to-reply)
-		if ( ! empty( $reply->parent_id ) ) {
-			$parent_reply = Reply::find( (int) $reply->parent_id );
-			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id ) {
-				$this->create_and_maybe_email(
-					(int) $parent_reply->author_id,
-					$actor_id,
-					'reply_to_reply',
-					'reply',
-					$reply_id,
-					sprintf(
-						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
-						$this->get_display_name( $actor_id ),
-						mb_substr( $post->title, 0, 50 )
-					),
-					$post_url,
-					$ctx_extra
-				);
-			}
-		}
+	/**
+	 * Build the enriched context shared by every reply notification (post title,
+	 * actor name, reply excerpt, space title) so the inline and deferred paths
+	 * produce identical emails/notifications.
+	 *
+	 * Feed-space posts (1.4.3 WS1) are stored untitled, so post_title falls back
+	 * to the title-or-excerpt helper for a human-readable subject line.
+	 */
+	private function reply_notification_context( object $reply, object $post ): array {
+		$space       = $post->space_id ? Space::find( (int) $post->space_id ) : null;
+		$reply_plain = isset( $reply->content_plain ) && '' !== (string) $reply->content_plain
+			? (string) $reply->content_plain
+			: wp_strip_all_tags( (string) ( $reply->content ?? '' ) );
+
+		return array(
+			'post_title'         => jetonomy_post_title_or_excerpt( $post ),
+			'actor_display_name' => $this->get_display_name( (int) $reply->author_id ),
+			'reply_excerpt'      => wp_trim_words( $reply_plain, 30, '…' ),
+			'space_title'        => $space ? (string) $space->title : '',
+		);
 	}
 
 	/**
@@ -667,10 +810,14 @@ class Notifier {
 			return;
 		}
 
+		// Keyed on the canonical moderation action vocabulary fired by
+		// Moderation_Service ('approve'|'spam'|'trash'|'hold') — every fire site
+		// now funnels through that choke-point, so these keys always match.
 		$action_labels = [
-			'approved' => __( 'approved', 'jetonomy' ),
-			'spam'     => __( 'marked as spam', 'jetonomy' ),
-			'trash'    => __( 'removed', 'jetonomy' ),
+			'approve' => __( 'approved', 'jetonomy' ),
+			'spam'    => __( 'marked as spam', 'jetonomy' ),
+			'trash'   => __( 'removed', 'jetonomy' ),
+			'hold'    => __( 'held for review', 'jetonomy' ),
 		];
 
 		$this->create_and_maybe_email(
@@ -753,7 +900,15 @@ class Notifier {
 				]
 			);
 
-			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id );
+			/**
+			 * Fires after a web notification row is created.
+			 *
+			 * $message (rendered human sentence) and $url (deep link) are
+			 * appended so consumers can mirror the notification 1:1 without
+			 * re-deriving them. Backward-compatible: existing 5-arg listeners
+			 * are unaffected.
+			 */
+			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
 		}
 
 		// Check email preference.
@@ -779,11 +934,13 @@ class Notifier {
 			return;
 		}
 
-		// Build unsubscribe URL.
-		$unsub_token = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
+		// Build unsubscribe URL (signed, time-limited token).
+		$unsub_exp   = self::unsubscribe_expiry();
+		$unsub_token = self::unsubscribe_token( $user_id, $type, $unsub_exp );
 		$unsub_url   = add_query_arg(
 			[
 				'jetonomy_unsubscribe' => $unsub_token,
+				'jetonomy_unsub_exp'   => $unsub_exp,
 				'uid'                  => $user_id,
 				'type'                 => $type,
 			],

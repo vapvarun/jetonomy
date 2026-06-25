@@ -2,8 +2,6 @@ Add structured fields to member profiles - collect the information that matters 
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-> **As of 1.4.1, custom field values are exposed on the REST API for both posts and users.** Earlier versions only saved the values to the database; third-party API consumers couldn't read them because the response filters were registered against an event nothing emitted. Free 1.4.1 fires the matching filters on `/jetonomy/v1/posts` and `/jetonomy/v1/users`, so any tool reading from the API now sees every custom field you have configured.
-
 ![Custom fields displayed on a member profile page](../images/pro-custom-fields.png)
 ## What You Will Learn
 
@@ -40,18 +38,22 @@ A generic WordPress profile has a bio and a website URL. That is not enough for 
 
 4. Click **Save Field**.
 
-<!-- TODO screenshot needed: Custom Fields admin list with Add Field form (was ../images/pro-custom-fields-admin.png) -->
+![The Custom Fields admin page, listing existing fields with the Add Field form open showing the Label, Field Key, Type, Required, Visibility, and Description settings](../images/pro-custom-fields-admin.png)
 ## Field Types
 
 | Type | Best for |
 |------|----------|
 | **Text** | Short single-line answers (job title, company, username) |
 | **Textarea** | Longer free-form text (bio supplement, expertise description) |
-| **Select** | Predefined options (country, role, industry) |
-| **Checkbox** | Yes/no toggle (newsletter opt-in, open to work) |
+| **Number** | Numeric values (years of experience, team size) |
+| **Email** | Contact email address |
 | **URL** | Website, GitHub, LinkedIn, portfolio links |
+| **Select** | Predefined options as a dropdown, single choice (country, role, industry) |
+| **Checkbox** | Yes/no toggle (newsletter opt-in, open to work) |
+| **Radio** | Predefined options as radio buttons, single choice |
+| **Date** | A calendar date (joined date, availability) |
 
-For the **Select** type, you define the options in the field editor - one per line. The member sees a dropdown.
+For the **Select** and **Radio** types, you define the options in the field editor - one per line. Select renders a dropdown; Radio renders a set of radio buttons.
 
 ## Visibility Options
 
@@ -119,6 +121,10 @@ Members can only update their own fields. Admins can update any member's fields.
 **How fields surface in output:** once a field is configured, its value is embedded automatically in the relevant REST responses - the `custom_fields` object on `/users` and `/posts` (and their list endpoints) - and rendered on the matching frontend surface (the member profile for profile fields, the post for post fields), subject to the field's visibility setting. You do not register a separate read endpoint per field; the value rides along with the object it belongs to.
 
 See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
+
+## Upgrading From Older Versions
+
+If you are on Jetonomy 1.4.1 or newer, custom field values are returned automatically on the `/jetonomy/v1/posts` and `/jetonomy/v1/users` endpoints, so any tool reading the API sees every field you have configured. On older versions the values were saved to the database but did not appear in API responses - update both the free and Pro plugins together to read custom fields over the API.
 
 ## What's Next?
 

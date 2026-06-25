@@ -27,6 +27,8 @@ These look like system pop-ups. They sit outside your theme, look different on e
 
 Jetonomy now uses its own modal toolkit for every "Are you sure?" prompt across the plugin. The modals look like your community, behave consistently, and play nicely with screen readers and keyboards.
 
+![Themed danger confirmation modal reading "Delete this post?" with a red Delete button and a Cancel button](../images/discussions/confirm-modal.png)
+
 ## Where You'll See Jetonomy Modals
 
 Anywhere the community needs to confirm an action or collect a short answer:
@@ -144,32 +146,31 @@ We recommend overriding tokens (e.g. `--jt-bg`, `--jt-radius`) at the modal leve
 
 The toolkit exposes three global functions for any custom JavaScript that integrates with Jetonomy. Each returns a Promise.
 
+The message is always the first argument; an options object follows.
+
 ```js
 // Yes/no confirmation
-const confirmed = await window.jetonomyConfirm({
+const confirmed = await window.jetonomyConfirm( 'This cannot be undone.', {
   title: 'Delete this post?',
-  message: 'This cannot be undone.',
   confirmLabel: 'Delete',
-  destructive: true,
-});
+  danger: true,
+} );
 
 // One-button info dialog
-await window.jetonomyAlert({
+await window.jetonomyAlert( 'Your changes are live.', {
   title: 'Saved',
-  message: 'Your changes are live.',
-});
+} );
 
 // Text input prompt
-const reason = await window.jetonomyPrompt({
+const reason = await window.jetonomyPrompt( 'Tell our moderators what is wrong.', {
   title: 'Why are you reporting this?',
-  message: 'Tell our moderators what is wrong.',
   placeholder: 'Reason',
-});
+} );
 ```
 
-The `destructive: true` flag styles the confirm button in red and disables overlay-click dismiss. Useful for delete confirmations and account actions.
+The `danger: true` flag styles the confirm button in red and disables overlay-click dismiss. Useful for delete confirmations and account actions.
 
-These are pure JS globals; you don't need to import anything if `jetonomy` is already enqueued on the page. For block development or modules, the same functions are available on `window.jetonomy.modals`.
+These are pure JS globals; you don't need to import anything if `jetonomy` is already enqueued on the page.
 
 ## What's Next?
 

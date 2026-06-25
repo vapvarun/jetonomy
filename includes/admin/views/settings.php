@@ -12,6 +12,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 ?>
 <div class="wrap jetonomy-admin">
 	<?php
+	// Screen-reader page heading + the WP notice anchor. Without `.wp-header-end`
+	// WordPress core relocates admin notices to just after the first <h2> it
+	// finds, which on the Integrations tab is the family-header title — so the
+	// "settings saved" / companion notice rendered inside `.jt-fam-header__body`.
+	// Anchoring here keeps every tab's notices at the top of the page.
+	?>
+	<h1 class="screen-reader-text"><?php esc_html_e( 'Jetonomy Settings', 'jetonomy' ); ?></h1>
+	<hr class="wp-header-end">
+	<?php
 	ob_start();
 	do_action( 'jetonomy_admin_settings_tabs', $active_tab );
 	$advanced_tabs_html = ob_get_clean();
@@ -52,6 +61,15 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 		'seo'         => __( 'SEO', 'jetonomy' ),
 		'antispam'    => __( 'Anti-Spam', 'jetonomy' ),
 	];
+
+	// Integrations tab appears only when BuddyPress Groups is active — the
+	// only context where the broadcast / comment-bridge toggles apply.
+	$jt_bp_active = function_exists( 'bp_is_active' ) && bp_is_active( 'groups' );
+	// Integrations tab is always available (Wbcom stack companions); the
+	// BuddyPress broadcast / comment-bridge toggles inside it render only when
+	// BP Groups is active.
+	$tab_icons['integrations']  = 'dashicons-networking';
+	$tab_labels['integrations'] = __( 'Integrations', 'jetonomy' );
 	?>
 
 	<?php settings_errors(); ?>
@@ -64,7 +82,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 
 		<aside class="jt-settings-sidebar">
 			<div class="jt-settings-sidebar-brand">
-				<span class="dashicons dashicons-admin-settings jt-settings-brand-icon" aria-hidden="true"></span>
+				<img class="jt-settings-brand-icon" src="<?php echo esc_url( JETONOMY_URL . 'assets/images/jetonomy-mark.svg' ); ?>" width="36" height="36" alt="" aria-hidden="true" />
 				<div class="jt-settings-brand-text">
 					<p class="jt-settings-brand-name">Jetonomy</p>
 					<p class="jt-settings-brand-sub"><?php esc_html_e( 'Settings', 'jetonomy' ); ?></p>
@@ -138,6 +156,16 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><?php esc_html_e( 'Community as Homepage', 'jetonomy' ); ?></th>
+						<td>
+							<label for="front_page">
+								<input type="checkbox" id="front_page" name="jetonomy_settings[front_page]" value="1" <?php checked( ! empty( $settings['front_page'] ) ); ?>>
+								<?php esc_html_e( 'Show the community home on the site front page.', 'jetonomy' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Visitors to your site root see the community home page. This takes precedence over the WordPress "Your homepage displays" setting. All community URLs, posts, pages, and feeds keep working unchanged.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="default_space_type"><?php esc_html_e( 'Default Space Type', 'jetonomy' ); ?></label></th>
 						<td>
 							<select id="default_space_type" name="jetonomy_settings[default_space_type]">
@@ -195,7 +223,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								}
 								if ( preg_match( '/^(bp_|bbp_|spectator|participant|moderator|keymaster|board_)/i', $jt_rk ) ) {
 									$jt_role_groups['community']['keys'][] = $jt_rk;
-								} elseif ( preg_match( '/^(ld_|tutor_|lms_|instructor|teacher|student|group_leader|memberpress|pmpro|wlm_)/i', $jt_rk ) ) {
+								} elseif ( preg_match( '/^(ld_|tutor_|lms_|lrn_|instructor|teacher|student|group_leader|memberpress|pmpro|wlm_)/i', $jt_rk ) ) {
 									$jt_role_groups['lms_memberships']['keys'][] = $jt_rk;
 								} elseif ( preg_match( '/^(shop_|customer|wc_|edd_|wpforms)/i', $jt_rk ) ) {
 									$jt_role_groups['commerce']['keys'][] = $jt_rk;
@@ -733,11 +761,49 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							</fieldset>
 						</td>
 					</tr>
+					</table>
+			</div>
+
+			<!-- Color Palette -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Color Palette', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly — useful when your theme has no color tokens for Jetonomy to inherit. Applied when "Inherit theme colors" is off. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table">
 					<tr>
-						<th scope="row"><label for="accent_color"><?php esc_html_e( 'Custom Accent Color', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="accent_color"><?php esc_html_e( 'Accent', 'jetonomy' ); ?></label></th>
 						<td>
 							<input type="text" id="accent_color" name="jetonomy_settings[accent_color]" value="<?php echo esc_attr( $settings['accent_color'] ?? '#0073aa' ); ?>" class="jetonomy-color-picker">
-							<p class="description"><?php esc_html_e( 'Applied when "Inherit theme colors" is off.', 'jetonomy' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Buttons, links, active states, and notification emails.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="text_color"><?php esc_html_e( 'Text', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="text_color" name="jetonomy_settings[text_color]" value="<?php echo esc_attr( $settings['text_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Body copy and headings. Secondary and muted text derive from it.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="bg_color"><?php esc_html_e( 'Background', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="bg_color" name="jetonomy_settings[bg_color]" value="<?php echo esc_attr( $settings['bg_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Cards and content surfaces.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="bg_subtle_color"><?php esc_html_e( 'Subtle Background', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="bg_subtle_color" name="jetonomy_settings[bg_subtle_color]" value="<?php echo esc_attr( $settings['bg_subtle_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Secondary surfaces — table headers, code, quiet panels.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="border_color"><?php esc_html_e( 'Border', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="border_color" name="jetonomy_settings[border_color]" value="<?php echo esc_attr( $settings['border_color'] ?? '' ); ?>" class="jetonomy-color-picker">
+							<p class="description"><?php esc_html_e( 'Card outlines, dividers, and input borders.', 'jetonomy' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -1057,6 +1123,26 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<p class="jt-settings-card__title"><?php esc_html_e( 'CAPTCHA Provider', 'jetonomy' ); ?></p>
 					<p class="jt-settings-card__desc"><?php esc_html_e( 'Protect post and reply forms from bots. Trusted members (trust level 2+) are always exempt.', 'jetonomy' ); ?></p>
 				</div>
+				<?php
+				// Inline validation: warn when the provider/keys are in a state that renders nothing.
+				$jt_cap_provider = $settings['captcha_provider'] ?? 'none';
+				$jt_cap_site     = trim( (string) ( $settings['captcha_site_key'] ?? '' ) );
+				$jt_cap_secret   = trim( (string) ( $settings['captcha_secret_key'] ?? '' ) );
+				$jt_cap_warning  = '';
+				if ( 'none' !== $jt_cap_provider && ( '' === $jt_cap_site || '' === $jt_cap_secret ) ) {
+					$jt_cap_warning = __( 'A CAPTCHA provider is selected but the Site Key and/or Secret Key is empty. The CAPTCHA will not render until both keys are filled in.', 'jetonomy' );
+				} elseif ( 'none' === $jt_cap_provider && ( '' !== $jt_cap_site || '' !== $jt_cap_secret ) ) {
+					$jt_cap_warning = __( 'CAPTCHA keys are saved but the Provider is set to Disabled, so no CAPTCHA renders. Select Cloudflare Turnstile or reCAPTCHA above to activate it.', 'jetonomy' );
+				}
+				if ( '' !== $jt_cap_warning ) :
+					?>
+					<p class="jt-captcha-config-warning" style="margin:0 0 16px;padding:10px 12px;background:var(--jt-warn-light,#fff8e5);border-inline-start:3px solid var(--jt-warn,#dba617);border-radius:4px;font-size:13px;">
+						<strong><?php esc_html_e( 'Heads up:', 'jetonomy' ); ?></strong>
+						<?php echo esc_html( $jt_cap_warning ); ?>
+					</p>
+					<?php
+				endif;
+				?>
 				<table class="form-table">
 					<tr>
 						<th scope="row"><label for="captcha_provider"><?php esc_html_e( 'Provider', 'jetonomy' ); ?></label></th>
@@ -1231,6 +1317,50 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 				<?php do_action( 'jetonomy_admin_license_tab_content' ); ?>
 			</div>
+
+		<?php elseif ( 'integrations' === $active_tab ) : ?>
+
+			<?php require __DIR__ . '/../../integrations/views/companion-cards.php'; ?>
+
+			<?php if ( $jt_bp_active ) : ?>
+			<form method="post" action="options.php" id="jetonomy-integrations-form">
+				<?php settings_fields( 'jetonomy_integrations' ); ?>
+				<div class="jt-settings-card">
+					<div class="jt-settings-card__head">
+						<p class="jt-settings-card__title"><?php esc_html_e( 'BuddyPress', 'jetonomy' ); ?></p>
+						<p class="jt-settings-card__desc"><?php esc_html_e( 'Control how Jetonomy and BuddyPress group activity stay in sync.', 'jetonomy' ); ?></p>
+					</div>
+					<?php
+					$jt_bp_broadcast = '0' !== (string) get_option( 'jetonomy_bp_broadcast', '1' );
+					$jt_bp_bridge    = '0' !== (string) get_option( 'jetonomy_bp_comment_bridge', '1' );
+					?>
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Broadcast topics to group activity', 'jetonomy' ); ?></th>
+							<td>
+								<label for="jetonomy_bp_broadcast">
+									<input type="hidden" name="jetonomy_bp_broadcast" value="0">
+									<input type="checkbox" id="jetonomy_bp_broadcast" name="jetonomy_bp_broadcast" value="1" <?php checked( $jt_bp_broadcast ); ?>>
+									<?php esc_html_e( 'Post new Jetonomy topics to the paired BuddyPress group activity stream.', 'jetonomy' ); ?>
+								</label>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Round-trip activity comments', 'jetonomy' ); ?></th>
+							<td>
+								<label for="jetonomy_bp_comment_bridge">
+									<input type="hidden" name="jetonomy_bp_comment_bridge" value="0">
+									<input type="checkbox" id="jetonomy_bp_comment_bridge" name="jetonomy_bp_comment_bridge" value="1" <?php checked( $jt_bp_bridge ); ?>>
+									<?php esc_html_e( 'Mirror BuddyPress activity comments on broadcast items back as Jetonomy replies.', 'jetonomy' ); ?>
+								</label>
+								<p class="description"><?php esc_html_e( 'Requires "Broadcast topics to group activity" to be enabled.', 'jetonomy' ); ?></p>
+							</td>
+						</tr>
+					</table>
+					<?php submit_button( __( 'Save Settings', 'jetonomy' ) ); ?>
+				</div>
+			</form>
+			<?php endif; ?>
 
 		<?php endif; ?>
 

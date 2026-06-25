@@ -85,9 +85,11 @@ class CategoriesApiTest extends WP_UnitTestCase {
 	}
 
 	public function test_post_categories_requires_auth(): void {
-		// Unauthenticated request should be denied.
+		// Unauthenticated request should be denied. REST_Auth::auth_mutation
+		// returns 401 rest_not_logged_in for anonymous callers (correct HTTP
+		// semantics); the legacy pre-migration callback returned 403.
 		$response = $this->do_request( 'POST', '/categories', [ 'name' => 'Unauth Cat' ] );
-		$this->assertEquals( 403, $response->get_status() );
+		$this->assertEquals( 401, $response->get_status() );
 	}
 
 	public function test_post_categories_creates_category_for_admin(): void {

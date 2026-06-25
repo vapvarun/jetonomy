@@ -2,9 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, master, 'v*']
+    # '*-dev' makes release branches CI-gated BEFORE merge — main sat red
+    # for three weeks (2026-05-23 → 06-11) because dev work only met CI
+    # after merging.
+    branches: [main, master, 'v*', '*-dev']
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   # ── PHP Lint: syntax check across PHP versions ─────────────────────────
@@ -66,8 +70,14 @@ jobs:
           WP_VERSION: ${{ matrix.wp }}
         run: bash bin/install-wp-tests.sh wp_tests root root 127.0.0.1 "$WP_VERSION" true
 
-      - name: Run PHPUnit (free standalone — unit testsuite)
-        run: vendor/bin/phpunit --testdox --testsuite=unit
+      - name: Run PHPUnit (free standalone — every non-pro testsuite)
+        # Previously only 'unit' ran here, leaving integration/security/
+        # error-paths/concurrency gated solely by the combo job (which
+        # needs the PRO_PAT secret and was pinned to a stale Pro ref).
+        # All of these suites pass in free-standalone mode.
+        env:
+          JETONOMY_TEST_SKIP_PRO: '1'
+        run: vendor/bin/phpunit --testdox --testsuite=unit,integration,security,error-paths,concurrency
 
   # ── PHPUnit combo: Free + Pro loaded together ─────────────────────────────
   # Exercises the Pro testsuite alongside the free unit testsuite so any
@@ -115,7 +125,13 @@ jobs:
           repository: vapvarun/jetonomy-pro
           token: ${{ secrets.PRO_PAT }}
           path: jetonomy-pro
-          ref: v1.3.0
+          # Lockstep pair selection. Both branches of the expression are
+          # HARDCODED literals (github.ref_name is only compared, never
+          # emitted), so no branch-name injection is possible — same
+          # guarantee as the previous fixed pin, without testing free HEAD
+          # against a Pro frozen at v1.3.0 (two minors stale when caught).
+          # Bump the '1.5.0-dev' literal when a new dev cycle opens.
+          ref: ${{ github.ref_name == '1.5.0-dev' && '1.5.0-dev' || 'master' }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -257,20 +273,21 @@ jobs:
       - name: Run Plugin Check
         run: |
           RESULT=$(wp plugin check jetonomy --path=/tmp/wp --format=csv 2>&1)
-          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected|DirectDB.UnescapedDBParameter|PreparedSQL.NotPrepared|MissingTranslatorsComment|Heredoc.NotAllowed|EscapeOutput'
+          # wp_function_not_compatible_with_requires_wp: PCP flags the WP 7.0
+          # Abilities API calls in class-abilities.php against 'Requires at
+          # least: 6.7'. Those calls are hook-gated — they only run inside
+          # wp_abilities_api_init / wp_abilities_api_categories_init, which
+          # core fires exclusively on WP >= 7.0 — so they can never execute on
+          # an older WP. PCP's static scan cannot see hook gating.
+          NOISE='compressed_files|hidden_files|application_detected|missing_direct_file_access_protection|outdated_tested_upto_header|stable_tag_mismatch|plugin_updater_detected|wp_function_not_compatible_with_requires_wp|DirectDB.UnescapedDBParameter|PreparedSQL.NotPrepared|MissingTranslatorsComment|Heredoc.NotAllowed|EscapeOutput'
           CODE_ERRORS=$(echo "$RESULT" | awk -F',' -v noise="$NOISE" '
             /^FILE:/ { file=$0; gsub(/^FILE: /, "", file); next }
             $3 == "ERROR" {
-              if (file ~ /^tests\//) next
-              if (file ~ /^bin\//) next
-              if (file ~ /^tools\//) next
-              if (file ~ /^\.githooks\//) next
-              if (file ~ /^plans\//) next
-              if (file ~ /^docs\//) next
-              if (file ~ /^marketing\//) next
-              if (file ~ /^dist\//) next
-              if (file ~ /^vendor\//) next
-              if (file ~ /^node_modules\//) next
+              # Segment match, not ^-anchored: PCP emits ABSOLUTE paths on the
+              # runner (/home/runner/work/...), so the old ^dir/ excludes never
+              # matched there. libs/ = vendored third-party (action-scheduler,
+              # edd-sl-sdk) — ships in dist, not ours to fix.
+              if (file ~ /(^|\/)(libs|tests|bin|tools|\.githooks|plans|docs|marketing|dist|vendor|node_modules)\//) next
               match_noise = 0
               split(noise, n, "|")
               for (k in n) { if ($4 ~ n[k]) { match_noise = 1; break } }

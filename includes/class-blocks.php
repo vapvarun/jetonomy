@@ -765,16 +765,22 @@ class Blocks {
 			$show_register_tab = $wp_can_register;
 		}
 		// 1.4.0 A.3 commit 3: both Login and Register tabs use REST. Block
-		// only exposes the REST endpoint base + a wp_rest nonce; the legacy
-		// `data-ajax-url` + per-action nonces are gone.
-		$rest_url   = esc_url_raw( rest_url( 'jetonomy/v1' ) );
-		$rest_nonce = wp_create_nonce( 'wp_rest' );
+		// only exposes the REST endpoint base; no nonce — the auth endpoints
+		// are public (REST_Auth::auth_public_write) and sending X-WP-Nonce
+		// from cached pages made core's rest_cookie_check_errors() fail with
+		// "Cookie check failed" for logged-out visitors (#9977381553).
+		$rest_url = esc_url_raw( rest_url( 'jetonomy/v1' ) );
+
+		// One widget per form — Turnstile auto-renders every container and
+		// scopes its hidden response input to it, so each panel reads its
+		// own token at submit. Empty string when CAPTCHA is off or the
+		// provider is invisible (reCAPTCHA v3).
+		$captcha_widget = \Jetonomy\Captcha\Captcha_Manager::render_widget();
 
 		ob_start();
 		?>
 		<div class="wp-block-jetonomy-login jt-login-block jt-app"
-			data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
-			data-rest-nonce="<?php echo esc_attr( $rest_nonce ); ?>">
+			data-rest-url="<?php echo esc_attr( $rest_url ); ?>">
 			<h3 class="jt-login-title"><?php echo esc_html( $title ); ?></h3>
 
 			<?php if ( $show_register_tab ) : ?>
@@ -801,6 +807,7 @@ class Blocks {
 					<input type="checkbox" name="remember" value="1" />
 					<span><?php esc_html_e( 'Remember me', 'jetonomy' ); ?></span>
 				</label>
+				<?php echo $captcha_widget; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr. ?>
 				<p class="jt-login-message" role="alert" aria-live="polite"></p>
 				<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
 					<?php esc_html_e( 'Log in', 'jetonomy' ); ?>
@@ -842,6 +849,7 @@ class Blocks {
 						<input type="text" name="website" autocomplete="off" tabindex="-1" />
 					</label>
 					<input type="hidden" name="loaded_at" value="<?php echo esc_attr( (string) time() ); ?>" />
+					<?php echo $captcha_widget; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr. ?>
 					<p class="jt-login-message" role="alert" aria-live="polite"></p>
 					<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
 						<?php esc_html_e( 'Create account', 'jetonomy' ); ?>
@@ -857,6 +865,7 @@ class Blocks {
 					<span><?php esc_html_e( 'Username or Email', 'jetonomy' ); ?></span>
 					<input type="text" name="user_login" autocomplete="username" required />
 				</label>
+				<?php echo $captcha_widget; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- adapter builds the HTML with esc_attr. ?>
 				<p class="jt-login-message" role="alert" aria-live="polite"></p>
 				<button type="submit" class="jt-btn jt-btn-fill jt-login-submit">
 					<?php esc_html_e( 'Send reset link', 'jetonomy' ); ?>

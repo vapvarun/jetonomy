@@ -4,7 +4,7 @@ category: "discussions"
 order: 8
 ---
 
-The composer is the box you type in when you create a new post or reply. Jetonomy 1.4.0 added three features that make the composer feel more like a modern community tool and less like a comment form: @mention autocomplete, a "New" pill on unread threads, and a "Managed by" sidebar card that surfaces space staff at a glance. Admin and moderator role pills also appear next to staff names so members always know who they are talking to.
+The composer is the box you type in when you create a new post or reply. It works like a modern community tool, not a plain comment form. Members can @mention each other, see at a glance which threads have new replies, and find out who runs a space and who on staff is replying. This guide covers each of those features and how they behave for the member.
 
 ## What You Will Learn
 
@@ -14,7 +14,7 @@ The composer is the box you type in when you create a new post or reply. Jetonom
 - Where role pills appear and what they tell members
 - How link previews turn a pasted URL into a rich card
 - How members add images, and which capability gates uploads
-- How the composer behaves with markdown vs the WYSIWYG editor
+- How the composer's formatting toolbar and markdown shortcuts work
 
 ## @mention Autocomplete
 
@@ -46,7 +46,7 @@ If you start typing a name that does not match anyone in your shared spaces, the
 
 1. Open any topic and start a reply.
 2. Type `@` followed by the first few letters of the person's name or username.
-3. The dropdown appears under your cursor with up to 8 matching members.
+3. The dropdown appears under your cursor with up to 10 matching members.
 4. Use the arrow keys to highlight a name, or click directly.
 5. Press Enter (or click) to insert the mention.
 6. Publish the reply. The mentioned member receives a notification within seconds.
@@ -81,6 +81,8 @@ On mobile the pill sits at the top-right of the card, sized for thumb readabilit
 
 ## "Managed by" Sidebar Card
 
+![Space sidebar "Managed by" card listing the space admins and moderators with avatars and role badges](../images/discussions/managed-by-card.png)
+
 Every space page now shows a "Managed by" card in the sidebar. The card lists the space admin(s) and moderator(s) with their avatars and a small role badge next to each name.
 
 ### What the Card Shows
@@ -100,7 +102,7 @@ For owners, this surfaces your community staff and gives them visibility. Member
 
 ### Customizing the Card
 
-The card is rendered from `templates/parts/space-sidebar-managed-by.php`. You can override it in your theme at `theme/jetonomy/parts/space-sidebar-managed-by.php` to change the layout, hide certain roles, or add extra links.
+The card is rendered from `templates/partials/managed-by-card.php`. You can override it in your theme at `theme/jetonomy/partials/managed-by-card.php` to change the layout, hide certain roles, or add extra links.
 
 ## Role Pills on Posts and Replies
 
@@ -135,16 +137,7 @@ The preview endpoint pulls metadata from Open Graph and Twitter Card tags, so it
 - Results are cached on the server (roughly 12 hours for a successful fetch, a few minutes for a failed one), so a 200-reply thread does not refetch the same link 200 times.
 - Mentions (`@name`) and tag links never turn into preview cards, only standalone web URLs do.
 
-### Developer Filters
-
-The link preview pipeline is fully filterable:
-
-| Filter | Purpose |
-|---|---|
-| `jetonomy_link_preview_providers` | Add or reorder host-specific providers (e.g. a custom intranet URL rewriter) ahead of the defaults |
-| `jetonomy_link_preview_data` | Final mutation of the preview data right before it is cached and returned |
-| `jetonomy_link_preview_cache_ttl` | Override the cache lifetime, in seconds |
-| `jetonomy_link_preview_user_agent` | Override the user agent used when fetching the page (some corporate firewalls only allow specific agents) |
+Developers can customize how link previews are fetched and rendered - see [Developer Notes](#developer-notes) at the end of this guide.
 
 ## Media Uploads
 
@@ -158,24 +151,44 @@ Uploads go to `POST /jetonomy/v1/media`, which stores the file as a standard Wor
 
 ### Who Can Upload
 
+In practice, most members who can post or reply can also attach images. Members who can already upload to your WordPress media library can attach images, and members earn the ability to upload automatically once they reach **Trust Level 1**, even if their WordPress role would not otherwise allow it. So a brand-new member may not be able to attach an image on their very first day, but gains it as soon as they reach Trust Level 1.
+
+Developers who need the exact capability list can find it under [Developer Notes](#developer-notes).
+
+## The Formatting Toolbar
+
+The composer is a single rich-text editor with a small formatting toolbar - there is no separate "plain text" vs "WYSIWYG" mode to choose between. The toolbar buttons are: **bold**, **italic**, **inline code** (`</>`), **link**, **blockquote**, and **image upload**.
+
+Members who prefer to type can also use common markdown shortcuts (`**bold**`, `*italic*`, `` `code` ``, `> quote`) directly in the editor. The toolbar and the markdown shortcuts produce the same formatted result.
+
+Paste handling, image uploads, and @mention autocomplete all work the same way regardless of whether you click a toolbar button or type the markup yourself.
+
+For more on the content editor and its fields, see [Creating Topics](01-creating-topics.md#content).
+
+## Developer Notes
+
+These details are for developers extending the composer. Site owners and members do not need them.
+
+### Link preview filters
+
+The link preview pipeline is fully filterable:
+
+| Filter | Purpose |
+|---|---|
+| `jetonomy_link_preview_providers` | Add or reorder host-specific providers (e.g. a custom intranet URL rewriter) ahead of the defaults |
+| `jetonomy_link_preview_data` | Final mutation of the preview data right before it is cached and returned |
+| `jetonomy_link_preview_cache_ttl` | Override the cache lifetime, in seconds |
+| `jetonomy_link_preview_user_agent` | Override the user agent used when fetching the page (some corporate firewalls only allow specific agents) |
+
+### Media upload capabilities
+
 Uploading is gated by capability. A member can upload media if they have any one of:
 
 - `upload_files` - the standard WordPress capability (Author and above)
 - `jetonomy_upload_media` - the Jetonomy role-map capability, granted to the Contributor role and automatically granted at Trust Level 1
 - `jetonomy_create_posts` or `jetonomy_create_replies` - anyone who can post or reply
 
-In practice this means most contributing members can attach images, and members earn the upload capability automatically as they reach Trust Level 1 even if their WordPress role would not otherwise allow it.
-
-## Markdown and WYSIWYG
-
-The composer supports two input modes, controlled per-space in **Space Settings → Editor**:
-
-- **Plain text with markdown** - members type using common markdown shortcuts (`**bold**`, `*italic*`, `[link](url)`). Lightweight, fast, ideal for technical communities.
-- **WYSIWYG** - a TinyMCE-style toolbar with buttons for formatting, lists, links, and image uploads. Friendlier for non-technical members.
-
-Both modes support the same paste handling, the same image uploads, and the same @mention autocomplete. Switching modes does not lose existing content; markdown is converted to HTML and vice versa on save.
-
-For a deeper walkthrough of editor settings see [Space Settings](../spaces-and-categories/04-space-settings.md).
+Uploads go to `POST /jetonomy/v1/media`, which stores the file as a standard WordPress attachment and returns its URL.
 
 ## What's Next?
 

@@ -20,7 +20,7 @@ Every post and every reply in your community shows a reaction strip. Members cli
 
 The reaction counts are displayed as chips directly below the post body. Each chip shows the emoji and the total count. Hovering a chip reveals the names of recent reactors.
 
-<!-- TODO screenshot needed: Reaction strip showing six emoji options (was ../images/pro-reactions-strip.png) -->
+![The reaction strip on a post, showing the eight default emoji options a member can pick from](../images/pro-reactions-strip.png)
 ## Enabling Reactions
 
 1. Go to **Jetonomy → Extensions** in your WordPress admin.
@@ -31,29 +31,31 @@ The reaction counts are displayed as chips directly below the post body. Each ch
 
 ## Default Emoji Set
 
-Jetonomy ships with six Fluent 3D emojis (Microsoft, MIT licensed) out of the box:
+Jetonomy ships with eight emoji reactions out of the box:
 
 | Emoji | Label | Use case |
 |-------|-------|----------|
 | Like | Thumbs up | General agreement |
 | Love | Heart | Enthusiasm, appreciation |
-| Thinking | Thinking face | Interesting, thought-provoking |
+| Haha | Laughing face | Humor, something funny |
 | Celebrate | Party popper | Wins, announcements |
+| Thinking | Thinking face | Interesting, thought-provoking |
+| Watching | Eyes | Following along, keeping an eye on it |
 | Rocket | Rocket | Fast, shipped, love it |
-| Sad | Sad face | Empathy, condolences |
+| Dislike | Thumbs down | Disagreement |
 
-All six are enabled globally by default. You can adjust which ones appear per space.
+All eight are enabled globally by default. You can adjust which ones appear per space.
 
 ## Per-Space Customization
 
-Different spaces have different tones. A Support space might not need a Celebrate emoji, and a General Chat space might not need Sad.
+Different spaces have different tones. A Support space might not need a Celebrate emoji, and a General Chat space might not need Dislike.
 
 1. Go to **Jetonomy → Spaces** and open the space you want to customize.
 2. Open the **Reactions** tab in the space settings panel.
 3. Toggle individual emojis on or off for this space.
 4. Save. The change takes effect immediately for all posts in that space.
 
-<!-- TODO screenshot needed: Space settings panel - Reactions tab (was ../images/pro-reactions-space-settings.png) -->
+![The Reactions tab inside a space's settings panel, with a per-emoji on/off toggle for that space](../images/pro-reactions-space-settings.png)
 ## REST API
 
 The Reactions extension registers these endpoints under `jetonomy/v1`:

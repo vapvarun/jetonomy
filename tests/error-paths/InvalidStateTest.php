@@ -221,7 +221,20 @@ class InvalidStateTest extends WP_UnitTestCase {
 	 * every request — there is no 409 guard; the operation is safe to repeat.
 	 */
 	public function test_accept_answer_twice_is_idempotent(): void {
-		$post_id  = $this->make_post();
+		// Accept-answer is gated to Q&A spaces since 93b302a (2026-05-08);
+		// the shared fixture space is a forum, so build a qa-typed space.
+		$qa_space_id = Space::create( array(
+			'title'       => 'Invalid State QA Space',
+			'slug'        => 'invalid-state-qa-' . uniqid(),
+			'category_id' => $this->cat_id,
+			'visibility'  => 'public',
+			'join_policy' => 'open',
+			'type'        => 'qa',
+		) );
+		SpaceMember::add( $qa_space_id, $this->admin_id, 'admin' );
+		SpaceMember::add( $qa_space_id, $this->member_id, 'member' );
+
+		$post_id  = $this->make_post( array( 'space_id' => $qa_space_id, 'type' => 'question' ) );
 		$reply_id = Reply::create( array(
 			'post_id'       => $post_id,
 			'author_id'     => $this->member_id,

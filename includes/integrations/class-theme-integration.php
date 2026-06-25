@@ -65,6 +65,23 @@ class Theme_Integration {
 		$light = $this->resolve_token_map( false );
 		$dark  = $this->resolve_token_map( true );
 
+		// An explicitly chosen admin palette (Settings → Appearance →
+		// Color Palette) outranks automatic theme bridging, token by
+		// token — the bridge keeps covering tokens the owner left empty.
+		// Light mode only: the palette never touches dark tokens.
+		$jt_settings = get_option( 'jetonomy_settings', array() );
+		$palette     = \Jetonomy\Template_Loader::palette_tokens( is_array( $jt_settings ) ? $jt_settings : array() );
+		if ( ! empty( $palette ) ) {
+			$light = array_diff_key( $light, $palette );
+			// The bridge derives --jt-accent-hover from the THEME accent;
+			// with the palette accent in charge, that derivation would be a
+			// mismatched leftover. Drop it — Jetonomy's own color-mix()
+			// default recomputes the hover from the palette accent.
+			if ( isset( $palette['--jt-accent'] ) ) {
+				unset( $light['--jt-accent-hover'] );
+			}
+		}
+
 		/**
 		 * Filter the resolved light-mode token → hex map before injection.
 		 *
@@ -143,59 +160,18 @@ class Theme_Integration {
 	private function resolve_token_map( $dark ) {
 		$template = get_template();
 
-		if ( 'reign-theme' === $template ) {
-			return $this->reign_token_map( (bool) $dark );
-		}
-
+		// Reign 8.0.0+ keeps --wp--preset--color--* in sync with its own
+		// --reign-* token system in BOTH light and dark, so Jetonomy's base
+		// --jt-accent chain (var(--bx-color-accent, var(--brand,
+		// var(--wp--preset--color--primary)))) already adopts the correct Reign
+		// brand per mode. The legacy reign_dark-* color mod this bridge used to
+		// read produced a stale, off-brand dark accent (e.g. #10b981) that
+		// overrode the chain - defer to the chain instead.
 		if ( in_array( $template, array( 'buddyx', 'buddyx-pro' ), true ) ) {
 			return $this->buddyx_token_map( (bool) $dark );
 		}
 
 		return array();
-	}
-
-	/**
-	 * Read Reign's color mods and map them to Jetonomy tokens.
-	 *
-	 * Reign scopes every color to a preset scheme (e.g. `reign_clean`,
-	 * `reign_dating`). Dark variants live under the `reign_dark-` prefix.
-	 *
-	 * @param bool $dark Whether to read the `reign_dark-` variants.
-	 * @return array<string,string>
-	 */
-	private function reign_token_map( $dark ) {
-		$prefix = $dark
-			? 'reign_dark'
-			: (string) get_theme_mod( 'reign_color_scheme', 'reign_clean' );
-
-		$keys = array(
-			'--jt-accent'    => 'reign_accent_color',
-			'--jt-text'      => 'reign_site_body_text_color',
-			'--jt-bg'        => 'reign_site_body_bg_color',
-			'--jt-bg-subtle' => 'reign_site_sections_bg_color',
-		);
-
-		$map = array();
-		foreach ( $keys as $token => $mod ) {
-			$color = $this->sanitize_color( (string) get_theme_mod( $prefix . '-' . $mod, '' ) );
-			if ( '' !== $color ) {
-				$map[ $token ] = $color;
-			}
-		}
-
-		// Legacy single-key fallback for themes that pre-date the scheme model.
-		if ( ! isset( $map['--jt-accent'] ) ) {
-			$legacy = $this->sanitize_color( (string) get_theme_mod( 'reign_accent_color', '' ) );
-			if ( '' !== $legacy ) {
-				$map['--jt-accent'] = $legacy;
-			}
-		}
-
-		if ( isset( $map['--jt-accent'] ) ) {
-			$map['--jt-accent-hover'] = $this->darken( $map['--jt-accent'], 15 );
-		}
-
-		return $map;
 	}
 
 	/**

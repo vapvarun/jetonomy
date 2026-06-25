@@ -6,11 +6,6 @@ parameters:
 			path: includes/adapters/class-pmpro-adapter.php
 
 		-
-			message: "#^Offset 'badges' on array\\{users\\: array\\<int, int\\>, categories\\: array\\{int, int\\}, spaces\\: array\\{int, int, int, int, int, int\\}, posts\\: non\\-empty\\-array\\<int\\<0, max\\>, int\\>, replies\\: array\\<int\\<0, max\\>, int\\>, flags\\: array\\{\\}\\|array\\{0\\: int, 1\\?\\: int\\}, polls\\: array\\{\\}, badges\\: non\\-empty\\-array\\<int\\<0, max\\>, int\\>\\} in empty\\(\\) always exists and is not falsy\\.$#"
-			count: 1
-			path: includes/admin/ajax/class-demo-seeder.php
-
-		-
 			message: "#^Cannot access offset 'name' on bool\\.$#"
 			count: 2
 			path: includes/admin/views/import.php
@@ -66,11 +61,6 @@ parameters:
 			path: includes/api/class-posts-controller.php
 
 		-
-			message: "#^Strict comparison using \\=\\=\\= between 'publish' and 'draft'\\|'pending'\\|'spam' will always evaluate to false\\.$#"
-			count: 1
-			path: includes/api/class-posts-controller.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$author_avatar\\.$#"
 			count: 1
 			path: includes/api/class-replies-controller.php
@@ -92,16 +82,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property object\\:\\:\\$trust_level\\.$#"
-			count: 1
-			path: includes/api/class-replies-controller.php
-
-		-
-			message: "#^Offset 'status' on array\\{post_id\\: int, author_id\\: int, content\\: non\\-falsy\\-string, content_plain\\: string, status\\: 'pending'\\|'spam', parent_id\\?\\: int\\<min, \\-1\\>\\|int\\<1, max\\>, created_at\\?\\: string\\} on left side of \\?\\? always exists and is not nullable\\.$#"
-			count: 1
-			path: includes/api/class-replies-controller.php
-
-		-
-			message: "#^Strict comparison using \\=\\=\\= between 'publish' and 'pending'\\|'spam' will always evaluate to false\\.$#"
 			count: 1
 			path: includes/api/class-replies-controller.php
 
@@ -171,11 +151,6 @@ parameters:
 			path: includes/class-template-loader.php
 
 		-
-			message: "#^Parameter \\#3 \\$deps of function wp_enqueue_script_module expects array\\<int\\|string, array\\{id\\: string, import\\?\\: string\\}\\>, array\\{'@wordpress…'\\} given\\.$#"
-			count: 1
-			path: includes/class-template-loader.php
-
-		-
 			message: "#^Access to an undefined property BP_Groups_Component\\:\\:\\$table_name_groupmeta\\.$#"
 			count: 2
 			path: includes/integrations/class-buddypress.php
@@ -206,13 +181,8 @@ parameters:
 			path: includes/integrations/class-buddypress.php
 
 		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
-			count: 1
-			path: includes/models/class-post.php
-
-		-
 			message: "#^Access to an undefined property object\\:\\:\\$space_id\\.$#"
-			count: 2
+			count: 1
 			path: includes/models/class-post.php
 
 		-
@@ -312,11 +282,6 @@ parameters:
 
 		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
-			count: 1
-			path: includes/qa/class-rest-tests.php
-
-		-
-			message: "#^Offset 0 does not exist on array\\<string, mixed\\>\\.$#"
 			count: 1
 			path: includes/qa/class-rest-tests.php
 

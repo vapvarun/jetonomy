@@ -64,7 +64,7 @@ $crumbs = array(
 			);
 			?>
 		<?php else : ?>
-			<form id="jt-new-space-form" class="jt-form jt-card" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
+			<form id="jt-new-space-form" class="jt-form jt-card" data-wp-on--submit="actions.createSpace" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">
 					<label for="jt-ns-title"><?php esc_html_e( 'Space title', 'jetonomy' ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
@@ -124,9 +124,9 @@ $crumbs = array(
 						<div class="jt-cover-actions">
 							<label class="jt-btn jt-btn-ghost jt-cover-pick">
 								<?php esc_html_e( 'Choose image', 'jetonomy' ); ?>
-								<input type="file" accept="image/*" data-jt-cover-input hidden>
+								<input type="file" accept="image/*" data-jt-cover-input data-wp-on--change="actions.uploadCover" hidden>
 							</label>
-							<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove hidden>
+							<button type="button" class="jt-btn jt-btn-ghost jt-cover-remove" data-jt-cover-remove data-wp-on--click="actions.removeCover" hidden>
 								<?php esc_html_e( 'Remove', 'jetonomy' ); ?>
 							</button>
 							<span class="jt-cover-status" data-jt-cover-status></span>

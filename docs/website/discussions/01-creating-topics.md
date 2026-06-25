@@ -1,3 +1,9 @@
+---
+title: "Creating Topics"
+category: "discussions"
+order: 1
+---
+
 A topic is the primary unit of discussion in Jetonomy - every conversation, question, idea, or update starts here. This guide walks through everything that happens from the moment a member clicks "New Post" to when their topic goes live.
 
 ![New post form with title, content editor, tags, and publish options](../images/new-post-form.png)
@@ -47,7 +53,6 @@ The content field supports rich text via a Markdown toolbar. You do not need to 
 | Link | Insert a hyperlink |
 | Quote | Block quote |
 | Image | Upload an image from your device |
-| Code block | Multi-line code with syntax highlighting |
 
 You can also type Markdown directly if you prefer:
 - `**bold**` → **bold**
@@ -69,7 +74,7 @@ As you type the title, Jetonomy searches for existing topics with similar titles
 
 If you see your question already answered in the list, click the match to jump to the existing topic instead of submitting a duplicate. If none of the matches fit, keep typing - the search re-runs after every few characters.
 
-Similar Topics detection runs entirely on the client against the search index - no additional page load.
+Similar Topics detection runs a lightweight, debounced search request (about 400ms after you stop typing) against the server search index, so it does not reload the page.
 
 ### Prefix Selector
 
@@ -126,6 +131,11 @@ If the topic is pending approval, it does not appear in the listing, does not in
 Learn how replies work, how threading is structured, and how to accept answers in Q&A spaces.
 
 [Replies & Threading →](02-replies-threading.md)
+
+## Related
+
+- [Embedding the Composer](10-embedding-the-composer.md) - drop a "start a topic" box onto any WordPress page, post, or landing page using the Compose Topic block or the `[jetonomy_compose_topic]` shortcode.
+- You can also surface existing discussions on any page with the Forum Feed and Trending blocks (and their `[jetonomy_recent_posts]` / `[jetonomy_trending_posts]` shortcodes) - see [Shortcodes, Widgets & Blocks](../developer-guide/04-shortcodes-widgets-blocks.md).
 
 ## Related Pro Features
 

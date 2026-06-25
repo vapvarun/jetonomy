@@ -2,7 +2,7 @@ Give every space its own meta titles, Open Graph images, Twitter Cards, schema m
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-<!-- TODO screenshot needed: SEO tab inside a space settings panel showing meta title, description, and Open Graph image fields (was ../images/pro-seo-space-tab.png) -->
+![The SEO tab inside a space's settings panel, showing the meta title, meta description, and Open Graph image fields](../images/pro-seo-space-tab.png)
 ## What You Will Learn
 
 - Why community SEO is different from page/post SEO
@@ -39,7 +39,6 @@ SEO Pro lets you upload a custom Open Graph image per space - a 1200x630 image u
 
 If you skip these fields, Jetonomy falls back to the meta title/description and uses the default OG image from your main settings.
 
-<!-- TODO screenshot needed: Open Graph preview showing a space with a custom card image (was ../images/pro-seo-og-preview.png) -->
 ## Schema.org Structured Data
 
 For every space and every post, Jetonomy Pro emits JSON-LD structured data:
@@ -95,4 +94,6 @@ SEO Pro does not replace Yoast, Rank Math, or All in One SEO. It handles the com
 
 ## What's Next?
 
-You have now seen every Pro feature. Return to the [pro-features overview](../pro-features/) to pick the extensions that fit your community.
+Feature an important post at the top of every space across your whole community.
+
+[Site Announcements →](15-site-announcements.md)

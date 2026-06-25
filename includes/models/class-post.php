@@ -80,6 +80,25 @@ class Post extends Model {
 				// membership through their own workflows, and demoting an existing
 				// admin/moderator back to 'member' would be a footgun.
 				self::maybe_auto_join_space( (int) ( $data['space_id'] ?? 0 ), (int) ( $data['author_id'] ?? 0 ) );
+
+				/**
+				 * Fires when a post enters or leaves `publish`.
+				 *
+				 * Fired here for posts created directly as publish;
+				 * Post::update() fires it for later transitions
+				 * (pending→publish approval, publish→trash, restore).
+				 * Date-bucketed consumers (Pro analytics aggregate) key on
+				 * $created_at so a deletion decrements the same calendar
+				 * bucket the creation incremented — keeping the aggregate in
+				 * lockstep with `WHERE status = 'publish'` query paths.
+				 *
+				 * @since 1.5.0
+				 *
+				 * @param int    $post_id    Post ID.
+				 * @param int    $delta      +1 entering publish, -1 leaving it.
+				 * @param string $created_at Post creation datetime (MySQL, UTC).
+				 */
+				do_action( 'jetonomy_post_publish_transition', (int) $id, 1, (string) $data['created_at'] );
 			}
 
 			/**
@@ -149,6 +168,9 @@ class Post extends Model {
 			if ( ! empty( $post->author_id ) ) {
 				UserProfile::increment_post_count( (int) $post->author_id, $delta );
 			}
+
+			/** This action is documented in includes/models/class-post.php (Post::create) */
+			do_action( 'jetonomy_post_publish_transition', $id, $delta, (string) ( $post->created_at ?? '' ) );
 		}
 
 		return $result;
@@ -466,17 +488,6 @@ class Post extends Model {
 	}
 
 	/**
-	 * Toggle private visibility on a post.
-	 *
-	 * @param int  $id         Post ID.
-	 * @param bool $is_private True to make private, false to make public.
-	 * @return bool
-	 */
-	public static function set_private( int $id, bool $is_private = true ): bool {
-		return static::update( $id, array( 'is_private' => $is_private ? 1 : 0 ) );
-	}
-
-	/**
 	 * Adjust reply_count and update last_reply_at and updated_at.
 	 *
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent
@@ -539,14 +550,36 @@ class Post extends Model {
 	 * @return object[]
 	 */
 	public static function list_by_author( int $user_id, int $limit = 20, int $offset = 0 ): array {
-		$table   = static::table();
+		$table      = static::table();
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		// Public method surfaced to other viewers (BP/FluentCommunity profile
+		// tabs, etc.): gate by space visibility + per-post is_private so an
+		// author's posts in private/hidden spaces (or their private posts in
+		// public spaces) stay hidden from non-member / non-author viewers.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = array();
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
 		$results = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table} WHERE author_id = %d AND status = 'publish' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT p.* FROM {$table} p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$user_id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		);
 		return $results ? $results : array();
@@ -580,6 +613,20 @@ class Post extends Model {
 		if ( null !== $space_id && $space_id > 0 ) {
 			$where .= ' AND p.space_id = %d';
 			$args[] = $space_id;
+		}
+
+		// Space-visibility + per-post is_private gate so trending never surfaces
+		// posts from private/hidden spaces (or private posts in public spaces)
+		// to viewers who aren't members / authors.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+		if ( '1=1' !== $space_vis_sql ) {
+			$where .= ' AND ' . $space_vis_sql;
+			$args   = array_merge( $args, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$where .= ' AND ' . $priv_sql;
+			$args   = array_merge( $args, $priv_params );
 		}
 
 		$args[] = $limit;
@@ -759,24 +806,67 @@ class Post extends Model {
 	 * @param int $id Post ID.
 	 * @return bool True if published.
 	 */
+	/**
+	 * Publish a draft post now, with the full create-post side-effects.
+	 *
+	 * Shared core for both the scheduled-cron publish and a manual "publish now"
+	 * from the drafts UI / REST, so the two paths never drift.
+	 *
+	 * @param int $id Post ID.
+	 * @return bool True if a draft was published, false if it was not a draft.
+	 */
+	public static function publish_draft( int $id ): bool {
+		$post = static::find( $id );
+		if ( ! $post || 'draft' !== ( $post->status ?? '' ) ) {
+			return false;
+		}
+
+		// Clear published_at on the same write so the post stops rendering a
+		// "scheduled" badge and can never be re-selected by get_due_scheduled()
+		// (which keys on `published_at IS NOT NULL`). $wpdb->update() emits a
+		// real SQL NULL for a null value.
+		static::update(
+			$id,
+			array(
+				'status'       => 'publish',
+				'published_at' => null,
+				'updated_at'   => now(),
+			)
+		);
+
+		// Do NOT increment post counts here. Post::update() already applies a
+		// +1 delta on the draft->publish transition (see the $was_publish/
+		// $is_publish branch in update()). Incrementing again double-counted
+		// every scheduled post permanently. Mirrors the "intentionally removed
+		// to prevent double-counting" note in class-posts-controller.php after
+		// Post::create().
+
+		// Fire the canonical post-creation side-effect hook so a post going live
+		// runs the SAME listeners a normally-published post does: activity log,
+		// subscriber notifications, @mention processing, auto-subscribe,
+		// BuddyPress / FluentCommunity broadcasts, and Pro polls / custom-fields /
+		// custom-badges / webhooks. A draft never fired this hook, so there is no
+		// double-fire. The null request argument matches the established
+		// programmatic fire in class-abilities.php (jetonomy_after_create_post is
+		// documented as ($post_id, $space_id, $request|null)); request-reading
+		// listeners no-op safely on null.
+		do_action( 'jetonomy_after_create_post', $id, (int) $post->space_id, null );
+
+		return true;
+	}
+
 	public static function publish_scheduled( int $id ): bool {
 		$post = static::find( $id );
 		if ( ! $post || 'draft' !== ( $post->status ?? '' ) || empty( $post->published_at ) ) {
 			return false;
 		}
 
-		static::update(
-			$id,
-			array(
-				'status'     => 'publish',
-				'updated_at' => now(),
-			)
-		);
+		if ( ! self::publish_draft( $id ) ) {
+			return false;
+		}
 
-		// Increment counters now that it's published.
-		Space::increment_post_count( (int) $post->space_id );
-		UserProfile::increment_post_count( (int) $post->author_id );
-
+		// Keep the scheduled-specific extension point so an integration can still
+		// distinguish "published on schedule" from "published immediately".
 		do_action( 'jetonomy_scheduled_post_published', $id, (int) $post->space_id );
 
 		return true;
@@ -811,6 +901,31 @@ class Post extends Model {
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $results ? $results : array();
+	}
+
+	/**
+	 * Count the current user's draft posts.
+	 *
+	 * Companion to list_drafts_by_user() so the drafts view can compute
+	 * accurate "Load More" pagination from the real total instead of the
+	 * `count( $page ) >= $per_page` heuristic, which showed a phantom button
+	 * when the draft count was an exact multiple of the page size.
+	 *
+	 * @param int $user_id Draft author.
+	 * @return int Total draft count for the user.
+	 */
+	public static function count_drafts_by_user( int $user_id ): int {
+		$table = static::table();
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$table} WHERE author_id = %d AND status = 'draft'",
+				$user_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**

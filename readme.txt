@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.4.5
+Stable tag: 1.5.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,53 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.5.0 - June 2026 =
+
+Instant in-place navigation across the community, built on the WordPress Interactivity API, plus an end-to-end audit that removed dead weight and verified every cross-surface contract.
+
+* New      - Instant navigation: moving between the home feed, categories, spaces, profiles, search, leaderboard, notifications and messages swaps the view in place instead of reloading the whole page, with the address bar and browser back/forward kept in sync. Built on the WordPress Interactivity API client-side navigation and applied uniformly across every community view.
+* New      - First-time visitors get a welcome banner on the community home with a one-line intro, a live member/post/this-week pulse, and a "Create free account" call-to-action. Filterable copy; hidden for logged-in members.
+* New      - Empty pages now guide you forward: drafts, search, leaderboard, profile tabs and space listings show a real styled call-to-action and next step instead of a dead end.
+* New      - Community Media: a member-facing dashboard to browse and manage your own uploads, kept out of the wp-admin Media Library.
+* New      - One-click install of the Wbcom stack companions straight from Settings > Integrations.
+* New      - Space cards now show an "Active N ago" recency signal so you can tell at a glance which spaces are alive.
+* New      - Avatar square-crop: uploading a profile photo opens a drag-and-zoom crop dialog so avatars are saved square; animated GIFs upload unchanged.
+* New      - Space RSS feeds: every public space serves RSS 2.0 at /community/s/{slug}/feed/ with auto-discovery on the space page; private spaces stay private.
+* New      - Remove a bookmark directly from the My Bookmarks page - the card drops off the list when you do.
+* New      - Tag pages have a "Start a discussion tagged X" button that opens the composer with the tag pre-filled.
+* New      - Conversations admin page (with Pro): paginated messaging oversight in wp-admin with thread detail and a compliance purge action.
+* New      - Learnomy LMS access rules: spaces can be gated by Learnomy course level through the access-rule engine.
+* New      - Space moderators can approve or deny join requests from the community front-end (on the space Members page), not only in wp-admin; approving admits the member and the requester is notified by email.
+* Improve  - Posting a reply now adds it to the thread in place instead of reloading the page.
+* Improve  - Space empty states speak the space's language ("Ask the first question" in Q&A, "Share an update" in feeds, "Suggest an idea" in idea spaces).
+* Improve  - Logged-out visitors clicking the vote control on a post are now taken to log in (with a return link) instead of nothing happening.
+* Improve  - Admin Dashboard "Pending Flags" is now a link straight to the moderation queue.
+* Improve  - Resolving a flag as valid through the REST API now applies the full contract on every surface: content trashed, related flags cleared, reporter rewarded, webhook event fired.
+* Improve  - Settings warns when your CAPTCHA provider and keys are mismatched.
+* Improve  - Private spaces are now discoverable in the directory and search, shown with a Join or Request-to-join action, while their posts stay members-only; only hidden spaces are kept out of listings.
+* Improve  - The front-end edit-space form now exposes the "Require moderator approval for new posts" setting, so space owners can toggle it without opening wp-admin.
+* Improve  - The forum adopts your active theme's brand colour automatically across BuddyX, BuddyX Pro, Reign and the popular page-builder themes (Astra, Kadence, GeneratePress, Blocksy), in light and dark mode, with no custom CSS; themes that expose no brand colour fall back to a clean default you can override under Settings > Appearance.
+* Fix      - Members can now pause all email notifications from Edit Profile (and admins per user); the verification reminder honoured this preference but nothing could set it.
+* Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
+* Fix      - Long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
+* Fix      - BuddyPress broadcast and activity-comment bridge now have on/off controls under Settings > Integrations (shown when BuddyPress is active); previously only changeable via WP-CLI.
+* Fix      - Block titles (login "Join the conversation", navigation, user panel, feed) stay legible on themes whose content-heading styles previously repainted them dark-on-dark.
+* Fix      - Analytics counting stays accurate through the content lifecycle: pending posts count on approval, trashed posts decrement their original day.
+* Fix      - The approval-hold check now evaluates the post author instead of the current user.
+* Fix      - The forum no longer injects its own brand colour into the site's global colour palette, where it could override the active theme's Primary colour; it reads the theme's colour instead of competing with it.
+* Fix      - The notification action menu (mark read, delete) opens anchored to its button instead of mis-positioned, and notification cards no longer stretch full width.
+* Fix      - A restrictive access rule added to a public space now gates the space (it is converted to private) instead of being saved but ignored.
+* Fix      - The community-uploads filter is available in the Media Library grid view, not only the list view.
+* Fix      - Load More on paginated community routes (notifications and listings) no longer returns a 404 on later pages.
+* Fix      - Database version constant bumped so the 1.5.0 migration runs automatically on upgrade.
+* Security - Search results, link-preview (oEmbed) cards, profile activity tabs, tag pages, trending lists and the recent-posts widgets no longer surface posts or replies from private or hidden spaces to people who are not members.
+* Security - Importing a members-only wpForo board no longer flattens it to a public space; access-restricted forums import as private with approval to join, with a filter to map access per site.
+* Dev      - Frontend REST calls route through a single client with automatic nonce-refresh on expiry; community views are fully declarative via the Interactivity API, so client-side navigation needs no per-route scripts.
+* Dev      - jetonomy_post_publish_transition and jetonomy_reply_publish_transition hooks fire on every publish/unpublish transition with a +/-1 delta and the original creation date.
+* Dev      - Removed three never-wired tables (space tags, user interests) with a guarded migration, the GET /space-tags route, three dead admin AJAX actions, and 30+ zero-reference methods.
+* Dev      - PHPUnit suite green across PHP 8.1-8.4 x WP 6.7-6.9; contract-audit baseline and release gate added; CI now runs on dev branches with the full non-pro test matrix.
+* Compat   - Aligned with Jetonomy Pro 1.5.0. Install both updates together.
 
 = 1.4.5 - June 2026 =
 

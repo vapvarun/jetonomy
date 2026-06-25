@@ -5,15 +5,15 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-04T04:27:07+00:00",
+        "at": "2026-06-24T18:12:20+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 87,
-            "covered": 31,
-            "uncovered": 56,
+            "total": 91,
+            "covered": 36,
+            "uncovered": 55,
             "skipped": 0,
             "covered_items": [
                 {
@@ -31,6 +31,18 @@
                 {
                     "method": "POST",
                     "route": "/spaces/(?P<id>\\d+)/members"
+                },
+                {
+                    "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)/join-requests"
+                },
+                {
+                    "method": "POST",
+                    "route": "/spaces/(?P<id>\\d+)/join-requests/(?P<request_id>\\d+)/approve"
+                },
+                {
+                    "method": "POST",
+                    "route": "/spaces/(?P<id>\\d+)/join-requests/(?P<request_id>\\d+)/deny"
                 },
                 {
                     "method": "POST",
@@ -105,6 +117,10 @@
                     "route": "/users/me"
                 },
                 {
+                    "method": "PATCH",
+                    "route": "/users/me"
+                },
+                {
                     "method": "GET",
                     "route": "/users/(?P<id>\\d+)"
                 },
@@ -139,6 +155,10 @@
                 {
                     "method": "POST",
                     "route": "/moderation/flags/(?P<id>\\d+)/resolve"
+                },
+                {
+                    "method": "GET",
+                    "route": "/auth/nonce"
                 }
             ],
             "uncovered_items": [
@@ -271,11 +291,6 @@
                     "method": "GET",
                     "route": "/tags",
                     "stub_command": "bin/qa-stub-gen.php rest GET \"/tags\""
-                },
-                {
-                    "method": "GET",
-                    "route": "/space-tags",
-                    "stub_command": "bin/qa-stub-gen.php rest GET \"/space-tags\""
                 },
                 {
                     "method": "GET",
@@ -426,10 +441,20 @@
         },
         "ajax": {
             "total": 43,
-            "covered": 0,
-            "uncovered": 43,
+            "covered": 3,
+            "uncovered": 40,
             "skipped": 0,
-            "covered_items": [],
+            "covered_items": [
+                {
+                    "action": "jetonomy_generate_invite"
+                },
+                {
+                    "action": "jetonomy_list_invites"
+                },
+                {
+                    "action": "jetonomy_revoke_invite"
+                }
+            ],
             "uncovered_items": [
                 {
                     "action": "jetonomy_create_category",
@@ -536,16 +561,8 @@
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_search_users"
                 },
                 {
-                    "action": "jetonomy_run_import",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_run_import"
-                },
-                {
                     "action": "jetonomy_import_batch",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_batch"
-                },
-                {
-                    "action": "jetonomy_import_progress",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_import_progress"
                 },
                 {
                     "action": "jetonomy_test_email",
@@ -580,10 +597,6 @@
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_delete_reply"
                 },
                 {
-                    "action": "jetonomy_get_replies",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_get_replies"
-                },
-                {
                     "action": "jetonomy_approve_join_request",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_approve_join_request"
                 },
@@ -606,10 +619,10 @@
             ]
         },
         "hooks_fired": {
-            "total": 4,
-            "covered": 3,
+            "total": 6,
+            "covered": 5,
             "uncovered": 1,
-            "skipped": 137,
+            "skipped": 146,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -621,6 +634,14 @@
                 },
                 {
                     "name": "jetonomy_reputation_pre_change",
+                    "consumer_count": 1
+                },
+                {
+                    "name": "jetonomy_post_publish_transition",
+                    "consumer_count": 1
+                },
+                {
+                    "name": "jetonomy_reply_publish_transition",
                     "consumer_count": 1
                 }
             ],
@@ -730,15 +751,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 154,
-        "items_covered": 39,
-        "items_uncovered": 115,
-        "items_skipped": 137,
-        "coverage_percent": 25.300000000000001
+        "items_total": 160,
+        "items_covered": 49,
+        "items_uncovered": 111,
+        "items_skipped": 146,
+        "coverage_percent": 30.600000000000001
     },
     "drift": {
-        "previous_uncovered": 118,
-        "current_uncovered": 115,
-        "delta": -3
+        "previous_uncovered": 111,
+        "current_uncovered": 111,
+        "delta": 0
     }
 }

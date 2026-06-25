@@ -28,9 +28,19 @@ class Admin {
 		// A6: intercepts the CSV export request before any output is sent so
 		// the download streams cleanly without admin-header HTML interleaving.
 		add_action( 'admin_init', array( $this, 'maybe_export_activity_csv' ) );
+		// One-click install/activate of Wbcom stack companions from the
+		// Integrations settings tab (self-contained — see includes/integrations/).
+		add_action( 'admin_post_jetonomy_install_companion', array( $this, 'handle_install_companion' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'in_admin_header', array( $this, 'hide_third_party_notices' ) );
 		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
+		// Email opt-out field on the WP user-profile screen — the admin
+		// entry point for the jetonomy_email_opt_out meta (members set it on
+		// the frontend Edit Profile page; owners see/toggle it here).
+		add_action( 'show_user_profile', array( $this, 'render_email_optout_field' ) );
+		add_action( 'edit_user_profile', array( $this, 'render_email_optout_field' ) );
+		add_action( 'personal_options_update', array( $this, 'save_email_optout_field' ) );
+		add_action( 'edit_user_profile_update', array( $this, 'save_email_optout_field' ) );
 		// A6: persist the per-page screen option for the Activity Log table.
 		add_filter( 'set-screen-option', array( $this, 'save_activity_screen_option' ), 10, 3 );
 
@@ -45,11 +55,49 @@ class Admin {
 		new Ajax\Setup_Handler();
 	}
 
+	/**
+	 * admin-post handler: install (or activate) a Wbcom stack companion from the
+	 * Integrations settings tab, then redirect back with a result flag.
+	 */
+	public function handle_install_companion(): void {
+		$slug = isset( $_POST['companion'] ) ? sanitize_key( wp_unslash( $_POST['companion'] ) ) : '';
+		$tier = isset( $_POST['tier'] ) && 'pro' === $_POST['tier'] ? 'pro' : 'free';
+
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			wp_die( esc_html__( 'You do not have permission to install plugins.', 'jetonomy' ), 403 );
+		}
+		check_admin_referer( 'jetonomy_install_companion_' . $slug );
+
+		$license = isset( $_POST['license'] ) ? sanitize_text_field( wp_unslash( $_POST['license'] ) ) : '';
+		$result  = \Jetonomy\Integrations\Companion_Installer::install( $slug, $tier, $license );
+
+		$args = array(
+			'page' => 'jetonomy-settings',
+			'tab'  => 'integrations',
+		);
+		if ( is_wp_error( $result ) ) {
+			$args['jt_install'] = 'error';
+			$args['jt_msg']     = rawurlencode( $result->get_error_message() );
+		} else {
+			$args['jt_install'] = 'ok';
+			$args['jt_done']    = $slug;
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
 	// ── Menu ──
 
 	public function add_menu(): void {
 		$menu_label = apply_filters( 'jetonomy_admin_menu_label', __( 'Jetonomy', 'jetonomy' ) );
-		$menu_icon  = apply_filters( 'jetonomy_admin_menu_icon', 'dashicons-groups' );
+
+		// Brand mark (mono members glyph) as a data-URI so WordPress recolors it
+		// for default/hover/current menu states. Single solid color is required
+		// for the admin-menu filter to tint cleanly.
+		$menu_glyph = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g fill="#a7aaad"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></svg>';
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Encoding an inline SVG as a data-URI menu icon, not obfuscation.
+		$menu_icon = apply_filters( 'jetonomy_admin_menu_icon', 'data:image/svg+xml;base64,' . base64_encode( $menu_glyph ) );
 
 		add_menu_page(
 			$menu_label,
@@ -232,6 +280,44 @@ class Admin {
 				'default'           => array(),
 			)
 		);
+
+		// BuddyPress integration toggles. Standalone options (read by
+		// Integrations\BuddyPress) in their OWN settings group + form, so a
+		// save on any other settings tab can never reset them. Only present
+		// when BuddyPress Groups is active — the only context where the
+		// broadcast / comment-bridge behaviour exists.
+		if ( function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
+			register_setting(
+				'jetonomy_integrations',
+				'jetonomy_bp_broadcast',
+				array(
+					'type'              => 'string',
+					'sanitize_callback' => array( $this, 'sanitize_bool_option' ),
+					'default'           => '1',
+				)
+			);
+			register_setting(
+				'jetonomy_integrations',
+				'jetonomy_bp_comment_bridge',
+				array(
+					'type'              => 'string',
+					'sanitize_callback' => array( $this, 'sanitize_bool_option' ),
+					'default'           => '1',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Normalise a checkbox option to the '1' / '0' string the BuddyPress
+	 * integration reads. The Integrations form ships a hidden '0' input
+	 * before each checkbox, so the option is always present in POST.
+	 *
+	 * @param mixed $value Raw submitted value.
+	 * @return string '1' or '0'.
+	 */
+	public function sanitize_bool_option( $value ): string {
+		return '1' === (string) $value ? '1' : '0';
 	}
 
 	/**
@@ -311,6 +397,9 @@ class Admin {
 			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
 			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
+			// Community as homepage — unchecked checkboxes don't submit, so
+			// absence inside a General-tab save means OFF (default).
+			$clean['front_page'] = ! empty( $input['front_page'] );
 
 			// Front-end space creation role allowlist (G6). Validate each
 			// posted role against the live wp_roles() registry so a stale or
@@ -410,6 +499,10 @@ class Admin {
 			$clean['inherit_fonts']  = ! empty( $input['inherit_fonts'] );
 			$clean['inherit_colors'] = ! empty( $input['inherit_colors'] );
 			$clean['accent_color']   = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
+			// Color palette — empty string means "no override, keep the default".
+			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
+				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
+			}
 			$clean['layout_density'] = sanitize_text_field( $input['layout_density'] ?? 'comfortable' );
 			$clean['custom_css']     = wp_strip_all_tags( $input['custom_css'] ?? '' );
 
@@ -569,6 +662,61 @@ class Admin {
 		return false;
 	}
 
+	/**
+	 * Render the Jetonomy email opt-out field on the WP user-profile screen.
+	 *
+	 * The frontend Edit Profile page is the member's entry point; this is the
+	 * owner/admin entry point for the same `jetonomy_email_opt_out` meta the
+	 * verification reminder honours. Visible to the user on their own profile
+	 * and to any user who can edit the target profile.
+	 *
+	 * @param \WP_User $user The user being edited.
+	 */
+	public function render_email_optout_field( $user ): void {
+		if ( ! ( $user instanceof \WP_User ) ) {
+			return;
+		}
+		$opted_out = (bool) get_user_meta( $user->ID, 'jetonomy_email_opt_out', true );
+		?>
+		<h2><?php esc_html_e( 'Jetonomy', 'jetonomy' ); ?></h2>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Community emails', 'jetonomy' ); ?></th>
+				<td>
+					<label for="jetonomy_email_opt_out">
+						<input type="checkbox" name="jetonomy_email_opt_out" id="jetonomy_email_opt_out" value="1" <?php checked( $opted_out ); ?> />
+						<?php esc_html_e( 'Pause all Jetonomy email notifications for this user.', 'jetonomy' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'When enabled, the email verification reminder and other Jetonomy emails are suppressed. Web notifications are unaffected.', 'jetonomy' ); ?></p>
+				</td>
+			</tr>
+		</table>
+		<?php
+		wp_nonce_field( 'jetonomy_email_optout_' . $user->ID, 'jetonomy_email_optout_nonce' );
+	}
+
+	/**
+	 * Persist the email opt-out field from the WP user-profile screen.
+	 *
+	 * @param int $user_id The user being saved.
+	 */
+	public function save_email_optout_field( int $user_id ): void {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return;
+		}
+		$nonce = isset( $_POST['jetonomy_email_optout_nonce'] )
+			? sanitize_text_field( wp_unslash( $_POST['jetonomy_email_optout_nonce'] ) )
+			: '';
+		if ( ! wp_verify_nonce( $nonce, 'jetonomy_email_optout_' . $user_id ) ) {
+			return;
+		}
+		if ( ! empty( $_POST['jetonomy_email_opt_out'] ) ) {
+			update_user_meta( $user_id, 'jetonomy_email_opt_out', 1 );
+		} else {
+			delete_user_meta( $user_id, 'jetonomy_email_opt_out' );
+		}
+	}
+
 	public function enqueue_assets( string $hook ): void {
 		if ( false === strpos( $hook, 'jetonomy' ) ) {
 			return;
@@ -672,6 +820,9 @@ class Admin {
 			'lifterlms'   => __( 'LifterLMS Course', 'jetonomy' ),
 			'sensei'      => __( 'Sensei Course', 'jetonomy' ),
 			'masterstudy' => __( 'MasterStudy Course', 'jetonomy' ),
+			'learnomy'    => __( 'Learnomy Course', 'jetonomy' ),
+			'suremembers' => __( 'SureMembers Access Group', 'jetonomy' ),
+			'wpfusion'    => __( 'WP Fusion Tag', 'jetonomy' ),
 		);
 
 		$membership_adapters = array();
@@ -703,6 +854,8 @@ class Admin {
 				'i18n'               => array(
 					'confirmDelete'           => esc_html__( 'Are you sure? This cannot be undone.', 'jetonomy' ),
 					'confirmBan'              => esc_html__( 'Are you sure you want to ban this user?', 'jetonomy' ),
+					'confirmSpam'             => esc_html__( 'Mark this as spam? It will be hidden from the community.', 'jetonomy' ),
+					'confirmTrash'            => esc_html__( 'Move this to trash? This removes it from the community.', 'jetonomy' ),
 					'saving'                  => esc_html__( 'Saving...', 'jetonomy' ),
 					'saved'                   => esc_html__( 'Saved!', 'jetonomy' ),
 					'deleted'                 => esc_html__( 'Deleted.', 'jetonomy' ),
@@ -740,6 +893,14 @@ class Admin {
 					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
 					'reloadPage'              => esc_html__( 'Reload page', 'jetonomy' ),
 					'importConnectionLost'    => esc_html__( 'Connection lost. You can resume this import later.', 'jetonomy' ),
+					'inviteCopied'            => esc_html__( 'Invite link copied to clipboard.', 'jetonomy' ),
+					'inviteRevokeConfirm'     => esc_html__( 'Revoke this invite link? Anyone holding it will no longer be able to join.', 'jetonomy' ),
+					'inviteNoLinks'           => esc_html__( 'No invite links yet.', 'jetonomy' ),
+					'inviteUnlimited'         => esc_html__( 'Unlimited', 'jetonomy' ),
+					'inviteNever'             => esc_html__( 'Never', 'jetonomy' ),
+					'inviteExpired'           => esc_html__( 'Expired', 'jetonomy' ),
+					'copy'                    => esc_html__( 'Copy', 'jetonomy' ),
+					'revoke'                  => esc_html__( 'Revoke', 'jetonomy' ),
 				),
 			)
 		);
@@ -1310,17 +1471,6 @@ class Admin {
 		do_action( 'jetonomy_admin_render_extensions' );
 	}
 
-	/**
-	 * Render the License page — content provided by Pro via hook.
-	 */
-	public function render_license(): void {
-		/**
-		 * Fires to render the License page content.
-		 * Hooked by Jetonomy Pro to display the license form.
-		 */
-		do_action( 'jetonomy_admin_render_license' );
-	}
-
 	// ── Helpers ──
 
 	private function get_all_categories_nested(): array {
@@ -1344,31 +1494,21 @@ class Admin {
 	// AJAX: Spaces
 	// ═══════════════════════════════════════════════════════════════
 
-
-
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Space Members (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
-
-
 
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Access Rules (moved to Spaces_Handler)
 	// ═══════════════════════════════════════════════════════════════
 
-
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Users
 	// ═══════════════════════════════════════════════════════════════
 
-
-
-
-
 	// ═══════════════════════════════════════════════════════════════
 	// AJAX: Misc
 	// ═══════════════════════════════════════════════════════════════
-
 
 	// ═══════════════════════════════════════════════════════════════
 	// Content Management

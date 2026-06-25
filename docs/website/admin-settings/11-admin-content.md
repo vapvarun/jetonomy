@@ -9,9 +9,11 @@ The Posts and Replies admin screen lets you view, search, edit, and moderate eve
 
 Go to **Jetonomy → Posts and Replies** to access this screen.
 
+![Posts and Replies admin screen showing the content list with the status filter and an inline edit panel open](../images/admin-content.png)
+
 ## Required Capability
 
-Viewing and moderating content requires `jetonomy_moderate`. WordPress Administrators and Editors receive this capability automatically.
+The Posts and Replies admin page itself requires `jetonomy_manage_settings`, which is administrator-only by default. The separate `jetonomy_moderate` capability (which Editors receive automatically) governs the **Moderation** screen, not this page.
 
 ## The Toolbar
 

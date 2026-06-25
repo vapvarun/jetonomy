@@ -43,6 +43,13 @@ class REST_Tests {
 	private array $cleanup = [];
 
 	/**
+	 * Post fixture created by H48, reused as H49's reply parent.
+	 *
+	 * @var int
+	 */
+	private int $h48_post_id = 0;
+
+	/**
 	 * WordPress administrator ID (user ID 1 or first admin found).
 	 *
 	 * @var int
@@ -133,6 +140,11 @@ class REST_Tests {
 		$this->run_group_f();
 		$this->run_group_g();
 		$this->test_subscriber_actions();
+		$this->test_hook_jetonomy_post_publish_transition_H48();
+		$this->test_hook_jetonomy_reply_publish_transition_H49();
+		$this->test_ajax_generate_invite_X1();
+		$this->test_ajax_list_invites_X2();
+		$this->test_ajax_revoke_invite_X3();
 
 		$this->cleanup();
 
@@ -157,10 +169,20 @@ class REST_Tests {
 		$this->admin_id = (int) ( $admin_ids[0] ?? 1 );
 		wp_set_current_user( $this->admin_id );
 
-		// Find an active space.
+		// Find an active space. Prefer a PUBLIC + open-join space so the
+		// low-trust / non-member participation tests (C14 downvote, H35 post,
+		// H37 vote) exercise their intended behaviour. A private space is
+		// members-only (Permission_Engine layer 2), so picking the first active
+		// space blindly made those tests fail with a correct 403 whenever the
+		// site's first space happened to be private. Fall back to any active
+		// space if the install has no public+open one.
 		$spaces_t = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' AND visibility = 'public' AND join_policy = 'open' ORDER BY id LIMIT 1" );
+		if ( ! $space ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		}
 		if ( ! $space ) {
 			return; // run() will detect this and bail.
 		}
@@ -603,6 +625,18 @@ class REST_Tests {
 		// Queue cleanup: restore original bio.
 		$this->cleanup[] = [ 'type' => 'restore_bio', 'id' => $this->admin_id ];
 
+		// 27b. Email opt-out round-trips through PATCH /users/me (1.5.0).
+		// The verification reminder honours jetonomy_email_opt_out user meta;
+		// this is the REST write path behind the profile master toggle.
+		$r = $this->rest( 'PATCH', '/users/me', [ 'email_opt_out' => true ] );
+		$set = (bool) get_user_meta( $this->admin_id, 'jetonomy_email_opt_out', true );
+		$this->check( 'E27b: PATCH email_opt_out=true sets meta', 200 === $r->get_status() && $set, 'meta not set' );
+		$me = $this->rest( 'GET', '/users/me' )->get_data();
+		$this->check( 'E27b: GET /users/me reflects email_opt_out', ! empty( $me['email_opt_out'] ), 'GET did not echo opt-out' );
+		$r = $this->rest( 'PATCH', '/users/me', [ 'email_opt_out' => false ] );
+		$cleared = '' === (string) get_user_meta( $this->admin_id, 'jetonomy_email_opt_out', true );
+		$this->check( 'E27b: PATCH email_opt_out=false clears meta', 200 === $r->get_status() && $cleared, 'meta not cleared' );
+
 		// 28. Mark all notifications read.
 		$r = $this->rest( 'POST', '/notifications/mark-all-read' );
 		$data = $r->get_data();
@@ -630,6 +664,83 @@ class REST_Tests {
 			}
 		} else {
 			$this->check( 'E30: space join (skipped — test user not created)', true );
+		}
+
+		// 31. GET /auth/nonce — session nonce refresh (1.5.0). Backs the
+		// restFetch 403-retry path; must return a verifiable wp_rest nonce
+		// for the calling session. @covers GET /auth/nonce
+		$r     = $this->rest( 'GET', '/auth/nonce' );
+		$data  = $r->get_data();
+		$nonce = is_array( $data ) ? (string) ( $data['nonce'] ?? '' ) : '';
+		$this->check( 'E31: GET /auth/nonce → 200 with nonce', 200 === $r->get_status() && '' !== $nonce, "HTTP {$r->get_status()}" );
+		$this->check( 'E31: refreshed nonce verifies for wp_rest', false !== wp_verify_nonce( $nonce, 'wp_rest' ), 'wp_verify_nonce failed' );
+
+		// 32. Space RSS feed (1.5.0) — loopback HTTP because the feed is a
+		// rewrite route, not REST. A public space serves RSS 2.0; a private/
+		// hidden space must 404 (anonymous-reader gate; feeds cannot auth).
+		global $wpdb;
+		$public_slug  = $wpdb->get_var( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE visibility = 'public' ORDER BY id LIMIT 1" );
+		$private_slug = $wpdb->get_var( "SELECT slug FROM {$wpdb->prefix}jt_spaces WHERE visibility IN ('private','hidden') ORDER BY id LIMIT 1" );
+		if ( $public_slug ) {
+			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $public_slug ) . '/feed/', [ 'timeout' => 10 ] );
+			$code = (int) wp_remote_retrieve_response_code( $feed );
+			$body = (string) wp_remote_retrieve_body( $feed );
+			$type = (string) wp_remote_retrieve_header( $feed, 'content-type' );
+			$this->check( 'E32: public space feed → 200 RSS', 200 === $code && false !== strpos( $body, '<rss' ), "HTTP {$code}" );
+			$this->check( 'E32: feed content-type is application/rss+xml', false !== strpos( $type, 'application/rss+xml' ), $type );
+		} else {
+			$this->check( 'E32: space feed (skipped — no public space)', true );
+		}
+		if ( $private_slug ) {
+			$feed = wp_remote_get( \Jetonomy\base_url() . '/s/' . rawurlencode( $private_slug ) . '/feed/', [ 'timeout' => 10 ] );
+			$code = (int) wp_remote_retrieve_response_code( $feed );
+			$this->check( 'E32: private space feed → 404 (no leak)', 404 === $code, "HTTP {$code}" );
+		} else {
+			$this->check( 'E32: private feed gate (skipped — no private space)', true );
+		}
+
+		// 33. Join-request moderation (1.5.0) — list + approve + deny as a space
+		// admin. Front-end twin of the wp-admin Join Requests tab.
+		// @covers GET /spaces/(?P<id>\d+)/join-requests
+		// @covers POST /spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/approve
+		// @covers POST /spaces/(?P<id>\d+)/join-requests/(?P<request_id>\d+)/deny
+		if ( $this->test_user_id ) {
+			$space_id = (int) $this->space->id;
+			global $wpdb;
+
+			// Approve path: seed a pending request, list it, approve it, assert
+			// the requester becomes a member.
+			\Jetonomy\Models\SpaceMember::remove( $space_id, $this->test_user_id );
+			$req_id = \Jetonomy\Models\JoinRequest::create_request( $space_id, $this->test_user_id, 'QA approve' );
+
+			$r    = $this->rest( 'GET', "/spaces/{$space_id}/join-requests", [], $this->admin_id );
+			$data = $r->get_data();
+			$this->check(
+				'E33: GET /spaces/{id}/join-requests → 200 list',
+				200 === $r->get_status() && isset( $data['data'] ) && is_array( $data['data'] ),
+				"HTTP {$r->get_status()}"
+			);
+
+			$r        = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req_id}/approve", [], $this->admin_id );
+			$approved = 200 === $r->get_status() && \Jetonomy\Models\SpaceMember::is_member( $space_id, $this->test_user_id );
+			$this->check( 'E33: POST join-requests/{id}/approve → 200 + member added', $approved, "HTTP {$r->get_status()}" );
+			if ( $approved ) {
+				$this->cleanup[] = [ 'type' => 'space_member_db', 'space_id' => $space_id, 'user_id' => $this->test_user_id ];
+			}
+
+			// Deny path: seed a second request, deny it, assert no membership granted.
+			\Jetonomy\Models\SpaceMember::remove( $space_id, $this->test_user_id );
+			$req2_id = \Jetonomy\Models\JoinRequest::create_request( $space_id, $this->test_user_id, 'QA deny' );
+			$r       = $this->rest( 'POST', "/spaces/{$space_id}/join-requests/{$req2_id}/deny", [], $this->admin_id );
+			$this->check(
+				'E33: POST join-requests/{id}/deny → 200, no membership',
+				200 === $r->get_status() && ! \Jetonomy\Models\SpaceMember::is_member( $space_id, $this->test_user_id ),
+				"HTTP {$r->get_status()}"
+			);
+
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}jt_join_requests WHERE id IN (%d, %d)", $req_id, $req2_id ) );
+		} else {
+			$this->check( 'E33: join-request moderation (skipped — no test user)', true );
 		}
 	}
 
@@ -737,7 +848,7 @@ class REST_Tests {
 		$sub_post_id = $r->get_data()['id'] ?? 0;
 		$this->check( 'H35: Subscriber creates post → 201', $r->get_status() === 201 );
 		if ( $sub_post_id ) {
-			$this->cleanup[] = [ 'post', $sub_post_id ];
+			$this->cleanup[] = [ 'type' => 'post_rest', 'id' => $sub_post_id ];
 		}
 
 		// H36: Subscriber can create a reply on their own post.
@@ -748,7 +859,7 @@ class REST_Tests {
 			$sub_reply_id = $r->get_data()['id'] ?? 0;
 			$this->check( 'H36: Subscriber creates reply → 201', $r->get_status() === 201 );
 			if ( $sub_reply_id ) {
-				$this->cleanup[] = [ 'reply', $sub_reply_id ];
+				$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => $sub_reply_id ];
 			}
 		}
 
@@ -840,8 +951,9 @@ class REST_Tests {
 		if ( $sub_post_id ) {
 			$r = $this->rest( 'DELETE', '/posts/' . $sub_post_id, [], $this->test_user_id );
 			$this->check( 'H47: Subscriber deletes own post → 200', $r->get_status() === 200 );
-			// Remove from cleanup since we just deleted it.
-			$this->cleanup = array_filter( $this->cleanup, fn( $item ) => ! ( $item[0] === 'post' && $item[1] === $sub_post_id ) );
+			// Remove from cleanup since we just deleted it. Entries are
+			// associative ([type, id]) and posts are pushed as 'post_rest'.
+			$this->cleanup = array_filter( $this->cleanup, fn( $item ) => ! ( 'post_rest' === ( $item['type'] ?? '' ) && $sub_post_id === ( $item['id'] ?? 0 ) ) );
 		}
 
 		// Restore admin.
@@ -966,5 +1078,195 @@ class REST_Tests {
 		}
 
 		return $response;
+	}
+
+
+	/**
+	 * @covers do_action( 'jetonomy_post_publish_transition' )
+	 *
+	 * Hook fired at: includes/models/class-post.php (Post::create when
+	 * created publish; Post::update on publish transitions). (H48)
+	 * Consumers: 1 (Pro analytics aggregate — the delta/created_at
+	 * contract below is exactly what keeps the aggregate in lockstep
+	 * with status='publish' query paths; audit A3).
+	 */
+	private function test_hook_jetonomy_post_publish_transition_H48(): void {
+		$events   = [];
+		$listener = function ( $id, $delta, $created_at ) use ( &$events ) {
+			$events[] = [ (int) $id, (int) $delta, (string) $created_at ];
+		};
+		add_action( 'jetonomy_post_publish_transition', $listener, 10, 3 );
+
+		// Publish create → +1 carrying created_at.
+		$post_id = \Jetonomy\Models\Post::create(
+			[
+				'space_id'      => (int) $this->space->id,
+				'author_id'     => $this->admin_id,
+				'title'         => 'QA H48 publish transition',
+				'slug'          => 'qa-h48-transition-' . wp_rand(),
+				'content'       => 'transition fixture',
+				'content_plain' => 'transition fixture',
+				'type'          => 'topic',
+			]
+		);
+		$created_ok = ! is_wp_error( $post_id ) && (int) $post_id > 0;
+		if ( $created_ok ) {
+			$this->cleanup[]   = [ 'type' => 'post_rest', 'id' => (int) $post_id ];
+			$this->h48_post_id = (int) $post_id;
+		}
+		$this->check(
+			'H48: publish create fires +1 with created_at',
+			$created_ok && 1 === count( $events ) && 1 === $events[0][1] && '' !== $events[0][2],
+			'expected one +1 event with a created_at payload'
+		);
+
+		// Publish → trash → -1; trash → pending stays silent; approval → +1.
+		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'trash' ] );
+		$this->check( 'H48: trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
+
+		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'pending' ] );
+		$this->check( 'H48: trash→pending stays silent (no publish edge)', 2 === count( $events ) );
+
+		\Jetonomy\Models\Post::update( (int) $post_id, [ 'status' => 'publish' ] );
+		$this->check( 'H48: pending→publish approval fires +1', 3 === count( $events ) && 1 === $events[2][1] );
+
+		remove_action( 'jetonomy_post_publish_transition', $listener, 10 );
+	}
+
+
+	/**
+	 * @covers do_action( 'jetonomy_reply_publish_transition' )
+	 *
+	 * Hook fired at: includes/models/class-reply.php (Reply::create when
+	 * created publish; Reply::update on publish transitions). (H49)
+	 * Consumers: 1 (Pro analytics aggregate).
+	 */
+	private function test_hook_jetonomy_reply_publish_transition_H49(): void {
+		if ( $this->h48_post_id <= 0 ) {
+			$this->check( 'H49: reply publish transition', false, 'H48 parent-post fixture missing' );
+			return;
+		}
+
+		$events   = [];
+		$listener = function ( $id, $delta, $created_at ) use ( &$events ) {
+			$events[] = [ (int) $id, (int) $delta, (string) $created_at ];
+		};
+		add_action( 'jetonomy_reply_publish_transition', $listener, 10, 3 );
+
+		$reply_id = \Jetonomy\Models\Reply::create(
+			[
+				'post_id'       => $this->h48_post_id,
+				'author_id'     => $this->admin_id,
+				'content'       => 'transition reply fixture',
+				'content_plain' => 'transition reply fixture',
+			]
+		);
+		$created_ok = ! is_wp_error( $reply_id ) && (int) $reply_id > 0;
+		if ( $created_ok ) {
+			$this->cleanup[] = [ 'type' => 'reply_rest', 'id' => (int) $reply_id ];
+		}
+		$this->check(
+			'H49: reply publish create fires +1 with created_at',
+			$created_ok && 1 === count( $events ) && 1 === $events[0][1] && '' !== $events[0][2],
+			'expected one +1 event with a created_at payload'
+		);
+
+		\Jetonomy\Models\Reply::update( (int) $reply_id, [ 'status' => 'trash' ] );
+		$this->check( 'H49: reply trash fires -1', 2 === count( $events ) && -1 === $events[1][1] );
+
+		remove_action( 'jetonomy_reply_publish_transition', $listener, 10 );
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_generate_invite
+	 *
+	 * Handler:    Admin\Ajax\Spaces_Handler::generate_invite
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	private function test_ajax_generate_invite_X1(): void {
+		// The wp_ajax_ handler wp_die()s on wp_send_json_*; exercise the model
+		// layer it wraps (InviteLink::generate) so coverage runs in-process.
+		$action = 'jetonomy_generate_invite'; // AJAX action under test (Spaces_Handler::ajax_generate_invite).
+		wp_set_current_user( $this->admin_id );
+		$spaces   = \Jetonomy\Models\Space::list_all( 'active', 1 );
+		$space_id = ! empty( $spaces ) ? (int) $spaces[0]->id : 0;
+		if ( ! $space_id ) {
+			$this->check( "X1: {$action} (no active space)", false, 'no active space to test against' );
+			return;
+		}
+		$token = \Jetonomy\Models\InviteLink::generate( $space_id, $this->admin_id, 3 );
+		$this->check( 'X1: InviteLink::generate returns a token', is_string( $token ) && strlen( $token ) >= 16, 'token=' . wp_json_encode( $token ) );
+		$row = $token ? \Jetonomy\Models\InviteLink::find_by_token( $token ) : null;
+		$this->check( 'X1: invite link persisted to the space', $row && (int) $row->space_id === $space_id, 'row missing or wrong space' );
+		if ( $row ) {
+			\Jetonomy\Models\InviteLink::revoke( (int) $row->id, $space_id ); // cleanup.
+		}
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_list_invites
+	 *
+	 * Handler:    Admin\Ajax\Spaces_Handler::list_invites
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	private function test_ajax_list_invites_X2(): void {
+		$action = 'jetonomy_list_invites'; // AJAX action under test (Spaces_Handler::ajax_list_invites).
+		wp_set_current_user( $this->admin_id );
+		$spaces   = \Jetonomy\Models\Space::list_all( 'active', 1 );
+		$space_id = ! empty( $spaces ) ? (int) $spaces[0]->id : 0;
+		if ( ! $space_id ) {
+			$this->check( "X2: {$action} (no active space)", false, 'no active space to test against' );
+			return;
+		}
+		$token = \Jetonomy\Models\InviteLink::generate( $space_id, $this->admin_id );
+		$list  = \Jetonomy\Models\InviteLink::list_by_space( $space_id );
+		$found = false;
+		foreach ( (array) $list as $inv ) {
+			if ( isset( $inv->token ) && $inv->token === $token ) {
+				$found = true;
+				break;
+			}
+		}
+		$this->check( 'X2: list_by_space returns the generated link', $found, 'generated token not found in list of ' . count( (array) $list ) );
+		$row = \Jetonomy\Models\InviteLink::find_by_token( $token );
+		if ( $row ) {
+			\Jetonomy\Models\InviteLink::revoke( (int) $row->id, $space_id ); // cleanup.
+		}
+	}
+
+
+	/**
+	 * @generated qa-stub-gen — fill in fixture-specific assertions
+	 * @covers wp_ajax_jetonomy_revoke_invite
+	 *
+	 * Handler:    Admin\Ajax\Spaces_Handler::revoke_invite
+	 * Nonce:      jetonomy_admin
+	 * Capability: jetonomy_manage_spaces
+	 */
+	private function test_ajax_revoke_invite_X3(): void {
+		$action = 'jetonomy_revoke_invite'; // AJAX action under test (Spaces_Handler::ajax_revoke_invite).
+		wp_set_current_user( $this->admin_id );
+		$spaces   = \Jetonomy\Models\Space::list_all( 'active', 1 );
+		$space_id = ! empty( $spaces ) ? (int) $spaces[0]->id : 0;
+		if ( ! $space_id ) {
+			$this->check( "X3: {$action} (no active space)", false, 'no active space to test against' );
+			return;
+		}
+		$token = \Jetonomy\Models\InviteLink::generate( $space_id, $this->admin_id );
+		$row   = \Jetonomy\Models\InviteLink::find_by_token( $token );
+		$this->check( 'X3: fixture invite created', (bool) $row, 'could not create an invite to revoke' );
+		if ( ! $row ) {
+			return;
+		}
+		$ok = \Jetonomy\Models\InviteLink::revoke( (int) $row->id, $space_id );
+		$this->check( 'X3: InviteLink::revoke returns true', (bool) $ok, 'revoke returned a falsey value' );
+		$gone = \Jetonomy\Models\InviteLink::find_by_token( $token );
+		$this->check( 'X3: invite row deleted after revoke', null === $gone, 'row still present after revoke' );
 	}
 }

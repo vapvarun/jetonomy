@@ -130,4 +130,20 @@ class Captcha_Manager {
 	public static function is_enabled(): bool {
 		return null !== self::$adapter;
 	}
+
+	/**
+	 * Widget container HTML for the active provider, or '' when CAPTCHA is
+	 * disabled / the provider is invisible (reCAPTCHA v3).
+	 *
+	 * Every form whose endpoint runs verify_or_skip() must echo this:
+	 * login block (login/register/lost-password), the post composers, and
+	 * the reply composer. Without it Turnstile never renders and tokens
+	 * are never produced (#9977126420).
+	 *
+	 * @since 1.5.0
+	 * @return string Escaped HTML, safe to echo.
+	 */
+	public static function render_widget(): string {
+		return self::$adapter ? self::$adapter->render_widget() : '';
+	}
 }

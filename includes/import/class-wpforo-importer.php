@@ -126,6 +126,9 @@ class WPForo_Importer extends Importer {
 		$forums = $wpdb->get_results( "SELECT * FROM {$p}forums ORDER BY `order` ASC" );
 
 		foreach ( $forums as $forum ) {
+			// Preserve source access level — a members-only wpForo board must
+			// NOT land as a public Jetonomy space. See self::map_access().
+			$access   = self::map_access( $forum );
 			$space_id = Space::create(
 				[
 					'category_id' => $cat_id,
@@ -134,8 +137,8 @@ class WPForo_Importer extends Importer {
 					'title'       => $forum->title,
 					'slug'        => $forum->slug ?: sanitize_title( $forum->title ),
 					'description' => wp_strip_all_tags( $forum->description ?? '' ),
-					'visibility'  => 'public',
-					'join_policy' => 'open',
+					'visibility'  => $access['visibility'],
+					'join_policy' => $access['join_policy'],
 					'sort_order'  => (int) $forum->order,
 				]
 			);
@@ -147,6 +150,55 @@ class WPForo_Importer extends Importer {
 				++$this->skipped;
 			}
 		}
+	}
+
+	/**
+	 * Map a wpForo forum's read access to a Jetonomy [visibility, join_policy].
+	 *
+	 * The wpForo plugin stores per-forum read access in the serialized `groups_can_view`
+	 * column (array of usergroup IDs). The default Guest usergroup id is 4; when
+	 * guests are not in the allow-list the board was members-only and must NOT
+	 * be flattened to a public Jetonomy space — it maps to private + approval so
+	 * the content stays gated and new members are vetted. When the column is
+	 * absent/empty the access is genuinely unknown, so the historical 'public'
+	 * default is preserved (fail-open only when there is no restriction signal).
+	 *
+	 * Owners can remap any imported board via the `jetonomy_import_space_visibility`
+	 * filter (e.g. force everything private, or whitelist a board to public).
+	 *
+	 * @param object $forum Source wpForo forum row.
+	 * @return array{visibility:string,join_policy:string}
+	 */
+	private static function map_access( object $forum ): array {
+		$restricted = false;
+		if ( ! empty( $forum->groups_can_view ) ) {
+			$groups = maybe_unserialize( $forum->groups_can_view );
+			if ( is_array( $groups ) ) {
+				$guest_group = (int) apply_filters( 'jetonomy_import_wpforo_guest_group', 4 );
+				$restricted  = ! in_array( $guest_group, array_map( 'intval', $groups ), true );
+			}
+		}
+
+		$access = [
+			'visibility'  => $restricted ? 'private' : 'public',
+			'join_policy' => $restricted ? 'approval' : 'open',
+		];
+
+		/**
+		 * Filter the visibility + join policy applied to an imported forum.
+		 *
+		 * @param array  $access [ visibility, join_policy ].
+		 * @param string $source Importer slug ('wpforo').
+		 * @param object $forum  Source forum row.
+		 */
+		$access = apply_filters( 'jetonomy_import_space_visibility', $access, 'wpforo', $forum );
+
+		// Validate against the schema enums so a stray filter return can never
+		// persist an invalid visibility/join_policy.
+		return [
+			'visibility'  => in_array( $access['visibility'] ?? '', [ 'public', 'private', 'hidden' ], true ) ? $access['visibility'] : ( $restricted ? 'private' : 'public' ),
+			'join_policy' => in_array( $access['join_policy'] ?? '', [ 'open', 'approval', 'invite' ], true ) ? $access['join_policy'] : ( $restricted ? 'approval' : 'open' ),
+		];
 	}
 
 	private function import_topics( string $p = '' ): void {

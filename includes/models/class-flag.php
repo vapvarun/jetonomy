@@ -77,25 +77,6 @@ class Flag extends Model {
 	}
 
 	/**
-	 * Count pending flags filed against one object (post or reply). Lets the
-	 * read surfaces show moderators a "this has N open reports" indicator
-	 * without loading the flag rows.
-	 *
-	 * @param string $object_type 'post' or 'reply'.
-	 * @param int    $object_id   Target object ID.
-	 * @return int
-	 */
-	public static function count_pending_for_object( string $object_type, int $object_id ): int {
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . " WHERE status = 'pending' AND object_type = %s AND object_id = %d",
-				$object_type,
-				$object_id
-			)
-		);
-	}
-
-	/**
 	 * Resolve a flag (approve/dismiss) and record who resolved it.
 	 *
 	 * @param int    $id          Flag row ID.
@@ -206,23 +187,6 @@ class Flag extends Model {
 				$post_id
 			)
 		) ?: [];
-	}
-
-	/**
-	 * Count how many flags exist for a given object (regardless of status).
-	 *
-	 * @param string $object_type
-	 * @param int    $object_id
-	 * @return int
-	 */
-	public static function count_for_object( string $object_type, int $object_id ): int {
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
-				$object_type,
-				$object_id
-			)
-		);
 	}
 
 	/**

@@ -269,20 +269,17 @@ class Tag extends Model {
 	}
 
 	/**
-	 * Delete a tag and detach it from every post. Also removes space tag links.
+	 * Delete a tag and detach it from every post.
 	 *
 	 * @param int $id Tag ID.
 	 * @return bool True if the tag row was removed.
 	 */
 	public static function delete_with_relations( int $id ): bool {
-		$post_tags     = table( 'post_tags' );
-		$space_tag_map = table( 'space_tag_map' );
-		$db            = static::db();
+		$post_tags = table( 'post_tags' );
+		$db        = static::db();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$db->delete( $post_tags, [ 'tag_id' => $id ] );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$db->delete( $space_tag_map, [ 'tag_id' => $id ] );
 
 		$deleted = (bool) parent::delete( $id );
 		return $deleted;

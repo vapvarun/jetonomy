@@ -42,7 +42,16 @@ class Schema {
 	public static function drop_tables(): void {
 		global $wpdb;
 
-		$tables = array_reverse( self::get_table_names() );
+		// Legacy tables removed from the live schema in 1.5.0 (audit A5 —
+		// never wired to any feature). Listed here so uninstalling an
+		// install that never ran the 1.5.0 migration still cleans them up.
+		$legacy = [
+			'jt_user_interests',
+			'jt_space_tag_map',
+			'jt_space_tags',
+		];
+
+		$tables = array_merge( $legacy, array_reverse( self::get_table_names() ) );
 
 		foreach ( $tables as $table ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -69,9 +78,6 @@ class Schema {
 			'jt_space_members',
 			'jt_tags',
 			'jt_post_tags',
-			'jt_space_tags',
-			'jt_space_tag_map',
-			'jt_user_interests',
 			'jt_activity_log',
 			'jt_restrictions',
 			'jt_access_rules',
@@ -84,7 +90,7 @@ class Schema {
 	}
 
 	/**
-	 * Build CREATE TABLE SQL strings for all 21 tables.
+	 * Build CREATE TABLE SQL strings for all 20 tables.
 	 *
 	 * @param string $p               Table prefix (e.g. "wp_").
 	 * @param string $charset_collate Charset/collation string from $wpdb.
@@ -255,7 +261,8 @@ class Schema {
   notify_via ENUM('web','email','both') NOT NULL DEFAULT 'web',
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
-  UNIQUE KEY user_object (user_id,object_type,object_id)
+  UNIQUE KEY user_object (user_id,object_type,object_id),
+  KEY object_lookup (object_type,object_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 9. jt_read_status
@@ -296,32 +303,11 @@ class Schema {
   KEY tag_post (tag_id,post_id)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 13. jt_space_tags
-		$sqls[] = "CREATE TABLE {$p}jt_space_tags (
-  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  name varchar(255) NOT NULL DEFAULT '',
-  slug varchar(255) NOT NULL DEFAULT '',
-  space_count int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY  (id),
-  UNIQUE KEY slug (slug)
-) ENGINE=InnoDB $charset_collate;";
+		// Tables 13-15 (jt_space_tags, jt_space_tag_map, jt_user_interests)
+		// were removed in 1.5.0 — they never gained a writer or any UX/REST
+		// surface (audit A5). Migration_1_5_0 drops them on upgrade.
 
-		// 14. jt_space_tag_map
-		$sqls[] = "CREATE TABLE {$p}jt_space_tag_map (
-  space_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  tag_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  PRIMARY KEY  (space_id,tag_id)
-) ENGINE=InnoDB $charset_collate;";
-
-		// 15. jt_user_interests
-		$sqls[] = "CREATE TABLE {$p}jt_user_interests (
-  user_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  tag_id bigint(20) unsigned NOT NULL DEFAULT 0,
-  created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY  (user_id,tag_id)
-) ENGINE=InnoDB $charset_collate;";
-
-		// 16. jt_activity_log
+		// 13. jt_activity_log
 		$sqls[] = "CREATE TABLE {$p}jt_activity_log (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -335,7 +321,7 @@ class Schema {
   KEY created (created_at)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 17. jt_restrictions
+		// 14. jt_restrictions
 		$sqls[] = "CREATE TABLE {$p}jt_restrictions (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -350,7 +336,7 @@ class Schema {
   KEY expires (expires_at)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 18. jt_access_rules
+		// 15. jt_access_rules
 		$sqls[] = "CREATE TABLE {$p}jt_access_rules (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   space_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -364,7 +350,7 @@ class Schema {
   KEY space_priority (space_id,priority)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 19. jt_flags
+		// 16. jt_flags
 		$sqls[] = "CREATE TABLE {$p}jt_flags (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   reporter_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -382,7 +368,7 @@ class Schema {
   KEY reporter (reporter_id)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 20. jt_revisions
+		// 17. jt_revisions
 		$sqls[] = "CREATE TABLE {$p}jt_revisions (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   object_type ENUM('post','reply') NOT NULL DEFAULT 'post',
@@ -396,7 +382,7 @@ class Schema {
   KEY object_created (object_type,object_id,created_at)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 21. jt_join_requests
+		// 18. jt_join_requests
 		$sqls[] = "CREATE TABLE {$p}jt_join_requests (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   space_id bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -411,7 +397,7 @@ class Schema {
   KEY space_status_created (space_id,status,created_at)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 22. jt_invite_links
+		// 19. jt_invite_links
 		$sqls[] = "CREATE TABLE {$p}jt_invite_links (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   space_id bigint(20) unsigned NOT NULL,
@@ -426,7 +412,7 @@ class Schema {
   KEY idx_space (space_id)
 ) ENGINE=InnoDB $charset_collate;";
 
-		// 23. jt_bookmarks
+		// 20. jt_bookmarks
 		$sqls[] = "CREATE TABLE {$p}jt_bookmarks (
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
   post_id bigint(20) unsigned NOT NULL DEFAULT 0,

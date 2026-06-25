@@ -109,6 +109,16 @@ POST /wp-json/jetonomy/v1/conversations
 GET /wp-json/jetonomy/v1/conversations/12/messages?after=msg_abc123&per_page=20
 ```
 
+## Site-Owner Oversight (Conversations Admin Page)
+
+*New in 1.5.0.* Site administrators get a dedicated **Jetonomy → Conversations** page in wp-admin for messaging oversight - useful for abuse investigations, GDPR requests, and verifying that messaging is healthy on a large community.
+
+- **Conversations list** - every conversation with participants, message count, and last activity, paginated at 50 per page so it stays fast even with tens of thousands of threads.
+- **Thread detail** - click any conversation to read its full message history.
+- **Purge** - permanently delete a conversation and all of its messages and read-state rows. The button asks for confirmation; the deletion fires the `jetonomy_pro_conversation_purged` action so audit tooling can record it.
+
+Purging is irreversible and bypasses the participants' own archive/leave state - reserve it for moderation and compliance situations.
+
 ## What's Next?
 
 Add polls to any topic to gather community input and drive decisions.

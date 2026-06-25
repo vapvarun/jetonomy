@@ -2,7 +2,7 @@
   "product_name": "Jetonomy",
   "product_slug": "jetonomy",
   "product_type": "plugin",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "tagline": "Next-gen Discussion Platform for WordPress",
   "short_id": "jtnmy",
   "categories": [
@@ -15,7 +15,7 @@
     {
       "slug": "spaces-and-categories",
       "name": "Spaces & Categories",
-      "description": "Organize your community into categories and Forum, Q&A, Ideas, Show & Tell, or Social Feed spaces with membership and join controls.",
+      "description": "Organize your community into categories and Forum, Q&A, Ideas, or Feed spaces with membership and join controls.",
       "order": 2
     },
     {
@@ -69,13 +69,13 @@
     {
       "slug": "migration",
       "name": "Migration",
-      "description": "Import your existing forum from bbPress or wpForo without losing topics, replies, or members.",
+      "description": "Import your existing forum from bbPress, wpForo, or Asgaros Forum without losing topics, replies, or members.",
       "order": 11
     },
     {
       "slug": "why-jetonomy",
       "name": "Why Jetonomy",
-      "description": "How Jetonomy compares to bbPress and wpForo, and how it scales to communities with thousands of topics.",
+      "description": "How Jetonomy compares to bbPress, wpForo, Asgaros Forum, and other community platforms, and how it scales to communities with thousands of topics.",
       "order": 12
     },
     {

@@ -40,6 +40,17 @@ $_jt_trend_priv_clause = $_jt_trend_is_priv
 		? $wpdb->prepare( ' AND (p.is_private = 0 OR p.author_id = %d)', $_jt_trend_user )
 		: ' AND p.is_private = 0' );
 
+// Space-visibility gate (global branch only — the per-space branch is already
+// scoped to a single space the viewer is on). Pre-prepared and concatenated
+// because the global query below runs without an outer $wpdb->prepare().
+[ $_jt_space_vis_sql, $_jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+$_jt_trend_space_clause                       = '';
+if ( '1=1' !== $_jt_space_vis_sql ) {
+	$_jt_trend_space_clause = $_jt_space_vis_params
+		? $wpdb->prepare( ' AND ' . $_jt_space_vis_sql, ...$_jt_space_vis_params ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		: ' AND ' . $_jt_space_vis_sql;
+}
+
 if ( ! empty( $space ) && isset( $space->id ) ) {
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$trending = $wpdb->get_results(
@@ -59,7 +70,7 @@ if ( ! empty( $space ) && isset( $space->id ) ) {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 		 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . '
+		 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . '
 		 ORDER BY p.vote_score DESC, p.reply_count DESC
 		 LIMIT 5'
 	) ?: [];

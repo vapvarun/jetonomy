@@ -121,41 +121,110 @@ class Space extends Model {
 	}
 
 	/**
-	 * Build the visibility WHERE fragment + bind values for a viewer.
+	 * Canonical CONTENT-visibility predicate — "can this viewer READ content in the space."
 	 *
-	 * Mirrors {@see self::list_visible()}'s rules so every "list spaces"
-	 * surface applies the same predicate end users expect:
-	 *   - WP admin: every space, hidden included.
-	 *   - Logged-in member: public OR hidden spaces they belong to.
-	 *   - Logged-in non-member: public only.
-	 *   - Guest: public only.
+	 * SQL form of {@see \Jetonomy\Permissions\Permission_Engine::can()} with
+	 * action 'read', so every cross-space content query (full-text search,
+	 * feeds, recent-post lists, oEmbed list paths) applies the same gate and
+	 * cannot surface a post whose parent space the viewer may not read:
+	 *   - WP admin: every space.
+	 *   - Guest: public spaces only.
+	 *   - Logged-in: public spaces, plus any space they are a member of
+	 *     (covers PRIVATE and HIDDEN spaces they belong to).
 	 *
-	 * Prior to this, list_by_category()/list_uncategorized() hardcoded
-	 * `visibility != 'hidden'` and silently dropped hidden spaces from
-	 * the home and category views even for the WP admin who created
-	 * them. Customers reasonably read the empty listing as "the space
-	 * stopped existing." The predicate now scopes per viewer instead.
+	 * Fails CLOSED relative to can(): AccessRule grants and per-user bans are
+	 * intentionally not modelled in SQL — the predicate is the membership-based
+	 * common case and may only ever UNDER-include (never leak). Single-item
+	 * reads still pass through Permission_Engine::can_read_post() for the
+	 * authoritative decision. The per-post `is_private` flag is a separate axis
+	 * layered on top by the search adapter, not here.
 	 *
-	 * @param int|null $user_id Viewer ID. Null defaults to the current
-	 *                          logged-in user. Pass 0 explicitly to
-	 *                          force guest semantics (cron, CLI render).
+	 * @param int|null $user_id Viewer ID. Null = current user; pass 0 to force guest.
+	 * @param string   $alias   Spaces-table alias without trailing dot (e.g. 's'); '' if unaliased.
 	 * @return array{0:string,1:array} [SQL fragment, bind values]
 	 */
-	private static function visibility_predicate_for( ?int $user_id ): array {
+	public static function content_visibility_sql( ?int $user_id, string $alias = '' ): array {
 		$user_id = $user_id ?? get_current_user_id();
+		$col     = '' !== $alias ? $alias . '.' : '';
 
 		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
 			return [ '1=1', [] ];
 		}
 
 		if ( $user_id <= 0 ) {
-			return [ "visibility = 'public'", [] ];
+			return [ "{$col}visibility = 'public'", [] ];
 		}
 
 		$members_table = \Jetonomy\table( 'space_members' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
-		$fragment = "(visibility = 'public' OR id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+		$fragment = "({$col}visibility = 'public' OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
 		return [ $fragment, [ $user_id ] ];
+	}
+
+	/**
+	 * Canonical LISTING-visibility predicate — "should this space appear in a directory."
+	 *
+	 * Deliberately BROADER than {@see self::content_visibility_sql()}: a
+	 * `private` space is DISCOVERABLE — its card shows in listings (with a
+	 * Join / Request / Invite-only call to action) while its content stays
+	 * gated behind membership. That discoverability is exactly what separates
+	 * `private` from `hidden`; only `hidden` spaces are withheld from
+	 * non-members:
+	 *   - WP admin: every space.
+	 *   - Guest: public spaces only (no anonymous exposure of private names).
+	 *   - Logged-in: public + private spaces, plus any HIDDEN space they belong to.
+	 *
+	 * Replaces the old "public OR member" listing rule, under which `private`
+	 * spaces were as invisible as `hidden` ones — collapsing two distinct
+	 * visibility states into one (Basecamp: "Private+open spaces invisible").
+	 *
+	 * Site owners can widen (e.g. show private to guests) or narrow (e.g. hide
+	 * invite-only) per site via the `jetonomy_space_listing_visibility_sql`
+	 * filter without forking the query.
+	 *
+	 * @param int|null $user_id Viewer ID. Null = current user; pass 0 to force guest.
+	 * @param string   $alias   Spaces-table alias without trailing dot (e.g. 's'); '' if unaliased.
+	 * @return array{0:string,1:array} [SQL fragment, bind values]
+	 */
+	public static function listing_visibility_sql( ?int $user_id, string $alias = '' ): array {
+		$user_id = $user_id ?? get_current_user_id();
+		$col     = '' !== $alias ? $alias . '.' : '';
+
+		if ( $user_id > 0 && user_can( $user_id, 'manage_options' ) ) {
+			$result = [ '1=1', [] ];
+		} elseif ( $user_id <= 0 ) {
+			$result = [ "{$col}visibility = 'public'", [] ];
+		} else {
+			$members_table = \Jetonomy\table( 'space_members' );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $members_table is a trusted prefixed name.
+			$fragment = "({$col}visibility IN ('public','private') OR {$col}id IN (SELECT space_id FROM {$members_table} WHERE user_id = %d))";
+			$result   = [ $fragment, [ $user_id ] ];
+		}
+
+		/**
+		 * Filter the space-listing visibility SQL predicate.
+		 *
+		 * @param array{0:string,1:array} $result  [ SQL fragment, bind values ].
+		 * @param int|null                $user_id Viewer ID (resolved; 0 for guest).
+		 * @param string                  $alias   Spaces-table alias without trailing dot.
+		 */
+		return apply_filters( 'jetonomy_space_listing_visibility_sql', $result, $user_id, $alias );
+	}
+
+	/**
+	 * Back-compat shim for the former listing predicate.
+	 *
+	 * Historically this returned the "public OR member" fragment and was used
+	 * by every list surface — which is why `private` spaces were wrongly
+	 * hidden. It now delegates to {@see self::listing_visibility_sql()} so the
+	 * listing surfaces gain `private` discoverability. Kept private and thin to
+	 * avoid churning every caller in one commit.
+	 *
+	 * @param int|null $user_id Viewer ID.
+	 * @return array{0:string,1:array}
+	 */
+	private static function visibility_predicate_for( ?int $user_id ): array {
+		return self::listing_visibility_sql( $user_id );
 	}
 
 	/**
@@ -270,22 +339,6 @@ class Space extends Model {
 		return static::db()->get_results(
 			static::db()->prepare( $base, $status )
 		) ?: [];
-	}
-
-	/**
-	 * Cheap COUNT(*) partner for {@see self::list_all()} — used by
-	 * pagination totals without materialising every row.
-	 *
-	 * @param string $status Row status value to filter by.
-	 * @return int
-	 */
-	public static function count_all( string $status = 'active' ): int {
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE status = %s',
-				$status
-			)
-		);
 	}
 
 	/**

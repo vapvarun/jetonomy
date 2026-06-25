@@ -60,31 +60,6 @@ class Revision extends Model {
 	}
 
 	/**
-	 * Cheap COUNT(*) partner for {@see self::list_for_object()}. Used by
-	 * paginated callers (the per-object revisions modal / admin view)
-	 * for the pager total without materialising every row.
-	 *
-	 * Backed by the existing `object_created (object_type, object_id,
-	 * created_at)` index.
-	 *
-	 * @param string $type Object type ('post' or 'reply').
-	 * @param int    $id   Object ID.
-	 * @return int
-	 */
-	public static function count_for_object( string $type, int $id ): int {
-		if ( $id <= 0 ) {
-			return 0;
-		}
-		return (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
-				$type,
-				$id
-			)
-		);
-	}
-
-	/**
 	 * Aggregate distinct (object_type, object_id) pairs that have ≥1
 	 * revision, with revision count, last-edited timestamp, and the user
 	 * id of whoever wrote the most recent snapshot. Powers the Revisions

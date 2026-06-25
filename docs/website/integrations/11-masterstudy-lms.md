@@ -2,6 +2,10 @@ Connect MasterStudy LMS course enrollment to Jetonomy spaces - students get a de
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
+![Jetonomy Settings - Integrations tab showing the integration status table and the Auto-Create Spaces for Courses card](images/integrations-settings.png)
+
+> MasterStudy LMS works like the other LMS integrations for adding members. The course picker, the **Sync Members** button, and the Auto-Create card are shown in the [LearnDash guide](04-learndash.md), which is the lead LMS reference for this section. (One difference: MasterStudy does not fire a removal hook - see Important Note on Removal below.)
+
 ## What You Will Learn
 
 - How to gate a space by MasterStudy LMS course enrollment
@@ -16,9 +20,11 @@ Jetonomy Pro detects MasterStudy LMS automatically when both plugins are active.
 
 1. Go to **Jetonomy → Spaces** → open the space → **Access Rules** tab.
 2. Select **MasterStudy Course** from the rule type dropdown.
-3. Start typing the course name - a searchable dropdown shows all published MasterStudy courses.
-4. Select the course, set Grants to **Participate** and Space Role to **Member**.
+3. Start typing the course name - a searchable dropdown shows all published MasterStudy courses (see the [course picker screenshot](04-learndash.md#gating-a-space-by-course-enrollment)).
+4. Select the course, set **Grants** to **Participate** and **Space Role** to **Member**.
 5. Click **Add Rule**.
+
+For what the **Grants** and **Space Role** fields mean, see [Grants and Space Role](01-memberpress.md#grants-and-space-role).
 
 ## Syncing Existing Students
 

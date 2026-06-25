@@ -171,3 +171,68 @@ if ( ! function_exists( 'jetonomy_admin_empty_state' ) ) {
 		}
 	}
 }
+
+if ( ! function_exists( 'jetonomy_space_activity_label' ) ) {
+	/**
+	 * Human-readable "Active N ago" label for a space, from last_activity_at.
+	 *
+	 * Visitors decide where to engage by whether a space is alive — lifetime
+	 * post/member totals can't tell a dormant space from a thriving one. This
+	 * surfaces recency on the space cards (home + category listings).
+	 *
+	 * @since 1.5.0
+	 * @param object $space Space row (expects ->last_activity_at, may be null/empty).
+	 * @return string e.g. "Active 2 hours ago", or '' when no activity is recorded.
+	 */
+	function jetonomy_space_activity_label( $space ): string {
+		$ts = isset( $space->last_activity_at ) ? (string) $space->last_activity_at : '';
+		if ( '' === $ts || '0000-00-00 00:00:00' === $ts ) {
+			return '';
+		}
+		$time = strtotime( $ts );
+		if ( ! $time ) {
+			return '';
+		}
+		/* translators: %s: human-readable time difference, e.g. "2 hours". */
+		return sprintf( __( 'Active %s ago', 'jetonomy' ), human_time_diff( $time, time() ) );
+	}
+}
+
+if ( ! function_exists( 'jetonomy_community_pulse' ) ) {
+	/**
+	 * Community pulse stats for the home welcome block: members, total posts,
+	 * and posts in the last 7 days. Cached in a 1-hour transient so the home
+	 * page never runs the COUNT on the posts table per request (the plugin's
+	 * extreme-scale rule — a single space can hold 10k+ posts).
+	 *
+	 * @since 1.5.0
+	 * @return array{members:int, posts:int, posts_week:int}
+	 */
+	function jetonomy_community_pulse(): array {
+		$cached = get_transient( 'jetonomy_community_pulse' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		global $wpdb;
+		$posts_tbl    = \Jetonomy\table( 'posts' );
+		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
+		$spaces_tbl   = \Jetonomy\table( 'spaces' );
+
+		$pulse = array(
+			// Total posts: sum the denormalised per-space counter (cheap) rather
+			// than COUNT the posts table.
+			'posts'      => (int) $wpdb->get_var( "SELECT COALESCE(SUM(post_count),0) FROM {$spaces_tbl}" ),
+			'members'    => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}" ),
+			'posts_week' => (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$posts_tbl} WHERE status = 'publish' AND created_at >= %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from table().
+					gmdate( 'Y-m-d H:i:s', time() - WEEK_IN_SECONDS )
+				)
+			),
+		);
+
+		set_transient( 'jetonomy_community_pulse', $pulse, HOUR_IN_SECONDS );
+		return $pulse;
+	}
+}

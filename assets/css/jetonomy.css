@@ -10,8 +10,23 @@
     --jt-font-heading: var(--font-display, var(--wp--preset--font-family--heading, inherit));
     --jt-font-mono: var(--wp--preset--font-family--monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
 
-    /* Colors — BuddyNext first, then WP theme.json, then neutral fallback */
-    --jt-accent: var(--brand, var(--wp--preset--color--primary, #3B82F6));
+    /* Colors — adopt the active theme's own brand token first so the plugin
+       reads as native (and follows the theme's dark mode automatically when the
+       theme flips its tokens), then WP theme.json, then the popular page-builder
+       themes, then a neutral fallback. Verified host-theme brand-token map:
+         BuddyX / BuddyX Pro 5.1+ → --bx-color-accent (flip on [data-bx-mode="dark"])
+         Reign 8.0+               → --reign-colors-theme
+         BuddyNext                → --brand
+         Any "primary"-slug theme → --wp--preset--color--primary (TT3, classic themes)
+         Astra                    → --ast-global-color-0
+         Kadence                  → --global-palette1
+         Blocksy                  → --theme-palette-color-1
+         GeneratePress / "accent" → --wp--preset--color--accent
+       Canonical recipe: wp-plugin-development skill, ux-foundation
+       "Host-Theme Token Adoption". A var() chain picks the first DEFINED token,
+       and these are mutually exclusive per active theme, so order only sets
+       precedence for the rare theme exposing two. */
+    --jt-accent: var(--bx-color-accent, var(--reign-colors-theme, var(--brand, var(--wp--preset--color--primary, var(--ast-global-color-0, var(--global-palette1, var(--theme-palette-color-1, var(--wp--preset--color--accent, #3B82F6))))))));
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
     --jt-accent-light: #EFF6FF;
@@ -19,7 +34,7 @@
     --jt-accent-muted: #DBEAFE;
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 15%, white);
 
-    --jt-text: var(--text-1, var(--wp--preset--color--contrast, #1a1a1a));
+    --jt-text: var(--bx-color-fg, var(--text-1, var(--wp--preset--color--contrast, #1a1a1a)));
     --jt-text-secondary: #4B5563;
     --jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
     /* Bumped from 60% → 65% so any text using --jt-text-tertiary against
@@ -27,7 +42,7 @@
     --jt-text-tertiary: #6B7280;
     --jt-text-tertiary: color-mix(in srgb, var(--jt-text) 65%, transparent);
 
-    --jt-bg: var(--bg, var(--wp--preset--color--base, #ffffff));
+    --jt-bg: var(--bx-color-bg-elevated, var(--bg, var(--wp--preset--color--base, #ffffff)));
     --jt-bg-subtle: #F9FAFB;
     --jt-bg-subtle: color-mix(in srgb, var(--jt-text) 3%, var(--jt-bg));
     --jt-bg-muted: #F3F4F6;
@@ -37,6 +52,7 @@
 
     --jt-border: rgba(0,0,0,0.1);
     --jt-border: color-mix(in srgb, var(--jt-text) 10%, transparent);
+    --jt-border: var(--bx-color-border, color-mix(in srgb, var(--jt-text) 10%, transparent));
     --jt-border-strong: rgba(0,0,0,0.18);
     --jt-border-strong: color-mix(in srgb, var(--jt-text) 18%, transparent);
 
@@ -66,6 +82,23 @@
     --jt-radius-sm: var(--r-sm, calc(var(--jt-radius) * 0.5));
     --jt-radius-lg: var(--r-lg, calc(var(--jt-radius) * 1.5));
     --jt-radius-full: var(--r-full, 9999px);
+
+    /* Surface — a card is a distinct surface that sits on the page, not the
+       page colour itself. BuddyNext (the Community OS) owns --surface/--canvas;
+       read it first so cards match exactly when running on it, with a matching
+       standalone fallback (clean white card lifting off a faintly tinted
+       canvas). Shared Wbcom standard: cards read --jt-surface, never --jt-bg. */
+    --jt-surface: var(--surface, var(--jt-bg));
+    --jt-canvas: var(--canvas, color-mix(in srgb, var(--jt-text) 2%, var(--jt-bg)));
+
+    /* Elevation — soft, layered shadows matching BuddyNext's --bn-shadow-*.
+       Shared standard: components pick a token, never a literal box-shadow, so
+       elevation is uniform across BuddyNext, Jetonomy, MediaVerse, Listora, and
+       Career Board. BuddyNext-first, with a matching standalone fallback. */
+    --jt-shadow-xs: var(--bn-shadow-xs, 0 1px 2px rgba(16, 24, 40, 0.04));
+    --jt-shadow-sm: var(--bn-shadow-sm, 0 1px 2px rgba(16, 24, 40, 0.04), 0 2px 4px rgba(16, 24, 40, 0.04));
+    --jt-shadow-md: var(--bn-shadow-md, 0 2px 4px rgba(16, 24, 40, 0.04), 0 8px 16px rgba(16, 24, 40, 0.06));
+    --jt-shadow-lg: var(--bn-shadow-lg, 0 8px 16px rgba(16, 24, 40, 0.06), 0 24px 48px rgba(16, 24, 40, 0.08));
 
     /* Spacing scale — used across every component for uniform rhythm.
        Do not add `px` values directly to components; pick a token. */
@@ -324,25 +357,66 @@
 
   /* ── Space cover image ── */
   .jt-space-cover {
-    height: 200px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 180px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    border-radius: var(--jt-radius, 6px);
-    margin-bottom: 16px;
+    border-radius: var(--jt-radius-lg) var(--jt-radius-lg) 0 0;
+    overflow: hidden;
+    margin-bottom: 0;
   }
+  /* Tonal cover fallback — a space with no cover image still gets a branded
+     banner (matches BuddyNext's gradient space cover). */
+  .jt-space-cover--tonal {
+    background-image: linear-gradient(135deg, color-mix(in srgb, var(--jt-accent) 22%, var(--jt-surface)), color-mix(in srgb, var(--jt-accent) 7%, var(--jt-surface)));
+  }
+  /* Scrim — only on photo covers, so the overlaid avatar + title stay legible. */
+  .jt-space-cover--image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.15) 38%, transparent 70%);
+    pointer-events: none;
+  }
+  /* Identity overlaid on the cover's lower edge: avatar tile + title — the
+     BuddyNext space-header pattern (identity lives ON the cover, not below it). */
+  .jt-space-cover__identity {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: var(--jt-space-4);
+  }
+  .jt-space-cover__title {
+    margin: 0;
+    font-family: var(--jt-font-heading);
+    font-weight: 700;
+    font-size: var(--jt-text-2xl);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--jt-text);
+  }
+  .jt-space-cover--image .jt-space-cover__title { color: #fff; }
+  /* Space avatar tile — surface fill, ring, soft shadow; reads on tonal + photo. */
+  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: var(--jt-radius-lg); background: var(--jt-surface); border: 3px solid var(--jt-surface); box-shadow: var(--jt-shadow-sm); color: var(--jt-accent); flex-shrink: 0; }
+  .jt-space-emoji svg { width: 32px; height: 32px; }
+  .jt-space-emoji.dashicons { font-size: 30px; width: auto; height: auto; }
+
   @media (max-width: 640px) {
-    .jt-space-cover { height: 120px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
+  .jt-crop-dialog { max-width: none; padding: var(--jt-space-lg, 16px); }
+
+    .jt-space-cover { min-height: 150px; border-radius: 0; margin-left: -16px; margin-right: -16px; }
+    .jt-space-cover__identity { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
   }
 
-  /* ── Space header ── */
-  .jt-space-head { display: flex; align-items: center; gap: 16px; padding-bottom: 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
-  /* Space header icon — Lucide SVG container. Lands as a 40px accent
-     square so the icon reads at the same weight emoji used to. */
-  .jt-space-emoji { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; color: var(--jt-accent); flex-shrink: 0; }
-  .jt-space-emoji svg { width: 32px; height: 32px; }
-  .jt-space-emoji.dashicons { font-size: 32px; width: auto; height: auto; }
-  .jt-space-head h1 { font-family: var(--jt-font-heading); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  /* ── Space header (below the cover) — description + stats + follow ── */
+  .jt-space-head { display: flex; align-items: flex-start; gap: 16px; padding: var(--jt-space-4) 4px 20px; margin-bottom: 16px; border-bottom: 1px solid var(--jt-border); }
+  .jt-space-head__meta { flex: 1 1 auto; min-width: 0; }
   .jt-space-desc { color: var(--jt-text-secondary); font-size: 0.9375rem; line-height: 1.5; margin-top: 6px; }
   .jt-space-nums { display: flex; gap: 20px; margin-left: auto; }
   .jt-num { text-align: center; }
@@ -362,6 +436,36 @@
   .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-white); text-decoration: none; }
   .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
   .jt-app .jt-btn-ghost:hover, .jt-app a.jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); text-decoration: none; }
+
+  /* ── Cross-theme <button> insulation (premium, uniform look in any theme) ──
+     Aggressive themes paint every bare <button> with their own accent via a
+     high-specificity `button:not(...)` chain — BuddyX 5.1's bx-tokens-applied.css
+     uses `button:not([class*="wp-"])…` at ~(0,6,1), which outranks the plugin's
+     button classes and turns every icon / action / menu / reaction button into a
+     solid accent pill (392 buttons repainted on a single thread). The theme rule
+     is NOT !important, so a scoped !important reset on .jt-app buttons wins no
+     matter the theme's selector specificity. Neutralize the theme paint, then
+     re-assert the few plugin buttons that intentionally carry a fill or surface.
+     Only <button> needs this; <a class="jt-btn"> is not matched by the theme's
+     `button` selector. */
+  .jt-app button { background-color: transparent !important; background-image: none !important; color: inherit !important; box-shadow: none !important; border-color: var(--jt-border) !important; }
+  /* Re-assert the plugin's own intentional button surfaces/text that the reset
+     above (and the theme) would otherwise flatten. Each carries !important to
+     beat the blanket; the design tokens keep them theme-adaptive. */
+  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-white) !important; }
+  .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-white) !important; }
+  .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
+  .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
+  /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
+     raised surface + accent underline. */
+  .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,
+  .jt-app button.jt-font-scale__btn.active { background-color: var(--jt-bg) !important; color: var(--jt-text) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.08), inset 0 -2px 0 var(--jt-accent) !important; }
+  /* Icon/action toolbar hover feedback. */
+  .jt-app button.jt-act:hover { background-color: var(--jt-bg-muted) !important; color: var(--jt-text-secondary) !important; }
+  /* Dropdown menu items: hover surface + danger text. */
+  .jt-app button.jt-more-item:hover { background-color: var(--jt-bg-hover) !important; }
+  .jt-app button.jt-more-item--danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-more-item--danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; }
 
   /* ── Topic list ── */
   .jt-topics { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
@@ -466,13 +570,12 @@
   /* My Spaces landing (G7). Two stacked sections, card per space. */
   .jt-my-spaces-section { margin-block-end: 36px; }
   .jt-my-spaces-section:last-child { margin-block-end: 0; }
-  .jt-section-title { font-size: 0.8125rem; font-weight: 700; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--jt-text-tertiary); }
   .jt-space-card-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0; color: var(--jt-accent); background: var(--jt-accent-muted); border-radius: var(--jt-radius); }
   .jt-space-card-icon svg { width: 22px; height: 22px; }
   .jt-space-card-icon.dashicons { font-size: 22px; }
   .jt-space-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-  .jt-space-card { background: var(--jt-bg); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); transition: border-color 0.15s ease, box-shadow 0.15s ease; display: flex; flex-direction: column; }
-  .jt-space-card:hover { border-color: var(--jt-accent); box-shadow: 0 2px 8px rgb(0 0 0 / 0.04); }
+  .jt-space-card { background: var(--jt-surface); border: 1px solid var(--jt-border); border-radius: var(--jt-radius); box-shadow: var(--jt-shadow-sm); transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; display: flex; flex-direction: column; }
+  .jt-space-card:hover { border-color: var(--jt-accent); box-shadow: var(--jt-shadow-md); }
   .jt-space-card-link { display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 14px; text-decoration: none; color: inherit; flex: 1 1 auto; }
   .jt-space-card-link:hover { color: inherit; }
   .jt-space-card-head { display: flex; align-items: flex-start; gap: 12px; }
@@ -507,6 +610,15 @@
   .jt-row-stat { text-align: center; }
   .jt-row-stat-n { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
   .jt-row-stat-l { font-size: 0.9375rem; color: var(--jt-text-secondary); }
+  /* Drafts-tab rows have a 2-column shape (title | actions), not the 4-column
+     topic-listing grid. Without this the title lands in the 48px icon column and
+     wraps one word per line, with a huge gap before the meta column (Basecamp
+     drafts-tab alignment). The `.jt-row.jt-row--draft` (0,2,0) specificity beats
+     both the base and the mobile `.jt-row` (0,1,0) templates at every breakpoint,
+     and the stat rule (0,3,0) overrides the mobile `.jt-row-stat:last-child`
+     display:none so the time + Publish-now button stay visible. */
+  .jt-row.jt-row--draft { grid-template-columns: 1fr auto; }
+  .jt-row.jt-row--draft .jt-row-stat { display: flex; align-items: center; gap: var(--jt-space-3); text-align: end; }
 
   /* ── Vote buttons ── */
   .jt-votes { display: flex; flex-direction: column; align-items: center; gap: 1px; position: relative; z-index: 1; }
@@ -516,6 +628,10 @@
   /* Keep the chevron from collapsing to 0 width as a flex child (Chromium SVG-in-flex quirk). */
   .jt-v-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
   .jt-act.voted { color: var(--jt-accent); }
+  /* Logged-out vote control is a "Log in to vote" link (1.5.0) — match the
+     button look (no underline, inherited colour, pointer). */
+  .jt-act.jt-act-login { text-decoration: none; color: var(--jt-text-secondary); cursor: pointer; }
+  .jt-act.jt-act-login:hover { color: var(--jt-accent); }
   /* Moderator "open reports" indicator: danger-tinted so flagged content reads
      as needing attention; the count badge sits on the flag icon. */
   .jt-act.jt-flagged-indicator { color: var(--jt-danger); text-decoration: none; }
@@ -664,7 +780,7 @@
   .jt-editor-hint { font-size: 0.9375rem; color: var(--jt-text-tertiary); font-family: var(--jt-font-mono); }
 
   /* ── Card (sidebar) ── */
-  .jt-card { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); padding-block: var(--jt-space-5); padding-inline: var(--jt-space-5); }
+  .jt-card { background: var(--jt-surface); border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); box-shadow: var(--jt-shadow-sm); padding-block: var(--jt-space-5); padding-inline: var(--jt-space-5); }
   @media (max-width: 640px) {
     .jt-card { padding-block: var(--jt-space-4); padding-inline: var(--jt-space-4); }
   }
@@ -772,7 +888,7 @@
     .jt-two-col > .jt-sidebar,
     .jt-two-col > aside { position: static; top: auto; }
     .jt-kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .jt-space-head { flex-direction: column; text-align: center; }
+    .jt-space-head { flex-direction: column; align-items: center; text-align: center; }
     .jt-space-nums { margin-left: 0; }
     .jt-header { padding: 10px 16px; }
     .jt-mobile-toggle { display: flex; }
@@ -813,6 +929,11 @@
     /* Topic listing rows — `.jt-row, a.jt-row` specificity match is
        load-bearing (desktop `a.jt-row` is 0,1,1). */
     .jt-row, a.jt-row { grid-template-columns: 36px 1fr 48px; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-3); }
+    /* Drafts rows stack on mobile: the inline title|actions shape squeezes the
+       title to a per-word column at 390px. One column = title full width, then
+       the time + Publish-now actions row beneath it. */
+    .jt-row.jt-row--draft { grid-template-columns: 1fr; }
+    .jt-row.jt-row--draft .jt-row-stat { justify-content: flex-start; margin-top: var(--jt-space-2); }
     .jt-row .jt-votes { width: 36px; }
     .jt-row-title { font-size: var(--jt-text-base); line-height: var(--jt-leading-snug); }
     .jt-row-sub { font-size: var(--jt-text-xs); gap: var(--jt-space-2); margin-top: var(--jt-space-1); }
@@ -973,6 +1094,9 @@
   .jt-space-card-stats { display: flex; gap: 12px; margin-top: 6px; }
   .jt-space-card-stat { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
   .jt-space-card-stat strong { color: var(--jt-text-secondary); font-weight: 600; }
+  /* Recency signal on space cards (1.5.0) — pushed to the end, lighter, so a
+     newcomer can tell at a glance which spaces are alive. */
+  .jt-space-card-activity { margin-inline-start: auto; font-style: italic; }
   .jt-space-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-block-end: 6px; }
   .jt-space-card-badge { display: inline-flex; align-items: center; gap: 4px; padding-block: 2px; padding-inline: 6px; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; border-radius: var(--jt-radius-sm, 6px); background: var(--jt-bg-muted); color: var(--jt-text-secondary); line-height: 1; }
   .jt-space-card-badge svg { flex-shrink: 0; width: 12px; height: 12px; }
@@ -1154,8 +1278,31 @@
   /* Leaderboard uses jt-two-col now — no max-width needed */
   .jt-page-title { font-family: var(--jt-font-heading); font-size: 1.375rem; font-weight: 700; margin: 0; }
   /* Community-home title: now visible (was screen-reader-only, which contradicted
-     the "main heading" setting). Spacing so it reads as the page heading. */
-  .jt-home-title { margin: 0 0 var(--jt-space-5, 20px); }
+     the "main heading" setting). Spacing so it reads as the page heading.
+     .jt-app prefix: a bare class (0,1,0) loses its margin to the
+     .jt-app h1 reset (0,1,1). */
+  .jt-app .jt-home-title { margin: 0 0 var(--jt-space-5, 20px); }
+  /* Newcomer welcome hero (1.5.0) — anon-only orientation block. Tokens only,
+     so it inverts cleanly in dark mode. */
+  .jt-home-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--jt-border);
+    border-radius: var(--jt-radius-lg, 12px);
+    background: var(--jt-bg-subtle, var(--jt-bg));
+  }
+  .jt-home-welcome-body { flex: 1 1 320px; min-width: 0; }
+  .jt-app .jt-home-welcome-title { margin: 0 0 0.35rem; font-size: 1.25rem; }
+  .jt-home-welcome-sub { margin: 0 0 0.75rem; color: var(--jt-text-secondary); max-width: 60ch; }
+  .jt-home-welcome-pulse { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; color: var(--jt-text-tertiary); }
+  .jt-home-welcome-pulse .jt-pulse-stat strong { color: var(--jt-text); font-weight: 700; }
+  .jt-pulse-stat--live strong { color: var(--jt-accent); }
+  .jt-home-welcome-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
   .jt-page-title-sm { font-size: 1.25rem; }
   .jt-leader-stats { display: flex; gap: 16px; margin-left: auto; text-align: right; }
   .jt-leader-stat-val { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; }
@@ -1442,9 +1589,11 @@
   }
 
   .jt-notif-item__menu-list {
+    /* Position is owned by SmartDropdown: it sets position:fixed + top/left
+       inline on open. Do NOT set top/left/inset-inline-end here — a stale
+       inset-inline-end combines with the JS-set left to stretch the fixed
+       panel full-width across the viewport. min-width gives it a sane size. */
     position: absolute;
-    top: 100%;
-    inset-inline-end: 8px;
     z-index: 30;
     min-width: 160px;
     margin: 0;
@@ -1572,6 +1721,7 @@
        line 2, full-width select so the truncation stops squeezing. */
     .jt-app .jt-member-item { flex-wrap: wrap; }
     .jt-member-role-select { flex-basis: 100%; max-width: 100%; width: 100%; margin-top: var(--jt-space-1); }
+    .jt-pending-actions { flex-basis: 100%; margin-top: var(--jt-space-1); }
   }
 
   /* ── Search ── */
@@ -1582,7 +1732,9 @@
   .jt-search-page-icon { flex-shrink: 0; color: var(--jt-text-tertiary); }
   .jt-search-page-input input { flex: 1; border: none !important; background: none !important; outline: none !important; padding: 0 !important; margin: 0 !important; font-family: inherit; font-size: inherit; color: var(--jt-text); box-shadow: none !important; }
   .jt-search-page-input input::placeholder { color: var(--jt-text-tertiary); }
-  .jt-section-label { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 8px; }
+  /* Same uppercase-label treatment as .jt-card h4 — same 12px gap contract.
+     .jt-app prefix so the margin survives the .jt-app h3 reset. */
+  .jt-app .jt-section-label { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--jt-text-tertiary); margin-bottom: 12px; }
   .jt-search-result-count { color: var(--jt-text-tertiary); }
 
   /* ── Tag page ── */
@@ -1617,6 +1769,11 @@
   .jt-member-rep { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; color: var(--jt-text-secondary); }
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-member-sub { color: var(--jt-text-tertiary); margin-top: 2px; }
+  .jt-pending-requests { margin-bottom: 20px; }
+  .jt-pending-requests-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 12px 16px 0; font-size: 1rem; font-weight: 600; color: var(--jt-text); }
+  .jt-pending-item:last-child { border-bottom: none; }
+  .jt-pending-message { font-size: 0.875rem; color: var(--jt-text-secondary); margin-top: 2px; }
+  .jt-pending-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
   /* ── Space roadmap extras ── */
   .jt-idea-excerpt { font-size: 0.9375rem; color: var(--jt-text-tertiary); margin-top: 4px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -1624,8 +1781,56 @@
 
   /* ── Edit profile ── */
   .jt-avatar-row { display: flex; align-items: center; gap: 12px; }
-  .jt-avatar-round { border-radius: 50%; }
+  .jt-avatar-round { border-radius: 50%; object-fit: cover; }
+
+  /* Avatar square-crop dialog (1.5.0) */
+  .jt-crop-dialog {
+    border: 1px solid var(--jt-border);
+    border-radius: var(--jt-radius-lg, 12px);
+    background: var(--jt-surface, var(--jt-bg));
+    color: var(--jt-text);
+    padding: var(--jt-space-xl, 20px);
+    max-width: 340px;
+    width: calc(100vw - 32px);
+    box-shadow: var(--jt-shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.2));
+  }
+  .jt-crop-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .jt-crop-dialog__title { margin: 0 0 4px; font-size: 1.0625rem; }
+  .jt-crop-dialog__hint { margin: 0 0 12px; font-size: 0.8125rem; color: var(--jt-text-secondary); }
+  .jt-crop-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: var(--jt-radius-md, 8px);
+    background: var(--jt-bg-subtle, var(--jt-bg));
+    cursor: grab;
+    touch-action: none;
+  }
+  .jt-crop-viewport:active { cursor: grabbing; }
+  .jt-crop-viewport img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    max-width: none;
+    user-select: none;
+    pointer-events: none;
+  }
+  .jt-crop-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+  }
+  .jt-crop-zoom { display: block; margin: 14px 0 16px; }
+  .jt-crop-zoom input[type='range'] { width: 100%; accent-color: var(--jt-accent); }
+  .jt-crop-dialog__actions { display: flex; justify-content: flex-end; gap: 8px; }
   .jt-avatar-hint { font-size: 0.8125rem; color: var(--jt-text-tertiary); }
+  .jt-avatar-controls { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .jt-avatar-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* .jt-btn's display beats the UA [hidden] rule — make hidden stick. */
+  .jt-avatar-buttons button[hidden] { display: none; }
 
   /* ── Composer login ── */
   .jt-editor-login { text-align: center; padding: 20px; }
@@ -1921,12 +2126,12 @@
   /* ── 2. Hover States — ALL Interactive Elements ── */
 
   /* Space cards — lift on hover */
-  .jt-space-card { transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .jt-space-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .jt-space-card { transition: border-color 0.2s, transform 0.2s ease, box-shadow 0.2s ease; box-shadow: var(--jt-shadow-sm); }
+  .jt-space-card:hover { transform: translateY(-1px); box-shadow: var(--jt-shadow-md); }
 
   /* Topic rows — lift on hover */
   a.jt-row { transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.15s; }
-  a.jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  a.jt-row:hover { box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
 
   /* Leaderboard rows — hover background */
   .jt-leader { transition: background 0.15s; padding: 8px 12px; margin: 0 -12px; border-radius: var(--jt-radius); }
@@ -1957,8 +2162,15 @@
   .jt-pill:active { transform: scale(0.95); }
 
   /* Cards — lift and shadow on hover */
-  .jt-card { transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .jt-card:hover { border-color: var(--jt-border-strong); box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .jt-card { transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s; box-shadow: var(--jt-shadow-sm); }
+  .jt-card:hover { border-color: var(--jt-border-strong); box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
+  /* The notification list is a full-width .jt-card that hosts a position:fixed
+     action-menu (SmartDropdown). The hover lift above makes the card a
+     containing block for that fixed panel, so the menu anchors to the card
+     instead of the viewport — it renders far below the clicked row and shifts
+     when the hover state toggles (Basecamp). A full-width list has no use for
+     the lift; drop only the transform here, the shadow/border hover stays. */
+  .jt-card.jt-notif-list:hover { transform: none; }
 
   /* ── 3. Community Nav — Active State Animation ── */
   .jt-community-nav-links a { position: relative; }
@@ -2269,6 +2481,8 @@
 
 /* ── Notification preferences grid ── */
 .jt-notif-prefs { border: 1px solid var(--jt-border); border-radius: var(--jt-radius); overflow: hidden; }
+.jt-notif-optout { display: flex; align-items: flex-start; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; color: var(--jt-text-secondary); cursor: pointer; }
+.jt-notif-optout input { margin-top: 0.15rem; flex-shrink: 0; }
 .jt-notif-row { display: grid; grid-template-columns: 1fr 3.5rem 3.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--jt-border); font-size: 0.875rem; color: var(--jt-text); }
 .jt-notif-row:last-child { border-bottom: none; }
 .jt-notif-header { font-weight: 600; background: var(--jt-bg-subtle); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--jt-text-secondary); }
@@ -2703,6 +2917,29 @@
 /* ── Discussion row hover effects (non-anchor rows) ── */
 .jt-row { box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.1s; }
 .jt-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+/* Bookmarks page: the per-card "Remove bookmark" toggle (1.5.0). The card is
+   a CSS grid, so a plain child lands in an implicit cell — pin it top-right
+   instead. Scoped with :has() so only cards that carry the toggle are
+   affected (the My Bookmarks list), never every post row. */
+.jt-row:has(.jt-bookmark-toggle) { position: relative; }
+.jt-bookmark-toggle {
+	position: absolute;
+	top: 0.5rem;
+	inset-inline-end: 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--jt-accent);
+	cursor: pointer;
+	border-radius: var(--jt-radius-sm, 4px);
+}
+.jt-bookmark-toggle:hover,
+.jt-bookmark-toggle:focus-visible { background: var(--jt-bg-hover, rgba(0,0,0,0.05)); }
 
 /* ── Jetonomy Navigation block — Category → Space tree ── */
 .jt-nav-block {
@@ -2716,7 +2953,7 @@
 .jt-nav-title {
 	font-size: 0.95rem;
 	font-weight: 600;
-	margin: 0 0 0.6rem;
+	margin: 0 0 0.75rem;
 	color: var(--jt-text);
 	letter-spacing: 0.01em;
 }
@@ -2823,6 +3060,21 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	margin: 0 0 0.75rem;
 	color: var(--jt-text);
 }
+
+/* Block-title contrast guard. These titles are headings (<h2>/<h3>); when a
+   block sits in page content a theme's content-heading rule (e.g.
+   .page .entry-content h3, specificity 0,2,1) can outrank the single-class
+   title rules above and repaint the title, risking low contrast on the block's
+   own surface. Scope the colour to the block wrapper + .jt-app (0,3,0) so it
+   reliably wins without !important. Dark mode is already covered by the
+   .jt-dark .jt-app h1-h6 reset near the top of this file. */
+.jt-feed-block.jt-app .jt-feed-title,
+.jt-nav-block.jt-app .jt-nav-title,
+.jt-login-block.jt-app .jt-login-title,
+.jt-user-panel.jt-app .jt-userpanel-title,
+.jt-app .jt-compose-topic-login .jt-compose-topic-login-title {
+	color: var(--jt-text);
+}
 .jt-login-tabs {
 	display: flex;
 	gap: 0.25rem;
@@ -2915,6 +3167,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-success);
 }
 @media (max-width: 640px) {
+	/* Welcome hero stacks; actions go full-width so the CTA stays tappable. */
+	.jt-home-welcome { flex-direction: column; align-items: stretch; }
+	.jt-home-welcome-actions { width: 100%; }
+	.jt-home-welcome-actions .jt-btn { flex: 1 1 auto; justify-content: center; }
 	.jt-login-block {
 		padding: 0.85rem;
 	}

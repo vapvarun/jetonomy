@@ -1,3 +1,9 @@
+---
+title: "Replies & Threading"
+category: "discussions"
+order: 2
+---
+
 Replies are where conversations happen. Jetonomy's reply system supports threaded discussions, multiple sort orders, accepted answers in Q&A spaces, and efficient loading for threads with hundreds of contributions.
 
 ![Single topic page with threaded replies and voting controls](../images/single-topic-replies.png)
@@ -53,9 +59,13 @@ Use the sort controls at the top of the reply list to change the order:
 
 Sort preference is stored per-session - if you change it on one topic, it persists as you navigate between topics in the same session.
 
+> **Note:** "Best" is the vote-ranked sort for **replies** inside a topic. The space topic listing uses a similarly named vote-ranked sort called **Popular** (see [Voting & Reputation](03-voting.md#how-votes-power-content-discovery)). Both rank by net vote score - they are simply labelled differently because one orders replies and the other orders topics.
+
 ## Accepted Answers in Q&A Spaces
 
 In Q&A spaces, the person who asked the question (the topic author) decides which reply is the accepted answer. This signals to everyone else that the question has been solved and surfaces the winning reply at the top of the thread.
+
+![Q&A question with an accepted answer pinned to the top, showing the green Accepted tag and the Accepted answer callout box](../images/discussions/accepted-answer.png)
 
 ### Marking an Answer as Accepted
 
@@ -70,7 +80,7 @@ As the asker, you are the one who confirms which reply actually solved your prob
 
 - The reply gets a green **Accepted** tag and the whole thread is marked as resolved.
 - An "Accepted answer" callout box appears at the top of the topic, so anyone landing on the question sees the solution first without scrolling.
-- The reply's author receives a notification and a +15 reputation bonus (you do not earn reputation for accepting your own reply).
+- The reply's author receives a notification and a reputation bonus (a default of +15; you do not earn reputation for accepting your own reply). The bonus amount is admin-configurable under [Settings → Permissions → Reputation Points](../admin-settings/02-permissions.md#reputation-points).
 
 ### Changing or Removing the Accepted Answer
 

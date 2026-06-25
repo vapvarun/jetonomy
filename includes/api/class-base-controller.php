@@ -70,23 +70,56 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * they own the moderation workflow, so running their writes through Akismet
 	 * creates false positives and blocks staff responses. Lower-trust members
 	 * still get the full spam pipeline.
+	 *
+	 * Thin alias over the engine's privilege check so there is exactly one
+	 * definition of "space staff" (1.5.0 consolidation, audit B).
 	 */
 	protected function author_bypasses_spam_check( int $user_id, int $space_id ): bool {
-		if ( user_can( $user_id, 'manage_options' ) ) {
-			return true;
-		}
-
-		$role = \Jetonomy\Models\SpaceMember::get_role( $space_id, $user_id );
-		return in_array( $role, array( 'admin', 'moderator' ), true );
+		return \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $user_id, $space_id );
 	}
 
 	/**
-	 * Validate and normalize a backdate string (e.g. `published_at`) to `Y-m-d H:i:s`.
+	 * Should this write be held for moderation under the space's
+	 * require_approval setting?
 	 *
-	 * Accepts anything PHP's `DateTimeImmutable::createFromFormat` understands (ISO 8601
-	 * with or without a trailing `Z`, MySQL datetime, or `DateTime::__construct` fallback).
-	 * Returns `null` when the input is empty (treat as "use default"), or `WP_Error` when
-	 * non-empty but unparsable.
+	 * One shared definition for the post + reply create paths (1.5.0
+	 * consolidation — the previous copy-pasted blocks also checked
+	 * current_user_can() instead of the AUTHOR's capabilities, which
+	 * diverges on imports and on-behalf writes; audit B).
+	 *
+	 * @param string $requested_status Status the caller asked for ('' = default publish).
+	 * @param int    $space_id         Space ID.
+	 * @param int    $author_id        Content author user ID.
+	 * @return bool True when the content must be created as `pending`.
+	 */
+	protected function should_hold_for_approval( string $requested_status, int $space_id, int $author_id ): bool {
+		if ( '' !== $requested_status && 'publish' !== $requested_status ) {
+			return false; // Drafts/scheduled content is not publish-bound yet.
+		}
+
+		$settings = \Jetonomy\Models\Space::get_settings( $space_id );
+		if ( empty( $settings['require_approval'] ) ) {
+			return false;
+		}
+
+		return ! \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $author_id, $space_id );
+	}
+
+	/**
+	 * Validate and normalize a backdate string (e.g. `published_at`) to a UTC
+	 * `Y-m-d H:i:s` for storage.
+	 *
+	 * Timezone contract (matches the WordPress core post scheduler):
+	 *  - A naive wall-clock value (`Y-m-d H:i:s`, `Y-m-dTH:i:s`, or date-only
+	 *    `Y-m-d`) is interpreted in the SITE timezone — the Settings -> General
+	 *    timezone via {@see wp_timezone()} — then converted to UTC. So "3 PM"
+	 *    means 3 PM in the site's timezone regardless of the author's location
+	 *    or the server's clock.
+	 *  - A value carrying an explicit offset or `Z` (`...+05:30`, `...Z`) is an
+	 *    absolute instant; its own offset is honoured and converted to UTC.
+	 *
+	 * Returns `null` when the input is empty (treat as "use default"), or
+	 * `WP_Error` when non-empty but unparsable.
 	 *
 	 * Gated to users who can `manage_options` — normal authors cannot forge dates via
 	 * the public API. Moderators with `edit_others_posts` also pass via the caller check.
@@ -97,23 +130,35 @@ abstract class Base_Controller extends WP_REST_Controller {
 			return null;
 		}
 
-		$formats = array(
-			'Y-m-d H:i:s',
-			'Y-m-d\TH:i:s',
-			'Y-m-d\TH:i:sP',
-			'Y-m-d\TH:i:s\Z',
-			'Y-m-d',
-		);
+		$utc = new \DateTimeZone( 'UTC' );
+
+		// An explicit timezone designator (trailing `Z` or `±HH:MM` / `±HHMM`)
+		// makes the value an absolute instant — parse in UTC and let the offset
+		// in the string do the work. Everything else is a naive wall-clock value
+		// interpreted in the SITE timezone so the WP timezone setting is always
+		// respected.
+		$has_tz     = (bool) preg_match( '/(Z|[+-]\d{2}:?\d{2})$/', $raw );
+		$parse_zone = $has_tz ? $utc : wp_timezone();
+
+		// Leading `!` resets every field not present in the format to the Unix
+		// epoch, so a date-only input ('Y-m-d') yields 00:00:00 instead of
+		// leaking the server's current time-of-day.
+		$formats = $has_tz
+			? array( '!Y-m-d\TH:i:sP', '!Y-m-d\TH:i:s\Z' )
+			: array( '!Y-m-d H:i:s', '!Y-m-d\TH:i:s', '!Y-m-d' );
+
 		foreach ( $formats as $format ) {
-			$dt = \DateTimeImmutable::createFromFormat( $format, $raw, new \DateTimeZone( 'UTC' ) );
+			$dt = \DateTimeImmutable::createFromFormat( $format, $raw, $parse_zone );
 			if ( $dt instanceof \DateTimeImmutable ) {
-				return $dt->format( 'Y-m-d H:i:s' );
+				return $dt->setTimezone( $utc )->format( 'Y-m-d H:i:s' );
 			}
 		}
 
+		// Fallback: hand the raw string to the parser, still anchoring a naive
+		// value to the site timezone before normalizing to UTC.
 		try {
-			$dt = new \DateTimeImmutable( $raw, new \DateTimeZone( 'UTC' ) );
-			return $dt->format( 'Y-m-d H:i:s' );
+			$dt = new \DateTimeImmutable( $raw, $parse_zone );
+			return $dt->setTimezone( $utc )->format( 'Y-m-d H:i:s' );
 		} catch ( \Exception $e ) {
 			return new WP_Error(
 				'jetonomy_invalid_published_at',
@@ -179,18 +224,6 @@ abstract class Base_Controller extends WP_REST_Controller {
 			);
 		}
 		return $user_id;
-	}
-
-	/**
-	 * Permission callback: require login or return WP_Error.
-	 *
-	 * @return bool|\WP_Error
-	 */
-	public function login_permission_check(): bool|\WP_Error {
-		if ( is_user_logged_in() ) {
-			return true;
-		}
-		return new \WP_Error( 'jetonomy_unauthorized', __( 'You must be logged in.', 'jetonomy' ), [ 'status' => 401 ] );
 	}
 
 	/**

@@ -85,6 +85,27 @@ class Subscription extends Model {
 	}
 
 	/**
+	 * Count subscribers of an object without materialising the list.
+	 *
+	 * Lets the notifier decide whether to fan out inline (small sets) or defer
+	 * to the background queue (large sets). Uses the object_lookup index.
+	 *
+	 * @param string $object_type
+	 * @param int    $object_id
+	 * @return int
+	 */
+	public static function count_subscribers( string $object_type, int $object_id ): int {
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE object_type = %s AND object_id = %d',
+				$object_type,
+				$object_id
+			)
+		);
+	}
+
+	/**
 	 * Return an array of user_ids subscribed to a given object.
 	 *
 	 * @param string $object_type

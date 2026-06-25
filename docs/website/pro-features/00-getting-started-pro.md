@@ -13,7 +13,7 @@ Activate your license, switch on the extensions you need, and understand which c
 
 Jetonomy Pro is a peer plugin to free Jetonomy. Install and activate free Jetonomy first, then install Jetonomy Pro - Pro shows an admin notice and stays dormant if the free plugin is not active.
 
-1. Go to **Jetonomy → License** in your WordPress admin (the `jetonomy-license` page).
+1. Go to **Jetonomy → Settings → License** in your WordPress admin (License is a tab inside the free plugin's Settings page, not a standalone page).
 2. Paste the license key from your purchase receipt.
 3. Click **Activate**. Jetonomy validates the key against the store and shows your tier and expiry.
 

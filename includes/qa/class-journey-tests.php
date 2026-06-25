@@ -49,6 +49,7 @@ class Journey_Tests {
 	public function run(): array {
 		try {
 			$this->test_content_journey();
+			$this->test_reply_count_consistency();
 			$this->test_space_journey();
 			$this->test_member_journey();
 			$this->test_moderation_journey();
@@ -137,6 +138,59 @@ class Journey_Tests {
 		if ( $flag_result->is_success() ) {
 			$this->cleanup[] = [ 'type' => 'flag', 'id' => (int) $flag_result->data['id'] ];
 		}
+	}
+
+	/**
+	 * Regression guard: Reply::delete (the direct/CLI/fixture delete path) must
+	 * reverse the reply_count increment that create() applied — mirroring the
+	 * REST path's update( status => trash ). Catches the counter-drift fixed in
+	 * the delete() method.
+	 */
+	private function test_reply_count_consistency(): void {
+		$space_id = $this->discover_open_space();
+		if ( ! $space_id ) {
+			$this->record( 'content: reply_count consistency', false, 'no open space found' );
+			return;
+		}
+		$author  = $this->discover_user();
+		$post_id = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $author,
+				'title'     => 'QA reply-count probe ' . uniqid(),
+				'content'   => 'probe',
+				'status'    => 'publish',
+			]
+		);
+		if ( ! is_int( $post_id ) || $post_id <= 0 ) {
+			$this->record( 'content: reply_count consistency', false, 'post create failed' );
+			return;
+		}
+		$this->cleanup[] = [ 'type' => 'post', 'id' => $post_id ];
+
+		$baseline = (int) ( \Jetonomy\Models\Post::find( $post_id )?->reply_count ?? 0 );
+		$reply_id = \Jetonomy\Models\Reply::create(
+			[
+				'post_id'   => $post_id,
+				'author_id' => $author,
+				'content'   => 'probe reply',
+				'status'    => 'publish',
+			]
+		);
+		if ( ! is_int( $reply_id ) || $reply_id <= 0 ) {
+			$this->record( 'content: reply_count consistency', false, 'reply create failed' );
+			return;
+		}
+		$after_create = (int) ( \Jetonomy\Models\Post::find( $post_id )?->reply_count ?? 0 );
+		\Jetonomy\Models\Reply::delete( $reply_id );
+		$after_delete = (int) ( \Jetonomy\Models\Post::find( $post_id )?->reply_count ?? 0 );
+
+		$ok = ( $after_create === $baseline + 1 ) && ( $after_delete === $baseline );
+		$this->record(
+			'content: reply_count consistency (create +1 / delete -1)',
+			$ok,
+			$ok ? '' : sprintf( 'baseline=%d create=%d delete=%d', $baseline, $after_create, $after_delete )
+		);
 	}
 
 	private function test_space_journey(): void {

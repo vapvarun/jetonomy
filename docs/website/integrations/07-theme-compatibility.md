@@ -47,7 +47,7 @@ Starting in 1.3.0, Jetonomy ships a dedicated bridge for the three Kirki-based t
 
 On BuddyX/BuddyX Pro/Reign, flipping the theme's dark-mode toggle in the Customizer now flips the entire community sidebar, nav, post cards, and reply editor in the same render. No custom-CSS bridge required.
 
-If you build a custom Kirki theme and want to hook into the same bridge, the integration is extensible via the `jetonomy_theme_integration_accent` and `jetonomy_theme_integration_dark_mode` filters - return your own values and Jetonomy will use them.
+If you build a custom Kirki theme and want to hook into the same bridge, the integration is extensible via the `jetonomy_theme_light_tokens` and `jetonomy_theme_dark_tokens` filters. Each receives a map of `--jt-*` token => hex color (light mode and dark mode respectively) - return your own token maps and Jetonomy will inject them. Return an empty array to disable that mode's override.
 
 ## Using Other Themes
 

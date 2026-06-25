@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800&display=swap">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#888;font-family:Inter,system-ui,sans-serif}
+  .stack{display:flex;flex-direction:column;gap:30px;padding:30px;align-items:flex-start}
+  .lock{display:flex;align-items:center;gap:28px;padding:48px 56px;border-radius:20px}
+  .light{background:#fff}.dark{background:#16181D}.brand{background:linear-gradient(135deg,#3B82F6,#7C3AED)}
+  .wm{font-weight:800;letter-spacing:-.045em;line-height:1;font-size:104px}
+  .col{display:flex;flex-direction:column;gap:10px}
+  .tag{font-weight:500;font-size:27px;letter-spacing:.5px}
+  .ink{color:#1F2733}.muted{color:#6B7280}.white{color:#fff}.wmuted{color:#9AA1AB}.tmuted{color:rgba(255,255,255,.85)}
+  .g{background:linear-gradient(135deg,#3B82F6,#7C3AED);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .gl{background:linear-gradient(135deg,#60A5FA,#A78BFA);-webkit-background-clip:text;background-clip:text;color:transparent}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B82F6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+  <linearGradient id="mgl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#60A5FA"/><stop offset="1" stop-color="#A78BFA"/></linearGradient>
+  <symbol id="mk" viewBox="0 0 512 512"><rect x="36" y="36" width="440" height="440" rx="120" fill="url(#mg)"/><g fill="#fff"><g opacity=".82"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/></g><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></symbol>
+  <symbol id="mkl" viewBox="0 0 512 512"><rect x="36" y="36" width="440" height="440" rx="120" fill="url(#mgl)"/><g fill="#16181D"><g opacity=".82"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/></g><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></symbol>
+  <symbol id="mkw" viewBox="0 0 512 512"><g fill="#fff"><g opacity=".9"><circle cx="324" cy="206" r="44"/><path d="M268 330a56 60 0 0 1 112 0v2a6 6 0 0 1-6 6H274a6 6 0 0 1-6-6z"/></g><circle cx="206" cy="220" r="60"/><path d="M124 366a82 86 0 0 1 164 0v4a10 10 0 0 1-10 10H134a10 10 0 0 1-10-10z"/></g></symbol>
+</defs></svg>
+<div class="stack">
+  <div id="h-light" class="lock light"><svg width="112" height="112"><use href="#mk"/></svg><div class="col"><div class="wm"><span class="ink">Jet</span><span class="g">onomy</span></div><div class="tag muted">Community platform for WordPress</div></div></div>
+  <div id="h-dark" class="lock dark"><svg width="112" height="112"><use href="#mkl"/></svg><div class="col"><div class="wm"><span class="white">Jet</span><span class="gl">onomy</span></div><div class="tag wmuted">Community platform for WordPress</div></div></div>
+  <div id="h-white" class="lock brand"><svg width="112" height="112"><use href="#mkw"/></svg><div class="col"><div class="wm white">Jetonomy</div><div class="tag tmuted">Community platform for WordPress</div></div></div>
+  <div id="wm" class="lock light"><div class="wm"><span class="ink">Jet</span><span class="g">onomy</span></div></div>
+  <div id="wm-white" class="lock dark"><div class="wm white">Jetonomy</div></div>
+</div></body></html>

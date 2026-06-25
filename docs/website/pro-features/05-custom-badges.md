@@ -36,7 +36,7 @@ Trust levels and reputation points are invisible to casual members. Badges are v
 4. Set the award conditions (see below).
 5. Click **Save Badge**.
 
-<!-- TODO screenshot needed: Badge editor with tier selector and criteria settings (was ../images/pro-badges-editor.png) -->
+![The Create Badge editor, showing the name, description, icon upload, Bronze/Silver/Gold tier selector, and auto-award criteria settings](../images/pro-badges-editor.png)
 ## Award Conditions
 
 ### Auto-Award
@@ -50,10 +50,13 @@ Auto-awarded badges evaluate all members on a regular schedule and grant the bad
 | **Total replies** | 25, 100, 250 replies |
 | **Upvotes received** | 10, 50, 200 upvotes on any content |
 | **Days as member** | 30, 180, 365 days since joining |
+| **Reputation** | 100, 500, 1000 reputation points |
+| **Trust level** | Trust level 1 through 5 |
+| **Spaces joined** | 3, 10, 25 spaces joined |
 
-Set the threshold for each criteria you want to use. You can combine multiple criteria - the member must satisfy all of them to earn the badge.
+Set the threshold for each criteria you want to use. You can combine multiple criteria with **all** (the member must satisfy every condition) or **any** (one is enough) to earn the badge.
 
-> **Note:** Auto-evaluation runs once every 12 hours via WP-Cron, aligned with the trust level evaluation job. There is no manual "evaluate now" button, but you can trigger evaluation by going to **Jetonomy → Badges → Run Evaluation**.
+> **Note:** Auto-evaluation runs automatically - a recurring job every 6 hours (via Action Scheduler, with a WP-Cron fallback), plus event-driven re-evaluation that fires when a member's posts, replies, votes, reputation, or trust level change. There is no manual "evaluate now" button.
 
 ### Manual Award
 

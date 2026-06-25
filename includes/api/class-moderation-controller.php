@@ -14,6 +14,7 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Flag;
+use Jetonomy\Moderation\Moderation_Service;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Trust\Reputation;
@@ -248,52 +249,6 @@ class Moderation_Controller extends Base_Controller {
 	 */
 	public function require_moderate(): bool|WP_Error {
 		if ( ! current_user_can( 'jetonomy_moderate' ) ) {
-			return $this->permission_error();
-		}
-		return true;
-	}
-
-	/**
-	 * Permission callback for POST /moderation/ban (1.4.0 C.3).
-	 *
-	 * Global bans + silences stay cap-only — they're sitewide actions and
-	 * should not delegate to per-space mods. Space-bans accept ANY of:
-	 * - jetonomy_moderate cap (global mod)
-	 * - manage_options (WP admin)
-	 * - space-admin role for the supplied space_id (delegated authority)
-	 *
-	 * The handler trusts these gates because $request->get_param('space_id')
-	 * is the same id the permission check used.
-	 */
-	public function require_ban_permission( WP_REST_Request $request ): bool|WP_Error {
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return $this->permission_error();
-		}
-		if ( current_user_can( 'jetonomy_moderate' ) || current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-		$type     = sanitize_text_field( (string) $request->get_param( 'type' ) );
-		$space_id = (int) $request->get_param( 'space_id' );
-		if ( 'space_ban' === $type && $space_id > 0
-			&& \Jetonomy\Permissions\Permission_Engine::is_space_admin( $user_id, $space_id ) ) {
-			return true;
-		}
-		return $this->permission_error();
-	}
-
-	/**
-	 * Permission callback: requires auth + jetonomy_flag capability.
-	 */
-	public function require_flag(): bool|WP_Error {
-		$user_id = $this->require_auth();
-		if ( is_wp_error( $user_id ) ) {
-			return $user_id;
-		}
-		if ( Restriction::is_silenced( $user_id ) ) {
-			return new WP_Error( 'silenced', __( 'You are currently silenced.', 'jetonomy' ), [ 'status' => 403 ] );
-		}
-		if ( ! current_user_can( 'jetonomy_flag' ) ) {
 			return $this->permission_error();
 		}
 		return true;
@@ -640,6 +595,13 @@ class Moderation_Controller extends Base_Controller {
 
 	/**
 	 * POST /moderation/flags/{id}/resolve — Resolve a flag as valid or dismissed.
+	 *
+	 * Delegates to Moderation_Service::resolve_flag — the single owner of the
+	 * resolution contract (content trash on valid, related-flag clearing,
+	 * reporter reputation award, jetonomy_flag_resolved hook). This route
+	 * previously called Flag::resolve() directly, so flags resolved through
+	 * the global REST surface skipped all of those side effects while the
+	 * admin-AJAX, CLI, and space-moderation surfaces applied them.
 	 */
 	public function resolve_flag( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$id     = absint( $request->get_param( 'id' ) );
@@ -650,14 +612,10 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'Flag' );
 		}
 
-		$resolved = Flag::resolve( $id, get_current_user_id(), $status );
+		$resolved = Moderation_Service::resolve_flag( get_current_user_id(), $id, $status );
 
-		if ( ! $resolved ) {
-			return new WP_Error(
-				'jetonomy_resolve_failed',
-				__( 'Failed to resolve flag.', 'jetonomy' ),
-				[ 'status' => 500 ]
-			);
+		if ( is_wp_error( $resolved ) ) {
+			return $resolved;
 		}
 
 		return new WP_REST_Response(
@@ -686,7 +644,7 @@ class Moderation_Controller extends Base_Controller {
 		$space_id   = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
 		$expires_at = $request->get_param( 'expires_at' ) ? sanitize_text_field( (string) $request->get_param( 'expires_at' ) ) : null;
 
-		// Cap matrix mirroring the legacy require_ban_permission():
+		// Ban cap matrix:
 		// - jetonomy_moderate OR manage_options always passes.
 		// - space_ban additionally accepts the space-admin delegate from the
 		// body-supplied space_id.
@@ -763,104 +721,47 @@ class Moderation_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Set the status of a post or reply by ID.
-	 *
-	 * @param string $type   'post' or 'reply'.
-	 * @param int    $id     Row ID.
-	 * @param string $status New status value.
-	 * @return bool|WP_Error
-	 */
-	private function set_status( string $type, int $id, string $status ): bool|WP_Error {
-		if ( 'post' === $type ) {
-			if ( ! \Jetonomy\Models\Post::find( $id ) ) {
-				return $this->not_found( 'Post' );
-			}
-			\Jetonomy\Models\Post::update( $id, array( 'status' => $status ) );
-			return true;
-		}
-
-		if ( ! \Jetonomy\Models\Reply::find( $id ) ) {
-			return $this->not_found( 'Reply' );
-		}
-		\Jetonomy\Models\Reply::update( $id, array( 'status' => $status ) );
-		return true;
-	}
-
-	/**
 	 * Approve a single post or reply (shared by single-item POST and bulk REST routes).
 	 *
-	 * Idempotent: if the item is already published the helper still fires the
-	 * `jetonomy_content_moderated` action with the moderator's ID so audit
-	 * trails record the explicit approval click.
+	 * Delegates to the Moderation_Service choke-point, which owns the status
+	 * write, pending-flag resolution, reputation, and the canonical
+	 * `jetonomy_content_moderated` ('approve') action — so REST, admin AJAX,
+	 * abilities, and space-mod all behave identically. Idempotent.
 	 *
 	 * @param string $type 'post' or 'reply'.
 	 * @param int    $id   Row ID.
 	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
 	 */
 	private function approve_item( string $type, int $id ): bool|WP_Error {
-		$result = $this->set_status( $type, $id, 'publish' );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		do_action( 'jetonomy_content_moderated', 'approved', $type, $id, get_current_user_id() );
-
-		return true;
+		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'approve' );
 	}
 
 	/**
 	 * Mark a single post or reply as spam (shared by single-item POST and bulk REST routes).
 	 *
-	 * Applies the -20 reputation penalty to the author and fires the
-	 * `jetonomy_content_moderated` action so any future per-item business rule
-	 * (notify-reporter, AI feedback loop) executes identically across both
-	 * dispatch paths.
+	 * Delegates to the Moderation_Service choke-point (status write, flag
+	 * resolution, author reputation penalty, and the `jetonomy_content_moderated`
+	 * 'spam' action).
 	 *
 	 * @param string $type 'post' or 'reply'.
 	 * @param int    $id   Row ID.
 	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
 	 */
 	private function spam_item( string $type, int $id ): bool|WP_Error {
-		global $wpdb;
-		$table = table( 'post' === $type ? 'posts' : 'replies' );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) );
-
-		if ( ! $row ) {
-			return $this->not_found( 'post' === $type ? 'Post' : 'Reply' );
-		}
-
-		$result = $this->set_status( $type, $id, 'spam' );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		$author_id = (int) $row->author_id;
-		if ( $author_id ) {
-			Reputation::award( $author_id, 'post_removed' );
-		}
-
-		do_action( 'jetonomy_content_moderated', 'spam', $type, $id, get_current_user_id() );
-
-		return true;
+		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'spam' );
 	}
 
 	/**
 	 * Soft-delete a single post or reply (shared by single-item POST and bulk REST routes).
+	 *
+	 * Delegates to the Moderation_Service choke-point (status write, flag
+	 * resolution, and the `jetonomy_content_moderated` 'trash' action).
 	 *
 	 * @param string $type 'post' or 'reply'.
 	 * @param int    $id   Row ID.
 	 * @return bool|WP_Error True on success, WP_Error if the row is missing.
 	 */
 	private function trash_item( string $type, int $id ): bool|WP_Error {
-		$result = $this->set_status( $type, $id, 'trash' );
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		do_action( 'jetonomy_content_moderated', 'trash', $type, $id, get_current_user_id() );
-
-		return true;
+		return Moderation_Service::set_object_status( get_current_user_id(), $type, $id, 'trash' );
 	}
 }

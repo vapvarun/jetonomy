@@ -1,3 +1,9 @@
+---
+title: "Space Settings"
+category: "spaces-and-categories"
+order: 4
+---
+
 Each space can override the global Jetonomy defaults with its own settings. This page is a complete reference for every per-space option, how it interacts with global settings, and how invite links work.
 
 ![Admin space editor showing per-space configuration options](../images/admin-space-edit.png)
@@ -57,6 +63,21 @@ See [Membership & Join Policies](03-membership-policies.md) for the full option 
 
 Controls who can add replies to topics in this space. Overrides the global default for this space only.
 
+### Post Prefixes
+
+**Default:** Off
+
+Prefixes are short, colored labels members can attach to the front of a topic title - for example "Bug", "Idea", "Solved", or "Announcement" - so the listing is easier to scan.
+
+Turn on the **Enable prefixes** toggle to reveal the prefix list, then add one row per prefix. Each row has a **label** (up to 50 characters) and a **color** swatch. Add as many as the space needs, and remove any with the &times; button.
+
+Once prefixes are enabled:
+
+- When a member starts a new topic in the space, an optional **Prefix** dropdown appears on the compose form. They pick one (or leave it blank).
+- The chosen prefix shows as a colored label in front of the topic title on the space listing and the single-topic view, using the color you set.
+
+Prefixes are configured per space, so a "Support" space can offer "Bug / Question / Solved" while an "Announcements" space offers none. You can manage prefixes from either the wp-admin space editor or the [front-end Edit Space page](08-front-end-edit-space.md).
+
 ## How Per-Space Settings Override Global Settings
 
 Jetonomy uses a two-layer settings system:
@@ -80,12 +101,12 @@ Each rule has three parts:
 
 | Type | What it checks |
 |------|---------------|
+| Everyone | Matches every visitor, including logged-out users |
 | Logged In | User is authenticated |
 | WordPress Role | User has a specific WP role (e.g. Editor) |
 | Capability | User has a specific WP capability |
 | Trust Level | User's Jetonomy trust level (0–5) |
-| MemberPress | User has an active MemberPress membership |
-| Paid Memberships Pro | User has an active PMPro level |
+| Membership | User has an active membership. The specific provider - MemberPress or Paid Memberships Pro in free, plus WooCommerce Memberships, Restrict Content Pro, and LearnDash in Pro - is chosen within the rule via the matching membership adapter |
 
 **Access Grant** - What to allow:
 
@@ -105,9 +126,11 @@ Multiple rules can be stacked. Jetonomy grants the highest matching permission l
 
 Invite links let you bring specific people into a space without opening up general membership.
 
+> **Where to manage invite links:** invite links are created and tracked from the **wp-admin** space edit screen (**Jetonomy → Spaces → [space] → Edit → Invite Links**), not from the front-end Edit Space page. A space owner without wp-admin access can run an Invite Only space, but a site administrator generates and shares the links on their behalf.
+
 ### Creating an Invite Link
 
-1. Open the space for editing and go to the **Invite Links** section.
+1. Open the space for editing in wp-admin and go to the **Invite Links** section.
 2. Click **Create Invite Link**.
 3. Set an optional **Usage Limit** (how many people can use this link before it expires).
 4. Set an optional **Expiry Date**.
@@ -126,6 +149,18 @@ When someone visits the link, they are prompted to log in if they are not alread
 The Invite Links table shows each link's current usage count against its limit. Links that have reached their usage limit are automatically deactivated but remain in the table for your records.
 
 You can manually deactivate or delete any invite link at any time.
+
+## Space RSS Feeds
+
+*New in 1.5.0.* Every public space publishes an RSS 2.0 feed of its latest 20 topics at:
+
+```
+https://your-site.com/community/s/{space-slug}/feed/
+```
+
+Feed readers and browsers discover it automatically from the space page. Members and visitors can follow a single space from any RSS reader without creating an account - useful for announcement spaces, changelogs, and "follow this team" workflows.
+
+Privacy is preserved: the feed serves only what a logged-out visitor could already read. Private and hidden spaces return 404 from their feed URL, and switching the whole community to private mode disables all feeds. Developers can adjust feed contents with the `jetonomy_space_feed_posts` filter.
 
 ## What's Next?
 

@@ -233,4 +233,72 @@ class UserProfile extends Model {
 		$decoded = json_decode( $row->settings, true );
 		return is_array( $decoded ) ? $decoded : [];
 	}
+
+	/**
+	 * Build the recent-activity WHERE clause for leaderboard queries.
+	 *
+	 * Centralises the period window shared by the server-rendered leaderboard
+	 * view and the REST leaderboards controller so both surfaces filter on an
+	 * identical population. Returns an empty string for the all-time board.
+	 *
+	 * @param string $period One of 'week', 'month', or 'all' (default).
+	 * @return string SQL fragment beginning with ' WHERE ', or '' for all-time.
+	 */
+	protected static function leaderboard_period_where( string $period ): string {
+		if ( 'week' === $period ) {
+			return ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
+		}
+		if ( 'month' === $period ) {
+			return ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
+		}
+		return '';
+	}
+
+	/**
+	 * Count profiles eligible for the leaderboard in a given period.
+	 *
+	 * Single source of truth for the leaderboard total, used to compute
+	 * accurate pagination on both the server-rendered view and the REST
+	 * response. Replaces the per-surface `count( $rows ) >= $per_page`
+	 * heuristic that rendered a phantom "Load More" when the total was an
+	 * exact multiple of the page size.
+	 *
+	 * @param string $period One of 'week', 'month', or 'all'.
+	 * @return int Total profile count for the period.
+	 */
+	public static function count_for_leaderboard( string $period = 'all' ): int {
+		$where = static::leaderboard_period_where( $period );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() . $where );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
+	 * Fetch one ranked page of leaderboard profiles.
+	 *
+	 * Shared by the server-rendered leaderboard view and the REST controller
+	 * so both render an identical, identically-ordered page.
+	 *
+	 * @param string $period   One of 'week', 'month', or 'all'.
+	 * @param int    $limit    Page size.
+	 * @param int    $offset   Row offset.
+	 * @param string $order_by ORDER BY clause. Trusted: callers pass a fixed
+	 *                         literal or a value already vetted via the
+	 *                         `jetonomy_users_query_args` filter. Defaults to
+	 *                         'reputation DESC'.
+	 * @return object[] Profile rows for the page (empty array when none).
+	 */
+	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC' ): array {
+		$where = static::leaderboard_period_where( $period );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . $where . ' ORDER BY ' . $order_by . ' LIMIT %d OFFSET %d',
+				$limit,
+				$offset
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $rows ? $rows : [];
+	}
 }

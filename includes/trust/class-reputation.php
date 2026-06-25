@@ -31,6 +31,12 @@ class Reputation {
 	 * Some entries are populated for use by WS4-B (currently un-wired callsites).
 	 */
 	private const POINTS_MAP = array(
+		// Small participation award for publishing content. Quality signals
+		// (upvotes/accepts) still dominate; keep these low so the rep economy
+		// isn't gamed by volume. Owners can retune or zero them out via the
+		// reputation_points setting / jetonomy_reputation_points_map filter.
+		'post_created'    => 2,
+		'reply_created'   => 1,
 		'post_upvoted'    => 10,
 		'reply_upvoted'   => 5,
 		'post_downvoted'  => -2,
@@ -91,24 +97,6 @@ class Reputation {
 		 * @param string $action Action key being scored.
 		 */
 		return (int) apply_filters( 'jetonomy_reputation_points_for', $points, $action );
-	}
-
-	/**
-	 * Return every action key with its current point value.
-	 *
-	 * Used by the Settings admin UI so the renderer never has to peek at the
-	 * private POINTS_MAP constant. Keys are the canonical action identifiers;
-	 * values reflect any per-site override that has already been applied.
-	 *
-	 * @return array<string,int>
-	 */
-	public static function action_points_map(): array {
-		$base = (array) apply_filters( 'jetonomy_reputation_points_map', self::POINTS_MAP );
-		$map  = array();
-		foreach ( $base as $action => $unused ) {
-			$map[ $action ] = self::points_for( $action );
-		}
-		return $map;
 	}
 
 	/**

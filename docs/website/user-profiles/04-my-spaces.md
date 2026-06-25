@@ -19,15 +19,16 @@ Since Jetonomy 1.4.0, every signed-in member has a personal page at `/community/
 
 The page is always at `/community/my-spaces/`. It is signed-in only. Visiting the URL while signed out redirects to the login page and returns to My Spaces after a successful sign-in.
 
-There are three built-in ways to reach the page:
+There are two built-in ways to reach the page:
 
 - The **My Spaces** link in the header avatar menu (added automatically in Jetonomy 1.4.0+)
-- The **My Spaces** tab on `/community/u/<your-login>/` (your own profile page)
 - The mobile drawer menu under "Community"
 
-If your theme overrides the header or profile templates, the link may not appear automatically. The page itself still works at the URL.
+If your theme overrides the header template, the link may not appear automatically. The page itself still works at the URL.
 
 ## The Two Sections
+
+![My Spaces page showing the "Spaces you run" section with Admin and Mod role badges and Edit, Mod queue, and Members quick-action buttons, above the "Spaces you're in" section](../images/my-spaces.png)
 
 The page is split into two sections, stacked top to bottom.
 
@@ -38,12 +39,13 @@ The first section lists every space where you are a space admin or space moderat
 For each space, the row shows:
 
 - The space icon and title
-- A role badge ("Admin" or "Moderator")
-- The current unread count
-- The last activity timestamp ("Active 2 hours ago")
-- Quick action buttons: **Visit**, **Edit**, **Members**
+- A role badge ("Admin" or "Mod")
+- The post count and member count
+- Quick action buttons: **Edit** (admins only), **Mod queue**, **Members**
 
-If you run no spaces, this section is replaced with a short empty state: "You don't run any spaces yet. If your community allows it, you can start one." If front-end space creation is enabled for your role, the empty state includes a **Create a space** button that goes to `/community/new-space/`.
+The whole card is a link to the space home, so there is no separate "Visit" button.
+
+If you run no spaces, this section simply does not appear (empty sections are hidden). If you also belong to no spaces, the page shows a single combined empty state - see [Empty State](#empty-state) below.
 
 ### Spaces You're In
 
@@ -52,51 +54,37 @@ The second section lists every space where you are a regular member. These are t
 For each space, the row shows:
 
 - The space icon and title
-- The space type (Forum, Q&A, Ideas, Show & Tell, Social Feed)
-- The current unread count
-- The last activity timestamp
-- Quick action buttons: **Visit**, **Leave**
+- An optional short description
+- The post count and member count
 
-If you have not joined any spaces yet, this section shows a friendly empty state with a **Browse the community** button that goes to the community home.
+The whole card is a link to the space home; member rows have no per-row action buttons.
+
+If you have not joined any spaces yet, this section simply does not appear (empty sections are hidden).
 
 ## What Each Row Tells You
-
-The row layout is designed to answer two questions at a glance: "Is there anything new to read here?" and "What can I do here right now?"
 
 | Element | What it means |
 |---|---|
 | Icon | The Lucide icon picked by the space owner |
-| Title | The space name, linked to the space home |
-| Role badge | "Admin", "Moderator", or no badge for regular members |
-| Unread count | New posts and replies you have not read yet |
-| Last activity | When the most recent post or reply landed in the space |
-| Type label | Forum, Q&A, Ideas, Show & Tell, or Social Feed |
-
-The unread count is per-space, computed from your last-read timestamp. Catching up on a space marks it read and the count goes to zero until new content arrives.
+| Title | The space name; the whole card links to the space home |
+| Role badge | "Admin" or "Mod" on the spaces you run; no badge for regular members |
+| Description | An optional short description excerpt, when the space has one |
+| Post count | Total published topics in the space |
+| Member count | Total members in the space |
 
 ## Quick Actions
 
-Each row carries one to three buttons depending on your role in the space.
+Action buttons appear only on rows in the "Spaces you run" section. Member rows have no action buttons - clicking the card opens the space.
 
-- **Visit** is always present. It opens the space home.
-- **Edit** appears only on rows in the "Spaces you run" section. It opens the front-end Edit Space page covered in the previous article.
-- **Members** appears only on rows in the "Spaces you run" section. It opens the members tab where you can promote, demote, or remove members.
-- **Leave** appears only on rows in the "Spaces you're in" section. Clicking it asks for confirmation and then removes you from the space.
+- **Edit** appears only for spaces you administer. It opens the front-end Edit Space page covered in the previous article.
+- **Mod queue** opens the space's moderation queue.
+- **Members** opens the members tab where you can promote, demote, or remove members.
 
-A space admin who is the only admin cannot leave their own space. The **Leave** button is hidden in that case and a tooltip explains that ownership must be transferred first.
+## Empty State
 
-## Empty States
+Brand-new members often land on My Spaces before they have joined anything. When you neither run nor belong to any space, the page shows a single full-page empty state - "You are not in any spaces yet" with a **Browse spaces** button that goes to the community home.
 
-Brand-new members often land on My Spaces before they have joined anything. The page handles four empty-state combinations:
-
-| You run | You're in | What the page shows |
-|---|---|---|
-| Nothing | Nothing | A single full-page empty state inviting you to browse the community |
-| Nothing | One or more | Section 1 collapsed with a short hint, section 2 normal |
-| One or more | Nothing | Section 1 normal, section 2 collapsed with a "Find spaces to join" link |
-| One or more | One or more | Both sections normal |
-
-The empty states are intentionally friendly and short. The goal is to point new members at the next action, not to make them feel like they are missing out.
+Otherwise, empty sections are simply hidden: if you run spaces but belong to none as a regular member (or vice versa), only the section with content renders. There is no per-section "collapsed" placeholder and no "Create a space" button on this page.
 
 ## Privacy
 
@@ -111,12 +99,12 @@ If you want to see which spaces another user is in, you have to look at their pu
 
 ## Performance
 
-The page paginates server-side at 25 spaces per section. Most members never trigger pagination because they belong to far fewer than 25 spaces. Communities with very active staff may see paginated results in the "Spaces you run" section.
+The page loads all of your spaces with one indexed query per role bucket (the spaces you run, and the spaces you belong to). Space rows are hydrated once each, so there is no per-row N+1 query, and the per-card role label ("Admin" / "Mod") is served from a warmed cache.
 
-Unread counts are read from the same per-user read-status table used everywhere else in Jetonomy. Loading My Spaces does not trigger a separate count query per space; the page issues one batched query and renders.
+> **Note:** The page does not paginate. It loads every space you run and every space you belong to. For the typical member this is a handful of spaces; if you expect members to belong to hundreds of spaces, pagination here is a known gap rather than a shipped feature.
 
 ## What's Next?
 
-The My Spaces page is one entry into your community life. The full profile page covers everything else: activity feed, badges, trust level, and account settings.
+The My Spaces page is one entry into your community life. The full profile page covers the rest of what a member does: their posts, replies, votes, bookmarks, and drafts, alongside their reputation score and trust level. (Profile badges are added by the [Custom Badges](../pro-features/05-custom-badges.md) Pro extension.)
 
 [Your Profile Page →](01-profiles.md)

@@ -64,6 +64,23 @@ class Reply extends Model {
 				self::maybe_auto_join_space( (int) $parent_post->space_id, (int) $data['author_id'] );
 			}
 
+			if ( 'publish' === ( $data['status'] ?? 'publish' ) ) {
+				/**
+				 * Fires when a reply enters or leaves `publish`.
+				 *
+				 * Mirrors `jetonomy_post_publish_transition` for the reply
+				 * path — fired here for replies created directly as publish;
+				 * Reply::update() fires it for later transitions.
+				 *
+				 * @since 1.5.0
+				 *
+				 * @param int    $reply_id   Reply ID.
+				 * @param int    $delta      +1 entering publish, -1 leaving it.
+				 * @param string $created_at Reply creation datetime (MySQL, UTC).
+				 */
+				do_action( 'jetonomy_reply_publish_transition', (int) $id, 1, (string) $data['created_at'] );
+			}
+
 			/**
 			 * Fires after a reply is created.
 			 *
@@ -119,6 +136,9 @@ class Reply extends Model {
 			if ( ! empty( $reply->author_id ) ) {
 				UserProfile::increment_reply_count( (int) $reply->author_id, $delta );
 			}
+
+			/** This action is documented in includes/models/class-reply.php (Reply::create) */
+			do_action( 'jetonomy_reply_publish_transition', $id, $delta, (string) ( $reply->created_at ?? '' ) );
 		}
 
 		return $result;
@@ -163,7 +183,28 @@ class Reply extends Model {
 			return $proceed;
 		}
 
-		return parent::delete( $id );
+		// Load before deletion so a hard delete reverses the same counters a
+		// published reply incremented in create(). REST deletes go through
+		// update( status => trash ), which already handles this; the direct
+		// delete path (CLI content journey, QA fixtures, abilities) must mirror
+		// it so post + author reply_count stay consistent across every delete
+		// mechanism.
+		$reply  = self::find( $id );
+		$result = parent::delete( $id );
+
+		if ( $result && $reply && 'publish' === ( $reply->status ?? '' ) ) {
+			if ( ! empty( $reply->post_id ) ) {
+				Post::increment_reply_count( (int) $reply->post_id, -1 );
+			}
+			if ( ! empty( $reply->author_id ) ) {
+				UserProfile::increment_reply_count( (int) $reply->author_id, -1 );
+			}
+
+			/** This action is documented in includes/models/class-reply.php (Reply::create) */
+			do_action( 'jetonomy_reply_publish_transition', $id, -1, (string) ( $reply->created_at ?? '' ) );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -381,6 +422,30 @@ class Reply extends Model {
 	}
 
 	/**
+	 * Whether a reply id appears anywhere in a threaded tree (any nesting depth).
+	 *
+	 * Canonical membership test for a `get_threaded()` result so callers don't
+	 * each hand-roll a recursive walker. Used by the single-post view to decide
+	 * whether the Q&A accepted-answer callout is a duplicate of an inline reply
+	 * on the current page.
+	 *
+	 * @param array $tree Threaded nodes (each may carry a ->children array).
+	 * @param int   $id   Reply id to search for.
+	 * @return bool
+	 */
+	public static function tree_contains( array $tree, int $id ): bool {
+		foreach ( $tree as $node ) {
+			if ( (int) $node->id === $id ) {
+				return true;
+			}
+			if ( ! empty( $node->children ) && self::tree_contains( $node->children, $id ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Recursively build threaded tree from grouped replies.
 	 *
 	 * @param array $by_parent Replies grouped by parent_id.
@@ -425,6 +490,23 @@ class Reply extends Model {
 		$posts_tbl   = \Jetonomy\table( 'posts' );
 		$spaces_tbl  = \Jetonomy\table( 'spaces' );
 
+		// Space-visibility + per-post is_private gate on the PARENT post: a
+		// reply in a private/hidden space (or under a private post) must not
+		// surface to non-member / non-author viewers of this user's profile.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = array();
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return static::db()->get_results(
 			static::db()->prepare(
@@ -437,12 +519,11 @@ class Reply extends Model {
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish'
+				 WHERE r.author_id = %d AND r.status = 'publish'{$gate_sql}
 				 ORDER BY r.created_at DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, array( $limit, $offset ) )
 			)
 		) ?: array();
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

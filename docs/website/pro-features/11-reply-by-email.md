@@ -2,7 +2,6 @@ Let members reply to community discussions directly from their email client - no
 
 > **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
 
-<!-- TODO screenshot needed: Email notification showing a reply button that posts back to the community (was ../images/pro-reply-by-email-flow.png) -->
 ## What You Will Learn
 
 - How Reply by Email works end to end
@@ -49,7 +48,7 @@ Back in **Jetonomy → Settings → Reply by Email**, enter the reply domain (e.
 
 Jetonomy now generates per-user, per-topic reply addresses using that domain.
 
-<!-- TODO screenshot needed: Reply by Email settings showing inbound URL and reply domain fields (was ../images/pro-reply-by-email-settings.png) -->
+![The Jetonomy, Settings, Reply by Email screen, showing the Inbound Endpoint URL and the reply domain field](../images/pro-reply-by-email-settings.png)
 ## Email Parsing
 
 Jetonomy parses the incoming email using these rules:

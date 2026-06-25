@@ -127,6 +127,7 @@ final class Jetonomy {
 		// callback firing before the user visits a community URL. The deferred
 		// init:99 flush in load_dependencies() still covers version bumps afterwards.
 		require_once JETONOMY_DIR . 'includes/class-router.php';
+		require_once JETONOMY_DIR . 'includes/class-feed.php';
 		( new Router() )->add_rewrite_rules();
 		flush_rewrite_rules();
 		update_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION, true );
@@ -314,26 +315,41 @@ final class Jetonomy {
 		if ( ! get_transient( 'jetonomy_activation_redirect' ) ) {
 			return;
 		}
-		delete_transient( 'jetonomy_activation_redirect' );
+
+		// IMPORTANT: do not consume (delete) the one-shot transient until we are
+		// certain this request is a real browser admin pageview that will be
+		// redirected. Deleting it up-front meant the first ajax/cron/network-admin
+		// request after activation silently ate the transient and the admin never
+		// reached the wizard (Basecamp F15). Each early-return below therefore
+		// leaves the transient intact for the next qualifying pageview.
 
 		// Safety net — never bounce into the wizard if setup already completed.
 		// Belt-and-braces alongside the guard in activate(); protects against
 		// any path that set the transient without consulting setup-complete.
+		// Here we DO consume it: setup is done, so the one-shot has no more work.
 		if ( get_option( 'jetonomy_setup_complete' ) ) {
+			delete_transient( 'jetonomy_activation_redirect' );
 			return;
 		}
 
+		// ajax/cron/network-admin: a logged-in admin is already browsing, so the
+		// next normal admin pageview will redirect. Leave the transient intact —
+		// the original 30s TTL from activate() covers this in-session window.
 		if ( wp_doing_ajax() || wp_doing_cron() || is_network_admin() ) {
 			return;
 		}
 		// Skip the redirect under WP-CLI / WP-Cron-as-CLI / REST contexts.
 		// Browser activation still gets the wizard; `wp plugin install --activate`
 		// stays clean instead of emitting wp-cli's "trying to do a URL redirect"
-		// backtrace. The transient survives until the next browser admin page load.
+		// backtrace. No browser is present, so re-arm with a longer window to
+		// survive until the admin's first real page load.
 		if ( ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
 			set_transient( 'jetonomy_activation_redirect', 1, 5 * MINUTE_IN_SECONDS );
 			return;
 		}
+
+		// Real browser admin request — consume the one-shot and redirect once.
+		delete_transient( 'jetonomy_activation_redirect' );
 		wp_safe_redirect( admin_url( 'admin.php?page=jetonomy-setup' ) );
 		exit;
 	}
@@ -367,6 +383,7 @@ final class Jetonomy {
 
 		// Non-namespaced files still need explicit require
 		require_once JETONOMY_DIR . 'includes/class-router.php';
+		require_once JETONOMY_DIR . 'includes/class-feed.php';
 		require_once JETONOMY_DIR . 'includes/class-template-loader.php';
 		new Router();
 
@@ -428,6 +445,10 @@ final class Jetonomy {
 		Adapters\Adapter_Registry::register_email( 'wp-mail', new Adapters\WP_Mail_Adapter() );
 		Adapters\Adapter_Registry::register_search( 'fulltext', new Search\Fulltext_Search() );
 
+		// Community media library hygiene: tag member uploads and hide them from
+		// the admin Media Library by default. register() self-gates to wp-admin.
+		( new Media_Library() )->register();
+
 		// MemberPress adapter (conditional)
 		if ( defined( 'MEPR_VERSION' ) ) {
 			$mepr = new Adapters\MemberPress_Adapter();
@@ -488,6 +509,10 @@ final class Jetonomy {
 
 		// CAPTCHA protection (reCAPTCHA v3 / Cloudflare Turnstile).
 		Captcha\Captcha_Manager::init();
+
+		// Local avatars — resolves jt_user_profiles.avatar_url for every
+		// get_avatar()/get_avatar_url() caller, Gravatar fallback.
+		Avatar::init();
 
 		new Notifications\Notifier();
 		new Cron();
@@ -572,15 +597,17 @@ final class Jetonomy {
 		$token   = sanitize_text_field( wp_unslash( $_GET['jetonomy_unsubscribe'] ) );
 		$user_id = absint( $_GET['uid'] );
 		$type    = sanitize_key( wp_unslash( $_GET['type'] ?? '' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- one-click email unsubscribe is authenticated by the signed token, not a nonce.
+		$expires = isset( $_GET['jetonomy_unsub_exp'] ) ? absint( $_GET['jetonomy_unsub_exp'] ) : 0;
 
 		if ( ! $user_id || ! $type ) {
 			return;
 		}
 
-		// Verify token.
-		$expected = wp_hash( $user_id . ':' . $type . ':unsubscribe' );
-		if ( ! hash_equals( $expected, $token ) ) {
-			wp_die( esc_html__( 'Invalid unsubscribe link.', 'jetonomy' ), '', array( 'response' => 403 ) );
+		// Verify the signed, time-limited token (legacy non-expiring links still
+		// accepted during the deprecation window — see Notifier::verify_unsubscribe).
+		if ( ! Notifications\Notifier::verify_unsubscribe( $user_id, $type, $token, $expires ) ) {
+			wp_die( esc_html__( 'This unsubscribe link is invalid or has expired.', 'jetonomy' ), '', array( 'response' => 403 ) );
 		}
 
 		// Disable this notification type for the user.

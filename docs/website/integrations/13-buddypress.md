@@ -1,7 +1,5 @@
 When BuddyPress is active alongside Jetonomy, groups and forum spaces feel like one membership. Members who join a group are enrolled in the paired forum space, new topics are announced on the group activity stream, and comments on those activities flow back to the topic as replies.
 
-![Jetonomy admin settings with the BuddyPress integration active](../images/admin-settings.png)
-
 ## What You Will Learn
 
 - How the integration auto-detects BuddyPress
@@ -12,9 +10,11 @@ When BuddyPress is active alongside Jetonomy, groups and forum spaces feel like 
 
 ## Auto-Detection
 
-Jetonomy checks for BuddyPress's Groups component on every load via `bp_is_active( 'groups' )`. When the component is active, the integration layer activates automatically. No toggle to flip, no bootstrap code to add.
+Jetonomy detects BuddyPress automatically when the Groups component is active - there is nothing to install or configure to turn the integration on. The pairing options, member sync, the Forum tab, and the profile nav all become available as soon as both plugins are active.
 
-The broadcast and comment-bridge parts also check the Activity component at runtime, so a BuddyPress install with Groups enabled but Activity disabled keeps the rest of the integration working and silently skips the activity pieces.
+If you have BuddyPress Groups enabled but the Activity component turned off, everything still works - Jetonomy simply skips the activity-stream broadcast and the comment bridge, which need Activity.
+
+> **Developer note:** detection runs on every page load via `bp_is_active( 'groups' )`; the broadcast and comment-bridge pieces additionally check `bp_is_active( 'activity' )` at runtime.
 
 ## Pairing Groups and Spaces
 
@@ -39,7 +39,9 @@ Once a group is paired, membership changes propagate both ways:
 - **Promoted to group moderator** → space moderator.
 - **Demoted** → back to space member.
 
-Unlike the FluentCommunity integration, BuddyPress member sync is bidirectional for both adds and leaves. Groups and forum spaces are treated as a single membership, which is the model most BuddyPress sites expect. If your site needs add-only semantics, remove `groups_leave_group`, `groups_remove_member`, and `groups_ban_member` from the BuddyPress integration at a hook-filter level.
+Unlike the FluentCommunity integration, BuddyPress member sync is bidirectional for both adds and leaves. Groups and forum spaces are treated as a single membership, which is the model most BuddyPress sites expect.
+
+> **Want add-only sync?** If you would rather a member who leaves a group keep their forum-space access (the way the FluentCommunity integration behaves), a developer can disable leave-sync with a few lines of code. See [Disable member-leave propagation](../developer-guide/07-buddypress-integration.md#extending) in the BuddyPress integration reference.
 
 ## Forum Tab on BP Group Pages
 
@@ -80,7 +82,7 @@ Properties:
 - **Private/hidden groups stay private.** The activity is posted with `hide_sitewide` set, so site-wide activity feeds do not leak the item outside the group.
 - **Paragraph breaks preserved.** The excerpt keeps its structure because the integration whitelists `<br>` and `<p>` on `bp_activity_allowed_tags` for broadcast content (tags are harmless on their own, with no attributes allowed through).
 
-Broadcast is enabled by default and can be turned off via the `jetonomy_bp_broadcast` option.
+Broadcast is enabled by default. To turn it off, go to **Jetonomy → Settings → Integrations** and clear the **Broadcast topics to group activity** checkbox. (This tab appears only while BuddyPress Groups is active.)
 
 ## Comment-to-Reply Bridge (New)
 
@@ -88,7 +90,7 @@ When a member comments on one of those broadcast activity items, the comment is 
 
 Only comments on broadcast activities round-trip. Comments on native BP activity posts (status updates, other plugins' activity types) are left alone. The integration identifies broadcast activities by a `jetonomy_post_id` activity-meta marker it sets at post time.
 
-Add-only by design: edits and deletes on the BuddyPress side do not propagate back. The forum thread stays the durable record. Enabled by default; toggle via `jetonomy_bp_comment_bridge`.
+Add-only by design: edits and deletes on the BuddyPress side do not propagate back. The forum thread stays the durable record. Enabled by default. To turn it off, go to **Jetonomy → Settings → Integrations** and clear the **Round-trip activity comments** checkbox - it requires **Broadcast topics to group activity** to stay on.
 
 ## Identity Keying
 

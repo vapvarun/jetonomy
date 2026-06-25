@@ -8,9 +8,11 @@ The Extensions screen is your control panel for turning individual Jetonomy Pro 
 
 Go to **Jetonomy → Extensions** to access this screen. This menu item is added by Jetonomy Pro and is not visible on free-only installs.
 
+![Extensions screen showing the Pro extension cards in a grid with category filters and on/off toggles](../images/pro-extensions.png)
+
 ## Required Capability
 
-Toggling extensions requires `manage_options`. Only WordPress Administrators can enable or disable extensions.
+The Extensions screen is gated by `jetonomy_manage_settings`, which is administrator-only by default. Only WordPress Administrators can open the screen and enable or disable extensions.
 
 ## The Extension Grid
 
@@ -57,6 +59,7 @@ Click the toggle switch on an active card. The page reloads and the extension is
 | SEO Pro | SEO | Schema.org markup, sitemaps, canonical handling |
 | Reply By Email | Communication | Members reply to threads by replying to notification emails |
 | AI Integration | AI | Spam detection, post summarization, semantic search, content suggestions |
+| Site Announcements | Moderation | Pin a post to the top of every space for site-wide updates |
 
 For detailed setup instructions for each extension, see the [Pro Features documentation](../pro-features/00-getting-started-pro.md).
 

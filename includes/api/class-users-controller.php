@@ -205,6 +205,7 @@ class Users_Controller extends Base_Controller {
 					'trust_level_name'    => Trust_Levels::name( $trust_level ),
 					'spaces_joined_count' => $spaces_count,
 					'settings'            => UserProfile::get_settings( $user_id ),
+					'email_opt_out'       => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
 				]
 			),
 			200
@@ -337,6 +338,17 @@ class Users_Controller extends Base_Controller {
 			}
 		}
 
+		// Master email opt-out (global kill-switch the verification reminder
+		// and future digests honour). Stored as user meta, not in the
+		// settings JSON, because the reminder reads get_user_meta directly.
+		if ( null !== $request->get_param( 'email_opt_out' ) ) {
+			if ( $request->get_param( 'email_opt_out' ) ) {
+				update_user_meta( $user_id, 'jetonomy_email_opt_out', 1 );
+			} else {
+				delete_user_meta( $user_id, 'jetonomy_email_opt_out' );
+			}
+		}
+
 		// update display_name via wp_update_user.
 		if ( null !== $request->get_param( 'display_name' ) ) {
 			$display_name = sanitize_text_field( (string) $request->get_param( 'display_name' ) );
@@ -369,6 +381,7 @@ class Users_Controller extends Base_Controller {
 					'display_name'     => $wp_user->display_name,
 					'trust_level_name' => Trust_Levels::name( (int) ( $profile->trust_level ?? 0 ) ),
 					'settings'         => UserProfile::get_settings( $user_id ),
+					'email_opt_out'    => (bool) get_user_meta( $user_id, 'jetonomy_email_opt_out', true ),
 				]
 			),
 			200
@@ -390,16 +403,36 @@ class Users_Controller extends Base_Controller {
 		$offset     = (int) $pagination['offset'];
 
 		global $wpdb;
-		$tbl = table( 'posts' );
+		$tbl        = table( 'posts' );
+		$spaces_tbl = table( 'spaces' );
+
+		// Space-visibility + per-post is_private gate so private/hidden-space
+		// posts (and private posts in public spaces) stay hidden from
+		// non-members / non-authors. Cross-space context → $space_id null.
+		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
+
+		$gate_sql    = '';
+		$gate_params = [];
+		if ( '1=1' !== $space_vis_sql ) {
+			$gate_sql   .= ' AND ' . $space_vis_sql;
+			$gate_params = array_merge( $gate_params, $space_vis_params );
+		}
+		if ( '' !== $priv_sql ) {
+			$gate_sql   .= ' AND ' . $priv_sql;
+			$gate_params = array_merge( $gate_params, $priv_params );
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$tbl} WHERE author_id = %d AND status = 'publish' ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				"SELECT p.* FROM {$tbl} p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$id,
-				$limit,
-				$offset
+				...array_merge( $gate_params, [ $limit, $offset ] )
 			)
 		) ?: [];
 
@@ -407,8 +440,11 @@ class Users_Controller extends Base_Controller {
 		$total = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT COUNT(*) FROM {$tbl} WHERE author_id = %d AND status = 'publish'",
-				$id
+				"SELECT COUNT(*) FROM {$tbl} p
+				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
+				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}",
+				$id,
+				...$gate_params
 			)
 		);
 
@@ -484,21 +520,25 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function get_update_args(): array {
 		return [
-			'display_name' => [
+			'display_name'  => [
 				'type'     => 'string',
 				'required' => false,
 			],
-			'bio'          => [
+			'bio'           => [
 				'type'     => 'string',
 				'required' => false,
 			],
-			'avatar_url'   => [
+			'avatar_url'    => [
 				'type'     => 'string',
 				'required' => false,
 				'format'   => 'uri',
 			],
-			'settings'     => [
+			'settings'      => [
 				'type'     => 'object',
+				'required' => false,
+			],
+			'email_opt_out' => [
+				'type'     => 'boolean',
 				'required' => false,
 			],
 		];

@@ -101,6 +101,7 @@ $jt_can_moderate_reply = $jt_reply_viewer
 		?>
 		<?php if ( jetonomy_space_allows_voting( $space ?? null ) ) : ?>
 		<div class="jt-vote-cluster" role="group" aria-label="<?php esc_attr_e( 'Vote on this reply', 'jetonomy' ); ?>">
+			<?php if ( is_user_logged_in() ) : ?>
 			<button class="jt-act <?php echo 1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyUp"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
@@ -108,16 +109,29 @@ $jt_can_moderate_reply = $jt_reply_viewer
 				aria-label="<?php esc_attr_e( 'Vote up', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
 			</button>
-			<?php
-			// Hide downvote on own replies — self-downvote was landing at
-			// -1 (Basecamp 9803889865).
-			if ( (int) $reply->author_id !== get_current_user_id() ) :
-				?>
+				<?php
+				// Hide downvote on own replies — self-downvote was landing at
+				// -1 (Basecamp 9803889865).
+				if ( (int) $reply->author_id !== get_current_user_id() ) :
+					?>
 			<button class="jt-act <?php echo -1 === $reply_viewer_vote ? 'voted' : ''; ?>"
 				data-wp-on--click="actions.voteReplyDown"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
 				title="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Vote down', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'chevron-down', 14 ); ?></button>
+				<?php endif; ?>
+			<?php else : ?>
+				<?php
+				// Logged-out: reply votes were clickable buttons that silently
+				// failed on click (no auth). Match the post-vote control — a
+				// "Log in to vote" link that takes the intent somewhere.
+				?>
+			<a class="jt-act jt-act-login"
+				href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"
+				title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
+				aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
+				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>
+			</a>
 			<?php endif; ?>
 		</div>
 		<?php endif; ?>

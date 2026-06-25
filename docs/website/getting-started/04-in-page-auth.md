@@ -1,49 +1,38 @@
 ---
 title: "In-Page Authentication"
 category: "getting-started"
-order: 4
+order: 5
 ---
 
-Before Jetonomy 1.4.0, anything that required a logged-in member bounced visitors to `wp-login.php`. That meant signing in to upvote a post or reply to a thread sent visitors to a generic WordPress login screen, then back to the community after a redirect. From 1.4.0 onward, Jetonomy handles Login, Register, and Forgot Password in-page through its own `/auth/*` REST endpoints, with forms that match your theme and the rest of the community UI.
+# In-Page Authentication
+
+Jetonomy can handle Login, Register, and Forgot Password right inside your community pages, with forms that match your theme instead of bouncing members to the generic WordPress login screen. It does this through its own `/auth/*` REST endpoints, so signing in to upvote a post or reply to a thread happens in place, without a jarring redirect to `wp-login.php` and back. This is an optional enhancement you can set up at any time after launch.
 
 ## What You Will Learn
 
 - Where the in-page auth forms appear and how they behave
-- Why the new flow matters for member experience
+- Why the Login block improves member experience over a bare login screen
 - How captcha protection now covers signup, not just posting
-- Who still uses `wp-login.php` and why
-- How auth behaves in Private community mode
+- How signed-out interactions and Private community mode route visitors
 - How to customize the auth surface with theme tokens
 
 ## Where the Forms Appear
 
-In-page auth shows up in two ways depending on what the visitor is doing.
+![The Jetonomy Login block rendered inline on a page, showing the Login, Register, and Lost Password tabs](../images/getting-started/login-block-tabs.png)
 
-### Modals on Interaction
+In-page auth is delivered by the **Login block** (`wp:jetonomy/login`). Place the block on any page or template, and it renders Login, Register, and Lost Password tabs inline, styled to match your community. The forms submit to Jetonomy's own `/auth/*` REST endpoints, so a visitor signs in or registers without ever leaving the page the block is on.
 
-When a signed-out visitor tries to do something that requires an account, Jetonomy opens a modal directly over the page they're on. The modal carries Login, Register, and Lost Password tabs.
+Use it wherever a sign-in surface makes sense:
 
-Common triggers:
+- A dedicated member-login page you build with the block
+- A sidebar or footer widget area
+- A landing page that gates content behind membership
 
-- Clicking the upvote arrow on a post or reply
-- Starting a reply
-- Clicking "Follow" on a space or member
-- Trying to subscribe to a tag
-- Clicking "Bookmark"
+### Signed-Out Interactions
 
-After successful sign-in, the modal closes and the action the visitor was trying to take happens automatically. They never lose their place.
+When a signed-out visitor tries to do something that requires an account - upvoting a post, starting a reply, following a space, subscribing to a tag, or bookmarking - Jetonomy sends them to the WordPress login screen (`wp_login_url`) with a `redirect_to` parameter back to the page they were on. After they sign in, they land back where they started.
 
-### Dedicated Pages
-
-Three full-page routes are always available:
-
-| Route | Purpose |
-|---|---|
-| `/community/login/` | Direct link for sign-in |
-| `/community/register/` | Direct link for new accounts |
-| `/community/lost-password/` | Direct link for password reset |
-
-These pages are useful for sharing in marketing emails, embedding in your nav, or sending in support replies. They use the same forms and the same `/auth/*` endpoints as the modal, so behaviour is consistent.
+For a fully in-page experience, point those visitors at a page that hosts the Login block instead of relying on the default `wp-login.php` redirect.
 
 ## Why This Matters
 
@@ -53,7 +42,7 @@ The old `wp-login.php` flow worked, but it had three real problems:
 2. **Lost context.** Visitors who clicked "Reply" had to sign in, then find their way back to the thread. WordPress's redirect handling did not always land them on the right page, especially with theme-specific URLs.
 3. **Slow perceived load.** Two full page navigations for what should be a quick "sign me in and let me reply" step.
 
-In-page auth fixes all three. The forms render where the visitor is, look like the rest of the community, and pick up the visitor's intended action when they finish signing in.
+The Login block fixes all three. The forms render inline on the page you place the block on, look like the rest of the community, and submit through the `/auth/*` endpoints without a full page navigation.
 
 ## Captcha Now Protects Signup
 
@@ -78,27 +67,23 @@ Choose whichever fits your stack. Turnstile is recommended if you're privacy-con
 
 ## Who Still Uses wp-login.php
 
-In-page auth covers your community. The standard WordPress site-wide login is unchanged.
+The Login block gives members an in-page sign-in surface. The standard WordPress site-wide login is unchanged.
 
-Administrators (anyone with the `manage_options` capability) can still sign in at `wp-login.php` and reach `wp-admin/`. That's intentional. Site owners need a reliable way to get into the admin area even if community pages have an issue, and security plugins, two-factor plugins, and SSO integrations all hook into `wp-login.php`.
+Administrators (anyone with the `manage_options` capability) sign in at `wp-login.php` and reach `wp-admin/`. That's intentional. Site owners need a reliable way to get into the admin area even if community pages have an issue, and security plugins, two-factor plugins, and SSO integrations all hook into `wp-login.php`.
 
 In practice:
 
-- Members never need to visit `wp-login.php`
-- Admins can use either `wp-login.php` (for admin access) or `/community/login/` (to log in as a member)
+- Members can use a page hosting the Login block, or fall back to `wp-login.php`
+- Signed-out interactions that require an account redirect to `wp-login.php` unless you route them to a Login-block page
 - Any plugin you have that customises `wp-login.php` (login restrictions, two-factor, branding) still works for admin login
 
 ## Private Community Mode
 
-If you've set your community to Private (under **Jetonomy → Settings → Privacy**), signed-out visitors can only reach three pages:
+If you've set your community to Private (the **Public / Private** access control under **Jetonomy → Settings → General → Access Control**), signed-out visitors cannot read any community content.
 
-- `/community/login/`
-- `/community/register/`
-- `/community/lost-password/`
+Every community URL redirects an anonymous visitor to the WordPress login screen (`wp_login_url`) with a `redirect_to` parameter back to the page they were trying to reach, so they land there as soon as they sign in. If you've built a page with the Login block, point your members at it for an in-page sign-in instead.
 
-Every other community URL redirects to `/community/login/` with a `redirect_to` parameter, so the visitor lands on the page they were trying to reach as soon as they sign in.
-
-Registration can be disabled separately if you only want to allow invited members. In that case the Register tab is hidden, and `/community/register/` redirects to `/community/login/`.
+Registration can be disabled separately if you only want to allow invited members. In that case the Login block hides its Register tab.
 
 ## Customization
 
@@ -106,12 +91,13 @@ The auth surface uses the same `--jt-*` design tokens as the rest of Jetonomy. T
 
 ### Light Auth Surface in Dark Mode
 
-There's one intentional exception: the Login Block and the modal auth forms stay in light mode even when the rest of your community is in dark mode. This is a deliberate UX choice. Sign-in forms in dark mode are statistically harder to read and easier to mistype, especially on mobile. Keeping auth surfaces light maintains form readability where it matters most: at the point of conversion.
+![The Login block staying light while the surrounding community page is in dark mode](../images/getting-started/login-block-light-in-dark-mode.png)
+
+There's one intentional exception: the Login block stays in light mode even when the rest of your community is in dark mode. This is a deliberate UX choice. Sign-in forms in dark mode are statistically harder to read and easier to mistype, especially on mobile. Keeping the auth surface light maintains form readability where it matters most: at the point of conversion.
 
 If you want to override this and run a dark auth surface (for a fully dark community theme), you can do it via CSS:
 
 ```css
-.jt-auth-modal,
 .jt-login-block {
   --jt-bg: #1a1a1a;
   --jt-text: #f5f5f5;
@@ -122,20 +108,8 @@ If you want to override this and run a dark auth surface (for a fully dark commu
 
 All auth form labels are translatable through the standard WordPress translation pipeline. They use the `jetonomy` text domain. If you're running a translated site, the forms pick up your translations on the next load.
 
-### Replacing the Forms Entirely
-
-For deep customisation (e.g. adding a "Sign in with Google" button via your SSO plugin), the auth templates are theme-overridable:
-
-```
-your-theme/jetonomy/auth/login-form.php
-your-theme/jetonomy/auth/register-form.php
-your-theme/jetonomy/auth/lost-password-form.php
-```
-
-Copy from `wp-content/plugins/jetonomy/templates/auth/` to start.
-
 ## What's Next?
 
-Learn how Jetonomy's in-product modal toolkit replaces native browser dialogs across the community.
+With onboarding complete, fine-tune your community in the settings screens, starting with General settings for your community URL and access controls.
 
-[Modals and Confirmations](../discussions/09-modals-confirmations.md)
+[General Settings →](../admin-settings/01-general.md)

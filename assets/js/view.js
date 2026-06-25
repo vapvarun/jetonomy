@@ -125,12 +125,8 @@ function jetonomySpacePicker( title, excludeSpaceId ) {
 		overlay.addEventListener( 'click', ( e ) => { if ( e.target === overlay ) { overlay.remove(); resolve( null ); } } );
 		document.body.appendChild( overlay );
 
-		// Derive API base: prefer the interactive element's data attribute, fall back to wpApiSettings.
-		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
-			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
-
-		fetch( apiBase + '/spaces', { credentials: 'same-origin' } )
-			.then( ( r ) => r.json() )
+		window.jetonomyRest.restFetch( '/spaces' )
+			.then( ( r ) => r.data || {} )
 			.then( ( data ) => {
 				while ( select.firstChild ) select.removeChild( select.firstChild );
 				const defaultOpt = document.createElement( 'option' );
@@ -310,8 +306,6 @@ function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 		document.body.appendChild( overlay );
 		searchInput.focus();
 
-		const apiBase = document.querySelector( '[data-wp-interactive="jetonomy"]' )?.dataset?.apiBase
-			|| ( window.wpApiSettings?.root ? window.wpApiSettings.root.replace( /\/$/, '' ) + '/jetonomy/v1' : '/wp-json/jetonomy/v1' );
 
 		const renderEmpty = ( message, isError ) => {
 			while ( resultsList.firstChild ) resultsList.removeChild( resultsList.firstChild );
@@ -379,8 +373,8 @@ function jetonomyPostPicker( title, excludePostId, spaceId, sourceTitle ) {
 					return;
 				}
 				resultsList.classList.add( 'is-loading' );
-				fetch( `${ apiBase }/search?q=${ encodeURIComponent( q ) }&type=post`, { credentials: 'same-origin' } )
-					.then( r => r.json() )
+				window.jetonomyRest.restFetch( `/search?q=${ encodeURIComponent( q ) }&type=post` )
+					.then( r => r.data || {} )
 					.then( data => {
 						resultsList.classList.remove( 'is-loading' );
 						const posts = ( data.data || data.results || data || [] ).filter( p => String( p.id ) !== String( excludePostId ) );
@@ -430,6 +424,256 @@ function triggerOf( event ) {
     return ( event && event.currentTarget ) || null;
 }
 
+
+// ── Avatar square-crop helpers (1.5.0) ─────────────────────────────────────
+// Plain module-scope state: the crop dialog is a single instance per page.
+const avatarCrop = { file: null, input: null, url: '', scale: 1, x: 0, y: 0, bound: false };
+
+function avatarCropLayout() {
+    const viewport = document.getElementById( 'jt-crop-viewport' );
+    const img      = document.getElementById( 'jt-crop-image' );
+    if ( ! viewport || ! img || ! img.naturalWidth ) return;
+
+    const vp   = viewport.clientWidth;
+    // Cover the square viewport at scale 1, scale up from there.
+    const base = ( vp / Math.min( img.naturalWidth, img.naturalHeight ) ) * avatarCrop.scale;
+    const w    = img.naturalWidth * base;
+    const h    = img.naturalHeight * base;
+
+    // Clamp the pan so the image always covers the viewport.
+    const maxX = Math.max( 0, ( w - vp ) / 2 );
+    const maxY = Math.max( 0, ( h - vp ) / 2 );
+    avatarCrop.x = Math.min( maxX, Math.max( -maxX, avatarCrop.x ) );
+    avatarCrop.y = Math.min( maxY, Math.max( -maxY, avatarCrop.y ) );
+
+    img.style.width     = w + 'px';
+    img.style.height    = h + 'px';
+    img.style.transform = 'translate(calc(-50% + ' + avatarCrop.x + 'px), calc(-50% + ' + avatarCrop.y + 'px))';
+}
+
+function avatarCropBindDrag() {
+    if ( avatarCrop.bound ) return;
+    avatarCrop.bound = true;
+
+    // Native Esc fires 'close' without going through our cancel action -
+    // release the object URL and reset the file input there too.
+    document.getElementById( 'jt-avatar-crop' )?.addEventListener( 'close', () => {
+        if ( avatarCrop.url ) URL.revokeObjectURL( avatarCrop.url );
+        if ( avatarCrop.input ) avatarCrop.input.value = '';
+        avatarCrop.url = '';
+    } );
+
+    const viewport = document.getElementById( 'jt-crop-viewport' );
+    if ( ! viewport ) return;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let originX = 0;
+    let originY = 0;
+    viewport.addEventListener( 'pointerdown', ( e ) => {
+        dragging = true;
+        startX   = e.clientX;
+        startY   = e.clientY;
+        originX  = avatarCrop.x;
+        originY  = avatarCrop.y;
+        viewport.setPointerCapture( e.pointerId );
+        e.preventDefault();
+    } );
+    viewport.addEventListener( 'pointermove', ( e ) => {
+        if ( ! dragging ) return;
+        avatarCrop.x = originX + ( e.clientX - startX );
+        avatarCrop.y = originY + ( e.clientY - startY );
+        avatarCropLayout();
+    } );
+    const end = () => { dragging = false; };
+    viewport.addEventListener( 'pointerup', end );
+    viewport.addEventListener( 'pointercancel', end );
+}
+
+function avatarCropRender() {
+    return new Promise( ( resolve ) => {
+        const viewport = document.getElementById( 'jt-crop-viewport' );
+        const img      = document.getElementById( 'jt-crop-image' );
+        if ( ! viewport || ! img || ! img.naturalWidth ) {
+            resolve( null );
+            return;
+        }
+        const vp    = viewport.clientWidth;
+        const base  = ( vp / Math.min( img.naturalWidth, img.naturalHeight ) ) * avatarCrop.scale;
+        const size  = 512;
+        // Viewport center maps to image center + pan offset (in display px).
+        const srcW  = vp / base;
+        const srcX  = ( img.naturalWidth / 2 ) - ( avatarCrop.x / base ) - ( srcW / 2 );
+        const srcY  = ( img.naturalHeight / 2 ) - ( avatarCrop.y / base ) - ( srcW / 2 );
+
+        const canvas  = document.createElement( 'canvas' );
+        canvas.width  = size;
+        canvas.height = size;
+        const ctx2d   = canvas.getContext( '2d' );
+        ctx2d.imageSmoothingQuality = 'high';
+        ctx2d.drawImage( img, srcX, srcY, srcW, srcW, 0, 0, size, size );
+
+        const isPng = avatarCrop.file && 'image/png' === avatarCrop.file.type;
+        canvas.toBlob( resolve, isPng ? 'image/png' : 'image/jpeg', 0.9 );
+    } );
+}
+
+function avatarCropClose() {
+    const dialog = document.getElementById( 'jt-avatar-crop' );
+    if ( dialog && dialog.open ) dialog.close();
+    if ( avatarCrop.url ) URL.revokeObjectURL( avatarCrop.url );
+    if ( avatarCrop.input ) avatarCrop.input.value = '';
+    avatarCrop.file  = null;
+    avatarCrop.input = null;
+    avatarCrop.url   = '';
+}
+
+// Upload a (possibly cropped) avatar file via the shared media pipeline and
+// stage the URL in the form. Generator so store actions can yield* into it.
+function* avatarUpload( file, input ) {
+    if ( ! window.jetonomyRest || typeof window.jetonomyRest.restFetch !== 'function' ) {
+        if ( window.bnToast ) window.bnToast( state.i18n?.failedSaveProfile || 'Failed to save profile.', 'error' );
+        return;
+    }
+    const fd = new FormData();
+    fd.append( 'file', file );
+
+    const result = yield window.jetonomyRest.restFetch( '/media', { method: 'POST', body: fd } );
+    input.value  = '';
+
+    if ( ! result.ok || ! result.data || ! result.data.url ) {
+        const msg = ( result.data && result.data.message ) || state.i18n?.failedSaveProfile || 'Failed to save profile.';
+        if ( window.bnToast ) window.bnToast( msg, 'error' );
+        return;
+    }
+
+    const form   = input.closest( 'form' );
+    const hidden = form?.querySelector( '[name="avatar_url"]' );
+    if ( hidden ) hidden.value = result.data.url;
+
+    const preview = document.getElementById( 'jt-avatar-preview' );
+    if ( preview ) preview.src = result.data.url;
+    document.getElementById( 'jt-avatar-remove' )?.removeAttribute( 'hidden' );
+}
+
+/**
+ * Append a freshly-posted TOP-LEVEL reply in place instead of full-reloading
+ * the thread. Re-fetches the current thread (HTML, not JSON — same approach as
+ * the Load More handler), lifts out the server-rendered card for the new reply,
+ * appends it to #jt-replies-container, and hydrates it so its action buttons
+ * (vote/reply/quote/more) work immediately. Returns true on success; on any
+ * miss (paginated thread where the reply isn't on this page, markup change,
+ * network error) returns false so the caller can fall back to a reload.
+ *
+ * @param {number|string} newId Reply id from the create response.
+ * @return {Promise<boolean>}
+ */
+async function appendNewReply( newId ) {
+    try {
+        const container = document.getElementById( 'jt-replies-container' );
+        if ( ! container || ! newId ) return false;
+        if ( container.querySelector( '[data-reply-id="' + newId + '"]' ) ) return true; // already there
+        const res = await fetch( window.location.href, { credentials: 'same-origin' } );
+        if ( ! res.ok ) return false;
+        const doc = new DOMParser().parseFromString( await res.text(), 'text/html' );
+        const fresh = doc.getElementById( 'jt-replies-container' );
+        const marker = fresh?.querySelector( '[data-reply-id="' + newId + '"]' );
+        if ( ! marker ) return false;
+        // Climb to the top-level wrapper (direct child of the container).
+        let node = marker;
+        while ( node && node.parentElement !== fresh ) node = node.parentElement;
+        if ( ! node ) return false;
+        const adopted = document.importNode( node, true );
+        container.appendChild( adopted );
+        if ( typeof window.jetonomyHydrateInteractive === 'function' ) {
+            window.jetonomyHydrateInteractive( [ adopted ] );
+        }
+        // Bump any reply-count pills so the header stays in sync.
+        document.querySelectorAll( '.jt-replies-section .jt-count-pill' ).forEach( ( pill ) => {
+            const n = parseInt( pill.textContent, 10 );
+            if ( ! isNaN( n ) ) pill.textContent = String( n + 1 );
+        } );
+        adopted.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+        return true;
+    } catch ( e ) {
+        return false;
+    }
+}
+
+/** Mark a notifications-page row read in place (ported from notifications-page.js). */
+function notifMarkRowRead( row ) {
+    row.classList.remove( 'unread' );
+    row.setAttribute( 'data-jt-notif-read', '1' );
+    const dot = row.querySelector( '.jt-notif-dot' );
+    if ( dot ) dot.remove();
+    const markBtn = row.querySelector( '[data-jt-notif-action="mark_read"]' );
+    if ( markBtn ) {
+        const li = markBtn.closest( 'li' );
+        if ( li ) li.remove();
+    }
+}
+
+/** Refresh the notifications bulk toolbar count + visibility from current checks. */
+function notifUpdateBulkbar() {
+    const bulkbar = document.querySelector( '[data-jt-notif-bulkbar]' );
+    const list = document.querySelector( '[data-jt-notif-list]' );
+    if ( ! bulkbar || ! list ) return;
+    const checked = list.querySelectorAll( '.jt-notif-cb:checked' );
+    const countEl = bulkbar.querySelector( '[data-jt-notif-selected-count]' );
+    if ( countEl ) countEl.textContent = String( checked.length );
+    if ( checked.length > 0 ) bulkbar.removeAttribute( 'hidden' );
+    else bulkbar.setAttribute( 'hidden', '' );
+}
+
+/** Set the cover-image preview within a form. Shared by the new-space +
+ * edit-space cover uploaders (data-jt-cover-* markup is identical on both). */
+// Approve/deny a pending join request from the space-members mod panel.
+// Returns a promise so the Interactivity action can `yield` it. On success
+// the row is removed; when the last row goes, the whole panel is removed.
+function jtModerateJoinRequest( btn, action ) {
+    const spaceId   = btn && btn.getAttribute( 'data-space-id' );
+    const requestId = btn && btn.getAttribute( 'data-request-id' );
+    if ( ! spaceId || ! requestId ) return Promise.resolve();
+    const row = btn.closest( '[data-jt-pending-row]' );
+    if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = true; } );
+    return window.jetonomyRest.restFetch(
+        '/spaces/' + parseInt( spaceId, 10 ) + '/join-requests/' + parseInt( requestId, 10 ) + '/' + action,
+        { method: 'POST', body: {} }
+    ).then( ( res ) => {
+        if ( ! res || ! res.ok ) {
+            if ( row ) row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
+            return;
+        }
+        if ( ! row ) return;
+        const list = row.parentNode;
+        row.remove();
+        if ( list && ! list.querySelector( '[data-jt-pending-row]' ) ) {
+            const section = list.closest( '.jt-pending-requests' );
+            if ( section ) section.remove();
+        }
+    } );
+}
+
+function jtSetCoverPreview( form, url ) {
+    const value  = form.querySelector( '[data-jt-cover-value]' );
+    const prev   = form.querySelector( '[data-jt-cover-preview]' );
+    const remove = form.querySelector( '[data-jt-cover-remove]' );
+    if ( value ) value.value = url;
+    if ( ! prev ) return;
+    if ( url ) {
+        prev.hidden = false;
+        let img = prev.querySelector( 'img' );
+        if ( ! img ) { img = document.createElement( 'img' ); img.alt = ''; prev.appendChild( img ); }
+        img.src = url;
+        if ( remove ) remove.hidden = false;
+    } else {
+        prev.hidden = true;
+        if ( remove ) remove.hidden = true;
+        const existing = prev.querySelector( 'img' );
+        if ( existing ) existing.remove();
+    }
+}
+
 const { state, actions } = store( 'jetonomy', {
     state: {
         // Post vote scores (populated from server state)
@@ -437,13 +681,8 @@ const { state, actions } = store( 'jetonomy', {
         // Reply vote scores
         replyScores: {},
         // Current sort
-        currentSort: 'latest',
         // Loading states
         isLoading: false,
-        // Notification count
-        unreadCount: 0,
-        // Composer visibility
-        composerVisible: false,
         composerReplyTo: null,
         // Threaded reply-to tracking
         replyToId: null,
@@ -463,6 +702,490 @@ const { state, actions } = store( 'jetonomy', {
     },
 
     actions: {
+        // ── Client-side navigation (Phase 2) ──
+        //
+        // Delegated from data-wp-on--click on #jetonomy-app: every internal link
+        // click bubbles here. We swap the [data-wp-router-region="jetonomy/main"]
+        // content via the iAPI router ONLY for routes served by the always-present
+        // global bundle (Rail B); anything needing a per-route script (post view
+        // -> prismjs, forms, moderation, messages, notifications, edit screens)
+        // falls through to a normal full-page load. The real <a href> is always
+        // preserved, so JS-off, router errors, and modified clicks all degrade to
+        // classic navigation — a link is never left dead.
+        *navigate( event ) {
+            const link = event.target?.closest?.( 'a' );
+            const href = link?.href;
+            if ( ! href ) return;
+            // Respect any handler that already claimed this click. A direct
+            // listener (e.g. Load More's fetch-and-append, which preventDefaults)
+            // fires before this delegated handler on #jetonomy-app, so bailing on
+            // defaultPrevented stops us double-handling content links that own
+            // their own behaviour.
+            if ( event.defaultPrevented ) return;
+            // Ignore in-page anchors and JS-hook links (href="#" / "#foo"):
+            // the skip-link, search-overlay toggle, dropdown triggers and user
+            // menu all use those and have their own handlers.
+            const rawHref = link.getAttribute( 'href' );
+            if ( ! rawHref || '#' === rawHref.charAt( 0 ) ) return;
+            // Let the browser handle new-tab / modified / download / cross-origin.
+            if (
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+                event.button !== 0 ||
+                link.hasAttribute( 'download' ) ||
+                ( link.target && link.target !== '_self' ) ||
+                link.origin !== window.location.origin
+            ) {
+                return;
+            }
+            // Rail B route guard: only client-nav routes that need nothing beyond
+            // the global bundle. Resolve the path relative to the community base.
+            const base = ( state.communityBase || '' )
+                .replace( /^https?:\/\/[^/]+/, '' )
+                .replace( /\/+$/, '' );
+            let rest = link.pathname;
+            if ( base && rest.indexOf( base ) === 0 ) {
+                rest = rest.slice( base.length );
+            } else if ( base ) {
+                // Off-base link (e.g. a BuddyPress "back to group" URL like
+                // /groups/foo/). It is same-origin and unmodified, but it is NOT
+                // a Jetonomy route — let the browser do a full-page navigation
+                // instead of pulling it into the app shell via the iAPI router.
+                return;
+            }
+            rest = rest.replace( /^\/+|\/+$/g, '' );
+            const seg = '' === rest ? [] : rest.split( '/' );
+            // Every route now runs on the global iAPI store (declarative; the
+            // router re-hydrates on navigation) EXCEPT the two rich-editor pages:
+            //   - single topic  (/s/{slug}/t/{slug}/)  reply composer + Prism
+            //   - new post       (/s/{slug}/new/)       topic composer
+            // Their editor scripts (composer.js, vendor Prism) bind on load and
+            // don't re-init on client nav, and full-loading an editor page is the
+            // right call anyway (clean editor + highlighter init). So those two
+            // full-load; default is client-side navigation — no allow-list to keep.
+            const editorRoute = 's' === seg[ 0 ] && [ 't', 'new' ].includes( seg[ 2 ] );
+            if ( editorRoute ) return; // full-page load
+            event.preventDefault();
+            try {
+                const router = yield import( '@wordpress/interactivity-router' );
+                yield router.actions.navigate( href );
+
+                // The iAPI store auto-hydrates swapped content, but classic
+                // content scripts (Load More, link previews) bind on page load
+                // and don't observe the swap. Fire a hook they re-init from.
+                document.dispatchEvent(
+                    new CustomEvent( 'jetonomy:navigated', { detail: { href } } )
+                );
+
+                // A11y: move focus + scroll to the freshly-swapped region so
+                // keyboard + screen-reader users land on the new content, and
+                // sync the persistent nav's active state (it lives outside the
+                // region, so the server-rendered .active class is now stale).
+                const region = document.querySelector( '[data-wp-router-region="jetonomy/main"]' );
+                if ( region ) {
+                    if ( ! region.hasAttribute( 'tabindex' ) ) {
+                        region.setAttribute( 'tabindex', '-1' );
+                    }
+                    region.focus( { preventScroll: true } );
+                }
+                window.scrollTo( 0, 0 );
+                document.querySelectorAll( '.jt-community-nav-links a, .jt-mobile-tabs a' ).forEach( ( a ) => {
+                    a.classList.toggle( 'active', a.pathname === window.location.pathname );
+                } );
+            } catch ( e ) {
+                window.location.href = href; // never strand the user
+            }
+        },
+        // ── Space members: role change + ban ──
+        // Declarative replacement for the former classic space-members.js. Lives
+        // in the global store so it loads on every route and the router
+        // re-hydrates the directives on client navigation — no per-route script.
+        *changeMemberRole() {
+            const select  = getElement().ref;
+            const spaceId = select.getAttribute( 'data-space-id' );
+            const userId  = select.getAttribute( 'data-user-id' );
+            const role    = select.value;
+            const prev    = select.getAttribute( 'data-prev-role' ) || '';
+            if ( ! spaceId || ! userId || ! role || prev === role ) return;
+
+            const i18n   = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const labels = i18n.roleLabels || { member: 'Member', moderator: 'Moderator', admin: 'Admin' };
+            const row    = select.closest( '.jt-member-item' );
+            const nameEl = row && row.querySelector( '.jt-member-name, .jt-member-display-name, [data-member-name]' );
+            const name   = nameEl ? nameEl.textContent.trim() : '';
+
+            const confirmBody = ( i18n.confirmRoleChange || 'Change %name% from %from% to %to%?' )
+                .replace( '%name%', name || 'this member' )
+                .replace( '%from%', labels[ prev ] || prev )
+                .replace( '%to%', labels[ role ] || role );
+            const confirmed = 'function' === typeof window.jetonomyConfirm
+                ? yield window.jetonomyConfirm( confirmBody, {
+                    title: i18n.confirmRoleChangeTitle || 'Change role',
+                    confirmLabel: i18n.confirmLabel || 'Change role',
+                    cancelLabel: i18n.cancelLabel || 'Cancel',
+                } )
+                : true;
+            if ( ! confirmed ) { select.value = prev; return; }
+
+            const oldErr = row && row.querySelector( '.jt-member-role-error' );
+            if ( oldErr ) oldErr.remove();
+            select.disabled = true;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/members/' + userId, {
+                method: 'PATCH',
+                body: { role },
+            } );
+            select.disabled = false;
+            if ( ! res.ok ) {
+                select.value = prev;
+                if ( row ) {
+                    const p = document.createElement( 'p' );
+                    p.className = 'jt-member-role-error';
+                    p.setAttribute( 'role', 'alert' );
+                    p.textContent = ( res.data && res.data.message ) || i18n.roleUpdateFailed || 'Could not update role. Please try again.';
+                    row.appendChild( p );
+                }
+                return;
+            }
+            if ( row ) {
+                let badge = row.querySelector( '.jt-member-badge' );
+                if ( 'moderator' === role || 'admin' === role ) {
+                    if ( ! badge ) {
+                        badge = document.createElement( 'span' );
+                        badge.className = 'jt-badge-accent jt-member-badge';
+                        const anchor = row.querySelector( '.jt-member-role-select' );
+                        if ( anchor ) anchor.parentNode.insertBefore( badge, anchor );
+                        else row.appendChild( badge );
+                    }
+                    badge.textContent = labels[ role ] || role;
+                } else if ( badge ) {
+                    badge.remove();
+                }
+            }
+            select.setAttribute( 'data-prev-role', role );
+        },
+
+        *banMember() {
+            const btn     = getElement().ref;
+            const spaceId = btn.getAttribute( 'data-space-id' );
+            const userId  = btn.getAttribute( 'data-user-id' );
+            const name    = btn.getAttribute( 'data-user-name' );
+            if ( ! spaceId || ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+
+            const i18n    = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const banBody = ( i18n.banConfirmFormat || 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.' ).replace( '%s', name || '' );
+            const ok = yield window.jetonomyConfirm( banBody, {
+                title: i18n.banMemberTitle || 'Ban member',
+                confirmLabel: i18n.banLabel || 'Ban',
+                danger: true,
+            } );
+            if ( ! ok ) return;
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/moderation/ban', {
+                method: 'POST',
+                body: { user_id: parseInt( userId, 10 ), space_id: parseInt( spaceId, 10 ), type: 'space_ban' },
+            } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            const row = btn.closest( '.jt-member-item' );
+            if ( row ) {
+                row.style.opacity = '0.5';
+                const note = document.createElement( 'span' );
+                note.className = 'jt-member-banned-note';
+                note.textContent = i18n.memberBanned || 'Banned';
+                row.appendChild( note );
+            }
+            btn.remove();
+        },
+
+        // ── Join requests (space-members mod panel) ──
+        *approveJoinRequest() {
+            yield jtModerateJoinRequest( getElement().ref, 'approve' );
+        },
+        *denyJoinRequest() {
+            const btn  = getElement().ref;
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            if ( 'function' === typeof window.jetonomyConfirm ) {
+                const ok = yield window.jetonomyConfirm(
+                    i18n.denyJoinBody || 'Deny this join request? The member can request again later.',
+                    { title: i18n.denyJoinTitle || 'Deny request', confirmLabel: i18n.denyLabel || 'Deny', danger: true }
+                );
+                if ( ! ok ) return;
+            }
+            yield jtModerateJoinRequest( btn, 'deny' );
+        },
+
+        // ── Space cover image (shared by new-space + edit-space forms) ──
+        *uploadCover() {
+            const input = getElement().ref;
+            const form  = input.closest( 'form' );
+            const file  = input.files && input.files[ 0 ];
+            if ( ! form || ! file ) return;
+            const i18n   = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const status = form.querySelector( '[data-jt-cover-status]' );
+            if ( status ) status.textContent = i18n.uploading || 'Uploading...';
+            const fd = new FormData();
+            fd.append( 'file', file );
+            input.value = '';
+            const res = yield window.jetonomyRest.restFetch( '/media', { method: 'POST', body: fd } );
+            if ( ! res.ok || ! res.data || ! res.data.url ) {
+                if ( status ) status.textContent = 0 === res.status
+                    ? ( i18n.networkError || 'Network error.' )
+                    : ( ( res.data && res.data.message ) || i18n.uploadFailed || 'Upload failed.' );
+                return;
+            }
+            jtSetCoverPreview( form, res.data.url );
+            if ( status ) {
+                status.textContent = i18n.uploaded || 'Uploaded.';
+                setTimeout( () => { status.textContent = ''; }, 2000 );
+            }
+        },
+        removeCover() {
+            const form = getElement().ref.closest( 'form' );
+            if ( form ) jtSetCoverPreview( form, '' );
+        },
+
+        // ── Create space (new-space form; declarative, was new-space.js) ──
+        *createSpace( event ) {
+            event.preventDefault();
+            const form   = getElement().ref;
+            const errBox = form.querySelector( '[data-jt-error]' );
+            const btn    = form.querySelector( 'button[type="submit"]' );
+            const i18n   = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            if ( errBox ) errBox.hidden = true;
+            if ( btn ) btn.disabled = true;
+
+            const payload = {};
+            new FormData( form ).forEach( ( v, k ) => {
+                if ( /^jt_cf\[/.test( k ) ) return; // collected separately
+                if ( v ) payload[ k ] = v;
+            } );
+            const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
+            if ( Object.keys( customFields ).length > 0 ) payload.custom_fields = customFields;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces', { method: 'POST', body: payload } );
+            if ( ! res.ok || ! res.data || ! res.data.slug ) {
+                if ( errBox ) {
+                    errBox.textContent = ( res.data && res.data.message ) || i18n.createSpaceFailed || 'Could not create the space. Please try again.';
+                    errBox.hidden = false;
+                }
+                if ( btn ) btn.disabled = false;
+                return;
+            }
+            window.location.href = ( form.dataset.jtCommunityBase || '' ) + '/s/' + res.data.slug + '/';
+        },
+
+        // ── Edit space (edit-space form; declarative, was space-edit.js) ──
+        togglePrefixConfig() {
+            const toggle = getElement().ref;
+            const config = toggle.closest( 'form' )?.querySelector( '[data-jt-prefix-config]' );
+            if ( config ) config.hidden = ! toggle.checked;
+        },
+        addPrefixRow() {
+            const list = getElement().ref.closest( 'form' )?.querySelector( '[data-jt-prefix-list]' );
+            if ( ! list ) return;
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const row = document.createElement( 'div' );
+            row.className = 'jt-prefix-row';
+            const nameInput = document.createElement( 'input' );
+            nameInput.type = 'text';
+            nameInput.className = 'jt-input jt-prefix-name';
+            nameInput.placeholder = i18n.prefixLabel || 'Label';
+            nameInput.maxLength = 50;
+            const colorInput = document.createElement( 'input' );
+            colorInput.type = 'color';
+            colorInput.className = 'jt-prefix-color';
+            colorInput.value = '#3B82F6';
+            const removeBtn = document.createElement( 'button' );
+            removeBtn.type = 'button';
+            removeBtn.className = 'jt-btn jt-btn-ghost jt-prefix-remove';
+            removeBtn.setAttribute( 'aria-label', i18n.removePrefix || 'Remove prefix' );
+            removeBtn.setAttribute( 'data-wp-on--click', 'actions.removePrefixRow' );
+            removeBtn.textContent = '×';
+            row.appendChild( nameInput );
+            row.appendChild( colorInput );
+            row.appendChild( removeBtn );
+            list.appendChild( row );
+            // Wire the new row's remove button (iAPI doesn't hydrate post-boot inserts).
+            if ( 'function' === typeof window.jetonomyHydrateInteractive ) {
+                window.jetonomyHydrateInteractive( [ row ] );
+            }
+        },
+        // Uses triggerOf (event-based) not getElement(), because dynamically-added
+        // rows are wired by jetonomyHydrateInteractive, where getElement() has no
+        // IA render scope. triggerOf falls back to event.currentTarget there.
+        removePrefixRow( event ) {
+            const row = triggerOf( event )?.closest( '.jt-prefix-row' );
+            if ( row ) row.remove();
+        },
+        *saveSpace( event ) {
+            event.preventDefault();
+            const form     = getElement().ref;
+            const errBox   = form.querySelector( '[data-jt-error]' );
+            const savedBox = form.querySelector( '[data-jt-saved]' );
+            const btn      = form.querySelector( 'button[type="submit"]' );
+            const i18n     = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            if ( errBox ) errBox.hidden = true;
+            if ( savedBox ) savedBox.hidden = true;
+            if ( btn ) btn.disabled = true;
+
+            const payload = {};
+            new FormData( form ).forEach( ( v, k ) => {
+                if ( 'posts_per_page' === k || 'enable_prefixes' === k ) return;
+                if ( /^jt_cf\[/.test( k ) ) return;
+                payload[ k ] = v;
+            } );
+            const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
+            if ( Object.keys( customFields ).length > 0 ) payload.custom_fields = customFields;
+
+            const settings = {};
+            const pppEl = form.querySelector( '[name=posts_per_page]' );
+            const ppp = pppEl ? pppEl.value.trim() : '';
+            settings.posts_per_page = '' === ppp ? '' : parseInt( ppp, 10 );
+            const toggle = form.querySelector( '[data-jt-prefix-toggle]' );
+            settings.enable_prefixes = toggle && toggle.checked ? 1 : 0;
+            const prefixes = [];
+            form.querySelectorAll( '.jt-prefix-row' ).forEach( ( row ) => {
+                const name = row.querySelector( '.jt-prefix-name' )?.value.trim();
+                const color = row.querySelector( '.jt-prefix-color' )?.value;
+                if ( name ) prefixes.push( { name, color } );
+            } );
+            settings.prefixes = prefixes;
+            const reqApproval = form.querySelector( '#jt-se-require-approval' );
+            settings.require_approval = reqApproval && reqApproval.checked ? 1 : 0;
+            payload.settings = settings;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + form.dataset.jtSpaceId, {
+                method: 'PATCH',
+                body: payload,
+            } );
+            if ( btn ) btn.disabled = false;
+            if ( ! res.ok ) {
+                if ( errBox ) {
+                    errBox.textContent = 0 === res.status
+                        ? ( i18n.networkErrorRetry || 'Network error. Please try again.' )
+                        : ( ( res.data && res.data.message ) || i18n.saveFailed || 'Could not save changes.' );
+                    errBox.hidden = false;
+                }
+                return;
+            }
+            if ( savedBox ) {
+                savedBox.hidden = false;
+                setTimeout( () => { savedBox.hidden = true; }, 2500 );
+            }
+        },
+
+        // ── Notifications page (declarative; was notifications-page.js) ──
+        *markAllNotifsRead( event ) {
+            const btn = triggerOf( event );
+            if ( ! btn ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/notifications/mark-all-read', { method: 'POST' } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            document.querySelectorAll( '[data-jt-notif-list] .jt-notif-item.unread' ).forEach( notifMarkRowRead );
+            btn.remove();
+        },
+        toggleNotifMenu( event ) {
+            event.stopPropagation();
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const menu = trigger.closest( '[data-jt-notif-menu]' );
+            const panel = menu && menu.querySelector( '.jt-notif-item__menu-list' );
+            if ( ! panel ) return;
+            panel.removeAttribute( 'hidden' );
+            if ( ! trigger._jtDropdown ) {
+                trigger._jtDropdown = window.jetonomySmartDropdown( trigger, panel, {
+                    placement: 'bottom-end',
+                    group: 'jt-notif',
+                    closeOnOutside: true,
+                    closeOnEscape: true,
+                } );
+                panel.style.display = 'none';
+            }
+            trigger._jtDropdown.toggle();
+        },
+        *markNotifRead( event ) {
+            const trigger = triggerOf( event );
+            const row = trigger && trigger.closest( '.jt-notif-item' );
+            const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
+            if ( ! id ) return;
+            const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'PATCH' } );
+            if ( res.ok ) notifMarkRowRead( row );
+        },
+        *deleteNotif( event ) {
+            const trigger = triggerOf( event );
+            const row = trigger && trigger.closest( '.jt-notif-item' );
+            const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
+            if ( ! id ) return;
+            // Optimistic remove — re-insert on failure so the user can retry.
+            const next = row.nextSibling;
+            const parent = row.parentNode;
+            row.style.display = 'none';
+            const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'DELETE' } );
+            if ( res.ok ) {
+                row.remove();
+                if ( ! document.querySelector( '[data-jt-notif-list] .jt-notif-item' ) ) {
+                    window.location.reload(); // render the server empty state
+                }
+            } else {
+                row.style.display = '';
+                if ( parent && next ) parent.insertBefore( row, next );
+            }
+        },
+        // ── Publish a draft / scheduled post now (drafts tab) ──
+        *publishDraft( event ) {
+            // The draft row is whole-row clickable (opens the draft); keep the
+            // button's click from bubbling into that navigation.
+            if ( event ) { event.stopPropagation(); event.preventDefault(); }
+            const btn = getElement().ref;
+            const row = btn.closest( '.jt-row--draft' );
+            const id = row && parseInt( row.getAttribute( 'data-jt-post-id' ), 10 );
+            if ( ! id || btn.disabled ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/posts/' + id, { method: 'PATCH', body: { status: 'publish' } } );
+            if ( res.ok ) {
+                if ( window.bnToast ) window.bnToast( state.i18n?.draftPublished || 'Published.' );
+                row.remove();
+                // Last draft gone — reload so the server renders the empty state.
+                if ( ! document.querySelector( '.jt-row--draft' ) ) window.location.reload();
+            } else {
+                btn.disabled = false;
+                if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
+            }
+        },
+        toggleNotifSelectAll( event ) {
+            const selectAll = triggerOf( event );
+            if ( ! selectAll ) return;
+            document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = selectAll.checked; } );
+            notifUpdateBulkbar();
+        },
+        updateNotifSelection() {
+            notifUpdateBulkbar();
+        },
+        *bulkNotifs( event ) {
+            const btn = triggerOf( event );
+            if ( ! btn ) return;
+            const action = btn.getAttribute( 'data-jt-notif-bulk' );
+            const ids = [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ]
+                .map( ( cb ) => parseInt( cb.value, 10 ) ).filter( ( id ) => id > 0 );
+            if ( ! ids.length ) return;
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/notifications/bulk', { method: 'POST', body: { action, ids } } );
+            btn.disabled = false;
+            if ( ! res.ok ) return;
+            ids.forEach( ( id ) => {
+                const row = document.querySelector( '[data-jt-notif-list] .jt-notif-item[data-jt-notif-id="' + id + '"]' );
+                if ( ! row ) return;
+                if ( 'delete' === action ) row.remove();
+                else notifMarkRowRead( row );
+            } );
+            const selectAll = document.querySelector( '[data-jt-notif-selectall]' );
+            if ( selectAll ) selectAll.checked = false;
+            notifUpdateBulkbar();
+            if ( ! document.querySelector( '[data-jt-notif-list] .jt-notif-item' ) ) {
+                window.location.reload();
+            }
+        },
+
         // ── Voting ──
         *voteUp( event ) {
             event.stopPropagation();
@@ -492,17 +1215,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, downWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/posts/${ postId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: 1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/posts/${ postId }/vote`,
+                    { method: 'POST', body: { value: 1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -557,17 +1272,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, upWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/posts/${ postId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: -1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/posts/${ postId }/vote`,
+                    { method: 'POST', body: { value: -1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -622,17 +1329,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, downWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/replies/${ replyId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: 1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/replies/${ replyId }/vote`,
+                    { method: 'POST', body: { value: 1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -687,17 +1386,9 @@ const { state, actions } = store( 'jetonomy', {
                     }
                     return { prevScore: current, wasVoted, upWasVoted };
                 },
-                fetch: () => fetch(
-                    `${ state.apiBase }/replies/${ replyId }/vote`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { value: -1 } ),
-                    }
+                fetch: () => window.jetonomyRest.restFetch(
+                    `/replies/${ replyId }/vote`,
+                    { method: 'POST', body: { value: -1 } }
                 ),
                 onSuccess: ( data ) => {
                     if ( data && data.score !== undefined ) {
@@ -801,21 +1492,16 @@ const { state, actions } = store( 'jetonomy', {
                 saveBtn.textContent = state.i18n?.saving || 'Saving...';
 
                 try {
-                    const res = await fetch( `${ state.apiBase }/replies/${ replyId }`, {
+                    const res = await window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
                         method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state._nonce || state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { content } ),
+                        body: { content },
                     } );
 
                     if ( res.ok ) {
                         // Reload so the display filter (wpautop) renders paragraphs.
                         window.location.reload();
                     } else {
-                        const err = await res.json().catch( () => ( {} ) );
+                        const err = res.data || {};
                         if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
                         saveBtn.textContent = state.i18n?.save || 'Save';
@@ -862,12 +1548,9 @@ const { state, actions } = store( 'jetonomy', {
             let subscriptionId = null;
             if ( wasFollowing ) {
                 try {
-                    const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=post&object_id=${ postId }`, {
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                    } );
+                    const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=post&object_id=${ postId }` );
                     if ( res.ok ) {
-                        const data = yield res.json();
+                        const data = res.data || {};
                         const subs = data.data || [];
                         if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
                     }
@@ -884,16 +1567,12 @@ const { state, actions } = store( 'jetonomy', {
                     return { wasFollowing };
                 },
                 fetch: () => wasFollowing
-                    ? fetch( `${ state.apiBase }/subscriptions/${ subscriptionId }`, {
+                    ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
                         method: 'DELETE',
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
                     } )
-                    : fetch( `${ state.apiBase }/subscriptions`, {
+                    : window.jetonomyRest.restFetch( `/subscriptions`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), via: 'both' } ),
+                        body: { object_type: 'post', object_id: parseInt( postId ), via: 'both' },
                     } ),
                 revert: ( snap ) => { applyFollowingUI( snap.wasFollowing ); },
                 toastOnError: true,
@@ -926,12 +1605,9 @@ const { state, actions } = store( 'jetonomy', {
             let subscriptionId = null;
             if ( wasFollowing ) {
                 try {
-                    const res = yield fetch( `${ state.apiBase }/subscriptions?object_type=space&object_id=${ spaceId }`, {
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                    } );
+                    const res = yield window.jetonomyRest.restFetch( `/subscriptions?object_type=space&object_id=${ spaceId }` );
                     if ( res.ok ) {
-                        const data = yield res.json();
+                        const data = res.data || {};
                         const subs = data.data || [];
                         if ( subs.length > 0 ) subscriptionId = subs[ 0 ].id;
                     }
@@ -945,16 +1621,12 @@ const { state, actions } = store( 'jetonomy', {
                     return { wasFollowing };
                 },
                 fetch: () => wasFollowing
-                    ? fetch( `${ state.apiBase }/subscriptions/${ subscriptionId }`, {
+                    ? window.jetonomyRest.restFetch( `/subscriptions/${ subscriptionId }`, {
                         method: 'DELETE',
-                        headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
                     } )
-                    : fetch( `${ state.apiBase }/subscriptions`, {
+                    : window.jetonomyRest.restFetch( `/subscriptions`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' } ),
+                        body: { object_type: 'space', object_id: parseInt( spaceId ), via: 'both' },
                     } ),
                 onSuccess: () => {
                     if ( window.bnToast ) {
@@ -1175,11 +1847,9 @@ const { state, actions } = store( 'jetonomy', {
                         : ( state.i18n?.bookmark || 'Bookmark' );
                     return { wasBookmarked };
                 },
-                fetch: () => fetch( `${ state.apiBase }/bookmarks`, {
+                fetch: () => window.jetonomyRest.restFetch( `/bookmarks`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { post_id: parseInt( postId ) } ),
+                    body: { post_id: parseInt( postId ) },
                 } ),
                 onSuccess: ( data ) => {
                     if ( ! data ) return;
@@ -1194,6 +1864,18 @@ const { state, actions } = store( 'jetonomy', {
                             ? ( state.i18n?.bookmarked || 'Bookmarked' )
                             : ( state.i18n?.bookmarkRemoved || 'Bookmark removed' )
                         );
+                    }
+                    // On the My Bookmarks page (context="list"), removing a
+                    // bookmark should drop the card it no longer belongs to —
+                    // otherwise an unbookmarked post lingers on the list of
+                    // bookmarks, which reads as broken.
+                    if ( ! data.bookmarked && 'list' === btnEl.dataset.bookmarkContext ) {
+                        const card = btnEl.closest( '.jt-row' );
+                        if ( card ) {
+                            card.style.transition = 'opacity 200ms';
+                            card.style.opacity = '0';
+                            setTimeout( () => card.remove(), 220 );
+                        }
                     }
                 },
                 revert: ( snap ) => {
@@ -1226,11 +1908,9 @@ const { state, actions } = store( 'jetonomy', {
             if ( reason === null ) return; // Cancelled
 
             try {
-                const res = yield fetch( `${ state.apiBase }/flags`, {
+                const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason } ),
+                    body: { object_type: 'post', object_id: parseInt( postId ), reason: 'other', description: reason },
                 } );
                 if ( res.ok ) {
                     // Reflect "already reported" state inline so the next click
@@ -1241,7 +1921,7 @@ const { state, actions } = store( 'jetonomy', {
                     el.ref.setAttribute( 'aria-label', el.ref.title );
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
@@ -1260,16 +1940,14 @@ const { state, actions } = store( 'jetonomy', {
             if ( reason === null ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/flags`, {
+                const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason } ),
+                    body: { object_type: 'reply', object_id: parseInt( replyId ), reason: 'other', description: reason },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
@@ -1287,16 +1965,14 @@ const { state, actions } = store( 'jetonomy', {
             if ( reason === null ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/flags`, {
+                const res = yield window.jetonomyRest.restFetch( `/flags`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason } ),
+                    body: { object_type: 'user', object_id: parseInt( userId ), reason: 'other', description: reason },
                 } );
                 if ( res.ok ) {
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedReport || 'Failed to submit report.' );
                 }
             } catch {
@@ -1462,20 +2138,15 @@ const { state, actions } = store( 'jetonomy', {
                 }
 
                 try {
-                    const res = await fetch( `${ state.apiBase }/posts/${ postId }`, {
+                    const res = await window.jetonomyRest.restFetch( `/posts/${ postId }`, {
                         method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state._nonce || state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( body ),
+                        body,
                     } );
 
                     if ( res.ok ) {
                         window.location.reload();
                     } else {
-                        const err = await res.json().catch( () => ( {} ) );
+                        const err = res.data || {};
                         if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to save.' );
                         saveBtn.disabled = false;
                         saveBtn.textContent = state.i18n?.save || 'Save';
@@ -1501,13 +2172,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/pin`, {
+                fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/pin`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -1536,13 +2202,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/close`, {
+                fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/close`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: ( data ) => {
                     if ( window.bnToast ) {
@@ -1566,24 +2227,19 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! postId ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }`, {
                     method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { is_private: ! isPrivate } ),
+                    body: { is_private: ! isPrivate },
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( data.is_private ? ( state.i18n?.madePrivate || 'Topic is now private' ) : ( state.i18n?.madePublic || 'Topic is now public' ) );
                     }
                     setTimeout( () => window.location.reload(), 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.failedTogglePrivate || 'Failed to change visibility.' );
                     }
@@ -1608,18 +2264,13 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! spaceId ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/move`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/move`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { target_space_id: parseInt( spaceId, 10 ) } ),
+                    body: { target_space_id: parseInt( spaceId, 10 ) },
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( state.i18n?.topicMoved || 'Topic moved successfully.' );
                     }
@@ -1628,7 +2279,7 @@ const { state, actions } = store( 'jetonomy', {
                         window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
                     }, 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.moveFailed || 'Failed to move topic.' );
                     }
@@ -1662,18 +2313,13 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmMerge || 'Merge this topic into the selected one? All replies will be moved and this topic will be deleted.' ) ) ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }/merge`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }/merge`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { target_post_id: parseInt( targetId, 10 ) } ),
+                    body: { target_post_id: parseInt( targetId, 10 ) },
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( state.i18n?.topicMerged || 'Topics merged successfully.' );
                     }
@@ -1682,7 +2328,7 @@ const { state, actions } = store( 'jetonomy', {
                         window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
                     }, 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.mergeFailed || 'Failed to merge topics.' );
                     }
@@ -1711,18 +2357,13 @@ const { state, actions } = store( 'jetonomy', {
                     body.space_id = parseInt( spaceId, 10 );
                 }
 
-                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }/split`, {
+                const res = yield window.jetonomyRest.restFetch( `/replies/${ replyId }/split`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( body ),
+                    body,
                 } );
 
                 if ( res.ok ) {
-                    const data = yield res.json();
+                    const data = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( state.i18n?.replySplit || 'Reply split into new topic.' );
                     }
@@ -1731,7 +2372,7 @@ const { state, actions } = store( 'jetonomy', {
                         window.location.href = `${ base }/s/${ data.space_slug }/t/${ data.slug }/`;
                     }, 600 );
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) {
                         window.bnToast( err.message || state.i18n?.splitFailed || 'Failed to split reply.' );
                     }
@@ -1753,12 +2394,8 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeletePost || 'Are you sure you want to delete this topic?' ) ) ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/posts/${ postId }`, {
+                const res = yield window.jetonomyRest.restFetch( `/posts/${ postId }`, {
                     method: 'DELETE',
-                    headers: {
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } );
 
                 if ( res.ok ) {
@@ -1766,7 +2403,7 @@ const { state, actions } = store( 'jetonomy', {
                     const base = state.communityBase || '/community';
                     window.location.href = spaceSlug ? `${ base }/s/${ spaceSlug }/` : `${ base }/`;
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
@@ -1784,12 +2421,8 @@ const { state, actions } = store( 'jetonomy', {
             if ( ! ( yield jetonomyConfirm( state.i18n?.confirmDeleteReply || 'Are you sure you want to delete this reply?' ) ) ) return;
 
             try {
-                const res = yield fetch( `${ state.apiBase }/replies/${ replyId }`, {
+                const res = yield window.jetonomyRest.restFetch( `/replies/${ replyId }`, {
                     method: 'DELETE',
-                    headers: {
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                    },
-                    credentials: 'same-origin',
                 } );
 
                 if ( res.ok ) {
@@ -1800,7 +2433,7 @@ const { state, actions } = store( 'jetonomy', {
                         setTimeout( () => replyEl.remove(), 300 );
                     }
                 } else {
-                    const err = yield res.json().catch( () => ( {} ) );
+                    const err = res.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedDelete || 'Failed to delete.' );
                 }
             } catch {
@@ -1821,10 +2454,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+                fetch: () => window.jetonomyRest.restFetch( `/replies/${ replyId }/accept`, {
                     method: 'POST',
-                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: () => {
                     if ( window.bnToast ) window.bnToast( state.i18n?.accepted || 'Accepted' );
@@ -1847,10 +2478,8 @@ const { state, actions } = store( 'jetonomy', {
 
             yield window.jetonomyOptimistic.gen( {
                 apply: () => null,
-                fetch: () => fetch( `${ state.apiBase }/replies/${ replyId }/accept`, {
+                fetch: () => window.jetonomyRest.restFetch( `/replies/${ replyId }/accept`, {
                     method: 'DELETE',
-                    headers: { 'X-WP-Nonce': state._nonce || state.nonce },
-                    credentials: 'same-origin',
                 } ),
                 onSuccess: () => {
                     if ( window.bnToast ) window.bnToast( state.i18n?.unaccepted || 'Marked as unanswered' );
@@ -1887,14 +2516,9 @@ const { state, actions } = store( 'jetonomy', {
                     allBtns.forEach( ( b ) => { b.disabled = true; } );
                     return { prevActive };
                 },
-                fetch: () => fetch( `${ state.apiBase }/posts/${ postId }/idea-status`, {
+                fetch: () => window.jetonomyRest.restFetch( `/posts/${ postId }/idea-status`, {
                     method: 'POST',
-                    headers: {
-                        'X-WP-Nonce': state._nonce || state.nonce,
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify( { idea_status: newStatus } ),
+                    body: { idea_status: newStatus },
                 } ),
                 onSuccess: () => {
                     // Mirror the change to the post-header pill so the read-
@@ -1931,35 +2555,8 @@ const { state, actions } = store( 'jetonomy', {
             ctx.collapsed = ! ctx.collapsed;
         },
 
-        // ── Sort ──
-        changeSort( event ) {
-            const sort = event.target.dataset.sort;
-            if ( ! sort || sort === state.currentSort ) return;
-
-            state.currentSort = sort;
-            // Reload page with new sort param
-            const url = new URL( window.location );
-            url.searchParams.set( 'sort', sort );
-            window.location = url.toString();
-        },
-
         // ── Composer ──
-        showReplyComposer( event ) {
-            const el = getElement();
-            const replyId = el.ref.dataset.replyId;
-            state.composerVisible = true;
-            state.composerReplyTo = replyId || null;
-            // Scroll to composer
-            const composer = document.getElementById( 'jt-composer' );
-            if ( composer ) {
-                composer.scrollIntoView( { behavior: 'smooth', block: 'center' } );
-                const input = composer.querySelector( '[contenteditable]' );
-                if ( input ) input.focus();
-            }
-        },
-
         cancelReplyComposer() {
-            state.composerVisible = false;
             state.composerReplyTo = null;
             state.replyToId = null;
             state.replyToAuthor = '';
@@ -2088,42 +2685,57 @@ const { state, actions } = store( 'jetonomy', {
             // The contenteditable body dispatches this on every keystroke.
         },
 
-        // ── Moderation ──
-        *dismissFlag( event ) {
-            const el = getElement();
-            const flagId = el.ref.dataset.flagId;
-            const flagAction = el.ref.dataset.action; // 'approved' or 'dismissed'
-            if ( ! flagId ) return;
+        // ── Moderation: resolve a queued flag ──
+        // Declarative replacement for the former classic moderation.js, used by
+        // templates/partials/moderation/flag-card.php on the space queue. The card
+        // carries an absolute data-resolve-endpoint prefix (so per-space queues
+        // work); restFetch is path-based (owns restBase), so we trim restBase back
+        // to a path. Status enum is the canonical server vocabulary: valid |
+        // dismissed. (Replaces the dead dismissFlag action + moderation.js.)
+        *resolveFlag() {
+            const btn  = getElement().ref;
+            const card = btn.closest( '.jt-mod-flag' );
+            if ( ! card ) return;
+            const flagId     = btn.getAttribute( 'data-flag-id' );
+            const resolution = btn.getAttribute( 'data-resolution' );
+            const endpoint   = card.getAttribute( 'data-resolve-endpoint' );
+            if ( ! flagId || ! resolution || ! endpoint ) return;
 
-            // Map template values to API-expected enum: 'valid' or 'dismissed'.
-            const apiStatus = flagAction === 'approved' ? 'valid' : 'dismissed';
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const base = ( ( window.jetonomyData && window.jetonomyData.restBase ) || '' ).replace( /\/+$/, '' );
+            let path = endpoint + flagId + '/resolve';
+            if ( base && 0 === path.indexOf( base ) ) path = path.slice( base.length );
 
-            try {
-                const response = yield fetch(
-                    `${ state.apiBase }/moderation/flags/${ flagId }/resolve`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state._nonce || state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( { status: apiStatus } ),
-                    }
-                );
-                if ( response.ok ) {
-                    const card = el.ref.closest( '.jt-mod-flag' );
-                    if ( card ) card.remove();
-                    if ( window.bnToast ) window.bnToast(
-                        apiStatus === 'valid'
-                            ? ( state.i18n?.contentRemoved || 'Content removed' )
-                            : ( state.i18n?.flagDismissed || 'Flag dismissed' )
-                    );
-                } else {
-                    if ( window.bnToast ) window.bnToast( state.i18n?.failed || 'Failed' );
-                }
-            } catch {
-                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+            const buttons = card.querySelectorAll( '.jt-mod-resolve' );
+            buttons.forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch( path, {
+                method: 'POST',
+                body: { status: resolution },
+            } );
+            if ( ! res.ok ) {
+                buttons.forEach( ( b ) => { b.disabled = false; } );
+                const existing = card.querySelector( '.jt-mod-flag-error' );
+                if ( existing ) existing.remove();
+                const p = document.createElement( 'p' );
+                p.className = 'jt-mod-flag-error';
+                p.setAttribute( 'role', 'alert' );
+                p.textContent = ( res.data && res.data.message ) || i18n.resolveFailed || 'Could not resolve flag. Please try again.';
+                card.appendChild( p );
+                return;
+            }
+            // Remove the resolved card; if the queue is now empty, swap in the
+            // empty state (ported from moderation.js removeCard()).
+            const container = card.parentNode;
+            card.remove();
+            if ( container && ! container.querySelector( '.jt-mod-flag' ) && container.parentNode ) {
+                const wrapper = document.createElement( 'div' );
+                wrapper.className = 'jt-empty';
+                const msg = document.createElement( 'div' );
+                msg.className = 'jt-empty-text';
+                msg.textContent = i18n.queueClean || 'Queue cleared.';
+                wrapper.appendChild( msg );
+                container.parentNode.replaceChild( wrapper, container );
             }
         },
 
@@ -2149,39 +2761,56 @@ const { state, actions } = store( 'jetonomy', {
                 ? rawParentId
                 : null;
 
-            // Get CAPTCHA token if a provider is active.
+            // Get CAPTCHA token if a provider is active. The Turnstile input
+            // is scoped to THIS composer's widget — a thread page can hold
+            // several reply composers, each with its own container.
             let captchaToken = '';
             if ( window.jetonomyCaptcha ) {
                 if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
                     captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
                 } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
-                    const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
+                    const tsScope = editorWrap || document;
+                    const tsInput = tsScope.querySelector( '[name="cf-turnstile-response"]' );
                     captchaToken = tsInput ? ( tsInput.value || '' ) : '';
                 }
             }
 
             try {
-                const response = yield fetch(
-                    `${ state.apiBase }/posts/${ postId }/replies`,
+                const response = yield window.jetonomyRest.restFetch(
+                    `/posts/${ postId }/replies`,
                     {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': state.nonce,
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( {
+                        body: {
                             content: body.innerHTML,
                             ...( parentId && { parent_id: parentId } ),
                             ...( captchaToken && { captcha_token: captchaToken } ),
-                        } ),
+                        },
                     }
                 );
 
                 if ( response.ok ) {
-                    window.location.reload();
+                    const payload = response.data || {};
+                    // Held for moderation -> not visible yet; tell the user, clear,
+                    // don't append.
+                    if ( 'pending' === payload.status || 'spam' === payload.status ) {
+                        body.innerHTML = '';
+                        if ( window.bnToast ) window.bnToast( state.i18n?.pendingNotice || 'Your reply is awaiting moderation and will appear once approved.' );
+                    } else {
+                        // Top-level replies append in place; nested replies and any
+                        // append miss fall back to a full reload.
+                        const appended = ! parentId && payload.id
+                            ? yield appendNewReply( payload.id )
+                            : false;
+                        if ( appended ) {
+                            body.innerHTML = '';
+                            state.replyToId = null;
+                            state.replyToAuthor = '';
+                        } else {
+                            window.location.reload();
+                        }
+                    }
                 } else {
-                    const err = yield response.json().catch( () => ( {} ) );
+                    const err = response.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to post reply.' );
                 }
             } catch {
@@ -2400,6 +3029,12 @@ const { state, actions } = store( 'jetonomy', {
                 const hourVal   = form.querySelector( '[name="published_hour"]' )?.value?.trim() || '';
                 const minuteVal = form.querySelector( '[name="published_minute"]' )?.value?.trim() || '';
                 const timeVal   = hourVal && minuteVal ? `${ hourVal }:${ minuteVal }` : '';
+                // Send the plain wall-clock value the user picked. The server
+                // interprets it in the SITE timezone (the WordPress Settings ->
+                // General timezone) and converts to UTC for storage, matching
+                // the core post scheduler. We intentionally do NOT stamp the
+                // browser's timezone here — the scheduled time means "this time
+                // in the site's timezone", regardless of where the author is.
                 if ( dateVal && timeVal ) {
                     publishedAt = dateVal + 'T' + timeVal + ':00';
                 } else if ( dateVal ) {
@@ -2414,12 +3049,14 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             // ── CAPTCHA ───────────────────────────────────────────────────────
+            // Turnstile input is read scoped to THIS form — the login block
+            // or another composer on the same page has its own widget.
             let captchaToken = '';
             if ( o.collectCaptcha && window.jetonomyCaptcha ) {
                 if ( window.jetonomyCaptcha.provider === 'recaptcha_v3' && window.grecaptcha ) {
                     captchaToken = yield new Promise( ( r ) => window.grecaptcha.execute( window.jetonomyCaptcha.siteKey, { action: 'submit' } ).then( r ) );
                 } else if ( window.jetonomyCaptcha.provider === 'turnstile' ) {
-                    const tsInput = document.querySelector( '[name="cf-turnstile-response"]' );
+                    const tsInput = form.querySelector( '[name="cf-turnstile-response"]' );
                     captchaToken  = tsInput ? ( tsInput.value || '' ) : '';
                 }
             }
@@ -2541,6 +3178,87 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Profile save ──
+        // ── Local avatar (#9966775705) ──
+        // Upload goes through the existing POST /media pipeline (uploads
+        // gate + auto-alt); the resulting URL is staged in the hidden
+        // avatar_url input and persisted by saveProfile's PATCH /users/me.
+        chooseAvatar() {
+            document.getElementById( 'jt-avatar-file' )?.click();
+        },
+
+        *avatarFileSelected( event ) {
+            const input = event.target;
+            const file  = input.files && input.files[0];
+            if ( ! file ) return;
+
+            // Animated GIFs lose their animation when redrawn to a canvas,
+            // so they skip the cropper and upload as chosen. Everything
+            // else goes through the square-crop dialog first.
+            if ( 'image/gif' === file.type || ! window.HTMLDialogElement ) {
+                yield* avatarUpload( file, input );
+                return;
+            }
+
+            const dialog = document.getElementById( 'jt-avatar-crop' );
+            const img    = document.getElementById( 'jt-crop-image' );
+            if ( ! dialog || ! img ) {
+                yield* avatarUpload( file, input );
+                return;
+            }
+
+            avatarCrop.file  = file;
+            avatarCrop.input = input;
+            avatarCrop.scale = 1;
+            avatarCrop.x     = 0;
+            avatarCrop.y     = 0;
+
+            const url = URL.createObjectURL( file );
+            yield new Promise( ( resolve, reject ) => {
+                img.onload  = resolve;
+                img.onerror = reject;
+                img.src     = url;
+            } ).catch( () => {} );
+            avatarCrop.url = url;
+
+            const zoom = document.getElementById( 'jt-crop-zoom' );
+            if ( zoom ) zoom.value = '100';
+            avatarCropBindDrag();
+            // Layout AFTER showModal - a closed <dialog> is display:none, so
+            // the viewport measures 0 wide until it is actually open.
+            dialog.showModal();
+            avatarCropLayout();
+        },
+
+        avatarCropZoom( event ) {
+            avatarCrop.scale = Math.max( 1, parseInt( event.target.value, 10 ) / 100 );
+            avatarCropLayout();
+        },
+
+        avatarCropCancel() {
+            avatarCropClose();
+        },
+
+        *avatarCropApply() {
+            const blob = yield avatarCropRender();
+            const { file, input } = avatarCrop;
+            avatarCropClose();
+            if ( ! blob || ! file || ! input ) return;
+            const name    = file.name.replace( /\.[a-z0-9]+$/i, '' ) + ( 'image/png' === blob.type ? '.png' : '.jpg' );
+            const cropped = new File( [ blob ], name, { type: blob.type } );
+            yield* avatarUpload( cropped, input );
+        },
+
+        removeAvatar( event ) {
+            const btn    = event.target.closest( 'button' );
+            const form   = btn?.closest( 'form' );
+            const hidden = form?.querySelector( '[name="avatar_url"]' );
+            if ( hidden ) hidden.value = '';
+
+            const preview = document.getElementById( 'jt-avatar-preview' );
+            if ( preview && preview.dataset.defaultSrc ) preview.src = preview.dataset.defaultSrc;
+            btn?.setAttribute( 'hidden', '' );
+        },
+
         *saveProfile( event ) {
             event.preventDefault();
             const ctx = getContext();
@@ -2568,22 +3286,33 @@ const { state, actions } = store( 'jetonomy', {
             const customFields = window.jetonomyCollectCustomFields ? window.jetonomyCollectCustomFields( form ) : {};
 
             const payload = { display_name: displayName, bio };
+            // Local avatar (#9966775705): the hidden input carries the URL of
+            // the uploaded attachment ('' = removed → Gravatar fallback).
+            const avatarInput = form.querySelector( '[name="avatar_url"]' );
+            if ( avatarInput ) {
+                payload.avatar_url = avatarInput.value || '';
+            }
             if ( Object.keys( notifPrefs ).length > 0 ) {
                 payload.notification_preferences = notifPrefs;
             }
 
+            // Master email opt-out checkbox. Always sent (boolean) so
+            // unchecking clears the meta, not only checking sets it.
+            const optOut = form.querySelector( '[name="email_opt_out"]' );
+            if ( optOut ) {
+                payload.email_opt_out = optOut.checked;
+            }
+
             try {
-                const response = yield fetch(
-                    `${ state.apiBase }/users/me`,
+                const response = yield window.jetonomyRest.restFetch(
+                    `/users/me`,
                     {
                         method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
-                        credentials: 'same-origin',
-                        body: JSON.stringify( payload ),
+                        body: payload,
                     }
                 );
                 if ( ! response.ok ) {
-                    const err = yield response.json().catch( () => ( {} ) );
+                    const err = response.data || {};
                     if ( window.bnToast ) window.bnToast( err.message || ( state.i18n?.failedSaveProfile || 'Failed to save profile.' ), 'error' );
                     return;
                 }
@@ -2593,17 +3322,15 @@ const { state, actions } = store( 'jetonomy', {
                 // redirects. Validation errors surface as a toast but don't
                 // block the redirect: the core profile already saved.
                 if ( Object.keys( customFields ).length > 0 ) {
-                    const cfResponse = yield fetch(
-                        `${ state.apiBase }/users/me/fields`,
+                    const cfResponse = yield window.jetonomyRest.restFetch(
+                        `/users/me/fields`,
                         {
                             method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': state.nonce },
-                            credentials: 'same-origin',
-                            body: JSON.stringify( customFields ),
+                            body: customFields,
                         }
                     );
                     if ( ! cfResponse.ok && 404 !== cfResponse.status ) {
-                        const cfErr = yield cfResponse.json().catch( () => ( {} ) );
+                        const cfErr = cfResponse.data || {};
                         if ( window.bnToast ) {
                             window.bnToast(
                                 cfErr.message || ( state.i18n?.failedSaveProfile || 'Some custom fields could not be saved.' ),
@@ -2619,27 +3346,6 @@ const { state, actions } = store( 'jetonomy', {
                 if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.', 'error' );
             } finally {
                 state.isSubmitting = false;
-            }
-        },
-
-        // ── Notification polling ──
-        *pollNotifications() {
-            if ( ! state.nonce ) return;
-
-            try {
-                const response = yield fetch(
-                    `${ state.apiBase }/notifications/unread-count`,
-                    {
-                        headers: { 'X-WP-Nonce': state.nonce },
-                        credentials: 'same-origin',
-                    }
-                );
-                if ( response.ok ) {
-                    const data = yield response.json();
-                    state.unreadCount = data.count || 0;
-                }
-            } catch {
-                // Silent fail for polling
             }
         },
 
@@ -2700,7 +3406,7 @@ const { state, actions } = store( 'jetonomy', {
                 collectPrefix:   false,
                 collectPrivate:  true, // regression #9886339472 — embed must respect private flag.
                 collectSchedule: false,
-                collectCaptcha:  false,
+                collectCaptcha:  true, // posts endpoint verifies for low-trust users (#9977126420).
                 bodySource:      'textarea',
                 errorSink:       'context',
             } );
@@ -2708,13 +3414,9 @@ const { state, actions } = store( 'jetonomy', {
     },
 
     callbacks: {
-        // Start polling on init
-        startPolling() {
-            // Poll every 30 seconds
-            setInterval( () => {
-                actions.pollNotifications();
-            }, 30000 );
-        },
+        // (Notification polling lives in header.js — the old
+        // startPolling/pollNotifications chain here had no data-wp-init
+        // consumer and was removed in 1.5.0; audit C.)
 
         // On mobile, the profile tabs row is horizontally scrollable to fit
         // all five tabs. When the viewer lands on a sub-page whose tab sits
@@ -2730,42 +3432,71 @@ const { state, actions } = store( 'jetonomy', {
             active.scrollIntoView( { inline: 'nearest', block: 'nearest', behavior: 'instant' } );
         },
 
-        // Poll for new replies and show a sticky banner
+        // Poll for new replies and show a sticky banner. Adaptive + visibility-
+        // aware: pauses entirely while the tab is hidden, and backs the interval
+        // off when nothing new arrives, so an abandoned tab stops hammering
+        // /updates. Resets to the fast cadence on activity or when refocused.
         initReplyPolling() {
             const repliesSection = document.getElementById( 'jt-replies-container' );
             if ( ! repliesSection || ! state.currentPostId ) return;
 
+            const MIN_INTERVAL = 15000;   // active cadence
+            const MAX_INTERVAL = 120000;  // idle ceiling (doubles 15->30->60->120)
+            let interval  = MIN_INTERVAL;
             let lastCheck = Date.now();
+            let timer     = null;
 
-            setInterval( async () => {
+            const schedule = () => {
+                clearTimeout( timer );
+                // Paused while hidden; the visibilitychange handler resumes it.
+                if ( document.hidden ) return;
+                timer = setTimeout( poll, interval );
+            };
+
+            const poll = async () => {
                 try {
                     const since = new Date( lastCheck ).toISOString();
-                    const response = await fetch(
-                        `${ state.apiBase }/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`,
-                        { headers: { 'X-WP-Nonce': state.nonce }, credentials: 'same-origin' }
+                    const response = await window.jetonomyRest.restFetch(
+                        `/updates?scope=post&id=${ state.currentPostId }&since=${ encodeURIComponent( since ) }`
                     );
-                    if ( ! response.ok ) return;
-                    const data = await response.json();
-                    const newReplies = ( data.data || [] ).length;
+                    if ( response.ok ) {
+                        const data = response.data || {};
+                        const newReplies = ( data.data || [] ).length;
 
-                    if ( newReplies > 0 ) {
-                        let banner = document.querySelector( '.jt-new-replies-banner' );
-                        if ( ! banner ) {
-                            banner = document.createElement( 'div' );
-                            banner.className = 'jt-new-replies-banner';
-                            banner.addEventListener( 'click', () => {
-                                window.location.reload();
-                            } );
-                            repliesSection.parentElement.appendChild( banner );
+                        if ( newReplies > 0 ) {
+                            let banner = document.querySelector( '.jt-new-replies-banner' );
+                            if ( ! banner ) {
+                                banner = document.createElement( 'div' );
+                                banner.className = 'jt-new-replies-banner';
+                                banner.addEventListener( 'click', () => {
+                                    window.location.reload();
+                                } );
+                                repliesSection.parentElement.appendChild( banner );
+                            }
+                            banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                            interval = MIN_INTERVAL;                      // activity -> fast again
+                        } else {
+                            interval = Math.min( interval * 2, MAX_INTERVAL ); // idle -> back off
                         }
-                        banner.textContent = `${ newReplies } new ${ newReplies === 1 ? 'reply' : 'replies' } — click to refresh`;
+                        lastCheck = Date.now();
                     }
-
-                    lastCheck = Date.now();
                 } catch {
-                    // silent
+                    // silent — transient network blip; keep current cadence
                 }
-            }, 15000 );
+                schedule();
+            };
+
+            document.addEventListener( 'visibilitychange', () => {
+                if ( document.hidden ) {
+                    clearTimeout( timer );           // pause; no work in the background
+                } else {
+                    clearTimeout( timer );
+                    interval = MIN_INTERVAL;         // resume fast + catch up now
+                    poll();
+                }
+            } );
+
+            schedule();
         },
     },
 } );
@@ -2776,10 +3507,6 @@ const { state, actions } = store( 'jetonomy', {
    GET /jetonomy/v1/link-preview (Jetonomy\Services\Links\Preview_Data) so the
    same endpoint drives the native mobile app. */
 ( function() {
-    const DATA     = window.jetonomyData || {};
-    const API_BASE = DATA.restBase || '/wp-json/jetonomy/v1';
-    const NONCE    = DATA.restNonce || '';
-
     const MAX_PER_CONTAINER = 3;
     const DESC_MAX          = 200;
     // Embed HTML comes from the REST response, which is kses-sanitised on the
@@ -2801,12 +3528,9 @@ const { state, actions } = store( 'jetonomy', {
     }
 
     function fetchPreview( href ) {
-        const headers = { 'Accept': 'application/json' };
-        if ( NONCE ) headers[ 'X-WP-Nonce' ] = NONCE;
-        return fetch( API_BASE + '/link-preview?url=' + encodeURIComponent( href ), {
-            headers,
-            credentials: 'same-origin',
-        } ).then( r => r.ok ? r.json() : null );
+        return window.jetonomyRest.restFetch( '/link-preview?url=' + encodeURIComponent( href ), {
+            headers: { 'Accept': 'application/json' },
+        } ).then( r => r.ok ? r.data : null );
     }
 
     function el( tag, cls, text ) {
@@ -2965,7 +3689,6 @@ const { state, actions } = store( 'jetonomy', {
         if ( titleInput && similarPanel && similarResults ) {
             let debounceTimer = null;
             const spaceId = titleInput.dataset.spaceId;
-            const SIMILAR_API = API_BASE;
             // Derive community base from breadcrumb or form context.
             const formEl = document.getElementById( 'jt-new-post-form' );
             const ctxData = formEl ? JSON.parse( formEl.dataset.wpContext || '{}' ) : {};
@@ -3005,13 +3728,13 @@ const { state, actions } = store( 'jetonomy', {
                 }
 
                 const useAllSpaces = allSpacesCheck && allSpacesCheck.checked;
-                let url = SIMILAR_API + '/search?q=' + encodeURIComponent( q ) + '&type=post';
+                let path = '/search?q=' + encodeURIComponent( q ) + '&type=post';
                 if ( ! useAllSpaces && spaceId ) {
-                    url += '&space_id=' + spaceId;
+                    path += '&space_id=' + spaceId;
                 }
 
-                fetch( url, { credentials: 'same-origin' } )
-                    .then( function( r ) { return r.json(); } )
+                window.jetonomyRest.restFetch( path )
+                    .then( function( r ) { return r.data || {}; } )
                     .then( function( res ) {
                         const posts = res.data || [];
                         similarResults.textContent = '';
