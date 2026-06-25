@@ -3060,6 +3060,21 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	margin: 0 0 0.75rem;
 	color: var(--jt-text);
 }
+
+/* Block-title contrast guard. These titles are headings (<h2>/<h3>); when a
+   block sits in page content a theme's content-heading rule (e.g.
+   .page .entry-content h3, specificity 0,2,1) can outrank the single-class
+   title rules above and repaint the title, risking low contrast on the block's
+   own surface. Scope the colour to the block wrapper + .jt-app (0,3,0) so it
+   reliably wins without !important. Dark mode is already covered by the
+   .jt-dark .jt-app h1-h6 reset near the top of this file. */
+.jt-feed-block.jt-app .jt-feed-title,
+.jt-nav-block.jt-app .jt-nav-title,
+.jt-login-block.jt-app .jt-login-title,
+.jt-user-panel.jt-app .jt-userpanel-title,
+.jt-app .jt-compose-topic-login .jt-compose-topic-login-title {
+	color: var(--jt-text);
+}
 .jt-login-tabs {
 	display: flex;
 	gap: 0.25rem;
