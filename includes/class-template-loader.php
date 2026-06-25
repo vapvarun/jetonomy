@@ -221,7 +221,7 @@ class Template_Loader {
 		// did) made Jetonomy render its generic blue on BuddyX instead of the
 		// theme accent. Mirrors the static chain in jetonomy.css.
 		if ( ! empty( $settings['inherit_colors'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--bx-color-accent,var(--brand,var(--wp--preset--color--primary,#3B82F6)));--jt-text:var(--bx-color-fg,var(--text-1,var(--wp--preset--color--contrast,#1a1a1a)));--jt-bg:var(--bx-color-bg-elevated,var(--bg,var(--wp--preset--color--base,#ffffff)));}';
+			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--bx-color-accent,var(--reign-colors-theme,var(--brand,var(--wp--preset--color--primary,var(--ast-global-color-0,var(--global-palette1,var(--theme-palette-color-1,var(--wp--preset--color--accent,#3B82F6))))))));--jt-text:var(--bx-color-fg,var(--text-1,var(--wp--preset--color--contrast,#1a1a1a)));--jt-bg:var(--bx-color-bg-elevated,var(--bg,var(--wp--preset--color--base,#ffffff)));}';
 		}
 
 		// Layout density.

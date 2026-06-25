@@ -10,14 +10,23 @@
     --jt-font-heading: var(--font-display, var(--wp--preset--font-family--heading, inherit));
     --jt-font-mono: var(--wp--preset--font-family--monospace, ui-monospace, SFMono-Regular, Menlo, monospace);
 
-    /* Colors — adopt the active theme's own token system first so the plugin
+    /* Colors — adopt the active theme's own brand token first so the plugin
        reads as native (and follows the theme's dark mode automatically when the
-       theme flips its tokens), then BuddyNext, then WP theme.json, then a
-       neutral fallback:
-         BuddyX / BuddyX Pro 5.1+ → --bx-color-* (flip on [data-bx-mode="dark"])
-         BuddyNext               → --brand / --text-1 / --bg
-         Any block theme         → --wp--preset--color--* */
-    --jt-accent: var(--bx-color-accent, var(--brand, var(--wp--preset--color--primary, #3B82F6)));
+       theme flips its tokens), then WP theme.json, then the popular page-builder
+       themes, then a neutral fallback. Verified host-theme brand-token map:
+         BuddyX / BuddyX Pro 5.1+ → --bx-color-accent (flip on [data-bx-mode="dark"])
+         Reign 8.0+               → --reign-colors-theme
+         BuddyNext                → --brand
+         Any "primary"-slug theme → --wp--preset--color--primary (TT3, classic themes)
+         Astra                    → --ast-global-color-0
+         Kadence                  → --global-palette1
+         Blocksy                  → --theme-palette-color-1
+         GeneratePress / "accent" → --wp--preset--color--accent
+       Canonical recipe: wp-plugin-development skill, ux-foundation
+       "Host-Theme Token Adoption". A var() chain picks the first DEFINED token,
+       and these are mutually exclusive per active theme, so order only sets
+       precedence for the rare theme exposing two. */
+    --jt-accent: var(--bx-color-accent, var(--reign-colors-theme, var(--brand, var(--wp--preset--color--primary, var(--ast-global-color-0, var(--global-palette1, var(--theme-palette-color-1, var(--wp--preset--color--accent, #3B82F6))))))));
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
     --jt-accent-light: #EFF6FF;
