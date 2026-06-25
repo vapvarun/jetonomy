@@ -1580,9 +1580,11 @@
   }
 
   .jt-notif-item__menu-list {
+    /* Position is owned by SmartDropdown: it sets position:fixed + top/left
+       inline on open. Do NOT set top/left/inset-inline-end here — a stale
+       inset-inline-end combines with the JS-set left to stretch the fixed
+       panel full-width across the viewport. min-width gives it a sane size. */
     position: absolute;
-    top: 100%;
-    inset-inline-end: 8px;
     z-index: 30;
     min-width: 160px;
     margin: 0;
@@ -2153,6 +2155,13 @@
   /* Cards — lift and shadow on hover */
   .jt-card { transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s; box-shadow: var(--jt-shadow-sm); }
   .jt-card:hover { border-color: var(--jt-border-strong); box-shadow: var(--jt-shadow-md); transform: translateY(-1px); }
+  /* The notification list is a full-width .jt-card that hosts a position:fixed
+     action-menu (SmartDropdown). The hover lift above makes the card a
+     containing block for that fixed panel, so the menu anchors to the card
+     instead of the viewport — it renders far below the clicked row and shifts
+     when the hover state toggles (Basecamp). A full-width list has no use for
+     the lift; drop only the transform here, the shadow/border hover stays. */
+  .jt-card.jt-notif-list:hover { transform: none; }
 
   /* ── 3. Community Nav — Active State Animation ── */
   .jt-community-nav-links a { position: relative; }
