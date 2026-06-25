@@ -745,6 +745,12 @@ const { state, actions } = store( 'jetonomy', {
             let rest = link.pathname;
             if ( base && rest.indexOf( base ) === 0 ) {
                 rest = rest.slice( base.length );
+            } else if ( base ) {
+                // Off-base link (e.g. a BuddyPress "back to group" URL like
+                // /groups/foo/). It is same-origin and unmodified, but it is NOT
+                // a Jetonomy route — let the browser do a full-page navigation
+                // instead of pulling it into the app shell via the iAPI router.
+                return;
             }
             rest = rest.replace( /^\/+|\/+$/g, '' );
             const seg = '' === rest ? [] : rest.split( '/' );
@@ -1069,8 +1075,9 @@ const { state, actions } = store( 'jetonomy', {
         },
 
         // ── Notifications page (declarative; was notifications-page.js) ──
-        *markAllNotifsRead() {
-            const btn = getElement().ref;
+        *markAllNotifsRead( event ) {
+            const btn = triggerOf( event );
+            if ( ! btn ) return;
             btn.disabled = true;
             const res = yield window.jetonomyRest.restFetch( '/notifications/mark-all-read', { method: 'POST' } );
             if ( ! res.ok ) { btn.disabled = false; return; }
@@ -1079,7 +1086,8 @@ const { state, actions } = store( 'jetonomy', {
         },
         toggleNotifMenu( event ) {
             event.stopPropagation();
-            const trigger = getElement().ref;
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
             const menu = trigger.closest( '[data-jt-notif-menu]' );
             const panel = menu && menu.querySelector( '.jt-notif-item__menu-list' );
             if ( ! panel ) return;
@@ -1095,15 +1103,17 @@ const { state, actions } = store( 'jetonomy', {
             }
             trigger._jtDropdown.toggle();
         },
-        *markNotifRead() {
-            const row = getElement().ref.closest( '.jt-notif-item' );
+        *markNotifRead( event ) {
+            const trigger = triggerOf( event );
+            const row = trigger && trigger.closest( '.jt-notif-item' );
             const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
             if ( ! id ) return;
             const res = yield window.jetonomyRest.restFetch( '/notifications/' + id, { method: 'PATCH' } );
             if ( res.ok ) notifMarkRowRead( row );
         },
-        *deleteNotif() {
-            const row = getElement().ref.closest( '.jt-notif-item' );
+        *deleteNotif( event ) {
+            const trigger = triggerOf( event );
+            const row = trigger && trigger.closest( '.jt-notif-item' );
             const id = row && parseInt( row.getAttribute( 'data-jt-notif-id' ), 10 );
             if ( ! id ) return;
             // Optimistic remove — re-insert on failure so the user can retry.
@@ -1142,16 +1152,18 @@ const { state, actions } = store( 'jetonomy', {
                 if ( window.bnToast ) window.bnToast( ( res.data && res.data.message ) || state.i18n?.genericError || 'Could not publish.' );
             }
         },
-        toggleNotifSelectAll() {
-            const selectAll = getElement().ref;
+        toggleNotifSelectAll( event ) {
+            const selectAll = triggerOf( event );
+            if ( ! selectAll ) return;
             document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb' ).forEach( ( cb ) => { cb.checked = selectAll.checked; } );
             notifUpdateBulkbar();
         },
         updateNotifSelection() {
             notifUpdateBulkbar();
         },
-        *bulkNotifs() {
-            const btn = getElement().ref;
+        *bulkNotifs( event ) {
+            const btn = triggerOf( event );
+            if ( ! btn ) return;
             const action = btn.getAttribute( 'data-jt-notif-bulk' );
             const ids = [ ...document.querySelectorAll( '[data-jt-notif-list] .jt-notif-cb:checked' ) ]
                 .map( ( cb ) => parseInt( cb.value, 10 ) ).filter( ( id ) => id > 0 );
