@@ -289,6 +289,7 @@ Instant in-place navigation across the community, built on the WordPress Interac
 * Improve  - Settings warns when your CAPTCHA provider and keys are mismatched.
 * Improve  - Private spaces are now discoverable in the directory and search, shown with a Join or Request-to-join action, while their posts stay members-only; only hidden spaces are kept out of listings.
 * Improve  - The front-end edit-space form now exposes the "Require moderator approval for new posts" setting, so space owners can toggle it without opening wp-admin.
+* Improve  - The forum adopts your active theme's brand colour automatically across BuddyX, BuddyX Pro, Reign and the popular page-builder themes (Astra, Kadence, GeneratePress, Blocksy), in light and dark mode, with no custom CSS; themes that expose no brand colour fall back to a clean default you can override under Settings > Appearance.
 * Fix      - Members can now pause all email notifications from Edit Profile (and admins per user); the verification reminder honoured this preference but nothing could set it.
 * Fix      - Spam and Trash in the admin moderation queue now ask for confirmation before removing content.
 * Fix      - Long-lived tabs refresh their session nonce automatically, so members no longer lose a reply to "Cookie nonce is invalid".
@@ -296,6 +297,11 @@ Instant in-place navigation across the community, built on the WordPress Interac
 * Fix      - Block titles (login "Join the conversation", navigation, user panel, feed) stay legible on themes whose content-heading styles previously repainted them dark-on-dark.
 * Fix      - Analytics counting stays accurate through the content lifecycle: pending posts count on approval, trashed posts decrement their original day.
 * Fix      - The approval-hold check now evaluates the post author instead of the current user.
+* Fix      - The forum no longer injects its own brand colour into the site's global colour palette, where it could override the active theme's Primary colour; it reads the theme's colour instead of competing with it.
+* Fix      - The notification action menu (mark read, delete) opens anchored to its button instead of mis-positioned, and notification cards no longer stretch full width.
+* Fix      - A restrictive access rule added to a public space now gates the space (it is converted to private) instead of being saved but ignored.
+* Fix      - The community-uploads filter is available in the Media Library grid view, not only the list view.
+* Fix      - Load More on paginated community routes (notifications and listings) no longer returns a 404 on later pages.
 * Fix      - Database version constant bumped so the 1.5.0 migration runs automatically on upgrade.
 * Security - Search results, link-preview (oEmbed) cards, profile activity tabs, tag pages, trending lists and the recent-posts widgets no longer surface posts or replies from private or hidden spaces to people who are not members.
 * Security - Importing a members-only wpForo board no longer flattens it to a public space; access-restricted forums import as private with approval to join, with a filter to map access per site.
