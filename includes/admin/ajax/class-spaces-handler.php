@@ -433,11 +433,31 @@ class Spaces_Handler {
 		}
 
 		$rule = AccessRule::find( $id );
+
+		// Guard: a restrictive access rule cannot gate a PUBLIC space. Public
+		// spaces are always readable, and the Permission_Engine blocks non-members
+		// on private/hidden spaces *before* rules run — so a membership/role/
+		// capability/trust-level rule on a public space silently does nothing (the
+		// "configured but content still accessible" report, #10000074550). When
+		// such a rule is attached to a public space, switch the space to Private
+		// so the rule actually restricts access, and tell the admin what happened.
+		$restrictive_types = array( 'membership', 'role', 'capability', 'trust_level' );
+		$made_private      = false;
+		$space             = Space::find( $space_id );
+		if ( $space && 'public' === $space->visibility && in_array( $rule_type, $restrictive_types, true ) ) {
+			$made_private = Space::update( $space_id, array( 'visibility' => 'private' ) );
+		}
+
+		$message = $made_private
+			? __( 'Access rule added. This space was switched to Private so the rule can restrict access — a rule cannot gate a public space.', 'jetonomy' )
+			: __( 'Access rule added.', 'jetonomy' );
+
 		wp_send_json_success(
 			array(
-				'id'      => $id,
-				'rule'    => $rule,
-				'message' => __( 'Access rule added.', 'jetonomy' ),
+				'id'           => $id,
+				'rule'         => $rule,
+				'made_private' => $made_private,
+				'message'      => $message,
 			)
 		);
 	}
