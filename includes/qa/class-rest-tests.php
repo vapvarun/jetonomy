@@ -169,10 +169,20 @@ class REST_Tests {
 		$this->admin_id = (int) ( $admin_ids[0] ?? 1 );
 		wp_set_current_user( $this->admin_id );
 
-		// Find an active space.
+		// Find an active space. Prefer a PUBLIC + open-join space so the
+		// low-trust / non-member participation tests (C14 downvote, H35 post,
+		// H37 vote) exercise their intended behaviour. A private space is
+		// members-only (Permission_Engine layer 2), so picking the first active
+		// space blindly made those tests fail with a correct 403 whenever the
+		// site's first space happened to be private. Fall back to any active
+		// space if the install has no public+open one.
 		$spaces_t = table( 'spaces' );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' AND visibility = 'public' AND join_policy = 'open' ORDER BY id LIMIT 1" );
+		if ( ! $space ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$space = $wpdb->get_row( "SELECT * FROM {$spaces_t} WHERE status = 'active' LIMIT 1" );
+		}
 		if ( ! $space ) {
 			return; // run() will detect this and bail.
 		}
