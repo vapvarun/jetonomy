@@ -213,9 +213,15 @@ class Template_Loader {
 			$dynamic_css .= ':root,.jt-app{--jt-font:inherit;--jt-font-heading:inherit;}';
 		}
 
-		// Inherit colors: when enabled, use WP theme preset colors only.
+		// Inherit colors: when enabled, adopt the active host theme's colors.
+		// Must chain through each theme's own token system first — BuddyX / BuddyX
+		// Pro expose `--bx-color-*` (NOT the WP presets), BuddyNext exposes
+		// `--brand`/`--text-1`/`--bg`, and Reign maps its palette onto the WP
+		// `--wp--preset--color--*`. Falling straight to the WP preset (as this
+		// did) made Jetonomy render its generic blue on BuddyX instead of the
+		// theme accent. Mirrors the static chain in jetonomy.css.
 		if ( ! empty( $settings['inherit_colors'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--wp--preset--color--primary,#3B82F6);--jt-text:var(--wp--preset--color--contrast,#1a1a1a);--jt-bg:var(--wp--preset--color--base,#ffffff);}';
+			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--bx-color-accent,var(--brand,var(--wp--preset--color--primary,#3B82F6)));--jt-text:var(--bx-color-fg,var(--text-1,var(--wp--preset--color--contrast,#1a1a1a)));--jt-bg:var(--bx-color-bg-elevated,var(--bg,var(--wp--preset--color--base,#ffffff)));}';
 		}
 
 		// Layout density.

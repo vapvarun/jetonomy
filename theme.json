@@ -53,15 +53,6 @@
 				{ "slug": "60", "size": "2.5rem", "name": "6" },
 				{ "slug": "70", "size": "4rem", "name": "7" }
 			]
-		},
-		"color": {
-			"palette": [
-				{ "slug": "base", "color": "#ffffff", "name": "Base" },
-				{ "slug": "contrast", "color": "#1a1a1a", "name": "Contrast" },
-				{ "slug": "primary", "color": "#3B82F6", "name": "Primary" },
-				{ "slug": "secondary", "color": "#6B7280", "name": "Secondary" },
-				{ "slug": "tertiary", "color": "#F3F4F6", "name": "Tertiary" }
-			]
 		}
 	},
 	"styles": {
