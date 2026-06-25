@@ -29,6 +29,12 @@ $offset   = ( $page - 1 ) * $per_page;
 
 $bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, $per_page, $offset );
 
+// has_more compares the real total against what is shown — never count( $bookmarks ),
+// which showed a phantom "Load More" when the bookmark count was an exact multiple
+// of $per_page (Basecamp).
+$total    = \Jetonomy\Models\Bookmark::count_by_user( $user_id );
+$has_more = ( $page * $per_page ) < $total;
+
 $crumbs = array(
 	array(
 		'label' => __( 'My bookmarks', 'jetonomy' ),
@@ -79,7 +85,7 @@ $crumbs = array(
 					?>
 				<?php endforeach; ?>
 			</div>
-			<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => count( $bookmarks ) >= $per_page ) ); ?>
+			<?php \Jetonomy\Template_Loader::partial( 'pagination', array( 'has_more' => $has_more ) ); ?>
 		<?php endif; ?>
 	</main>
 

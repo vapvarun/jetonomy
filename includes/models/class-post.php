@@ -904,6 +904,31 @@ class Post extends Model {
 	}
 
 	/**
+	 * Count the current user's draft posts.
+	 *
+	 * Companion to list_drafts_by_user() so the drafts view can compute
+	 * accurate "Load More" pagination from the real total instead of the
+	 * `count( $page ) >= $per_page` heuristic, which showed a phantom button
+	 * when the draft count was an exact multiple of the page size.
+	 *
+	 * @param int $user_id Draft author.
+	 * @return int Total draft count for the user.
+	 */
+	public static function count_drafts_by_user( int $user_id ): int {
+		$table = static::table();
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$table} WHERE author_id = %d AND status = 'draft'",
+				$user_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
 	 * Get posts that are scheduled and due for publishing.
 	 *
 	 * @param int $limit Maximum number of rows to return. 0 means no limit.

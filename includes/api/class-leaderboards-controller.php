@@ -58,26 +58,11 @@ class Leaderboards_Controller extends Base_Controller {
 	 * GET /leaderboards — Ranked list of members by reputation.
 	 */
 	public function list_items( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		global $wpdb;
-
 		$limit  = (int) $request->get_param( 'limit' );
 		$offset = (int) $request->get_param( 'offset' );
 		$period = $request->get_param( 'period' ) ?? 'all';
 		if ( ! in_array( $period, array( 'all', 'month', 'week' ), true ) ) {
 			$period = 'all';
-		}
-
-		$profiles_tbl = \Jetonomy\table( 'user_profiles' );
-
-		// Period filter on recent activity, matching the server-rendered
-		// leaderboard template. Previously the REST endpoint accepted `period`
-		// and echoed it back but never applied it, so it always returned the
-		// all-time board.
-		$period_where = '';
-		if ( 'week' === $period ) {
-			$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 7 DAY)';
-		} elseif ( 'month' === $period ) {
-			$period_where = ' WHERE last_seen_at > DATE_SUB(NOW(), INTERVAL 30 DAY)';
 		}
 
 		/**
@@ -98,18 +83,12 @@ class Leaderboards_Controller extends Base_Controller {
 		$limit        = (int) $args['limit'];
 		$offset       = (int) $args['offset'];
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$profiles_tbl}{$period_where}" );
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$leaders = $wpdb->get_results(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$profiles_tbl}{$period_where} ORDER BY {$order_by_sql} LIMIT %d OFFSET %d",
-				$limit,
-				$offset
-			)
-		) ?: [];
+		// Total + page slice come from the shared model methods so this endpoint
+		// and the server-rendered leaderboard view stay in lockstep on both the
+		// population (period filter) and the ordering. The period filter was
+		// previously echoed back but never applied; the model now owns it.
+		$total   = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
+		$leaders = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $limit, $offset, $order_by_sql );
 
 		$settings  = get_option( 'jetonomy_settings', [] );
 		$base_slug = $settings['base_slug'] ?? 'community';
