@@ -52,6 +52,7 @@ class Media_Library {
 		add_filter( 'ajax_query_attachments_args', array( $this, 'filter_grid_query' ) );
 		add_action( 'pre_get_posts', array( $this, 'filter_list_query' ) );
 		add_action( 'restrict_manage_posts', array( $this, 'render_list_filter' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_grid_filter' ) );
 		add_action( 'admin_init', array( $this, 'maybe_backfill' ) );
 		// Dedicated, paginated Community Media admin view (priority 20 so the
 		// parent Jetonomy menu is already registered).
@@ -191,8 +192,18 @@ class Media_Library {
 	 * Whether the owner has opted to see community uploads on this request.
 	 */
 	private function show_community(): bool {
-		// Read-only list filter; nonce not required for a GET view toggle.
-		return isset( $_GET[ self::SHOW_PARAM ] ) && '1' === $_GET[ self::SHOW_PARAM ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// Read-only view toggle; nonce not required. The list-view dropdown
+		// submits via GET (takes precedence); the grid-view dropdown persists a
+		// cookie (admin-ajax query-attachments requests carry no GET params).
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET[ self::SHOW_PARAM ] ) ) {
+			return '1' === $_GET[ self::SHOW_PARAM ];
+		}
+		if ( isset( $_COOKIE[ self::SHOW_PARAM ] ) ) {
+			return '1' === $_COOKIE[ self::SHOW_PARAM ];
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		return false;
 	}
 
 	/**
@@ -269,6 +280,43 @@ class Media_Library {
 			<option value="1" <?php selected( $show, true ); ?>><?php esc_html_e( 'Show community uploads', 'jetonomy' ); ?></option>
 		</select>
 		<?php
+	}
+
+	/**
+	 * Enqueue the grid-view community-uploads filter.
+	 *
+	 * `restrict_manage_posts` (render_list_filter) only fires on the list screen,
+	 * so the JS grid view needs its own toolbar dropdown. The script injects the
+	 * dropdown and persists the choice in a cookie that show_community() reads.
+	 *
+	 * @param string $hook Current admin page hook.
+	 */
+	public function enqueue_grid_filter( $hook ): void {
+		if ( 'upload.php' !== $hook ) {
+			return;
+		}
+		// Grid is the default; only the list view already has the dropdown.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen-mode toggle.
+		$mode = isset( $_GET['mode'] ) ? sanitize_key( wp_unslash( $_GET['mode'] ) ) : 'grid';
+		if ( 'list' === $mode ) {
+			return;
+		}
+		wp_enqueue_script(
+			'jetonomy-media-grid',
+			JETONOMY_URL . 'assets/js/admin-media-grid.js',
+			array(),
+			JETONOMY_VERSION,
+			true
+		);
+		wp_localize_script(
+			'jetonomy-media-grid',
+			'jetonomyMediaGrid',
+			array(
+				'label' => __( 'Community uploads', 'jetonomy' ),
+				'show'  => __( 'Show community uploads', 'jetonomy' ),
+				'hide'  => __( 'Hide community uploads', 'jetonomy' ),
+			)
+		);
 	}
 
 	/**
