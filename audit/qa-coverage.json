@@ -5,7 +5,7 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-26T04:52:02+00:00",
+        "at": "2026-06-26T08:13:37+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
@@ -622,7 +622,7 @@
             "total": 6,
             "covered": 5,
             "uncovered": 1,
-            "skipped": 151,
+            "skipped": 170,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -754,7 +754,7 @@
         "items_total": 160,
         "items_covered": 49,
         "items_uncovered": 111,
-        "items_skipped": 151,
+        "items_skipped": 170,
         "coverage_percent": 30.600000000000001
     },
     "drift": {
