@@ -2870,6 +2870,41 @@
 			"type": "filter",
 			"where": "templates/views/space-members.php:29",
 			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_profile_tabs",
+			"type": "filter",
+			"args": "$tabs, $user, $is_own",
+			"where": "templates/views/user-profile.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_space_tabs",
+			"type": "filter",
+			"args": "$tabs, $space, $show_members",
+			"where": "templates/views/space.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_dynamic_css",
+			"type": "filter",
+			"args": "$css, $settings",
+			"where": "includes/class-template-loader.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_space_card_after",
+			"type": "action",
+			"args": "$space",
+			"where": "templates/views/home.php, templates/views/category.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_member_card_after",
+			"type": "action",
+			"args": "$member, $space",
+			"where": "templates/views/space-members.php",
+			"consumed_by": []
 		}
 	],
 	"buddypress_integration": {

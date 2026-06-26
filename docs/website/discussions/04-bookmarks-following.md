@@ -11,6 +11,7 @@ Bookmarks and following are how members stay connected to the content they care 
 ## What You Will Learn
 
 - How to bookmark a topic and access your bookmarks later
+- How to remove a bookmark directly from the My Bookmarks page
 - How to follow a space and what that means for notifications
 - How auto-subscription works when you post or reply
 - How to manage your subscriptions and turn off notifications
@@ -33,6 +34,12 @@ Two ways to get there, both show the same list:
 Both list every topic you have bookmarked, most recent first. Each item shows the topic title, the space it belongs to, the author, and when it was posted. Click any item to go directly to the topic.
 
 Bookmarks are private - other members cannot see your bookmark list. The standalone page requires sign-in and is excluded from search engines so the URL itself never reveals what you've saved.
+
+### Removing a Bookmark from the Bookmarks Page
+
+Each card on the **My Bookmarks** page carries a bookmark icon button in the top-right corner. Clicking it removes the bookmark immediately - no confirmation dialog. The card fades out and disappears from the list so the page always reflects your current bookmark state.
+
+The same toggle works in reverse too: if you accidentally remove a bookmark, re-open the topic and bookmark it again from the topic action bar.
 
 > **Tip:** Use bookmarks as a reading queue - bookmark topics you want to read later, then clear them as you go. The Bookmarks tab gives you a clean list without any algorithm reordering it.
 

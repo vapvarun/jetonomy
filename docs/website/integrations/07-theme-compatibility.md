@@ -49,6 +49,25 @@ On BuddyX/BuddyX Pro/Reign, flipping the theme's dark-mode toggle in the Customi
 
 If you build a custom Kirki theme and want to hook into the same bridge, the integration is extensible via the `jetonomy_theme_light_tokens` and `jetonomy_theme_dark_tokens` filters. Each receives a map of `--jt-*` token => hex color (light mode and dark mode respectively) - return your own token maps and Jetonomy will inject them. Return an empty array to disable that mode's override.
 
+## Popular Page-Builder Themes (1.5.0+)
+
+Starting in 1.5.0, Jetonomy extends automatic brand-color adoption to four widely-used page-builder themes. When any of these themes is active, the forum picks up its accent in both light and dark mode with no custom CSS required.
+
+| Theme | Brand token adopted |
+|---|---|
+| Astra | `--ast-global-color-0` |
+| Kadence | `--global-palette1` |
+| GeneratePress | `--wp--preset--color--accent` |
+| Blocksy | `--theme-palette-color-1` |
+
+**Light and dark mode.** The adoption works through a CSS `var()` chain: `--jt-accent` resolves to the active theme's brand token first. When the theme flips its own token for dark mode, the forum follows automatically - no separate dark-mode override needed.
+
+**Our own themes are also covered.** BuddyX, BuddyX Pro, and Reign have been supported since 1.3.0 via the Kirki bridge described above. They define their own token names (`--bx-color-accent` for BuddyX and BuddyX Pro, `--reign-colors-theme` for Reign) and work the same way with no configuration required.
+
+**Themes with no recognizable brand token.** Stock block themes that expose numbered palette slugs (such as `accent-1` or `palette3`) are deliberately not auto-adopted - an accidentally adopted low-contrast color is worse than a clean default. For these themes, Jetonomy falls back to its own neutral accent. The site owner can override it under **Jetonomy → Settings → Appearance → Color Palette**.
+
+For the full technical specification of the `var()` chain, the complete verified token map, and the checklist for adding a new theme, see [`docs/standards/host-theme-color-adoption.md`](../../standards/host-theme-color-adoption.md).
+
 ## Using Other Themes
 
 Jetonomy works with any well-built WordPress theme. Compatibility level depends on how fully the theme uses theme.json:

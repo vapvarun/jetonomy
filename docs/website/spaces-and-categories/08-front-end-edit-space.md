@@ -4,7 +4,7 @@ category: "spaces-and-categories"
 order: 8
 ---
 
-Since Jetonomy 1.4.0, space owners and moderators can edit their space directly from the front-end. They click an **Edit space** button in the space header and adjust the title, description, cover image, icon, type, visibility, join policy, category, posts-per-page, and prefixes without ever loading wp-admin.
+Since Jetonomy 1.4.0, space owners and moderators can edit their space directly from the front-end. They click an **Edit space** button in the space header and adjust the title, description, cover image, icon, type, visibility, join policy, moderation approval, category, posts-per-page, and prefixes without ever loading wp-admin.
 
 ![Front-end Edit Space page at /community/s/<slug>/edit/ with the Edit space button visible in the space header and the editable fields below](../images/spaces-and-categories/edit-space-form.png)
 
@@ -46,6 +46,7 @@ Every space setting that is editable in wp-admin is editable from the front-end.
 | Type | Forum, Q&A, Ideas, or Feed |
 | Visibility | Public, Private, or Hidden |
 | Join policy | Open, Approval Required, or Invite Only |
+| Require moderator approval for new posts | When checked, new posts are held in the moderation queue until a moderator approves them |
 | Posts per page | A number from 1 to 100; leave blank to use the site default |
 | Post prefixes | Optional tags shown in front of post titles (e.g. "Bug", "Idea") |
 

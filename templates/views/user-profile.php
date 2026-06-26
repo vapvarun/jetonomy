@@ -242,24 +242,67 @@ $crumbs = [
 			</div>
 
 			<!-- Profile tabs -->
+			<?php
+			$jt_profile_url = $base . '/u/' . $user->user_login;
+
+			// Built-in tabs as an ordered, filterable map. Each entry:
+			// slug => [ 'label' => string, 'url' => string ]. The 'posts' tab is
+			// the base profile URL and is the active tab when $current_tab is empty.
+			$jt_profile_tabs = array(
+				'posts'   => array(
+					'label' => __( 'Posts', 'jetonomy' ),
+					'url'   => $jt_profile_url . '/',
+				),
+				'replies' => array(
+					'label' => __( 'Replies', 'jetonomy' ),
+					'url'   => $jt_profile_url . '/replies/',
+				),
+				'votes'   => array(
+					'label' => __( 'Votes', 'jetonomy' ),
+					'url'   => $jt_profile_url . '/votes/',
+				),
+			);
+			if ( $is_own ) {
+				$jt_profile_tabs['bookmarks'] = array(
+					'label' => __( 'Bookmarks', 'jetonomy' ),
+					'url'   => $jt_profile_url . '/bookmarks/',
+				);
+				$jt_profile_tabs['drafts']    = array(
+					'label' => __( 'Drafts', 'jetonomy' ),
+					'url'   => $jt_profile_url . '/drafts/',
+				);
+			}
+
+			/**
+			 * Filters the user-profile tab bar.
+			 *
+			 * Add, remove, reorder, or relabel the tabs shown under a member's
+			 * profile header. Each tab is `slug => [ 'label' => string, 'url' =>
+			 * string ]`. A custom tab typically links to a route registered via
+			 * the `jetonomy_template_map` filter (so it can render its own view),
+			 * but the URL can point anywhere.
+			 *
+			 * @since 1.5.0
+			 *
+			 * @param array<string,array{label:string,url:string}> $jt_profile_tabs Ordered tab map.
+			 * @param \WP_User $user    The profile owner.
+			 * @param bool     $is_own  Whether the viewer is the profile owner.
+			 */
+			$jt_profile_tabs = apply_filters( 'jetonomy_profile_tabs', $jt_profile_tabs, $user, $is_own );
+			?>
 			<div class="jt-profile-tabs" data-wp-interactive="jetonomy" data-wp-init--active-tab="callbacks.initProfileTabsActive">
-				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/' ); ?>" class="jt-profile-tab <?php echo esc_attr( empty( $current_tab ) ? 'active' : '' ); ?>">
-					<?php esc_html_e( 'Posts', 'jetonomy' ); ?>
-				</a>
-				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/replies/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'replies' === $current_tab ? 'active' : '' ); ?>">
-					<?php esc_html_e( 'Replies', 'jetonomy' ); ?>
-				</a>
-				<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/votes/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'votes' === $current_tab ? 'active' : '' ); ?>">
-					<?php esc_html_e( 'Votes', 'jetonomy' ); ?>
-				</a>
-				<?php if ( $is_own ) : ?>
-					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/bookmarks/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'bookmarks' === $current_tab ? 'active' : '' ); ?>">
-						<?php esc_html_e( 'Bookmarks', 'jetonomy' ); ?>
+				<?php
+				foreach ( (array) $jt_profile_tabs as $jt_tab_slug => $jt_tab ) :
+					if ( empty( $jt_tab['label'] ) || ! isset( $jt_tab['url'] ) ) {
+						continue;
+					}
+					$jt_tab_active = ( '' === (string) $current_tab && 'posts' === $jt_tab_slug )
+						|| ( (string) $current_tab === (string) $jt_tab_slug );
+					?>
+					<a href="<?php echo esc_url( $jt_tab['url'] ); ?>" class="jt-profile-tab <?php echo $jt_tab_active ? 'active' : ''; ?>">
+						<?php echo esc_html( $jt_tab['label'] ); ?>
 					</a>
-					<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/drafts/' ); ?>" class="jt-profile-tab <?php echo esc_attr( 'drafts' === $current_tab ? 'active' : '' ); ?>">
-						<?php esc_html_e( 'Drafts', 'jetonomy' ); ?>
-					</a>
-				<?php endif; ?>
+				<?php endforeach; ?>
 			</div>
 
 			<?php if ( 'replies' === $current_tab ) : ?>

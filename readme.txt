@@ -309,6 +309,7 @@ Instant in-place navigation across the community, built on the WordPress Interac
 * Dev      - jetonomy_post_publish_transition and jetonomy_reply_publish_transition hooks fire on every publish/unpublish transition with a +/-1 delta and the original creation date.
 * Dev      - Removed three never-wired tables (space tags, user interests) with a guarded migration, the GET /space-tags route, three dead admin AJAX actions, and 30+ zero-reference methods.
 * Dev      - PHPUnit suite green across PHP 8.1-8.4 x WP 6.7-6.9; contract-audit baseline and release gate added; CI now runs on dev branches with the full non-pro test matrix.
+* Dev      - New front-end extension points so themes and companion plugins can customise without copying templates: jetonomy_profile_tabs and jetonomy_space_tabs (add or reorder profile and space tabs), jetonomy_space_card_after and jetonomy_member_card_after (inject into space and member cards), and jetonomy_dynamic_css (append --jt-* token overrides).
 * Compat   - Aligned with Jetonomy Pro 1.5.0. Install both updates together.
 
 = 1.4.5 - June 2026 =
