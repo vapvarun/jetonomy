@@ -97,6 +97,10 @@ $crumbs = [
 								</div>
 							</div>
 						</a>
+						<?php
+						/** Fires after each space card; mirror of the home grid hook. @since 1.5.0 @param object $space */
+						do_action( 'jetonomy_space_card_after', $space );
+						?>
 					<?php endforeach; ?>
 				</div>
 			<?php endif; ?>

@@ -260,6 +260,20 @@ $role_labels = [
 								<?php echo esc_html( $mp ? (int) $mp->reputation : 0 ); ?> <span class="jt-member-rep-label"><?php esc_html_e( 'rep', 'jetonomy' ); ?></span>
 							</span>
 						</div>
+						<?php
+						/**
+						 * Fires after each member row in the space members list.
+						 *
+						 * Append a per-member badge, link, or action here. Fires
+						 * after the row's closing element.
+						 *
+						 * @since 1.5.0
+						 *
+						 * @param object $member The space membership row (user_id, role, joined_at).
+						 * @param object $space  The space being viewed.
+						 */
+						do_action( 'jetonomy_member_card_after', $member, $space );
+						?>
 					<?php endforeach; ?>
 				</div>
 

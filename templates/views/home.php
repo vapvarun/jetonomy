@@ -73,6 +73,18 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 			</div>
 		</a>
 		<?php
+		/**
+		 * Fires after each space card in the community home grid.
+		 *
+		 * Append a custom badge, button, or note after a space card. Fires
+		 * OUTSIDE the card's <a> wrapper so interactive markup (buttons,
+		 * forms) is valid. The same hook fires from the category view.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param object $space The space being rendered.
+		 */
+		do_action( 'jetonomy_space_card_after', $space );
 	}
 	echo '</div>';
 }

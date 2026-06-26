@@ -234,6 +234,21 @@ class Template_Loader {
 			$dynamic_css .= wp_strip_all_tags( $settings['custom_css'] );
 		}
 
+		/**
+		 * Filters the Jetonomy dynamic inline CSS before it is attached.
+		 *
+		 * The string already contains the container width, palette tokens,
+		 * font-inherit rules, the host-theme colour-adoption chain, density
+		 * rules and the admin Custom CSS. Append your own `--jt-*` token
+		 * overrides or scoped rules here from a plugin without a child theme.
+		 *
+		 * @since 1.5.0
+		 *
+		 * @param string $dynamic_css The assembled inline CSS.
+		 * @param array  $settings    The jetonomy_settings option array.
+		 */
+		$dynamic_css = (string) apply_filters( 'jetonomy_dynamic_css', $dynamic_css, $settings );
+
 		wp_add_inline_style( 'jetonomy', $dynamic_css );
 
 		// Set up Interactivity API state
