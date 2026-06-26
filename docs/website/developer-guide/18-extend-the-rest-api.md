@@ -26,11 +26,11 @@ Each core object type exposes a filter on the prepared response array immediatel
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `$data` | `array` | The prepared response data array — modify and return this |
+| `$data` | `array` | The prepared response data array - modify and return this |
 | `$object` | `object` | The raw model row (or `WP_User` for the user filter) |
 | `$request` | `WP_REST_Request\|null` | The originating request; `null` in non-request contexts |
 
-**Returns:** `array` — the modified data array.
+**Returns:** `array` - the modified data array.
 
 ### Example: append a gamification score to post responses
 
@@ -71,7 +71,7 @@ Companion plugins can register additional endpoints inside the `jetonomy/v1` nam
 
 ### Permission callbacks
 
-Every mutation route (`POST`, `PUT`, `PATCH`, `DELETE`) **must** use `\Jetonomy\API\REST_Auth::auth_mutation()` as its `permission_callback`. Do not use raw closures, `is_user_logged_in()`, or `current_user_can()` — the audit script enforces this rule.
+Every mutation route (`POST`, `PUT`, `PATCH`, `DELETE`) **must** use `\Jetonomy\API\REST_Auth::auth_mutation()` as its `permission_callback`. Do not use raw closures, `is_user_logged_in()`, or `current_user_can()` - the audit script enforces this rule.
 
 For read-only routes, use `\Jetonomy\Visibility::rest_check` (respects the Private Community setting) or `'__return_true'` for fully public data.
 
@@ -110,7 +110,7 @@ add_action( 'rest_api_init', function () {
             array(
                 'methods'             => \WP_REST_Server::CREATABLE,
                 'callback'            => 'my_plugin_save_note',
-                // Lazy resolution — safe if Jetonomy loads after this plugin.
+                // Lazy resolution - safe if Jetonomy loads after this plugin.
                 'permission_callback' => function ( \WP_REST_Request $r ) {
                     if ( ! class_exists( \Jetonomy\API\REST_Auth::class ) ) {
                         return new \WP_Error( 'jetonomy_not_loaded', 'Jetonomy is required.', array( 'status' => 503 ) );
@@ -165,7 +165,7 @@ The `jetonomy_check_content` filter fires inside the post and reply controllers 
 
 | Return value | Effect |
 |-------------|--------|
-| `null` | No action — content saves normally |
+| `null` | No action - content saves normally |
 | `'hold'` | Status set to `pending`; moves to the moderation queue |
 | `'spam'` | Status set to `spam` |
 | `'flag'` | Content publishes but a Flag record is created; it surfaces in the moderation queue for review |
@@ -240,6 +240,6 @@ add_filter( 'jetonomy_check_content', function ( $action, array $data, int $spac
 
 ## What's next
 
-- [Hooks Reference](./02-hooks-reference.md) — action and filter hooks fired around every lifecycle event
-- [Extend the Frontend](./17-extend-the-frontend.md) — call your new endpoint from JavaScript
-- [Adapters](./05-adapters.md) — replace the email, search, or real-time adapter with a custom implementation
+- [Hooks Reference](./02-hooks-reference.md) - action and filter hooks fired around every lifecycle event
+- [Extend the Frontend](./17-extend-the-frontend.md) - call your new endpoint from JavaScript
+- [Adapters](./05-adapters.md) - replace the email, search, or real-time adapter with a custom implementation

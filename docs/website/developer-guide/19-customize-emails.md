@@ -1,4 +1,4 @@
-Jetonomy's notification emails flow through a single pipeline: event → `Notifier` → subject/body resolution → filters → HTML render → email adapter. Every stage exposes a filter so you can adjust any aspect — subject line, body text, logo, accent color, headers, or the full rendered HTML — without replacing core template files.
+Jetonomy's notification emails flow through a single pipeline: event → `Notifier` → subject/body resolution → filters → HTML render → email adapter. Every stage exposes a filter so you can adjust any aspect - subject line, body text, logo, accent color, headers, or the full rendered HTML - without replacing core template files.
 
 **Source references:**
 - `Notifier::send_email_notification()`: `includes/notifications/class-notifier.php:926`
@@ -69,7 +69,7 @@ Filter the email subject line before sending.
 ```php
 add_filter( 'jetonomy_email_subject', function ( string $subject, string $type, \WP_User $user ): string {
     if ( 'mention' === $type ) {
-        return '[Mention] ' . $user->display_name . ' — you were tagged in the community';
+        return '[Mention] ' . $user->display_name . ' - you were tagged in the community';
     }
     return $subject;
 }, 10, 3 );
@@ -97,7 +97,7 @@ Filter the plain-text email body (the intro sentence shown above the CTA button)
 add_filter( 'jetonomy_email_body', function ( string $body, string $type, \WP_User $user ): string {
     // Append a reply-by-email instruction for reply notifications.
     if ( in_array( $type, array( 'reply_to_post', 'reply_to_reply' ), true ) ) {
-        $body .= "\n\nTo reply, visit the community — reply-by-email is not supported.";
+        $body .= "\n\nTo reply, visit the community - reply-by-email is not supported.";
     }
     return $body;
 }, 10, 3 );
@@ -295,7 +295,7 @@ Without any PHP code, create a file at:
 your-theme/jetonomy/emails/{type}.php
 ```
 
-where `{type}` is the notification type slug with underscores replaced by hyphens — for example `reply-to-post.php` for the `reply_to_post` type. If no per-type file exists, `base.php` is used.
+where `{type}` is the notification type slug with underscores replaced by hyphens - for example `reply-to-post.php` for the `reply_to_post` type. If no per-type file exists, `base.php` is used.
 
 Inside the file you have access to all variables from the `$ctx` array above (extracted into local scope). Follow the structure of `wp-content/plugins/jetonomy/templates/emails/base.php` as your starting point.
 
@@ -335,6 +335,6 @@ See [Adapters](./05-adapters.md) for the full adapter pattern documentation.
 
 ## What's next
 
-- [Hooks Reference — `jetonomy_notification_created`](./02-hooks-reference.md#jetonomy_notification_created) — listen for notification creation events to forward to mobile push or webhooks
-- [Extend the REST API](./18-extend-the-rest-api.md) — expose notification data via a custom endpoint
-- [Adapters](./05-adapters.md) — swap the email transport entirely
+- [Hooks Reference - `jetonomy_notification_created`](./02-hooks-reference.md#jetonomy_notification_created) - listen for notification creation events to forward to mobile push or webhooks
+- [Extend the REST API](./18-extend-the-rest-api.md) - expose notification data via a custom endpoint
+- [Adapters](./05-adapters.md) - swap the email transport entirely

@@ -54,7 +54,7 @@ Jetonomy keeps quality high without a moderator watching every post. Trust grows
 
 What is included:
 
-- **Trust levels 0 to 5** - members earn higher trust and unlock capabilities automatically as they contribute. See [Trust Levels](../moderation-and-trust/01-trust-levels.md).
+- **Trust levels 0 to 5** - members earn higher trust and gain capabilities automatically as they contribute. See [Trust Levels](../moderation-and-trust/01-trust-levels.md).
 - **Flagging and reporting** - any logged-in member can report content that breaks your rules. See [Flagging & Reporting](../moderation-and-trust/02-flagging-reporting.md).
 - **Moderation queue** - a single dashboard for posts awaiting approval, flagged content, and spam-caught items. See [Moderation Queue](../moderation-and-trust/03-moderation-queue.md).
 - **Anti-spam** - multiple silent layers of spam protection that real members never notice. See [Anti-Spam](../moderation-and-trust/04-anti-spam.md).
@@ -136,7 +136,7 @@ Integrations included:
 
 - **MemberPress** - gate spaces by membership level. See [MemberPress](../integrations/01-memberpress.md).
 - **Paid Memberships Pro** - gate spaces by PMPro level. See [Paid Memberships Pro](../integrations/02-pmpro.md).
-- **WooCommerce** - unlock spaces on product purchase or active subscription. See [WooCommerce](../integrations/03-woocommerce.md).
+- **WooCommerce** - open spaces on product purchase or active subscription. See [WooCommerce](../integrations/03-woocommerce.md).
 - **LearnDash** - pair course and group enrollment with discussion spaces. See [LearnDash](../integrations/04-learndash.md).
 - **Tutor LMS** - pair course enrollment with discussion spaces. See [Tutor LMS](../integrations/08-tutor-lms.md).
 - **BuddyPress** - make groups and forum spaces feel like one membership. See [BuddyPress](../integrations/13-buddypress.md).

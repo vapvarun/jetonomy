@@ -39,7 +39,7 @@ A feed is only served when two conditions are both true:
 When a visitor or browser extension loads a public space page, Jetonomy adds a `<link>` tag to the HTML `<head>` that points to the feed:
 
 ```html
-<link rel="alternate" type="application/rss+xml" title="Space Name – RSS" href="/community/s/slug/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Space Name - RSS" href="/community/s/slug/feed/" />
 ```
 
 Feed readers and browser extensions that support auto-discovery (most do) detect this tag automatically. Members can subscribe by pasting the space URL into their feed reader - they do not need to know the `/feed/` URL in advance.

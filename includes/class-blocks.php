@@ -651,9 +651,12 @@ class Blocks {
 		$can_create_space  = current_user_can( 'manage_options' )
 			|| current_user_can( 'jetonomy_create_spaces' )
 			|| ( ! empty( $jt_allowed_roles ) && count( array_intersect( $jt_user_roles, $jt_allowed_roles ) ) > 0 );
-		$show_messages     = defined( 'JETONOMY_PRO_VERSION' );
-		$logout_url        = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
-		$title             = isset( $attributes['title'] ) && '' !== $attributes['title']
+		// Only show the Messages (DM) link when the private-messaging extension is
+		// actually active (route registered) - Pro merely being installed is not
+		// enough, or the link 404s. See \Jetonomy\messaging_active().
+		$show_messages = \Jetonomy\messaging_active();
+		$logout_url    = wp_logout_url( (string) home_url( add_query_arg( array(), (string) ( $_SERVER['REQUEST_URI'] ?? '/' ) ) ) );
+		$title         = isset( $attributes['title'] ) && '' !== $attributes['title']
 			? (string) $attributes['title']
 			: sprintf( /* translators: %s: user display name */ __( 'Hi, %s', 'jetonomy' ), $user->display_name );
 

@@ -76,10 +76,10 @@ These are topic listing page loads (20 topics per page) on a standard VPS (2 CPU
 
 No special configuration needed. Jetonomy works well on shared hosting with default settings.
 
-### For Medium Communities (1,000–10,000 members)
+### For Medium Communities (1,000 - 10,000 members)
 
 - Enable object caching (Redis or Memcached)
-- Set posts per page to 20–30 (default)
+- Set posts per page to 20 - 30 (default)
 - Use a CDN for static assets
 
 ### For Large Communities (10,000+ members)

@@ -26,7 +26,7 @@ apply_filters( 'jetonomy_space_tabs', $tabs, $space, $show_members )
 | `$space` | `object` | The space being viewed (`slug`, `type`, `name`, etc.). |
 | `$show_members` | `bool` | Whether the Members tab is visible (`is_user_logged_in()`). |
 
-**Return:** `array` — the modified tab map. Entries missing `label` or `url` are skipped.
+**Return:** `array` - the modified tab map. Entries missing `label` or `url` are skipped.
 
 **Source:** `templates/views/space.php`
 
@@ -43,7 +43,7 @@ add_filter( 'jetonomy_template_map', function( array $map ): array {
 } );
 ```
 
-A minimal template for the route. It sets the active flag correctly on the tab map via the same filter — because the filter runs again when this template is loaded under the `space-analytics` route:
+A minimal template for the route. It sets the active flag correctly on the tab map via the same filter - because the filter runs again when this template is loaded under the `space-analytics` route:
 
 ```php
 <?php
@@ -62,7 +62,7 @@ if ( ! $space ) {
     <div class="jt-container">
         <?php
         // Your custom content here.
-        // The tab bar is rendered by the partials/header — no need to
+        // The tab bar is rendered by the partials/header - no need to
         // re-emit it here. Your filter below handles the active flag.
         ?>
         <h2><?php echo esc_html( $space->name ); ?> - Analytics</h2>
@@ -133,13 +133,13 @@ add_filter( 'jetonomy_space_tabs', function( array $tabs, object $space, bool $s
  * 4. Marks the tab active when the analytics route is loaded.
  */
 
-// Step 1 – template.
+// Step 1 - template.
 add_filter( 'jetonomy_template_map', function( array $map ): array {
     $map['space-analytics'] = get_stylesheet_directory() . '/jetonomy/views/space-analytics.php';
     return $map;
 } );
 
-// Step 2 – rewrite rule.
+// Step 2 - rewrite rule.
 add_action( 'init', function() {
     $settings = get_option( 'jetonomy_settings', [] );
     $base     = $settings['base_slug'] ?? 'community';
@@ -151,7 +151,7 @@ add_action( 'init', function() {
     );
 } );
 
-// Step 3 – tab (handles both the space view and the analytics route).
+// Step 3 - tab (handles both the space view and the analytics route).
 add_filter( 'jetonomy_space_tabs', function( array $tabs, object $space, bool $show_members ): array {
     $settings      = get_option( 'jetonomy_settings', [] );
     $base          = $settings['base_slug'] ?? 'community';
@@ -219,8 +219,8 @@ add_filter( 'jetonomy_space_tabs', function( array $tabs ): array {
 
 ## Notes
 
-- The `>1-tab rule` is evaluated after your filter runs. If your filter removes tabs and leaves only one, the nav will be hidden — this is by design.
+- The `>1-tab rule` is evaluated after your filter runs. If your filter removes tabs and leaves only one, the nav will be hidden - this is by design.
 - The `active` key is optional; entries without it are treated as inactive. You only need to set it on the tab representing the current page.
 - The `jetonomy_slug` and `jetonomy_route` query vars are already registered by Jetonomy's router; you do not need to register them again.
-- Flush permalinks whenever you add or modify a rewrite rule. Use activation/deactivation hooks in a plugin — never call `flush_rewrite_rules()` on every request.
+- Flush permalinks whenever you add or modify a rewrite rule. Use activation/deactivation hooks in a plugin - never call `flush_rewrite_rules()` on every request.
 - See [Template Overrides](./03-template-overrides.md) for the full `jetonomy_template_map` contract and how to call partials correctly from custom templates.

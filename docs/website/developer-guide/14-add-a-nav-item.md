@@ -1,4 +1,4 @@
-Add a link or button to Jetonomy's community top nav using the `jetonomy_header_nav_items` action — no template override needed.
+Add a link or button to Jetonomy's community top nav using the `jetonomy_header_nav_items` action - no template override needed.
 
 ---
 
@@ -103,7 +103,7 @@ add_filter( 'jetonomy_show_community_nav', '__return_false' );
 
 ## Notes
 
-- Echo valid anchor elements only. The hook fires inside a `<div>` — block-level elements will break the nav layout. Use `<a>` tags styled with `jt-nav-link` to match the built-in items, or provide your own class.
+- Echo valid anchor elements only. The hook fires inside a `<div>` - block-level elements will break the nav layout. Use `<a>` tags styled with `jt-nav-link` to match the built-in items, or provide your own class.
 - Use `esc_url()`, `esc_attr()`, and `esc_html()` on all output. Never echo raw variable values.
 - The hook fires on every Jetonomy page including admin-facing moderation views, so conditional checks (logged-in state, capability, route) prevent items appearing in the wrong context.
 - If you want to remove a built-in nav item rather than add a new one, override `partials/header.php` in your theme. See [Template Overrides](./03-template-overrides.md).

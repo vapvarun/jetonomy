@@ -54,6 +54,6 @@ Online status is automatic. There is no setting to enable, no API key to configu
 
 ## What's Next?
 
-Go back to explore other sections, or return to the main community setup guide.
+Go back to other sections, or return to the main community setup guide.
 
 [User Profiles →](01-profiles.md) | [Leaderboard →](02-leaderboard.md)

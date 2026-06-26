@@ -67,7 +67,7 @@ Your space is created and visible immediately after you finish the wizard.
 
 ### Path B: Load Sample Data
 
-Choose this if you want to explore Jetonomy's features before committing to a structure.
+Choose this if you want to try Jetonomy's features before committing to a structure.
 
 Jetonomy seeds your site with a complete, realistic community:
 

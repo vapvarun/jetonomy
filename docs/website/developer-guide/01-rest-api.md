@@ -72,8 +72,8 @@ Spaces are the primary containers for posts (equivalent to forums or boards).
 |-----------|------|---------|-------------|
 | `page` | int | 1 | Page number |
 | `per_page` | int | 20 | Results per page (max 100) |
-| `category_id` | int | — | Filter by category |
-| `search` | string | — | Search by title |
+| `category_id` | int | - | Filter by category |
+| `search` | string | - | Search by title |
 | `orderby` | string | `position` | `position`, `title`, `member_count`, `post_count` |
 
 ```javascript
@@ -111,8 +111,8 @@ Posts are individual discussion threads (topics) inside a Space.
 | `page` | int | 1 | Page number |
 | `per_page` | int | 20 | Max 100 |
 | `sort` | string | `latest` | `latest`, `oldest`, `votes`, `replies` |
-| `type` | string | — | Filter by post type (`discussion`, `question`, `idea`) |
-| `tag` | string | — | Filter by tag slug |
+| `type` | string | - | Filter by post type (`discussion`, `question`, `idea`) |
+| `tag` | string | - | Filter by tag slug |
 | `status` | string | `publish` | `publish`, `draft` (author/mod only) |
 
 **POST /spaces/{space_id}/posts - body**
@@ -221,14 +221,14 @@ Full-text search across Posts, Replies, Spaces, and Tags. Uses MySQL `FULLTEXT` 
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `q` | string | Yes | — | Query string (min 2 chars) |
-| `type` | string | — | `post` | `post`, `reply`, `space`, `tag`, `all` |
-| `space_id` | int | — | — | Restrict to a specific space |
-| `date_from` | string | — | — | ISO date `YYYY-MM-DD` |
-| `date_to` | string | — | — | ISO date `YYYY-MM-DD` |
-| `author_id` | int | — | — | Filter by author's WP user ID |
-| `tag` | string | — | — | Filter by tag slug |
-| `sort` | string | — | `relevance` | `relevance`, `newest`, `votes` |
+| `q` | string | Yes | - | Query string (min 2 chars) |
+| `type` | string | - | `post` | `post`, `reply`, `space`, `tag`, `all` |
+| `space_id` | int | - | - | Restrict to a specific space |
+| `date_from` | string | - | - | ISO date `YYYY-MM-DD` |
+| `date_to` | string | - | - | ISO date `YYYY-MM-DD` |
+| `author_id` | int | - | - | Filter by author's WP user ID |
+| `tag` | string | - | - | Filter by tag slug |
+| `sort` | string | - | `relevance` | `relevance`, `newest`, `votes` |
 
 Using `type=all` returns a grouped response with `posts`, `spaces`, and `tags` keys.
 
@@ -368,7 +368,7 @@ Returns per-item results so partial failures are visible:
 |-----------|------|---------|-------------|
 | `period` | string | `week` | `week`, `month`, `all-time` |
 | `per_page` | int | 10 | Max 50 |
-| `space_id` | int | — | Restrict to a space |
+| `space_id` | int | - | Restrict to a space |
 
 ---
 
@@ -519,8 +519,8 @@ All analytics endpoints require the `jetonomy_view_analytics` capability.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `range` | string | `30d` | `7d`, `30d`, `90d`, `custom` |
-| `start` | string | — | ISO date (required when `range=custom`) |
-| `end` | string | — | ISO date (required when `range=custom`) |
+| `start` | string | - | ISO date (required when `range=custom`) |
+| `end` | string | - | ISO date (required when `range=custom`) |
 
 ```javascript
 const res  = await fetch(

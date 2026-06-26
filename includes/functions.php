@@ -33,6 +33,24 @@ function now(): string {
 }
 
 /**
+ * Whether the private-messaging (DM) feature is available on this request.
+ *
+ * The Pro private-messaging extension registers its `/messages/` route via the
+ * `jetonomy_template_map` filter only when the extension is enabled AND licensed
+ * (its boot() ran). Gate every Messages / DM link on this so it never points at a
+ * 404 when Pro is installed but messaging is off. Result is cached per request.
+ *
+ * @return bool True when the messages route is registered.
+ */
+function messaging_active(): bool {
+	static $active = null;
+	if ( null === $active ) {
+		$active = array_key_exists( 'messages', (array) apply_filters( 'jetonomy_template_map', array() ) );
+	}
+	return (bool) $active;
+}
+
+/**
  * Resolve the requesting client's IP, honouring a trusted reverse-proxy chain.
  *
  * Single source of truth for "who is this request from" — used by IP-bans and

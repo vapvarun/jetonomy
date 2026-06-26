@@ -70,9 +70,9 @@ The summary line looks like `[DRY RUN] Import complete. Imported: 1240, Skipped:
 
 | Community Size | Topics + Replies | Estimated Time |
 |---|---|---|
-| Small | Under 10,000 | 2–5 minutes |
-| Medium | 10,000–100,000 | 10–40 minutes |
-| Large | 100,000–500,000 | 1–4 hours |
+| Small | Under 10,000 | 2 - 5 minutes |
+| Medium | 10,000 - 100,000 | 10 - 40 minutes |
+| Large | 100,000 - 500,000 | 1 - 4 hours |
 | Very large | 500,000+ | Use WP-CLI |
 
 These are estimates for a typical shared hosting server. Dedicated servers will be significantly faster.
@@ -94,7 +94,7 @@ wp --path="/path/to/wordpress" jetonomy import bbpress
 The only flag is `--dry-run`:
 
 ```bash
-# Dry run — validate and count without writing any data
+# Dry run - validate and count without writing any data
 wp jetonomy import bbpress --dry-run
 ```
 

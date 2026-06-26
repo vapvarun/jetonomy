@@ -30,6 +30,12 @@ Surface community content on any page, post, sidebar, or page-builder canvas.
 
 - [Shortcodes, Widgets, and Blocks](./04-shortcodes-widgets-blocks.md) - the eight shortcodes, four classic widgets, and eight Gutenberg blocks, with attributes and block/shortcode parity notes.
 
+## Get found
+
+Make the community discoverable to search engines and feed readers.
+
+- [SEO and Discoverability](./22-seo-and-discoverability.md) - the structured data, Open Graph and Twitter cards, canonical URLs, XML sitemap, and per-space RSS feeds Jetonomy emits, plus the `jetonomy_seo_meta` filter and the Pro SEO controls.
+
 ## Integrate
 
 Read and write community data from another application, agent, or platform.

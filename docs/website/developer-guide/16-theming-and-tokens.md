@@ -1,4 +1,4 @@
-Jetonomy uses a single set of CSS custom properties — the `--jt-*` token system — to control every colour, radius, and font across the community UI. All tokens are declared in one place, inherit from the active theme where possible, and can be overridden from multiple layers: the admin palette, the `jetonomy_dynamic_css` filter, or a child-theme stylesheet. This page explains the full layering chain.
+Jetonomy uses a single set of CSS custom properties - the `--jt-*` token system - to control every colour, radius, and font across the community UI. All tokens are declared in one place, inherit from the active theme where possible, and can be overridden from multiple layers: the admin palette, the `jetonomy_dynamic_css` filter, or a child-theme stylesheet. This page explains the full layering chain.
 
 **Source references:**
 - Token definitions: `assets/css/jetonomy.css` (`:root, .jt-app` block)
@@ -79,7 +79,7 @@ When the `inherit_colors` setting is enabled, Jetonomy injects the full host-the
 
 The chain resolves in priority order: BuddyX/BuddyX Pro (`--bx-color-*`) → Reign (`--reign-colors-theme`) → BuddyNext (`--brand`) → WP preset slugs (Astra, Kadence, Blocksy, GeneratePress) → hard-coded fallback.
 
-When `inherit_colors` is on, the manual palette fields have no effect — the chain wins.
+When `inherit_colors` is on, the manual palette fields have no effect - the chain wins.
 
 See [`docs/standards/host-theme-color-adoption.md`](../standards/host-theme-color-adoption.md) for the full verified token map per theme, the compliance checklist, and guidance on themes that expose no recognizable brand token.
 
@@ -89,7 +89,7 @@ See [`docs/standards/host-theme-color-adoption.md`](../standards/host-theme-colo
 
 When the `custom_css` setting contains text, it is appended to the inline style block after the palette and inherit-colors rules. The value is passed through `wp_strip_all_tags()` before output, so HTML markup is stripped but valid CSS (including `--jt-*` token assignments) is preserved.
 
-This is the right place for a site owner to make one-off tweaks without a child theme — for example:
+This is the right place for a site owner to make one-off tweaks without a child theme - for example:
 
 ```css
 /* In Jetonomy → Settings → Appearance → Custom CSS */
@@ -107,7 +107,7 @@ This is the right place for a site owner to make one-off tweaks without a child 
 
 *Since 1.5.0.*
 
-The `jetonomy_dynamic_css` filter fires after the full dynamic CSS string is assembled — container width, palette overrides, font-inherit rules, host-theme color chain, density rules, and the admin `custom_css` — and before it is attached to the page via `wp_add_inline_style()`.
+The `jetonomy_dynamic_css` filter fires after the full dynamic CSS string is assembled - container width, palette overrides, font-inherit rules, host-theme color chain, density rules, and the admin `custom_css` - and before it is attached to the page via `wp_add_inline_style()`.
 
 Use it from a plugin (companion plugin, add-on) to append token overrides or scoped rules without requiring a child theme.
 
@@ -118,7 +118,7 @@ Use it from a plugin (companion plugin, add-on) to append token overrides or sco
 | `$css` | `string` | The assembled inline CSS string |
 | `$settings` | `array` | The `jetonomy_settings` option array |
 
-**Returns:** `string` — the modified CSS string.
+**Returns:** `string` - the modified CSS string.
 
 **Source:** `includes/class-template-loader.php:250`
 
@@ -180,7 +180,7 @@ Never write per-component dark selectors. Dark mode overrides belong only in `.j
     border: 1px solid var(--jt-border);
 }
 
-/* Wrong — breaks when a token value changes */
+/* Wrong - breaks when a token value changes */
 .jt-dark .jt-card {
     background: #1e1e1e;
 }
@@ -190,6 +190,6 @@ Never write per-component dark selectors. Dark mode overrides belong only in `.j
 
 ## What's next
 
-- [Template Overrides](./03-template-overrides.md) — adding CSS to overridden template files
-- [Extend the Frontend](./17-extend-the-frontend.md) — injecting JavaScript that uses the same token values
-- [Hooks Reference](./02-hooks-reference.md) — `jetonomy_before_content` for injecting markup that needs matching styles
+- [Template Overrides](./03-template-overrides.md) - adding CSS to overridden template files
+- [Extend the Frontend](./17-extend-the-frontend.md) - injecting JavaScript that uses the same token values
+- [Hooks Reference](./02-hooks-reference.md) - `jetonomy_before_content` for injecting markup that needs matching styles

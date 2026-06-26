@@ -15,8 +15,8 @@ This page explains how to extend the store, keep scripts alive across navigation
 
 Every click inside `#jetonomy-app` is delegated to `actions.navigate`. The action decides whether the target URL is safe to swap client-side:
 
-- **Most routes** — swapped inside `[data-wp-router-region="jetonomy/main"]` without a full reload.
-- **Rich-editor routes** (`/s/{slug}/t/{slug}/` single topic, `/s/{slug}/new/` new post) — forced to full-page load because the composer and Prism.js bind on `DOMContentLoaded` and do not re-init on swap.
+- **Most routes** - swapped inside `[data-wp-router-region="jetonomy/main"]` without a full reload.
+- **Rich-editor routes** (`/s/{slug}/t/{slug}/` single topic, `/s/{slug}/new/` new post) - forced to full-page load because the composer and Prism.js bind on `DOMContentLoaded` and do not re-init on swap.
 
 After each swap the navigate action dispatches `jetonomy:navigated` on `document`. Every companion script that targets region content must listen to this event; `DOMContentLoaded` alone is not reliable for region content.
 
@@ -41,7 +41,7 @@ add_action( 'wp_enqueue_scripts', function () {
 ```
 
 ```js
-// assets/js/my-view.js  (ES module — loaded as a script module)
+// assets/js/my-view.js  (ES module - loaded as a script module)
 import { store, getContext } from '@wordpress/interactivity';
 
 const { state, actions } = store( 'jetonomy', {
@@ -73,7 +73,7 @@ Then bind your action declaratively in a template (or a template override):
 </div>
 ```
 
-Declarative controls auto-hydrate after every client-side swap — no re-init code needed.
+Declarative controls auto-hydrate after every client-side swap - no re-init code needed.
 
 ---
 
@@ -95,7 +95,7 @@ function initMyPlugin() {
     } );
 }
 
-// Startup — guard for cases where the DOM is already ready.
+// Startup - guard for cases where the DOM is already ready.
 if ( document.readyState === 'loading' ) {
     document.addEventListener( 'DOMContentLoaded', initMyPlugin );
 } else {
@@ -194,7 +194,7 @@ add_action( 'jetonomy_post_card_after_badges', function ( $post ) {
 }, 10, 1 );
 ```
 
-Because both the state and the actions are declared in the `'jetonomy'` store, the Interactivity API automatically re-hydrates the directives after every client-side navigation — no `jetonomy:navigated` listener is needed here.
+Because both the state and the actions are declared in the `'jetonomy'` store, the Interactivity API automatically re-hydrates the directives after every client-side navigation - no `jetonomy:navigated` listener is needed here.
 
 ---
 
@@ -206,15 +206,15 @@ Because both the state and the actions are declared in the `'jetonomy'` store, t
 - Sends `credentials: 'same-origin'` and the `X-WP-Nonce` header on every request.
 - JSON-encodes plain-object bodies and sets `Content-Type: application/json`.
 - On `403 rest_cookie_invalid_nonce` responses, fetches `/jetonomy/v1/auth/nonce` to refresh the nonce and retries the original request automatically.
-- Never throws — always resolves to `{ ok: boolean, status: number, data: any }`.
+- Never throws - always resolves to `{ ok: boolean, status: number, data: any }`.
 
 **Signature:**
 
 ```js
 const result = await window.jetonomyRest.restFetch( path, options );
-// path   — string, e.g. '/posts/42/vote' or 'posts/42' (leading slash optional)
-// options — fetch-compatible object: method, body, headers, etc.
-// result  — { ok, status, data }
+// path - string, e.g. '/posts/42/vote' or 'posts/42' (leading slash optional)
+// options - fetch-compatible object: method, body, headers, etc.
+// result - { ok, status, data }
 ```
 
 **Reading example:**
@@ -270,7 +270,7 @@ Before shipping any frontend feature, verify against the [Frontend Interactivity
 
 - [ ] No `DOMContentLoaded`-only handler targeting region content without a `jetonomy:navigated` pair.
 - [ ] No `wp_add_inline_script` / inline `<script>` driving region behavior.
-- [ ] No raw `fetch()` calls — use `window.jetonomyRest.restFetch` instead.
+- [ ] No raw `fetch()` calls - use `window.jetonomyRest.restFetch` instead.
 - [ ] Interactive controls use `data-wp-on--*` store actions wherever possible.
 - [ ] Verify the feature after a client-side navigation, not only after a full page load.
 
@@ -278,6 +278,6 @@ Before shipping any frontend feature, verify against the [Frontend Interactivity
 
 ## What's next
 
-- [Theming and Tokens](./16-theming-and-tokens.md) — CSS custom properties your JS can read
-- [Extend the REST API](./18-extend-the-rest-api.md) — add REST endpoints your `restFetch` calls can hit
-- [Hooks Reference](./02-hooks-reference.md) — PHP hooks for injecting markup into templates
+- [Theming and Tokens](./16-theming-and-tokens.md) - CSS custom properties your JS can read
+- [Extend the REST API](./18-extend-the-rest-api.md) - add REST endpoints your `restFetch` calls can hit
+- [Hooks Reference](./02-hooks-reference.md) - PHP hooks for injecting markup into templates
