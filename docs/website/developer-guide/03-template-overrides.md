@@ -133,7 +133,8 @@ $is_sponsored = ( (int) $post->space_id === MY_SPONSORED_SPACE_ID );
     ?>
 
     <div class="jt-row__body">
-        <a href="<?php echo esc_url( \Jetonomy\post_url( $post ) ); ?>">
+        <?php // There is no single post-URL helper; build it from base_url + the space and post slugs (same as core templates). ?>
+        <a href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/' ); ?>">
             <?php echo esc_html( $post->title ); ?>
         </a>
     </div>

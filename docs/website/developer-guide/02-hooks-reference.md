@@ -478,8 +478,9 @@ Fires whenever a user's reputation score changes.
 
 ```php
 add_action( 'jetonomy_reputation_changed', function( int $user_id, string $action, int $delta, array $context ) {
-    // Sync reputation to BuddyPress profile.
-    bp_update_user_meta( $user_id, 'jetonomy_rep', \Jetonomy\Models\UserProfile::get_reputation( $user_id ) );
+    // Sync reputation to BuddyPress profile (read the total from the profile row).
+    $profile = \Jetonomy\Models\UserProfile::find_by_user( $user_id );
+    bp_update_user_meta( $user_id, 'jetonomy_rep', $profile ? (int) $profile->reputation : 0 );
 }, 10, 4 );
 ```
 
@@ -574,10 +575,11 @@ Fires when a user's membership expires or is cancelled.
 
 ```php
 add_action( 'jetonomy_membership_deactivated', function( int $user_id, string $level_id, string $adapter ) {
-    // Revoke access to private spaces when membership lapses.
-    $private_spaces = \Jetonomy\Models\Space::get_by_membership_level( $level_id );
-    foreach ( $private_spaces as $space ) {
-        \Jetonomy\Models\SpaceMember::remove( $user_id, $space->id );
+    // Revoke access to the spaces this level grants. Jetonomy has no built-in
+    // "spaces for a level" lookup, so map the level to your space IDs yourself.
+    $level_space_map = array( 'gold' => array( 12, 18 ) );
+    foreach ( $level_space_map[ $level_id ] ?? array() as $space_id ) {
+        \Jetonomy\Models\SpaceMember::remove( $space_id, $user_id ); // (space_id, user_id)
     }
 }, 10, 3 );
 ```
