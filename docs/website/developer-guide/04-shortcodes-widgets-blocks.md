@@ -143,7 +143,7 @@ Displays a list of members for a specific space, ordered by reputation.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `space_id` | int | — | **Required.** ID of the space |
+| `space_id` | int | - | **Required.** ID of the space |
 | `count` | int | `10` | Number of members to display |
 
 ```
@@ -245,7 +245,7 @@ Jetonomy registers eight server-side rendered blocks. Each block uses a `render_
 
 All blocks live in the **Widgets** category of the block inserter and answer to the search term `jet`.
 
-This is how the content blocks render on a published page — Forum Feed, Trending, Space List, and Leaderboard dropped onto a regular WordPress page. Because blocks and shortcodes share the same render path, the matching `[jetonomy_*]` shortcodes produce identical output:
+This is how the content blocks render on a published page - Forum Feed, Trending, Space List, and Leaderboard dropped onto a regular WordPress page. Because blocks and shortcodes share the same render path, the matching `[jetonomy_*]` shortcodes produce identical output:
 
 ![Forum Feed, Trending, Spaces, and Leaderboard blocks rendered on a published WordPress page](../images/developer-guide/blocks-showcase.png)
 
@@ -262,7 +262,7 @@ Each block exposes its settings through Inspector controls in the right sidebar,
 
 Block inserter visibility was tightened in 1.4.0 - every block now registers an editor-side script (`assets/js/blocks-editor.js`) so all eight blocks appear in the inserter at once. Pre-1.4.0 only Compose Topic was visible because it was the only block carrying its own `editor_script`.
 
-In the block editor each block paints the same lightweight preview card — a **JETONOMY** badge, the block name, and a hint that reflects the current settings (`All public spaces`, `7 day window`, `Categories → spaces tree, permission-aware`) — so you can lay out a page without firing a single REST call:
+In the block editor each block paints the same lightweight preview card - a **JETONOMY** badge, the block name, and a hint that reflects the current settings (`All public spaces`, `7 day window`, `Categories → spaces tree, permission-aware`) - so you can lay out a page without firing a single REST call:
 
 ![Jetonomy blocks shown as static preview cards in the Gutenberg block editor](../images/developer-guide/blocks-editor.png)
 

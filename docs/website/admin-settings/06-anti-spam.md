@@ -25,7 +25,7 @@ Members at Trust Level 2 or above are exempt from all anti-spam checks. Admins a
 
 | Provider | How It Works | User Visibility |
 |---|---|---|
-| None | No spam protection | — |
+| None | No spam protection | - |
 | Google reCAPTCHA v3 | Score-based, no user interaction | Invisible (small badge) |
 | Cloudflare Turnstile | Smart challenge, no image puzzle | Invisible (small badge) |
 

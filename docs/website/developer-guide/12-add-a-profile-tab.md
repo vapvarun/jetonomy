@@ -6,7 +6,7 @@ Add a custom tab to a member's profile page using the `jetonomy_profile_tabs` fi
 
 When Jetonomy renders a profile page it builds an ordered map of tabs, then passes it through `jetonomy_profile_tabs` before rendering the tab bar. Each entry in the map is a slug keyed to a label and URL. The `posts` tab is active when no sub-tab is in the URL; all other tabs are matched by slug against the current URL.
 
-**Rendering rule:** every non-empty entry with a `label` and `url` key is rendered. There is no minimum count — even a single tab will render. To remove a built-in tab, unset its slug from the map before returning it.
+**Rendering rule:** every non-empty entry with a `label` and `url` key is rendered. There is no minimum count - even a single tab will render. To remove a built-in tab, unset its slug from the map before returning it.
 
 **Content rule:** a custom tab is just a link. Clicking it navigates to the URL you specify. Content for that URL must come from a separate route and template registered via `jetonomy_template_map` (see [Template Overrides](./03-template-overrides.md)).
 
@@ -26,12 +26,12 @@ apply_filters( 'jetonomy_profile_tabs', $tabs, $user, $is_own )
 | `$user` | `WP_User` | The profile owner. |
 | `$is_own` | `bool` | `true` when the viewing user is the profile owner. |
 
-**Return:** `array` — the modified tab map.
+**Return:** `array` - the modified tab map.
 
 **Source:** `templates/views/user-profile.php`
 
 **Built-in slugs and active-state rule:**
-The `posts` tab is active when the URL is the bare profile URL (no sub-tab segment). All other tabs are active when their slug appears as the `jetonomy_tab` query var. Setting a tab's URL to your own route means Jetonomy's active-tab logic will not apply to it — your template is responsible for highlighting the tab.
+The `posts` tab is active when the URL is the bare profile URL (no sub-tab segment). All other tabs are active when their slug appears as the `jetonomy_tab` query var. Setting a tab's URL to your own route means Jetonomy's active-tab logic will not apply to it - your template is responsible for highlighting the tab.
 
 ---
 
@@ -41,7 +41,7 @@ Register a new route via `jetonomy_template_map` and point it to a PHP template 
 
 ```php
 add_filter( 'jetonomy_template_map', function( array $map ): array {
-    // Absolute path bypasses the theme-override check — correct for plugin templates.
+    // Absolute path bypasses the theme-override check - correct for plugin templates.
     $map['profile-portfolio'] = MY_PLUGIN_DIR . 'templates/profile-portfolio.php';
     return $map;
 } );
@@ -132,14 +132,14 @@ The following block can be placed in your theme's `functions.php` or in a site-s
  * 3. Adds a "Portfolio" tab to the profile tab bar.
  */
 
-// Step 1 – template.
+// Step 1 - template.
 add_filter( 'jetonomy_template_map', function( array $map ): array {
     // Point to a template file in your plugin or theme.
     $map['profile-portfolio'] = get_stylesheet_directory() . '/jetonomy/views/profile-portfolio.php';
     return $map;
 } );
 
-// Step 2 – rewrite rule.
+// Step 2 - rewrite rule.
 add_action( 'init', function() {
     $settings = get_option( 'jetonomy_settings', [] );
     $base     = $settings['base_slug'] ?? 'community';
@@ -151,7 +151,7 @@ add_action( 'init', function() {
     );
 } );
 
-// Step 3 – tab.
+// Step 3 - tab.
 add_filter( 'jetonomy_profile_tabs', function( array $tabs, WP_User $user, bool $is_own ): array {
     $settings = get_option( 'jetonomy_settings', [] );
     $base     = $settings['base_slug'] ?? 'community';
@@ -217,7 +217,7 @@ add_filter( 'jetonomy_profile_tabs', function( array $tabs ): array {
 
 ## Notes
 
-- Flush permalinks after changing any rewrite rule. In a plugin, call `flush_rewrite_rules()` on activation and deactivation hooks — never on every request.
+- Flush permalinks after changing any rewrite rule. In a plugin, call `flush_rewrite_rules()` on activation and deactivation hooks - never on every request.
 - The `jetonomy_slug` and `jetonomy_route` query vars are already registered by Jetonomy's router; you do not need to add them to `query_vars`.
 - If your tab must only appear for logged-in users, check `is_user_logged_in()` inside the filter before appending the tab.
 - See [Template Overrides](./03-template-overrides.md) for calling partials (`header`, `breadcrumb`) correctly inside your custom template so theme overrides are respected.

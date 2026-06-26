@@ -105,7 +105,7 @@ Each rule has three parts:
 | Logged In | User is authenticated |
 | WordPress Role | User has a specific WP role (e.g. Editor) |
 | Capability | User has a specific WP capability |
-| Trust Level | User's Jetonomy trust level (0–5) |
+| Trust Level | User's Jetonomy trust level (0 - 5) |
 | Membership | User has an active membership. The specific provider - MemberPress or Paid Memberships Pro in free, plus WooCommerce Memberships, Restrict Content Pro, and LearnDash in Pro - is chosen within the rule via the matching membership adapter |
 
 **Access Grant** - What to allow:

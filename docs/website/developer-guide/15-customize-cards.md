@@ -1,4 +1,4 @@
-Inject badges, buttons, counts, and metadata into post cards, reply cards, space cards, and member rows using purpose-built hooks — no template override required for most use cases.
+Inject badges, buttons, counts, and metadata into post cards, reply cards, space cards, and member rows using purpose-built hooks - no template override required for most use cases.
 
 ---
 
@@ -352,7 +352,7 @@ Available tokens are listed in the plugin's `CLAUDE.md` CSS Token Rules section.
 ## Notes
 
 - `jetonomy_post_card_after_badges` fires in both the listing card and the single-post header. Test both surfaces when you add a badge.
-- `jetonomy_space_card_after` fires outside the `<a>` wrapper — this is intentional so buttons and forms are valid HTML. Don't wrap the emitted content in another `<a>`.
+- `jetonomy_space_card_after` fires outside the `<a>` wrapper - this is intentional so buttons and forms are valid HTML. Don't wrap the emitted content in another `<a>`.
 - `jetonomy_member_card_after` fires inside the members list grid, not inside any wrapper link, so interactive elements are valid.
 - For heavier customizations that require restructuring the card layout, use [Template Overrides](./03-template-overrides.md) instead.
 - See [Hooks Reference](./02-hooks-reference.md) for the full list of hooks, including sidebar, reply, and between-replies slots.

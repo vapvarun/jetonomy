@@ -5,7 +5,7 @@ Jetonomy registers its admin UI under a single top-level menu (Jetonomy → Dash
 | Page | WP menu slug | Extension hooks |
 |------|-------------|-----------------|
 | Dashboard | `jetonomy-dashboard` | `jetonomy_admin_dashboard_widgets`, `jetonomy_admin_dashboard_after_stats` |
-| Spaces list | `jetonomy-spaces` | *(no list-table column hooks — see Known Gap)* |
+| Spaces list | `jetonomy-spaces` | *(no list-table column hooks - see Known Gap)* |
 | Space edit | `jetonomy-spaces&action=edit&id=N` | `jetonomy_admin_space_edit_tabs`, `jetonomy_admin_space_edit_tab_content` |
 | Settings | `jetonomy-settings` | `jetonomy_admin_settings_tabs`, `jetonomy_admin_settings_tab_content` |
 | Moderation | `jetonomy-moderation` | `jetonomy_admin_moderation_tabs`, `jetonomy_admin_moderation_tab_content` |
@@ -88,7 +88,7 @@ add_action( 'jetonomy_admin_settings_tab_content', function( string $active_tab 
     <?php
 } );
 
-// Save handler — runs before the view (admin_init fires earlier than the page render).
+// Save handler - runs before the view (admin_init fires earlier than the page render).
 add_action( 'admin_init', function() {
     if (
         isset( $_POST['acme_nonce'] ) &&

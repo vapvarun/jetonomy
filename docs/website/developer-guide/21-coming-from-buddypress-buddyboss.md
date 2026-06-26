@@ -31,9 +31,9 @@ If you want to run Jetonomy alongside an active BuddyPress install, start with t
 
 | BuddyPress / BuddyBoss | Jetonomy equivalent | Reference |
 |------------------------|---------------------|-----------|
-| `bp_core_new_nav_item()` — add a profile tab | `jetonomy_profile_tabs` filter | [12-add-a-profile-tab.md](./12-add-a-profile-tab.md) |
-| `BP_Group_Extension` — add a space/group tab | `jetonomy_space_tabs` filter | [13-add-a-space-tab.md](./13-add-a-space-tab.md) |
-| `bp_core_add_nav_item()` — add a community nav link | `jetonomy_header_nav_items` action | [14-add-a-nav-item.md](./14-add-a-nav-item.md) |
+| `bp_core_new_nav_item()` - add a profile tab | `jetonomy_profile_tabs` filter | [12-add-a-profile-tab.md](./12-add-a-profile-tab.md) |
+| `BP_Group_Extension` - add a space/group tab | `jetonomy_space_tabs` filter | [13-add-a-space-tab.md](./13-add-a-space-tab.md) |
+| `bp_core_add_nav_item()` - add a community nav link | `jetonomy_header_nav_items` action | [14-add-a-nav-item.md](./14-add-a-nav-item.md) |
 | `bp_core_get_user_domain( $user_id )` | `\Jetonomy\get_profile_url( $user_id )` | Filterable via `jetonomy_profile_url` |
 
 ### Membership and access
@@ -55,7 +55,7 @@ If you want to run Jetonomy alongside an active BuddyPress install, start with t
 | `groups_get_group( $group_id )` | `\Jetonomy\Models\Space::find( $space_id )` | n/a |
 | `bp_activity_add( $args )` | REST `POST /jetonomy/v1/spaces/{id}/posts` or `\Jetonomy\Models\Post::create( $data )` | [01-rest-api.md](./01-rest-api.md) |
 | `bp_activity_delete( $args )` | REST `DELETE /jetonomy/v1/posts/{id}` | [01-rest-api.md](./01-rest-api.md) |
-| `xprofile_set_field_data( $field, $user_id, $value )` | Pro Custom Fields extension — REST `PUT /jetonomy/v1/users/{id}/custom-fields` | Pro only |
+| `xprofile_set_field_data( $field, $user_id, $value )` | Pro Custom Fields extension - REST `PUT /jetonomy/v1/users/{id}/custom-fields` | Pro only |
 
 ### Hooks
 
@@ -79,7 +79,7 @@ Jetonomy now has a `jetonomy_profile_tabs` filter for the same purpose. Full wor
 
 ```php
 // Register a "Portfolio" tab on every Jetonomy profile.
-// Signature: $tabs (array), $user (WP_User), $is_own (bool — true when viewing your own profile).
+// Signature: $tabs (array), $user (WP_User), $is_own (bool - true when viewing your own profile).
 add_filter( 'jetonomy_profile_tabs', function( array $tabs, \WP_User $user, bool $is_own ): array {
     $tabs[] = [
         'slug'  => 'portfolio',
@@ -110,7 +110,7 @@ add_filter( 'jetonomy_space_tabs', function( array $tabs, object $space, bool $s
 }, 10, 3 );
 ```
 
-Note: the wp-admin side of space editing uses a different hook pair — `jetonomy_admin_space_edit_tabs` and `jetonomy_admin_space_edit_tab_content`. See [Admin Extensions](./20-admin-extensions.md).
+Note: the wp-admin side of space editing uses a different hook pair - `jetonomy_admin_space_edit_tabs` and `jetonomy_admin_space_edit_tab_content`. See [Admin Extensions](./20-admin-extensions.md).
 
 ---
 
@@ -120,11 +120,11 @@ BuddyPress member types (`bp_register_member_type`) create named cohorts that ca
 
 The closest tools are:
 
-- **WP roles** — `add_role()` / `add_cap()` — for capability gating. Jetonomy's Permission Engine checks WP capabilities via `current_user_can()` at the community level, then layered space roles and trust levels.
-- **Trust Levels 0-5** — auto-evaluated daily from activity (posts, replies, reputation, days active). Readable as `$user_profile->trust_level`. Listen to `jetonomy_trust_level_changed` to react to promotions.
-- **Space roles** — `'member'`, `'moderator'`, `'admin'` — per-space, not site-wide.
+- **WP roles** - `add_role()` / `add_cap()` - for capability gating. Jetonomy's Permission Engine checks WP capabilities via `current_user_can()` at the community level, then layered space roles and trust levels.
+- **Trust Levels 0-5** - auto-evaluated daily from activity (posts, replies, reputation, days active). Readable as `$user_profile->trust_level`. Listen to `jetonomy_trust_level_changed` to react to promotions.
+- **Space roles** - `'member'`, `'moderator'`, `'admin'` - per-space, not site-wide.
 
-There is no equivalent of BP's per-type directory filter, profile field visibility gating, or per-type nav injection. Those require WP role–based conditionals or trust-level checks in your own code.
+There is no equivalent of BP's per-type directory filter, profile field visibility gating, or per-type nav injection. Those require WP role - based conditionals or trust-level checks in your own code.
 
 ---
 

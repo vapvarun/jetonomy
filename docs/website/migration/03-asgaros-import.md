@@ -67,9 +67,9 @@ The Asgaros importer runs the entire import in a single pass - the progress bar 
 
 | Community Size | Topics + Replies | Estimated Time |
 |---|---|---|
-| Small | Under 10,000 | 2–5 minutes |
-| Medium | 10,000–100,000 | 10–40 minutes |
-| Large | 100,000–500,000 | 1–4 hours |
+| Small | Under 10,000 | 2 - 5 minutes |
+| Medium | 10,000 - 100,000 | 10 - 40 minutes |
+| Large | 100,000 - 500,000 | 1 - 4 hours |
 | Very large | 500,000+ | Use WP-CLI |
 
 ## Running via WP-CLI
