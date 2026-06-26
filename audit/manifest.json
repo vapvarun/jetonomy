@@ -2905,6 +2905,139 @@
 			"args": "$member, $space",
 			"where": "templates/views/space-members.php",
 			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_after_create_flag",
+			"type": "action",
+			"args": "",
+			"where": "includes/api/class-moderation-controller.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_after_resolve_flag",
+			"type": "action",
+			"args": "",
+			"where": "includes/moderation/class-moderation-service.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_after_update_post",
+			"type": "action",
+			"args": "",
+			"where": "includes/api/class-posts-controller.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_after_update_reply",
+			"type": "action",
+			"args": "",
+			"where": "includes/api/class-replies-controller.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_companions",
+			"type": "filter",
+			"args": "",
+			"where": "includes/integrations/class-companion-registry.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_home_welcome_heading",
+			"type": "filter",
+			"args": "",
+			"where": "templates/views/home.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_home_welcome_subheading",
+			"type": "filter",
+			"args": "",
+			"where": "templates/views/home.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_idea_status_changed",
+			"type": "action",
+			"args": "",
+			"where": "includes/models/class-post.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_post_created",
+			"type": "action",
+			"args": "",
+			"where": "includes/models/class-post.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_posts_query_args",
+			"type": "filter",
+			"args": "",
+			"where": "includes/models/class-post.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_replies_query_args",
+			"type": "filter",
+			"args": "",
+			"where": "includes/models/class-reply.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_reply_created",
+			"type": "action",
+			"args": "",
+			"where": "includes/models/class-reply.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_seo_meta",
+			"type": "filter",
+			"args": "",
+			"where": "includes/class-template-loader.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_space_pending_requests_shown",
+			"type": "filter",
+			"args": "",
+			"where": "templates/views/space-members.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_spaces_query_args",
+			"type": "filter",
+			"args": "",
+			"where": "includes/models/class-space.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_trust_level_pre_change",
+			"type": "filter",
+			"args": "",
+			"where": "includes/class-cli.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_users_query_args",
+			"type": "filter",
+			"args": "",
+			"where": "includes/api/class-leaderboards-controller.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_vote_cast",
+			"type": "action",
+			"args": "",
+			"where": "includes/models/class-vote.php",
+			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_vote_retracted",
+			"type": "action",
+			"args": "",
+			"where": "includes/models/class-vote.php",
+			"consumed_by": []
 		}
 	],
 	"buddypress_integration": {
