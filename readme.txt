@@ -301,6 +301,8 @@ Instant in-place navigation across the community, built on the WordPress Interac
 * Fix      - The notification action menu (mark read, delete) opens anchored to its button instead of mis-positioned, and notification cards no longer stretch full width.
 * Fix      - A restrictive access rule added to a public space now gates the space (it is converted to private) instead of being saved but ignored.
 * Fix      - The community-uploads filter is available in the Media Library grid view, not only the list view.
+* Fix      - Block panels (user panel, feed, login, navigation) rendered a tinted background in dark mode on themes that expose no dark token, such as BuddyX; they now use the neutral surface colour like the rest of the community.
+* Fix      - The Messages link in the user panel and the Message button on profiles no longer appear when private messaging is inactive, so they no longer lead to a 404.
 * Fix      - Load More on paginated community routes (notifications and listings) no longer returns a 404 on later pages.
 * Fix      - Database version constant bumped so the 1.5.0 migration runs automatically on upgrade.
 * Security - Search results, link-preview (oEmbed) cards, profile activity tabs, tag pages, trending lists and the recent-posts widgets no longer surface posts or replies from private or hidden spaces to people who are not members.
