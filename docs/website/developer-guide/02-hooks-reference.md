@@ -942,15 +942,15 @@ Use these to add content to the Jetonomy admin pages without overriding core adm
 | Hook | Parameters | Where it fires |
 |------|------------|---------------|
 | `jetonomy_admin_dashboard_widgets` | none | Dashboard page - add custom stat cards |
-| `jetonomy_admin_dashboard_after_stats` | none | Dashboard - below the stats row |
-| `jetonomy_admin_settings_tabs` | none | Settings page - register new tab nav items |
+| `jetonomy_admin_dashboard_after_stats` | `$stats` (array) | Dashboard - below the stats row |
+| `jetonomy_admin_settings_tabs` | `$active_tab` (string) | Settings page - register new tab nav items |
 | `jetonomy_admin_settings_tab_content` | `$active_tab` (string) | Settings page - render tab content |
-| `jetonomy_admin_moderation_tabs` | none | Moderation page - extra tab nav items |
+| `jetonomy_admin_moderation_tabs` | `$active_tab` (string) | Moderation page - extra tab nav items |
 | `jetonomy_admin_moderation_tab_content` | `$active_tab` (string) | Moderation page - render tab content |
-| `jetonomy_admin_space_edit_tabs` | `$space_id` (int) | Space edit page - extra tab nav items |
-| `jetonomy_admin_space_edit_tab_content` | `$active_tab` (string), `$space_id` (int) | Space edit page - render tab content |
+| `jetonomy_admin_space_edit_tabs` | `$space` (object) | Space edit page - extra tab nav items |
+| `jetonomy_admin_space_edit_tab_content` | `$active_tab` (string), `$space` (object) | Space edit page - render tab content |
 | `jetonomy_admin_render_extensions` | none | Admin - Extensions tab placeholder |
-| `jetonomy_admin_render_license` | none | Admin - License tab placeholder |
+| `jetonomy_admin_license_tab_content` | none | License page - render content in the License tab (Pro) |
 
 **Example: adding a Settings tab**
 
@@ -2224,17 +2224,12 @@ Filter (not action). Filters the footer text shown at the bottom of all Jetonomy
 
 ## Pro Hooks
 
-These hooks are available only when **Jetonomy Pro** is active. Pro injects into core admin via the standard admin hooks (`jetonomy_admin_dashboard_widgets`, `jetonomy_admin_settings_tabs`) and registers its own extension lifecycle events.
+These hooks are available only when **Jetonomy Pro** is active. Pro injects into core admin via the standard admin hooks (`jetonomy_admin_dashboard_widgets`, `jetonomy_admin_settings_tabs`).
 
 | Hook | Type | Description |
 |------|------|-------------|
-| `jetonomy_pro_extension_booted` | action | Fires after a Pro extension's `boot()` runs. Params: `$extension_id (string)` |
-| `jetonomy_pro_extension_enabled` | action | Fires when an extension is toggled on in admin. Params: `$extension_id (string)` |
-| `jetonomy_pro_extension_disabled` | action | Fires when an extension is toggled off. Params: `$extension_id (string)` |
 | `jetonomy_pro_message_sent` | action | Fires after a private message is sent. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)` |
 | `jetonomy_pro_dm_received` | action | Fires once per recipient when a DM is delivered. Counterpart to `jetonomy_pro_message_sent` - lets you build "received first DM" or "active inbox" rules. Skipped for system messages. Params: `$message_id (int)`, `$conversation_id (int)`, `$sender_id (int)`, `$recipient_id (int)` |
-| `jetonomy_pro_webhook_sent` | action | Fires after a webhook is dispatched. Params: `$webhook_id (int)`, `$event (string)`, `$response_code (int)` |
-| `jetonomy_pro_digest_sent` | action | Fires after an email digest is sent. Params: `$user_id (int)`, `$frequency (string)` |
 
 ---
 
