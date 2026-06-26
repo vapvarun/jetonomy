@@ -7,6 +7,7 @@ Tags connect related discussions across your entire community. A member searchin
 - How to add tags when creating a topic
 - How tag pills work on topic listings
 - How tag pages bring together content from multiple spaces
+- How to start a new discussion directly from a tag page
 - How the Popular Tags sidebar section helps members discover content
 - Why consistent tagging improves search and community quality
 
@@ -31,6 +32,12 @@ Every tag has a dedicated page at `/community/tag/tag-slug/`. The tag page shows
 Members can switch the sort to **Popular** to find the best content on that topic - Popular orders by net vote score.
 
 Tag pages are publicly accessible by default. If your community is private, tag pages respect the space access rules - topics in private spaces are not shown on tag pages to members who do not have access to those spaces.
+
+### Start a Discussion from a Tag Page
+
+Logged-in members see a **Start a discussion tagged [tag name]** button in the tag page header. Clicking it opens the composer in the most active space for that tag with the tag already filled in - one click from browsing a topic to contributing to it.
+
+The button only appears when the tag has at least one existing post, so it always points to a space where the conversation is already happening.
 
 ## Popular Tags Sidebar
 

@@ -82,7 +82,7 @@ Properties:
 - **Private/hidden groups stay private.** The activity is posted with `hide_sitewide` set, so site-wide activity feeds do not leak the item outside the group.
 - **Paragraph breaks preserved.** The excerpt keeps its structure because the integration whitelists `<br>` and `<p>` on `bp_activity_allowed_tags` for broadcast content (tags are harmless on their own, with no attributes allowed through).
 
-Broadcast is enabled by default. To turn it off, go to **Jetonomy → Settings → Integrations** and clear the **Broadcast topics to group activity** checkbox. (This tab appears only while BuddyPress Groups is active.)
+Broadcast is enabled by default. To turn it off, go to **Jetonomy → Settings → Integrations** and clear the **Broadcast topics to group activity** checkbox. The Integrations tab appears only while BuddyPress Groups is active. These controls were added to the admin UI in 1.5.0; prior versions required `wp option update jetonomy_bp_broadcast 0` via WP-CLI.
 
 ## Comment-to-Reply Bridge (New)
 
@@ -90,7 +90,7 @@ When a member comments on one of those broadcast activity items, the comment is 
 
 Only comments on broadcast activities round-trip. Comments on native BP activity posts (status updates, other plugins' activity types) are left alone. The integration identifies broadcast activities by a `jetonomy_post_id` activity-meta marker it sets at post time.
 
-Add-only by design: edits and deletes on the BuddyPress side do not propagate back. The forum thread stays the durable record. Enabled by default. To turn it off, go to **Jetonomy → Settings → Integrations** and clear the **Round-trip activity comments** checkbox - it requires **Broadcast topics to group activity** to stay on.
+Add-only by design: edits and deletes on the BuddyPress side do not propagate back. The forum thread stays the durable record. Enabled by default. To turn it off, go to **Jetonomy → Settings → Integrations** and clear the **Round-trip activity comments** checkbox - it requires **Broadcast topics to group activity** to stay on. This control was added to the admin UI in 1.5.0; prior versions required `wp option update jetonomy_bp_comment_bridge 0` via WP-CLI.
 
 ## Identity Keying
 

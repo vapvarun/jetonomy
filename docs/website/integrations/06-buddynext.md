@@ -4,10 +4,34 @@ When BuddyNext is active alongside Jetonomy, the two plugins integrate automatic
 
 ## What You Will Learn
 
+- How BuddyNext and Jetonomy split the work between a social layer and a forum layer
+- Why pairing the two in-house plugins beats bolting on a third-party social plugin
 - What the BuddyNext integration enables
 - How shared design tokens work
 - How Jetonomy suppresses its own header and nav when BuddyNext is active
 - What you need to do (spoiler: nothing)
+
+## The Social Layer for Jetonomy
+
+BuddyNext is Wbcom's in-house **social-networking layer**, and Jetonomy is the **forum, community, and Q&A layer**. They are built to pair:
+
+| Layer | Plugin | Owns |
+|---|---|---|
+| Social | **BuddyNext** | Member profiles, the activity feed/stream, connections and the social graph |
+| Forum | **Jetonomy** | Spaces, topics, ideas, and roadmaps |
+
+Run them together and you get a **complete community platform from one vendor** - social profiles and a member feed on the BuddyNext side, structured discussion and Q&A on the Jetonomy side. There is no third-party social plugin (BuddyPress or BuddyBoss) required: the social graph and the forum come from the same house and are designed to fit.
+
+> **Already on BuddyPress?** Jetonomy also pairs with BuddyPress directly - see the [BuddyPress integration](13-buddypress.md). BuddyNext is the path for site owners who want the social layer and the forum layer to come from a single vendor.
+
+## Why BuddyNext Over a Third-Party Social Plugin
+
+For a site owner choosing what to run underneath Jetonomy, BuddyNext has practical advantages over a third-party social plugin:
+
+- **One vendor.** Social layer and forum layer ship from the same team, so there is one place to go for billing, licensing, and questions - not two ecosystems to reconcile.
+- **Aligned roadmap and support.** Features on both sides are planned together, so an integration point doesn't break when one plugin updates ahead of the other. Support sees the whole stack.
+- **Native colour and dark-mode sync.** Jetonomy adopts BuddyNext's design tokens automatically, so the forum matches the social layer in light and dark mode with no custom CSS. See [Popular Page-Builder Themes and colour adoption](07-theme-compatibility.md#popular-page-builder-themes-150) for how the underlying token chain works.
+- **Lighter footprint.** No extra abstraction layer or compatibility shim between a third-party social plugin and Jetonomy - the two plugins talk through shared tokens and a single detection hook.
 
 ## Auto-Detection
 

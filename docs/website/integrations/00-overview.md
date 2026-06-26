@@ -21,6 +21,10 @@ These connect an external "who has paid / who is enrolled" system to Jetonomy's 
 | [LifterLMS](09-lifterlms.md) | Pro | LifterLMS course or membership enrolment |
 | [Sensei LMS](10-sensei-lms.md) | Pro | Sensei course enrolment |
 | [MasterStudy LMS](11-masterstudy-lms.md) | Pro | MasterStudy course enrolment |
+| WP Fusion | **Pro** | WP Fusion CRM tag |
+| SureMembers | **Pro** | SureMembers access group |
+
+> **WP Fusion and SureMembers setup.** Gate a space by a WP Fusion tag or a SureMembers access group using the **Access Rules** tab on the space editor. Both integrations are detected automatically when the third-party plugin is active. Full setup instructions are in the Jetonomy Pro documentation.
 
 > **Tip:** Access Rules from different integrations stack. You can gate one space to "MemberPress VIP **or** a specific WooCommerce product **or** a LearnDash course" - a member who matches any rule gets in.
 

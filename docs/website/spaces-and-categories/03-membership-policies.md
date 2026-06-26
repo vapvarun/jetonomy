@@ -32,7 +32,9 @@ Use Public when you want maximum reach and SEO value. Most community spaces shou
 
 ### Private
 
-The space appears in listings and search results, so members can discover it. However, only approved members can read the content. Non-members see the space name and description, then a "Request to Join" prompt.
+The space appears in listings and search results, so any visitor can discover it. Only members can read the posts and replies. Non-members see the space name and description, then a **Join** or **Request to Join** button depending on the join policy: Open spaces show "Join" for an instant-access join; Approval Required spaces show "Request to Join" for a moderated admission.
+
+Private is the right choice when the community should be findable but the content should be gated. It is distinct from Hidden: a Private space is visible in the directory and search; a Hidden space is not listed anywhere.
 
 Use Private for paid membership communities, internal team discussions, or beta program spaces where content should be gated but the space itself should be findable.
 
