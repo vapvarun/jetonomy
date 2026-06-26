@@ -94,7 +94,7 @@ Jetonomy inherits your theme's fonts, colors, and border radius automatically vi
 
 To adjust further:
 
-- Go to **Jetonomy → Settings** and explore the **General** and **Advanced** tabs.
+- Go to **Jetonomy → Settings** and open the **General** and **Advanced** tabs.
 - To override specific templates, create a `jetonomy/` folder inside your active theme directory and drop in any template file from `wp-content/plugins/jetonomy/templates/`. Jetonomy always checks your theme folder first.
 
 > **Tip:** You do not need to copy all templates. Only override the ones you want to change. Unmodified templates are served directly from the plugin.

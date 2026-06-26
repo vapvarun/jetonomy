@@ -1,4 +1,4 @@
-Gate Jetonomy spaces by WooCommerce Membership plan or active WooCommerce Subscription - so customers unlock discussion areas the moment their membership or subscription becomes active.
+Gate Jetonomy spaces by WooCommerce Membership plan or active WooCommerce Subscription - so customers get access to discussion areas as soon as their membership or subscription becomes active.
 
 ![The Jetonomy admin settings screen](../images/admin-settings.png)
 

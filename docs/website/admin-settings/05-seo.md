@@ -66,13 +66,14 @@ When enabled, Jetonomy outputs JSON-LD structured data on community pages. This 
 
 | Page Type | Schema Type |
 |---|---|
-| Community home | `WebSite` + `BreadcrumbList` |
-| Space | `DiscussionForumPosting` (as container) |
-| Single post | `DiscussionForumPosting` |
-| Post with replies | `DiscussionForumPosting` + `Comment` |
+| Community home | `WebSite` + `SearchAction` (sitelinks search box) |
+| Space | `CollectionPage` + `ItemList` |
+| Q&A topic with an accepted answer | `QAPage` (Question + Answer) |
+| Discussion topic | `DiscussionForumPosting` with vote and reply counts |
+| Tag | `CollectionPage` + `ItemList` |
 | User profile | `Person` |
 
-The `DiscussionForumPosting` type is the W3C-recognized schema for forum content. Google uses it to display rich results for Q&A content in particular.
+Pages with a breadcrumb trail also carry `BreadcrumbList`. `QAPage` and `DiscussionForumPosting` are the schema types Google documents for forum content: a question with an accepted answer is marked up as `QAPage`, and a regular discussion is marked up as `DiscussionForumPosting` with its up-vote and reply counts. Both are eligible for rich results in search.
 
 ## Meta Title Patterns
 
@@ -123,7 +124,7 @@ Jetonomy outputs Open Graph and Twitter Card meta tags automatically on all publ
 **Default:** Empty
 **Location:** SEO tab → Twitter handle
 
-Enter your community's Twitter or X handle (with or without the leading `@`). When set, Jetonomy emits `twitter:site` and `twitter:creator` meta tags on every community page that does not already declare a per-page override. This gives X / Twitter a verified attribution to display alongside link previews and unlocks richer card layouts.
+Enter your community's Twitter or X handle (with or without the leading `@`). When set, Jetonomy emits `twitter:site` and `twitter:creator` meta tags on every community page that does not already declare a per-page override. This gives X / Twitter a verified attribution to display alongside link previews and enables richer card layouts.
 
 Leave this empty if the community has no Twitter / X presence - Jetonomy simply omits the tags instead of emitting empty ones.
 

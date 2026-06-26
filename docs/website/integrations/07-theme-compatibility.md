@@ -84,7 +84,7 @@ For classic themes, you can override the `--jt-accent` token in your theme's `st
 
 Jetonomy supports dark mode natively. If your theme sets `data-theme="dark"` or a `.dark` class on the `<html>` or `<body>` element, Jetonomy's dark overrides activate automatically via the `.jt-dark .jt-app` CSS selector.
 
-BuddyX and BuddyNext set `data-theme="dark"` - so dark mode is seamless. For other themes, add a small bridge if their dark mode uses a different selector:
+BuddyX and BuddyNext set `data-theme="dark"` - so dark mode follows automatically. For other themes, add a small bridge if their dark mode uses a different selector:
 
 ```css
 /* In your theme's style.css - bridge for custom dark mode selector */
