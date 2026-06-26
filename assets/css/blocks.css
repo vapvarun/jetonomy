@@ -872,8 +872,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 [data-theme="dark"] .jt-user-panel,
 [data-theme="dark"] .jt-feed-block,
 [data-theme="dark"] .jt-shortcode {
-	--jtb-bg:      var(--bg, #0b0f1a);
-	--jtb-text:    var(--text-1, #e7ebf3);
+	--jtb-bg:      var(--jt-bg, #171717);
+	--jtb-text:    var(--jt-text, #e5e5e5);
 	--jtb-border:  color-mix(in srgb, var(--jtb-text) 16%, transparent);
 	--jtb-shadow:  0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
 }
