@@ -62,6 +62,11 @@
             "severity": "error"
         },
         {
+            "id": "hook-consumed-never-fired:jetonomy_pro_send_expo_push",
+            "reason": "Fired at runtime via Queue::async(self::ASYNC_HOOK_EXPO) in on_notification_created (web-push/class-extension.php:518) - Action Scheduler async dispatch via class constant, invisible to the static scan. Same pattern as the browser jetonomy_pro_send_push hook. New native-push transport in 1.6.0.",
+            "severity": "error"
+        },
+        {
             "id": "ajax-handler-unreferenced:jetonomy_create_category",
             "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
             "severity": "warning"
