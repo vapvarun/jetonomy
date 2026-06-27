@@ -27,6 +27,10 @@ module.exports = function( grunt ) {
 					potFilename: 'jetonomy.pot',
 					type: 'wp-plugin',
 					updateTimestamp: false,
+					// Never scan build/staging/vendor/test trees. A leftover
+					// dist/ (the zip-staging copy) otherwise doubles every
+					// source reference with phantom dist/jetonomy/... lines.
+					exclude: [ 'dist/.*', 'vendor/.*', 'node_modules/.*', 'tests/.*' ],
 					potHeaders: {
 						poedit: true,
 						'x-poedit-keywordslist': true,
