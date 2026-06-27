@@ -1125,6 +1125,15 @@ class Spaces_Controller extends Base_Controller {
 			'last_activity_at' => $space->last_activity_at ?? null,
 		];
 
+		// Viewer-relative membership context (additive, 1.6.0). All three are
+		// null-safe for logged-out callers and resolve to indexed point
+		// lookups, so the per-row cost on the spaces list (≤ page size) stays
+		// bounded.
+		$uid                   = get_current_user_id();
+		$data['is_member']     = $uid ? SpaceMember::is_member( (int) $space->id, $uid ) : false;
+		$data['viewer_role']   = $uid ? SpaceMember::get_role( (int) $space->id, $uid ) : null;
+		$data['is_subscribed'] = $uid ? \Jetonomy\Models\Subscription::is_subscribed( $uid, 'space', (int) $space->id ) : false;
+
 		/**
 		 * Filter the REST response data for a single space.
 		 *

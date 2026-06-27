@@ -15,6 +15,32 @@
 		"namespace": "jetonomy/v1",
 		"endpoints": [
 			{
+				"route": "/app/config",
+				"methods": [
+					"GET"
+				],
+				"handler": "App_Config_Controller::get_config",
+				"permission": "__return_true",
+				"purpose": "White-label branding + feature flags for the mobile app (pre-login theming)",
+				"auth": "public",
+				"capability": null,
+				"ownership_check": null,
+				"audit_notes": "1.6.0 mobile API. Public read (matches /push/vapid-key). Returns accent_color, logo_url, login_bg_url, dark_mode_default, pro_active, features{messaging,reactions,polls,badges,custom_fields,web_push,native_push}. Wrapped in the jetonomy_app_config filter."
+			},
+			{
+				"route": "/feed",
+				"methods": [
+					"GET"
+				],
+				"handler": "Feed_Controller::list_items",
+				"permission": "Visibility::rest_check",
+				"purpose": "Global cross-space home feed (sort=hot|new|top), visibility-gated, paginated",
+				"auth": "public",
+				"capability": null,
+				"ownership_check": null,
+				"audit_notes": "1.6.0 mobile API. Feed_Controller extends Posts_Controller so the post shape (incl. is_bookmarked + viewer_vote) is shared. Gating in SQL via Post::list_global_feed (member-or-public spaces, is_private=0). Standard paginated_response envelope + X-WP-Total / X-WP-TotalPages headers."
+			},
+			{
 				"route": "/spaces",
 				"methods": [
 					"GET",
@@ -26,7 +52,7 @@
 				"auth": "public",
 				"capability": null,
 				"ownership_check": null,
-				"audit_notes": "GET: visibility-filtered; POST: create_permission_check enforces jetonomy_create_spaces. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode."
+				"audit_notes": "GET: visibility-filtered; POST: create_permission_check enforces jetonomy_create_spaces. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: each space in the GET response carries viewer-relative is_member, viewer_role, is_subscribed (null-safe for logged-out)."
 			},
 			{
 				"route": "/spaces/(?P<id>\\d+)",
@@ -41,7 +67,7 @@
 				"auth": "public_with_handler",
 				"capability": "space_admin",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode."
+				"audit_notes": "GET: membership for private/hidden; PATCH/DELETE: space-admin check. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_member, viewer_role, is_subscribed."
 			},
 			{
 				"route": "/spaces/(?P<id>\\d+)/members",
@@ -161,7 +187,7 @@
 				"auth": "public_with_handler",
 				"capability": "create_posts",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "GET: space-read enforced; POST: create_posts enforced. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode."
+				"audit_notes": "GET: space-read enforced; POST: create_posts enforced. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: each post in the GET response carries is_bookmarked + viewer_vote (-1|0|1), batch-resolved via enrich_viewer_state (no N+1); null-safe for logged-out."
 			},
 			{
 				"route": "/posts/drafts",
@@ -189,7 +215,7 @@
 				"auth": "public_with_handler",
 				"capability": "ownership_or_edit_others",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode."
+				"audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1)."
 			},
 			{
 				"route": "/posts/(?P<id>\\d+)/close",
@@ -300,43 +326,43 @@
 			{
 				"route": "/replies/(?P<id>\\d+)",
 				"methods": [
-					"GET",
 					"PATCH",
 					"DELETE"
 				],
-				"handler": "Replies_Controller::get_item,update_item,delete_item",
-				"permission": "__return_true,REST_Auth::auth_mutation (closure)",
-				"purpose": "Get, update, or delete a reply",
-				"auth": "public_with_handler",
+				"handler": "Replies_Controller::update_item,delete_item",
+				"permission": "REST_Auth::auth_mutation (closure)",
+				"purpose": "Update or delete a reply",
+				"auth": "login_required",
 				"capability": "ownership_or_edit_others",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "GET: space-read; PATCH/DELETE: ownership or edit_others (no GET registered)"
+				"audit_notes": "1.6.0 drift fix: no GET is registered on this route (only PATCH + DELETE) - the stale GET/get_item entry was removed."
 			},
 			{
 				"route": "/replies/(?P<id>\\d+)/accept",
 				"methods": [
-					"POST"
+					"POST",
+					"DELETE"
 				],
-				"handler": "Replies_Controller::accept_answer",
+				"handler": "Replies_Controller::accept_reply,unaccept_reply",
 				"permission": "REST_Auth::auth_mutation (closure)",
-				"purpose": "Mark reply as accepted answer",
+				"purpose": "Mark / unmark a reply as the accepted answer",
 				"auth": "login_required",
 				"capability": "post_author",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "Mark as accepted answer"
+				"audit_notes": "1.6.0 drift fix: DELETE -> unaccept_reply was missing; handler is accept_reply (POST) + unaccept_reply (DELETE), not accept_answer."
 			},
 			{
 				"route": "/replies/(?P<id>\\d+)/split",
 				"methods": [
 					"POST"
 				],
-				"handler": "Replies_Controller::split_item",
+				"handler": "Replies_Controller::split_reply",
 				"permission": "REST_Auth::auth_mutation (closure)",
 				"purpose": "Split reply into new post",
 				"auth": "login_required",
 				"capability": "edit_others_posts",
 				"ownership_check": "handler_enforces",
-				"audit_notes": "Split into new post"
+				"audit_notes": "1.6.0 drift fix: handler method is split_reply (was wrongly listed as split_item)."
 			},
 			{
 				"route": "/replies/(?P<id>\\d+)/vote",
@@ -423,12 +449,12 @@
 					"GET"
 				],
 				"handler": "Users_Controller::suggest_users",
-				"permission": "__return_true",
+				"permission": "is_user_logged_in",
 				"purpose": "Suggest users by name/login prefix",
-				"auth": "public",
+				"auth": "login_required",
 				"capability": null,
 				"ownership_check": null,
-				"audit_notes": "Suggest users"
+				"audit_notes": "1.6.0 drift fix: permission callback is `fn() => is_user_logged_in()` (mention autocomplete is login-only), not __return_true/public."
 			},
 			{
 				"route": "/notifications",
@@ -1803,6 +1829,14 @@
 			"args": "none",
 			"where": "includes/admin/views/dashboard.php",
 			"consumed_by": null
+		},
+		{
+			"name": "jetonomy_app_config",
+			"type": "filter",
+			"args": "$data, $request",
+			"where": "includes/api/class-app-config-controller.php",
+			"consumed_by": "jetonomy-pro",
+			"notes": "1.6.0. Filters the GET /app/config payload (branding + feature flags) so Pro / site owners can override white-label branding or force-flag a feature."
 		},
 		{
 			"name": "jetonomy_admin_dashboard_widgets",

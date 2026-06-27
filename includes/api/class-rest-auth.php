@@ -79,6 +79,34 @@ class REST_Auth {
 				);
 			}
 
+			// 1b. Account-status gate. Application Passwords mint credentials
+			// OUTSIDE the wp_authenticate flow, so the `authenticate`-filter
+			// bans/verification gates (class-jetonomy.php) never run for a
+			// header-authed app/API call. Enforce them here so one place covers
+			// every mutation route (posts, replies, votes, conversations,
+			// push device registration, …) on the mobile/native client.
+			$current_uid = get_current_user_id();
+
+			if (
+				$current_uid > 0
+				&& class_exists( '\\Jetonomy\\Models\\Restriction' )
+				&& \Jetonomy\Models\Restriction::is_banned( $current_uid )
+			) {
+				return new WP_Error(
+					'jetonomy_user_banned',
+					__( 'Your account has been banned from this community.', 'jetonomy' ),
+					array( 'status' => 403 )
+				);
+			}
+
+			if ( $current_uid > 0 && get_user_meta( $current_uid, '_jetonomy_pending_verification', true ) ) {
+				return new WP_Error(
+					'jetonomy_pending_verification',
+					__( 'Confirm your email to finish signing up before posting.', 'jetonomy' ),
+					array( 'status' => 403 )
+				);
+			}
+
 			// 2. Cookie-auth path requires a valid X-WP-Nonce. Header-auth
 			// paths (Application Passwords, OAuth) authenticate per-request
 			// and don't need (or use) the WP cookie nonce.

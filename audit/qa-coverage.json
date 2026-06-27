@@ -5,17 +5,25 @@
         "version": "1.4.3"
     },
     "generated": {
-        "at": "2026-06-26T08:13:37+00:00",
+        "at": "2026-06-27T02:54:33+00:00",
         "manifest_at": "2026-06-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 91,
-            "covered": 36,
+            "total": 93,
+            "covered": 38,
             "uncovered": 55,
             "skipped": 0,
             "covered_items": [
+                {
+                    "method": "GET",
+                    "route": "/app/config"
+                },
+                {
+                    "method": "GET",
+                    "route": "/feed"
+                },
                 {
                     "method": "GET",
                     "route": "/spaces"
@@ -85,10 +93,6 @@
                     "route": "/posts/(?P<post_id>\\d+)/replies"
                 },
                 {
-                    "method": "GET",
-                    "route": "/replies/(?P<id>\\d+)"
-                },
-                {
                     "method": "PATCH",
                     "route": "/replies/(?P<id>\\d+)"
                 },
@@ -98,6 +102,10 @@
                 },
                 {
                     "method": "POST",
+                    "route": "/replies/(?P<id>\\d+)/accept"
+                },
+                {
+                    "method": "DELETE",
                     "route": "/replies/(?P<id>\\d+)/accept"
                 },
                 {
@@ -622,7 +630,7 @@
             "total": 6,
             "covered": 5,
             "uncovered": 1,
-            "skipped": 170,
+            "skipped": 171,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -751,15 +759,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 160,
-        "items_covered": 49,
+        "items_total": 162,
+        "items_covered": 51,
         "items_uncovered": 111,
-        "items_skipped": 170,
-        "coverage_percent": 30.600000000000001
+        "items_skipped": 171,
+        "coverage_percent": 31.5
     },
     "drift": {
-        "previous_uncovered": 111,
+        "previous_uncovered": 114,
         "current_uncovered": 111,
-        "delta": 0
+        "delta": -3
     }
 }

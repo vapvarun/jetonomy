@@ -53,6 +53,36 @@ class Bookmark extends Model {
 	}
 
 	/**
+	 * Batch bookmark lookup — which of $post_ids has $user_id bookmarked?
+	 *
+	 * One query for a whole page of posts, so list/feed enrichment never runs
+	 * a per-row is_bookmarked() (N+1). Returns only the bookmarked IDs.
+	 *
+	 * @since 1.6.0
+	 * @param int   $user_id  Viewer.
+	 * @param int[] $post_ids Candidate post IDs.
+	 * @return int[] Subset of $post_ids the user has bookmarked.
+	 */
+	public static function bookmarked_ids( int $user_id, array $post_ids ): array {
+		$post_ids = array_values( array_unique( array_filter( array_map( 'intval', $post_ids ) ) ) );
+		if ( $user_id <= 0 || empty( $post_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+		$rows         = static::db()->get_col(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT post_id FROM ' . static::table() . " WHERE user_id = %d AND post_id IN ({$placeholders})",
+				$user_id,
+				...$post_ids
+			)
+		);
+
+		return array_map( 'intval', $rows ?: array() );
+	}
+
+	/**
 	 * List bookmarked posts for a user with post data.
 	 *
 	 * @return object[]

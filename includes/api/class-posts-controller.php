@@ -295,6 +295,8 @@ class Posts_Controller extends Base_Controller {
 
 		// Eager-load all author data in a single batch before preparing items.
 		$posts = $this->enrich_with_author( $posts );
+		// Eager-load viewer bookmark + vote state in two batched queries (no N+1).
+		$posts = $this->enrich_viewer_state( $posts );
 
 		$items = array_map( array( $this, 'prepare_post' ), $posts );
 
@@ -305,6 +307,42 @@ class Posts_Controller extends Base_Controller {
 				'offset' => (int) $pagination['offset'],
 			)
 		);
+	}
+
+	/**
+	 * Seed viewer-relative state (is_bookmarked, viewer_vote) onto a list of
+	 * post rows in two batched queries, so prepare_post() can read the
+	 * pre-resolved value instead of running a per-row lookup (N+1).
+	 *
+	 * No-op for logged-out callers — prepare_post() then falls back to the
+	 * safe defaults (false / 0). Shared by the space-scoped list and the
+	 * global feed (item 2).
+	 *
+	 * @since 1.6.0
+	 * @param object[] $posts Post row objects (mutated in place).
+	 * @return object[] The same array with viewer_vote + is_bookmarked set.
+	 */
+	protected function enrich_viewer_state( array $posts ): array {
+		$uid = get_current_user_id();
+		if ( ! $uid || empty( $posts ) ) {
+			return $posts;
+		}
+
+		$ids = array_map( static fn( $p ) => (int) $p->id, $posts );
+
+		$bookmarked = array_fill_keys(
+			\Jetonomy\Models\Bookmark::bookmarked_ids( $uid, $ids ),
+			true
+		);
+		$votes      = \Jetonomy\Models\Vote::user_votes_map( $uid, 'post', $ids );
+
+		foreach ( $posts as $post ) {
+			$pid                 = (int) $post->id;
+			$post->is_bookmarked = isset( $bookmarked[ $pid ] );
+			$post->viewer_vote   = isset( $votes[ $pid ] ) ? (int) $votes[ $pid ] : 0;
+		}
+
+		return $posts;
 	}
 
 	/**
@@ -1052,8 +1090,11 @@ class Posts_Controller extends Base_Controller {
 	 *
 	 * When called after enrich_with_author() the author fields are already set
 	 * on the object — individual DB/cache lookups are skipped in that case.
+	 *
+	 * Protected (since 1.6.0) so Feed_Controller can reuse the single canonical
+	 * post shape instead of duplicating it.
 	 */
-	private function prepare_post( object $post ): array {
+	protected function prepare_post( object $post ): array {
 		$author_id = (int) ( $post->author_id ?? 0 );
 		$space     = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
@@ -1129,6 +1170,18 @@ class Posts_Controller extends Base_Controller {
 			'space_title'       => $space ? $space->title : '',
 			'space_slug'        => $space ? $space->slug : '',
 		);
+
+		// Viewer-relative state (additive, 1.6.0). Null-safe for logged-out
+		// callers. When a batch enrich pre-set the values on the row
+		// (enrich_viewer_state, used by list + feed) use them; otherwise fall
+		// back to a per-item lookup for the single get_item path.
+		$uid                   = get_current_user_id();
+		$data['is_bookmarked'] = isset( $post->is_bookmarked )
+			? (bool) $post->is_bookmarked
+			: ( $uid ? \Jetonomy\Models\Bookmark::is_bookmarked( $uid, (int) $post->id ) : false );
+		$data['viewer_vote']   = isset( $post->viewer_vote )
+			? (int) $post->viewer_vote
+			: ( $uid ? (int) ( \Jetonomy\Models\Vote::get_user_vote( $uid, 'post', (int) $post->id ) ?? 0 ) : 0 );
 
 		/**
 		 * Filter the REST response data for a single post.

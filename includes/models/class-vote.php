@@ -208,6 +208,43 @@ class Vote extends Model {
 	}
 
 	/**
+	 * Batch vote lookup — map of $object_ids the user has voted on to value.
+	 *
+	 * One query for a whole page, so list/feed enrichment never runs a per-row
+	 * get_user_vote() (N+1). Missing IDs are simply absent from the map (the
+	 * caller treats absence as 0).
+	 *
+	 * @since 1.6.0
+	 * @param int    $user_id     Voter.
+	 * @param string $object_type 'post' | 'reply'.
+	 * @param int[]  $object_ids  Candidate object IDs.
+	 * @return array<int,int> Map of object_id => vote value (-1|1).
+	 */
+	public static function user_votes_map( int $user_id, string $object_type, array $object_ids ): array {
+		$object_ids = array_values( array_unique( array_filter( array_map( 'intval', $object_ids ) ) ) );
+		if ( $user_id <= 0 || empty( $object_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $object_ids ), '%d' ) );
+		$rows         = static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'SELECT object_id, value FROM ' . static::table() . " WHERE user_id = %d AND object_type = %s AND object_id IN ({$placeholders})",
+				$user_id,
+				$object_type,
+				...$object_ids
+			)
+		);
+
+		$map = array();
+		foreach ( $rows ?: array() as $row ) {
+			$map[ (int) $row->object_id ] = (int) $row->value;
+		}
+		return $map;
+	}
+
+	/**
 	 * List posts voted on by a user (upvotes only), with post + space info.
 	 *
 	 * @param int $user_id Voter user ID.

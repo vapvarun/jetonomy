@@ -1,0 +1,130 @@
+<?php
+/**
+ * App Config REST API controller.
+ *
+ * Serves white-label branding + feature flags for the mobile app so the
+ * client can theme its login / splash screens BEFORE a user authenticates,
+ * and hide UI for extensions the site hasn't enabled. Public read on purpose
+ * (mirrors `/push/vapid-key`): there is nothing sensitive here, and pre-login
+ * theming needs it without a session.
+ *
+ * @package Jetonomy
+ * @since   1.6.0
+ */
+
+namespace Jetonomy\API;
+
+defined( 'ABSPATH' ) || exit;
+
+use WP_REST_Request;
+use WP_REST_Response;
+
+class App_Config_Controller extends Base_Controller {
+
+	protected $rest_base = 'app/config';
+
+	/**
+	 * Register the public /app/config route.
+	 */
+	public function register_routes() {
+		register_rest_route(
+			$this->namespace,
+			'/app/config',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_config' ),
+				// Public: the mobile app reads this before login to theme its
+				// splash / sign-in screens. Same posture as /push/vapid-key.
+				'permission_callback' => '__return_true',
+			)
+		);
+	}
+
+	/**
+	 * GET /app/config — branding + feature flags.
+	 */
+	public function get_config( WP_REST_Request $request ): WP_REST_Response {
+		$settings   = (array) get_option( 'jetonomy_settings', array() );
+		$pro_active = defined( 'JETONOMY_PRO_VERSION' );
+		$branding   = $this->branding( $pro_active, $settings );
+
+		$data = array(
+			'accent_color'      => $branding['accent_color'],
+			'logo_url'          => $branding['logo_url'],
+			'login_bg_url'      => $branding['login_bg_url'],
+			'dark_mode_default' => (bool) ( $settings['dark_mode_default'] ?? false ),
+			'pro_active'        => $pro_active,
+			'features'          => $this->feature_flags(),
+		);
+
+		/**
+		 * Filter the mobile app config payload. Lets Pro / site owners override
+		 * branding (e.g. inject a white-label logo) or force-flag a feature.
+		 *
+		 * @since 1.6.0
+		 * @param array           $data    Assembled config payload.
+		 * @param WP_REST_Request $request The config request.
+		 */
+		$data = apply_filters( 'jetonomy_app_config', $data, $request );
+
+		return new WP_REST_Response( $data, 200 );
+	}
+
+	/**
+	 * Resolve branding. Free cannot call Pro classes, so read the shared
+	 * options directly: prefer the Pro white-label row when Pro is active,
+	 * otherwise fall back to the free Appearance accent color.
+	 *
+	 * @param bool  $pro_active Whether the Pro plugin is loaded.
+	 * @param array $settings   The `jetonomy_settings` option.
+	 * @return array{accent_color:string,logo_url:string,login_bg_url:string}
+	 */
+	private function branding( bool $pro_active, array $settings ): array {
+		$accent   = '';
+		$logo     = '';
+		$login_bg = '';
+
+		if ( $pro_active ) {
+			$wl       = (array) get_option( 'jetonomy_pro_white_label', array() );
+			$accent   = (string) ( $wl['accent_color'] ?? '' );
+			$logo     = (string) ( $wl['logo_url'] ?? ( $wl['header_logo_url'] ?? '' ) );
+			$login_bg = (string) ( $wl['login_bg_url'] ?? '' );
+		}
+
+		if ( '' === $accent ) {
+			// Free Appearance tab default (Settings → Appearance → Accent).
+			$accent = (string) ( $settings['accent_color'] ?? '#0073aa' );
+		}
+
+		return array(
+			'accent_color' => $accent,
+			'logo_url'     => $logo,
+			'login_bg_url' => $login_bg,
+		);
+	}
+
+	/**
+	 * Map the enabled Pro extension IDs to the app's feature flag block.
+	 *
+	 * Native push ships inside the web-push extension, so `native_push` gates
+	 * on the same `web-push` ID as `web_push`.
+	 *
+	 * @return array<string,bool>
+	 */
+	private function feature_flags(): array {
+		$ext = (array) get_option( 'jetonomy_pro_extensions', array() );
+		$has = static function ( string $id ) use ( $ext ): bool {
+			return in_array( $id, $ext, true );
+		};
+
+		return array(
+			'messaging'     => $has( 'private-messaging' ),
+			'reactions'     => $has( 'reactions' ),
+			'polls'         => $has( 'polls' ),
+			'badges'        => $has( 'custom-badges' ),
+			'custom_fields' => $has( 'custom-fields' ),
+			'web_push'      => $has( 'web-push' ),
+			'native_push'   => $has( 'web-push' ),
+		);
+	}
+}
