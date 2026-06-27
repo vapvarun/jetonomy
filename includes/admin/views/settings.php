@@ -764,6 +764,23 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</table>
 			</div>
 
+			<!-- Brand Logo -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Logo', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Your community logo. Shown in the mobile app (login + header) and anywhere a brand mark is needed. Square or wide PNG/SVG; leave empty to show the Community Title as text.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="logo_url"><?php esc_html_e( 'Logo URL', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="logo_url" name="jetonomy_settings[logo_url]" value="<?php echo esc_url( $settings['logo_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/logo.png">
+							<p class="description"><?php esc_html_e( 'Paste an image URL (e.g. from Media Library). Recommended: at least 512px on the longest side, transparent PNG.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
 			<!-- Color Palette -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">

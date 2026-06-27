@@ -48,7 +48,15 @@ class App_Config_Controller extends Base_Controller {
 		$pro_active = defined( 'JETONOMY_PRO_VERSION' );
 		$branding   = $this->branding( $pro_active, $settings );
 
+		// App display name: the Community Title (Settings → General), falling
+		// back to the WordPress site name. Shown as the community name in-app.
+		$app_name = trim( (string) ( $settings['community_title'] ?? '' ) );
+		if ( '' === $app_name ) {
+			$app_name = (string) get_bloginfo( 'name' );
+		}
+
 		$data = array(
+			'app_name'          => $app_name,
 			'accent_color'      => $branding['accent_color'],
 			'logo_url'          => $branding['logo_url'],
 			'login_bg_url'      => $branding['login_bg_url'],
@@ -94,6 +102,12 @@ class App_Config_Controller extends Base_Controller {
 		if ( '' === $accent ) {
 			// Free Appearance tab default (Settings → Appearance → Accent).
 			$accent = (string) ( $settings['accent_color'] ?? '#0073aa' );
+		}
+
+		if ( '' === $logo ) {
+			// Free Appearance tab logo (Settings → Appearance → Logo). Pro
+			// white-label, when set, overrides this above.
+			$logo = (string) ( $settings['logo_url'] ?? '' );
 		}
 
 		return array(
