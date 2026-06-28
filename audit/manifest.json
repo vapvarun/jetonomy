@@ -3,7 +3,7 @@
 	"plugin": {
 		"slug": "jetonomy",
 		"name": "Jetonomy",
-		"version": "1.4.3",
+		"version": "1.6.0",
 		"namespace": "Jetonomy",
 		"main_file": "jetonomy.php",
 		"text_domain": "jetonomy",
@@ -3397,6 +3397,7 @@
 		]
 	},
 	"generated": {
+		"refresh_2026_06_28": "1.6.0 mobile-app refresh + plugin.version 1.4.3->1.6.0. Verified the mobile surface is captured: GET /app/config (App_Config_Controller; serves app_name from Community Title, accent_color, logo_url + feature_flags map) and GET /feed (Feed_Controller; sort hot|new|top, cursor after/before + offset + window_days) present; logo_url added to Settings -> Appearance. REST 73/73 exact vs register_rest_route grep. App-side: the login screen now applies the discovered site accent+logo pre-auth (no plugin surface change). Native push device registration lives in jetonomy-pro web-push (/push/register-device), not free.",
 		"refresh_2026_06_11": "Coverage-gated refresh after the full-audit fix series (audit/full-audit-2026-06-11.md). wppqa baseline: audit/wppqa-baseline-2026-06-11. All categories within gate vs ground-truth grep: rest 68/69 calls (multi-config registrations), ajax 40/40 (comment-text hits excluded), hooks_fired 142/140+dynamic, tables 20 (3 dead tables dropped in Migration_1_5_0), blocks 8/8, shortcodes 8/8 (stale jetonomy_recent_activity entry removed), cron 6 (Action Scheduler map in class-cron.php - wp_schedule_event grep finds 0 by design), wp_cli 14 (dynamic dispatcher loop), admin_pages 14/14.",
 		"at": "2026-06-04T00:00:00Z",
 		"from": "wp-plugin-onboard --refresh (1.4.3 feature-drop delta: admin bar + notifications redesign + configurable reputation + Pro extension hooks)",
