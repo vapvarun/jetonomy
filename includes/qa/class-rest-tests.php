@@ -849,8 +849,8 @@ class REST_Tests {
 			is_array( $data )
 				&& array_key_exists( 'accent_color', $data )
 				&& array_key_exists( 'features', $data )
-				&& is_array( $data['features'] ?? null )
-				&& array_key_exists( 'messaging', $data['features'] ?? [] ),
+				&& is_array( $data['features'] )
+				&& array_key_exists( 'messaging', $data['features'] ),
 			'missing accent_color / features block'
 		);
 
