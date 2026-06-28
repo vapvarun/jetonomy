@@ -10,6 +10,8 @@ The mobile app reads your branding **straight from your WordPress settings**, so
 
 > **Requires Jetonomy 1.6.0 or newer.** On older versions the app falls back to its default styling.
 
+![The mobile app sign-in screen branded from WordPress settings: the community logo, the community name, and the accent color applied to the sign-in button and links](../images/mobile-app/00-login.png)
+
 ## What You Will Learn
 
 - Where to set the community name, accent color, and logo
