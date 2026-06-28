@@ -1,0 +1,21 @@
+{
+  "domain": "jetonomy",
+  "potFile": "languages/jetonomy.pot",
+  "languagesDir": "languages",
+  "engine": "claude",
+  "model": "haiku",
+  "batch": 40,
+  "makeJson": true,
+  "protect": ["Jetonomy", "Pro", "WordPress", "BuddyPress", "REST", "API", "URL", "CSV", "AI"],
+  "glossary": {
+    "Space": "",
+    "Trust Level": ""
+  },
+  "locales": [
+    { "locale": "de_DE", "name": "German",  "register": "informal (du)" },
+    { "locale": "fr_FR", "name": "French",  "register": "informal (tu)" },
+    { "locale": "es_ES", "name": "Spanish", "register": "informal (tú)" },
+    { "locale": "nl_NL", "name": "Dutch",   "register": "informal (je)" },
+    { "locale": "ko_KR", "name": "Korean",  "register": "polite (해요체)", "model": "sonnet" }
+  ]
+}

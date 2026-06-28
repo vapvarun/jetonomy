@@ -149,6 +149,12 @@ module.exports = function( grunt ) {
 	grunt.loadNpmTasks( 'grunt-contrib-copy' );
 	grunt.loadNpmTasks( 'grunt-contrib-compress' );
 
+	// Registers `grunt i18n`: sync new strings (msgmerge) -> AI-translate ->
+	// compile .mo + .json, per .wbcom-i18n.json. Run before a release to refresh
+	// locale translations, then commit the .po/.mo. Standalone (not in `build`)
+	// so day-to-day builds don't re-translate. See @wbcom/i18n-ai.
+	require( '@wbcom/i18n-ai/grunt' )( grunt );
+
 	// CI gate: abort if the latest GitHub Actions run is not passing.
 	grunt.registerTask( 'ci-check', 'Verify GitHub Actions CI is green before release.', function() {
 		var done = this.async();

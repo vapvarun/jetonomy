@@ -10,6 +10,7 @@
     "check:i18n": "bash bin/check-i18n.sh"
   },
   "devDependencies": {
+    "@wbcom/i18n-ai": "^0.1.0",
     "@wordpress/env": "^11.3.0",
     "@wordpress/scripts": "^28.0.0",
     "grunt": "^1.6.1",
