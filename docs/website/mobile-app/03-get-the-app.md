@@ -14,6 +14,8 @@ There are two ways to put the Jetonomy app in your members' hands: use the **ope
 - What it takes to publish your own branded app
 - The accounts and tools involved (and the no-EAS alternatives)
 
+![The Communities screen, where a member can switch between several Jetonomy communities or add another - available in the open-source app](../images/mobile-app/07-communities.png)
+
 ## Try it first (no publishing)
 
 The open-source app runs in **Expo Go** so you can see it before committing:

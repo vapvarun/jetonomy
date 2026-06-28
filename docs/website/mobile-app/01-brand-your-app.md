@@ -52,6 +52,8 @@ GET /wp-json/jetonomy/v1/app/config
 
 which returns your `app_name` (Community Title), `accent_color`, and `logo_url`. The app re-reads it whenever it connects, so updates appear without shipping a new build.
 
+![A community's accent color applied throughout the mobile app - the active feed tab, links, and the compose button all use the brand color](../images/mobile-app/01-home.png)
+
 ## In-app branding vs the home-screen icon
 
 - **In-app branding** (logo, color, name) is what these settings control. It themes the inside of the app and works on the open-source app for every community.

@@ -42,6 +42,8 @@ The app reads each person's role from WordPress, so there is nothing extra to se
 
 Being an admin in WordPress *is* the connection - no extra "register the app" action is needed.
 
+![A member's profile in the mobile app, showing their reputation, badges, and posts](../images/mobile-app/05-profile.png)
+
 ## Revoking access
 
 Anyone can revoke a device from the same **Users -> Profile -> Application Passwords** screen, or sign out / remove the community inside the app. Revoking does not affect their account or their real password.
