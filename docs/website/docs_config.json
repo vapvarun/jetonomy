@@ -49,40 +49,46 @@
       "order": 7
     },
     {
+      "slug": "mobile-app",
+      "name": "Mobile App",
+      "description": "Give your community a native iOS and Android app. Brand it from wp-admin (logo, color, community name), connect members with WordPress Application Passwords, and use the open-source Jetonomy app or publish your own.",
+      "order": 8
+    },
+    {
       "slug": "pro-features",
       "name": "Pro Features",
       "description": "Jetonomy Pro extensions: private messaging, polls, reactions, custom badges, advanced moderation, analytics, webhooks, and AI.",
-      "order": 8
+      "order": 9
     },
     {
       "slug": "integrations",
       "name": "Integrations",
       "description": "Gate spaces with MemberPress, Paid Memberships Pro, WooCommerce, LearnDash, and Tutor LMS, and connect BuddyPress and FluentCommunity.",
-      "order": 9
+      "order": 10
     },
     {
       "slug": "admin-settings",
       "name": "Admin Settings",
       "description": "Configure permissions, email, appearance, SEO, anti-spam, access control, and the activity log from wp-admin.",
-      "order": 10
+      "order": 11
     },
     {
       "slug": "migration",
       "name": "Migration",
       "description": "Import your existing forum from bbPress, wpForo, or Asgaros Forum without losing topics, replies, or members.",
-      "order": 11
+      "order": 12
     },
     {
       "slug": "why-jetonomy",
       "name": "Why Jetonomy",
       "description": "How Jetonomy compares to bbPress, wpForo, Asgaros Forum, and other community platforms, and how it scales to communities with thousands of topics.",
-      "order": 12
+      "order": 13
     },
     {
       "slug": "developer-guide",
       "name": "Developer Guide",
       "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides.",
-      "order": 13
+      "order": 14
     }
   ]
 }
