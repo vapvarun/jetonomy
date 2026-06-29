@@ -3601,17 +3601,19 @@ msgstr "Moderação Avançada"
 #: includes/admin/views/settings.php:1287
 #: includes/admin/views/space-edit.php:47
 msgid "Custom Fields"
-msgstr ""
+msgstr "Campos Personalizados"
 
 #: includes/admin/views/settings.php:1289
 msgid ""
 "Add custom fields to posts and user profiles: text, select, checkbox, date, "
 "and more."
 msgstr ""
+"Adicione campos personalizados a posts e perfis de usuários: texto, "
+"seleção, caixa de verificação, data e muito mais."
 
 #: includes/admin/views/settings.php:1293
 msgid "Advanced Moderation"
-msgstr ""
+msgstr "Moderação Avançada"
 
 #: includes/admin/views/settings.php:1295
 msgid ""
