@@ -25,7 +25,7 @@ class Space extends Model {
 	 * @return object|null
 	 */
 	public static function find( int $id ): ?object {
-		return Cache::remember(
+		return Cache::remember_object(
 			"space:{$id}",
 			fn() => parent::find( $id ),
 			300
@@ -105,7 +105,7 @@ class Space extends Model {
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug ): ?object {
-		return Cache::remember(
+		return Cache::remember_object(
 			"space:slug:{$slug}",
 			function () use ( $slug ) {
 				$row = static::db()->get_row(

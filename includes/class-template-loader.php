@@ -942,13 +942,16 @@ class Template_Loader {
 					true
 				);
 
-				// seo-pro currently emits only for the `post` route — its
-				// get_current_context() bails when `jetonomy_space_slug` is
-				// empty, which is true on the bare `/s/:slug/` space route
-				// (the router only sets `jetonomy_space_slug` on the post
-				// rewrite). When that gap is closed in Pro, add `space`
-				// here so free skips the duplicate emit.
-				$seo_pro_handles = array( 'post' );
+				// Routes seo-pro emits its own OG/meta for. Its
+				// get_current_context() resolves the post-detail route plus the
+				// whole space family (it remaps the space slug for the bare
+				// listing, members, roadmap, moderation, edit and new-post
+				// surfaces). Free must defer on every one of those or the page
+				// gets a duplicate og:title/og:url set — the space-page dupe
+				// reported in 1.5.0. Any route NOT in this list (home, category,
+				// tag, search, leaderboard, …) has no Pro emitter, so free stays
+				// the single source there.
+				$seo_pro_handles = array( 'post', 'space', 'space-members', 'space-roadmap', 'space-moderation', 'edit-space', 'new-post' );
 				$skip_baseline   = $seo_pro_active && in_array( $data['route'], $seo_pro_handles, true );
 
 				$site_name    = get_bloginfo( 'name' );

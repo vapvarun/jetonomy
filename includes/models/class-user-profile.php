@@ -54,7 +54,7 @@ class UserProfile extends Model {
 	 * @return object|null
 	 */
 	public static function find_by_user( int $user_id ): ?object {
-		return Cache::remember(
+		return Cache::remember_object(
 			"profile:{$user_id}",
 			function () use ( $user_id ) {
 				$row = static::db()->get_row(
