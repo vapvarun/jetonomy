@@ -62,6 +62,13 @@ class App_Config_Controller extends Base_Controller {
 			'login_bg_url'      => $branding['login_bg_url'],
 			'dark_mode_default' => (bool) ( $settings['dark_mode_default'] ?? false ),
 			'pro_active'        => $pro_active,
+			// Pro-only gate. The Jetonomy mobile app is a Pro benefit, so this
+			// defaults to false here in free. Jetonomy Pro flips it true via the
+			// `jetonomy_app_config` filter below, and only when the site holds a
+			// valid Pro license. When false, the app shows a "requires Jetonomy
+			// Pro" screen and refuses to sign in, so the app never runs against a
+			// free-only (or unlicensed) install. Fail closed.
+			'app_enabled'       => false,
 			'features'          => $this->feature_flags(),
 		);
 

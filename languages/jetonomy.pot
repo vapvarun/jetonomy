@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-06-28 11:51:58+00:00\n"
+"POT-Creation-Date: 2026-07-02 19:05:11+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -725,7 +725,7 @@ msgstr ""
 #: includes/admin/class-admin.php:159 includes/admin/class-admin.php:160
 #: includes/admin/views/moderation.php:30
 #: includes/class-template-loader.php:866
-#: includes/class-template-loader.php:1009
+#: includes/class-template-loader.php:1012
 #: includes/notifications/class-notifier.php:1135
 #: includes/seo/class-schema-markup.php:492 templates/partials/header.php:54
 #: templates/partials/header.php:56 templates/partials/icon-picker.php:98
@@ -779,7 +779,7 @@ msgstr ""
 #: includes/class-nav-menus.php:51 includes/class-template-loader.php:854
 #: includes/class-template-loader.php:857
 #: includes/class-template-loader.php:878
-#: includes/class-template-loader.php:969
+#: includes/class-template-loader.php:972
 #: includes/integrations/class-fluent-community.php:1094
 #: includes/seo/class-schema-markup.php:425 templates/partials/header.php:35
 #: templates/partials/header.php:37 templates/views/home.php:94
@@ -3674,7 +3674,7 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:32 includes/admin/views/spaces.php:202
 #: includes/class-template-loader.php:860
-#: includes/class-template-loader.php:999 templates/partials/sidebar.php:135
+#: includes/class-template-loader.php:1002 templates/partials/sidebar.php:135
 #: templates/views/my-spaces.php:141 templates/views/space-members.php:87
 #: templates/views/space-members.php:106 templates/views/space.php:252
 #: templates/views/space.php:352
@@ -4994,7 +4994,7 @@ msgid "My profile"
 msgstr ""
 
 #: includes/class-admin-bar.php:98 includes/class-template-loader.php:896
-#: includes/class-template-loader.php:1136
+#: includes/class-template-loader.php:1139
 msgid "Edit profile"
 msgstr ""
 
@@ -5146,7 +5146,7 @@ msgstr ""
 
 #: includes/class-blocks.php:686 includes/class-nav-menus.php:82
 #: includes/class-template-loader.php:893
-#: includes/class-template-loader.php:1129 templates/partials/header.php:65
+#: includes/class-template-loader.php:1132 templates/partials/header.php:65
 #: templates/partials/header.php:73 templates/views/notifications.php:39
 #: templates/views/notifications.php:88
 msgid "Notifications"
@@ -5157,7 +5157,7 @@ msgid "Messages"
 msgstr ""
 
 #: includes/class-blocks.php:697 includes/class-template-loader.php:902
-#: includes/class-template-loader.php:1150 templates/views/my-spaces.php:51
+#: includes/class-template-loader.php:1153 templates/views/my-spaces.php:51
 #: templates/views/my-spaces.php:62
 msgid "My Spaces"
 msgstr ""
@@ -5872,135 +5872,135 @@ msgid "Ban failed. Please try again."
 msgstr ""
 
 #: includes/class-template-loader.php:863
-#: includes/class-template-loader.php:1004 templates/views/space-roadmap.php:98
+#: includes/class-template-loader.php:1007 templates/views/space-roadmap.php:98
 #: templates/views/space-roadmap.php:111 templates/views/space-roadmap.php:120
 #: templates/views/space.php:346
 msgid "Roadmap"
 msgstr ""
 
 #: includes/class-template-loader.php:881
-#: includes/class-template-loader.php:1099
+#: includes/class-template-loader.php:1102
 msgid "Top members"
 msgstr ""
 
 #: includes/class-template-loader.php:887
-#: includes/class-template-loader.php:1112
+#: includes/class-template-loader.php:1115
 msgid "Moderation Queue"
 msgstr ""
 
 #: includes/class-template-loader.php:890
-#: includes/class-template-loader.php:1122
+#: includes/class-template-loader.php:1125
 msgid "Start a discussion"
 msgstr ""
 
 #: includes/class-template-loader.php:899
-#: includes/class-template-loader.php:1143
+#: includes/class-template-loader.php:1146
 msgid "You are invited"
 msgstr ""
 
 #: includes/class-template-loader.php:905
-#: includes/class-template-loader.php:1157 templates/views/new-space.php:49
+#: includes/class-template-loader.php:1160 templates/views/new-space.php:49
 msgid "Create a space"
 msgstr ""
 
 #: includes/class-template-loader.php:908
-#: includes/class-template-loader.php:1164 templates/partials/sidebar.php:181
+#: includes/class-template-loader.php:1167 templates/partials/sidebar.php:181
 #: templates/views/space.php:240
 msgid "Edit space"
 msgstr ""
 
 #: includes/class-template-loader.php:911
-#: includes/class-template-loader.php:1171 templates/views/drafts.php:40
+#: includes/class-template-loader.php:1174 templates/views/drafts.php:40
 #: templates/views/drafts.php:51
 msgid "My drafts"
 msgstr ""
 
 #: includes/class-template-loader.php:914
-#: includes/class-template-loader.php:1178 templates/views/bookmarks.php:40
+#: includes/class-template-loader.php:1181 templates/views/bookmarks.php:40
 #: templates/views/bookmarks.php:51
 msgid "My bookmarks"
 msgstr ""
 
-#: includes/class-template-loader.php:970
+#: includes/class-template-loader.php:973
 msgid "Join our community discussions, Q&A, and more."
 msgstr ""
 
-#: includes/class-template-loader.php:976
+#: includes/class-template-loader.php:979
 msgid "Spaces in the %1$s category on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1000
+#: includes/class-template-loader.php:1003
 msgid "Members of the %1$s space on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1005
+#: includes/class-template-loader.php:1008
 msgid "Roadmap for the %1$s space on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1010
-#: includes/class-template-loader.php:1113
+#: includes/class-template-loader.php:1013
+#: includes/class-template-loader.php:1116
 msgid "Moderation queue for %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1086
+#: includes/class-template-loader.php:1089
 msgid "Community profile for @%1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1094
+#: includes/class-template-loader.php:1097
 #: includes/seo/class-schema-markup.php:399
 #. translators: 1: tag name, 2: site name
 msgid "Discussions tagged %1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1100
+#: includes/class-template-loader.php:1103
 msgid "Top contributors and most-helpful members on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1105
+#: includes/class-template-loader.php:1108
 msgid "Search the community"
 msgstr ""
 
-#: includes/class-template-loader.php:1106
+#: includes/class-template-loader.php:1109
 msgid "Search discussions, replies, members, and tags on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1121
+#: includes/class-template-loader.php:1124
 msgid "Start a discussion in %s"
 msgstr ""
 
-#: includes/class-template-loader.php:1123
+#: includes/class-template-loader.php:1126
 msgid "Compose a new discussion on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1130
+#: includes/class-template-loader.php:1133
 msgid "Your community notifications."
 msgstr ""
 
-#: includes/class-template-loader.php:1137
+#: includes/class-template-loader.php:1140
 msgid "Edit your community profile."
 msgstr ""
 
-#: includes/class-template-loader.php:1144
+#: includes/class-template-loader.php:1147
 msgid "Accept your community invite to %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1151
+#: includes/class-template-loader.php:1154
 msgid "Spaces you run and spaces you are part of on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1158
+#: includes/class-template-loader.php:1161
 msgid "Start a new community space on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1165
+#: includes/class-template-loader.php:1168
 msgid "Edit your community space settings."
 msgstr ""
 
-#: includes/class-template-loader.php:1172
+#: includes/class-template-loader.php:1175
 msgid "Your saved drafts on the community."
 msgstr ""
 
-#: includes/class-template-loader.php:1179
+#: includes/class-template-loader.php:1182
 msgid "Posts you have bookmarked on the community."
 msgstr ""
 
