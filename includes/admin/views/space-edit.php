@@ -21,9 +21,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 	<h1>
 		<?php
 		/* translators: %s: space title */
-		printf( esc_html__( 'Edit Space: %s', 'jetonomy' ), esc_html( $space->title ) );
+		printf( esc_html__( 'Edit %1$s: %2$s', 'jetonomy' ), esc_html( \Jetonomy\space_label() ), esc_html( $space->title ) );
 		?>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Back to Spaces', 'jetonomy' ); ?></a>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces' ) ); ?>" class="page-title-action"><?php echo esc_html( sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></a>
 	</h1>
 
 	<!-- Tabs -->
@@ -167,7 +167,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 				</tr>
 			</table>
 			<p class="submit">
-				<button type="submit" class="button button-primary"><?php esc_html_e( 'Update Space', 'jetonomy' ); ?></button>
+				<button type="submit" class="button button-primary"><?php echo esc_html( sprintf( __( 'Update %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></button>
 				<span class="spinner"></span>
 			</p>
 		</form>
@@ -211,7 +211,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								'variant' => 'compact',
 								'icon'    => 'groups',
 								'title'   => __( 'No members yet', 'jetonomy' ),
-								'body'    => __( 'Invite members or open this space to the wider community.', 'jetonomy' ),
+								'body'    => sprintf( __( 'Invite members or open this %s to the wider community.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							)
 						);
 						?>
@@ -284,7 +284,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							'variant' => 'compact',
 							'icon'    => 'admin-links',
 							'title'   => __( 'No invite links yet', 'jetonomy' ),
-							'body'    => __( 'Generate a link to invite people directly into this space.', 'jetonomy' ),
+							'body'    => sprintf( __( 'Generate a link to invite people directly into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						)
 					);
 					?>
@@ -336,7 +336,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<th><?php esc_html_e( 'Type', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Value', 'jetonomy' ); ?></th>
 						<th><?php esc_html_e( 'Grants', 'jetonomy' ); ?></th>
-						<th><?php esc_html_e( 'Space Role', 'jetonomy' ); ?></th>
+						<th><?php echo esc_html( sprintf( __( '%s Role', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></th>
 						<th><?php esc_html_e( 'Actions', 'jetonomy' ); ?></th>
 					</tr>
 				</thead>
@@ -410,8 +410,8 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 	<?php elseif ( 'settings' === $active_tab ) : ?>
 		<!-- Space Settings Tab -->
 		<div class="jetonomy-tab-content">
-			<h2><?php esc_html_e( 'Space-Specific Settings', 'jetonomy' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'These settings override the global defaults for this space only.', 'jetonomy' ); ?></p>
+			<h2><?php echo esc_html( sprintf( __( '%s-Specific Settings', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
+			<p class="description"><?php echo esc_html( sprintf( __( 'These settings override the global defaults for this %s only.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 
 			<form id="jetonomy-space-settings-form" data-space-id="<?php echo absint( $space->id ); ?>">
 				<table class="form-table">
@@ -472,7 +472,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 						<td>
 							<label style="margin-bottom:8px;display:block;">
 								<input type="checkbox" id="ss-enable-prefixes" value="1" <?php checked( ! empty( $space_settings['enable_prefixes'] ) ); ?>>
-								<?php esc_html_e( 'Enable topic prefixes for this space', 'jetonomy' ); ?>
+								<?php echo esc_html( sprintf( __( 'Enable topic prefixes for this %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</label>
 							<div id="jt-prefixes-config" <?php echo empty( $space_settings['enable_prefixes'] ) ? 'style="display:none;"' : ''; ?>>
 								<p class="description" style="margin-bottom:8px;"><?php esc_html_e( 'Colored labels members can apply to topics (e.g. Bug, Suggestion, Solved).', 'jetonomy' ); ?></p>
@@ -519,7 +519,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 									</option>
 								<?php endforeach; ?>
 							</select>
-							<p class="description"><?php esc_html_e( 'Link this space to a BuddyPress group. Members will be synced automatically.', 'jetonomy' ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'Link this %s to a BuddyPress group. Members will be synced automatically.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<?php endif; ?>
@@ -575,7 +575,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 								'variant' => 'success',
 								'icon'    => 'yes-alt',
 								'title'   => __( 'No pending join requests', 'jetonomy' ),
-								'body'    => __( 'New requests to join this space will appear here for review.', 'jetonomy' ),
+								'body'    => sprintf( __( 'New requests to join this %s will appear here for review.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 							)
 						);
 						?>

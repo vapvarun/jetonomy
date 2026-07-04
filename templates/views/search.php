@@ -192,7 +192,7 @@ $crumbs = [
 					<span class="jt-search-page-icon" aria-hidden="true"><?php jetonomy_echo_icon( 'search', 20 ); ?></span>
 					<input type="text" name="q"
 						value="<?php echo esc_attr( $q ); ?>"
-						placeholder="<?php esc_attr_e( 'Search discussions, spaces, tags…', 'jetonomy' ); ?>"
+						placeholder="<?php echo esc_attr( sprintf( __( 'Search discussions, %s, tags…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?>"
 						autofocus>
 				</div>
 				<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>">
@@ -384,7 +384,7 @@ $crumbs = [
 					'empty-state',
 					[
 						'icon'    => 'empty-search',
-						'message' => __( 'Enter a search term above to find discussions, spaces, and tags.', 'jetonomy' ),
+						'message' => sprintf( __( 'Enter a search term above to find discussions, %s, and tags.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					]
 				);
 				?>

@@ -148,7 +148,7 @@ class Notifier {
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
 			),
 			'join_request'          => array(
-				'subject' => __( '[{site}] New space join request', 'jetonomy' ),
+				'subject' => sprintf( __( '[{site}] New %s join request', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
 			),
 			'verification_reminder' => array(
@@ -462,7 +462,7 @@ class Notifier {
 		}
 
 		$space       = Space::find( $space_id );
-		$space_name  = $space ? $space->title : __( 'a space', 'jetonomy' );
+		$space_name  = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$actor_id    = (int) $post->author_id;
 		$post_url    = $this->get_post_url( $post );
 		$subscribers = Subscription::get_subscribers( 'space', $space_id );
@@ -1358,7 +1358,7 @@ class Notifier {
 	 */
 	public function on_join_request_approved( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : __( 'the space', 'jetonomy' );
+		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$url   = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
 		$this->create_and_maybe_email(
 			$user_id,
@@ -1377,7 +1377,7 @@ class Notifier {
 	 */
 	public function on_join_request_denied( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : __( 'the space', 'jetonomy' );
+		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1394,7 +1394,7 @@ class Notifier {
 	 */
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
 		$space      = Space::find( $space_id );
-		$space_name = $space ? $space->title : __( 'a space', 'jetonomy' );
+		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
 		$recipient_ids = [];

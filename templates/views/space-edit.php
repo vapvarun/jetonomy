@@ -124,7 +124,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					</div>
 				</div>
 				<input type="hidden" name="cover_image" value="<?php echo esc_attr( $space->cover_image ?? '' ); ?>" data-jt-cover-value>
-				<p class="jt-form-help"><?php esc_html_e( 'Wide banner shown at the top of the space page. Recommended 1500×400 px.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Recommended 1500×400 px.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
 			<div class="jt-form-row">
@@ -135,7 +135,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 						'field_name'    => 'icon',
 						'current_value' => $current_icon,
 						'id_prefix'     => 'jt-se-icon',
-						'help'          => __( 'Pick the icon that matches what this space is about.', 'jetonomy' ),
+						'help'          => sprintf( __( 'Pick the icon that matches what this %s is about.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					)
 				);
 				?>
@@ -186,7 +186,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 						</option>
 					<?php endforeach; ?>
 				</select>
-				<p class="jt-form-help"><?php esc_html_e( 'Group this space under a top-level category on the community home.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %s under a top-level category on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
 			<div class="jt-form-row">
@@ -200,7 +200,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 					class="jt-input jt-input-narrow"
 					value="<?php echo esc_attr( (string) $posts_per_page ); ?>"
 					placeholder="<?php esc_attr_e( 'Default', 'jetonomy' ); ?>">
-				<p class="jt-form-help"><?php esc_html_e( 'How many topics to show per page in this space. Leave blank to use the site default.', 'jetonomy' ); ?></p>
+				<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'How many topics to show per page in this %s. Leave blank to use the site default.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 			</div>
 
 			<div class="jt-form-row jt-prefixes-row">

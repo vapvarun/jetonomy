@@ -40,7 +40,7 @@ function jetonomy_render_space_grid( array $spaces, string $base ): void {
 					<div class="jt-space-card-badges">
 						<?php jetonomy_render_space_meta_badges( $space ); ?>
 						<?php if ( 'hidden' === ( $space->visibility ?? '' ) ) : ?>
-							<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php esc_attr_e( 'Hidden space. Only admins and members can see this listing.', 'jetonomy' ); ?>">
+							<span class="jt-space-card-badge jt-space-card-badge-hidden" aria-label="<?php echo esc_attr( sprintf( __( 'Hidden %s. Only admins and members can see this listing.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>">
 								<?php jetonomy_echo_icon( 'lock', 12 ); ?>
 								<?php esc_html_e( 'Hidden', 'jetonomy' ); ?>
 							</span>
@@ -110,7 +110,7 @@ if ( ! is_user_logged_in() ) :
 		'jetonomy_home_welcome_subheading',
 		! empty( $settings['community_tagline'] )
 			? (string) $settings['community_tagline']
-			: __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the spaces you care about.', 'jetonomy' )
+			: sprintf( __( 'Ask questions, share what you build, and join the discussion. Create a free account to post, vote, and follow the %s you care about.', 'jetonomy' ), \Jetonomy\space_label( true, true ) )
 	);
 	$jt_pulse       = jetonomy_community_pulse();
 	?>

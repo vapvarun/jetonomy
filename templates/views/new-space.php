@@ -56,7 +56,7 @@ $crumbs = array(
 				[
 					'icon'      => 'lock',
 					'icon_size' => 64,
-					'message'   => __( 'Creating spaces is reserved for community administrators.', 'jetonomy' ),
+					'message'   => sprintf( __( 'Creating %s is reserved for community administrators.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					'cta_label' => __( 'Back to community', 'jetonomy' ),
 					'cta_url'   => $base . '/',
 					'tone'      => 'forbidden',
@@ -114,7 +114,7 @@ $crumbs = array(
 							</option>
 						<?php endforeach; ?>
 					</select>
-					<p class="jt-form-help"><?php esc_html_e( 'Group this space under a top-level category on the community home.', 'jetonomy' ); ?></p>
+					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Group this %s under a top-level category on the community home.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
@@ -133,7 +133,7 @@ $crumbs = array(
 						</div>
 					</div>
 					<input type="hidden" name="cover_image" value="" data-jt-cover-value>
-					<p class="jt-form-help"><?php esc_html_e( 'Wide banner shown at the top of the space page. Optional.', 'jetonomy' ); ?></p>
+					<p class="jt-form-help"><?php echo esc_html( sprintf( __( 'Wide banner shown at the top of the %s page. Optional.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
 
 				<div class="jt-form-row">
@@ -144,7 +144,7 @@ $crumbs = array(
 							'field_name'    => 'icon',
 							'current_value' => 'users',
 							'id_prefix'     => 'jt-ns-icon',
-							'help'          => __( 'Pick the icon that matches what this space is about.', 'jetonomy' ),
+							'help'          => sprintf( __( 'Pick the icon that matches what this %s is about.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						)
 					);
 					?>

@@ -41,7 +41,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'rea
 		'empty-state',
 		[
 			'icon'    => 'lock',
-			'message' => __( 'You need to be a member of this space to see its roadmap.', 'jetonomy' ),
+			'message' => sprintf( __( 'You need to be a member of this %s to see its roadmap.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
 	);
@@ -149,7 +149,7 @@ $space_url = $base . '/s/' . $space->slug . '/';
 	</div>
 </div>
 
-<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Space sections', 'jetonomy' ); ?>">
+<nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
 	<a href="<?php echo esc_url( $space_url ); ?>" class="jt-space-tab">
 		<?php esc_html_e( 'Ideas', 'jetonomy' ); ?>
 	</a>
