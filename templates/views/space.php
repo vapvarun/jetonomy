@@ -17,7 +17,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
 	);
@@ -129,7 +129,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		?>
 		<div class="jt-space-gate-actions">
 			<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
-				<?php esc_html_e( 'Join Space', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 			</button>
 		</div>
 		<?php
@@ -237,7 +237,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
-								<?php esc_html_e( 'Edit space', 'jetonomy' ); ?>
+								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>
 					<?php endif; ?>
@@ -287,7 +287,7 @@ $crumbs[] = [
 						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-							<?php esc_html_e( 'Join Space', 'jetonomy' ); ?>
+							<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 						</button>
 						<?php
 					else :

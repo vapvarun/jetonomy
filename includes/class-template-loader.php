@@ -488,7 +488,7 @@ class Template_Loader {
 					// Composer + Join-Space gate strings (consumed by composer.js).
 					'quoteSelected'          => esc_html__( 'Quote', 'jetonomy' ),
 					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
-					'joinSpace'              => esc_html__( 'Join Space', 'jetonomy' ),
+					'joinSpace'              => esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ),
 					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
 					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
 					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),
@@ -899,7 +899,7 @@ class Template_Loader {
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 					case 'my-spaces':
-						$parts['title'] = __( 'My Spaces', 'jetonomy' );
+						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
 					case 'new-space':
 						$parts['title'] = __( 'Create a space', 'jetonomy' );
@@ -976,7 +976,7 @@ class Template_Loader {
 						break;
 					case 'category':
 						$title     = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
-						$desc      = sprintf( __( 'Spaces in the %1$s category on %2$s.', 'jetonomy' ), $title, $site_name );
+						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
 						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $title;
 						break;
@@ -1150,8 +1150,8 @@ class Template_Loader {
 						$noindex   = true; // One-shot landing.
 						break;
 					case 'my-spaces':
-						$title     = __( 'My Spaces', 'jetonomy' );
-						$desc      = sprintf( __( 'Spaces you run and spaces you are part of on %s.', 'jetonomy' ), $site_name );
+						$title     = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
+						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
 						$url       = $base . '/my-spaces/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.

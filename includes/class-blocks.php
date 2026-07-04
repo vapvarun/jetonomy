@@ -694,11 +694,11 @@ class Blocks {
 					</a>
 				<?php endif; ?>
 				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
-					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Spaces', 'jetonomy' ); ?></span>
+					<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></span>
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">
-						<span class="jt-userpanel-link-label"><?php esc_html_e( 'Create space', 'jetonomy' ); ?></span>
+						<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 					</a>
 				<?php endif; ?>
 				<a href="<?php echo esc_url( $edit_url ); ?>" class="jt-userpanel-link">

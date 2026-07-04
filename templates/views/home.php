@@ -18,7 +18,7 @@ $base                 = \Jetonomy\base_url();
  */
 function jetonomy_render_space_grid( array $spaces, string $base ): void {
 	if ( empty( $spaces ) ) {
-		echo '<p class="jt-cat-empty">' . esc_html__( 'No spaces in this category yet.', 'jetonomy' ) . '</p>';
+		echo '<p class="jt-cat-empty">' . esc_html( sprintf( __( 'No %s in this category yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ) . '</p>';
 		return;
 	}
 	echo '<div class="jt-space-grid">';
@@ -174,7 +174,7 @@ if ( ! is_user_logged_in() ) :
 				<?php if ( ! empty( $uncategorized_spaces ) ) : ?>
 					<section class="jt-mb-md">
 						<div class="jt-cat-row">
-							<h2 class="jt-cat-name"><?php esc_html_e( 'Other Spaces', 'jetonomy' ); ?></h2>
+							<h2 class="jt-cat-name"><?php echo esc_html( sprintf( __( 'Other %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></h2>
 						</div>
 						<?php jetonomy_render_space_grid( $uncategorized_spaces, $base ); ?>
 					</section>

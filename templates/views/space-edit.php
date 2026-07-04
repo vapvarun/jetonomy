@@ -27,7 +27,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
 	);
@@ -43,7 +43,7 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::is_space_admin( get_current_user
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
 	);
@@ -95,7 +95,7 @@ $prefixes_on    = ! empty( $space_settings['enable_prefixes'] );
 			data-jt-community-base="<?php echo esc_url( $base ); ?>">
 
 			<div class="jt-form-row">
-				<label for="jt-se-title"><?php esc_html_e( 'Space title', 'jetonomy' ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
+				<label for="jt-se-title"><?php echo esc_html( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 				<input type="text" id="jt-se-title" name="title" required maxlength="120" class="jt-input" value="<?php echo esc_attr( $space->title ); ?>">
 			</div>
 

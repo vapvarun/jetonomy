@@ -288,7 +288,7 @@ class Spaces_Handler {
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
-			wp_send_json_error( __( 'Space not found.', 'jetonomy' ) );
+			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		// Decrement category space count

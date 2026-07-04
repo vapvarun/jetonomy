@@ -130,7 +130,7 @@ $_partial_space = $_space ? $_space : (object) array(
 
 	<?php if ( 'picker' === $_mode ) : ?>
 		<label class="jt-compose-topic-field">
-			<span class="jt-compose-topic-label"><?php esc_html_e( 'Post to space', 'jetonomy' ); ?></span>
+			<span class="jt-compose-topic-label"><?php echo esc_html( sprintf( __( 'Post to %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 			<select
 				class="jt-compose-topic-space"
 				data-wp-on--change="actions.composeTopicSelectSpace"

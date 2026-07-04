@@ -156,6 +156,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="space_label_singular"><?php esc_html_e( 'Space Label', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="space_label_singular" name="jetonomy_settings[space_label_singular]" value="<?php echo esc_attr( $settings['space_label_singular'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
+							<input type="text" id="space_label_plural" name="jetonomy_settings[space_label_plural]" value="<?php echo esc_attr( $settings['space_label_plural'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Spaces', 'jetonomy' ); ?>">
+							<p class="description"><?php esc_html_e( 'What to call a Space across the whole community — singular and plural (e.g. Forum / Forums, Discussion / Discussions). Leave empty to keep "Space / Spaces".', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Community as Homepage', 'jetonomy' ); ?></th>
 						<td>
 							<label for="front_page">

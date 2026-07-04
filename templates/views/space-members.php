@@ -17,7 +17,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
 	);
@@ -265,7 +265,7 @@ $role_labels = [
 									data-space-id="<?php echo absint( $space->id ); ?>"
 									data-user-id="<?php echo absint( $member->user_id ); ?>"
 									data-user-name="<?php echo esc_attr( $mu->display_name ); ?>">
-									<?php esc_html_e( 'Ban from space', 'jetonomy' ); ?>
+									<?php echo esc_html( sprintf( __( 'Ban from %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 								</button>
 							<?php endif; ?>
 							<?php

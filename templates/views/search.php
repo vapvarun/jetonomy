@@ -206,7 +206,7 @@ $crumbs = [
 						$filters = [
 							'all'    => __( 'All', 'jetonomy' ),
 							'posts'  => __( 'Posts', 'jetonomy' ),
-							'spaces' => __( 'Spaces', 'jetonomy' ),
+							'spaces' => \Jetonomy\space_label( true ),
 							'tags'   => __( 'Tags', 'jetonomy' ),
 						];
 						foreach ( $filters as $key => $label ) :
@@ -282,7 +282,7 @@ $crumbs = [
 							/* translators: %s: search query */
 							'message'     => sprintf( __( 'No results for "%s"', 'jetonomy' ), $q ),
 							'description' => __( 'Try different or fewer keywords (search needs at least 2 characters), or browse the community.', 'jetonomy' ),
-							'cta_label'   => __( 'Browse all spaces', 'jetonomy' ),
+							'cta_label'   => sprintf( __( 'Browse all %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 							'cta_url'     => \Jetonomy\base_url() . '/',
 							'tone'        => 'warn',
 						]
@@ -339,7 +339,7 @@ $crumbs = [
 
 					<?php if ( ! empty( $spaces ) ) : ?>
 						<h3 class="jt-section-label">
-							<?php esc_html_e( 'Spaces', 'jetonomy' ); ?>
+							<?php echo esc_html( \Jetonomy\space_label( true ) ); ?>
 						</h3>
 						<div class="jt-space-grid jt-mb-lg">
 							<?php foreach ( $spaces as $space ) : ?>

@@ -400,6 +400,9 @@ class Admin {
 			}
 			$clean['base_slug']          = $new_slug;
 			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
+			// Space label override (singular / plural). Empty = keep the default.
+			$clean['space_label_singular'] = sanitize_text_field( $input['space_label_singular'] ?? '' );
+			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
 			$clean['posts_per_page']     = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
@@ -1065,7 +1068,7 @@ class Admin {
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
-				wp_die( esc_html__( 'Space not found.', 'jetonomy' ) );
+				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories     = $this->get_all_categories_flat();
 			$members        = SpaceMember::list_by_space( $space_id );

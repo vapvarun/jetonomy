@@ -28,6 +28,38 @@ function base_url(): string {
 	return home_url( '/' . $base_slug );
 }
 
+/**
+ * The site owner's label for a "Space" (e.g. Space, Forum, Discussion, Channel).
+ *
+ * Single source of truth for the noun so an owner can rename Spaces everywhere
+ * from Settings → General. Falls back to the translated default when no custom
+ * label is set. Developers can override per context via `jetonomy_space_label`.
+ *
+ * @param bool $plural True for the plural form.
+ * @param bool $lower  True to lowercase (for mid-sentence use, e.g. "join this space").
+ * @return string
+ */
+function space_label( bool $plural = false, bool $lower = false ): string {
+	$settings = get_option( 'jetonomy_settings', [] );
+	$key      = $plural ? 'space_label_plural' : 'space_label_singular';
+	$custom   = isset( $settings[ $key ] ) ? trim( (string) $settings[ $key ] ) : '';
+
+	$label = '' !== $custom
+		? $custom
+		: ( $plural ? __( 'Spaces', 'jetonomy' ) : __( 'Space', 'jetonomy' ) );
+
+	/**
+	 * Filter the Space label. $plural/$lower give context for per-surface tweaks.
+	 *
+	 * @param string $label  Resolved label.
+	 * @param bool   $plural Plural form requested.
+	 * @param bool   $lower  Lowercase requested.
+	 */
+	$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
+
+	return $lower ? mb_strtolower( $label ) : $label;
+}
+
 function now(): string {
 	return current_time( 'mysql', true );
 }

@@ -145,7 +145,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 	<?php else : ?>
 		<!-- Spaces List View -->
 		<h1>
-			<?php esc_html_e( 'Spaces', 'jetonomy' ); ?>
+			<?php echo esc_html( \Jetonomy\space_label( true ) ); ?>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=jetonomy-spaces&action=new' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Add New', 'jetonomy' ); ?></a>
 		</h1>
 

@@ -36,7 +36,7 @@ $categories = \Jetonomy\Models\Category::list_top_level();
 $base   = \Jetonomy\base_url();
 $crumbs = array(
 	array(
-		'label' => __( 'Create space', 'jetonomy' ),
+		'label' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 		'url'   => '',
 	),
 );
@@ -46,7 +46,7 @@ $crumbs = array(
 <div class="jt-two-col">
 	<main>
 		<h1 class="jt-page-title jt-mb-20">
-			<?php esc_html_e( 'Create a space', 'jetonomy' ); ?>
+			<?php echo esc_html( sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 		</h1>
 
 		<?php if ( ! $qualifies ) : ?>
@@ -66,7 +66,7 @@ $crumbs = array(
 		<?php else : ?>
 			<form id="jt-new-space-form" class="jt-form jt-card" data-wp-on--submit="actions.createSpace" data-jt-rest-base="<?php echo esc_url( rest_url( 'jetonomy/v1' ) ); ?>" data-jt-rest-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>" data-jt-community-base="<?php echo esc_url( $base ); ?>">
 				<div class="jt-form-row">
-					<label for="jt-ns-title"><?php esc_html_e( 'Space title', 'jetonomy' ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
+					<label for="jt-ns-title"><?php echo esc_html( sprintf( __( '%s title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?> <span class="jt-required" aria-hidden="true">*</span></label>
 					<input type="text" id="jt-ns-title" name="title" required maxlength="120" class="jt-input">
 					<p class="jt-form-help"><?php esc_html_e( 'Short, descriptive. What people will look for.', 'jetonomy' ); ?></p>
 				</div>
@@ -162,7 +162,7 @@ $crumbs = array(
 
 				<div class="jt-form-actions">
 					<button type="submit" class="jt-btn jt-btn-fill">
-						<?php esc_html_e( 'Create space', 'jetonomy' ); ?>
+						<?php echo esc_html( sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 					</button>
 					<a class="jt-btn jt-btn-ghost" href="<?php echo esc_url( $base . '/' ); ?>">
 						<?php esc_html_e( 'Cancel', 'jetonomy' ); ?>

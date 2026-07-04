@@ -1388,7 +1388,7 @@ class Abilities {
 	public function execute_get_space( $input ) {
 		$space = Space::find( (int) $input['space_id'] );
 		if ( ! $space ) {
-			return new WP_Error( 'not_found', __( 'Space not found.', 'jetonomy' ) );
+			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 		return [
 			'id'           => (int) $space->id,
@@ -1407,7 +1407,7 @@ class Abilities {
 		$space    = Space::find( $space_id );
 
 		if ( ! $space ) {
-			return new WP_Error( 'not_found', __( 'Space not found.', 'jetonomy' ) );
+			return new WP_Error( 'not_found', sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		if ( SpaceMember::is_member( $space_id, $user_id ) ) {
