@@ -3072,6 +3072,20 @@
 			"args": "",
 			"where": "includes/models/class-vote.php",
 			"consumed_by": []
+		},
+		{
+			"name": "jetonomy_space_member_role_changed",
+			"type": "action",
+			"args": "space_id, user_id, new_role, old_role",
+			"where": "includes/models/class-space-member.php (set_role)",
+			"consumed_by": "Uncanny Automator glue (Pro/companion, class_exists guard); no free consumer"
+		},
+		{
+			"name": "jetonomy_before_set_role",
+			"type": "filter",
+			"args": "proceed(bool), user_id, space_id, new_role",
+			"where": "includes/models/class-space-member.php (set_role)",
+			"consumed_by": "veto hook for programmatic role changes; symmetry with jetonomy_before_join_space"
 		}
 	],
 	"buddypress_integration": {
@@ -3421,7 +3435,8 @@
 		"static_analysis_refresh_2026_06_03": "1.5.0-dev bug-sweep refresh. Phase-0 wppqa baseline saved to audit/wppqa-baseline-2026-06-03/SUMMARY.md (authoritative current bug state). grid_track_overflow_risks cleared: all 4 flagged selectors (.jt-stats-bar, .jt-badges, .jt-kanban, tablet) verified to already use repeat(N, minmax(0, 1fr)) in jetonomy.css:691/697/705/774 \u2014 the 617/623/631/694 line refs were 1.4.3-era stale. dead_listeners still 1 (jetonomy_after_resolve_flag \u2014 intentional extension point, not a bug). No new issues from the bug sweep; wppqa errors are heuristic false positives (REST-JS request-payload reads), vendored libs/, or pre-existing CSS. Space-field hooks added to hooks_fired this session.",
 		"refresh_2026_06_04": "Pre-1.4.5 release refresh: coverage-gated hooks_fired reconcile - added 29 fired hooks missing since 1.4.3/1.4.4 (WB Gam filters, sidebar visibility/extension hooks, join-request + space-member events, delete post/reply); removed stale jetonomy_extensions_init (no longer in code). REST(66 routes incl /media via rest_base), tables(23), admin_pages(13 slugs), shortcodes(9) verified exact vs ground-truth grep. wp_cli(14)/blocks(8)/cron(6) registered dynamically (dispatcher loop / register_block_type / schedules array) - manifest counts verified correct. wppqa 2026-06-04 baseline identical to 2026-06-03 (all known FPs).",
 		"delta_2026_06_12_ai_async": "Moderation_Service: set_object_status() now rejects user_id <= 0 (anonymous can never moderate even if a permission_callback regresses); automated actors use the new system_set_object_status() (PHP-internal, never wire to REST/AJAX). Both share the private apply_object_status() impl, which also gained the hold=>pending action. Consumer: jetonomy-pro AI Batch_Reviewer.",
-		"delta_2026_07_05_wave_e": "Wave E: GDPR erase now covers jt_revisions (anonymize author_id), jt_spaces (anonymize author_id), jt_bookmarks (delete) in erase_data + on_user_delete (identity no longer survives an erase). NEW filter jetonomy_notification_deep_link (functions.php) so Pro object types (message/conversation) resolve to a URL without free hardcoding a pro route; notifications template + controller route through it. Admin fixes: idea_status_changed added to the notification_defaults save allowlist (toggle was dead); posts_per_page/replies_per_page clamped to 100 (was lower-bound only); option_page_capability_jetonomy_settings filter so a delegated jetonomy_manage_settings role can actually save. Follow-ups filed: GDPR export completeness + eraser batching + counter-recompute; reaction/flag_resolved notification types; dark_mode_default + verification_reminder_hours admin fields; notification-defaults render/consume default divergence."
+		"delta_2026_07_05_wave_e": "Wave E: GDPR erase now covers jt_revisions (anonymize author_id), jt_spaces (anonymize author_id), jt_bookmarks (delete) in erase_data + on_user_delete (identity no longer survives an erase). NEW filter jetonomy_notification_deep_link (functions.php) so Pro object types (message/conversation) resolve to a URL without free hardcoding a pro route; notifications template + controller route through it. Admin fixes: idea_status_changed added to the notification_defaults save allowlist (toggle was dead); posts_per_page/replies_per_page clamped to 100 (was lower-bound only); option_page_capability_jetonomy_settings filter so a delegated jetonomy_manage_settings role can actually save. Follow-ups filed: GDPR export completeness + eraser batching + counter-recompute; reaction/flag_resolved notification types; dark_mode_default + verification_reminder_hours admin fields; notification-defaults render/consume default divergence.",
+		"delta_2026_07_04_automator": "Automator \"our side\" contract (card [Pro] Uncanny Automator integration): NEW SpaceMember::set_role() is the single role-update path (validates role vs SpaceMember::VALID_ROLES, not-a-member/idempotent guards, fires jetonomy_space_member_role_changed with old+new). REST update_member_role + admin ajax_change_member_role both route through it (killed the direct $wpdb->update dup + the silent add()-as-role-change). NEW filter jetonomy_before_set_role (veto). add()/remove() + join/leave events unchanged (still 3/2 args). VALID_ROLES centralized on the model. Automator SDK glue itself is out of scope (thin Pro/companion wrapper gated by class_exists(Automator))."
 	},
 	"static_analysis": {
 		"dead_listeners": [

@@ -14,6 +14,12 @@ use function Jetonomy\table;
 
 class SpaceMember extends Model {
 
+	/**
+	 * Canonical space-role set. Single source of truth for role validation
+	 * across the REST controller, admin AJAX, and set_role().
+	 */
+	public const VALID_ROLES = [ 'viewer', 'member', 'moderator', 'admin' ];
+
 	protected static function table_name(): string {
 		return 'space_members';
 	}
@@ -118,6 +124,82 @@ class SpaceMember extends Model {
 
 		// G1 cache invalidation — see add() comment.
 		self::bust_privileged_cache( $space_id );
+	}
+
+	/**
+	 * Change an existing member's role (facade — the single role-update path).
+	 *
+	 * Distinct from add(): this only re-roles an EXISTING member and fires the
+	 * role-changed event, so a role change is never silent. Idempotent — a no-op
+	 * success when the member is already at that role. Policy guards
+	 * (permission, last-admin, self-demotion) live at the caller, not here.
+	 *
+	 * @param int    $space_id Space ID.
+	 * @param int    $user_id  User ID.
+	 * @param string $role     Target role (one of self::VALID_ROLES).
+	 * @return \WP_Error|bool True on success (incl. no-op), WP_Error otherwise.
+	 */
+	public static function set_role( int $space_id, int $user_id, string $role ): \WP_Error|bool {
+		if ( ! in_array( $role, self::VALID_ROLES, true ) ) {
+			return new \WP_Error(
+				'invalid_role',
+				sprintf( __( 'Invalid role. Allowed: %s.', 'jetonomy' ), implode( ', ', self::VALID_ROLES ) ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$old_role = self::get_role( $space_id, $user_id );
+		if ( null === $old_role ) {
+			return new \WP_Error(
+				'not_a_member',
+				__( 'User is not a member of this space.', 'jetonomy' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		if ( $old_role === $role ) {
+			return true; // Idempotent — nothing to change.
+		}
+
+		/**
+		 * Filter whether a programmatic role change should proceed. Return
+		 * WP_Error to abort (symmetry with jetonomy_before_join_space).
+		 *
+		 * @param bool   $proceed  Whether to proceed (default true).
+		 * @param int    $user_id  User ID.
+		 * @param int    $space_id Space ID.
+		 * @param string $role     Target role.
+		 */
+		$proceed = apply_filters( 'jetonomy_before_set_role', true, $user_id, $space_id, $role );
+		if ( is_wp_error( $proceed ) ) {
+			return $proceed;
+		}
+
+		static::db()->update(
+			static::table(),
+			[ 'role' => $role ],
+			[
+				'space_id' => $space_id,
+				'user_id'  => $user_id,
+			]
+		);
+
+		self::bust_privileged_cache( $space_id );
+
+		/**
+		 * Fires after an existing member's role changes. The "user's role
+		 * changed" trigger (e.g. Uncanny Automator) listens here. Not fired on a
+		 * brand-new add() or a no-op same-role call.
+		 *
+		 * @since 1.6.0
+		 * @param int    $space_id Space ID.
+		 * @param int    $user_id  User ID.
+		 * @param string $role     New role.
+		 * @param string $old_role Previous role.
+		 */
+		do_action( 'jetonomy_space_member_role_changed', $space_id, $user_id, $role, $old_role );
+
+		return true;
 	}
 
 	/**

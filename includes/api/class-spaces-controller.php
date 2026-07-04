@@ -27,7 +27,9 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * Valid member roles.
 	 */
-	private const VALID_ROLES = [ 'viewer', 'member', 'moderator', 'admin' ];
+	// Single source of truth lives on the model so REST, admin, and set_role()
+	// validate against one list.
+	private const VALID_ROLES = SpaceMember::VALID_ROLES;
 
 	/**
 	 * Valid join policies.
@@ -1020,21 +1022,13 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		global $wpdb;
-		$wpdb->update(
-			\Jetonomy\table( 'space_members' ),
-			[ 'role' => $role ],
-			[
-				'space_id' => $id,
-				'user_id'  => $user_id,
-			]
-		);
-
-		// Direct $wpdb->update bypasses the model's add()/remove() cache
-		// invalidation — bust the privileged-members cache so the
-		// "Managed by" sidebar card (G1) refreshes immediately on the
-		// next page load.
-		SpaceMember::bust_privileged_cache( $id );
+		// One role-update path — set_role() owns the write, cache-bust, and the
+		// role-changed event. The policy guards above (permission, self-demote,
+		// last-admin) stay here as REST-layer policy.
+		$result = SpaceMember::set_role( $id, $user_id, $role );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		return new WP_REST_Response(
 			[
