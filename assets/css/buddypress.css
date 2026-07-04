@@ -2,6 +2,12 @@
  * Jetonomy — BuddyPress integration styles.
  * Only loaded when BuddyPress is active.
  *
+ * Colors route through the --jt-* token cascade so this integration adopts the
+ * active theme's palette and dark mode (the tokens are reassigned in
+ * .jt-dark .jt-app in jetonomy.css). The hex after each var() is the original
+ * value, kept as a fallback so appearance is identical when no theme token is
+ * present. The two `#fff` on accent buttons are intentional on-accent contrast.
+ *
  * @package Jetonomy
  */
 
@@ -14,16 +20,16 @@
 	justify-content: space-between;
 	margin-bottom: 20px;
 	padding-bottom: 16px;
-	border-bottom: 1px solid #e5e7eb;
+	border-bottom: 1px solid var(--jt-border, #e5e7eb);
 }
 .jt-bp-forum-head strong {
 	font-size: 1.25rem;
 	font-weight: 700;
-	color: #1e293b;
+	color: var(--jt-text, #1e293b);
 }
 .jt-bp-forum-head .bp-primary-action {
-	background: #3b82f6;
-	color: #fff;
+	background: var(--jt-accent, #3b82f6);
+	color: #fff; /* on-accent contrast */
 	border: none;
 	border-radius: 6px;
 	padding: 8px 18px;
@@ -34,18 +40,18 @@
 	transition: background 0.15s;
 }
 .jt-bp-forum-head .bp-primary-action:hover {
-	background: #2563eb;
-	color: #fff;
+	background: var(--jt-accent-hover, #2563eb);
+	color: #fff; /* on-accent contrast */
 }
 
 .jt-bp-empty {
 	text-align: center;
-	color: #94a3b8;
+	color: var(--jt-text-tertiary, #94a3b8);
 	font-size: 0.9375rem;
 	padding: 48px 20px;
-	background: #f8fafc;
+	background: var(--jt-bg-subtle, #f8fafc);
 	border-radius: 8px;
-	border: 1px dashed #e2e8f0;
+	border: 1px dashed var(--jt-border, #e2e8f0);
 }
 
 /* Topic list */
@@ -60,60 +66,60 @@
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	font-weight: 600;
-	color: #94a3b8;
+	color: var(--jt-text-tertiary, #94a3b8);
 	padding: 10px 16px;
-	border-bottom: 2px solid #e2e8f0;
-	background: #f8fafc;
+	border-bottom: 2px solid var(--jt-border, #e2e8f0);
+	background: var(--jt-bg-subtle, #f8fafc);
 }
 .jt-bp-topics th:first-child { border-radius: 8px 0 0 0; }
 .jt-bp-topics th:last-child { border-radius: 0 8px 0 0; }
 
 .jt-bp-topics td {
 	padding: 14px 16px;
-	border-bottom: 1px solid #f1f5f9;
+	border-bottom: 1px solid var(--jt-border, #f1f5f9);
 	font-size: 0.9375rem;
 	vertical-align: middle;
 }
 .jt-bp-topics tr:last-child td { border-bottom: none; }
-.jt-bp-topics tr:hover td { background: #f8fafc; }
+.jt-bp-topics tr:hover td { background: var(--jt-bg-subtle, #f8fafc); }
 
 .jt-bp-topics td a {
 	text-decoration: none;
 	font-weight: 600;
-	color: #1e293b;
+	color: var(--jt-text, #1e293b);
 	font-size: 0.9375rem;
 }
-.jt-bp-topics td a:hover { color: #3b82f6; }
+.jt-bp-topics td a:hover { color: var(--jt-accent, #3b82f6); }
 
 .jt-bp-topics td small {
 	display: block;
-	color: #94a3b8;
+	color: var(--jt-text-tertiary, #94a3b8);
 	font-size: 0.8125rem;
 	margin-top: 2px;
 	font-weight: 400;
 }
 .jt-bp-topics .jt-bp-replies,
 .jt-bp-topics .jt-bp-activity {
-	color: #64748b;
+	color: var(--jt-text-secondary, #64748b);
 	font-size: 0.875rem;
 	white-space: nowrap;
 }
 
 /* Topic row (group forum list) */
 .jt-bp-topic-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.jt-bp-topic-meta { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; }
+.jt-bp-topic-meta { font-size: 0.8125rem; color: var(--jt-text-tertiary, #94a3b8); margin-top: 2px; }
 
 .jt-bp-view-all {
 	margin-top: 16px;
 	padding-top: 16px;
-	border-top: 1px solid #e2e8f0;
+	border-top: 1px solid var(--jt-border, #e2e8f0);
 	font-size: 0.875rem;
 	text-align: center;
 }
 .jt-bp-view-all a {
 	font-weight: 600;
 	text-decoration: none;
-	color: #3b82f6;
+	color: var(--jt-accent, #3b82f6);
 }
 .jt-bp-view-all a:hover { text-decoration: underline; }
 
@@ -125,7 +131,7 @@
 	gap: 0;
 	padding: 0;
 	margin-bottom: 24px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid var(--jt-border, #e2e8f0);
 	border-radius: 8px;
 	overflow: hidden;
 }
@@ -133,21 +139,21 @@
 	flex: 1;
 	text-align: center;
 	padding: 16px 12px;
-	border-right: 1px solid #e2e8f0;
-	background: #f8fafc;
+	border-right: 1px solid var(--jt-border, #e2e8f0);
+	background: var(--jt-bg-subtle, #f8fafc);
 }
 .jt-bp-stat:last-child { border-right: none; }
 .jt-bp-stat strong {
 	display: block;
 	font-size: 1.5rem;
 	font-weight: 700;
-	color: #1e293b;
+	color: var(--jt-text, #1e293b);
 	line-height: 1.2;
 }
 .jt-bp-stat span,
 .jt-bp-stat {
 	font-size: 0.75rem;
-	color: #94a3b8;
+	color: var(--jt-text-tertiary, #94a3b8);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 }
@@ -156,7 +162,7 @@
 	font-size: 0.875rem;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
-	color: #64748b;
+	color: var(--jt-text-secondary, #64748b);
 	margin: 0 0 12px;
 }
 
@@ -171,21 +177,21 @@
 	align-items: center;
 	gap: 10px;
 	padding: 10px 0;
-	border-bottom: 1px solid #f1f5f9;
+	border-bottom: 1px solid var(--jt-border, #f1f5f9);
 }
 .jt-bp-recent li:last-child { border-bottom: none; }
 .jt-bp-recent a {
 	text-decoration: none;
 	font-weight: 500;
-	color: #1e293b;
+	color: var(--jt-text, #1e293b);
 	font-size: 0.9375rem;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-.jt-bp-recent a:hover { color: #3b82f6; }
+.jt-bp-recent a:hover { color: var(--jt-accent, #3b82f6); }
 .jt-bp-time {
-	color: #94a3b8;
+	color: var(--jt-text-tertiary, #94a3b8);
 	font-size: 0.8125rem;
 	white-space: nowrap;
 	text-align: right;
@@ -193,8 +199,8 @@
 .jt-bp-space-tag {
 	display: inline-block;
 	font-size: 0.75rem;
-	color: #64748b;
-	background: #f1f5f9;
+	color: var(--jt-text-secondary, #64748b);
+	background: var(--jt-bg-muted, #f1f5f9);
 	padding: 1px 8px;
 	border-radius: 4px;
 	margin-left: 6px;
@@ -221,25 +227,25 @@
 .jt-bp-forum-settings {
 	margin-top: 20px;
 	padding: 20px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid var(--jt-border, #e2e8f0);
 	border-radius: 8px;
-	background: #f8fafc;
+	background: var(--jt-bg-subtle, #f8fafc);
 }
 .jt-bp-forum-settings h4 {
 	margin: 0 0 4px;
 	font-size: 1rem;
 	font-weight: 700;
-	color: #1e293b;
+	color: var(--jt-text, #1e293b);
 }
 .jt-bp-forum-settings .description {
-	color: #64748b;
+	color: var(--jt-text-secondary, #64748b);
 	font-size: 0.875rem;
 	margin: 0 0 14px;
 }
 .jt-bp-forum-settings label {
 	font-weight: 600;
 	font-size: 0.875rem;
-	color: #374151;
+	color: var(--jt-text, #374151);
 	display: block;
 	margin-bottom: 6px;
 }
@@ -247,8 +253,8 @@
 	width: 100%;
 	max-width: 400px;
 	padding: 8px 12px;
-	border: 1px solid #d1d5db;
+	border: 1px solid var(--jt-border, #d1d5db);
 	border-radius: 6px;
 	font-size: 0.9375rem;
-	background: #fff;
+	background: var(--jt-bg, #fff);
 }

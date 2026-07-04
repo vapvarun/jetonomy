@@ -93,6 +93,31 @@ $crumbs = [
 			</div>
 		</div>
 
+		<?php
+		// "You are ranked #N" — orients the viewer on a big board where they
+		// aren't on the first page. One O(1) COUNT query; hidden for guests and
+		// members not active in the selected period (rank 0).
+		$jt_current_uid = get_current_user_id();
+		$jt_my_rank     = $jt_current_uid ? \Jetonomy\Models\UserProfile::rank_for_user( $jt_current_uid, $period ) : 0;
+		if ( $jt_my_rank > 0 ) :
+			?>
+			<div class="jt-card jt-leader-you">
+				<span class="jt-leader-you-rank">#<?php echo (int) $jt_my_rank; ?></span>
+				<span class="jt-leader-you-label">
+					<?php esc_html_e( 'Your rank', 'jetonomy' ); ?>
+					<small><?php
+						echo esc_html(
+							sprintf(
+								/* translators: %d: total members on the leaderboard. */
+								__( 'of %d members', 'jetonomy' ),
+								$_jt_total
+							)
+						);
+					?></small>
+				</span>
+			</div>
+		<?php endif; ?>
+
 		<?php if ( empty( $leaders ) ) : ?>
 			<?php
 			\Jetonomy\Template_Loader::partial(

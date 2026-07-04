@@ -301,4 +301,44 @@ class UserProfile extends Model {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $rows ? $rows : [];
 	}
+
+	/**
+	 * Competition rank of one user on the leaderboard for a period.
+	 *
+	 * Two scalar queries (the user's reputation, then a COUNT of profiles ahead
+	 * of them) using the same period filter as the board — O(1), no full scan.
+	 * Ties share a rank (standard "1224" competition ranking). Returns 0 when
+	 * the user has no profile or isn't active in the period (i.e. unranked).
+	 *
+	 * @param int    $user_id User to rank.
+	 * @param string $period  One of 'week', 'month', or 'all'.
+	 * @return int Rank (1-based), or 0 if the user is not on this board.
+	 */
+	public static function rank_for_user( int $user_id, string $period = 'all' ): int {
+		if ( $user_id < 1 ) {
+			return 0;
+		}
+		$where = static::leaderboard_period_where( $period );
+		$glue  = '' === $where ? ' WHERE' : ' AND';
+		$table = static::table();
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rep = static::db()->get_var(
+			static::db()->prepare(
+				'SELECT reputation FROM ' . $table . $where . $glue . ' user_id = %d',
+				$user_id
+			)
+		);
+		if ( null === $rep ) {
+			return 0;
+		}
+		$ahead = (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . $table . $where . $glue . ' reputation > %d',
+				(int) $rep
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $ahead + 1;
+	}
 }

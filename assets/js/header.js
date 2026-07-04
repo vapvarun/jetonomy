@@ -365,10 +365,9 @@
 		card.style.top = (rect.bottom + 8) + 'px';
 		card.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 296)) + 'px';
 	}
-	document.addEventListener('mouseover', function (e) {
-		if (!e.target || !e.target.closest) { return; }
-		var link = e.target.closest('.jt-user-link, .jt-mention');
-		if (!link) { return; }
+	// Show the card for a user link. `delay` = 0 for keyboard focus (immediate),
+	// 400ms for pointer hover (avoids flicker on pass-through).
+	function scheduleShowHoverCard(link, delay) {
 		var userId = link.dataset.userId;
 		if (!userId) {
 			var href = link.getAttribute('href') || '';
@@ -393,15 +392,49 @@
 					showHoverCard(link, data.id);
 				}
 			});
-		}, 400);
-	});
-	document.addEventListener('mouseout', function (e) {
-		if (!e.target || !e.target.closest) { return; }
-		var link = e.target.closest('.jt-user-link, .jt-mention');
-		if (!link) { return; }
+		}, delay);
+	}
+	function scheduleHideHoverCard() {
 		clearTimeout(hcTimer);
 		hcHideTimer = setTimeout(function () {
 			if (hcEl) { hcEl.style.display = 'none'; }
 		}, 200);
+	}
+	function hideHoverCardNow() {
+		clearTimeout(hcTimer);
+		clearTimeout(hcHideTimer);
+		if (hcEl && hcEl.style.display !== 'none') { hcEl.style.display = 'none'; }
+	}
+
+	document.addEventListener('mouseover', function (e) {
+		if (!e.target || !e.target.closest) { return; }
+		var link = e.target.closest('.jt-user-link, .jt-mention');
+		if (link) { scheduleShowHoverCard(link, 400); }
+	});
+	document.addEventListener('mouseout', function (e) {
+		if (!e.target || !e.target.closest) { return; }
+		if (e.target.closest('.jt-user-link, .jt-mention')) { scheduleHideHoverCard(); }
+	});
+	// Keyboard: tabbing to a user link opens the card, blurring closes it, so
+	// keyboard users get the same info and can dismiss it.
+	document.addEventListener('focusin', function (e) {
+		if (!e.target || !e.target.closest) { return; }
+		var link = e.target.closest('.jt-user-link, .jt-mention');
+		if (link) { scheduleShowHoverCard(link, 0); }
+	});
+	document.addEventListener('focusout', function (e) {
+		if (!e.target || !e.target.closest) { return; }
+		if (e.target.closest('.jt-user-link, .jt-mention')) { scheduleHideHoverCard(); }
+	});
+	// Escape dismisses immediately (keyboard) …
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && hcEl && hcEl.style.display !== 'none') { hideHoverCardNow(); }
+	});
+	// … and a tap/click outside the card or a user link dismisses it, so a
+	// touch-opened card is never stuck open (touch fires no mouseout).
+	document.addEventListener('pointerdown', function (e) {
+		if (!hcEl || hcEl.style.display === 'none') { return; }
+		if (!e.target || !e.target.closest) { hideHoverCardNow(); return; }
+		if (!e.target.closest('.jt-hover-card, .jt-user-link, .jt-mention')) { hideHoverCardNow(); }
 	});
 })();
