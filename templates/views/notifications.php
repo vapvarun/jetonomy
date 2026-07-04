@@ -188,6 +188,14 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 							$notif_url = $base . '/s/' . $jr_space->slug . '/mod/';
 						}
 					}
+				} else {
+					// Anything else (e.g. Pro DM 'message'/'conversation') routes
+					// through the shared resolver + its jetonomy_notification_deep_link
+					// filter, so Pro object types link correctly instead of home.
+					$resolved = \Jetonomy\notification_deep_link( (string) $notif->object_type, (int) $notif->object_id );
+					if ( '' !== $resolved ) {
+						$notif_url = $resolved;
+					}
 				}
 
 				$row_class = 'jt-notif-item';

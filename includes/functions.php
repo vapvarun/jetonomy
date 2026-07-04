@@ -190,7 +190,17 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		return get_profile_url( $object_id );
 	}
 
-	return '';
+	/**
+	 * Resolve a deep link for an object type free doesn't know about (e.g. Pro's
+	 * 'message'/'conversation'). Lets Pro map its own object types to URLs
+	 * without free hardcoding a Pro route. Existing types return above, so this
+	 * only fires for unknown types — zero behavior change for them.
+	 *
+	 * @param string $url         Default ('').
+	 * @param string $object_type Notification object type.
+	 * @param int    $object_id   Notification object id.
+	 */
+	return (string) apply_filters( 'jetonomy_notification_deep_link', '', $object_type, $object_id );
 }
 
 /**

@@ -261,6 +261,12 @@ class Admin {
 	// ── Settings API ──
 
 	public function register_settings(): void {
+		// The Settings page renders under jetonomy_manage_settings, but the form
+		// posts to options.php which enforces manage_options by default. Align
+		// them so delegating the granular cap to a non-admin role actually lets
+		// that role SAVE (otherwise they hit a WP "not allowed" wp_die).
+		add_filter( 'option_page_capability_jetonomy_settings', static fn() => 'jetonomy_manage_settings' );
+
 		register_setting(
 			'jetonomy_settings',
 			'jetonomy_settings',
@@ -392,8 +398,10 @@ class Admin {
 			}
 			$clean['base_slug']          = $new_slug;
 			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
-			$clean['posts_per_page']     = max( 1, absint( $input['posts_per_page'] ?? 20 ) );
-			$clean['replies_per_page']   = max( 1, absint( $input['replies_per_page'] ?? 30 ) );
+			// Clamp to the UI max (100) so a crafted POST can't store a huge
+			// value that flows straight into a SQL LIMIT on a big-site query.
+			$clean['posts_per_page']     = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
+			$clean['replies_per_page']   = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
 			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
 			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
@@ -483,6 +491,9 @@ class Admin {
 				'vote_on_post',
 				'moderation',
 				'join_request',
+				// Was missing, so unchecking its admin default silently reverted
+				// to the seeded true/true — the toggle looked dead.
+				'idea_status_changed',
 			);
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {

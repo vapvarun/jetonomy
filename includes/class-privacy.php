@@ -215,9 +215,12 @@ class Privacy {
 		$uid     = $user->ID;
 		$removed = 0;
 
-		// Anonymize posts (don't delete — preserve community content)
+		// Anonymize authored content (don't delete — preserve community threads,
+		// and keep denormalized counters correct since the rows still exist).
 		$removed += (int) $wpdb->update( table( 'posts' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
 		$removed += (int) $wpdb->update( table( 'replies' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
+		$removed += (int) $wpdb->update( table( 'revisions' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
+		$removed += (int) $wpdb->update( table( 'spaces' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
 
 		// Delete personal data
 		$wpdb->delete( table( 'user_profiles' ), [ 'user_id' => $uid ] );
@@ -230,8 +233,9 @@ class Privacy {
 		$wpdb->delete( table( 'restrictions' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'flags' ), [ 'reporter_id' => $uid ] );
 		$wpdb->delete( table( 'join_requests' ), [ 'user_id' => $uid ] );
+		$wpdb->delete( table( 'bookmarks' ), [ 'user_id' => $uid ] );
 
-		$removed += 10; // Tables cleaned
+		$removed += 11; // Tables cleaned
 
 		return [
 			'items_removed'  => $removed,
@@ -247,9 +251,11 @@ class Privacy {
 	public function on_user_delete( int $user_id ): void {
 		global $wpdb;
 
-		// Anonymize content
+		// Anonymize content (rows kept so threads + denormalized counters stay intact)
 		$wpdb->update( table( 'posts' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
 		$wpdb->update( table( 'replies' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
+		$wpdb->update( table( 'revisions' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
+		$wpdb->update( table( 'spaces' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
 
 		// Delete user-specific data
 		$tables = [
@@ -262,6 +268,7 @@ class Privacy {
 			'activity_log',
 			'restrictions',
 			'join_requests',
+			'bookmarks',
 		];
 
 		foreach ( $tables as $t ) {
