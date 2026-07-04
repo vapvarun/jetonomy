@@ -192,9 +192,9 @@ class Privacy {
 				'data'        => [
 					[
 						'name'  => __( 'Display Name', 'jetonomy' ),
-						// jt_user_profiles has no display_name column — it lives
-						// on wp_users. Reading from $profile here returned empty
-						// for every export (Phase C audit, 1.4.0 fix).
+						// Read WP's canonical display_name from wp_users (the
+						// authoritative source) rather than the jt_user_profiles
+						// copy, which can be stale.
 						'value' => (string) $user->display_name,
 					],
 					[
@@ -325,6 +325,27 @@ class Privacy {
 		];
 	}
 
+	/** Authored tables anonymized (author_id -> 0) on both erase + user delete. */
+	private const ANON_TABLES = [ 'posts', 'replies', 'revisions', 'spaces' ];
+
+	/**
+	 * Personal-data tables purged on both the GDPR erase and the WP user-delete
+	 * path — a single [ table, user_column ] list so the two can never drift.
+	 */
+	private const PURGE_TABLES = [
+		[ 'user_profiles', 'user_id' ],
+		[ 'notifications', 'user_id' ],
+		[ 'subscriptions', 'user_id' ],
+		[ 'read_status', 'user_id' ],
+		[ 'space_members', 'user_id' ],
+		[ 'votes', 'user_id' ],
+		[ 'activity_log', 'user_id' ],
+		[ 'restrictions', 'user_id' ],
+		[ 'flags', 'reporter_id' ],
+		[ 'join_requests', 'user_id' ],
+		[ 'bookmarks', 'user_id' ],
+	];
+
 	public function erase_data( string $email, int $page = 1 ): array {
 		$user = get_user_by( 'email', $email );
 		if ( ! $user ) {
@@ -347,37 +368,28 @@ class Privacy {
 		// those tables over several pages, so "capture then recompute" can no
 		// longer happen in a single call).
 		if ( 1 === $page ) {
-			set_transient(
+			// Durable option (not a transient): a transient can be evicted by an
+			// object cache under memory pressure or expire during a long
+			// multi-page erase, which would silently skip the counter recompute
+			// and leave vote_score / member_count drifted. Cleared on completion.
+			update_option(
 				$state_key,
 				[
 					'votes'  => $this->collect_vote_objects( $uid ),
 					'spaces' => $this->collect_member_spaces( $uid ),
 				],
-				HOUR_IN_SECONDS
+				false
 			);
 		}
 
 		// Anonymize authored content (kept — preserves community threads and the
 		// denormalized counters since the rows still exist), bounded per table.
-		foreach ( [ 'posts', 'replies', 'revisions', 'spaces' ] as $authored ) {
+		foreach ( self::ANON_TABLES as $authored ) {
 			$work += $this->batch_anonymize_author( $authored, $uid, $batch );
 		}
 
-		// Delete personal data, bounded per table.
-		$purge = [
-			[ 'user_profiles', 'user_id' ],
-			[ 'notifications', 'user_id' ],
-			[ 'subscriptions', 'user_id' ],
-			[ 'read_status', 'user_id' ],
-			[ 'space_members', 'user_id' ],
-			[ 'votes', 'user_id' ],
-			[ 'activity_log', 'user_id' ],
-			[ 'restrictions', 'user_id' ],
-			[ 'flags', 'reporter_id' ],
-			[ 'join_requests', 'user_id' ],
-			[ 'bookmarks', 'user_id' ],
-		];
-		foreach ( $purge as [ $table_key, $user_col ] ) {
+		// Delete personal data, bounded per table (shared list — see PURGE_TABLES).
+		foreach ( self::PURGE_TABLES as [ $table_key, $user_col ] ) {
 			$n        = $this->batch_delete( $table_key, $user_col, $uid, $batch );
 			$work    += $n;
 			$removed += $n;
@@ -387,14 +399,14 @@ class Privacy {
 		// counters exactly once, on that final page, from the page-1 capture.
 		$done = ( 0 === $work );
 		if ( $done ) {
-			$state = get_transient( $state_key );
+			$state = get_option( $state_key );
 			if ( is_array( $state ) ) {
 				$this->recompute_counters_after_purge(
 					(array) ( $state['votes'] ?? [] ),
 					(array) ( $state['spaces'] ?? [] )
 				);
 			}
-			delete_transient( $state_key );
+			delete_option( $state_key );
 		}
 
 		return [
@@ -506,36 +518,22 @@ class Privacy {
 	public function on_user_delete( int $user_id ): void {
 		global $wpdb;
 
-		// Anonymize content (rows kept so threads + denormalized counters stay intact)
-		$wpdb->update( table( 'posts' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
-		$wpdb->update( table( 'replies' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
-		$wpdb->update( table( 'revisions' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
-		$wpdb->update( table( 'spaces' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
+		// Anonymize content (rows kept so threads + denormalized counters stay
+		// intact), using the same shared list as erase_data().
+		foreach ( self::ANON_TABLES as $t ) {
+			$wpdb->update( table( $t ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
+		}
 
 		// Capture vote/membership targets before deleting so the denormalized
 		// counters can be recomputed afterwards (same as erase_data()).
 		$vote_objects  = $this->collect_vote_objects( $user_id );
 		$member_spaces = $this->collect_member_spaces( $user_id );
 
-		// Delete user-specific data
-		$tables = [
-			'user_profiles',
-			'notifications',
-			'subscriptions',
-			'read_status',
-			'space_members',
-			'votes',
-			'activity_log',
-			'restrictions',
-			'join_requests',
-			'bookmarks',
-		];
-
-		foreach ( $tables as $t ) {
-			$wpdb->delete( table( $t ), [ 'user_id' => $user_id ] );
+		// Delete user-specific data (shared PURGE_TABLES list — flags is keyed by
+		// reporter_id in that list, so this stays in sync with the eraser).
+		foreach ( self::PURGE_TABLES as [ $table_key, $user_col ] ) {
+			$wpdb->delete( table( $table_key ), [ $user_col => $user_id ] );
 		}
-
-		$wpdb->delete( table( 'flags' ), [ 'reporter_id' => $user_id ] );
 
 		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );
 	}

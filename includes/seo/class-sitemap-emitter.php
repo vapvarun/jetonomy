@@ -208,9 +208,9 @@ class Sitemap_Emitter {
 		} else {
 			$pt = table( 'posts' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$ids     = $wpdb->get_col( "SELECT p.id FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND s.visibility = 'public' AND s.status = 'active' ORDER BY p.id ASC" );
+			$ids     = $wpdb->get_col( "SELECT p.id FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active' ORDER BY p.id ASC" );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND s.visibility = 'public' AND s.status = 'active'" );
+			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active'" );
 		}
 
 		$ids     = array_map( 'intval', (array) $ids );
@@ -256,7 +256,7 @@ class Sitemap_Emitter {
 			$wpdb->prepare(
 				"SELECT p.id, p.slug AS post_slug, s.slug AS space_slug, s.id AS space_id, p.last_reply_at, p.updated_at, p.created_at
 				 FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id
-				 WHERE p.status = 'publish' AND s.visibility = 'public' AND s.status = 'active' AND p.id > %d
+				 WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active' AND p.id > %d
 				 ORDER BY p.id ASC LIMIT %d",
 				$start_after,
 				self::PAGE_SIZE

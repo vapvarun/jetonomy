@@ -160,7 +160,7 @@ wp_head();
 	<!-- Step 2: Create First Space -->
 	<div class="jt-setup-card jt-step" id="jt-step-2">
 		<h2><?php echo esc_html( sprintf( __( 'Create Your First %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></h2>
-		<p class="jt-setup-card__desc"><?php echo esc_html( sprintf( __( 'A %1$s is a community section where people can start discussions. You can add more %2$s later.', 'jetonomy' ), \Jetonomy\space_label(), \Jetonomy\space_label( true, true ) ) ); ?></p>
+		<p class="jt-setup-card__desc"><?php echo esc_html( sprintf( __( 'A %1$s is a community section where people can start discussions. You can add more %2$s later.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 
 		<div class="jt-setup-error" id="jt-error-2"></div>
 
