@@ -347,6 +347,11 @@ class Privacy {
 		$removed += (int) $wpdb->update( table( 'revisions' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
 		$removed += (int) $wpdb->update( table( 'spaces' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
 
+		// Capture what the vote / membership deletes will affect BEFORE deleting,
+		// so we can recompute the denormalized counters on those rows afterwards.
+		$vote_objects  = $this->collect_vote_objects( $uid );
+		$member_spaces = $this->collect_member_spaces( $uid );
+
 		// Delete personal data
 		$wpdb->delete( table( 'user_profiles' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'notifications' ), [ 'user_id' => $uid ] );
@@ -360,6 +365,11 @@ class Privacy {
 		$wpdb->delete( table( 'join_requests' ), [ 'user_id' => $uid ] );
 		$wpdb->delete( table( 'bookmarks' ), [ 'user_id' => $uid ] );
 
+		// Recompute the denormalized counters the raw deletes bypassed, so the
+		// affected posts'/replies' vote_score and the spaces' member_count don't
+		// over-count after the erase. Bounded to only the touched ids.
+		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );
+
 		$removed += 11; // Tables cleaned
 
 		return [
@@ -368,6 +378,75 @@ class Privacy {
 			'messages'       => [ __( 'Jetonomy: Posts and replies anonymized. Personal data deleted.', 'jetonomy' ) ],
 			'done'           => true,
 		];
+	}
+
+	/** Distinct (object_type, object_id) rows a user voted on. */
+	private function collect_vote_objects( int $user_id ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (array) $wpdb->get_results(
+			$wpdb->prepare( 'SELECT DISTINCT object_type, object_id FROM ' . table( 'votes' ) . ' WHERE user_id = %d', $user_id )
+		);
+	}
+
+	/** Space ids a user is a member of. */
+	private function collect_member_spaces( int $user_id ): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) $wpdb->get_col(
+			$wpdb->prepare( 'SELECT space_id FROM ' . table( 'space_members' ) . ' WHERE user_id = %d', $user_id )
+		) );
+	}
+
+	/**
+	 * Recompute vote_score (posts + replies) and member_count (spaces) for the
+	 * rows a user's now-deleted votes / memberships touched. Set-based, bounded
+	 * to the captured ids — no per-row loop.
+	 *
+	 * @param object[] $vote_objects Rows from collect_vote_objects().
+	 * @param int[]    $space_ids    Space ids from collect_member_spaces().
+	 */
+	private function recompute_counters_after_purge( array $vote_objects, array $space_ids ): void {
+		global $wpdb;
+
+		$post_ids  = [];
+		$reply_ids = [];
+		foreach ( $vote_objects as $vo ) {
+			if ( 'reply' === ( $vo->object_type ?? 'post' ) ) {
+				$reply_ids[] = (int) $vo->object_id;
+			} else {
+				$post_ids[] = (int) $vo->object_id;
+			}
+		}
+		$this->recompute_vote_score( table( 'posts' ), 'post', $post_ids );
+		$this->recompute_vote_score( table( 'replies' ), 'reply', $reply_ids );
+
+		$space_ids = array_values( array_unique( array_filter( array_map( 'intval', $space_ids ) ) ) );
+		if ( $space_ids ) {
+			$sp = table( 'spaces' );
+			$sm = table( 'space_members' );
+			$in = implode( ',', $space_ids );
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( "UPDATE {$sp} SET member_count = ( SELECT COUNT(*) FROM {$sm} sm WHERE sm.space_id = {$sp}.id ) WHERE id IN ({$in})" );
+		}
+	}
+
+	/** Recompute vote_score for a set of post/reply ids from the surviving votes. */
+	private function recompute_vote_score( string $target_table, string $object_type, array $ids ): void {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $ids ) ) ) );
+		if ( ! $ids ) {
+			return;
+		}
+		global $wpdb;
+		$in = implode( ',', $ids );
+		$vt = table( 'votes' );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$target_table} t SET t.vote_score = ( SELECT COALESCE(SUM(v.value),0) FROM {$vt} v WHERE v.object_type = %s AND v.object_id = t.id ) WHERE t.id IN ({$in})",
+				$object_type
+			)
+		);
 	}
 
 	/**
@@ -381,6 +460,11 @@ class Privacy {
 		$wpdb->update( table( 'replies' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
 		$wpdb->update( table( 'revisions' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
 		$wpdb->update( table( 'spaces' ), [ 'author_id' => 0 ], [ 'author_id' => $user_id ] );
+
+		// Capture vote/membership targets before deleting so the denormalized
+		// counters can be recomputed afterwards (same as erase_data()).
+		$vote_objects  = $this->collect_vote_objects( $user_id );
+		$member_spaces = $this->collect_member_spaces( $user_id );
 
 		// Delete user-specific data
 		$tables = [
@@ -401,5 +485,7 @@ class Privacy {
 		}
 
 		$wpdb->delete( table( 'flags' ), [ 'reporter_id' => $user_id ] );
+
+		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );
 	}
 }

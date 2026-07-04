@@ -608,8 +608,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php
 						foreach ( $notif_types as $type => $label ) :
+							// Fallbacks must match how Notifier consumes an unset type:
+							// web defaults ON ( ?? true ), but email defaults OFF
+							// ( should_email() uses !empty() ). Rendering email as
+							// checked-by-default showed types as ON that the notifier
+							// treats as OFF (the phantom-default this card targets).
 							$web_on   = isset( $notif_defaults[ $type ]['web'] ) ? (bool) $notif_defaults[ $type ]['web'] : true;
-							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : true;
+							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : false;
 							?>
 							<tr>
 								<td><?php echo esc_html( $label ); ?></td>
