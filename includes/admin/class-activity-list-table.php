@@ -46,7 +46,11 @@ class Activity_List_Table extends \WP_List_Table {
 				'singular' => 'activity',
 				'plural'   => 'activities',
 				'ajax'     => false,
-				'screen'   => 'jetonomy_page_jetonomy-activity',
+				// Use the real current screen so column/screen-option prefs bind
+				// correctly even when White Label renames the menu (which changes
+				// the screen id prefix). Fall back to the canonical id if the
+				// screen isn't set yet.
+				'screen'   => get_current_screen() ? get_current_screen()->id : 'jetonomy_page_jetonomy-activity',
 			)
 		);
 	}

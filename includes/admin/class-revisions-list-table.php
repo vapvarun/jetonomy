@@ -53,7 +53,9 @@ class Revisions_List_Table extends \WP_List_Table {
 				'singular' => 'revision-object',
 				'plural'   => 'revision-objects',
 				'ajax'     => false,
-				'screen'   => 'jetonomy_page_jetonomy-revisions',
+				// Real current screen so prefs bind correctly under White Label's
+				// renamed menu (which changes the screen id prefix).
+				'screen'   => get_current_screen() ? get_current_screen()->id : 'jetonomy_page_jetonomy-revisions',
 			)
 		);
 	}

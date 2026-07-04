@@ -922,9 +922,12 @@ class Admin {
 			)
 		);
 
-		// Per-page admin scripts. Hook suffix matches WP's auto-generated
-		// menu_page_url hook ('toplevel_page_jetonomy' for the dashboard,
-		// 'jetonomy_page_jetonomy-{slug}' for sub-pages).
+		// Per-page admin scripts. WP builds sub-page hooks as
+		// '{sanitize_title(menu_label)}_page_{slug}', and White Label filters the
+		// menu label — so the prefix becomes e.g. 'qa-brand_page_...'. Match by
+		// the stable '_page_{slug}' suffix, not the label-derived prefix, or these
+		// per-page scripts silently fail to load on white-labeled sites. (The
+		// toplevel hook uses the menu SLUG, which White Label leaves alone.)
 		if ( 'toplevel_page_jetonomy' === $hook ) {
 			wp_enqueue_script(
 				'jetonomy-admin-dashboard',
@@ -933,7 +936,7 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'jetonomy_page_jetonomy-revisions' === $hook ) {
+		} elseif ( str_ends_with( $hook, '_page_jetonomy-revisions' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-revisions',
 				JETONOMY_URL . 'assets/js/admin-revisions.js',
@@ -941,7 +944,7 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'jetonomy_page_jetonomy-tags' === $hook ) {
+		} elseif ( str_ends_with( $hook, '_page_jetonomy-tags' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-tags',
 				JETONOMY_URL . 'assets/js/admin-tags.js',
@@ -949,7 +952,7 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'jetonomy_page_jetonomy-settings' === $hook ) {
+		} elseif ( str_ends_with( $hook, '_page_jetonomy-settings' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-settings',
 				JETONOMY_URL . 'assets/js/admin-settings.js',
