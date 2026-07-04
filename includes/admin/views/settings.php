@@ -593,7 +593,9 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'new_post_in_sub'     => sprintf( __( 'New post in subscribed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'        => __( 'Vote on your post', 'jetonomy' ),
+					'reaction'            => __( 'Reaction on your post', 'jetonomy' ),
 					'moderation'          => __( 'Moderator action on your content', 'jetonomy' ),
+					'flag_resolved'       => __( 'Your report was reviewed', 'jetonomy' ),
 					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
 				?>

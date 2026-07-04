@@ -57,6 +57,12 @@ class App_Config_Controller extends Base_Controller {
 
 		$data = array(
 			'app_name'          => $app_name,
+				'space_label'       => array(
+					// Configurable "Space" noun (Settings -> General) so the app
+					// renders the same label as web, not a hardcoded "Space".
+					'singular' => \Jetonomy\space_label(),
+					'plural'   => \Jetonomy\space_label( true ),
+				),
 			'accent_color'      => $branding['accent_color'],
 			'logo_url'          => $branding['logo_url'],
 			'login_bg_url'      => $branding['login_bg_url'],
