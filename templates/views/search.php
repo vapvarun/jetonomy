@@ -77,19 +77,20 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			// Use direct filtered query when advanced filters are active.
 			global $wpdb;
 			$posts_tbl = \Jetonomy\table( 'posts' );
-			$where     = [ 'MATCH(title, content_plain) AGAINST(%s IN BOOLEAN MODE)', "status = 'publish'" ];
+			$spaces_tbl = \Jetonomy\table( 'spaces' );
+			$where     = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
 			$params    = [ $q ];
 
 			if ( $date_from ) {
-				$where[]  = 'created_at >= %s';
+				$where[]  = 'p.created_at >= %s';
 				$params[] = $date_from . ' 00:00:00';
 			}
 			if ( $date_to ) {
-				$where[]  = 'created_at <= %s';
+				$where[]  = 'p.created_at <= %s';
 				$params[] = $date_to . ' 23:59:59';
 			}
 			if ( $author_id ) {
-				$where[]  = 'author_id = %d';
+				$where[]  = 'p.author_id = %d';
 				$params[] = $author_id;
 			}
 
@@ -98,13 +99,23 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 			// leak private posts. Global search page (no space context) => pass null,
 			// which applies the author-or-public rule with no privileged bypass.
 			// Columns are unambiguous across the joined tag tables, so no alias needed.
-			list( $vis_sql, $vis_params ) = \Jetonomy\Search\Fulltext_Search::visibility_clause( null );
+			list( $vis_sql, $vis_params ) = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
 			if ( '' !== $vis_sql ) {
 				$where[] = $vis_sql;
 				$params  = array_merge( $params, $vis_params );
 			}
 
-			$order_by  = 'votes' === $sort ? 'vote_score DESC' : 'created_at DESC';
+			// Space-level content gate — exclude posts whose parent space the
+			// viewer cannot read (private/hidden unless member). The non-filtered
+			// search path already applies this; without it the advanced-filter
+			// branch leaked private/hidden-space posts to any viewer.
+			list( $space_vis_sql, $space_vis_params ) = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
+			if ( '1=1' !== $space_vis_sql ) {
+				$where[] = $space_vis_sql;
+				$params  = array_merge( $params, $space_vis_params );
+			}
+
+			$order_by  = 'votes' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
 			$where_sql = implode( ' AND ', $where );
 
 			if ( $tag_slug ) {
@@ -113,14 +124,14 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 				$tag_params = array_merge( [ $tag_slug ], $params, [ $per_page, $offset ] );
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$sql = $wpdb->prepare(
-					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$pt_tbl} pt ON pt.post_id = p.id INNER JOIN {$tags_tbl} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$spaces_tbl} s ON s.id = p.space_id INNER JOIN {$pt_tbl} pt ON pt.post_id = p.id INNER JOIN {$tags_tbl} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
 					...$tag_params
 				);
 			} else {
 				$paged_params = array_merge( $params, [ $per_page, $offset ] );
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$sql = $wpdb->prepare(
-					"SELECT * FROM {$posts_tbl} WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
+					"SELECT p.* FROM {$posts_tbl} p INNER JOIN {$spaces_tbl} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
 					...$paged_params
 				);
 			}

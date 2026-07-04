@@ -429,14 +429,19 @@ class Space extends Model {
 			$values[] = $type;
 		}
 
-		// Explicit visibility filter.
+		// Explicit visibility filter — NARROWS the result set within what the
+		// viewer is already allowed to see. It must never stand in for the
+		// viewer gate below: passing visibility=hidden|private previously
+		// skipped the gate entirely and exposed every such space to guests.
 		if ( $visibility ) {
 			$where[]  = 's.visibility = %s';
 			$values[] = $visibility;
 		}
 
-		// Visibility rules — only when no explicit visibility filter is set.
-		if ( ! $visibility && ! $is_admin ) {
+		// Viewer visibility gate — ALWAYS applied for non-admins, regardless of
+		// any explicit visibility filter, so the filter can only ever return a
+		// subset of the caller's visible spaces (fail closed).
+		if ( ! $is_admin ) {
 			if ( ! $user_id ) {
 				// Guests see only public spaces.
 				$where[] = "s.visibility = 'public'";

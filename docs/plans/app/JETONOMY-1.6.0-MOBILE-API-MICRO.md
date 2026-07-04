@@ -1,6 +1,6 @@
 # Jetonomy 1.6.0 — Mobile API, Micro File-by-File Build Plan
 
-**Status:** Planned (2026-06-27)
+**Status:** SHIPPED in 1.6.0 - verified 2026-07-04. All sections (app-config, feed, push/register-device, prepare_space viewer context) present in code.
 **Parent contract:** [`JETONOMY-1.6.0-MOBILE-API.md`](./JETONOMY-1.6.0-MOBILE-API.md)
 **Consumer:** [`vapvarun/jetonomy-app`](https://github.com/vapvarun/jetonomy-app) (React Native / Expo)
 **Branches:** free `jetonomy@1.6.0-dev` · pro `jetonomy-pro@1.6.0-dev`

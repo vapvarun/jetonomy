@@ -1010,11 +1010,19 @@ class Notifier {
 		 * Filter the headers before sending. Integrators can append
 		 * additional headers (tracking, tagging) here.
 		 *
-		 * @param string[]  $headers Headers array ready for wp_mail.
-		 * @param string    $type    Notification type.
-		 * @param \WP_User  $user    Recipient.
+		 * The object context (type + id) is passed so integrations that build
+		 * per-notification headers can identify the target — e.g. the Pro
+		 * Reply-by-Email extension needs the post id to mint a Reply-To token.
+		 * For 'reply_to_post' the object is the post ('post', post_id); for
+		 * 'reply_to_reply' it is the reply ('reply', reply_id).
+		 *
+		 * @param string[]  $headers     Headers array ready for wp_mail.
+		 * @param string    $type        Notification type.
+		 * @param \WP_User  $user        Recipient.
+		 * @param string    $object_type Target object type ('post'|'reply'|'space'|'user'|'').
+		 * @param int       $object_id   Target object ID (0 when none).
 		 */
-		$headers = (array) apply_filters( 'jetonomy_email_headers', $headers, $type, $user );
+		$headers = (array) apply_filters( 'jetonomy_email_headers', $headers, $type, $user, $object_type, $object_id );
 
 		$email_adapter->send( $user->user_email, $subject, $html, $plain, $headers );
 	}

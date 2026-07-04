@@ -31,17 +31,54 @@ if ( ! $space ) {
 	return;
 }
 
+// Visibility gate: the roadmap of a private/hidden ideas space is members-only.
+// Mirror the main space view and the REST layer, which both require read access
+// before exposing a gated space's ideas. Runs BEFORE the query below so a
+// non-member never reads idea titles/content of a space they cannot access.
+if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
+	status_header( 403 );
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'    => 'lock',
+			'message' => __( 'You need to be a member of this space to see its roadmap.', 'jetonomy' ),
+			'tone'    => 'forbidden',
+		]
+	);
+	return;
+}
+
 global $wpdb;
 $posts_tbl = \Jetonomy\table( 'posts' );
+
+// Private ideas (is_private = 1) surface only to privileged viewers (admins /
+// space moderators) and their own author — mirror the predicate
+// Post::list_by_space_visible() uses so the roadmap never leaks private ideas,
+// even on a public space.
+$jt_viewer_id = get_current_user_id();
+$jt_is_priv   = $jt_viewer_id
+	&& ( current_user_can( 'manage_options' )
+		|| \Jetonomy\Permissions\Permission_Engine::is_space_privileged( $jt_viewer_id, (int) $space->id ) );
+
+$jt_private_sql    = '';
+$jt_private_params = array( (int) $space->id );
+if ( ! $jt_is_priv ) {
+	if ( $jt_viewer_id > 0 ) {
+		$jt_private_sql      = ' AND (is_private = 0 OR author_id = %d)';
+		$jt_private_params[] = $jt_viewer_id;
+	} else {
+		$jt_private_sql = ' AND is_private = 0';
+	}
+}
 
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $all_ideas = $wpdb->get_results(
 	$wpdb->prepare(
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		"SELECT * FROM {$posts_tbl}
-		 WHERE space_id = %d AND status = 'publish'
+		 WHERE space_id = %d AND status = 'publish'{$jt_private_sql}
 		 ORDER BY vote_score DESC, created_at DESC",
-		(int) $space->id
+		...$jt_private_params
 	)
 ) ?: [];
 

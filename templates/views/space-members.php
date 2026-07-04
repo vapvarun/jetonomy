@@ -24,6 +24,23 @@ if ( ! $space ) {
 	return;
 }
 
+// Visibility gate: the member roster of a private/hidden space is members-only.
+// Mirror the main space view and the REST members endpoint, which both require
+// read access before exposing any of a gated space's data. Runs BEFORE the
+// roster queries so a non-member never triggers them.
+if ( ! \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
+	status_header( 403 );
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		[
+			'icon'    => 'lock',
+			'message' => __( 'You need to be a member of this space to see its members.', 'jetonomy' ),
+			'tone'    => 'forbidden',
+		]
+	);
+	return;
+}
+
 // Pagination. 25/page is readable on desktop, fits mobile, keeps the
 // COUNT(*) query trivial against the new space_role_joined index.
 $jt_members_per_page = (int) apply_filters( 'jetonomy_space_members_per_page', 25 );

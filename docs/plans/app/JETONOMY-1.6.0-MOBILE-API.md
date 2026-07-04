@@ -1,6 +1,6 @@
 # Jetonomy 1.6.0 — Mobile API (lean)
 
-**Status:** Planned (2026-06-27)
+**Status:** SHIPPED in 1.6.0 (free b46c84f / pro 5ca3e99) - verified 2026-07-04. Endpoints /app/config, /feed, /push/register-device and viewer-context enrichment all present in code.
 **Consumers:** [`vapvarun/jetonomy-app`](https://github.com/vapvarun/jetonomy-app) (React Native / Expo)
 
 **Guiding principle:** Jetonomy is a WordPress plugin — **use WP core for everything core

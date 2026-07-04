@@ -240,13 +240,24 @@ class Schema_Markup {
 			return null;
 		}
 
+		// Private/hidden spaces emit NO schema. Head output is crawler-facing
+		// (Googlebot is an anonymous visitor), so emitting CollectionPage here
+		// would expose a gated space's title, description, and post titles/URLs
+		// to any guest — the same leak the sitemap providers already avoid.
+		// Fail closed: only public spaces get structured data.
+		if ( 'public' !== ( $space->visibility ?? 'public' ) ) {
+			return null;
+		}
+
 		$base      = \Jetonomy\base_url();
 		$space_url = $base . '/s/' . $space->slug . '/';
 
 		// Top 10 recent posts in this space — gives the schema a real
 		// mainEntity ItemList rather than an empty container. Stays well
-		// inside the extreme-scale rule because of the LIMIT 10.
-		$posts        = \Jetonomy\Models\Post::list_by_space( (int) $space->id, 'latest', 10 );
+		// inside the extreme-scale rule because of the LIMIT 10. Uses the
+		// guest/non-privileged visibility path so per-post private ideas
+		// (is_private = 1) never surface in the public schema either.
+		$posts        = \Jetonomy\Models\Post::list_by_space_visible( (int) $space->id, 0, false, 'latest', 10 );
 		$item_entries = array();
 		foreach ( $posts as $i => $post ) {
 			$item_entries[] = array(
@@ -440,13 +451,18 @@ class Schema_Markup {
 		if ( 'post' === $route && $space_slug && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
-			if ( $space ) {
+			// Gate each crumb on what THIS viewer may see. Head output is
+			// crawler-facing (Googlebot is a guest), so an ungated post/space
+			// title here leaks a private/hidden space's name and a private
+			// topic's title into BreadcrumbList JSON-LD even though the HTML
+			// view 403s. Mirror the get_post_schema() read gate.
+			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
 					'url'  => $base . 's/' . $space_slug . '/',
 				];
 			}
-			if ( $post ) {
+			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 				$items[] = [
 					'name' => $post->title,
 					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',
