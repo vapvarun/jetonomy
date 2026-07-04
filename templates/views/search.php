@@ -76,10 +76,10 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 		if ( $date_from || $date_to || $author_id || '' !== $author_name || $tag_slug || 'relevance' !== $sort ) {
 			// Use direct filtered query when advanced filters are active.
 			global $wpdb;
-			$posts_tbl = \Jetonomy\table( 'posts' );
+			$posts_tbl  = \Jetonomy\table( 'posts' );
 			$spaces_tbl = \Jetonomy\table( 'spaces' );
-			$where     = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
-			$params    = [ $q ];
+			$where      = [ 'MATCH(p.title, p.content_plain) AGAINST(%s IN BOOLEAN MODE)', "p.status = 'publish'" ];
+			$params     = [ $q ];
 
 			if ( $date_from ) {
 				$where[]  = 'p.created_at >= %s';

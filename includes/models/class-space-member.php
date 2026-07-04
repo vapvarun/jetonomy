@@ -43,6 +43,7 @@ class SpaceMember extends Model {
 		 * @param int    $space_id Space ID.
 		 * @param string $role     Role being assigned.
 		 */
+		/** @var \WP_Error|true $proceed A veto filter may return WP_Error to abort. */
 		$proceed = apply_filters( 'jetonomy_before_join_space', true, $user_id, $space_id, $role );
 		if ( is_wp_error( $proceed ) ) {
 			return $proceed;
@@ -170,6 +171,7 @@ class SpaceMember extends Model {
 		 * @param int    $space_id Space ID.
 		 * @param string $role     Target role.
 		 */
+		/** @var \WP_Error|true $proceed A veto filter may return WP_Error to abort. */
 		$proceed = apply_filters( 'jetonomy_before_set_role', true, $user_id, $space_id, $role );
 		if ( is_wp_error( $proceed ) ) {
 			return $proceed;

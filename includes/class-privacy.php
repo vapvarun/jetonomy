@@ -120,42 +120,83 @@ class Privacy {
 	}
 
 	public function export_bookmarks( string $email, int $page = 1 ): array {
-		return $this->export_table( $email, $page, 'jetonomy-bookmarks', __( 'Jetonomy Bookmarks', 'jetonomy' ), 'bookmarks', 'user_id', [
-			'post_id'    => __( 'Post ID', 'jetonomy' ),
-			'created_at' => __( 'Bookmarked At', 'jetonomy' ),
-		], 'post_id' );
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-bookmarks',
+			__( 'Jetonomy Bookmarks', 'jetonomy' ),
+			'bookmarks',
+			'user_id',
+			[
+				'post_id'    => __( 'Post ID', 'jetonomy' ),
+				'created_at' => __( 'Bookmarked At', 'jetonomy' ),
+			],
+			'post_id'
+		);
 	}
 
 	public function export_votes( string $email, int $page = 1 ): array {
-		return $this->export_table( $email, $page, 'jetonomy-votes', __( 'Jetonomy Votes', 'jetonomy' ), 'votes', 'user_id', [
-			'object_id'  => __( 'On (object ID)', 'jetonomy' ),
-			'value'      => __( 'Vote', 'jetonomy' ),
-			'created_at' => __( 'Voted At', 'jetonomy' ),
-		] );
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-votes',
+			__( 'Jetonomy Votes', 'jetonomy' ),
+			'votes',
+			'user_id',
+			[
+				'object_id'  => __( 'On (object ID)', 'jetonomy' ),
+				'value'      => __( 'Vote', 'jetonomy' ),
+				'created_at' => __( 'Voted At', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function export_subscriptions( string $email, int $page = 1 ): array {
-		return $this->export_table( $email, $page, 'jetonomy-subscriptions', __( 'Jetonomy Subscriptions', 'jetonomy' ), 'subscriptions', 'user_id', [
-			'object_id'  => __( 'Subscribed To (object ID)', 'jetonomy' ),
-			'created_at' => __( 'Since', 'jetonomy' ),
-		] );
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-subscriptions',
+			__( 'Jetonomy Subscriptions', 'jetonomy' ),
+			'subscriptions',
+			'user_id',
+			[
+				'object_id'  => __( 'Subscribed To (object ID)', 'jetonomy' ),
+				'created_at' => __( 'Since', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function export_notifications( string $email, int $page = 1 ): array {
-		return $this->export_table( $email, $page, 'jetonomy-notifications', __( 'Jetonomy Notifications', 'jetonomy' ), 'notifications', 'user_id', [
-			'type'       => __( 'Type', 'jetonomy' ),
-			'message'    => __( 'Message', 'jetonomy' ),
-			'created_at' => __( 'Received', 'jetonomy' ),
-		] );
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-notifications',
+			__( 'Jetonomy Notifications', 'jetonomy' ),
+			'notifications',
+			'user_id',
+			[
+				'type'       => __( 'Type', 'jetonomy' ),
+				'message'    => __( 'Message', 'jetonomy' ),
+				'created_at' => __( 'Received', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function export_activity( string $email, int $page = 1 ): array {
-		return $this->export_table( $email, $page, 'jetonomy-activity', __( 'Jetonomy Activity Log', 'jetonomy' ), 'activity_log', 'user_id', [
-			'action'      => __( 'Action', 'jetonomy' ),
-			'object_type' => __( 'Object Type', 'jetonomy' ),
-			'object_id'   => __( 'Object ID', 'jetonomy' ),
-			'created_at'  => __( 'At', 'jetonomy' ),
-		] );
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-activity',
+			__( 'Jetonomy Activity Log', 'jetonomy' ),
+			'activity_log',
+			'user_id',
+			[
+				'action'      => __( 'Action', 'jetonomy' ),
+				'object_type' => __( 'Object Type', 'jetonomy' ),
+				'object_id'   => __( 'Object ID', 'jetonomy' ),
+				'created_at'  => __( 'At', 'jetonomy' ),
+			]
+		);
 	}
 
 	public function register_erasers( array $erasers ): array {
@@ -456,9 +497,12 @@ class Privacy {
 	private function collect_member_spaces( int $user_id ): array {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return array_map( 'intval', (array) $wpdb->get_col(
-			$wpdb->prepare( 'SELECT space_id FROM ' . table( 'space_members' ) . ' WHERE user_id = %d', $user_id )
-		) );
+		return array_map(
+			'intval',
+			(array) $wpdb->get_col(
+				$wpdb->prepare( 'SELECT space_id FROM ' . table( 'space_members' ) . ' WHERE user_id = %d', $user_id )
+			)
+		);
 	}
 
 	/**

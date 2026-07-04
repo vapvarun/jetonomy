@@ -543,7 +543,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tr>
 						<th scope="row"><label for="verification_reminder_hours"><?php esc_html_e( 'Email Verification Reminder', 'jetonomy' ); ?></label></th>
 						<td>
-							<input type="number" id="verification_reminder_hours" name="jetonomy_settings[verification_reminder_hours]" min="0" max="168" value="<?php echo esc_attr( (int) ( $settings['verification_reminder_hours'] ?? 24 ) ); ?>" class="small-text">
+							<input type="number" id="verification_reminder_hours" name="jetonomy_settings[verification_reminder_hours]" min="0" max="168" value="<?php echo esc_attr( (string) (int) ( $settings['verification_reminder_hours'] ?? 24 ) ); ?>" class="small-text">
 							<?php esc_html_e( 'hours', 'jetonomy' ); ?>
 							<p class="description"><?php esc_html_e( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if a member has not verified. Set to 0 to disable.', 'jetonomy' ); ?></p>
 						</td>

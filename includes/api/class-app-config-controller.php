@@ -56,26 +56,26 @@ class App_Config_Controller extends Base_Controller {
 		}
 
 		$data = array(
-			'app_name'          => $app_name,
-				'space_label'       => array(
-					// Configurable "Space" noun (Settings -> General) so the app
-					// renders the same label as web, not a hardcoded "Space".
-					'singular' => \Jetonomy\space_label(),
-					'plural'   => \Jetonomy\space_label( true ),
-				),
-			'accent_color'      => $branding['accent_color'],
-			'logo_url'          => $branding['logo_url'],
-			'login_bg_url'      => $branding['login_bg_url'],
-				// Dark mode follows the device/OS theme in the app — phantom dark_mode_default removed (no admin producer).
-			'pro_active'        => $pro_active,
+			'app_name'     => $app_name,
+			'space_label'  => array(
+				// Configurable "Space" noun (Settings -> General) so the app
+				// renders the same label as web, not a hardcoded "Space".
+				'singular' => \Jetonomy\space_label(),
+				'plural'   => \Jetonomy\space_label( true ),
+			),
+			'accent_color' => $branding['accent_color'],
+			'logo_url'     => $branding['logo_url'],
+			'login_bg_url' => $branding['login_bg_url'],
+			// Dark mode follows the device/OS theme in the app — phantom dark_mode_default removed (no admin producer).
+			'pro_active'   => $pro_active,
 			// Pro-only gate. The Jetonomy mobile app is a Pro benefit, so this
 			// defaults to false here in free. Jetonomy Pro flips it true via the
 			// `jetonomy_app_config` filter below, and only when the site holds a
 			// valid Pro license. When false, the app shows a "requires Jetonomy
 			// Pro" screen and refuses to sign in, so the app never runs against a
 			// free-only (or unlicensed) install. Fail closed.
-			'app_enabled'       => false,
-			'features'          => $this->feature_flags(),
+			'app_enabled'  => false,
+			'features'     => $this->feature_flags(),
 		);
 
 		/**

@@ -202,13 +202,13 @@ class Sitemap_Emitter {
 
 		if ( 'spaces' === $type ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$ids     = $wpdb->get_col( "SELECT id FROM {$sp} WHERE visibility = 'public' AND status = 'active' ORDER BY id ASC" );
+			$ids = $wpdb->get_col( "SELECT id FROM {$sp} WHERE visibility = 'public' AND status = 'active' ORDER BY id ASC" );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(last_activity_at,'1970-01-01'), COALESCE(updated_at,'1970-01-01'))) FROM {$sp} WHERE visibility = 'public' AND status = 'active'" );
 		} else {
 			$pt = table( 'posts' );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$ids     = $wpdb->get_col( "SELECT p.id FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active' ORDER BY p.id ASC" );
+			$ids = $wpdb->get_col( "SELECT p.id FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active' ORDER BY p.id ASC" );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$lastmod = (string) $wpdb->get_var( "SELECT MAX(GREATEST(COALESCE(p.last_reply_at,'1970-01-01'), COALESCE(p.updated_at,'1970-01-01'), COALESCE(p.created_at,'1970-01-01'))) FROM {$pt} p INNER JOIN {$sp} s ON p.space_id = s.id WHERE p.status = 'publish' AND p.is_private = 0 AND s.visibility = 'public' AND s.status = 'active'" );
 		}

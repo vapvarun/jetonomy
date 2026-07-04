@@ -1026,10 +1026,10 @@ class Notifier {
 	 * them (create_and_maybe_email / Mentions::notify do) to avoid a re-read.
 	 * Callers that only need the master kill-switch may omit $type.
 	 *
-	 * @param int         $user_id         Recipient.
-	 * @param string      $type            Notification type (empty = kill-switch check only).
-	 * @param array|null  $user_prefs      Pre-loaded per-user notifications map.
-	 * @param array|null  $global_defaults Pre-loaded admin notification_defaults map.
+	 * @param int        $user_id         Recipient.
+	 * @param string     $type            Notification type (empty = kill-switch check only).
+	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
 	 * @return bool
 	 */
 	public static function should_email( int $user_id, string $type = '', ?array $user_prefs = null, ?array $global_defaults = null ): bool {
