@@ -482,6 +482,11 @@ class Admin {
 			$clean['email_logo_url']    = esc_url_raw( $input['email_logo_url'] ?? '' );
 			$clean['email_footer_text'] = sanitize_text_field( $input['email_footer_text'] ?? '' );
 
+			// Verification-reminder cadence (hours). 0 = disabled; clamp to a
+			// week so a typo can't schedule an absurd delay. Consumed by the
+			// verification-reminder cron (Verification_Reminder).
+			$clean['verification_reminder_hours'] = min( 168, max( 0, absint( $input['verification_reminder_hours'] ?? 24 ) ) );
+
 			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
 			$notif_types = array(
 				'reply_to_post',

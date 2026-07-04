@@ -60,7 +60,7 @@ class App_Config_Controller extends Base_Controller {
 			'accent_color'      => $branding['accent_color'],
 			'logo_url'          => $branding['logo_url'],
 			'login_bg_url'      => $branding['login_bg_url'],
-			'dark_mode_default' => (bool) ( $settings['dark_mode_default'] ?? false ),
+				// Dark mode follows the device/OS theme in the app — phantom dark_mode_default removed (no admin producer).
 			'pro_active'        => $pro_active,
 			// Pro-only gate. The Jetonomy mobile app is a Pro benefit, so this
 			// defaults to false here in free. Jetonomy Pro flips it true via the
