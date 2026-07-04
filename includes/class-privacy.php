@@ -30,7 +30,132 @@ class Privacy {
 			'exporter_friendly_name' => __( 'Jetonomy Replies', 'jetonomy' ),
 			'callback'               => [ $this, 'export_replies' ],
 		];
+		// Personal data that is erased but was previously not exported (GDPR
+		// export completeness). All paginated via the shared export_table() helper.
+		$exporters['jetonomy-bookmarks']     = [
+			'exporter_friendly_name' => __( 'Jetonomy Bookmarks', 'jetonomy' ),
+			'callback'               => [ $this, 'export_bookmarks' ],
+		];
+		$exporters['jetonomy-votes']         = [
+			'exporter_friendly_name' => __( 'Jetonomy Votes', 'jetonomy' ),
+			'callback'               => [ $this, 'export_votes' ],
+		];
+		$exporters['jetonomy-subscriptions'] = [
+			'exporter_friendly_name' => __( 'Jetonomy Subscriptions', 'jetonomy' ),
+			'callback'               => [ $this, 'export_subscriptions' ],
+		];
+		$exporters['jetonomy-notifications'] = [
+			'exporter_friendly_name' => __( 'Jetonomy Notifications', 'jetonomy' ),
+			'callback'               => [ $this, 'export_notifications' ],
+		];
+		$exporters['jetonomy-activity']      = [
+			'exporter_friendly_name' => __( 'Jetonomy Activity Log', 'jetonomy' ),
+			'callback'               => [ $this, 'export_activity' ],
+		];
 		return $exporters;
+	}
+
+	/**
+	 * Shared paginated exporter. WP re-invokes with an incrementing $page until
+	 * done=true, so a heavy user exports in bounded chunks (no giant query).
+	 *
+	 * @param string                $email     Subject email.
+	 * @param int                   $page      1-based page.
+	 * @param string                $group_id  WP exporter group id.
+	 * @param string                $label     Group label.
+	 * @param string                $table_key Model table key.
+	 * @param string                $user_col  User-id column on the table.
+	 * @param array<string, string> $fields    column => human label.
+	 * @return array{data: array, done: bool}
+	 */
+	private function export_table( string $email, int $page, string $group_id, string $label, string $table_key, string $user_col, array $fields, string $key_col = 'id' ): array {
+		$user = get_user_by( 'email', $email );
+		if ( ! $user ) {
+			return [
+				'data' => [],
+				'done' => true,
+			];
+		}
+
+		global $wpdb;
+		$limit    = 100;
+		$offset   = ( max( 1, $page ) - 1 ) * $limit;
+		$key_col  = sanitize_key( $key_col );
+		$user_col = sanitize_key( $user_col );
+		// $key_col drives pagination + the item id ('id' for most tables; some
+		// like jt_bookmarks have a composite PK and no single id column).
+		$cols = implode( ', ', array_unique( array_map( 'sanitize_key', array_merge( [ $key_col ], array_keys( $fields ) ) ) ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT ' . $cols . ' FROM ' . table( $table_key ) . ' WHERE ' . $user_col . ' = %d ORDER BY ' . $key_col . ' ASC LIMIT %d OFFSET %d',
+				$user->ID,
+				$limit,
+				$offset
+			)
+		);
+
+		$data = [];
+		foreach ( (array) $rows as $row ) {
+			$items = [];
+			foreach ( $fields as $col => $lbl ) {
+				$items[] = [
+					'name'  => $lbl,
+					'value' => (string) ( $row->$col ?? '' ),
+				];
+			}
+			$data[] = [
+				'group_id'    => $group_id,
+				'group_label' => $label,
+				'item_id'     => $group_id . '-' . (string) ( $row->$key_col ?? '' ),
+				'data'        => $items,
+			];
+		}
+
+		return [
+			'data' => $data,
+			'done' => count( $rows ) < $limit,
+		];
+	}
+
+	public function export_bookmarks( string $email, int $page = 1 ): array {
+		return $this->export_table( $email, $page, 'jetonomy-bookmarks', __( 'Jetonomy Bookmarks', 'jetonomy' ), 'bookmarks', 'user_id', [
+			'post_id'    => __( 'Post ID', 'jetonomy' ),
+			'created_at' => __( 'Bookmarked At', 'jetonomy' ),
+		], 'post_id' );
+	}
+
+	public function export_votes( string $email, int $page = 1 ): array {
+		return $this->export_table( $email, $page, 'jetonomy-votes', __( 'Jetonomy Votes', 'jetonomy' ), 'votes', 'user_id', [
+			'object_id'  => __( 'On (object ID)', 'jetonomy' ),
+			'value'      => __( 'Vote', 'jetonomy' ),
+			'created_at' => __( 'Voted At', 'jetonomy' ),
+		] );
+	}
+
+	public function export_subscriptions( string $email, int $page = 1 ): array {
+		return $this->export_table( $email, $page, 'jetonomy-subscriptions', __( 'Jetonomy Subscriptions', 'jetonomy' ), 'subscriptions', 'user_id', [
+			'object_id'  => __( 'Subscribed To (object ID)', 'jetonomy' ),
+			'created_at' => __( 'Since', 'jetonomy' ),
+		] );
+	}
+
+	public function export_notifications( string $email, int $page = 1 ): array {
+		return $this->export_table( $email, $page, 'jetonomy-notifications', __( 'Jetonomy Notifications', 'jetonomy' ), 'notifications', 'user_id', [
+			'type'       => __( 'Type', 'jetonomy' ),
+			'message'    => __( 'Message', 'jetonomy' ),
+			'created_at' => __( 'Received', 'jetonomy' ),
+		] );
+	}
+
+	public function export_activity( string $email, int $page = 1 ): array {
+		return $this->export_table( $email, $page, 'jetonomy-activity', __( 'Jetonomy Activity Log', 'jetonomy' ), 'activity_log', 'user_id', [
+			'action'      => __( 'Action', 'jetonomy' ),
+			'object_type' => __( 'Object Type', 'jetonomy' ),
+			'object_id'   => __( 'Object ID', 'jetonomy' ),
+			'created_at'  => __( 'At', 'jetonomy' ),
+		] );
 	}
 
 	public function register_erasers( array $erasers ): array {
