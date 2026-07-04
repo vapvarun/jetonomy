@@ -143,7 +143,8 @@ class Schema {
   UNIQUE KEY slug (slug),
   KEY category_sort (category_id,sort_order),
   KEY parent_sort (parent_id,sort_order),
-  KEY visibility_sort (visibility,sort_order)
+  KEY visibility_sort (visibility,sort_order),
+  KEY sitemap_vis_status_id (visibility,status,id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 3. jt_posts
@@ -181,6 +182,7 @@ class Schema {
   KEY space_votes (space_id,vote_score),
   KEY author_created (author_id,created_at),
   KEY status_created (status,created_at),
+  KEY sitemap_status_id (status,id),
   FULLTEXT KEY ft_title_content (title,content_plain)
 ) ENGINE=InnoDB $charset_collate;";
 
