@@ -488,6 +488,59 @@ class Post extends Model {
 	}
 
 	/**
+	 * List posts in the given moderation statuses, newest first, paginated.
+	 *
+	 * Shared by the REST moderation queue and the wp-admin Moderation screen so
+	 * both read one implementation instead of duplicating raw SQL. Served by the
+	 * status_created (status, created_at) index.
+	 *
+	 * @param string[] $statuses One or more of publish|pending|draft|spam|trash.
+	 * @param int      $limit    Max rows.
+	 * @param int      $offset   Pagination offset.
+	 * @return object[]
+	 */
+	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0 ): array {
+		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
+		if ( empty( $statuses ) ) {
+			return array();
+		}
+		$table        = static::table();
+		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+		$params       = array_merge( $statuses, array( $limit, $offset ) );
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				...$params
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
+	 *
+	 * @param string[] $statuses
+	 * @return int
+	 */
+	public static function count_by_status( array $statuses ): int {
+		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
+		if ( empty( $statuses ) ) {
+			return 0;
+		}
+		$table        = static::table();
+		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
+				"SELECT COUNT(*) FROM {$table} WHERE status IN ({$placeholders})",
+				...$statuses
+			)
+		);
+	}
+
+	/**
 	 * Adjust reply_count and update last_reply_at and updated_at.
 	 *
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent

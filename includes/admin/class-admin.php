@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\JoinRequest;
@@ -1102,9 +1103,12 @@ class Admin {
 		$paged_flags   = max( 1, absint( $_GET['paged_flags'] ?? 1 ) );
 		$paged_banned  = max( 1, absint( $_GET['paged_banned'] ?? 1 ) );
 
-		// Real totals for tab badge counts.
-		$total_posts   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'pending'" );
-		$total_replies = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'pending'" );
+		// Real totals for tab badge counts. Posts/replies reuse the shared
+		// count-by-status model methods (same COUNT(*) the REST queue uses);
+		// the paginated list queries below keep their display JOINs (space/post
+		// title) and stay here since the API path doesn't need those columns.
+		$total_posts   = Post::count_by_status( array( 'pending' ) );
+		$total_replies = Reply::count_by_status( array( 'pending' ) );
 		$total_flags   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" );
 		$total_banned  = (int) $wpdb->get_var(
 			$wpdb->prepare(

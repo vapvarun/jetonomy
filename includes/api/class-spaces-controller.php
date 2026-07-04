@@ -100,6 +100,7 @@ class Spaces_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_members' ],
 					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+					'args'                => $this->get_collection_params(),
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
@@ -688,10 +689,26 @@ class Spaces_Controller extends Base_Controller {
 			}
 		}
 
-		$members = SpaceMember::list_by_space( $id );
-		$items   = array_map( [ $this, 'prepare_member' ], $members );
+		// Paginate: a large space can have tens of thousands of members, so
+		// never load the whole roster. Mirror the space-listing endpoint —
+		// COUNT(*) for the real total, then a bounded LIMIT/OFFSET slice.
+		// Both are served by the space_members space_role_joined index.
+		$pagination = $this->get_pagination( $request );
+		$total      = SpaceMember::count_by_space( $id );
+		$members    = SpaceMember::list_by_space( $id, $pagination['limit'], $pagination['offset'] );
+		$items      = array_map( [ $this, 'prepare_member' ], $members );
 
-		return $this->paginated_response( $items, [ 'total' => count( $items ) ] );
+		$response = $this->paginated_response(
+			$items,
+			[
+				'total'  => $total,
+				'offset' => $pagination['offset'],
+			]
+		);
+
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / max( 1, $pagination['limit'] ) ) );
+
+		return $response;
 	}
 
 	/**

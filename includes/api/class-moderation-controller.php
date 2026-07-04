@@ -14,6 +14,8 @@ use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Flag;
+use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Moderation\Moderation_Service;
 use Jetonomy\Models\Restriction;
 use Jetonomy\Models\UserProfile;
@@ -258,58 +260,59 @@ class Moderation_Controller extends Base_Controller {
 	 * GET /moderation/queue — Fetch pending posts, replies, and flag count.
 	 */
 	public function get_queue( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		global $wpdb;
-
-		$posts_table   = table( 'posts' );
-		$replies_table = table( 'replies' );
-
 		$status_filter = (string) $request->get_param( 'status' );
 		$type_filter   = (string) $request->get_param( 'type' );
 
-		$status_clause = 'all' === $status_filter
-			? "status IN ('pending','spam')"
-			: $wpdb->prepare( 'status = %s', $status_filter );
+		// Map the status filter to the set of moderation statuses. Data access
+		// goes through the Post/Reply models (shared with the wp-admin queue) —
+		// no raw SQL here — and is paginated so a 100k-item queue never loads
+		// the whole set into memory. Served by the status_created index.
+		$statuses = 'all' === $status_filter || '' === $status_filter
+			? array( 'pending', 'spam' )
+			: array( $status_filter );
 
-		$posts = array();
-		if ( '' === $type_filter || 'post' === $type_filter ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$posts = $wpdb->get_results(
-				"SELECT *, 'post' AS object_type FROM {$posts_table} WHERE {$status_clause} ORDER BY created_at DESC"
-			) ?: array();
+		$pagination = $this->get_pagination( $request );
+		$want_posts = '' === $type_filter || 'post' === $type_filter;
+		$want_reply = '' === $type_filter || 'reply' === $type_filter;
+
+		$post_total  = $want_posts ? Post::count_by_status( $statuses ) : 0;
+		$reply_total = $want_reply ? Reply::count_by_status( $statuses ) : 0;
+		$total       = $post_total + $reply_total;
+
+		// Fetch a bounded window from each table, tag the object type, merge and
+		// sort by created_at DESC, then trim to the page size. Over-fetching each
+		// side by (offset + limit) is what lets a single interleaved page be
+		// assembled correctly; both slices are still index-served and bounded.
+		$window = $pagination['offset'] + $pagination['limit'];
+
+		$posts = $want_posts ? Post::list_by_status( $statuses, $window, 0 ) : array();
+		foreach ( $posts as $row ) {
+			$row->object_type = 'post';
+		}
+		$replies = $want_reply ? Reply::list_by_status( $statuses, $window, 0 ) : array();
+		foreach ( $replies as $row ) {
+			$row->object_type = 'reply';
 		}
 
-		$replies = array();
-		if ( '' === $type_filter || 'reply' === $type_filter ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$replies = $wpdb->get_results(
-				"SELECT *, 'reply' AS object_type FROM {$replies_table} WHERE {$status_clause} ORDER BY created_at DESC"
-			) ?: array();
-		}
-
-		// Merge and sort by created_at DESC.
 		$merged = array_merge( $posts, $replies );
 		usort(
 			$merged,
-			function ( $a, $b ) {
-				return strcmp( $b->created_at, $a->created_at );
+			static function ( $a, $b ) {
+				return strcmp( (string) $b->created_at, (string) $a->created_at );
 			}
 		);
+		$page = array_slice( $merged, $pagination['offset'], $pagination['limit'] );
 
-		$pending_flags_count = Flag::count_pending();
-
-		return new WP_REST_Response(
+		$response = $this->paginated_response(
+			$page,
 			array(
-				'data'                => $merged,
-				'pending_flags_count' => $pending_flags_count,
-				'meta'                => array(
-					'count'    => count( $merged ),
-					'status'   => $status_filter,
-					'type'     => $type_filter !== '' ? $type_filter : null,
-					'has_more' => false,
-				),
-			),
-			200
+				'total'  => $total,
+				'offset' => $pagination['offset'],
+			)
 		);
+		$response->header( 'X-Jetonomy-Pending-Flags', (string) Flag::count_pending() );
+
+		return $response;
 	}
 
 	/**

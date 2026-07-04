@@ -180,6 +180,7 @@ class Schema {
   KEY space_private_reply (space_id,is_private,last_reply_at),
   KEY space_votes (space_id,vote_score),
   KEY author_created (author_id,created_at),
+  KEY status_created (status,created_at),
   FULLTEXT KEY ft_title_content (title,content_plain)
 ) ENGINE=InnoDB $charset_collate;";
 
@@ -201,6 +202,7 @@ class Schema {
   KEY post_created (post_id,created_at),
   KEY post_votes (post_id,vote_score),
   KEY author_created (author_id,created_at),
+  KEY status_created (status,created_at),
   FULLTEXT KEY ft_content (content_plain)
 ) ENGINE=InnoDB $charset_collate;";
 
@@ -213,7 +215,8 @@ class Schema {
   value tinyint(4) NOT NULL DEFAULT 0,
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (id),
-  UNIQUE KEY user_object (user_id,object_type,object_id)
+  UNIQUE KEY user_object (user_id,object_type,object_id),
+  KEY object_created (object_type,object_id,created_at)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 6. jt_user_profiles
@@ -234,7 +237,8 @@ class Schema {
   updated_at datetime DEFAULT NULL,
   verification_reminder_sent_at datetime DEFAULT NULL,
   PRIMARY KEY  (user_id),
-  KEY trust_reputation (trust_level,reputation)
+  KEY trust_reputation (trust_level,reputation),
+  KEY trust_user (trust_level,user_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		// 7. jt_notifications
