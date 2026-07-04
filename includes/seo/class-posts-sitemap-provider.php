@@ -26,7 +26,7 @@ class Posts_Sitemap_Provider extends WP_Sitemaps_Provider {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT p.slug AS post_slug, s.slug AS space_slug, p.last_reply_at, p.updated_at, p.created_at
+				"SELECT p.slug AS post_slug, s.slug AS space_slug, s.id AS space_id, p.last_reply_at, p.updated_at, p.created_at
              FROM {$pt} p
              INNER JOIN {$st} s ON p.space_id = s.id
              WHERE p.status = 'publish' AND s.visibility = 'public' AND s.status = 'active'
@@ -40,6 +40,11 @@ class Posts_Sitemap_Provider extends WP_Sitemaps_Provider {
 		$base = \Jetonomy\base_url() . '/s/';
 
 		foreach ( $posts as $post ) {
+			// Drop posts whose parent space is excluded (same filter the spaces
+			// provider uses; seo-pro's per-space "Exclude from Sitemap" setting).
+			if ( apply_filters( 'jetonomy_sitemap_exclude_space', false, (int) $post->space_id ) ) {
+				continue;
+			}
 			$urls[] = [
 				'loc'     => $base . $post->space_slug . '/t/' . $post->post_slug . '/',
 				'lastmod' => $post->last_reply_at ?: $post->updated_at ?: $post->created_at,

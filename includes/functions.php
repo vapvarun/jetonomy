@@ -333,3 +333,36 @@ function footer_text( string $default = '' ): string {
 	 */
 	return (string) apply_filters( 'jetonomy_footer_text', $default );
 }
+
+/**
+ * jetonomy_settings option merged with SEO defaults (single source of truth).
+ *
+ * The admin SEO checkboxes render "Default: On" via `?? true`, but the
+ * consumers used `empty($settings['seo_x'])` which treats an absent key as OFF
+ * — so a fresh install had the sitemap/noindex features silently disabled
+ * despite the UI. Routing BOTH the render and the consumers through this
+ * defaults union makes them agree, and it applies to existing installs on the
+ * next page load (an activation seed would never re-fire on a plugin update).
+ *
+ * Uses the `+` union (stored values win, only absent keys fall to defaults) so
+ * an admin's explicit `false`/`0` is preserved.
+ *
+ * @return array
+ */
+function seo_settings(): array {
+	$defaults = array(
+		'seo_schema'           => true,
+		'seo_sitemap'          => true,
+		'seo_noindex_profiles' => true,
+		'seo_noindex_search'   => true,
+		'seo_post_title'       => '{post_title} - {space_name} | {site_name}',
+		'seo_space_title'      => '{space_name} | {site_name}',
+		'seo_twitter_handle'   => '',
+		'seo_default_og_image' => '',
+	);
+	$stored = get_option( 'jetonomy_settings', array() );
+	if ( ! is_array( $stored ) ) {
+		$stored = array();
+	}
+	return $stored + $defaults;
+}

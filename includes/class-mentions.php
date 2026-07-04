@@ -106,19 +106,13 @@ class Mentions {
 
 			do_action( 'jetonomy_notification_created', $notification_id, $uid, 'mention', $object_type, $object_id, $message, $content_url );
 
-			// Check user email preference for mentions.
+			// Check email preference via the shared gate (master kill-switch +
+			// per-user per-type + admin default). $user_prefs already loaded.
 			$profile    = Models\UserProfile::find_by_user( $uid );
 			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
 			$user_prefs = $settings['notifications'] ?? [];
 
-			if ( isset( $user_prefs['mention']['email'] ) ) {
-				$send_email = ! empty( $user_prefs['mention']['email'] );
-			} else {
-				$global     = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
-				$send_email = ! empty( $global['mention']['email'] );
-			}
-
-			if ( $send_email ) {
+			if ( \Jetonomy\Notifications\Notifier::should_email( $uid, 'mention', $user_prefs ) ) {
 				$email_adapter = Adapters\Adapter_Registry::get_email();
 				if ( $email_adapter ) {
 					$user = get_userdata( $uid );

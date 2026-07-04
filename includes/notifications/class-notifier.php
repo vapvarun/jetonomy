@@ -911,16 +911,54 @@ class Notifier {
 			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
 		}
 
-		// Check email preference.
-		if ( isset( $user_prefs[ $type ]['email'] ) ) {
-			$send_email = ! empty( $user_prefs[ $type ]['email'] );
-		} else {
-			$send_email = ! empty( $global_defaults[ $type ]['email'] );
-		}
-
-		if ( $send_email ) {
+		// Check email preference via the shared gate (profile + defaults already
+		// loaded above, so no extra query beyond the one opt-out meta read).
+		if ( self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
+	}
+
+	/**
+	 * Should this user receive an EMAIL for this notification type?
+	 *
+	 * The single source of truth for the email decision, combining the three
+	 * preference layers in order — checked once per recipient (O(1)):
+	 *   1. master kill-switch  (jetonomy_email_opt_out user meta)
+	 *   2. per-user per-type    (UserProfile.settings['notifications'][type]['email'])
+	 *   3. admin default        (jetonomy_settings['notification_defaults'][type]['email'])
+	 *
+	 * $user_prefs / $global_defaults may be passed when the caller already loaded
+	 * them (create_and_maybe_email / Mentions::notify do) to avoid a re-read.
+	 * Callers that only need the master kill-switch may omit $type.
+	 *
+	 * @param int         $user_id         Recipient.
+	 * @param string      $type            Notification type (empty = kill-switch check only).
+	 * @param array|null  $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null  $global_defaults Pre-loaded admin notification_defaults map.
+	 * @return bool
+	 */
+	public static function should_email( int $user_id, string $type = '', ?array $user_prefs = null, ?array $global_defaults = null ): bool {
+		// Master kill-switch — suppresses ALL email (web notifications unaffected).
+		if ( get_user_meta( $user_id, 'jetonomy_email_opt_out', true ) ) {
+			return false;
+		}
+		if ( '' === $type ) {
+			return true; // Kill-switch-only check passed.
+		}
+
+		if ( null === $user_prefs ) {
+			$profile    = UserProfile::find_by_user( $user_id );
+			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+			$user_prefs = is_array( $settings ) ? ( $settings['notifications'] ?? [] ) : [];
+		}
+		if ( isset( $user_prefs[ $type ]['email'] ) ) {
+			return ! empty( $user_prefs[ $type ]['email'] );
+		}
+
+		if ( null === $global_defaults ) {
+			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		}
+		return ! empty( $global_defaults[ $type ]['email'] );
 	}
 
 	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {

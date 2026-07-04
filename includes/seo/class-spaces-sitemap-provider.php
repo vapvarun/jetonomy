@@ -25,7 +25,7 @@ class Spaces_Sitemap_Provider extends WP_Sitemaps_Provider {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$spaces = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT slug, last_activity_at, updated_at FROM {$t} WHERE visibility = 'public' AND status = 'active' ORDER BY id ASC LIMIT 2000 OFFSET %d",
+				"SELECT id, slug, last_activity_at, updated_at FROM {$t} WHERE visibility = 'public' AND status = 'active' ORDER BY id ASC LIMIT 2000 OFFSET %d",
 				$offset
 			)
 		);
@@ -34,6 +34,16 @@ class Spaces_Sitemap_Provider extends WP_Sitemaps_Provider {
 		$base = \Jetonomy\base_url() . '/s/';
 
 		foreach ( $spaces as $space ) {
+			/**
+			 * Allow a space to be excluded from the sitemap. Consumed by seo-pro's
+			 * per-space "Exclude from Sitemap" setting.
+			 *
+			 * @param bool $exclude  Whether to drop this space (default false).
+			 * @param int  $space_id Space ID.
+			 */
+			if ( apply_filters( 'jetonomy_sitemap_exclude_space', false, (int) $space->id ) ) {
+				continue;
+			}
 			$urls[] = [
 				'loc'     => $base . $space->slug . '/',
 				'lastmod' => $space->last_activity_at ?: $space->updated_at,

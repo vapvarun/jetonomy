@@ -16,8 +16,9 @@ class Sitemap {
 	}
 
 	public function register(): void {
-		// Respect seo_sitemap toggle.
-		$settings = get_option( 'jetonomy_settings', [] );
+		// Respect seo_sitemap toggle (defaults On, matching the admin UI — via
+		// the shared seo_settings() defaults union so render == consume).
+		$settings = \Jetonomy\seo_settings();
 		if ( empty( $settings['seo_sitemap'] ) ) {
 			return;
 		}

@@ -84,12 +84,14 @@ class Schema_Markup {
 			return;
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		// Shared defaults union so the admin checkboxes (Default: On) and these
+		// consumers agree — previously an absent seo_noindex_* / seo_sitemap key
+		// read as OFF despite the UI. See Jetonomy\seo_settings().
+		$settings = \Jetonomy\seo_settings();
 
-		// 1.4.0 D.4: schema emission defaults to ON. Pre-1.4.0 the option was
-		// opt-in, which meant a fresh install shipped with no JSON-LD on any
-		// route. Customers who want it OFF can set seo_schema=>false explicitly.
-		$seo_schema_enabled = ! array_key_exists( 'seo_schema', $settings ) || ! empty( $settings['seo_schema'] );
+		// Schema emission defaults to ON (already correct pre-defaults-helper via
+		// array_key_exists; kept for clarity). Customers set seo_schema=>false to disable.
+		$seo_schema_enabled = ! empty( $settings['seo_schema'] );
 		if ( ! $seo_schema_enabled ) {
 			return;
 		}

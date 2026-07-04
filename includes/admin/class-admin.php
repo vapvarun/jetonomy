@@ -1461,7 +1461,10 @@ class Admin {
 	}
 
 	public function render_settings(): void {
-		$settings = get_option( 'jetonomy_settings', array() );
+		// Merge SEO defaults so the checkbox render matches what the frontend
+		// consumers actually do (shared source of truth, prevents phantom
+		// "Default: On" toggles that were really off).
+		$settings = \Jetonomy\seo_settings();
 		include JETONOMY_DIR . 'includes/admin/views/settings.php';
 	}
 

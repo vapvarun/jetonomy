@@ -405,6 +405,28 @@ class Replies_Controller extends Base_Controller {
 			if ( 'block' === $moderation_action ) {
 				return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
 			}
+			// Enforce hold/spam/flag on EDIT too (only 'block' was handled before,
+			// so editing spam into a published reply bypassed moderation).
+			if ( 'hold' === $moderation_action ) {
+				$update_data['status'] = 'pending';
+			}
+			if ( 'spam' === $moderation_action ) {
+				$update_data['status'] = 'spam';
+			}
+			if ( 'flag' === $moderation_action ) {
+				$auto_flag_id = \Jetonomy\Models\Flag::create(
+					array(
+						'reporter_id' => 0,
+						'object_type' => 'reply',
+						'object_id'   => (int) $id,
+						'reason'      => 'other',
+						'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
+					)
+				);
+				if ( $auto_flag_id ) {
+					do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
+				}
+			}
 
 			// Create a revision before updating.
 			Revision::create(

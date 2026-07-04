@@ -280,8 +280,11 @@ if ( ! class_exists( 'WP_Sitemaps_Provider' ) ) {
 	class WP_Sitemaps_Provider {
 		public $name = '';
 		public $object_type = '';
-		public function get_url_list( int $p, string $s = '' ): array { return array(); }
-		public function get_max_num_pages( string $s = '' ): int { return 1; }
+		// Signatures mirror WP core (untyped, no return type) — the child
+		// providers match core, so the stub must not over-specify or PHP throws
+		// a false declaration-incompatibility fatal.
+		public function get_url_list( $page_num, $object_subtype = '' ) { return array(); }
+		public function get_max_num_pages( $object_subtype = '' ) { return 1; }
 	}
 }
 if ( ! class_exists( 'WP_Widget' ) ) {

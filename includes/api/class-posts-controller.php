@@ -742,6 +742,15 @@ class Posts_Controller extends Base_Controller {
 		if ( 'block' === $moderation_action ) {
 			return $this->validation_error( __( 'Your post was blocked by our content policy.', 'jetonomy' ) );
 		}
+		// Enforce hold/spam on EDIT too (mirrors the create path). Without this a
+		// user could publish clean then edit spam/held content in — only 'block'
+		// was handled before. 'flag' is filed after the update (need $id).
+		if ( 'hold' === $moderation_action ) {
+			$update_data['status'] = 'pending';
+		}
+		if ( 'spam' === $moderation_action ) {
+			$update_data['status'] = 'spam';
+		}
 
 		// Only stamp an "edited" audit trail when the user actually edited content.
 		// Pure backdates (published_at/created_at/last_reply_at only) shouldn't appear edited.
@@ -763,6 +772,23 @@ class Posts_Controller extends Base_Controller {
 		}
 
 		Post::update( $id, $update_data );
+
+		// Auto-flag on edit when a rule asked to flag (mirrors the create path):
+		// the edit stays published but surfaces in the moderation queue.
+		if ( 'flag' === $moderation_action ) {
+			$auto_flag_id = Flag::create(
+				array(
+					'reporter_id' => 0,
+					'object_type' => 'post',
+					'object_id'   => (int) $id,
+					'reason'      => 'other',
+					'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
+				)
+			);
+			if ( $auto_flag_id ) {
+				do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'post' );
+			}
+		}
 
 		do_action( 'jetonomy_post_updated', $id, $space_id, $user_id );
 
