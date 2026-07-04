@@ -135,6 +135,14 @@ class Notifier {
 				'subject' => __( '[{site}] Your post received a vote', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
 			),
+			'reaction'              => array(
+				'subject' => __( '[{site}] Someone reacted to your post', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+			),
+			'flag_resolved'         => array(
+				'subject' => __( '[{site}] Your report was reviewed', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nThanks for helping keep {site} healthy.", 'jetonomy' ),
+			),
 			'moderation'            => array(
 				'subject' => __( '[{site}] A moderator reviewed your content', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
@@ -295,6 +303,13 @@ class Notifier {
 
 		// Flag created — notify moderators
 		add_action( 'jetonomy_flag_created', [ $this, 'on_flag_created' ], 10, 2 );
+
+		// Report closure — tell the reporter (neutrally) their flag was reviewed.
+		add_action( 'jetonomy_after_resolve_flag', [ $this, 'on_flag_resolved' ], 10, 2 );
+
+		// First reaction on a post/reply — notify the author once (fired by Pro
+		// reactions only on the 0->1 transition, so no per-reaction spam).
+		add_action( 'jetonomy_pro_first_reaction', [ $this, 'on_first_reaction' ], 10, 3 );
 
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
@@ -694,6 +709,86 @@ class Notifier {
 				$content_url
 			);
 		}
+	}
+
+	/**
+	 * Notify a content author the FIRST time their post/reply is reacted to.
+	 *
+	 * Pro reactions fires jetonomy_pro_first_reaction only on the 0->1 reactor
+	 * transition, so the author gets a single nudge, never a ping per reaction.
+	 * Mirrors on_vote(); skips self-reactions.
+	 *
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Reacted object ID.
+	 * @param int    $reactor_id  User who reacted.
+	 */
+	public function on_first_reaction( string $object_type, int $object_id, int $reactor_id ): void {
+		$content_url = '';
+		if ( 'post' === $object_type ) {
+			$obj = Post::find( $object_id );
+			if ( ! $obj || (int) $obj->author_id === $reactor_id ) {
+				return;
+			}
+			$author_id   = (int) $obj->author_id;
+			$title       = mb_substr( $obj->title, 0, 50 );
+			$content_url = $this->get_post_url( $obj );
+		} elseif ( 'reply' === $object_type ) {
+			$obj = Reply::find( $object_id );
+			if ( ! $obj || (int) $obj->author_id === $reactor_id ) {
+				return;
+			}
+			$author_id = (int) $obj->author_id;
+			$title     = __( 'your reply', 'jetonomy' );
+			$parent    = $obj->post_id ? Post::find( (int) $obj->post_id ) : null;
+			if ( $parent ) {
+				$content_url = $this->get_post_url( $parent );
+			}
+		} else {
+			return;
+		}
+
+		$this->create_and_maybe_email(
+			$author_id,
+			$reactor_id,
+			'reaction',
+			$object_type,
+			$object_id,
+			sprintf(
+				// translators: %s: content title.
+				__( 'Someone reacted to %s', 'jetonomy' ),
+				'"' . $title . '"'
+			),
+			$content_url
+		);
+	}
+
+	/**
+	 * Notify the reporter (neutrally) when a moderator resolves their flag.
+	 *
+	 * O(1) — one recipient. Deliberately does NOT reveal the moderation outcome
+	 * (product decision); it just closes the reporter's loop. Links to the
+	 * community home so a removed target can't 404. Skips self-resolved flags and
+	 * reporter-less (system) flags.
+	 *
+	 * @param object $flag    Resolved flag row (carries reporter_id/object_*).
+	 * @param array  $context { status, user_id } — the resolving moderator.
+	 */
+	public function on_flag_resolved( $flag, array $context = array() ): void {
+		$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+		$resolver_id = (int) ( $context['user_id'] ?? 0 );
+		if ( $reporter_id < 1 || $reporter_id === $resolver_id ) {
+			return;
+		}
+
+		$this->create_and_maybe_email(
+			$reporter_id,
+			$resolver_id,
+			'flag_resolved',
+			(string) ( $flag->object_type ?? 'post' ),
+			(int) ( $flag->object_id ?? 0 ),
+			__( 'Your report was reviewed. Thanks for helping keep the community healthy.', 'jetonomy' ),
+			\Jetonomy\base_url() . '/'
+		);
 	}
 
 	/**
@@ -1174,11 +1269,13 @@ class Notifier {
 			'reply_to_reply'      => __( 'New Reply', 'jetonomy' ),
 			'mention'             => __( 'Mention', 'jetonomy' ),
 			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
+			'reaction'            => __( 'Reaction', 'jetonomy' ),
 			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
 			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
 			'new_post_in_sub'     => __( 'New Post', 'jetonomy' ),
 			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
+			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
 		];
@@ -1189,11 +1286,13 @@ class Notifier {
 			'reply_to_reply'      => __( 'View Reply', 'jetonomy' ),
 			'mention'             => __( 'View Post', 'jetonomy' ),
 			'vote_on_post'        => __( 'View Post', 'jetonomy' ),
+			'reaction'            => __( 'View Post', 'jetonomy' ),
 			'accepted_answer'     => __( 'View Answer', 'jetonomy' ),
 			'idea_status_changed' => __( 'View Idea', 'jetonomy' ),
 			'new_post_in_sub'     => __( 'View Post', 'jetonomy' ),
 			'badge_earned'        => __( 'View Your Badges', 'jetonomy' ),
 			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
+			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),
 			'join_request'        => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
 		];

@@ -349,7 +349,9 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
+			'reaction',
 			'moderation',
+			'flag_resolved',
 			'join_request',
 			// A8: editor row for the A10 reminder cron's email. Without this
 			// the form silently strips any verification_reminder override
@@ -489,7 +491,9 @@ class Admin {
 				'new_post_in_sub',
 				'badge_earned',
 				'vote_on_post',
+				'reaction',
 				'moderation',
+				'flag_resolved',
 				'join_request',
 				// Was missing, so unchecking its admin default silently reverted
 				// to the seeded true/true — the toggle looked dead.
