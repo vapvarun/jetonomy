@@ -311,6 +311,40 @@ class SpaceMember extends Model {
 	}
 
 	/**
+	 * Of the given user IDs, return the subset that are members of the space.
+	 *
+	 * One index-covered batch query (space_members PK is (space_id, user_id)),
+	 * NOT a per-user membership check — used to filter mention recipients for a
+	 * gated space without an N+1. Mirrors roles_for_users() without the role
+	 * filter.
+	 *
+	 * @param int   $space_id Space to check membership in.
+	 * @param int[] $user_ids Candidate user IDs.
+	 * @return int[] Subset of $user_ids that are members.
+	 */
+	public static function members_among( int $space_id, array $user_ids ): array {
+		$user_ids = array_values( array_unique( array_map( 'intval', $user_ids ) ) );
+		if ( $space_id <= 0 || empty( $user_ids ) ) {
+			return [];
+		}
+
+		$db           = static::db();
+		$table        = static::table();
+		$placeholders = implode( ',', array_fill( 0, count( $user_ids ), '%d' ) );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $db->get_col(
+			$db->prepare(
+				"SELECT user_id FROM {$table} WHERE space_id = %d AND user_id IN ({$placeholders})",
+				array_merge( [ $space_id ], $user_ids )
+			)
+		) ?: [];
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array_map( 'intval', $rows );
+	}
+
+	/**
 	 * Pre-populate the per-request role cache for a list of users in a
 	 * space. Call BEFORE rendering a list of posts / replies so each
 	 * partial's role_label() lookup is O(1) — without this, a 200-reply

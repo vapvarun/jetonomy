@@ -346,7 +346,7 @@ class Notifier {
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
 		if ( ! empty( $mentioned ) ) {
 			$post = \Jetonomy\Models\Post::find( $post_id );
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ) );
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
 		}
 	}
 

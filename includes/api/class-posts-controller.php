@@ -638,7 +638,7 @@ class Posts_Controller extends Base_Controller {
 		if ( 'draft' !== ( $post_data['status'] ?? 'publish' ) ) {
 			$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
 			if ( ! empty( $mentioned ) ) {
-				\Jetonomy\Mentions::notify( $mentioned, $user_id, 'post', $post_id, $title );
+				\Jetonomy\Mentions::notify( $mentioned, $user_id, 'post', $post_id, $title, (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
 			}
 		}
 

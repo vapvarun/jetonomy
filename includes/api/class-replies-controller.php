@@ -353,7 +353,7 @@ class Replies_Controller extends Base_Controller {
 		// Parse @mentions and notify.
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
 		if ( ! empty( $mentioned ) ) {
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ) );
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
 		}
 
 		$reply = Reply::find( $reply_id );

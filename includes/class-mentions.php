@@ -54,9 +54,28 @@ class Mentions {
 	/**
 	 * Notify mentioned users.
 	 */
-	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title ): void {
+	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title, ?int $space_id = null, bool $is_private = false ): void {
 		$actor      = get_userdata( $actor_id );
 		$actor_name = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
+
+		// Visibility filter: never notify a user who can't read the mentioned
+		// content. Done ONCE, set-based, before the loop — no per-recipient
+		// permission check (that would be an N+1 at scale). A public space needs
+		// no filtering (everyone can read); a private/hidden space is gated to
+		// its members; an is_private post is gated to author + space staff.
+		if ( $space_id && ! empty( $user_ids ) ) {
+			$space = Models\Space::find( $space_id );
+			if ( $space && in_array( $space->visibility, [ 'private', 'hidden' ], true ) ) {
+				$members  = Models\SpaceMember::members_among( $space_id, $user_ids );
+				$user_ids = array_values( array_intersect( $user_ids, $members ) );
+			}
+			if ( $is_private && ! empty( $user_ids ) ) {
+				// is_private post: only the author + space admins/moderators.
+				$staff   = array_keys( Models\SpaceMember::roles_for_users( $space_id, $user_ids ) );
+				$allowed = array_merge( $staff, [ $actor_id ] ); // actor filtered out below anyway.
+				$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
+			}
+		}
 
 		foreach ( $user_ids as $uid ) {
 			if ( $uid === $actor_id ) {
