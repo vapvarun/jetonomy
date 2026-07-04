@@ -11,6 +11,34 @@
  * @package Jetonomy
  */
 
+/* ── Token definitions ──
+ * jetonomy.css (which defines the --jt-* tokens on :root) is NOT enqueued on
+ * BuddyPress pages — only this file is. So define the tokens this integration
+ * uses here, scoped to its own containers, inheriting from the active theme's
+ * brand tokens (BuddyX / Reign / BuddyNext / Astra / Kadence / Blocksy /
+ * GeneratePress) with a hex fallback. Mirrors the chain in jetonomy.css so the
+ * BP surfaces adopt the theme's colors instead of the raw fallbacks. */
+.jt-bp-forum,
+.jt-bp-profile,
+.jt-bp-forum-settings,
+.jt-bp-back-banner {
+	--jt-accent: var(--bx-color-accent, var(--reign-colors-theme, var(--brand, var(--wp--preset--color--primary, var(--ast-global-color-0, var(--global-palette1, var(--theme-palette-color-1, var(--wp--preset--color--accent, #3B82F6))))))));
+	--jt-accent-hover: #2563EB;
+	--jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
+	--jt-text: var(--bx-color-fg, var(--text-1, var(--wp--preset--color--contrast, #1a1a1a)));
+	--jt-text-secondary: #4B5563;
+	--jt-text-secondary: color-mix(in srgb, var(--jt-text) 70%, transparent);
+	--jt-text-tertiary: #6B7280;
+	--jt-text-tertiary: color-mix(in srgb, var(--jt-text) 65%, transparent);
+	--jt-bg: var(--bx-color-bg-elevated, var(--bg, var(--wp--preset--color--base, #ffffff)));
+	--jt-bg-subtle: #F9FAFB;
+	--jt-bg-subtle: color-mix(in srgb, var(--jt-text) 3%, var(--jt-bg));
+	--jt-bg-muted: #F3F4F6;
+	--jt-bg-muted: color-mix(in srgb, var(--jt-text) 6%, var(--jt-bg));
+	--jt-border: rgba(0, 0, 0, 0.1);
+	--jt-border: var(--bx-color-border, color-mix(in srgb, var(--jt-text) 10%, transparent));
+}
+
 /* ── Group Forum Tab ── */
 .jt-bp-forum { padding: 0; }
 
