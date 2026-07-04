@@ -336,48 +336,99 @@ class Privacy {
 			];
 		}
 
-		global $wpdb;
-		$uid     = $user->ID;
-		$removed = 0;
+		$uid       = $user->ID;
+		$batch     = max( 1, (int) apply_filters( 'jetonomy_erase_batch_size', 1000 ) );
+		$state_key = 'jetonomy_erase_' . $uid;
+		$work      = 0; // Rows touched (anonymized or deleted) this page.
+		$removed   = 0;
 
-		// Anonymize authored content (don't delete — preserve community threads,
-		// and keep denormalized counters correct since the rows still exist).
-		$removed += (int) $wpdb->update( table( 'posts' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
-		$removed += (int) $wpdb->update( table( 'replies' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
-		$removed += (int) $wpdb->update( table( 'revisions' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
-		$removed += (int) $wpdb->update( table( 'spaces' ), [ 'author_id' => 0 ], [ 'author_id' => $uid ] );
+		// Page 1: capture the recompute targets BEFORE any vote / membership row
+		// is deleted, and stash them for the final page (the deletes below drain
+		// those tables over several pages, so "capture then recompute" can no
+		// longer happen in a single call).
+		if ( 1 === $page ) {
+			set_transient(
+				$state_key,
+				[
+					'votes'  => $this->collect_vote_objects( $uid ),
+					'spaces' => $this->collect_member_spaces( $uid ),
+				],
+				HOUR_IN_SECONDS
+			);
+		}
 
-		// Capture what the vote / membership deletes will affect BEFORE deleting,
-		// so we can recompute the denormalized counters on those rows afterwards.
-		$vote_objects  = $this->collect_vote_objects( $uid );
-		$member_spaces = $this->collect_member_spaces( $uid );
+		// Anonymize authored content (kept — preserves community threads and the
+		// denormalized counters since the rows still exist), bounded per table.
+		foreach ( [ 'posts', 'replies', 'revisions', 'spaces' ] as $authored ) {
+			$work += $this->batch_anonymize_author( $authored, $uid, $batch );
+		}
 
-		// Delete personal data
-		$wpdb->delete( table( 'user_profiles' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'notifications' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'subscriptions' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'read_status' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'space_members' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'votes' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'activity_log' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'restrictions' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'flags' ), [ 'reporter_id' => $uid ] );
-		$wpdb->delete( table( 'join_requests' ), [ 'user_id' => $uid ] );
-		$wpdb->delete( table( 'bookmarks' ), [ 'user_id' => $uid ] );
+		// Delete personal data, bounded per table.
+		$purge = [
+			[ 'user_profiles', 'user_id' ],
+			[ 'notifications', 'user_id' ],
+			[ 'subscriptions', 'user_id' ],
+			[ 'read_status', 'user_id' ],
+			[ 'space_members', 'user_id' ],
+			[ 'votes', 'user_id' ],
+			[ 'activity_log', 'user_id' ],
+			[ 'restrictions', 'user_id' ],
+			[ 'flags', 'reporter_id' ],
+			[ 'join_requests', 'user_id' ],
+			[ 'bookmarks', 'user_id' ],
+		];
+		foreach ( $purge as [ $table_key, $user_col ] ) {
+			$n        = $this->batch_delete( $table_key, $user_col, $uid, $batch );
+			$work    += $n;
+			$removed += $n;
+		}
 
-		// Recompute the denormalized counters the raw deletes bypassed, so the
-		// affected posts'/replies' vote_score and the spaces' member_count don't
-		// over-count after the erase. Bounded to only the touched ids.
-		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );
-
-		$removed += 11; // Tables cleaned
+		// Drained once a full pass touched nothing. Recompute the denormalized
+		// counters exactly once, on that final page, from the page-1 capture.
+		$done = ( 0 === $work );
+		if ( $done ) {
+			$state = get_transient( $state_key );
+			if ( is_array( $state ) ) {
+				$this->recompute_counters_after_purge(
+					(array) ( $state['votes'] ?? [] ),
+					(array) ( $state['spaces'] ?? [] )
+				);
+			}
+			delete_transient( $state_key );
+		}
 
 		return [
 			'items_removed'  => $removed,
 			'items_retained' => 0,
-			'messages'       => [ __( 'Jetonomy: Posts and replies anonymized. Personal data deleted.', 'jetonomy' ) ],
-			'done'           => true,
+			'messages'       => $done ? [ __( 'Jetonomy: Posts and replies anonymized. Personal data deleted.', 'jetonomy' ) ] : [],
+			'done'           => $done,
 		];
+	}
+
+	/** Anonymize up to $limit authored rows in one table; returns rows affected. */
+	private function batch_anonymize_author( string $table_key, int $uid, int $limit ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . table( $table_key ) . ' SET author_id = 0 WHERE author_id = %d LIMIT %d',
+				$uid,
+				$limit
+			)
+		);
+	}
+
+	/** Delete up to $limit of a user's rows from one table; returns rows deleted. */
+	private function batch_delete( string $table_key, string $user_col, int $uid, int $limit ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				'DELETE FROM ' . table( $table_key ) . " WHERE {$user_col} = %d LIMIT %d",
+				$uid,
+				$limit
+			)
+		);
 	}
 
 	/** Distinct (object_type, object_id) rows a user voted on. */
