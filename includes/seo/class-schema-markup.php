@@ -442,7 +442,11 @@ class Schema_Markup {
 
 		if ( 'space' === $route && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
-			if ( $space ) {
+			// Gate on read access — the space-route breadcrumb was ungated, so a
+			// guest on a private/hidden space URL got its title in BreadcrumbList
+			// JSON-LD (the post-route branch below was already gated; this one was
+			// missed). Same read check.
+			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
 					'url'  => $base . 's/' . $slug . '/',
