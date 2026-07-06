@@ -1,271 +1,281 @@
 {
-    "generated": "2026-06-11T05:47:38+00:00",
-    "suppressions": [
-        {
-            "id": "user_meta-read-never-written:jetonomy_email_opt_out",
-            "reason": "REAL gap, tracked: Basecamp card 9985243886 - the verification reminder honors an opt-out nothing can set. Fix = wire into edit-profile notification prefs + unsubscribe link.",
-            "severity": "error"
-        },
-        {
-            "id": "user_meta-written-never-read:_jetonomy_verified_at",
-            "reason": "Audit-trail timestamp written on email verification (class-auth-controller.php:538) - intentionally write-only; kept for support/forensics.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-read-never-written:jetonomy_setup_admin_id",
-            "reason": "Operator escape hatch: CLI scenarios read it to pin the acting admin, falling back to the first administrator (class-cli.php:292). Intentionally write-less; setting it via wp option update is the documented override.",
-            "severity": "error"
-        },
-        {
-            "id": "option-read-never-written:jetonomy_bp_broadcast",
-            "reason": "REAL gap, tracked: Basecamp card 9985243976 - BP broadcast toggle has no settings UI; operators flip via wp option update. Read defaults ON with safe fallback.",
-            "severity": "error"
-        },
-        {
-            "id": "option-read-never-written:jetonomy_bp_comment_bridge",
-            "reason": "REAL gap, tracked: Basecamp card 9985243976 - same card as jetonomy_bp_broadcast (BP integration settings checkboxes).",
-            "severity": "error"
-        },
-        {
-            "id": "option-read-never-written:jetonomy_pro_digest_settings",
-            "reason": "False positive: written via class constant OPTION_SETTINGS - add_option at email-digest/class-extension.php:95-97 and update_option at :2020.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-written-never-read:jetonomy_qa_pages",
-            "reason": "Dev seeding tooling (bin/seed-qa-pages.php) - fixture ledger, never read by shipped code by design.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-written-never-read:jetonomy_qa_fixtures",
-            "reason": "Dev seeding tooling (bin/seed-qa-users.php) - written as a fixture ledger for manual cleanup, never read by shipped code by design.",
-            "severity": "warning"
-        },
-        {
-            "id": "option-written-never-read:jetonomy_clean_uninstall",
-            "reason": "Stale defensive delete_option in uninstall.php for a key no version ever wrote; harmless, remove on next uninstall.php touch.",
-            "severity": "warning"
-        },
-        {
-            "id": "hook-consumed-never-fired:jetonomy_pro_badges_eval_user",
-            "reason": "Fired at runtime via Queue::async(self::ASYNC_EVAL_USER) (custom-badges/class-extension.php:171) - class-constant dispatch is invisible to the static scan.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:jetonomy_pro_rbe_imap_poll",
-            "reason": "Fired at runtime via Queue::recurring(self::CRON_HOOK, 5min) (reply-by-email/class-extension.php:70) - class-constant dispatch.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:jetonomy_pro_dispatch_webhook",
-            "reason": "Fired at runtime via Queue::async(self::ASYNC_HOOK) (webhooks/class-extension.php:175) - class-constant dispatch. The web-push:66 attribution is the scanner resolving the same-named constant across classes; web-push ASYNC_HOOK is jetonomy_pro_send_push.",
-            "severity": "error"
-        },
-        {
-            "id": "hook-consumed-never-fired:jetonomy_pro_send_expo_push",
-            "reason": "Fired at runtime via Queue::async(self::ASYNC_HOOK_EXPO) in on_notification_created (web-push/class-extension.php:518) - Action Scheduler async dispatch via class constant, invisible to the static scan. Same pattern as the browser jetonomy_pro_send_push hook. New native-push transport in 1.6.0.",
-            "severity": "error"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_create_category",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_update_category",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_delete_category",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_reorder_categories",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_update_post",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_delete_post",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_update_reply",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_delete_reply",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_bulk_content_action",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_import_batch",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_approve_content",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_spam_content",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_trash_content",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_resolve_flag",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_test_email",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_flush_rules",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_email_preview",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_email_reset",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_setup_save",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_setup_create_sample",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_create_space",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_update_space",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_delete_space",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_add_space_member",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_remove_space_member",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_change_member_role",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_add_access_rule",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_delete_access_rule",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_sync_access_rule",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_approve_join_request",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_deny_join_request",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_create_tag",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_update_tag",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_delete_tag",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_bulk_delete_tags",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_ban_user",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_unban_user",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_change_trust_level",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_search_users",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        },
-        {
-            "id": "ajax-handler-unreferenced:jetonomy_pro_digest_preview",
-            "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
-            "severity": "warning"
-        }
-    ],
-    "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI)."
+  "generated": "2026-06-11T05:47:38+00:00",
+  "suppressions": [
+    {
+      "id": "user_meta-read-never-written:jetonomy_email_opt_out",
+      "reason": "REAL gap, tracked: Basecamp card 9985243886 - the verification reminder honors an opt-out nothing can set. Fix = wire into edit-profile notification prefs + unsubscribe link.",
+      "severity": "error"
+    },
+    {
+      "id": "user_meta-written-never-read:_jetonomy_verified_at",
+      "reason": "Audit-trail timestamp written on email verification (class-auth-controller.php:538) - intentionally write-only; kept for support/forensics.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-read-never-written:jetonomy_setup_admin_id",
+      "reason": "Operator escape hatch: CLI scenarios read it to pin the acting admin, falling back to the first administrator (class-cli.php:292). Intentionally write-less; setting it via wp option update is the documented override.",
+      "severity": "error"
+    },
+    {
+      "id": "option-read-never-written:jetonomy_bp_broadcast",
+      "reason": "REAL gap, tracked: Basecamp card 9985243976 - BP broadcast toggle has no settings UI; operators flip via wp option update. Read defaults ON with safe fallback.",
+      "severity": "error"
+    },
+    {
+      "id": "option-read-never-written:jetonomy_bp_comment_bridge",
+      "reason": "REAL gap, tracked: Basecamp card 9985243976 - same card as jetonomy_bp_broadcast (BP integration settings checkboxes).",
+      "severity": "error"
+    },
+    {
+      "id": "option-read-never-written:jetonomy_pro_digest_settings",
+      "reason": "False positive: written via class constant OPTION_SETTINGS - add_option at email-digest/class-extension.php:95-97 and update_option at :2020.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-written-never-read:jetonomy_qa_pages",
+      "reason": "Dev seeding tooling (bin/seed-qa-pages.php) - fixture ledger, never read by shipped code by design.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-written-never-read:jetonomy_qa_fixtures",
+      "reason": "Dev seeding tooling (bin/seed-qa-users.php) - written as a fixture ledger for manual cleanup, never read by shipped code by design.",
+      "severity": "warning"
+    },
+    {
+      "id": "option-written-never-read:jetonomy_clean_uninstall",
+      "reason": "Stale defensive delete_option in uninstall.php for a key no version ever wrote; harmless, remove on next uninstall.php touch.",
+      "severity": "warning"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_pro_badges_eval_user",
+      "reason": "Fired at runtime via Queue::async(self::ASYNC_EVAL_USER) (custom-badges/class-extension.php:171) - class-constant dispatch is invisible to the static scan.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_pro_rbe_imap_poll",
+      "reason": "Fired at runtime via Queue::recurring(self::CRON_HOOK, 5min) (reply-by-email/class-extension.php:70) - class-constant dispatch.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_pro_dispatch_webhook",
+      "reason": "Fired at runtime via Queue::async(self::ASYNC_HOOK) (webhooks/class-extension.php:175) - class-constant dispatch. The web-push:66 attribution is the scanner resolving the same-named constant across classes; web-push ASYNC_HOOK is jetonomy_pro_send_push.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_pro_send_expo_push",
+      "reason": "Fired at runtime via Queue::async(self::ASYNC_HOOK_EXPO) in on_notification_created (web-push/class-extension.php:518) - Action Scheduler async dispatch via class constant, invisible to the static scan. Same pattern as the browser jetonomy_pro_send_push hook. New native-push transport in 1.6.0.",
+      "severity": "error"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_create_category",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_update_category",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_delete_category",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_reorder_categories",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_update_post",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_delete_post",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_update_reply",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_delete_reply",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_bulk_content_action",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_import_batch",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_approve_content",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_spam_content",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_trash_content",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_resolve_flag",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_test_email",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_flush_rules",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_email_preview",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_email_reset",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_setup_save",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_setup_create_sample",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_create_space",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_update_space",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_delete_space",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_add_space_member",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_remove_space_member",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_change_member_role",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_add_access_rule",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_delete_access_rule",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_sync_access_rule",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_approve_join_request",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_deny_join_request",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_create_tag",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_update_tag",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_delete_tag",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_bulk_delete_tags",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_ban_user",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_unban_user",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_change_trust_level",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_search_users",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_pro_digest_preview",
+      "reason": "False positive class: admin JS routes every action through the self.ajax(action, data) helper (assets/js/admin.js etc.); the scanner only matches action:-style literals. Verified 40/40 actions have a JS reference (2026-06-11 triage).",
+      "severity": "warning"
+    },
+    {
+      "id": "ajax-action-no-handler:jetonomy_space_member_role_changed",
+      "reason": "False positive. 'jetonomy_space_member_role_changed' is a do_action extension hook fired at includes/models/class-space-member.php:202 (do_action($hook,$space_id,$user_id,$role,$old_role)), NOT an admin-ajax action. No wp_ajax_ handler is required; the scanner's ajax heuristic matched a do_action hook name.",
+      "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_pro_prune_webhook_deliveries",
+      "reason": "False positive. Pro webhook-delivery prune job: bound at includes/extensions/webhooks/class-extension.php:89 (add_action(self::PRUNE_HOOK,...)) and scheduled daily at :90 (Queue::recurring(self::PRUNE_HOOK, DAY_IN_SECONDS)). Fired by the Queue/cron scheduler; scanner cannot resolve the const at the schedule site.",
+      "severity": "error"
+    }
+  ],
+  "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI)."
 }
