@@ -279,6 +279,8 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 ## Pro
 
+Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro extensions. For the complete per-feature breakdown - every action and filter each extension fires, with signatures and defaults - see the **Pro Hooks** reference in the Jetonomy Pro developer guide (`developer-guide/02-pro-hooks.md`).
+
 | Hook | What it does | Args | Source |
 |---|---|---|---|
 | `jetonomy_pro_ai_all_providers_failed`<br>_action_ ·_Pro_ | - | `$feature, $exception` | `includes/extensions/ai/class-spam-detector.php` |

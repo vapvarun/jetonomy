@@ -83,6 +83,16 @@ const data = await res.json();
 // data.meta → { total, pages, page }
 ```
 
+**Viewer-relative fields (added in 1.6.0)**
+
+Every space object - in both the list and the single-space response - carries three fields that describe the calling user's relationship to the space. They are null-safe for logged-out callers (`is_member` and `is_subscribed` return `false`, `viewer_role` returns `null`).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `is_member` | boolean | Whether the current user is a member of this space |
+| `viewer_role` | string \| null | The space role the current user holds (for example `moderator` or `member`), or `null` when they are not a member |
+| `is_subscribed` | boolean | Whether the current user is subscribed to this space for new-content notifications |
+
 ---
 
 ## Posts
@@ -150,6 +160,15 @@ await fetch( `/wp-json/jetonomy/v1/spaces/${spaceId}/posts`, {
 | `url` | string | Yes | URL to fetch OG data for |
 
 Response: `{ title, description, image, domain }`
+
+**Viewer-relative fields (added in 1.6.0)**
+
+Every post object - in the space listing, the global feed, and the single-post response - carries two fields that describe the calling user's relationship to the post. They are null-safe for logged-out callers.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `is_bookmarked` | boolean | Whether the current user has bookmarked this post (`false` when logged out) |
+| `viewer_vote` | integer | The current user's vote on this post: `1` (up), `-1` (down), or `0` (no vote / logged out) |
 
 ---
 
@@ -627,11 +646,14 @@ const data = await res.json();
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/custom-fields` | Logged in | List all custom field definitions |
-| POST | `/custom-fields` | Admin (`manage_options`) | Create a custom field definition |
-| PATCH | `/custom-fields/{id}` | Admin (`manage_options`) | Update a custom field definition |
-| DELETE | `/custom-fields/{id}` | Admin (`manage_options`) | Delete a custom field definition |
-| POST | `/custom-field-values` | Logged in | Set a custom field value on a post, reply, or user profile |
+| GET | `/fields` | Public | List all custom field definitions |
+| POST | `/fields` | Admin (`manage_options`) | Create a custom field definition |
+| PATCH | `/fields/{id}` | Admin (`manage_options`) | Update a custom field definition |
+| DELETE | `/fields/{id}` | Admin (`manage_options`) | Delete a custom field definition |
+| GET | `/posts/{id}/fields` | Public | Get a post's custom field values |
+| PATCH | `/posts/{id}/fields` | Logged in (author / moderator) | Set custom field values on a post |
+| GET | `/users/{id}/fields` | Public | Get a user's custom field values |
+| PATCH | `/users/me/fields` | Logged in | Set the current user's custom field values |
 
 ### Email Digest (`email-digest` extension)
 
@@ -659,15 +681,11 @@ const data = await res.json();
 
 ### AI (`ai` extension)
 
-All AI endpoints require the `manage_options` capability.
-
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/ai/providers` | Admin | List configured AI providers and their status |
-| POST | `/ai/suggestions` | Admin | Generate AI-powered content suggestions |
-| POST | `/ai/spam-detection` | Admin | Run AI spam detection on a piece of content |
-| GET | `/ai/usage` | Admin | Get per-request AI usage statistics |
-| GET | `/ai/usage/summary` | Admin | Get monthly usage summary grouped by provider |
+| GET | `/ai/usage` | Admin (`manage_options`) | Get per-request AI usage statistics |
+| GET | `/ai/usage/summary` | Admin (`manage_options`) | Get monthly usage summary grouped by provider |
+| POST | `/ai/suggest-reply` | Logged in | Generate an AI-suggested reply for a Q&A post |
 
 ### Web Push (`web-push` extension)
 
@@ -689,7 +707,7 @@ All AI endpoints require the `manage_options` capability.
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| POST | `/reply-by-email/process` | Shared secret (webhook) | Inbound webhook endpoint for processing email replies - authenticated via a shared secret header, not a user session |
+| POST | `/reply-by-email/inbound` | Signature (webhook) | Inbound webhook endpoint for processing email replies - validated by a signature inside the callback, not a user session |
 
 ### Advanced Moderation (`advanced-moderation` extension)
 
@@ -711,9 +729,7 @@ All advanced moderation endpoints require the `manage_options` capability.
 
 ### Community Announcements (`site-announcements` extension)
 
-> **Namespace:** these routes live under `jetonomy-pro/v1`, not `jetonomy/v1`.
-
-All routes require the `manage_options` or `jetonomy_manage_spaces` capability (administrators by default).
+The management routes live under `jetonomy-pro/v1` and require the `manage_options` or `jetonomy_manage_spaces` capability (administrators by default).
 
 | Method | Route | Description |
 |--------|-------|-------------|
@@ -730,6 +746,23 @@ await fetch( '/wp-json/jetonomy-pro/v1/site-announcements/395', {
 ```
 
 This is distinct from the free space-level pin (`POST /posts/{id}/pin`), which only stickies a topic within its own space.
+
+**GET `/announcements/active`** *(added in 1.6.0)*
+
+> **Namespace:** unlike the management routes above, this endpoint lives under `jetonomy/v1`.
+
+A member-readable list of the currently active announcements, used by the mobile app's announcement banner. The read is public-aware: logged-out callers on a public community see the same site-wide pins the listing inject shows. Each item returns `id`, `title`, `space_id`, `url` (deep link to the post), and `created_at`.
+
+```json
+{
+  "data": [
+    { "id": 395, "title": "Scheduled maintenance Sunday", "space_id": 12, "url": "https://example.com/community/s/news/t/maintenance/", "created_at": "2026-07-01 09:00:00" }
+  ],
+  "meta": { "total": 1 }
+}
+```
+
+For the full Pro endpoint reference (methods, params, and permission callbacks per extension), see the [Pro Endpoints](#pro-endpoints) section above, or the dedicated **Pro REST API** and **Pro Hooks** references in the Jetonomy Pro developer guide.
 
 ---
 
