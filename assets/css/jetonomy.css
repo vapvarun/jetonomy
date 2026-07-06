@@ -227,9 +227,23 @@
      surrounding theme. Without this override the .jt-app token redefinitions
      above propagate into the block via inheritance and the form goes near-
      black on near-black. Re-declaring the relevant tokens here re-establishes
-     light values inside the block scope only. */
+     light values inside the block scope only.
+
+     Specificity: the login block IS a .jt-app, and a host-theme colour-adoption
+     rule sets `.jt-dark .jt-app { --jt-bg: <theme dark> }` at 0,2,0 AFTER this
+     file, so a plain `.jt-dark .jt-login-block` (also 0,2,0) lost the tie and
+     the form stayed dark. Adding the block's own `.jt-app` class lifts the
+     winning selectors to 0,3,0. The bare `.jt-dark .jt-login-block` selectors
+     are kept for the shortcode variant that renders without `.jt-app`.
+
+     The block paints its surface from the parallel --jtb-* token layer (see
+     blocks.css), NOT --jt-*, so those must be pinned here too — pinning --jt-*
+     alone leaves the visible background dark. --jtb-bg-soft/-hover derive from
+     --jtb-bg/--jtb-text via color-mix, so re-light automatically. */
   .jt-dark .jt-login-block,
-  .jt-app.jt-dark .jt-login-block {
+  .jt-dark .jt-app.jt-login-block,
+  [data-theme="dark"] .jt-login-block,
+  [data-theme="dark"] .jt-app.jt-login-block {
     --jt-text: #1a1a1a;
     --jt-text-secondary: color-mix(in srgb, #1a1a1a 70%, transparent);
     --jt-text-tertiary: color-mix(in srgb, #1a1a1a 65%, transparent);
@@ -244,6 +258,9 @@
     --jt-danger-light: #fee2e2;
     --jt-accent-light: color-mix(in srgb, var(--jt-accent) 10%, white);
     --jt-accent-muted: color-mix(in srgb, var(--jt-accent) 15%, white);
+    --jtb-bg: #ffffff;
+    --jtb-text: #1a1a1a;
+    --jtb-border: color-mix(in srgb, #1a1a1a 12%, transparent);
   }
 
   /* ── Font size scaling (A / A+ / A++) ─────────────────────────────────────

@@ -276,6 +276,7 @@ Mobile and headless API release: new endpoints and per-viewer fields so a native
 * Fix      - Logged-out "Log in to vote" and "Log in to reply" links now return to the topic being viewed after login, instead of the site's front page.
 * Fix      - Opening the new-post page for a space you have not joined now shows a Join prompt, instead of a composer that only rejects the post with a permission error after you have written it.
 * Fix      - The moderation queue's pending-flag counter now updates the moment a flag is resolved, instead of showing the old count until the page is reloaded.
+* Fix      - The sidebar login form now stays light in dark mode, as intended, instead of rendering as a dark card on themes (such as BuddyX) whose dark toggle the form's colour override was not catching.
 * Dev      - Corrected manifest drift on the reply routes and the /users/suggest permission to match the shipped code.
 * Compat   - Aligned with Jetonomy Pro 1.6.0. Install both updates together.
 
