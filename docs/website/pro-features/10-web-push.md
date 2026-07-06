@@ -35,6 +35,10 @@ The service worker handles:
 - Displaying the browser notification
 - Opening the correct URL when the notification is clicked
 
+> **Note:** Every push payload is encrypted per [RFC 8291](https://datatracker.ietf.org/doc/html/rfc8291) (aes128gcm content encoding) before it leaves your server, so browsers and push services accept it and its contents are never readable in transit.
+
+Looking for push on a native iOS or Android app instead of the browser? The same extension registers app devices for native push - see [Native push setup](../mobile-app/04-native-push-setup.md).
+
 ## Member Subscription
 
 The first time a logged-in member visits any community page after you enable Web Push, a **Enable push notifications** prompt appears at the top of the page. Clicking **Enable** triggers the browser's native permission dialog.

@@ -91,9 +91,11 @@ This means you can configure a sensible default globally and only override the s
 
 ## Access Rules for Membership-Gated Spaces
 
-For Private and Hidden spaces, you can restrict access based on external membership status - not just whether someone has joined the space.
+Access rules restrict a space based on external membership status - not just whether someone has joined the space. They apply to Private and Hidden spaces, where non-members are already blocked from the content and the rule decides who among them gets in.
 
 Go to the **Access Rules** tab on the space edit screen to add rules.
+
+> **Adding a restrictive rule to a Public space converts it to Private automatically.** A Public space is readable by everyone, so a membership, role, capability, or trust-level rule attached to it would silently do nothing - the content stays open. To stop that "configured but still accessible" trap, Jetonomy switches the space to Private the moment you save such a rule, so the rule can actually gate access. The admin screen tells you it happened. If you did not intend to make the space Private, remove the rule and the space stays Public.
 
 Each rule has three parts:
 
@@ -106,7 +108,7 @@ Each rule has three parts:
 | WordPress Role | User has a specific WP role (e.g. Editor) |
 | Capability | User has a specific WP capability |
 | Trust Level | User's Jetonomy trust level (0 - 5) |
-| Membership | User has an active membership. The specific provider - MemberPress or Paid Memberships Pro in free, plus WooCommerce Memberships, Restrict Content Pro, and LearnDash in Pro - is chosen within the rule via the matching membership adapter |
+| Membership | User has an active membership. The specific provider - MemberPress or Paid Memberships Pro in free, plus WooCommerce Memberships, Restrict Content Pro, LearnDash, and [Learnomy](../integrations/14-learnomy.md) (course or membership plan) in Pro - is chosen within the rule via the matching membership adapter |
 
 **Access Grant** - What to allow:
 
@@ -120,7 +122,7 @@ Each rule has three parts:
 
 Multiple rules can be stacked. Jetonomy grants the highest matching permission level.
 
-> **Note:** MemberPress and Paid Memberships Pro adapters are available in Jetonomy free. WooCommerce Memberships, Restrict Content Pro, and LearnDash adapters require Jetonomy Pro.
+> **Note:** MemberPress and Paid Memberships Pro adapters are available in Jetonomy free. WooCommerce Memberships, Restrict Content Pro, LearnDash, and [Learnomy](../integrations/14-learnomy.md) adapters require Jetonomy Pro. The Learnomy adapter gates a space by either a Learnomy course or a Learnomy membership plan.
 
 ## Invite Links
 

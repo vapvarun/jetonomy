@@ -36,7 +36,7 @@ Six cards show current counts for the most important community metrics. Counts u
 | Pending Flags | Flags in the moderation queue that have not been resolved |
 | Posts Today | Posts created in the current calendar day (UTC) |
 
-The **Pending Flags** card turns orange when the count is greater than zero - a visual signal to visit the moderation queue.
+When the **Pending Flags** count is greater than zero, the card turns orange and shows a **Review flags →** link that takes you straight to the moderation queue - so the count is a one-click action, not just a visual signal. On the moderation queue itself, the "N pending" badge updates live as you resolve each flag, without a page reload.
 
 ## Recent Activity Feed
 

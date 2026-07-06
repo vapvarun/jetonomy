@@ -85,10 +85,16 @@
       "order": 13
     },
     {
+      "slug": "faq",
+      "name": "FAQ",
+      "description": "Quick answers to the most common questions about Jetonomy and Jetonomy Pro, grouped by topic.",
+      "order": 14
+    },
+    {
       "slug": "developer-guide",
       "name": "Developer Guide",
       "description": "Extend Jetonomy with the REST API, hooks, WP-CLI, blocks, shortcodes, and template overrides.",
-      "order": 14
+      "order": 15
     }
   ]
 }

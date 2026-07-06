@@ -75,6 +75,8 @@ Every mutation route (`POST`, `PUT`, `PATCH`, `DELETE`) **must** use `\Jetonomy\
 
 For read-only routes, use `\Jetonomy\Visibility::rest_check` (respects the Private Community setting) or `'__return_true'` for fully public data.
 
+Since 1.6.0, `REST_Auth::auth_mutation()` (and the Pro wrapper `rest_auth_mutation()`) also hard-rejects banned users (`jetonomy_user_banned`) and users still pending email verification (`jetonomy_pending_verification`) with a 403, before the capability check runs. This holds even for Application-Password sessions. Extension authors inherit this account-status protection automatically by using the standard callback - there is nothing extra to wire.
+
 > **Important for companion plugins:** `REST_Auth` is defined in the free plugin. If your plugin may be active before Jetonomy, resolve the class lazily inside the callback rather than in the registration call. Eager static calls at route-registration time can fatal the REST API if the free plugin loads later.
 
 ### Basic read endpoint

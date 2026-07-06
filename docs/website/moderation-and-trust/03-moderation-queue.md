@@ -62,6 +62,10 @@ Actions differ between the pending tabs and the Flags tab.
 
 > **Tip:** Use Spam rather than Trash when content is clearly commercial spam. This trains Akismet for your site, making future auto-detection more accurate.
 
+**Spam and Trash ask for confirmation.** Both actions remove content, so clicking either one opens a confirmation dialog before anything is deleted - individually per row and for the bulk action across selected rows. Approve does not prompt, since it only publishes. This guards against a misclick trashing a legitimate post.
+
+**The flag counter updates live.** When you resolve a flag (Valid or Dismiss), the resolved row is removed and the "N pending" flag badge decrements immediately, without a page reload. When the last flag is cleared, the badge disappears. You always see the true outstanding count without refreshing.
+
 ## Per-Space vs Global Moderation
 
 The queue shows content from all spaces by default. Use the **Space** filter dropdown at the top of the queue to narrow to a single space. This is useful when you have dedicated space moderators - a moderator for your Support space only needs to see Support space items.

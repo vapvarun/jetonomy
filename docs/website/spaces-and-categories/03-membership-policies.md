@@ -32,7 +32,9 @@ Use Public when you want maximum reach and SEO value. Most community spaces shou
 
 ### Private
 
-The space appears in listings and search results, so any visitor can discover it. Only members can read the posts and replies. Non-members see the space name and description, then a **Join** or **Request to Join** button depending on the join policy: Open spaces show "Join" for an instant-access join; Approval Required spaces show "Request to Join" for a moderated admission.
+The space itself appears in listings and search results, so any visitor can discover it. Only members can read the posts and replies. Non-members see the space name and description, then a **Join** or **Request to Join** button depending on the join policy: Open spaces show "Join" for an instant-access join; Approval Required spaces show "Request to Join" for a moderated admission.
+
+The discoverable part is the space, not its content. A post inside a private or hidden space is not leaked to non-members anywhere: it is excluded from search results, from oEmbed and link-preview cards, from tag pages, from trending and popular lists, and from the recent-posts widgets and home feed. A non-member cannot pull the post body in through any of these public surfaces - only members (and admins) see it.
 
 Private is the right choice when the community should be findable but the content should be gated. It is distinct from Hidden: a Private space is visible in the directory and search; a Hidden space is not listed anywhere.
 
@@ -67,6 +69,8 @@ Use Open for general discussion spaces, community-wide help channels, and any sp
 When a user clicks **Join**, they submit a join request. The request goes to the space moderators and admins for review.
 
 Moderators see pending requests in **Jetonomy → Moderation → Join Requests**. They can approve or decline each request. The user gets a notification when their request is reviewed.
+
+Since 1.5.0, space moderators can also handle requests from the community front-end, without opening wp-admin. On the space **Members** page (`/community/s/:slug/members/`), a "Pending join requests" panel lists each requester with **Approve** and **Deny** buttons. Approving admits the member instantly and emails the requester that they are in; denying clears the request. This is the same approve/admit path as the wp-admin tab, so a space moderator who has no wp-admin access can still run an Approval Required space end to end.
 
 Approved members can then post and reply immediately.
 

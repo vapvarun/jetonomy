@@ -26,6 +26,15 @@ Members can start a new topic in three ways:
 
 The new post form is always scoped to a specific space. If a member arrives via the generic + New button, they choose a space before the form loads. This ensures every topic lands in the right place.
 
+### If You Have Not Joined the Space (1.6.0)
+
+Jetonomy checks that you are allowed to post before it loads the composer. If you open the new post page for a space you have not joined, you see a permission prompt up front instead of a blank composer:
+
+- **Open space you can join** - a "Join [space]" prompt appears with a button that takes you back to the space to join. Once you are a member, open the new post page again and the composer loads.
+- **Restricted space you cannot join** - a permission-denied message appears with a link back to the space.
+
+This replaces the old behavior where you could write an entire post and only hit the wall when you tried to submit it. The gate runs first so you never lose a draft to a rejected submission.
+
 ## The Post Composer
 
 ### Title

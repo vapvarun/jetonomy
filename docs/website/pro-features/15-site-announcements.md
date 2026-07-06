@@ -72,6 +72,36 @@ Site Announcements registers these endpoints under `jetonomy-pro/v1`:
 
 `{id}` is the numeric post ID. Pinning and unpinning require the `manage_options` or `jetonomy_manage_spaces` capability (Administrator by default); the same capability is required to list the current pins. See the [REST API reference](../developer-guide/01-rest-api.md) for full payloads.
 
+The three routes above are the administrator management surface: they read and write the raw pin option, so they are admin-gated.
+
+### Mobile / in-app banner
+
+Mobile and in-app clients read announcements through a separate member-facing route, served under the **free** `jetonomy/v1` namespace alongside the other app read routes (not `jetonomy-pro/v1`):
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/announcements/active` | The active announcements the current member is allowed to see |
+
+It powers an in-app banner of the currently pinned announcements. The read is visibility-aware - a member only receives announcements on posts they can access. The response returns a `data` array plus a `meta.total` count:
+
+```json
+GET /wp-json/jetonomy/v1/announcements/active
+{
+  "data": [
+    {
+      "id": 128,
+      "title": "Scheduled maintenance this weekend",
+      "space_id": 4,
+      "url": "https://example.com/community/s/general/t/scheduled-maintenance/",
+      "created_at": "2026-06-01 09:30:00"
+    }
+  ],
+  "meta": { "total": 1 }
+}
+```
+
+Each item carries the announcement post `id`, its `title`, the `space_id` it lives in, a `url` deep link the client opens, and the `created_at` timestamp.
+
 ## Related
 
 - [Topic Management](../discussions/06-topic-management.md) - space-level pinning, closing, moving, and merging topics

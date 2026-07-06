@@ -61,6 +61,15 @@ The public key that the protection widget loads in the browser. Safe to expose -
 
 The private key Jetonomy uses server-side to verify each submission with the provider. Keep it confidential - it is rendered as a masked password field and is never exposed to the browser.
 
+## Configuration Warnings
+
+Jetonomy checks your provider and key combination as the settings page loads and shows an inline "Heads up" notice at the top of the CAPTCHA Provider card whenever the two do not match. There are two cases:
+
+- **Provider selected but keys missing** - you picked reCAPTCHA v3 or Turnstile but left the Site Key and/or Secret Key blank. The notice reads: "A CAPTCHA provider is selected but the Site Key and/or Secret Key is empty. The CAPTCHA will not render until both keys are filled in." Resolve it by pasting both keys from the provider dashboard, then saving.
+- **Keys saved but provider disabled** - you saved a Site Key and/or Secret Key but left the Provider set to Disabled. The notice reads: "CAPTCHA keys are saved but the Provider is set to Disabled, so no CAPTCHA renders. Select Cloudflare Turnstile or reCAPTCHA above to activate it." Resolve it by choosing a provider from the dropdown, then saving.
+
+The warning is advisory - it does not block saving. It clears on the next page load once the provider and keys agree.
+
 ## Score Threshold (reCAPTCHA v3 Only)
 
 **Setting:** `captcha_score_threshold`

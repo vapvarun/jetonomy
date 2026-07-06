@@ -49,6 +49,12 @@ Time-limited bans lift themselves automatically when they expire, so you do not 
 
 The dialog has an optional **Reason** field. The reason is stored with the ban for your own records - it does not change how the ban behaves. Recording why you banned someone makes it easy for you or another moderator to understand the history later.
 
+## Bans Apply to the API and the App Too
+
+A ban is not just a front-end block. Jetonomy checks account status on every REST write - creating posts and replies, voting, registering a push device, and every other mutation - so a banned member is rejected no matter how they connect. That includes Application Password and mobile-app sessions, which authenticate outside the normal WordPress login flow. A banned account cannot post around the ban by switching to the app or calling the API directly; the write is refused with a "banned" error before anything is saved.
+
+The same gate also stops members who have not confirmed their email (pending verification) from writing through the API until they finish signing up.
+
 ## Lifting a Ban Early
 
 To remove a ban before it expires, click **Unban** on the member's row (on the Users page or the Banned Users tab). The restriction is cleared and the member can participate again immediately.

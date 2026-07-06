@@ -111,13 +111,15 @@ GET /wp-json/jetonomy/v1/conversations/12/messages?after=msg_abc123&per_page=20
 
 ## Site-Owner Oversight (Conversations Admin Page)
 
-*New in 1.5.0.* Site administrators get a dedicated **Jetonomy → Conversations** page in wp-admin for messaging oversight - useful for abuse investigations, GDPR requests, and verifying that messaging is healthy on a large community.
+*New in 1.5.0.* Site administrators get a dedicated **Jetonomy → Conversations** page in the WordPress admin sidebar for messaging oversight - useful for abuse investigations, GDPR requests, and verifying that messaging is healthy on a large community. The page is visible to administrators only (it requires the `manage_options` capability).
 
-- **Conversations list** - every conversation with participants, message count, and last activity, paginated at 50 per page so it stays fast even with tens of thousands of threads.
-- **Thread detail** - click any conversation to read its full message history.
-- **Purge** - permanently delete a conversation and all of its messages and read-state rows. The button asks for confirmation; the deletion fires the `jetonomy_pro_conversation_purged` action so audit tooling can record it.
+- **Conversations list** - every conversation with its ID, type (direct or group), participants, message count, and last activity, most recently active first and paginated at 50 per page so it stays fast even with tens of thousands of threads.
+- **Thread detail** - click any conversation to read its full message history. Messages are shown newest first, paginated at 50 per page, each with the sender's display name (shown as "Deleted user" if the account no longer exists), a plain-text excerpt of the message (up to 300 characters), and the sent timestamp.
+- **Purge** - permanently delete a conversation and all of its messages and read-state rows. The button asks for confirmation ("Permanently delete this conversation for all participants?"); on confirm the conversation is removed, you return to the list with a "Conversation purged" notice, and the deletion fires the `jetonomy_pro_conversation_purged` action so audit tooling can record it.
 
-Purging is irreversible and bypasses the participants' own archive/leave state - reserve it for moderation and compliance situations.
+Purging is irreversible and bypasses the participants' own archive/leave state - reserve it for moderation and compliance situations. It does not notify participants, does not touch their accounts or trust levels, and does not remove any posts or replies they made in public spaces.
+
+> **Privacy:** Site owners can read members' private conversations from this page. State this in your site's privacy policy so members understand your platform's moderation and compliance position.
 
 ## What's Next?
 

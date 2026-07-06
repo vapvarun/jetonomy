@@ -85,6 +85,21 @@ Feed is designed for short-form status updates - brief posts without a required 
 
 Use Feed for: member introductions, community announcements, daily check-ins, showcasing work, open-ended community updates.
 
+## Empty-State Copy Adapts to the Space Type
+
+A space with no posts yet does not show a generic "No posts" message. The empty state speaks the space's own language so the first visitor knows exactly what to do, and its call-to-action button matches:
+
+| Space type | Empty-state message | Button |
+|------------|--------------------|--------|
+| Forum | "No posts yet. Be the first to start a discussion!" | New Post |
+| Q&A | "No questions yet. Ask the first one and get answers from the community." | Ask a question |
+| Feed | "Nothing posted yet. Share the first update." | Share an update |
+| Ideas | "No ideas yet. Suggest the first one and let the community vote." | Suggest an idea |
+
+The button only appears for a visitor who is actually allowed to post in the space. A member (or anyone who can join an open space) sees the call-to-action; a visitor who cannot post sees the message without a button.
+
+> **Note:** Space cards on the community home and category listings also carry an "Active [time] ago" recency signal (for example, "Active 2 hours ago"), so members can tell a thriving space from a dormant one at a glance. A space with no recorded activity shows no label.
+
 ## Changing the Space Type
 
 You can change the type of an existing space at any time. Either open it in **Jetonomy → Spaces** in wp-admin, or use the **Edit space** button on the space header itself (front-end edit), and update the **Type** field.

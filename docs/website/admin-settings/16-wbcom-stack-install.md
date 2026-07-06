@@ -7,7 +7,7 @@ The Wbcom stack section of the Integrations tab lets you install companion plugi
 - How the install and activate flow works
 - How to extend the catalog with the `jetonomy_companions` filter
 
-Go to **Jetonomy → Settings → Integrations** to access the companion cards. The tab is only visible when BuddyPress with Groups is not the only active integration; the companion cards appear on all installs.
+Go to **Jetonomy → Settings → Integrations** to access the companion cards. The Integrations tab is always available, and the companion cards appear on every install regardless of which other plugins are active.
 
 ## Available Companions
 

@@ -1,14 +1,14 @@
-The Integrations tab holds the settings that keep Jetonomy and BuddyPress group activity in sync. It appears in **Jetonomy → Settings** only when BuddyPress with the Groups component is active on your site.
+The Integrations tab connects Jetonomy to companion plugins and keeps Jetonomy and BuddyPress group activity in sync. The tab is always available under **Jetonomy → Settings**; the BuddyPress sync card described on this page appears inside it only when BuddyPress with the Groups component is active.
 
 ## What You Will Learn
 
-- Where the Integrations tab appears and when it is visible
+- That the Integrations tab is always available, and when the BuddyPress card appears inside it
 - What the two BuddyPress sync toggles do
 - The dependency between the two toggles
 
 ![Integrations tab showing the two BuddyPress sync toggles](../images/admin-integrations.png)
 
-Go to **Jetonomy → Settings → Integrations** to access these settings. If you do not see the tab, BuddyPress (with Groups) is not active - the tab is hidden until then.
+Go to **Jetonomy → Settings → Integrations** to access these settings. The tab itself is always present. If you do not see the two BuddyPress toggles below, BuddyPress with the Groups component is not active - the BuddyPress card stays hidden until it is, while the rest of the Integrations tab (companion plugins) shows on every install.
 
 ## Broadcast topics to group activity
 

@@ -101,6 +101,16 @@ WP-CLI is the recommended way to import larger wpForo databases - it is not subj
 
 All imported wpForo forums become standard **Forum** spaces in Jetonomy. wpForo post types (Normal, Question/Answer, Debate) are not mapped to Jetonomy space types - if you want a space to behave as Q&A, change its type in **Jetonomy → Spaces** after the import.
 
+## Access and Visibility After Import
+
+The importer preserves each board's read access instead of flattening everything to public. It reads the wpForo forum's `groups_can_view` setting:
+
+- A forum that **guests can read** imports as a **Public** space with an **Open** join policy - anyone can find and read it.
+- A forum that was **members-only** (guests are not in the allow-list) imports as a **Private** space with an **Approval Required** join policy - the content stays gated and new members are vetted, exactly as it was on wpForo. A members-only board is never opened up to the public by the import.
+- When wpForo records no access signal at all, the space defaults to Public - the importer only tightens access when there is a clear restriction to preserve.
+
+> **For developers:** map access per site with the `jetonomy_import_space_visibility` filter. It receives the resolved `[ visibility, join_policy ]` array, the importer slug (`wpforo`), and the source forum row, so you can force every imported board private, whitelist specific boards to public, or apply your own rule. Any value the filter returns is validated against the allowed visibility and join-policy options before it is saved.
+
 ## Post-Import Checklist
 
 After the import completes:

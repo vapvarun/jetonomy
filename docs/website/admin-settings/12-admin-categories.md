@@ -5,6 +5,7 @@ Categories let you group related spaces under a shared label so members can brow
 ## What You Will Learn
 
 - How to create, edit, and delete categories
+- How to open a category on the front end from the list
 - How category visibility works
 - How to reorder categories with drag and drop
 - How icons and colors work
@@ -51,6 +52,12 @@ The category's visibility does not override the visibility of individual spaces 
 ## Editing a Category
 
 Click **Edit** in the row actions under any category name. An **Edit Category** modal opens with the same fields as the creation form. Make your changes and click **Update Category**.
+
+## Viewing a Category on the Front End
+
+Each row shows the category's full front-end path in the **Slug** column - the complete address such as `/community/category/announcements/`, not just the bare slug. A **View** link in the row actions opens that page in a new tab.
+
+Since Jetonomy 1.6.0 the list surfaces this path and View action directly, so you no longer have to guess the address from the slug and risk a 404. Use **View** to confirm a category renders as expected right after creating or editing it.
 
 ## Deleting a Category
 

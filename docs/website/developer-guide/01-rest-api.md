@@ -502,16 +502,21 @@ Endpoints that power the [Jetonomy mobile app](../mobile-app/00-mobile-app-overv
 
 **GET /app/config**
 
-Public - the app reads it on connect to theme itself per site. `app_name` comes from **Settings -> General -> Community Title** (falling back to the site name); `accent_color` and `logo_url` from **Settings -> Appearance**. The `features` map reflects which Pro extensions are active, so the app gates its UI on them.
+Public - the app reads it on connect to theme itself per site before a user signs in. `app_name` comes from **Settings -> General -> Community Title** (falling back to the site name). `space_label` carries the singular and plural of the configurable "Space" noun so the app labels match the web. `accent_color`, `logo_url`, and `login_bg_url` come from branding: the Pro white-label row when Pro is active, otherwise the free **Settings -> Appearance** values. The `features` map reflects which Pro extensions are active, so the app gates its UI on them.
+
+`app_enabled` is the fail-closed gate that decides whether the mobile app signs in at all. It defaults to `false` in the free plugin. Jetonomy Pro flips it to `true` through the `jetonomy_app_config` filter, and only when the site holds a valid Pro license. When it is `false`, the app shows a "requires Jetonomy Pro" screen and refuses to sign in, so the app never runs against a free-only or unlicensed install.
+
+Dark mode is not part of this payload - the app follows the device/OS theme.
 
 ```json
 {
-  "app_name":          "Course Academy",
-  "accent_color":      "#7C3AED",
-  "logo_url":          "https://example.com/logo.png",
-  "login_bg_url":      "",
-  "dark_mode_default": false,
-  "pro_active":        true,
+  "app_name":     "Course Academy",
+  "space_label":  { "singular": "Space", "plural": "Spaces" },
+  "accent_color": "#7C3AED",
+  "logo_url":     "https://example.com/logo.png",
+  "login_bg_url": "",
+  "pro_active":   true,
+  "app_enabled":  true,
   "features": {
     "messaging":     true,
     "reactions":     true,
@@ -526,16 +531,14 @@ Public - the app reads it on connect to theme itself per site. `app_name` comes 
 
 **GET /feed - parameters**
 
-A single cross-space feed (the app's Home tab). Returns only posts in spaces the caller may view.
+A single cross-space feed (the app's Home tab). Returns only posts in spaces the caller may view. The feed is offset-paginated: pass `limit` and `offset`. It does not honour the generic `after`/`before` cursor params - they are inert on this route.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `sort` | string | `hot` | `hot`, `new`, `top` |
-| `limit` | int | - | Page size |
-| `after` | int | 0 | Cursor - return posts after this post ID |
-| `before` | int | 0 | Cursor - return posts before this post ID |
-| `offset` | int | 0 | Offset paging (alternative to the cursor) |
-| `window_days` | int | 7 | For `sort=top`, the look-back window in days |
+| `limit` | int | - | Page size (max 50) |
+| `offset` | int | 0 | Offset into the result set |
+| `window_days` | int | 7 | For `sort=top`, the look-back window in days (0 = all-time) |
 
 **POST /push/register-device - body**
 
@@ -628,19 +631,22 @@ const data = await res.json();
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | GET | `/posts/{id}/reactions` | Public | List reactions on a post |
-| POST | `/posts/{id}/reactions` | Logged in | Toggle an emoji reaction on a post |
+| POST | `/posts/{id}/reactions` | Logged in (`jetonomy_vote`) | Toggle an emoji reaction on a post |
 | GET | `/replies/{id}/reactions` | Public | List reactions on a reply |
-| POST | `/replies/{id}/reactions` | Logged in | Toggle an emoji reaction on a reply |
+| POST | `/replies/{id}/reactions` | Logged in (`jetonomy_vote`) | Toggle an emoji reaction on a reply |
 
 ### Custom Badges (`custom-badges` extension)
 
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| GET | `/badges` | Logged in | List all defined badges |
+| GET | `/badges` | Public | List all defined badges |
 | POST | `/badges` | Admin (`manage_options`) | Create a new badge definition |
+| GET | `/badges/{id}` | Public | Get a single badge with its earned count |
 | PATCH | `/badges/{id}` | Admin (`manage_options`) | Update a badge definition |
-| DELETE | `/badges/{id}` | Admin (`manage_options`) | Delete a badge definition |
-| POST | `/users/{user_id}/badges` | Admin (`manage_options`) | Manually award a badge to a user |
+| DELETE | `/badges/{id}` | Admin (`manage_options`) | Delete (deactivate) a badge definition |
+| GET | `/users/{id}/badges` | Public | List the badges a user has earned |
+| POST | `/badges/{id}/award` | Admin (`manage_options`) | Manually award the badge to a user (`user_id` in body) |
+| DELETE | `/badges/{id}/award` | Admin (`manage_options`) | Revoke the badge from a user (`user_id` in body) |
 
 ### Custom Fields (`custom-fields` extension)
 
@@ -670,7 +676,10 @@ const data = await res.json();
 |--------|-------|------|-------------|
 | GET | `/webhooks` | Admin (`manage_options`) | List all registered webhook endpoints |
 | POST | `/webhooks` | Admin (`manage_options`) | Register a new webhook endpoint |
+| PATCH | `/webhooks/{id}` | Admin (`manage_options`) | Update a webhook endpoint |
 | DELETE | `/webhooks/{id}` | Admin (`manage_options`) | Delete a webhook endpoint |
+| POST | `/webhooks/{id}/test` | Admin (`manage_options`) | Send a test delivery to the endpoint |
+| GET | `/webhooks/{id}/deliveries` | Admin (`manage_options`) | List recent delivery attempts for the endpoint |
 
 ### White Label (`white-label` extension)
 
@@ -762,7 +771,7 @@ A member-readable list of the currently active announcements, used by the mobile
 }
 ```
 
-For the full Pro endpoint reference (methods, params, and permission callbacks per extension), see the [Pro Endpoints](#pro-endpoints) section above, or the dedicated **Pro REST API** and **Pro Hooks** references in the Jetonomy Pro developer guide.
+For the full Pro endpoint reference (methods, params, and permission callbacks per extension), see the [Pro Endpoints](#pro-endpoints) section above.
 
 ---
 
@@ -783,9 +792,15 @@ Common error codes:
 | Code | HTTP | Meaning |
 |------|------|---------|
 | `rest_forbidden` | 403 | Missing capability or nonce |
+| `jetonomy_user_banned` | 403 | The authenticated user is banned from the community (mutation routes) |
+| `jetonomy_pending_verification` | 403 | The authenticated user has not confirmed their email yet (mutation routes) |
 | `rest_not_found` | 404 | Resource does not exist |
 | `validation_error` | 422 | Invalid or missing parameters |
 | `rate_limited` | 429 | Too many requests from this user |
+
+**Account-status enforcement (1.6.0)**
+
+Every write mutation rejects banned users (`jetonomy_user_banned`) and users who still owe email verification (`jetonomy_pending_verification`), both with HTTP 403. This runs inside the shared mutation permission callback (`REST_Auth::auth_mutation()`), so it applies uniformly to every mutation route. It fires even for requests authenticated with an Application Password: those credentials are minted outside the normal login flow, so enforcing the checks here closes a bypass where a banned or unverified account could otherwise still post through the API.
 
 ---
 

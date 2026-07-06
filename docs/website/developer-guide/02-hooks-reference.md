@@ -135,6 +135,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 |---|---|---|---|
 | `jetonomy_pro_ai_review_exempt_trust_level`<br>_filter_ ·_Pro_ | Filter the trust level at which members skip AI review. | - | `includes/extensions/ai/class-batch-reviewer.php` |
 | `jetonomy_pro_badge_earned`<br>_action_ ·_Pro_ | Fires when a user earns a badge. | `$user_id, $badge_id, $badge` | `includes/extensions/custom-badges/class-extension.php` |
+| `jetonomy_pro_badge_revoked`<br>_action_ ·_Pro_ | Fires when a badge is revoked from a user (`$removed` is the removed row). | `$user_id, $badge_id, $removed` | `includes/extensions/custom-badges/class-extension.php` |
 | `jetonomy_reputation_changed`<br>_action_ | of {@see award_custom()}. | `user_id, points, reason` | `includes/trust/class-reputation.php` |
 | `jetonomy_reputation_points_for`<br>_filter_ | Runs after the admin override + hardcoded fallback resolve, so filter listeners see the final number that would apply. | `$points, $action` | `includes/trust/class-reputation.php` |
 | `jetonomy_reputation_points_map`<br>_filter_ | Use this to add new action keys or wholesale-replace the scoring table (e.g. | - | `includes/trust/class-reputation.php` |
@@ -194,7 +195,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_sidebar_before_managed_by`<br>_action_ | Insert a custom widget or ad before the Managed-by card. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_popular_tags`<br>_action_ | Insert a custom widget or ad before the Popular Tags section. | - | `templates/partials/sidebar.php` |
 | `jetonomy_sidebar_before_trending`<br>_action_ | Insert a custom widget or ad before the Trending section. | - | `templates/partials/sidebar.php` |
-| `jetonomy_space_card_after`<br>_action_ | - | `$space` | `templates/views/category.php` |
+| `jetonomy_space_card_after`<br>_action_ | Fires after each space card. Append a per-space badge, link, or action here. | `$space` | `templates/views/category.php`, `templates/views/home.php` |
 | `jetonomy_template_map`<br>_filter_ | Values may be relative (resolved against plugin_dir/theme_dir) or absolute paths (starting with /). | `map` | `includes/class-template-loader.php` |
 
 ## Theme & CSS
@@ -238,6 +239,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_app_config`<br>_filter_ | Filter the mobile app config payload (branding + feature flags) served by `GET /app/config`. Pro consumes it to set `app_enabled` and inject white-label branding. Since 1.6.0. | `data, request` | `includes/api/class-app-config-controller.php` |
 | `jetonomy_rest_prepare_notification`<br>_filter_ | Filter the REST response data for a single notification. | `response, notification` | `includes/api/class-notifications-controller.php` |
 | `jetonomy_rest_prepare_post`<br>_filter_ | Filter the REST response data for a single post. | `response, post` | `includes/api/class-posts-controller.php` |
 | `jetonomy_rest_prepare_reply`<br>_filter_ | Filter the REST response data for a single reply. | `response, reply` | `includes/api/class-replies-controller.php` |
@@ -248,6 +250,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_automator_space_options_limit`<br>_filter_ ·_Pro_ | Filter the number of spaces offered in the Uncanny Automator dropdowns (default 500). | - | `includes/integrations/class-automator-integration.php` |
 | `jetonomy_client_ip`<br>_filter_ | Final resolved client IP. | `ip, remote_addr` | `includes/functions.php` |
 | `jetonomy_companions`<br>_filter_ | Filter the Wbcom stack companion catalog. | - | `includes/integrations/class-companion-registry.php` |
 
@@ -257,6 +260,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 |---|---|---|---|
 | `jetonomy_composer_toolbar`<br>_action_ | Fires inside the composer toolbar, after the built-in formatting buttons. | - | `templates/partials/composer.php` |
 | `jetonomy_cron_batch_size`<br>_filter_ | - | - | `includes/class-cron.php` |
+| `jetonomy_erase_batch_size`<br>_filter_ ·_Pro_ | Filter the batch size used by the GDPR personal-data eraser (default 1000). | - | `includes/class-privacy.php` |
 | `jetonomy_footer_text`<br>_filter_ | Filter the footer text used by Jetonomy-rendered surfaces. | `text` | `includes/functions.php` |
 | `jetonomy_home_welcome_heading`<br>_filter_ | - | - | `templates/views/home.php` |
 | `jetonomy_home_welcome_subheading`<br>_filter_ | - | - | `templates/views/home.php` |
@@ -279,7 +283,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 ## Pro
 
-Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro extensions. For the complete per-feature breakdown - every action and filter each extension fires, with signatures and defaults - see the **Pro Hooks** reference in the Jetonomy Pro developer guide (`developer-guide/02-pro-hooks.md`).
+Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro extensions, and only when the corresponding extension is active. Each hook's source extension is noted in the Source column.
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
@@ -297,6 +301,7 @@ Pro-only hooks (marked _Pro_ above and listed below) fire from the Jetonomy Pro 
 | `jetonomy_pro_conversation_purged`<br>_action_ ·_Pro_ | Fires after a site admin purges a conversation from wp-admin. | `conversation_id, admin_id` | `includes/extensions/private-messaging/class-admin-page.php` |
 | `jetonomy_pro_dm_received`<br>_action_ ·_Pro_ | Counterpart to `jetonomy_pro_message_sent`. | - | `includes/extensions/private-messaging/class-extension.php` |
 | `jetonomy_pro_field_created`<br>_action_ ·_Pro_ | Fires after a custom field is created. | `$field_id, $context` | `includes/extensions/custom-fields/class-extension.php` |
+| `jetonomy_pro_first_reaction`<br>_action_ ·_Pro_ | Fires the first time an object receives any reaction. | `$object_type, $object_id, $user_id` | `includes/extensions/reactions/class-extension.php` |
 | `jetonomy_pro_message_sent`<br>_action_ ·_Pro_ | Fires after a message is sent. | `$message_id, $conversation_id, $sender_id` | `includes/extensions/private-messaging/class-extension.php` |
 | `jetonomy_pro_poll_created`<br>_action_ ·_Pro_ | Fires after a poll is created. | `$poll_id, $post_id, $user_id` | `includes/extensions/polls/class-extension.php` |
 | `jetonomy_pro_reaction_icon_renderer`<br>_filter_ ·_Pro_ | Sites that want the SVG look can opt in via the filter below. | `$renderer, $slug, $size` | `includes/extensions/reactions/class-extension.php` |

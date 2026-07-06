@@ -98,6 +98,12 @@ DELETE /jetonomy/v1/users/<user_id>/restrictions/<restriction_id>
 
 Temporary bans (1d, 7d, 30d) expire automatically - you do not need to remove them manually.
 
+## Pausing a Member's Email
+
+You can stop all Jetonomy email for a single member from their WordPress profile. Open the member's profile (the **View Profile** row action, or **Users → All Users** in wp-admin), scroll to the **Jetonomy** section, and tick **Pause all Jetonomy email notifications for this user** under **Community emails**. Save the profile.
+
+While this is on, Jetonomy suppresses the email verification reminder and every other Jetonomy email for that member. Web notifications are unaffected - the member keeps receiving in-community notifications. This is the admin-side control for the same opt-out members can set themselves on the frontend Edit Profile page (stored as the `jetonomy_email_opt_out` user meta).
+
 ## Trust Level Reference
 
 | Level | Name | How Earned |

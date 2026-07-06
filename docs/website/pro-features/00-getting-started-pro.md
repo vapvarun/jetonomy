@@ -57,6 +57,15 @@ Pro registers five capabilities that gate its features. Each maps to the WordPre
 
 > **Note:** Most Pro REST write routes are additionally gated by `manage_options` for admin operations, and by trust level for member operations (for example, Private Messaging and Poll creation require Trust Level 1 or higher). See the per-feature pages and the [REST API reference](../developer-guide/01-rest-api.md) for the exact permission on each route.
 
+## Data and Uninstall
+
+Disabling an extension and deleting the plugin are two very different actions.
+
+- **Disabling an extension** (from **Jetonomy → Extensions**) only unregisters that extension's hooks and stops its background work. Everything it already stored - its tables, options, and member content - stays in place, so re-enabling it later picks up exactly where you left off. Deactivating the whole Jetonomy Pro plugin leaves all Pro data untouched the same way.
+- **Deleting the plugin** from the WordPress Plugins screen runs the uninstall routine. It removes Jetonomy Pro's database tables, Pro plugin options, Pro user meta (every `jetonomy_pro_` key), and Pro scheduled tasks. Jetonomy Pro does not register its own WordPress capabilities - those belong to the free plugin and are cleaned up by its uninstall.
+
+Only uninstalling removes stored data - and it is irreversible - so back up your database first if there is any chance you will want the data again.
+
 ## What's Next?
 
 Start with the engagement extensions members notice first.

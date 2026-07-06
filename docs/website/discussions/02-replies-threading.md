@@ -21,7 +21,7 @@ Replies are where conversations happen. Jetonomy's reply system supports threade
 
 The reply composer appears at the bottom of every topic page. Click into the text area to expand the full Markdown toolbar - the same formatting options available in the post composer (bold, italic, inline code, links, block quotes, image upload, code blocks).
 
-Click **Reply** to submit. The reply appears immediately without a page reload.
+Click **Reply** to submit. A new top-level reply is added in place without a page reload. A threaded sub-reply (a reply to another reply) reloads the page so it slots into the right position under its parent.
 
 If the space has "Require Post Approval" enabled, your reply is held for moderator review before appearing to other members. A confirmation message tells you it is pending.
 
