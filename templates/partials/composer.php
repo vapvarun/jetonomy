@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 // $reply_to  — optional parent reply ID for nested replies.
 // $placeholder — optional custom placeholder string.
 if ( ! is_user_logged_in() ) {
-	$login_url = wp_login_url( isset( $post_url ) ? $post_url : get_permalink() );
+	$login_url = wp_login_url( isset( $post_url ) ? $post_url : \Jetonomy\current_url() );
 	?>
 	<div class="jt-editor jt-editor-login">
 		<a href="<?php echo esc_url( $login_url ); ?>" class="jt-btn jt-btn-fill">

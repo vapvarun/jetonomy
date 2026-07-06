@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.6.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-07-06 02:48:43+00:00\n"
+"POT-Creation-Date: 2026-07-06 13:10:33+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -713,7 +713,7 @@ msgid "Tags"
 msgstr ""
 
 #: includes/admin/class-admin.php:142 includes/admin/class-admin.php:143
-#: includes/admin/views/settings.php:162 includes/functions.php:49
+#: includes/admin/views/settings.php:162 includes/functions.php:69
 msgid "Spaces"
 msgstr ""
 
@@ -801,7 +801,7 @@ msgid ""
 "suppressed. Web notifications are unaffected."
 msgstr ""
 
-#: includes/admin/class-admin.php:776 includes/admin/views/categories.php:298
+#: includes/admin/class-admin.php:776 includes/admin/views/categories.php:300
 #: includes/admin/views/content.php:200 includes/admin/views/replies.php:227
 #: includes/admin/views/spaces.php:140 includes/admin/views/tags.php:246
 #: includes/admin/views/users.php:146 includes/admin/views/users.php:186
@@ -1172,14 +1172,14 @@ msgstr ""
 
 #: includes/admin/views/categories.php:26
 #: includes/admin/views/categories.php:111
-#: includes/admin/views/categories.php:249 includes/admin/views/tags.php:57
+#: includes/admin/views/categories.php:251 includes/admin/views/tags.php:57
 #: includes/admin/views/tags.php:113 includes/admin/views/tags.php:232
 msgid "Name"
 msgstr ""
 
 #: includes/admin/views/categories.php:30
 #: includes/admin/views/categories.php:112
-#: includes/admin/views/categories.php:253
+#: includes/admin/views/categories.php:255
 #: includes/admin/views/space-edit.php:70 includes/admin/views/spaces.php:34
 #: includes/admin/views/tags.php:61 includes/admin/views/tags.php:114
 #: includes/admin/views/tags.php:237
@@ -1191,7 +1191,7 @@ msgid "Auto-generated from name"
 msgstr ""
 
 #: includes/admin/views/categories.php:34
-#: includes/admin/views/categories.php:257
+#: includes/admin/views/categories.php:259
 #: includes/admin/views/moderation.php:247
 #: includes/admin/views/space-edit.php:74 includes/admin/views/spaces.php:38
 #: templates/views/new-space.php:75 templates/views/space-edit.php:103
@@ -1199,18 +1199,18 @@ msgid "Description"
 msgstr ""
 
 #: includes/admin/views/categories.php:38
-#: includes/admin/views/categories.php:261
+#: includes/admin/views/categories.php:263
 msgid "Parent Category"
 msgstr ""
 
 #: includes/admin/views/categories.php:40
-#: includes/admin/views/categories.php:263
+#: includes/admin/views/categories.php:265
 msgid "(None - Top Level)"
 msgstr ""
 
 #: includes/admin/views/categories.php:47
 #: includes/admin/views/categories.php:114
-#: includes/admin/views/categories.php:270
+#: includes/admin/views/categories.php:272
 #: includes/admin/views/space-edit.php:100 includes/admin/views/spaces.php:71
 #: includes/admin/views/spaces.php:206 templates/views/new-space.php:91
 #: templates/views/space-edit.php:155
@@ -1218,13 +1218,13 @@ msgid "Visibility"
 msgstr ""
 
 #: includes/admin/views/categories.php:49
-#: includes/admin/views/categories.php:272
+#: includes/admin/views/categories.php:274
 #: includes/admin/views/space-edit.php:103 includes/admin/views/spaces.php:74
 msgid "Public"
 msgstr ""
 
 #: includes/admin/views/categories.php:50
-#: includes/admin/views/categories.php:273
+#: includes/admin/views/categories.php:275
 #: includes/admin/views/space-edit.php:104 includes/admin/views/spaces.php:75
 #: templates/partials/icon-picker.php:164 templates/partials/post-card.php:88
 #: templates/views/single-post.php:370
@@ -1232,21 +1232,21 @@ msgid "Private"
 msgstr ""
 
 #: includes/admin/views/categories.php:51
-#: includes/admin/views/categories.php:274
+#: includes/admin/views/categories.php:276
 #: includes/admin/views/space-edit.php:105 includes/admin/views/spaces.php:76
 #: templates/views/category.php:78 templates/views/home.php:45
 msgid "Hidden"
 msgstr ""
 
 #: includes/admin/views/categories.php:55
-#: includes/admin/views/categories.php:278
+#: includes/admin/views/categories.php:280
 #: includes/admin/views/space-edit.php:130 includes/admin/views/spaces.php:101
 #: templates/partials/icon-picker.php:41
 msgid "Icon"
 msgstr ""
 
 #: includes/admin/views/categories.php:69
-#: includes/admin/views/categories.php:292
+#: includes/admin/views/categories.php:294
 msgid "Color"
 msgstr ""
 
@@ -1301,12 +1301,12 @@ msgid ""
 msgstr ""
 
 #: includes/admin/views/categories.php:145
-#: includes/admin/views/categories.php:167
+#: includes/admin/views/categories.php:168
 msgid "Drag to reorder"
 msgstr ""
 
 #: includes/admin/views/categories.php:152
-#: includes/admin/views/categories.php:172 includes/admin/views/content.php:211
+#: includes/admin/views/categories.php:173 includes/admin/views/content.php:211
 #: includes/admin/views/replies.php:238 includes/admin/views/spaces.php:237
 #: includes/admin/views/tags.php:152
 #: libs/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:39
@@ -1316,7 +1316,14 @@ msgid "Edit"
 msgstr ""
 
 #: includes/admin/views/categories.php:153
-#: includes/admin/views/categories.php:173
+#: includes/admin/views/categories.php:174 includes/admin/views/content.php:255
+#: includes/admin/views/spaces.php:238
+#: templates/partials/moderation/flag-card.php:109
+msgid "View"
+msgstr ""
+
+#: includes/admin/views/categories.php:154
+#: includes/admin/views/categories.php:175
 #: includes/admin/views/space-edit.php:401 includes/admin/views/spaces.php:239
 #: includes/admin/views/tags.php:81 includes/admin/views/tags.php:153
 #: libs/action-scheduler/classes/ActionScheduler_ListTable.php:92
@@ -1326,18 +1333,18 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: includes/admin/views/categories.php:202 includes/admin/views/tags.php:181
+#: includes/admin/views/categories.php:204 includes/admin/views/tags.php:181
 #. translators: %d: total items
 msgid "%d item"
 msgid_plural "%d items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/views/categories.php:245
+#: includes/admin/views/categories.php:247
 msgid "Edit Category"
 msgstr ""
 
-#: includes/admin/views/categories.php:297
+#: includes/admin/views/categories.php:299
 msgid "Update Category"
 msgstr ""
 
@@ -1508,7 +1515,7 @@ msgstr ""
 
 #: includes/admin/views/content.php:122 includes/admin/views/content.php:261
 #: includes/admin/views/content.php:316 includes/admin/views/moderation.php:80
-#: includes/admin/views/settings.php:161 includes/functions.php:49
+#: includes/admin/views/settings.php:161 includes/functions.php:69
 msgid "Space"
 msgstr ""
 
@@ -1552,11 +1559,6 @@ msgstr ""
 
 #: includes/admin/views/content.php:247 includes/admin/views/replies.php:291
 msgid "Restore"
-msgstr ""
-
-#: includes/admin/views/content.php:255 includes/admin/views/spaces.php:238
-#: templates/partials/moderation/flag-card.php:109
-msgid "View"
 msgstr ""
 
 #: includes/admin/views/content.php:296 includes/admin/views/dashboard.php:204
@@ -3706,6 +3708,7 @@ msgstr ""
 
 #: includes/admin/views/space-edit.php:26
 #: includes/integrations/class-fluent-community.php:849
+#: templates/views/new-post.php:68
 #. translators: %s: paired FluentCommunity space title.
 msgid "Back to %s"
 msgstr ""
@@ -5465,7 +5468,7 @@ msgid "Could not create the topic."
 msgstr ""
 
 #: includes/class-template-loader.php:268
-#: includes/class-template-loader.php:312 templates/views/new-post.php:57
+#: includes/class-template-loader.php:312 templates/views/new-post.php:105
 msgid "Post Topic"
 msgstr ""
 
@@ -5861,8 +5864,8 @@ msgstr ""
 msgid "Joining..."
 msgstr ""
 
-#: includes/class-template-loader.php:491 templates/views/space.php:132
-#: templates/views/space.php:290
+#: includes/class-template-loader.php:491 templates/views/new-post.php:59
+#: templates/views/space.php:132 templates/views/space.php:290
 msgid "Join %s"
 msgstr ""
 
@@ -8453,7 +8456,7 @@ msgid "You are not a member of any %1$s yet. Join a %2$s to start posting."
 msgstr ""
 
 #: templates/partials/compose-topic-embed.php:156
-#: templates/views/new-post.php:82
+#: templates/views/new-post.php:130
 #. translators: %s: space title
 msgid "Posting in %s"
 msgstr ""
@@ -9127,31 +9130,41 @@ msgstr[1] ""
 msgid "Mod queue"
 msgstr ""
 
-#: templates/views/new-post.php:31
+#: templates/views/new-post.php:58
+#. translators: %s: space title
+msgid "Join %s to start a discussion."
+msgstr ""
+
+#: templates/views/new-post.php:67
+#. translators: %s: space label (e.g. space, forum)
+msgid "You do not have permission to post in this %s."
+msgstr ""
+
+#: templates/views/new-post.php:79
 msgid "Ask a Question"
 msgstr ""
 
-#: templates/views/new-post.php:35
+#: templates/views/new-post.php:83
 msgid "Share an Idea"
 msgstr ""
 
-#: templates/views/new-post.php:39
+#: templates/views/new-post.php:87
 msgid "New Status"
 msgstr ""
 
-#: templates/views/new-post.php:44
+#: templates/views/new-post.php:92
 msgid "New Topic"
 msgstr ""
 
-#: templates/views/new-post.php:53
+#: templates/views/new-post.php:101
 msgid "Post Question"
 msgstr ""
 
-#: templates/views/new-post.php:54
+#: templates/views/new-post.php:102
 msgid "Submit Idea"
 msgstr ""
 
-#: templates/views/new-post.php:55
+#: templates/views/new-post.php:103
 msgid "Post Status"
 msgstr ""
 

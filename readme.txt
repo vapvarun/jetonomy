@@ -273,6 +273,9 @@ Mobile and headless API release: new endpoints and per-viewer fields so a native
 * New      - Posts and spaces now include per-viewer state (is_bookmarked, viewer_vote, is_member, viewer_role, is_subscribed) so clients render the right controls without extra requests.
 * Improve  - REST write requests now reject banned and pending-verification users on every mutation, closing an Application Password bypass.
 * Fix      - The admin Categories list now shows each category's full front-end URL plus a View link, so owners no longer hit a 404 by guessing the address from the bare slug.
+* Fix      - Logged-out "Log in to vote" and "Log in to reply" links now return to the topic being viewed after login, instead of the site's front page.
+* Fix      - Opening the new-post page for a space you have not joined now shows a Join prompt, instead of a composer that only rejects the post with a permission error after you have written it.
+* Fix      - The moderation queue's pending-flag counter now updates the moment a flag is resolved, instead of showing the old count until the page is reloaded.
 * Dev      - Corrected manifest drift on the reply routes and the /users/suggest permission to match the shipped code.
 * Compat   - Aligned with Jetonomy Pro 1.6.0. Install both updates together.
 

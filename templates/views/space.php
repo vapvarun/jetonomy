@@ -64,7 +64,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 				'icon'      => 'lock',
 				'message'   => $gate_message,
 				'cta_label' => __( 'Log In', 'jetonomy' ),
-				'cta_url'   => wp_login_url( get_permalink() ),
+				'cta_url'   => wp_login_url( \Jetonomy\current_url() ),
 				'tone'      => 'forbidden',
 			]
 		);
