@@ -127,7 +127,7 @@ $jt_can_moderate_reply = $jt_reply_viewer
 				// "Log in to vote" link that takes the intent somewhere.
 				?>
 			<a class="jt-act jt-act-login"
-				href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"
+				href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"
 				title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
 				<?php jetonomy_echo_icon( 'chevron-up', 14 ); ?> <span class="n"><?php echo (int) $reply->vote_score; ?></span>

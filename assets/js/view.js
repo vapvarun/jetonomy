@@ -2728,6 +2728,20 @@ const { state, actions } = store( 'jetonomy', {
             // empty state (ported from moderation.js removeCard()).
             const container = card.parentNode;
             card.remove();
+            // Keep the header "N pending" badge in sync — it is server-rendered
+            // and would otherwise show the pre-resolution count until reload.
+            // Replace only the numeric run so the localized suffix survives;
+            // drop the badge entirely when the queue hits zero (SSR hides it).
+            const flagBadge = document.querySelector( '.jt-flag-count' );
+            if ( flagBadge ) {
+                const nextCount = Math.max( 0, ( parseInt( flagBadge.getAttribute( 'data-count' ), 10 ) || 0 ) - 1 );
+                if ( nextCount <= 0 ) {
+                    flagBadge.remove();
+                } else {
+                    flagBadge.setAttribute( 'data-count', String( nextCount ) );
+                    flagBadge.textContent = flagBadge.textContent.replace( /\d+/, String( nextCount ) );
+                }
+            }
             if ( container && ! container.querySelector( '.jt-mod-flag' ) && container.parentNode ) {
                 const wrapper = document.createElement( 'div' );
                 wrapper.className = 'jt-empty';

@@ -539,7 +539,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 								// wanted to vote stuck. Make it a link to log in (and
 								// return here), so the intent has somewhere to go.
 								?>
-							<a class="jt-act jt-act-login" href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"
+							<a class="jt-act jt-act-login" href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"
 								title="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>"
 								aria-label="<?php esc_attr_e( 'Log in to vote', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'chevron-up', 16 ); ?>
@@ -856,7 +856,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</div>
 			<?php else : ?>
 				<div class="jt-login-prompt">
-					<a href="<?php echo esc_url( wp_login_url( get_permalink() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
+					<a href="<?php echo esc_url( wp_login_url( \Jetonomy\current_url() ) ); ?>"><?php esc_html_e( 'Log in to reply', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 		</main>

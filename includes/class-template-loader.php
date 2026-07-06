@@ -19,7 +19,7 @@ class Template_Loader {
 				$base_slug = $settings['base_slug'] ?? 'community';
 				wp_safe_redirect( home_url( '/' . $base_slug . '/u/' . wp_get_current_user()->user_login . '/' ) );
 			} else {
-				wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
+				wp_safe_redirect( wp_login_url( current_url() ) );
 			}
 			exit;
 		}
@@ -32,14 +32,14 @@ class Template_Loader {
 		// gates the REST API in private mode (see Jetonomy\Visibility::rest_check).
 		$settings = get_option( 'jetonomy_settings', array() );
 		if ( ! \Jetonomy\Visibility::can_view_community() ) {
-			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
+			wp_safe_redirect( wp_login_url( current_url() ) );
 			exit;
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
 		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
-			wp_safe_redirect( wp_login_url( home_url( esc_url_raw( wp_unslash( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/' ) ) ) ) );
+			wp_safe_redirect( wp_login_url( current_url() ) );
 			exit;
 		}
 
@@ -263,7 +263,7 @@ class Template_Loader {
 				'postScores'     => new \stdClass(),
 				'replyScores'    => new \stdClass(),
 				'isLoggedIn'     => is_user_logged_in(),
-				'loginUrl'       => wp_login_url( home_url( isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/' ) ),
+				'loginUrl'       => wp_login_url( current_url() ),
 				'isSubmitting'   => false,
 				'submitLabel'    => __( 'Post Topic', 'jetonomy' ),
 				'submitError'    => '',

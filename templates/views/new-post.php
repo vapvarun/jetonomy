@@ -23,8 +23,56 @@ if ( ! $space ) {
 	return;
 }
 
-$base           = \Jetonomy\base_url();
-$space_url      = $base . '/s/' . esc_attr( $space->slug ) . '/';
+$base      = \Jetonomy\base_url();
+$space_url = $base . '/s/' . esc_attr( $space->slug ) . '/';
+
+// Permission gate. Template_Loader only guarantees the visitor is logged in and
+// the space exists — it does NOT check that they may post here. Without this,
+// a non-member of a members-only-post space gets the full composer and only
+// discovers the wall after writing the whole post (REST 403 on submit). Gate up
+// front: offer a Join CTA when joining would grant the right (open space,
+// non-member), otherwise a plain permission-denied state.
+$jt_user_id = get_current_user_id();
+if ( ! \Jetonomy\Permissions\Permission_Engine::can( $jt_user_id, 'create_posts', (int) $space->id ) ) {
+	$jt_can_join = ( 'open' === ( $space->join_policy ?? '' ) )
+		&& ! \Jetonomy\Models\SpaceMember::is_member( (int) $space->id, $jt_user_id );
+
+	\Jetonomy\Template_Loader::partial(
+		'breadcrumb',
+		[
+			'crumbs' => [
+				[
+					'label' => $space->title,
+					'url'   => $space_url,
+				],
+			],
+		]
+	);
+	\Jetonomy\Template_Loader::partial(
+		'empty-state',
+		$jt_can_join
+			? [
+				'icon'      => 'users',
+				'icon_size' => 48,
+				/* translators: %s: space title */
+				'message'   => sprintf( __( 'Join %s to start a discussion.', 'jetonomy' ), $space->title ),
+				'cta_label' => sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ),
+				'cta_url'   => $space_url,
+				'tone'      => 'info',
+			]
+			: [
+				'icon'      => 'lock',
+				'icon_size' => 48,
+				/* translators: %s: space label (e.g. space, forum) */
+				'message'   => sprintf( __( 'You do not have permission to post in this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+				'cta_label' => sprintf( __( 'Back to %s', 'jetonomy' ), \Jetonomy\space_label() ),
+				'cta_url'   => $space_url,
+				'tone'      => 'forbidden',
+			]
+	);
+	return;
+}
+
 $space_type_map = [
 	'qa'    => [
 		'post_type' => 'question',

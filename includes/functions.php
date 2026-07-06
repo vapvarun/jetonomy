@@ -29,6 +29,26 @@ function base_url(): string {
 }
 
 /**
+ * Get the URL of the page currently being requested.
+ *
+ * Jetonomy routes are virtual (rendered by the Router without a real WP post),
+ * so `get_permalink()` inside a route template does NOT return the current URL -
+ * it resolves to whatever stray `$post` the main query left behind (typically
+ * the site's front page or first post). Any "return here after X" URL - most
+ * importantly the login redirect on a logged-out topic/reply - must be built
+ * from the actual request URI instead. This is the single source of truth for
+ * "where am I", mirroring the expression already used in Template_Loader's
+ * auth-gate redirects.
+ *
+ * @return string Absolute URL of the current request.
+ */
+function current_url(): string {
+	// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- esc_url_raw sanitizes.
+	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/';
+	return home_url( esc_url_raw( $request_uri ) );
+}
+
+/**
  * The site owner's label for a "Space" (e.g. Space, Forum, Discussion, Channel).
  *
  * Single source of truth for the noun so an owner can rename Spaces everywhere
@@ -402,7 +422,7 @@ function seo_settings(): array {
 		'seo_twitter_handle'   => '',
 		'seo_default_og_image' => '',
 	);
-	$stored = get_option( 'jetonomy_settings', array() );
+	$stored   = get_option( 'jetonomy_settings', array() );
 	if ( ! is_array( $stored ) ) {
 		$stored = array();
 	}
