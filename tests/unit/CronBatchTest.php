@@ -33,10 +33,15 @@ class CronBatchTest extends WP_UnitTestCase {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Confirm that evaluate_trust_levels processes at most the filtered batch
+	 * Confirm that one trust-sweep batch processes at most the filtered batch
 	 * size per invocation. We override the batch to 2, seed 3 qualifying
-	 * profiles (all eligible for promotion to trust level 1), run the handler,
+	 * profiles (all eligible for promotion to trust level 1), run one batch,
 	 * and assert only 2 profiles were promoted -- not 3.
+	 *
+	 * The public entry point evaluate_trust_levels() now only resets the keyset
+	 * cursor and enqueues the first async slice (Action Scheduler); the bounded
+	 * per-run work lives in evaluate_trust_batch(), which is what we exercise
+	 * here so the cap is asserted synchronously without waiting on the queue.
 	 */
 	public function test_evaluate_trust_levels_caps_at_batch_size(): void {
 		global $wpdb;
@@ -118,7 +123,9 @@ class CronBatchTest extends WP_UnitTestCase {
 			}
 		);
 
-		( new Cron() )->evaluate_trust_levels();
+		// Fresh cursor (no option yet) => start at user_id 0; evaluate_trust_batch()
+		// applies the jetonomy_cron_batch_size filter (=> 2) and runs one slice.
+		( new Cron() )->evaluate_trust_batch();
 
 		remove_all_filters( 'jetonomy_cron_batch_size' );
 
@@ -126,7 +133,7 @@ class CronBatchTest extends WP_UnitTestCase {
 			$small_batch,
 			$promoted,
 			sprintf(
-				'evaluate_trust_levels must promote exactly %d profiles per run when batch is %d and %d qualify',
+				'one trust batch must promote exactly %d profiles per run when batch is %d and %d qualify',
 				$small_batch,
 				$small_batch,
 				3

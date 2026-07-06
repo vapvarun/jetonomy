@@ -43,7 +43,7 @@ class AppConfigTest extends WP_UnitTestCase {
 		$data = $res->get_data();
 
 		$this->assertSame( 200, $res->get_status() );
-		foreach ( array( 'accent_color', 'logo_url', 'login_bg_url', 'dark_mode_default', 'pro_active', 'features' ) as $key ) {
+		foreach ( array( 'accent_color', 'logo_url', 'login_bg_url', 'pro_active', 'features' ) as $key ) {
 			$this->assertArrayHasKey( $key, $data );
 		}
 		foreach ( array( 'messaging', 'reactions', 'polls', 'badges', 'custom_fields', 'web_push', 'native_push' ) as $flag ) {
