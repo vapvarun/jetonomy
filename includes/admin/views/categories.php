@@ -150,10 +150,11 @@ defined( 'ABSPATH' ) || exit;
 							<?php endif; ?>
 							<div class="row-actions">
 								<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>" data-slug="<?php echo esc_attr( $cat->slug ); ?>" data-description="<?php echo esc_attr( $cat->description ?? '' ); ?>" data-parent="<?php echo absint( $cat->parent_id ); ?>" data-icon="<?php echo esc_attr( $cat->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $cat->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $cat->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
+								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/category/' . $cat->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 								<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $cat->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 							</div>
 						</td>
-						<td class="column-slug"><code><?php echo esc_html( $cat->slug ); ?></code></td>
+						<td class="column-slug"><code><?php echo esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $cat->slug . '/' ); ?></code></td>
 						<td class="column-spaces"><?php echo absint( $cat->space_count ); ?></td>
 						<td class="column-visibility">
 							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $cat->visibility ); ?>"><?php echo esc_html( ucfirst( $cat->visibility ) ); ?></span>
@@ -170,10 +171,11 @@ defined( 'ABSPATH' ) || exit;
 								<strong><?php echo esc_html( $child->name ); ?></strong>
 								<div class="row-actions">
 									<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $child->id ); ?>" data-name="<?php echo esc_attr( $child->name ); ?>" data-slug="<?php echo esc_attr( $child->slug ); ?>" data-description="<?php echo esc_attr( $child->description ?? '' ); ?>" data-parent="<?php echo absint( $child->parent_id ); ?>" data-icon="<?php echo esc_attr( $child->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $child->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $child->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
+									<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/category/' . $child->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 									<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $child->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 								</div>
 							</td>
-							<td class="column-slug"><code><?php echo esc_html( $child->slug ); ?></code></td>
+							<td class="column-slug"><code><?php echo esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $child->slug . '/' ); ?></code></td>
 							<td class="column-spaces"><?php echo absint( $child->space_count ); ?></td>
 							<td class="column-visibility">
 								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $child->visibility ); ?>"><?php echo esc_html( ucfirst( $child->visibility ) ); ?></span>
