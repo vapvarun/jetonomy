@@ -202,7 +202,7 @@ endif;
 					printf(
 						/* translators: %d: total items */
 						esc_html( _n( '%d item', '%d items', $_cats_total, 'jetonomy' ) ),
-						$_cats_total
+						absint( $_cats_total )
 					);
 					?>
 				</span>
