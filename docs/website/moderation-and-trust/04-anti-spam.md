@@ -57,7 +57,7 @@ Akismet and CAPTCHA work independently. You can run both at the same time for ma
 
 ## AI-Powered Spam Detection (Pro)
 
-Jetonomy Pro's AI extension adds a third layer: a language model reads every new post and reply and scores it for spam probability before it is published. Posts above the configured threshold go to the moderation queue with a reason the model generated. Posts below it are published as normal.
+Jetonomy Pro's AI extension adds a third layer: posts and replies publish instantly, then a background reviewer scores each one for spam probability on a schedule (the AI is never in the posting path). Posts above the configured threshold are moved to the moderation queue with a reason the model generated. Posts below it stay published as normal.
 
 This catches the kinds of spam that pattern matching and Akismet miss - subtly rewritten affiliate spam, contextually wrong replies designed to pad posting history, and coordinated attacks that use clean accounts.
 
