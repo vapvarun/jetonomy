@@ -1,0 +1,38 @@
+[
+  {
+    "n": 1,
+    "title": "[Fixed 1.6.0] Private/hidden spaces leaked via GET /spaces?visibility=hidden",
+    "file": "card-01-spaces-rest-visibility-leak.md",
+    "body_file": "/Users/vapvarun/Local Sites/jetonomy/app/public/wp-content/plugins/jetonomy/docs/qa/fixed-cards/card-01-spaces-rest-visibility-leak.md"
+  },
+  {
+    "n": 2,
+    "title": "[Fixed 1.6.0] Space members roster shown to non-members on private/hidden spaces",
+    "file": "card-02-space-members-roster-leak.md",
+    "body_file": "/Users/vapvarun/Local Sites/jetonomy/app/public/wp-content/plugins/jetonomy/docs/qa/fixed-cards/card-02-space-members-roster-leak.md"
+  },
+  {
+    "n": 3,
+    "title": "[Fixed 1.6.0] Space roadmap ideas visible to non-members (+ private ideas on public spaces)",
+    "file": "card-03-space-roadmap-ideas-leak.md",
+    "body_file": "/Users/vapvarun/Local Sites/jetonomy/app/public/wp-content/plugins/jetonomy/docs/qa/fixed-cards/card-03-space-roadmap-ideas-leak.md"
+  },
+  {
+    "n": 4,
+    "title": "[Fixed 1.6.0] Search advanced filters leaked posts from private/hidden spaces",
+    "file": "card-04-search-advanced-filter-leak.md",
+    "body_file": "/Users/vapvarun/Local Sites/jetonomy/app/public/wp-content/plugins/jetonomy/docs/qa/fixed-cards/card-04-search-advanced-filter-leak.md"
+  },
+  {
+    "n": 5,
+    "title": "[Fixed 1.6.0] Private space/post titles exposed in page-head JSON-LD (SEO schema)",
+    "file": "card-05-jsonld-head-private-leak.md",
+    "body_file": "/Users/vapvarun/Local Sites/jetonomy/app/public/wp-content/plugins/jetonomy/docs/qa/fixed-cards/card-05-jsonld-head-private-leak.md"
+  },
+  {
+    "n": 6,
+    "title": "[Fixed 1.6.0] Reply-by-Email: fatal on every notification email + forgeable token expiry",
+    "file": "card-06-reply-by-email-fatal-and-token.md",
+    "body_file": "/Users/vapvarun/Local Sites/jetonomy/app/public/wp-content/plugins/jetonomy/docs/qa/fixed-cards/card-06-reply-by-email-fatal-and-token.md"
+  }
+]

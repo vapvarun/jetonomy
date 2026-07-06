@@ -19,6 +19,20 @@ class Router {
 		add_filter( 'request', [ $this, 'maybe_serve_front_page' ] );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
+		// WP's canonical redirect would append a trailing slash to the extension-
+		// less-looking /…-sitemap.xml URL (301 -> …/) before handle_request emits.
+		// Skip it for the sitemap route so the XML is served directly.
+		add_filter( 'redirect_canonical', [ $this, 'skip_canonical_for_sitemap' ] );
+	}
+
+	/**
+	 * Disable WordPress canonical redirects on the custom sitemap route.
+	 *
+	 * @param string|false $redirect_url The URL WP wants to redirect to.
+	 * @return string|false
+	 */
+	public function skip_canonical_for_sitemap( $redirect_url ) {
+		return 'sitemap' === get_query_var( 'jetonomy_route' ) ? false : $redirect_url;
 	}
 
 	/**
@@ -56,6 +70,12 @@ class Router {
 
 		// Community home
 		add_rewrite_rule( "^{$base}/?$", 'index.php?jetonomy_route=home', 'top' );
+
+		// Custom XML sitemap (index + paginated children) — replaces the WP-core
+		// providers so we can emit <priority>/<changefreq>. Handled by
+		// Sitemap_Emitter, which echoes XML and exits (see handle_request).
+		add_rewrite_rule( "^{$base}-sitemap\\.xml$", 'index.php?jetonomy_route=sitemap', 'top' );
+		add_rewrite_rule( "^{$base}-sitemap-(spaces|posts)-([0-9]+)\\.xml$", 'index.php?jetonomy_route=sitemap&jetonomy_tab=$matches[1]&jetonomy_slug=$matches[2]', 'top' );
 
 		// Category view
 		add_rewrite_rule( "^{$base}/category/([^/]+)/?$", 'index.php?jetonomy_route=category&jetonomy_slug=$matches[1]', 'top' );
@@ -201,6 +221,12 @@ class Router {
 		// Space RSS feed renders XML and exits before any template work.
 		if ( 'space-feed' === $route ) {
 			Feed::render( (string) $data['slug'] );
+		}
+
+		// Custom XML sitemap renders XML and exits before any template work.
+		// Empty tab = the sitemap index; tab+slug = a child page.
+		if ( 'sitemap' === $route ) {
+			SEO\Sitemap_Emitter::render( (string) $data['tab'], (int) $data['slug'] );
 		}
 
 		// Load the template (template may call status_header(404) inside)

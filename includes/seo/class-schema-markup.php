@@ -84,12 +84,14 @@ class Schema_Markup {
 			return;
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
+		// Shared defaults union so the admin checkboxes (Default: On) and these
+		// consumers agree — previously an absent seo_noindex_* / seo_sitemap key
+		// read as OFF despite the UI. See Jetonomy\seo_settings().
+		$settings = \Jetonomy\seo_settings();
 
-		// 1.4.0 D.4: schema emission defaults to ON. Pre-1.4.0 the option was
-		// opt-in, which meant a fresh install shipped with no JSON-LD on any
-		// route. Customers who want it OFF can set seo_schema=>false explicitly.
-		$seo_schema_enabled = ! array_key_exists( 'seo_schema', $settings ) || ! empty( $settings['seo_schema'] );
+		// Schema emission defaults to ON (already correct pre-defaults-helper via
+		// array_key_exists; kept for clarity). Customers set seo_schema=>false to disable.
+		$seo_schema_enabled = ! empty( $settings['seo_schema'] );
 		if ( ! $seo_schema_enabled ) {
 			return;
 		}
@@ -240,13 +242,24 @@ class Schema_Markup {
 			return null;
 		}
 
+		// Private/hidden spaces emit NO schema. Head output is crawler-facing
+		// (Googlebot is an anonymous visitor), so emitting CollectionPage here
+		// would expose a gated space's title, description, and post titles/URLs
+		// to any guest — the same leak the sitemap providers already avoid.
+		// Fail closed: only public spaces get structured data.
+		if ( 'public' !== ( $space->visibility ?? 'public' ) ) {
+			return null;
+		}
+
 		$base      = \Jetonomy\base_url();
 		$space_url = $base . '/s/' . $space->slug . '/';
 
 		// Top 10 recent posts in this space — gives the schema a real
 		// mainEntity ItemList rather than an empty container. Stays well
-		// inside the extreme-scale rule because of the LIMIT 10.
-		$posts        = \Jetonomy\Models\Post::list_by_space( (int) $space->id, 'latest', 10 );
+		// inside the extreme-scale rule because of the LIMIT 10. Uses the
+		// guest/non-privileged visibility path so per-post private ideas
+		// (is_private = 1) never surface in the public schema either.
+		$posts        = \Jetonomy\Models\Post::list_by_space_visible( (int) $space->id, 0, false, 'latest', 10 );
 		$item_entries = array();
 		foreach ( $posts as $i => $post ) {
 			$item_entries[] = array(
@@ -429,7 +442,11 @@ class Schema_Markup {
 
 		if ( 'space' === $route && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
-			if ( $space ) {
+			// Gate on read access — the space-route breadcrumb was ungated, so a
+			// guest on a private/hidden space URL got its title in BreadcrumbList
+			// JSON-LD (the post-route branch below was already gated; this one was
+			// missed). Same read check.
+			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
 					'url'  => $base . 's/' . $slug . '/',
@@ -440,13 +457,18 @@ class Schema_Markup {
 		if ( 'post' === $route && $space_slug && $slug ) {
 			$space = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
-			if ( $space ) {
+			// Gate each crumb on what THIS viewer may see. Head output is
+			// crawler-facing (Googlebot is a guest), so an ungated post/space
+			// title here leaks a private/hidden space's name and a private
+			// topic's title into BreadcrumbList JSON-LD even though the HTML
+			// view 403s. Mirror the get_post_schema() read gate.
+			if ( $space && \Jetonomy\Permissions\Permission_Engine::can( get_current_user_id(), 'read', (int) $space->id ) ) {
 				$items[] = [
 					'name' => $space->title,
 					'url'  => $base . 's/' . $space_slug . '/',
 				];
 			}
-			if ( $post ) {
+			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 				$items[] = [
 					'name' => $post->title,
 					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',

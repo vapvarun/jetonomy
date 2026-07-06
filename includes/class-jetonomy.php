@@ -178,9 +178,17 @@ final class Jetonomy {
 					'web'   => true,
 					'email' => false,
 				),
+				'reaction'            => array(
+					'web'   => true,
+					'email' => false,
+				),
 				'moderation'          => array(
 					'web'   => true,
 					'email' => true,
+				),
+				'flag_resolved'       => array(
+					'web'   => true,
+					'email' => false,
 				),
 				'join_request'        => array(
 					'web'   => true,

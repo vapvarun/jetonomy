@@ -135,12 +135,20 @@ class Notifier {
 				'subject' => __( '[{site}] Your post received a vote', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
 			),
+			'reaction'              => array(
+				'subject' => __( '[{site}] Someone reacted to your post', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nOpen the post to see the discussion.", 'jetonomy' ),
+			),
+			'flag_resolved'         => array(
+				'subject' => __( '[{site}] Your report was reviewed', 'jetonomy' ),
+				'body'    => __( "Hi {user},\n\n{message}\n\nThanks for helping keep {site} healthy.", 'jetonomy' ),
+			),
 			'moderation'            => array(
 				'subject' => __( '[{site}] A moderator reviewed your content', 'jetonomy' ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nIf you think this was a mistake, reply to a moderator in the community.", 'jetonomy' ),
 			),
 			'join_request'          => array(
-				'subject' => __( '[{site}] New space join request', 'jetonomy' ),
+				'subject' => sprintf( __( '[{site}] New %s join request', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'body'    => __( "Hi {user},\n\n{message}\n\nReview the request and approve or decline it.", 'jetonomy' ),
 			),
 			'verification_reminder' => array(
@@ -296,6 +304,13 @@ class Notifier {
 		// Flag created — notify moderators
 		add_action( 'jetonomy_flag_created', [ $this, 'on_flag_created' ], 10, 2 );
 
+		// Report closure — tell the reporter (neutrally) their flag was reviewed.
+		add_action( 'jetonomy_after_resolve_flag', [ $this, 'on_flag_resolved' ], 10, 2 );
+
+		// First reaction on a post/reply — notify the author once (fired by Pro
+		// reactions only on the 0->1 transition, so no per-reaction spam).
+		add_action( 'jetonomy_pro_first_reaction', [ $this, 'on_first_reaction' ], 10, 3 );
+
 		// Join request — notify space admins
 		add_action( 'jetonomy_join_request_created', [ $this, 'on_join_request' ], 10, 3 );
 		add_action( 'jetonomy_join_request_approved', [ $this, 'on_join_request_approved' ], 10, 3 );
@@ -346,7 +361,7 @@ class Notifier {
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
 		if ( ! empty( $mentioned ) ) {
 			$post = \Jetonomy\Models\Post::find( $post_id );
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ) );
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
 		}
 	}
 
@@ -447,7 +462,7 @@ class Notifier {
 		}
 
 		$space       = Space::find( $space_id );
-		$space_name  = $space ? $space->title : __( 'a space', 'jetonomy' );
+		$space_name  = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$actor_id    = (int) $post->author_id;
 		$post_url    = $this->get_post_url( $post );
 		$subscribers = Subscription::get_subscribers( 'space', $space_id );
@@ -697,6 +712,86 @@ class Notifier {
 	}
 
 	/**
+	 * Notify a content author the FIRST time their post/reply is reacted to.
+	 *
+	 * Pro reactions fires jetonomy_pro_first_reaction only on the 0->1 reactor
+	 * transition, so the author gets a single nudge, never a ping per reaction.
+	 * Mirrors on_vote(); skips self-reactions.
+	 *
+	 * @param string $object_type 'post' or 'reply'.
+	 * @param int    $object_id   Reacted object ID.
+	 * @param int    $reactor_id  User who reacted.
+	 */
+	public function on_first_reaction( string $object_type, int $object_id, int $reactor_id ): void {
+		$content_url = '';
+		if ( 'post' === $object_type ) {
+			$obj = Post::find( $object_id );
+			if ( ! $obj || (int) $obj->author_id === $reactor_id ) {
+				return;
+			}
+			$author_id   = (int) $obj->author_id;
+			$title       = mb_substr( $obj->title, 0, 50 );
+			$content_url = $this->get_post_url( $obj );
+		} elseif ( 'reply' === $object_type ) {
+			$obj = Reply::find( $object_id );
+			if ( ! $obj || (int) $obj->author_id === $reactor_id ) {
+				return;
+			}
+			$author_id = (int) $obj->author_id;
+			$title     = __( 'your reply', 'jetonomy' );
+			$parent    = $obj->post_id ? Post::find( (int) $obj->post_id ) : null;
+			if ( $parent ) {
+				$content_url = $this->get_post_url( $parent );
+			}
+		} else {
+			return;
+		}
+
+		$this->create_and_maybe_email(
+			$author_id,
+			$reactor_id,
+			'reaction',
+			$object_type,
+			$object_id,
+			sprintf(
+				// translators: %s: content title.
+				__( 'Someone reacted to %s', 'jetonomy' ),
+				'"' . $title . '"'
+			),
+			$content_url
+		);
+	}
+
+	/**
+	 * Notify the reporter (neutrally) when a moderator resolves their flag.
+	 *
+	 * O(1) — one recipient. Deliberately does NOT reveal the moderation outcome
+	 * (product decision); it just closes the reporter's loop. Links to the
+	 * community home so a removed target can't 404. Skips self-resolved flags and
+	 * reporter-less (system) flags.
+	 *
+	 * @param object $flag    Resolved flag row (carries reporter_id/object_*).
+	 * @param array  $context { status, user_id } — the resolving moderator.
+	 */
+	public function on_flag_resolved( $flag, array $context = array() ): void {
+		$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+		$resolver_id = (int) ( $context['user_id'] ?? 0 );
+		if ( $reporter_id < 1 || $reporter_id === $resolver_id ) {
+			return;
+		}
+
+		$this->create_and_maybe_email(
+			$reporter_id,
+			$resolver_id,
+			'flag_resolved',
+			(string) ( $flag->object_type ?? 'post' ),
+			(int) ( $flag->object_id ?? 0 ),
+			__( 'Your report was reviewed. Thanks for helping keep the community healthy.', 'jetonomy' ),
+			\Jetonomy\base_url() . '/'
+		);
+	}
+
+	/**
 	 * Notify when a reply is accepted as answer.
 	 */
 	public function on_reply_accepted( int $reply_id, int $post_id ): void {
@@ -911,16 +1006,54 @@ class Notifier {
 			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
 		}
 
-		// Check email preference.
-		if ( isset( $user_prefs[ $type ]['email'] ) ) {
-			$send_email = ! empty( $user_prefs[ $type ]['email'] );
-		} else {
-			$send_email = ! empty( $global_defaults[ $type ]['email'] );
-		}
-
-		if ( $send_email ) {
+		// Check email preference via the shared gate (profile + defaults already
+		// loaded above, so no extra query beyond the one opt-out meta read).
+		if ( self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
+	}
+
+	/**
+	 * Should this user receive an EMAIL for this notification type?
+	 *
+	 * The single source of truth for the email decision, combining the three
+	 * preference layers in order — checked once per recipient (O(1)):
+	 *   1. master kill-switch  (jetonomy_email_opt_out user meta)
+	 *   2. per-user per-type    (UserProfile.settings['notifications'][type]['email'])
+	 *   3. admin default        (jetonomy_settings['notification_defaults'][type]['email'])
+	 *
+	 * $user_prefs / $global_defaults may be passed when the caller already loaded
+	 * them (create_and_maybe_email / Mentions::notify do) to avoid a re-read.
+	 * Callers that only need the master kill-switch may omit $type.
+	 *
+	 * @param int        $user_id         Recipient.
+	 * @param string     $type            Notification type (empty = kill-switch check only).
+	 * @param array|null $user_prefs      Pre-loaded per-user notifications map.
+	 * @param array|null $global_defaults Pre-loaded admin notification_defaults map.
+	 * @return bool
+	 */
+	public static function should_email( int $user_id, string $type = '', ?array $user_prefs = null, ?array $global_defaults = null ): bool {
+		// Master kill-switch — suppresses ALL email (web notifications unaffected).
+		if ( get_user_meta( $user_id, 'jetonomy_email_opt_out', true ) ) {
+			return false;
+		}
+		if ( '' === $type ) {
+			return true; // Kill-switch-only check passed.
+		}
+
+		if ( null === $user_prefs ) {
+			$profile    = UserProfile::find_by_user( $user_id );
+			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
+			$user_prefs = is_array( $settings ) ? ( $settings['notifications'] ?? [] ) : [];
+		}
+		if ( isset( $user_prefs[ $type ]['email'] ) ) {
+			return ! empty( $user_prefs[ $type ]['email'] );
+		}
+
+		if ( null === $global_defaults ) {
+			$global_defaults = get_option( 'jetonomy_settings', [] )['notification_defaults'] ?? [];
+		}
+		return ! empty( $global_defaults[ $type ]['email'] );
 	}
 
 	private function send_email_notification( int $user_id, string $type, string $message, string $object_type = '', int $object_id = 0, string $url = '', array $extra = array() ): void {
@@ -1010,11 +1143,19 @@ class Notifier {
 		 * Filter the headers before sending. Integrators can append
 		 * additional headers (tracking, tagging) here.
 		 *
-		 * @param string[]  $headers Headers array ready for wp_mail.
-		 * @param string    $type    Notification type.
-		 * @param \WP_User  $user    Recipient.
+		 * The object context (type + id) is passed so integrations that build
+		 * per-notification headers can identify the target — e.g. the Pro
+		 * Reply-by-Email extension needs the post id to mint a Reply-To token.
+		 * For 'reply_to_post' the object is the post ('post', post_id); for
+		 * 'reply_to_reply' it is the reply ('reply', reply_id).
+		 *
+		 * @param string[]  $headers     Headers array ready for wp_mail.
+		 * @param string    $type        Notification type.
+		 * @param \WP_User  $user        Recipient.
+		 * @param string    $object_type Target object type ('post'|'reply'|'space'|'user'|'').
+		 * @param int       $object_id   Target object ID (0 when none).
 		 */
-		$headers = (array) apply_filters( 'jetonomy_email_headers', $headers, $type, $user );
+		$headers = (array) apply_filters( 'jetonomy_email_headers', $headers, $type, $user, $object_type, $object_id );
 
 		$email_adapter->send( $user->user_email, $subject, $html, $plain, $headers );
 	}
@@ -1128,11 +1269,13 @@ class Notifier {
 			'reply_to_reply'      => __( 'New Reply', 'jetonomy' ),
 			'mention'             => __( 'Mention', 'jetonomy' ),
 			'vote_on_post'        => __( 'Vote', 'jetonomy' ),
+			'reaction'            => __( 'Reaction', 'jetonomy' ),
 			'accepted_answer'     => __( 'Answer Accepted', 'jetonomy' ),
 			'idea_status_changed' => __( 'Roadmap Update', 'jetonomy' ),
 			'new_post_in_sub'     => __( 'New Post', 'jetonomy' ),
 			'badge_earned'        => __( 'Achievement', 'jetonomy' ),
 			'moderation'          => __( 'Moderation', 'jetonomy' ),
+			'flag_resolved'       => __( 'Report Reviewed', 'jetonomy' ),
 			'join_request'        => __( 'Join Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Welcome', 'jetonomy' ),
 		];
@@ -1143,11 +1286,13 @@ class Notifier {
 			'reply_to_reply'      => __( 'View Reply', 'jetonomy' ),
 			'mention'             => __( 'View Post', 'jetonomy' ),
 			'vote_on_post'        => __( 'View Post', 'jetonomy' ),
+			'reaction'            => __( 'View Post', 'jetonomy' ),
 			'accepted_answer'     => __( 'View Answer', 'jetonomy' ),
 			'idea_status_changed' => __( 'View Idea', 'jetonomy' ),
 			'new_post_in_sub'     => __( 'View Post', 'jetonomy' ),
 			'badge_earned'        => __( 'View Your Badges', 'jetonomy' ),
 			'moderation'          => __( 'Review in Mod Queue', 'jetonomy' ),
+			'flag_resolved'       => __( 'Open the Community', 'jetonomy' ),
 			'join_request'        => __( 'Review Request', 'jetonomy' ),
 			'user_welcome'        => __( 'Open the Community', 'jetonomy' ),
 		];
@@ -1213,7 +1358,7 @@ class Notifier {
 	 */
 	public function on_join_request_approved( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : __( 'the space', 'jetonomy' );
+		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$url   = $space ? \Jetonomy\base_url() . '/s/' . $space->slug . '/' : '';
 		$this->create_and_maybe_email(
 			$user_id,
@@ -1232,7 +1377,7 @@ class Notifier {
 	 */
 	public function on_join_request_denied( int $space_id, int $user_id, int $reviewed_by ): void {
 		$space = Space::find( $space_id );
-		$name  = $space ? $space->title : __( 'the space', 'jetonomy' );
+		$name  = $space ? $space->title : sprintf( __( 'the %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		$this->create_and_maybe_email(
 			$user_id,
 			$reviewed_by,
@@ -1249,7 +1394,7 @@ class Notifier {
 	 */
 	public function on_join_request( int $space_id, int $user_id, string $message ): void {
 		$space      = Space::find( $space_id );
-		$space_name = $space ? $space->title : __( 'a space', 'jetonomy' );
+		$space_name = $space ? $space->title : sprintf( __( 'a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 
 		// Collect recipients: space-level admins/moderators + WP-level admins.
 		$recipient_ids = [];

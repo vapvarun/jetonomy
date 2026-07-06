@@ -156,6 +156,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="space_label_singular"><?php esc_html_e( 'Space Label', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="text" id="space_label_singular" name="jetonomy_settings[space_label_singular]" value="<?php echo esc_attr( $settings['space_label_singular'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
+							<input type="text" id="space_label_plural" name="jetonomy_settings[space_label_plural]" value="<?php echo esc_attr( $settings['space_label_plural'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Spaces', 'jetonomy' ); ?>">
+							<p class="description"><?php esc_html_e( 'What to call a Space across the whole community — singular and plural (e.g. Forum / Forums, Discussion / Discussions). Leave empty to keep "Space / Spaces".', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Community as Homepage', 'jetonomy' ); ?></th>
 						<td>
 							<label for="front_page">
@@ -166,7 +174,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="default_space_type"><?php esc_html_e( 'Default Space Type', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="default_space_type"><?php echo esc_html( sprintf( __( 'Default %s Type', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label></th>
 						<td>
 							<select id="default_space_type" name="jetonomy_settings[default_space_type]">
 								<option value="forum" <?php selected( $settings['default_space_type'] ?? 'forum', 'forum' ); ?>><?php esc_html_e( 'Forum', 'jetonomy' ); ?></option>
@@ -174,11 +182,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<option value="ideas" <?php selected( $settings['default_space_type'] ?? '', 'ideas' ); ?>><?php esc_html_e( 'Ideas', 'jetonomy' ); ?></option>
 								<option value="feed" <?php selected( $settings['default_space_type'] ?? '', 'feed' ); ?>><?php esc_html_e( 'Feed', 'jetonomy' ); ?></option>
 							</select>
-							<p class="description"><?php esc_html_e( 'The pre-selected type when creating a new space.', 'jetonomy' ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'The pre-selected type when creating a new %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Front-end space creation', 'jetonomy' ); ?></th>
+						<th scope="row"><?php echo esc_html( sprintf( __( 'Front-end %s creation', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></th>
 						<td>
 							<?php
 							$selected_roles = isset( $settings['frontend_space_creation_roles'] )
@@ -233,7 +241,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							}
 							?>
 							<fieldset>
-								<legend class="screen-reader-text"><?php esc_html_e( 'Roles allowed to create spaces from the front end', 'jetonomy' ); ?></legend>
+								<legend class="screen-reader-text"><?php echo esc_html( sprintf( __( 'Roles allowed to create %s from the front end', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></legend>
 								<?php foreach ( $jt_role_groups as $jt_group ) : ?>
 									<?php if ( ! empty( $jt_group['keys'] ) ) : ?>
 										<p style="margin:12px 0 4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#646970;"><?php echo esc_html( $jt_group['label'] ); ?></p>
@@ -248,7 +256,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 									<?php endif; ?>
 								<?php endforeach; ?>
 							</fieldset>
-							<p class="description" style="margin-block-start:12px;"><?php esc_html_e( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create spaces from /community/new-space/. Leave every box unticked to keep front-end space creation admin-only.', 'jetonomy' ); ?></p>
+							<p class="description" style="margin-block-start:12px;"><?php echo esc_html( sprintf( __( 'Site administrators always qualify. Tick any additional WordPress roles you trust to create %1$s from /community/new-space/. Leave every box unticked to keep front-end %2$s creation admin-only.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -366,8 +374,8 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 											'upload_media' => __( 'Upload images', 'jetonomy' ),
 											'edit_own_posts' => __( 'Edit own posts', 'jetonomy' ),
 											'delete_own_posts' => __( 'Delete own posts', 'jetonomy' ),
-											'create_spaces' => __( 'Create spaces', 'jetonomy' ),
-											'join_spaces'  => __( 'Join private spaces', 'jetonomy' ),
+											'create_spaces' => sprintf( __( 'Create %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+											'join_spaces'  => sprintf( __( 'Join private %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 											'edit_others_posts' => __( "Edit others' posts", 'jetonomy' ),
 											'close_posts'  => __( 'Close topics', 'jetonomy' ),
 											'pin_posts'    => __( 'Pin topics', 'jetonomy' ),
@@ -428,11 +436,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<tr>
 							<td><strong><?php esc_html_e( 'Administrator', 'jetonomy' ); ?></strong></td>
-							<td><?php esc_html_e( 'All capabilities: manage settings, manage spaces, moderate', 'jetonomy' ); ?></td>
+							<td><?php echo esc_html( sprintf( __( 'All capabilities: manage settings, manage %s, moderate', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td><strong><?php esc_html_e( 'Editor', 'jetonomy' ); ?></strong></td>
-							<td><?php esc_html_e( 'Moderate content, manage spaces', 'jetonomy' ); ?></td>
+							<td><?php echo esc_html( sprintf( __( 'Moderate content, manage %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
 						</tr>
 						<tr>
 							<td><strong><?php esc_html_e( 'Author / Contributor', 'jetonomy' ); ?></strong></td>
@@ -440,7 +448,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</tr>
 						<tr>
 							<td><strong><?php esc_html_e( 'Subscriber', 'jetonomy' ); ?></strong></td>
-							<td><?php esc_html_e( 'Read public spaces, create posts and replies', 'jetonomy' ); ?></td>
+							<td><?php echo esc_html( sprintf( __( 'Read public %s, create posts and replies', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ); ?></td>
 						</tr>
 					</tbody>
 				</table>
@@ -533,6 +541,14 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="verification_reminder_hours"><?php esc_html_e( 'Email Verification Reminder', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="number" id="verification_reminder_hours" name="jetonomy_settings[verification_reminder_hours]" min="0" max="168" value="<?php echo esc_attr( (string) (int) ( $settings['verification_reminder_hours'] ?? 24 ) ); ?>" class="small-text">
+							<?php esc_html_e( 'hours', 'jetonomy' ); ?>
+							<p class="description"><?php esc_html_e( 'Send a one-time &quot;confirm your email&quot; reminder this many hours after signup if a member has not verified. Set to 0 to disable.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><?php esc_html_e( 'Email Adapter', 'jetonomy' ); ?></th>
 						<td>
 							<select disabled>
@@ -574,11 +590,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'mention'             => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'     => __( 'Your answer accepted', 'jetonomy' ),
 					'idea_status_changed' => __( 'Your idea roadmap status changed', 'jetonomy' ),
-					'new_post_in_sub'     => __( 'New post in subscribed space', 'jetonomy' ),
+					'new_post_in_sub'     => sprintf( __( 'New post in subscribed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'badge_earned'        => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'        => __( 'Vote on your post', 'jetonomy' ),
+					'reaction'            => __( 'Reaction on your post', 'jetonomy' ),
 					'moderation'          => __( 'Moderator action on your content', 'jetonomy' ),
-					'join_request'        => __( 'Space join request', 'jetonomy' ),
+					'flag_resolved'       => __( 'Your report was reviewed', 'jetonomy' ),
+					'join_request'        => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 				];
 				?>
 				<table class="jt-notif-defaults-table">
@@ -592,8 +610,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					<tbody>
 						<?php
 						foreach ( $notif_types as $type => $label ) :
+							// Fallbacks must match how Notifier consumes an unset type:
+							// web defaults ON ( ?? true ), but email defaults OFF
+							// ( should_email() uses !empty() ). Rendering email as
+							// checked-by-default showed types as ON that the notifier
+							// treats as OFF (the phantom-default this card targets).
 							$web_on   = isset( $notif_defaults[ $type ]['web'] ) ? (bool) $notif_defaults[ $type ]['web'] : true;
-							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : true;
+							$email_on = isset( $notif_defaults[ $type ]['email'] ) ? (bool) $notif_defaults[ $type ]['email'] : false;
 							?>
 							<tr>
 								<td><?php echo esc_html( $label ); ?></td>
@@ -644,11 +667,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					'mention'               => __( 'Mention (@username)', 'jetonomy' ),
 					'accepted_answer'       => __( 'Your answer accepted', 'jetonomy' ),
 					'idea_status_changed'   => __( 'Your idea roadmap status changed', 'jetonomy' ),
-					'new_post_in_sub'       => __( 'New post in subscribed space', 'jetonomy' ),
+					'new_post_in_sub'       => sprintf( __( 'New post in subscribed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'badge_earned'          => __( 'Badge earned', 'jetonomy' ),
 					'vote_on_post'          => __( 'Vote on your post', 'jetonomy' ),
 					'moderation'            => __( 'Moderator action', 'jetonomy' ),
-					'join_request'          => __( 'Space join request', 'jetonomy' ),
+					'join_request'          => sprintf( __( '%s join request', 'jetonomy' ), \Jetonomy\space_label() ),
 					'verification_reminder' => __( 'Verification reminder', 'jetonomy' ),
 				);
 				?>
@@ -764,6 +787,23 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					</table>
 			</div>
 
+			<!-- Brand Logo -->
+			<div class="jt-settings-card">
+				<div class="jt-settings-card__head">
+					<p class="jt-settings-card__title"><?php esc_html_e( 'Logo', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Your community logo. Shown in the mobile app (login + header) and anywhere a brand mark is needed. Square or wide PNG/SVG; leave empty to show the Community Title as text.', 'jetonomy' ); ?></p>
+				</div>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="logo_url"><?php esc_html_e( 'Logo URL', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="logo_url" name="jetonomy_settings[logo_url]" value="<?php echo esc_url( $settings['logo_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/logo.png">
+							<p class="description"><?php esc_html_e( 'Paste an image URL (e.g. from Media Library). Recommended: at least 512px on the longest side, transparent PNG.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+				</table>
+			</div>
+
 			<!-- Color Palette -->
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
@@ -843,7 +883,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 								<input type="number" name="jetonomy_settings[container_width_custom]" value="<?php echo esc_attr( (string) $jt_container_width_custom ); ?>" min="600" max="2400" step="10" class="small-text" style="margin-inline-start:8px;">
 								<span><?php esc_html_e( 'px', 'jetonomy' ); ?></span>
 							</fieldset>
-							<p class="description"><?php esc_html_e( 'Applies to community pages only (Spaces, Discussions, Profile, etc.).', 'jetonomy' ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'Applies to community pages only (%s, Discussions, Profile, etc.).', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -938,7 +978,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="seo_space_title"><?php esc_html_e( 'Space Title', 'jetonomy' ); ?></label></th>
+						<th scope="row"><label for="seo_space_title"><?php echo esc_html( sprintf( __( '%s Title', 'jetonomy' ), \Jetonomy\space_label() ) ); ?></label></th>
 						<td>
 							<input type="text" id="seo_space_title" name="jetonomy_settings[seo_space_title]" value="<?php echo esc_attr( $settings['seo_space_title'] ?? '{space_name} | {site_name}' ); ?>" class="large-text">
 							<p class="description"><?php esc_html_e( 'Tokens: {space_name}, {site_name}', 'jetonomy' ); ?></p>
@@ -1009,7 +1049,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 							<a class="button" href="<?php echo esc_url( home_url( '/wp-sitemap.xml' ) ); ?>" target="_blank" rel="noopener">
 								<?php esc_html_e( 'Open XML sitemap', 'jetonomy' ); ?>
 							</a>
-							<p class="description"><?php esc_html_e( 'Confirms /wp-sitemap.xml is reachable and that community URLs (spaces + posts) are listed. New spaces can take a few minutes to appear after the next ping.', 'jetonomy' ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'Confirms /wp-sitemap.xml is reachable and that community URLs (%1$s + posts) are listed. New %2$s can take a few minutes to appear after the next ping.', 'jetonomy' ), \Jetonomy\space_label( true, true ), \Jetonomy\space_label( true, true ) ) ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -1110,7 +1150,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				<div class="jt-pro-upsell">
 					<span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span>
 					<h4><?php esc_html_e( 'SEO Pro', 'jetonomy' ); ?></h4>
-					<p><?php esc_html_e( 'Open Graph tags, per-space canonical URLs, breadcrumb schema, and advanced robots control.', 'jetonomy' ); ?></p>
+					<p><?php echo esc_html( sprintf( __( 'Open Graph tags, per-%s canonical URLs, breadcrumb schema, and advanced robots control.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
@@ -1233,7 +1273,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'Analytics Dashboard', 'jetonomy' ),
 						'icon' => 'dashicons-chart-area',
-						'desc' => __( 'Engagement graphs, user growth, top spaces, post trends, and CSV export.', 'jetonomy' ),
+						'desc' => sprintf( __( 'Engagement graphs, user growth, top %s, post trends, and CSV export.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 						'tier' => 'Starter',
 					],
 					[
@@ -1281,7 +1321,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 					[
 						'name' => __( 'SEO Pro', 'jetonomy' ),
 						'icon' => 'dashicons-search',
-						'desc' => __( 'Per-space meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ),
+						'desc' => sprintf( __( 'Per-%s meta titles, Open Graph, Twitter Cards, Schema.org, sitemap controls.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 						'tier' => 'Growth',
 					],
 					[

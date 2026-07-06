@@ -166,8 +166,25 @@ class Embeds {
 						return '<div class="jt-embed">' . self::tiktok_iframe( $tiktok_id ) . '</div>' . $trailing;
 					}
 
-					$embed = wp_oembed_get( $url, array( 'width' => 680 ) );
-					if ( $embed ) {
+					// Cache the oEmbed resolution keyed on the URL. Without this,
+					// wp_oembed_get() fires a live provider HTTP request per URL
+					// on EVERY render (every post/reply in every list) — a call
+					// storm at scale. WP core's oEmbed cache doesn't help here
+					// (Jetonomy content lives in custom tables, not WP posts).
+					// Keyed by URL so it's shared across posts and needs no
+					// content-edit invalidation. Empty-string sentinel caches the
+					// negative (wp_oembed_get returns false for non-embeddable
+					// URLs, which Cache::remember would otherwise treat as a miss
+					// and re-fetch every render).
+					$embed = \Jetonomy\Cache::remember(
+						'oembed:' . md5( $url . '|680' ),
+						static function () use ( $url ) {
+							$html = wp_oembed_get( $url, array( 'width' => 680 ) );
+							return is_string( $html ) ? $html : '';
+						},
+						DAY_IN_SECONDS
+					);
+					if ( '' !== $embed ) {
 						return '<div class="jt-embed">' . $embed . '</div>' . $trailing;
 					}
 

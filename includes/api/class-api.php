@@ -40,6 +40,11 @@ class Api {
 			'admin'            => 'Admin_Controller',
 			'media'            => 'Media_Controller',
 			'auth'             => 'Auth_Controller',
+			// 1.6.0 mobile-API additions. `app-config` powers pre-login app
+			// theming + feature flags; `feed` is the global cross-space home
+			// feed. Keys are kebab → class-<key>-controller.php.
+			'app-config'       => 'App_Config_Controller',
+			'feed'             => 'Feed_Controller',
 		];
 
 		require_once $dir . 'class-base-controller.php';

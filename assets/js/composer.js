@@ -898,3 +898,30 @@ document.addEventListener( 'DOMContentLoaded', () => {
     window.addEventListener( 'scroll', closeDropdown, true );
     window.addEventListener( 'resize', closeDropdown );
 }() );
+
+/* ── Unsaved-changes guard for the new-post composer ──
+ * Warns before a full-page unload (tab close, refresh, external link) when the
+ * new-post form has edits that were never submitted. Disarms on submit so the
+ * post-submit redirect doesn't trip it. Re-attaches on iAPI client navigation
+ * (DOMContentLoaded fires only once) per the frontend-interactivity standard.
+ */
+( function () {
+    function attachUnsavedGuard() {
+        var form = document.getElementById( 'jt-new-post-form' );
+        if ( ! form || form.dataset.jtUnsavedGuard ) { return; }
+        form.dataset.jtUnsavedGuard = '1';
+        var dirty = false;
+        form.addEventListener( 'input', function () { dirty = true; } );
+        form.addEventListener( 'change', function () { dirty = true; } );
+        // Submitting is intentional — don't warn on the success redirect.
+        form.addEventListener( 'submit', function () { dirty = false; }, true );
+        window.addEventListener( 'beforeunload', function ( e ) {
+            if ( ! dirty ) { return; }
+            e.preventDefault();
+            e.returnValue = ''; // Triggers the browser's native "Leave site?" prompt.
+        } );
+    }
+    document.addEventListener( 'DOMContentLoaded', attachUnsavedGuard );
+    document.addEventListener( 'jetonomy:navigated', attachUnsavedGuard );
+    if ( document.readyState !== 'loading' ) { attachUnsavedGuard(); }
+}() );

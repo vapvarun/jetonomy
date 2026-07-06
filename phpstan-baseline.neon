@@ -228,16 +228,6 @@ parameters:
 		-
 			message: "#^Call to function is_wp_error\\(\\) with bool will always evaluate to false\\.$#"
 			count: 1
-			path: includes/models/class-space-member.php
-
-		-
-			message: "#^is_wp_error\\(bool\\) will always evaluate to false\\.$#"
-			count: 1
-			path: includes/models/class-space-member.php
-
-		-
-			message: "#^Call to function is_wp_error\\(\\) with bool will always evaluate to false\\.$#"
-			count: 1
 			path: includes/models/class-vote.php
 
 		-
@@ -289,8 +279,3 @@ parameters:
 			message: "#^is_wp_error\\(WP_REST_Response\\) will always evaluate to false\\.$#"
 			count: 1
 			path: includes/qa/class-rest-tests.php
-
-		-
-			message: "#^Negated boolean expression is always false\\.$#"
-			count: 1
-			path: includes/seo/class-sitemap.php

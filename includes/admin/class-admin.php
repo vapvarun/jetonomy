@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
+use Jetonomy\Models\Reply;
 use Jetonomy\Models\SpaceMember;
 use Jetonomy\Models\AccessRule;
 use Jetonomy\Models\JoinRequest;
@@ -260,6 +261,12 @@ class Admin {
 	// ── Settings API ──
 
 	public function register_settings(): void {
+		// The Settings page renders under jetonomy_manage_settings, but the form
+		// posts to options.php which enforces manage_options by default. Align
+		// them so delegating the granular cap to a non-admin role actually lets
+		// that role SAVE (otherwise they hit a WP "not allowed" wp_die).
+		add_filter( 'option_page_capability_jetonomy_settings', static fn() => 'jetonomy_manage_settings' );
+
 		register_setting(
 			'jetonomy_settings',
 			'jetonomy_settings',
@@ -342,7 +349,9 @@ class Admin {
 			'new_post_in_sub',
 			'badge_earned',
 			'vote_on_post',
+			'reaction',
 			'moderation',
+			'flag_resolved',
 			'join_request',
 			// A8: editor row for the A10 reminder cron's email. Without this
 			// the form silently strips any verification_reminder override
@@ -391,8 +400,13 @@ class Admin {
 			}
 			$clean['base_slug']          = $new_slug;
 			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
-			$clean['posts_per_page']     = max( 1, absint( $input['posts_per_page'] ?? 20 ) );
-			$clean['replies_per_page']   = max( 1, absint( $input['replies_per_page'] ?? 30 ) );
+			// Space label override (singular / plural). Empty = keep the default.
+			$clean['space_label_singular'] = sanitize_text_field( $input['space_label_singular'] ?? '' );
+			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
+			// Clamp to the UI max (100) so a crafted POST can't store a huge
+			// value that flows straight into a SQL LIMIT on a big-site query.
+			$clean['posts_per_page']     = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
+			$clean['replies_per_page']   = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
 			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
 			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
@@ -471,6 +485,11 @@ class Admin {
 			$clean['email_logo_url']    = esc_url_raw( $input['email_logo_url'] ?? '' );
 			$clean['email_footer_text'] = sanitize_text_field( $input['email_footer_text'] ?? '' );
 
+			// Verification-reminder cadence (hours). 0 = disabled; clamp to a
+			// week so a typo can't schedule an absurd delay. Consumed by the
+			// verification-reminder cron (Verification_Reminder).
+			$clean['verification_reminder_hours'] = min( 168, max( 0, absint( $input['verification_reminder_hours'] ?? 24 ) ) );
+
 			// Notification defaults — checkbox values absent when unchecked, so default false if not present.
 			$notif_types = array(
 				'reply_to_post',
@@ -480,8 +499,13 @@ class Admin {
 				'new_post_in_sub',
 				'badge_earned',
 				'vote_on_post',
+				'reaction',
 				'moderation',
+				'flag_resolved',
 				'join_request',
+				// Was missing, so unchecking its admin default silently reverted
+				// to the seeded true/true — the toggle looked dead.
+				'idea_status_changed',
 			);
 			$raw_notif   = is_array( $input['notification_defaults'] ?? null ) ? $input['notification_defaults'] : array();
 			foreach ( $notif_types as $nt ) {
@@ -499,6 +523,7 @@ class Admin {
 			$clean['inherit_fonts']  = ! empty( $input['inherit_fonts'] );
 			$clean['inherit_colors'] = ! empty( $input['inherit_colors'] );
 			$clean['accent_color']   = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
+			$clean['logo_url']       = esc_url_raw( $input['logo_url'] ?? '' );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
 				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
@@ -905,9 +930,12 @@ class Admin {
 			)
 		);
 
-		// Per-page admin scripts. Hook suffix matches WP's auto-generated
-		// menu_page_url hook ('toplevel_page_jetonomy' for the dashboard,
-		// 'jetonomy_page_jetonomy-{slug}' for sub-pages).
+		// Per-page admin scripts. WP builds sub-page hooks as
+		// '{sanitize_title(menu_label)}_page_{slug}', and White Label filters the
+		// menu label — so the prefix becomes e.g. 'qa-brand_page_...'. Match by
+		// the stable '_page_{slug}' suffix, not the label-derived prefix, or these
+		// per-page scripts silently fail to load on white-labeled sites. (The
+		// toplevel hook uses the menu SLUG, which White Label leaves alone.)
 		if ( 'toplevel_page_jetonomy' === $hook ) {
 			wp_enqueue_script(
 				'jetonomy-admin-dashboard',
@@ -916,7 +944,7 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'jetonomy_page_jetonomy-revisions' === $hook ) {
+		} elseif ( str_ends_with( $hook, '_page_jetonomy-revisions' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-revisions',
 				JETONOMY_URL . 'assets/js/admin-revisions.js',
@@ -924,7 +952,7 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'jetonomy_page_jetonomy-tags' === $hook ) {
+		} elseif ( str_ends_with( $hook, '_page_jetonomy-tags' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-tags',
 				JETONOMY_URL . 'assets/js/admin-tags.js',
@@ -932,7 +960,7 @@ class Admin {
 				JETONOMY_VERSION,
 				true
 			);
-		} elseif ( 'jetonomy_page_jetonomy-settings' === $hook ) {
+		} elseif ( str_ends_with( $hook, '_page_jetonomy-settings' ) ) {
 			wp_enqueue_script(
 				'jetonomy-admin-settings',
 				JETONOMY_URL . 'assets/js/admin-settings.js',
@@ -1040,7 +1068,7 @@ class Admin {
 		if ( 'edit' === $action && $space_id > 0 ) {
 			$space = Space::find( $space_id );
 			if ( ! $space ) {
-				wp_die( esc_html__( 'Space not found.', 'jetonomy' ) );
+				wp_die( esc_html( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) ) );
 			}
 			$categories     = $this->get_all_categories_flat();
 			$members        = SpaceMember::list_by_space( $space_id );
@@ -1101,9 +1129,12 @@ class Admin {
 		$paged_flags   = max( 1, absint( $_GET['paged_flags'] ?? 1 ) );
 		$paged_banned  = max( 1, absint( $_GET['paged_banned'] ?? 1 ) );
 
-		// Real totals for tab badge counts.
-		$total_posts   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'pending'" );
-		$total_replies = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'pending'" );
+		// Real totals for tab badge counts. Posts/replies reuse the shared
+		// count-by-status model methods (same COUNT(*) the REST queue uses);
+		// the paginated list queries below keep their display JOINs (space/post
+		// title) and stay here since the API path doesn't need those columns.
+		$total_posts   = Post::count_by_status( array( 'pending' ) );
+		$total_replies = Reply::count_by_status( array( 'pending' ) );
 		$total_flags   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$flags_t} WHERE status = 'pending'" );
 		$total_banned  = (int) $wpdb->get_var(
 			$wpdb->prepare(
@@ -1456,7 +1487,10 @@ class Admin {
 	}
 
 	public function render_settings(): void {
-		$settings = get_option( 'jetonomy_settings', array() );
+		// Merge SEO defaults so the checkbox render matches what the frontend
+		// consumers actually do (shared source of truth, prevents phantom
+		// "Default: On" toggles that were really off).
+		$settings = \Jetonomy\seo_settings();
 		include JETONOMY_DIR . 'includes/admin/views/settings.php';
 	}
 

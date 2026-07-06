@@ -1,0 +1,39 @@
+# Jetonomy 1.6.0 — Open audit issues (Basecamp cards)
+
+Created 2026-07-04 in the **Bugs** column (project 46596502, table 9706083020, column 9706083723).
+Plan: `../plans/active/1.6.0-remaining-audit-fixes.md`. Every card carries the 10k-sites x 100k-users scale bar.
+Fetch: `basecamp show <id> -m`. Move/comment on the board directly.
+
+| Wave | Card | ID |
+|------|------|----|
+| Wave A - scale | Space members REST returns ALL members (no LIMIT) | `10062614535` |
+| Wave A - scale | Moderation queue runs unbounded SELECT * | `10062614546` |
+| Wave A - scale | Analytics top-contributors is N+1 over all users | `10062614567` |
+| Wave A - scale | Trust-level eval cron never covers a large member base | `10062614582` |
+| Wave A - scale | Embeds call wp_oembed_get() per URL on every render | `10062614598` |
+| Wave B - privacy | Email digest leaks private/hidden-space content to non-members | `10062614614` |
+| Wave B - privacy | Poll on a private-space post is open to anyone | `10062614624` |
+| Wave B - privacy | Site announcements ignore is_private / space visibility | `10062614643` |
+| Wave B - privacy | Reactions: no read check on toggle/list | `10062614655` |
+| Wave B - privacy | AI suggest-reply has no can_read_post gate | `10062614662` |
+| Wave B - privacy | Mentions notify users who can't read the space | `10062614677` |
+| Wave B - privacy | Web-push may push content the device shouldn't receive | `10062614696` |
+| Wave C | Multiple-choice poll vote corrupts prior selections | `10062614703` |
+| Wave C | Private-messaging Block is display-only; no report path | `10062614709` |
+| Wave C | Analytics CSV export returns JSON, not a file | `10062614719` |
+| Wave C | AI Daily Budget cap is dead wiring | `10062614736` |
+| Wave C | White-label header logo/branding not applied on frontend | `10062614746` |
+| Wave C | Webhooks: signing secret never returned; no delivery log | `10062614753` |
+| Wave D | Notifications: email opt-out + per-type toggles not honored | `10062614762` |
+| Wave D | Email digest: default frequency / send_hour / kill-switch ignored | `10062614767` |
+| Wave D | SEO-Pro: exclude-from-sitemap / priority / meta-title dead | `10062614779` |
+| Wave D | Custom-fields Searchable/Filterable flags are dead weight | `10062614797` |
+| Wave D | Advanced-moderation: rule type edit lost; hold/mark not enforced | `10062614809` |
+| Wave D | Custom-badges: repeatable awards fire once; no revoke | `10062614833` |
+| Wave D | SEO sitemap/noindex 'Default: On' is phantom | `10062614853` |
+| Wave E | GDPR erase/export incomplete (identity survives an erase) | `10062614868` |
+| Wave E | Notification wiring: DM notif doesn't open conversation; reaction/flag-resolved have no consumer | `10062614880` |
+| Wave E | Pro manifest rest.endpoints has 8 phantom + 3 missing routes | `10062614883` |
+| Wave E | Re-run the free:admin-settings feature audit (never completed) | `10062614895` |
+
+**29 cards.** Waves: A=scale-critical (fix first), B=privacy sweep #2 (release-blocking), C=broken features, D=settings-not-applied, E=GDPR/wiring/hygiene.

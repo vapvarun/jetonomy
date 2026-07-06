@@ -48,7 +48,7 @@ if ( ! empty( $privileged_spaces ) ) {
 
 $crumbs = array(
 	array(
-		'label' => __( 'My Spaces', 'jetonomy' ),
+		'label' => sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ),
 		'url'   => '',
 	),
 );
@@ -59,10 +59,10 @@ $crumbs = array(
 	<main>
 		<header class="jt-page-head">
 			<h1 class="jt-page-title">
-				<?php esc_html_e( 'My Spaces', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?>
 			</h1>
 			<p class="jt-page-subtitle">
-				<?php esc_html_e( 'Spaces you run, plus the ones you are part of.', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( __( '%s you run, plus the ones you are part of.', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?>
 			</p>
 		</header>
 
@@ -72,8 +72,8 @@ $crumbs = array(
 				'empty-state',
 				[
 					'icon'      => 'users',
-					'message'   => __( 'You are not in any spaces yet.', 'jetonomy' ),
-					'cta_label' => __( 'Browse spaces', 'jetonomy' ),
+					'message'   => sprintf( __( 'You are not in any %s yet.', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
+					'cta_label' => sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 					'cta_url'   => $base . '/',
 				]
 			);

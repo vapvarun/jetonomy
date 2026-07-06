@@ -26,7 +26,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
 	);
@@ -39,7 +39,7 @@ if ( ! Moderation_Permissions::can_view_space_queue( $user_id, (int) $space->id 
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',
 		[
-			'message' => __( 'You do not have permission to moderate this space.', 'jetonomy' ),
+			'message' => sprintf( __( 'You do not have permission to moderate this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 			'tone'    => 'forbidden',
 		]
 	);

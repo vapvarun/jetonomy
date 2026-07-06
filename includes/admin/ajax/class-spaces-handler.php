@@ -288,7 +288,7 @@ class Spaces_Handler {
 
 		$space = Space::find( $id );
 		if ( ! $space ) {
-			wp_send_json_error( __( 'Space not found.', 'jetonomy' ) );
+			wp_send_json_error( sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ) );
 		}
 
 		// Decrement category space count
@@ -375,11 +375,17 @@ class Spaces_Handler {
 			wp_send_json_error( __( 'Missing required fields.', 'jetonomy' ) );
 		}
 
-		if ( ! in_array( $role, array( 'viewer', 'member', 'moderator', 'admin' ), true ) ) {
+		if ( ! in_array( $role, SpaceMember::VALID_ROLES, true ) ) {
 			wp_send_json_error( __( 'Invalid role.', 'jetonomy' ) );
 		}
 
-		$result = SpaceMember::add( $space_id, $user_id, $role );
+		// Route existing-member role changes through set_role() so they fire the
+		// role-changed event (add()'s REPLACE INTO updated the row silently);
+		// still add() a brand-new member so this admin control keeps working for
+		// both cases.
+		$result = SpaceMember::is_member( $space_id, $user_id )
+			? SpaceMember::set_role( $space_id, $user_id, $role )
+			: SpaceMember::add( $space_id, $user_id, $role );
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
 		}

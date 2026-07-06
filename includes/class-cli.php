@@ -51,40 +51,22 @@ class CLI {
 	 * @subcommand trust-evaluate
 	 */
 	public function trust_evaluate( $args, $assoc_args ): void {
-		global $wpdb;
-		$profiles_t = table( 'user_profiles' );
+		// Reuse the cron's keyset-batch evaluator so the CLI and the scheduled
+		// sweep share ONE implementation — same replies-received join, same
+		// bounded slices (no OOM loading every profile at once), same hooks.
+		$batch     = (int) apply_filters( 'jetonomy_cron_batch_size', 500, 'evaluate_trust_levels' );
+		$after     = 0;
+		$processed = 0;
+		$promoted  = 0;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$profiles = $wpdb->get_results( "SELECT * FROM {$profiles_t} WHERE trust_level < 4" );
-		$promoted = 0;
+		do {
+			$result     = \Jetonomy\Cron::run_trust_batch( $after, $batch );
+			$processed += $result['count'];
+			$promoted  += $result['promoted'];
+			$after      = $result['last_id'];
+		} while ( $result['count'] >= $batch );
 
-		foreach ( $profiles as $profile ) {
-			$days_active = 0;
-			if ( $profile->created_at ) {
-				$days_active = (int) ( ( time() - strtotime( $profile->created_at ) ) / DAY_IN_SECONDS );
-			}
-
-			$stats = [
-				'post_count'       => (int) $profile->post_count,
-				'days_active'      => $days_active,
-				'reputation'       => (int) $profile->reputation,
-				'replies_received' => 0, // Would need a join to count -- simplified
-			];
-
-			$new_level = Trust_Evaluator::evaluate_level( $stats );
-
-			/** This filter is documented in includes/class-cron.php */
-			$new_level = (int) apply_filters( 'jetonomy_trust_level_pre_change', $new_level, (int) $profile->user_id, $stats );
-
-			if ( $new_level > (int) $profile->trust_level ) {
-				$wpdb->update( $profiles_t, [ 'trust_level' => $new_level ], [ 'user_id' => $profile->user_id ] );
-				\WP_CLI::log( sprintf( 'User %d: Level %d -> %d', $profile->user_id, $profile->trust_level, $new_level ) );
-				do_action( 'jetonomy_trust_level_changed', (int) $profile->user_id, (int) $profile->trust_level, $new_level );
-				++$promoted;
-			}
-		}
-
-		\WP_CLI::success( sprintf( '%d users promoted.', $promoted ) );
+		\WP_CLI::success( sprintf( '%d profiles evaluated, %d users promoted.', $processed, $promoted ) );
 	}
 
 	/**

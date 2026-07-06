@@ -488,6 +488,59 @@ class Post extends Model {
 	}
 
 	/**
+	 * List posts in the given moderation statuses, newest first, paginated.
+	 *
+	 * Shared by the REST moderation queue and the wp-admin Moderation screen so
+	 * both read one implementation instead of duplicating raw SQL. Served by the
+	 * status_created (status, created_at) index.
+	 *
+	 * @param string[] $statuses One or more of publish|pending|draft|spam|trash.
+	 * @param int      $limit    Max rows.
+	 * @param int      $offset   Pagination offset.
+	 * @return object[]
+	 */
+	public static function list_by_status( array $statuses, int $limit = 20, int $offset = 0 ): array {
+		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
+		if ( empty( $statuses ) ) {
+			return array();
+		}
+		$table        = static::table();
+		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+		$params       = array_merge( $statuses, array( $limit, $offset ) );
+
+		return static::db()->get_results(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
+				"SELECT * FROM {$table} WHERE status IN ({$placeholders}) ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				...$params
+			)
+		) ?: array();
+	}
+
+	/**
+	 * Count posts in the given moderation statuses via COUNT(*) (no row load).
+	 *
+	 * @param string[] $statuses
+	 * @return int
+	 */
+	public static function count_by_status( array $statuses ): int {
+		$statuses = array_values( array_filter( array_map( 'strval', $statuses ) ) );
+		if ( empty( $statuses ) ) {
+			return 0;
+		}
+		$table        = static::table();
+		$placeholders = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table trusted, $placeholders is a list of %s.
+				"SELECT COUNT(*) FROM {$table} WHERE status IN ({$placeholders})",
+				...$statuses
+			)
+		);
+	}
+
+	/**
 	 * Adjust reply_count and update last_reply_at and updated_at.
 	 *
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent
@@ -644,6 +697,99 @@ class Post extends Model {
 			static::db()->prepare( $query, ...$args )
 		);
 		return $results ? $results : array();
+	}
+
+	/**
+	 * Global cross-space home feed, visibility-gated for $user_id.
+	 *
+	 * Unlike {@see self::list_trending()} (hot-only, unpaginated) this powers
+	 * the app's home tab: paginated, sortable (hot|new|top), and gated in SQL
+	 * so logged-out callers see only public-space posts while members see
+	 * their full visibility set. Private posts (`is_private = 1`) are excluded
+	 * for everyone — the home feed is a public surface, not a personal inbox.
+	 *
+	 * Big-site contract: LIMIT/OFFSET + a parallel COUNT(*), no per-row query.
+	 * Sort windows lean on the existing `(status, created_at, space_id)` index;
+	 * `top` filters on `created_at` (not `published_at`) so that index covers it
+	 * without a new key.
+	 *
+	 * @since 1.6.0
+	 *
+	 * @param int    $user_id     Viewer (0 = logged-out → public spaces only).
+	 * @param string $sort        'hot' | 'new' | 'top'.
+	 * @param int    $limit       Page size (clamped 1..50).
+	 * @param int    $offset      Offset for pagination.
+	 * @param int    $window_days Only used by 'top' (default 7; 0 = all-time).
+	 * @return array{posts:object[], total:int}
+	 */
+	public static function list_global_feed( int $user_id, string $sort = 'hot', int $limit = 20, int $offset = 0, int $window_days = 7 ): array {
+		$limit       = max( 1, min( 50, $limit ) );
+		$offset      = max( 0, $offset );
+		$window_days = max( 0, $window_days );
+		$sort        = in_array( $sort, array( 'hot', 'new', 'top' ), true ) ? $sort : 'hot';
+
+		$table      = static::table();
+		$spaces_tbl = \Jetonomy\table( 'spaces' );
+
+		$where      = "p.status = 'publish' AND p.is_private = 0";
+		$where_args = array();
+
+		// Member-or-public space gate (fails closed for guests).
+		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( $user_id, 'sp' );
+		if ( '1=1' !== $vis_sql ) {
+			$where     .= ' AND ' . $vis_sql;
+			$where_args = array_merge( $where_args, $vis_params );
+		}
+
+		// `top` is scoped to a trailing window so the ranking stays meaningful.
+		if ( 'top' === $sort && $window_days > 0 ) {
+			$where       .= ' AND p.created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)';
+			$where_args[] = $window_days;
+		}
+
+		// Order is built from a fixed allow-list (not user input) so direct
+		// interpolation is safe.
+		switch ( $sort ) {
+			case 'new':
+				$order = 'COALESCE(p.published_at, p.created_at) DESC, p.id DESC';
+				break;
+			case 'top':
+				$order = 'p.vote_score DESC, p.id DESC';
+				break;
+			default:
+				$order = 'hot_score DESC, p.id DESC';
+				break;
+		}
+
+		// Total via a parallel COUNT(*) with the same WHERE (drives X-WP-Total).
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count_sql = "SELECT COUNT(*) FROM {$table} p LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id WHERE {$where}";
+		$total     = (int) static::db()->get_var(
+			empty( $where_args )
+				? $count_sql
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				: static::db()->prepare( $count_sql, ...$where_args )
+		);
+
+		$query = "SELECT p.*, sp.slug AS space_slug, sp.title AS space_title,
+				(p.vote_score + p.reply_count * 2) / POW(TIMESTAMPDIFF(HOUR, p.created_at, NOW()) + 2, 1.5) AS hot_score
+			FROM {$table} p
+			LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
+			WHERE {$where}
+			ORDER BY {$order}
+			LIMIT %d OFFSET %d";
+
+		$query_args = array_merge( $where_args, array( $limit, $offset ) );
+		$results    = static::db()->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			static::db()->prepare( $query, ...$query_args )
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		return array(
+			'posts' => $results ? $results : array(),
+			'total' => $total,
+		);
 	}
 
 	/**

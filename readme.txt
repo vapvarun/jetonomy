@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,17 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.6.0 - June 2026 =
+
+Mobile and headless API release: new endpoints and per-viewer fields so a native app or any client can drive the community.
+
+* New      - GET /app/config exposes site branding (accent colour, logo) and which Pro features are active, so a client can theme itself and show or hide features per site.
+* New      - GET /feed serves a global cross-space home feed with hot, new, and top sorting and cursor pagination.
+* New      - Posts and spaces now include per-viewer state (is_bookmarked, viewer_vote, is_member, viewer_role, is_subscribed) so clients render the right controls without extra requests.
+* Improve  - REST write requests now reject banned and pending-verification users on every mutation, closing an Application Password bypass.
+* Dev      - Corrected manifest drift on the reply routes and the /users/suggest permission to match the shipped code.
+* Compat   - Aligned with Jetonomy Pro 1.6.0. Install both updates together.
 
 = 1.5.0 - June 2026 =
 

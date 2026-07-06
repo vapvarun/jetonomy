@@ -28,6 +28,38 @@ function base_url(): string {
 	return home_url( '/' . $base_slug );
 }
 
+/**
+ * The site owner's label for a "Space" (e.g. Space, Forum, Discussion, Channel).
+ *
+ * Single source of truth for the noun so an owner can rename Spaces everywhere
+ * from Settings → General. Falls back to the translated default when no custom
+ * label is set. Developers can override per context via `jetonomy_space_label`.
+ *
+ * @param bool $plural True for the plural form.
+ * @param bool $lower  True to lowercase (for mid-sentence use, e.g. "join this space").
+ * @return string
+ */
+function space_label( bool $plural = false, bool $lower = false ): string {
+	$settings = get_option( 'jetonomy_settings', [] );
+	$key      = $plural ? 'space_label_plural' : 'space_label_singular';
+	$custom   = isset( $settings[ $key ] ) ? trim( (string) $settings[ $key ] ) : '';
+
+	$label = '' !== $custom
+		? $custom
+		: ( $plural ? __( 'Spaces', 'jetonomy' ) : __( 'Space', 'jetonomy' ) );
+
+	/**
+	 * Filter the Space label. $plural/$lower give context for per-surface tweaks.
+	 *
+	 * @param string $label  Resolved label.
+	 * @param bool   $plural Plural form requested.
+	 * @param bool   $lower  Lowercase requested.
+	 */
+	$label = (string) apply_filters( 'jetonomy_space_label', $label, $plural, $lower );
+
+	return $lower ? mb_strtolower( $label ) : $label;
+}
+
 function now(): string {
 	return current_time( 'mysql', true );
 }
@@ -190,7 +222,17 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		return get_profile_url( $object_id );
 	}
 
-	return '';
+	/**
+	 * Resolve a deep link for an object type free doesn't know about (e.g. Pro's
+	 * 'message'/'conversation'). Lets Pro map its own object types to URLs
+	 * without free hardcoding a Pro route. Existing types return above, so this
+	 * only fires for unknown types — zero behavior change for them.
+	 *
+	 * @param string $url         Default ('').
+	 * @param string $object_type Notification object type.
+	 * @param int    $object_id   Notification object id.
+	 */
+	return (string) apply_filters( 'jetonomy_notification_deep_link', '', $object_type, $object_id );
 }
 
 /**
@@ -332,4 +374,37 @@ function footer_text( string $default = '' ): string {
 	 * @param string $text The current footer text. May be empty.
 	 */
 	return (string) apply_filters( 'jetonomy_footer_text', $default );
+}
+
+/**
+ * jetonomy_settings option merged with SEO defaults (single source of truth).
+ *
+ * The admin SEO checkboxes render "Default: On" via `?? true`, but the
+ * consumers used `empty($settings['seo_x'])` which treats an absent key as OFF
+ * — so a fresh install had the sitemap/noindex features silently disabled
+ * despite the UI. Routing BOTH the render and the consumers through this
+ * defaults union makes them agree, and it applies to existing installs on the
+ * next page load (an activation seed would never re-fire on a plugin update).
+ *
+ * Uses the `+` union (stored values win, only absent keys fall to defaults) so
+ * an admin's explicit `false`/`0` is preserved.
+ *
+ * @return array
+ */
+function seo_settings(): array {
+	$defaults = array(
+		'seo_schema'           => true,
+		'seo_sitemap'          => true,
+		'seo_noindex_profiles' => true,
+		'seo_noindex_search'   => true,
+		'seo_post_title'       => '{post_title} - {space_name} | {site_name}',
+		'seo_space_title'      => '{space_name} | {site_name}',
+		'seo_twitter_handle'   => '',
+		'seo_default_og_image' => '',
+	);
+	$stored = get_option( 'jetonomy_settings', array() );
+	if ( ! is_array( $stored ) ) {
+		$stored = array();
+	}
+	return $stored + $defaults;
 }

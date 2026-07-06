@@ -280,8 +280,8 @@ class Template_Loader {
 					'networkError'          => __( 'Network error. Please try again.', 'jetonomy' ),
 					'follow'                => __( 'Follow', 'jetonomy' ),
 					'following'             => __( 'Following', 'jetonomy' ),
-					'followingSpace'        => __( 'Following space', 'jetonomy' ),
-					'unfollowedSpace'       => __( 'Unfollowed space', 'jetonomy' ),
+					'followingSpace'        => sprintf( __( 'Following %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
+					'unfollowedSpace'       => sprintf( __( 'Unfollowed %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'copyLink'              => __( 'Copy link', 'jetonomy' ),
 					'bookmark'              => __( 'Bookmark', 'jetonomy' ),
 					'removeBookmark'        => __( 'Remove bookmark', 'jetonomy' ),
@@ -296,7 +296,7 @@ class Template_Loader {
 					'confirmDeletePost'     => __( 'Are you sure you want to delete this topic?', 'jetonomy' ),
 					'confirmDeleteReply'    => __( 'Are you sure you want to delete this reply?', 'jetonomy' ),
 					'failedDelete'          => __( 'Failed to delete.', 'jetonomy' ),
-					'moveTopicTitle'        => __( 'Move topic to another space', 'jetonomy' ),
+					'moveTopicTitle'        => sprintf( __( 'Move topic to another %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'topicMoved'            => __( 'Topic moved successfully.', 'jetonomy' ),
 					'moveFailed'            => __( 'Failed to move topic.', 'jetonomy' ),
 					'mergeTopicTitle'       => __( 'Merge into another topic', 'jetonomy' ),
@@ -321,7 +321,7 @@ class Template_Loader {
 					'messageSending'        => __( 'Sending...', 'jetonomy' ),
 					'messageSend'           => __( 'Send', 'jetonomy' ),
 					'messageSendFailed'     => __( 'Failed to send. Please try again.', 'jetonomy' ),
-					'noMessageMatches'      => __( 'No matches. You can only message people who share at least one space with you.', 'jetonomy' ),
+					'noMessageMatches'      => sprintf( __( 'No matches. You can only message people who share at least one %s with you.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'recipientRequired'     => __( 'Please enter a recipient.', 'jetonomy' ),
 					'userNotFound'          => __( 'User not found: ', 'jetonomy' ),
 					// Pro Private Messaging — conversation actions (kebab menu, WS3-C).
@@ -344,7 +344,7 @@ class Template_Loader {
 					// missing here, so they always rendered the English fallback even
 					// on a translated locale.
 					'voteFailed'            => __( 'Vote failed.', 'jetonomy' ),
-					'chooseSpace'           => __( 'Choose a space first.', 'jetonomy' ),
+					'chooseSpace'           => sprintf( __( 'Choose a %s first.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 					'draftSaved'            => __( 'Draft saved. You can find it in your profile under Drafts.', 'jetonomy' ),
 					'saveDraft'             => __( 'Save Draft', 'jetonomy' ),
 					'scheduleDateRequired'  => __( 'Please choose a publish date and time.', 'jetonomy' ),
@@ -481,14 +481,14 @@ class Template_Loader {
 					'uploadFailed'           => esc_html__( 'Upload failed.', 'jetonomy' ),
 					'networkError'           => esc_html__( 'Network error.', 'jetonomy' ),
 					'networkErrorRetry'      => esc_html__( 'Network error. Please try again.', 'jetonomy' ),
-					'createSpaceFailed'      => esc_html__( 'Could not create the space. Please try again.', 'jetonomy' ),
+					'createSpaceFailed'      => esc_html( sprintf( __( 'Could not create the %s. Please try again.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
 					'saveFailed'             => esc_html__( 'Could not save changes.', 'jetonomy' ),
 					'prefixLabel'            => esc_html__( 'Label', 'jetonomy' ),
 					'removePrefix'           => esc_html__( 'Remove prefix', 'jetonomy' ),
 					// Composer + Join-Space gate strings (consumed by composer.js).
 					'quoteSelected'          => esc_html__( 'Quote', 'jetonomy' ),
 					'joining'                => esc_html__( 'Joining...', 'jetonomy' ),
-					'joinSpace'              => esc_html__( 'Join Space', 'jetonomy' ),
+					'joinSpace'              => esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ),
 					'requesting'             => esc_html__( 'Requesting...', 'jetonomy' ),
 					'awaitingApproval'       => esc_html__( 'Awaiting Approval', 'jetonomy' ),
 					'requestToJoin'          => esc_html__( 'Request to Join', 'jetonomy' ),
@@ -507,10 +507,10 @@ class Template_Loader {
 					'modalSubmit'            => esc_html__( 'Submit', 'jetonomy' ),
 					'modalMove'              => esc_html__( 'Move', 'jetonomy' ),
 					'modalMerge'             => esc_html__( 'Merge', 'jetonomy' ),
-					'loadingSpaces'          => esc_html__( 'Loading spaces…', 'jetonomy' ),
-					'selectSpacePlaceholder' => esc_html__( 'Select a space…', 'jetonomy' ),
-					'noOtherSpaces'          => esc_html__( 'No other spaces available', 'jetonomy' ),
-					'failedLoadSpaces'       => esc_html__( 'Failed to load spaces', 'jetonomy' ),
+					'loadingSpaces'          => esc_html( sprintf( __( 'Loading %s…', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
+					'selectSpacePlaceholder' => esc_html( sprintf( __( 'Select a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ),
+					'noOtherSpaces'          => esc_html( sprintf( __( 'No other %s available', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
+					'failedLoadSpaces'       => esc_html( sprintf( __( 'Failed to load %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ) ),
 					'searchTopicPlaceholder' => esc_html__( 'Search for a topic...', 'jetonomy' ),
 					'noTopicsFound'          => esc_html__( 'No topics found', 'jetonomy' ),
 					'searchFailed'           => esc_html__( 'Search failed', 'jetonomy' ),
@@ -540,7 +540,7 @@ class Template_Loader {
 					'failedSaveProfile'      => esc_html__( 'Failed to save profile.', 'jetonomy' ),
 					// WS4-C: space-members ban dialog (translator placeholders).
 					/* translators: %s: member display name. */
-					'banConfirmFormat'       => __( 'Ban %s from this space? They will lose access to its posts and replies until you lift the ban.', 'jetonomy' ),
+					'banConfirmFormat'       => sprintf( __( 'Ban %1$s from this %2$s? They will lose access to its posts and replies until you lift the ban.', 'jetonomy' ), '%s', \Jetonomy\space_label( false, true ) ),
 					'banMemberTitle'         => esc_html__( 'Ban member', 'jetonomy' ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
 					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
@@ -899,13 +899,13 @@ class Template_Loader {
 						$parts['title'] = __( 'You are invited', 'jetonomy' );
 						break;
 					case 'my-spaces':
-						$parts['title'] = __( 'My Spaces', 'jetonomy' );
+						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
 					case 'new-space':
-						$parts['title'] = __( 'Create a space', 'jetonomy' );
+						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'edit-space':
-						$parts['title'] = __( 'Edit space', 'jetonomy' );
+						$parts['title'] = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
 					case 'drafts':
 						$parts['title'] = __( 'My drafts', 'jetonomy' );
@@ -942,13 +942,16 @@ class Template_Loader {
 					true
 				);
 
-				// seo-pro currently emits only for the `post` route — its
-				// get_current_context() bails when `jetonomy_space_slug` is
-				// empty, which is true on the bare `/s/:slug/` space route
-				// (the router only sets `jetonomy_space_slug` on the post
-				// rewrite). When that gap is closed in Pro, add `space`
-				// here so free skips the duplicate emit.
-				$seo_pro_handles = array( 'post' );
+				// Routes seo-pro emits its own OG/meta for. Its
+				// get_current_context() resolves the post-detail route plus the
+				// whole space family (it remaps the space slug for the bare
+				// listing, members, roadmap, moderation, edit and new-post
+				// surfaces). Free must defer on every one of those or the page
+				// gets a duplicate og:title/og:url set — the space-page dupe
+				// reported in 1.5.0. Any route NOT in this list (home, category,
+				// tag, search, leaderboard, …) has no Pro emitter, so free stays
+				// the single source there.
+				$seo_pro_handles = array( 'post', 'space', 'space-members', 'space-roadmap', 'space-moderation', 'edit-space', 'new-post' );
 				$skip_baseline   = $seo_pro_active && in_array( $data['route'], $seo_pro_handles, true );
 
 				$site_name    = get_bloginfo( 'name' );
@@ -973,7 +976,7 @@ class Template_Loader {
 						break;
 					case 'category':
 						$title     = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
-						$desc      = sprintf( __( 'Spaces in the %1$s category on %2$s.', 'jetonomy' ), $title, $site_name );
+						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
 						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $title;
 						break;
@@ -997,12 +1000,12 @@ class Template_Loader {
 							switch ( $data['route'] ) {
 								case 'space-members':
 									$title = $space->title . ' — ' . __( 'Members', 'jetonomy' );
-									$desc  = sprintf( __( 'Members of the %1$s space on %2$s.', 'jetonomy' ), $space->title, $site_name );
+									$desc  = sprintf( __( 'Members of the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
 									$url   = $base . '/s/' . $space->slug . '/members/';
 									break;
 								case 'space-roadmap':
 									$title = $space->title . ' — ' . __( 'Roadmap', 'jetonomy' );
-									$desc  = sprintf( __( 'Roadmap for the %1$s space on %2$s.', 'jetonomy' ), $space->title, $site_name );
+									$desc  = sprintf( __( 'Roadmap for the %1$s %2$s on %3$s.', 'jetonomy' ), $space->title, \Jetonomy\space_label( false, true ), $site_name );
 									$url   = $base . '/s/' . $space->slug . '/roadmap/';
 									break;
 								case 'space-moderation':
@@ -1147,22 +1150,22 @@ class Template_Loader {
 						$noindex   = true; // One-shot landing.
 						break;
 					case 'my-spaces':
-						$title     = __( 'My Spaces', 'jetonomy' );
-						$desc      = sprintf( __( 'Spaces you run and spaces you are part of on %s.', 'jetonomy' ), $site_name );
+						$title     = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
+						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
 						$url       = $base . '/my-spaces/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;
 					case 'new-space':
-						$title     = __( 'Create a space', 'jetonomy' );
-						$desc      = sprintf( __( 'Start a new community space on %s.', 'jetonomy' ), $site_name );
+						$title     = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						$desc      = sprintf( __( 'Start a new community %1$s on %2$s.', 'jetonomy' ), \Jetonomy\space_label( false, true ), $site_name );
 						$url       = $base . '/new-space/';
 						$image_alt = $site_name;
 						$noindex   = true; // Composer page.
 						break;
 					case 'edit-space':
-						$title     = __( 'Edit space', 'jetonomy' );
-						$desc      = __( 'Edit your community space settings.', 'jetonomy' );
+						$title     = sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
+						$desc      = sprintf( __( 'Edit your community %s settings.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						$url       = $base . '/s/' . rawurlencode( (string) $data['slug'] ) . '/edit/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in editor view.

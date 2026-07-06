@@ -110,7 +110,7 @@ defined( 'ABSPATH' ) || exit;
 				<th class="column-drag" style="width:30px;"></th>
 				<th class="column-name"><?php esc_html_e( 'Name', 'jetonomy' ); ?></th>
 				<th class="column-slug"><?php esc_html_e( 'Slug', 'jetonomy' ); ?></th>
-				<th class="column-spaces"><?php esc_html_e( 'Spaces', 'jetonomy' ); ?></th>
+				<th class="column-spaces"><?php echo esc_html( \Jetonomy\space_label( true ) ); ?></th>
 				<th class="column-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></th>
 			</tr>
 		</thead>

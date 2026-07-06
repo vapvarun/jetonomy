@@ -67,7 +67,7 @@ class Admin_Bar {
 			array(
 				'parent' => 'jetonomy-community',
 				'id'     => 'jetonomy-community-home',
-				'title'  => __( 'Browse spaces', 'jetonomy' ),
+				'title'  => sprintf( __( 'Browse %s', 'jetonomy' ), \Jetonomy\space_label( true, true ) ),
 				'href'   => esc_url( $base . '/' ),
 			)
 		);

@@ -27,7 +27,9 @@ class Spaces_Controller extends Base_Controller {
 	/**
 	 * Valid member roles.
 	 */
-	private const VALID_ROLES = [ 'viewer', 'member', 'moderator', 'admin' ];
+	// Single source of truth lives on the model so REST, admin, and set_role()
+	// validate against one list.
+	private const VALID_ROLES = SpaceMember::VALID_ROLES;
 
 	/**
 	 * Valid join policies.
@@ -100,6 +102,7 @@ class Spaces_Controller extends Base_Controller {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_members' ],
 					'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+					'args'                => $this->get_collection_params(),
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
@@ -688,10 +691,26 @@ class Spaces_Controller extends Base_Controller {
 			}
 		}
 
-		$members = SpaceMember::list_by_space( $id );
-		$items   = array_map( [ $this, 'prepare_member' ], $members );
+		// Paginate: a large space can have tens of thousands of members, so
+		// never load the whole roster. Mirror the space-listing endpoint —
+		// COUNT(*) for the real total, then a bounded LIMIT/OFFSET slice.
+		// Both are served by the space_members space_role_joined index.
+		$pagination = $this->get_pagination( $request );
+		$total      = SpaceMember::count_by_space( $id );
+		$members    = SpaceMember::list_by_space( $id, $pagination['limit'], $pagination['offset'] );
+		$items      = array_map( [ $this, 'prepare_member' ], $members );
 
-		return $this->paginated_response( $items, [ 'total' => count( $items ) ] );
+		$response = $this->paginated_response(
+			$items,
+			[
+				'total'  => $total,
+				'offset' => $pagination['offset'],
+			]
+		);
+
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / max( 1, $pagination['limit'] ) ) );
+
+		return $response;
 	}
 
 	/**
@@ -1003,21 +1022,13 @@ class Spaces_Controller extends Base_Controller {
 			);
 		}
 
-		global $wpdb;
-		$wpdb->update(
-			\Jetonomy\table( 'space_members' ),
-			[ 'role' => $role ],
-			[
-				'space_id' => $id,
-				'user_id'  => $user_id,
-			]
-		);
-
-		// Direct $wpdb->update bypasses the model's add()/remove() cache
-		// invalidation — bust the privileged-members cache so the
-		// "Managed by" sidebar card (G1) refreshes immediately on the
-		// next page load.
-		SpaceMember::bust_privileged_cache( $id );
+		// One role-update path — set_role() owns the write, cache-bust, and the
+		// role-changed event. The policy guards above (permission, self-demote,
+		// last-admin) stay here as REST-layer policy.
+		$result = SpaceMember::set_role( $id, $user_id, $role );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		return new WP_REST_Response(
 			[
@@ -1124,6 +1135,15 @@ class Spaces_Controller extends Base_Controller {
 			'updated_at'       => $space->updated_at ?? null,
 			'last_activity_at' => $space->last_activity_at ?? null,
 		];
+
+		// Viewer-relative membership context (additive, 1.6.0). All three are
+		// null-safe for logged-out callers and resolve to indexed point
+		// lookups, so the per-row cost on the spaces list (≤ page size) stays
+		// bounded.
+		$uid                   = get_current_user_id();
+		$data['is_member']     = $uid ? SpaceMember::is_member( (int) $space->id, $uid ) : false;
+		$data['viewer_role']   = $uid ? SpaceMember::get_role( (int) $space->id, $uid ) : null;
+		$data['is_subscribed'] = $uid ? \Jetonomy\Models\Subscription::is_subscribed( $uid, 'space', (int) $space->id ) : false;
 
 		/**
 		 * Filter the REST response data for a single space.

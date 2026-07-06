@@ -1,5 +1,11 @@
 # jetonomy-app - React Native Mobile App
 
+> **AUTH SECTION SUPERSEDED (2026-07-04).** The JWT / `POST /auth/token` / Bearer-header
+> flow described later in this doc was REJECTED and never built. The shipped 1.6.0
+> contract is WP core **Application Passwords only** - there is no `/auth/token`
+> endpoint in code. Follow `JETONOMY-1.6.0-MOBILE-API.md` (the shipped contract) for
+> auth; ignore the JWT/authStore sections here. Kept only as historical product sketch.
+
 ## Overview
 
 White-label community forum app. One codebase builds every customer's branded app. Connects to any Jetonomy-powered WordPress site via REST API.

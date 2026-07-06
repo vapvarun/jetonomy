@@ -470,6 +470,70 @@ These endpoints require the `manage_options` capability (administrators only).
 
 ---
 
+## Mobile App
+
+Endpoints that power the [Jetonomy mobile app](../mobile-app/00-mobile-app-overview.md). Added in 1.6.0.
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/app/config` | Public | Per-site branding + feature flags the app reads on connect |
+| GET | `/feed` | Public | Global feed across every space the caller can see |
+| POST | `/push/register-device` | Logged in | Register this device's Expo push token for native push |
+| DELETE | `/push/register-device` | Logged in | Unregister the device's push token |
+
+**GET /app/config**
+
+Public - the app reads it on connect to theme itself per site. `app_name` comes from **Settings -> General -> Community Title** (falling back to the site name); `accent_color` and `logo_url` from **Settings -> Appearance**. The `features` map reflects which Pro extensions are active, so the app gates its UI on them.
+
+```json
+{
+  "app_name":          "Course Academy",
+  "accent_color":      "#7C3AED",
+  "logo_url":          "https://example.com/logo.png",
+  "login_bg_url":      "",
+  "dark_mode_default": false,
+  "pro_active":        true,
+  "features": {
+    "messaging":     true,
+    "reactions":     true,
+    "polls":         true,
+    "badges":        true,
+    "custom_fields": true,
+    "web_push":      true,
+    "native_push":   true
+  }
+}
+```
+
+**GET /feed - parameters**
+
+A single cross-space feed (the app's Home tab). Returns only posts in spaces the caller may view.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sort` | string | `hot` | `hot`, `new`, `top` |
+| `limit` | int | - | Page size |
+| `after` | int | 0 | Cursor - return posts after this post ID |
+| `before` | int | 0 | Cursor - return posts before this post ID |
+| `offset` | int | 0 | Offset paging (alternative to the cursor) |
+| `window_days` | int | 7 | For `sort=top`, the look-back window in days |
+
+**POST /push/register-device - body**
+
+Registers the device for native (Expo) push. `DELETE` with the same `expo_push_token` removes it.
+
+```javascript
+{
+    expo_push_token: 'ExponentPushToken[xxxxxxxx]',  // required
+    platform:        'ios',                           // required: ios | android
+    device_name:     'My iPhone',                     // optional
+}
+```
+
+> Branding is set from wp-admin - see the [Mobile App](../mobile-app/00-mobile-app-overview.md) docs for the site-owner walkthrough.
+
+---
+
 ## Pro Endpoints
 
 The following endpoints are available only when **Jetonomy Pro** is active and the relevant extension is enabled.

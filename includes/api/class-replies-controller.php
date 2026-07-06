@@ -353,7 +353,7 @@ class Replies_Controller extends Base_Controller {
 		// Parse @mentions and notify.
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
 		if ( ! empty( $mentioned ) ) {
-			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ) );
+			\Jetonomy\Mentions::notify( $mentioned, $user_id, 'reply', $reply_id, $post->title ?? __( 'your reply', 'jetonomy' ), (int) ( $post->space_id ?? 0 ), (bool) ( $post->is_private ?? false ) );
 		}
 
 		$reply = Reply::find( $reply_id );
@@ -404,6 +404,28 @@ class Replies_Controller extends Base_Controller {
 			$moderation_action = apply_filters( 'jetonomy_check_content', null, array( 'content' => $content ), $space_id, $user_id );
 			if ( 'block' === $moderation_action ) {
 				return $this->validation_error( __( 'Your reply was blocked by our content policy.', 'jetonomy' ) );
+			}
+			// Enforce hold/spam/flag on EDIT too (only 'block' was handled before,
+			// so editing spam into a published reply bypassed moderation).
+			if ( 'hold' === $moderation_action ) {
+				$update_data['status'] = 'pending';
+			}
+			if ( 'spam' === $moderation_action ) {
+				$update_data['status'] = 'spam';
+			}
+			if ( 'flag' === $moderation_action ) {
+				$auto_flag_id = \Jetonomy\Models\Flag::create(
+					array(
+						'reporter_id' => 0,
+						'object_type' => 'reply',
+						'object_id'   => (int) $id,
+						'reason'      => 'other',
+						'description' => __( 'Flagged automatically by a moderation rule.', 'jetonomy' ),
+					)
+				);
+				if ( $auto_flag_id ) {
+					do_action( 'jetonomy_flag_created', (int) $auto_flag_id, 'reply' );
+				}
 			}
 
 			// Create a revision before updating.

@@ -139,6 +139,7 @@ class REST_Tests {
 		$this->run_group_e();
 		$this->run_group_f();
 		$this->run_group_g();
+		$this->run_group_i_mobile_api();
 		$this->test_subscriber_actions();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
@@ -389,6 +390,12 @@ class REST_Tests {
 				$data = $r->get_data();
 				$this->check( 'B10: POST /replies/{id}/accept → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 				$this->check( 'B10: is_accepted = true', ! empty( $data['is_accepted'] ), 'is_accepted was not true' );
+
+				// Unaccept (DELETE) — the accepted answer can be cleared.
+				$r    = $this->rest( 'DELETE', "/replies/{$qa_reply_id}/accept" );
+				$data = $r->get_data();
+				$this->check( 'B10b: DELETE /replies/{id}/accept → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+				$this->check( 'B10b: is_accepted = false', empty( $data['is_accepted'] ), 'is_accepted was not cleared' );
 			} else {
 				$this->check( 'B10: Q&A accept fixture created (post + reply)', false, 'could not create post/reply in the Q&A space' );
 			}
@@ -820,6 +827,46 @@ class REST_Tests {
 		} else {
 			$this->check( 'G34: non-mod resolve flag (skipped — no post_id)', true );
 		}
+	}
+
+	// ──────────────────────────────────────────────────────────────────────────
+	// Group I — Mobile API (1.6.0)
+	// ──────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * Smoke-test the 1.6.0 mobile-API additions: the public app-config
+	 * endpoint and the global cross-space home feed.
+	 */
+	private function run_group_i_mobile_api(): void {
+		\WP_CLI::log( '  Group I: Mobile API (1.6.0)' );
+
+		// I1: GET /app/config — public branding + feature flags.
+		$r    = $this->rest( 'GET', '/app/config' );
+		$data = $r->get_data();
+		$this->check( 'I1: GET /app/config â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check(
+			'I1: config has branding + features keys',
+			is_array( $data )
+				&& array_key_exists( 'accent_color', $data )
+				&& array_key_exists( 'features', $data )
+				&& is_array( $data['features'] )
+				&& array_key_exists( 'messaging', $data['features'] ),
+			'missing accent_color / features block'
+		);
+
+		// I2: GET /feed — global cross-space home feed (default sort=hot).
+		$r    = $this->rest( 'GET', '/feed' );
+		$data = $r->get_data();
+		$this->check( 'I2: GET /feed â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'I2: feed has data envelope', is_array( $data ) && array_key_exists( 'data', $data ), 'missing data envelope' );
+
+		// I3: GET /feed?sort=new — alternate sort is accepted.
+		$r = $this->rest( 'GET', '/feed', [ 'sort' => 'new' ] );
+		$this->check( 'I3: GET /feed?sort=new â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// I4: GET /feed?sort=top — windowed top sort is accepted.
+		$r = $this->rest( 'GET', '/feed', [ 'sort' => 'top' ] );
+		$this->check( 'I4: GET /feed?sort=top â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────

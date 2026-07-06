@@ -130,12 +130,12 @@ $_partial_space = $_space ? $_space : (object) array(
 
 	<?php if ( 'picker' === $_mode ) : ?>
 		<label class="jt-compose-topic-field">
-			<span class="jt-compose-topic-label"><?php esc_html_e( 'Post to space', 'jetonomy' ); ?></span>
+			<span class="jt-compose-topic-label"><?php echo esc_html( sprintf( __( 'Post to %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></span>
 			<select
 				class="jt-compose-topic-space"
 				data-wp-on--change="actions.composeTopicSelectSpace"
 				data-wp-bind--disabled="context.submitting">
-				<option value="" data-type=""><?php esc_html_e( 'Choose a space…', 'jetonomy' ); ?></option>
+				<option value="" data-type=""><?php echo esc_html( sprintf( __( 'Choose a %s…', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?></option>
 				<?php foreach ( $_postable as $_s ) : ?>
 					<option
 						value="<?php echo (int) $_s->id; ?>"
@@ -144,7 +144,7 @@ $_partial_space = $_space ? $_space : (object) array(
 			</select>
 			<?php if ( empty( $_postable ) ) : ?>
 				<small class="jt-compose-topic-empty">
-					<?php esc_html_e( 'You are not a member of any space yet. Join a space to start posting.', 'jetonomy' ); ?>
+					<?php echo esc_html( sprintf( __( 'You are not a member of any %1$s yet. Join a %2$s to start posting.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?>
 				</small>
 			<?php endif; ?>
 		</label>

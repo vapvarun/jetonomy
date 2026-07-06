@@ -17,7 +17,7 @@ if ( ! $space ) {
 		[
 			'icon'      => 'empty-search',
 			'icon_size' => 48,
-			'message'   => __( 'Space not found.', 'jetonomy' ),
+			'message'   => sprintf( __( '%s not found.', 'jetonomy' ), \Jetonomy\space_label() ),
 			'tone'      => 'warn',
 		]
 	);
@@ -56,8 +56,8 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		// and the home/category listings show a Hidden badge, so the gate
 		// message must agree.
 		$gate_message = $_jt_is_hidden
-			? __( 'This space is hidden. Log in to check whether you have access.', 'jetonomy' )
-			: __( 'This space is private. Please log in to request access.', 'jetonomy' );
+			? sprintf( __( 'This %s is hidden. Log in to check whether you have access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			: sprintf( __( 'This %s is private. Please log in to request access.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			[
@@ -73,8 +73,8 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 		// Invite-only — cannot self-join. Hidden spaces always land here
 		// (forced above) so the message wording works for both.
 		$invite_message = $_jt_is_hidden
-			? __( 'This space is hidden and invite-only. You need an invitation to join.', 'jetonomy' )
-			: __( 'This space is invite-only. You need an invitation to join.', 'jetonomy' );
+			? sprintf( __( 'This %s is hidden and invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) )
+			: sprintf( __( 'This %s is invite-only. You need an invitation to join.', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 		\Jetonomy\Template_Loader::partial(
 			'empty-state',
 			[
@@ -92,7 +92,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 				'empty-state',
 				[
 					'icon'    => 'check-circle',
-					'message' => __( 'Your request to join this space is awaiting approval.', 'jetonomy' ),
+					'message' => sprintf( __( 'Your request to join this %s is awaiting approval.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				]
 			);
 			return;
@@ -102,7 +102,7 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
-				'message' => __( 'This space requires approval to join. Submit a request below.', 'jetonomy' ),
+				'message' => sprintf( __( 'This %s requires approval to join. Submit a request below.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
 			]
 		);
@@ -122,14 +122,14 @@ if ( in_array( $space->visibility, [ 'private', 'hidden' ], true ) && ! $_jt_is_
 			'empty-state',
 			[
 				'icon'    => 'lock',
-				'message' => __( 'This space is private. Join to access posts and discussions.', 'jetonomy' ),
+				'message' => sprintf( __( 'This %s is private. Join to access posts and discussions.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ),
 				'tone'    => 'forbidden',
 			]
 		);
 		?>
 		<div class="jt-space-gate-actions">
 			<button class="jt-btn jt-btn-fill jt-join-btn" data-space-id="<?php echo absint( $space->id ); ?>" data-nonce="<?php echo esc_attr( $join_nonce ); ?>">
-				<?php esc_html_e( 'Join Space', 'jetonomy' ); ?>
+				<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 			</button>
 		</div>
 		<?php
@@ -237,7 +237,7 @@ $crumbs[] = [
 							<a class="jt-btn jt-btn-sm jt-btn-ghost"
 								href="<?php echo esc_url( \Jetonomy\base_url() . '/s/' . $space->slug . '/edit/' ); ?>">
 								<?php jetonomy_echo_icon( 'pencil', 14 ); ?>
-								<?php esc_html_e( 'Edit space', 'jetonomy' ); ?>
+								<?php echo esc_html( sprintf( __( 'Edit %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 							</a>
 						</p>
 					<?php endif; ?>
@@ -287,7 +287,7 @@ $crumbs[] = [
 						<button class="jt-btn jt-btn-sm jt-btn-fill jt-join-btn"
 							data-space-id="<?php echo absint( $space->id ); ?>"
 							data-nonce="<?php echo esc_attr( $_jt_join_nonce ); ?>">
-							<?php esc_html_e( 'Join Space', 'jetonomy' ); ?>
+							<?php echo esc_html( sprintf( __( 'Join %s', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>
 						</button>
 						<?php
 					else :
@@ -308,9 +308,9 @@ $crumbs[] = [
 		<?php if ( $is_restricted ) : ?>
 			<div class="jt-status-banner jt-status-banner--<?php echo esc_attr( $space_status ); ?>">
 				<?php if ( 'archived' === $space_status ) : ?>
-					<?php esc_html_e( 'This space is archived. New posts and replies are no longer accepted.', 'jetonomy' ); ?>
+					<?php echo esc_html( sprintf( __( 'This %s is archived. New posts and replies are no longer accepted.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				<?php else : ?>
-					<?php esc_html_e( 'This space is locked. New posts and replies are not allowed.', 'jetonomy' ); ?>
+					<?php echo esc_html( sprintf( __( 'This %s is locked. New posts and replies are not allowed.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) ); ?>
 				<?php endif; ?>
 			</div>
 			<?php endif; ?>
@@ -373,7 +373,7 @@ $crumbs[] = [
 
 			if ( is_array( $jt_space_tabs ) && count( $jt_space_tabs ) > 1 ) :
 				?>
-				<nav class="jt-space-tabs" aria-label="<?php esc_attr_e( 'Space sections', 'jetonomy' ); ?>">
+				<nav class="jt-space-tabs" aria-label="<?php echo esc_attr( sprintf( __( '%s sections', 'jetonomy' ), \Jetonomy\space_label() ) ); ?>">
 					<?php
 					foreach ( $jt_space_tabs as $jt_space_tab ) :
 						if ( empty( $jt_space_tab['label'] ) || ! isset( $jt_space_tab['url'] ) ) {

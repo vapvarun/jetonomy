@@ -1,7 +1,7 @@
 # Developer Docs & Extensibility Gap Report
 
 **Date:** 2026-06-26
-**Status:** Plan for review (no code/docs written yet beyond this report)
+**Status:** SHIPPED - verified 2026-07-04 (developer-guide docs + jetonomy_profile_tabs/jetonomy_space_tabs/jetonomy_member_card_after template filters all present in code). This doc should be archived out of active/.
 **Goal:** Make Jetonomy's developer/customizer story complete and discoverable - especially for people coming from BuddyPress / BuddyBoss who do not yet know what Jetonomy already offers.
 
 ---

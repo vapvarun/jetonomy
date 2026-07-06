@@ -2,20 +2,28 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.4.3"
+        "version": "1.6.0"
     },
     "generated": {
-        "at": "2026-06-26T08:13:37+00:00",
-        "manifest_at": "2026-06-04T00:00:00Z",
+        "at": "2026-07-04T18:15:58+00:00",
+        "manifest_at": "2026-07-04T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 91,
-            "covered": 36,
+            "total": 93,
+            "covered": 38,
             "uncovered": 55,
             "skipped": 0,
             "covered_items": [
+                {
+                    "method": "GET",
+                    "route": "/app/config"
+                },
+                {
+                    "method": "GET",
+                    "route": "/feed"
+                },
                 {
                     "method": "GET",
                     "route": "/spaces"
@@ -85,10 +93,6 @@
                     "route": "/posts/(?P<post_id>\\d+)/replies"
                 },
                 {
-                    "method": "GET",
-                    "route": "/replies/(?P<id>\\d+)"
-                },
-                {
                     "method": "PATCH",
                     "route": "/replies/(?P<id>\\d+)"
                 },
@@ -98,6 +102,10 @@
                 },
                 {
                     "method": "POST",
+                    "route": "/replies/(?P<id>\\d+)/accept"
+                },
+                {
+                    "method": "DELETE",
                     "route": "/replies/(?P<id>\\d+)/accept"
                 },
                 {
@@ -619,10 +627,10 @@
             ]
         },
         "hooks_fired": {
-            "total": 6,
+            "total": 7,
             "covered": 5,
-            "uncovered": 1,
-            "skipped": 170,
+            "uncovered": 2,
+            "skipped": 175,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -650,6 +658,11 @@
                     "name": "jetonomy_user_left_space",
                     "consumer_count": 1,
                     "stub_command": "bin/qa-stub-gen.php hook jetonomy_user_left_space"
+                },
+                {
+                    "name": "jetonomy_notification_deep_link",
+                    "consumer_count": 1,
+                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_notification_deep_link"
                 }
             ],
             "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
@@ -743,23 +756,23 @@
                     "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy scenario"
                 },
                 {
-                    "command": "jetonomy qa-actions",
-                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy qa-actions"
+                    "command": "jetonomy",
+                    "stub_command": "bin/qa-stub-gen.php wp_cli jetonomy"
                 }
             ]
         }
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 160,
-        "items_covered": 49,
-        "items_uncovered": 111,
-        "items_skipped": 170,
-        "coverage_percent": 30.600000000000001
+        "items_total": 163,
+        "items_covered": 51,
+        "items_uncovered": 112,
+        "items_skipped": 175,
+        "coverage_percent": 31.300000000000001
     },
     "drift": {
-        "previous_uncovered": 111,
-        "current_uncovered": 111,
-        "delta": 0
+        "previous_uncovered": 115,
+        "current_uncovered": 112,
+        "delta": -3
     }
 }

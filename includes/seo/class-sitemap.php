@@ -1,6 +1,11 @@
 <?php
 /**
- * Sitemap registration.
+ * Sitemap wiring.
+ *
+ * Jetonomy content is served by a CUSTOM sitemap (Sitemap_Emitter, via the
+ * router rewrite) rather than WP-core providers, so it can carry
+ * <priority>/<changefreq>. This class no longer registers WP-core providers; it
+ * just advertises the custom sitemap in robots.txt.
  *
  * @package Jetonomy
  */
@@ -12,22 +17,30 @@ defined( 'ABSPATH' ) || exit;
 class Sitemap {
 
 	public function __construct() {
-		add_action( 'init', [ $this, 'register' ] );
+		add_filter( 'robots_txt', array( $this, 'add_sitemap_line' ), 10, 2 );
 	}
 
-	public function register(): void {
-		// Respect seo_sitemap toggle.
-		$settings = get_option( 'jetonomy_settings', [] );
+	/**
+	 * Append a `Sitemap:` line for the custom community sitemap so crawlers
+	 * discover it. Gated on the same seo_sitemap toggle as the emitter.
+	 *
+	 * @param string $output The robots.txt content.
+	 * @param bool   $public Whether the site is public.
+	 * @return string
+	 */
+	public function add_sitemap_line( string $output, $public ): string {
+		if ( ! $public ) {
+			return $output;
+		}
+		$settings = \Jetonomy\seo_settings();
 		if ( empty( $settings['seo_sitemap'] ) ) {
-			return;
+			return $output;
 		}
 
-		$sitemaps = wp_sitemaps_get_server();
-		if ( ! $sitemaps ) {
-			return;
+		$url = home_url( '/' . Sitemap_Emitter::base_prefix() . '-sitemap.xml' );
+		if ( false === strpos( $output, $url ) ) {
+			$output .= "\nSitemap: " . esc_url_raw( $url ) . "\n";
 		}
-
-		$sitemaps->registry->add_provider( 'jetonomyspaces', new Spaces_Sitemap_Provider() );
-		$sitemaps->registry->add_provider( 'jetonomyposts', new Posts_Sitemap_Provider() );
+		return $output;
 	}
 }
