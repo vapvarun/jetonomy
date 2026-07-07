@@ -338,7 +338,10 @@ class Notifications_Controller extends Base_Controller {
 		if ( 'badge' === $object_type ) {
 			$user = get_userdata( (int) $notification->user_id );
 			if ( $user ) {
-				return \Jetonomy\base_url() . '/u/' . rawurlencode( $user->user_login ) . '/';
+				// #jt-badges anchor = the profile badges section (Pro custom-badges).
+				// Mirrors templates/views/notifications.php so the web page and the
+				// REST/app dropdown resolve badge notifications identically.
+				return \Jetonomy\base_url() . '/u/' . rawurlencode( $user->user_login ) . '/#jt-badges';
 			}
 			return '';
 		}

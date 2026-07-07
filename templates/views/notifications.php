@@ -174,7 +174,12 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 				} elseif ( 'badge' === $notif->object_type ) {
 					$badge_user = get_userdata( (int) $notif->user_id );
 					if ( $badge_user ) {
-						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/';
+						// Deep-link to the profile's badges section (#jt-badges anchor,
+						// rendered by Pro's custom-badges extension) so an "earned a
+						// badge" notification lands on the achievement, not the profile
+						// top. Degrades to the profile root when no badges section is
+						// present (e.g. free-only site).
+						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/#jt-badges';
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
 					// Mirrors Notifier::build_join_request_url_for() so the link
