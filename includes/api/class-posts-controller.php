@@ -1136,7 +1136,7 @@ class Posts_Controller extends Base_Controller {
 			$author        = $author_id ? get_userdata( $author_id ) : null;
 			$profile       = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
 			$author_name   = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
-			$author_avatar = $author ? get_avatar_url( $author_id, array( 'size' => 64 ) ) : '';
+			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
 			$author_login  = $author ? $author->user_login : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
 			$reputation    = $profile ? (int) $profile->reputation : 0;

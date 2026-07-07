@@ -865,7 +865,7 @@ class Spaces_Controller extends Base_Controller {
 				'display_name' => ( $profile && ! empty( $profile->display_name ) )
 					? $profile->display_name
 					: ( $user ? $user->display_name : __( 'Unknown member', 'jetonomy' ) ),
-				'avatar_url'   => get_avatar_url( $uid, [ 'size' => 48 ] ),
+				'avatar_url'   => \Jetonomy\Avatar::display_url( $uid, 48 ),
 				'profile_url'  => \Jetonomy\get_profile_url( $uid ),
 				'message'      => (string) ( $row->message ?? '' ),
 				'created_at'   => (string) $row->created_at,
@@ -1171,7 +1171,7 @@ class Spaces_Controller extends Base_Controller {
 			'role'         => $member->role,
 			'joined_at'    => $member->joined_at ?? null,
 			'display_name' => $user ? $user->display_name : '',
-			'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 48 ] ),
+			'avatar_url'   => \Jetonomy\Avatar::display_url( $user_id, 48 ),
 			'trust_level'  => $profile ? (int) $profile->trust_level : 0,
 			'reputation'   => $profile ? (int) $profile->reputation : 0,
 			'profile_url'  => \Jetonomy\base_url() . '/u/' . ( $user ? $user->user_login : $user_id ) . '/',

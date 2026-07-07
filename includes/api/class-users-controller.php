@@ -172,7 +172,7 @@ class Users_Controller extends Base_Controller {
 				'id'           => (int) $u->ID,
 				'login'        => $u->user_login,
 				'display_name' => $u->display_name,
-				'avatar_url'   => (string) get_avatar_url( $u->ID, array( 'size' => 48 ) ),
+				'avatar_url'   => \Jetonomy\Avatar::display_url( $u->ID, 48 ),
 			);
 		}
 		return new WP_REST_Response( $out, 200 );
@@ -276,7 +276,7 @@ class Users_Controller extends Base_Controller {
 			'post_count'       => (int) ( $profile->post_count ?? 0 ),
 			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
 			'bio'              => $profile->bio ?? null,
-			'avatar_url'       => $profile->avatar_url ?? get_avatar_url( $id, [ 'size' => 64 ] ),
+			'avatar_url'       => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 64 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];

@@ -306,7 +306,7 @@ class Notifications_Controller extends Base_Controller {
 			// Enriched actor data (for app clients + JS rendering)
 			'message'      => $notification->message ?? '',
 			'actor_name'   => $actor ? $actor->display_name : __( 'System', 'jetonomy' ),
-			'actor_avatar' => $actor ? get_avatar_url( $actor_id, [ 'size' => 64 ] ) : '',
+			'actor_avatar' => $actor ? \Jetonomy\Avatar::display_url( $actor_id, 64 ) : '',
 			'actor_login'  => $actor ? $actor->user_login : '',
 			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
 			'profile_url'  => $actor_id ? \Jetonomy\get_profile_url( $actor_id ) : '',
