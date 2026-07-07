@@ -676,7 +676,7 @@
   .jt-tag-link:hover { color: var(--jt-accent); text-decoration: underline; }
 
   /* Post-body tag row — tags moved out of byline (1.4.1 byline cleanup) */
-  .jt-post-tags { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-5) var(--jt-space-2); padding: 0; }
+  .jt-post-tags { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-5); padding: 0; }
 
   /* ── Trust level badge ── */
   .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: var(--jt-white); font-family: var(--jt-font-mono); }
