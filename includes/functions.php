@@ -277,9 +277,12 @@ function get_user_link( int $user_id, string $avatar_class = 'jt-avatar-sm', int
 			. '</span>';
 	}
 
-	$url        = get_profile_url( $user_id );
-	$name       = $user->display_name;
-	$avatar_url = get_avatar_url( $user_id, [ 'size' => $avatar_size * 2 ] );
+	$url  = get_profile_url( $user_id );
+	$name = $user->display_name;
+	// Resolve through Avatar::display_url() so a real uploaded avatar (local /
+	// BuddyPress / Gravatar-that-exists) is shown, and members with no real
+	// avatar fall back to initials instead of Gravatar's generic mystery-person.
+	$avatar_url = Avatar::display_url( $user_id, $avatar_size * 2 );
 	$initials   = strtoupper( mb_substr( $name, 0, 2 ) );
 
 	$avatar_html = $avatar_url

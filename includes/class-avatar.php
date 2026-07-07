@@ -42,6 +42,26 @@ class Avatar {
 	private static array $cache = array();
 
 	/**
+	 * User-meta flag caching whether a member has a real hosted Gravatar.
+	 * '1' = yes, '0' = no, absent = not yet checked. Keyed off the user's
+	 * email, so it is invalidated when the email changes.
+	 */
+	private const META_HAS_GRAVATAR = 'jetonomy_has_gravatar';
+
+	/**
+	 * Async action that populates META_HAS_GRAVATAR out of the render path.
+	 */
+	private const CHECK_HOOK = 'jetonomy_gravatar_check';
+
+	/**
+	 * Per-request guard so one page render enqueues at most one background
+	 * Gravatar check per user, no matter how many times the avatar renders.
+	 *
+	 * @var array<int, true>
+	 */
+	private static array $check_enqueued = array();
+
+	/**
 	 * Hook everything up. Called once from Jetonomy bootstrap.
 	 */
 	public static function init(): void {
@@ -53,6 +73,13 @@ class Avatar {
 		add_action( 'edit_user_profile', array( __CLASS__, 'render_admin_field' ) );
 		add_action( 'personal_options_update', array( __CLASS__, 'save_admin_field' ) );
 		add_action( 'edit_user_profile_update', array( __CLASS__, 'save_admin_field' ) );
+
+		// Background Gravatar-existence check (populates META_HAS_GRAVATAR) and
+		// its invalidation. Runs off the render path via Action Scheduler, with
+		// a WP-Cron single-event fallback.
+		add_action( self::CHECK_HOOK, array( __CLASS__, 'run_gravatar_check' ) );
+		add_action( 'profile_update', array( __CLASS__, 'on_profile_update' ), 10, 2 );
+		add_action( 'user_register', array( __CLASS__, 'invalidate_gravatar' ) );
 	}
 
 	/**
@@ -112,6 +139,153 @@ class Avatar {
 	 */
 	public static function flush_cache( int $user_id ): void {
 		unset( self::$cache[ $user_id ] );
+	}
+
+	/**
+	 * Resolve the avatar URL to display for a user, or '' when the caller
+	 * should render an initials placeholder instead.
+	 *
+	 * Chain: a locally-uploaded avatar (Jetonomy profile, BuddyPress, or any
+	 * other provider that hooks the avatar filters) is used as-is; a plain
+	 * Gravatar URL is only used when the member actually has a hosted Gravatar
+	 * (cached check). Otherwise '' is returned so the reader sees initials
+	 * rather than Gravatar's generic mystery-person, which is indistinguishable
+	 * from a broken image.
+	 *
+	 * The Gravatar existence check never runs inline — it is enqueued as a
+	 * background job and the member shows initials until it resolves, so a
+	 * 400-reply topic never fires 400 HTTP calls during render.
+	 *
+	 * @param int $user_id WP user ID.
+	 * @param int $size    Requested pixel size (passed to get_avatar_url()).
+	 * @return string Avatar URL, or '' to signal an initials fallback.
+	 */
+	public static function display_url( int $user_id, int $size = 96 ): string {
+		if ( $user_id <= 0 ) {
+			return '';
+		}
+
+		$url = (string) get_avatar_url( $user_id, array( 'size' => $size ) );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		// A non-Gravatar URL means a real uploaded avatar resolved via the
+		// avatar filters (Jetonomy local, BuddyPress, WP Fusion, …). Use it.
+		if ( false === strpos( $url, 'gravatar.com/avatar/' ) ) {
+			return $url;
+		}
+
+		// Gravatar URL: only trust it when the member has a real hosted Gravatar.
+		$has = self::has_gravatar( $user_id );
+		if ( true === $has ) {
+			return $url;
+		}
+		if ( null === $has ) {
+			self::maybe_check_gravatar( $user_id ); // Warm the cache in the background.
+		}
+
+		return '';
+	}
+
+	/**
+	 * Whether the member has a real hosted Gravatar.
+	 *
+	 * @param int $user_id WP user ID.
+	 * @return bool|null true/false when known, null when not yet checked.
+	 */
+	public static function has_gravatar( int $user_id ): ?bool {
+		if ( $user_id <= 0 ) {
+			return false;
+		}
+		$flag = get_user_meta( $user_id, self::META_HAS_GRAVATAR, true );
+		if ( '1' === $flag ) {
+			return true;
+		}
+		if ( '0' === $flag ) {
+			return false;
+		}
+		return null;
+	}
+
+	/**
+	 * Enqueue a one-off background Gravatar-existence check for a user,
+	 * deduplicated per request and (for an hour) across requests so a busy
+	 * topic doesn't schedule the same check repeatedly.
+	 *
+	 * @param int $user_id WP user ID.
+	 */
+	public static function maybe_check_gravatar( int $user_id ): void {
+		if ( $user_id <= 0 || isset( self::$check_enqueued[ $user_id ] ) ) {
+			return;
+		}
+		self::$check_enqueued[ $user_id ] = true;
+
+		$lock = 'jt_grav_chk_' . $user_id;
+		if ( get_transient( $lock ) ) {
+			return;
+		}
+		set_transient( $lock, 1, HOUR_IN_SECONDS );
+
+		if ( function_exists( 'as_enqueue_async_action' ) ) {
+			as_enqueue_async_action( self::CHECK_HOOK, array( $user_id ), 'jetonomy' );
+		} else {
+			wp_schedule_single_event( time() + 30, self::CHECK_HOOK, array( $user_id ) );
+		}
+	}
+
+	/**
+	 * Background worker: HEAD-request Gravatar with `d=404` and cache whether a
+	 * real avatar exists (200) or not (404). Runs via Action Scheduler / WP-Cron.
+	 *
+	 * @param int $user_id WP user ID.
+	 */
+	public static function run_gravatar_check( $user_id ): void {
+		$user_id = (int) $user_id;
+		delete_transient( 'jt_grav_chk_' . $user_id );
+
+		$user = get_userdata( $user_id );
+		if ( ! $user || '' === (string) $user->user_email ) {
+			update_user_meta( $user_id, self::META_HAS_GRAVATAR, '0' );
+			return;
+		}
+
+		$hash = md5( strtolower( trim( (string) $user->user_email ) ) );
+		$resp = wp_remote_head(
+			'https://www.gravatar.com/avatar/' . $hash . '?d=404',
+			array(
+				'timeout'     => 3,
+				'redirection' => 0,
+			)
+		);
+
+		$exists = ! is_wp_error( $resp ) && 200 === (int) wp_remote_retrieve_response_code( $resp );
+		update_user_meta( $user_id, self::META_HAS_GRAVATAR, $exists ? '1' : '0' );
+	}
+
+	/**
+	 * Re-check on the next render when a user's email changes (Gravatar keys
+	 * off the email address).
+	 *
+	 * @param int      $user_id       Updated user ID.
+	 * @param \WP_User $old_user_data User object before the update.
+	 */
+	public static function on_profile_update( $user_id, $old_user_data ): void {
+		$new = get_userdata( (int) $user_id );
+		if ( $new && $new->user_email !== $old_user_data->user_email ) {
+			self::invalidate_gravatar( (int) $user_id );
+		}
+	}
+
+	/**
+	 * Drop the cached Gravatar flag so the next render re-checks.
+	 *
+	 * @param int $user_id WP user ID.
+	 */
+	public static function invalidate_gravatar( $user_id ): void {
+		$user_id = (int) $user_id;
+		delete_user_meta( $user_id, self::META_HAS_GRAVATAR );
+		delete_transient( 'jt_grav_chk_' . $user_id );
 	}
 
 	/**
