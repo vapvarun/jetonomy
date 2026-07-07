@@ -676,7 +676,10 @@
   .jt-tag-link:hover { color: var(--jt-accent); text-decoration: underline; }
 
   /* Post-body tag row — tags moved out of byline (1.4.1 byline cleanup) */
-  .jt-post-tags { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-5); padding: 0; }
+  /* Tags are a sibling of .jt-post-body, so they don't inherit its horizontal
+     padding — match it (space-6 desktop, space-4 mobile) so hashtags align with
+     the body text column instead of sitting flush against the card edge. */
+  .jt-post-tags { display: flex; flex-wrap: wrap; gap: var(--jt-space-3); margin-block: var(--jt-space-5); padding-block: 0; padding-inline: var(--jt-space-6); }
 
   /* ── Trust level badge ── */
   .jt-tl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; font-size: 0.6875rem; font-weight: 700; color: var(--jt-white); font-family: var(--jt-font-mono); }
@@ -715,8 +718,23 @@
   .jt-meta strong { color: var(--jt-text); }
   .jt-post-body { padding: var(--jt-space-6); font-size: 1rem; line-height: 1.8; }
   .jt-post-body p { margin: 0 0 var(--jt-space-3); }
-  .jt-post-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
-  .jt-post-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
+  /* Prose element rules are shared by the post body AND the reply body so every
+     content type (lists, code, blockquotes, long words) aligns and wraps the
+     same way in both — no per-container drift. Long unbroken tokens (URLs, hashes)
+     break instead of overflowing the card. img/table/iframe overflow rules are
+     grouped for both containers further down. */
+  .jt-post-body, .jt-reply-body { overflow-wrap: break-word; }
+  /* Lists inherit a zeroed padding from the global reset, so outside markers
+     overflow left toward the card edge. Restore a marker gutter so 1./2./bullets
+     sit inside the reading column, aligned under the body text. */
+  .jt-post-body ol, .jt-post-body ul,
+  .jt-reply-body ol, .jt-reply-body ul { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-6); }
+  .jt-post-body li, .jt-reply-body li { margin-block: var(--jt-space-1); }
+  .jt-post-body code, .jt-reply-body code { background: var(--jt-bg-muted); padding: 2px 6px; border-radius: 4px; font-family: var(--jt-font-mono); }
+  /* code inside a code block must not also get the inline-code chip background. */
+  .jt-post-body pre code, .jt-reply-body pre code { background: none; padding: 0; border-radius: 0; }
+  .jt-post-body pre, .jt-reply-body pre { background: var(--jt-code-bg); color: var(--jt-code-fg); padding: var(--jt-space-4); border-radius: var(--jt-radius); overflow-x: auto; font-family: var(--jt-font-mono); line-height: 1.6; margin: 0 0 var(--jt-space-3); }
+  .jt-post-body blockquote, .jt-reply-body blockquote { margin: 0 0 var(--jt-space-3); padding-inline-start: var(--jt-space-4); border-inline-start: 3px solid var(--jt-border); color: var(--jt-text-secondary); }
   .jt-post-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block: var(--jt-space-3); padding-inline: var(--jt-space-4); border-top: 1px solid var(--jt-border); }
 
   /* ── Action buttons ── */
@@ -1030,6 +1048,7 @@
        15px on mobile for density without going under the iOS zoom
        threshold on input fields. */
     .jt-post-body { padding: var(--jt-space-4); font-size: var(--jt-text-base); }
+    .jt-post-tags { padding-inline: var(--jt-space-4); }
     .jt-reply-body { padding: var(--jt-space-3) var(--jt-space-4); font-size: var(--jt-text-base); }
 
     /* Breadcrumb truncation */
