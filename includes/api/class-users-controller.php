@@ -235,7 +235,10 @@ class Users_Controller extends Base_Controller {
 			'post_count'       => (int) ( $profile->post_count ?? 0 ),
 			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
 			'bio'              => $profile->bio ?? null,
+			// avatar_url = the raw stored upload (null when none) for the edit flow;
+			// avatar_display = the resolved render value ('' => client shows initials).
 			'avatar_url'       => $profile->avatar_url ?? null,
+			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];
@@ -276,7 +279,8 @@ class Users_Controller extends Base_Controller {
 			'post_count'       => (int) ( $profile->post_count ?? 0 ),
 			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
 			'bio'              => $profile->bio ?? null,
-			'avatar_url'       => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 64 ),
+			'avatar_url'       => $profile->avatar_url ?? null,
+			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];
@@ -467,17 +471,18 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_profile( ?object $profile ): array {
 		$data = [
-			'id'           => (int) ( $profile->user_id ?? 0 ),
-			'user_id'      => (int) ( $profile->user_id ?? 0 ),
-			'reputation'   => (int) ( $profile->reputation ?? 0 ),
-			'post_count'   => (int) ( $profile->post_count ?? 0 ),
-			'reply_count'  => (int) ( $profile->reply_count ?? 0 ),
-			'trust_level'  => (int) ( $profile->trust_level ?? 0 ),
-			'bio'          => $profile->bio ?? null,
-			'avatar_url'   => $profile->avatar_url ?? null,
-			'last_seen_at' => $profile->last_seen_at ?? null,
-			'created_at'   => $profile->created_at ?? null,
-			'updated_at'   => $profile->updated_at ?? null,
+			'id'             => (int) ( $profile->user_id ?? 0 ),
+			'user_id'        => (int) ( $profile->user_id ?? 0 ),
+			'reputation'     => (int) ( $profile->reputation ?? 0 ),
+			'post_count'     => (int) ( $profile->post_count ?? 0 ),
+			'reply_count'    => (int) ( $profile->reply_count ?? 0 ),
+			'trust_level'    => (int) ( $profile->trust_level ?? 0 ),
+			'bio'            => $profile->bio ?? null,
+			'avatar_url'     => $profile->avatar_url ?? null,
+			'avatar_display' => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
+			'last_seen_at'   => $profile->last_seen_at ?? null,
+			'created_at'     => $profile->created_at ?? null,
+			'updated_at'     => $profile->updated_at ?? null,
 		];
 
 		/**
