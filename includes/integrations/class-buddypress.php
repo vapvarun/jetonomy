@@ -154,6 +154,17 @@ class BuddyPress {
 		if ( $this->comment_bridge_enabled() ) {
 			add_action( 'bp_activity_comment_posted', array( $this, 'on_bp_activity_comment_posted' ), 20, 3 );
 		}
+
+		// Deep-link fix: a broadcast row is owned by the topic author, so BP
+		// fires its own "commented on one of your updates" notification whose
+		// link resolves to the activity permalink (the feed) — not the forum
+		// topic the reader expects. Point that notification at the originating
+		// Jetonomy topic instead. Registered unconditionally so existing
+		// broadcast activities keep deep-linking correctly even if the
+		// broadcast toggle is later turned off. Non-broadcast activities are
+		// left untouched by the handler.
+		add_filter( 'bp_activity_single_update_reply_notification', array( $this, 'filter_broadcast_reply_notification' ), 20, 5 );
+		add_filter( 'bp_activity_single_comment_reply_notification', array( $this, 'filter_broadcast_reply_notification' ), 20, 5 );
 	}
 
 	/*
@@ -432,6 +443,83 @@ class BuddyPress {
 			)
 		);
 		self::$syncing = false;
+	}
+
+	/**
+	 * Point BuddyPress's activity-reply notification at the Jetonomy topic.
+	 *
+	 * When a topic is broadcast to a paired group's activity stream, the
+	 * broadcast row is owned by the topic author, so BuddyPress fires its own
+	 * "commented on one of your updates" notification whose link resolves to
+	 * the activity permalink (the feed) — not the forum topic the reader
+	 * expects. For broadcast activities (tagged with ACTIVITY_META_POST) we
+	 * rewrite that link to the originating Jetonomy topic. Any other activity
+	 * is returned untouched.
+	 *
+	 * Fires on both the string and array variants of BP's
+	 * `bp_activity_single_{update|comment}_reply_notification` filter.
+	 *
+	 * @param string|array $formatted   BP's formatted notification (HTML anchor or ['text','link']).
+	 * @param string       $link        BP's original permalink for the interaction.
+	 * @param int          $total_items Number of items being notified about.
+	 * @param int          $activity_id Activity ID BP is formatting (a comment for update_reply).
+	 * @param int          $user_id     ID of the user who left the comment.
+	 * @return string|array The notification with its link rewritten to the topic, or unchanged.
+	 */
+	public function filter_broadcast_reply_notification( $formatted, $link, $total_items, $activity_id, $user_id ) {
+		unset( $total_items, $user_id );
+
+		$topic_url = $this->topic_url_for_activity( (int) $activity_id );
+		if ( '' === $topic_url ) {
+			return $formatted; // Not one of our broadcast activities.
+		}
+
+		if ( is_array( $formatted ) ) {
+			$formatted['link'] = $topic_url;
+			return $formatted;
+		}
+
+		// String format: swap BP's permalink for the topic URL inside the anchor.
+		return str_replace( esc_url( (string) $link ), esc_url( $topic_url ), (string) $formatted );
+	}
+
+	/**
+	 * Resolve the Jetonomy topic URL for a BP activity that belongs to a
+	 * broadcast topic, walking up from an activity comment to its root row.
+	 *
+	 * BP formats update_reply / comment_reply notifications against the
+	 * comment activity; the ACTIVITY_META_POST tag lives on the root
+	 * broadcast row, so we climb one level when handed a comment.
+	 *
+	 * @param int $activity_id Activity or activity-comment ID.
+	 * @return string Topic URL, or '' when the activity is not a broadcast row.
+	 */
+	private function topic_url_for_activity( int $activity_id ): string {
+		if ( $activity_id <= 0 || ! function_exists( 'bp_activity_get_meta' ) ) {
+			return '';
+		}
+
+		$activity = new \BP_Activity_Activity( $activity_id );
+		$root_id  = ( 'activity_comment' === $activity->type && ! empty( $activity->item_id ) )
+			? (int) $activity->item_id
+			: $activity_id;
+
+		$post_id = (int) bp_activity_get_meta( $root_id, self::ACTIVITY_META_POST, true );
+		if ( $post_id <= 0 ) {
+			return '';
+		}
+
+		$post = Post::find( $post_id );
+		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
+			return '';
+		}
+
+		$space = Space::find( (int) $post->space_id );
+		if ( ! $space ) {
+			return '';
+		}
+
+		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
 	}
 
 	/*
