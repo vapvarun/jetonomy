@@ -41,8 +41,9 @@ class Reply extends Model {
 
 		$data = array_merge(
 			array(
-				'status'     => 'publish',
-				'created_at' => now(),
+				'status'       => 'publish',
+				'is_anonymous' => 0,
+				'created_at'   => now(),
 			),
 			$data
 		);

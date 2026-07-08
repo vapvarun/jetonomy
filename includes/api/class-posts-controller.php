@@ -497,6 +497,11 @@ class Posts_Controller extends Base_Controller {
 			'is_private'    => $is_private,
 		);
 
+		// Carry the client-requested flag into the create data. Free only
+		// plumbs it through — Pro validates/enforces it via the
+		// `jetonomy_before_create_post` filter (see Task 12).
+		$post_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+
 		if ( ! empty( $prefix ) ) {
 			$post_data['prefix'] = $prefix;
 		}
@@ -1292,6 +1297,12 @@ class Posts_Controller extends Base_Controller {
 				'type'     => 'boolean',
 				'required' => false,
 				'default'  => false,
+			),
+			'is_anonymous' => array(
+				'type'              => 'boolean',
+				'required'          => false,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 			'status'       => array(
 				'type'     => 'string',

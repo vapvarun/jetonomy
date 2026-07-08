@@ -52,6 +52,7 @@ class Post extends Model {
 		$data = array_merge(
 			array(
 				'status'        => 'publish',
+				'is_anonymous'  => 0,
 				'created_at'    => $now,
 				'updated_at'    => $now,
 				'last_reply_at' => $now,

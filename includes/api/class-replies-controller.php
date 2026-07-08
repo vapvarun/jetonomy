@@ -250,6 +250,11 @@ class Replies_Controller extends Base_Controller {
 			'content_plain' => $content_plain,
 		);
 
+		// Carry the client-requested flag into the create data. Free only
+		// plumbs it through — Pro validates/enforces it via the
+		// `jetonomy_before_create_reply` filter (see Task 12).
+		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+
 		if ( $akismet_spam ) {
 			$reply_data['status'] = 'spam';
 		}
@@ -819,6 +824,12 @@ class Replies_Controller extends Base_Controller {
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 1,
+			),
+			'is_anonymous' => array(
+				'type'              => 'boolean',
+				'required'          => false,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 			'published_at' => array(
 				'type'              => 'string',
