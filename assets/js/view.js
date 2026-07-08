@@ -1917,7 +1917,7 @@ const { state, actions } = store( 'jetonomy', {
                     // hits the short-circuit above without a page reload.
                     el.ref.dataset.flagged = '1';
                     el.ref.classList.add( 'is-flagged' );
-                    el.ref.title = state.i18n?.alreadyReported || 'You have reported this';
+                    el.ref.title = state.i18n?.alreadyReported || 'You already reported this.';
                     el.ref.setAttribute( 'aria-label', el.ref.title );
                     if ( window.bnToast ) window.bnToast( state.i18n?.reportedThankYou || 'Reported. Thank you.' );
                 } else {
