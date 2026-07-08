@@ -235,8 +235,8 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 			<div class="jt-thread-toggle" data-wp-interactive="jetonomy"
 				data-wp-context='{"collapsed": false, "childCount": <?php echo (int) count( $reply->children ); ?>}'>
 				<button class="jt-thread-toggle-btn" data-wp-on--click="actions.toggleThread"
-					data-wp-text="context.collapsed ? '+ Show ' + context.childCount + ' replies' : '&minus; Hide replies'">
-					&minus; Hide replies
+					data-wp-text="state.threadToggleLabel">
+					&minus; <?php esc_html_e( 'Hide replies', 'jetonomy' ); ?>
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
 					<?php foreach ( $reply->children as $child ) : ?>

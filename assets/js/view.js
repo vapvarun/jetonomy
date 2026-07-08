@@ -699,6 +699,22 @@ const { state, actions } = store( 'jetonomy', {
         get nonce() {
             return state._nonce || '';
         },
+
+        // Localized label for the threaded-reply toggle button. Reads this
+        // element's context (collapsed + childCount) and state.i18n so the
+        // button translates (was inline English in the data-wp-text expr).
+        get threadToggleLabel() {
+            const ctx  = getContext() || {};
+            const i18n = state.i18n || {};
+            const n    = Number( ctx.childCount ) || 0;
+            if ( ctx.collapsed ) {
+                const label = 1 === n
+                    ? ( i18n.showRepliesOne || 'Show 1 reply' )
+                    : ( i18n.showRepliesMany || 'Show %d replies' ).replace( '%d', n );
+                return '+ ' + label;
+            }
+            return '\u2212 ' + ( i18n.hideReplies || 'Hide replies' );
+        },
     },
 
     actions: {

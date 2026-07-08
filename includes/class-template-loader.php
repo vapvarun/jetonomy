@@ -369,6 +369,12 @@ class Template_Loader {
 					'alreadyReported'       => __( 'You already reported this.', 'jetonomy' ),
 					'draftPublished'        => __( 'Published.', 'jetonomy' ),
 					'genericError'          => __( 'Could not publish.', 'jetonomy' ),
+					// Threaded-reply toggle label (single-post.php); the count is
+					// substituted client-side in the state.threadToggleLabel getter.
+					'hideReplies'           => __( 'Hide replies', 'jetonomy' ),
+					'showRepliesOne'        => __( 'Show 1 reply', 'jetonomy' ),
+					/* translators: %d: number of replies. */
+					'showRepliesMany'       => __( 'Show %d replies', 'jetonomy' ),
 				),
 			)
 		);
