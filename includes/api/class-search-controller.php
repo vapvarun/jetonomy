@@ -256,7 +256,7 @@ class Search_Controller extends Base_Controller {
 			$params[] = $date_to . ' 23:59:59';
 		}
 		if ( $author_id ) {
-			$where[]  = 'p.author_id = %d';
+			$where[]  = 'p.author_id = %d AND p.is_anonymous = 0';
 			$params[] = $author_id;
 		}
 
@@ -372,7 +372,7 @@ class Search_Controller extends Base_Controller {
 			$r_params[] = $date_to . ' 23:59:59';
 		}
 		if ( $author_id ) {
-			$r_where[]  = 'r.author_id = %d';
+			$r_where[]  = 'r.author_id = %d AND r.is_anonymous = 0';
 			$r_params[] = $author_id;
 		}
 
@@ -493,7 +493,7 @@ class Search_Controller extends Base_Controller {
 			$params[] = $date_to . ' 23:59:59';
 		}
 		if ( $author_id ) {
-			$where[]  = 'p.author_id = %d';
+			$where[]  = 'p.author_id = %d AND p.is_anonymous = 0';
 			$params[] = $author_id;
 		}
 
@@ -560,7 +560,7 @@ class Search_Controller extends Base_Controller {
 			$r_params[] = $date_to . ' 23:59:59';
 		}
 		if ( $author_id ) {
-			$r_where[]  = 'r.author_id = %d';
+			$r_where[]  = 'r.author_id = %d AND r.is_anonymous = 0';
 			$r_params[] = $author_id;
 		}
 		if ( $space_id ) {

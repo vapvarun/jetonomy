@@ -90,7 +90,7 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 				$params[] = $date_to . ' 23:59:59';
 			}
 			if ( $author_id ) {
-				$where[]  = 'p.author_id = %d';
+				$where[]  = 'p.author_id = %d AND p.is_anonymous = 0';
 				$params[] = $author_id;
 			}
 
@@ -299,8 +299,8 @@ $crumbs = [
 							foreach ( $posts as $post ) :
 								$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
 								$post_url = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
-								$excerpt  = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
-								$author   = get_userdata( (int) $post->author_id );
+								$excerpt        = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
+								$author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 								?>
 								<?php $_jt_search_space = isset( $post->space_id ) ? \Jetonomy\Models\Space::find( (int) $post->space_id ) : null; ?>
 								<a href="<?php echo esc_url( $post_url ); ?>" class="jt-row">
@@ -312,7 +312,7 @@ $crumbs = [
 									<div class="jt-row-main">
 										<div class="jt-row-title"><?php echo esc_html( jetonomy_post_title_or_excerpt( $post ) ); ?></div>
 										<div class="jt-row-sub">
-											<?php echo esc_html( $author ? $author->display_name : '' ); ?>
+											<?php echo esc_html( $author_display['name'] ); ?>
 											&middot;
 											<?php echo esc_html( $post->space_title ); ?>
 											&middot;
