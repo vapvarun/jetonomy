@@ -7,8 +7,11 @@
 
 defined( 'ABSPATH' ) || exit;
 $display     = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply );
+// Anonymous-posting leak-audit fix: role pill / online status must never be
+// derived from the raw author_id when the display identity is masked, or
+// "Anonymous [Admin]" / an online dot de-anonymizes the real author.
+$jt_is_masked = (int) $display['id'] !== (int) $reply->author_id;
 $profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
-$author_id   = (int) $display['id'];
 $trust       = $profile ? (int) $profile->trust_level : 0;
 $time_ago    = human_time_diff( strtotime( $reply->created_at ), time() );
 $is_op       = (int) $reply->author_id === (int) $post->author_id;
@@ -24,7 +27,7 @@ $jt_can_moderate_reply = $jt_reply_viewer
 ?>
 <div class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
-		<span class="jt-avatar-wrap <?php echo \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ? esc_attr( 'is-online' ) : ''; ?>">
+		<span class="jt-avatar-wrap <?php echo ( ! $jt_is_masked && \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ) ? esc_attr( 'is-online' ) : ''; ?>">
 			<?php
 			// get_user_link() returns trusted, fully-escaped plugin markup (incl. the
 			// Lucide SVG fallback avatar, which wp_kses_post would strip). Echo direct.
@@ -46,7 +49,7 @@ $jt_can_moderate_reply = $jt_reply_viewer
 		$jt_role = isset( $post ) && isset( $post->space_id )
 			? \Jetonomy\get_space_role_label( (int) $reply->author_id, (int) $post->space_id )
 			: null;
-		if ( null !== $jt_role ) :
+		if ( ! $jt_is_masked && null !== $jt_role ) :
 			$jt_role_label = ( 'admin' === $jt_role )
 				? __( 'Admin', 'jetonomy' )
 				: __( 'Mod', 'jetonomy' );
