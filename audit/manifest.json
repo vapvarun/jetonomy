@@ -1965,7 +1965,7 @@
       "type": "filter",
       "args": "'' (html), $post",
       "where": "templates/views/single-post.php",
-      "consumed_by": "jetonomy-pro"
+      "consumed_by": "jetonomy-pro, jetonomy-pro/attachments"
     },
     {
       "name": "jetonomy_after_replies",
@@ -3126,6 +3126,27 @@
       "args": "$can_reveal (bool, default false), $object, $viewer_id",
       "where": "includes/class-author.php (Author::for_display)",
       "consumed_by": "jetonomy-pro anonymous-posting (Reveal) - true only for manage_options in explicit reveal context"
+    },
+    {
+      "name": "jetonomy_after_reply_content",
+      "type": "filter",
+      "args": "$html, $reply",
+      "where": "templates/partials/reply-card.php",
+      "consumed_by": "jetonomy-pro/attachments"
+    },
+    {
+      "name": "jetonomy_upload_allowed_types",
+      "type": "filter",
+      "args": "$ext_to_mime",
+      "where": "includes/api/class-media-controller.php (Media_Controller::validate_upload + upload_image)",
+      "consumed_by": "jetonomy-pro/attachments"
+    },
+    {
+      "name": "jetonomy_upload_max_size",
+      "type": "filter",
+      "args": "$bytes",
+      "where": "includes/api/class-media-controller.php (Media_Controller::validate_upload)",
+      "consumed_by": "jetonomy-pro/attachments"
     }
   ],
   "buddypress_integration": {
