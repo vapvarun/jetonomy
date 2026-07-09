@@ -598,6 +598,11 @@ class Post extends Model {
 	/**
 	 * List published posts by a specific author.
 	 *
+	 * Anonymous posts (is_anonymous = 1) are always excluded, including from
+	 * the author's own profile: surfacing them here — even to the author
+	 * themselves — would deanonymize the post by correlating it to this
+	 * identity, defeating the anonymity the space/activity views already mask.
+	 *
 	 * @param int $user_id Author user ID.
 	 * @param int $limit   Max rows.
 	 * @param int $offset  Pagination offset.
@@ -630,7 +635,7 @@ class Post extends Model {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT p.* FROM {$table} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
 				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$user_id,
 				...array_merge( $gate_params, array( $limit, $offset ) )

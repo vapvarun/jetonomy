@@ -68,7 +68,10 @@ $spaces_tbl = \Jetonomy\table( 'spaces' );
 
 // Space-visibility + per-post is_private gate: a non-member viewing another
 // user's profile must not see that user's posts in private/hidden spaces, nor
-// their private posts in public spaces.
+// their private posts in public spaces. is_anonymous = 0 (query below) is an
+// anonymity guard: an anonymous post must never surface on this profile's
+// public post stream, even to the author viewing their own profile — that
+// would deanonymize it by correlating it to this identity.
 [ $jt_space_vis_sql, $jt_space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 'sp' );
 [ $jt_priv_sql, $jt_priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
 
@@ -90,7 +93,7 @@ $recent_posts = $wpdb->get_results(
 		"SELECT p.*, sp.slug AS space_slug, sp.title AS space_title
 		 FROM {$posts_tbl} p
 		 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.author_id = %d AND p.status = 'publish'{$jt_gate_sql}
+		 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$jt_gate_sql}
 		 ORDER BY p.created_at DESC
 		 LIMIT %d OFFSET %d",
 		(int) $user->ID,
