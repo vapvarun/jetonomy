@@ -36,4 +36,17 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 		$out = Uploader::extend_allowed_types( array( 'png' => 'image/png' ) );
 		$this->assertNotContains( 'image/svg+xml', $out );
 	}
+
+	public function test_settings_sanitize_drops_svg_and_clamps(): void {
+		$out = \Jetonomy_Pro\Extensions\Attachments\Settings::sanitize(
+			array(
+				'allowed_types'  => array( 'png', 'svg', 'exe', 'pdf' ),
+				'max_size_bytes' => 999999999999,
+				'max_files'      => 99,
+			)
+		);
+		$this->assertSame( array( 'png', 'pdf' ), array_values( $out['allowed_types'] ) );
+		$this->assertLessThanOrEqual( (int) wp_max_upload_size(), $out['max_size_bytes'] );
+		$this->assertSame( 20, $out['max_files'] );
+	}
 }
