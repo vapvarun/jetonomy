@@ -89,4 +89,37 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 		$this->assertTrue( $res->get_data()['deleted'] );
 		$this->assertSame( 0, \Jetonomy_Pro\Extensions\Attachments\Model::count_for( 'post', 6666 ) );
 	}
+
+	public function test_link_on_create_post_reads_attachment_ids_from_request(): void {
+		$owner = self::factory()->user->create();
+		$a1    = self::factory()->attachment->create_object( array( 'post_author' => $owner ), 0, array( 'post_mime_type' => 'image/png' ) );
+		$a2    = self::factory()->attachment->create_object( array( 'post_author' => $owner ), 0, array( 'post_mime_type' => 'image/png' ) );
+		wp_set_current_user( $owner );
+
+		$req = new \WP_REST_Request( 'POST', '/jetonomy/v1/posts' );
+		$req->set_param( 'attachment_ids', $a1 . ',' . $a2 );
+
+		( new \Jetonomy_Pro\Extensions\Attachments\Extension() )->link_on_create_post( 9191, 1, $req );
+		$this->assertSame( 2, \Jetonomy_Pro\Extensions\Attachments\Model::count_for( 'post', 9191 ) );
+	}
+
+	public function test_link_on_create_post_ignores_ids_owned_by_someone_else(): void {
+		$owner   = self::factory()->user->create();
+		$other   = self::factory()->user->create();
+		$foreign = self::factory()->attachment->create_object( array( 'post_author' => $other ), 0, array( 'post_mime_type' => 'image/png' ) );
+		wp_set_current_user( $owner );
+
+		$req = new \WP_REST_Request( 'POST', '/jetonomy/v1/posts' );
+		$req->set_param( 'attachment_ids', (string) $foreign );
+
+		( new \Jetonomy_Pro\Extensions\Attachments\Extension() )->link_on_create_post( 9292, 1, $req );
+		$this->assertSame( 0, \Jetonomy_Pro\Extensions\Attachments\Model::count_for( 'post', 9292 ) );
+	}
+
+	public function test_render_composer_attach_button_has_data_attribute(): void {
+		ob_start();
+		( new \Jetonomy_Pro\Extensions\Attachments\Extension() )->render_composer_attach_button( 1, 0 );
+		$html = (string) ob_get_clean();
+		$this->assertStringContainsString( 'data-jt-attach="1"', $html );
+	}
 }
