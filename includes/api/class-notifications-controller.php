@@ -288,8 +288,15 @@ class Notifications_Controller extends Base_Controller {
 			return [];
 		}
 
-		$actor_id = (int) ( $notification->actor_id ?? 0 );
-		$actor    = $actor_id ? get_userdata( $actor_id ) : null;
+		// actor_anonymous is the source of truth for masking — persisted on the
+		// row at creation time from the reply/post's is_anonymous flag
+		// (Notifier::create_and_maybe_email / Mentions::notify). Gating
+		// get_userdata()/avatar/profile-url on it here (rather than trusting
+		// the already-masked $message text) stops the real author's identity
+		// leaking through this enriched actor_* payload.
+		$is_actor_anonymous = ! empty( $notification->actor_anonymous );
+		$actor_id           = $is_actor_anonymous ? 0 : (int) ( $notification->actor_id ?? 0 );
+		$actor              = $actor_id ? get_userdata( $actor_id ) : null;
 
 		$object_type = $notification->object_type ?? '';
 		$object_id   = $notification->object_id ? (int) $notification->object_id : 0;
@@ -305,7 +312,7 @@ class Notifications_Controller extends Base_Controller {
 			'created_at'   => $notification->created_at ?? null,
 			// Enriched actor data (for app clients + JS rendering)
 			'message'      => $notification->message ?? '',
-			'actor_name'   => $actor ? $actor->display_name : __( 'System', 'jetonomy' ),
+			'actor_name'   => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'System', 'jetonomy' ) ),
 			'actor_avatar' => $actor ? \Jetonomy\Avatar::display_url( $actor_id, 64 ) : '',
 			'actor_login'  => $actor ? $actor->user_login : '',
 			'time_ago'     => $notification->created_at ? human_time_diff( strtotime( $notification->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',

@@ -55,10 +55,11 @@ class Mentions {
 	 * Notify mentioned users.
 	 */
 	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title, ?int $space_id = null, bool $is_private = false ): void {
-		$object     = 'reply' === $object_type
+		$object          = 'reply' === $object_type
 			? Models\Reply::find( $object_id )
 			: Models\Post::find( $object_id );
-		$actor_name = \Jetonomy\Author::for_display( $actor_id, $object )['name'] ?: __( 'Someone', 'jetonomy' );
+		$actor_name      = \Jetonomy\Author::for_display( $actor_id, $object )['name'] ?: __( 'Someone', 'jetonomy' );
+		$actor_anonymous = (bool) ( $object->is_anonymous ?? false );
 
 		// Visibility filter: never notify a user who can't read the mentioned
 		// content. Done ONCE, set-based, before the loop — no per-recipient
@@ -96,13 +97,14 @@ class Mentions {
 
 			$notification_id = Models\Notification::create(
 				[
-					'user_id'     => $uid,
-					'actor_id'    => $actor_id,
-					'type'        => 'mention',
-					'object_type' => $object_type,
-					'object_id'   => $object_id,
-					'message'     => $message,
-					'created_at'  => now(),
+					'user_id'         => $uid,
+					'actor_id'        => $actor_id,
+					'actor_anonymous' => $actor_anonymous ? 1 : 0,
+					'type'            => 'mention',
+					'object_type'     => $object_type,
+					'object_id'       => $object_id,
+					'message'         => $message,
+					'created_at'      => now(),
 				]
 			);
 

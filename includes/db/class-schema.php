@@ -250,6 +250,7 @@ class Schema {
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   user_id bigint(20) unsigned NOT NULL DEFAULT 0,
   actor_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  actor_anonymous tinyint(1) NOT NULL DEFAULT 0,
   type varchar(50) NOT NULL DEFAULT '',
   object_type ENUM('post','reply','space','badge','message') NOT NULL DEFAULT 'post',
   object_id bigint(20) unsigned NOT NULL DEFAULT 0,
