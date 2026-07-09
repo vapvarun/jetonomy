@@ -52,4 +52,27 @@ class AnonymousGateTest extends WP_UnitTestCase {
 		// Guest never allowed.
 		$this->assertFalse( Gate::can_author_anonymously( $this->space_id, 0 ) );
 	}
+
+	public function test_enforcement_forces_flag_off_when_space_disallows(): void {
+		update_option( 'jetonomy_pro_anonymous_enabled', true ); // global on, space OFF
+		$ext  = new \Jetonomy_Pro\Extensions\Anonymous_Posting\Extension();
+		$data = $ext->enforce_post_anonymity( array( 'is_anonymous' => 1 ), $this->user_id, $this->space_id );
+		$this->assertSame( 0, $data['is_anonymous'] );
+	}
+
+	public function test_enforcement_sets_flag_when_all_gates_pass(): void {
+		update_option( 'jetonomy_pro_anonymous_enabled', true );
+		Space::update( $this->space_id, array( 'settings' => wp_json_encode( array( 'allow_anonymous' => true ) ) ) );
+		$ext  = new \Jetonomy_Pro\Extensions\Anonymous_Posting\Extension();
+		$data = $ext->enforce_post_anonymity( array( 'is_anonymous' => 1 ), $this->user_id, $this->space_id );
+		$this->assertSame( 1, $data['is_anonymous'] );
+	}
+
+	public function test_enforcement_ignores_client_flag_without_request(): void {
+		update_option( 'jetonomy_pro_anonymous_enabled', true );
+		Space::update( $this->space_id, array( 'settings' => wp_json_encode( array( 'allow_anonymous' => true ) ) ) );
+		$ext  = new \Jetonomy_Pro\Extensions\Anonymous_Posting\Extension();
+		$data = $ext->enforce_post_anonymity( array(), $this->user_id, $this->space_id ); // no is_anonymous requested
+		$this->assertSame( 0, $data['is_anonymous'] );
+	}
 }
