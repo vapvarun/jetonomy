@@ -2806,15 +2806,25 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
+                const payload = {
+                    content: body.innerHTML,
+                    ...( parentId && { parent_id: parentId } ),
+                    ...( captchaToken && { captcha_token: captchaToken } ),
+                };
+
+                // Generic pre-submit extension point (mirrors composePost's
+                // `jetonomy:before-post-submit` below). Additive/stackable —
+                // any script can listen and mutate `detail.payload` in place
+                // before the REST call fires, without owning/replacing the
+                // submit action itself. Pro's anonymous-posting extension
+                // uses this to add `is_anonymous`.
+                document.dispatchEvent( new CustomEvent( 'jetonomy:before-reply-submit', { detail: { editor: editorWrap, payload } } ) );
+
                 const response = yield window.jetonomyRest.restFetch(
                     `/posts/${ postId }/replies`,
                     {
                         method: 'POST',
-                        body: {
-                            content: body.innerHTML,
-                            ...( parentId && { parent_id: parentId } ),
-                            ...( captchaToken && { captcha_token: captchaToken } ),
-                        },
+                        body: payload,
                     }
                 );
 
@@ -3116,6 +3126,15 @@ const { state, actions } = store( 'jetonomy', {
                 const extras = o.extraPayload( form ) || {};
                 Object.assign( payload, extras );
             }
+
+            // Generic pre-submit extension point. Unlike `extraPayload`
+            // (single-owner, wired via the `jetonomy_new_post_submit_action`
+            // filter that replaces the whole submit action), this event is
+            // additive/stackable — any number of scripts can listen and
+            // mutate `detail.payload` in place before the REST call fires.
+            // Pro's anonymous-posting extension uses this to add
+            // `is_anonymous` without needing its own submit-action override.
+            document.dispatchEvent( new CustomEvent( 'jetonomy:before-post-submit', { detail: { form, payload } } ) );
 
             // ── Request ───────────────────────────────────────────────────────
             // restFetch (1.4.3) wraps fetch, refreshes nonce on 403, and

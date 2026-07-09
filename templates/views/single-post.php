@@ -92,7 +92,14 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 	return;
 }
 
-$author   = get_userdata( (int) $post->author_id );
+// Anonymous-posting leak-audit fix: the single-post header rendered the raw
+// author via get_userdata() directly, bypassing Author::for_display() — the
+// same mask every listing/reply/feed card already routes through. That left
+// the one page most likely to be viewed showing the real name on an
+// is_anonymous=1 topic. `$jt_author_display['id']` is 0 (name "Anonymous",
+// no avatar/url) whenever the viewer isn't granted a reveal.
+$jt_author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+$jt_author_masked  = (int) $jt_author_display['id'] !== (int) $post->author_id;
 $profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
 $category = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
@@ -356,8 +363,25 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 						// Tags moved out of the byline into their own row below the
 						// post body so the meta line reads cleanly as
 						// "User · time · status" without descriptor noise.
-						// Trusted, fully-escaped plugin markup (incl. Lucide SVG avatar). Echo direct.
-						echo \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						// Anonymous-posting mask: same split-render pattern as
+						// reply-card.php — get_user_link() renders the avatar
+						// (icon-only silhouette + no link when $jt_author_display['id']
+						// is 0), name rendered separately so "Anonymous" always shows
+						// even though get_user_link()'s show_name path requires a
+						// resolvable WP user. Trusted, fully-escaped plugin markup
+						// (incl. Lucide SVG avatar). Echo direct.
+						echo \Jetonomy\get_user_link( (int) $jt_author_display['id'], 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						if ( '' !== $jt_author_display['url'] ) :
+							?>
+							<a class="jt-user-link" href="<?php echo esc_url( $jt_author_display['url'] ); ?>">
+								<span class="jt-user-name"><?php echo esc_html( $jt_author_display['name'] ); ?></span>
+							</a>
+							<?php
+						else :
+							?>
+							<span class="jt-user-name"><?php echo esc_html( '' !== $jt_author_display['name'] ? $jt_author_display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?></span>
+							<?php
+						endif;
 						?>
 						<span>
 							<?php
