@@ -3,10 +3,11 @@
  * Unit tests for the Anonymous Posting Pro extension's Gate.
  *
  * Verifies that Gate::can_author_anonymously() is the single source of truth
- * requiring BOTH the global master switch (jetonomy_pro_anonymous_enabled)
- * AND the per-space opt-in (settings.allow_anonymous) to be true, plus a
- * logged-in author — matching the sibling Pro extension test convention of
- * skipping automatically when Jetonomy Pro is not active.
+ * requiring BOTH the global master switch (the Anonymous Posting extension being
+ * enabled, i.e. present in the jetonomy_pro_extensions option) AND the per-space
+ * opt-in (settings.allow_anonymous) to be true, plus a logged-in author —
+ * matching the sibling Pro extension test convention of skipping automatically
+ * when Jetonomy Pro is not active.
  *
  * @package Jetonomy\Tests\Pro
  */
@@ -34,7 +35,13 @@ class AnonymousGateTest extends WP_UnitTestCase {
 		$cat            = Category::create( array( 'name' => 'G', 'slug' => 'g-' . uniqid() ) );
 		$this->space_id = Space::create( array( 'title' => 'S', 'slug' => 's-' . uniqid(), 'category_id' => $cat ) );
 		$this->user_id  = self::factory()->user->create();
-		delete_option( 'jetonomy_pro_anonymous_enabled' );
+		// Global master switch OFF = extension not enabled.
+		update_option( 'jetonomy_pro_extensions', array() );
+	}
+
+	/** Turn the global master switch ON by enabling the extension. */
+	private function enable_globally(): void {
+		update_option( 'jetonomy_pro_extensions', array( 'anonymous-posting' ) );
 	}
 
 	public function test_gate_requires_global_and_space_and_user(): void {
@@ -42,7 +49,7 @@ class AnonymousGateTest extends WP_UnitTestCase {
 		$this->assertFalse( Gate::can_author_anonymously( $this->space_id, $this->user_id ) );
 
 		// Global on only.
-		update_option( 'jetonomy_pro_anonymous_enabled', true );
+		$this->enable_globally();
 		$this->assertFalse( Gate::can_author_anonymously( $this->space_id, $this->user_id ) );
 
 		// Global on + space on.
@@ -54,14 +61,14 @@ class AnonymousGateTest extends WP_UnitTestCase {
 	}
 
 	public function test_enforcement_forces_flag_off_when_space_disallows(): void {
-		update_option( 'jetonomy_pro_anonymous_enabled', true ); // global on, space OFF
+		$this->enable_globally(); // global on, space OFF
 		$ext  = new \Jetonomy_Pro\Extensions\Anonymous_Posting\Extension();
 		$data = $ext->enforce_post_anonymity( array( 'is_anonymous' => 1 ), $this->user_id, $this->space_id );
 		$this->assertSame( 0, $data['is_anonymous'] );
 	}
 
 	public function test_enforcement_sets_flag_when_all_gates_pass(): void {
-		update_option( 'jetonomy_pro_anonymous_enabled', true );
+		$this->enable_globally();
 		Space::update( $this->space_id, array( 'settings' => wp_json_encode( array( 'allow_anonymous' => true ) ) ) );
 		$ext  = new \Jetonomy_Pro\Extensions\Anonymous_Posting\Extension();
 		$data = $ext->enforce_post_anonymity( array( 'is_anonymous' => 1 ), $this->user_id, $this->space_id );
@@ -69,7 +76,7 @@ class AnonymousGateTest extends WP_UnitTestCase {
 	}
 
 	public function test_enforcement_ignores_client_flag_without_request(): void {
-		update_option( 'jetonomy_pro_anonymous_enabled', true );
+		$this->enable_globally();
 		Space::update( $this->space_id, array( 'settings' => wp_json_encode( array( 'allow_anonymous' => true ) ) ) );
 		$ext  = new \Jetonomy_Pro\Extensions\Anonymous_Posting\Extension();
 		$data = $ext->enforce_post_anonymity( array(), $this->user_id, $this->space_id ); // no is_anonymous requested
