@@ -89,6 +89,13 @@ $jt_can_moderate_reply = $jt_reply_viewer
 		?>
 	</div>
 	<?php
+	// Reply after-content slot (Pro attachment strip renders here). Mirrors the
+	// post-level jetonomy_after_post_content filter; same shared kses set.
+	$jt_reply_after = apply_filters( 'jetonomy_after_reply_content', '', $reply );
+	if ( '' !== $jt_reply_after ) {
+		echo wp_kses( $jt_reply_after, jetonomy_after_content_allowed_html() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kses'd above.
+	}
+
 	$reply_viewer_id   = get_current_user_id();
 	$reply_viewer_vote = $reply_viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $reply_viewer_id, 'reply', (int) $reply->id ) : null;
 	?>

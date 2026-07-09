@@ -462,58 +462,10 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				// Poll widget (Pro) renders radio/checkbox inputs via this
 				// filter. wp_kses_post() strips form inputs, which silently
 				// breaks voting UI even though the REST endpoint works.
-				// Extend the post-content allowlist with the input element
-				// + the IA event directive consumers used inside the slot.
-				$jt_post_content_after_tags          = wp_kses_allowed_html( 'post' );
-				$jt_post_content_after_tags['input'] = array(
-					'type'                   => true,
-					'name'                   => true,
-					'value'                  => true,
-					'checked'                => true,
-					'disabled'               => true,
-					'class'                  => true,
-					'id'                     => true,
-					'data-wp-on--click'      => true,
-					'data-wp-on--change'     => true,
-					'data-wp-bind--checked'  => true,
-					'data-wp-bind--disabled' => true,
-					'aria-label'             => true,
-					'aria-checked'           => true,
-				);
-				// IA directives on existing elements (div/span/button/label).
-				foreach ( array( 'div', 'span', 'button', 'label', 'a', 'form', 'select', 'option', 'textarea' ) as $jt_tag ) {
-					if ( isset( $jt_post_content_after_tags[ $jt_tag ] ) ) {
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-interactive']    = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-context']        = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-on--click']      = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-on--change']     = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-on--submit']     = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-bind--hidden']   = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-bind--disabled'] = true;
-						$jt_post_content_after_tags[ $jt_tag ]['data-wp-class--active']  = true;
-					}
-				}
-				$jt_post_content_after_tags['textarea'] = isset( $jt_post_content_after_tags['textarea'] )
-					? $jt_post_content_after_tags['textarea']
-					: array(
-						'name'        => true,
-						'class'       => true,
-						'rows'        => true,
-						'cols'        => true,
-						'placeholder' => true,
-					);
-				$jt_post_content_after_tags['select']   = isset( $jt_post_content_after_tags['select'] )
-					? $jt_post_content_after_tags['select']
-					: array(
-						'name'  => true,
-						'class' => true,
-					);
-				$jt_post_content_after_tags['option']   = isset( $jt_post_content_after_tags['option'] )
-					? $jt_post_content_after_tags['option']
-					: array(
-						'value'    => true,
-						'selected' => true,
-					);
+				// Shared allow-list (helpers.php) — permits poll inputs AND
+				// attachment-card markup. Single source of truth with
+				// reply-card.php so the two after-content slots never drift.
+				$jt_post_content_after_tags = jetonomy_after_content_allowed_html();
 
 				echo wp_kses(
 					apply_filters( 'jetonomy_after_post_content', '', $post ),
