@@ -49,4 +49,44 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 		$this->assertLessThanOrEqual( (int) wp_max_upload_size(), $out['max_size_bytes'] );
 		$this->assertSame( 20, $out['max_files'] );
 	}
+
+	public function test_attach_enforces_max_files(): void {
+		$this->assertTrue( method_exists( \Jetonomy_Pro\Extensions\Attachments\Rest::class, 'attach' ) );
+	}
+
+	public function test_post_payload_gets_attachments_array(): void {
+		\Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 7777, 42, 0 );
+		$post = (object) array( 'id' => 7777 );
+		$rest = new \Jetonomy_Pro\Extensions\Attachments\Rest( new \Jetonomy_Pro\Extensions\Attachments\Extension() );
+		$data = $rest->inject_post_payload( array( 'id' => 7777 ), $post );
+		$this->assertArrayHasKey( 'attachments', $data );
+		$this->assertSame( 42, (int) $data['attachments'][0]['id'] );
+	}
+
+	public function test_non_owner_cannot_attach(): void {
+		$owner = self::factory()->user->create();
+		$other = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$aid   = self::factory()->attachment->create_object( array( 'post_author' => $owner ), 0, array( 'post_mime_type' => 'image/png' ) );
+		wp_set_current_user( $other );
+		$req = new \WP_REST_Request( 'POST', '/jetonomy-pro/v1/attachments' );
+		$req->set_param( 'object_type', 'post' );
+		$req->set_param( 'object_id', 5555 );
+		$req->set_param( 'attachment_id', $aid );
+		$req->set_param( 'sort', 0 );
+		$res = ( new \Jetonomy_Pro\Extensions\Attachments\Rest( new \Jetonomy_Pro\Extensions\Attachments\Extension() ) )->attach( $req );
+		$this->assertInstanceOf( \WP_Error::class, $res );
+		$this->assertSame( 403, $res->get_error_data()['status'] );
+	}
+
+	public function test_owner_can_detach_own_attachment(): void {
+		$owner = self::factory()->user->create();
+		$aid   = self::factory()->attachment->create_object( array( 'post_author' => $owner ), 0, array( 'post_mime_type' => 'image/png' ) );
+		$link  = \Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 6666, $aid, 0 );
+		wp_set_current_user( $owner );
+		$req = new \WP_REST_Request( 'DELETE' );
+		$req->set_url_params( array( 'id' => $link ) );
+		$res = ( new \Jetonomy_Pro\Extensions\Attachments\Rest( new \Jetonomy_Pro\Extensions\Attachments\Extension() ) )->detach( $req );
+		$this->assertTrue( $res->get_data()['deleted'] );
+		$this->assertSame( 0, \Jetonomy_Pro\Extensions\Attachments\Model::count_for( 'post', 6666 ) );
+	}
 }
