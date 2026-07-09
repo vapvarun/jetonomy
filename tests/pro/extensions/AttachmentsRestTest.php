@@ -122,4 +122,26 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 		$html = (string) ob_get_clean();
 		$this->assertStringContainsString( 'data-jt-attach="1"', $html );
 	}
+
+	/**
+	 * Guards the lazy-load contract (spec §4): pdf.js may only ever be reached
+	 * via a dynamic import() inside pdf-viewer.js, triggered from a PDF-card
+	 * click — never a static import in the always-loaded frontend module.
+	 */
+	public function test_pdfjs_is_not_in_the_initial_frontend_bundle(): void {
+		$frontend = file_get_contents( JETONOMY_PRO_DIR . 'assets/js/attachments-frontend.js' );
+		$this->assertDoesNotMatchRegularExpression( '/^\s*import\s+[^;]*pdfjs/m', $frontend, 'pdf.js must not be statically imported in the frontend module.' );
+		$this->assertMatchesRegularExpression( "/import\\(\\s*['\"]\\.\\/pdf-viewer/", $frontend, 'PDF viewer must be dynamically imported on click.' );
+	}
+
+	public function test_pdfjs_vendored_lib_files_exist(): void {
+		$this->assertFileExists( JETONOMY_PRO_DIR . 'assets/lib/pdfjs/pdf.min.mjs' );
+		$this->assertFileExists( JETONOMY_PRO_DIR . 'assets/lib/pdfjs/pdf.worker.min.mjs' );
+	}
+
+	public function test_pdf_viewer_only_dynamically_imports_pdfjs(): void {
+		$viewer = file_get_contents( JETONOMY_PRO_DIR . 'assets/js/pdf-viewer.js' );
+		$this->assertDoesNotMatchRegularExpression( '/^\s*import\s+[^;]*pdfjs/m', $viewer );
+		$this->assertMatchesRegularExpression( "/import\\(\\s*['\"]\\.\\.\\/lib\\/pdfjs\\/pdf\\.min\\.mjs/", $viewer );
+	}
 }
