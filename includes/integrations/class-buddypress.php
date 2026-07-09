@@ -224,7 +224,17 @@ class BuddyPress {
 	 */
 	public function format_activity_action( $action, $activity ): string {
 		unset( $action );
-		$user_link  = bp_core_get_userlink( (int) $activity->user_id );
+		$user_link = bp_core_get_userlink( (int) $activity->user_id );
+
+		// Defensive mask: an anonymous post's activity is never created (see
+		// on_jt_post_created_for_bp), but if a legacy row or a third-party
+		// caller ever produces one, fall back to a non-identifying actor
+		// rather than resolving the real user link above.
+		$jt_post = Post::find( (int) ( $activity->secondary_item_id ?? 0 ) );
+		if ( $jt_post && ! empty( $jt_post->is_anonymous ) ) {
+			$user_link = esc_html__( 'Anonymous', 'jetonomy' );
+		}
+
 		$group      = groups_get_group( (int) $activity->item_id );
 		$group_name = is_object( $group ) && ! empty( $group->name ) ? (string) $group->name : '';
 		$group_link = '' !== $group_name
@@ -279,6 +289,13 @@ class BuddyPress {
 		// Privacy guard: private topics never broadcast. Group audience
 		// can be broader than the private-topic scope.
 		if ( ! empty( $post->is_private ) ) {
+			return;
+		}
+
+		// Anonymous posts are never broadcast to the BP activity stream — a BP
+		// activity row's user_id natively drives avatar/permalink/notifications
+		// and cannot be masked after the fact. No activity = no leak.
+		if ( ! empty( $post->is_anonymous ) ) {
 			return;
 		}
 
@@ -823,10 +840,10 @@ class BuddyPress {
 		} else {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
-				$post_url = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
-				$author   = get_userdata( (int) $post->author_id );
-				$time_ago = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
-				$replies  = (int) $post->reply_count;
+				$post_url   = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+				$jt_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+				$time_ago   = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
+				$replies    = (int) $post->reply_count;
 
 				echo '<li>';
 				echo '<div class="jt-bp-topic-row">';
@@ -837,7 +854,7 @@ class BuddyPress {
 				}
 				echo '</div>';
 				echo '<div class="jt-bp-topic-meta">';
-				echo '<span>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</span>';
+				echo '<span>' . esc_html( '' !== $jt_display['name'] ? $jt_display['name'] : __( 'Anonymous', 'jetonomy' ) ) . '</span>';
 				// translators: %s: human-readable time difference.
 				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
 				echo '</div>';
@@ -947,6 +964,12 @@ class BuddyPress {
 		$base  = \Jetonomy\base_url();
 		$posts = Post::list_by_author( $user_id, 10 );
 
+		// Own-profile leak guard: a "Posts" tab on the AUTHOR's own profile
+		// would otherwise deanonymize their anonymous topics by correlating
+		// them to this identity, defeating the anonymity that the space/
+		// activity views already mask. Anonymous rows are never listed here.
+		$posts = array_values( array_filter( $posts, static fn( $post ) => empty( $post->is_anonymous ) ) );
+
 		if ( ! empty( $posts ) ) {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
@@ -982,7 +1005,9 @@ class BuddyPress {
 
 		// Space-visibility + per-post is_private gate on the PARENT post so a
 		// member's replies in private/hidden spaces (or under private posts)
-		// don't leak to non-member / non-author profile visitors.
+		// don't leak to non-member / non-author profile visitors. is_anonymous
+		// = 0 is an own-profile leak guard: listing the author's own anonymous
+		// replies here would deanonymize them by correlating to this profile.
 		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
 		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
 		$gate_sql                             = '';
@@ -1006,7 +1031,7 @@ class BuddyPress {
 				 FROM {$p}jt_replies r
 				 INNER JOIN {$p}jt_posts p ON p.id = r.post_id
 				 INNER JOIN {$p}jt_spaces s ON s.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish'{$gate_sql}
+				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
 				 ORDER BY r.created_at DESC
 				 LIMIT 10",
 				$user_id,
