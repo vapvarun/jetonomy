@@ -112,6 +112,75 @@ class PostsAnonymousRestTest extends WP_UnitTestCase {
 		$this->assertSame( 'Real Name', $data['author_name'] );
 	}
 
+	/**
+	 * Regression: Author::for_display() also returns id=0 for content whose
+	 * REAL author_id is 0 (deleted-user content — Privacy::on_user_delete()
+	 * zeroes author_id but leaves is_anonymous=0). The masking override in
+	 * prepare_post() must NOT fire in that case; the pre-existing "Anonymous"
+	 * display-name fallback (for a null get_userdata()) must be preserved,
+	 * not overwritten with an empty string.
+	 */
+	public function test_deleted_user_post_falls_back_to_anonymous_label_not_empty(): void {
+		$post_id = Post::create(
+			array(
+				'space_id'  => $this->space_id,
+				'author_id' => $this->author_id,
+				'title'     => 'Orphaned topic',
+				'content'   => 'Body',
+				'status'    => 'publish',
+			)
+		);
+
+		// Simulate Privacy::on_user_delete(): zero the real author_id while
+		// leaving is_anonymous=0 (not a masking case).
+		global $wpdb;
+		$wpdb->update( \Jetonomy\table( 'posts' ), array( 'author_id' => 0 ), array( 'id' => $post_id ) );
+
+		wp_set_current_user( $this->member_id );
+		$data = $this->server->dispatch( new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$post_id}" ) )->get_data();
+
+		$this->assertSame( 0, $data['author_id'] );
+		$this->assertSame( 'Anonymous', $data['author_name'] );
+		$this->assertNotSame( '', $data['author_name'] );
+	}
+
+	/**
+	 * Same regression for replies: deleted-user reply (author_id=0,
+	 * is_anonymous=0) must keep the "Anonymous" fallback label, not an
+	 * empty string, in the collection batch-enrich path.
+	 */
+	public function test_deleted_user_reply_falls_back_to_anonymous_label_not_empty(): void {
+		$post_id = Post::create(
+			array(
+				'space_id'  => $this->space_id,
+				'author_id' => $this->author_id,
+				'title'     => 'Topic with orphaned reply',
+				'content'   => 'Body',
+				'status'    => 'publish',
+			)
+		);
+
+		$reply_id = Reply::create(
+			array(
+				'post_id'   => $post_id,
+				'author_id' => $this->author_id,
+				'content'   => 'Orphaned reply',
+			)
+		);
+
+		global $wpdb;
+		$wpdb->update( \Jetonomy\table( 'replies' ), array( 'author_id' => 0 ), array( 'id' => $reply_id ) );
+
+		wp_set_current_user( $this->member_id );
+		$data = $this->server->dispatch( new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$post_id}/replies" ) )->get_data();
+
+		$this->assertNotEmpty( $data['data'] );
+		$reply = $data['data'][0];
+		$this->assertSame( 0, $reply['author_id'] );
+		$this->assertSame( 'Anonymous', $reply['author_name'] );
+		$this->assertNotSame( '', $reply['author_name'] );
+	}
+
 	public function test_flagged_reply_masked_in_collection_batch_path(): void {
 		$post_id = Post::create(
 			array(
