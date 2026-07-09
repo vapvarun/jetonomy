@@ -276,6 +276,9 @@ Avatar fallbacks and app parity, correct notification deep-links, and fuller tra
 * Fix      - Post and reply body text now share one alignment across every content type, so a reply no longer sits offset from the post it answers.
 * Fix      - Vertical spacing above and below the post hashtag row is now balanced, instead of crowding the tags against the post body.
 * Fix      - Compose toolbar labels, block-editor scripts, the threaded-reply toggle, and the remaining front-end script strings are now translatable.
+* Security - Member media uploads are now validated against an explicit file-type allow-list with a content check, replacing behaviour where the accepted types depended on the member's role.
+* Fix      - Composer and form inputs now show a single focus ring instead of a doubled outline.
+* Dev      - Added the author-display resolver, the is_anonymous columns, and the upload allow-list and max-size filters that power Pro Anonymous Posting and File Attachments.
 * Compat   - Aligned with Jetonomy Pro 1.6.1. Install both updates together.
 
 = 1.6.0 - June 2026 =
