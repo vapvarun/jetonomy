@@ -3,6 +3,7 @@ namespace Jetonomy\Tests\Pro\Extensions;
 
 use WP_UnitTestCase;
 use Jetonomy_Pro\Extensions\Attachments\Extension;
+use Jetonomy_Pro\Extensions\Attachments\Model;
 
 class AttachmentsModelTest extends WP_UnitTestCase {
 
@@ -24,5 +25,16 @@ class AttachmentsModelTest extends WP_UnitTestCase {
 		$meta = ( new Extension() )->meta();
 		$this->assertSame( 'attachments', $meta['id'] );
 		$this->assertSame( 'starter', $meta['requires'] );
+	}
+
+	public function test_link_count_and_get(): void {
+		$id1 = Model::link( 'post', 4242, 900, 0 );
+		$id2 = Model::link( 'post', 4242, 901, 1 );
+		$this->assertGreaterThan( 0, $id1 );
+		$this->assertSame( 2, Model::count_for( 'post', 4242 ) );
+		$rows = Model::get_for( 'post', 4242 );
+		$this->assertSame( array( 900, 901 ), array_map( static fn( $r ) => (int) $r->attachment_id, $rows ) );
+		$this->assertTrue( Model::unlink( $id2 ) );
+		$this->assertSame( 1, Model::count_for( 'post', 4242 ) );
 	}
 }
