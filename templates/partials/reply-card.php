@@ -6,9 +6,9 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$author      = get_userdata( (int) $reply->author_id );
+$display     = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply );
 $profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
-$author_id   = (int) $reply->author_id;
+$author_id   = (int) $display['id'];
 $trust       = $profile ? (int) $profile->trust_level : 0;
 $time_ago    = human_time_diff( strtotime( $reply->created_at ), time() );
 $is_op       = (int) $reply->author_id === (int) $post->author_id;
@@ -28,15 +28,15 @@ $jt_can_moderate_reply = $jt_reply_viewer
 			<?php
 			// get_user_link() returns trusted, fully-escaped plugin markup (incl. the
 			// Lucide SVG fallback avatar, which wp_kses_post would strip). Echo direct.
-			echo \Jetonomy\get_user_link( (int) $reply->author_id, 'jt-avatar-sm', 28, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo \Jetonomy\get_user_link( (int) $display['id'], 'jt-avatar-sm', 28, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			?>
 		</span>
-		<?php if ( $author ) : ?>
-			<a class="jt-reply-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $reply->author_id ) ); ?>">
-				<?php echo esc_html( $author->display_name ); ?>
+		<?php if ( '' !== $display['url'] ) : ?>
+			<a class="jt-reply-author" href="<?php echo esc_url( $display['url'] ); ?>">
+				<?php echo esc_html( $display['name'] ); ?>
 			</a>
 		<?php else : ?>
-			<span class="jt-reply-author"><?php esc_html_e( 'Anonymous', 'jetonomy' ); ?></span>
+			<span class="jt-reply-author"><?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?></span>
 		<?php endif; ?>
 		<?php
 		// 1.4.0 G3: role pill — same as post-card.php, scoped to the
@@ -139,13 +139,13 @@ $jt_can_moderate_reply = $jt_reply_viewer
 			<button class="jt-act jt-reply-to-btn"
 				data-wp-on--click="actions.setReplyTo"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
-				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"
+				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
 				title="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Reply', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'message-circle', 14 ); ?> <span class="jt-btn-label"><?php esc_html_e( 'Reply', 'jetonomy' ); ?></span></button>
 			<button class="jt-act"
 				data-wp-on--click="actions.quoteReply"
 				data-reply-id="<?php echo (int) $reply->id; ?>"
-				data-reply-author="<?php echo esc_attr( $author ? $author->display_name : '' ); ?>"
+				data-reply-author="<?php echo esc_attr( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>"
 				title="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"
 				aria-label="<?php esc_attr_e( 'Quote', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'quote', 14 ); ?></button>
 		<?php endif; ?>
