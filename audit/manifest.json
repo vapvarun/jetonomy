@@ -1555,7 +1555,7 @@
     },
     {
       "name": "{prefix}jt_posts",
-      "purpose": "Posts and questions",
+      "purpose": "Posts and questions (+is_anonymous flag, 1.7.0)",
       "columns": {
         "idea_status": "enum('planned','in_progress','shipped','declined') DEFAULT NULL"
       },
@@ -1570,7 +1570,7 @@
     },
     {
       "name": "{prefix}jt_replies",
-      "purpose": "Replies and answers"
+      "purpose": "Replies and answers (+is_anonymous flag, 1.7.0)"
     },
     {
       "name": "{prefix}jt_votes",
@@ -1590,7 +1590,7 @@
     },
     {
       "name": "{prefix}jt_notifications",
-      "purpose": "User notifications"
+      "purpose": "User notifications (+actor_anonymous flag, 1.7.0)"
     },
     {
       "name": "{prefix}jt_subscriptions",
@@ -3119,6 +3119,13 @@
       ],
       "where": "includes/functions.php:58",
       "consumed_by": []
+    },
+    {
+      "name": "jetonomy_author_can_reveal",
+      "type": "filter",
+      "args": "$can_reveal (bool, default false), $object, $viewer_id",
+      "where": "includes/class-author.php (Author::for_display)",
+      "consumed_by": "jetonomy-pro anonymous-posting (Reveal) - true only for manage_options in explicit reveal context"
     }
   ],
   "buddypress_integration": {
