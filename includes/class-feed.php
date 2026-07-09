@@ -77,7 +77,7 @@ class Feed {
 		<?php foreach ( $posts as $post ) : ?>
 			<?php
 			$post_url = $space_url . 't/' . rawurlencode( (string) $post->slug ) . '/';
-			$author   = get_userdata( (int) $post->author_id );
+			$display  = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 			$excerpt  = wp_trim_words( (string) ( $post->content_plain ?? wp_strip_all_tags( (string) $post->content ) ), 55 );
 			?>
 	<item>
@@ -85,7 +85,7 @@ class Feed {
 		<link><?php echo esc_url( $post_url ); ?></link>
 		<guid isPermaLink="true"><?php echo esc_url( $post_url ); ?></guid>
 		<pubDate><?php echo esc_html( mysql2date( 'r', (string) $post->created_at, false ) ); ?></pubDate>
-		<dc:creator><?php echo esc_html( $author ? $author->display_name : __( 'Member', 'jetonomy' ) ); ?></dc:creator>
+		<dc:creator><?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Member', 'jetonomy' ) ); ?></dc:creator>
 		<description><?php echo esc_html( $excerpt ); ?></description>
 	</item>
 <?php endforeach; ?>
