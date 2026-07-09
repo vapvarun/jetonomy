@@ -158,8 +158,15 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 		<div class="jt-card jt-card-flush jt-notif-list" data-jt-notif-list>
 			<?php foreach ( $notifications as $notif ) : ?>
 				<?php
-				$actor        = $notif->actor_id ? get_userdata( (int) $notif->actor_id ) : null;
-				$actor_name   = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
+				// actor_anonymous is the source of truth for masking — set at
+				// notification-creation time from the reply/post's is_anonymous
+				// flag (Notifier::create_and_maybe_email / Mentions::notify).
+				// Gating get_userdata() on it (rather than deriving from the
+				// message text) stops the real author's avatar/name/name-link
+				// leaking beside an "Anonymous replied…" message.
+				$jt_notif_anon = ! empty( $notif->actor_anonymous );
+				$actor         = ( $notif->actor_id && ! $jt_notif_anon ) ? get_userdata( (int) $notif->actor_id ) : null;
+				$actor_name    = $jt_notif_anon ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'Someone', 'jetonomy' ) );
 				$action_label = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );

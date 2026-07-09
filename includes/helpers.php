@@ -236,3 +236,91 @@ if ( ! function_exists( 'jetonomy_community_pulse' ) ) {
 		return $pulse;
 	}
 }
+
+if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
+	/**
+	 * Shared kses allow-list for the post/reply after-content filter slots
+	 * (`jetonomy_after_post_content` / `jetonomy_after_reply_content`).
+	 *
+	 * Extends the 'post' set with the form inputs + IA directives the polls
+	 * widget relies on AND the attachment-card markup (image link, PDF trigger
+	 * button, download chip, inline SVG icons). One source of truth so the two
+	 * slots (single-post.php and reply-card.php) never drift. Superset of the
+	 * former inline allow-list in single-post.php — nothing the poll widget
+	 * needed is dropped.
+	 *
+	 * @return array kses allowed-HTML map.
+	 */
+	function jetonomy_after_content_allowed_html(): array {
+		$tags = wp_kses_allowed_html( 'post' );
+
+		$tags['input'] = array(
+			'type'                   => true,
+			'name'                   => true,
+			'value'                  => true,
+			'checked'                => true,
+			'disabled'               => true,
+			'class'                  => true,
+			'id'                     => true,
+			'aria-label'             => true,
+			'aria-checked'           => true,
+			'data-wp-on--click'      => true,
+			'data-wp-on--change'     => true,
+			'data-wp-bind--checked'  => true,
+			'data-wp-bind--disabled' => true,
+		);
+		$tags['button'] = array(
+			'type'              => true,
+			'class'             => true,
+			'aria-label'        => true,
+			'aria-pressed'      => true,
+			'title'             => true,
+			'data-jt-pdf-url'   => true,
+			'data-jt-pdf-name'  => true,
+			'data-jt-pdf-pages' => true,
+			'data-wp-on--click' => true,
+		);
+		$tags['a']['download']        = true;
+		$tags['a']['rel']             = true;
+		$tags['a']['data-jt-pdf-url'] = true;
+		$tags['img']['loading']       = true;
+		$tags['img']['decoding']      = true;
+		$tags['svg']  = array(
+			'viewbox'         => true,
+			'width'           => true,
+			'height'          => true,
+			'fill'            => true,
+			'aria-hidden'     => true,
+			'class'           => true,
+			'xmlns'           => true,
+			'stroke'          => true,
+			'stroke-width'    => true,
+			'stroke-linecap'  => true,
+			'stroke-linejoin' => true,
+		);
+		$tags['path']       = array( 'd' => true, 'fill' => true, 'stroke' => true );
+		$tags['line']       = array( 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true );
+		$tags['polyline']   = array( 'points' => true );
+		$tags['rect']       = array( 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true );
+		$tags['figure']     = array( 'class' => true );
+		$tags['figcaption'] = array( 'class' => true );
+		$tags['textarea']   = array( 'name' => true, 'class' => true, 'rows' => true, 'cols' => true, 'placeholder' => true );
+		$tags['select']     = array( 'name' => true, 'class' => true );
+		$tags['option']     = array( 'value' => true, 'selected' => true );
+
+		// IA directives on structural tags (mirrors the poll widget's needs).
+		foreach ( array( 'div', 'span', 'button', 'label', 'a', 'form', 'select', 'option', 'textarea' ) as $t ) {
+			if ( isset( $tags[ $t ] ) ) {
+				$tags[ $t ]['data-wp-interactive']    = true;
+				$tags[ $t ]['data-wp-context']        = true;
+				$tags[ $t ]['data-wp-on--click']      = true;
+				$tags[ $t ]['data-wp-on--change']     = true;
+				$tags[ $t ]['data-wp-on--submit']     = true;
+				$tags[ $t ]['data-wp-bind--hidden']   = true;
+				$tags[ $t ]['data-wp-bind--disabled'] = true;
+				$tags[ $t ]['data-wp-class--active']  = true;
+			}
+		}
+		return $tags;
+	}
+}

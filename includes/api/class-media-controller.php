@@ -154,7 +154,36 @@ class Media_Controller extends Base_Controller {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		$attachment_id = media_handle_upload( 'file', 0 );
+		// Explicit allow-list + size + MIME double-check before core stores it.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- REST nonce verified by core.
+		$jt_file  = array(
+			'name'     => isset( $_FILES['file']['name'] ) ? sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) ) : '',
+			'tmp_name' => isset( $_FILES['file']['tmp_name'] ) ? $_FILES['file']['tmp_name'] : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			'size'     => isset( $_FILES['file']['size'] ) ? (int) $_FILES['file']['size'] : 0,
+		);
+		$jt_valid = self::validate_upload( $jt_file );
+		if ( is_wp_error( $jt_valid ) ) {
+			return $jt_valid;
+		}
+		$_FILES['file']['name'] = $jt_file['name']; // Persist the sanitized name for core.
+
+		$attachment_id = media_handle_upload(
+			'file',
+			0,
+			array(),
+			array(
+				'test_form' => false,
+				'mimes'     => (array) apply_filters(
+					'jetonomy_upload_allowed_types',
+					array(
+						'jpg|jpeg' => 'image/jpeg',
+						'png'      => 'image/png',
+						'gif'      => 'image/gif',
+						'webp'     => 'image/webp',
+					)
+				),
+			)
+		);
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return new WP_Error(
@@ -198,5 +227,61 @@ class Media_Controller extends Base_Controller {
 				'height' => isset( $meta['height'] ) ? (int) $meta['height'] : 0,
 			]
 		);
+	}
+
+	/**
+	 * Validate an uploaded file against the explicit extension+MIME allow-list
+	 * and the size cap BEFORE it reaches media_handle_upload(). Allow-list, not
+	 * blocklist: the extension AND the sniffed MIME must both resolve to the
+	 * same allowed type. SVG is never in the default list (script vector).
+	 *
+	 * Free defaults to images only, so existing behaviour is unchanged; the Pro
+	 * attachments extension widens `jetonomy_upload_allowed_types` to add
+	 * pdf/office. This closes the prior gap where media_handle_upload() ran with
+	 * no explicit mime guard (inheriting the user's role mime map silently).
+	 *
+	 * @param array $file One entry from $_FILES (name, tmp_name, size).
+	 * @return true|\WP_Error
+	 */
+	public static function validate_upload( array $file ) {
+		$max = (int) apply_filters( 'jetonomy_upload_max_size', min( (int) wp_max_upload_size(), 10 * MB_IN_BYTES ) );
+		if ( (int) ( $file['size'] ?? 0 ) > $max ) {
+			return new WP_Error(
+				'jetonomy_upload_size',
+				/* translators: %s: human-readable maximum file size. */
+				sprintf( __( 'File is too large. Maximum size is %s.', 'jetonomy' ), size_format( $max ) ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$allowed = (array) apply_filters(
+			'jetonomy_upload_allowed_types',
+			array(
+				'jpg|jpeg' => 'image/jpeg',
+				'png'      => 'image/png',
+				'gif'      => 'image/gif',
+				'webp'     => 'image/webp',
+			)
+		);
+		unset( $allowed['svg'], $allowed['svgz'] ); // Hard exclusion regardless of filters.
+
+		$name  = sanitize_file_name( (string) ( $file['name'] ?? '' ) );
+		$check = wp_check_filetype_and_ext( (string) ( $file['tmp_name'] ?? '' ), $name, $allowed );
+		if ( empty( $check['ext'] ) || empty( $check['type'] ) || ! in_array( $check['type'], $allowed, true ) ) {
+			return new WP_Error( 'jetonomy_upload_type', __( 'This file type is not allowed.', 'jetonomy' ), array( 'status' => 400 ) );
+		}
+
+		if ( function_exists( 'finfo_open' ) && is_readable( (string) $file['tmp_name'] ) ) {
+			$finfo = finfo_open( FILEINFO_MIME_TYPE );
+			$real  = $finfo ? finfo_file( $finfo, (string) $file['tmp_name'] ) : '';
+			if ( $finfo ) {
+				finfo_close( $finfo );
+			}
+			if ( $real && ! in_array( $real, $allowed, true ) ) {
+				return new WP_Error( 'jetonomy_upload_type', __( 'File contents do not match its extension.', 'jetonomy' ), array( 'status' => 400 ) );
+			}
+		}
+
+		return true;
 	}
 }

@@ -250,6 +250,11 @@ class Replies_Controller extends Base_Controller {
 			'content_plain' => $content_plain,
 		);
 
+		// Carry the client-requested flag into the create data. Free only
+		// plumbs it through — Pro validates/enforces it via the
+		// `jetonomy_before_create_reply` filter (see Task 12).
+		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+
 		if ( $akismet_spam ) {
 			$reply_data['status'] = 'spam';
 		}
@@ -769,6 +774,19 @@ class Replies_Controller extends Base_Controller {
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		}
 
+		// Anonymous masking — one place, overrides both the enriched batch path
+		// and the per-item lookup above. Real author_id is kept on the row.
+		$display = \Jetonomy\Author::for_display( $author_id, $reply );
+		if ( ! empty( $reply->is_anonymous ) && 0 === $display['id'] ) {
+			$author_id     = 0;
+			$author_name   = $display['name'];
+			$author_avatar = $display['avatar'];
+			$author_login  = '';
+			$trust_level   = 0;
+			$reputation    = 0;
+			$profile_url   = $display['url'];
+		}
+
 		$data = array(
 			'id'            => (int) $reply->id,
 			'post_id'       => (int) $reply->post_id,
@@ -819,6 +837,12 @@ class Replies_Controller extends Base_Controller {
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 1,
+			),
+			'is_anonymous' => array(
+				'type'              => 'boolean',
+				'required'          => false,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 			'published_at' => array(
 				'type'              => 'string',

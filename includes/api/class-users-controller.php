@@ -416,6 +416,10 @@ class Users_Controller extends Base_Controller {
 		// Space-visibility + per-post is_private gate so private/hidden-space
 		// posts (and private posts in public spaces) stay hidden from
 		// non-members / non-authors. Cross-space context → $space_id null.
+		// is_anonymous = 0 (both queries below) is an anonymity guard: an
+		// anonymous post must never surface on the real author's public
+		// profile stream, even to the author themselves — that would
+		// deanonymize it by correlation.
 		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
 		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
 
@@ -436,7 +440,7 @@ class Users_Controller extends Base_Controller {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT p.* FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
 				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$id,
 				...array_merge( $gate_params, [ $limit, $offset ] )
@@ -449,7 +453,7 @@ class Users_Controller extends Base_Controller {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}",
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}",
 				$id,
 				...$gate_params
 			)

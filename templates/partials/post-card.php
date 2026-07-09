@@ -6,7 +6,11 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$author  = get_userdata( $post->author_id );
+$display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+// Anonymous-posting leak-audit fix: role pill must never be derived from the
+// raw author_id when the display identity is masked, or "Anonymous [Admin]"
+// de-anonymizes the real author.
+$jt_is_masked = (int) $display['id'] !== (int) $post->author_id;
 $profile = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $space   = \Jetonomy\Models\Space::find( (int) $post->space_id );
 // 1.4.0 C.5: caller passes `has_unread` from the bulk read-status map.
@@ -16,7 +20,7 @@ $has_unread = isset( $has_unread ) ? (bool) $has_unread : false;
 // offers a one-click "Remove bookmark" — the bookmarks list was otherwise a
 // dead end (no way to manage the very bookmarks it exists to show).
 $show_bookmark_toggle = isset( $show_bookmark_toggle ) ? (bool) $show_bookmark_toggle : false;
-$initials             = $author ? strtoupper( substr( $author->display_name, 0, 2 ) ) : '??';
+$initials             = '' !== $display['name'] ? strtoupper( mb_substr( $display['name'], 0, 2 ) ) : '??';
 $trust                = $profile ? (int) $profile->trust_level : 0;
 $base                 = \Jetonomy\base_url();
 $post_url             = $base . '/s/' . ( $space->slug ?? '' ) . '/t/' . $post->slug . '/';
@@ -123,13 +127,13 @@ if ( $prefix_name && $space ) {
 			<?php endif; ?>
 		</a>
 		<div class="jt-row-sub">
-			<?php echo esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ); ?>
+			<?php echo esc_html( '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' ) ); ?>
 			<?php
 			// 1.4.0 G3: render role pill (Admin / Mod) when this user holds a
 			// privileged role IN THIS POST'S SPACE. Reads the warmed cache
 			// populated by the parent view — see space.php / single-post.php.
 			$jt_role = \Jetonomy\get_space_role_label( (int) $post->author_id, (int) $post->space_id );
-			if ( null !== $jt_role ) :
+			if ( ! $jt_is_masked && null !== $jt_role ) :
 				$jt_role_label = ( 'admin' === $jt_role )
 					? __( 'Admin', 'jetonomy' )
 					: __( 'Mod', 'jetonomy' );
