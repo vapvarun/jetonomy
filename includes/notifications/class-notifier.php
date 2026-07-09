@@ -466,6 +466,9 @@ class Notifier {
 		$actor_id    = (int) $post->author_id;
 		$post_url    = $this->get_post_url( $post );
 		$subscribers = Subscription::get_subscribers( 'space', $space_id );
+		// Actor is the post author; an anonymous post must not leak the real
+		// author via the notification row's actor_id (avatar/name/profile).
+		$is_anon = (bool) ( $post->is_anonymous ?? false );
 
 		foreach ( $subscribers as $sub_user_id ) {
 			if ( $sub_user_id === $actor_id ) {
@@ -483,7 +486,9 @@ class Notifier {
 					$space_name,
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url
+				$post_url,
+				array(),
+				$is_anon
 			);
 		}
 	}
@@ -807,6 +812,11 @@ class Notifier {
 		}
 
 		if ( (int) $reply->author_id !== (int) $post->author_id ) {
+			// Actor is the POST author (the accepter). When the question was
+			// posted anonymously, that author's identity must stay masked on
+			// the reply author's notification, or accepting an answer would
+			// de-anonymize the anonymous asker. Gated on the post's real flag,
+			// so a normal (non-anonymous) accept still shows the real accepter.
 			$this->create_and_maybe_email(
 				(int) $reply->author_id,
 				(int) $post->author_id,
@@ -816,7 +826,10 @@ class Notifier {
 				sprintf(
 					__( 'Your answer was accepted in "%s"', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
-				)
+				),
+				'',
+				array(),
+				(bool) ( $post->is_anonymous ?? false )
 			);
 		}
 	}
