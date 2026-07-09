@@ -144,4 +144,29 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 		$this->assertDoesNotMatchRegularExpression( '/^\s*import\s+[^;]*pdfjs/m', $viewer );
 		$this->assertMatchesRegularExpression( "/import\\(\\s*['\"]\\.\\.\\/lib\\/pdfjs\\/pdf\\.min\\.mjs/", $viewer );
 	}
+
+	public function test_batch_endpoint_returns_one_group_per_object_id(): void {
+		$owner = self::factory()->user->create();
+		$aid   = self::factory()->attachment->create_object( array( 'post_author' => $owner ), 0, array( 'post_mime_type' => 'image/png' ) );
+		\Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 4141, $aid, 0 );
+
+		$req = new \WP_REST_Request( 'GET', '/jetonomy-pro/v1/attachments/batch' );
+		$req->set_param( 'object_type', 'post' );
+		$req->set_param( 'object_ids', '4141,4142' );
+		$rest = new \Jetonomy_Pro\Extensions\Attachments\Rest( new \Jetonomy_Pro\Extensions\Attachments\Extension() );
+		$data = $rest->batch( $req )->get_data();
+
+		$this->assertCount( 1, $data['4141'] );
+		$this->assertSame( array(), $data['4142'] );
+	}
+
+	public function test_enqueue_admin_only_matches_the_content_page(): void {
+		$ext = new \Jetonomy_Pro\Extensions\Attachments\Extension();
+		$ext->enqueue_admin( 'jetonomy_page_jetonomy-content' );
+		$this->assertTrue( wp_script_is( 'jetonomy-pro-attachments-admin', 'enqueued' ) );
+
+		wp_dequeue_script( 'jetonomy-pro-attachments-admin' );
+		$ext->enqueue_admin( 'jetonomy_page_jetonomy-moderation' );
+		$this->assertFalse( wp_script_is( 'jetonomy-pro-attachments-admin', 'enqueued' ) );
+	}
 }
