@@ -55,8 +55,10 @@ class Mentions {
 	 * Notify mentioned users.
 	 */
 	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title, ?int $space_id = null, bool $is_private = false ): void {
-		$actor      = get_userdata( $actor_id );
-		$actor_name = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
+		$object     = 'reply' === $object_type
+			? Models\Reply::find( $object_id )
+			: Models\Post::find( $object_id );
+		$actor_name = \Jetonomy\Author::for_display( $actor_id, $object )['name'] ?: __( 'Someone', 'jetonomy' );
 
 		// Visibility filter: never notify a user who can't read the mentioned
 		// content. Done ONCE, set-based, before the loop — no per-recipient

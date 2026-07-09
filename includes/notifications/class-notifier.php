@@ -517,7 +517,7 @@ class Notifier {
 				$post_id,
 				sprintf(
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
-					$this->get_display_name( $actor_id ),
+					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
 				$post_url,
@@ -537,7 +537,7 @@ class Notifier {
 					$reply_id,
 					sprintf(
 						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
-						$this->get_display_name( $actor_id ),
+						\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 						mb_substr( $post->title, 0, 50 )
 					),
 					$post_url,
@@ -584,7 +584,7 @@ class Notifier {
 				$post_id,
 				sprintf(
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
-					$this->get_display_name( $actor_id ),
+					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
 				$post_url,
@@ -609,7 +609,7 @@ class Notifier {
 
 		return array(
 			'post_title'         => jetonomy_post_title_or_excerpt( $post ),
-			'actor_display_name' => $this->get_display_name( (int) $reply->author_id ),
+			'actor_display_name' => \Jetonomy\Author::for_display( (int) $reply->author_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 			'reply_excerpt'      => wp_trim_words( $reply_plain, 30, '…' ),
 			'space_title'        => $space ? (string) $space->title : '',
 		);
