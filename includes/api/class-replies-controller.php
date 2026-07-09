@@ -774,6 +774,19 @@ class Replies_Controller extends Base_Controller {
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
 		}
 
+		// Anonymous masking — one place, overrides both the enriched batch path
+		// and the per-item lookup above. Real author_id is kept on the row.
+		$display = \Jetonomy\Author::for_display( $author_id, $reply );
+		if ( 0 === $display['id'] ) {
+			$author_id     = 0;
+			$author_name   = $display['name'];
+			$author_avatar = $display['avatar'];
+			$author_login  = '';
+			$trust_level   = 0;
+			$reputation    = 0;
+			$profile_url   = $display['url'];
+		}
+
 		$data = array(
 			'id'            => (int) $reply->id,
 			'post_id'       => (int) $reply->post_id,
