@@ -23,7 +23,7 @@ Your license drives automatic updates and tier checks. If a license is missing o
 
 ## Enable Extensions
 
-Jetonomy Pro ships fifteen extensions. None of them do anything until you switch them on.
+Jetonomy Pro ships seventeen extensions. None of them do anything until you switch them on.
 
 1. Go to **Jetonomy → Extensions** (the `jetonomy-extensions` page).
 2. Each extension shows a card with its name, description, and a toggle.
@@ -41,7 +41,7 @@ Disable an extension at any time from the same page. Disabling stops the feature
 | **Agency** | Builders running Pro across many client sites |
 | **Lifetime** | One-time purchase with ongoing updates |
 
-All fifteen extensions are available on the paid tiers. Higher tiers raise the activation limits (number of sites) and support level rather than locking individual features behind a paywall. The exact site limits per tier are listed on your account page and on the [pricing page](https://jetonomy.com/pro/).
+All seventeen extensions are available on the paid tiers. Higher tiers raise the activation limits (number of sites) and support level rather than locking individual features behind a paywall. The exact site limits per tier are listed on your account page and on the [pricing page](https://jetonomy.com/pro/).
 
 ## Capabilities
 

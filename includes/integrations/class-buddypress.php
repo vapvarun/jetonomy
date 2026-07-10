@@ -154,6 +154,17 @@ class BuddyPress {
 		if ( $this->comment_bridge_enabled() ) {
 			add_action( 'bp_activity_comment_posted', array( $this, 'on_bp_activity_comment_posted' ), 20, 3 );
 		}
+
+		// Deep-link fix: a broadcast row is owned by the topic author, so BP
+		// fires its own "commented on one of your updates" notification whose
+		// link resolves to the activity permalink (the feed) — not the forum
+		// topic the reader expects. Point that notification at the originating
+		// Jetonomy topic instead. Registered unconditionally so existing
+		// broadcast activities keep deep-linking correctly even if the
+		// broadcast toggle is later turned off. Non-broadcast activities are
+		// left untouched by the handler.
+		add_filter( 'bp_activity_single_update_reply_notification', array( $this, 'filter_broadcast_reply_notification' ), 20, 5 );
+		add_filter( 'bp_activity_single_comment_reply_notification', array( $this, 'filter_broadcast_reply_notification' ), 20, 5 );
 	}
 
 	/*
@@ -213,7 +224,17 @@ class BuddyPress {
 	 */
 	public function format_activity_action( $action, $activity ): string {
 		unset( $action );
-		$user_link  = bp_core_get_userlink( (int) $activity->user_id );
+		$user_link = bp_core_get_userlink( (int) $activity->user_id );
+
+		// Defensive mask: an anonymous post's activity is never created (see
+		// on_jt_post_created_for_bp), but if a legacy row or a third-party
+		// caller ever produces one, fall back to a non-identifying actor
+		// rather than resolving the real user link above.
+		$jt_post = Post::find( (int) ( $activity->secondary_item_id ?? 0 ) );
+		if ( $jt_post && ! empty( $jt_post->is_anonymous ) ) {
+			$user_link = esc_html__( 'Anonymous', 'jetonomy' );
+		}
+
 		$group      = groups_get_group( (int) $activity->item_id );
 		$group_name = is_object( $group ) && ! empty( $group->name ) ? (string) $group->name : '';
 		$group_link = '' !== $group_name
@@ -268,6 +289,13 @@ class BuddyPress {
 		// Privacy guard: private topics never broadcast. Group audience
 		// can be broader than the private-topic scope.
 		if ( ! empty( $post->is_private ) ) {
+			return;
+		}
+
+		// Anonymous posts are never broadcast to the BP activity stream — a BP
+		// activity row's user_id natively drives avatar/permalink/notifications
+		// and cannot be masked after the fact. No activity = no leak.
+		if ( ! empty( $post->is_anonymous ) ) {
 			return;
 		}
 
@@ -432,6 +460,83 @@ class BuddyPress {
 			)
 		);
 		self::$syncing = false;
+	}
+
+	/**
+	 * Point BuddyPress's activity-reply notification at the Jetonomy topic.
+	 *
+	 * When a topic is broadcast to a paired group's activity stream, the
+	 * broadcast row is owned by the topic author, so BuddyPress fires its own
+	 * "commented on one of your updates" notification whose link resolves to
+	 * the activity permalink (the feed) — not the forum topic the reader
+	 * expects. For broadcast activities (tagged with ACTIVITY_META_POST) we
+	 * rewrite that link to the originating Jetonomy topic. Any other activity
+	 * is returned untouched.
+	 *
+	 * Fires on both the string and array variants of BP's
+	 * `bp_activity_single_{update|comment}_reply_notification` filter.
+	 *
+	 * @param string|array $formatted   BP's formatted notification (HTML anchor or ['text','link']).
+	 * @param string       $link        BP's original permalink for the interaction.
+	 * @param int          $total_items Number of items being notified about.
+	 * @param int          $activity_id Activity ID BP is formatting (a comment for update_reply).
+	 * @param int          $user_id     ID of the user who left the comment.
+	 * @return string|array The notification with its link rewritten to the topic, or unchanged.
+	 */
+	public function filter_broadcast_reply_notification( $formatted, $link, $total_items, $activity_id, $user_id ) {
+		unset( $total_items, $user_id );
+
+		$topic_url = $this->topic_url_for_activity( (int) $activity_id );
+		if ( '' === $topic_url ) {
+			return $formatted; // Not one of our broadcast activities.
+		}
+
+		if ( is_array( $formatted ) ) {
+			$formatted['link'] = $topic_url;
+			return $formatted;
+		}
+
+		// String format: swap BP's permalink for the topic URL inside the anchor.
+		return str_replace( esc_url( (string) $link ), esc_url( $topic_url ), (string) $formatted );
+	}
+
+	/**
+	 * Resolve the Jetonomy topic URL for a BP activity that belongs to a
+	 * broadcast topic, walking up from an activity comment to its root row.
+	 *
+	 * BP formats update_reply / comment_reply notifications against the
+	 * comment activity; the ACTIVITY_META_POST tag lives on the root
+	 * broadcast row, so we climb one level when handed a comment.
+	 *
+	 * @param int $activity_id Activity or activity-comment ID.
+	 * @return string Topic URL, or '' when the activity is not a broadcast row.
+	 */
+	private function topic_url_for_activity( int $activity_id ): string {
+		if ( $activity_id <= 0 || ! function_exists( 'bp_activity_get_meta' ) ) {
+			return '';
+		}
+
+		$activity = new \BP_Activity_Activity( $activity_id );
+		$root_id  = ( 'activity_comment' === $activity->type && ! empty( $activity->item_id ) )
+			? (int) $activity->item_id
+			: $activity_id;
+
+		$post_id = (int) bp_activity_get_meta( $root_id, self::ACTIVITY_META_POST, true );
+		if ( $post_id <= 0 ) {
+			return '';
+		}
+
+		$post = Post::find( $post_id );
+		if ( ! $post || 'publish' !== ( $post->status ?? '' ) ) {
+			return '';
+		}
+
+		$space = Space::find( (int) $post->space_id );
+		if ( ! $space ) {
+			return '';
+		}
+
+		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
 	}
 
 	/*
@@ -735,10 +840,10 @@ class BuddyPress {
 		} else {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
-				$post_url = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
-				$author   = get_userdata( (int) $post->author_id );
-				$time_ago = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
-				$replies  = (int) $post->reply_count;
+				$post_url   = $base . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+				$jt_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+				$time_ago   = human_time_diff( strtotime( $post->last_reply_at ?? $post->created_at ), time() );
+				$replies    = (int) $post->reply_count;
 
 				echo '<li>';
 				echo '<div class="jt-bp-topic-row">';
@@ -749,7 +854,7 @@ class BuddyPress {
 				}
 				echo '</div>';
 				echo '<div class="jt-bp-topic-meta">';
-				echo '<span>' . esc_html( $author ? $author->display_name : __( 'Anonymous', 'jetonomy' ) ) . '</span>';
+				echo '<span>' . esc_html( '' !== $jt_display['name'] ? $jt_display['name'] : __( 'Anonymous', 'jetonomy' ) ) . '</span>';
 				// translators: %s: human-readable time difference.
 				echo ' <span class="jt-bp-time">' . esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) ) . '</span>';
 				echo '</div>';
@@ -859,6 +964,12 @@ class BuddyPress {
 		$base  = \Jetonomy\base_url();
 		$posts = Post::list_by_author( $user_id, 10 );
 
+		// Own-profile leak guard: a "Posts" tab on the AUTHOR's own profile
+		// would otherwise deanonymize their anonymous topics by correlating
+		// them to this identity, defeating the anonymity that the space/
+		// activity views already mask. Anonymous rows are never listed here.
+		$posts = array_values( array_filter( $posts, static fn( $post ) => empty( $post->is_anonymous ) ) );
+
 		if ( ! empty( $posts ) ) {
 			echo '<ul class="jt-bp-recent">';
 			foreach ( $posts as $post ) {
@@ -894,7 +1005,9 @@ class BuddyPress {
 
 		// Space-visibility + per-post is_private gate on the PARENT post so a
 		// member's replies in private/hidden spaces (or under private posts)
-		// don't leak to non-member / non-author profile visitors.
+		// don't leak to non-member / non-author profile visitors. is_anonymous
+		// = 0 is an own-profile leak guard: listing the author's own anonymous
+		// replies here would deanonymize them by correlating to this profile.
 		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
 		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
 		$gate_sql                             = '';
@@ -918,7 +1031,7 @@ class BuddyPress {
 				 FROM {$p}jt_replies r
 				 INNER JOIN {$p}jt_posts p ON p.id = r.post_id
 				 INNER JOIN {$p}jt_spaces s ON s.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish'{$gate_sql}
+				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
 				 ORDER BY r.created_at DESC
 				 LIMIT 10",
 				$user_id,

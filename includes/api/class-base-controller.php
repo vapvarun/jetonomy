@@ -360,7 +360,10 @@ abstract class Base_Controller extends WP_REST_Controller {
 
 			$enrichment = [
 				'author_name'   => $user ? $user->display_name : __( 'Anonymous', 'jetonomy' ),
-				'author_avatar' => $user ? get_avatar_url( $uid, [ 'size' => 64 ] ) : '',
+				// display_url() returns '' when the member has no real avatar, so
+				// API clients (mobile app) render initials from author_name — the
+				// same fallback the web templates use. Never the Gravatar mystery-man.
+				'author_avatar' => $user ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
 				'author_login'  => $user ? $user->user_login : '',
 				'trust_level'   => $profile ? (int) $profile->trust_level : 0,
 				'reputation'    => $profile ? (int) $profile->reputation : 0,

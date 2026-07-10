@@ -497,6 +497,11 @@ class Posts_Controller extends Base_Controller {
 			'is_private'    => $is_private,
 		);
 
+		// Carry the client-requested flag into the create data. Free only
+		// plumbs it through — Pro validates/enforces it via the
+		// `jetonomy_before_create_post` filter (see Task 12).
+		$post_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
+
 		if ( ! empty( $prefix ) ) {
 			$post_data['prefix'] = $prefix;
 		}
@@ -1136,11 +1141,24 @@ class Posts_Controller extends Base_Controller {
 			$author        = $author_id ? get_userdata( $author_id ) : null;
 			$profile       = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
 			$author_name   = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
-			$author_avatar = $author ? get_avatar_url( $author_id, array( 'size' => 64 ) ) : '';
+			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
 			$author_login  = $author ? $author->user_login : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
 			$reputation    = $profile ? (int) $profile->reputation : 0;
 			$profile_url   = $author_id ? \Jetonomy\get_profile_url( $author_id ) : '';
+		}
+
+		// Anonymous masking — one place, overrides both the enriched batch path
+		// and the per-item lookup above. Real author_id is kept on the row.
+		$display = \Jetonomy\Author::for_display( $author_id, $post );
+		if ( ! empty( $post->is_anonymous ) && 0 === $display['id'] ) {
+			$author_id     = 0;
+			$author_name   = $display['name'];
+			$author_avatar = $display['avatar'];
+			$author_login  = '';
+			$trust_level   = 0;
+			$reputation    = 0;
+			$profile_url   = $display['url'];
 		}
 
 		// Resolve prefix color from space settings.
@@ -1292,6 +1310,12 @@ class Posts_Controller extends Base_Controller {
 				'type'     => 'boolean',
 				'required' => false,
 				'default'  => false,
+			),
+			'is_anonymous' => array(
+				'type'              => 'boolean',
+				'required'          => false,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
 			'status'       => array(
 				'type'     => 'string',

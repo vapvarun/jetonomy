@@ -15,7 +15,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$author      = get_userdata( $post->author_id );
+$display     = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
+// Anonymous-posting leak-audit fix: role pill / online status must never be
+// derived from the raw author_id when the display identity is masked, or
+// "Anonymous [Admin]" / an online dot de-anonymizes the real author.
+$jt_is_masked = (int) $display['id'] !== (int) $post->author_id;
 $profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
 $space       = \Jetonomy\Models\Space::find( (int) $post->space_id );
 $has_unread  = isset( $has_unread ) ? (bool) $has_unread : false;
@@ -25,24 +29,24 @@ $time_ago    = human_time_diff( strtotime( $post->created_at ), time() );
 $viewer_id   = get_current_user_id();
 $viewer_vote = $viewer_id ? \Jetonomy\Models\Vote::get_user_vote( $viewer_id, 'post', (int) $post->id ) : null;
 
-$author_name = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
+$author_name = '' !== $display['name'] ? $display['name'] : __( 'Anonymous', 'jetonomy' );
 ?>
 <article class="jt-feed-card" data-wp-interactive="jetonomy">
 	<header class="jt-feed-card-head">
 		<?php
 		// Trusted, fully-escaped plugin markup (incl. Lucide SVG avatar). Echo direct.
-		echo \Jetonomy\get_user_link( (int) $post->author_id, 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo \Jetonomy\get_user_link( (int) $display['id'], 'jt-avatar-md', 36, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		?>
 		<div class="jt-feed-card-meta">
-			<?php if ( $author ) : ?>
-				<a class="jt-feed-card-author" href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $post->author_id ) ); ?>"><?php echo esc_html( $author_name ); ?></a>
+			<?php if ( '' !== $display['url'] ) : ?>
+				<a class="jt-feed-card-author" href="<?php echo esc_url( $display['url'] ); ?>"><?php echo esc_html( $author_name ); ?></a>
 			<?php else : ?>
 				<?php // Deleted/anonymous author: plain text, not an empty-href link (which would reload the page on click). ?>
 				<span class="jt-feed-card-author"><?php echo esc_html( $author_name ); ?></span>
 			<?php endif; ?>
 			<?php
 			$jt_role = \Jetonomy\get_space_role_label( (int) $post->author_id, (int) $post->space_id );
-			if ( null !== $jt_role ) :
+			if ( ! $jt_is_masked && null !== $jt_role ) :
 				$jt_role_label = ( 'admin' === $jt_role )
 					? __( 'Admin', 'jetonomy' )
 					: __( 'Mod', 'jetonomy' );

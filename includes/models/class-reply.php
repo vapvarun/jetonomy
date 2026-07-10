@@ -41,8 +41,9 @@ class Reply extends Model {
 
 		$data = array_merge(
 			array(
-				'status'     => 'publish',
-				'created_at' => now(),
+				'status'       => 'publish',
+				'is_anonymous' => 0,
+				'created_at'   => now(),
 			),
 			$data
 		);
@@ -533,6 +534,11 @@ class Reply extends Model {
 	/**
 	 * List published replies by a specific user, with parent post info.
 	 *
+	 * Anonymous replies (is_anonymous = 1) are always excluded, including from
+	 * the author's own profile: surfacing them here — even to the author
+	 * themselves — would deanonymize the reply by correlating it to this
+	 * identity, defeating the anonymity the space/activity views already mask.
+	 *
 	 * @param int $user_id  Author user ID.
 	 * @param int $limit    Max rows.
 	 * @param int $offset   Pagination offset.
@@ -572,7 +578,7 @@ class Reply extends Model {
 				 FROM {$replies_tbl} r
 				 LEFT JOIN {$posts_tbl} p ON p.id = r.post_id
 				 LEFT JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-				 WHERE r.author_id = %d AND r.status = 'publish'{$gate_sql}
+				 WHERE r.author_id = %d AND r.status = 'publish' AND r.is_anonymous = 0{$gate_sql}
 				 ORDER BY r.created_at DESC
 				 LIMIT %d OFFSET %d",
 				$user_id,

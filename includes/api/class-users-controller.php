@@ -172,7 +172,7 @@ class Users_Controller extends Base_Controller {
 				'id'           => (int) $u->ID,
 				'login'        => $u->user_login,
 				'display_name' => $u->display_name,
-				'avatar_url'   => (string) get_avatar_url( $u->ID, array( 'size' => 48 ) ),
+				'avatar_url'   => \Jetonomy\Avatar::display_url( $u->ID, 48 ),
 			);
 		}
 		return new WP_REST_Response( $out, 200 );
@@ -235,7 +235,10 @@ class Users_Controller extends Base_Controller {
 			'post_count'       => (int) ( $profile->post_count ?? 0 ),
 			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
 			'bio'              => $profile->bio ?? null,
+			// avatar_url = the raw stored upload (null when none) for the edit flow;
+			// avatar_display = the resolved render value ('' => client shows initials).
 			'avatar_url'       => $profile->avatar_url ?? null,
+			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];
@@ -276,7 +279,8 @@ class Users_Controller extends Base_Controller {
 			'post_count'       => (int) ( $profile->post_count ?? 0 ),
 			'reply_count'      => (int) ( $profile->reply_count ?? 0 ),
 			'bio'              => $profile->bio ?? null,
-			'avatar_url'       => $profile->avatar_url ?? get_avatar_url( $id, [ 'size' => 64 ] ),
+			'avatar_url'       => $profile->avatar_url ?? null,
+			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
 		];
@@ -412,6 +416,10 @@ class Users_Controller extends Base_Controller {
 		// Space-visibility + per-post is_private gate so private/hidden-space
 		// posts (and private posts in public spaces) stay hidden from
 		// non-members / non-authors. Cross-space context → $space_id null.
+		// is_anonymous = 0 (both queries below) is an anonymity guard: an
+		// anonymous post must never surface on the real author's public
+		// profile stream, even to the author themselves — that would
+		// deanonymize it by correlation.
 		[ $space_vis_sql, $space_vis_params ] = \Jetonomy\Models\Space::content_visibility_sql( get_current_user_id(), 's' );
 		[ $priv_sql, $priv_params ]           = \Jetonomy\Search\Fulltext_Search::visibility_clause( null, 'p' );
 
@@ -432,7 +440,7 @@ class Users_Controller extends Base_Controller {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT p.* FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}
 				 ORDER BY p.created_at DESC LIMIT %d OFFSET %d",
 				$id,
 				...array_merge( $gate_params, [ $limit, $offset ] )
@@ -445,7 +453,7 @@ class Users_Controller extends Base_Controller {
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				"SELECT COUNT(*) FROM {$tbl} p
 				 LEFT JOIN {$spaces_tbl} s ON s.id = p.space_id
-				 WHERE p.author_id = %d AND p.status = 'publish'{$gate_sql}",
+				 WHERE p.author_id = %d AND p.status = 'publish' AND p.is_anonymous = 0{$gate_sql}",
 				$id,
 				...$gate_params
 			)
@@ -467,17 +475,18 @@ class Users_Controller extends Base_Controller {
 	 */
 	private function prepare_profile( ?object $profile ): array {
 		$data = [
-			'id'           => (int) ( $profile->user_id ?? 0 ),
-			'user_id'      => (int) ( $profile->user_id ?? 0 ),
-			'reputation'   => (int) ( $profile->reputation ?? 0 ),
-			'post_count'   => (int) ( $profile->post_count ?? 0 ),
-			'reply_count'  => (int) ( $profile->reply_count ?? 0 ),
-			'trust_level'  => (int) ( $profile->trust_level ?? 0 ),
-			'bio'          => $profile->bio ?? null,
-			'avatar_url'   => $profile->avatar_url ?? null,
-			'last_seen_at' => $profile->last_seen_at ?? null,
-			'created_at'   => $profile->created_at ?? null,
-			'updated_at'   => $profile->updated_at ?? null,
+			'id'             => (int) ( $profile->user_id ?? 0 ),
+			'user_id'        => (int) ( $profile->user_id ?? 0 ),
+			'reputation'     => (int) ( $profile->reputation ?? 0 ),
+			'post_count'     => (int) ( $profile->post_count ?? 0 ),
+			'reply_count'    => (int) ( $profile->reply_count ?? 0 ),
+			'trust_level'    => (int) ( $profile->trust_level ?? 0 ),
+			'bio'            => $profile->bio ?? null,
+			'avatar_url'     => $profile->avatar_url ?? null,
+			'avatar_display' => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( (int) ( $profile->user_id ?? 0 ), 96 ),
+			'last_seen_at'   => $profile->last_seen_at ?? null,
+			'created_at'     => $profile->created_at ?? null,
+			'updated_at'     => $profile->updated_at ?? null,
 		];
 
 		/**

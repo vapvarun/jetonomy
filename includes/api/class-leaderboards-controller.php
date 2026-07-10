@@ -130,7 +130,7 @@ class Leaderboards_Controller extends Base_Controller {
 				'user_id'      => $user_id,
 				'display_name' => $user->display_name,
 				'user_login'   => $user->user_login,
-				'avatar_url'   => get_avatar_url( $user_id, [ 'size' => 64 ] ),
+				'avatar_url'   => \Jetonomy\Avatar::display_url( $user_id, 64 ),
 				'profile_url'  => \Jetonomy\get_profile_url( $user_id ),
 				'reputation'   => (int) $leader->reputation,
 				'post_count'   => (int) $leader->post_count,

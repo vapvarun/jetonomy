@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,23 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.7.0 - July 2026 =
+
+Foundations for two new Pro features - Anonymous Posting and File Attachments - plus avatar fallbacks, app parity, correct notification deep-links, and fuller translation coverage.
+
+* New      - Members with no uploaded avatar now get a generated initials avatar instead of a blank placeholder, on the web and in any REST client.
+* New      - User records returned by the REST API now include an avatar_display field, so a native app renders the same avatar the site does.
+* Fix      - The profile-header avatar now uses the same resolver as every other avatar, so a member's initials fallback no longer disappears on their own profile.
+* Fix      - BuddyPress activity-reply notifications now open the forum topic being replied to, instead of the activity feed.
+* Fix      - Badge notifications now deep-link to the badges section of the recipient's profile, instead of the top of the profile.
+* Fix      - Post and reply body text now share one alignment across every content type, so a reply no longer sits offset from the post it answers.
+* Fix      - Vertical spacing above and below the post hashtag row is now balanced, instead of crowding the tags against the post body.
+* Fix      - Compose toolbar labels, block-editor scripts, the threaded-reply toggle, and the remaining front-end script strings are now translatable.
+* Security - Member media uploads are now validated against an explicit file-type allow-list with a content check, replacing behaviour where the accepted types depended on the member's role.
+* Fix      - Composer and form inputs now show a single focus ring instead of a doubled outline.
+* Dev      - Added the author-display resolver, the is_anonymous columns, and the upload allow-list and max-size filters that power Pro Anonymous Posting and File Attachments.
+* Compat   - Aligned with Jetonomy Pro 1.7.0. Install both updates together.
 
 = 1.6.0 - June 2026 =
 

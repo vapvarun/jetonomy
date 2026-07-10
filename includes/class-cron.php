@@ -78,11 +78,14 @@ class Cron {
 			// Also drop any in-flight trust-sweep batch actions (async, not in
 			// the RECURRING map).
 			as_unschedule_all_actions( 'jetonomy_trust_evaluation_batch', [], self::AS_GROUP );
+			// …and any queued avatar Gravatar-existence checks (async, per-user).
+			as_unschedule_all_actions( 'jetonomy_gravatar_check', [], self::AS_GROUP );
 		}
 		foreach ( array_keys( self::RECURRING ) as $hook ) {
 			wp_clear_scheduled_hook( $hook );
 		}
 		wp_clear_scheduled_hook( 'jetonomy_trust_evaluation_batch' );
+		wp_clear_scheduled_hook( 'jetonomy_gravatar_check' );
 		delete_option( self::TRUST_CURSOR_OPTION );
 	}
 
@@ -197,7 +200,11 @@ class Cron {
 		);
 
 		if ( empty( $profiles ) ) {
-			return [ 'last_id' => $after, 'count' => 0, 'promoted' => 0 ];
+			return [
+				'last_id'  => $after,
+				'count'    => 0,
+				'promoted' => 0,
+			];
 		}
 
 		$user_ids        = wp_list_pluck( $profiles, 'user_id' );
@@ -264,7 +271,11 @@ class Cron {
 			}
 		}
 
-		return [ 'last_id' => $last_id, 'count' => count( $profiles ), 'promoted' => $promoted ];
+		return [
+			'last_id'  => $last_id,
+			'count'    => count( $profiles ),
+			'promoted' => $promoted,
+		];
 	}
 
 	/**

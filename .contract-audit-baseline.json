@@ -275,6 +275,30 @@
       "id": "hook-consumed-never-fired:jetonomy_pro_prune_webhook_deliveries",
       "reason": "False positive. Pro webhook-delivery prune job: bound at includes/extensions/webhooks/class-extension.php:89 (add_action(self::PRUNE_HOOK,...)) and scheduled daily at :90 (Queue::recurring(self::PRUNE_HOOK, DAY_IN_SECONDS)). Fired by the Queue/cron scheduler; scanner cannot resolve the const at the schedule site.",
       "severity": "error"
+    },
+    {
+      "id": "hook-consumed-never-fired:jetonomy_pro_attachments_gc",
+      "reason": "False positive. Fired via Jetonomy_Pro\\Queue::recurring(self::GC_HOOK, DAY_IN_SECONDS) in attachments Extension::activate() -> as_schedule_recurring_action()/wp_schedule_event(). Scheduler indirection the static scanner cannot resolve; same class as the other baselined Queue-scheduled hooks (badges_eval_user, dispatch_webhook, send_expo_push)."
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_generate_invite",
+      "reason": "False positive. Called via self.ajax('jetonomy_generate_invite', ...) in assets/js/admin.js:992 (dynamic action string). Real space-invite admin feature; REST twin POST /spaces/{id}/invite also exists. Same dynamic-dispatch pattern as the other baselined admin AJAX handlers."
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_list_invites",
+      "reason": "False positive. Called via self.ajax('jetonomy_list_invites', ...) in assets/js/admin.js:950 (dynamic action string). Real space-invite admin feature."
+    },
+    {
+      "id": "ajax-handler-unreferenced:jetonomy_revoke_invite",
+      "reason": "False positive. Called via self.ajax('jetonomy_revoke_invite', ...) in assets/js/admin.js:1033 (dynamic action string). Real space-invite admin feature."
+    },
+    {
+      "id": "post_meta-written-never-read:_jetonomy_media",
+      "reason": "False positive. Read via WP_Query meta_query key clauses in includes/class-media-library.php (lines 77-84 list scope; 245-252 exclude clause). Scanner only recognizes get_post_meta() as a read, not meta_query key usage."
+    },
+    {
+      "id": "post_meta-written-never-read:_jetonomy_media_checked",
+      "reason": "False positive. Read via meta_query in includes/class-media-library.php:351-358 (one-shot backfill guard). Scanner only recognizes get_post_meta() reads, not meta_query key usage."
     }
   ],
   "triaged": "2026-06-11 - first run on the pair; full triage in commit message. Real findings carded: 9985243886 (email opt-out unsettable), 9985243976 (BP toggles no UI)."

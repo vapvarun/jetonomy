@@ -466,6 +466,9 @@ class Notifier {
 		$actor_id    = (int) $post->author_id;
 		$post_url    = $this->get_post_url( $post );
 		$subscribers = Subscription::get_subscribers( 'space', $space_id );
+		// Actor is the post author; an anonymous post must not leak the real
+		// author via the notification row's actor_id (avatar/name/profile).
+		$is_anon = (bool) ( $post->is_anonymous ?? false );
 
 		foreach ( $subscribers as $sub_user_id ) {
 			if ( $sub_user_id === $actor_id ) {
@@ -483,7 +486,9 @@ class Notifier {
 					$space_name,
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url
+				$post_url,
+				array(),
+				$is_anon
 			);
 		}
 	}
@@ -506,6 +511,7 @@ class Notifier {
 		$actor_id  = (int) $reply->author_id;
 		$post_url  = $this->get_post_url( $post );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
+		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
 		// 1. Notify post author (if not the replier).
 		if ( (int) $post->author_id !== $actor_id ) {
@@ -517,11 +523,12 @@ class Notifier {
 				$post_id,
 				sprintf(
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
-					$this->get_display_name( $actor_id ),
+					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
 				$post_url,
-				$ctx_extra
+				$ctx_extra,
+				$is_anon
 			);
 		}
 
@@ -537,11 +544,12 @@ class Notifier {
 					$reply_id,
 					sprintf(
 						__( '%1$s replied to your comment in "%2$s"', 'jetonomy' ),
-						$this->get_display_name( $actor_id ),
+						\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 						mb_substr( $post->title, 0, 50 )
 					),
 					$post_url,
-					$ctx_extra
+					$ctx_extra,
+					$is_anon
 				);
 			}
 		}
@@ -570,6 +578,7 @@ class Notifier {
 		$actor_id  = (int) $reply->author_id;
 		$post_url  = $this->get_post_url( $post );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
+		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
 		$subscribers = Subscription::get_subscribers( 'post', $post_id );
 		foreach ( $subscribers as $sub_user_id ) {
@@ -584,11 +593,12 @@ class Notifier {
 				$post_id,
 				sprintf(
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
-					$this->get_display_name( $actor_id ),
+					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
 				$post_url,
-				$ctx_extra
+				$ctx_extra,
+				$is_anon
 			);
 		}
 	}
@@ -609,7 +619,7 @@ class Notifier {
 
 		return array(
 			'post_title'         => jetonomy_post_title_or_excerpt( $post ),
-			'actor_display_name' => $this->get_display_name( (int) $reply->author_id ),
+			'actor_display_name' => \Jetonomy\Author::for_display( (int) $reply->author_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 			'reply_excerpt'      => wp_trim_words( $reply_plain, 30, '…' ),
 			'space_title'        => $space ? (string) $space->title : '',
 		);
@@ -802,6 +812,11 @@ class Notifier {
 		}
 
 		if ( (int) $reply->author_id !== (int) $post->author_id ) {
+			// Actor is the POST author (the accepter). When the question was
+			// posted anonymously, that author's identity must stay masked on
+			// the reply author's notification, or accepting an answer would
+			// de-anonymize the anonymous asker. Gated on the post's real flag,
+			// so a normal (non-anonymous) accept still shows the real accepter.
 			$this->create_and_maybe_email(
 				(int) $reply->author_id,
 				(int) $post->author_id,
@@ -811,7 +826,10 @@ class Notifier {
 				sprintf(
 					__( 'Your answer was accepted in "%s"', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
-				)
+				),
+				'',
+				array(),
+				(bool) ( $post->is_anonymous ?? false )
 			);
 		}
 	}
@@ -970,10 +988,15 @@ class Notifier {
 	 * @param string $object_type 'post' | 'reply' | 'user' | 'space' | '' .
 	 * @param int    $object_id   Target object ID.
 	 * @param string $message     Short notification sentence.
-	 * @param string $url         Deep-link for the CTA.
-	 * @param array  $extra       Optional enriched context; see render_email_template().
+	 * @param string $url              Deep-link for the CTA.
+	 * @param array  $extra            Optional enriched context; see render_email_template().
+	 * @param bool   $actor_anonymous  Whether the actor's SOURCE content (the reply/post
+	 *                                 that triggered this notification) is anonymous. Persisted
+	 *                                 on the row so display layers (REST prepare_notification,
+	 *                                 the notifications template) mask the real actor without
+	 *                                 re-resolving the source object.
 	 */
-	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array() ): void {
+	private function create_and_maybe_email( int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '', array $extra = array(), bool $actor_anonymous = false ): void {
 		// Load user preferences and global defaults.
 		$profile         = UserProfile::find_by_user( $user_id );
 		$settings        = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
@@ -985,13 +1008,14 @@ class Notifier {
 		if ( $web_enabled ) {
 			$notification_id = Notification::create(
 				[
-					'user_id'     => $user_id,
-					'actor_id'    => $actor_id,
-					'type'        => $type,
-					'object_type' => $object_type,
-					'object_id'   => $object_id,
-					'message'     => $message,
-					'created_at'  => now(),
+					'user_id'         => $user_id,
+					'actor_id'        => $actor_id,
+					'actor_anonymous' => $actor_anonymous ? 1 : 0,
+					'type'            => $type,
+					'object_type'     => $object_type,
+					'object_id'       => $object_id,
+					'message'         => $message,
+					'created_at'      => now(),
 				]
 			);
 

@@ -158,8 +158,15 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 		<div class="jt-card jt-card-flush jt-notif-list" data-jt-notif-list>
 			<?php foreach ( $notifications as $notif ) : ?>
 				<?php
-				$actor        = $notif->actor_id ? get_userdata( (int) $notif->actor_id ) : null;
-				$actor_name   = $actor ? $actor->display_name : __( 'Someone', 'jetonomy' );
+				// actor_anonymous is the source of truth for masking — set at
+				// notification-creation time from the reply/post's is_anonymous
+				// flag (Notifier::create_and_maybe_email / Mentions::notify).
+				// Gating get_userdata() on it (rather than deriving from the
+				// message text) stops the real author's avatar/name/name-link
+				// leaking beside an "Anonymous replied…" message.
+				$jt_notif_anon = ! empty( $notif->actor_anonymous );
+				$actor         = ( $notif->actor_id && ! $jt_notif_anon ) ? get_userdata( (int) $notif->actor_id ) : null;
+				$actor_name    = $jt_notif_anon ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'Someone', 'jetonomy' ) );
 				$action_label = ! empty( $notif->message )
 					? $notif->message
 					: ( $type_labels[ $notif->type ] ?? $notif->type );
@@ -174,7 +181,12 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 				} elseif ( 'badge' === $notif->object_type ) {
 					$badge_user = get_userdata( (int) $notif->user_id );
 					if ( $badge_user ) {
-						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/';
+						// Deep-link to the profile's badges section (#jt-badges anchor,
+						// rendered by Pro's custom-badges extension) so an "earned a
+						// badge" notification lands on the achievement, not the profile
+						// top. Degrades to the profile root when no badges section is
+						// present (e.g. free-only site).
+						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/#jt-badges';
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
 					// Mirrors Notifier::build_join_request_url_for() so the link

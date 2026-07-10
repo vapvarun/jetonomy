@@ -364,6 +364,17 @@ class Template_Loader {
 					'voteSingular'          => __( '1 vote', 'jetonomy' ),
 					/* translators: %d: vote count. */
 					'voteFormat'            => __( '%d votes', 'jetonomy' ),
+					// 1.6.1 i18n sweep - keys view.js reads via state.i18n that were
+					// never injected, so they rendered the English fallback on every locale.
+					'alreadyReported'       => __( 'You already reported this.', 'jetonomy' ),
+					'draftPublished'        => __( 'Published.', 'jetonomy' ),
+					'genericError'          => __( 'Could not publish.', 'jetonomy' ),
+					// Threaded-reply toggle label (single-post.php); the count is
+					// substituted client-side in the state.threadToggleLabel getter.
+					'hideReplies'           => __( 'Hide replies', 'jetonomy' ),
+					'showRepliesOne'        => __( 'Show 1 reply', 'jetonomy' ),
+					/* translators: %d: number of replies. */
+					'showRepliesMany'       => __( 'Show %d replies', 'jetonomy' ),
 				),
 			)
 		);
@@ -544,6 +555,16 @@ class Template_Loader {
 					'banMemberTitle'         => esc_html__( 'Ban member', 'jetonomy' ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
 					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
+					// 1.6.1 i18n sweep - role-change + deny-join confirm dialogs (view.js reads
+					// window.jetonomyData.i18n outside the IA store; these were never injected).
+					/* translators: %name%, %from%, %to% are replaced client-side. */
+					'confirmRoleChange'      => esc_html__( 'Change %name% from %from% to %to%?', 'jetonomy' ),
+					'confirmRoleChangeTitle' => esc_html__( 'Change role', 'jetonomy' ),
+					'confirmLabel'           => esc_html__( 'Change role', 'jetonomy' ),
+					'cancelLabel'            => esc_html__( 'Cancel', 'jetonomy' ),
+					'denyJoinBody'           => esc_html__( 'Deny this join request? The member can request again later.', 'jetonomy' ),
+					'denyJoinTitle'          => esc_html__( 'Deny request', 'jetonomy' ),
+					'denyLabel'              => esc_html__( 'Deny', 'jetonomy' ),
 				),
 			)
 		);
