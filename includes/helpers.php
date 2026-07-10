@@ -254,7 +254,7 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 	function jetonomy_after_content_allowed_html(): array {
 		$tags = wp_kses_allowed_html( 'post' );
 
-		$tags['input'] = array(
+		$tags['input']                = array(
 			'type'                   => true,
 			'name'                   => true,
 			'value'                  => true,
@@ -269,7 +269,7 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 			'data-wp-bind--checked'  => true,
 			'data-wp-bind--disabled' => true,
 		);
-		$tags['button'] = array(
+		$tags['button']               = array(
 			'type'              => true,
 			'class'             => true,
 			'aria-label'        => true,
@@ -285,7 +285,7 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 		$tags['a']['data-jt-pdf-url'] = true;
 		$tags['img']['loading']       = true;
 		$tags['img']['decoding']      = true;
-		$tags['svg']  = array(
+		$tags['svg']                  = array(
 			'viewbox'         => true,
 			'width'           => true,
 			'height'          => true,
@@ -298,15 +298,42 @@ if ( ! function_exists( 'jetonomy_after_content_allowed_html' ) ) {
 			'stroke-linecap'  => true,
 			'stroke-linejoin' => true,
 		);
-		$tags['path']       = array( 'd' => true, 'fill' => true, 'stroke' => true );
-		$tags['line']       = array( 'x1' => true, 'y1' => true, 'x2' => true, 'y2' => true );
-		$tags['polyline']   = array( 'points' => true );
-		$tags['rect']       = array( 'x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true );
-		$tags['figure']     = array( 'class' => true );
-		$tags['figcaption'] = array( 'class' => true );
-		$tags['textarea']   = array( 'name' => true, 'class' => true, 'rows' => true, 'cols' => true, 'placeholder' => true );
-		$tags['select']     = array( 'name' => true, 'class' => true );
-		$tags['option']     = array( 'value' => true, 'selected' => true );
+		$tags['path']                 = array(
+			'd'      => true,
+			'fill'   => true,
+			'stroke' => true,
+		);
+		$tags['line']                 = array(
+			'x1' => true,
+			'y1' => true,
+			'x2' => true,
+			'y2' => true,
+		);
+		$tags['polyline']             = array( 'points' => true );
+		$tags['rect']                 = array(
+			'x'      => true,
+			'y'      => true,
+			'width'  => true,
+			'height' => true,
+			'rx'     => true,
+		);
+		$tags['figure']               = array( 'class' => true );
+		$tags['figcaption']           = array( 'class' => true );
+		$tags['textarea']             = array(
+			'name'        => true,
+			'class'       => true,
+			'rows'        => true,
+			'cols'        => true,
+			'placeholder' => true,
+		);
+		$tags['select']               = array(
+			'name'  => true,
+			'class' => true,
+		);
+		$tags['option']               = array(
+			'value'    => true,
+			'selected' => true,
+		);
 
 		// IA directives on structural tags (mirrors the poll widget's needs).
 		foreach ( array( 'div', 'span', 'button', 'label', 'a', 'form', 'select', 'option', 'textarea' ) as $t ) {

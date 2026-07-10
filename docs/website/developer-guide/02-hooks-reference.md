@@ -2,7 +2,7 @@
 
 Jetonomy is built to be extended cleanly - every hook below is a real, supported extension point, generated straight from the source so this page never drifts from the code. Each row says what the hook is for and where it fires. New here? Start with the **[developer cookbook](00-index.md)** for step-by-step recipes (add a profile tab, customise a card, theme with tokens, extend the REST API), and the **[Coming from BuddyPress / BuddyBoss](21-coming-from-buddypress-buddyboss.md)** guide.
 
-**200 hooks**, 133 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.
+**205 hooks**, 138 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.
 
 
 ## Posts
@@ -16,6 +16,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_after_update_post`<br>_action_ | Fires after a post is updated. | - | `includes/api/class-posts-controller.php` |
 | `jetonomy_before_create_post`<br>_filter_ | Filter post data before creation. | `data` | `includes/models/class-post.php` |
 | `jetonomy_before_delete_post`<br>_filter_ | Filter whether a post deletion should proceed. | `post_id` | `includes/models/class-post.php` |
+| `jetonomy_new_post_fields`<br>_action_ | Fires inside the new-topic form, after the built-in fields. Anonymous Posting's "Post anonymously" checkbox and File Attachments' "Attach files" button render here. | `space` | `templates/partials/compose-fields.php` |
 | `jetonomy_new_post_submit_action`<br>_filter_ | - | `url` | `templates/views/new-post.php` |
 | `jetonomy_post_actions`<br>_action_ | - | `post_id` | `templates/views/single-post.php` |
 | `jetonomy_post_card_after_badges`<br>_action_ | Mirror the listing-card badge hook on the single-post header so Pro markers (notably the site-wide "Announcement" badge) show here too, not… | `$post, $space` | `templates/views/single-post.php` |
@@ -36,6 +37,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_after_create_reply`<br>_action_ | - | - | `includes/class-abilities.php` |
 | `jetonomy_after_delete_reply`<br>_action_ | Fires after a reply is deleted. | - | `includes/api/class-replies-controller.php` |
 | `jetonomy_after_replies`<br>_action_ | Fires after the replies list renders. | `post_id` | `templates/views/single-post.php` |
+| `jetonomy_after_reply_content`<br>_filter_ | Filter appended after a reply's body content. File Attachments renders its attachment card strip here - the reply-side mirror of `jetonomy_after_post_content`. Since 1.7.0. | `content, reply` | `templates/partials/reply-card.php` |
 | `jetonomy_after_update_reply`<br>_action_ | Fires after a reply is updated with the full reply object plus context. | - | `includes/api/class-replies-controller.php` |
 | `jetonomy_before_create_reply`<br>_filter_ | Filter reply data before creation. | `data` | `includes/models/class-reply.php` |
 | `jetonomy_before_delete_reply`<br>_filter_ | Filter whether a reply deletion should proceed. | `reply_id` | `includes/models/class-reply.php` |
@@ -210,6 +212,13 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 |---|---|---|---|
 | `jetonomy_seo_meta`<br>_filter_ | @type string $title         OG/Twitter title. | - | `includes/class-template-loader.php` |
 
+## Media & Uploads
+
+| Hook | What it does | Args | Source |
+|---|---|---|---|
+| `jetonomy_upload_allowed_types`<br>_filter_ | The extension-to-MIME allow-list checked before `POST /media` accepts a file (extension AND sniffed MIME must both resolve to an allowed type; SVG is always excluded). Free defaults to images only. File Attachments widens this to add PDF and Office types. | `types` | `includes/api/class-media-controller.php` |
+| `jetonomy_upload_max_size`<br>_filter_ | The maximum accepted upload size in bytes, checked before `POST /media` accepts a file. Defaults to the smaller of the server's max upload size and 10 MB. | `max_bytes` | `includes/api/class-media-controller.php` |
+
 ## Query filters
 
 | Hook | What it does | Args | Source |
@@ -258,6 +267,7 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 | Hook | What it does | Args | Source |
 |---|---|---|---|
+| `jetonomy_author_can_reveal`<br>_filter_ | Whether the current viewer may see the real author of an anonymous post/reply. Free always returns `false` - anonymous stays masked for everyone. Pro's Anonymous Posting extension grants an explicit-reveal context to site admins only. Since 1.7.0. | `can_reveal, object, viewer_id` | `includes/class-author.php` |
 | `jetonomy_composer_toolbar`<br>_action_ | Fires inside the composer toolbar, after the built-in formatting buttons. | - | `templates/partials/composer.php` |
 | `jetonomy_cron_batch_size`<br>_filter_ | - | - | `includes/class-cron.php` |
 | `jetonomy_erase_batch_size`<br>_filter_ ·_Pro_ | Filter the batch size used by the GDPR personal-data eraser (default 1000). | - | `includes/class-privacy.php` |

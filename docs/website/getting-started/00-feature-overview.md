@@ -32,6 +32,8 @@ Pro adds:
 
 - **Polls** - attach a single or multi-select poll to any topic for decisions and feedback. See [Polls](../pro-features/03-polls.md).
 - **Reactions** - emoji reactions on posts and replies so members can respond without writing a full reply. See [Reactions](../pro-features/01-reactions.md).
+- **Anonymous Posting** - members post and reply without showing their name, enabled per space, with an audited admin-only reveal. See [Anonymous Posting](anonymous-posting.md).
+- **File Attachments** - attach images, PDFs, and documents to topics and replies, with preview cards and an inline PDF viewer. See [File Attachments](file-attachments.md).
 
 ## Spaces & Organization
 

@@ -53,4 +53,18 @@ tests_add_filter(
 	1
 );
 
+// Shared test fixtures / traits. There is no PSR-4 autoload for the
+// `Jetonomy\Tests\*` namespace, and PHPUnit only loads *Test.php files, so
+// any reusable trait or base class under a `Support/` dir must be required
+// explicitly here before the test classes that `use` it are loaded.
+// Two plain glob() calls rather than a GLOB_BRACE pattern — GLOB_BRACE is not
+// defined on every PHP build (e.g. the Alpine PHP in the wp-env test container).
+$_support_files = array_merge(
+	glob( __DIR__ . '/unit/Support/*.php' ) ?: array(),
+	glob( __DIR__ . '/pro/Support/*.php' ) ?: array()
+);
+foreach ( $_support_files as $_support_file ) {
+	require_once $_support_file;
+}
+
 require $_tests_dir . '/includes/bootstrap.php';

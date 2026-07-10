@@ -27,7 +27,7 @@ Active extensions have a highlighted card border. Inactive extensions appear mut
 
 ## Filtering by Category
 
-Use the filter buttons above the grid to show only extensions in a specific category. Available categories include Communication, Engagement, Administration, Moderation, Gamification, Content, Integration, Branding, SEO, and AI.
+Use the filter buttons above the grid to show only extensions in a specific category. Available categories include Communication, Engagement, Administration, Moderation, Gamification, Content, Integration, Branding, SEO, Privacy, and AI.
 
 Click **All** to return to the full list.
 
@@ -60,6 +60,8 @@ Click the toggle switch on an active card. The page reloads and the extension is
 | Reply By Email | Communication | Members reply to threads by replying to notification emails |
 | AI Integration | AI | Spam detection, post summarization, semantic search, content suggestions |
 | Site Announcements | Moderation | Pin a post to the top of every space for site-wide updates |
+| Anonymous Posting | Privacy | Let members post and reply without showing their name, with an audited admin-only reveal |
+| File Attachments | Content | Attach images, PDFs, and documents to topics and replies |
 
 For detailed setup instructions for each extension, see the [Pro Features documentation](../pro-features/00-getting-started-pro.md).
 

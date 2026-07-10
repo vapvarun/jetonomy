@@ -1,3 +1,9 @@
+---
+title: "File Attachments"
+category: "getting-started"
+order: 9
+---
+
 # File Attachments
 
 File Attachments lets members attach files — images, PDFs and documents — to topics and replies. It is a **Pro** feature, off until you enable it.
@@ -30,3 +36,8 @@ Every upload is validated against this allow-list on the server (file extension 
 - **The viewer is only loaded when needed.** The PDF viewer library is downloaded the first time a member opens a PDF, never on a normal page load, so it doesn't slow the community down.
 - **Removing an attachment** detaches it from the post/reply; genuinely orphaned uploads are cleaned up automatically by a daily background task.
 - **Deleting a topic or reply** removes its attachment links.
+
+## Related
+
+- [Extensions](../admin-settings/13-extensions.md) - where every Pro extension, including File Attachments, is enabled or disabled
+- [REST API reference](../developer-guide/01-rest-api.md#pro-endpoints) - the attach, detach, download, and batch endpoints under `jetonomy-pro/v1`

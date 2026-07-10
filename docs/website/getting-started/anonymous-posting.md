@@ -1,3 +1,9 @@
+---
+title: "Anonymous Posting"
+category: "getting-started"
+order: 8
+---
+
 # Anonymous Posting
 
 Anonymous Posting lets members start topics and write replies without showing their name or avatar to other members. It is a **Pro** feature, and it is off until you turn it on — both site-wide and per space.
@@ -45,3 +51,9 @@ Use this sparingly — for abuse investigations, not routine browsing. Anonymous
 - **The real author is never discarded.** Anonymity hides identity from other members on every surface; it does not make the post authorless. That is what lets you moderate, rate-limit, and — if necessary — reveal.
 - **Both switches are required.** Disabling the extension, or turning the space option off, immediately stops new anonymous posts. Posts that were already anonymous stay masked.
 - **Abuse:** because the poster is still a real, rate-limited member behind the scenes, blocking and standard moderation remain the remedy for misuse.
+
+## Related
+
+- [Extensions](../admin-settings/13-extensions.md) - where every Pro extension, including Anonymous Posting, is enabled or disabled
+- [Activity Log](../admin-settings/08-activity-log.md) - where every author reveal is recorded
+- [REST API reference](../developer-guide/01-rest-api.md#pro-endpoints) - the `POST /anonymous/reveal` endpoint for a custom admin surface

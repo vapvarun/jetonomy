@@ -416,6 +416,10 @@ Returns per-item results so partial failures are visible:
 }
 ```
 
+**`avatar_display` (added in 1.7.0)**
+
+Every user object returned by `/users/me`, `/users/{id}`, and `/users/by-login/{login}` carries a read-only `avatar_display` field: the resolved URL a client should render. It is the member's `avatar_url` when set, otherwise the best available real avatar (uploaded, BuddyPress, or a hosted Gravatar). It is an empty string `''` when none of those exist - the signal for the client to render a generated initials avatar instead of a blank placeholder. `avatar_url` remains the writable field on `PATCH`; `avatar_display` is compute-only.
+
 ---
 
 ## Updates (Polling)
@@ -772,6 +776,62 @@ A member-readable list of the currently active announcements, used by the mobile
 ```
 
 For the full Pro endpoint reference (methods, params, and permission callbacks per extension), see the [Pro Endpoints](#pro-endpoints) section above.
+
+### Anonymous Posting (`anonymous-posting` extension)
+
+> **Namespace:** this route lives under `jetonomy/v1`, not `jetonomy-pro/v1` - it mirrors the free `jetonomy_author_can_reveal` filter seam rather than registering a Pro-only namespace.
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/anonymous/reveal` | Admin (`manage_options`) | Reveal the real author of an anonymous post or reply |
+
+**POST /anonymous/reveal - body**
+
+```javascript
+{
+    object_type: 'post',   // or 'reply'
+    object_id:   42,
+}
+```
+
+Only site administrators can call this - space moderators cannot. Every successful reveal is written to the activity log (`anonymous_author_revealed`) with the real author ID, so reveals stay accountable. Returns `404` if the object is not actually anonymous, `403` if the caller lacks `manage_options`.
+
+```json
+{ "success": true, "author": { "id": 17, "name": "Jane Doe" } }
+```
+
+### File Attachments (`attachments` extension)
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | `/attachments` | Logged in (`jetonomy_create_posts`, `jetonomy_create_replies`, or `jetonomy_upload_media`) | Link an already-uploaded attachment to a post or reply |
+| DELETE | `/attachments/{id}` | Owner / Moderator | Detach an attachment from its post or reply |
+| GET | `/attachments/{id}/download` | Public | Download the file (forces `Content-Disposition: attachment` for non-image/PDF types) |
+| GET | `/attachments/batch` | Admin (`jetonomy_manage_settings`) / Moderator (`moderate_comments`) | Batch-read attachments for many posts or replies in one call |
+
+These routes are registered under `jetonomy-pro/v1`. `{id}` on `DELETE` and the download route is the attachment **link** ID, not the WordPress attachment ID.
+
+**POST /attachments - body**
+
+```javascript
+{
+    object_type:   'post',   // or 'reply'
+    object_id:     101,
+    attachment_id: 4820,     // WP attachment ID from POST /jetonomy/v1/media
+    sort:          0,        // optional
+}
+```
+
+The file is re-validated against the allow-list on attach (defence in depth), and the per-object file cap from the Attachments settings is enforced server-side.
+
+**GET /attachments/batch - parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `object_type` | string | Yes | `post` or `reply` |
+| `object_ids` | string | Yes | Comma-separated list of IDs |
+
+Posts and replies also carry an `attachments[]` array directly on their normal `GET`/list responses (injected via `jetonomy_rest_prepare_post` / `jetonomy_rest_prepare_reply`), so most clients never need to call these routes directly except to attach or detach a file.
 
 ---
 
