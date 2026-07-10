@@ -2,9 +2,9 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Jetonomy 1.6.0\n"
+"Project-Id-Version: Jetonomy 1.7.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-07-06 13:10:33+00:00\n"
+"POT-Creation-Date: 2026-07-10 09:14:22+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -605,17 +605,17 @@ msgstr ""
 #: includes/admin/class-activity-list-table.php:244
 #: includes/admin/class-revisions-list-table.php:307
 #: includes/admin/views/revisions.php:134 includes/class-shortcodes.php:177
-#: includes/integrations/class-buddypress.php:754
-#: includes/integrations/class-buddypress.php:874
-#: includes/integrations/class-buddypress.php:939
-#: includes/integrations/class-buddypress.php:971
-#: templates/partials/feed-card.php:55
+#: includes/integrations/class-buddypress.php:859
+#: includes/integrations/class-buddypress.php:985
+#: includes/integrations/class-buddypress.php:1052
+#: includes/integrations/class-buddypress.php:1084
+#: templates/partials/feed-card.php:59
 #: templates/partials/moderation/flag-card.php:95
-#: templates/partials/post-card.php:165 templates/partials/reply-card.php:69
-#: templates/views/moderation.php:162 templates/views/notifications.php:228
-#: templates/views/search.php:319 templates/views/single-post.php:365
-#: templates/views/user-profile.php:359 templates/views/user-profile.php:488
-#: templates/views/user-profile.php:612
+#: templates/partials/post-card.php:169 templates/partials/reply-card.php:72
+#: templates/views/moderation.php:162 templates/views/notifications.php:240
+#: templates/views/search.php:319 templates/views/single-post.php:389
+#: templates/views/user-profile.php:362 templates/views/user-profile.php:491
+#: templates/views/user-profile.php:615
 #. translators: %s: human-readable time difference
 #. translators: %s: human-readable time difference.
 #. translators: %s: human-readable time difference
@@ -628,7 +628,7 @@ msgstr ""
 
 #: includes/admin/class-activity-list-table.php:257
 #: includes/admin/views/moderation.php:358
-#: includes/api/class-notifications-controller.php:308
+#: includes/api/class-notifications-controller.php:315
 msgid "System"
 msgstr ""
 
@@ -708,7 +708,7 @@ msgstr ""
 #: includes/admin/class-admin.php:133 includes/admin/class-admin.php:134
 #: includes/admin/views/tags.php:46 templates/partials/compose-fields.php:117
 #: templates/views/search.php:210 templates/views/search.php:367
-#: templates/views/single-post.php:419
+#: templates/views/single-post.php:443
 msgid "Tags"
 msgstr ""
 
@@ -725,9 +725,9 @@ msgstr ""
 
 #: includes/admin/class-admin.php:160 includes/admin/class-admin.php:161
 #: includes/admin/views/moderation.php:30
-#: includes/class-template-loader.php:866
-#: includes/class-template-loader.php:1012
-#: includes/notifications/class-notifier.php:1277
+#: includes/class-template-loader.php:887
+#: includes/class-template-loader.php:1033
+#: includes/notifications/class-notifier.php:1301
 #: includes/seo/class-schema-markup.php:514 templates/partials/header.php:54
 #: templates/partials/header.php:56 templates/partials/icon-picker.php:98
 #: templates/views/moderation.php:78 templates/views/space-moderation.php:65
@@ -776,11 +776,11 @@ msgid "Insufficient permissions."
 msgstr ""
 
 #: includes/admin/class-admin.php:402 includes/admin/views/settings.php:154
-#: includes/class-admin-bar.php:57 includes/class-blocks.php:600
-#: includes/class-nav-menus.php:51 includes/class-template-loader.php:854
-#: includes/class-template-loader.php:857
+#: includes/class-admin-bar.php:57 includes/class-blocks.php:602
+#: includes/class-nav-menus.php:51 includes/class-template-loader.php:875
 #: includes/class-template-loader.php:878
-#: includes/class-template-loader.php:972
+#: includes/class-template-loader.php:899
+#: includes/class-template-loader.php:993
 #: includes/integrations/class-fluent-community.php:1094
 #: includes/seo/class-schema-markup.php:438 templates/partials/header.php:35
 #: templates/partials/header.php:37 templates/views/home.php:94
@@ -806,8 +806,9 @@ msgstr ""
 #: includes/admin/views/spaces.php:140 includes/admin/views/tags.php:246
 #: includes/admin/views/users.php:146 includes/admin/views/users.php:186
 #: includes/class-template-loader.php:276
-#: includes/class-template-loader.php:449
-#: includes/class-template-loader.php:505
+#: includes/class-template-loader.php:460
+#: includes/class-template-loader.php:516
+#: includes/class-template-loader.php:564
 #: libs/action-scheduler/classes/ActionScheduler_ListTable.php:133
 #: templates/partials/compose-fields.php:240 templates/partials/composer.php:77
 #: templates/views/edit-profile.php:97 templates/views/edit-profile.php:169
@@ -815,17 +816,17 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: includes/admin/class-admin.php:777 includes/class-template-loader.php:450
-#: includes/class-template-loader.php:506
+#: includes/admin/class-admin.php:777 includes/class-template-loader.php:461
+#: includes/class-template-loader.php:517
 msgid "Confirm"
 msgstr ""
 
-#: includes/admin/class-admin.php:778 includes/class-template-loader.php:451
-#: includes/class-template-loader.php:507
+#: includes/admin/class-admin.php:778 includes/class-template-loader.php:462
+#: includes/class-template-loader.php:518
 msgid "Submit"
 msgstr ""
 
-#: includes/admin/class-admin.php:779 includes/class-template-loader.php:452
+#: includes/admin/class-admin.php:779 includes/class-template-loader.php:463
 msgid "OK"
 msgstr ""
 
@@ -944,7 +945,7 @@ msgid "Unban"
 msgstr ""
 
 #: includes/admin/class-admin.php:898 includes/admin/views/users.php:90
-#: includes/class-template-loader.php:545
+#: includes/class-template-loader.php:556
 msgid "Ban"
 msgstr ""
 
@@ -1122,7 +1123,7 @@ msgstr ""
 #: includes/admin/views/moderation.php:345 includes/admin/views/replies.php:31
 #: includes/admin/views/replies.php:190 includes/admin/views/revisions.php:154
 #: includes/admin/views/users.php:97 includes/class-abilities.php:1434
-#: includes/notifications/class-notifier.php:874
+#: includes/notifications/class-notifier.php:892
 #: templates/partials/moderation/flag-card.php:92
 #: templates/views/moderation.php:137
 msgid "Unknown"
@@ -1137,11 +1138,11 @@ msgstr ""
 #: includes/admin/class-revisions-list-table.php:353
 #: includes/admin/views/spaces.php:203 includes/admin/views/tags.php:115
 #: includes/admin/views/users.php:63
-#: includes/integrations/class-buddypress.php:799
+#: includes/integrations/class-buddypress.php:904
 #: templates/partials/sidebar.php:131 templates/views/search.php:208
 #: templates/views/search.php:295 templates/views/space.php:248
-#: templates/views/space.php:330 templates/views/user-profile.php:210
-#: templates/views/user-profile.php:253
+#: templates/views/space.php:330 templates/views/user-profile.php:213
+#: templates/views/user-profile.php:256
 msgid "Posts"
 msgstr ""
 
@@ -1149,10 +1150,10 @@ msgstr ""
 #: includes/admin/views/content.php:125 includes/admin/views/content.php:276
 #: includes/admin/views/content.php:319 includes/admin/views/import.php:179
 #: includes/admin/views/users.php:64
-#: includes/integrations/class-buddypress.php:811
-#: includes/integrations/class-buddypress.php:993
-#: templates/views/notifications.php:60 templates/views/single-post.php:705
-#: templates/views/user-profile.php:214 templates/views/user-profile.php:257
+#: includes/integrations/class-buddypress.php:916
+#: includes/integrations/class-buddypress.php:1106
+#: templates/views/notifications.php:60 templates/views/single-post.php:681
+#: templates/views/user-profile.php:217 templates/views/user-profile.php:260
 msgid "Replies"
 msgstr ""
 
@@ -1226,8 +1227,8 @@ msgstr ""
 #: includes/admin/views/categories.php:50
 #: includes/admin/views/categories.php:275
 #: includes/admin/views/space-edit.php:104 includes/admin/views/spaces.php:75
-#: templates/partials/icon-picker.php:164 templates/partials/post-card.php:88
-#: templates/views/single-post.php:370
+#: templates/partials/icon-picker.php:164 templates/partials/post-card.php:92
+#: templates/views/single-post.php:394
 msgid "Private"
 msgstr ""
 
@@ -1273,7 +1274,7 @@ msgid "Search categories…"
 msgstr ""
 
 #: includes/admin/views/categories.php:103 includes/admin/views/tags.php:103
-#: includes/class-nav-menus.php:72 includes/class-template-loader.php:884
+#: includes/class-nav-menus.php:72 includes/class-template-loader.php:905
 #: includes/seo/class-schema-markup.php:508
 #: libs/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:786
 #: templates/partials/header.php:39 templates/partials/header.php:41
@@ -1310,8 +1311,8 @@ msgstr ""
 #: includes/admin/views/replies.php:238 includes/admin/views/spaces.php:237
 #: includes/admin/views/tags.php:152
 #: libs/action-scheduler/classes/data-stores/ActionScheduler_wpPostStore_PostTypeRegistrar.php:39
-#: templates/partials/reply-card.php:169 templates/views/my-spaces.php:132
-#: templates/views/single-post.php:630 templates/views/space-edit.php:60
+#: templates/partials/reply-card.php:179 templates/views/my-spaces.php:132
+#: templates/views/single-post.php:606 templates/views/space-edit.php:60
 msgid "Edit"
 msgstr ""
 
@@ -1327,9 +1328,9 @@ msgstr ""
 #: includes/admin/views/space-edit.php:401 includes/admin/views/spaces.php:239
 #: includes/admin/views/tags.php:81 includes/admin/views/tags.php:153
 #: libs/action-scheduler/classes/ActionScheduler_ListTable.php:92
-#: libs/edd-sl-sdk/src/Messenger.php:273 templates/partials/reply-card.php:183
-#: templates/views/notifications.php:153 templates/views/notifications.php:252
-#: templates/views/single-post.php:658
+#: libs/edd-sl-sdk/src/Messenger.php:273 templates/partials/reply-card.php:193
+#: templates/views/notifications.php:153 templates/views/notifications.php:264
+#: templates/views/single-post.php:634
 msgid "Delete"
 msgstr ""
 
@@ -1568,9 +1569,9 @@ msgstr ""
 #: includes/admin/views/space-edit.php:240
 #: includes/admin/views/space-edit.php:597 includes/admin/views/users.php:104
 #: includes/admin/views/users.php:107
-#: includes/api/class-notifications-controller.php:311
-#: includes/api/class-posts-controller.php:1193
-#: includes/api/class-replies-controller.php:793
+#: includes/api/class-notifications-controller.php:318
+#: includes/api/class-posts-controller.php:1211
+#: includes/api/class-replies-controller.php:811
 msgid "ago"
 msgstr ""
 
@@ -1953,7 +1954,7 @@ msgid "Forums"
 msgstr ""
 
 #: includes/admin/views/import.php:177
-#: includes/integrations/class-buddypress.php:992
+#: includes/integrations/class-buddypress.php:1105
 msgid "Topics"
 msgstr ""
 
@@ -2115,8 +2116,8 @@ msgid "No replies match these filters"
 msgstr ""
 
 #: includes/admin/views/replies.php:180 includes/admin/views/replies.php:325
-#: includes/class-template-loader.php:275 templates/partials/reply-card.php:143
-#: templates/partials/reply-card.php:144 templates/views/moderation.php:154
+#: includes/class-template-loader.php:275 templates/partials/reply-card.php:153
+#: templates/partials/reply-card.php:154 templates/views/moderation.php:154
 msgid "Reply"
 msgstr ""
 
@@ -2214,7 +2215,7 @@ msgid "Permissions"
 msgstr ""
 
 #: includes/admin/views/settings.php:59 includes/admin/views/settings.php:607
-#: includes/class-blocks.php:830 templates/views/edit-profile.php:126
+#: includes/class-blocks.php:832 templates/views/edit-profile.php:126
 msgid "Email"
 msgstr ""
 
@@ -2304,8 +2305,8 @@ msgstr ""
 #: includes/admin/views/setup-wizard.php:124
 #: includes/admin/views/space-edit.php:92 includes/admin/views/spaces.php:62
 #: includes/admin/views/spaces.php:164 includes/admin/views/spaces.php:245
-#: includes/integrations/class-buddypress.php:675
-#: includes/integrations/class-buddypress.php:787
+#: includes/integrations/class-buddypress.php:780
+#: includes/integrations/class-buddypress.php:892
 #: templates/partials/sidebar.php:140
 msgid "Forum"
 msgstr ""
@@ -2459,7 +2460,7 @@ msgid ""
 msgstr ""
 
 #: includes/admin/views/settings.php:351
-#: includes/integrations/class-buddypress.php:995
+#: includes/integrations/class-buddypress.php:1108
 msgid "Level"
 msgstr ""
 
@@ -2473,8 +2474,8 @@ msgstr ""
 
 #: includes/admin/views/settings.php:354 includes/admin/views/users.php:62
 #: includes/class-privacy.php:250
-#: includes/integrations/class-buddypress.php:994
-#: templates/views/user-profile.php:206
+#: includes/integrations/class-buddypress.php:1107
+#: templates/views/user-profile.php:209
 msgid "Reputation"
 msgstr ""
 
@@ -2499,7 +2500,7 @@ msgid "Delete own posts"
 msgstr ""
 
 #: includes/admin/views/settings.php:377
-#: includes/admin/views/setup-wizard.php:194 includes/class-blocks.php:701
+#: includes/admin/views/setup-wizard.php:194 includes/class-blocks.php:703
 #: templates/views/new-space.php:39 templates/views/new-space.php:165
 msgid "Create %s"
 msgstr ""
@@ -3551,7 +3552,7 @@ msgstr ""
 
 #: includes/admin/views/setup-wizard.php:56 includes/class-shortcodes.php:523
 #: includes/class-template-loader.php:280
-#: includes/class-template-loader.php:483
+#: includes/class-template-loader.php:494
 msgid "Network error. Please try again."
 msgstr ""
 
@@ -3714,8 +3715,8 @@ msgid "Back to %s"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:32 includes/admin/views/spaces.php:202
-#: includes/class-template-loader.php:860
-#: includes/class-template-loader.php:1002 templates/partials/sidebar.php:135
+#: includes/class-template-loader.php:881
+#: includes/class-template-loader.php:1023 templates/partials/sidebar.php:135
 #: templates/views/my-spaces.php:141 templates/views/space-members.php:104
 #: templates/views/space-members.php:123 templates/views/space.php:252
 #: templates/views/space.php:352
@@ -3751,7 +3752,7 @@ msgid "Join Policy"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:113 includes/admin/views/spaces.php:84
-#: templates/partials/feed-card.php:100
+#: templates/partials/feed-card.php:104
 msgid "Open"
 msgstr ""
 
@@ -3810,8 +3811,8 @@ msgstr ""
 #: includes/admin/views/space-edit.php:185
 #: includes/admin/views/space-edit.php:235
 #: includes/admin/views/space-edit.php:322 includes/admin/views/users.php:21
-#: includes/class-feed.php:88 includes/class-template-loader.php:528
-#: includes/notifications/class-notifier.php:867
+#: includes/class-feed.php:88 includes/class-template-loader.php:539
+#: includes/notifications/class-notifier.php:885
 #: templates/views/leaderboard.php:141 templates/views/space-members.php:110
 msgid "Member"
 msgstr ""
@@ -3819,8 +3820,8 @@ msgstr ""
 #: includes/admin/views/space-edit.php:186
 #: includes/admin/views/space-edit.php:236
 #: includes/admin/views/space-edit.php:323
-#: includes/class-template-loader.php:529
-#: includes/notifications/class-notifier.php:871
+#: includes/class-template-loader.php:540
+#: includes/notifications/class-notifier.php:889
 #: templates/views/space-members.php:111
 msgid "Moderator"
 msgstr ""
@@ -3828,10 +3829,10 @@ msgstr ""
 #: includes/admin/views/space-edit.php:187
 #: includes/admin/views/space-edit.php:237
 #: includes/admin/views/space-edit.php:324
-#: includes/class-template-loader.php:530 templates/partials/feed-card.php:47
+#: includes/class-template-loader.php:541 templates/partials/feed-card.php:51
 #: templates/partials/managed-by-card.php:23
-#: templates/partials/post-card.php:134 templates/partials/reply-card.php:51
-#: templates/views/my-spaces.php:96 templates/views/single-post.php:661
+#: templates/partials/post-card.php:138 templates/partials/reply-card.php:54
+#: templates/views/my-spaces.php:96 templates/views/single-post.php:637
 #: templates/views/space-members.php:112
 msgid "Admin"
 msgstr ""
@@ -4063,7 +4064,7 @@ msgid "Colored labels members can apply to topics (e.g. Bug, Suggestion, Solved)
 msgstr ""
 
 #: includes/admin/views/space-edit.php:486
-#: includes/class-template-loader.php:486 templates/views/space-edit.php:220
+#: includes/class-template-loader.php:497 templates/views/space-edit.php:220
 msgid "Label"
 msgstr ""
 
@@ -4089,7 +4090,7 @@ msgid "Pending Join Requests (%d)"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:564 includes/class-privacy.php:179
-#: templates/views/user-profile.php:169
+#: templates/views/user-profile.php:172
 msgid "Message"
 msgstr ""
 
@@ -4106,7 +4107,7 @@ msgid "New requests to join this %s will appear here for review."
 msgstr ""
 
 #: includes/admin/views/space-edit.php:600
-#: templates/views/space-members.php:169
+#: includes/class-template-loader.php:567 templates/views/space-members.php:169
 msgid "Deny"
 msgstr ""
 
@@ -4214,8 +4215,8 @@ msgstr ""
 msgid "Update Tag"
 msgstr ""
 
-#: includes/admin/views/users.php:19 templates/partials/feed-card.php:95
-#: templates/partials/post-card.php:121
+#: includes/admin/views/users.php:19 templates/partials/feed-card.php:99
+#: templates/partials/post-card.php:125
 msgid "New"
 msgstr ""
 
@@ -4224,12 +4225,12 @@ msgid "Basic"
 msgstr ""
 
 #: includes/admin/views/users.php:22
-#: includes/notifications/class-notifier.php:868
+#: includes/notifications/class-notifier.php:886
 msgid "Regular"
 msgstr ""
 
 #: includes/admin/views/users.php:23
-#: includes/notifications/class-notifier.php:870
+#: includes/notifications/class-notifier.php:888
 msgid "Leader"
 msgstr ""
 
@@ -4252,7 +4253,7 @@ msgid_plural "%s users"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/admin/views/users.php:59 includes/class-blocks.php:826
+#: includes/admin/views/users.php:59 includes/class-blocks.php:828
 msgid "Username"
 msgstr ""
 
@@ -4440,14 +4441,18 @@ msgid "You must be logged in."
 msgstr ""
 
 #: includes/api/class-base-controller.php:362
+#: includes/api/class-notifications-controller.php:315
 #: includes/api/class-oembed-controller.php:142
-#: includes/api/class-posts-controller.php:1138
-#: includes/api/class-replies-controller.php:764
-#: includes/class-abilities.php:1232 includes/class-shortcodes.php:174
-#: includes/class-shortcodes.php:230
-#: includes/integrations/class-buddypress.php:752
-#: templates/partials/avatar.php:14 templates/partials/feed-card.php:28
-#: templates/partials/post-card.php:126 templates/partials/reply-card.php:39
+#: includes/api/class-posts-controller.php:1143
+#: includes/api/class-replies-controller.php:769
+#: includes/class-abilities.php:1232 includes/class-author.php:51
+#: includes/class-shortcodes.php:174 includes/class-shortcodes.php:230
+#: includes/integrations/class-buddypress.php:235
+#: includes/integrations/class-buddypress.php:857
+#: templates/partials/avatar.php:17 templates/partials/feed-card.php:32
+#: templates/partials/post-card.php:130 templates/partials/reply-card.php:42
+#: templates/partials/reply-card.php:152 templates/partials/reply-card.php:158
+#: templates/views/notifications.php:169 templates/views/single-post.php:382
 msgid "Anonymous"
 msgstr ""
 
@@ -4460,8 +4465,8 @@ msgid "Category name is required."
 msgstr ""
 
 #: includes/api/class-categories-controller.php:203
-#: includes/api/class-posts-controller.php:736
-#: includes/api/class-replies-controller.php:467
+#: includes/api/class-posts-controller.php:741
+#: includes/api/class-replies-controller.php:472
 #: includes/api/class-spaces-controller.php:567
 msgid "No fields provided for update."
 msgstr ""
@@ -4478,8 +4483,21 @@ msgstr ""
 msgid "No file provided."
 msgstr ""
 
-#: includes/api/class-media-controller.php:180
+#: includes/api/class-media-controller.php:209
 msgid "Uploaded image"
+msgstr ""
+
+#: includes/api/class-media-controller.php:252
+#. translators: %s: human-readable maximum file size.
+msgid "File is too large. Maximum size is %s."
+msgstr ""
+
+#: includes/api/class-media-controller.php:271
+msgid "This file type is not allowed."
+msgstr ""
+
+#: includes/api/class-media-controller.php:281
+msgid "File contents do not match its extension."
 msgstr ""
 
 #: includes/api/class-moderation-controller.php:375
@@ -4530,8 +4548,8 @@ msgid "Thread not found."
 msgstr ""
 
 #: includes/api/class-oembed-controller.php:247
-#: includes/class-template-loader.php:524
-#: includes/integrations/class-buddypress.php:748
+#: includes/class-template-loader.php:535
+#: includes/integrations/class-buddypress.php:853
 #: templates/partials/sidebar.php:281
 #. translators: %d: number of replies.
 #. translators: %d: number of replies on a topic.
@@ -4582,55 +4600,55 @@ msgstr ""
 msgid "Post title is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:551
-#: includes/api/class-posts-controller.php:743
+#: includes/api/class-posts-controller.php:556
+#: includes/api/class-posts-controller.php:748
 msgid "Your post was blocked by our content policy."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:578
+#: includes/api/class-posts-controller.php:583
 #: includes/class-abilities.php:1192
 msgid "Failed to create post."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:596
-#: includes/api/class-posts-controller.php:785
-#: includes/api/class-replies-controller.php:336
-#: includes/api/class-replies-controller.php:423
+#: includes/api/class-posts-controller.php:601
+#: includes/api/class-posts-controller.php:790
+#: includes/api/class-replies-controller.php:341
+#: includes/api/class-replies-controller.php:428
 msgid "Flagged automatically by a moderation rule."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:683
+#: includes/api/class-posts-controller.php:688
 msgid "Could not publish this draft."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:922
+#: includes/api/class-posts-controller.php:927
 msgid "Roadmap status only applies to Ideas spaces."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:938
+#: includes/api/class-posts-controller.php:943
 msgid "Invalid roadmap status."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:990
+#: includes/api/class-posts-controller.php:995
 #. translators: %d: maximum number of pinned topics allowed per space
 msgid "You can pin up to %d topic in a space. Unpin one first."
 msgid_plural "You can pin up to %d topics in a space. Unpin one first."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/api/class-posts-controller.php:1030
+#: includes/api/class-posts-controller.php:1035
 msgid "A valid target_space_id is required."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1034
+#: includes/api/class-posts-controller.php:1039
 msgid "Post is already in the target space."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1087
+#: includes/api/class-posts-controller.php:1092
 msgid "Cannot merge a post with itself."
 msgstr ""
 
-#: includes/api/class-posts-controller.php:1104
+#: includes/api/class-posts-controller.php:1109
 #: includes/class-template-loader.php:305
 msgid "Failed to merge topics."
 msgstr ""
@@ -4644,45 +4662,45 @@ msgid "This post is closed and cannot receive new replies."
 msgstr ""
 
 #: includes/api/class-replies-controller.php:227
-#: includes/api/class-replies-controller.php:401
+#: includes/api/class-replies-controller.php:406
 msgid "Reply content is required."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:278
-#: includes/api/class-replies-controller.php:460
+#: includes/api/class-replies-controller.php:283
+#: includes/api/class-replies-controller.php:465
 msgid "Reply published_at cannot precede the parent post date."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:295
-#: includes/api/class-replies-controller.php:406
+#: includes/api/class-replies-controller.php:300
+#: includes/api/class-replies-controller.php:411
 msgid "Your reply was blocked by our content policy."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:319
+#: includes/api/class-replies-controller.php:324
 #: includes/class-abilities.php:1294
 msgid "Failed to create reply."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:356
+#: includes/api/class-replies-controller.php:361
 #: includes/notifications/class-notifier.php:364
-#: includes/notifications/class-notifier.php:644
-#: includes/notifications/class-notifier.php:741
+#: includes/notifications/class-notifier.php:654
+#: includes/notifications/class-notifier.php:751
 msgid "your reply"
 msgstr ""
 
-#: includes/api/class-replies-controller.php:588
+#: includes/api/class-replies-controller.php:593
 msgid "Accepted answers only apply to Q&A spaces."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:660
+#: includes/api/class-replies-controller.php:665
 msgid "This reply is not the accepted answer."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:708
+#: includes/api/class-replies-controller.php:713
 msgid "A title is required for the new topic."
 msgstr ""
 
-#: includes/api/class-replies-controller.php:725
+#: includes/api/class-replies-controller.php:730
 msgid "Failed to split reply into new topic."
 msgstr ""
 
@@ -5036,8 +5054,8 @@ msgstr ""
 msgid "My profile"
 msgstr ""
 
-#: includes/class-admin-bar.php:98 includes/class-template-loader.php:896
-#: includes/class-template-loader.php:1139
+#: includes/class-admin-bar.php:98 includes/class-template-loader.php:917
+#: includes/class-template-loader.php:1160
 msgid "Edit profile"
 msgstr ""
 
@@ -5061,11 +5079,11 @@ msgstr ""
 msgid "Posts &amp; replies"
 msgstr ""
 
-#: includes/class-avatar.php:165
+#: includes/class-avatar.php:339
 msgid "Community avatar"
 msgstr ""
 
-#: includes/class-avatar.php:170
+#: includes/class-avatar.php:344
 msgid "Remove this custom avatar (falls back to Gravatar)"
 msgstr ""
 
@@ -5073,195 +5091,195 @@ msgstr ""
 msgid "Resend confirmation email"
 msgstr ""
 
-#: includes/class-blocks.php:167
+#: includes/class-blocks.php:169
 msgid "Forum Feed"
 msgstr ""
 
-#: includes/class-blocks.php:168
+#: includes/class-blocks.php:170
 msgid ""
 "Display recent forum discussions. Optionally scope to a single space with a "
 "header."
 msgstr ""
 
-#: includes/class-blocks.php:204
+#: includes/class-blocks.php:206
 msgid "Trending Topics"
 msgstr ""
 
-#: includes/class-blocks.php:205
+#: includes/class-blocks.php:207
 msgid ""
 "Display trending forum topics ranked by recent engagement (votes + replies "
 "over the last 7 days)."
 msgstr ""
 
-#: includes/class-blocks.php:229
+#: includes/class-blocks.php:231
 msgid "Space List"
 msgstr ""
 
-#: includes/class-blocks.php:230
+#: includes/class-blocks.php:232
 msgid "Display forum spaces as a grid."
 msgstr ""
 
-#: includes/class-blocks.php:250 includes/class-nav-menus.php:77
+#: includes/class-blocks.php:252 includes/class-nav-menus.php:77
 #: includes/seo/class-schema-markup.php:502 templates/partials/header.php:43
 #: templates/partials/header.php:45 templates/views/leaderboard.php:58
 #: templates/views/leaderboard.php:69
 msgid "Leaderboard"
 msgstr ""
 
-#: includes/class-blocks.php:251
+#: includes/class-blocks.php:253
 #: includes/widgets/class-leaderboard-widget.php:18
 msgid "Display top community members by reputation."
 msgstr ""
 
-#: includes/class-blocks.php:287
+#: includes/class-blocks.php:289
 msgid "Jetonomy Navigation"
 msgstr ""
 
-#: includes/class-blocks.php:288
+#: includes/class-blocks.php:290
 msgid "Sidebar navigation for categories and spaces, permission-aware."
 msgstr ""
 
-#: includes/class-blocks.php:308
+#: includes/class-blocks.php:310
 msgid "Jetonomy User Panel"
 msgstr ""
 
-#: includes/class-blocks.php:309
+#: includes/class-blocks.php:311
 msgid ""
 "Logged-in profile card for the sidebar: avatar, notifications, profile, and "
 "logout. Empty for logged-out viewers."
 msgstr ""
 
-#: includes/class-blocks.php:333
+#: includes/class-blocks.php:335
 msgid "Jetonomy Login"
 msgstr ""
 
-#: includes/class-blocks.php:334
+#: includes/class-blocks.php:336
 msgid ""
 "Quick login and register form for the Jetonomy sidebar. Renders empty for "
 "logged-in viewers."
 msgstr ""
 
-#: includes/class-blocks.php:363
+#: includes/class-blocks.php:365
 msgid "Jetonomy Compose Topic"
 msgstr ""
 
-#: includes/class-blocks.php:364
+#: includes/class-blocks.php:366
 msgid ""
 "Let signed-in members start a new topic from any page. Fixed-space mode or "
 "member-only picker."
 msgstr ""
 
-#: includes/class-blocks.php:386
+#: includes/class-blocks.php:388
 msgid "Recent topics"
 msgstr ""
 
-#: includes/class-blocks.php:416
+#: includes/class-blocks.php:418
 msgid "Trending topics"
 msgstr ""
 
-#: includes/class-blocks.php:439
+#: includes/class-blocks.php:441
 #. translators: %s: space title
 msgid "%s · Topics"
 msgstr ""
 
-#: includes/class-blocks.php:448
+#: includes/class-blocks.php:450
 msgid "View all"
 msgstr ""
 
-#: includes/class-blocks.php:661
+#: includes/class-blocks.php:663
 #. translators: %s: user display name
 msgid "Hi, %s"
 msgstr ""
 
-#: includes/class-blocks.php:673 templates/views/user-profile.php:159
+#: includes/class-blocks.php:675 templates/views/user-profile.php:162
 #. translators: %d: trust level
 msgid "Trust Level %d"
 msgstr ""
 
-#: includes/class-blocks.php:681
+#: includes/class-blocks.php:683
 msgid "Account"
 msgstr ""
 
-#: includes/class-blocks.php:683 includes/class-nav-menus.php:87
+#: includes/class-blocks.php:685 includes/class-nav-menus.php:87
 #: templates/partials/header.php:48 templates/partials/header.php:50
 msgid "My Profile"
 msgstr ""
 
-#: includes/class-blocks.php:686 includes/class-nav-menus.php:82
-#: includes/class-template-loader.php:893
-#: includes/class-template-loader.php:1132 templates/partials/header.php:65
+#: includes/class-blocks.php:688 includes/class-nav-menus.php:82
+#: includes/class-template-loader.php:914
+#: includes/class-template-loader.php:1153 templates/partials/header.php:65
 #: templates/partials/header.php:73 templates/views/notifications.php:39
 #: templates/views/notifications.php:88
 msgid "Notifications"
 msgstr ""
 
-#: includes/class-blocks.php:693
+#: includes/class-blocks.php:695
 msgid "Messages"
 msgstr ""
 
-#: includes/class-blocks.php:697 includes/class-template-loader.php:902
-#: includes/class-template-loader.php:1153 templates/views/my-spaces.php:51
+#: includes/class-blocks.php:699 includes/class-template-loader.php:923
+#: includes/class-template-loader.php:1174 templates/views/my-spaces.php:51
 #: templates/views/my-spaces.php:62
 msgid "My %s"
 msgstr ""
 
-#: includes/class-blocks.php:705 templates/views/edit-profile.php:24
-#: templates/views/edit-profile.php:35 templates/views/user-profile.php:164
+#: includes/class-blocks.php:707 templates/views/edit-profile.php:24
+#: templates/views/edit-profile.php:35 templates/views/user-profile.php:167
 msgid "Edit Profile"
 msgstr ""
 
-#: includes/class-blocks.php:708
+#: includes/class-blocks.php:710
 msgid "Log out"
 msgstr ""
 
-#: includes/class-blocks.php:756 templates/partials/compose-topic-embed.php:53
+#: includes/class-blocks.php:758 templates/partials/compose-topic-embed.php:53
 msgid "Join the conversation"
 msgstr ""
 
-#: includes/class-blocks.php:792 includes/class-blocks.php:816
+#: includes/class-blocks.php:794 includes/class-blocks.php:818
 #: templates/views/home.php:131
 msgid "Log in"
 msgstr ""
 
-#: includes/class-blocks.php:795
+#: includes/class-blocks.php:797
 msgid "Register"
 msgstr ""
 
-#: includes/class-blocks.php:802 includes/class-blocks.php:868
+#: includes/class-blocks.php:804 includes/class-blocks.php:870
 msgid "Username or Email"
 msgstr ""
 
-#: includes/class-blocks.php:806 includes/class-blocks.php:834
+#: includes/class-blocks.php:808 includes/class-blocks.php:836
 msgid "Password"
 msgstr ""
 
-#: includes/class-blocks.php:811
+#: includes/class-blocks.php:813
 msgid "Remember me"
 msgstr ""
 
-#: includes/class-blocks.php:819
+#: includes/class-blocks.php:821
 msgid "Forgot password?"
 msgstr ""
 
-#: includes/class-blocks.php:851
+#: includes/class-blocks.php:853
 msgid "Website"
 msgstr ""
 
-#: includes/class-blocks.php:858
+#: includes/class-blocks.php:860
 msgid "Create account"
 msgstr ""
 
-#: includes/class-blocks.php:865
+#: includes/class-blocks.php:867
 msgid ""
 "Enter your username or email and we will send a reset link if an account "
 "matches."
 msgstr ""
 
-#: includes/class-blocks.php:874
+#: includes/class-blocks.php:876
 msgid "Send reset link"
 msgstr ""
 
-#: includes/class-blocks.php:877
+#: includes/class-blocks.php:879
 msgid "Back to login"
 msgstr ""
 
@@ -5303,13 +5321,16 @@ msgstr ""
 msgid "Show community uploads"
 msgstr ""
 
-#: includes/class-mentions.php:59
-#: includes/notifications/class-notifier.php:1478
-#: templates/views/notifications.php:162
+#: includes/class-mentions.php:61 includes/notifications/class-notifier.php:526
+#: includes/notifications/class-notifier.php:547
+#: includes/notifications/class-notifier.php:596
+#: includes/notifications/class-notifier.php:622
+#: includes/notifications/class-notifier.php:1502
+#: templates/views/notifications.php:169
 msgid "Someone"
 msgstr ""
 
-#: includes/class-mentions.php:87
+#: includes/class-mentions.php:90
 #. translators: 1: actor display name, 2: post/reply title
 msgid "%1$s mentioned you in \"%2$s\""
 msgstr ""
@@ -5371,7 +5392,7 @@ msgid "On (object ID)"
 msgstr ""
 
 #: includes/class-privacy.php:148
-#: includes/notifications/class-notifier.php:1271
+#: includes/notifications/class-notifier.php:1295
 msgid "Vote"
 msgstr ""
 
@@ -5423,7 +5444,7 @@ msgstr ""
 msgid "Jetonomy: Posts and replies anonymized. Personal data deleted."
 msgstr ""
 
-#: includes/class-shortcodes.php:163 templates/views/user-profile.php:576
+#: includes/class-shortcodes.php:163 templates/views/user-profile.php:579
 msgid "No posts yet."
 msgstr ""
 
@@ -5480,7 +5501,7 @@ msgstr ""
 msgid "Roadmap status updated"
 msgstr ""
 
-#: includes/class-template-loader.php:274 templates/partials/reply-card.php:73
+#: includes/class-template-loader.php:274 templates/partials/reply-card.php:76
 msgid "Accepted"
 msgstr ""
 
@@ -5488,13 +5509,13 @@ msgstr ""
 msgid "Failed to save."
 msgstr ""
 
-#: includes/class-template-loader.php:281 templates/views/single-post.php:318
-#: templates/views/single-post.php:401 templates/views/space.php:302
+#: includes/class-template-loader.php:281 templates/views/single-post.php:325
+#: templates/views/single-post.php:425 templates/views/space.php:302
 msgid "Follow"
 msgstr ""
 
-#: includes/class-template-loader.php:282 templates/views/single-post.php:318
-#: templates/views/single-post.php:401 templates/views/space.php:302
+#: includes/class-template-loader.php:282 templates/views/single-post.php:325
+#: templates/views/single-post.php:425 templates/views/space.php:302
 msgid "Following"
 msgstr ""
 
@@ -5510,14 +5531,14 @@ msgstr ""
 msgid "Copy link"
 msgstr ""
 
-#: includes/class-template-loader.php:286 templates/views/single-post.php:573
-#: templates/views/single-post.php:574
+#: includes/class-template-loader.php:286 templates/views/single-post.php:549
+#: templates/views/single-post.php:550
 msgid "Bookmark"
 msgstr ""
 
-#: includes/class-template-loader.php:287 templates/partials/post-card.php:176
-#: templates/partials/post-card.php:177 templates/views/single-post.php:573
-#: templates/views/single-post.php:574
+#: includes/class-template-loader.php:287 templates/partials/post-card.php:180
+#: templates/partials/post-card.php:181 templates/views/single-post.php:549
+#: templates/views/single-post.php:550
 msgid "Remove bookmark"
 msgstr ""
 
@@ -5688,23 +5709,23 @@ msgid "Block this user? They will no longer be able to message you here."
 msgstr ""
 
 #: includes/class-template-loader.php:335
-#: includes/class-template-loader.php:537
+#: includes/class-template-loader.php:548
 msgid "Content removed"
 msgstr ""
 
 #: includes/class-template-loader.php:336
-#: includes/class-template-loader.php:538
+#: includes/class-template-loader.php:549
 msgid "Flag dismissed"
 msgstr ""
 
 #: includes/class-template-loader.php:337
-#: includes/class-template-loader.php:539
+#: includes/class-template-loader.php:550
 #: libs/action-scheduler/classes/abstracts/ActionScheduler_Store.php:458
 msgid "Failed"
 msgstr ""
 
 #: includes/class-template-loader.php:338
-#: includes/class-template-loader.php:540
+#: includes/class-template-loader.php:551
 msgid "Failed to save profile."
 msgstr ""
 
@@ -5798,320 +5819,363 @@ msgstr ""
 msgid "%d votes"
 msgstr ""
 
-#: includes/class-template-loader.php:472
+#: includes/class-template-loader.php:369
+msgid "You already reported this."
+msgstr ""
+
+#: includes/class-template-loader.php:370
+msgid "Published."
+msgstr ""
+
+#: includes/class-template-loader.php:371
+msgid "Could not publish."
+msgstr ""
+
+#: includes/class-template-loader.php:374 templates/views/single-post.php:246
+msgid "Hide replies"
+msgstr ""
+
+#: includes/class-template-loader.php:375
+msgid "Show 1 reply"
+msgstr ""
+
+#: includes/class-template-loader.php:377
+#. translators: %d: number of replies.
+msgid "Show %d replies"
+msgstr ""
+
+#: includes/class-template-loader.php:483
 msgid "Queue cleared."
 msgstr ""
 
-#: includes/class-template-loader.php:473
+#: includes/class-template-loader.php:484
 msgid "Could not resolve flag. Please try again."
 msgstr ""
 
-#: includes/class-template-loader.php:474
+#: includes/class-template-loader.php:485
 msgid "Could not update role. Please try again."
 msgstr ""
 
-#: includes/class-template-loader.php:475 templates/partials/header.php:77
+#: includes/class-template-loader.php:486 templates/partials/header.php:77
 msgid "Loading..."
 msgstr ""
 
-#: includes/class-template-loader.php:476 templates/partials/pagination.php:37
+#: includes/class-template-loader.php:487 templates/partials/pagination.php:37
 msgid "Load More"
 msgstr ""
 
-#: includes/class-template-loader.php:477
+#: includes/class-template-loader.php:488
 msgid "Show fewer icons"
 msgstr ""
 
-#: includes/class-template-loader.php:478
+#: includes/class-template-loader.php:489
 #: templates/partials/icon-picker.php:241
 msgid "Show more icons"
 msgstr ""
 
-#: includes/class-template-loader.php:479
+#: includes/class-template-loader.php:490
 msgid "Uploading..."
 msgstr ""
 
-#: includes/class-template-loader.php:480
+#: includes/class-template-loader.php:491
 msgid "Uploaded."
 msgstr ""
 
-#: includes/class-template-loader.php:481
+#: includes/class-template-loader.php:492
 msgid "Upload failed."
 msgstr ""
 
-#: includes/class-template-loader.php:482
+#: includes/class-template-loader.php:493
 msgid "Network error."
 msgstr ""
 
-#: includes/class-template-loader.php:484
+#: includes/class-template-loader.php:495
 msgid "Could not create the %s. Please try again."
 msgstr ""
 
-#: includes/class-template-loader.php:485
+#: includes/class-template-loader.php:496
 msgid "Could not save changes."
 msgstr ""
 
-#: includes/class-template-loader.php:487 templates/views/space-edit.php:222
+#: includes/class-template-loader.php:498 templates/views/space-edit.php:222
 msgid "Remove prefix"
 msgstr ""
 
-#: includes/class-template-loader.php:489 templates/partials/reply-card.php:149
-#: templates/partials/reply-card.php:150
+#: includes/class-template-loader.php:500 templates/partials/reply-card.php:159
+#: templates/partials/reply-card.php:160
 msgid "Quote"
 msgstr ""
 
-#: includes/class-template-loader.php:490
+#: includes/class-template-loader.php:501
 msgid "Joining..."
 msgstr ""
 
-#: includes/class-template-loader.php:491 templates/views/new-post.php:59
+#: includes/class-template-loader.php:502 templates/views/new-post.php:59
 #: templates/views/space.php:132 templates/views/space.php:290
 msgid "Join %s"
 msgstr ""
 
-#: includes/class-template-loader.php:492
+#: includes/class-template-loader.php:503
 msgid "Requesting..."
 msgstr ""
 
-#: includes/class-template-loader.php:493 templates/views/space.php:270
+#: includes/class-template-loader.php:504 templates/views/space.php:270
 msgid "Awaiting Approval"
 msgstr ""
 
-#: includes/class-template-loader.php:494
+#: includes/class-template-loader.php:505
 msgid "Request to Join"
 msgstr ""
 
-#: includes/class-template-loader.php:495
+#: includes/class-template-loader.php:506
 msgid "Submitting..."
 msgstr ""
 
-#: includes/class-template-loader.php:496
+#: includes/class-template-loader.php:507
 msgid "Request Sent"
 msgstr ""
 
-#: includes/class-template-loader.php:497
+#: includes/class-template-loader.php:508
 msgid "Request submitted. Awaiting approval."
 msgstr ""
 
-#: includes/class-template-loader.php:498
+#: includes/class-template-loader.php:509
 msgid "Could not submit request."
 msgstr ""
 
-#: includes/class-template-loader.php:499
+#: includes/class-template-loader.php:510
 msgid "No matches"
 msgstr ""
 
-#: includes/class-template-loader.php:500
+#: includes/class-template-loader.php:511
 msgid "Banned"
 msgstr ""
 
-#: includes/class-template-loader.php:508 templates/views/single-post.php:648
+#: includes/class-template-loader.php:519 templates/views/single-post.php:624
 msgid "Move"
 msgstr ""
 
-#: includes/class-template-loader.php:509 templates/views/single-post.php:652
+#: includes/class-template-loader.php:520 templates/views/single-post.php:628
 msgid "Merge"
 msgstr ""
 
-#: includes/class-template-loader.php:510
+#: includes/class-template-loader.php:521
 msgid "Loading %s…"
 msgstr ""
 
-#: includes/class-template-loader.php:511
+#: includes/class-template-loader.php:522
 msgid "Select a %s…"
 msgstr ""
 
-#: includes/class-template-loader.php:512
+#: includes/class-template-loader.php:523
 msgid "No other %s available"
 msgstr ""
 
-#: includes/class-template-loader.php:513
+#: includes/class-template-loader.php:524
 msgid "Failed to load %s"
 msgstr ""
 
-#: includes/class-template-loader.php:514
+#: includes/class-template-loader.php:525
 msgid "Search for a topic..."
 msgstr ""
 
-#: includes/class-template-loader.php:515
+#: includes/class-template-loader.php:526
 msgid "No topics found"
 msgstr ""
 
-#: includes/class-template-loader.php:516
+#: includes/class-template-loader.php:527
 msgid "Search failed"
 msgstr ""
 
-#: includes/class-template-loader.php:521
+#: includes/class-template-loader.php:532
 msgid "From"
 msgstr ""
 
-#: includes/class-template-loader.php:522
+#: includes/class-template-loader.php:533
 msgid "Type at least 2 characters to search."
 msgstr ""
 
-#: includes/class-template-loader.php:526
+#: includes/class-template-loader.php:537
 #. translators: %d: number of replies on a topic.
 msgid "%d replies"
 msgstr ""
 
-#: includes/class-template-loader.php:533
+#: includes/class-template-loader.php:544
 msgid "Close menu"
 msgstr ""
 
-#: includes/class-template-loader.php:534
+#: includes/class-template-loader.php:545
 msgid "Enter URL:"
 msgstr ""
 
-#: includes/class-template-loader.php:535
+#: includes/class-template-loader.php:546
 msgid "https://example.com"
 msgstr ""
 
-#: includes/class-template-loader.php:543
+#: includes/class-template-loader.php:554
 #. translators: %s: member display name.
 msgid ""
 "Ban %1$s from this %2$s? They will lose access to its posts and replies "
 "until you lift the ban."
 msgstr ""
 
-#: includes/class-template-loader.php:544
+#: includes/class-template-loader.php:555
 msgid "Ban member"
 msgstr ""
 
-#: includes/class-template-loader.php:546
+#: includes/class-template-loader.php:557
 msgid "Ban failed. Please try again."
 msgstr ""
 
-#: includes/class-template-loader.php:863
-#: includes/class-template-loader.php:1007
+#: includes/class-template-loader.php:561
+#. translators: %name%, %from%, %to% are replaced client-side.
+msgid "Change %name% from %from% to %to%?"
+msgstr ""
+
+#: includes/class-template-loader.php:562
+#: includes/class-template-loader.php:563
+msgid "Change role"
+msgstr ""
+
+#: includes/class-template-loader.php:565
+msgid "Deny this join request? The member can request again later."
+msgstr ""
+
+#: includes/class-template-loader.php:566
+msgid "Deny request"
+msgstr ""
+
+#: includes/class-template-loader.php:884
+#: includes/class-template-loader.php:1028
 #: templates/views/space-roadmap.php:135 templates/views/space-roadmap.php:148
 #: templates/views/space-roadmap.php:157 templates/views/space.php:346
 msgid "Roadmap"
 msgstr ""
 
-#: includes/class-template-loader.php:881
-#: includes/class-template-loader.php:1102
+#: includes/class-template-loader.php:902
+#: includes/class-template-loader.php:1123
 msgid "Top members"
 msgstr ""
 
-#: includes/class-template-loader.php:887
-#: includes/class-template-loader.php:1115
+#: includes/class-template-loader.php:908
+#: includes/class-template-loader.php:1136
 msgid "Moderation Queue"
 msgstr ""
 
-#: includes/class-template-loader.php:890
-#: includes/class-template-loader.php:1125
+#: includes/class-template-loader.php:911
+#: includes/class-template-loader.php:1146
 msgid "Start a discussion"
 msgstr ""
 
-#: includes/class-template-loader.php:899
-#: includes/class-template-loader.php:1146
+#: includes/class-template-loader.php:920
+#: includes/class-template-loader.php:1167
 msgid "You are invited"
 msgstr ""
 
-#: includes/class-template-loader.php:905
-#: includes/class-template-loader.php:1160 templates/views/new-space.php:49
+#: includes/class-template-loader.php:926
+#: includes/class-template-loader.php:1181 templates/views/new-space.php:49
 msgid "Create a %s"
 msgstr ""
 
-#: includes/class-template-loader.php:908
-#: includes/class-template-loader.php:1167 templates/partials/sidebar.php:181
+#: includes/class-template-loader.php:929
+#: includes/class-template-loader.php:1188 templates/partials/sidebar.php:181
 #: templates/views/space-edit.php:82 templates/views/space.php:240
 #. translators: %s: space title
 msgid "Edit %s"
 msgstr ""
 
-#: includes/class-template-loader.php:911
-#: includes/class-template-loader.php:1174 templates/views/drafts.php:40
+#: includes/class-template-loader.php:932
+#: includes/class-template-loader.php:1195 templates/views/drafts.php:40
 #: templates/views/drafts.php:51
 msgid "My drafts"
 msgstr ""
 
-#: includes/class-template-loader.php:914
-#: includes/class-template-loader.php:1181 templates/views/bookmarks.php:40
+#: includes/class-template-loader.php:935
+#: includes/class-template-loader.php:1202 templates/views/bookmarks.php:40
 #: templates/views/bookmarks.php:51
 msgid "My bookmarks"
 msgstr ""
 
-#: includes/class-template-loader.php:973
+#: includes/class-template-loader.php:994
 msgid "Join our community discussions, Q&A, and more."
 msgstr ""
 
-#: includes/class-template-loader.php:979
+#: includes/class-template-loader.php:1000
 msgid "%1$s in the %2$s category on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1003
+#: includes/class-template-loader.php:1024
 msgid "Members of the %1$s %2$s on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1008
+#: includes/class-template-loader.php:1029
 msgid "Roadmap for the %1$s %2$s on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1013
-#: includes/class-template-loader.php:1116
+#: includes/class-template-loader.php:1034
+#: includes/class-template-loader.php:1137
 msgid "Moderation queue for %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1089
+#: includes/class-template-loader.php:1110
 msgid "Community profile for @%1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1097
+#: includes/class-template-loader.php:1118
 #: includes/seo/class-schema-markup.php:412
 #. translators: 1: tag name, 2: site name
 msgid "Discussions tagged %1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1103
+#: includes/class-template-loader.php:1124
 msgid "Top contributors and most-helpful members on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1108
+#: includes/class-template-loader.php:1129
 msgid "Search the community"
 msgstr ""
 
-#: includes/class-template-loader.php:1109
+#: includes/class-template-loader.php:1130
 msgid "Search discussions, replies, members, and tags on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1124
+#: includes/class-template-loader.php:1145
 msgid "Start a discussion in %s"
 msgstr ""
 
-#: includes/class-template-loader.php:1126
+#: includes/class-template-loader.php:1147
 msgid "Compose a new discussion on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1133
+#: includes/class-template-loader.php:1154
 msgid "Your community notifications."
 msgstr ""
 
-#: includes/class-template-loader.php:1140
+#: includes/class-template-loader.php:1161
 msgid "Edit your community profile."
 msgstr ""
 
-#: includes/class-template-loader.php:1147
+#: includes/class-template-loader.php:1168
 msgid "Accept your community invite to %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1154
+#: includes/class-template-loader.php:1175
 msgid "%1$s you run and %2$s you are part of on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1161
+#: includes/class-template-loader.php:1182
 msgid "Start a new community %1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1168
+#: includes/class-template-loader.php:1189
 msgid "Edit your community %s settings."
 msgstr ""
 
-#: includes/class-template-loader.php:1175
+#: includes/class-template-loader.php:1196
 msgid "Your saved drafts on the community."
 msgstr ""
 
-#: includes/class-template-loader.php:1182
+#: includes/class-template-loader.php:1203
 msgid "Posts you have bookmarked on the community."
 msgstr ""
 
@@ -6146,91 +6210,91 @@ msgstr ""
 msgid "Imported from wpForo"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:199
+#: includes/integrations/class-buddypress.php:210
 msgid "New forum topic"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:201
+#: includes/integrations/class-buddypress.php:212
 msgid "Forum Topics"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:225
+#: includes/integrations/class-buddypress.php:246
 #. translators: %s: user link.
 msgid "%s started a new forum topic"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:228
+#: includes/integrations/class-buddypress.php:249
 #. translators: 1: user link, 2: group link.
 msgid "%1$s started a new forum topic in %2$s"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:323
+#: includes/integrations/class-buddypress.php:351
 #: includes/integrations/class-fluent-community.php:359
 msgid "Shared from the forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:325
+#: includes/integrations/class-buddypress.php:353
 #: includes/integrations/class-fluent-community.php:361
 msgid "View discussion"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:729
+#: includes/integrations/class-buddypress.php:834
 msgid "+ New Topic"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:734
+#: includes/integrations/class-buddypress.php:839
 msgid "No topics yet. Start a discussion!"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:760
+#: includes/integrations/class-buddypress.php:865
 msgid "View all topics"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:824
+#: includes/integrations/class-buddypress.php:929
 #: includes/integrations/class-fluent-community.php:958
-#: templates/views/user-profile.php:267
+#: templates/views/user-profile.php:270
 msgid "Bookmarks"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:879
+#: includes/integrations/class-buddypress.php:990
 msgid "No forum posts yet."
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:944
+#: includes/integrations/class-buddypress.php:1057
 msgid "No forum replies yet."
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:976
+#: includes/integrations/class-buddypress.php:1089
 msgid "No bookmarked posts yet."
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:995
-#: templates/views/user-profile.php:218
+#: includes/integrations/class-buddypress.php:1108
+#: templates/views/user-profile.php:221
 msgid "Trust"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1004
+#: includes/integrations/class-buddypress.php:1117
 msgid "View Full Forum Profile"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1068
-#: includes/integrations/class-buddypress.php:1072
+#: includes/integrations/class-buddypress.php:1181
+#: includes/integrations/class-buddypress.php:1185
 msgid "Discussion Forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1069
+#: includes/integrations/class-buddypress.php:1182
 msgid "Add a discussion forum to this group. Members will be synced automatically."
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1075
+#: includes/integrations/class-buddypress.php:1188
 msgid "No forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1076
+#: includes/integrations/class-buddypress.php:1189
 msgid "Create new discussion forum"
 msgstr ""
 
-#: includes/integrations/class-buddypress.php:1078
+#: includes/integrations/class-buddypress.php:1191
 msgid "Link existing forum"
 msgstr ""
 
@@ -6907,189 +6971,189 @@ msgid ""
 msgstr ""
 
 #: includes/notifications/class-notifier.php:465
-#: includes/notifications/class-notifier.php:1397
+#: includes/notifications/class-notifier.php:1421
 msgid "a %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:482
+#: includes/notifications/class-notifier.php:485
 #. translators: 1: space name, 2: post title
 msgid "New post in %1$s: %2$s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:519
+#: includes/notifications/class-notifier.php:525
 msgid "%1$s replied to your post \"%2$s\""
 msgstr ""
 
-#: includes/notifications/class-notifier.php:539
+#: includes/notifications/class-notifier.php:546
 msgid "%1$s replied to your comment in \"%2$s\""
 msgstr ""
 
-#: includes/notifications/class-notifier.php:586
+#: includes/notifications/class-notifier.php:595
 msgid "%1$s replied in \"%2$s\""
 msgstr ""
 
-#: includes/notifications/class-notifier.php:683
+#: includes/notifications/class-notifier.php:693
 #. translators: 1: vote count, 2: content title.
 msgid "%1$d person voted on %2$s"
 msgid_plural "%1$d people voted on %2$s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/notifications/class-notifier.php:706
+#: includes/notifications/class-notifier.php:716
 #. translators: %s: content title.
 msgid "Someone voted on %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:758
+#: includes/notifications/class-notifier.php:768
 #. translators: %s: content title.
 msgid "Someone reacted to %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:789
+#: includes/notifications/class-notifier.php:799
 msgid "Your report was reviewed. Thanks for helping keep the community healthy."
 msgstr ""
 
-#: includes/notifications/class-notifier.php:812
+#: includes/notifications/class-notifier.php:827
 msgid "Your answer was accepted in \"%s\""
 msgstr ""
 
-#: includes/notifications/class-notifier.php:851
+#: includes/notifications/class-notifier.php:869
 #. translators: 1: idea title, 2: new status label
 msgid "Your idea \"%1$s\" is now %2$s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:869
+#: includes/notifications/class-notifier.php:887
 msgid "Trusted"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:883
+#: includes/notifications/class-notifier.php:901
 msgid "Congratulations! You have been promoted to %1$s (Level %2$d)"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:912
+#: includes/notifications/class-notifier.php:930
 msgid "approved"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:913
+#: includes/notifications/class-notifier.php:931
 msgid "marked as spam"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:914
+#: includes/notifications/class-notifier.php:932
 msgid "removed"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:915
+#: includes/notifications/class-notifier.php:933
 msgid "held for review"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:926
+#: includes/notifications/class-notifier.php:944
 #. translators: 1: object type (post/reply), 2: action label
 msgid "Your %1$s was %2$s by a moderator"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:955
+#: includes/notifications/class-notifier.php:973
 msgid "New content flag requires review"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1268
-#: includes/notifications/class-notifier.php:1269
+#: includes/notifications/class-notifier.php:1292
+#: includes/notifications/class-notifier.php:1293
 msgid "New Reply"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1270
+#: includes/notifications/class-notifier.php:1294
 msgid "Mention"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1272
+#: includes/notifications/class-notifier.php:1296
 msgid "Reaction"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1273
+#: includes/notifications/class-notifier.php:1297
 msgid "Answer Accepted"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1274
+#: includes/notifications/class-notifier.php:1298
 msgid "Roadmap Update"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1275 templates/views/space.php:465
+#: includes/notifications/class-notifier.php:1299 templates/views/space.php:465
 msgid "New Post"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1276
+#: includes/notifications/class-notifier.php:1300
 msgid "Achievement"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1278
+#: includes/notifications/class-notifier.php:1302
 msgid "Report Reviewed"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1279
+#: includes/notifications/class-notifier.php:1303
 msgid "Join Request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1280
+#: includes/notifications/class-notifier.php:1304
 #: templates/partials/icon-picker.php:53 templates/views/home.php:117
 msgid "Welcome"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1285
-#: includes/notifications/class-notifier.php:1287
-#: includes/notifications/class-notifier.php:1288
-#: includes/notifications/class-notifier.php:1289
-#: includes/notifications/class-notifier.php:1292
+#: includes/notifications/class-notifier.php:1309
+#: includes/notifications/class-notifier.php:1311
+#: includes/notifications/class-notifier.php:1312
+#: includes/notifications/class-notifier.php:1313
+#: includes/notifications/class-notifier.php:1316
 msgid "View Post"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1286
+#: includes/notifications/class-notifier.php:1310
 msgid "View Reply"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1290
+#: includes/notifications/class-notifier.php:1314
 msgid "View Answer"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1291
+#: includes/notifications/class-notifier.php:1315
 msgid "View Idea"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1293
+#: includes/notifications/class-notifier.php:1317
 msgid "View Your Badges"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1294
+#: includes/notifications/class-notifier.php:1318
 msgid "Review in Mod Queue"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1295
-#: includes/notifications/class-notifier.php:1297
+#: includes/notifications/class-notifier.php:1319
+#: includes/notifications/class-notifier.php:1321
 msgid "Open the Community"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1296
+#: includes/notifications/class-notifier.php:1320
 msgid "Review Request"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1299
+#: includes/notifications/class-notifier.php:1323
 msgid "View in Community"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1361
-#: includes/notifications/class-notifier.php:1380
+#: includes/notifications/class-notifier.php:1385
+#: includes/notifications/class-notifier.php:1404
 msgid "the %s"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1370
+#: includes/notifications/class-notifier.php:1394
 #. translators: %s: space name
 msgid "Your request to join %s was approved"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1388
+#: includes/notifications/class-notifier.php:1412
 #. translators: %s: space name
 msgid "Your request to join %s was not approved"
 msgstr ""
 
-#: includes/notifications/class-notifier.php:1429
+#: includes/notifications/class-notifier.php:1453
 #. translators: 1: user display name, 2: space name
 msgid "%1$s requested to join %2$s"
 msgstr ""
@@ -8357,6 +8421,18 @@ msgstr ""
 msgid "Share the details… (Markdown supported)"
 msgstr ""
 
+#: templates/partials/compose-fields.php:156 templates/partials/composer.php:32
+msgid "Bold"
+msgstr ""
+
+#: templates/partials/compose-fields.php:157 templates/partials/composer.php:33
+msgid "Italic"
+msgstr ""
+
+#: templates/partials/compose-fields.php:158 templates/partials/composer.php:34
+msgid "Code"
+msgstr ""
+
 #: templates/partials/compose-fields.php:160 templates/partials/composer.php:38
 msgid "Blockquote"
 msgstr ""
@@ -8406,7 +8482,7 @@ msgid "More publishing options"
 msgstr ""
 
 #: templates/partials/compose-fields.php:265
-#: templates/views/user-profile.php:494
+#: templates/views/user-profile.php:497
 msgid "Publish now"
 msgstr ""
 
@@ -8465,24 +8541,12 @@ msgstr ""
 msgid "Post topic"
 msgstr ""
 
-#: templates/partials/composer.php:17 templates/views/single-post.php:859
+#: templates/partials/composer.php:17 templates/views/single-post.php:835
 msgid "Log in to reply"
 msgstr ""
 
 #: templates/partials/composer.php:26
 msgid "Write your reply… (Markdown supported)"
-msgstr ""
-
-#: templates/partials/composer.php:32
-msgid "Bold"
-msgstr ""
-
-#: templates/partials/composer.php:33
-msgid "Italic"
-msgstr ""
-
-#: templates/partials/composer.php:34
-msgid "Code"
 msgstr ""
 
 #: templates/partials/composer.php:35
@@ -8509,26 +8573,26 @@ msgstr ""
 msgid "Post Reply"
 msgstr ""
 
-#: templates/partials/feed-card.php:48
+#: templates/partials/feed-card.php:52
 #: templates/partials/managed-by-card.php:24
-#: templates/partials/post-card.php:135 templates/partials/reply-card.php:52
+#: templates/partials/post-card.php:139 templates/partials/reply-card.php:55
 #: templates/views/my-spaces.php:96
 msgid "Mod"
 msgstr ""
 
-#: templates/partials/feed-card.php:71
+#: templates/partials/feed-card.php:75
 msgid "Upvote"
 msgstr ""
 
-#: templates/partials/feed-card.php:84
+#: templates/partials/feed-card.php:88
 msgid "Downvote"
 msgstr ""
 
-#: templates/partials/feed-card.php:91
+#: templates/partials/feed-card.php:95
 msgid "View replies"
 msgstr ""
 
-#: templates/partials/feed-card.php:95 templates/partials/post-card.php:120
+#: templates/partials/feed-card.php:99 templates/partials/post-card.php:124
 msgid "You have unread replies"
 msgstr ""
 
@@ -8646,8 +8710,8 @@ msgstr ""
 msgid "Achievements"
 msgstr ""
 
-#: templates/partials/icon-picker.php:103 templates/partials/post-card.php:85
-#: templates/views/single-post.php:375
+#: templates/partials/icon-picker.php:103 templates/partials/post-card.php:89
+#: templates/views/single-post.php:399
 msgid "Pinned"
 msgstr ""
 
@@ -8725,77 +8789,77 @@ msgstr ""
 msgid "No pending flags. The community is clean!"
 msgstr ""
 
-#: templates/partials/post-card.php:53 templates/views/single-post.php:512
+#: templates/partials/post-card.php:57 templates/views/single-post.php:488
 msgid "Vote on this post"
 msgstr ""
 
-#: templates/partials/post-card.php:58 templates/partials/post-card.php:59
-#: templates/partials/reply-card.php:108 templates/partials/reply-card.php:109
-#: templates/views/single-post.php:517 templates/views/single-post.php:518
+#: templates/partials/post-card.php:62 templates/partials/post-card.php:63
+#: templates/partials/reply-card.php:118 templates/partials/reply-card.php:119
+#: templates/views/single-post.php:493 templates/views/single-post.php:494
 msgid "Vote up"
 msgstr ""
 
-#: templates/partials/post-card.php:66 templates/partials/post-card.php:67
-#: templates/partials/reply-card.php:120 templates/partials/reply-card.php:121
-#: templates/views/single-post.php:530 templates/views/single-post.php:531
+#: templates/partials/post-card.php:70 templates/partials/post-card.php:71
+#: templates/partials/reply-card.php:130 templates/partials/reply-card.php:131
+#: templates/views/single-post.php:506 templates/views/single-post.php:507
 msgid "Vote down"
 msgstr ""
 
-#: templates/partials/post-card.php:113
+#: templates/partials/post-card.php:117
 msgid "Answered"
 msgstr ""
 
-#: templates/partials/post-card.php:115
+#: templates/partials/post-card.php:119
 msgid "Needs answer"
 msgstr ""
 
-#: templates/partials/post-card.php:159 templates/views/search.php:327
-#: templates/views/space-roadmap.php:186 templates/views/user-profile.php:404
-#: templates/views/user-profile.php:555 templates/views/user-profile.php:606
+#: templates/partials/post-card.php:163 templates/views/search.php:327
+#: templates/views/space-roadmap.php:186 templates/views/user-profile.php:407
+#: templates/views/user-profile.php:558 templates/views/user-profile.php:609
 msgid "replies"
 msgstr ""
 
-#: templates/partials/reply-card.php:64
+#: templates/partials/reply-card.php:67
 msgid "OP"
 msgstr ""
 
-#: templates/partials/reply-card.php:103
+#: templates/partials/reply-card.php:113
 msgid "Vote on this reply"
 msgstr ""
 
-#: templates/partials/reply-card.php:131 templates/partials/reply-card.php:132
-#: templates/views/single-post.php:543 templates/views/single-post.php:544
+#: templates/partials/reply-card.php:141 templates/partials/reply-card.php:142
+#: templates/views/single-post.php:519 templates/views/single-post.php:520
 msgid "Log in to vote"
 msgstr ""
 
-#: templates/partials/reply-card.php:156 templates/partials/reply-card.php:157
-#: templates/views/single-post.php:592 templates/views/single-post.php:593
-#: templates/views/user-profile.php:178
+#: templates/partials/reply-card.php:166 templates/partials/reply-card.php:167
+#: templates/views/single-post.php:568 templates/views/single-post.php:569
+#: templates/views/user-profile.php:181
 msgid "Report"
 msgstr ""
 
-#: templates/partials/reply-card.php:163 templates/partials/reply-card.php:164
-#: templates/views/single-post.php:623 templates/views/single-post.php:624
+#: templates/partials/reply-card.php:173 templates/partials/reply-card.php:174
+#: templates/views/single-post.php:599 templates/views/single-post.php:600
 msgid "More options"
 msgstr ""
 
-#: templates/partials/reply-card.php:177
+#: templates/partials/reply-card.php:187
 msgid "Split to Topic"
 msgstr ""
 
-#: templates/partials/reply-card.php:209 templates/partials/reply-card.php:210
+#: templates/partials/reply-card.php:219 templates/partials/reply-card.php:220
 msgid "Accept as best answer"
 msgstr ""
 
-#: templates/partials/reply-card.php:211
+#: templates/partials/reply-card.php:221
 msgid "Accept"
 msgstr ""
 
-#: templates/partials/reply-card.php:232 templates/partials/reply-card.php:233
+#: templates/partials/reply-card.php:242 templates/partials/reply-card.php:243
 msgid "Remove accepted answer"
 msgstr ""
 
-#: templates/partials/reply-card.php:234
+#: templates/partials/reply-card.php:244
 msgid "Unaccept"
 msgstr ""
 
@@ -8926,8 +8990,8 @@ msgstr ""
 msgid "Vote on my post"
 msgstr ""
 
-#: templates/views/edit-profile.php:114 templates/views/single-post.php:758
-#: templates/views/single-post.php:761
+#: templates/views/edit-profile.php:114 templates/views/single-post.php:734
+#: templates/views/single-post.php:737
 msgid "Accepted answer"
 msgstr ""
 
@@ -9284,7 +9348,7 @@ msgstr ""
 msgid "new content flag requires review"
 msgstr ""
 
-#: templates/views/notifications.php:59 templates/views/notifications.php:233
+#: templates/views/notifications.php:59 templates/views/notifications.php:245
 msgid "Unread"
 msgstr ""
 
@@ -9292,7 +9356,7 @@ msgstr ""
 msgid "Mentions"
 msgstr ""
 
-#: templates/views/notifications.php:62 templates/views/user-profile.php:261
+#: templates/views/notifications.php:62 templates/views/user-profile.php:264
 msgid "Votes"
 msgstr ""
 
@@ -9372,15 +9436,15 @@ msgstr ""
 msgid "Mark read"
 msgstr ""
 
-#: templates/views/notifications.php:209
+#: templates/views/notifications.php:221
 msgid "Select notification"
 msgstr ""
 
-#: templates/views/notifications.php:239
+#: templates/views/notifications.php:251
 msgid "Notification actions"
 msgstr ""
 
-#: templates/views/notifications.php:246
+#: templates/views/notifications.php:258
 msgid "Mark as read"
 msgstr ""
 
@@ -9427,7 +9491,7 @@ msgstr ""
 msgid "Relevance"
 msgstr ""
 
-#: templates/views/search.php:262 templates/views/single-post.php:713
+#: templates/views/search.php:262 templates/views/single-post.php:689
 msgid "Newest"
 msgstr ""
 
@@ -9462,102 +9526,102 @@ msgstr ""
 msgid "This content is in a private space."
 msgstr ""
 
-#: templates/views/single-post.php:264
+#: templates/views/single-post.php:271
 msgid "This post is pending review and not yet publicly visible."
 msgstr ""
 
-#: templates/views/single-post.php:266
+#: templates/views/single-post.php:273
 msgid "This post has been marked as spam."
 msgstr ""
 
-#: templates/views/single-post.php:269
+#: templates/views/single-post.php:276
 #. translators: %s: post status
 msgid "This post has status: %s"
 msgstr ""
 
-#: templates/views/single-post.php:337
+#: templates/views/single-post.php:344
 msgid "Set roadmap status"
 msgstr ""
 
-#: templates/views/single-post.php:338
+#: templates/views/single-post.php:345
 msgid "Status:"
 msgstr ""
 
-#: templates/views/single-post.php:380
+#: templates/views/single-post.php:404
 msgid "Resolved"
 msgstr ""
 
-#: templates/views/single-post.php:385
+#: templates/views/single-post.php:409
 msgid "Closed"
 msgstr ""
 
-#: templates/views/single-post.php:553
+#: templates/views/single-post.php:529
 #. translators: %d: number of views
 msgid "%d view"
 msgid_plural "%d views"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/views/single-post.php:563 templates/views/single-post.php:564
+#: templates/views/single-post.php:539 templates/views/single-post.php:540
 msgid "Share"
 msgstr ""
 
-#: templates/views/single-post.php:592 templates/views/single-post.php:593
+#: templates/views/single-post.php:568 templates/views/single-post.php:569
 msgid "You have reported this"
 msgstr ""
 
-#: templates/views/single-post.php:608
+#: templates/views/single-post.php:584
 #. translators: %d: number of open reports on this topic.
 msgid "%d open report - review in the moderation queue"
 msgid_plural "%d open reports - review in the moderation queue"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/views/single-post.php:634
+#: templates/views/single-post.php:610
 msgid "Make Public"
 msgstr ""
 
-#: templates/views/single-post.php:634
+#: templates/views/single-post.php:610
 msgid "Make Private"
 msgstr ""
 
-#: templates/views/single-post.php:639
+#: templates/views/single-post.php:615
 msgid "Unpin"
 msgstr ""
 
-#: templates/views/single-post.php:639
+#: templates/views/single-post.php:615
 msgid "Pin"
 msgstr ""
 
-#: templates/views/single-post.php:642
+#: templates/views/single-post.php:618
 msgid "Reopen topic"
 msgstr ""
 
-#: templates/views/single-post.php:642
+#: templates/views/single-post.php:618
 msgid "Close topic"
 msgstr ""
 
-#: templates/views/single-post.php:712
+#: templates/views/single-post.php:688
 msgid "Oldest"
 msgstr ""
 
-#: templates/views/single-post.php:714
+#: templates/views/single-post.php:690
 msgid "Best"
 msgstr ""
 
-#: templates/views/single-post.php:784
+#: templates/views/single-post.php:760
 msgid "No replies yet. Be the first to reply!"
 msgstr ""
 
-#: templates/views/single-post.php:835
+#: templates/views/single-post.php:811
 msgid "This post is closed and no longer accepts replies."
 msgstr ""
 
-#: templates/views/single-post.php:840
+#: templates/views/single-post.php:816
 msgid "This topic is closed. As a moderator, you can still add a reply."
 msgstr ""
 
-#: templates/views/single-post.php:845
+#: templates/views/single-post.php:821
 msgid "Your Reply"
 msgstr ""
 
@@ -9618,7 +9682,7 @@ msgid ""
 "Requests tab."
 msgstr ""
 
-#: templates/views/space-members.php:228 templates/views/user-profile.php:193
+#: templates/views/space-members.php:228 templates/views/user-profile.php:196
 #. translators: %s: joined date
 #. translators: %s: join date
 msgid "Joined %s"
@@ -9793,66 +9857,66 @@ msgstr ""
 msgid "Tag pagination"
 msgstr ""
 
-#: templates/views/user-profile.php:160
+#: templates/views/user-profile.php:163
 msgid "Level %d"
 msgstr ""
 
-#: templates/views/user-profile.php:176
+#: templates/views/user-profile.php:179
 msgid "Report User"
 msgstr ""
 
-#: templates/views/user-profile.php:271
+#: templates/views/user-profile.php:274
 msgid "Drafts"
 msgstr ""
 
-#: templates/views/user-profile.php:315
+#: templates/views/user-profile.php:318
 msgid ""
 "You have not replied to anything yet — jump into a discussion and your "
 "replies will show here."
 msgstr ""
 
-#: templates/views/user-profile.php:316
+#: templates/views/user-profile.php:319
 msgid "No replies yet."
 msgstr ""
 
-#: templates/views/user-profile.php:349
+#: templates/views/user-profile.php:352
 #. translators: %s: post title
 msgid "on %s"
 msgstr ""
 
-#: templates/views/user-profile.php:376
+#: templates/views/user-profile.php:379
 msgid ""
 "You have not voted yet — upvote posts and replies you find helpful and they "
 "will show here."
 msgstr ""
 
-#: templates/views/user-profile.php:377
+#: templates/views/user-profile.php:380
 msgid "No votes yet."
 msgstr ""
 
-#: templates/views/user-profile.php:410
+#: templates/views/user-profile.php:413
 #. translators: %s: human-readable time difference
 msgid "voted %s ago"
 msgstr ""
 
-#: templates/views/user-profile.php:426
+#: templates/views/user-profile.php:429
 msgid "No drafts yet. Save a post as draft and it will appear here."
 msgstr ""
 
-#: templates/views/user-profile.php:470
+#: templates/views/user-profile.php:473
 #. translators: %s: scheduled date/time
 msgid "Scheduled: %s"
 msgstr ""
 
-#: templates/views/user-profile.php:474
+#: templates/views/user-profile.php:477
 msgid "Draft"
 msgstr ""
 
-#: templates/views/user-profile.php:509
+#: templates/views/user-profile.php:512
 msgid "No bookmarks yet. Bookmark posts to find them here later."
 msgstr ""
 
-#: templates/views/user-profile.php:561
+#: templates/views/user-profile.php:564
 #. translators: %s: human-readable time difference
 msgid "saved %s ago"
 msgstr ""
