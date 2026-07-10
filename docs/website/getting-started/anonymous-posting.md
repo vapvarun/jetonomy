@@ -57,3 +57,4 @@ Use this sparingly — for abuse investigations, not routine browsing. Anonymous
 - [Extensions](../admin-settings/13-extensions.md) - where every Pro extension, including Anonymous Posting, is enabled or disabled
 - [Activity Log](../admin-settings/08-activity-log.md) - where every author reveal is recorded
 - [REST API reference](../developer-guide/01-rest-api.md#pro-endpoints) - the `POST /anonymous/reveal` endpoint for a custom admin surface
+- [Anonymous Posting (Pro Features)](../pro-features/16-anonymous-posting.md) - the full feature reference

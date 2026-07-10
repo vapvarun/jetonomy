@@ -108,4 +108,6 @@ Each item carries the announcement post `id`, its `title`, the `space_id` it liv
 
 ## What's Next?
 
-You have now seen every Pro feature. Return to the [Pro getting-started guide](00-getting-started-pro.md) to choose which extensions to enable for your community.
+Let members post topics and replies without showing their name, with an audited admin-only reveal.
+
+[Anonymous Posting →](16-anonymous-posting.md)

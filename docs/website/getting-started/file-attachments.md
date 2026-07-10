@@ -41,3 +41,4 @@ Every upload is validated against this allow-list on the server (file extension 
 
 - [Extensions](../admin-settings/13-extensions.md) - where every Pro extension, including File Attachments, is enabled or disabled
 - [REST API reference](../developer-guide/01-rest-api.md#pro-endpoints) - the attach, detach, download, and batch endpoints under `jetonomy-pro/v1`
+- [File Attachments (Pro Features)](../pro-features/17-file-attachments.md) - the full feature reference
