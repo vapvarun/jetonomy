@@ -274,6 +274,13 @@ class Vote extends Model {
 			$gate_params = array_merge( $gate_params, $priv_params );
 		}
 
+		// Hide votes on content authored by users the viewer has blocked.
+		// no-op for guests/no-blocks.
+		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$gate_sql .= ' AND ' . $block_sql;
+		}
+
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return static::db()->get_results(
 			static::db()->prepare(

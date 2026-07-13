@@ -52,6 +52,10 @@ class Privacy {
 			'exporter_friendly_name' => __( 'Jetonomy Activity Log', 'jetonomy' ),
 			'callback'               => [ $this, 'export_activity' ],
 		];
+		$exporters['jetonomy-blocks']        = [
+			'exporter_friendly_name' => __( 'Jetonomy Blocked Users', 'jetonomy' ),
+			'callback'               => [ $this, 'export_blocks' ],
+		];
 		return $exporters;
 	}
 
@@ -196,6 +200,22 @@ class Privacy {
 				'object_id'   => __( 'Object ID', 'jetonomy' ),
 				'created_at'  => __( 'At', 'jetonomy' ),
 			]
+		);
+	}
+
+	public function export_blocks( string $email, int $page = 1 ): array {
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-blocks',
+			__( 'Jetonomy Blocked Users', 'jetonomy' ),
+			'blocked_users',
+			'blocker_id',
+			[
+				'blocked_id' => __( 'Blocked User ID', 'jetonomy' ),
+				'created_at' => __( 'Blocked At', 'jetonomy' ),
+			],
+			'blocked_id'
 		);
 	}
 
@@ -385,6 +405,7 @@ class Privacy {
 		[ 'flags', 'reporter_id' ],
 		[ 'join_requests', 'user_id' ],
 		[ 'bookmarks', 'user_id' ],
+		[ 'blocked_users', 'blocker_id' ],
 	];
 
 	public function erase_data( string $email, int $page = 1 ): array {
@@ -578,6 +599,13 @@ class Privacy {
 		foreach ( self::PURGE_TABLES as [ $table_key, $user_col ] ) {
 			$wpdb->delete( table( $table_key ), [ $user_col => $user_id ] );
 		}
+
+		// blocked_users is deleted above by blocker_id (this user's own block
+		// list), but the composite PK also has a `blocked_id` axis — other
+		// users' blocks pointing AT this now-deleted account. KEY blocked_id
+		// exists specifically for this cleanup; without it every other
+		// member's block list accumulates a permanently-dangling row.
+		$wpdb->delete( table( 'blocked_users' ), [ 'blocked_id' => $user_id ] );
 
 		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );
 	}

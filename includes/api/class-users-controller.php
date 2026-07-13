@@ -166,8 +166,15 @@ class Users_Controller extends Base_Controller {
 			);
 		}
 
+		// Loaded once, outside the loop — never call blocked_ids()/is_blocked()
+		// per row.
+		$blocked_ids = \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() );
+
 		$out = array();
 		foreach ( $users as $u ) {
+			if ( in_array( (int) $u->ID, $blocked_ids, true ) ) {
+				continue;
+			}
 			$out[] = array(
 				'id'           => (int) $u->ID,
 				'login'        => $u->user_login,
@@ -241,6 +248,10 @@ class Users_Controller extends Base_Controller {
 			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
+			// Has the CURRENT viewer blocked this profile? Backs the app's
+			// Block/Unblock button. blocked_ids() is memoized per-request, so
+			// this is never a fresh query. Always false for guests.
+			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 		];
 
 		/**
@@ -283,6 +294,7 @@ class Users_Controller extends Base_Controller {
 			'avatar_display'   => $profile->avatar_url ?: \Jetonomy\Avatar::display_url( $id, 96 ),
 			'created_at'       => $wp_user->user_registered ?? null,
 			'last_seen_at'     => $profile->last_seen_at ?? null,
+			'is_blocked'       => in_array( $id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 		];
 
 		/** This filter is documented in includes/api/class-users-controller.php */
@@ -432,6 +444,13 @@ class Users_Controller extends Base_Controller {
 		if ( '' !== $priv_sql ) {
 			$gate_sql   .= ' AND ' . $priv_sql;
 			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
+		// Hide this profile's posts entirely when the VIEWER has blocked $id.
+		// no-op for guests/no-blocks; must match the COUNT(*) below exactly.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$gate_sql .= ' AND ' . $block_sql;
 		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared

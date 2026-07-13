@@ -73,6 +73,24 @@ class Search_Controller extends Base_Controller {
 						'default' => 'relevance',
 						'enum'    => [ 'relevance', 'newest', 'votes' ],
 					],
+					'limit'     => [
+						'type'        => 'integer',
+						'minimum'     => 1,
+						'maximum'     => 50,
+						'description' => 'Page size (1-50, default 20). No default is declared here so an unsent value can fall back to the per_page alias.',
+					],
+					'offset'    => [
+						'type'        => 'integer',
+						'default'     => 0,
+						'minimum'     => 0,
+						'description' => 'Row offset for pagination.',
+					],
+					'per_page'  => [
+						'type'        => 'integer',
+						'minimum'     => 1,
+						'maximum'     => 50,
+						'description' => 'Alias for limit — kept for existing web callers (assets/js/header.js) that already send per_page.',
+					],
 				],
 			]
 		);
@@ -116,15 +134,41 @@ class Search_Controller extends Base_Controller {
 			return $this->validation_error( __( 'Search query must be at least 2 characters.', 'jetonomy' ) );
 		}
 
+		// Pagination — mirrors Feed_Controller::list_items() (get_pagination() +
+		// clamp to 1..50). `per_page` is accepted as an alias for `limit`: the
+		// header search overlay (assets/js/header.js) already sends per_page,
+		// and the composer typeahead (assets/js/composer.js) already sends
+		// limit — both were previously silently dropped by the route schema.
+		//
+		// Big-site note: limit is capped at 50; a deep OFFSET on a FULLTEXT+JOIN
+		// query is O(offset), which is fine at ~2000 rows. A keyset cursor would
+		// only work for sort=newest (relevance has no monotonic key to page on),
+		// so we deliberately do not half-build one here.
+		$pagination = $this->get_pagination( $request );
+		$limit_raw  = $request->get_param( 'limit' );
+		if ( null === $limit_raw || '' === $limit_raw ) {
+			$per_page = $request->get_param( 'per_page' );
+			if ( null !== $per_page && '' !== $per_page ) {
+				$limit_raw = $per_page;
+			}
+		}
+		$limit  = max( 1, min( 50, (int) ( $limit_raw ?? $pagination['limit'] ) ) );
+		$offset = max( 0, (int) $pagination['offset'] );
+
 		global $wpdb;
 
-		// Combined "all" mode returns posts, spaces, and tags grouped.
+		// Combined "all" mode returns posts, spaces, and tags grouped. Limit/offset
+		// apply to the posts group only — spaces/tags are a header slice (a fixed
+		// preview list), not a paginated collection in this mode.
 		if ( 'all' === $type || empty( $type ) ) {
-			$posts  = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort );
-			$spaces = $this->search_spaces( $wpdb, $q );
-			$tags   = $this->search_tags( $wpdb, $q );
+			$posts        = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort, $limit, $offset );
+			$posts_total  = $this->count_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug );
+			$spaces       = $this->search_spaces( $wpdb, $q );
+			$spaces_total = $this->count_spaces( $wpdb, $q );
+			$tags         = $this->search_tags( $wpdb, $q );
+			$tags_total   = $this->count_tags( $wpdb, $q );
 
-			return new WP_REST_Response(
+			$response = new WP_REST_Response(
 				[
 					'data' => [
 						'posts'  => array_map(
@@ -147,26 +191,46 @@ class Search_Controller extends Base_Controller {
 							$tags
 						),
 					],
-					'meta' => [ 'total' => count( $posts ) + count( $spaces ) + count( $tags ) ],
+					'meta' => [
+						// Back-compat: `total` previously meant "rows returned across
+						// all three groups combined." It now means the posts group's
+						// real total (matching every other search mode + the new
+						// X-WP-Total/X-WP-TotalPages headers). `totals` carries the
+						// real per-group counts so callers than need the old combined
+						// number can add them up themselves.
+						'total'    => $posts_total,
+						'totals'   => [
+							'posts'  => $posts_total,
+							'spaces' => $spaces_total,
+							'tags'   => $tags_total,
+						],
+						'offset'   => $offset,
+						'has_more' => ( $offset + count( $posts ) ) < $posts_total,
+					],
 				],
 				200
 			);
+
+			$response->header( 'X-WP-Total', (string) $posts_total );
+			$response->header( 'X-WP-TotalPages', (string) (int) ceil( $posts_total / max( 1, $limit ) ) );
+
+			return $response;
 		}
 
 		$results = [];
 		$total   = 0;
 
 		if ( 'post' === $type ) {
-			$results = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort );
+			$results = $this->search_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug, $sort, $limit, $offset );
 			$total   = $this->count_posts( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $tag_slug );
 		} elseif ( 'reply' === $type ) {
-			$results = $this->search_replies( $wpdb, $q, $space_id, $date_from, $date_to, $author_id );
+			$results = $this->search_replies( $wpdb, $q, $space_id, $date_from, $date_to, $author_id, $limit, $offset );
 			$total   = $this->count_replies( $wpdb, $q, $space_id, $date_from, $date_to, $author_id );
 		} elseif ( 'space' === $type ) {
-			$results = $this->search_spaces( $wpdb, $q );
+			$results = $this->search_spaces( $wpdb, $q, $limit, $offset );
 			$total   = $this->count_spaces( $wpdb, $q );
 		} elseif ( 'tag' === $type ) {
-			$results = $this->search_tags( $wpdb, $q );
+			$results = $this->search_tags( $wpdb, $q, $limit, $offset );
 			$total   = $this->count_tags( $wpdb, $q );
 		}
 
@@ -179,17 +243,23 @@ class Search_Controller extends Base_Controller {
 			$results
 		);
 
-		// COUNT mirrors the WHERE clause of each search_* method. Result-set
-		// page size is 20 (or 10 for tags); has_more is "total exceeds what
-		// we returned." When A3 lands the per-type SQL collapses into a
-		// single adapter call and these count_* siblings disappear too.
-		return $this->paginated_response(
+		// COUNT mirrors the WHERE clause of each search_* method. paginated_response()
+		// computes has_more from offset + count(items) vs total (base-controller.php),
+		// which is correct on every page — the previous hand-rolled
+		// `$total > count($items)` stayed true forever past page 1. When A3 lands
+		// the per-type SQL collapses into a single adapter call and these count_*
+		// siblings disappear too.
+		$response = $this->paginated_response(
 			$items,
 			[
-				'total'    => $total,
-				'has_more' => $total > count( $items ),
+				'total'  => $total,
+				'offset' => $offset,
 			]
 		);
+
+		$response->header( 'X-WP-TotalPages', (string) (int) ceil( $total / max( 1, $limit ) ) );
+
+		return $response;
 	}
 
 	/**
@@ -203,9 +273,11 @@ class Search_Controller extends Base_Controller {
 	 * @param int|null    $author_id
 	 * @param string|null $tag_slug
 	 * @param string      $sort       One of 'relevance', 'newest', 'votes'.
+	 * @param int         $limit      Page size (default 20, callers clamp to 1..50).
+	 * @param int         $offset     Row offset.
 	 * @return object[]
 	 */
-	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null, string $sort = 'relevance' ): array {
+	private function search_posts( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, ?string $tag_slug = null, string $sort = 'relevance', int $limit = 20, int $offset = 0 ): array {
 		$posts_table = table( 'posts' );
 
 		// Build a BOOLEAN-MODE query string that treats each meaningful token
@@ -260,6 +332,12 @@ class Search_Controller extends Base_Controller {
 			$params[] = $author_id;
 		}
 
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$where[] = $block_sql;
+		}
+
 		// Order:
 		// - relevance: the MATCH score against the same boolean query (previously
 		// defaulted to created_at DESC, which meant relevance sort was never
@@ -306,17 +384,19 @@ class Search_Controller extends Base_Controller {
 		if ( $tag_slug ) {
 			$tags_table      = table( 'tags' );
 			$post_tags_table = table( 'post_tags' );
-			$all_params      = array_merge( $select_params, [ $tag_slug ], $params );
+			// Param order matters: select_params, tag_slug, where params, then
+			// limit/offset LAST — the new placeholders are last in the SQL below.
+			$all_params = array_merge( $select_params, [ $tag_slug ], $params, [ $limit, $offset ] );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id INNER JOIN {$post_tags_table} pt ON pt.post_id = p.id INNER JOIN {$tags_table} t ON t.id = pt.tag_id AND t.slug = %s WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
 				...$all_params
 			);
 		} else {
-			$all_params = array_merge( $select_params, $params );
+			$all_params = array_merge( $select_params, $params, [ $limit, $offset ] );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			$sql = $wpdb->prepare(
-				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT 20",
+				"SELECT p.*, s.title AS space_title, s.slug AS space_slug{$select_extra} FROM {$posts_table} p INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY {$order_by} LIMIT %d OFFSET %d",
 				...$all_params
 			);
 		}
@@ -333,9 +413,11 @@ class Search_Controller extends Base_Controller {
 	 * @param string|null $date_from  Date string in Y-m-d format.
 	 * @param string|null $date_to    Date string in Y-m-d format.
 	 * @param int|null    $author_id
+	 * @param int         $limit      Page size (default 20, callers clamp to 1..50).
+	 * @param int         $offset     Row offset.
 	 * @return object[]
 	 */
-	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null ): array {
+	private function search_replies( \wpdb $wpdb, string $q, ?int $space_id, ?string $date_from = null, ?string $date_to = null, ?int $author_id = null, int $limit = 20, int $offset = 0 ): array {
 		$replies_table = table( 'replies' );
 		$posts_table   = table( 'posts' );
 		$spaces_table  = table( 'spaces' );
@@ -381,15 +463,23 @@ class Search_Controller extends Base_Controller {
 			$r_params[] = $space_id;
 		}
 
+		// Hide replies AUTHORED BY a blocked user. Deliberately not filtering on
+		// the parent post's author — that would over-block other people's useful
+		// replies inside a blocked user's thread. no-op for guests/no-blocks.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'r', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$r_where[] = $block_sql;
+		}
+
 		$where_sql = implode( ' AND ', $r_where );
 		// Order by the same boolean MATCH score so the best topical matches
 		// surface first instead of the most recent replies regardless of
 		// overlap.
 		$score_params = [ $boolean_q ];
-		$all_params   = array_merge( $score_params, $r_params );
+		$all_params   = array_merge( $score_params, $r_params, [ $limit, $offset ] );
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$sql = $wpdb->prepare(
-			"SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY match_score DESC, r.created_at DESC LIMIT 20",
+			"SELECT r.*, MATCH(r.content_plain) AGAINST(%s IN BOOLEAN MODE) AS match_score FROM {$replies_table} r INNER JOIN {$posts_table} p ON p.id = r.post_id INNER JOIN {$spaces_table} s ON s.id = p.space_id WHERE {$where_sql} ORDER BY match_score DESC, r.created_at DESC LIMIT %d OFFSET %d",
 			...$all_params
 		);
 
@@ -401,9 +491,11 @@ class Search_Controller extends Base_Controller {
 	 *
 	 * @param \wpdb  $wpdb
 	 * @param string $q
+	 * @param int    $limit  Page size (default 20, callers clamp to 1..50).
+	 * @param int    $offset Row offset.
 	 * @return object[]
 	 */
-	private function search_spaces( \wpdb $wpdb, string $q ): array {
+	private function search_spaces( \wpdb $wpdb, string $q, int $limit = 20, int $offset = 0 ): array {
 		$spaces_table = table( 'spaces' );
 		$like         = '%' . $wpdb->esc_like( $q ) . '%';
 
@@ -411,14 +503,14 @@ class Search_Controller extends Base_Controller {
 		// private spaces (content stays gated), hidden withheld from non-members.
 		[ $vis_sql, $vis_params ] = \Jetonomy\Models\Space::listing_visibility_sql( get_current_user_id() );
 
+		$all_params = array_merge( [ $like, $like ], $vis_params, [ $limit, $offset ] );
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND {$vis_sql} LIMIT 20",
-				$like,
-				$like,
-				...$vis_params
+				"SELECT * FROM {$spaces_table} WHERE (title LIKE %s OR description LIKE %s) AND {$vis_sql} LIMIT %d OFFSET %d",
+				...$all_params
 			)
 		) ?: [];
 	}
@@ -428,17 +520,21 @@ class Search_Controller extends Base_Controller {
 	 *
 	 * @param \wpdb  $wpdb
 	 * @param string $q
+	 * @param int    $limit  Page size (default 10, callers clamp to 1..50).
+	 * @param int    $offset Row offset.
 	 * @return object[]
 	 */
-	private function search_tags( \wpdb $wpdb, string $q ): array {
+	private function search_tags( \wpdb $wpdb, string $q, int $limit = 10, int $offset = 0 ): array {
 		$tags_table = table( 'tags' );
 		$like       = '%' . $wpdb->esc_like( $q ) . '%';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$tags_table} WHERE name LIKE %s ORDER BY post_count DESC LIMIT 10",
-				$like
+				"SELECT * FROM {$tags_table} WHERE name LIKE %s ORDER BY post_count DESC LIMIT %d OFFSET %d",
+				$like,
+				$limit,
+				$offset
 			)
 		) ?: [];
 	}
@@ -495,6 +591,12 @@ class Search_Controller extends Base_Controller {
 		if ( $author_id ) {
 			$where[]  = 'p.author_id = %d AND p.is_anonymous = 0';
 			$params[] = $author_id;
+		}
+
+		// Must mirror search_posts() exactly or meta.total disagrees with the rows.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$where[] = $block_sql;
 		}
 
 		$where_sql = implode( ' AND ', $where );
@@ -566,6 +668,12 @@ class Search_Controller extends Base_Controller {
 		if ( $space_id ) {
 			$r_where[]  = 'p.space_id = %d';
 			$r_params[] = $space_id;
+		}
+
+		// Must mirror search_replies() exactly or meta.total disagrees with the rows.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'r', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$r_where[] = $block_sql;
 		}
 
 		$where_sql = implode( ' AND ', $r_where );

@@ -398,8 +398,11 @@ class Admin {
 					update_option( 'jetonomy_old_base_slug', $old_base, false );
 				}
 			}
-			$clean['base_slug']          = $new_slug;
-			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
+			$clean['base_slug']       = $new_slug;
+			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
+			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
+			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
+			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
 			// Space label override (singular / plural). Empty = keep the default.
 			$clean['space_label_singular'] = sanitize_text_field( $input['space_label_singular'] ?? '' );
 			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );

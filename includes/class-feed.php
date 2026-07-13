@@ -44,6 +44,9 @@ class Feed {
 			exit;
 		}
 
+		// viewer_id = 0 (guest) always — RSS is logged-out/cacheable, so this
+		// deliberately never applies a per-viewer block filter (Post::exclusion_sql()
+		// already no-ops for guests); a per-viewer feed would poison page caches.
 		$posts = Post::list_by_space_visible( (int) $space->id, 0, false, 'latest', self::ITEMS, 0 );
 
 		/**

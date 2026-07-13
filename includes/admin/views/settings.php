@@ -156,6 +156,20 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="terms_url"><?php esc_html_e( 'Terms of Service URL', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="terms_url" name="jetonomy_settings[terms_url]" value="<?php echo esc_attr( $settings['terms_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/terms/">
+							<p class="description"><?php esc_html_e( 'Shown to members before they sign up in the mobile app. Leave empty if you have none.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="privacy_url"><?php esc_html_e( 'Privacy Policy URL', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="url" id="privacy_url" name="jetonomy_settings[privacy_url]" value="<?php echo esc_attr( $settings['privacy_url'] ?? '' ); ?>" class="regular-text" placeholder="https://example.com/privacy/">
+							<p class="description"><?php esc_html_e( 'Shown to members before they sign up in the mobile app. Leave empty to use your WordPress Privacy Policy page.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="space_label_singular"><?php esc_html_e( 'Space Label', 'jetonomy' ); ?></label></th>
 						<td>
 							<input type="text" id="space_label_singular" name="jetonomy_settings[space_label_singular]" value="<?php echo esc_attr( $settings['space_label_singular'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">

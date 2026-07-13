@@ -86,11 +86,12 @@ class Schema {
 			'jt_join_requests',
 			'jt_invite_links',
 			'jt_bookmarks',
+			'jt_blocked_users',
 		];
 	}
 
 	/**
-	 * Build CREATE TABLE SQL strings for all 20 tables.
+	 * Build CREATE TABLE SQL strings for all 21 tables.
 	 *
 	 * @param string $p               Table prefix (e.g. "wp_").
 	 * @param string $charset_collate Charset/collation string from $wpdb.
@@ -428,6 +429,16 @@ class Schema {
   created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY  (user_id, post_id),
   KEY user_created (user_id, created_at)
+) ENGINE=InnoDB $charset_collate;";
+
+		// 21. jt_blocked_users
+		$sqls[] = "CREATE TABLE {$p}jt_blocked_users (
+  blocker_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  blocked_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY  (blocker_id, blocked_id),
+  KEY blocker_created (blocker_id, created_at),
+  KEY blocked_id (blocked_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		return $sqls;

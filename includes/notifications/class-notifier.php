@@ -356,7 +356,10 @@ class Notifier {
 		}
 
 		// Canonical post-create side-effects (same as the REST controller).
-		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
+		// 3rd arg is null — this fire is a background/programmatic path with no
+		// WP_REST_Request, mirroring the post-create hook's null request arg
+		// (class-abilities.php, models/class-post.php).
+		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
 
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
 		if ( ! empty( $mentioned ) ) {
@@ -1032,7 +1035,15 @@ class Notifier {
 
 		// Check email preference via the shared gate (profile + defaults already
 		// loaded above, so no extra query beyond the one opt-out meta read).
-		if ( self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
+		//
+		// Block gate: an email leaves the system and can't be un-sent, so it
+		// gets its own hard check independent of the web-notification row
+		// above. The DB row is still written (and the actor_id > 0 guard
+		// keeps this a no-op for system notifications) — the read-surface
+		// filters already hide it from the recipient, and unblocking restores
+		// the history without needing to re-send anything.
+		$recipient_blocked_actor = $actor_id > 0 && \Jetonomy\Models\BlockedUser::is_blocked( $user_id, $actor_id );
+		if ( ! $recipient_blocked_actor && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
 	}

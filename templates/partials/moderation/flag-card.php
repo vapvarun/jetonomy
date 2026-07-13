@@ -36,6 +36,9 @@ $reporter    = get_userdata( (int) $flag->reporter_id );
 $time_ago    = human_time_diff( strtotime( $flag->created_at ), time() );
 $reason_text = $reason_labels[ $flag->reason ] ?? $flag->reason;
 
+// Deliberately NOT block-filtered anywhere on this card or the moderation
+// queue it belongs to: a blocked user's flagged content MUST still reach
+// moderators. Hard rule — never filter moderation.
 // Resolve deep link to the flagged object.
 $object_url = '';
 if ( 'post' === $flag->object_type ) {

@@ -51,6 +51,10 @@ if ( '1=1' !== $_jt_space_vis_sql ) {
 		: ' AND ' . $_jt_space_vis_sql;
 }
 
+// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+[ $_jt_trend_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+$_jt_trend_block_clause  = '' !== $_jt_trend_block_sql ? ' AND ' . $_jt_trend_block_sql : '';
+
 if ( ! empty( $space ) && isset( $space->id ) ) {
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	$trending = $wpdb->get_results(
@@ -58,7 +62,7 @@ if ( ! empty( $space ) && isset( $space->id ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 			 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-			 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . '
+			 WHERE p.space_id = %d AND p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_block_clause . '
 			 ORDER BY p.vote_score DESC, p.reply_count DESC
 			 LIMIT 5',
 			(int) $space->id
@@ -70,13 +74,15 @@ if ( ! empty( $space ) && isset( $space->id ) ) {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		"SELECT p.*, sp.slug AS space_slug FROM {$posts_tbl} p
 		 INNER JOIN {$spaces_tbl} sp ON sp.id = p.space_id
-		 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . '
+		 WHERE p.status = 'publish'" . $_jt_trend_priv_clause . $_jt_trend_space_clause . $_jt_trend_block_clause . '
 		 ORDER BY p.vote_score DESC, p.reply_count DESC
 		 LIMIT 5'
 	) ?: [];
 }
 
-// Top members by reputation.
+// Top members by reputation. Deliberately NOT block-filtered — this is a
+// ranking/leaderboard, not a content feed; per-viewer filtering would
+// re-rank the board and leak "you blocked someone" via rank gaps.
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $leaders = $wpdb->get_results(
 	// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared

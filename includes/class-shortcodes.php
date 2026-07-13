@@ -144,6 +144,12 @@ class Shortcodes {
 			$args   = array_merge( $args, $priv_params );
 		}
 
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$where .= ' AND ' . $block_sql;
+		}
+
 		$order = 'latest' === $atts['sort'] ? 'p.created_at DESC' : 'p.vote_score DESC';
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -315,6 +321,9 @@ class Shortcodes {
 		global $wpdb;
 		$profiles_tbl = table( 'user_profiles' );
 
+		// Deliberately NOT block-filtered — a leaderboard is a ranking, not a
+		// content feed. Per-viewer filtering would re-rank the board and leak
+		// "you blocked someone" via rank gaps.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$leaders = $wpdb->get_results(
@@ -408,6 +417,9 @@ class Shortcodes {
 		$members_tbl  = table( 'space_members' );
 		$profiles_tbl = table( 'user_profiles' );
 
+		// Deliberately NOT block-filtered — a member roster/ranking, not a
+		// content feed. Per-viewer filtering would re-rank the list and leak
+		// "you blocked someone" via a missing row.
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$members = $wpdb->get_results(

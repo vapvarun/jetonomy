@@ -353,7 +353,12 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		// Fire action for Notifier and other listeners (handles all notifications).
-		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
+		// 3rd arg mirrors the post-create hook (jetonomy_after_create_post,
+		// class-posts-controller.php:612) so Pro extensions reading
+		// $request->get_param() on the reply path work the same as on posts —
+		// e.g. attachment_ids from a JSON REST body (the mobile app), which the
+		// old 2-arg fire silently dropped (see attachments extension).
+		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, $request );
 
 		// Parse @mentions and notify.
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
@@ -829,22 +834,31 @@ class Replies_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return array(
-			'content'      => array(
+			'content'        => array(
 				'type'     => 'string',
 				'required' => true,
 			),
-			'parent_id'    => array(
+			'parent_id'      => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 1,
 			),
-			'is_anonymous' => array(
+			'is_anonymous'   => array(
 				'type'              => 'boolean',
 				'required'          => false,
 				'default'           => false,
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
-			'published_at' => array(
+			'published_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			// Undeclared passthrough before this fix — Pro's File Attachments
+			// extension reads this via $request->get_param() (class-extension.php
+			// link_on_create_reply()). Must stay a CSV STRING: Pro's link_pending()
+			// does explode(',', $csv), not an array walk.
+			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',

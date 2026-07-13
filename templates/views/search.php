@@ -115,6 +115,12 @@ if ( '' !== $q && strlen( $q ) >= 2 ) {
 				$params  = array_merge( $params, $space_vis_params );
 			}
 
+			// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+			list( $jt_search_block_sql ) = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+			if ( '' !== $jt_search_block_sql ) {
+				$where[] = $jt_search_block_sql;
+			}
+
 			$order_by  = 'votes' === $sort ? 'p.vote_score DESC' : 'p.created_at DESC';
 			$where_sql = implode( ' AND ', $where );
 
@@ -297,8 +303,8 @@ $crumbs = [
 						<div class="jt-topics jt-mb-lg">
 							<?php
 							foreach ( $posts as $post ) :
-								$time_ago = human_time_diff( strtotime( $post->created_at ), time() );
-								$post_url = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
+								$time_ago       = human_time_diff( strtotime( $post->created_at ), time() );
+								$post_url       = $base . '/s/' . $post->space_slug . '/t/' . $post->slug . '/';
 								$excerpt        = wp_trim_words( wp_strip_all_tags( $post->content ), 25, '…' );
 								$author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 								?>

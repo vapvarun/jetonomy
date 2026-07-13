@@ -406,6 +406,12 @@ class Post extends Model {
 			}
 		}
 
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$extra_where .= ' AND ' . $block_sql;
+		}
+
 		if ( $after > 0 ) {
 			$params  = array( $space_id, $after, $limit );
 			$results = static::db()->get_results(
@@ -476,6 +482,12 @@ class Post extends Model {
 			} else {
 				$extra_where .= ' AND is_private = 0';
 			}
+		}
+
+		// Match list_by_space_visible()'s block exclusion exactly or pagination breaks.
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$extra_where .= ' AND ' . $block_sql;
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -630,6 +642,12 @@ class Post extends Model {
 			$gate_params = array_merge( $gate_params, $priv_params );
 		}
 
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$gate_sql .= ' AND ' . $block_sql;
+		}
+
 		$results = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -686,6 +704,12 @@ class Post extends Model {
 		if ( '' !== $priv_sql ) {
 			$where .= ' AND ' . $priv_sql;
 			$args   = array_merge( $args, $priv_params );
+		}
+
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$where .= ' AND ' . $block_sql;
 		}
 
 		$args[] = $limit;
@@ -745,6 +769,13 @@ class Post extends Model {
 		if ( '1=1' !== $vis_sql ) {
 			$where     .= ' AND ' . $vis_sql;
 			$where_args = array_merge( $where_args, $vis_params );
+		}
+
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		// Shared by the COUNT(*) and SELECT below (both read $where).
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$where .= ' AND ' . $block_sql;
 		}
 
 		// `top` is scoped to a trailing window so the ranking stays meaningful.

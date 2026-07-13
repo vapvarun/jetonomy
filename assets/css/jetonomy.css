@@ -787,6 +787,20 @@
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
   .jt-accepted-tag { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success); white-space: nowrap; }
   .jt-accepted-tag svg { flex-shrink: 0; }
+
+  /* Blocked-author tombstone (reply-card.php). Node is kept so nested,
+     non-blocked replies still attach — only this row's content is hidden. */
+  .jt-reply-blocked { border-style: dashed; }
+  .jt-reply-tombstone { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); color: var(--jt-text-tertiary); font-size: 0.9375rem; font-style: italic; }
+  .jt-reply-tombstone svg { flex-shrink: 0; }
+  .jt-unblock-btn { margin-inline-start: auto; font-style: normal; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent); background: none; border: none; cursor: pointer; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-sm); }
+  .jt-unblock-btn:hover, .jt-unblock-btn:focus-visible { background: var(--jt-accent-light); }
+
+  /* Blocked-author tombstone — full single-post view (single-post.php). Deep
+     links to a blocked author's post land here instead of the full content. */
+  .jt-post-blocked-tombstone { display: flex; flex-direction: column; align-items: center; gap: var(--jt-space-3); padding: var(--jt-space-6, 32px) var(--jt-space-4); text-align: center; color: var(--jt-text-tertiary); border: 1px dashed var(--jt-border); border-radius: var(--jt-radius-lg); }
+  .jt-post-blocked-tombstone p { margin: 0; font-size: 1rem; }
+
   /* Threaded reply nesting — up to 3 levels */
   .jt-nested { margin-left: 24px; position: relative; }
   .jt-nested::before { content: ''; position: absolute; left: -12px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: 1px; }

@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "jetonomy",
     "name": "Jetonomy",
-    "version": "1.6.1",
+    "version": "1.7.1",
     "namespace": "Jetonomy",
     "main_file": "jetonomy.php",
     "text_domain": "jetonomy",
@@ -25,7 +25,7 @@
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "1.6.0 mobile API. Public read (matches /push/vapid-key). Returns app_name (Community Title, falls back to site name), accent_color, logo_url, login_bg_url, dark_mode_default, pro_active, app_enabled (bool, default false in free -- b46c84f Pro-only mobile-app gate; jetonomy-pro flips it true via jetonomy_app_config only with a valid license, app refuses sign-in otherwise, fail closed), features{messaging,reactions,polls,badges,custom_fields,web_push,native_push}. Wrapped in the jetonomy_app_config filter."
+        "audit_notes": "1.6.0 mobile API, extended 1.7.1 for anonymous-posting + attachments app parity + terms/privacy EULA screen (app-config-controller delta 2026-07-13). Public read (matches /push/vapid-key). Returns app_name (Community Title, falls back to site name), accent_color, logo_url, login_bg_url, terms_url/privacy_url (Settings -> General -> Community Setup; privacy_url falls back to get_privacy_policy_url() when unset; always strings, '' if not configured), pro_active, app_enabled (bool, default false in free -- b46c84f Pro-only mobile-app gate; jetonomy-pro flips it true via jetonomy_app_config only with a valid license, app refuses sign-in otherwise, fail closed), features{messaging,reactions,polls,badges,custom_fields,web_push,native_push,anonymous,attachments,blocking} (anonymous/attachments are ordinary Pro extension IDs; blocking is a FREE capability hardcoded true, no admin toggle -- BlockedUser model + /users/me/blocks), attachments{enabled,max_files,max_size_bytes,allowed_types,allowed_mimes} object (always emitted, enabled:false + zeroed limits when off, sourced from the SAME Extensions\\Attachments\\Settings::get() the web composer reads -- Pro listener in class-jetonomy-pro.php::gate_app_on_license()/attachments_config()). When the Pro license is invalid, gate_app_on_license() forces every Pro-derived features.* flag to false (blocking excluded) as belt-and-braces consistency. Wrapped in the jetonomy_app_config filter."
       },
       {
         "route": "/feed",
@@ -546,7 +546,7 @@
         "auth": "public",
         "capability": null,
         "ownership_check": null,
-        "audit_notes": "Full-text search. 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode."
+        "audit_notes": "Full-text search. 1.4.1 A11: wrapped with Visibility::rest_check - responds 401 in private mode. 1.7.1: gained real limit/offset pagination (limit 1-50, default 20; per_page accepted as an alias for limit, matching assets/js/header.js) - the route previously declared no pagination args at all and every search_* query used a hardcoded LIMIT 20/10. X-WP-Total + X-WP-TotalPages now set; the hand-rolled meta.has_more (always true past page 1) replaced with the correct offset-based paginated_response() calculation. type=all mode's meta gained totals{posts,spaces,tags} - meta.total now means the posts group's real total, not the combined row count of all three groups."
       },
       {
         "route": "/categories",
@@ -629,6 +629,33 @@
         "capability": null,
         "ownership_check": null,
         "audit_notes": "Delete bookmark"
+      },
+      {
+        "route": "/users/me/blocks",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "handler": "Blocks_Controller::list_items,create_item",
+        "permission": "is_user_logged_in,REST_Auth::auth_mutation('read')",
+        "purpose": "List the current user's blocked users, or block a user (body: {user_id:int})",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "1.7.1 foundation (step 1 of 2, App Store Guideline 1.2 safety primitive). GET mirrors the bookmarks-controller is_user_logged_in() pattern; POST delegates to BlockedUser::block() which guards self-block (400), nonexistent target (404), and blocking a manage_options/jetonomy_moderate user (403). List items are batch-enriched via Base_Controller::batch_load_users() (no N+1). Read-surface filtering (feed/search/notifications/etc.) is a separate follow-up — this model is inert until those call sites adopt BlockedUser::exclusion_sql()."
+      },
+      {
+        "route": "/users/me/blocks/(?P<user_id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Blocks_Controller::delete_item",
+        "permission": "REST_Auth::auth_mutation('read')",
+        "purpose": "Unblock a user",
+        "auth": "login_required",
+        "capability": null,
+        "ownership_check": null,
+        "audit_notes": "1.7.1 foundation. Mirrors Bookmarks_Controller::delete_item — 200 with {deleted:true,user_id} even when no block existed (idempotent no-op)."
       },
       {
         "route": "/moderation/queue",
@@ -1401,8 +1428,8 @@
       "group": "jetonomy_settings",
       "type": "array",
       "default": {},
-      "controls": "base_slug, front_page, accent_color, text_color, bg_color, bg_subtle_color, border_color, default_space_type, notification_defaults, trust_thresholds, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles, reputation_points",
-      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults(). 1.5.0: gained front_page (bool, default false) - \"Community as Homepage\"; Router::maybe_serve_front_page() injects jetonomy_route=home via the request filter only when parsed query vars are empty. 1.5.0: gained the Color Palette set (text_color, bg_color, bg_subtle_color, border_color; empty = no override) - Template_Loader::palette_tokens()/palette_css() emit root token overrides when inherit_colors is off; Theme_Integration light bridge subtracts palette-set tokens so explicit admin picks beat auto theme bridging."
+      "controls": "base_slug, front_page, accent_color, text_color, bg_color, bg_subtle_color, border_color, default_space_type, notification_defaults, trust_thresholds, rate_limits, activity_log_retention_days, require_email_verification, frontend_space_creation_roles, reputation_points, terms_url, privacy_url",
+      "notes": " 1.4.3: gained reputation_points array (action_slug → int) for the new configurable-reputation settings card; sanitize_settings filters to known action slugs from Reputation::action_points_defaults(). 1.5.0: gained front_page (bool, default false) - \"Community as Homepage\"; Router::maybe_serve_front_page() injects jetonomy_route=home via the request filter only when parsed query vars are empty. 1.5.0: gained the Color Palette set (text_color, bg_color, bg_subtle_color, border_color; empty = no override) - Template_Loader::palette_tokens()/palette_css() emit root token overrides when inherit_colors is off; Theme_Integration light bridge subtracts palette-set tokens so explicit admin picks beat auto theme bridging. 1.7.1: gained terms_url + privacy_url (Settings -> General -> Community Setup) - consumed by GET /app/config for the mobile app's pre-login EULA screen; privacy_url falls back to get_privacy_policy_url() when unset."
     },
     {
       "key": "jetonomy_email_templates",
@@ -1643,6 +1670,18 @@
     {
       "name": "{prefix}jt_bookmarks",
       "purpose": "User bookmarked posts"
+    },
+    {
+      "name": "{prefix}jt_blocked_users",
+      "purpose": "User-level blocks (Apple Guideline 1.2 safety primitive, 1.7.1). Composite PK (blocker_id, blocked_id) is the uniqueness constraint; KEY blocker_created backs list_by_blocker(), KEY blocked_id backs is_blocked_between(). One-way semantics: only the blocker stops seeing the blocked user's content. Foundation step (1 of 2) — no read-surface filtering wired yet.",
+      "migrations": [
+        {
+          "version": "1.7.1",
+          "change": "CREATE TABLE {prefix}jt_blocked_users",
+          "purpose": "New table backing Jetonomy\\Models\\BlockedUser.",
+          "file": "includes/db/migrations/class-migration_1_7_1.php"
+        }
+      ]
     }
   ],
   "capabilities": [
@@ -1923,13 +1962,15 @@
     {
       "name": "jetonomy_after_create_reply",
       "type": "action",
-      "args_count": 2,
+      "args_count": 3,
       "args_signature": [
         "int $reply_id",
-        "int $post_id"
+        "int $post_id",
+        "WP_REST_Request|null $request"
       ],
-      "where": "includes/api/class-replies-controller.php:335",
-      "consumed_by": "jetonomy-pro"
+      "where": "includes/api/class-replies-controller.php (REST create); includes/notifications/class-notifier.php on_reply_from_email() ($request null); includes/class-abilities.php (programmatic create, $request null)",
+      "consumed_by": "jetonomy-pro",
+      "audit_notes": "1.7.1: widened 2 -> 3 args to mirror jetonomy_after_create_post. The REST create path (class-replies-controller.php) now passes $request so jetonomy-pro's attachments extension can read attachment_ids from a JSON body on POST /posts/{id}/replies (previously silently dropped for mobile/JSON clients, which never populate $_POST)."
     },
     {
       "name": "jetonomy_fanout_post_subscribers",
@@ -2585,7 +2626,8 @@
       "type": "filter",
       "args": "response, space",
       "where": "includes/api/class-spaces-controller.php",
-      "consumed_by": null
+      "consumed_by": "jetonomy-pro/anonymous-posting",
+      "audit_notes": "1.7.1: consumed by jetonomy-pro's anonymous-posting extension (Extension::inject_allow_anonymous()) to add allow_anonymous:bool to the space payload, so the mobile app can gate the 'Post anonymously' toggle on the same per-space opt-in Gate::space_allows() already enforces server-side on write."
     },
     {
       "name": "jetonomy_rest_prepare_user",
@@ -3147,6 +3189,30 @@
       "args": "$bytes",
       "where": "includes/api/class-media-controller.php (Media_Controller::validate_upload)",
       "consumed_by": "jetonomy-pro/attachments"
+    },
+    {
+      "name": "jetonomy_user_blocked",
+      "type": "action",
+      "args": "$blocker_id, $blocked_id",
+      "where": "includes/models/class-blocked-user.php (BlockedUser::block)",
+      "consumed_by": null,
+      "notes": "1.7.1 foundation. Fires after a successful block (including re-blocking an already-blocked user, since the write is INSERT IGNORE)."
+    },
+    {
+      "name": "jetonomy_user_unblocked",
+      "type": "action",
+      "args": "$blocker_id, $blocked_id",
+      "where": "includes/models/class-blocked-user.php (BlockedUser::unblock)",
+      "consumed_by": null,
+      "notes": "1.7.1 foundation. Fires after unblock() runs, regardless of whether a row was actually deleted (idempotent no-op safe)."
+    },
+    {
+      "name": "jetonomy_blocked_user_ids",
+      "type": "filter",
+      "args": "$ids (int[]), $viewer_id (int)",
+      "where": "includes/models/class-blocked-user.php (BlockedUser::blocked_ids)",
+      "consumed_by": null,
+      "notes": "1.7.1 foundation. Lets Pro/3rd-party code widen the exclusion set (e.g. a future mute feature) without touching the model. Applied once per request (self::$memo), after the 5-minute Cache::remember layer."
     }
   ],
   "buddypress_integration": {

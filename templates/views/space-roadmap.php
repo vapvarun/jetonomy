@@ -71,6 +71,12 @@ if ( ! $jt_is_priv ) {
 	}
 }
 
+// Hide ideas authored by users the viewer has blocked. no-op for guests/no-blocks.
+[ $jt_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( $jt_viewer_id, '', 'author_id' );
+if ( '' !== $jt_block_sql ) {
+	$jt_private_sql .= ' AND ' . $jt_block_sql;
+}
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $all_ideas = $wpdb->get_results(
 	$wpdb->prepare(

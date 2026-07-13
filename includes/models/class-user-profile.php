@@ -104,7 +104,7 @@ class UserProfile extends Model {
 	 * @param int $user_id WP user ID.
 	 * @param int $delta   Amount to add (use negative value to subtract).
 	 */
-	public static function _apply_reputation_delta( int $user_id, int $delta ): void {
+	public static function _apply_reputation_delta( int $user_id, int $delta ): void { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore -- Underscore marks this as package-private; renaming would break the Reputation facade.
 		Cache::delete( "profile:{$user_id}" );
 		static::db()->query(
 			static::db()->prepare(
@@ -289,6 +289,9 @@ class UserProfile extends Model {
 	 * @return object[] Profile rows for the page (empty array when none).
 	 */
 	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC' ): array {
+		// Deliberately NOT block-filtered — a ranking, not a content feed.
+		// Per-viewer filtering would re-rank the board and leak "you blocked
+		// someone" via rank gaps.
 		$where = static::leaderboard_period_where( $period );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = static::db()->get_results(

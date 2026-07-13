@@ -92,6 +92,26 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 	return;
 }
 
+// Blocked-author tombstone. A deep link (notification, share, search result
+// that predates a block) can land here even though every list surface
+// already filters this author out. We do NOT 404 — the post genuinely
+// exists and moderators/deep-linkers need a real state, not "not found" —
+// we just refuse to ship the content to a viewer who blocked its author.
+if ( in_array( (int) $post->author_id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ) ) {
+	?>
+	<div class="jt-post-blocked-tombstone" data-wp-interactive="jetonomy">
+		<?php jetonomy_echo_icon( 'shield', 32 ); ?>
+		<p><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></p>
+		<button class="jt-btn jt-btn-ghost" type="button"
+			data-wp-on--click="actions.unblockUser"
+			data-user-id="<?php echo (int) $post->author_id; ?>">
+			<?php esc_html_e( 'Unblock this user', 'jetonomy' ); ?>
+		</button>
+	</div>
+	<?php
+	return;
+}
+
 // Anonymous-posting leak-audit fix: the single-post header rendered the raw
 // author via get_userdata() directly, bypassing Author::for_display() — the
 // same mask every listing/reply/feed card already routes through. That left
@@ -100,9 +120,9 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 // no avatar/url) whenever the viewer isn't granted a reveal.
 $jt_author_display = \Jetonomy\Author::for_display( (int) $post->author_id, $post );
 $jt_author_masked  = (int) $jt_author_display['id'] !== (int) $post->author_id;
-$profile  = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
-$tags     = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
-$category = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
+$profile           = \Jetonomy\Models\UserProfile::find_by_user( (int) $post->author_id );
+$tags              = \Jetonomy\Models\Tag::list_for_post( (int) $post->id );
+$category          = ( $space && $space->category_id ) ? \Jetonomy\Models\Category::find( (int) $space->category_id ) : null;
 
 $author_id = (int) $post->author_id;
 $trust     = $profile ? (int) $profile->trust_level : 0;
@@ -728,6 +748,15 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 					&& ! $jt_accepted_on_page
 				) {
 					$jt_accepted_reply = \Jetonomy\Models\Reply::find( $jt_accepted_reply_id );
+					if ( $jt_accepted_reply ) {
+						// Off-page fetch bypasses get_threaded()'s tree builder —
+						// apply the same block tombstone here so a blocked user's
+						// accepted answer doesn't leak its content into the callout.
+						\Jetonomy\Models\Reply::apply_block_tombstone(
+							$jt_accepted_reply,
+							\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
+						);
+					}
 				}
 				if ( $jt_accepted_reply ) :
 					?>

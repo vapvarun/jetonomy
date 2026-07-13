@@ -1126,8 +1126,9 @@ class Posts_Controller extends Base_Controller {
 	 * post shape instead of duplicating it.
 	 */
 	protected function prepare_post( object $post ): array {
-		$author_id = (int) ( $post->author_id ?? 0 );
-		$space     = \Jetonomy\Models\Space::find( (int) $post->space_id );
+		$author_id     = (int) ( $post->author_id ?? 0 );
+		$raw_author_id = $author_id; // Pre-anonymization id, used for the block check below.
+		$space         = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
 		// Use pre-enriched data if present, otherwise fall back to per-item lookup.
 		if ( isset( $post->author_name ) ) {
@@ -1213,6 +1214,11 @@ class Posts_Controller extends Base_Controller {
 			// Space context
 			'space_title'       => $space ? $space->title : '',
 			'space_slug'        => $space ? $space->slug : '',
+			// Has the VIEWER blocked this post's (real, pre-anonymization) author?
+			// Deep-link / by-ID fetches (get_item()) bypass the list-query SQL
+			// filters entirely, so the client needs this flag to tombstone the
+			// post instead of a 404 — deep links and moderation must still work.
+			'blocked_author'    => in_array( $raw_author_id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
 		);
 
 		// Viewer-relative state (additive, 1.6.0). Null-safe for logged-out
@@ -1283,47 +1289,58 @@ class Posts_Controller extends Base_Controller {
 			// for Feed spaces. Marking it `required: true` here would
 			// short-circuit the body-derived title path before reaching
 			// the handler.
-			'title'        => array(
+			'title'          => array(
 				'type'     => 'string',
 				'required' => false,
 			),
-			'content'      => array(
+			'content'        => array(
 				'type'     => 'string',
 				'required' => true,
 			),
-			'type'         => array(
+			'type'           => array(
 				'type'     => 'string',
 				'required' => false,
 				'enum'     => array( 'topic', 'question', 'discussion', 'announcement', 'idea', 'status' ),
 			),
-			'tags'         => array(
+			'tags'           => array(
 				'type'     => 'array',
 				'required' => false,
 				'items'    => array( 'type' => 'string' ),
 			),
-			'prefix'       => array(
+			'prefix'         => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			),
-			'is_private'   => array(
+			'is_private'     => array(
 				'type'     => 'boolean',
 				'required' => false,
 				'default'  => false,
 			),
-			'is_anonymous' => array(
+			'is_anonymous'   => array(
 				'type'              => 'boolean',
 				'required'          => false,
 				'default'           => false,
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
-			'status'       => array(
+			'status'         => array(
 				'type'     => 'string',
 				'required' => false,
 				'enum'     => array( 'publish', 'draft' ),
 				'default'  => 'publish',
 			),
-			'published_at' => array(
+			'published_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			// Undeclared passthrough before this fix — Pro's File Attachments
+			// extension already reads this via $request->get_param() (see
+			// link_on_create_post() in jetonomy-pro/includes/extensions/attachments/
+			// class-extension.php). Declaring it here just makes it discoverable
+			// from the route schema; no behavior change on this route. Must stay a
+			// CSV STRING: Pro's link_pending() does explode(',', $csv).
+			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',

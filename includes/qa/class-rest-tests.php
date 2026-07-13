@@ -140,6 +140,7 @@ class REST_Tests {
 		$this->run_group_f();
 		$this->run_group_g();
 		$this->run_group_i_mobile_api();
+		$this->run_group_j_blocks();
 		$this->test_subscriber_actions();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
@@ -867,6 +868,60 @@ class REST_Tests {
 		// I4: GET /feed?sort=top — windowed top sort is accepted.
 		$r = $this->rest( 'GET', '/feed', [ 'sort' => 'top' ] );
 		$this->check( 'I4: GET /feed?sort=top â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+	}
+
+	/**
+	 * Smoke-test the 1.7.1 user-blocking routes.
+	 *
+	 * Blocker is the current (admin) user; the blocked party is the subscriber
+	 * fixture. The reverse is deliberately asserted to fail - blocking a
+	 * moderator would let a member hide themselves from moderation.
+	 */
+	private function run_group_j_blocks(): void {
+		\WP_CLI::log( '  Group J: User Blocking (1.7.1)' );
+
+		if ( ! $this->test_user_id ) {
+			$this->check( 'J1: block routes (skipped - no test user)', true );
+			return;
+		}
+
+		// J1: Block the subscriber.
+		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
+		$data = $r->get_data();
+		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
+		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()}" );
+		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
+
+		// J2: The block shows up in the viewer's list.
+		$r    = $this->rest( 'GET', '/users/me/blocks' );
+		$data = $r->get_data();
+		$rows = is_array( $data ) && isset( $data['data'] ) ? $data['data'] : [];
+		$ids  = array_map(
+			static function ( $row ) {
+				return (int) ( is_array( $row ) ? ( $row['user_id'] ?? 0 ) : ( $row->user_id ?? 0 ) );
+			},
+			(array) $rows
+		);
+		$this->check( 'J2: GET /users/me/blocks -> 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'J2: list contains the blocked user', in_array( $this->test_user_id, $ids, true ), 'blocked user absent from list' );
+
+		// J3: Self-block is refused.
+		$r = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => get_current_user_id() ] );
+		$this->check( 'J3: self-block -> 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// J4: Blocking a moderator is refused (subscriber tries to block the admin).
+		$r = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => 1 ], $this->test_user_id );
+		$this->check( 'J4: blocking a moderator -> 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// J5: Unblock (also restores state - no cleanup entry needed).
+		$r    = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}" );
+		$data = $r->get_data();
+		$this->check( 'J5: DELETE /users/me/blocks/{id} -> 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'J5: response confirms deletion', ! empty( $data['deleted'] ), 'deleted flag not set' );
+
+		// J6: Unblock is idempotent - a repeat DELETE is a 200 no-op, not a 404.
+		$r = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}" );
+		$this->check( 'J6: repeat DELETE -> 200 (idempotent)', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 	}
 
 	// ──────────────────────────────────────────────────────────────────────────

@@ -89,9 +89,16 @@ class Notification extends Model {
 	 * @return int
 	 */
 	public static function unread_count( int $user_id ): int {
+		// Must match list_for_user_with_targets()'s block exclusion or the
+		// header badge count disagrees with what the notifications list shows.
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'actor_id' );
+		$block_where   = '' !== $block_sql ? " AND {$block_sql}" : '';
+		$table         = static::table();
+
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE user_id = %d AND is_read = 0',
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND is_read = 0{$block_where}",
 				$user_id
 			)
 		);
@@ -110,7 +117,15 @@ class Notification extends Model {
 	 */
 	public static function count_for_user( int $user_id, string $filter = 'all' ): int {
 		[ $where, $params ] = self::filter_where( $filter );
-		$sql                = 'SELECT COUNT(*) FROM ' . static::table() . ' n WHERE n.user_id = %d' . $where;
+
+		// Must mirror list_for_user_with_targets()'s block exclusion exactly
+		// or pagination totals disagree with the visible list.
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
+		if ( '' !== $block_sql ) {
+			$where .= ' AND ' . $block_sql;
+		}
+
+		$sql = 'SELECT COUNT(*) FROM ' . static::table() . ' n WHERE n.user_id = %d' . $where;
 
 		return (int) static::db()->get_var(
 			static::db()->prepare( $sql, array_merge( [ $user_id ], $params ) )
@@ -145,6 +160,13 @@ class Notification extends Model {
 		$replies = \Jetonomy\table( 'replies' );
 
 		[ $where, $params ] = self::filter_where( $filter );
+
+		// Hide notifications whose actor is a user the viewer has blocked.
+		// no-op for guests/no-blocks. Must match count_for_user() exactly.
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, 'n', 'actor_id' );
+		if ( '' !== $block_sql ) {
+			$where .= ' AND ' . $block_sql;
+		}
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names interpolated; user data passed via $wpdb->prepare placeholders.
 		$sql = "SELECT n.*,
@@ -236,17 +258,24 @@ class Notification extends Model {
 	 * @return array<string,int>
 	 */
 	public static function counts_by_filter( int $user_id ): array {
+		// The filter-tab badges — same block exclusion as the list/unread
+		// counts so a badge never advertises a blocked user's content.
+		[ $block_sql ] = BlockedUser::exclusion_sql( $user_id, '', 'actor_id' );
+		$block_where   = '' !== $block_sql ? " AND {$block_sql}" : '';
+		$table         = static::table();
+
 		$row = static::db()->get_row(
 			static::db()->prepare(
-				'SELECT
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT
 					COUNT(*)                                                              AS c_all,
 					SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END)                          AS c_unread,
 					SUM(CASE WHEN type = %s THEN 1 ELSE 0 END)                            AS c_mentions,
 					SUM(CASE WHEN type IN (%s, %s) THEN 1 ELSE 0 END)                     AS c_replies,
 					SUM(CASE WHEN type = %s THEN 1 ELSE 0 END)                            AS c_votes,
 					SUM(CASE WHEN type = %s THEN 1 ELSE 0 END)                            AS c_badges
-				FROM ' . static::table() . '
-				WHERE user_id = %d',
+				FROM {$table}
+				WHERE user_id = %d{$block_where}",
 				'mention',
 				'reply_to_post',
 				'reply_to_reply',

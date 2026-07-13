@@ -64,6 +64,12 @@ if ( '' !== $jt_priv_sql ) {
 	$jt_gate_params = array_merge( $jt_gate_params, $jt_priv_params );
 }
 
+// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+[ $jt_block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+if ( '' !== $jt_block_sql ) {
+	$jt_gate_sql .= ' AND ' . $jt_block_sql;
+}
+
 // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 $posts = $wpdb->get_results(
 	$wpdb->prepare(

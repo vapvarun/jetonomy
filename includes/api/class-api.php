@@ -36,6 +36,7 @@ class Api {
 			'updates'          => 'Updates_Controller',
 			'leaderboards'     => 'Leaderboards_Controller',
 			'bookmarks'        => 'Bookmarks_Controller',
+			'blocks'           => 'Blocks_Controller',
 			'oembed'           => 'OEmbed_Controller',
 			'admin'            => 'Admin_Controller',
 			'media'            => 'Media_Controller',
