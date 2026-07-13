@@ -462,13 +462,52 @@ class Moderation_Controller extends Base_Controller {
 	 * GET /moderation/flags — List all pending flags.
 	 */
 	public function list_flags( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$flags = Flag::list_pending();
+		$pagination = $this->get_pagination( $request );
+		$limit      = (int) $pagination['limit'];
+		$offset     = (int) $pagination['offset'];
+
+		$flags = Flag::list_pending( $limit, $offset );
+
+		// Enrich the reporter (and resolver) so the queue can say WHO reported a
+		// thing. The raw row carries only reporter_id, which left every client
+		// rendering "Reported by unknown" — a moderation queue that cannot name
+		// the reporter is close to useless. Batch-loaded: one query for the whole
+		// page, never a get_userdata() inside the loop.
+		$user_ids = [];
+		foreach ( $flags as $flag ) {
+			if ( ! empty( $flag->reporter_id ) ) {
+				$user_ids[] = (int) $flag->reporter_id;
+			}
+			if ( ! empty( $flag->resolved_by ) ) {
+				$user_ids[] = (int) $flag->resolved_by;
+			}
+		}
+		$users = $this->batch_load_users( $user_ids );
+
+		foreach ( $flags as $flag ) {
+			$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+			$reporter    = $users[ $reporter_id ] ?? null;
+			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
+
+			$flag->reporter = $reporter
+				? [
+					'id'           => $reporter_id,
+					'display_name' => $reporter->display_name ?? '',
+					'user_login'   => $reporter->user_login ?? '',
+					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
+				]
+				: null;
+
+			$flag->resolved_by_name = $resolver->display_name ?? '';
+		}
+
+		$total = Flag::count_pending();
 
 		return $this->paginated_response(
 			$flags,
 			[
-				'total'    => count( $flags ),
-				'has_more' => false,
+				'total'  => $total,
+				'offset' => $offset,
 			]
 		);
 	}

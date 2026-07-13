@@ -62,4 +62,34 @@ class Capabilities {
 			}
 		}
 	}
+
+	/**
+	 * Every Jetonomy capability, flattened from ROLE_MAP.
+	 *
+	 * ROLE_MAP stays the single source of truth. Headless clients (the mobile
+	 * app) have to know what the signed-in member may actually do, and
+	 * re-listing the caps anywhere else would guarantee the two lists drift.
+	 *
+	 * @return string[]
+	 */
+	public static function all(): array {
+		return array_values( array_unique( array_merge( ...array_values( self::ROLE_MAP ) ) ) );
+	}
+
+	/**
+	 * Resolve a user's capabilities as a `cap => bool` map for REST clients.
+	 *
+	 * `manage_options` is folded in because it is the cap the admin surfaces
+	 * gate on, and it is a WP core cap rather than one of ours.
+	 *
+	 * @param int $user_id WP user ID.
+	 * @return array<string, bool>
+	 */
+	public static function map_for_user( int $user_id ): array {
+		$out = [];
+		foreach ( array_merge( self::all(), [ 'manage_options' ] ) as $cap ) {
+			$out[ $cap ] = user_can( $user_id, $cap );
+		}
+		return $out;
+	}
 }
