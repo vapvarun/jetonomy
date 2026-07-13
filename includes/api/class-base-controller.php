@@ -227,6 +227,62 @@ abstract class Base_Controller extends WP_REST_Controller {
 	}
 
 	/**
+	 * Per-IP rate limit shared across every REST mutation that needs one
+	 * (login / register / lost-password on Auth_Controller, delete-account
+	 * on Users_Controller, …). Promoted here from Auth_Controller (1.7.1) so
+	 * every controller can enforce the same throttle without a duplicate
+	 * copy — the limiter logic must never drift between callers.
+	 *
+	 * Defaults to 5 attempts per minute. Caller can override for tighter or
+	 * looser buckets.
+	 *
+	 * @param string $bucket  Unique bucket key, e.g. 'login' / 'delete_account'.
+	 * @param int    $max     Max attempts in the window.
+	 * @param int    $seconds Window size in seconds.
+	 * @return bool True when within limit, false when exhausted.
+	 */
+	protected static function check_rate_limit( string $bucket, int $max = 5, int $seconds = MINUTE_IN_SECONDS ): bool {
+		$ip  = \Jetonomy\client_ip() ?: 'unknown';
+		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
+		$now = time();
+
+		// Store BOTH the hit count AND a fixed expiry timestamp in the
+		// transient value, then re-`set_transient` with only the REMAINING
+		// seconds. Calling `set_transient($key, $hits+1, $seconds)` on every
+		// hit extends the window every time, so an attacker pacing themselves
+		// under $max could go indefinitely. Now the TTL collapses toward
+		// $expires_at on every increment, the window is fixed once, and the
+		// throttle is real.
+		$record = get_transient( $key );
+		if ( ! is_array( $record ) || ! isset( $record['expires_at'], $record['hits'] ) || $now >= (int) $record['expires_at'] ) {
+			set_transient(
+				$key,
+				array(
+					'hits'       => 1,
+					'expires_at' => $now + $seconds,
+				),
+				$seconds
+			);
+			return true;
+		}
+
+		if ( (int) $record['hits'] >= $max ) {
+			return false;
+		}
+
+		$remaining = max( 1, (int) $record['expires_at'] - $now );
+		set_transient(
+			$key,
+			array(
+				'hits'       => (int) $record['hits'] + 1,
+				'expires_at' => (int) $record['expires_at'],
+			),
+			$remaining
+		);
+		return true;
+	}
+
+	/**
 	 * Standard pagination args for route registration — supports cursor and legacy offset.
 	 */
 	public function get_collection_params(): array {
@@ -358,8 +414,17 @@ abstract class Base_Controller extends WP_REST_Controller {
 			$user    = $users[ $uid ] ?? null;
 			$profile = $profiles[ $uid ] ?? null;
 
+			// author_name routes through the SAME seam every other render
+			// surface uses (\Jetonomy\Author::for_display()) so a tombstoned
+			// (author_id = 0, deleted-account) row reads "[deleted]" here too,
+			// instead of drifting to "Anonymous" the way this list endpoint
+			// used to render it. Passing the already-batch-loaded $user avoids
+			// a redundant get_userdata() per row (author_id > 0 case).
+			$item_obj    = is_object( $item ) ? $item : (object) $item;
+			$author_name = \Jetonomy\Author::for_display( $uid, $item_obj, $user )['name'];
+
 			$enrichment = [
-				'author_name'   => $user ? $user->display_name : __( 'Anonymous', 'jetonomy' ),
+				'author_name'   => $author_name ?: __( 'Anonymous', 'jetonomy' ),
 				// display_url() returns '' when the member has no real avatar, so
 				// API clients (mobile app) render initials from author_name — the
 				// same fallback the web templates use. Never the Gravatar mystery-man.

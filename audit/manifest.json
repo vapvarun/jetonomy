@@ -405,6 +405,19 @@
         "audit_notes": "Was missing from the manifest (delta added 1.5.0). avatar_url is consumed at render since 1.5.0 by Jetonomy\\Avatar (pre_get_avatar_data filter, Gravatar fallback) - local avatar upload flows POST /media then PATCH here (#9966775705)."
       },
       {
+        "route": "/users/me",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Users_Controller::delete_account",
+        "permission": "REST_Auth::auth_mutation('read', ['allow_banned'=>true,'allow_unverified'=>true])",
+        "purpose": "In-app account deletion (Apple Guideline 5.1.1(v) / GDPR Art. 17). Body: { password?, confirm: 'DELETE', delete_content?: bool }. Default content policy is anonymize (author_id -> 0 tombstone via the existing Privacy::on_user_delete() contract); delete_content=true opt-in hard-deletes authored posts/replies via internal rest_do_request() calls to DELETE /posts/{id} and DELETE /replies/{id} so counters + the Pro attachments cascade (jetonomy_after_delete_post/reply) stay correct. Rate-limited 5/hour/IP via the (now-shared) Base_Controller::check_rate_limit('delete_account'). Refuses manage_options users (403 jetonomy_admin_must_use_wp_admin). Multisite: defaults to remove_user_from_blog() for the current site only; wpmu_delete_user() (network-wide) only when jetonomy_delete_account_network_wide filter returns true.",
+        "auth": "logged_in (banned + pending-verification allowed)",
+        "capability": null,
+        "ownership_check": "self-only (require_auth)",
+        "audit_notes": "1.7.1. Attachments preserved by default (post_types_to_delete_with_user filtered to drop 'attachment', then reassigned to author_id=0) unless delete_content=true. Tombstoned (author_id=0) content now renders '[deleted]' via Author::for_display() - see hooks_fired delta."
+      },
+      {
         "route": "/users/(?P<id>\\d+)",
         "methods": [
           "GET"
@@ -1862,6 +1875,14 @@
   ],
   "services": [],
   "hooks_fired": [
+    {
+      "name": "jetonomy_delete_account_network_wide",
+      "type": "filter",
+      "args": "$network_wide (bool, default false), $user_id",
+      "where": "includes/api/class-users-controller.php (Users_Controller::delete_wp_account)",
+      "consumed_by": null,
+      "notes": "1.7.1. DELETE /users/me multisite branch. Default false = remove_user_from_blog() for the current site only (a shared network account is not this site's to fully delete). Return true to route through wpmu_delete_user() instead (network-wide) for a network that owns exactly one community."
+    },
     {
       "name": "jetonomy_admin_dashboard_after_stats",
       "type": "action",

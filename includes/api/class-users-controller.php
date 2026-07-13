@@ -45,6 +45,25 @@ class Users_Controller extends Base_Controller {
 					'permission_callback' => REST_Auth::auth_mutation( 'read' ),
 					'args'                => $this->get_update_args(),
 				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_account' ],
+					// Apple 5.1.1(v) / GDPR Art. 17: an app supporting account
+					// creation must let a member delete their account from
+					// inside the app — including a banned or never-verified
+					// one (neither carve-out exists in either requirement).
+					// allow_banned / allow_unverified skip those two gates
+					// while every other auth_mutation() check (login, cookie
+					// nonce) still applies.
+					'permission_callback' => REST_Auth::auth_mutation(
+						'read',
+						[
+							'allow_banned'     => true,
+							'allow_unverified' => true,
+						]
+					),
+					'args'                => $this->get_delete_account_args(),
+				],
 			]
 		);
 
@@ -405,6 +424,288 @@ class Users_Controller extends Base_Controller {
 			),
 			200
 		);
+	}
+
+	/**
+	 * DELETE /users/me — Permanently delete the authenticated user's account.
+	 *
+	 * Apple Guideline 5.1.1(v) / GDPR Art. 17. Body:
+	 *   { password?: string, confirm: "DELETE", delete_content?: bool }
+	 *
+	 * Content policy defaults to ANONYMIZE, not hard-delete. This is already
+	 * the plugin's shipped, tested contract — Privacy::erase_data() (GDPR
+	 * eraser) and Privacy::on_user_delete() (this route, via wp_delete_user())
+	 * both reassign authored posts/replies/revisions to the author_id = 0
+	 * tombstone rather than deleting the rows. A hard-deleting account-delete
+	 * route would contradict the plugin's own eraser, and hard-delete also
+	 * destroys OTHER members' data: deleting a member's topic deletes the
+	 * thread N other members replied in, orphaning their replies and
+	 * drifting the denormalized counters. Apple's requirement is to delete
+	 * the ACCOUNT, not the content; GDPR Art. 17 covers personal data, and
+	 * pseudonymized (author_id = 0) content satisfies it — Art. 17(3)
+	 * additionally permits retention for freedom of expression. `delete_content:
+	 * true` is an explicit, non-default opt-in for a member who wants their
+	 * own posts/replies actually removed too.
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function delete_account( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$user_id = $this->require_auth();
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		// Refuse admins outright — deleting the last administrator from a
+		// phone is a foot-gun with no upside. Site owners manage their own
+		// account from wp-admin's Users screen.
+		if ( current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'jetonomy_admin_must_use_wp_admin',
+				__( 'Site administrators can\'t delete their account from the app. Use the WordPress admin Users screen instead.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( ! self::check_rate_limit( 'delete_account', 5, HOUR_IN_SECONDS ) ) {
+			return new WP_Error(
+				'jetonomy_rate_limited',
+				__( 'Too many attempts. Please wait a while and try again.', 'jetonomy' ),
+				[ 'status' => 429 ]
+			);
+		}
+
+		$wp_user = get_userdata( $user_id );
+		if ( ! $wp_user ) {
+			return $this->not_found( 'User' );
+		}
+
+		// "Type DELETE to confirm" is the only guard available to accounts
+		// with no usable password (SSO / social login) and is always required.
+		$confirm = (string) $request->get_param( 'confirm' );
+		if ( ! hash_equals( 'DELETE', $confirm ) ) {
+			return new WP_Error(
+				'jetonomy_confirm_required',
+				__( 'Type DELETE to confirm you want to permanently delete your account.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// SSO / social-login accounts are commonly provisioned with no usable
+		// WP password — an empty user_pass is the detectable signal. Those
+		// accounts rely on the confirm check above only; every other account
+		// must additionally prove the current password.
+		$has_password = '' !== (string) $wp_user->user_pass;
+		if ( $has_password ) {
+			$password = (string) $request->get_param( 'password' );
+			if ( '' === $password || ! wp_check_password( $password, $wp_user->user_pass, $user_id ) ) {
+				return new WP_Error(
+					'jetonomy_bad_password',
+					__( 'That password is incorrect.', 'jetonomy' ),
+					[ 'status' => 403 ]
+				);
+			}
+		}
+
+		$delete_content = (bool) $request->get_param( 'delete_content' );
+
+		if ( $delete_content ) {
+			$this->hard_delete_authored_content( $user_id );
+		}
+
+		// Preserve uploaded media by default. wp_delete_user( $uid, null )
+		// would otherwise hard-delete every 'attachment' post this user
+		// owns (core default: delete_with_user = true for attachments) even
+		// though their (anonymized, surviving) replies still reference those
+		// images. Captured before the delete call, reassigned afterward.
+		$attachment_ids = [];
+		if ( ! $delete_content ) {
+			$attachment_ids = get_posts(
+				[
+					'post_type'              => 'attachment',
+					'author'                 => $user_id,
+					'post_status'            => 'any',
+					'fields'                 => 'ids',
+					'posts_per_page'         => -1,
+					'no_found_rows'          => true,
+					'update_post_meta_cache' => false,
+					'update_post_term_cache' => false,
+				]
+			);
+			add_filter( 'post_types_to_delete_with_user', [ $this, 'exclude_attachments_from_user_delete' ] );
+		}
+
+		$deleted = $this->delete_wp_account( $user_id );
+
+		if ( ! $delete_content ) {
+			remove_filter( 'post_types_to_delete_with_user', [ $this, 'exclude_attachments_from_user_delete' ] );
+			$this->reassign_attachments_to_tombstone( $attachment_ids );
+		}
+
+		if ( ! $deleted ) {
+			return new WP_Error(
+				'jetonomy_delete_account_failed',
+				__( "We couldn't delete your account. Please try again or contact support.", 'jetonomy' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		// End the session — the account (and any cookie tied to it) is gone.
+		wp_clear_auth_cookie();
+
+		return new WP_REST_Response(
+			[
+				'deleted'        => true,
+				'user_id'        => $user_id,
+				'content_policy' => $delete_content ? 'deleted' : 'anonymized',
+			],
+			200
+		);
+	}
+
+	/**
+	 * Hard-delete every post/reply this user authored — the `delete_content:
+	 * true` opt-in only. Routed through the SAME REST endpoints a member uses
+	 * to delete their own content one at a time (DELETE /posts/{id},
+	 * DELETE /replies/{id}) via an internal rest_do_request(), rather than
+	 * calling Post::delete() / Reply::delete() directly. Those controllers
+	 * are the only place that both decrements space/user counters
+	 * (Post::update()/Reply::update() detect the publish→trash transition)
+	 * AND fires jetonomy_after_delete_post / jetonomy_after_delete_reply,
+	 * which the Pro attachments extension listens to for its own cleanup —
+	 * calling the bare model delete() would silently skip both.
+	 */
+	private function hard_delete_authored_content( int $user_id ): void {
+		// Scale note: this loop is synchronous inside the account-deletion
+		// request, one rest_do_request() per authored row. Fine for a typical
+		// member; a heavy contributor with thousands of posts could push the
+		// request close to PHP's execution-time limit. delete_content is an
+		// explicit, non-default opt-in — acceptable for v1. If this becomes a
+		// real-world timeout, move it to a background job (Action Scheduler)
+		// per the plugin's background-jobs standard rather than inlining a
+		// batch/cursor here.
+		global $wpdb;
+		$posts_t   = table( 'posts' );
+		$replies_t = table( 'replies' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$posts_t} WHERE author_id = %d AND status != 'trash'", $user_id ) );
+		foreach ( $post_ids as $post_id ) {
+			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/posts/' . (int) $post_id ) );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$reply_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$replies_t} WHERE author_id = %d AND status != 'trash'", $user_id ) );
+		foreach ( $reply_ids as $reply_id ) {
+			rest_do_request( new WP_REST_Request( 'DELETE', '/jetonomy/v1/replies/' . (int) $reply_id ) );
+		}
+	}
+
+	/**
+	 * Delete (or, on multisite, remove-from-site) the WP account itself.
+	 *
+	 * Single-site: wp_delete_user(). Multisite: defaults to
+	 * remove_user_from_blog() for JUST this site — wp_delete_user() would
+	 * remove the account from the ENTIRE network, which is almost never what
+	 * a single community site owner wants or is authorized to decide for a
+	 * shared network account. A network that genuinely owns its users (one
+	 * community = one network) can opt into the network-wide delete via the
+	 * `jetonomy_delete_account_network_wide` filter.
+	 *
+	 * Both remove_user_from_blog() and wpmu_delete_user() are hooked to
+	 * Jetonomy's Privacy::on_user_delete() (both free and Pro — see
+	 * class-privacy.php), so table cleanup happens automatically regardless
+	 * of which path runs.
+	 *
+	 * @param int $user_id
+	 * @return bool
+	 */
+	private function delete_wp_account( int $user_id ): bool {
+		if ( is_multisite() ) {
+			/**
+			 * Whether account deletion should remove the member from the
+			 * ENTIRE multisite network rather than just the current site.
+			 * Default false: a shared network account is not this site's to
+			 * fully delete. Flip to true only when this community owns the
+			 * whole network (one community = one network).
+			 *
+			 * @since 1.7.1
+			 * @param bool $network_wide Default false.
+			 * @param int  $user_id      Account being deleted.
+			 */
+			$network_wide = (bool) apply_filters( 'jetonomy_delete_account_network_wide', false, $user_id );
+
+			if ( $network_wide ) {
+				if ( ! function_exists( 'wpmu_delete_user' ) ) {
+					require_once ABSPATH . 'wp-admin/includes/ms.php';
+				}
+				return (bool) wpmu_delete_user( $user_id );
+			}
+
+			$result = remove_user_from_blog( $user_id, get_current_blog_id() );
+			return ! is_wp_error( $result );
+		}
+
+		if ( ! function_exists( 'wp_delete_user' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/user.php';
+		}
+		return (bool) wp_delete_user( $user_id );
+	}
+
+	/**
+	 * `post_types_to_delete_with_user` filter callback — strips 'attachment'
+	 * so wp_delete_user()/wpmu_delete_user() leave the leaver's uploaded
+	 * media in place. Public: WP's call_user_func() invokes filter callbacks
+	 * from outside the class, which fails on private/protected methods.
+	 */
+	public function exclude_attachments_from_user_delete( array $post_types ): array {
+		return array_values( array_diff( $post_types, [ 'attachment' ] ) );
+	}
+
+	/**
+	 * Reassign the leaver's preserved attachments to the author_id = 0
+	 * tombstone (same convention as ANON_TABLES) so their surviving,
+	 * anonymized posts/replies keep working images instead of pointing at a
+	 * deleted account.
+	 *
+	 * @param int[] $attachment_ids
+	 */
+	private function reassign_attachments_to_tombstone( array $attachment_ids ): void {
+		if ( empty( $attachment_ids ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$ids          = array_map( 'absint', $attachment_ids );
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->posts} SET post_author = 0 WHERE ID IN ({$placeholders})", ...$ids ) );
+
+		foreach ( $ids as $id ) {
+			clean_post_cache( $id );
+		}
+	}
+
+	/**
+	 * Args for DELETE /users/me.
+	 */
+	private function get_delete_account_args(): array {
+		return [
+			'password'       => [
+				'type'     => 'string',
+				'required' => false,
+			],
+			'confirm'        => [
+				'type'     => 'string',
+				'required' => true,
+			],
+			'delete_content' => [
+				'type'     => 'boolean',
+				'required' => false,
+				'default'  => false,
+			],
+		];
 	}
 
 	/**
