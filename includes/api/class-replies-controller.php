@@ -797,28 +797,33 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$data = array(
-			'id'            => (int) $reply->id,
-			'post_id'       => (int) $reply->post_id,
-			'parent_id'     => $reply->parent_id ? (int) $reply->parent_id : null,
-			'author_id'     => $author_id,
-			'content'       => \Jetonomy\Embeds::process( $reply->content ?? '' ),
-			'content_plain' => $reply->content_plain ?? '',
-			'status'        => $reply->status ?? 'publish',
-			'is_accepted'   => (bool) ( $reply->is_accepted ?? false ),
-			'vote_score'    => (int) ( $reply->vote_score ?? 0 ),
-			'edited_at'     => $reply->edited_at ?? null,
-			'edited_by'     => $reply->edited_by ? (int) $reply->edited_by : null,
-			'created_at'    => $reply->created_at ?? null,
+			'id'                => (int) $reply->id,
+			'post_id'           => (int) $reply->post_id,
+			'parent_id'         => $reply->parent_id ? (int) $reply->parent_id : null,
+			'author_id'         => $author_id,
+			'content'           => \Jetonomy\Embeds::process( $reply->content ?? '' ),
+			'content_plain'     => $reply->content_plain ?? '',
+			'status'            => $reply->status ?? 'publish',
+			'is_accepted'       => (bool) ( $reply->is_accepted ?? false ),
+			'vote_score'        => (int) ( $reply->vote_score ?? 0 ),
+			'edited_at'         => $reply->edited_at ?? null,
+			'edited_by'         => $reply->edited_by ? (int) $reply->edited_by : null,
+			'created_at'        => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
-			'published_at'  => $reply->created_at ?? null,
+			'published_at'      => $reply->created_at ?? null,
 			// Enriched author data (for app clients + JS rendering)
-			'author_name'   => $author_name,
-			'author_avatar' => $author_avatar,
-			'author_login'  => $author_login,
-			'trust_level'   => $trust_level,
-			'reputation'    => $reputation,
-			'time_ago'      => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
-			'profile_url'   => $profile_url,
+			'author_name'       => $author_name,
+			'author_avatar'     => $author_avatar,
+			'author_login'      => $author_login,
+			'trust_level'       => $trust_level,
+			'reputation'        => $reputation,
+			'time_ago'          => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'       => $profile_url,
+			// True when the viewer has blocked this author. Reply::list_by_post()
+			// and build_tree() keep the node (with its content emptied) rather than
+			// dropping the row, so the children of a blocked author still render;
+			// clients use this flag to draw a tombstone in place of the body.
+			'is_blocked_author' => ! empty( $reply->is_blocked_author ),
 		);
 
 		/**

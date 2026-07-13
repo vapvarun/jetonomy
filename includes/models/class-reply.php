@@ -270,32 +270,47 @@ class Reply extends Model {
 		$offset   = (int) $args['offset'];
 		$after    = (int) $args['after'];
 
-		// Hide replies from users the viewer has blocked. no-op for guests/no-blocks.
-		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), '', 'author_id' );
-		$block_where   = '' !== $block_sql ? " AND {$block_sql}" : '';
+		// Blocked authors are TOMBSTONED here, not SQL-excluded.
+		//
+		// This is the flat list REST clients (and the mobile app) consume, and
+		// they re-nest it client-side on parent_id. Dropping a blocked author's
+		// row would leave every child of theirs pointing at a parent that isn't
+		// in the payload — an innocent third party's reply then either vanishes
+		// or silently re-parents to the thread root, detached from the
+		// conversation it was answering. Same reasoning as build_tree(): keep
+		// the node so the subtree survives, and empty its content instead. The
+		// row count also stays stable, so pagination and `has_more` don't shift
+		// per viewer.
+		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
 
 		// Cursor: prefer id-based over offset when $after is provided.
 		if ( $after > 0 ) {
-			return static::db()->get_results(
+			$rows = static::db()->get_results(
 				static::db()->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish'{$block_where} AND id > %d ORDER BY {$order_by} LIMIT %d",
+					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' AND id > %d ORDER BY {$order_by} LIMIT %d",
 					$post_id,
 					$after,
 					$limit
 				)
 			) ?: array();
+		} else {
+			$rows = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' ORDER BY {$order_by} LIMIT %d OFFSET %d",
+					$post_id,
+					$limit,
+					$offset
+				)
+			) ?: array();
 		}
 
-		return static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish'{$block_where} ORDER BY {$order_by} LIMIT %d OFFSET %d",
-				$post_id,
-				$limit,
-				$offset
-			)
-		) ?: array();
+		foreach ( $rows as $row ) {
+			self::apply_block_tombstone( $row, $blocked_ids );
+		}
+
+		return $rows;
 	}
 
 	/**
