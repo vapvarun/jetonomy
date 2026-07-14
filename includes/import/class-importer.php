@@ -393,9 +393,23 @@ abstract class Importer {
 	 * forum's upload folder will 404 every image in every migrated post.
 	 *
 	 * Registering it makes WordPress the owner of the file, which is the whole point
-	 * of migrating. We do NOT move or copy it: the file is already inside uploads/,
-	 * so its URL stays valid and the body needs no rewrite — and copying would double
-	 * the disk footprint of a forum whose attachments run to gigabytes.
+	 * of migrating. We do NOT move or copy it: the file is already inside uploads/, so
+	 * copying would double the disk footprint of a forum whose attachments run to
+	 * gigabytes.
+	 *
+	 * But the URL in the body DOES get rewritten to this site's canonical one, because
+	 * "the URL is still valid" is only true when nothing about the site changed. In a
+	 * real migration it usually has:
+	 *
+	 *   - The body carries the OLD DOMAIN (the whole point of migrating is often a new
+	 *     host). The file is here; the link points at a site that may no longer exist.
+	 *   - wpForo writes hrefs protocol-relative, and wp_kses_post() mangles those when
+	 *     the host has a port (it reads `host:` as a disallowed protocol), leaving a
+	 *     broken relative path.
+	 *   - The body says http:// on a site that has since moved to https.
+	 *
+	 * In all three the file is fine and only the link is wrong, so we repoint it. That
+	 * is what makes "nothing is lost" actually true rather than merely true-on-my-machine.
 	 *
 	 * Deliberately keyed on the source forum's own folder (e.g. `wpforo`) rather than
 	 * all of uploads/: a body may also reference genuine media-library URLs, including
@@ -407,36 +421,37 @@ abstract class Importer {
 	 *
 	 * @param string $body        Post body HTML.
 	 * @param string $path_prefix Folder under uploads/ owned by the source forum.
-	 * @return int Number of files now tracked in the media library.
+	 * @return string The body, with every recovered file's URL repointed at this site.
 	 */
-	protected function register_body_media( string $body, string $path_prefix ): int {
+	protected function adopt_body_media( string $body, string $path_prefix ): string {
 		$path_prefix = trim( $path_prefix, '/' );
 		if ( '' === $body || '' === $path_prefix || false === strpos( $body, $path_prefix . '/' ) ) {
-			return 0;
+			return $body;
 		}
 
 		$uploads = wp_get_upload_dir();
 		if ( empty( $uploads['baseurl'] ) ) {
-			return 0;
+			return $body;
 		}
 
 		$base_path = (string) wp_parse_url( $uploads['baseurl'], PHP_URL_PATH );
 		if ( '' === $base_path ) {
-			return 0;
+			return $body;
 		}
 		// Only files under the source forum's own folder. Trailing slash matters:
 		// without it `wpforo` would also swallow `wpforo-backup/`.
 		$prefix = $base_path . '/' . $path_prefix . '/';
 
 		if ( ! preg_match_all( '#(?:src|href)=[\'"]([^\'"]+)[\'"]#i', $body, $matches ) ) {
-			return 0;
+			return $body;
 		}
 
-		$registered = 0;
-		$seen       = [];
+		$seen = [];
 
-		foreach ( array_unique( $matches[1] ) as $raw_url ) {
-			$raw_url = html_entity_decode( $raw_url, ENT_QUOTES, 'UTF-8' );
+		foreach ( array_unique( $matches[1] ) as $found ) {
+			// $found is the URL exactly as it appears in the body — that is what we
+			// must replace. Decode only to interpret it.
+			$raw_url = html_entity_decode( $found, ENT_QUOTES, 'UTF-8' );
 
 			// Match on the path only: the body may carry a protocol-relative URL, an
 			// http:// one on a site now on https, or the site's previous domain.
@@ -450,11 +465,19 @@ abstract class Importer {
 			}
 			$seen[ $url_path ] = true;
 
-			if ( $this->ensure_media_id( 0, $raw_url ) ) {
-				++$registered;
+			$path = $this->resolve_upload_path( $raw_url );
+			if ( '' === $path ) {
+				continue; // Not a real file under uploads/ — leave the markup alone.
+			}
+
+			$this->ensure_media_id( 0, $raw_url );
+
+			$canonical = $this->upload_path_to_url( $path );
+			if ( '' !== $canonical && $canonical !== $found ) {
+				$body = str_replace( $found, $canonical, $body );
 			}
 		}
 
-		return $registered;
+		return $body;
 	}
 }

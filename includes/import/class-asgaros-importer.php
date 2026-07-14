@@ -527,7 +527,11 @@ class Asgaros_Importer extends Importer {
 			}
 
 			$first_post = $first_posts_map[ (int) $topic->id ] ?? null;
-			$content    = $first_post ? $first_post->text : '';
+			$content    = (string) ( $first_post ? $first_post->text : '' );
+
+			// Register any inline image and repoint it at this site — must happen
+			// BEFORE create, or the rewritten body is never stored.
+			$content = $this->adopt_body_media( $content, $this->asgaros_upload_folder() );
 
 			$status = ( isset( $topic->approved ) && 1 === (int) $topic->approved ) ? 'publish' : 'pending';
 
@@ -557,9 +561,7 @@ class Asgaros_Importer extends Importer {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
 
 				if ( $first_post ) {
-					// Inline images in the text, then the upload list. Both live under
-					// Asgaros' own folder and neither is in the media library.
-					$this->register_body_media( (string) $content, $this->asgaros_upload_folder() );
+					// The upload list. (Inline images were adopted before create.)
 					$this->migrate_asgaros_uploads(
 						'post',
 						(int) $post_id,
@@ -610,13 +612,15 @@ class Asgaros_Importer extends Importer {
 				continue;
 			}
 
+			$text = $this->adopt_body_media( (string) $asgaros_post->text, $this->asgaros_upload_folder() );
+
 			$reply_id = JtReply::create(
 				[
 					'post_id'       => $post_id,
 					'parent_id'     => null,
 					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
-					'content'       => wp_kses_post( $asgaros_post->text ),
-					'content_plain' => wp_strip_all_tags( $asgaros_post->text ),
+					'content'       => wp_kses_post( $text ),
+					'content_plain' => wp_strip_all_tags( $text ),
 					'status'        => 'publish',
 					'created_at'    => $asgaros_post->date ?? now(),
 				]
@@ -631,7 +635,6 @@ class Asgaros_Importer extends Importer {
 			if ( $reply_id ) {
 				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );
 
-				$this->register_body_media( (string) $asgaros_post->text, $this->asgaros_upload_folder() );
 				$this->migrate_asgaros_uploads(
 					'reply',
 					(int) $reply_id,
