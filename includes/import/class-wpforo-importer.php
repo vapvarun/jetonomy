@@ -29,13 +29,22 @@ class WPForo_Importer extends Importer {
 		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) );
 	}
 
+	/**
+	 * NOTE on the table names below: these were `"{$p}posts"`, which resolves to
+	 * `wp_posts` — the WordPress core posts table, not `wp_wpforo_posts`. The
+	 * `wpforo_` prefix was missing, so the importer counted every WP post, page,
+	 * revision and media attachment on the site as if it were a forum post. The
+	 * progress bar divides by this number, so on a real site the percentage was
+	 * nonsense (and on a site with no forum content at all it still reported
+	 * thousands of rows to import).
+	 */
 	public function get_source_stats(): array {
 		global $wpdb;
 		$p = $wpdb->prefix;
 		return [
 			'forums' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" ),
 			'topics' => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" ),
-			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}posts" ),
+			'posts'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" ),
 		];
 	}
 
@@ -44,26 +53,230 @@ class WPForo_Importer extends Importer {
 		$p      = $wpdb->prefix;
 		$forums = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_forums" );
 		$topics = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_topics" );
-		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}posts" );
+		$posts  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$p}wpforo_posts" );
 		return $forums + $topics + $posts;
 	}
 
+	/** Option holding the resolved board list for the run in progress. */
+	private const BOARDS_OPTION = 'jetonomy_import_wpforo_boards';
+
+	/** Option holding the index of the board currently being imported. */
+	private const BOARD_IDX_OPTION = 'jetonomy_import_wpforo_board_idx';
+
+	/** Option holding the category id created for the current board. */
+	private const CAT_OPTION = 'jetonomy_import_wpforo_cat_id';
+
+	/**
+	 * Import one batch of one phase.
+	 *
+	 * This used to call run() — the entire import, every board — inside a single
+	 * AJAX request, so any forum with real content hit max_execution_time and died
+	 * with no partial-progress recovery. Same defect the Asgaros importer carried.
+	 *
+	 * wpForo is MULTI-BOARD: each board has its own table prefix (wpforo_,
+	 * wpforo1_, wpforo2_...). The phase machine therefore walks boards as an outer
+	 * loop and phases as an inner one, persisting which board it is on between
+	 * requests (the handler only hands us phase + offset, so the board index has to
+	 * live in an option).
+	 *
+	 * Per board: forums -> topics -> replies -> likes -> profiles. When a board is
+	 * finished we advance to the next one and start at 'forums' again. After the
+	 * last board, recount once and finish.
+	 *
+	 * Forums are NOT paged: wpForo forums nest, so a child forum needs its parent
+	 * to exist first, and the set is bounded (a board's forum list, tens of rows).
+	 * The volume is topics/posts, which do page. Same reasoning as Asgaros.
+	 *
+	 * @param string $phase      Current phase.
+	 * @param int    $offset     Row offset within the phase.
+	 * @param int    $batch_size Rows to process this call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
-		if ( 'forums' === $phase && 0 === $offset ) {
-			$this->run();
-			return [
-				'phase'     => 'complete',
-				'offset'    => 0,
-				'done'      => true,
-				'processed' => $this->imported,
+		$batch_size = max( 1, $batch_size );
+		$boards     = $this->resolve_boards( $phase, $offset );
+
+		if ( empty( $boards ) ) {
+			return $this->finish();
+		}
+
+		$idx = (int) get_option( self::BOARD_IDX_OPTION, 0 );
+		if ( $idx >= count( $boards ) ) {
+			return $this->finish();
+		}
+
+		$board  = $boards[ $idx ];
+		$prefix = (string) $board['prefix'];
+
+		switch ( $phase ) {
+			case 'forums':
+				$cat_id = Category::create(
+					[
+						'name' => $board['cat_name'],
+						'slug' => $board['cat_slug'] . '-' . time(),
+					]
+				);
+				update_option( self::CAT_OPTION, (int) $cat_id, false );
+
+				$before = $this->imported;
+				$this->import_forums( (int) $cat_id, $prefix );
+				$this->persist_id_map();
+
+				return $this->next( 'topics', 0, $this->imported - $before );
+
+			case 'topics':
+				$processed = $this->import_topics_batch( $prefix, $offset, $batch_size );
+				$this->persist_id_map();
+
+				return $processed >= $batch_size
+					? $this->next( 'topics', $offset + $batch_size, $processed )
+					: $this->next( 'replies', 0, $processed );
+
+			case 'replies':
+				$processed = $this->import_replies_batch( $prefix, $offset, $batch_size );
+				$this->persist_id_map();
+
+				return $processed >= $batch_size
+					? $this->next( 'replies', $offset + $batch_size, $processed )
+					: $this->next( 'likes', 0, $processed );
+
+			case 'likes':
+				// Likes are a thin join table; one pass per board is bounded and cheap.
+				$this->import_likes( $prefix );
+				return $this->next( 'profiles', 0, 0 );
+
+			case 'profiles':
+				$processed = $this->create_profiles_batch( $prefix, $offset, $batch_size );
+
+				if ( $processed >= $batch_size ) {
+					return $this->next( 'profiles', $offset + $batch_size, $processed );
+				}
+
+				// Board done — move to the next one, or finish.
+				$next_idx = $idx + 1;
+				update_option( self::BOARD_IDX_OPTION, $next_idx, false );
+
+				if ( $next_idx < count( $boards ) ) {
+					return $this->next( 'forums', 0, $processed );
+				}
+
+				return $this->finish( $processed );
+
+			default:
+				return $this->finish();
+		}
+	}
+
+	/**
+	 * Resolve (and cache for the run) the list of wpForo boards to import.
+	 *
+	 * Computed once, on the first batch, then reused — the board list must not be
+	 * re-derived mid-run or the board index would point at a different board.
+	 *
+	 * @param string $phase  Current phase.
+	 * @param int    $offset Current offset.
+	 * @return array[] Boards, each with prefix + category naming.
+	 */
+	private function resolve_boards( string $phase, int $offset ): array {
+		$cached = get_option( self::BOARDS_OPTION, [] );
+		$first  = ( 'forums' === $phase && 0 === $offset && ! get_option( self::BOARD_IDX_OPTION, 0 ) );
+
+		if ( ! empty( $cached ) && ! $first ) {
+			return $cached;
+		}
+		if ( ! empty( $cached ) && $first ) {
+			return $cached;
+		}
+
+		global $wpdb;
+		$boards_table = $wpdb->prefix . 'wpforo_boards';
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results( "SELECT boardid, title FROM {$boards_table} WHERE status = 1 ORDER BY boardid ASC" );
+
+		if ( empty( $rows ) ) {
+			$rows = [
+				(object) [
+					'boardid' => 0,
+					'title'   => 'Forums',
+				],
 			];
 		}
+
+		$multi  = count( $rows ) > 1;
+		$boards = [];
+
+		foreach ( $rows as $row ) {
+			$board_id = (int) $row->boardid;
+			$prefix   = $wpdb->prefix . 'wpforo' . ( $board_id ? $board_id . '_' : '_' );
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $prefix . 'forums' ) ) ) {
+				continue;
+			}
+
+			$boards[] = [
+				'prefix'   => $prefix,
+				'cat_name' => $multi
+					/* translators: %s: wpForo board name */
+					? sprintf( __( 'Imported from wpForo -- %s', 'jetonomy' ), $row->title )
+					: __( 'Imported from wpForo', 'jetonomy' ),
+				'cat_slug' => $multi
+					? 'imported-wpforo-' . sanitize_title( $row->title )
+					: 'imported-wpforo',
+			];
+		}
+
+		update_option( self::BOARDS_OPTION, $boards, false );
+		update_option( self::BOARD_IDX_OPTION, 0, false );
+
+		return $boards;
+	}
+
+	/**
+	 * Build a "keep going" batch result.
+	 *
+	 * @param string $phase     Next phase.
+	 * @param int    $offset    Next offset.
+	 * @param int    $processed Rows consumed this call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
+	private function next( string $phase, int $offset, int $processed ): array {
+		return [
+			'phase'     => $phase,
+			'offset'    => $offset,
+			'done'      => false,
+			'processed' => $processed,
+		];
+	}
+
+	/**
+	 * Recount denormalized counters once, clean up run state, and report done.
+	 *
+	 * @param int $processed Rows consumed on the final call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
+	private function finish( int $processed = 0 ): array {
+		$this->recount();
+
+		delete_option( self::BOARDS_OPTION );
+		delete_option( self::BOARD_IDX_OPTION );
+		delete_option( self::CAT_OPTION );
+
 		return [
 			'phase'     => 'complete',
 			'offset'    => 0,
 			'done'      => true,
-			'processed' => 0,
+			'processed' => $processed,
 		];
+	}
+
+	/**
+	 * Persist the id_map so the next batch (a separate request) can resolve
+	 * parents. Import_Handler restores it into $this->id_map before each call.
+	 */
+	private function persist_id_map(): void {
+		update_option( 'jetonomy_import_id_map', $this->id_map, false );
 	}
 
 	public function run( array $options = [] ): array {
@@ -117,21 +330,80 @@ class WPForo_Importer extends Importer {
 		return $this->results();
 	}
 
+	/**
+	 * Order forums so every parent appears before its children.
+	 *
+	 * Breadth-first from the roots, then anything orphaned (a parent that no longer
+	 * exists) is appended so it still imports rather than being silently dropped.
+	 *
+	 * @param object[] $forums wpForo forum rows.
+	 * @return object[] Same rows, parents first.
+	 */
+	private function sort_forums_by_dependency( array $forums ): array {
+		$indexed  = [];
+		$children = [];
+
+		foreach ( $forums as $forum ) {
+			$indexed[ (int) $forum->forumid ] = $forum;
+			$parent                           = (int) ( $forum->parentid ?? 0 );
+			$children[ $parent ][]            = (int) $forum->forumid;
+		}
+
+		$ordered = [];
+		$queue   = $children[0] ?? [];
+
+		while ( ! empty( $queue ) ) {
+			$id = array_shift( $queue );
+			if ( ! isset( $indexed[ $id ] ) ) {
+				continue;
+			}
+			$ordered[] = $indexed[ $id ];
+			unset( $indexed[ $id ] );
+			if ( ! empty( $children[ $id ] ) ) {
+				array_splice( $queue, 0, 0, $children[ $id ] );
+			}
+		}
+
+		// Orphans: parent id points at a forum that isn't in the set. Import them
+		// anyway (flat) rather than losing the content entirely.
+		foreach ( $indexed as $leftover ) {
+			$ordered[] = $leftover;
+		}
+
+		return $ordered;
+	}
+
 	private function import_forums( int $cat_id, string $p = '' ): void {
 		global $wpdb;
 		if ( ! $p ) {
 			$p = $wpdb->prefix . 'wpforo_';
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$forums = $wpdb->get_results( "SELECT * FROM {$p}forums ORDER BY `order` ASC" );
 
+		// wpForo NESTS forums (its categories are just forums with children), and
+		// this loop used to ignore `parentid` entirely — every sub-forum landed as a
+		// top-level space and the whole board structure was flattened on import.
+		// Walk parents before children so a child can resolve its parent's new id.
+		$forums = $this->sort_forums_by_dependency( (array) $forums );
+
 		foreach ( $forums as $forum ) {
+			$parent_space_id = 0;
+			if ( ! empty( $forum->parentid ) && (int) $forum->parentid > 0 ) {
+				$mapped = $this->get_mapped_id( 'forum', (int) $forum->parentid );
+				if ( $mapped ) {
+					$parent_space_id = $mapped;
+				}
+			}
+
 			// Preserve source access level — a members-only wpForo board must
 			// NOT land as a public Jetonomy space. See self::map_access().
 			$access   = self::map_access( $forum );
 			$space_id = Space::create(
 				[
 					'category_id' => $cat_id,
+					'parent_id'   => $parent_space_id,
 					'author_id'   => 1,
 					'type'        => 'forum',
 					'title'       => $forum->title,
@@ -207,7 +479,49 @@ class WPForo_Importer extends Importer {
 			$p = $wpdb->prefix . 'wpforo_';
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$topics = $wpdb->get_results( "SELECT * FROM {$p}topics ORDER BY topicid ASC" );
+
+		$this->import_topic_rows( (array) $topics, $p );
+	}
+
+	/**
+	 * Import one page of topics. Returns rows SEEN (not imported) — returning
+	 * "imported" would stall the phase forever on a page where every row skipped.
+	 *
+	 * @param string $p      Board table prefix.
+	 * @param int    $offset Row offset.
+	 * @param int    $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function import_topics_batch( string $p, int $offset, int $limit ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$topics = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$p}topics ORDER BY topicid ASC LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		$this->import_topic_rows( (array) $topics, $p );
+
+		return count( (array) $topics );
+	}
+
+	/**
+	 * Create Jetonomy posts from a set of wpForo topic rows.
+	 *
+	 * Shared by the batched and single-shot paths so the two cannot drift.
+	 *
+	 * @param object[] $topics wpForo topic rows.
+	 * @param string   $p      Board table prefix.
+	 */
+	private function import_topic_rows( array $topics, string $p ): void {
+		global $wpdb;
 
 		if ( empty( $topics ) ) {
 			return;
@@ -287,6 +601,7 @@ class WPForo_Importer extends Importer {
 			$p = $wpdb->prefix . 'wpforo_';
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$posts = $wpdb->get_results(
 			"SELECT p.* FROM {$p}posts p
 			 INNER JOIN (
@@ -296,6 +611,52 @@ class WPForo_Importer extends Importer {
 			 ORDER BY p.postid ASC"
 		);
 
+		$this->import_reply_rows( (array) $posts );
+	}
+
+	/**
+	 * Import one page of replies. Returns rows SEEN (see import_topics_batch).
+	 *
+	 * Ordered by postid ASC, which keeps a threaded reply's parent (always a lower
+	 * postid) ahead of its children across batch boundaries.
+	 *
+	 * @param string $p      Board table prefix.
+	 * @param int    $offset Row offset.
+	 * @param int    $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function import_replies_batch( string $p, int $offset, int $limit ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT p.* FROM {$p}posts p
+				 INNER JOIN (
+				     SELECT topicid, MIN(postid) as first_postid FROM {$p}posts GROUP BY topicid
+				 ) fp ON p.topicid = fp.topicid
+				 WHERE p.postid != fp.first_postid
+				 ORDER BY p.postid ASC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		$this->import_reply_rows( (array) $posts );
+
+		return count( (array) $posts );
+	}
+
+	/**
+	 * Create Jetonomy replies from a set of wpForo post rows.
+	 *
+	 * Shared by the batched and single-shot paths so the two cannot drift.
+	 *
+	 * @param object[] $posts wpForo post rows (excluding each topic's first post).
+	 */
+	private function import_reply_rows( array $posts ): void {
 		foreach ( $posts as $wf_post ) {
 			$post_id = $this->get_mapped_id( 'topic', $wf_post->topicid );
 			if ( ! $post_id ) {
@@ -369,11 +730,46 @@ class WPForo_Importer extends Importer {
 			return;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$profiles = $wpdb->get_results( "SELECT * FROM {$profiles_table}" );
 
 		foreach ( $profiles as $prof ) {
 			$this->ensure_profile( (int) $prof->userid );
 		}
+	}
+
+	/**
+	 * Ensure profiles for one page of wpForo members. Returns rows SEEN.
+	 *
+	 * @param string $p      Board table prefix.
+	 * @param int    $offset Row offset.
+	 * @param int    $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function create_profiles_batch( string $p, int $offset, int $limit ): int {
+		global $wpdb;
+
+		$profiles_table = $p . 'profiles';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $profiles_table ) ) ) {
+			return 0;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT userid FROM {$profiles_table} ORDER BY userid ASC LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		foreach ( $ids as $uid ) {
+			$this->ensure_profile( (int) $uid );
+		}
+
+		return count( (array) $ids );
 	}
 
 	private function recount(): void {
