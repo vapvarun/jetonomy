@@ -9,6 +9,7 @@ namespace Jetonomy\Import;
 
 defined( 'ABSPATH' ) || exit;
 
+use Jetonomy\Models\Attachment;
 use Jetonomy\Models\Category;
 use Jetonomy\Models\Space;
 use Jetonomy\Models\Post;
@@ -179,24 +180,17 @@ abstract class Importer {
 	// ─────────────────────────────────────────────────────────────────────────
 
 	/**
-	 * Is the Pro attachments extension available to link into?
+	 * Attachments are stored in FREE from 1.7.1 on, so an import always has
+	 * somewhere to put them.
 	 *
-	 * Attachments are a Pro feature (jt_pro_attachments) but the importers ship in
-	 * free. We never let that cost the customer their files: the file is put into
-	 * the WP media library either way (that part is free), and the link row is only
-	 * written when Pro is present. Turning Pro on later therefore *reveals* the
-	 * attachments instead of requiring a re-import.
+	 * This used to ask Pro over a filter, and answer "no" on a free site — which
+	 * meant a free-tier migration wrote no attachment rows at all, and we papered
+	 * over it by leaving the old forum's raw markup in the post body. Two
+	 * presentations, one of which only existed on free, and a body we had to mutate
+	 * to switch between them. Kept only so a caller can still ask.
 	 */
-	protected function pro_attachments_available(): bool {
-		/**
-		 * Whether an attachments backend is available to link imported files into.
-		 *
-		 * Free must not reach into a Pro class directly, so Pro's attachments
-		 * extension answers this instead.
-		 *
-		 * @param bool $supported Default false (free alone cannot store links).
-		 */
-		return (bool) apply_filters( 'jetonomy_import_attachments_supported', false );
+	protected function attachments_available(): bool {
+		return true;
 	}
 
 	/**
@@ -354,31 +348,9 @@ abstract class Importer {
 			return false;
 		}
 
-		/**
-		 * Attach an imported media item to a post or reply.
-		 *
-		 * Pro's attachments extension hooks this and writes the jt_pro_attachments
-		 * row. Its Model::link() is idempotent (unique index on object+attachment),
-		 * so a resumed or re-run import cannot double-attach the same file. Returns
-		 * 0 when nothing handled it — i.e. Pro is not active — and the caller then
-		 * leaves the source markup in the body so the file is still reachable.
-		 *
-		 * @param int    $link_id       0 by default.
-		 * @param string $object_type   'post' or 'reply'.
-		 * @param int    $object_id     Jetonomy post/reply id.
-		 * @param int    $attachment_id WP media ID.
-		 * @param int    $sort          Display order.
-		 */
-		$link_id = (int) apply_filters(
-			'jetonomy_import_link_attachment',
-			0,
-			$object_type,
-			$object_id,
-			$attachment_id,
-			$sort
-		);
-
-		return $link_id > 0;
+		// Idempotent (unique key on object_type+object_id+attachment_id), so a
+		// resumed or re-run import cannot double-attach the customer's file.
+		return Attachment::link( $object_type, $object_id, $attachment_id, $sort ) > 0;
 	}
 
 	/**
@@ -393,23 +365,21 @@ abstract class Importer {
 	 * forum's upload folder will 404 every image in every migrated post.
 	 *
 	 * Registering it makes WordPress the owner of the file, which is the whole point
-	 * of migrating. We do NOT move or copy it: the file is already inside uploads/, so
-	 * copying would double the disk footprint of a forum whose attachments run to
-	 * gigabytes.
+	 * of migrating. We do NOT move, copy, or REWRITE anything:
 	 *
-	 * But the URL in the body DOES get rewritten to this site's canonical one, because
-	 * "the URL is still valid" is only true when nothing about the site changed. In a
-	 * real migration it usually has:
+	 *   - The file is already inside uploads/, so copying it would double the disk
+	 *     footprint of a forum whose attachments run to gigabytes.
+	 *   - The body is not touched. An inline image comes across with the body for
+	 *     free — wp_kses_post keeps <img> — and its URL is already correct, because
+	 *     we import from the old forum's tables in the SAME database on the SAME
+	 *     site. (A body carrying an old domain only happens if the site was moved,
+	 *     and that is fixed by `wp search-replace`, which rewrites the source forum's
+	 *     tables too — verified. If someone skipped that step, every URL on their
+	 *     whole site is broken, not just the forum's, and papering over it here would
+	 *     be the wrong place.)
 	 *
-	 *   - The body carries the OLD DOMAIN (the whole point of migrating is often a new
-	 *     host). The file is here; the link points at a site that may no longer exist.
-	 *   - wpForo writes hrefs protocol-relative, and wp_kses_post() mangles those when
-	 *     the host has a port (it reads `host:` as a disallowed protocol), leaving a
-	 *     broken relative path.
-	 *   - The body says http:// on a site that has since moved to https.
-	 *
-	 * In all three the file is fine and only the link is wrong, so we repoint it. That
-	 * is what makes "nothing is lost" actually true rather than merely true-on-my-machine.
+	 * Not rewriting is a feature, not laziness: every attachment bug we have shipped
+	 * came from mutating post content.
 	 *
 	 * Deliberately keyed on the source forum's own folder (e.g. `wpforo`) rather than
 	 * all of uploads/: a body may also reference genuine media-library URLs, including
@@ -421,40 +391,39 @@ abstract class Importer {
 	 *
 	 * @param string $body        Post body HTML.
 	 * @param string $path_prefix Folder under uploads/ owned by the source forum.
-	 * @return string The body, with every recovered file's URL repointed at this site.
+	 * @return int Files now tracked in the media library.
 	 */
-	protected function adopt_body_media( string $body, string $path_prefix ): string {
+	protected function register_body_media( string $body, string $path_prefix ): int {
 		$path_prefix = trim( $path_prefix, '/' );
 		if ( '' === $body || '' === $path_prefix || false === strpos( $body, $path_prefix . '/' ) ) {
-			return $body;
+			return 0;
 		}
 
 		$uploads = wp_get_upload_dir();
 		if ( empty( $uploads['baseurl'] ) ) {
-			return $body;
+			return 0;
 		}
 
 		$base_path = (string) wp_parse_url( $uploads['baseurl'], PHP_URL_PATH );
 		if ( '' === $base_path ) {
-			return $body;
+			return 0;
 		}
 		// Only files under the source forum's own folder. Trailing slash matters:
 		// without it `wpforo` would also swallow `wpforo-backup/`.
 		$prefix = $base_path . '/' . $path_prefix . '/';
 
 		if ( ! preg_match_all( '#(?:src|href)=[\'"]([^\'"]+)[\'"]#i', $body, $matches ) ) {
-			return $body;
+			return 0;
 		}
 
-		$seen = [];
+		$registered = 0;
+		$seen       = [];
 
 		foreach ( array_unique( $matches[1] ) as $found ) {
-			// $found is the URL exactly as it appears in the body — that is what we
-			// must replace. Decode only to interpret it.
 			$raw_url = html_entity_decode( $found, ENT_QUOTES, 'UTF-8' );
 
-			// Match on the path only: the body may carry a protocol-relative URL, an
-			// http:// one on a site now on https, or the site's previous domain.
+			// Match on the path: the body may carry a protocol-relative URL (wpForo
+			// writes those) or an http:// one on a site now on https.
 			$url_path = (string) wp_parse_url( $raw_url, PHP_URL_PATH );
 			if ( '' === $url_path || 0 !== strpos( $url_path, $prefix ) ) {
 				continue;
@@ -465,19 +434,11 @@ abstract class Importer {
 			}
 			$seen[ $url_path ] = true;
 
-			$path = $this->resolve_upload_path( $raw_url );
-			if ( '' === $path ) {
-				continue; // Not a real file under uploads/ — leave the markup alone.
-			}
-
-			$this->ensure_media_id( 0, $raw_url );
-
-			$canonical = $this->upload_path_to_url( $path );
-			if ( '' !== $canonical && $canonical !== $found ) {
-				$body = str_replace( $found, $canonical, $body );
+			if ( $this->ensure_media_id( 0, $raw_url ) ) {
+				++$registered;
 			}
 		}
 
-		return $body;
+		return $registered;
 	}
 }

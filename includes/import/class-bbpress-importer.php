@@ -75,7 +75,7 @@ class BBPress_Importer extends Importer {
 	 * @return int Attachments linked.
 	 */
 	private function migrate_bbpress_attachments( string $object_type, int $source_post_id, int $object_id ): int {
-		if ( ! $source_post_id || ! $object_id || ! $this->pro_attachments_available() ) {
+		if ( ! $source_post_id || ! $object_id || ! $this->attachments_available() ) {
 			return 0;
 		}
 

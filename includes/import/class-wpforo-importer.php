@@ -716,7 +716,7 @@ class WPForo_Importer extends Importer {
 			// Images pasted into the text are a separate loss from the attachment
 			// box: they render fine after import, so the migration looks clean, but
 			// the file is not a media item and deleting uploads/wpforo/ 404s it.
-			$content = $this->adopt_body_media( $content, $this->media_dir );
+			$this->register_body_media( $content, $this->media_dir );
 
 			// The post is created with the body INTACT. Attachment markup is removed
 			// only after each file is proven linked (see migrate_attachments), so a
@@ -867,7 +867,7 @@ class WPForo_Importer extends Importer {
 
 			// Replies carry attachments and inline images too — same body as topics.
 			$body = (string) $wf_post->body;
-			$body = $this->adopt_body_media( $body, $this->media_dir );
+			$this->register_body_media( $body, $this->media_dir );
 
 			$attachments = $this->parse_wpforo_attachments( $body );
 

@@ -456,6 +456,7 @@ final class Jetonomy {
 		// Community media library hygiene: tag member uploads and hide them from
 		// the admin Media Library by default. register() self-gates to wp-admin.
 		( new Media_Library() )->register();
+		( new Attachments() )->register();
 
 		// MemberPress adapter (conditional)
 		if ( defined( 'MEPR_VERSION' ) ) {

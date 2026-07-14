@@ -531,7 +531,7 @@ class Asgaros_Importer extends Importer {
 
 			// Register any inline image and repoint it at this site — must happen
 			// BEFORE create, or the rewritten body is never stored.
-			$content = $this->adopt_body_media( $content, $this->asgaros_upload_folder() );
+			$this->register_body_media( $content, $this->asgaros_upload_folder() );
 
 			$status = ( isset( $topic->approved ) && 1 === (int) $topic->approved ) ? 'publish' : 'pending';
 
@@ -612,7 +612,8 @@ class Asgaros_Importer extends Importer {
 				continue;
 			}
 
-			$text = $this->adopt_body_media( (string) $asgaros_post->text, $this->asgaros_upload_folder() );
+			$text = (string) $asgaros_post->text;
+			$this->register_body_media( $text, $this->asgaros_upload_folder() );
 
 			$reply_id = JtReply::create(
 				[
