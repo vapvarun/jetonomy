@@ -136,14 +136,53 @@ class Flag extends Model {
 	 * @param int    $limit  Maximum number of rows to return.
 	 * @return object[]
 	 */
-	public static function list_by_status( string $status = 'pending', int $limit = 50 ): array {
+	public static function list_by_status( string $status = 'pending', int $limit = 50, int $offset = 0 ): array {
 		return static::db()->get_results(
 			static::db()->prepare(
-				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY created_at DESC LIMIT %d',
+				'SELECT * FROM ' . static::table() . ' WHERE status = %s ORDER BY created_at DESC LIMIT %d OFFSET %d',
 				$status,
-				$limit
+				$limit,
+				$offset
 			)
 		) ?: [];
+	}
+
+	/**
+	 * List every flag regardless of status, newest first.
+	 *
+	 * @param int $limit  Maximum rows.
+	 * @param int $offset Pagination offset.
+	 * @return object[]
+	 */
+	public static function list_all( int $limit = 50, int $offset = 0 ): array {
+		return static::db()->get_results(
+			static::db()->prepare(
+				'SELECT * FROM ' . static::table() . ' ORDER BY created_at DESC LIMIT %d OFFSET %d',
+				$limit,
+				$offset
+			)
+		) ?: [];
+	}
+
+	/**
+	 * Count flags with a given status ('' or 'all' counts every flag).
+	 *
+	 * Needed so a status-filtered list can paginate honestly — count_pending()
+	 * only ever answers for 'pending'.
+	 *
+	 * @param string $status Status to count, or '' / 'all' for every flag.
+	 */
+	public static function count_by_status( string $status = 'pending' ): int {
+		if ( '' === $status || 'all' === $status ) {
+			return (int) static::db()->get_var( 'SELECT COUNT(*) FROM ' . static::table() );
+		}
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE status = %s',
+				$status
+			)
+		);
 	}
 
 	/**

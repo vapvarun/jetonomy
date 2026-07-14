@@ -116,7 +116,7 @@ class Moderation_Controller extends Base_Controller {
 			]
 		);
 
-		// List pending flags.
+		// List flags, optionally filtered by status.
 		register_rest_route(
 			$ns,
 			'/moderation/flags',
@@ -124,6 +124,17 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'list_flags' ],
 				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					// Was undeclared, so the route ALWAYS returned pending flags and
+					// any "resolved" / "all" filter a client offered was dead UI.
+					// Statuses are the ones Flag actually writes: a new flag is
+					// 'pending'; resolving it sets 'valid' or 'dismissed'.
+					'status' => [
+						'type'    => 'string',
+						'default' => 'pending',
+						'enum'    => [ 'pending', 'valid', 'dismissed', 'all' ],
+					],
+				],
 			]
 		);
 
@@ -472,8 +483,11 @@ class Moderation_Controller extends Base_Controller {
 		$pagination = $this->get_pagination( $request );
 		$limit      = (int) $pagination['limit'];
 		$offset     = (int) $pagination['offset'];
+		$status     = (string) ( $request->get_param( 'status' ) ?: 'pending' );
 
-		$flags = Flag::list_pending( $limit, $offset );
+		$flags = 'all' === $status
+			? Flag::list_all( $limit, $offset )
+			: Flag::list_by_status( $status, $limit, $offset );
 
 		// Enrich the reporter (and resolver) so the queue can say WHO reported a
 		// thing. The raw row carries only reporter_id, which left every client
@@ -508,7 +522,9 @@ class Moderation_Controller extends Base_Controller {
 			$flag->resolved_by_name = $resolver->display_name ?? '';
 		}
 
-		$total = Flag::count_pending();
+		// Count for the SAME status we listed, or has_more lies on every filter
+		// other than 'pending'.
+		$total = Flag::count_by_status( $status );
 
 		return $this->paginated_response(
 			$flags,
