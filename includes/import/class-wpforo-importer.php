@@ -663,15 +663,21 @@ class WPForo_Importer extends Importer {
 			}
 
 			$first_post = $first_posts_map[ (int) $topic->topicid ] ?? null;
-			$content    = $first_post ? $first_post->body : '';
+			$content    = (string) ( $first_post ? $first_post->body : '' );
+
+			// Images pasted into the text are a separate loss from the attachment
+			// box: they render fine after import, so the migration looks clean, but
+			// the file is not a media item and deleting uploads/wpforo/ 404s it.
+			// Read from the body BEFORE we strip anything out of it.
+			$this->register_body_media( $content, 'wpforo' );
 
 			// wpForo keeps attachments as markup inside the body. Pull them out
 			// BEFORE the post is created so the stored content is clean; strip the
 			// source markup only when Pro is present to render them natively,
 			// otherwise leave it so the file stays reachable from the body.
-			$attachments = $this->parse_wpforo_attachments( (string) $content );
+			$attachments = $this->parse_wpforo_attachments( $content );
 			if ( $attachments && $this->pro_attachments_available() ) {
-				$content = $this->strip_wpforo_attachments( (string) $content );
+				$content = $this->strip_wpforo_attachments( $content );
 			}
 
 			$post_id = JtPost::create(
@@ -784,8 +790,10 @@ class WPForo_Importer extends Importer {
 				$parent_id = $this->get_mapped_id( 'wpforo_reply', $wf_post->parentid );
 			}
 
-			// Replies carry attachments too — same body markup as topics.
-			$body        = (string) $wf_post->body;
+			// Replies carry attachments and inline images too — same body as topics.
+			$body = (string) $wf_post->body;
+			$this->register_body_media( $body, 'wpforo' );
+
 			$attachments = $this->parse_wpforo_attachments( $body );
 			if ( $attachments && $this->pro_attachments_available() ) {
 				$body = $this->strip_wpforo_attachments( $body );

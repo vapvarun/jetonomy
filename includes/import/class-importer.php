@@ -263,4 +263,77 @@ abstract class Importer {
 
 		return $link_id > 0;
 	}
+
+	/**
+	 * Register every file a post body references out of the old forum's upload
+	 * folder into the WP media library.
+	 *
+	 * Separate from the attachment box: this is the image someone pasted *into* the
+	 * text. It survives the import untouched (wp_kses_post keeps <img> and <a>), so
+	 * the post still renders and the migration looks clean — but the file is not a
+	 * media-library item. It is invisible in Media, a media-only backup or host
+	 * migration leaves it behind, and nothing tells the owner that deleting the old
+	 * forum's upload folder will 404 every image in every migrated post.
+	 *
+	 * Registering it makes WordPress the owner of the file, which is the whole point
+	 * of migrating. We do NOT move or copy it: the file is already inside uploads/,
+	 * so its URL stays valid and the body needs no rewrite — and copying would double
+	 * the disk footprint of a forum whose attachments run to gigabytes.
+	 *
+	 * Deliberately keyed on the source forum's own folder (e.g. `wpforo`) rather than
+	 * all of uploads/: a body may also reference genuine media-library URLs, including
+	 * WP-generated `-800x600` sizes, which must not be re-registered as new items.
+	 *
+	 * Schema-free by design — it reads URLs out of the body, so it covers files put
+	 * there by an addon we do not have (wpForo's paid attachments addon) as well as
+	 * ones we do.
+	 *
+	 * @param string $body        Post body HTML.
+	 * @param string $path_prefix Folder under uploads/ owned by the source forum.
+	 * @return int Number of files now tracked in the media library.
+	 */
+	protected function register_body_media( string $body, string $path_prefix ): int {
+		$path_prefix = trim( $path_prefix, '/' );
+		if ( '' === $body || '' === $path_prefix || false === strpos( $body, $path_prefix . '/' ) ) {
+			return 0;
+		}
+
+		$uploads = wp_get_upload_dir();
+		if ( empty( $uploads['baseurl'] ) ) {
+			return 0;
+		}
+
+		$base_url = $uploads['baseurl'] . '/' . $path_prefix . '/';
+		// Bodies written years ago can hold the absolute URL, a protocol-relative
+		// one, or a site-root-relative path. Match on the path and rebuild.
+		$base_path = (string) wp_parse_url( $base_url, PHP_URL_PATH );
+
+		if ( ! preg_match_all( '#(?:src|href)=[\'"]([^\'"]+)[\'"]#i', $body, $matches ) ) {
+			return 0;
+		}
+
+		$registered = 0;
+		$seen       = [];
+
+		foreach ( array_unique( $matches[1] ) as $raw_url ) {
+			$url_path = (string) wp_parse_url( $raw_url, PHP_URL_PATH );
+			if ( '' === $url_path || 0 !== strpos( $url_path, $base_path ) ) {
+				continue;
+			}
+
+			// Rebuild against our own baseurl: the stored host may be the site's old
+			// domain, but the file sits in this site's uploads dir either way.
+			$absolute = $uploads['baseurl'] . substr( $url_path, strlen( (string) wp_parse_url( $uploads['baseurl'], PHP_URL_PATH ) ) );
+			if ( isset( $seen[ $absolute ] ) ) {
+				continue;
+			}
+			$seen[ $absolute ] = true;
+
+			if ( $this->ensure_media_id( 0, $absolute ) ) {
+				++$registered;
+			}
+		}
+
+		return $registered;
+	}
 }
