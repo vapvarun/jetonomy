@@ -57,6 +57,45 @@ abstract class Importer {
 	abstract public function run_batch( string $phase, int $offset, int $batch_size ): array;
 
 	/**
+	 * Wall-clock deadline for the current batch, or 0.0 when unbounded.
+	 *
+	 * @var float
+	 */
+	protected float $deadline = 0.0;
+
+	/**
+	 * Start this batch's time budget.
+	 *
+	 * Rows are cheap; their media is not. Registering one 4000x3000 forum photo costs
+	 * ~0.9s, nearly all of it wp_generate_attachment_metadata() regenerating every
+	 * thumbnail size. At the default 500-row batch that is minutes of CPU against a
+	 * 30s max_execution_time, so an image-heavy forum times out — and a batch that
+	 * dies half-way is worse than slow: the id map is only persisted when the batch
+	 * completes, so resuming replays rows that were already written and DUPLICATES
+	 * the customer's posts.
+	 *
+	 * So the batch stops itself at a row boundary before the request dies, persists
+	 * what it did, and reports the exact number of rows consumed. The next call picks
+	 * up from there. Slow imports get more batches, not lost or duplicated content.
+	 */
+	protected function start_budget(): void {
+		/**
+		 * Seconds a single import batch may spend before it stops at a row boundary.
+		 *
+		 * @param float $seconds Default 15.
+		 */
+		$seconds        = (float) apply_filters( 'jetonomy_import_batch_seconds', 15.0 );
+		$this->deadline = microtime( true ) + max( 1.0, $seconds );
+	}
+
+	/**
+	 * Has this batch used up its time budget?
+	 */
+	protected function budget_spent(): bool {
+		return $this->deadline > 0.0 && microtime( true ) >= $this->deadline;
+	}
+
+	/**
 	 * Save progress to wp_options for polling.
 	 */
 	public function save_progress( array $progress ): void {
@@ -161,6 +200,74 @@ abstract class Importer {
 	}
 
 	/**
+	 * Resolve a URL from an old forum body to the file's path inside uploads/.
+	 *
+	 * The single place any importer turns a source URL into a path. There used to be
+	 * two implementations that disagreed, and the naive one — a `strpos()` against
+	 * `$uploads['baseurl']` — was wrong against real forum markup:
+	 *
+	 *   - wpForo writes attachment hrefs PROTOCOL-RELATIVE (`//host/path`). Its
+	 *     folder map builds a `url//` key with `preg_replace('#^https?:#i','',$url)`
+	 *     (wpforo.php:499) and the attachment markup uses it (hooks.php:2432). A
+	 *     prefix compare against `https://host/...` fails on every one of them.
+	 *   - Bodies written before an http -> https move still carry `http://`.
+	 *   - Bodies written before a domain change still carry the old host.
+	 *
+	 * All three are the same file sitting in this site's uploads dir, so we match on
+	 * the PATH and ignore scheme/host entirely.
+	 *
+	 * Containment is enforced with realpath(): `uploads/wpforo/../../../wp-config.php`
+	 * is a valid path under the prefix and file_exists() would say yes. Registering
+	 * that as a media item would hand an attacker (any member who could type an <img>
+	 * years ago) arbitrary file registration — and, once someone deletes it from the
+	 * Media screen, arbitrary file DELETION, since wp_delete_attachment( $id, true )
+	 * unlinks whatever _wp_attached_file points at.
+	 *
+	 * @param string $file_url URL as it appears in the source body.
+	 * @return string Absolute path inside uploads/, or '' if it is not one.
+	 */
+	protected function resolve_upload_path( string $file_url ): string {
+		if ( '' === $file_url ) {
+			return '';
+		}
+
+		$uploads = wp_get_upload_dir();
+		if ( empty( $uploads['basedir'] ) || empty( $uploads['baseurl'] ) ) {
+			return '';
+		}
+
+		$url_path  = (string) wp_parse_url( $file_url, PHP_URL_PATH );
+		$base_path = (string) wp_parse_url( $uploads['baseurl'], PHP_URL_PATH );
+		if ( '' === $url_path || '' === $base_path || 0 !== strpos( $url_path, $base_path . '/' ) ) {
+			return '';
+		}
+
+		$relative  = rawurldecode( substr( $url_path, strlen( $base_path ) ) );
+		$candidate = $uploads['basedir'] . $relative;
+
+		$real = realpath( $candidate );
+		$root = realpath( $uploads['basedir'] );
+		if ( false === $real || false === $root || 0 !== strpos( $real, $root . DIRECTORY_SEPARATOR ) ) {
+			return ''; // Missing, or escaping uploads/ via `../`.
+		}
+
+		return $real;
+	}
+
+	/**
+	 * Public URL for a file we resolved inside uploads/.
+	 */
+	protected function upload_path_to_url( string $path ): string {
+		$uploads = wp_get_upload_dir();
+		$root    = realpath( $uploads['basedir'] );
+		if ( false === $root || 0 !== strpos( $path, $root ) ) {
+			return '';
+		}
+
+		return $uploads['baseurl'] . str_replace( DIRECTORY_SEPARATOR, '/', substr( $path, strlen( $root ) ) );
+	}
+
+	/**
 	 * Resolve a source attachment to a WordPress media ID, importing it if needed.
 	 *
 	 * @param int    $known_media_id Media ID the source already recorded, or 0.
@@ -175,36 +282,46 @@ abstract class Importer {
 			return $known_media_id;
 		}
 
-		if ( ! $file_url ) {
+		// The file already lives inside this site's uploads dir (the old forum put it
+		// there), so there is nothing to download — we register what is on disk.
+		$path = $this->resolve_upload_path( $file_url );
+		if ( '' === $path ) {
 			return 0;
 		}
 
-		// Map the public URL back to a path on disk. The file already lives inside
-		// this site's uploads dir (the old forum put it there), so there is nothing
-		// to download — we register what is already on disk.
-		$uploads = wp_get_upload_dir();
-		if ( empty( $uploads['baseurl'] ) || 0 !== strpos( $file_url, $uploads['baseurl'] ) ) {
-			return 0; // Off-site or unrecognised — leave the body link alone.
-		}
-
-		$path = $uploads['basedir'] . substr( $file_url, strlen( $uploads['baseurl'] ) );
-		if ( ! file_exists( $path ) ) {
+		$canonical_url = $this->upload_path_to_url( $path );
+		if ( '' === $canonical_url ) {
 			return 0;
 		}
 
 		// Already registered under a different code path? Don't create a second row.
-		$existing = attachment_url_to_postid( $file_url );
+		$existing = attachment_url_to_postid( $canonical_url );
 		if ( $existing ) {
 			return (int) $existing;
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/image.php';
+		// Refuse anything WordPress would not accept as an upload. The old code fell
+		// back to application/octet-stream here, which turned "WP rejects this file
+		// type" into "register it anyway" — and that is what made a planted
+		// `../../../wp-config.php` reachable.
+		$filetype = wp_check_filetype( basename( $path ), null );
+		if ( empty( $filetype['type'] ) ) {
+			$this->log_error( 'attachment', $file_url, 'Disallowed file type' );
+			return 0;
+		}
 
-		$filetype  = wp_check_filetype( basename( $path ), null );
+		// wp_generate_attachment_metadata() reaches into all three of these for
+		// audio/video (wp_read_video_metadata() lives in media.php). wpForo's own
+		// copy of this code requires all three; the live path only happens to work
+		// because admin-ajax loads them.
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+
 		$attach_id = wp_insert_attachment(
 			[
-				'guid'           => $file_url,
-				'post_mime_type' => $filetype['type'] ?: 'application/octet-stream',
+				'guid'           => $canonical_url,
+				'post_mime_type' => $filetype['type'],
 				'post_title'     => $file_name ?: basename( $path ),
 				'post_content'   => '',
 				'post_status'    => 'inherit',
@@ -303,10 +420,13 @@ abstract class Importer {
 			return 0;
 		}
 
-		$base_url = $uploads['baseurl'] . '/' . $path_prefix . '/';
-		// Bodies written years ago can hold the absolute URL, a protocol-relative
-		// one, or a site-root-relative path. Match on the path and rebuild.
-		$base_path = (string) wp_parse_url( $base_url, PHP_URL_PATH );
+		$base_path = (string) wp_parse_url( $uploads['baseurl'], PHP_URL_PATH );
+		if ( '' === $base_path ) {
+			return 0;
+		}
+		// Only files under the source forum's own folder. Trailing slash matters:
+		// without it `wpforo` would also swallow `wpforo-backup/`.
+		$prefix = $base_path . '/' . $path_prefix . '/';
 
 		if ( ! preg_match_all( '#(?:src|href)=[\'"]([^\'"]+)[\'"]#i', $body, $matches ) ) {
 			return 0;
@@ -316,20 +436,21 @@ abstract class Importer {
 		$seen       = [];
 
 		foreach ( array_unique( $matches[1] ) as $raw_url ) {
+			$raw_url = html_entity_decode( $raw_url, ENT_QUOTES, 'UTF-8' );
+
+			// Match on the path only: the body may carry a protocol-relative URL, an
+			// http:// one on a site now on https, or the site's previous domain.
 			$url_path = (string) wp_parse_url( $raw_url, PHP_URL_PATH );
-			if ( '' === $url_path || 0 !== strpos( $url_path, $base_path ) ) {
+			if ( '' === $url_path || 0 !== strpos( $url_path, $prefix ) ) {
 				continue;
 			}
 
-			// Rebuild against our own baseurl: the stored host may be the site's old
-			// domain, but the file sits in this site's uploads dir either way.
-			$absolute = $uploads['baseurl'] . substr( $url_path, strlen( (string) wp_parse_url( $uploads['baseurl'], PHP_URL_PATH ) ) );
-			if ( isset( $seen[ $absolute ] ) ) {
+			if ( isset( $seen[ $url_path ] ) ) {
 				continue;
 			}
-			$seen[ $absolute ] = true;
+			$seen[ $url_path ] = true;
 
-			if ( $this->ensure_media_id( 0, $absolute ) ) {
+			if ( $this->ensure_media_id( 0, $raw_url ) ) {
 				++$registered;
 			}
 		}

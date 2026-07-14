@@ -67,6 +67,13 @@ class WPForo_Importer extends Importer {
 	private const CAT_OPTION = 'jetonomy_import_wpforo_cat_id';
 
 	/**
+	 * Uploads folder of the board currently being imported (wpforo, wpforo_2, ...).
+	 *
+	 * @var string
+	 */
+	private string $media_dir = 'wpforo';
+
+	/**
 	 * Import one batch of one phase.
 	 *
 	 * This used to call run() — the entire import, every board — inside a single
@@ -94,7 +101,8 @@ class WPForo_Importer extends Importer {
 	 */
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
 		$batch_size = max( 1, $batch_size );
-		$boards     = $this->resolve_boards( $phase, $offset );
+		$this->start_budget();
+		$boards = $this->resolve_boards( $phase, $offset );
 
 		if ( empty( $boards ) ) {
 			return $this->finish();
@@ -107,6 +115,10 @@ class WPForo_Importer extends Importer {
 
 		$board  = $boards[ $idx ];
 		$prefix = (string) $board['prefix'];
+
+		// Board-scoped uploads folder (wpforo, wpforo_2, ...). Boards cached by an
+		// older build have no 'media' key, so fall back to the default board's.
+		$this->media_dir = (string) ( $board['media'] ?? 'wpforo' );
 
 		switch ( $phase ) {
 			case 'forums':
@@ -125,20 +137,29 @@ class WPForo_Importer extends Importer {
 				return $this->next( 'topics', 0, $this->imported - $before );
 
 			case 'topics':
-				$processed = $this->import_topics_batch( $prefix, $offset, $batch_size );
+				$r = $this->import_topics_batch( $prefix, $offset, $batch_size );
 				$this->persist_id_map();
 
-				return $processed >= $batch_size
-					? $this->next( 'topics', $offset + $batch_size, $processed )
-					: $this->next( 'replies', 0, $processed );
+				// Ran out of time mid-page: resume at the exact row we stopped on.
+				if ( $r['processed'] < $r['fetched'] ) {
+					return $this->next( 'topics', $offset + $r['processed'], $r['processed'] );
+				}
+
+				return $r['fetched'] >= $batch_size
+					? $this->next( 'topics', $offset + $r['processed'], $r['processed'] )
+					: $this->next( 'replies', 0, $r['processed'] );
 
 			case 'replies':
-				$processed = $this->import_replies_batch( $prefix, $offset, $batch_size );
+				$r = $this->import_replies_batch( $prefix, $offset, $batch_size );
 				$this->persist_id_map();
 
-				return $processed >= $batch_size
-					? $this->next( 'replies', $offset + $batch_size, $processed )
-					: $this->next( 'likes', 0, $processed );
+				if ( $r['processed'] < $r['fetched'] ) {
+					return $this->next( 'replies', $offset + $r['processed'], $r['processed'] );
+				}
+
+				return $r['fetched'] >= $batch_size
+					? $this->next( 'replies', $offset + $r['processed'], $r['processed'] )
+					: $this->next( 'likes', 0, $r['processed'] );
 
 			case 'likes':
 				// Likes are a thin join table; one pass per board is bounded and cheap.
@@ -217,6 +238,10 @@ class WPForo_Importer extends Importer {
 
 			$boards[] = [
 				'prefix'   => $prefix,
+				// Each board uploads to its OWN folder: wpforo, wpforo_2, wpforo_3...
+				// (wpforo.php:503). Hardcoding 'wpforo' silently skipped every file on
+				// every board but the first — no error, just missing media.
+				'media'    => 'wpforo' . ( $board_id ? '_' . $board_id : '' ),
 				'cat_name' => $multi
 					/* translators: %s: wpForo board name */
 					? sprintf( __( 'Imported from wpForo -- %s', 'jetonomy' ), $row->title )
@@ -426,6 +451,9 @@ class WPForo_Importer extends Importer {
 				'media_id' => $media_id,
 				'url'      => html_entity_decode( $url, ENT_QUOTES ),
 				'name'     => html_entity_decode( $name, ENT_QUOTES ),
+				// The exact markup this attachment came from. We only ever remove a
+				// block we have PROVEN we replaced.
+				'block'    => $block[0],
 			];
 		}
 
@@ -433,47 +461,53 @@ class WPForo_Importer extends Importer {
 	}
 
 	/**
-	 * Remove wpForo's attachment markup from a body we have migrated.
+	 * Migrate a body's attachments, and strip ONLY the ones that actually landed.
 	 *
-	 * Only called once the file is linked into Jetonomy — otherwise the reader
-	 * would see the attachment twice: once in Jetonomy's attachment UI and once as
-	 * wpForo's leftover paperclip link.
+	 * The subtle, dangerous version of this method stripped the whole body up front
+	 * (any wpfa block, on the strength of "Pro is active") and migrated afterwards.
+	 * If migration then recovered nothing — which is exactly what happened on a site
+	 * with attachs_to_medialib off — the body lost its links AND no attachment row was
+	 * written, so the file was referenced from nowhere. That is the customer's original
+	 * "missing media" bug, recreated by the fix meant to close it.
 	 *
-	 * @param string $body Post body HTML.
-	 * @return string
-	 */
-	private function strip_wpforo_attachments( string $body ): string {
-		$out = preg_replace( '#<div[^>]*id=[\'"]wpfa-\d+[\'"][^>]*>.*?</div>#is', '', $body );
-
-		return null === $out ? $body : trim( (string) $out );
-	}
-
-	/**
-	 * Migrate every attachment referenced by a source body onto an imported object.
+	 * So the rule is: a block is removed only after that specific file is linked. If
+	 * anything fails, wpForo's markup stays exactly where it is and the file remains
+	 * reachable from the post.
 	 *
 	 * @param string  $object_type 'post' or 'reply'.
 	 * @param int     $object_id   Jetonomy post/reply id.
 	 * @param array[] $attachments Rows from parse_wpforo_attachments().
-	 * @return int How many were linked.
+	 * @param string  $body        The body as stored.
+	 * @return array{linked: int, body: string} Linked count and the body to keep.
 	 */
-	private function migrate_attachments( string $object_type, int $object_id, array $attachments ): int {
+	private function migrate_attachments( string $object_type, int $object_id, array $attachments, string $body ): array {
 		$linked = 0;
 		$sort   = 0;
 
 		foreach ( $attachments as $att ) {
 			$media_id = $this->ensure_media_id( (int) $att['media_id'], (string) $att['url'], (string) $att['name'] );
 			if ( ! $media_id ) {
-				$this->log_error( 'attachment', $att['url'], 'Could not recover the file' );
+				$this->log_error( 'attachment', (string) $att['url'], 'Could not recover the file — left the link in the post' );
 				continue;
 			}
 
-			if ( $this->link_attachment( $object_type, $object_id, $media_id, $sort ) ) {
-				++$linked;
-				++$sort;
+			if ( ! $this->link_attachment( $object_type, $object_id, $media_id, $sort ) ) {
+				$this->log_error( 'attachment', (string) $att['url'], 'Could not attach the file — left the link in the post' );
+				continue;
 			}
+
+			// Linked. Now, and only now, take wpForo's markup out — otherwise the
+			// reader sees it twice: once in Jetonomy's attachment UI, once as
+			// wpForo's leftover paperclip link.
+			$body = str_replace( (string) $att['block'], '', $body );
+			++$linked;
+			++$sort;
 		}
 
-		return $linked;
+		return [
+			'linked' => $linked,
+			'body'   => $linked ? trim( $body ) : $body,
+		];
 	}
 
 	private function import_forums( int $cat_id, string $p = '' ): void {
@@ -595,9 +629,10 @@ class WPForo_Importer extends Importer {
 	 * @param string $p      Board table prefix.
 	 * @param int    $offset Row offset.
 	 * @param int    $limit  Page size.
-	 * @return int Rows consumed.
+	 * @return array{fetched:int, processed:int} `processed` < `fetched` means the batch
+	 *         stopped early on its time budget; resume from offset + processed.
 	 */
-	private function import_topics_batch( string $p, int $offset, int $limit ): int {
+	private function import_topics_batch( string $p, int $offset, int $limit ): array {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -610,9 +645,13 @@ class WPForo_Importer extends Importer {
 			)
 		);
 
-		$this->import_topic_rows( (array) $topics, $p );
+		$fetched   = count( (array) $topics );
+		$processed = $this->import_topic_rows( (array) $topics, $p );
 
-		return count( (array) $topics );
+		return [
+			'fetched'   => $fetched,
+			'processed' => $processed,
+		];
 	}
 
 	/**
@@ -622,12 +661,13 @@ class WPForo_Importer extends Importer {
 	 *
 	 * @param object[] $topics wpForo topic rows.
 	 * @param string   $p      Board table prefix.
+	 * @return int Rows CONSUMED (including skipped ones) — what the offset advances by.
 	 */
-	private function import_topic_rows( array $topics, string $p ): void {
+	private function import_topic_rows( array $topics, string $p ): int {
 		global $wpdb;
 
 		if ( empty( $topics ) ) {
-			return;
+			return 0;
 		}
 
 		$topic_ids    = wp_list_pluck( $topics, 'topicid' );
@@ -650,7 +690,15 @@ class WPForo_Importer extends Importer {
 			$first_posts_map[ (int) $fp->topicid ] = $fp;
 		}
 
+		$consumed = 0;
+		$total    = count( $topics );
+
 		foreach ( $topics as $topic ) {
+			// Count the row as consumed BEFORE any `continue` below: a skipped row is
+			// still a row the offset moved past. Miscounting here would replay it and
+			// duplicate the customer's content.
+			++$consumed;
+
 			$space_id = $this->get_mapped_id( 'forum', $topic->forumid );
 			if ( ! $space_id ) {
 				++$this->skipped;
@@ -668,17 +716,12 @@ class WPForo_Importer extends Importer {
 			// Images pasted into the text are a separate loss from the attachment
 			// box: they render fine after import, so the migration looks clean, but
 			// the file is not a media item and deleting uploads/wpforo/ 404s it.
-			// Read from the body BEFORE we strip anything out of it.
-			$this->register_body_media( $content, 'wpforo' );
+			$this->register_body_media( $content, $this->media_dir );
 
-			// wpForo keeps attachments as markup inside the body. Pull them out
-			// BEFORE the post is created so the stored content is clean; strip the
-			// source markup only when Pro is present to render them natively,
-			// otherwise leave it so the file stays reachable from the body.
+			// The post is created with the body INTACT. Attachment markup is removed
+			// only after each file is proven linked (see migrate_attachments), so a
+			// failed migration can never leave the reader with no way to the file.
 			$attachments = $this->parse_wpforo_attachments( $content );
-			if ( $attachments && $this->pro_attachments_available() ) {
-				$content = $this->strip_wpforo_attachments( $content );
-			}
 
 			$post_id = JtPost::create(
 				[
@@ -703,9 +746,22 @@ class WPForo_Importer extends Importer {
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', $topic->topicid, $post_id );
+
 				if ( $attachments ) {
-					$this->migrate_attachments( 'post', (int) $post_id, $attachments );
+					$result = $this->migrate_attachments( 'post', (int) $post_id, $attachments, $content );
+
+					// Only rewrite the stored body for the blocks that actually linked.
+					if ( $result['linked'] > 0 ) {
+						JtPost::update(
+							(int) $post_id,
+							[
+								'content'       => wp_kses_post( $result['body'] ),
+								'content_plain' => wp_strip_all_tags( $result['body'] ),
+							]
+						);
+					}
 				}
+
 				if ( $first_post ) {
 					$this->map_id( 'wpforo_post', $first_post->postid, 0 );
 				}
@@ -713,7 +769,15 @@ class WPForo_Importer extends Importer {
 			} else {
 				++$this->skipped;
 			}
+
+			// Out of time, but not out of rows: stop cleanly here. The caller resumes
+			// at exactly $consumed, so nothing is lost and nothing is done twice.
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return $consumed;
 	}
 
 	private function import_replies( string $p = '' ): void {
@@ -744,9 +808,9 @@ class WPForo_Importer extends Importer {
 	 * @param string $p      Board table prefix.
 	 * @param int    $offset Row offset.
 	 * @param int    $limit  Page size.
-	 * @return int Rows consumed.
+	 * @return array{fetched:int, processed:int}
 	 */
-	private function import_replies_batch( string $p, int $offset, int $limit ): int {
+	private function import_replies_batch( string $p, int $offset, int $limit ): array {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -765,9 +829,13 @@ class WPForo_Importer extends Importer {
 			)
 		);
 
-		$this->import_reply_rows( (array) $posts );
+		$fetched   = count( (array) $posts );
+		$processed = $this->import_reply_rows( (array) $posts );
 
-		return count( (array) $posts );
+		return [
+			'fetched'   => $fetched,
+			'processed' => $processed,
+		];
 	}
 
 	/**
@@ -776,9 +844,16 @@ class WPForo_Importer extends Importer {
 	 * Shared by the batched and single-shot paths so the two cannot drift.
 	 *
 	 * @param object[] $posts wpForo post rows (excluding each topic's first post).
+	 * @return int Rows CONSUMED (including skipped ones).
 	 */
-	private function import_reply_rows( array $posts ): void {
+	private function import_reply_rows( array $posts ): int {
+		$consumed = 0;
+		$total    = count( $posts );
+
 		foreach ( $posts as $wf_post ) {
+			// Counted before any `continue` — see import_topic_rows().
+			++$consumed;
+
 			$post_id = $this->get_mapped_id( 'topic', $wf_post->topicid );
 			if ( ! $post_id ) {
 				++$this->skipped;
@@ -792,12 +867,9 @@ class WPForo_Importer extends Importer {
 
 			// Replies carry attachments and inline images too — same body as topics.
 			$body = (string) $wf_post->body;
-			$this->register_body_media( $body, 'wpforo' );
+			$this->register_body_media( $body, $this->media_dir );
 
 			$attachments = $this->parse_wpforo_attachments( $body );
-			if ( $attachments && $this->pro_attachments_available() ) {
-				$body = $this->strip_wpforo_attachments( $body );
-			}
 
 			$reply_id = JtReply::create(
 				[
@@ -818,14 +890,32 @@ class WPForo_Importer extends Importer {
 
 			if ( $reply_id ) {
 				$this->map_id( 'wpforo_reply', $wf_post->postid, $reply_id );
+
 				if ( $attachments ) {
-					$this->migrate_attachments( 'reply', (int) $reply_id, $attachments );
+					$result = $this->migrate_attachments( 'reply', (int) $reply_id, $attachments, $body );
+
+					if ( $result['linked'] > 0 ) {
+						JtReply::update(
+							(int) $reply_id,
+							[
+								'content'       => wp_kses_post( $result['body'] ),
+								'content_plain' => wp_strip_all_tags( $result['body'] ),
+							]
+						);
+					}
 				}
+
 				++$this->imported;
 			} else {
 				++$this->skipped;
 			}
+
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return $consumed;
 	}
 
 	private function import_likes( string $p = '' ): void {
