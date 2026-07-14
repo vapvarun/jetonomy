@@ -50,26 +50,35 @@ class Notifier {
 	}
 
 	/**
-	 * Verify an unsubscribe token. Honours the signed expiry; falls back to the
-	 * legacy non-expiring token so links in already-sent emails keep working
-	 * during the deprecation window.
+	 * Verify an unsubscribe token.
+	 *
+	 * Every link must now carry a signed expiry. The old non-expiring token
+	 * (pre-1.5.0) is no longer accepted: it was a bearer credential with no
+	 * lifetime, so anyone who ever saw one of those emails — a shared inbox, a
+	 * forwarded message, a mail archive — could unsubscribe that member forever.
+	 * The deprecation window the 1.5.0 fallback existed for has passed (1.6.0 and
+	 * 1.7.0 have both shipped since), so the fallback is gone.
+	 *
+	 * A link from an email sent before 1.5.0 will now fail closed rather than
+	 * silently honour an unbounded token. Those members can still unsubscribe from
+	 * their notification settings, or from any newer email.
 	 *
 	 * @param int    $user_id User id from the URL.
 	 * @param string $type    Notification type from the URL.
 	 * @param string $token   Token from the URL.
-	 * @param int    $expires Expiry timestamp from the URL (0 for a legacy link).
+	 * @param int    $expires Expiry timestamp from the URL.
 	 * @return bool
 	 */
 	public static function verify_unsubscribe( int $user_id, string $type, string $token, int $expires ): bool {
-		if ( $expires > 0 ) {
-			if ( time() > $expires ) {
-				return false; // Link has expired.
-			}
-			return hash_equals( self::unsubscribe_token( $user_id, $type, $expires ), $token );
+		if ( $expires <= 0 ) {
+			return false; // Unsigned / pre-1.5.0 link — no longer honoured.
 		}
-		// Legacy link (no exp param). TODO: drop after 2 releases once historic
-		// emails have aged out, leaving only expiring links.
-		return hash_equals( wp_hash( $user_id . ':' . $type . ':unsubscribe' ), $token );
+
+		if ( time() > $expires ) {
+			return false; // Link has expired.
+		}
+
+		return hash_equals( self::unsubscribe_token( $user_id, $type, $expires ), $token );
 	}
 
 	/**

@@ -2713,6 +2713,16 @@ tr.jetonomy-moderated td {
 	margin: 12px 0;
 }
 
+/* The search field inherited WP's narrow default width, which clipped its own
+   placeholder ("Member username or email" rendered as "Member username or").
+   Give it room for the placeholder it ships with, and let it flex down on narrow
+   screens rather than overflowing the row. */
+.jt-cmedia__filters input[type="search"] {
+	flex: 1 1 240px;
+	min-width: 0;
+	max-width: 320px;
+}
+
 .jt-cmedia__count {
 	font-weight: 600;
 	color: var(--jt-admin-text-2);

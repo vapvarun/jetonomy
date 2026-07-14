@@ -612,8 +612,8 @@ final class Jetonomy {
 			return;
 		}
 
-		// Verify the signed, time-limited token (legacy non-expiring links still
-		// accepted during the deprecation window — see Notifier::verify_unsubscribe).
+		// Verify the signed, time-limited token. Unsigned pre-1.5.0 links are no
+		// longer honoured — see Notifier::verify_unsubscribe().
 		if ( ! Notifications\Notifier::verify_unsubscribe( $user_id, $type, $token, $expires ) ) {
 			wp_die( esc_html__( 'This unsubscribe link is invalid or has expired.', 'jetonomy' ), '', array( 'response' => 403 ) );
 		}

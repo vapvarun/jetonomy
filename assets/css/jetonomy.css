@@ -2628,11 +2628,23 @@
 .jt-toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
   z-index: 10001; background: var(--jt-text, #1a1a1a); color: var(--jt-bg, #fff);
-  padding: 10px 24px; border-radius: var(--jt-radius-full, 20px);
-  font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+  padding: 10px 24px; border-radius: var(--jt-radius-lg, 12px);
+  font-size: 0.875rem; font-weight: 600;
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   opacity: 0; transition: opacity 0.3s, transform 0.3s;
   pointer-events: none;
+
+  /* This is the shared toast: anything that calls window.bnToast() lands here,
+     including third-party messages we do not control the length of (a
+     gamification plugin's "You earned 10 points for your first reply!", for
+     instance). It used to be `white-space: nowrap` with no max-width, so a
+     message of any real length grew WIDER THAN THE VIEWPORT — measured at 394px
+     inside a 390px screen — and spilled over the content behind it. Let it wrap
+     and cap it to the screen. */
+  max-width: min(28rem, calc(100vw - 32px));
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 .jt-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 

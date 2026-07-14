@@ -787,6 +787,20 @@
   .jt-reply-foot { display: flex; align-items: center; gap: var(--jt-space-3); padding-block-start: var(--jt-space-2); padding-block-end: var(--jt-space-3); padding-inline: var(--jt-space-5); }
   .jt-accepted-tag { margin-right: auto; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--jt-success); white-space: nowrap; }
   .jt-accepted-tag svg { flex-shrink: 0; }
+
+  /* Blocked-author tombstone (reply-card.php). Node is kept so nested,
+     non-blocked replies still attach — only this row's content is hidden. */
+  .jt-reply-blocked { border-style: dashed; }
+  .jt-reply-tombstone { display: flex; align-items: center; flex-wrap: wrap; gap: var(--jt-space-2); padding: var(--jt-space-3) var(--jt-space-4); color: var(--jt-text-tertiary); font-size: 0.9375rem; font-style: italic; }
+  .jt-reply-tombstone svg { flex-shrink: 0; }
+  .jt-unblock-btn { margin-inline-start: auto; font-style: normal; font-size: 0.8125rem; font-weight: 600; color: var(--jt-accent); background: none; border: none; cursor: pointer; padding: 2px var(--jt-space-2); border-radius: var(--jt-radius-sm); }
+  .jt-unblock-btn:hover, .jt-unblock-btn:focus-visible { background: var(--jt-accent-light); }
+
+  /* Blocked-author tombstone — full single-post view (single-post.php). Deep
+     links to a blocked author's post land here instead of the full content. */
+  .jt-post-blocked-tombstone { display: flex; flex-direction: column; align-items: center; gap: var(--jt-space-3); padding: var(--jt-space-6, 32px) var(--jt-space-4); text-align: center; color: var(--jt-text-tertiary); border: 1px dashed var(--jt-border); border-radius: var(--jt-radius-lg); }
+  .jt-post-blocked-tombstone p { margin: 0; font-size: 1rem; }
+
   /* Threaded reply nesting — up to 3 levels */
   .jt-nested { margin-right: 24px; position: relative; }
   .jt-nested::before { content: ''; position: absolute; right: -12px; top: 0; bottom: 0; width: 2px; background: var(--jt-border); border-radius: 1px; }
@@ -2614,11 +2628,23 @@
 .jt-toast {
   position: fixed; bottom: 24px; right: 50%; transform: translateX(50%) translateY(20px);
   z-index: 10001; background: var(--jt-text, #1a1a1a); color: var(--jt-bg, #fff);
-  padding: 10px 24px; border-radius: var(--jt-radius-full, 20px);
-  font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+  padding: 10px 24px; border-radius: var(--jt-radius-lg, 12px);
+  font-size: 0.875rem; font-weight: 600;
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   opacity: 0; transition: opacity 0.3s, transform 0.3s;
   pointer-events: none;
+
+  /* This is the shared toast: anything that calls window.bnToast() lands here,
+     including third-party messages we do not control the length of (a
+     gamification plugin's "You earned 10 points for your first reply!", for
+     instance). It used to be `white-space: nowrap` with no max-width, so a
+     message of any real length grew WIDER THAN THE VIEWPORT — measured at 394px
+     inside a 390px screen — and spilled over the content behind it. Let it wrap
+     and cap it to the screen. */
+  max-width: min(28rem, calc(100vw - 32px));
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 .jt-toast.show { opacity: 1; transform: translateX(50%) translateY(0); }
 
