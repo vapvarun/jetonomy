@@ -29,31 +29,44 @@ class Attachments {
 	public function register(): void {
 		add_filter( 'jetonomy_after_post_content', array( $this, 'render_post' ), 20, 2 );
 		add_filter( 'jetonomy_after_reply_content', array( $this, 'render_reply' ), 20, 2 );
+
+		// The REST payload is FREE too. It used to be injected by Pro, which meant the
+		// mobile app saw no attachments at all on a free site — the data was there and
+		// simply never left the server. Pro enriches each item through
+		// `jetonomy_rest_attachment_data`, so a Pro site's payload is unchanged.
+		add_filter( 'jetonomy_rest_prepare_post', array( $this, 'inject_post_payload' ), 10, 2 );
+		add_filter( 'jetonomy_rest_prepare_reply', array( $this, 'inject_reply_payload' ), 10, 2 );
 	}
 
 	/**
-	 * Should free draw the attachments?
-	 *
-	 * Pro ships a richer strip (lightbox, inline PDF preview, type badges) and turns
-	 * this off so exactly ONE renderer runs — otherwise every attachment would appear
-	 * twice. The DATA is identical either way, which is the whole point: a site that
-	 * loses Pro keeps showing its files, just more plainly.
+	 * @param array  $data Post payload.
+	 * @param object $post Post row.
 	 */
-	private function enabled(): bool {
-		/**
-		 * Filter whether free renders the attachment list.
-		 *
-		 * @param bool $enabled Default true. Pro returns false and renders its own.
-		 */
-		return (bool) apply_filters( 'jetonomy_render_attachments', true );
+	public function inject_post_payload( array $data, $post ): array {
+		$data['attachments'] = Attachment::payload_for( 'post', (int) ( $post->id ?? 0 ) );
+
+		return $data;
 	}
+
+	/**
+	 * @param array  $data  Reply payload.
+	 * @param object $reply Reply row.
+	 */
+	public function inject_reply_payload( array $data, $reply ): array {
+		// get_for() is cache-transparent, and the reply list is primed in one query
+		// by prime_for_post(), so a page of N replies costs no extra queries.
+		$data['attachments'] = Attachment::payload_for( 'reply', (int) ( $reply->id ?? 0 ) );
+
+		return $data;
+	}
+
 
 	/**
 	 * @param string $html Existing appended HTML.
 	 * @param object $post Post row.
 	 */
 	public function render_post( string $html, $post ): string {
-		if ( empty( $post->id ) || ! $this->enabled() ) {
+		if ( empty( $post->id ) ) {
 			return $html;
 		}
 
@@ -69,7 +82,7 @@ class Attachments {
 	 * @param object $reply Reply row.
 	 */
 	public function render_reply( string $html, $reply ): string {
-		if ( empty( $reply->id ) || ! $this->enabled() ) {
+		if ( empty( $reply->id ) ) {
 			return $html;
 		}
 
@@ -94,13 +107,15 @@ class Attachments {
 				: $this->file_card( $attachment );
 
 			/**
-			 * Filter a single attachment card.
+			 * Filter one attachment's card HTML.
 			 *
-			 * Pro uses this to upgrade a card in place (e.g. an inline PDF preview)
-			 * without changing the stored data or free's fallback.
+			 * This is the ONLY seam a richer renderer needs. Pro returns its own card
+			 * (lightbox image, inline PDF viewer, typed chip) — so there is exactly one
+			 * list renderer in the codebase, not one per plugin, and free's basic card
+			 * is the fallback when Pro is absent.
 			 *
-			 * @param string $card       Card HTML.
-			 * @param array  $attachment Hydrated attachment.
+			 * @param string $card        Card HTML.
+			 * @param array  $attachment  Hydrated attachment.
 			 * @param string $object_type 'post'|'reply'.
 			 * @param int    $object_id   Object id.
 			 */
@@ -111,8 +126,17 @@ class Attachments {
 			return '';
 		}
 
+		/**
+		 * Filter the attachment list's wrapper class, so a richer renderer can keep
+		 * its own container styling.
+		 *
+		 * @param string $class Wrapper class.
+		 */
+		$class = (string) apply_filters( 'jetonomy_attachments_class', 'jt-attachments' );
+
 		return sprintf(
-			'<ul class="jt-attachments" aria-label="%s">%s</ul>',
+			'<ul class="%1$s" aria-label="%2$s">%3$s</ul>',
+			esc_attr( $class ),
 			esc_attr__( 'Attachments', 'jetonomy' ),
 			$cards
 		);

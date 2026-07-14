@@ -211,9 +211,17 @@ class Attachment {
 	}
 
 	/**
-	 * Hydrate a link row into what a renderer or REST payload needs.
+	 * Hydrate a link row into the canonical attachment shape.
 	 *
-	 * @return array{id:int,attachment_id:int,url:string,name:string,mime:string,ext:string,size:int,is_image:bool,thumb:string}|null
+	 * ONE shape, used by the frontend renderer AND the REST payload, so the web and
+	 * the app can never drift. The keys are exactly the ones the app already consumes
+	 * (they were Pro's) — `id` is the MEDIA id and `link_id` the row id, which reads
+	 * backwards but is the established contract and not worth breaking clients over.
+	 *
+	 * Pro enriches this per item through `jetonomy_rest_attachment_data` (it swaps in
+	 * its own download URL for non-images), so a Pro site's payload is unchanged.
+	 *
+	 * @return array{id:int,link_id:int,url:string,thumb:string,mime:string,name:string,size:int,type:string,ext:string,is_image:bool}|null
 	 */
 	public static function hydrate( object $row ): ?array {
 		$attachment_id = (int) $row->attachment_id;
@@ -222,20 +230,60 @@ class Attachment {
 			return null; // Media item deleted from under us — render nothing, not a broken card.
 		}
 
-		$file     = (string) get_attached_file( $attachment_id );
-		$mime     = (string) get_post_mime_type( $attachment_id );
-		$is_image = (bool) wp_attachment_is_image( $attachment_id );
+		$file = (string) get_attached_file( $attachment_id );
+		$mime = (string) get_post_mime_type( $attachment_id );
+
+		if ( 0 === strpos( $mime, 'image/' ) ) {
+			$type = 'image';
+		} elseif ( 'application/pdf' === $mime ) {
+			$type = 'pdf';
+		} else {
+			$type = 'file';
+		}
 
 		return array(
-			'id'            => (int) $row->id,
-			'attachment_id' => $attachment_id,
-			'url'           => $url,
-			'name'          => $file ? basename( $file ) : (string) get_the_title( $attachment_id ),
-			'mime'          => $mime,
-			'ext'           => strtoupper( (string) pathinfo( $url, PATHINFO_EXTENSION ) ),
-			'size'          => ( $file && file_exists( $file ) ) ? (int) filesize( $file ) : 0,
-			'is_image'      => $is_image,
-			'thumb'         => $is_image ? (string) wp_get_attachment_image_url( $attachment_id, 'medium' ) : '',
+			'id'       => $attachment_id,
+			'link_id'  => (int) $row->id,
+			'url'      => $url,
+			'thumb'    => (string) ( wp_get_attachment_image_url( $attachment_id, 'image' === $type ? 'medium' : 'thumbnail' ) ?: '' ),
+			'mime'     => $mime,
+			// Real filename WITH extension, so a card can show "sample.pdf" and derive
+			// its own type badge.
+			'name'     => $file ? basename( $file ) : (string) get_the_title( $attachment_id ),
+			'size'     => ( $file && file_exists( $file ) ) ? (int) filesize( $file ) : 0,
+			'type'     => $type,
+			'ext'      => strtoupper( (string) pathinfo( $url, PATHINFO_EXTENSION ) ),
+			'is_image' => 'image' === $type,
 		);
+	}
+
+	/**
+	 * The attachments on an object, hydrated, for a REST payload.
+	 *
+	 * @return array[]
+	 */
+	public static function payload_for( string $object_type, int $object_id ): array {
+		$out = array();
+
+		foreach ( static::get_for( $object_type, $object_id ) as $row ) {
+			$data = static::hydrate( $row );
+			if ( null === $data ) {
+				continue;
+			}
+
+			/**
+			 * Filter one attachment's REST/render data.
+			 *
+			 * Pro uses this to swap in its gated download URL for non-images and to
+			 * add PDF page counts, without free needing to know anything about it.
+			 *
+			 * @param array  $data        Canonical attachment data.
+			 * @param string $object_type 'post'|'reply'.
+			 * @param int    $object_id   Object id.
+			 */
+			$out[] = (array) apply_filters( 'jetonomy_rest_attachment_data', $data, $object_type, $object_id );
+		}
+
+		return $out;
 	}
 }
