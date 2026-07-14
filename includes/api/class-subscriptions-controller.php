@@ -95,6 +95,7 @@ class Subscriptions_Controller extends Base_Controller {
 		);
 
 		$items = array_map( [ $this, 'prepare_subscription' ], $rows );
+		$items = $this->attach_subscription_targets( $items );
 
 		return $this->paginated_response(
 			$items,
@@ -103,6 +104,73 @@ class Subscriptions_Controller extends Base_Controller {
 				'offset' => $offset,
 			]
 		);
+	}
+
+	/**
+	 * Attach the title of whatever each subscription points at.
+	 *
+	 * The rows carry only object_type + object_id, so a client had nothing
+	 * human-readable to show and could only render a row of identical "Open post"
+	 * buttons — a subscriptions list that cannot tell you WHAT you subscribed to
+	 * is not a list, it's a row of mystery links.
+	 *
+	 * Batch-loaded: two queries for the whole page (one for posts, one for
+	 * spaces), never a lookup per row.
+	 *
+	 * @param array[] $items Prepared subscription rows.
+	 * @return array[]
+	 */
+	private function attach_subscription_targets( array $items ): array {
+		$post_ids  = [];
+		$space_ids = [];
+		foreach ( $items as $item ) {
+			if ( 'post' === ( $item['object_type'] ?? '' ) ) {
+				$post_ids[] = (int) $item['object_id'];
+			} elseif ( 'space' === ( $item['object_type'] ?? '' ) ) {
+				$space_ids[] = (int) $item['object_id'];
+			}
+		}
+
+		global $wpdb;
+		$titles = [];
+
+		if ( $post_ids ) {
+			$posts_tbl = table( 'posts' );
+			$ph        = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$posts_tbl} WHERE id IN ({$ph})", ...$post_ids ) ) ?: [];
+			foreach ( $rows as $row ) {
+				$titles[ 'post:' . (int) $row->id ] = [
+					'title' => $row->title ?? '',
+					'slug'  => $row->slug ?? '',
+				];
+			}
+		}
+
+		if ( $space_ids ) {
+			$spaces_tbl = table( 'spaces' );
+			$ph         = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: [];
+			foreach ( $rows as $row ) {
+				$titles[ 'space:' . (int) $row->id ] = [
+					'title' => $row->name ?? '',
+					'slug'  => $row->slug ?? '',
+				];
+			}
+		}
+
+		foreach ( $items as &$item ) {
+			$key           = ( $item['object_type'] ?? '' ) . ':' . (int) ( $item['object_id'] ?? 0 );
+			$target        = $titles[ $key ] ?? null;
+			$item['title'] = $target['title'] ?? '';
+			$item['slug']  = $target['slug'] ?? '';
+			// The target may have been deleted since the subscription was made.
+			$item['exists'] = null !== $target;
+		}
+		unset( $item );
+
+		return $items;
 	}
 
 	/**
