@@ -303,6 +303,13 @@ class Moderation_Controller extends Base_Controller {
 		);
 		$page = array_slice( $merged, $pagination['offset'], $pagination['limit'] );
 
+		// Name the author. The raw rows carry only author_id, so every client was
+		// rendering "post by unknown" — a moderation queue that cannot tell you who
+		// wrote the thing you are about to approve, spam or trash is close to
+		// useless, and the decision often turns on exactly that. Batch-loaded via
+		// the shared helper: one query for the page, never a get_userdata() per row.
+		$page = $this->enrich_with_author( $page );
+
 		$response = $this->paginated_response(
 			$page,
 			array(
