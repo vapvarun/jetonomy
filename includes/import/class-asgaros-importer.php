@@ -413,6 +413,83 @@ class Asgaros_Importer extends Importer {
 	 *
 	 * @param object[] $topics Asgaros topic rows.
 	 */
+	/**
+	 * Carry an Asgaros post's uploads onto the imported object.
+	 *
+	 * Verified against a real Asgaros Forum install by reading its own upload code
+	 * (includes/forum-uploads.php), not by assuming:
+	 *
+	 *   - The file list lives in `forum_posts.uploads`, a longtext column holding a
+	 *     SERIALIZED array of bare file names (`$links[] = $name;`). No media table,
+	 *     no body markup.
+	 *   - The file itself sits at `uploads/{folder}/{SOURCE post id}/{name}` — the
+	 *     source post id is part of the path, so it has to be read before we throw
+	 *     the old id away.
+	 *   - It is written with move_uploaded_file() and never touches
+	 *     wp_insert_attachment(), so unlike bbPress the file is NOT in the media
+	 *     library. It has to be registered, which is exactly what ensure_media_id()
+	 *     does (and that also gets the file out of harm's way if Asgaros is removed).
+	 *
+	 * The folder is filterable in Asgaros (asgarosforum_filter_upload_folder), so we
+	 * ask for the same value rather than hardcoding it and silently missing every
+	 * file on a site that changed it.
+	 *
+	 * @param string $object_type    'post' or 'reply'.
+	 * @param int    $object_id      Imported Jetonomy post/reply id.
+	 * @param int    $source_post_id Asgaros post id (part of the file path).
+	 * @param mixed  $uploads        Raw `uploads` column value.
+	 * @return int Files linked.
+	 */
+	private function migrate_asgaros_uploads( string $object_type, int $object_id, int $source_post_id, $uploads ): int {
+		if ( ! $object_id || ! $source_post_id || empty( $uploads ) ) {
+			return 0;
+		}
+
+		$files = maybe_unserialize( $uploads );
+		if ( ! is_array( $files ) || ! $files ) {
+			return 0;
+		}
+
+		$base = wp_get_upload_dir()['baseurl'] . '/' . $this->asgaros_upload_folder() . '/' . $source_post_id . '/';
+
+		$linked = 0;
+		$sort   = 0;
+
+		foreach ( $files as $name ) {
+			$name = (string) $name;
+			if ( '' === $name ) {
+				continue;
+			}
+
+			$media_id = $this->ensure_media_id( 0, $base . rawurlencode( $name ), $name );
+			if ( ! $media_id ) {
+				$this->log_error( 'attachment', $base . $name, 'Could not recover the file' );
+				continue;
+			}
+
+			if ( $this->link_attachment( $object_type, $object_id, $media_id, $sort ) ) {
+				++$linked;
+				++$sort;
+			}
+		}
+
+		return $linked;
+	}
+
+	/**
+	 * Asgaros' uploads folder under uploads/. Filterable on their side, so we read
+	 * the same value instead of hardcoding 'asgarosforum'.
+	 */
+	private function asgaros_upload_folder(): string {
+		// Asgaros' own filter, deliberately. We are asking THEIR plugin where it put
+		// the files; prefixing this with jetonomy_ would just be us talking to
+		// ourselves and would miss every file on a site that changed the folder.
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+		$folder = apply_filters( 'asgarosforum_filter_upload_folder', 'asgarosforum' );
+
+		return trim( (string) $folder, '/' ) ?: 'asgarosforum';
+	}
+
 	private function import_topic_rows( array $topics ): void {
 		global $wpdb;
 		$p = $wpdb->prefix;
@@ -478,9 +555,20 @@ class Asgaros_Importer extends Importer {
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
+
 				if ( $first_post ) {
+					// Inline images in the text, then the upload list. Both live under
+					// Asgaros' own folder and neither is in the media library.
+					$this->register_body_media( (string) $content, $this->asgaros_upload_folder() );
+					$this->migrate_asgaros_uploads(
+						'post',
+						(int) $post_id,
+						(int) $first_post->id,
+						$first_post->uploads ?? ''
+					);
 					$this->map_id( 'asgaros_post_skip', (int) $first_post->id, 0 );
 				}
+
 				++$this->imported;
 			} else {
 				$this->log_error( 'topic', $topic->id, 'Failed to create post' );
@@ -542,6 +630,15 @@ class Asgaros_Importer extends Importer {
 
 			if ( $reply_id ) {
 				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );
+
+				$this->register_body_media( (string) $asgaros_post->text, $this->asgaros_upload_folder() );
+				$this->migrate_asgaros_uploads(
+					'reply',
+					(int) $reply_id,
+					(int) $asgaros_post->id,
+					$asgaros_post->uploads ?? ''
+				);
+
 				++$this->imported;
 			} else {
 				$this->log_error( 'reply', $asgaros_post->id, 'Failed to create reply' );
