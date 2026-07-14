@@ -87,6 +87,7 @@ class Schema {
 			'jt_invite_links',
 			'jt_bookmarks',
 			'jt_blocked_users',
+			'jt_attachments',
 		];
 	}
 
@@ -439,6 +440,35 @@ class Schema {
   PRIMARY KEY  (blocker_id, blocked_id),
   KEY blocker_created (blocker_id, created_at),
   KEY blocked_id (blocked_id)
+) ENGINE=InnoDB $charset_collate;";
+
+		/*
+		 * 22. jt_attachments — the files on a post or reply.
+		 *
+		 * MUST be here, not only in Migration_1_7_1. A fresh install never runs a
+		 * migration: activate() calls create_tables() and stamps db_version at the
+		 * current release, so check_db_version() has nothing to do. A table that
+		 * exists only in a migration file therefore never gets created on a new
+		 * site — and this one is also the table the whole attachment feature reads,
+		 * so free-only installs would have had no attachments at all.
+		 *
+		 * Being here also puts it under the create_tables() self-heal net and makes
+		 * uninstall drop it, both of which are driven off get_table_names().
+		 *
+		 * Definition must stay byte-identical to Migration_1_7_1's, or the two
+		 * dbDelta calls will fight each other with ALTER TABLEs.
+		 */
+		$sqls[] = "CREATE TABLE {$p}jt_attachments (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  object_type enum('post','reply') NOT NULL,
+  object_id bigint(20) unsigned NOT NULL,
+  attachment_id bigint(20) unsigned NOT NULL,
+  sort smallint(5) unsigned NOT NULL DEFAULT 0,
+  created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY  (id),
+  UNIQUE KEY object_attachment (object_type,object_id,attachment_id),
+  KEY object (object_type,object_id,sort),
+  KEY attachment (attachment_id)
 ) ENGINE=InnoDB $charset_collate;";
 
 		return $sqls;

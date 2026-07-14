@@ -114,6 +114,9 @@ final class Jetonomy {
 	}
 
 	public function activate(): void {
+		// Read this BEFORE anything stamps it — see the guard on the bump below.
+		$db_version_before = (string) get_option( 'jetonomy_db_version', '' );
+
 		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
 		DB\Schema::create_tables();
 
@@ -132,7 +135,29 @@ final class Jetonomy {
 		flush_rewrite_rules();
 		update_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION, true );
 
-		update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
+		/*
+		 * Only stamp the DB version on a FRESH install, where create_tables() above
+		 * has just built every table at the current definition and there is nothing
+		 * to migrate.
+		 *
+		 * On an EXISTING site this must not run. activate() does not run migrations,
+		 * so stamping the version here would tell check_db_version() that the site is
+		 * already up to date and the pending migrations would never run — not once,
+		 * ever. That happens on the ordinary manual-zip upgrade (deactivate, upload,
+		 * activate) and on any "deactivate and reactivate to be safe" support advice.
+		 *
+		 * It was survivable while migrations only added tables, because the
+		 * create_tables() self-heal quietly covered for it. 1.7.1 is the first
+		 * migration that MOVES DATA (jt_pro_attachments -> jt_attachments), and a
+		 * migration that never runs there leaves every attachment on the site
+		 * orphaned in a table nothing reads.
+		 *
+		 * Leaving the stored version alone lets check_db_version() do its job on the
+		 * next request, which is the one code path that actually runs migrations.
+		 */
+		if ( '' === $db_version_before ) {
+			update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
+		}
 
 		// Preset EDD license key for free plugin auto-updates.
 		if ( ! get_option( 'jetonomy_license_key' ) ) {
