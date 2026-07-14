@@ -48,24 +48,116 @@ class Asgaros_Importer extends Importer {
 		return $forums + $topics + $posts;
 	}
 
+	/**
+	 * Import one batch of one phase.
+	 *
+	 * This used to call run() — the entire import — inside a single AJAX request,
+	 * so any forum with real content hit max_execution_time and died with no
+	 * partial-progress recovery. Phases now page through the source tables the way
+	 * the bbPress importer does, and the caller (Import_Handler) persists the id_map
+	 * and a resume point between batches.
+	 *
+	 * Phase order: forums -> topics -> replies -> profiles -> complete.
+	 *
+	 * FORUMS ARE DELIBERATELY NOT PAGED. A child forum can only be created once its
+	 * parent exists, so the set has to be dependency-sorted as a whole (see
+	 * sort_by_dependency()). Paging it would need a parent-before-child ordering
+	 * that survives across batches, and Asgaros forum counts are bounded — they are
+	 * the board's categories/forums, tens of rows, not the content. The volume lives
+	 * in topics and posts, and those page.
+	 *
+	 * @param string $phase      Current phase.
+	 * @param int    $offset     Row offset within the phase.
+	 * @param int    $batch_size Rows to process this call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
-		// TODO: implement batched import for Asgaros.
-		// For now, fall through to run() via a single-shot batch.
-		if ( 'forums' === $phase && 0 === $offset ) {
-			$this->run();
-			return [
-				'phase'     => 'complete',
-				'offset'    => 0,
-				'done'      => true,
-				'processed' => $this->imported,
-			];
+		$batch_size = max( 1, $batch_size );
+
+		switch ( $phase ) {
+			case 'forums':
+				$cat_id = Category::create(
+					[
+						'name' => __( 'Imported from Asgaros', 'jetonomy' ),
+						'slug' => 'imported-asgaros-' . time(),
+					]
+				);
+				update_option( 'jetonomy_import_asgaros_cat_id', (int) $cat_id, false );
+
+				$before = $this->imported;
+				$this->import_forums( (int) $cat_id );
+				$this->persist_id_map();
+
+				return [
+					'phase'     => 'topics',
+					'offset'    => 0,
+					'done'      => false,
+					'processed' => $this->imported - $before,
+				];
+
+			case 'topics':
+				$processed = $this->import_topics_batch( $offset, $batch_size );
+				$this->persist_id_map();
+
+				$has_more = $processed >= $batch_size;
+				return [
+					'phase'     => $has_more ? 'topics' : 'replies',
+					'offset'    => $has_more ? $offset + $batch_size : 0,
+					'done'      => false,
+					'processed' => $processed,
+				];
+
+			case 'replies':
+				$processed = $this->import_replies_batch( $offset, $batch_size );
+				$this->persist_id_map();
+
+				$has_more = $processed >= $batch_size;
+				return [
+					'phase'     => $has_more ? 'replies' : 'profiles',
+					'offset'    => $has_more ? $offset + $batch_size : 0,
+					'done'      => false,
+					'processed' => $processed,
+				];
+
+			case 'profiles':
+				$processed = $this->create_profiles_batch( $offset, $batch_size );
+
+				if ( $processed >= $batch_size ) {
+					return [
+						'phase'     => 'profiles',
+						'offset'    => $offset + $batch_size,
+						'done'      => false,
+						'processed' => $processed,
+					];
+				}
+
+				// Last phase — the counters are denormalized, so recount once at the
+				// very end rather than after every batch.
+				$this->recount();
+
+				return [
+					'phase'     => 'complete',
+					'offset'    => 0,
+					'done'      => true,
+					'processed' => $processed,
+				];
+
+			default:
+				return [
+					'phase'     => 'complete',
+					'offset'    => 0,
+					'done'      => true,
+					'processed' => 0,
+				];
 		}
-		return [
-			'phase'     => 'complete',
-			'offset'    => 0,
-			'done'      => true,
-			'processed' => 0,
-		];
+	}
+
+	/**
+	 * Persist the id_map so the next batch (a separate request) can resolve
+	 * parents. Import_Handler restores it into $this->id_map before each call.
+	 */
+	private function persist_id_map(): void {
+		update_option( 'jetonomy_import_id_map', $this->id_map, false );
 	}
 
 	public function run( array $options = [] ): array {
@@ -204,6 +296,105 @@ class Asgaros_Importer extends Importer {
 		return $ordered;
 	}
 
+	/**
+	 * Import one page of topics. Returns how many source rows this call consumed.
+	 *
+	 * The count is of ROWS SEEN, not rows successfully imported — the caller uses
+	 * it to decide whether another page exists. Returning "imported" would stall
+	 * the phase forever on a page where every topic was skipped.
+	 *
+	 * @param int $offset Row offset.
+	 * @param int $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function import_topics_batch( int $offset, int $limit ): int {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$topics = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$p}forum_topics ORDER BY id ASC LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		$this->import_topic_rows( (array) $topics );
+
+		return count( (array) $topics );
+	}
+
+	/**
+	 * Import one page of replies. Returns rows consumed (see import_topics_batch).
+	 *
+	 * @param int $offset Row offset.
+	 * @param int $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function import_replies_batch( int $offset, int $limit ): int {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// Every post EXCEPT the first in each topic — the first became the topic body.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT p.* FROM {$p}forum_posts p
+				 INNER JOIN (
+				     SELECT parent_id AS topic_id, MIN(id) AS first_id
+				     FROM {$p}forum_posts
+				     GROUP BY parent_id
+				 ) f ON p.parent_id = f.topic_id
+				 WHERE p.id != f.first_id
+				 ORDER BY p.id ASC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		$this->import_reply_rows( (array) $posts );
+
+		return count( (array) $posts );
+	}
+
+	/**
+	 * Ensure profiles for one page of authors. Returns rows consumed.
+	 *
+	 * @param int $offset Row offset.
+	 * @param int $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function create_profiles_batch( int $offset, int $limit ): int {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT author_id FROM (
+				     SELECT DISTINCT author_id FROM {$p}forum_topics WHERE author_id > 0
+				     UNION
+				     SELECT DISTINCT author_id FROM {$p}forum_posts WHERE author_id > 0
+				 ) authors
+				 ORDER BY author_id ASC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		foreach ( $ids as $uid ) {
+			$this->ensure_profile( (int) $uid );
+		}
+
+		return count( (array) $ids );
+	}
+
 	private function import_topics(): void {
 		global $wpdb;
 		$p = $wpdb->prefix;
@@ -211,6 +402,20 @@ class Asgaros_Importer extends Importer {
 		$topics = $wpdb->get_results(
 			"SELECT * FROM {$p}forum_topics ORDER BY id ASC"
 		);
+
+		$this->import_topic_rows( (array) $topics );
+	}
+
+	/**
+	 * Create Jetonomy posts from a set of Asgaros topic rows.
+	 *
+	 * Shared by the batched and the single-shot paths so the two can never drift.
+	 *
+	 * @param object[] $topics Asgaros topic rows.
+	 */
+	private function import_topic_rows( array $topics ): void {
+		global $wpdb;
+		$p = $wpdb->prefix;
 
 		if ( empty( $topics ) ) {
 			return;
@@ -299,6 +504,17 @@ class Asgaros_Importer extends Importer {
 			 ORDER BY p.id ASC"
 		);
 
+		$this->import_reply_rows( (array) $posts );
+	}
+
+	/**
+	 * Create Jetonomy replies from a set of Asgaros post rows.
+	 *
+	 * Shared by the batched and the single-shot paths so the two cannot drift.
+	 *
+	 * @param object[] $posts Asgaros post rows (excluding each topic's first post).
+	 */
+	private function import_reply_rows( array $posts ): void {
 		foreach ( $posts as $asgaros_post ) {
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
