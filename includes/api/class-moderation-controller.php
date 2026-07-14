@@ -727,6 +727,41 @@ class Moderation_Controller extends Base_Controller {
 			return $this->not_found( 'User' );
 		}
 
+		// Who may be TARGETED. The cap matrix above only ever checked the actor,
+		// so any user with jetonomy_moderate (the editor role, by default) could
+		// issue a global_ban against the site administrator — and a global ban makes
+		// REST_Auth reject that account's mutations, so a moderator could lock the
+		// owner out of their own community. Verified against a live site before this
+		// guard existed: an editor banned user 1 and the row was written.
+		//
+		// Rules, mirroring the ones user-blocking already enforces:
+		// - nobody restricts themselves,
+		// - nobody restricts an administrator over REST,
+		// - a moderator cannot restrict another moderator; only an admin can.
+		if ( $user_id === $actor_id ) {
+			return new WP_Error(
+				'jetonomy_cannot_ban_self',
+				__( 'You cannot restrict your own account.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return new WP_Error(
+				'jetonomy_cannot_ban_admin',
+				__( 'Administrators cannot be restricted.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( user_can( $user_id, 'jetonomy_moderate' ) && ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'jetonomy_cannot_ban_moderator',
+				__( 'Only an administrator can restrict a moderator.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		$restriction_id = Restriction::ban(
 			$user_id,
 			$type,
