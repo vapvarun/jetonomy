@@ -1,4 +1,17 @@
 <?php
+/*
+ * Query logging, so the N+1 guards actually run.
+ *
+ * Without this, every "rendering N rows must issue zero extra queries" test
+ * markTestSkipped()s — which reads green while protecting nothing. The
+ * attachment batch-prime test was skipped for exactly that reason, and the
+ * big-site rule (no per-row queries in a list) is precisely what it exists to
+ * defend.
+ */
+if ( ! defined( 'SAVEQUERIES' ) ) {
+	define( 'SAVEQUERIES', true );
+}
+
 $_tests_dir = getenv( 'WP_TESTS_DIR' ) ?: '/tmp/wordpress-tests-lib';
 
 if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
