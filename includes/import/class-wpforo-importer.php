@@ -373,6 +373,109 @@ class WPForo_Importer extends Importer {
 		return $ordered;
 	}
 
+	/**
+	 * Parse wpForo's default (free) attachments out of a post body.
+	 *
+	 * Core wpForo stores an attachment as markup appended to `wpforo_posts.body`
+	 * (see includes/hooks.php::wpforo_move_uploded_default_attach):
+	 *
+	 *   <div id="wpfa-{ID}" class="wpforo-attached-file">
+	 *     <a class="wpforo-default-attachment" href="{url}" title="{name}">…</a>
+	 *   </div>
+	 *
+	 * {ID} is a WordPress media ID — wpForo puts the file in the media library via
+	 * wpforo_insert_to_media_library(). BUT that only happens when the site's
+	 * `attachs_to_medialib` setting is on (it ships on, but owners can turn it off),
+	 * and when it is off the ID written into the markup is literally 0 and the file
+	 * exists on disk only. Both cases have to be handled, which is why we keep the
+	 * href as well as the id: the href is what lets us recover a wpfa-0 file.
+	 *
+	 * `wpfa-deleted` blocks are wpForo's "Attachment removed" tombstones — skipped.
+	 *
+	 * @param string $body Post body HTML.
+	 * @return array[] Each: ['media_id' => int, 'url' => string, 'name' => string].
+	 */
+	private function parse_wpforo_attachments( string $body ): array {
+		if ( false === strpos( $body, 'wpforo-attached-file' ) ) {
+			return [];
+		}
+
+		$found = [];
+
+		if ( ! preg_match_all(
+			'#<div[^>]*id=[\'"]wpfa-(\d+)[\'"][^>]*>(.*?)</div>#is',
+			$body,
+			$blocks,
+			PREG_SET_ORDER
+		) ) {
+			return [];
+		}
+
+		foreach ( $blocks as $block ) {
+			$media_id = (int) $block[1];
+			$inner    = $block[2];
+
+			$url  = preg_match( '#href=[\'"]([^\'"]+)[\'"]#i', $inner, $m ) ? $m[1] : '';
+			$name = preg_match( '#title=[\'"]([^\'"]*)[\'"]#i', $inner, $t ) ? $t[1] : '';
+
+			if ( ! $url ) {
+				continue; // A tombstone, or markup we don't recognise — leave it be.
+			}
+
+			$found[] = [
+				'media_id' => $media_id,
+				'url'      => html_entity_decode( $url, ENT_QUOTES ),
+				'name'     => html_entity_decode( $name, ENT_QUOTES ),
+			];
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Remove wpForo's attachment markup from a body we have migrated.
+	 *
+	 * Only called once the file is linked into Jetonomy — otherwise the reader
+	 * would see the attachment twice: once in Jetonomy's attachment UI and once as
+	 * wpForo's leftover paperclip link.
+	 *
+	 * @param string $body Post body HTML.
+	 * @return string
+	 */
+	private function strip_wpforo_attachments( string $body ): string {
+		$out = preg_replace( '#<div[^>]*id=[\'"]wpfa-\d+[\'"][^>]*>.*?</div>#is', '', $body );
+
+		return null === $out ? $body : trim( (string) $out );
+	}
+
+	/**
+	 * Migrate every attachment referenced by a source body onto an imported object.
+	 *
+	 * @param string  $object_type 'post' or 'reply'.
+	 * @param int     $object_id   Jetonomy post/reply id.
+	 * @param array[] $attachments Rows from parse_wpforo_attachments().
+	 * @return int How many were linked.
+	 */
+	private function migrate_attachments( string $object_type, int $object_id, array $attachments ): int {
+		$linked = 0;
+		$sort   = 0;
+
+		foreach ( $attachments as $att ) {
+			$media_id = $this->ensure_media_id( (int) $att['media_id'], (string) $att['url'], (string) $att['name'] );
+			if ( ! $media_id ) {
+				$this->log_error( 'attachment', $att['url'], 'Could not recover the file' );
+				continue;
+			}
+
+			if ( $this->link_attachment( $object_type, $object_id, $media_id, $sort ) ) {
+				++$linked;
+				++$sort;
+			}
+		}
+
+		return $linked;
+	}
+
 	private function import_forums( int $cat_id, string $p = '' ): void {
 		global $wpdb;
 		if ( ! $p ) {
@@ -562,6 +665,15 @@ class WPForo_Importer extends Importer {
 			$first_post = $first_posts_map[ (int) $topic->topicid ] ?? null;
 			$content    = $first_post ? $first_post->body : '';
 
+			// wpForo keeps attachments as markup inside the body. Pull them out
+			// BEFORE the post is created so the stored content is clean; strip the
+			// source markup only when Pro is present to render them natively,
+			// otherwise leave it so the file stays reachable from the body.
+			$attachments = $this->parse_wpforo_attachments( (string) $content );
+			if ( $attachments && $this->pro_attachments_available() ) {
+				$content = $this->strip_wpforo_attachments( (string) $content );
+			}
+
 			$post_id = JtPost::create(
 				[
 					'space_id'      => $space_id,
@@ -585,6 +697,9 @@ class WPForo_Importer extends Importer {
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', $topic->topicid, $post_id );
+				if ( $attachments ) {
+					$this->migrate_attachments( 'post', (int) $post_id, $attachments );
+				}
 				if ( $first_post ) {
 					$this->map_id( 'wpforo_post', $first_post->postid, 0 );
 				}
@@ -669,13 +784,20 @@ class WPForo_Importer extends Importer {
 				$parent_id = $this->get_mapped_id( 'wpforo_reply', $wf_post->parentid );
 			}
 
+			// Replies carry attachments too — same body markup as topics.
+			$body        = (string) $wf_post->body;
+			$attachments = $this->parse_wpforo_attachments( $body );
+			if ( $attachments && $this->pro_attachments_available() ) {
+				$body = $this->strip_wpforo_attachments( $body );
+			}
+
 			$reply_id = JtReply::create(
 				[
 					'post_id'       => $post_id,
 					'parent_id'     => $parent_id,
 					'author_id'     => (int) $wf_post->userid,
-					'content'       => wp_kses_post( $wf_post->body ),
-					'content_plain' => wp_strip_all_tags( $wf_post->body ),
+					'content'       => wp_kses_post( $body ),
+					'content_plain' => wp_strip_all_tags( $body ),
 					'status'        => 'publish',
 					'created_at'    => $wf_post->created ?? now(),
 				]
@@ -688,6 +810,9 @@ class WPForo_Importer extends Importer {
 
 			if ( $reply_id ) {
 				$this->map_id( 'wpforo_reply', $wf_post->postid, $reply_id );
+				if ( $attachments ) {
+					$this->migrate_attachments( 'reply', (int) $reply_id, $attachments );
+				}
 				++$this->imported;
 			} else {
 				++$this->skipped;
