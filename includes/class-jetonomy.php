@@ -389,25 +389,62 @@ final class Jetonomy {
 
 	private function check_db_version(): void {
 		$current = get_option( 'jetonomy_db_version', '0.0.0' );
-		if ( ! version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
+
+		if ( version_compare( $current, JETONOMY_DB_VERSION, '<' ) ) {
+			// 1) Run any registered data migrations from the stored version forward.
+			require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
+			DB\Migrator::run( $current );
+
+			// 2) Re-run Schema::create_tables() as a safety net. dbDelta is
+			// idempotent — it adds any tables / columns / indexes that exist in
+			// the current Schema definition but are missing from the database.
+			require_once JETONOMY_DIR . 'includes/db/class-schema.php';
+			DB\Schema::create_tables();
+
+			update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
 			return;
 		}
 
-		// 1) Run any registered data migrations from the stored version forward.
-		require_once JETONOMY_DIR . 'includes/db/class-migrator.php';
-		DB\Migrator::run( $current );
+		// db_version is at (or past) target, so the migration loop above never runs.
+		// A table the current schema defines can still be MISSING here — a migration
+		// that half-completed, a db_version stamped by a dev/beta build before the
+		// table existed, or a database restored from a mixed backup. Left alone, every
+		// query against that table errors on every request, forever. The create_tables
+		// self-heal above cannot reach this state because it is gated on the version
+		// being behind — which is the exact gap this repair closes.
+		$this->maybe_repair_schema();
+	}
 
-		// 2) Re-run Schema::create_tables() as a safety net. dbDelta is
-		// idempotent — it adds any tables / columns / indexes that exist in
-		// the current Schema definition but are missing from the database.
-		// This protects against the case where a new table was added to
-		// Schema between releases without a matching migration file (e.g.
-		// `jt_bookmarks` added in 1.1.0 but never registered in Migrator).
-		// Mirrors the Pro plugin's self-heal pattern in class-jetonomy-pro.php.
-		require_once JETONOMY_DIR . 'includes/db/class-schema.php';
-		DB\Schema::create_tables();
+	/**
+	 * Create any schema table that is missing even though db_version is at target.
+	 *
+	 * Runs at most once per plugin version (an autoloaded option flag short-circuits
+	 * it), and the SHOW TABLES sentinel only triggers real work when a table is
+	 * actually absent — so the steady-state cost is a single option read.
+	 *
+	 * The newest table (jt_attachments) is owned by a DATA migration — it is the
+	 * renamed jt_pro_attachments — so a plain create_tables() would make an empty
+	 * table and orphan the old rows. We run the migration itself, which is idempotent
+	 * (renames/merges, then dbDelta-creates), then the create_tables net for the rest.
+	 */
+	private function maybe_repair_schema(): void {
+		if ( get_option( 'jetonomy_schema_checked' ) === JETONOMY_VERSION ) {
+			return;
+		}
 
-		update_option( 'jetonomy_db_version', JETONOMY_DB_VERSION );
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$present = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'jt_attachments' ) );
+
+		if ( ! $present ) {
+			require_once JETONOMY_DIR . 'includes/db/migrations/class-migration_1_7_1.php';
+			( new DB\Migrations\Migration_1_7_1() )->up();
+
+			require_once JETONOMY_DIR . 'includes/db/class-schema.php';
+			DB\Schema::create_tables();
+		}
+
+		update_option( 'jetonomy_schema_checked', JETONOMY_VERSION, true );
 	}
 
 	private function load_dependencies(): void {

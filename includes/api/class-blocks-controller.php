@@ -2,9 +2,12 @@
 /**
  * User-blocking REST API controller.
  *
- * Foundation only (1.7.1 step 1 of 2) — read-surface filtering is a
- * follow-up change. This controller only lets a user manage their own block
- * list; it does not yet remove blocked users' content from any feed.
+ * Manages a user's own block list. Read-surface filtering is applied where it
+ * matters most for 1.8.0: space/feed LISTINGS and search exclude blocked authors
+ * (BlockedUser::exclusion_sql), and the REST reply list tombstones them without
+ * dropping the innocent replies nested beneath. NOT yet masked: the direct
+ * single-post view of a blocked author's own topic (navigating straight to their
+ * post URL still renders it) — a deliberate follow-up, tracked separately.
  *
  * @package Jetonomy
  * @since   1.7.1
