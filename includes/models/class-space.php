@@ -92,9 +92,11 @@ class Space extends Model {
 	 * is the single chokepoint.
 	 *
 	 * @param int $id Space ID.
-	 * @return bool
+	 * @return bool|\WP_Error Mirrors Model::delete() — do not narrow to bool, or a
+	 *                        WP_Error return would TypeError and callers that
+	 *                        is_wp_error() the result become dead code.
 	 */
-	public static function delete( int $id ): bool {
+	public static function delete( int $id ): bool|\WP_Error {
 		$slug   = parent::find( $id )->slug ?? null;
 		$result = parent::delete( $id );
 		self::bust_cache( $id, $slug );
