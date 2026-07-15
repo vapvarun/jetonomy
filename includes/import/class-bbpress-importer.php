@@ -551,5 +551,9 @@ class BBPress_Importer extends Importer {
 
 		// Update last_reply_at on posts
 		$wpdb->query( "UPDATE {$posts_table} p SET p.last_reply_at = (SELECT MAX(r.created_at) FROM {$replies_table} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+
+		// spaces.post_count above backs space:{id}; a set-based UPDATE names no ids
+		// (Caching Standard §4d). This is a one-shot import, so flush the group.
+		\Jetonomy\Cache::flush();
 	}
 }

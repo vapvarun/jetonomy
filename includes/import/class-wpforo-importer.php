@@ -1013,5 +1013,9 @@ class WPForo_Importer extends Importer {
 		$wpdb->query( "UPDATE {$posts_t} p SET p.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" );
 		$wpdb->query( "UPDATE {$spaces_t} s SET s.post_count = (SELECT COUNT(*) FROM {$posts_t} p WHERE p.space_id = s.id AND p.status = 'publish')" );
 		$wpdb->query( "UPDATE {$posts_t} p SET p.last_reply_at = (SELECT MAX(r.created_at) FROM {$replies_t} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+
+		// spaces.post_count above backs space:{id}; a set-based UPDATE names no ids
+		// (Caching Standard §4d). This is a one-shot import, so flush the group.
+		\Jetonomy\Cache::flush();
 	}
 }
