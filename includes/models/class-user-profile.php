@@ -14,6 +14,12 @@ use Jetonomy\Cache;
 
 class UserProfile extends Model {
 
+	/**
+	 * Seconds is_online() caches its verdict. Presence tolerates this staleness
+	 * by design, so the key is never busted — it ages out (Caching Standard §4b).
+	 */
+	private const ONLINE_TTL = 60;
+
 	protected static function table_name(): string {
 		return 'user_profiles';
 	}
@@ -197,21 +203,23 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function is_online( int $user_id ): bool {
-		$key    = 'jetonomy_online_' . $user_id;
-		$cached = wp_cache_get( $key, 'jetonomy' );
+		$key    = 'online_' . $user_id;
+		$cached = Cache::get( $key );
 
 		if ( false !== $cached ) {
 			return (bool) $cached;
 		}
 
+		// Presence tolerates up to ONLINE_TTL of staleness by design (Caching
+		// Standard §4b) — update_last_seen() does not bust this key; it ages out.
 		$profile = static::find_by_user( $user_id );
 		if ( ! $profile || empty( $profile->last_seen_at ) ) {
-			wp_cache_set( $key, 0, 'jetonomy', 60 );
+			Cache::set( $key, 0, self::ONLINE_TTL );
 			return false;
 		}
 
 		$online = ( strtotime( $profile->last_seen_at ) > ( time() - 300 ) );
-		wp_cache_set( $key, (int) $online, 'jetonomy', 60 );
+		Cache::set( $key, (int) $online, self::ONLINE_TTL );
 
 		return $online;
 	}
