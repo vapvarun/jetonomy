@@ -29,6 +29,14 @@ use Jetonomy\Models\UserProfile;
 class Permission_Engine {
 
 	/**
+	 * Seconds a can() verdict is cached per (user, action, space). A permission
+	 * or role change is reflected within this window — the accepted hot-read
+	 * trade-off (Caching Standard §4b lists can() as a sanctioned short-TTL cache),
+	 * so the key is not busted on role change; it ages out.
+	 */
+	private const PERM_TTL = 60;
+
+	/**
 	 * Moderation actions a space-level admin / moderator can perform on
 	 * content in their space, regardless of the WordPress capability map.
 	 * Used by the Layer 0d short-circuit so subscribers promoted to the
@@ -101,7 +109,7 @@ class Permission_Engine {
 
 		$result = self::resolve( $user_id, $action, $space_id );
 		// Store as 1/0 so we can distinguish a cached false from a cache miss.
-		Cache::set( $cache_key, $result ? 1 : 0, 60 );
+		Cache::set( $cache_key, $result ? 1 : 0, self::PERM_TTL );
 		return $result;
 	}
 
