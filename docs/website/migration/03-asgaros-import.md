@@ -23,6 +23,7 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 | Sticky topics | Pinned posts | Preserved |
 | Closed topics | Closed posts | Preserved |
 | Unapproved topics | Pending posts | Topics not approved in Asgaros import as pending |
+| Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from Asgaros and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
 - Asgaros topic tags
@@ -31,6 +32,8 @@ Move your existing Asgaros Forum community into Jetonomy - forums, topics, repli
 - Asgaros moderator assignments (assign Space Moderator roles manually after import)
 - Asgaros subscriptions (replaced by Jetonomy follow/subscribe)
 - Custom Asgaros meta fields (use the `jetonomy_importers` filter to extend)
+
+> **Attachments (1.8.0+):** If a file cannot be recovered - for example it is already missing from disk - the import still completes and tells you how many files it could not bring over ("N files could not be recovered and were left linked in the original post text"). That is a warning to check a handful of posts by hand, not a failed import. See the [Migration overview](00-overview.md#attachments-and-inline-images) for details.
 
 ## Asgaros Data Structure Differences
 

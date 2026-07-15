@@ -1,9 +1,10 @@
 Let members attach images, PDFs, and documents to topics and replies, with server-rendered preview cards and a lazy-loaded inline PDF viewer.
 
-> **PRO** - This feature requires [Jetonomy Pro](https://jetonomy.com/pro/).
+> **PRO** - Attaching new files (the composer), the lightbox, the inline PDF viewer, and file type/size limits require [Jetonomy Pro](https://jetonomy.com/pro/). As of 1.8.0, viewing attachments that already exist on a post does not - the free Jetonomy plugin displays them on its own, and keeps displaying them even if Pro is later deactivated.
 
 ## What You Will Learn
 
+- What the free plugin shows on its own, and what Pro adds on top
 - How to enable File Attachments
 - How to configure allowed file types, max file size, and max files per post
 - What members see for images, PDFs, and documents
@@ -13,6 +14,18 @@ Let members attach images, PDFs, and documents to topics and replies, with serve
 ## Why File Attachments Matter
 
 A screenshot, log file, or spec document often explains a problem faster than a paragraph of text. File Attachments lets members back up their posts and replies with real files, directly in the thread, instead of pasting external links that rot over time.
+
+## Free vs. Pro
+
+The free Jetonomy plugin already renders any attachment that lands on a post or reply - through an import, the mobile app, or the REST API - even with Pro off. Enabling this Pro extension adds the ability to attach *new* files plus a richer display:
+
+| | Free | With File Attachments (Pro) |
+|---|---|---|
+| Display existing attachments | Yes | Yes |
+| Images | Inline thumbnail | Inline thumbnail + click-to-enlarge lightbox |
+| PDFs / documents | Download chip (name, size, type) | Download chip, plus a first-page preview and inline viewer for PDFs |
+| Attach a new file from the composer | No | Yes |
+| Configurable allowed types, max size, max count | - | Yes |
 
 ## Enabling File Attachments
 
@@ -33,19 +46,23 @@ Go to **Jetonomy → Settings → Attachments** to control:
 
 ## What Members See
 
-Attached files render as cards under the post or reply:
+Attached files render as cards under the post or reply. The base card - image thumbnail or a download chip with file name, size, and type - is rendered by the free plugin. With File Attachments enabled, Pro upgrades the card:
 
-- **Images** show an inline thumbnail; click to enlarge.
-- **PDFs** show a first-page preview with `filename · pages · size` and an **Open viewer** button that opens the file inline, with page navigation and zoom, or in a new tab. The thumbnail needs your host's Imagick and Ghostscript support - if unavailable, the card falls back to a document icon and the file still opens and downloads normally.
-- **Documents** (DOCX, XLSX, PPTX, ODT, TXT, CSV) show a download chip with the file type and size.
+- **Images** show an inline thumbnail; with Pro, click it to enlarge in a lightbox.
+- **PDFs** show a download chip by default; with Pro, the card instead shows a first-page preview with `filename · pages · size` and an **Open viewer** button that opens the file inline, with page navigation and zoom, or in a new tab. The thumbnail needs your host's Imagick and Ghostscript support - if unavailable, the card falls back to the document icon and the file still opens and downloads normally.
+- **Documents** (DOCX, XLSX, PPTX, ODT, TXT, CSV) show the same download chip with the file type and size, with or without Pro.
 
 The cards are server-rendered on every page load, so they show correctly even with JavaScript disabled. The PDF viewer library itself is only downloaded the first time a member opens a PDF - never on a normal page load - so it does not slow down browsing.
+
+## If You Deactivate Pro
+
+Attachment link records live in the free plugin as of 1.8.0. Deactivating or uninstalling Jetonomy Pro does not remove or hide attachments already on a post or reply - the free plugin keeps rendering them exactly as described in "Free vs. Pro" above. You only lose the composer's Attach files control, the lightbox, the inline PDF viewer, and the configurable limits until Pro is reactivated.
 
 ## Data Lifecycle
 
 - **Removing an attachment** detaches it from the post or reply; the underlying uploaded file is left alone in case it is still referenced elsewhere.
 - **Deleting a topic or reply** removes its attachment links automatically.
-- **Orphan cleanup** runs once a day: it drops link rows whose underlying file was removed some other way, and deletes community uploads that were never linked to any post or reply within 24 hours of being uploaded. This sweep is scoped strictly to files uploaded through the community composer, so it never touches the site owner's own WordPress media library.
+- **Orphan cleanup** runs once a day: it drops link rows whose underlying file was removed some other way, and deletes community uploads that were never linked to any post or reply within 24 hours of being uploaded. This sweep is scoped strictly to files uploaded through the community composer, so it never touches the site owner's own WordPress media library. Cleanup only removes files this plugin created, never another forum plugin's media, so a migration can never lose files.
 
 ## REST API
 

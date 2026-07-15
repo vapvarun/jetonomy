@@ -33,7 +33,7 @@ Pro adds:
 - **Polls** - attach a single or multi-select poll to any topic for decisions and feedback. See [Polls](../pro-features/03-polls.md).
 - **Reactions** - emoji reactions on posts and replies so members can respond without writing a full reply. See [Reactions](../pro-features/01-reactions.md).
 - **Anonymous Posting** - members post and reply without showing their name, enabled per space, with an audited admin-only reveal. See [Anonymous Posting](anonymous-posting.md).
-- **File Attachments** - attach images, PDFs, and documents to topics and replies, with preview cards and an inline PDF viewer. See [File Attachments](file-attachments.md).
+- **File Attachments** - attach new images, PDFs, and documents to topics and replies, with a lightbox and an inline PDF viewer. (The free plugin already displays any attachment already on a post - see [File Attachments](file-attachments.md).)
 
 ## Spaces & Organization
 
@@ -60,7 +60,8 @@ What is included:
 - **Flagging and reporting** - any logged-in member can report content that breaks your rules. See [Flagging & Reporting](../moderation-and-trust/02-flagging-reporting.md).
 - **Moderation queue** - a single dashboard for posts awaiting approval, flagged content, and spam-caught items. See [Moderation Queue](../moderation-and-trust/03-moderation-queue.md).
 - **Anti-spam** - multiple silent layers of spam protection that real members never notice. See [Anti-Spam](../moderation-and-trust/04-anti-spam.md).
-- **Banning** - remove and block disruptive members from your community. See [Trust Levels](../moderation-and-trust/01-trust-levels.md).
+- **Banning** - remove disruptive members from your community. See [Trust Levels](../moderation-and-trust/01-trust-levels.md).
+- **Blocking** - members can hide a disruptive member's replies from their own view and report them in one step, from the mobile app or the REST API. See [Flagging & Reporting](../moderation-and-trust/02-flagging-reporting.md).
 - **Pinning and announcements** - keep important topics at the top of a space. See [Topic Management](../discussions/06-topic-management.md).
 
 Pro adds:
@@ -77,6 +78,7 @@ What is included:
 - **Member profiles** - a public page showing who a member is and what they have contributed. See [User Profiles](../user-profiles/01-profiles.md).
 - **Reputation** - a contribution score that powers trust levels and rankings. See [User Profiles](../user-profiles/01-profiles.md).
 - **Leaderboard** - public recognition for your top contributors. See [Leaderboard](../user-profiles/02-leaderboard.md).
+- **Account deletion** - members can permanently delete their own account from the mobile app or the REST API. See [User Profiles](../user-profiles/01-profiles.md).
 
 Pro adds:
 

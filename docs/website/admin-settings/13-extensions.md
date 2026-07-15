@@ -63,6 +63,8 @@ Click the toggle switch on an active card. The page reloads and the extension is
 | Anonymous Posting | Privacy | Let members post and reply without showing their name, with an audited admin-only reveal |
 | File Attachments | Content | Attach images, PDFs, and documents to topics and replies |
 
+> **Note:** As of 1.8.0, attachments already on a post (from an import, the mobile app, or the REST API) display in the free plugin whether or not this extension is enabled. Enabling File Attachments here adds the composer, the lightbox, the inline PDF viewer, and configurable size/type limits - and keeps working if you disable the extension later, since the underlying files are never hidden.
+
 For detailed setup instructions for each extension, see the [Pro Features documentation](../pro-features/00-getting-started-pro.md).
 
 ## What's Next?

@@ -41,6 +41,12 @@ You can run any import two ways. Use this to decide:
 
   If you type a source name that does not exist, the command lists the valid ones back to you.
 
+## Attachments and Inline Images
+
+As of Jetonomy 1.8.0, all three importers bring over more than text. Images embedded in a topic or reply, and files attached to it, are downloaded from your old forum and registered into the WordPress media library as part of the same import run - members do not need to re-upload anything, and the files keep working even if you later remove the old forum plugin's upload folder.
+
+If a specific file cannot be recovered (for example, it is already missing from disk), the import does not fail because of it. It finishes normally and reports how many files it could not recover, for example: *"3 files could not be recovered and were left linked in the original post text."* Treat that message as a to-do list for a handful of posts, not as a failed import - everything else has already come across.
+
 ## Reading the Import Screen
 
 When you open **Jetonomy → Import**, each forum plugin that Jetonomy detects appears as its own card. Here is what every part of the card means:
@@ -64,6 +70,7 @@ These steps apply to every source. The individual guides list the same checklist
 - [ ] **Flush permalinks if spaces 404.** Go to **Jetonomy → Settings → Permalinks** and click Save. (The bbPress importer does this for you automatically; wpForo and Asgaros do not, so do it by hand if new spaces return a 404.)
 - [ ] **Clean up old shortcodes.** If your pages or widgets used your old forum's shortcodes, remove or replace them - they will print raw shortcode text while the old plugin is still active.
 - [ ] Once everything checks out, you can deactivate the old forum plugin.
+- [ ] If the import reported files it could not recover, open those specific posts and re-attach or re-upload the file by hand.
 
 ## What's Next?
 

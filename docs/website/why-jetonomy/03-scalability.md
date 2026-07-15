@@ -51,6 +51,8 @@ Jetonomy uses WordPress object cache (`wp_cache`) throughout:
 
 If you run an object cache plugin (Redis, Memcached), Jetonomy benefits automatically.
 
+As of 1.8.0, cached data is invalidated the instant something changes - space visibility, member counts, and profile counts all clear their cache entry immediately on write, so members never see a stale count or a space that looks visible or hidden a few minutes late.
+
 ### Denormalized Counters
 
 Jetonomy does not run `COUNT(*)` queries to show "42 replies" on a topic card. The `reply_count` column is updated incrementally when replies are created or deleted. Displaying a list of 20 topics with accurate counts requires zero extra queries.

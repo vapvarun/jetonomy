@@ -4,6 +4,8 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 
 **205 hooks**, 138 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.
 
+> The 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) are documented with usage examples on the dedicated **[Attachment Hooks](24-attachment-hooks.md)** page.
+
 
 ## Posts
 
