@@ -77,12 +77,15 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function update_profile( int $user_id, array $data ): bool {
-		Cache::delete( "profile:{$user_id}" );
-		return false !== static::db()->update(
+		// Bust AFTER the write. Busting first is a re-prime race: a concurrent
+		// find_by_user() between the delete and the update re-caches the old row.
+		$result = false !== static::db()->update(
 			static::table(),
 			$data,
 			[ 'user_id' => $user_id ]
 		);
+		Cache::delete( "profile:{$user_id}" );
+		return $result;
 	}
 
 	/**
@@ -105,7 +108,6 @@ class UserProfile extends Model {
 	 * @param int $delta   Amount to add (use negative value to subtract).
 	 */
 	public static function _apply_reputation_delta( int $user_id, int $delta ): void { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore -- Underscore marks this as package-private; renaming would break the Reputation facade.
-		Cache::delete( "profile:{$user_id}" );
 		static::db()->query(
 			static::db()->prepare(
 				'UPDATE ' . static::table() . ' SET reputation = reputation + %d WHERE user_id = %d',
@@ -113,6 +115,8 @@ class UserProfile extends Model {
 				$user_id
 			)
 		);
+		// Bust AFTER the write (re-prime race — see update_profile()).
+		Cache::delete( "profile:{$user_id}" );
 	}
 
 	/**
