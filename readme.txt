@@ -279,6 +279,7 @@ Forum imports now bring attachments across, attachments work with or without Pro
 * Fix      - wpForo import no longer flattens the forum hierarchy, miscounts progress, or runs the whole import in a single request that times out on large forums.
 * Fix      - Migrated inline images and attachments are registered into the media library, so deleting the old forum's uploads folder can no longer break them.
 * Fix      - Blocked members' replies are hidden without dropping the innocent replies nested beneath them.
+* Fix      - One-click email unsubscribe links now save the change; they reported success but the preference never persisted.
 * Security - A moderator could globally ban the site administrator; banning an admin or a fellow moderator is now refused.
 * Dev      - Post and reply REST payloads carry an attachments array (id, url, thumbnail, mime, name, size, type) whether or not Pro is active.
 
