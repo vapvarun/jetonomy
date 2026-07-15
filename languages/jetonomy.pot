@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.8.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-07-15 09:49:12+00:00\n"
+"POT-Creation-Date: 2026-07-15 11:12:08+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -4484,7 +4484,7 @@ msgstr ""
 msgid "Anonymous"
 msgstr ""
 
-#: includes/api/class-blocks-controller.php:121
+#: includes/api/class-blocks-controller.php:124
 msgid "A valid user_id is required."
 msgstr ""
 
@@ -5369,17 +5369,17 @@ msgid ""
 "use \"Resend confirmation\" on the sign-in form."
 msgstr ""
 
-#: includes/class-jetonomy.php:644
+#: includes/class-jetonomy.php:681
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: includes/class-jetonomy.php:656
+#: includes/class-jetonomy.php:693
 msgid ""
 "You have been unsubscribed from these email notifications. You can "
 "re-enable them in your notification preferences."
 msgstr ""
 
-#: includes/class-jetonomy.php:657
+#: includes/class-jetonomy.php:694
 msgid "Unsubscribed"
 msgstr ""
 
