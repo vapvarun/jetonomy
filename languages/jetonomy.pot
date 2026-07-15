@@ -2,9 +2,9 @@
 # This file is distributed under the GPL v2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Jetonomy 1.7.1\n"
+"Project-Id-Version: Jetonomy 1.8.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-07-14 10:49:11+00:00\n"
+"POT-Creation-Date: 2026-07-15 09:49:12+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -156,31 +156,31 @@ msgstr ""
 msgid "Invalid bulk action."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:43
+#: includes/admin/ajax/class-import-handler.php:46
 msgid "Unknown import source."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:76
+#: includes/admin/ajax/class-import-handler.php:116
 msgid "Importing forums..."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:77
+#: includes/admin/ajax/class-import-handler.php:117
 msgid "Importing topics..."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:78
+#: includes/admin/ajax/class-import-handler.php:118
 msgid "Importing replies..."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:79
+#: includes/admin/ajax/class-import-handler.php:119
 msgid "Creating user profiles..."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:80
+#: includes/admin/ajax/class-import-handler.php:120
 msgid "Recounting statistics..."
 msgstr ""
 
-#: includes/admin/ajax/class-import-handler.php:81
+#: includes/admin/ajax/class-import-handler.php:121
 #: includes/admin/class-admin.php:892
 msgid "Import complete!"
 msgstr ""
@@ -349,7 +349,7 @@ msgid "Space updated."
 msgstr ""
 
 #: includes/admin/ajax/class-spaces-handler.php:291
-#: includes/admin/class-admin.php:1074
+#: includes/admin/class-admin.php:1076
 #: includes/api/class-base-controller.php:50 includes/class-abilities.php:1394
 #: includes/class-abilities.php:1413 templates/views/new-post.php:19
 #: templates/views/space-edit.php:30 templates/views/space-edit.php:46
@@ -1034,57 +1034,64 @@ msgstr ""
 msgid "Connection lost. You can resume this import later."
 msgstr ""
 
-#: includes/admin/class-admin.php:924
-msgid "Invite link copied to clipboard."
-msgstr ""
-
 #: includes/admin/class-admin.php:925
-msgid "Revoke this invite link? Anyone holding it will no longer be able to join."
+#. translators: %d: number of attachment files that could not be recovered.
+msgid ""
+"%d file(s) could not be recovered and were left linked in the original post "
+"text."
 msgstr ""
 
 #: includes/admin/class-admin.php:926
-msgid "No invite links yet."
+msgid "Invite link copied to clipboard."
 msgstr ""
 
 #: includes/admin/class-admin.php:927
-msgid "Unlimited"
+msgid "Revoke this invite link? Anyone holding it will no longer be able to join."
 msgstr ""
 
-#: includes/admin/class-admin.php:928 includes/admin/views/users.php:107
-msgid "Never"
+#: includes/admin/class-admin.php:928
+msgid "No invite links yet."
 msgstr ""
 
 #: includes/admin/class-admin.php:929
-msgid "Expired"
+msgid "Unlimited"
 msgstr ""
 
-#: includes/admin/class-admin.php:930
-msgid "Copy"
+#: includes/admin/class-admin.php:930 includes/admin/views/users.php:107
+msgid "Never"
 msgstr ""
 
 #: includes/admin/class-admin.php:931
+msgid "Expired"
+msgstr ""
+
+#: includes/admin/class-admin.php:932
+msgid "Copy"
+msgstr ""
+
+#: includes/admin/class-admin.php:933
 msgid "Revoke"
 msgstr ""
 
-#: includes/admin/class-admin.php:1217
+#: includes/admin/class-admin.php:1219
 msgid "Entries per page"
 msgstr ""
 
-#: includes/admin/class-admin.php:1249 includes/admin/class-admin.php:1363
+#: includes/admin/class-admin.php:1251 includes/admin/class-admin.php:1365
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: includes/admin/class-admin.php:1274
+#: includes/admin/class-admin.php:1276
 msgid "You do not have sufficient permissions to export activity."
 msgstr ""
 
-#: includes/admin/class-admin.php:1428
+#: includes/admin/class-admin.php:1430
 #: includes/admin/class-revisions-list-table.php:268
 #. translators: %s: parent post title
 msgid "Reply to: %s"
 msgstr ""
 
-#: includes/admin/class-admin.php:1618 includes/class-abilities.php:217
+#: includes/admin/class-admin.php:1620 includes/class-abilities.php:217
 #: includes/class-abilities.php:337 includes/class-abilities.php:406
 #: includes/class-abilities.php:1225
 #: includes/moderation/class-moderation-service.php:388
@@ -1351,7 +1358,7 @@ msgid "Update Category"
 msgstr ""
 
 #: includes/admin/views/community-media.php:28
-#: includes/class-media-library.php:124 includes/class-media-library.php:125
+#: includes/class-media-library.php:144 includes/class-media-library.php:145
 msgid "Community Media"
 msgstr ""
 
@@ -5138,6 +5145,10 @@ msgstr ""
 msgid "Posts &amp; replies"
 msgstr ""
 
+#: includes/class-attachments.php:140
+msgid "Attachments"
+msgstr ""
+
 #: includes/class-author.php:77
 msgid "[deleted]"
 msgstr ""
@@ -5358,29 +5369,29 @@ msgid ""
 "use \"Resend confirmation\" on the sign-in form."
 msgstr ""
 
-#: includes/class-jetonomy.php:618
+#: includes/class-jetonomy.php:644
 msgid "This unsubscribe link is invalid or has expired."
 msgstr ""
 
-#: includes/class-jetonomy.php:630
+#: includes/class-jetonomy.php:656
 msgid ""
 "You have been unsubscribed from these email notifications. You can "
 "re-enable them in your notification preferences."
 msgstr ""
 
-#: includes/class-jetonomy.php:631
+#: includes/class-jetonomy.php:657
 msgid "Unsubscribed"
 msgstr ""
 
-#: includes/class-media-library.php:277 includes/class-media-library.php:315
+#: includes/class-media-library.php:312 includes/class-media-library.php:350
 msgid "Community uploads"
 msgstr ""
 
-#: includes/class-media-library.php:279 includes/class-media-library.php:317
+#: includes/class-media-library.php:314 includes/class-media-library.php:352
 msgid "Hide community uploads"
 msgstr ""
 
-#: includes/class-media-library.php:280 includes/class-media-library.php:316
+#: includes/class-media-library.php:315 includes/class-media-library.php:351
 msgid "Show community uploads"
 msgstr ""
 
@@ -6263,26 +6274,28 @@ msgstr ""
 msgid "Active %s ago"
 msgstr ""
 
-#: includes/import/class-asgaros-importer.php:81
-#: includes/import/class-asgaros-importer.php:166
+#: includes/import/class-asgaros-importer.php:89
+#: includes/import/class-asgaros-importer.php:192
 msgid "Imported from Asgaros"
 msgstr ""
 
-#: includes/import/class-bbpress-importer.php:77
-#: includes/import/class-bbpress-importer.php:280
+#: includes/import/class-bbpress-importer.php:144
+#: includes/import/class-bbpress-importer.php:355
 msgid "Imported from bbPress"
 msgstr ""
 
-#: includes/import/class-bbpress-importer.php:282
+#: includes/import/class-bbpress-importer.php:357
 msgid "Forums imported from bbPress"
 msgstr ""
 
-#: includes/import/class-wpforo-importer.php:94
+#: includes/import/class-wpforo-importer.php:243
+#: includes/import/class-wpforo-importer.php:341
 #. translators: %s: wpForo board name
 msgid "Imported from wpForo -- %s"
 msgstr ""
 
-#: includes/import/class-wpforo-importer.php:95
+#: includes/import/class-wpforo-importer.php:244
+#: includes/import/class-wpforo-importer.php:342
 msgid "Imported from wpForo"
 msgstr ""
 
@@ -6770,7 +6783,7 @@ msgstr ""
 msgid "Please log in to use this invite."
 msgstr ""
 
-#: includes/models/class-space.php:576
+#: includes/models/class-space.php:641
 msgid "Hidden spaces must use the invite-only join policy."
 msgstr ""
 
