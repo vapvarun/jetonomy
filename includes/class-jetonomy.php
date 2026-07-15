@@ -686,7 +686,11 @@ final class Jetonomy {
 		if ( $profile ) {
 			$settings                                    = json_decode( $profile->settings ?? '{}', true ) ?: array();
 			$settings['notifications'][ $type ]['email'] = false;
-			Models\UserProfile::update( (int) $profile->id, array( 'settings' => wp_json_encode( $settings ) ) );
+			// Must key on user_id: jt_user_profiles has no `id` column, so the base
+			// Model::update() (WHERE id = ...) silently failed with "Unknown column
+			// 'id'" and the unsubscribe never persisted — the link reported success
+			// while the email flag stayed on.
+			Models\UserProfile::update_profile( $user_id, array( 'settings' => wp_json_encode( $settings ) ) );
 		}
 
 		wp_die(
