@@ -77,6 +77,34 @@ class Import_Handler {
 		// Run one batch.
 		$result = $importer->run_batch( $phase, $offset, $batch_size );
 
+		// Accumulate this batch's non-fatal errors (an attachment whose file could
+		// not be recovered, say) across batches, the same way the id_map is
+		// persisted. run_batch() logs them into the per-request instance, so without
+		// this they are thrown away and the customer sees "Import complete!" while
+		// files were quietly skipped.
+		$import_errors = get_option(
+			'jetonomy_import_errors',
+			[
+				'count'  => 0,
+				'sample' => [],
+			]
+		);
+		$batch_errors  = $importer->get_errors();
+		if ( $batch_errors ) {
+			$import_errors['count'] = (int) ( $import_errors['count'] ?? 0 ) + count( $batch_errors );
+			// Keep only a bounded sample for the UI — a 50k-post forum with many
+			// unrecoverable files must not bloat wp_options.
+			$room = 50 - count( (array) ( $import_errors['sample'] ?? [] ) );
+			if ( $room > 0 ) {
+				$import_errors['sample'] = array_merge(
+					(array) ( $import_errors['sample'] ?? [] ),
+					array_slice( $batch_errors, 0, $room )
+				);
+			}
+			update_option( 'jetonomy_import_errors', $import_errors, false );
+		}
+		$skipped_files = (int) ( $import_errors['count'] ?? 0 );
+
 		// Calculate overall progress.
 		$total           = $importer->get_total_count();
 		$total_processed = absint( get_option( 'jetonomy_import_total_processed', 0 ) ) + $result['processed'];
@@ -102,6 +130,7 @@ class Import_Handler {
 				'total'     => $total,
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
+				'skipped'   => $skipped_files,
 			]
 		);
 
@@ -111,15 +140,17 @@ class Import_Handler {
 			$history[ $source ] = [
 				'completed_at' => current_time( 'mysql' ),
 				'imported'     => $total_processed,
+				'skipped'      => $skipped_files,
 				'source'       => $source,
 				'source_name'  => $importers[ $source ]->get_source_name(),
 			];
 			update_option( 'jetonomy_import_history', $history, false );
 
-			// Clear transient state.
+			// Clear transient state (skipped count already read into the response above).
 			delete_option( 'jetonomy_import_resume' );
 			delete_option( 'jetonomy_import_total_processed' );
 			delete_option( 'jetonomy_import_id_map' );
+			delete_option( 'jetonomy_import_errors' );
 			\Jetonomy\Import\Importer::clear_progress();
 		}
 
@@ -132,6 +163,7 @@ class Import_Handler {
 				'total'     => $total,
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
+				'skipped'   => $skipped_files,
 			]
 		);
 	}

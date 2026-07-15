@@ -142,6 +142,7 @@ abstract class Importer {
 	public function reset_run_state(): void {
 		delete_option( 'jetonomy_import_id_map' );
 		delete_option( 'jetonomy_import_total_processed' );
+		delete_option( 'jetonomy_import_errors' );
 		$this->id_map = [];
 	}
 
@@ -185,6 +186,21 @@ abstract class Importer {
 			'errors'   => $this->errors,
 			'dry_run'  => $this->dry_run,
 		];
+	}
+
+	/**
+	 * Non-fatal errors logged during this batch — e.g. an attachment whose file
+	 * could not be recovered from the old forum's uploads.
+	 *
+	 * The run_batch() call logs these into the per-request instance; the AJAX handler
+	 * reads this AFTER each batch and accumulates them, so a skipped file is reported
+	 * to the customer instead of vanishing behind a green "Import complete!". That
+	 * silent success is what let the original missing-media bug ship.
+	 *
+	 * @return array<int,array{type:string,id:mixed,message:string}>
+	 */
+	public function get_errors(): array {
+		return $this->errors;
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────

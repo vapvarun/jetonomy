@@ -1391,14 +1391,24 @@
 				}
 			}
 
-			function buildCompleteNotice(processed) {
+			function buildCompleteNotice(processed, skipped) {
+				skipped = parseInt(skipped, 10) || 0;
 				var notice = document.createElement('div');
-				notice.className = 'notice notice-success';
+				// A partial success is a warning, not a clean success — the site owner
+				// needs to know some files did not come across rather than seeing a
+				// green tick and assuming everything migrated.
+				notice.className = skipped > 0 ? 'notice notice-warning' : 'notice notice-success';
 				var p = document.createElement('p');
 				var strong = document.createElement('strong');
 				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
 				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
+				if (skipped > 0) {
+					var warn = document.createElement('strong');
+					var tmpl = Jetonomy.i18n.importSkippedFiles || '%d file(s) could not be recovered and were left linked in the original post text.';
+					warn.textContent = tmpl.replace('%d', skipped) + ' ';
+					p.appendChild(warn);
+				}
 				var link = document.createElement('a');
 				link.href = '';
 				link.textContent = Jetonomy.i18n.reloadPage || 'Reload page';
@@ -1456,7 +1466,7 @@
 
 							results.style.display = 'block';
 							while (results.firstChild) { results.removeChild(results.firstChild); }
-							results.appendChild(buildCompleteNotice(d.processed));
+							results.appendChild(buildCompleteNotice(d.processed, d.skipped));
 
 							// Auto-reload after 3 seconds to show "Previously Imported" state
 							setTimeout(function() { window.location.reload(); }, 3000);

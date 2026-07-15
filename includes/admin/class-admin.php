@@ -921,6 +921,8 @@ class Admin {
 					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
 					'reloadPage'              => esc_html__( 'Reload page', 'jetonomy' ),
 					'importConnectionLost'    => esc_html__( 'Connection lost. You can resume this import later.', 'jetonomy' ),
+					/* translators: %d: number of attachment files that could not be recovered. */
+					'importSkippedFiles'      => esc_html__( '%d file(s) could not be recovered and were left linked in the original post text.', 'jetonomy' ),
 					'inviteCopied'            => esc_html__( 'Invite link copied to clipboard.', 'jetonomy' ),
 					'inviteRevokeConfirm'     => esc_html__( 'Revoke this invite link? Anyone holding it will no longer be able to join.', 'jetonomy' ),
 					'inviteNoLinks'           => esc_html__( 'No invite links yet.', 'jetonomy' ),
