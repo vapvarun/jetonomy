@@ -1021,6 +1021,13 @@ class BuddyPress {
 			$gate_params = array_merge( $gate_params, $priv_params );
 		}
 
+		// Hide this profile's replies entirely when the VIEWER has blocked
+		// $user_id. no-op for guests/no-blocks.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'r', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$gate_sql .= ' AND ' . $block_sql;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$replies = $wpdb->get_results(
 			$wpdb->prepare(

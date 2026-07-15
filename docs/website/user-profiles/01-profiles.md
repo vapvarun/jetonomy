@@ -6,6 +6,7 @@ Every member in your community has a public profile page that shows who they are
 - How online status works on profiles
 - Which tabs are available and who can see each one
 - How members edit their own profile
+- How members delete their own account from the app or API
 - Where reputation and trust level appear
 
 ## The Profile Page
@@ -78,6 +79,12 @@ Editable fields:
 ![Avatar crop dialog open with the image preview, zoom slider, and Crop and upload button](../images/edit-profile-avatar-crop.png)
 
 WordPress Administrators can edit any member's profile from the standard WordPress Users admin as well.
+
+## Deleting Your Account (1.8.0+)
+
+Members can permanently delete their own account from the mobile app or the REST API (`DELETE /users/me`). There is no web front-end button for this yet - it is available through the app and the API only.
+
+Account deletion is permanent and cannot be undone from the community front end - make sure your app or client confirms with the member before sending the request.
 
 ## Embedding Profiles on a Page
 

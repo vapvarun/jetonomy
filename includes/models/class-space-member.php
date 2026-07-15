@@ -281,9 +281,12 @@ class SpaceMember extends Model {
 	 * `display_name` from `wp_users` and `avatar_url` so the template can
 	 * render directly without a per-row WP_User lookup.
 	 *
-	 * Cached per space for 60s via transient `jt_priv_members_{id}`. Cache
-	 * is busted automatically by `add()`, `remove()`, and role updates that
-	 * call `static::bust_privileged_cache( $space_id )`.
+	 * Cached per space for 60s in the object cache (key `priv_members_{id}`).
+	 * This is a hot recomputable read (a query result re-hit on every space-page
+	 * view), so it belongs in the object cache, not a transient — a transient
+	 * would write two wp_options rows per cold read on a site without a
+	 * persistent cache (Caching Standard §3). Busted automatically by `add()`,
+	 * `remove()`, and role updates via `static::bust_privileged_cache()`.
 	 *
 	 * @param int $space_id
 	 * @param int $limit Max rows (defaults to 20 — high enough for any real
@@ -293,8 +296,8 @@ class SpaceMember extends Model {
 	 *                            display_name, avatar_url.
 	 */
 	public static function list_privileged( int $space_id, int $limit = 20 ): array {
-		$cache_key = 'jt_priv_members_' . $space_id;
-		$cached    = get_transient( $cache_key );
+		$cache_key = 'priv_members_' . $space_id;
+		$cached    = \Jetonomy\Cache::get( $cache_key );
 		if ( false !== $cached ) {
 			return $cached;
 		}
@@ -326,16 +329,16 @@ class SpaceMember extends Model {
 			$row->avatar_url = (string) get_avatar_url( (int) $row->user_id, [ 'size' => 48 ] );
 		}
 
-		set_transient( $cache_key, $rows, MINUTE_IN_SECONDS );
+		\Jetonomy\Cache::set( $cache_key, $rows, MINUTE_IN_SECONDS );
 		return $rows;
 	}
 
 	/**
-	 * Bust the list_privileged transient for a space. Called from add(),
+	 * Bust the list_privileged object cache for a space. Called from add(),
 	 * remove(), and role-update paths.
 	 */
 	public static function bust_privileged_cache( int $space_id ): void {
-		delete_transient( 'jt_priv_members_' . $space_id );
+		\Jetonomy\Cache::delete( 'priv_members_' . $space_id );
 	}
 
 	/**

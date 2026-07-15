@@ -33,15 +33,74 @@ class Space extends Model {
 	}
 
 	/**
-	 * Invalidate the cached row and then delegate to Model::update().
+	 * Bust every object-cache key that serves a space row.
+	 *
+	 * Row data lives once, under space:{id} (find()); find_by_slug() caches only
+	 * the stable slug->id mapping under space:slug:{slug}. A row-data change
+	 * therefore busts only space:{id}; the slug key is dropped only when the
+	 * mapping itself changes — a slug rename or a delete (Caching Standard §2b).
+	 * Callers bust AFTER the DB write — busting first is a re-prime race, and the
+	 * slug-keyed disclosure gap (a space turned private still readable by URL) is
+	 * exactly the member-visible staleness §4b forbids.
+	 *
+	 * @param int         $id   Space id.
+	 * @param string|null $slug Slug whose mapping to also drop (rename/delete only).
+	 */
+	public static function bust_cache( int $id, ?string $slug = null ): void {
+		$keys = [ "space:{$id}" ];
+		if ( ! empty( $slug ) ) {
+			$keys[] = "space:slug:{$slug}";
+		}
+		Cache::delete_many( $keys );
+	}
+
+	/**
+	 * Update a space, then invalidate its cache (after the write).
+	 *
+	 * Busting before the write is a re-prime race: a concurrent read between the
+	 * delete and the write re-caches the OLD row. So we write first, then bust
+	 * space:{id}. Only when the slug changes do we also drop the old + new
+	 * slug->id mappings (we read the old slug just for that case).
 	 *
 	 * @param int   $id   Space ID.
 	 * @param array $data Column data.
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
-		Cache::delete( "space:{$id}" );
-		return parent::update( $id, $data );
+		$slug_changing = ! empty( $data['slug'] );
+		$old_slug      = $slug_changing ? ( parent::find( $id )->slug ?? null ) : null;
+
+		$result = parent::update( $id, $data );
+
+		self::bust_cache( $id );
+		if ( $slug_changing && $data['slug'] !== $old_slug ) {
+			$keys = [ "space:slug:{$data['slug']}" ];
+			if ( $old_slug ) {
+				$keys[] = "space:slug:{$old_slug}";
+			}
+			Cache::delete_many( $keys );
+		}
+		return $result;
+	}
+
+	/**
+	 * Delete a space, then invalidate its cache (both keys).
+	 *
+	 * Model::delete() does not touch the cache, so without this override a
+	 * deleted space kept serving from space:{id} / space:slug:{slug} until the
+	 * TTL. Deletion funnels through here (admin AJAX handler, journeys), so this
+	 * is the single chokepoint.
+	 *
+	 * @param int $id Space ID.
+	 * @return bool|\WP_Error Mirrors Model::delete() — do not narrow to bool, or a
+	 *                        WP_Error return would TypeError and callers that
+	 *                        is_wp_error() the result become dead code.
+	 */
+	public static function delete( int $id ): bool|\WP_Error {
+		$slug   = parent::find( $id )->slug ?? null;
+		$result = parent::delete( $id );
+		self::bust_cache( $id, $slug );
+		return $result;
 	}
 
 	/**
@@ -105,19 +164,25 @@ class Space extends Model {
 	 * @return object|null
 	 */
 	public static function find_by_slug( string $slug ): ?object {
-		return Cache::remember_object(
+		// Cache only the STABLE slug->id mapping here; the mutable row data lives
+		// once, under space:{id} via find(). Caching the whole row under the slug
+		// key too would double-store it and force every count change to bust this
+		// key (an extra read on hot paths). The mapping only changes on a slug
+		// rename or a delete, so it rarely needs busting. (Caching Standard §2b.)
+		$id = (int) Cache::remember(
 			"space:slug:{$slug}",
 			function () use ( $slug ) {
-				$row = static::db()->get_row(
+				return (int) static::db()->get_var(
 					static::db()->prepare(
-						'SELECT * FROM ' . static::table() . ' WHERE slug = %s',
+						'SELECT id FROM ' . static::table() . ' WHERE slug = %s',
 						$slug
 					)
 				);
-				return $row ?: null;
 			},
 			300
 		);
+
+		return $id > 0 ? self::find( $id ) : null;
 	}
 
 	/**
@@ -287,7 +352,6 @@ class Space extends Model {
 	 * @param int $by Amount to add (use negative value to decrement).
 	 */
 	public static function increment_post_count( int $id, int $by = 1 ): void {
-		Cache::delete( "space:{$id}" );
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
@@ -298,6 +362,7 @@ class Space extends Model {
 				$id
 			)
 		);
+		self::bust_cache( $id );
 	}
 
 	/**
@@ -307,7 +372,6 @@ class Space extends Model {
 	 * @param int $by Amount to add (use negative value to decrement).
 	 */
 	public static function increment_member_count( int $id, int $by = 1 ): void {
-		Cache::delete( "space:{$id}" );
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
@@ -317,6 +381,7 @@ class Space extends Model {
 				$id
 			)
 		);
+		self::bust_cache( $id );
 	}
 
 	/**

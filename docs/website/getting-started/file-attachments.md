@@ -6,15 +6,24 @@ order: 9
 
 # File Attachments
 
-File Attachments lets members attach files — images, PDFs and documents — to topics and replies. It is a **Pro** feature, off until you enable it.
+File Attachments lets members attach files — images, PDFs and documents — to topics and replies. As of 1.8.0, viewing attachments works in the free plugin. **Jetonomy Pro** adds the ability to attach new files, plus a lightbox, an inline PDF viewer, and configurable size/type limits.
 
-## What members see
+## What members see without Pro
 
-When enabled, the composer gains an **Attach files** control (a full "Attach files" button on the new-topic form, a compact paperclip in the reply toolbar). Attached files render as cards under the post or reply:
+Any attachment already on a post or reply — from a forum import, the mobile app, or the REST API — renders even on a free-only install:
 
-- **Images** show an inline thumbnail (click to enlarge).
-- **PDFs** show a first-page preview with `filename · pages · size` and an **Open viewer** button that opens the PDF inline (page navigation + zoom, or open in a new tab).
-- **Documents** (DOCX, XLSX, PPTX, ODT, TXT, CSV) show a download chip with the file type and size.
+- **Images** show an inline thumbnail.
+- **Everything else** (PDFs and documents) shows a download chip with the file name, size, and type.
+
+> **If you deactivate Pro, your files keep showing.** Attachment storage and display live in the free plugin as of 1.8.0, so nothing disappears - you just lose the composer, the lightbox, the inline PDF viewer, and the size/type limits until Pro is active again.
+
+## What Pro adds
+
+With the File Attachments extension enabled, the composer gains an **Attach files** control (a full "Attach files" button on the new-topic form, a compact paperclip in the reply toolbar) so members can attach new files. The display also gets richer:
+
+- **Images** get a lightbox (click to enlarge).
+- **PDFs** get a first-page preview with `filename · pages · size` and an **Open viewer** button that opens the PDF inline (page navigation + zoom, or open in a new tab).
+- **Documents** (DOCX, XLSX, PPTX, ODT, TXT, CSV) keep the same download chip you get without Pro.
 
 ## Turn it on
 

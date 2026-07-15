@@ -116,6 +116,12 @@ class Fulltext_Search implements Search_Adapter {
 			$params = array_merge( $params, $space_vis_params );
 		}
 
+		// Hide posts from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$sql .= ' AND ' . $block_sql;
+		}
+
 		$sql     .= ' ORDER BY relevance DESC LIMIT %d OFFSET %d';
 		$params[] = $limit;
 		$params[] = $offset;
@@ -161,6 +167,14 @@ class Fulltext_Search implements Search_Adapter {
 		if ( '1=1' !== $space_vis_sql ) {
 			$where[] = $space_vis_sql;
 			$params  = array_merge( $params, $space_vis_params );
+		}
+
+		// Hide replies AUTHORED BY a blocked user. Deliberately not filtering on
+		// the parent post's author — that would over-block other people's
+		// useful replies inside a blocked user's thread. no-op for guests/no-blocks.
+		[ $block_sql ] = \Jetonomy\Models\BlockedUser::exclusion_sql( get_current_user_id(), 'r', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$where[] = $block_sql;
 		}
 
 		$sql     .= ' WHERE ' . implode( ' AND ', $where );

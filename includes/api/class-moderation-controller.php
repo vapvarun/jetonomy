@@ -116,7 +116,7 @@ class Moderation_Controller extends Base_Controller {
 			]
 		);
 
-		// List pending flags.
+		// List flags, optionally filtered by status.
 		register_rest_route(
 			$ns,
 			'/moderation/flags',
@@ -124,6 +124,17 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'list_flags' ],
 				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					// Was undeclared, so the route ALWAYS returned pending flags and
+					// any "resolved" / "all" filter a client offered was dead UI.
+					// Statuses are the ones Flag actually writes: a new flag is
+					// 'pending'; resolving it sets 'valid' or 'dismissed'.
+					'status' => [
+						'type'    => 'string',
+						'default' => 'pending',
+						'enum'    => [ 'pending', 'valid', 'dismissed', 'all' ],
+					],
+				],
 			]
 		);
 
@@ -303,6 +314,13 @@ class Moderation_Controller extends Base_Controller {
 		);
 		$page = array_slice( $merged, $pagination['offset'], $pagination['limit'] );
 
+		// Name the author. The raw rows carry only author_id, so every client was
+		// rendering "post by unknown" — a moderation queue that cannot tell you who
+		// wrote the thing you are about to approve, spam or trash is close to
+		// useless, and the decision often turns on exactly that. Batch-loaded via
+		// the shared helper: one query for the page, never a get_userdata() per row.
+		$page = $this->enrich_with_author( $page );
+
 		$response = $this->paginated_response(
 			$page,
 			array(
@@ -462,13 +480,57 @@ class Moderation_Controller extends Base_Controller {
 	 * GET /moderation/flags — List all pending flags.
 	 */
 	public function list_flags( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$flags = Flag::list_pending();
+		$pagination = $this->get_pagination( $request );
+		$limit      = (int) $pagination['limit'];
+		$offset     = (int) $pagination['offset'];
+		$status     = (string) ( $request->get_param( 'status' ) ?: 'pending' );
+
+		$flags = 'all' === $status
+			? Flag::list_all( $limit, $offset )
+			: Flag::list_by_status( $status, $limit, $offset );
+
+		// Enrich the reporter (and resolver) so the queue can say WHO reported a
+		// thing. The raw row carries only reporter_id, which left every client
+		// rendering "Reported by unknown" — a moderation queue that cannot name
+		// the reporter is close to useless. Batch-loaded: one query for the whole
+		// page, never a get_userdata() inside the loop.
+		$user_ids = [];
+		foreach ( $flags as $flag ) {
+			if ( ! empty( $flag->reporter_id ) ) {
+				$user_ids[] = (int) $flag->reporter_id;
+			}
+			if ( ! empty( $flag->resolved_by ) ) {
+				$user_ids[] = (int) $flag->resolved_by;
+			}
+		}
+		$users = $this->batch_load_users( $user_ids );
+
+		foreach ( $flags as $flag ) {
+			$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+			$reporter    = $users[ $reporter_id ] ?? null;
+			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
+
+			$flag->reporter = $reporter
+				? [
+					'id'           => $reporter_id,
+					'display_name' => $reporter->display_name ?? '',
+					'user_login'   => $reporter->user_login ?? '',
+					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
+				]
+				: null;
+
+			$flag->resolved_by_name = $resolver->display_name ?? '';
+		}
+
+		// Count for the SAME status we listed, or has_more lies on every filter
+		// other than 'pending'.
+		$total = Flag::count_by_status( $status );
 
 		return $this->paginated_response(
 			$flags,
 			[
-				'total'    => count( $flags ),
-				'has_more' => false,
+				'total'  => $total,
+				'offset' => $offset,
 			]
 		);
 	}
@@ -663,6 +725,41 @@ class Moderation_Controller extends Base_Controller {
 
 		if ( ! get_userdata( $user_id ) ) {
 			return $this->not_found( 'User' );
+		}
+
+		// Who may be TARGETED. The cap matrix above only ever checked the actor,
+		// so any user with jetonomy_moderate (the editor role, by default) could
+		// issue a global_ban against the site administrator — and a global ban makes
+		// REST_Auth reject that account's mutations, so a moderator could lock the
+		// owner out of their own community. Verified against a live site before this
+		// guard existed: an editor banned user 1 and the row was written.
+		//
+		// Rules, mirroring the ones user-blocking already enforces:
+		// - nobody restricts themselves,
+		// - nobody restricts an administrator over REST,
+		// - a moderator cannot restrict another moderator; only an admin can.
+		if ( $user_id === $actor_id ) {
+			return new WP_Error(
+				'jetonomy_cannot_ban_self',
+				__( 'You cannot restrict your own account.', 'jetonomy' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return new WP_Error(
+				'jetonomy_cannot_ban_admin',
+				__( 'Administrators cannot be restricted.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		if ( user_can( $user_id, 'jetonomy_moderate' ) && ! current_user_can( 'manage_options' ) ) {
+			return new WP_Error(
+				'jetonomy_cannot_ban_moderator',
+				__( 'Only an administrator can restrict a moderator.', 'jetonomy' ),
+				[ 'status' => 403 ]
+			);
 		}
 
 		$restriction_id = Restriction::ban(

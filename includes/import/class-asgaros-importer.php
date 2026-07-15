@@ -48,24 +48,142 @@ class Asgaros_Importer extends Importer {
 		return $forums + $topics + $posts;
 	}
 
+	/**
+	 * Import one batch of one phase.
+	 *
+	 * This used to call run() — the entire import — inside a single AJAX request,
+	 * so any forum with real content hit max_execution_time and died with no
+	 * partial-progress recovery. Phases now page through the source tables the way
+	 * the bbPress importer does, and the caller (Import_Handler) persists the id_map
+	 * and a resume point between batches.
+	 *
+	 * Phase order: forums -> topics -> replies -> profiles -> complete.
+	 *
+	 * FORUMS ARE DELIBERATELY NOT PAGED. A child forum can only be created once its
+	 * parent exists, so the set has to be dependency-sorted as a whole (see
+	 * sort_by_dependency()). Paging it would need a parent-before-child ordering
+	 * that survives across batches, and Asgaros forum counts are bounded — they are
+	 * the board's categories/forums, tens of rows, not the content. The volume lives
+	 * in topics and posts, and those page.
+	 *
+	 * @param string $phase      Current phase.
+	 * @param int    $offset     Row offset within the phase.
+	 * @param int    $batch_size Rows to process this call.
+	 * @return array{phase:string, offset:int, done:bool, processed:int}
+	 */
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
-		// TODO: implement batched import for Asgaros.
-		// For now, fall through to run() via a single-shot batch.
-		if ( 'forums' === $phase && 0 === $offset ) {
-			$this->run();
-			return [
-				'phase'     => 'complete',
-				'offset'    => 0,
-				'done'      => true,
-				'processed' => $this->imported,
-			];
+		$batch_size = max( 1, $batch_size );
+
+		// Registering one Asgaros upload costs ~0.9s (wp_generate_attachment_metadata
+		// regenerating every thumbnail), so an image-heavy forum blows past
+		// max_execution_time at the default 500-row batch. The row loops below stop at
+		// a row boundary once this budget is spent, exactly like the wpForo importer —
+		// without it a batch dies mid-loop, the id_map never persists, and the retried
+		// offset re-creates the pre-timeout topics as DUPLICATES.
+		$this->start_budget();
+
+		switch ( $phase ) {
+			case 'forums':
+				$cat_id = Category::create(
+					[
+						'name' => __( 'Imported from Asgaros', 'jetonomy' ),
+						'slug' => 'imported-asgaros-' . time(),
+					]
+				);
+
+				$before = $this->imported;
+				$this->import_forums( (int) $cat_id );
+				$this->persist_id_map();
+
+				return [
+					'phase'     => 'topics',
+					'offset'    => 0,
+					'done'      => false,
+					'processed' => $this->imported - $before,
+				];
+
+			case 'topics':
+				$r = $this->import_topics_batch( $offset, $batch_size );
+				$this->persist_id_map();
+
+				// Ran out of time mid-page: resume at the exact row we stopped on.
+				if ( $r['processed'] < $r['fetched'] ) {
+					return [
+						'phase'     => 'topics',
+						'offset'    => $offset + $r['processed'],
+						'done'      => false,
+						'processed' => $r['processed'],
+					];
+				}
+
+				$has_more = $r['fetched'] >= $batch_size;
+				return [
+					'phase'     => $has_more ? 'topics' : 'replies',
+					'offset'    => $has_more ? $offset + $r['processed'] : 0,
+					'done'      => false,
+					'processed' => $r['processed'],
+				];
+
+			case 'replies':
+				$r = $this->import_replies_batch( $offset, $batch_size );
+				$this->persist_id_map();
+
+				if ( $r['processed'] < $r['fetched'] ) {
+					return [
+						'phase'     => 'replies',
+						'offset'    => $offset + $r['processed'],
+						'done'      => false,
+						'processed' => $r['processed'],
+					];
+				}
+
+				$has_more = $r['fetched'] >= $batch_size;
+				return [
+					'phase'     => $has_more ? 'replies' : 'profiles',
+					'offset'    => $has_more ? $offset + $r['processed'] : 0,
+					'done'      => false,
+					'processed' => $r['processed'],
+				];
+
+			case 'profiles':
+				$processed = $this->create_profiles_batch( $offset, $batch_size );
+
+				if ( $processed >= $batch_size ) {
+					return [
+						'phase'     => 'profiles',
+						'offset'    => $offset + $batch_size,
+						'done'      => false,
+						'processed' => $processed,
+					];
+				}
+
+				// Last phase — the counters are denormalized, so recount once at the
+				// very end rather than after every batch.
+				$this->recount();
+
+				return [
+					'phase'     => 'complete',
+					'offset'    => 0,
+					'done'      => true,
+					'processed' => $processed,
+				];
+
+			default:
+				return [
+					'phase'     => 'complete',
+					'offset'    => 0,
+					'done'      => true,
+					'processed' => 0,
+				];
 		}
-		return [
-			'phase'     => 'complete',
-			'offset'    => 0,
-			'done'      => true,
-			'processed' => 0,
-		];
+	}
+
+	/**
+	 * Persist the id_map so the next batch (a separate request) can resolve
+	 * parents. Import_Handler restores it into $this->id_map before each call.
+	 */
+	private function persist_id_map(): void {
+		update_option( 'jetonomy_import_id_map', $this->id_map, false );
 	}
 
 	public function run( array $options = [] ): array {
@@ -204,6 +322,115 @@ class Asgaros_Importer extends Importer {
 		return $ordered;
 	}
 
+	/**
+	 * Import one page of topics.
+	 *
+	 * Returns both the rows FETCHED and the rows CONSUMED. They are equal for a
+	 * full page, but the budget can stop import_topic_rows() early, in which case
+	 * consumed < fetched and the caller resumes at offset + consumed rather than
+	 * skipping the untouched tail. "Consumed" counts skipped rows too, so a page
+	 * of all-skipped topics still advances instead of stalling the phase.
+	 *
+	 * @param int $offset Row offset.
+	 * @param int $limit  Page size.
+	 * @return array{fetched:int, processed:int}
+	 */
+	private function import_topics_batch( int $offset, int $limit ): array {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$topics = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$p}forum_topics ORDER BY id ASC LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		$fetched   = count( (array) $topics );
+		$processed = $this->import_topic_rows( (array) $topics );
+
+		return [
+			'fetched'   => $fetched,
+			'processed' => $processed,
+		];
+	}
+
+	/**
+	 * Import one page of replies. Returns fetched + consumed (see import_topics_batch).
+	 *
+	 * @param int $offset Row offset.
+	 * @param int $limit  Page size.
+	 * @return array{fetched:int, processed:int}
+	 */
+	private function import_replies_batch( int $offset, int $limit ): array {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// Every post EXCEPT the first in each topic — the first became the topic body.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT p.* FROM {$p}forum_posts p
+				 INNER JOIN (
+				     SELECT parent_id AS topic_id, MIN(id) AS first_id
+				     FROM {$p}forum_posts
+				     GROUP BY parent_id
+				 ) f ON p.parent_id = f.topic_id
+				 WHERE p.id != f.first_id
+				 ORDER BY p.id ASC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		$fetched   = count( (array) $posts );
+		$processed = $this->import_reply_rows( (array) $posts );
+
+		return [
+			'fetched'   => $fetched,
+			'processed' => $processed,
+		];
+	}
+
+	/**
+	 * Ensure profiles for one page of authors. Returns rows consumed.
+	 *
+	 * @param int $offset Row offset.
+	 * @param int $limit  Page size.
+	 * @return int Rows consumed.
+	 */
+	private function create_profiles_batch( int $offset, int $limit ): int {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT author_id FROM (
+				     SELECT DISTINCT author_id FROM {$p}forum_topics WHERE author_id > 0
+				     UNION
+				     SELECT DISTINCT author_id FROM {$p}forum_posts WHERE author_id > 0
+				 ) authors
+				 ORDER BY author_id ASC
+				 LIMIT %d OFFSET %d",
+				$limit,
+				$offset
+			)
+		);
+
+		foreach ( $ids as $uid ) {
+			$this->ensure_profile( (int) $uid );
+		}
+
+		return count( (array) $ids );
+	}
+
 	private function import_topics(): void {
 		global $wpdb;
 		$p = $wpdb->prefix;
@@ -212,9 +439,106 @@ class Asgaros_Importer extends Importer {
 			"SELECT * FROM {$p}forum_topics ORDER BY id ASC"
 		);
 
-		if ( empty( $topics ) ) {
-			return;
+		$this->import_topic_rows( (array) $topics );
+	}
+
+	/**
+	 * Create Jetonomy posts from a set of Asgaros topic rows.
+	 *
+	 * Shared by the batched and the single-shot paths so the two can never drift.
+	 *
+	 * @param object[] $topics Asgaros topic rows.
+	 * @return int Rows CONSUMED (including skipped ones). Stops early at a row
+	 *             boundary once the time budget is spent (batched path only —
+	 *             the single-shot run() never starts a budget, so it consumes all).
+	 */
+	/**
+	 * Carry an Asgaros post's uploads onto the imported object.
+	 *
+	 * Verified against a real Asgaros Forum install by reading its own upload code
+	 * (includes/forum-uploads.php), not by assuming:
+	 *
+	 *   - The file list lives in `forum_posts.uploads`, a longtext column holding a
+	 *     SERIALIZED array of bare file names (`$links[] = $name;`). No media table,
+	 *     no body markup.
+	 *   - The file itself sits at `uploads/{folder}/{SOURCE post id}/{name}` — the
+	 *     source post id is part of the path, so it has to be read before we throw
+	 *     the old id away.
+	 *   - It is written with move_uploaded_file() and never touches
+	 *     wp_insert_attachment(), so unlike bbPress the file is NOT in the media
+	 *     library. It has to be registered, which is exactly what ensure_media_id()
+	 *     does (and that also gets the file out of harm's way if Asgaros is removed).
+	 *
+	 * The folder is filterable in Asgaros (asgarosforum_filter_upload_folder), so we
+	 * ask for the same value rather than hardcoding it and silently missing every
+	 * file on a site that changed it.
+	 *
+	 * @param string $object_type    'post' or 'reply'.
+	 * @param int    $object_id      Imported Jetonomy post/reply id.
+	 * @param int    $source_post_id Asgaros post id (part of the file path).
+	 * @param mixed  $uploads        Raw `uploads` column value.
+	 * @return int Files linked.
+	 */
+	private function migrate_asgaros_uploads( string $object_type, int $object_id, int $source_post_id, $uploads ): int {
+		if ( ! $object_id || ! $source_post_id || empty( $uploads ) ) {
+			return 0;
 		}
+
+		$files = maybe_unserialize( $uploads );
+		if ( ! is_array( $files ) || ! $files ) {
+			return 0;
+		}
+
+		$base = wp_get_upload_dir()['baseurl'] . '/' . $this->asgaros_upload_folder() . '/' . $source_post_id . '/';
+
+		$linked = 0;
+		$sort   = 0;
+
+		foreach ( $files as $name ) {
+			$name = (string) $name;
+			if ( '' === $name ) {
+				continue;
+			}
+
+			$media_id = $this->ensure_media_id( 0, $base . rawurlencode( $name ), $name );
+			if ( ! $media_id ) {
+				$this->log_error( 'attachment', $base . $name, 'Could not recover the file' );
+				continue;
+			}
+
+			if ( $this->link_attachment( $object_type, $object_id, $media_id, $sort ) ) {
+				++$linked;
+				++$sort;
+			}
+		}
+
+		return $linked;
+	}
+
+	/**
+	 * Asgaros' uploads folder under uploads/. Filterable on their side, so we read
+	 * the same value instead of hardcoding 'asgarosforum'.
+	 */
+	private function asgaros_upload_folder(): string {
+		// Asgaros' own filter, deliberately. We are asking THEIR plugin where it put
+		// the files; prefixing this with jetonomy_ would just be us talking to
+		// ourselves and would miss every file on a site that changed the folder.
+		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+		$folder = apply_filters( 'asgarosforum_filter_upload_folder', 'asgarosforum' );
+
+		return trim( (string) $folder, '/' ) ?: 'asgarosforum';
+	}
+
+	private function import_topic_rows( array $topics ): int {
+		global $wpdb;
+		$p = $wpdb->prefix;
+
+		if ( empty( $topics ) ) {
+			return 0;
+		}
+
+		$consumed = 0;
+		$total    = count( $topics );
 
 		$topic_ids    = wp_list_pluck( $topics, 'id' );
 		$placeholders = implode( ',', array_fill( 0, count( $topic_ids ), '%d' ) );
@@ -237,6 +561,10 @@ class Asgaros_Importer extends Importer {
 		}
 
 		foreach ( $topics as $topic ) {
+			// Counted before any `continue` so a skipped row still advances the
+			// offset — otherwise a page of all-skipped topics would stall the phase.
+			++$consumed;
+
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( ! $space_id ) {
 				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->parent_id} not imported" );
@@ -245,7 +573,13 @@ class Asgaros_Importer extends Importer {
 			}
 
 			$first_post = $first_posts_map[ (int) $topic->id ] ?? null;
-			$content    = $first_post ? $first_post->text : '';
+			$content    = (string) ( $first_post ? $first_post->text : '' );
+
+			// Register any inline image into the media library so it survives the
+			// old forum's upload folder being deleted. This does NOT rewrite the
+			// inline URL in the body (old-domain URLs are punted to wp search-replace,
+			// see register_body_media()) — it only gets the file into Media.
+			$this->register_body_media( $content, $this->asgaros_upload_folder() );
 
 			$status = ( isset( $topic->approved ) && 1 === (int) $topic->approved ) ? 'publish' : 'pending';
 
@@ -273,15 +607,32 @@ class Asgaros_Importer extends Importer {
 
 			if ( $post_id ) {
 				$this->map_id( 'topic', (int) $topic->id, $post_id );
+
 				if ( $first_post ) {
+					// The upload list. (Inline images were adopted before create.)
+					$this->migrate_asgaros_uploads(
+						'post',
+						(int) $post_id,
+						(int) $first_post->id,
+						$first_post->uploads ?? ''
+					);
 					$this->map_id( 'asgaros_post_skip', (int) $first_post->id, 0 );
 				}
+
 				++$this->imported;
 			} else {
 				$this->log_error( 'topic', $topic->id, 'Failed to create post' );
 				++$this->skipped;
 			}
+
+			// Out of time, but not out of rows: stop at this boundary. The caller
+			// resumes at exactly $consumed, so nothing is lost or done twice.
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return $consumed;
 	}
 
 	private function import_replies(): void {
@@ -299,20 +650,42 @@ class Asgaros_Importer extends Importer {
 			 ORDER BY p.id ASC"
 		);
 
+		$this->import_reply_rows( (array) $posts );
+	}
+
+	/**
+	 * Create Jetonomy replies from a set of Asgaros post rows.
+	 *
+	 * Shared by the batched and the single-shot paths so the two cannot drift.
+	 *
+	 * @param object[] $posts Asgaros post rows (excluding each topic's first post).
+	 * @return int Rows CONSUMED (including skipped ones). Stops early once the time
+	 *             budget is spent (batched path only).
+	 */
+	private function import_reply_rows( array $posts ): int {
+		$consumed = 0;
+		$total    = count( $posts );
+
 		foreach ( $posts as $asgaros_post ) {
+			// Counted before any `continue` (see import_topic_rows()).
+			++$consumed;
+
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
 				++$this->skipped;
 				continue;
 			}
 
+			$text = (string) $asgaros_post->text;
+			$this->register_body_media( $text, $this->asgaros_upload_folder() );
+
 			$reply_id = JtReply::create(
 				[
 					'post_id'       => $post_id,
 					'parent_id'     => null,
 					'author_id'     => (int) ( $asgaros_post->author_id ?? 1 ),
-					'content'       => wp_kses_post( $asgaros_post->text ),
-					'content_plain' => wp_strip_all_tags( $asgaros_post->text ),
+					'content'       => wp_kses_post( $text ),
+					'content_plain' => wp_strip_all_tags( $text ),
 					'status'        => 'publish',
 					'created_at'    => $asgaros_post->date ?? now(),
 				]
@@ -326,12 +699,26 @@ class Asgaros_Importer extends Importer {
 
 			if ( $reply_id ) {
 				$this->map_id( 'asgaros_reply', (int) $asgaros_post->id, $reply_id );
+
+				$this->migrate_asgaros_uploads(
+					'reply',
+					(int) $reply_id,
+					(int) $asgaros_post->id,
+					$asgaros_post->uploads ?? ''
+				);
+
 				++$this->imported;
 			} else {
 				$this->log_error( 'reply', $asgaros_post->id, 'Failed to create reply' );
 				++$this->skipped;
 			}
+
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return $consumed;
 	}
 
 	private function create_profiles(): void {
@@ -358,5 +745,9 @@ class Asgaros_Importer extends Importer {
 		$wpdb->query( "UPDATE {$pt} p SET p.reply_count    = (SELECT COUNT(*)   FROM {$rt} r WHERE r.post_id  = p.id AND r.status = 'publish')" );
 		$wpdb->query( "UPDATE {$st} s SET s.post_count     = (SELECT COUNT(*)   FROM {$pt} p WHERE p.space_id = s.id AND p.status = 'publish')" );
 		$wpdb->query( "UPDATE {$pt} p SET p.last_reply_at  = (SELECT MAX(r.created_at) FROM {$rt} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+
+		// spaces.post_count above backs space:{id}; a set-based UPDATE names no ids
+		// (Caching Standard §4d). This is a one-shot import, so flush the group.
+		\Jetonomy\Cache::flush();
 	}
 }

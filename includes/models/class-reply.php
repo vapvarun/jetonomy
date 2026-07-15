@@ -270,9 +270,22 @@ class Reply extends Model {
 		$offset   = (int) $args['offset'];
 		$after    = (int) $args['after'];
 
+		// Blocked authors are TOMBSTONED here, not SQL-excluded.
+		//
+		// This is the flat list REST clients (and the mobile app) consume, and
+		// they re-nest it client-side on parent_id. Dropping a blocked author's
+		// row would leave every child of theirs pointing at a parent that isn't
+		// in the payload — an innocent third party's reply then either vanishes
+		// or silently re-parents to the thread root, detached from the
+		// conversation it was answering. Same reasoning as build_tree(): keep
+		// the node so the subtree survives, and empty its content instead. The
+		// row count also stays stable, so pagination and `has_more` don't shift
+		// per viewer.
+		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
+
 		// Cursor: prefer id-based over offset when $after is provided.
 		if ( $after > 0 ) {
-			return static::db()->get_results(
+			$rows = static::db()->get_results(
 				static::db()->prepare(
 					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' AND id > %d ORDER BY {$order_by} LIMIT %d",
@@ -281,17 +294,23 @@ class Reply extends Model {
 					$limit
 				)
 			) ?: array();
+		} else {
+			$rows = static::db()->get_results(
+				static::db()->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' ORDER BY {$order_by} LIMIT %d OFFSET %d",
+					$post_id,
+					$limit,
+					$offset
+				)
+			) ?: array();
 		}
 
-		return static::db()->get_results(
-			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT * FROM {$table} WHERE post_id = %d AND status = 'publish' ORDER BY {$order_by} LIMIT %d OFFSET %d",
-				$post_id,
-				$limit,
-				$offset
-			)
-		) ?: array();
+		foreach ( $rows as $row ) {
+			self::apply_block_tombstone( $row, $blocked_ids );
+		}
+
+		return $rows;
 	}
 
 	/**
@@ -457,8 +476,12 @@ class Reply extends Model {
 			$by_parent[ $pid ][] = $reply;
 		}
 
+		// Blocked-author ids for the current viewer, loaded ONCE for the whole
+		// tree (not per-row) — see build_tree()'s tombstone step.
+		$blocked_ids = BlockedUser::blocked_ids( get_current_user_id() );
+
 		// Recursively attach children (max 3 levels).
-		$tree = self::build_tree( $by_parent, 0, 0, 3 );
+		$tree = self::build_tree( $by_parent, 0, 0, 3, $blocked_ids );
 
 		// Sort top-level based on sort param.
 		if ( 'newest' === $sort ) {
@@ -502,13 +525,19 @@ class Reply extends Model {
 	/**
 	 * Recursively build threaded tree from grouped replies.
 	 *
-	 * @param array $by_parent Replies grouped by parent_id.
-	 * @param int   $parent_id Current parent ID.
-	 * @param int   $depth     Current depth.
-	 * @param int   $max_depth Maximum nesting depth.
+	 * Blocked-author replies are tombstoned, NOT dropped: dropping a node
+	 * whose id is some other (innocent) reply's parent_id would orphan that
+	 * entire subtree, silently hiding replies from users the viewer never
+	 * blocked. See self::apply_block_tombstone().
+	 *
+	 * @param array $by_parent   Replies grouped by parent_id.
+	 * @param int   $parent_id   Current parent ID.
+	 * @param int   $depth       Current depth.
+	 * @param int   $max_depth   Maximum nesting depth.
+	 * @param int[] $blocked_ids Viewer's blocked author ids (loaded once by the caller).
 	 * @return array Nested reply nodes.
 	 */
-	private static function build_tree( array &$by_parent, int $parent_id, int $depth, int $max_depth ): array {
+	private static function build_tree( array &$by_parent, int $parent_id, int $depth, int $max_depth, array $blocked_ids = array() ): array {
 		if ( ! isset( $by_parent[ $parent_id ] ) ) {
 			return array();
 		}
@@ -518,17 +547,45 @@ class Reply extends Model {
 			$reply->depth    = $depth;
 			$reply->children = array();
 
+			self::apply_block_tombstone( $reply, $blocked_ids );
+
 			if ( $depth < $max_depth ) {
-				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth + 1, $max_depth );
+				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth + 1, $max_depth, $blocked_ids );
 			} else {
 				// At max depth, flatten further children at the same level.
-				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth, $max_depth );
+				$reply->children = self::build_tree( $by_parent, (int) $reply->id, $depth, $max_depth, $blocked_ids );
 			}
 
 			$nodes[] = $reply;
 		}
 
 		return $nodes;
+	}
+
+	/**
+	 * Mark + scrub a reply row authored by a user the viewer has blocked.
+	 *
+	 * Sets `is_blocked_author = true` and nulls the content fields SERVER-SIDE
+	 * so blocked text never reaches the client — the reply-card partial then
+	 * renders a tombstone ("Content hidden — you blocked this user") instead
+	 * of the body. `author_id` is deliberately left intact: the template needs
+	 * it to render the Unblock affordance and to keep avatar/permission checks
+	 * from erroring on a null author.
+	 *
+	 * Shared by get_threaded()'s tree builder and the off-page Q&A
+	 * accepted-answer callout (single-post.php), which fetches its reply via
+	 * Reply::find() instead of the tree and must apply the same treatment.
+	 *
+	 * @param object $reply       Reply row, mutated in place.
+	 * @param int[]  $blocked_ids Viewer's blocked author ids.
+	 */
+	public static function apply_block_tombstone( object $reply, array $blocked_ids ): void {
+		$reply->is_blocked_author = in_array( (int) $reply->author_id, $blocked_ids, true );
+
+		if ( $reply->is_blocked_author ) {
+			$reply->content       = '';
+			$reply->content_plain = '';
+		}
 	}
 
 	/**
@@ -564,6 +621,12 @@ class Reply extends Model {
 		if ( '' !== $priv_sql ) {
 			$gate_sql   .= ' AND ' . $priv_sql;
 			$gate_params = array_merge( $gate_params, $priv_params );
+		}
+
+		// Hide replies from users the viewer has blocked. no-op for guests/no-blocks.
+		[ $block_sql ] = BlockedUser::exclusion_sql( get_current_user_id(), 'r', 'author_id' );
+		if ( '' !== $block_sql ) {
+			$gate_sql .= ' AND ' . $block_sql;
 		}
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

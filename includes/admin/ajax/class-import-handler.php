@@ -35,6 +35,9 @@ class Import_Handler {
 		$phase      = sanitize_text_field( wp_unslash( $_POST['phase'] ?? 'forums' ) );
 		$offset     = absint( $_POST['offset'] ?? 0 );
 		$batch_size = absint( $_POST['batch_size'] ?? 500 );
+		// Set only on the first batch of a fresh/restart run (never on a resume or
+		// a mid-run board hand-off, which also arrive as phase=forums/offset=0).
+		$new_run = (bool) absint( wp_unslash( $_POST['new_run'] ?? 0 ) );
 
 		Import_Manager::init();
 		$importers = Import_Manager::get_importers();
@@ -45,7 +48,16 @@ class Import_Handler {
 
 		$importer = $importers[ $source ];
 
-		// Restore ID map from previous batch.
+		// A fresh run clears whatever a previous (possibly aborted) import left
+		// behind — a stale id_map, a non-zero processed counter, cached board
+		// state. Without this the next import inherits them and either mis-resolves
+		// parents (the id_map's 'forum'/'topic' keys are shared across sources) or
+		// reports a wrong progress %.
+		if ( $new_run ) {
+			$importer->reset_run_state();
+		}
+
+		// Restore ID map from previous batch (empty after a reset above).
 		$importer->id_map = get_option( 'jetonomy_import_id_map', [] );
 
 		// Save resume point so the import can be resumed if interrupted.
@@ -57,13 +69,41 @@ class Import_Handler {
 				'phase'      => $phase,
 				'offset'     => $offset,
 				'batch_size' => $batch_size,
-				'started_at' => $existing_resume['started_at'] ?? current_time( 'mysql' ),
+				'started_at' => $new_run ? current_time( 'mysql' ) : ( $existing_resume['started_at'] ?? current_time( 'mysql' ) ),
 			],
 			false
 		);
 
 		// Run one batch.
 		$result = $importer->run_batch( $phase, $offset, $batch_size );
+
+		// Accumulate this batch's non-fatal errors (an attachment whose file could
+		// not be recovered, say) across batches, the same way the id_map is
+		// persisted. run_batch() logs them into the per-request instance, so without
+		// this they are thrown away and the customer sees "Import complete!" while
+		// files were quietly skipped.
+		$import_errors = get_option(
+			'jetonomy_import_errors',
+			[
+				'count'  => 0,
+				'sample' => [],
+			]
+		);
+		$batch_errors  = $importer->get_errors();
+		if ( $batch_errors ) {
+			$import_errors['count'] = (int) ( $import_errors['count'] ?? 0 ) + count( $batch_errors );
+			// Keep only a bounded sample for the UI — a 50k-post forum with many
+			// unrecoverable files must not bloat wp_options.
+			$room = 50 - count( (array) ( $import_errors['sample'] ?? [] ) );
+			if ( $room > 0 ) {
+				$import_errors['sample'] = array_merge(
+					(array) ( $import_errors['sample'] ?? [] ),
+					array_slice( $batch_errors, 0, $room )
+				);
+			}
+			update_option( 'jetonomy_import_errors', $import_errors, false );
+		}
+		$skipped_files = (int) ( $import_errors['count'] ?? 0 );
 
 		// Calculate overall progress.
 		$total           = $importer->get_total_count();
@@ -90,6 +130,7 @@ class Import_Handler {
 				'total'     => $total,
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
+				'skipped'   => $skipped_files,
 			]
 		);
 
@@ -99,15 +140,17 @@ class Import_Handler {
 			$history[ $source ] = [
 				'completed_at' => current_time( 'mysql' ),
 				'imported'     => $total_processed,
+				'skipped'      => $skipped_files,
 				'source'       => $source,
 				'source_name'  => $importers[ $source ]->get_source_name(),
 			];
 			update_option( 'jetonomy_import_history', $history, false );
 
-			// Clear transient state.
+			// Clear transient state (skipped count already read into the response above).
 			delete_option( 'jetonomy_import_resume' );
 			delete_option( 'jetonomy_import_total_processed' );
 			delete_option( 'jetonomy_import_id_map' );
+			delete_option( 'jetonomy_import_errors' );
 			\Jetonomy\Import\Importer::clear_progress();
 		}
 
@@ -120,6 +163,7 @@ class Import_Handler {
 				'total'     => $total,
 				'percent'   => $percent,
 				'message'   => $phase_labels[ $result['phase'] ] ?? '',
+				'skipped'   => $skipped_files,
 			]
 		);
 	}

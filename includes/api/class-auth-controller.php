@@ -785,56 +785,9 @@ class Auth_Controller extends Base_Controller {
 		);
 	}
 
-	/**
-	 * Per-IP rate limit shared across login / register / lost-password.
-	 * Defaults to 5 attempts per minute. Caller can override for tighter
-	 * buckets (lost-password uses 3 / 5 minutes per Decision 8 plug-and-play
-	 * — strict enough to discourage email-probing, loose enough that a real
-	 * person who fat-fingered their email twice still gets through).
-	 *
-	 * @param string $bucket  'login' / 'register' / 'lost_password' / future buckets.
-	 * @param int    $max     Max attempts in the window.
-	 * @param int    $seconds Window size in seconds.
-	 * @return bool True when within limit, false when exhausted.
-	 */
-	protected static function check_rate_limit( string $bucket, int $max = 5, int $seconds = MINUTE_IN_SECONDS ): bool {
-		$ip  = \Jetonomy\client_ip() ?: 'unknown';
-		$key = 'jt_auth_' . $bucket . '_' . md5( $ip );
-		$now = time();
-
-		// 1.4.0 fix: store BOTH the hit count AND a fixed expiry timestamp
-		// in the transient value, then re-`set_transient` with only the
-		// REMAINING seconds. Calling `set_transient($key, $hits+1, $seconds)`
-		// on every hit (the pre-1.4.0 pattern) extended the window every
-		// time, so an attacker pacing themselves under $max could go
-		// indefinitely. Now the TTL collapses toward $expires_at on every
-		// increment, the window is fixed once, and the throttle is real.
-		$record = get_transient( $key );
-		if ( ! is_array( $record ) || ! isset( $record['expires_at'], $record['hits'] ) || $now >= (int) $record['expires_at'] ) {
-			set_transient(
-				$key,
-				array(
-					'hits'       => 1,
-					'expires_at' => $now + $seconds,
-				),
-				$seconds
-			);
-			return true;
-		}
-
-		if ( (int) $record['hits'] >= $max ) {
-			return false;
-		}
-
-		$remaining = max( 1, (int) $record['expires_at'] - $now );
-		set_transient(
-			$key,
-			array(
-				'hits'       => (int) $record['hits'] + 1,
-				'expires_at' => (int) $record['expires_at'],
-			),
-			$remaining
-		);
-		return true;
-	}
+	// check_rate_limit() lives on Base_Controller (promoted 1.7.1 so
+	// Users_Controller's delete-account route can share the same per-IP
+	// throttle without a duplicate copy). Inherited here unchanged — every
+	// call site below (`self::check_rate_limit( 'login' )` etc.) still
+	// resolves correctly via the class hierarchy.
 }

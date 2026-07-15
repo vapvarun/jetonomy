@@ -1295,7 +1295,10 @@ class Abilities {
 		}
 
 		UserProfile::increment_reply_count( $user_id );
-		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
+		// 3rd arg is null — Abilities API execute callbacks have no WP_REST_Request,
+		// mirroring the post-create hook's null request arg a few lines up in
+		// execute_create_post().
+		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, null );
 
 		return [
 			'id'      => $reply_id,

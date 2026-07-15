@@ -54,13 +54,62 @@ class AttachmentsRestTest extends WP_UnitTestCase {
 		$this->assertTrue( method_exists( \Jetonomy_Pro\Extensions\Attachments\Rest::class, 'attach' ) );
 	}
 
+	/**
+	 * The payload is injected by FREE from 1.7.1 on, through the
+	 * `jetonomy_rest_prepare_post` filter — which is why a free-only site's app finally
+	 * sees its attachments (Pro used to inject it, so free stored the data and never
+	 * sent it). This drives that filter rather than a Pro method, because Pro's
+	 * inject_post_payload() no longer exists.
+	 */
 	public function test_post_payload_gets_attachments_array(): void {
-		\Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 7777, 42, 0 );
-		$post = (object) array( 'id' => 7777 );
-		$rest = new \Jetonomy_Pro\Extensions\Attachments\Rest( new \Jetonomy_Pro\Extensions\Attachments\Extension() );
-		$data = $rest->inject_post_payload( array( 'id' => 7777 ), $post );
+		\Jetonomy\DB\Schema::create_tables();
+		( new \Jetonomy\Attachments() )->register();
+
+		// A REAL media item. The old test linked a fabricated id (42) and asserted it
+		// came back — which only worked because Pro's shaper emitted a card for media
+		// that does not exist. Free's hydrate() deliberately skips a link whose media
+		// item is gone (show nothing, not a broken card), so a fake id now yields an
+		// empty array. That is the correct behaviour; the test was wrong.
+		$aid = self::factory()->attachment->create_object(
+			array(),
+			0,
+			array( 'post_mime_type' => 'image/png' )
+		);
+
+		\Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 7777, $aid, 0 );
+
+		$data = (array) apply_filters(
+			'jetonomy_rest_prepare_post',
+			array( 'id' => 7777 ),
+			(object) array( 'id' => 7777 )
+		);
+
 		$this->assertArrayHasKey( 'attachments', $data );
-		$this->assertSame( 42, (int) $data['attachments'][0]['id'] );
+		$this->assertSame( $aid, (int) $data['attachments'][0]['id'] );
+
+		// The contract the mobile app consumes. Losing a key here silently breaks it.
+		foreach ( array( 'id', 'link_id', 'url', 'thumb', 'mime', 'name', 'size', 'type' ) as $key ) {
+			$this->assertArrayHasKey( $key, $data['attachments'][0] );
+		}
+	}
+
+	/**
+	 * A link whose media item was deleted from under us must render/serve nothing,
+	 * rather than a card pointing at a dead URL.
+	 */
+	public function test_payload_skips_a_link_whose_media_is_gone(): void {
+		\Jetonomy\DB\Schema::create_tables();
+		( new \Jetonomy\Attachments() )->register();
+
+		\Jetonomy_Pro\Extensions\Attachments\Model::link( 'post', 7778, 999999999, 0 );
+
+		$data = (array) apply_filters(
+			'jetonomy_rest_prepare_post',
+			array( 'id' => 7778 ),
+			(object) array( 'id' => 7778 )
+		);
+
+		$this->assertSame( array(), $data['attachments'] );
 	}
 
 	public function test_non_owner_cannot_attach(): void {

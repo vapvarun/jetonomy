@@ -48,6 +48,73 @@ class BBPress_Importer extends Importer {
 		return $forums + $topics + $replies;
 	}
 
+	/**
+	 * Carry a bbPress topic/reply's attachments onto the imported object.
+	 *
+	 * Nothing like wpForo's. Verified against a real bbPress 2.6 + GD bbPress
+	 * Attachments 4.9 install by uploading through the plugin's own front-end form
+	 * and reading what it wrote:
+	 *
+	 *   - The attachment IS an ordinary WP media item. wp_insert_attachment() is
+	 *     called with the topic/reply id as the parent, so `post_parent` points at
+	 *     the topic or the reply (never the forum), plus a `_bbp_attachment` meta
+	 *     flag. That post_parent lookup is the plugin's own accessor
+	 *     (d4p_get_post_attachments(), code/public.php), so it is the contract.
+	 *   - The file already lives in uploads/YYYY/MM. Nothing to recover, nothing
+	 *     to sideload — it is in the media library the moment it is uploaded.
+	 *   - The body carries NO attachment markup, so there is nothing to strip.
+	 *
+	 * So this is purely a re-link: the file survives untouched either way, and all
+	 * that is missing is the row that makes Jetonomy render it. That link is Pro, so
+	 * on a free site nothing happens here and no file is lost — the media items are
+	 * already in the library, and enabling Pro later reveals them.
+	 *
+	 * @param string $object_type   'post' or 'reply'.
+	 * @param int    $source_post_id bbPress topic/reply post ID.
+	 * @param int    $object_id      Imported Jetonomy post/reply id.
+	 * @return int Attachments linked.
+	 */
+	private function migrate_bbpress_attachments( string $object_type, int $source_post_id, int $object_id ): int {
+		if ( ! $source_post_id || ! $object_id || ! $this->attachments_available() ) {
+			return 0;
+		}
+
+		$attachments = get_posts(
+			[
+				'post_type'        => 'attachment',
+				'post_parent'      => $source_post_id,
+				'posts_per_page'   => -1,
+				'post_status'      => 'inherit',
+				'orderby'          => 'ID',
+				'order'            => 'ASC',
+				'fields'           => 'ids',
+				'suppress_filters' => false,
+			]
+		);
+
+		$linked = 0;
+		$sort   = 0;
+
+		foreach ( $attachments as $attachment_id ) {
+			if ( $this->link_attachment( $object_type, $object_id, (int) $attachment_id, $sort ) ) {
+				++$linked;
+				++$sort;
+			}
+		}
+
+		return $linked;
+	}
+
+	/**
+	 * Also drop the import category id on a fresh run so a restarted import does
+	 * not leave an orphan option behind. parent handles the shared id_map +
+	 * processed counter.
+	 */
+	public function reset_run_state(): void {
+		parent::reset_run_state();
+		delete_option( 'jetonomy_import_bbpress_cat_id' );
+	}
+
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
 		global $wpdb;
 
@@ -165,6 +232,7 @@ class BBPress_Importer extends Importer {
 
 					if ( $post_id ) {
 						$this->map_id( 'topic', $topic->ID, $post_id );
+						$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
 						++$this->imported;
 					}
 				}
@@ -224,9 +292,16 @@ class BBPress_Importer extends Importer {
 					}
 
 					if ( $reply_id ) {
+						// The batched path never mapped replies (the legacy run() path
+						// did). Nothing downstream could resolve an imported reply --
+						// including its attachments.
+						$this->map_id( 'reply', $reply->ID, $reply_id );
+						$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
 						++$this->imported;
 					}
 				}
+
+				update_option( 'jetonomy_import_id_map', $this->id_map, false );
 
 				$has_more = count( $replies ) >= $batch_size;
 				return [
@@ -389,6 +464,9 @@ class BBPress_Importer extends Importer {
 
 			if ( $post_id || $this->dry_run ) {
 				$this->map_id( 'topic', $topic->ID, $post_id );
+				if ( ! $this->dry_run ) {
+					$this->migrate_bbpress_attachments( 'post', (int) $topic->ID, (int) $post_id );
+				}
 				++$this->imported;
 			} else {
 				$this->log_error( 'topic', $topic->ID, 'Failed to create post' );
@@ -437,6 +515,9 @@ class BBPress_Importer extends Importer {
 
 			if ( $reply_id || $this->dry_run ) {
 				$this->map_id( 'reply', $reply->ID, $reply_id );
+				if ( ! $this->dry_run ) {
+					$this->migrate_bbpress_attachments( 'reply', (int) $reply->ID, (int) $reply_id );
+				}
 				++$this->imported;
 			} else {
 				++$this->skipped;
@@ -470,5 +551,9 @@ class BBPress_Importer extends Importer {
 
 		// Update last_reply_at on posts
 		$wpdb->query( "UPDATE {$posts_table} p SET p.last_reply_at = (SELECT MAX(r.created_at) FROM {$replies_table} r WHERE r.post_id = p.id AND r.status = 'publish')" );
+
+		// spaces.post_count above backs space:{id}; a set-based UPDATE names no ids
+		// (Caching Standard §4d). This is a one-shot import, so flush the group.
+		\Jetonomy\Cache::flush();
 	}
 }

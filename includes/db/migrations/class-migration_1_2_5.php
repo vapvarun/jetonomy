@@ -74,5 +74,10 @@ class Migration_1_2_5 {
 		$wpdb->query(
 			"UPDATE {$spaces_t} s SET s.member_count = (SELECT COUNT(*) FROM {$members_t} m WHERE m.space_id = s.id)"
 		);
+
+		// This direct member_count UPDATE runs after Recount::run()'s own flush and
+		// is set-based (names no ids, §4d); space.member_count backs space:{id}, so
+		// flush again after it. One-shot upgrade path, so a group flush is fine.
+		\Jetonomy\Cache::flush();
 	}
 }

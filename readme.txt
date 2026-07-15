@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: forum, community, discussion, Q&A, bbpress alternative
 Requires at least: 6.7
 Tested up to: 6.9
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,24 @@ Absolutely. Jetonomy has 48+ REST API endpoints (90+ with Pro), 19 WordPress Abi
 Each site in a Multisite network gets its own independent community. Network activation works. Tables are created per-site with the standard table prefix. There is no cross-site feed functionality in the free version.
 
 == Changelog ==
+
+= 1.8.0 - July 2026 =
+
+Forum imports now bring attachments across, attachments work with or without Pro, and cached data is never served stale after a change.
+
+* New      - Import attachments and media from wpForo, bbPress, and Asgaros, not just the posts and replies.
+* New      - Block another member, and report while blocking, from the mobile app and the REST API.
+* New      - Delete your own account from the app (DELETE /users/me).
+* Improve  - Attachments are shown and served by the free plugin, so a site without Pro keeps displaying its files instead of hiding them.
+* Improve  - An import that cannot recover a file now says so ("N files could not be recovered") instead of reporting a silent success.
+* Improve  - Object cache is invalidated the moment you change a space, profile, or membership, so counts and visibility are never a few minutes stale.
+* Improve  - The subscriptions API now returns the title and link of what you are subscribed to.
+* Improve  - Moderation queue items and flags now name the author and the reporter, and the flags status filter is honoured.
+* Fix      - wpForo import no longer flattens the forum hierarchy, miscounts progress, or runs the whole import in a single request that times out on large forums.
+* Fix      - Migrated inline images and attachments are registered into the media library, so deleting the old forum's uploads folder can no longer break them.
+* Fix      - Blocked members' replies are hidden without dropping the innocent replies nested beneath them.
+* Security - A moderator could globally ban the site administrator; banning an admin or a fellow moderator is now refused.
+* Dev      - Post and reply REST payloads carry an attachments array (id, url, thumbnail, mime, name, size, type) whether or not Pro is active.
 
 = 1.7.0 - July 2026 =
 

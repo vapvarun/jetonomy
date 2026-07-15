@@ -15,6 +15,21 @@ class Privacy {
 		add_filter( 'wp_privacy_personal_data_exporters', [ $this, 'register_exporters' ] );
 		add_filter( 'wp_privacy_personal_data_erasers', [ $this, 'register_erasers' ] );
 		add_action( 'delete_user', [ $this, 'on_user_delete' ] );
+
+		// Multisite: `wp_delete_user()` removes the account from the ENTIRE
+		// network, but a network admin more commonly just removes a member
+		// from ONE site (`remove_user_from_blog()`) or, on WP's own "delete
+		// from all sites" flow, `wpmu_delete_user()` — NEITHER of which fires
+		// `delete_user`. Without these, every Jetonomy table on this site is
+		// left dirty (orphan author_id / actor_id / etc. pointers) whenever a
+		// multisite admin removes a user through core's own UI. Hooked with
+		// the default $accepted_args = 1 so only $user_id reaches
+		// on_user_delete() — its signature already matches every one of these
+		// three hooks. `remove_user_from_blog()` fires from inside a
+		// switch_to_blog() call, so $wpdb->prefix is already this site's when
+		// this listener runs.
+		add_action( 'remove_user_from_blog', [ $this, 'on_user_delete' ] );
+		add_action( 'wpmu_delete_user', [ $this, 'on_user_delete' ] );
 	}
 
 	public function register_exporters( array $exporters ): array {
@@ -51,6 +66,10 @@ class Privacy {
 		$exporters['jetonomy-activity']      = [
 			'exporter_friendly_name' => __( 'Jetonomy Activity Log', 'jetonomy' ),
 			'callback'               => [ $this, 'export_activity' ],
+		];
+		$exporters['jetonomy-blocks']        = [
+			'exporter_friendly_name' => __( 'Jetonomy Blocked Users', 'jetonomy' ),
+			'callback'               => [ $this, 'export_blocks' ],
 		];
 		return $exporters;
 	}
@@ -196,6 +215,22 @@ class Privacy {
 				'object_id'   => __( 'Object ID', 'jetonomy' ),
 				'created_at'  => __( 'At', 'jetonomy' ),
 			]
+		);
+	}
+
+	public function export_blocks( string $email, int $page = 1 ): array {
+		return $this->export_table(
+			$email,
+			$page,
+			'jetonomy-blocks',
+			__( 'Jetonomy Blocked Users', 'jetonomy' ),
+			'blocked_users',
+			'blocker_id',
+			[
+				'blocked_id' => __( 'Blocked User ID', 'jetonomy' ),
+				'created_at' => __( 'Blocked At', 'jetonomy' ),
+			],
+			'blocked_id'
 		);
 	}
 
@@ -385,6 +420,28 @@ class Privacy {
 		[ 'flags', 'reporter_id' ],
 		[ 'join_requests', 'user_id' ],
 		[ 'bookmarks', 'user_id' ],
+		[ 'blocked_users', 'blocker_id' ],
+	];
+
+	/**
+	 * Stale creator/actor-pointer columns nullified (set to 0) on BOTH the
+	 * GDPR erase and the WP user-delete path — one list so the two can never
+	 * drift, same precedent as ANON_TABLES / PURGE_TABLES. These columns
+	 * record "who did this TO something" rather than authorship, so they
+	 * were left as orphans by both paths until 1.7.1: a deleted member
+	 * stayed wired into OTHER members' rows forever. Worst case —
+	 * jt_notifications.actor_id — kept the leaver as the visible actor on
+	 * other members' notifications indefinitely.
+	 */
+	private const NULLIFY_TABLES = [
+		[ 'posts', 'last_reply_by' ],
+		[ 'posts', 'edited_by' ],
+		[ 'replies', 'edited_by' ],
+		[ 'notifications', 'actor_id' ],
+		[ 'restrictions', 'issued_by' ],
+		[ 'flags', 'resolved_by' ],
+		[ 'join_requests', 'reviewed_by' ],
+		[ 'invite_links', 'created_by' ],
 	];
 
 	public function erase_data( string $email, int $page = 1 ): array {
@@ -436,6 +493,12 @@ class Privacy {
 			$removed += $n;
 		}
 
+		// Nullify stale creator/actor pointers (shared list — see NULLIFY_TABLES).
+		// Not counted in $removed — these are updates, not deletions.
+		foreach ( self::NULLIFY_TABLES as [ $table_key, $col ] ) {
+			$work += $this->batch_nullify( $table_key, $col, $uid, $batch );
+		}
+
 		// Drained once a full pass touched nothing. Recompute the denormalized
 		// counters exactly once, on that final page, from the page-1 capture.
 		$done = ( 0 === $work );
@@ -478,6 +541,19 @@ class Privacy {
 		return (int) $wpdb->query(
 			$wpdb->prepare(
 				'DELETE FROM ' . table( $table_key ) . " WHERE {$user_col} = %d LIMIT %d",
+				$uid,
+				$limit
+			)
+		);
+	}
+
+	/** Nullify (set to 0) up to $limit rows in one table/column; returns rows affected. */
+	private function batch_nullify( string $table_key, string $col, int $uid, int $limit ): int {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				'UPDATE ' . table( $table_key ) . " SET {$col} = 0 WHERE {$col} = %d LIMIT %d",
 				$uid,
 				$limit
 			)
@@ -535,6 +611,15 @@ class Privacy {
 			$in = implode( ',', $space_ids );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query( "UPDATE {$sp} SET member_count = ( SELECT COUNT(*) FROM {$sm} sm WHERE sm.space_id = {$sp}.id ) WHERE id IN ({$in})" );
+
+			// A set-based UPDATE cannot name the rows it touched, so it busts no
+			// cache on its own (Caching Standard §4d) — and member_count is served
+			// from space:{id}. This path is member-triggered (GDPR erase / user
+			// delete), so a stale count would be visible on any persistent-cache
+			// site. We DO know the ids, so bust each. (Row change only, id key.)
+			foreach ( $space_ids as $sid ) {
+				\Jetonomy\Models\Space::bust_cache( (int) $sid );
+			}
 		}
 	}
 
@@ -579,6 +664,24 @@ class Privacy {
 			$wpdb->delete( table( $table_key ), [ $user_col => $user_id ] );
 		}
 
+		// blocked_users is deleted above by blocker_id (this user's own block
+		// list), but the composite PK also has a `blocked_id` axis — other
+		// users' blocks pointing AT this now-deleted account. KEY blocked_id
+		// exists specifically for this cleanup; without it every other
+		// member's block list accumulates a permanently-dangling row.
+		$wpdb->delete( table( 'blocked_users' ), [ 'blocked_id' => $user_id ] );
+
+		// Nullify stale creator/actor pointers (shared list — see NULLIFY_TABLES).
+		foreach ( self::NULLIFY_TABLES as [ $table_key, $col ] ) {
+			$wpdb->update( table( $table_key ), [ $col => 0 ], [ $col => $user_id ] );
+		}
+
 		$this->recompute_counters_after_purge( $vote_objects, $member_spaces );
+
+		// Base_Controller::batch_load_users() caches the wp_users row for
+		// 300s under this key — without invalidation a deleted user's
+		// display_name would keep serving from cache for up to 5 minutes
+		// after the account (and its author_id pointers) are gone.
+		Cache::delete( "user:{$user_id}" );
 	}
 }

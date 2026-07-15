@@ -6,16 +6,43 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-$display     = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply );
+
+// Blocked-author tombstone. Set server-side by Reply::apply_block_tombstone()
+// (get_threaded()'s tree builder, or the Q&A accepted-answer callout). The
+// node itself is deliberately kept (not dropped upstream) so any child
+// replies from OTHER, non-blocked users still attach to the thread — only
+// the content and author-facing chrome for THIS row are suppressed.
+if ( ! empty( $reply->is_blocked_author ) ) {
+	?>
+	<div class="jt-reply jt-reply-blocked" data-wp-interactive="jetonomy">
+		<div class="jt-reply-body jt-reply-tombstone">
+			<?php jetonomy_echo_icon( 'shield', 16 ); ?>
+			<span><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></span>
+			<?php if ( is_user_logged_in() ) : ?>
+				<button class="jt-act jt-unblock-btn" type="button"
+					data-wp-on--click="actions.unblockUser"
+					data-user-id="<?php echo (int) $reply->author_id; ?>"
+					title="<?php esc_attr_e( 'Unblock this user', 'jetonomy' ); ?>"
+					aria-label="<?php esc_attr_e( 'Unblock this user', 'jetonomy' ); ?>">
+					<?php esc_html_e( 'Unblock', 'jetonomy' ); ?>
+				</button>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php
+	return;
+}
+
+$display = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply );
 // Anonymous-posting leak-audit fix: role pill / online status must never be
 // derived from the raw author_id when the display identity is masked, or
 // "Anonymous [Admin]" / an online dot de-anonymizes the real author.
 $jt_is_masked = (int) $display['id'] !== (int) $reply->author_id;
-$profile     = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
-$trust       = $profile ? (int) $profile->trust_level : 0;
-$time_ago    = human_time_diff( strtotime( $reply->created_at ), time() );
-$is_op       = (int) $reply->author_id === (int) $post->author_id;
-$is_accepted = (int) $reply->is_accepted;
+$profile      = \Jetonomy\Models\UserProfile::find_by_user( (int) $reply->author_id );
+$trust        = $profile ? (int) $profile->trust_level : 0;
+$time_ago     = human_time_diff( strtotime( $reply->created_at ), time() );
+$is_op        = (int) $reply->author_id === (int) $post->author_id;
+$is_accepted  = (int) $reply->is_accepted;
 
 // 1.4.0 C.1 fix: space-role moderators (subscriber WP role + jt_space_members
 // admin/mod) get the same edit / split / delete affordances as WP-cap mods.

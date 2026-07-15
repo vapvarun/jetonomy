@@ -2457,6 +2457,37 @@ const { state, actions } = store( 'jetonomy', {
             }
         },
 
+        // ── Unblock a user (from a blocked-author tombstone) ──
+        //
+        // DELETE /users/me/blocks/:id, then reload so every tombstone for
+        // that author across the page (and the read-surface SQL filters on
+        // the next request) reflect the unblock immediately.
+        *unblockUser( event ) {
+            const trigger = triggerOf( event );
+            if ( ! trigger ) return;
+            const userId = trigger.dataset.userId;
+            if ( ! userId ) return;
+
+            trigger.disabled = true;
+
+            try {
+                const res = yield window.jetonomyRest.restFetch( `/users/me/blocks/${ userId }`, {
+                    method: 'DELETE',
+                } );
+
+                if ( res.ok ) {
+                    window.location.reload();
+                } else {
+                    const err = res.data || {};
+                    if ( window.bnToast ) window.bnToast( err.message || state.i18n?.failedSave || 'Failed to unblock.' );
+                    trigger.disabled = false;
+                }
+            } catch {
+                if ( window.bnToast ) window.bnToast( state.i18n?.networkError || 'Network error. Please try again.' );
+                trigger.disabled = false;
+            }
+        },
+
         // ── Accept reply as best answer (Q&A) ──
         //
         // Server-side mutation reloads the page on success because the

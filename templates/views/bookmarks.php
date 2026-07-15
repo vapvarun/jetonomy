@@ -27,6 +27,9 @@ $page     = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
 $per_page = 20;
 $offset   = ( $page - 1 ) * $per_page;
 
+// Deliberately NOT block-filtered — the viewer bookmarked this content
+// themselves, on purpose. Hiding it because the author is now blocked would
+// silently destroy something the viewer chose to keep.
 $bookmarks = \Jetonomy\Models\Bookmark::list_by_user( $user_id, $per_page, $offset );
 
 // has_more compares the real total against what is shown — never count( $bookmarks ),

@@ -14,6 +14,12 @@ use Jetonomy\Cache;
 
 class UserProfile extends Model {
 
+	/**
+	 * Seconds is_online() caches its verdict. Presence tolerates this staleness
+	 * by design, so the key is never busted — it ages out (Caching Standard §4b).
+	 */
+	private const ONLINE_TTL = 60;
+
 	protected static function table_name(): string {
 		return 'user_profiles';
 	}
@@ -77,12 +83,15 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function update_profile( int $user_id, array $data ): bool {
-		Cache::delete( "profile:{$user_id}" );
-		return false !== static::db()->update(
+		// Bust AFTER the write. Busting first is a re-prime race: a concurrent
+		// find_by_user() between the delete and the update re-caches the old row.
+		$result = false !== static::db()->update(
 			static::table(),
 			$data,
 			[ 'user_id' => $user_id ]
 		);
+		Cache::delete( "profile:{$user_id}" );
+		return $result;
 	}
 
 	/**
@@ -104,8 +113,7 @@ class UserProfile extends Model {
 	 * @param int $user_id WP user ID.
 	 * @param int $delta   Amount to add (use negative value to subtract).
 	 */
-	public static function _apply_reputation_delta( int $user_id, int $delta ): void {
-		Cache::delete( "profile:{$user_id}" );
+	public static function _apply_reputation_delta( int $user_id, int $delta ): void { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore -- Underscore marks this as package-private; renaming would break the Reputation facade.
 		static::db()->query(
 			static::db()->prepare(
 				'UPDATE ' . static::table() . ' SET reputation = reputation + %d WHERE user_id = %d',
@@ -113,6 +121,8 @@ class UserProfile extends Model {
 				$user_id
 			)
 		);
+		// Bust AFTER the write (re-prime race — see update_profile()).
+		Cache::delete( "profile:{$user_id}" );
 	}
 
 	/**
@@ -193,21 +203,23 @@ class UserProfile extends Model {
 	 * @return bool
 	 */
 	public static function is_online( int $user_id ): bool {
-		$key    = 'jetonomy_online_' . $user_id;
-		$cached = wp_cache_get( $key, 'jetonomy' );
+		$key    = 'online_' . $user_id;
+		$cached = Cache::get( $key );
 
 		if ( false !== $cached ) {
 			return (bool) $cached;
 		}
 
+		// Presence tolerates up to ONLINE_TTL of staleness by design (Caching
+		// Standard §4b) — update_last_seen() does not bust this key; it ages out.
 		$profile = static::find_by_user( $user_id );
 		if ( ! $profile || empty( $profile->last_seen_at ) ) {
-			wp_cache_set( $key, 0, 'jetonomy', 60 );
+			Cache::set( $key, 0, self::ONLINE_TTL );
 			return false;
 		}
 
 		$online = ( strtotime( $profile->last_seen_at ) > ( time() - 300 ) );
-		wp_cache_set( $key, (int) $online, 'jetonomy', 60 );
+		Cache::set( $key, (int) $online, self::ONLINE_TTL );
 
 		return $online;
 	}
@@ -289,6 +301,9 @@ class UserProfile extends Model {
 	 * @return object[] Profile rows for the page (empty array when none).
 	 */
 	public static function list_for_leaderboard( string $period = 'all', int $limit = 20, int $offset = 0, string $order_by = 'reputation DESC' ): array {
+		// Deliberately NOT block-filtered — a ranking, not a content feed.
+		// Per-viewer filtering would re-rank the board and leak "you blocked
+		// someone" via rank gaps.
 		$where = static::leaderboard_period_where( $period );
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows = static::db()->get_results(

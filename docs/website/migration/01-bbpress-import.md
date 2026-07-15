@@ -21,6 +21,7 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 | Replies | Jetonomy Replies | Imported as flat replies on the post (bbPress reply threading is flattened) |
 | User accounts | Linked to existing WP users | Matched by user ID |
 | Sticky topics | Pinned posts | Preserved |
+| Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from bbPress and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
 - bbPress topic tags
@@ -31,6 +32,8 @@ Move your existing bbPress community into Jetonomy - forums, topics, replies, us
 - bbPress private messages (import to Jetonomy Pro private messaging separately)
 - Custom bbPress meta fields (use the `jetonomy_importers` filter to extend)
 - Forum avatars (WordPress avatars carry over via Gravatar/WP user accounts)
+
+> **Attachments (1.8.0+):** If a file cannot be recovered - for example it is already missing from disk - the import still completes and tells you how many files it could not bring over ("N files could not be recovered and were left linked in the original post text"). That is a warning to check a handful of posts by hand, not a failed import. See the [Migration overview](00-overview.md#attachments-and-inline-images) for details.
 
 > **What to do about the gaps:** Jetonomy replies are flat by design - every reply attaches to the topic, not to another reply - so the conversation stays intact even though bbPress's nested threading is not carried over. Topic tags are not imported; if tags matter to you, re-tag your highest-value topics by hand after the import (it is usually a small number that drive most of the traffic).
 

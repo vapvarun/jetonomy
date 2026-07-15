@@ -140,6 +140,8 @@ class REST_Tests {
 		$this->run_group_f();
 		$this->run_group_g();
 		$this->run_group_i_mobile_api();
+		$this->run_group_j_blocks();
+		$this->run_group_k_delete_account();
 		$this->test_subscriber_actions();
 		$this->test_hook_jetonomy_post_publish_transition_H48();
 		$this->test_hook_jetonomy_reply_publish_transition_H49();
@@ -869,6 +871,60 @@ class REST_Tests {
 		$this->check( 'I4: GET /feed?sort=top â 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
 	}
 
+	/**
+	 * Smoke-test the 1.7.1 user-blocking routes.
+	 *
+	 * Blocker is the current (admin) user; the blocked party is the subscriber
+	 * fixture. The reverse is deliberately asserted to fail - blocking a
+	 * moderator would let a member hide themselves from moderation.
+	 */
+	private function run_group_j_blocks(): void {
+		\WP_CLI::log( '  Group J: User Blocking (1.7.1)' );
+
+		if ( ! $this->test_user_id ) {
+			$this->check( 'J1: block routes (skipped - no test user)', true );
+			return;
+		}
+
+		// J1: Block the subscriber.
+		$r    = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => $this->test_user_id ] );
+		$data = $r->get_data();
+		$ok   = in_array( $r->get_status(), [ 200, 201 ], true );
+		$this->check( 'J1: POST /users/me/blocks -> 200/201', $ok, "HTTP {$r->get_status()}" );
+		$this->check( 'J1: response confirms blocked user', ! empty( $data['user_id'] ) && (int) $data['user_id'] === $this->test_user_id, 'missing/incorrect user_id' );
+
+		// J2: The block shows up in the viewer's list.
+		$r    = $this->rest( 'GET', '/users/me/blocks' );
+		$data = $r->get_data();
+		$rows = is_array( $data ) && isset( $data['data'] ) ? $data['data'] : [];
+		$ids  = array_map(
+			static function ( $row ) {
+				return (int) ( is_array( $row ) ? ( $row['user_id'] ?? 0 ) : ( $row->user_id ?? 0 ) );
+			},
+			(array) $rows
+		);
+		$this->check( 'J2: GET /users/me/blocks -> 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'J2: list contains the blocked user', in_array( $this->test_user_id, $ids, true ), 'blocked user absent from list' );
+
+		// J3: Self-block is refused.
+		$r = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => get_current_user_id() ] );
+		$this->check( 'J3: self-block -> 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// J4: Blocking a moderator is refused (subscriber tries to block the admin).
+		$r = $this->rest( 'POST', '/users/me/blocks', [ 'user_id' => 1 ], $this->test_user_id );
+		$this->check( 'J4: blocking a moderator -> 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// J5: Unblock (also restores state - no cleanup entry needed).
+		$r    = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}" );
+		$data = $r->get_data();
+		$this->check( 'J5: DELETE /users/me/blocks/{id} -> 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'J5: response confirms deletion', ! empty( $data['deleted'] ), 'deleted flag not set' );
+
+		// J6: Unblock is idempotent - a repeat DELETE is a 200 no-op, not a 404.
+		$r = $this->rest( 'DELETE', "/users/me/blocks/{$this->test_user_id}" );
+		$this->check( 'J6: repeat DELETE -> 200 (idempotent)', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+	}
+
 	// ──────────────────────────────────────────────────────────────────────────
 	// Cleanup
 	// ──────────────────────────────────────────────────────────────────────────
@@ -1315,5 +1371,188 @@ class REST_Tests {
 		$this->check( 'X3: InviteLink::revoke returns true', (bool) $ok, 'revoke returned a falsey value' );
 		$gone = \Jetonomy\Models\InviteLink::find_by_token( $token );
 		$this->check( 'X3: invite row deleted after revoke', null === $gone, 'row still present after revoke' );
+	}
+
+	/**
+	 * Smoke-test DELETE /users/me (1.7.1 — in-app account deletion, Apple
+	 * Guideline 5.1.1(v) / GDPR Art. 17).
+	 *
+	 * Creates a throwaway user with a self-authored post, a reply that
+	 * targets the shared admin fixture post (so a jt_notifications row is
+	 * created with actor_id = the throwaway user), and a vote. Deletes the
+	 * account via the route and asserts: the WP account is gone, the
+	 * authored content survives tombstoned (author_id = 0, renders
+	 * "[deleted]"), the notification's actor_id is nullified, votes are
+	 * purged, and the guard rails (bad password / missing confirm / admin)
+	 * reject correctly.
+	 */
+	private function run_group_k_delete_account(): void {
+		\WP_CLI::log( '  Group K: Account Deletion (1.7.1)' );
+
+		// This group makes 3 real calls against the rate-limited DELETE
+		// /users/me route (K1, K2, K4 — K3 is refused before the limiter
+		// runs). The bucket is per-IP and CLI has no REMOTE_ADDR, so every
+		// run shares the same 'unknown'-IP bucket. Reset it here so
+		// `wp jetonomy qa-actions` stays safely re-runnable inside the same
+		// hour instead of tripping its own limiter on the second run — the
+		// same reason the rest of this suite never exercises the real
+		// login/register/lost-password endpoints via REST either.
+		delete_transient( 'jt_auth_delete_account_' . md5( \Jetonomy\client_ip() ?: 'unknown' ) );
+
+		if ( ! $this->post_id ) {
+			$this->check( 'K: account deletion (skipped — no fixture post)', true );
+			return;
+		}
+
+		$ts       = time();
+		$password = wp_generate_password( 20 );
+		$uid      = wp_insert_user(
+			[
+				'user_login'   => 'jt_qa_del_' . $ts,
+				'user_pass'    => $password,
+				'user_email'   => 'jt-qa-del-' . $ts . '@test.local',
+				'role'         => 'subscriber',
+				'display_name' => 'QA Delete Test User',
+			]
+		);
+		if ( is_wp_error( $uid ) || ! $uid ) {
+			$this->check( 'K: fixture user created', false, is_wp_error( $uid ) ? $uid->get_error_message() : 'wp_insert_user failed' );
+			return;
+		}
+		$uid = (int) $uid;
+
+		// Self-authored fixture post (asserts the tombstone survives).
+		$post_id = \Jetonomy\Models\Post::create(
+			[
+				'space_id'      => (int) $this->space->id,
+				'author_id'     => $uid,
+				'title'         => 'QA K delete-account fixture post',
+				'slug'          => 'qa-k-delete-account-' . $ts,
+				'content'       => 'fixture',
+				'content_plain' => 'fixture',
+				'type'          => 'topic',
+			]
+		);
+		$post_id = ! is_wp_error( $post_id ) ? (int) $post_id : 0;
+
+		// Reply BY the throwaway user on the admin's fixture post — fires a
+		// reply_to_post notification to the admin with actor_id = $uid.
+		$r        = $this->rest(
+			'POST',
+			"/posts/{$this->post_id}/replies",
+			[ 'content' => '<p>Reply by the soon-to-be-deleted user.</p>' ],
+			$uid
+		);
+		$reply_id = (int) ( $r->get_data()['id'] ?? 0 );
+
+		// A vote by the throwaway user.
+		$this->rest( 'POST', "/posts/{$this->post_id}/vote", [ 'value' => 1 ], $uid );
+
+		global $wpdb;
+		$notifications_t = table( 'notifications' );
+		$votes_t         = table( 'votes' );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$notif_before = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_t} WHERE actor_id = %d", $uid ) );
+		$this->check( 'K0: fixture notification exists with actor_id = throwaway user', $notif_before > 0, "notif_before={$notif_before}" );
+
+		// K1: missing confirm → 400 (schema-required arg).
+		$r = $this->rest( 'DELETE', '/users/me', [ 'password' => $password ], $uid );
+		$this->check( 'K1: DELETE /users/me without confirm → 400', 400 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// K2: wrong password → 403.
+		$r = $this->rest(
+			'DELETE',
+			'/users/me',
+			[
+				'password' => 'definitely-the-wrong-password',
+				'confirm'  => 'DELETE',
+			],
+			$uid
+		);
+		$this->check( 'K2: DELETE /users/me with wrong password → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// K3: admins are refused — they use wp-admin instead.
+		$r = $this->rest( 'DELETE', '/users/me', [ 'confirm' => 'DELETE' ], $this->admin_id );
+		$this->check( 'K3: admin DELETE /users/me → 403', 403 === $r->get_status(), "HTTP {$r->get_status()}" );
+
+		// K4: correct password + confirm → 200, default anonymize policy.
+		$r    = $this->rest(
+			'DELETE',
+			'/users/me',
+			[
+				'password' => $password,
+				'confirm'  => 'DELETE',
+			],
+			$uid
+		);
+		$data = $r->get_data();
+		$this->check( 'K4: DELETE /users/me → 200', 200 === $r->get_status(), "HTTP {$r->get_status()}" );
+		$this->check( 'K4: response confirms deletion', ! empty( $data['deleted'] ), 'deleted flag not set' );
+		$this->check( 'K4: content_policy = anonymized (default)', 'anonymized' === ( $data['content_policy'] ?? '' ), 'content_policy=' . ( $data['content_policy'] ?? '' ) );
+
+		// K5: the WP account is gone. Checked against the DB row directly, not
+		// just get_userdata() — core's wp_delete_user() does not check the
+		// return value of its own internal $wpdb->delete( $wpdb->users, ... )
+		// call, so a transient DB error there can still leave wp_delete_user()
+		// reporting success (and the object cache cleared) while the row
+		// survives. A cache-only assertion would pass in that case; the direct
+		// SELECT does not.
+		wp_cache_delete( $uid, 'users' );
+		$row_still_present = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->users} WHERE ID = %d", $uid ) );
+		$this->check( 'K5: wp_users row gone', ! $row_still_present, 'row still present in wp_users after DELETE /users/me reported success' );
+
+		// K6/K7: authored content survives, tombstoned.
+		if ( $post_id ) {
+			$post_row = \Jetonomy\Models\Post::find( $post_id );
+			$this->check( 'K6: authored post survives with author_id = 0', $post_row && 0 === (int) $post_row->author_id, $post_row ? "author_id={$post_row->author_id}" : 'post missing' );
+			if ( $post_row ) {
+				$display = \Jetonomy\Author::for_display( (int) $post_row->author_id, $post_row );
+				$this->check( 'K6b: tombstoned post renders "[deleted]"', '[deleted]' === $display['name'], 'name=' . $display['name'] );
+			}
+		} else {
+			$this->check( 'K6: authored post fixture created', false, 'Post::create() failed' );
+		}
+
+		if ( $reply_id ) {
+			$reply_row = \Jetonomy\Models\Reply::find( $reply_id );
+			$this->check( 'K7: authored reply survives with author_id = 0', $reply_row && 0 === (int) $reply_row->author_id, $reply_row ? "author_id={$reply_row->author_id}" : 'reply missing' );
+		} else {
+			$this->check( 'K7: authored reply fixture created', false, 'reply create returned no id' );
+		}
+
+		// K8: jt_notifications.actor_id nullified — the deleted user no
+		// longer shows up as the actor on the admin's notification.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$notif_after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$notifications_t} WHERE actor_id = %d", $uid ) );
+		$this->check( 'K8: notifications.actor_id nullified', 0 === $notif_after, "notif_after={$notif_after}" );
+
+		// K9: no orphan jt_votes rows remain for the deleted user.
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$votes_after = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$votes_t} WHERE user_id = %d", $uid ) );
+		$this->check( 'K9: votes purged', 0 === $votes_after, "votes_after={$votes_after}" );
+
+		// Cleanup — the fixture rows are now anonymized (author_id = 0), not
+		// owned by any session, so remove them directly rather than via REST.
+		wp_set_current_user( $this->admin_id );
+		if ( $reply_id ) {
+			$wpdb->delete( table( 'replies' ), [ 'id' => $reply_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
+		if ( $post_id ) {
+			$wpdb->delete( table( 'posts' ), [ 'id' => $post_id ] ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
+
+		// Safety net: never leave the fixture ACCOUNT behind in the live
+		// wp_users table, regardless of what K4/K5 found — a real 429
+		// (bucket exhausted by a prior run in the same hour) or the
+		// wp_delete_user() edge case K5 now guards against would otherwise
+		// leak a "jt_qa_del_*" account into the site's real user list forever.
+		// Checked against the DB directly (see K5) rather than get_userdata().
+		if ( (bool) $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM {$wpdb->users} WHERE ID = %d", $uid ) ) ) {
+			if ( ! function_exists( 'wp_delete_user' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/user.php';
+			}
+			wp_delete_user( $uid );
+		}
 	}
 }

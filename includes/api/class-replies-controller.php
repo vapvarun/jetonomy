@@ -353,7 +353,12 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		// Fire action for Notifier and other listeners (handles all notifications).
-		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id );
+		// 3rd arg mirrors the post-create hook (jetonomy_after_create_post,
+		// class-posts-controller.php:612) so Pro extensions reading
+		// $request->get_param() on the reply path work the same as on posts —
+		// e.g. attachment_ids from a JSON REST body (the mobile app), which the
+		// old 2-arg fire silently dropped (see attachments extension).
+		do_action( 'jetonomy_after_create_reply', $reply_id, $post_id, $request );
 
 		// Parse @mentions and notify.
 		$mentioned = \Jetonomy\Mentions::extract_user_ids( $content );
@@ -764,9 +769,13 @@ class Replies_Controller extends Base_Controller {
 			$reputation    = $reply->reputation;
 			$profile_url   = $reply->profile_url;
 		} else {
-			$author        = $author_id ? get_userdata( $author_id ) : null;
-			$profile       = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
-			$author_name   = $author ? $author->display_name : __( 'Anonymous', 'jetonomy' );
+			$author  = $author_id ? get_userdata( $author_id ) : null;
+			$profile = $author_id ? \Jetonomy\Models\UserProfile::find_by_user( $author_id ) : null;
+			// Routed through the same seam as everywhere else so a deleted
+			// account (author_id = 0, tombstoned by Privacy::on_user_delete())
+			// reads "[deleted]" here too instead of "Anonymous". $author is
+			// already fetched above — passed through to avoid a second query.
+			$author_name   = \Jetonomy\Author::for_display( $author_id, $reply, $author ?: null )['name'] ?: __( 'Anonymous', 'jetonomy' );
 			$author_avatar = $author ? \Jetonomy\Avatar::display_url( $author_id, 64 ) : '';
 			$author_login  = $author ? $author->user_login : '';
 			$trust_level   = $profile ? (int) $profile->trust_level : 0;
@@ -788,28 +797,33 @@ class Replies_Controller extends Base_Controller {
 		}
 
 		$data = array(
-			'id'            => (int) $reply->id,
-			'post_id'       => (int) $reply->post_id,
-			'parent_id'     => $reply->parent_id ? (int) $reply->parent_id : null,
-			'author_id'     => $author_id,
-			'content'       => \Jetonomy\Embeds::process( $reply->content ?? '' ),
-			'content_plain' => $reply->content_plain ?? '',
-			'status'        => $reply->status ?? 'publish',
-			'is_accepted'   => (bool) ( $reply->is_accepted ?? false ),
-			'vote_score'    => (int) ( $reply->vote_score ?? 0 ),
-			'edited_at'     => $reply->edited_at ?? null,
-			'edited_by'     => $reply->edited_by ? (int) $reply->edited_by : null,
-			'created_at'    => $reply->created_at ?? null,
+			'id'                => (int) $reply->id,
+			'post_id'           => (int) $reply->post_id,
+			'parent_id'         => $reply->parent_id ? (int) $reply->parent_id : null,
+			'author_id'         => $author_id,
+			'content'           => \Jetonomy\Embeds::process( $reply->content ?? '' ),
+			'content_plain'     => $reply->content_plain ?? '',
+			'status'            => $reply->status ?? 'publish',
+			'is_accepted'       => (bool) ( $reply->is_accepted ?? false ),
+			'vote_score'        => (int) ( $reply->vote_score ?? 0 ),
+			'edited_at'         => $reply->edited_at ?? null,
+			'edited_by'         => $reply->edited_by ? (int) $reply->edited_by : null,
+			'created_at'        => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
-			'published_at'  => $reply->created_at ?? null,
+			'published_at'      => $reply->created_at ?? null,
 			// Enriched author data (for app clients + JS rendering)
-			'author_name'   => $author_name,
-			'author_avatar' => $author_avatar,
-			'author_login'  => $author_login,
-			'trust_level'   => $trust_level,
-			'reputation'    => $reputation,
-			'time_ago'      => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
-			'profile_url'   => $profile_url,
+			'author_name'       => $author_name,
+			'author_avatar'     => $author_avatar,
+			'author_login'      => $author_login,
+			'trust_level'       => $trust_level,
+			'reputation'        => $reputation,
+			'time_ago'          => $reply->created_at ? human_time_diff( strtotime( $reply->created_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '',
+			'profile_url'       => $profile_url,
+			// True when the viewer has blocked this author. Reply::list_by_post()
+			// and build_tree() keep the node (with its content emptied) rather than
+			// dropping the row, so the children of a blocked author still render;
+			// clients use this flag to draw a tombstone in place of the body.
+			'is_blocked_author' => ! empty( $reply->is_blocked_author ),
 		);
 
 		/**
@@ -829,22 +843,31 @@ class Replies_Controller extends Base_Controller {
 	 */
 	private function get_create_args(): array {
 		return array(
-			'content'      => array(
+			'content'        => array(
 				'type'     => 'string',
 				'required' => true,
 			),
-			'parent_id'    => array(
+			'parent_id'      => array(
 				'type'     => 'integer',
 				'required' => false,
 				'minimum'  => 1,
 			),
-			'is_anonymous' => array(
+			'is_anonymous'   => array(
 				'type'              => 'boolean',
 				'required'          => false,
 				'default'           => false,
 				'sanitize_callback' => 'rest_sanitize_boolean',
 			),
-			'published_at' => array(
+			'published_at'   => array(
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			// Undeclared passthrough before this fix — Pro's File Attachments
+			// extension reads this via $request->get_param() (class-extension.php
+			// link_on_create_reply()). Must stay a CSV STRING: Pro's link_pending()
+			// does explode(',', $csv), not an array walk.
+			'attachment_ids' => array(
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',

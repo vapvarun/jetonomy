@@ -23,6 +23,7 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 | Liked posts | Vote score | wpForo likes mapped to upvotes |
 | Pinned topics | Pinned posts | Preserved |
 | Closed topics | Closed posts | Preserved |
+| Inline images and attached files (1.8.0+) | WordPress media library + Jetonomy attachments | Downloaded from wpForo and re-registered as attachments; images stay inline, other files show as a download link |
 
 **Not imported:**
 - wpForo sub-forum hierarchy (all forums, including sub-forums, are flattened into spaces under the board's category)
@@ -32,7 +33,9 @@ Move your existing wpForo community into Jetonomy - forums, topics, replies, and
 - wpForo private conversations (different data structure; import to Jetonomy Pro private messaging separately)
 - wpForo groups and group memberships (map manually to Jetonomy spaces)
 - wpForo custom user groups beyond standard roles
-- Embedded wpForo media that uses shortcodes instead of standard `<img>` tags
+- Embedded wpForo media that uses shortcodes instead of standard `<img>` tags (standard `<img>` tags and file attachments import normally as of 1.8.0)
+
+> **Attachments (1.8.0+):** If a file cannot be recovered - for example it is already missing from disk - the import still completes and tells you how many files it could not bring over ("N files could not be recovered and were left linked in the original post text"). That is a warning to check a handful of posts by hand, not a failed import. See the [Migration overview](00-overview.md#attachments-and-inline-images) for details.
 
 ## wpForo Data Structure Differences
 

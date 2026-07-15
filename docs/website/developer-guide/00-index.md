@@ -7,6 +7,7 @@ Use this page as a map: each guide is grouped by what you are trying to do, so y
 Hook into Jetonomy's data and behaviour, or swap out a back-end service.
 
 - [Hooks Reference](./02-hooks-reference.md) - every `jetonomy_*` action and filter, with the arguments each one passes.
+- [Attachment Hooks](./24-attachment-hooks.md) - the 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) and the `attachments` array now carried on post/reply REST payloads.
 - [Adapter System](./05-adapters.md) - the membership, search, real-time, and email adapter interfaces you implement to plug in your own service.
 - [Template Overrides](./03-template-overrides.md) - copy any community template into your theme's `jetonomy/` directory to change its layout.
 - [Admin Extensions](./20-admin-extensions.md) - add settings tabs, space-edit tabs, moderation tabs, dashboard widgets, and menu white-label overrides to the Jetonomy wp-admin UI.
@@ -41,6 +42,9 @@ Make the community discoverable to search engines and feed readers.
 Read and write community data from another application, agent, or platform.
 
 - [REST API Reference](./01-rest-api.md) - the full `jetonomy/v1` endpoint listing with methods, payloads, responses, and permission contracts.
+- [OpenAPI Spec + Full REST Reference](./api/) - the complete machine-readable `openapi.json` (load into Swagger UI / Redoc) plus a human-readable companion covering every free and Pro route, generated from 1.8.0 source.
+- [Attachment Model](./23-attachment-model.md) - `Jetonomy\Models\Attachment` (link, get_for, get_for_many, prime_for_post, hydrate, payload_for) and the `jt_attachments` table.
+- [Import Framework](./25-import-framework.md) - the `Jetonomy\Import\Importer` base contract (media migration, error surfacing, the per-batch time budget) and how to add a source importer.
 - [Abilities API](./11-abilities-api.md) - expose the community to AI agents and automation tools through the WordPress Abilities API.
 - [FluentCommunity Integration](./06-fluent-community-integration.md) - developer reference for the FluentCommunity coexistence layer.
 - [BuddyPress Integration](./07-buddypress-integration.md) - developer reference for the BuddyPress Groups coexistence layer, including how to disable leave-sync.
@@ -58,3 +62,5 @@ JavaScript and access-control building blocks for custom front-end code.
 Drive and test the community from the command line.
 
 - [WP-CLI Commands](./10-wp-cli.md) - the full `wp jetonomy` and `wp jetonomy-pro` command surface, plus the `qa-actions` smoke suite.
+- [Caching](./26-caching.md) - the `Jetonomy\Cache` wrapper and the bust-after-write invalidation rule (`Space::bust_cache()` as the reference pattern).
+- [Media Provenance](./27-media-provenance.md) - `Jetonomy\Media_Library` origin tagging (`tag_upload`, `is_ours`, `META_ORIGIN`) and why only files Jetonomy created are garbage-collected.

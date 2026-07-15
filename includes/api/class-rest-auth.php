@@ -61,10 +61,21 @@ class REST_Auth {
 	 *                              enforces login + nonce when callers don't
 	 *                              care about a specific cap.
 	 * @param array           $opts Optional. {
-	 *     @type callable|null $author_of_post Receives WP_REST_Request, must
-	 *                                         return int post ID. If given,
-	 *                                         the current user must own the
-	 *                                         post (or hold manage_options).
+	 *     @type callable|null $author_of_post   Receives WP_REST_Request, must
+	 *                                           return int post ID. If given,
+	 *                                           the current user must own the
+	 *                                           post (or hold manage_options).
+	 *     @type bool          $allow_banned     Skip the banned-account gate.
+	 *                                           Only for routes a banned member
+	 *                                           must still reach — e.g. account
+	 *                                           deletion (Apple 5.1.1(v) / GDPR
+	 *                                           Art. 17 apply regardless of a
+	 *                                           moderation action). Default false.
+	 *     @type bool          $allow_unverified Skip the pending-email-verification
+	 *                                           gate. Same rationale — a visitor
+	 *                                           who never confirmed their email
+	 *                                           must still be able to delete the
+	 *                                           account they created. Default false.
 	 * }
 	 * @return Closure(WP_REST_Request): (true|WP_Error)
 	 */
@@ -88,7 +99,8 @@ class REST_Auth {
 			$current_uid = get_current_user_id();
 
 			if (
-				$current_uid > 0
+				empty( $opts['allow_banned'] )
+				&& $current_uid > 0
 				&& class_exists( '\\Jetonomy\\Models\\Restriction' )
 				&& \Jetonomy\Models\Restriction::is_banned( $current_uid )
 			) {
@@ -99,7 +111,7 @@ class REST_Auth {
 				);
 			}
 
-			if ( $current_uid > 0 && get_user_meta( $current_uid, '_jetonomy_pending_verification', true ) ) {
+			if ( empty( $opts['allow_unverified'] ) && $current_uid > 0 && get_user_meta( $current_uid, '_jetonomy_pending_verification', true ) ) {
 				return new WP_Error(
 					'jetonomy_pending_verification',
 					__( 'Confirm your email to finish signing up before posting.', 'jetonomy' ),

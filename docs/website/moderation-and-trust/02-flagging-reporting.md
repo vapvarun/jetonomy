@@ -6,6 +6,7 @@ Flagging lets any logged-in member report content that breaks your community rul
 
 - How to flag a topic or reply
 - How to report an entire member account
+- How to block a member from the mobile app or the REST API
 - What information a flag captures
 - What the reason categories mean and where they come from
 - Who can flag content and what the restrictions are
@@ -37,6 +38,16 @@ Flagging is not limited to individual posts and replies - a member can also repo
 To report a member, open their **profile page** (`/community/u/their-username/`) and click the **Report** button next to the Message button. A prompt asks why you are reporting the user; type a brief reason and confirm. As with content flags, you cannot report your own account, and the control only appears to logged-in members.
 
 A user report creates a flag the same way a content report does - it is recorded against that member's account, captures your reason text and your name as the reporter, and surfaces in the moderation tools for a moderator to review and act on (for example, by [banning the member](05-banning-members.md) if the report is justified).
+
+## Blocking a Member (1.8.0+)
+
+Blocking hides a member's replies from your own view without removing them for anyone else - useful when you want to stop seeing someone's content without waiting on a moderator. As of 1.8.0, blocking is available from the mobile app and the REST API.
+
+You can report the member in the same action - blocking and filing a report travel together in one request, so members do not need to submit them separately.
+
+If the blocked member's reply has other replies nested underneath it, only their own content is hidden; the innocent replies in that nested thread stay visible.
+
+> **Note:** Blocking is a personal, per-viewer preference. It does not stop the blocked member from posting, and moderators and other members still see everything as normal. To remove someone's ability to post at all, a moderator needs to [ban them](05-banning-members.md).
 
 ## What a Flag Captures
 

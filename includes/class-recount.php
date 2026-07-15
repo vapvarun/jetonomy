@@ -67,6 +67,12 @@ class Recount {
 			$stats['user_reply_counts'] = (int) $wpdb->query( "UPDATE {$profiles_t} u SET u.reply_count = (SELECT COUNT(*) FROM {$replies_t} r WHERE r.author_id = u.user_id AND r.status = 'publish')" );
 		}
 
+		// Every recompute above is a set-based UPDATE that cannot name the rows it
+		// touched (Caching Standard §4d), and the values written (space/profile
+		// counts, vote scores) back the space:{id} / profile:{id} caches. This is a
+		// one-shot admin/CLI path, so flush the group rather than track every id.
+		Cache::flush();
+
 		return $stats;
 	}
 }

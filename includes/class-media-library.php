@@ -32,6 +32,26 @@ class Media_Library {
 	/** Skip-marker set on non-community attachments during backfill. */
 	const META_CHECKED = '_jetonomy_media_checked';
 
+	/**
+	 * PROVENANCE. Set only when Jetonomy itself created the upload.
+	 *
+	 * META_FLAG cannot be used to decide whether we may DELETE a file, because the
+	 * backfill below also applies it to media we did not create: it infers "this is a
+	 * community upload" from the author lacking `upload_files`, which is true of every
+	 * subscriber-authored attachment on the site — including another forum plugin's.
+	 * wpForo, for instance, inserts its attachments into the media library authored by
+	 * the posting member. Pro's GC then force-deleted any flagged, unlinked attachment
+	 * over 24h old (wp_delete_attachment with $force_delete = true, so the FILE went
+	 * from disk as well) — which meant enabling attachments on a site mid-migration
+	 * could destroy the very files the import existed to rescue.
+	 *
+	 * Ownership is now RECORDED at write time rather than guessed after the fact.
+	 * Only uploads carrying this meta are ever GC-eligible. A capability check is a
+	 * fine heuristic for HIDING a file from the owner's media grid; it is not one for
+	 * deleting it.
+	 */
+	const META_ORIGIN = '_jetonomy_media_origin';
+
 	/** Request flag that reveals community uploads in the admin list screen. */
 	const SHOW_PARAM = 'jetonomy_show_community';
 
@@ -183,9 +203,24 @@ class Media_Library {
 			return;
 		}
 		update_post_meta( $attachment_id, self::META_FLAG, 1 );
+		// WE created this file, so we are allowed to reclaim it if it is never used.
+		// Nothing else may set this — see META_ORIGIN.
+		update_post_meta( $attachment_id, self::META_ORIGIN, 'upload' );
 		if ( $space_id > 0 ) {
 			update_post_meta( $attachment_id, self::META_SPACE, $space_id );
 		}
+	}
+
+	/**
+	 * May this attachment be garbage-collected?
+	 *
+	 * Only files Jetonomy itself uploaded. Anything we merely *recognised* — another
+	 * forum plugin's media, a member's older upload, anything the backfill flagged —
+	 * is someone else's file, and an unused file is not a good enough reason to delete
+	 * someone else's data.
+	 */
+	public static function is_ours( int $attachment_id ): bool {
+		return 'upload' === (string) get_post_meta( $attachment_id, self::META_ORIGIN, true );
 	}
 
 	/**

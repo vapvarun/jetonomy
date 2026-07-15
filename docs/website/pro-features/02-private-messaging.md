@@ -73,6 +73,8 @@ Blocked users cannot send new messages to the member who blocked them. Existing 
 
 Admins can view and clear blocks in **Jetonomy → Users → [username] → Messaging**.
 
+> **Note (1.8.0+):** This is separate from the community-wide blocking a member can do from the mobile app or REST API (see [Blocking a Member](../moderation-and-trust/02-flagging-reporting.md#blocking-a-member-180)), which hides a member's replies across the whole community rather than just messaging. As of 1.8.0, the two work together: Private Messaging also honors a community-wide block, so you cannot start or continue a conversation with someone you have blocked, or who has blocked you, even outside this menu.
+
 ## REST API
 
 Private Messaging adds endpoints under `jetonomy/v1`:

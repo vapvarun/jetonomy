@@ -87,6 +87,8 @@ class Leaderboards_Controller extends Base_Controller {
 		// and the server-rendered leaderboard view stay in lockstep on both the
 		// population (period filter) and the ordering. The period filter was
 		// previously echoed back but never applied; the model now owns it.
+		// Deliberately NOT block-filtered — a ranking, not a content feed. See
+		// UserProfile::list_for_leaderboard().
 		$total   = \Jetonomy\Models\UserProfile::count_for_leaderboard( $period );
 		$leaders = \Jetonomy\Models\UserProfile::list_for_leaderboard( $period, $limit, $offset, $order_by_sql );
 

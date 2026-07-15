@@ -1333,13 +1333,13 @@
 
 			// Fresh import
 			$(document).on('click', '.jetonomy-import-btn', function() {
-				self.startImport($(this).data('source'), 'forums', 0);
+				self.startImport($(this).data('source'), 'forums', 0, true);
 			});
 
-			// Resume interrupted import
+			// Resume interrupted import — continues prior state, so NOT a new run.
 			$(document).on('click', '.jetonomy-import-resume-btn', function() {
 				var $btn = $(this);
-				self.startImport($btn.data('source'), $btn.data('phase'), parseInt($btn.data('offset'), 10));
+				self.startImport($btn.data('source'), $btn.data('phase'), parseInt($btn.data('offset'), 10), false);
 			});
 
 			// Start over — overwrite resume state then start fresh from beginning
@@ -1350,12 +1350,12 @@
 					{ danger: true, title: 'Restart import' }
 				).then(function(ok) {
 					if (!ok) return;
-					self.startImport($btn.data('source'), 'forums', 0);
+					self.startImport($btn.data('source'), 'forums', 0, true);
 				});
 			});
 		},
 
-		startImport: function(source, startPhase, startOffset) {
+		startImport: function(source, startPhase, startOffset, isNewRun) {
 			var self = this;
 			var card = document.getElementById('import-source-' + source);
 			if (!card) return;
@@ -1391,14 +1391,24 @@
 				}
 			}
 
-			function buildCompleteNotice(processed) {
+			function buildCompleteNotice(processed, skipped) {
+				skipped = parseInt(skipped, 10) || 0;
 				var notice = document.createElement('div');
-				notice.className = 'notice notice-success';
+				// A partial success is a warning, not a clean success — the site owner
+				// needs to know some files did not come across rather than seeing a
+				// green tick and assuming everything migrated.
+				notice.className = skipped > 0 ? 'notice notice-warning' : 'notice notice-success';
 				var p = document.createElement('p');
 				var strong = document.createElement('strong');
 				strong.textContent = (Jetonomy.i18n.importDone || 'Import complete!') + ' ';
 				p.appendChild(strong);
 				p.appendChild(document.createTextNode(processed + ' records imported successfully. '));
+				if (skipped > 0) {
+					var warn = document.createElement('strong');
+					var tmpl = Jetonomy.i18n.importSkippedFiles || '%d file(s) could not be recovered and were left linked in the original post text.';
+					warn.textContent = tmpl.replace('%d', skipped) + ' ';
+					p.appendChild(warn);
+				}
 				var link = document.createElement('a');
 				link.href = '';
 				link.textContent = Jetonomy.i18n.reloadPage || 'Reload page';
@@ -1408,7 +1418,11 @@
 				return notice;
 			}
 
-			function runBatch(phase, offset) {
+			// Only the very first batch of a fresh/restart run signals new_run so the
+			// server clears prior state once — recursive continuations must not, or
+			// they would wipe the id_map the run depends on (and wpForo's per-board
+			// hand-off also arrives as forums/0).
+			function runBatch(phase, offset, newRun) {
 				updateStepIndicator(phase);
 
 				var data = new FormData();
@@ -1418,6 +1432,7 @@
 				data.append('phase',      phase);
 				data.append('offset',     offset);
 				data.append('batch_size', 500);
+				data.append('new_run',    newRun ? 1 : 0);
 
 				fetch(self.ajaxUrl, { method: 'POST', body: data })
 					.then(function(r) { return r.json(); })
@@ -1436,7 +1451,7 @@
 						statusPct.textContent    = d.percent + '%';
 
 						if (!d.done) {
-							runBatch(d.phase, d.offset);
+							runBatch(d.phase, d.offset, false);
 						} else {
 							// Mark complete
 							progressFill.style.width = '100%';
@@ -1451,7 +1466,7 @@
 
 							results.style.display = 'block';
 							while (results.firstChild) { results.removeChild(results.firstChild); }
-							results.appendChild(buildCompleteNotice(d.processed));
+							results.appendChild(buildCompleteNotice(d.processed, d.skipped));
 
 							// Auto-reload after 3 seconds to show "Previously Imported" state
 							setTimeout(function() { window.location.reload(); }, 3000);
@@ -1463,7 +1478,7 @@
 					});
 			}
 
-			runBatch(startPhase, startOffset);
+			runBatch(startPhase, startOffset, !!isNewRun);
 		},
 
 		// ═══════════════════════════════════════════════════════════

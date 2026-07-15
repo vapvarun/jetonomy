@@ -121,6 +121,7 @@ Imports run in background batches. You can close your browser and come back. The
 | Topics | Posts |
 | Replies | Replies |
 | Users | WordPress users + Jetonomy profiles |
+| Inline images and attachments (1.8.0+) | Media library + Jetonomy attachments |
 
 ## The Community Frontend: A Quick Tour
 

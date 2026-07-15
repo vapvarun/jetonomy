@@ -398,8 +398,11 @@ class Admin {
 					update_option( 'jetonomy_old_base_slug', $old_base, false );
 				}
 			}
-			$clean['base_slug']          = $new_slug;
-			$clean['community_title']    = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
+			$clean['base_slug']       = $new_slug;
+			$clean['community_title'] = sanitize_text_field( $input['community_title'] ?? __( 'Community', 'jetonomy' ) );
+			// Mobile app EULA screen (Apple Guideline 1.2) reads these via /app/config.
+			$clean['terms_url']   = esc_url_raw( $input['terms_url'] ?? '' );
+			$clean['privacy_url'] = esc_url_raw( $input['privacy_url'] ?? '' );
 			// Space label override (singular / plural). Empty = keep the default.
 			$clean['space_label_singular'] = sanitize_text_field( $input['space_label_singular'] ?? '' );
 			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
@@ -918,6 +921,8 @@ class Admin {
 					'hiddenRequiresInvite'    => esc_html__( 'Switched visibility to Private because Hidden requires Invite Only.', 'jetonomy' ),
 					'reloadPage'              => esc_html__( 'Reload page', 'jetonomy' ),
 					'importConnectionLost'    => esc_html__( 'Connection lost. You can resume this import later.', 'jetonomy' ),
+					/* translators: %d: number of attachment files that could not be recovered. */
+					'importSkippedFiles'      => esc_html__( '%d file(s) could not be recovered and were left linked in the original post text.', 'jetonomy' ),
 					'inviteCopied'            => esc_html__( 'Invite link copied to clipboard.', 'jetonomy' ),
 					'inviteRevokeConfirm'     => esc_html__( 'Revoke this invite link? Anyone holding it will no longer be able to join.', 'jetonomy' ),
 					'inviteNoLinks'           => esc_html__( 'No invite links yet.', 'jetonomy' ),
