@@ -63,5 +63,45 @@ if ( ! wp_using_ext_object_cache() ) {
 }
 ```
 
-The recommended box mirrors `~/dev/buddynext-scale-docker` (WP + MySQL + Redis
-drop-in). Record observed results here when run, as the 1.0.8 plan's §6.3.1 does.
+## Reproduce the Redis box (docker-compose)
+
+A minimal stack — WordPress + MariaDB + Redis + the redis-cache drop-in,
+bind-mounting the free + pro plugin repos. Kept OUTSIDE the repo (git repos stay
+out of cloud-synced folders, per the BuddyNext 1.0.8 lesson):
+`~/dev/jetonomy-redis-docker/docker-compose.yml` (db: mariadb:11, redis:
+redis:7-alpine, wp: wordpress:php8.2-apache on :8099, cli: wordpress:cli-php8.2).
+
+```bash
+cd ~/dev/jetonomy-redis-docker && docker compose up -d
+run(){ docker compose exec -T cli wp --allow-root "$@"; }
+run core install --url=http://localhost:8099 --title=JetRedis \
+    --admin_user=admin --admin_password=admin --admin_email=a@b.co --skip-email
+run plugin activate jetonomy jetonomy-pro
+run plugin install redis-cache --activate
+run config set WP_REDIS_HOST redis
+run config set WP_REDIS_PORT 6379 --raw
+run redis enable          # installs the object-cache.php drop-in
+run redis status          # Status: Connected, Drop-in: Valid
+run eval 'echo wp_using_ext_object_cache() ? "ON" : "OFF";'   # ON
+```
+
+Each `wp eval` is a separate process = a separate request sharing Redis, so the
+three-step prime → write → read below is a true cross-request test.
+
+## Observed Redis cross-request results — RECORDED 2026-07-15
+
+Stack: WordPress 6.x + MariaDB 11 + Redis 7 + Redis Object Cache v2.8.0 (Predis
+v2.4.0), `wp_using_ext_object_cache()` = **true**. Free + Pro `1.7.1-dev`.
+
+| # | Check (3 separate `wp eval` processes) | Observed | Verdict |
+|---|---|---|---|
+| T2 | prime `find_by_slug` (public) → proc B `update(visibility=private)` → proc C `find_by_slug` | proc C = **private** | PASS — slug bust persists cross-request (J1 disclosure fix holds on Redis) |
+| **Neg. control** | prime `find(id)` → proc B **direct DB** `UPDATE post_count=555` (no model, no bust) → proc C `find(id)` | proc C = **0** (stale, not 555) | PASS — Redis persists cross-request, so a *real* missing bust IS caught; the tests do not pass for the wrong reason (§4c) |
+| T6 | prime `list_privileged` → proc B assert store → proc C bust → read | transient **none**, object cache **set**, after bust **miss** | PASS — object cache (not transient), bust persists cross-request |
+
+The negative control is the load-bearing check: it proves the environment
+reproduces the cross-request staleness class, so the T2/T6 passes are real. T4
+(GDPR) and T5 (recount) use the same `Space::bust_cache()` / `Cache::flush()`
+primitives proven here, and were verified single-process on the Local site.
+
+Tear down: `cd ~/dev/jetonomy-redis-docker && docker compose down -v`.
