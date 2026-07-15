@@ -611,6 +611,15 @@ class Privacy {
 			$in = implode( ',', $space_ids );
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->query( "UPDATE {$sp} SET member_count = ( SELECT COUNT(*) FROM {$sm} sm WHERE sm.space_id = {$sp}.id ) WHERE id IN ({$in})" );
+
+			// A set-based UPDATE cannot name the rows it touched, so it busts no
+			// cache on its own (Caching Standard §4d) — and member_count is served
+			// from space:{id}. This path is member-triggered (GDPR erase / user
+			// delete), so a stale count would be visible on any persistent-cache
+			// site. We DO know the ids, so bust each. (Row change only, id key.)
+			foreach ( $space_ids as $sid ) {
+				\Jetonomy\Models\Space::bust_cache( (int) $sid );
+			}
 		}
 	}
 
