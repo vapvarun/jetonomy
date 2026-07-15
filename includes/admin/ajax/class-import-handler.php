@@ -35,6 +35,9 @@ class Import_Handler {
 		$phase      = sanitize_text_field( wp_unslash( $_POST['phase'] ?? 'forums' ) );
 		$offset     = absint( $_POST['offset'] ?? 0 );
 		$batch_size = absint( $_POST['batch_size'] ?? 500 );
+		// Set only on the first batch of a fresh/restart run (never on a resume or
+		// a mid-run board hand-off, which also arrive as phase=forums/offset=0).
+		$new_run = (bool) absint( wp_unslash( $_POST['new_run'] ?? 0 ) );
 
 		Import_Manager::init();
 		$importers = Import_Manager::get_importers();
@@ -45,7 +48,16 @@ class Import_Handler {
 
 		$importer = $importers[ $source ];
 
-		// Restore ID map from previous batch.
+		// A fresh run clears whatever a previous (possibly aborted) import left
+		// behind — a stale id_map, a non-zero processed counter, cached board
+		// state. Without this the next import inherits them and either mis-resolves
+		// parents (the id_map's 'forum'/'topic' keys are shared across sources) or
+		// reports a wrong progress %.
+		if ( $new_run ) {
+			$importer->reset_run_state();
+		}
+
+		// Restore ID map from previous batch (empty after a reset above).
 		$importer->id_map = get_option( 'jetonomy_import_id_map', [] );
 
 		// Save resume point so the import can be resumed if interrupted.
@@ -57,7 +69,7 @@ class Import_Handler {
 				'phase'      => $phase,
 				'offset'     => $offset,
 				'batch_size' => $batch_size,
-				'started_at' => $existing_resume['started_at'] ?? current_time( 'mysql' ),
+				'started_at' => $new_run ? current_time( 'mysql' ) : ( $existing_resume['started_at'] ?? current_time( 'mysql' ) ),
 			],
 			false
 		);

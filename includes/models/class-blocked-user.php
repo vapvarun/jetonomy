@@ -2,13 +2,13 @@
 /**
  * Blocked-user model.
  *
- * Foundation for the user-blocking safety primitive (Apple Guideline 1.2 —
- * UGC apps must let a member block an abusive member). Ships in FREE.
+ * The user-blocking safety primitive (Apple Guideline 1.2 — UGC apps must let a
+ * member block an abusive member). Ships in FREE.
  *
- * This is step 1 of 2: schema + model + REST only. Nothing in the read
- * surfaces (feed, space listings, post detail, replies, search,
- * notifications, mentions, DM suggestions) calls this model yet — it is
- * inert until a follow-up change wires exclusion_sql() into those queries.
+ * exclusion_sql() / blocked_ids() are wired into the read surfaces — search,
+ * sidebar, user profile, the users and posts controllers, Reply::list_by_user,
+ * and (via free's block state) Pro DM delivery — so a blocked member's content
+ * is filtered out of the blocker's view and DMs are refused in both directions.
  *
  * @package Jetonomy
  * @since   1.7.1

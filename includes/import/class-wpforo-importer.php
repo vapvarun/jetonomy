@@ -63,9 +63,6 @@ class WPForo_Importer extends Importer {
 	/** Option holding the index of the board currently being imported. */
 	private const BOARD_IDX_OPTION = 'jetonomy_import_wpforo_board_idx';
 
-	/** Option holding the category id created for the current board. */
-	private const CAT_OPTION = 'jetonomy_import_wpforo_cat_id';
-
 	/**
 	 * Uploads folder of the board currently being imported (wpforo, wpforo_2, ...).
 	 *
@@ -128,7 +125,6 @@ class WPForo_Importer extends Importer {
 						'slug' => $board['cat_slug'] . '-' . time(),
 					]
 				);
-				update_option( self::CAT_OPTION, (int) $cat_id, false );
 
 				$before = $this->imported;
 				$this->import_forums( (int) $cat_id, $prefix );
@@ -281,12 +277,25 @@ class WPForo_Importer extends Importer {
 	 * @param int $processed Rows consumed on the final call.
 	 * @return array{phase:string, offset:int, done:bool, processed:int}
 	 */
+	/**
+	 * Also drop the cached board list + board index on a fresh run.
+	 *
+	 * These persist across batches (a run is multi-board), so a previous run that
+	 * was aborted mid-board would otherwise leave a non-zero board index behind and
+	 * a fresh import would silently skip every board before it. parent handles the
+	 * shared id_map + processed counter.
+	 */
+	public function reset_run_state(): void {
+		parent::reset_run_state();
+		delete_option( self::BOARDS_OPTION );
+		delete_option( self::BOARD_IDX_OPTION );
+	}
+
 	private function finish( int $processed = 0 ): array {
 		$this->recount();
 
 		delete_option( self::BOARDS_OPTION );
 		delete_option( self::BOARD_IDX_OPTION );
-		delete_option( self::CAT_OPTION );
 
 		return [
 			'phase'     => 'complete',

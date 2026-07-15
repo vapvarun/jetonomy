@@ -148,6 +148,11 @@ class Users_Controller extends Base_Controller {
 			return new WP_REST_Response( array(), 200 );
 		}
 
+		// Exclude blocked users in the query itself, not after the LIMIT — a
+		// post-fetch filter would trim the capped set of 10 down to fewer and the
+		// typeahead would show a short, uneven list. Loaded once here.
+		$blocked_ids = \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() );
+
 		$users = array();
 		if ( $space_id > 0 ) {
 			global $wpdb;
@@ -165,6 +170,7 @@ class Users_Controller extends Base_Controller {
 			$users = get_users(
 				array(
 					'include' => array_map( 'intval', $ids ),
+					'exclude' => $blocked_ids,
 					'search'  => '*' . $q . '*',
 					'number'  => 10,
 					'orderby' => 'display_name',
@@ -179,21 +185,15 @@ class Users_Controller extends Base_Controller {
 				array(
 					'search'         => '*' . $q . '*',
 					'search_columns' => array( 'user_login', 'display_name' ),
+					'exclude'        => $blocked_ids,
 					'number'         => 10,
 					'orderby'        => 'display_name',
 				)
 			);
 		}
 
-		// Loaded once, outside the loop — never call blocked_ids()/is_blocked()
-		// per row.
-		$blocked_ids = \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() );
-
 		$out = array();
 		foreach ( $users as $u ) {
-			if ( in_array( (int) $u->ID, $blocked_ids, true ) ) {
-				continue;
-			}
 			$out[] = array(
 				'id'           => (int) $u->ID,
 				'login'        => $u->user_login,

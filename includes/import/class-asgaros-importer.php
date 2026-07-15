@@ -74,6 +74,14 @@ class Asgaros_Importer extends Importer {
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
 		$batch_size = max( 1, $batch_size );
 
+		// Registering one Asgaros upload costs ~0.9s (wp_generate_attachment_metadata
+		// regenerating every thumbnail), so an image-heavy forum blows past
+		// max_execution_time at the default 500-row batch. The row loops below stop at
+		// a row boundary once this budget is spent, exactly like the wpForo importer —
+		// without it a batch dies mid-loop, the id_map never persists, and the retried
+		// offset re-creates the pre-timeout topics as DUPLICATES.
+		$this->start_budget();
+
 		switch ( $phase ) {
 			case 'forums':
 				$cat_id = Category::create(
@@ -82,7 +90,6 @@ class Asgaros_Importer extends Importer {
 						'slug' => 'imported-asgaros-' . time(),
 					]
 				);
-				update_option( 'jetonomy_import_asgaros_cat_id', (int) $cat_id, false );
 
 				$before = $this->imported;
 				$this->import_forums( (int) $cat_id );
@@ -96,27 +103,46 @@ class Asgaros_Importer extends Importer {
 				];
 
 			case 'topics':
-				$processed = $this->import_topics_batch( $offset, $batch_size );
+				$r = $this->import_topics_batch( $offset, $batch_size );
 				$this->persist_id_map();
 
-				$has_more = $processed >= $batch_size;
+				// Ran out of time mid-page: resume at the exact row we stopped on.
+				if ( $r['processed'] < $r['fetched'] ) {
+					return [
+						'phase'     => 'topics',
+						'offset'    => $offset + $r['processed'],
+						'done'      => false,
+						'processed' => $r['processed'],
+					];
+				}
+
+				$has_more = $r['fetched'] >= $batch_size;
 				return [
 					'phase'     => $has_more ? 'topics' : 'replies',
-					'offset'    => $has_more ? $offset + $batch_size : 0,
+					'offset'    => $has_more ? $offset + $r['processed'] : 0,
 					'done'      => false,
-					'processed' => $processed,
+					'processed' => $r['processed'],
 				];
 
 			case 'replies':
-				$processed = $this->import_replies_batch( $offset, $batch_size );
+				$r = $this->import_replies_batch( $offset, $batch_size );
 				$this->persist_id_map();
 
-				$has_more = $processed >= $batch_size;
+				if ( $r['processed'] < $r['fetched'] ) {
+					return [
+						'phase'     => 'replies',
+						'offset'    => $offset + $r['processed'],
+						'done'      => false,
+						'processed' => $r['processed'],
+					];
+				}
+
+				$has_more = $r['fetched'] >= $batch_size;
 				return [
 					'phase'     => $has_more ? 'replies' : 'profiles',
-					'offset'    => $has_more ? $offset + $batch_size : 0,
+					'offset'    => $has_more ? $offset + $r['processed'] : 0,
 					'done'      => false,
-					'processed' => $processed,
+					'processed' => $r['processed'],
 				];
 
 			case 'profiles':
@@ -297,17 +323,19 @@ class Asgaros_Importer extends Importer {
 	}
 
 	/**
-	 * Import one page of topics. Returns how many source rows this call consumed.
+	 * Import one page of topics.
 	 *
-	 * The count is of ROWS SEEN, not rows successfully imported — the caller uses
-	 * it to decide whether another page exists. Returning "imported" would stall
-	 * the phase forever on a page where every topic was skipped.
+	 * Returns both the rows FETCHED and the rows CONSUMED. They are equal for a
+	 * full page, but the budget can stop import_topic_rows() early, in which case
+	 * consumed < fetched and the caller resumes at offset + consumed rather than
+	 * skipping the untouched tail. "Consumed" counts skipped rows too, so a page
+	 * of all-skipped topics still advances instead of stalling the phase.
 	 *
 	 * @param int $offset Row offset.
 	 * @param int $limit  Page size.
-	 * @return int Rows consumed.
+	 * @return array{fetched:int, processed:int}
 	 */
-	private function import_topics_batch( int $offset, int $limit ): int {
+	private function import_topics_batch( int $offset, int $limit ): array {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
@@ -321,19 +349,23 @@ class Asgaros_Importer extends Importer {
 			)
 		);
 
-		$this->import_topic_rows( (array) $topics );
+		$fetched   = count( (array) $topics );
+		$processed = $this->import_topic_rows( (array) $topics );
 
-		return count( (array) $topics );
+		return [
+			'fetched'   => $fetched,
+			'processed' => $processed,
+		];
 	}
 
 	/**
-	 * Import one page of replies. Returns rows consumed (see import_topics_batch).
+	 * Import one page of replies. Returns fetched + consumed (see import_topics_batch).
 	 *
 	 * @param int $offset Row offset.
 	 * @param int $limit  Page size.
-	 * @return int Rows consumed.
+	 * @return array{fetched:int, processed:int}
 	 */
-	private function import_replies_batch( int $offset, int $limit ): int {
+	private function import_replies_batch( int $offset, int $limit ): array {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
@@ -356,9 +388,13 @@ class Asgaros_Importer extends Importer {
 			)
 		);
 
-		$this->import_reply_rows( (array) $posts );
+		$fetched   = count( (array) $posts );
+		$processed = $this->import_reply_rows( (array) $posts );
 
-		return count( (array) $posts );
+		return [
+			'fetched'   => $fetched,
+			'processed' => $processed,
+		];
 	}
 
 	/**
@@ -412,6 +448,9 @@ class Asgaros_Importer extends Importer {
 	 * Shared by the batched and the single-shot paths so the two can never drift.
 	 *
 	 * @param object[] $topics Asgaros topic rows.
+	 * @return int Rows CONSUMED (including skipped ones). Stops early at a row
+	 *             boundary once the time budget is spent (batched path only —
+	 *             the single-shot run() never starts a budget, so it consumes all).
 	 */
 	/**
 	 * Carry an Asgaros post's uploads onto the imported object.
@@ -490,13 +529,16 @@ class Asgaros_Importer extends Importer {
 		return trim( (string) $folder, '/' ) ?: 'asgarosforum';
 	}
 
-	private function import_topic_rows( array $topics ): void {
+	private function import_topic_rows( array $topics ): int {
 		global $wpdb;
 		$p = $wpdb->prefix;
 
 		if ( empty( $topics ) ) {
-			return;
+			return 0;
 		}
+
+		$consumed = 0;
+		$total    = count( $topics );
 
 		$topic_ids    = wp_list_pluck( $topics, 'id' );
 		$placeholders = implode( ',', array_fill( 0, count( $topic_ids ), '%d' ) );
@@ -519,6 +561,10 @@ class Asgaros_Importer extends Importer {
 		}
 
 		foreach ( $topics as $topic ) {
+			// Counted before any `continue` so a skipped row still advances the
+			// offset — otherwise a page of all-skipped topics would stall the phase.
+			++$consumed;
+
 			$space_id = $this->get_mapped_id( 'forum', (int) $topic->parent_id );
 			if ( ! $space_id ) {
 				$this->log_error( 'topic', $topic->id, "Parent forum {$topic->parent_id} not imported" );
@@ -529,8 +575,10 @@ class Asgaros_Importer extends Importer {
 			$first_post = $first_posts_map[ (int) $topic->id ] ?? null;
 			$content    = (string) ( $first_post ? $first_post->text : '' );
 
-			// Register any inline image and repoint it at this site — must happen
-			// BEFORE create, or the rewritten body is never stored.
+			// Register any inline image into the media library so it survives the
+			// old forum's upload folder being deleted. This does NOT rewrite the
+			// inline URL in the body (old-domain URLs are punted to wp search-replace,
+			// see register_body_media()) — it only gets the file into Media.
 			$this->register_body_media( $content, $this->asgaros_upload_folder() );
 
 			$status = ( isset( $topic->approved ) && 1 === (int) $topic->approved ) ? 'publish' : 'pending';
@@ -576,7 +624,15 @@ class Asgaros_Importer extends Importer {
 				$this->log_error( 'topic', $topic->id, 'Failed to create post' );
 				++$this->skipped;
 			}
+
+			// Out of time, but not out of rows: stop at this boundary. The caller
+			// resumes at exactly $consumed, so nothing is lost or done twice.
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return $consumed;
 	}
 
 	private function import_replies(): void {
@@ -603,9 +659,17 @@ class Asgaros_Importer extends Importer {
 	 * Shared by the batched and the single-shot paths so the two cannot drift.
 	 *
 	 * @param object[] $posts Asgaros post rows (excluding each topic's first post).
+	 * @return int Rows CONSUMED (including skipped ones). Stops early once the time
+	 *             budget is spent (batched path only).
 	 */
-	private function import_reply_rows( array $posts ): void {
+	private function import_reply_rows( array $posts ): int {
+		$consumed = 0;
+		$total    = count( $posts );
+
 		foreach ( $posts as $asgaros_post ) {
+			// Counted before any `continue` (see import_topic_rows()).
+			++$consumed;
+
 			$post_id = $this->get_mapped_id( 'topic', (int) $asgaros_post->parent_id );
 			if ( ! $post_id ) {
 				++$this->skipped;
@@ -648,7 +712,13 @@ class Asgaros_Importer extends Importer {
 				$this->log_error( 'reply', $asgaros_post->id, 'Failed to create reply' );
 				++$this->skipped;
 			}
+
+			if ( $consumed < $total && $this->budget_spent() ) {
+				break;
+			}
 		}
+
+		return $consumed;
 	}
 
 	private function create_profiles(): void {

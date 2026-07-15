@@ -1333,13 +1333,13 @@
 
 			// Fresh import
 			$(document).on('click', '.jetonomy-import-btn', function() {
-				self.startImport($(this).data('source'), 'forums', 0);
+				self.startImport($(this).data('source'), 'forums', 0, true);
 			});
 
-			// Resume interrupted import
+			// Resume interrupted import — continues prior state, so NOT a new run.
 			$(document).on('click', '.jetonomy-import-resume-btn', function() {
 				var $btn = $(this);
-				self.startImport($btn.data('source'), $btn.data('phase'), parseInt($btn.data('offset'), 10));
+				self.startImport($btn.data('source'), $btn.data('phase'), parseInt($btn.data('offset'), 10), false);
 			});
 
 			// Start over — overwrite resume state then start fresh from beginning
@@ -1350,12 +1350,12 @@
 					{ danger: true, title: 'Restart import' }
 				).then(function(ok) {
 					if (!ok) return;
-					self.startImport($btn.data('source'), 'forums', 0);
+					self.startImport($btn.data('source'), 'forums', 0, true);
 				});
 			});
 		},
 
-		startImport: function(source, startPhase, startOffset) {
+		startImport: function(source, startPhase, startOffset, isNewRun) {
 			var self = this;
 			var card = document.getElementById('import-source-' + source);
 			if (!card) return;
@@ -1408,7 +1408,11 @@
 				return notice;
 			}
 
-			function runBatch(phase, offset) {
+			// Only the very first batch of a fresh/restart run signals new_run so the
+			// server clears prior state once — recursive continuations must not, or
+			// they would wipe the id_map the run depends on (and wpForo's per-board
+			// hand-off also arrives as forums/0).
+			function runBatch(phase, offset, newRun) {
 				updateStepIndicator(phase);
 
 				var data = new FormData();
@@ -1418,6 +1422,7 @@
 				data.append('phase',      phase);
 				data.append('offset',     offset);
 				data.append('batch_size', 500);
+				data.append('new_run',    newRun ? 1 : 0);
 
 				fetch(self.ajaxUrl, { method: 'POST', body: data })
 					.then(function(r) { return r.json(); })
@@ -1436,7 +1441,7 @@
 						statusPct.textContent    = d.percent + '%';
 
 						if (!d.done) {
-							runBatch(d.phase, d.offset);
+							runBatch(d.phase, d.offset, false);
 						} else {
 							// Mark complete
 							progressFill.style.width = '100%';
@@ -1463,7 +1468,7 @@
 					});
 			}
 
-			runBatch(startPhase, startOffset);
+			runBatch(startPhase, startOffset, !!isNewRun);
 		},
 
 		// ═══════════════════════════════════════════════════════════

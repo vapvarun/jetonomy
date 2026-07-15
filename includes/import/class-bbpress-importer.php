@@ -105,6 +105,16 @@ class BBPress_Importer extends Importer {
 		return $linked;
 	}
 
+	/**
+	 * Also drop the import category id on a fresh run so a restarted import does
+	 * not leave an orphan option behind. parent handles the shared id_map +
+	 * processed counter.
+	 */
+	public function reset_run_state(): void {
+		parent::reset_run_state();
+		delete_option( 'jetonomy_import_bbpress_cat_id' );
+	}
+
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
 		global $wpdb;
 

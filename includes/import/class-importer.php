@@ -128,6 +128,24 @@ abstract class Importer {
 	}
 
 	/**
+	 * Reset all transient state left by a previous run before a fresh import.
+	 *
+	 * The batch driver only cleared the id_map + processed counter on a
+	 * COMPLETED run, so an import that was closed or timed out left them behind.
+	 * The next run then inherited a stale id_map — whose generic 'forum'/'topic'
+	 * keys are shared across ALL three sources, so a parent could resolve to the
+	 * previous source's object — and a non-zero processed counter that skewed the
+	 * progress %. The driver now calls this on a fresh/restart click (never on a
+	 * resume or a mid-run board hand-off). Subclasses override to also drop their
+	 * own source-specific resume options, calling parent::reset_run_state() first.
+	 */
+	public function reset_run_state(): void {
+		delete_option( 'jetonomy_import_id_map' );
+		delete_option( 'jetonomy_import_total_processed' );
+		$this->id_map = [];
+	}
+
+	/**
 	 * Map an old ID to a new ID.
 	 */
 	protected function map_id( string $type, $old_id, int $new_id ): void {
@@ -335,8 +353,10 @@ abstract class Importer {
 	/**
 	 * Link a recovered media item to an imported post or reply.
 	 *
-	 * No-op (returns false) when Pro is absent — the caller then leaves the source
-	 * markup in the body so the file is still reachable.
+	 * Attachments moved to free in 1.7.1, so this always links via the free
+	 * Attachment model regardless of whether Pro is active (Pro only adds the
+	 * upload UI + download URL on top of the same table). Returns false only when
+	 * there is no media id to link.
 	 *
 	 * @param string $object_type   'post' or 'reply'.
 	 * @param int    $object_id     Jetonomy post/reply id.

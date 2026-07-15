@@ -455,8 +455,11 @@ class Schema {
 		 * Being here also puts it under the create_tables() self-heal net and makes
 		 * uninstall drop it, both of which are driven off get_table_names().
 		 *
-		 * Definition must stay byte-identical to Migration_1_7_1's, or the two
-		 * dbDelta calls will fight each other with ALTER TABLEs.
+		 * Keep the column set / keys in step with Migration_1_7_1's definition, or
+		 * the two dbDelta calls will fight each other with ALTER TABLEs on every
+		 * load. (The trailing table-option string differs harmlessly — Schema adds
+		 * "ENGINE=InnoDB", the migration omits it — because dbDelta compares columns
+		 * and indexes, not the storage engine; the columns/keys are what must match.)
 		 */
 		$sqls[] = "CREATE TABLE {$p}jt_attachments (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
