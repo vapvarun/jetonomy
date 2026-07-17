@@ -13,6 +13,7 @@ use Jetonomy\CLI\Journeys\Content_Journey;
 use Jetonomy\CLI\Journeys\Member_Journey;
 use Jetonomy\CLI\Journeys\Moderation_Journey;
 use Jetonomy\CLI\Journeys\Notification_Journey;
+use Jetonomy\CLI\Journeys\Privacy_Journey;
 use Jetonomy\CLI\Journeys\Space_Journey;
 use Jetonomy\CLI\Journeys\Taxonomy_Journey;
 use Jetonomy\CLI\Journeys\User_Journey;
@@ -58,6 +59,7 @@ class Journey_Tests {
 			$this->test_config_journey();
 			$this->test_taxonomy_journey();
 			$this->test_user_journey();
+			$this->test_privacy_journey();
 			$this->test_scenario_runner();
 			$this->test_pro_extension_journey();
 			$this->test_pro_messaging_journey();
@@ -436,6 +438,30 @@ class Journey_Tests {
 		$this->record_result( 'user: get_trust_level', $journey->get_trust_level( $user_id ) );
 		$this->record_result( 'user: adjust_reputation', $journey->adjust_reputation( $user_id, 5 ) );
 		$this->record_result( 'user: get_profile', $journey->get_profile( $user_id ) );
+	}
+
+	/**
+	 * Scan only — deliberately never calls purge_orphans().
+	 *
+	 * qa-actions runs against live installs, and a smoke test has no business
+	 * deleting rows as a side effect of being run. The scan still exercises the
+	 * whole discovery path (free's columns + Pro's contributed ones + the SQL),
+	 * which is where the bugs would be; the purge itself is the shared
+	 * on_user_delete() body already covered by the rest of this suite.
+	 */
+	private function test_privacy_journey(): void {
+		$journey = new Privacy_Journey();
+		$result  = $journey->scan_orphans();
+		$this->record_result( 'privacy: scan_orphans', $result );
+
+		if ( ! $result->is_success() ) {
+			return;
+		}
+		$this->record(
+			'privacy: orphan report shape',
+			isset( $result->data['orphan_rows'], $result->data['orphan_users'], $result->data['columns'] ),
+			sprintf( '%d orphan row(s)', (int) ( $result->data['orphan_rows'] ?? -1 ) )
+		);
 	}
 
 	private function test_scenario_runner(): void {
