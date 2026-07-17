@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.8.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-07-17 17:32:15+00:00\n"
+"POT-Creation-Date: 2026-07-17 18:27:20+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -726,8 +726,8 @@ msgstr ""
 
 #: includes/admin/class-admin.php:160 includes/admin/class-admin.php:161
 #: includes/admin/views/moderation.php:30
-#: includes/class-template-loader.php:1055
-#: includes/class-template-loader.php:1201
+#: includes/class-template-loader.php:1100
+#: includes/class-template-loader.php:1246
 #: includes/notifications/class-notifier.php:1383
 #: includes/seo/class-schema-markup.php:472 templates/partials/header.php:54
 #: templates/partials/header.php:56 templates/partials/icon-picker.php:98
@@ -778,11 +778,11 @@ msgstr ""
 
 #: includes/admin/class-admin.php:402 includes/admin/views/settings.php:154
 #: includes/class-admin-bar.php:57 includes/class-blocks.php:615
-#: includes/class-nav-menus.php:101 includes/class-template-loader.php:1030
-#: includes/class-template-loader.php:1043
-#: includes/class-template-loader.php:1046
-#: includes/class-template-loader.php:1067
-#: includes/class-template-loader.php:1161
+#: includes/class-nav-menus.php:101 includes/class-template-loader.php:1075
+#: includes/class-template-loader.php:1088
+#: includes/class-template-loader.php:1091
+#: includes/class-template-loader.php:1112
+#: includes/class-template-loader.php:1206
 #: includes/integrations/class-fluent-community.php:1094
 #: includes/seo/class-schema-markup.php:392 templates/partials/header.php:35
 #: templates/partials/header.php:37 templates/views/home.php:94
@@ -1281,7 +1281,7 @@ msgid "Search categories…"
 msgstr ""
 
 #: includes/admin/views/categories.php:103 includes/admin/views/tags.php:103
-#: includes/class-nav-menus.php:122 includes/class-template-loader.php:1073
+#: includes/class-nav-menus.php:122 includes/class-template-loader.php:1118
 #: includes/seo/class-schema-markup.php:466
 #: libs/action-scheduler/classes/abstracts/ActionScheduler_Abstract_ListTable.php:786
 #: templates/partials/header.php:39 templates/partials/header.php:41
@@ -3777,8 +3777,8 @@ msgid "Back to %s"
 msgstr ""
 
 #: includes/admin/views/space-edit.php:32 includes/admin/views/spaces.php:200
-#: includes/class-template-loader.php:1049
-#: includes/class-template-loader.php:1191 templates/partials/sidebar.php:141
+#: includes/class-template-loader.php:1094
+#: includes/class-template-loader.php:1236 templates/partials/sidebar.php:141
 #: templates/views/my-spaces.php:141 templates/views/space-members.php:119
 #: templates/views/space-members.php:138 templates/views/space.php:252
 #: templates/views/space.php:352
@@ -5157,8 +5157,8 @@ msgstr ""
 msgid "My profile"
 msgstr ""
 
-#: includes/class-admin-bar.php:98 includes/class-template-loader.php:1085
-#: includes/class-template-loader.php:1337
+#: includes/class-admin-bar.php:98 includes/class-template-loader.php:1130
+#: includes/class-template-loader.php:1382
 msgid "Edit profile"
 msgstr ""
 
@@ -5317,8 +5317,8 @@ msgid "My Profile"
 msgstr ""
 
 #: includes/class-blocks.php:701 includes/class-nav-menus.php:132
-#: includes/class-template-loader.php:1082
-#: includes/class-template-loader.php:1330 templates/partials/header.php:65
+#: includes/class-template-loader.php:1127
+#: includes/class-template-loader.php:1375 templates/partials/header.php:65
 #: templates/partials/header.php:73 templates/views/notifications.php:39
 #: templates/views/notifications.php:88
 msgid "Notifications"
@@ -5328,8 +5328,8 @@ msgstr ""
 msgid "Messages"
 msgstr ""
 
-#: includes/class-blocks.php:712 includes/class-template-loader.php:1091
-#: includes/class-template-loader.php:1351 templates/views/my-spaces.php:51
+#: includes/class-blocks.php:712 includes/class-template-loader.php:1136
+#: includes/class-template-loader.php:1396 templates/views/my-spaces.php:51
 #: templates/views/my-spaces.php:62
 msgid "My %s"
 msgstr ""
@@ -6169,137 +6169,137 @@ msgstr ""
 msgid "Deny request"
 msgstr ""
 
-#: includes/class-template-loader.php:1052
-#: includes/class-template-loader.php:1196
+#: includes/class-template-loader.php:1097
+#: includes/class-template-loader.php:1241
 #: templates/views/space-roadmap.php:141 templates/views/space-roadmap.php:154
 #: templates/views/space-roadmap.php:163 templates/views/space.php:346
 msgid "Roadmap"
 msgstr ""
 
-#: includes/class-template-loader.php:1070
-#: includes/class-template-loader.php:1300
+#: includes/class-template-loader.php:1115
+#: includes/class-template-loader.php:1345
 msgid "Top members"
 msgstr ""
 
-#: includes/class-template-loader.php:1076
-#: includes/class-template-loader.php:1313
+#: includes/class-template-loader.php:1121
+#: includes/class-template-loader.php:1358
 msgid "Moderation Queue"
 msgstr ""
 
-#: includes/class-template-loader.php:1079
-#: includes/class-template-loader.php:1323
+#: includes/class-template-loader.php:1124
+#: includes/class-template-loader.php:1368
 msgid "Start a discussion"
 msgstr ""
 
-#: includes/class-template-loader.php:1088
-#: includes/class-template-loader.php:1344
+#: includes/class-template-loader.php:1133
+#: includes/class-template-loader.php:1389
 msgid "You are invited"
 msgstr ""
 
-#: includes/class-template-loader.php:1094
-#: includes/class-template-loader.php:1358 templates/views/new-space.php:49
+#: includes/class-template-loader.php:1139
+#: includes/class-template-loader.php:1403 templates/views/new-space.php:49
 msgid "Create a %s"
 msgstr ""
 
-#: includes/class-template-loader.php:1097
-#: includes/class-template-loader.php:1365 templates/partials/sidebar.php:187
+#: includes/class-template-loader.php:1142
+#: includes/class-template-loader.php:1410 templates/partials/sidebar.php:187
 #: templates/views/space-edit.php:82 templates/views/space.php:240
 #. translators: %s: space title
 msgid "Edit %s"
 msgstr ""
 
-#: includes/class-template-loader.php:1100
-#: includes/class-template-loader.php:1372 templates/views/drafts.php:40
+#: includes/class-template-loader.php:1145
+#: includes/class-template-loader.php:1417 templates/views/drafts.php:40
 #: templates/views/drafts.php:51
 msgid "My drafts"
 msgstr ""
 
-#: includes/class-template-loader.php:1103
-#: includes/class-template-loader.php:1379 templates/views/bookmarks.php:43
+#: includes/class-template-loader.php:1148
+#: includes/class-template-loader.php:1424 templates/views/bookmarks.php:43
 #: templates/views/bookmarks.php:54
 msgid "My bookmarks"
 msgstr ""
 
-#: includes/class-template-loader.php:1162
+#: includes/class-template-loader.php:1207
 msgid "Join our community discussions, Q&A, and more."
 msgstr ""
 
-#: includes/class-template-loader.php:1168
+#: includes/class-template-loader.php:1213
 msgid "%1$s in the %2$s category on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1192
+#: includes/class-template-loader.php:1237
 msgid "Members of the %1$s %2$s on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1197
+#: includes/class-template-loader.php:1242
 msgid "Roadmap for the %1$s %2$s on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1202
-#: includes/class-template-loader.php:1314
+#: includes/class-template-loader.php:1247
+#: includes/class-template-loader.php:1359
 msgid "Moderation queue for %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1287
+#: includes/class-template-loader.php:1332
 msgid "Community profile for @%1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1295
+#: includes/class-template-loader.php:1340
 #: includes/seo/class-schema-markup.php:366
 #. translators: 1: tag name, 2: site name
 msgid "Discussions tagged %1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1301
+#: includes/class-template-loader.php:1346
 msgid "Top contributors and most-helpful members on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1306
+#: includes/class-template-loader.php:1351
 msgid "Search the community"
 msgstr ""
 
-#: includes/class-template-loader.php:1307
+#: includes/class-template-loader.php:1352
 msgid "Search discussions, replies, members, and tags on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1322
+#: includes/class-template-loader.php:1367
 msgid "Start a discussion in %s"
 msgstr ""
 
-#: includes/class-template-loader.php:1324
+#: includes/class-template-loader.php:1369
 msgid "Compose a new discussion on %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1331
+#: includes/class-template-loader.php:1376
 msgid "Your community notifications."
 msgstr ""
 
-#: includes/class-template-loader.php:1338
+#: includes/class-template-loader.php:1383
 msgid "Edit your community profile."
 msgstr ""
 
-#: includes/class-template-loader.php:1345
+#: includes/class-template-loader.php:1390
 msgid "Accept your community invite to %s."
 msgstr ""
 
-#: includes/class-template-loader.php:1352
+#: includes/class-template-loader.php:1397
 msgid "%1$s you run and %2$s you are part of on %3$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1359
+#: includes/class-template-loader.php:1404
 msgid "Start a new community %1$s on %2$s."
 msgstr ""
 
-#: includes/class-template-loader.php:1366
+#: includes/class-template-loader.php:1411
 msgid "Edit your community %s settings."
 msgstr ""
 
-#: includes/class-template-loader.php:1373
+#: includes/class-template-loader.php:1418
 msgid "Your saved drafts on the community."
 msgstr ""
 
-#: includes/class-template-loader.php:1380
+#: includes/class-template-loader.php:1425
 msgid "Posts you have bookmarked on the community."
 msgstr ""
 
