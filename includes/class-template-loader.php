@@ -864,6 +864,65 @@ class Template_Loader {
 		);
 	}
 
+	/**
+	 * Resolve the owner's SEO title pattern for a content route.
+	 *
+	 * Ported from Schema_Markup::filter_title(), which is now deleted — it was a
+	 * second document_title_parts producer and this one always overwrote it.
+	 *
+	 * Two behaviours are deliberately preserved from it. `{site_name}` is stripped
+	 * out of the pattern (with any adjacent separator) because WordPress appends
+	 * the site name itself via the title separator; leaving the placeholder in
+	 * would render it twice. And an unresolvable object returns '' rather than a
+	 * half-substituted string, so the caller falls back to the generic label —
+	 * that path is live, since 404s render through here too.
+	 *
+	 * One behaviour is deliberately fixed: this reads \Jetonomy\seo_settings(),
+	 * not get_option() raw. filter_title() gated on `! empty( $settings[...] )`
+	 * against the raw option, so on any install where the owner had not explicitly
+	 * saved a pattern the documented defaults never applied and the whole feature
+	 * silently no-opped.
+	 *
+	 * @param string               $route 'post' | 'space'.
+	 * @param string               $slug  Object slug from the route.
+	 * @param array<string,mixed>  $seo   Resolved seo_settings().
+	 * @return string Title fragment, or '' when the object cannot be resolved.
+	 */
+	private static function seo_title_from_pattern( string $route, string $slug, array $seo ): string {
+		$key     = 'post' === $route ? 'seo_post_title' : 'seo_space_title';
+		$pattern = (string) ( $seo[ $key ] ?? '' );
+		if ( '' === $pattern || '' === $slug ) {
+			return '';
+		}
+
+		// WP appends ' – {site_name}' itself; drop the placeholder and any
+		// separator hugging it so the site name is not printed twice.
+		$pattern = (string) preg_replace( '/\s*[\|\-–—]?\s*\{site_name\}\s*[\|\-–—]?\s*/u', ' ', $pattern );
+		$pattern = trim( (string) preg_replace( '/\s+/u', ' ', $pattern ) );
+		if ( '' === $pattern ) {
+			return '';
+		}
+
+		if ( 'post' === $route ) {
+			$post = \Jetonomy\Models\Post::find_by_slug( $slug );
+			if ( ! $post ) {
+				return '';
+			}
+			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+			return str_replace(
+				[ '{post_title}', '{space_name}' ],
+				[ (string) $post->title, (string) ( $space->title ?? '' ) ],
+				$pattern
+			);
+		}
+
+		$space = \Jetonomy\Models\Space::find_by_slug( $slug );
+		if ( ! $space ) {
+			return '';
+		}
+		return str_replace( '{space_name}', (string) $space->title, $pattern );
+	}
+
 	private static function set_seo_meta( array $data ): void {
 		// On a mapped front page the community is rendered over a real WP page.
 		// That page has its own object, its own permalink, and its own SEO fields
@@ -881,6 +940,26 @@ class Template_Loader {
 				// so we only set the route-specific title fragment here. Don't
 				// concatenate the site name yourself — it doubles up.
 				$slug_pretty = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
+
+				// Owner-configurable title patterns (Settings → SEO). These are the
+				// documented contract for the two routes that represent real content,
+				// and until now they did nothing at all: Schema_Markup::filter_title
+				// implemented them but read the option raw, so its own defaults never
+				// applied, and this closure ran later and overwrote its result anyway.
+				// Two producers of document_title_parts, and the wrong one won — which
+				// is why every topic's title was its SLUG rather than its title.
+				// One producer now; filter_title is gone.
+				$seo = \Jetonomy\seo_settings();
+				if ( 'post' === $data['route'] || 'space' === $data['route'] ) {
+					$patterned = self::seo_title_from_pattern( $data['route'], (string) $data['slug'], $seo );
+					if ( '' !== $patterned ) {
+						$parts['title'] = $patterned;
+						return $parts;
+					}
+					// Fall through to the generic labels below when the object is
+					// missing (404s render through this same path).
+				}
+
 				switch ( $data['route'] ) {
 					case 'home':
 						$parts['title'] = __( 'Community', 'jetonomy' );
