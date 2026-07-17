@@ -287,6 +287,67 @@ class Permission_Engine {
 	}
 
 	/**
+	 * May this post's AUTHORED TEXT be emitted to this viewer out-of-band?
+	 *
+	 * can_read_post() plus the blocked-author check, for the surfaces that
+	 * broadcast a post's title/body somewhere the viewer cannot be shown a
+	 * tombstone: the <head> (title / og:* / meta description), JSON-LD, and the
+	 * oEmbed unfurl. Those three asked can_read_post() — which knows about
+	 * visibility and status but not blocks — so a blocked author's title and
+	 * (via meta description) their entire body still reached the very person who
+	 * blocked them, beside a body that correctly read "Content hidden — you
+	 * blocked this user" (1.8.0).
+	 *
+	 * DELIBERATELY NOT FOLDED INTO can_read_post(). The two questions differ in
+	 * their negative outcome, and conflating them regresses the tombstone
+	 * shipped earlier in 1.8.0:
+	 *
+	 *   can_read_post() === false  -> 404, the row is not yours to reach.
+	 *   blocked author            -> the row IS yours to reach; we owe you a
+	 *                                "you blocked this user" state and an
+	 *                                Unblock affordance, and we owe the innocent
+	 *                                repliers on that topic their replies.
+	 *
+	 * Teaching can_read_post() about blocks would 404 single-post.php, collapse
+	 * GET /posts/{id}'s blocked_author payload, and orphan every innocent reply
+	 * under a blocked author's topic via the replies-controller parent gate —
+	 * breaking three surfaces to fix three. Surfaces that render a viewer-facing
+	 * state keep can_read_post() + Post::apply_block_tombstone(). Surfaces that
+	 * emit text with no room for a state call this.
+	 *
+	 * DIRECTION IS NOT DECIDED HERE. It comes from BlockedUser::blocked_ids(),
+	 * the one primitive every read surface already shares, so whichever way that
+	 * set is defined this method agrees with the tombstone beside it by
+	 * construction rather than by two places remembering to match.
+	 *
+	 * NO-VIEWER DEFAULT IS "EMIT", explicitly: blocked_ids( 0 ) is [] because a
+	 * guest has blocked nobody. A crawler, cron run, or warm cache therefore
+	 * sees byte-identical output to today — blocking must never deindex a public
+	 * topic. Cost for that path is zero queries; for a member it is one, memoized
+	 * per request and cached for 5 minutes by blocked_ids().
+	 *
+	 * @since 1.8.0
+	 * @param int    $user_id WP user ID (0 for guest).
+	 * @param object $post    Post row object.
+	 * @return bool
+	 */
+	public static function can_render_post_text( int $user_id, object $post ): bool {
+		if ( ! self::can_read_post( $user_id, $post ) ) {
+			return false;
+		}
+
+		if ( $user_id <= 0 ) {
+			return true;
+		}
+
+		return ! in_array(
+			(int) ( $post->author_id ?? 0 ),
+			\Jetonomy\Models\BlockedUser::blocked_ids( $user_id ),
+			true
+		);
+	}
+
+	/**
 	 * Check if a user can read a specific post, considering status and private visibility.
 	 *
 	 * @param int    $user_id  WP user ID (0 for guest).

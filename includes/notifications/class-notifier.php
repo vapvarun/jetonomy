@@ -1031,15 +1031,7 @@ class Notifier {
 				]
 			);
 
-			/**
-			 * Fires after a web notification row is created.
-			 *
-			 * $message (rendered human sentence) and $url (deep link) are
-			 * appended so consumers can mirror the notification 1:1 without
-			 * re-deriving them. Backward-compatible: existing 5-arg listeners
-			 * are unaffected.
-			 */
-			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
+			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url );
 		}
 
 		// Check email preference via the shared gate (profile + defaults already
@@ -1051,10 +1043,80 @@ class Notifier {
 		// keeps this a no-op for system notifications) — the read-surface
 		// filters already hide it from the recipient, and unblocking restores
 		// the history without needing to re-send anything.
-		$recipient_blocked_actor = $actor_id > 0 && \Jetonomy\Models\BlockedUser::is_blocked( $user_id, $actor_id );
-		if ( ! $recipient_blocked_actor && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
+		if ( ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
+	}
+
+	/**
+	 * Has $user_id blocked $actor_id? THE outbound-notification block predicate.
+	 *
+	 * One implementation for both things that leave the system (email, push) so
+	 * they cannot disagree about the same event — which is exactly what 1.8.0
+	 * shipped: the email was correctly suppressed while the push for the same
+	 * notification went out, because the gate sat below the hook the push
+	 * listens to.
+	 *
+	 * Direction deliberately matches the read surfaces rather than the DM gate:
+	 * an outbound mirror of a read surface should be suppressed on the same
+	 * terms as the row it mirrors. is_blocked_between() is the DM predicate and
+	 * belongs to a two-party channel, not to a notification about public content.
+	 * System notifications (actor_id 0) are never suppressed.
+	 *
+	 * @since 1.8.0
+	 * @param int $user_id  Recipient.
+	 * @param int $actor_id Actor who triggered the notification (0 = system).
+	 * @return bool
+	 */
+	public static function recipient_blocked_actor( int $user_id, int $actor_id ): bool {
+		return $actor_id > 0 && \Jetonomy\Models\BlockedUser::is_blocked( $user_id, $actor_id );
+	}
+
+	/**
+	 * Fire `jetonomy_notification_created` — the one door to every outbound
+	 * mirror of a web notification.
+	 *
+	 * THE gate for out-of-app dispatch, and the reason it lives here rather
+	 * than in each listener: the only consumer is Pro's web-push extension,
+	 * which subscribed to the raw hook and so fired ABOVE the block check that
+	 * correctly suppressed the matching EMAIL twelve lines below it. Same
+	 * event, same recipient, opposite answers — the email was right and the
+	 * push was wrong, which is the proof the gate belonged lower rather than
+	 * copied into Pro. Pro must not re-derive this (it cannot: the hook's
+	 * signature carries no actor_id), and now it does not have to.
+	 *
+	 * The notification ROW is still written by the caller — only the outbound
+	 * mirror is withheld. The recipient's own list filters the row out via
+	 * Notification::list_for_user()'s actor exclusion, and unblocking restores
+	 * the history without re-sending anything.
+	 *
+	 * @since 1.8.0
+	 * @param int    $notification_id Row ID.
+	 * @param int    $user_id         Recipient.
+	 * @param int    $actor_id        Actor (0 = system; never suppressed).
+	 * @param string $type            Notification type.
+	 * @param string $object_type     Object type.
+	 * @param int    $object_id       Object ID.
+	 * @param string $message         Rendered human sentence.
+	 * @param string $url             Deep link.
+	 */
+	public static function emit_notification_created( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '' ): void {
+		if ( self::recipient_blocked_actor( $user_id, $actor_id ) ) {
+			return;
+		}
+
+		/**
+		 * Fires after a web notification row is created.
+		 *
+		 * NOT fired when the recipient has blocked the actor — consumers mirror
+		 * the notification out of the app (push, and anything added later), and
+		 * a blocked actor's words must not arrive on the blocker's phone.
+		 *
+		 * $message (rendered human sentence) and $url (deep link) are appended
+		 * so consumers can mirror the notification 1:1 without re-deriving
+		 * them. Backward-compatible: existing 5-arg listeners are unaffected.
+		 */
+		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
 	}
 
 	/**

@@ -99,12 +99,18 @@ class Schema_Markup {
 			return null;
 		}
 
-		// 1.4.0 fix: gate the schema emit on the same can_read_post()
-		// check Template_Loader applies to og:* / meta description /
-		// article:* metadata. Without this, JSON-LD leaks the full
-		// content of a private post to logged-out crawlers even though
-		// the HTML view returns 403/404 (Basecamp 9803998504 regression).
-		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+		// 1.4.0 fix: gate the schema emit on the same check Template_Loader
+		// applies to og:* / meta description / article:* metadata. Without
+		// this, JSON-LD leaks the full content of a private post to
+		// logged-out crawlers even though the HTML view returns 403/404
+		// (Basecamp 9803998504 regression).
+		//
+		// 1.8.0: that shared check is now can_render_post_text(), so this
+		// emit inherits the blocked-author gate too — `headline` and `text`
+		// were shipping a blocked author's title and body verbatim to the
+		// viewer who blocked them. Crawlers are unaffected (they block
+		// nobody), so public topics keep their structured data intact.
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 			return null;
 		}
 
@@ -416,7 +422,11 @@ class Schema_Markup {
 					'url'  => $base . 's/' . $space_slug . '/',
 				];
 			}
-			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+			// can_render_post_text(): the crumb's `name` IS the post title, so a
+			// blocked author's title rode into BreadcrumbList even though the
+			// page body beside it was tombstoned (1.8.0). Dropping the crumb
+			// leaves a valid shorter chain (Community → Space).
+			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 				$items[] = [
 					'name' => $post->title,
 					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',

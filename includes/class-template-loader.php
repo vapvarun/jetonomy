@@ -900,12 +900,28 @@ class Template_Loader {
 	 * saved a pattern the documented defaults never applied and the whole feature
 	 * silently no-opped.
 	 *
+	 * THE TITLE IS ITS OWN FETCH. This resolves the post independently of
+	 * set_seo_meta()'s $post — which is exactly how the <title> ended up being
+	 * the one thing in the <head> with no permission gate on it at all, while
+	 * og:*, meta description and article:* beside it had been gated since 1.4.0.
+	 * Verified at runtime on 1.8.0: a logged-out crawler on an is_private topic
+	 * got a body reading "Post not found" and a <title> reading the private
+	 * topic's real title, and a viewer who had blocked the author got their
+	 * post title in their browser tab beside a "you blocked this user" body.
+	 *
 	 * @param string               $route 'post' | 'space'.
 	 * @param string               $slug  Object slug from the route.
 	 * @param array<string,mixed>  $seo   Resolved seo_settings().
-	 * @return string Title fragment, or '' when the object cannot be resolved.
+	 * @return string|null Title fragment; '' when the object cannot be resolved
+	 *                     (caller falls back to the slug label — that is just the
+	 *                     URL echoed back, so it reveals nothing); null when the
+	 *                     object EXISTS but this viewer may not be shown its text,
+	 *                     which the caller must render as a neutral label. The two
+	 *                     are distinct on purpose: the slug is derived from the
+	 *                     title, so falling back to it for a gated post would
+	 *                     re-leak in hyphens the words the gate just withheld.
 	 */
-	private static function seo_title_from_pattern( string $route, string $slug, array $seo ): string {
+	private static function seo_title_from_pattern( string $route, string $slug, array $seo ): ?string {
 		$key     = 'post' === $route ? 'seo_post_title' : 'seo_space_title';
 		$pattern = (string) ( $seo[ $key ] ?? '' );
 		if ( '' === $pattern || '' === $slug ) {
@@ -924,6 +940,12 @@ class Template_Loader {
 			$post = \Jetonomy\Models\Post::find_by_slug( $slug );
 			if ( ! $post ) {
 				return '';
+			}
+			// The gate the rest of the <head> already had. Same predicate as the
+			// og:* / description branch in set_seo_meta() so the tab title and the
+			// tags beneath it can never disagree about the same post again.
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
+				return null;
 			}
 			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 			return str_replace(
@@ -969,6 +991,15 @@ class Template_Loader {
 				$seo = \Jetonomy\seo_settings();
 				if ( 'post' === $data['route'] || 'space' === $data['route'] ) {
 					$patterned = self::seo_title_from_pattern( $data['route'], (string) $data['slug'], $seo );
+					// null = the post exists but this viewer may not be shown its
+					// text (private/pending/trashed, or they blocked the author).
+					// Neutral label rather than the slug fallback below, which is
+					// built FROM the title and would hand back the same words
+					// (1.8.0).
+					if ( null === $patterned ) {
+						$parts['title'] = __( 'Community', 'jetonomy' );
+						return $parts;
+					}
 					if ( '' !== $patterned ) {
 						$parts['title'] = $patterned;
 						return $parts;
@@ -1157,7 +1188,16 @@ class Template_Loader {
 						// description, OG tags, article:* metadata, and oEmbed discovery URL
 						// for a private topic leak into every non-author response's <head>
 						// (Basecamp 9803998504).
-						if ( $post && ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+						//
+						// can_render_post_text() (not can_read_post()) because the <head> is
+						// also where a BLOCKED author's words were still arriving: the body
+						// read "Content hidden — you blocked this user" while <title>,
+						// og:title and — worst — meta description (the whole post body) sat
+						// in the same response. Nulling $post falls through to the generic
+						// community title, which is what a viewer who blocked the author
+						// should get. A guest/crawler blocks nobody, so their <head> is
+						// byte-identical to before (1.8.0).
+						if ( $post && ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 							$post = null;
 						}
 						if ( $post ) {

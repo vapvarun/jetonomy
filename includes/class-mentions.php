@@ -195,7 +195,10 @@ class Mentions {
 				]
 			);
 
-			do_action( 'jetonomy_notification_created', $notification_id, $uid, 'mention', $object_type, $object_id, $message, $content_url );
+			// Routed through the shared emitter so the push gate applies here too
+			// (1.8.0). This path fired the hook raw, so @mentioning someone who
+			// had blocked you put your words on their phone.
+			\Jetonomy\Notifications\Notifier::emit_notification_created( $notification_id, $uid, $actor_id, 'mention', $object_type, $object_id, $message, $content_url );
 
 			// Check email preference via the shared gate (master kill-switch +
 			// per-user per-type + admin default). $user_prefs already loaded.
@@ -203,7 +206,12 @@ class Mentions {
 			$settings   = $profile ? json_decode( $profile->settings ?? '{}', true ) : [];
 			$user_prefs = $settings['notifications'] ?? [];
 
-			if ( \Jetonomy\Notifications\Notifier::should_email( $uid, 'mention', $user_prefs ) ) {
+			// Block gate — Notifier::create_and_maybe_email() has had one since
+			// 1.7.1, but this second, parallel email path never got it, so a
+			// mention email from a blocked user still landed in the blocker's
+			// inbox. Same predicate, one implementation (1.8.0).
+			if ( ! \Jetonomy\Notifications\Notifier::recipient_blocked_actor( $uid, $actor_id )
+				&& \Jetonomy\Notifications\Notifier::should_email( $uid, 'mention', $user_prefs ) ) {
 				$email_adapter = Adapters\Adapter_Registry::get_email();
 				if ( $email_adapter ) {
 					$user = get_userdata( $uid );
