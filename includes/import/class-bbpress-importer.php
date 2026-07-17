@@ -65,9 +65,17 @@ class BBPress_Importer extends Importer {
 	 *   - The body carries NO attachment markup, so there is nothing to strip.
 	 *
 	 * So this is purely a re-link: the file survives untouched either way, and all
-	 * that is missing is the row that makes Jetonomy render it. That link is Pro, so
-	 * on a free site nothing happens here and no file is lost — the media items are
-	 * already in the library, and enabling Pro later reveals them.
+	 * that is missing is the row that makes Jetonomy render it.
+	 *
+	 * That link is FREE as of 1.7.1 — this comment used to say it was Pro, and that
+	 * "enabling Pro later reveals them". Both halves are now false, and the second
+	 * was false in a way that mattered: it promised a reveal that no code performed,
+	 * because link rows were only ever written during import (Basecamp 10093054077).
+	 * Attachments moved to free (Attachments::register() is in the unconditional
+	 * bootstrap; the importer links via the free Attachment model regardless of
+	 * whether Pro is active), so the rows are written here on every site and free
+	 * renders them immediately. Turning Pro off costs previews and the PDF viewer,
+	 * not the attachments.
 	 *
 	 * @param string $object_type   'post' or 'reply'.
 	 * @param int    $source_post_id bbPress topic/reply post ID.

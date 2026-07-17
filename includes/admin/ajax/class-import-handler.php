@@ -141,12 +141,22 @@ class Import_Handler {
 				'completed_at' => current_time( 'mysql' ),
 				'imported'     => $total_processed,
 				'skipped'      => $skipped_files,
+				// Carry the sample into the durable record, not just the count.
+				// It used to be accumulated across every batch and then thrown away
+				// by the delete_option() below, so the only trace a file was skipped
+				// was a number in a notice the page reloaded away three seconds
+				// later. "27 files skipped" with no way to learn WHICH is not a
+				// report; the owner cannot act on it, and after a re-import they
+				// cannot even tell whether it got better.
+				'errors'       => array_slice( (array) ( $import_errors['sample'] ?? [] ), 0, 50 ),
 				'source'       => $source,
 				'source_name'  => $importers[ $source ]->get_source_name(),
 			];
 			update_option( 'jetonomy_import_history', $history, false );
 
-			// Clear transient state (skipped count already read into the response above).
+			// Clear transient state. Safe now: the count AND the sample are both in
+			// the history record above — previously this line was where the evidence
+			// died.
 			delete_option( 'jetonomy_import_resume' );
 			delete_option( 'jetonomy_import_total_processed' );
 			delete_option( 'jetonomy_import_id_map' );

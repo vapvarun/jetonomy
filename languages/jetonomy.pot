@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Jetonomy 1.8.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/jetonomy\n"
-"POT-Creation-Date: 2026-07-17 07:02:28+00:00\n"
+"POT-Creation-Date: 2026-07-17 12:00:09+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1156,7 +1156,7 @@ msgstr ""
 
 #: includes/admin/class-revisions-list-table.php:354
 #: includes/admin/views/content.php:125 includes/admin/views/content.php:276
-#: includes/admin/views/content.php:319 includes/admin/views/import.php:179
+#: includes/admin/views/content.php:319 includes/admin/views/import.php:180
 #: includes/admin/views/users.php:64
 #: includes/integrations/class-buddypress.php:916
 #: includes/integrations/class-buddypress.php:1113
@@ -1610,7 +1610,7 @@ msgid "Please choose a bulk action."
 msgstr ""
 
 #: includes/admin/views/content.php:379 includes/admin/views/dashboard.php:279
-#: includes/admin/views/import.php:203 includes/admin/views/moderation.php:46
+#: includes/admin/views/import.php:301 includes/admin/views/moderation.php:46
 #: includes/admin/views/settings.php:769 includes/admin/views/settings.php:963
 #: includes/admin/views/settings.php:1157
 #: includes/admin/views/space-edit.php:47
@@ -1630,13 +1630,13 @@ msgid ""
 msgstr ""
 
 #: includes/admin/views/content.php:382 includes/admin/views/dashboard.php:281
-#: includes/admin/views/import.php:206 includes/admin/views/settings.php:772
+#: includes/admin/views/import.php:304 includes/admin/views/settings.php:772
 #: includes/admin/views/settings.php:966 includes/admin/views/settings.php:1160
 #: includes/admin/views/spaces.php:295 includes/admin/views/users.php:197
 msgid "Upgrade to Pro"
 msgstr ""
 
-#: includes/admin/views/content.php:384 includes/admin/views/import.php:208
+#: includes/admin/views/content.php:384 includes/admin/views/import.php:306
 #: includes/admin/views/spaces.php:297 includes/admin/views/users.php:199
 msgid "View Docs"
 msgstr ""
@@ -1918,68 +1918,103 @@ msgstr ""
 msgid "%s records imported"
 msgstr ""
 
-#: includes/admin/views/import.php:103
+#: includes/admin/views/import.php:104
 msgid "Warning:"
 msgstr ""
 
-#: includes/admin/views/import.php:104
+#: includes/admin/views/import.php:105
 msgid ""
 "Re-importing may create duplicate content. Only re-import if the previous "
 "import had issues."
 msgstr ""
 
-#: includes/admin/views/import.php:115
+#: includes/admin/views/import.php:116
 #. translators: 1: phase name, 2: offset number, 3: start date/time
 msgid "Import was interrupted at phase: %1$s (offset: %2$s). Started: %3$s"
 msgstr ""
 
-#: includes/admin/views/import.php:147
+#: includes/admin/views/import.php:148
 msgid "Resume Import"
 msgstr ""
 
-#: includes/admin/views/import.php:151
+#: includes/admin/views/import.php:152
 msgid "Start Over"
 msgstr ""
 
-#: includes/admin/views/import.php:156
+#: includes/admin/views/import.php:157
 msgid "Re-importing may create duplicates. Are you sure?"
 msgstr ""
 
-#: includes/admin/views/import.php:159
+#: includes/admin/views/import.php:160
 msgid "Re-Import"
 msgstr ""
 
-#: includes/admin/views/import.php:166
+#: includes/admin/views/import.php:167
 #. translators: %s: source name
 msgid "Import from %s"
 msgstr ""
 
-#: includes/admin/views/import.php:175
+#: includes/admin/views/import.php:176
 msgid "Forums"
 msgstr ""
 
-#: includes/admin/views/import.php:177
+#: includes/admin/views/import.php:178
 #: includes/integrations/class-buddypress.php:1112
 msgid "Topics"
 msgstr ""
 
-#: includes/admin/views/import.php:181
+#: includes/admin/views/import.php:182
 msgid "Profiles"
 msgstr ""
 
-#: includes/admin/views/import.php:183
+#: includes/admin/views/import.php:184
 msgid "Finalize"
 msgstr ""
 
-#: includes/admin/views/import.php:189
+#: includes/admin/views/import.php:190
 msgid "Starting..."
 msgstr ""
 
-#: includes/admin/views/import.php:204
+#: includes/admin/views/import.php:223
+msgid "Past imports"
+msgstr ""
+
+#: includes/admin/views/import.php:238
+#. translators: 1: number of records imported, 2: date and time
+msgid "%1$s records imported on %2$s"
+msgstr ""
+
+#: includes/admin/views/import.php:243
+msgid "an unknown date"
+msgstr ""
+
+#: includes/admin/views/import.php:256
+#. translators: %s: number of items that could not be imported
+msgid "%s item could not be imported"
+msgid_plural "%s items could not be imported"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin/views/import.php:278
+#. translators: 1: number of examples shown, 2: total number skipped
+msgid "Showing the first %1$s of %2$s."
+msgstr ""
+
+#: includes/admin/views/import.php:287
+msgid ""
+"This import ran before per-item reasons were recorded, so only the count is "
+"known."
+msgstr ""
+
+#: includes/admin/views/import.php:292
+msgid "Everything imported cleanly. Nothing was skipped."
+msgstr ""
+
+#: includes/admin/views/import.php:302
 msgid "Private Messaging & Email Digests"
 msgstr ""
 
-#: includes/admin/views/import.php:205
+#: includes/admin/views/import.php:303
 msgid ""
 "Keep members engaged after migration with private messaging, daily/weekly "
 "email digests, and web push notifications."
@@ -6276,12 +6311,12 @@ msgstr ""
 msgid "Imported from Asgaros"
 msgstr ""
 
-#: includes/import/class-bbpress-importer.php:144
-#: includes/import/class-bbpress-importer.php:355
+#: includes/import/class-bbpress-importer.php:152
+#: includes/import/class-bbpress-importer.php:363
 msgid "Imported from bbPress"
 msgstr ""
 
-#: includes/import/class-bbpress-importer.php:357
+#: includes/import/class-bbpress-importer.php:365
 msgid "Forums imported from bbPress"
 msgstr ""
 

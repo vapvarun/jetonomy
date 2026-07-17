@@ -1468,8 +1468,17 @@
 							while (results.firstChild) { results.removeChild(results.firstChild); }
 							results.appendChild(buildCompleteNotice(d.processed, d.skipped));
 
-							// Auto-reload after 3 seconds to show "Previously Imported" state
-							setTimeout(function() { window.location.reload(); }, 3000);
+							// Only auto-reload a CLEAN import. The reload exists to reveal the
+							// "Previously Imported" state, which is fine when there is nothing
+							// to read — but when files were skipped it used to pull the page out
+							// from under the one notice telling you so, three seconds in. The
+							// skipped count and the per-item reasons are now recorded durably in
+							// the import history and rendered on this page (see
+							// admin/views/import.php), so nothing is lost either way; this just
+							// stops us interrupting someone mid-sentence about their own data.
+							if (!d.skipped) {
+								setTimeout(function() { window.location.reload(); }, 3000);
+							}
 						}
 					})
 					.catch(function() {
