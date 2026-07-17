@@ -431,3 +431,36 @@ function seo_settings(): array {
 	}
 	return $stored + $defaults;
 }
+
+/**
+ * Echo the <option> list for a space's visibility, from the one source of truth.
+ *
+ * Every form that offers the choice calls this, so none of them can drift out of
+ * step with the `visibility` enum again — which is what let a hidden space be
+ * silently republished as public (see Space::visibility_levels()).
+ *
+ * `$current` matters more than it looks: passing the space's real value is what
+ * makes selected() mark it. A form that offers no option matching the stored
+ * value does not fail loudly — it quietly shows the first one and saves that.
+ *
+ * @param string $current      The space's stored visibility, '' when creating.
+ * @param bool   $with_details Append the level description to each label. On by
+ *                             default for member-facing forms, where the whole
+ *                             question is "which one hides it"; wp-admin passes
+ *                             false because its table row carries its own copy.
+ */
+function space_visibility_options( string $current = '', bool $with_details = true ): void {
+	foreach ( \Jetonomy\Models\Space::visibility_levels() as $value => $level ) {
+		$label = $with_details
+			/* translators: 1: visibility level, e.g. "Private". 2: what it means. */
+			? sprintf( _x( '%1$s: %2$s', 'space visibility option', 'jetonomy' ), $level['label'], $level['description'] )
+			: $level['label'];
+
+		printf(
+			'<option value="%1$s" %2$s>%3$s</option>',
+			esc_attr( $value ),
+			selected( $current, $value, false ),
+			esc_html( $label )
+		);
+	}
+}

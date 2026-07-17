@@ -616,6 +616,55 @@ class Space extends Model {
 	}
 
 	/**
+	 * Just the valid `visibility` values, for validation and REST/ability enums.
+	 *
+	 * Derived from visibility_levels() so a level can never be offerable in a
+	 * form but rejected by a validator, or the reverse.
+	 *
+	 * @return string[]
+	 */
+	public static function visibility_values(): array {
+		return array_keys( self::visibility_levels() );
+	}
+
+	/**
+	 * The visibility levels a space can have, with the copy shown to whoever
+	 * picks one.
+	 *
+	 * The single source for every surface that offers the choice. This list was
+	 * hand-written in three places (wp-admin, the front-end space form, and the
+	 * new-space form) and two of them had drifted: they offered only public and
+	 * private. That drift was not cosmetic — it silently published hidden
+	 * spaces. A form that cannot represent `hidden` renders no selected option,
+	 * so the browser falls back to the first one (public), and saving anything
+	 * at all PATCHed visibility to public. Deriving the list from one place is
+	 * what stops a fourth surface from drifting the same way.
+	 *
+	 * The descriptions carry the distinction the levels are named for: private
+	 * is discoverable but unreadable, hidden is neither. Owners were asking
+	 * support which one hides a space; the form should answer that itself.
+	 *
+	 * @return array<string,array{label:string,description:string}> Keyed by the
+	 *         `visibility` enum in jt_spaces (schema: public|private|hidden).
+	 */
+	public static function visibility_levels(): array {
+		return [
+			'public'  => [
+				'label'       => __( 'Public', 'jetonomy' ),
+				'description' => __( 'Anyone can find this space and read it.', 'jetonomy' ),
+			],
+			'private' => [
+				'label'       => __( 'Private', 'jetonomy' ),
+				'description' => __( 'Anyone can find this space, but only members can read it.', 'jetonomy' ),
+			],
+			'hidden'  => [
+				'label'       => __( 'Hidden', 'jetonomy' ),
+				'description' => __( 'Only members can find this space. It is invite-only.', 'jetonomy' ),
+			],
+		];
+	}
+
+	/**
 	 * Validate the cross-field rule between visibility and join_policy.
 	 *
 	 * Hidden spaces must be invite-only. A hidden space with an "open" or

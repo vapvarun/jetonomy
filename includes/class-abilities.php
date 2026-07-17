@@ -697,7 +697,7 @@ class Abilities {
 						'visibility'  => [
 							'type'        => 'string',
 							'description' => 'Visibility level.',
-							'enum'        => [ 'public', 'private', 'hidden' ],
+							'enum'        => \Jetonomy\Models\Space::visibility_values(),
 							'default'     => 'public',
 						],
 						'category_id' => [

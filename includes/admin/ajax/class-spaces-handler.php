@@ -75,7 +75,7 @@ class Spaces_Handler {
 		if ( ! in_array( $type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {
 			$type = 'forum';
 		}
-		if ( ! in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
+		if ( ! in_array( $visibility, Space::visibility_values(), true ) ) {
 			$visibility = 'public';
 		}
 		if ( ! in_array( $join_policy, array( 'open', 'approval', 'invite' ), true ) ) {
@@ -156,7 +156,7 @@ class Spaces_Handler {
 		}
 		if ( isset( $_POST['visibility'] ) ) {
 			$visibility = sanitize_text_field( wp_unslash( $_POST['visibility'] ) );
-			if ( in_array( $visibility, array( 'public', 'private', 'hidden' ), true ) ) {
+			if ( in_array( $visibility, Space::visibility_values(), true ) ) {
 				$data['visibility'] = $visibility;
 			}
 		}

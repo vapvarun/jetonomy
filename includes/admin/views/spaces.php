@@ -71,9 +71,7 @@ $action_param = sanitize_text_field( $_GET['action'] ?? 'list' );
 					<th scope="row"><label for="space-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label></th>
 					<td>
 						<select id="space-visibility">
-							<option value="public"><?php esc_html_e( 'Public', 'jetonomy' ); ?></option>
-							<option value="private"><?php esc_html_e( 'Private', 'jetonomy' ); ?></option>
-							<option value="hidden"><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
+							<?php \Jetonomy\space_visibility_options( '', false ); ?>
 						</select>
 					</td>
 				</tr>
