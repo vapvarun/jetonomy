@@ -152,6 +152,7 @@ class Space_Moderation_Controller extends Base_Controller {
 			$flags,
 			[
 				'total'    => $total,
+				'offset'   => $offset,
 				'space_id' => $space_id,
 			]
 		);

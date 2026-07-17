@@ -172,6 +172,28 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Build a paginated response with cursor support.
 	 */
 	protected function paginated_response( array $items, array $meta = [] ): WP_REST_Response {
+		// has_more is (offset + count) < total. If a paginating caller passes total
+		// but forgets offset, offset silently reads 0 and every page compares
+		// against page 1 — has_more is stuck true, a "Load more" that never ends.
+		// The per-space moderation route shipped exactly this (Basecamp 10105626990).
+		//
+		// offset is not optional when the response actually paginates, so say so out
+		// loud rather than assume it. The fix is not "add the missing line to one
+		// route" — that leaves the next route free to forget — but making the
+		// omission impossible to miss in dev/CI. Costs nothing in production.
+		//
+		// Gated on count < total on purpose: a non-paginated list passes
+		// total = count(items) (one page), where offset cannot change has_more, so
+		// warning there would be a false positive that teaches developers to ignore
+		// the warning. Only the genuinely-paginated, offset-missing case trips it.
+		if ( isset( $meta['total'] ) && ! array_key_exists( 'offset', $meta ) && count( $items ) < (int) $meta['total'] ) {
+			_doing_it_wrong(
+				__METHOD__,
+				esc_html( "paginated_response() paginates (count < total) but was given no 'offset'; has_more will be stuck true past page 1. Pass 'offset' from get_pagination()." ),
+				'1.8.0'
+			);
+		}
+
 		$last_item   = end( $items );
 		$cursor_next = $last_item
 			? ( is_object( $last_item ) ? (int) $last_item->id : (int) ( $last_item['id'] ?? 0 ) )
