@@ -909,9 +909,9 @@ class Template_Loader {
 	 * topic's real title, and a viewer who had blocked the author got their
 	 * post title in their browser tab beside a "you blocked this user" body.
 	 *
-	 * @param string               $route 'post' | 'space'.
-	 * @param string               $slug  Object slug from the route.
-	 * @param array<string,mixed>  $seo   Resolved seo_settings().
+	 * @param string              $route 'post' | 'space'.
+	 * @param string              $slug  Object slug from the route.
+	 * @param array<string,mixed> $seo   Resolved seo_settings().
 	 * @return string|null Title fragment; '' when the object cannot be resolved
 	 *                     (caller falls back to the slug label — that is just the
 	 *                     URL echoed back, so it reveals nothing); null when the
@@ -960,6 +960,36 @@ class Template_Loader {
 			return '';
 		}
 		return str_replace( '{space_name}', (string) $space->title, $pattern );
+	}
+
+	/**
+	 * The display name for a virtual route's SEO title/OG, resolved from the
+	 * object rather than the slug.
+	 *
+	 * The slug loses punctuation and capitalization ("Help & Support" ->
+	 * "help-support"), so prettifying it back gives "Help support" in the
+	 * <title> and OG tags while the on-page <h1> shows the real name. Resolve
+	 * the space/category object and use its stored name; fall back to the
+	 * prettified slug only when the object is missing (404s render here too).
+	 *
+	 * @param string $route    Virtual route key.
+	 * @param string $slug     Route slug.
+	 * @param string $fallback Prettified-slug fallback.
+	 * @return string
+	 */
+	private static function seo_display_name( string $route, string $slug, string $fallback ): string {
+		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation' ), true ) ) {
+			$sp = \Jetonomy\Models\Space::find_by_slug( $slug );
+			if ( $sp && ! empty( $sp->title ) ) {
+				return (string) $sp->title;
+			}
+		} elseif ( 'category' === $route ) {
+			$ct = \Jetonomy\Models\Category::find_by_slug( $slug );
+			if ( $ct && ! empty( $ct->name ) ) {
+				return (string) $ct->name;
+			}
+		}
+		return $fallback;
 	}
 
 	private static function set_seo_meta( array $data ): void {
@@ -1013,16 +1043,16 @@ class Template_Loader {
 						$parts['title'] = __( 'Community', 'jetonomy' );
 						break;
 					case 'space':
-						$parts['title'] = $slug_pretty . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'space', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Community', 'jetonomy' );
 						break;
 					case 'space-members':
-						$parts['title'] = $slug_pretty . ' — ' . __( 'Members', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'space-members', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Members', 'jetonomy' );
 						break;
 					case 'space-roadmap':
-						$parts['title'] = $slug_pretty . ' — ' . __( 'Roadmap', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'space-roadmap', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Roadmap', 'jetonomy' );
 						break;
 					case 'space-moderation':
-						$parts['title'] = $slug_pretty . ' — ' . __( 'Moderation', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'space-moderation', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Moderation', 'jetonomy' );
 						break;
 					case 'post':
 						$parts['title'] = $slug_pretty;
@@ -1034,7 +1064,7 @@ class Template_Loader {
 						$parts['title'] = '#' . (string) $data['slug'];
 						break;
 					case 'category':
-						$parts['title'] = $slug_pretty . ' — ' . __( 'Community', 'jetonomy' );
+						$parts['title'] = self::seo_display_name( 'category', (string) $data['slug'], $slug_pretty ) . ' — ' . __( 'Community', 'jetonomy' );
 						break;
 					case 'leaderboard':
 						$parts['title'] = __( 'Top members', 'jetonomy' );
@@ -1134,7 +1164,7 @@ class Template_Loader {
 						$image_alt = $site_name;
 						break;
 					case 'category':
-						$title     = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
+						$title     = self::seo_display_name( 'category', (string) $data['slug'], ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) ) );
 						$desc      = sprintf( __( '%1$s in the %2$s category on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), $title, $site_name );
 						$url       = $base . '/category/' . rawurlencode( (string) $data['slug'] ) . '/';
 						$image_alt = $title;

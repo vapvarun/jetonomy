@@ -69,17 +69,23 @@ class Theme_Integration {
 		// An explicitly chosen admin palette (Settings → Appearance →
 		// Color Palette) outranks automatic theme bridging, token by
 		// token — the bridge keeps covering tokens the owner left empty.
-		// Light mode only: the palette never touches dark tokens.
+		// Applied in BOTH modes: dropping the palette-controlled tokens from
+		// the dark bridge too lets the owner's :root value win under
+		// `.jt-dark`, instead of the theme's dark primary silently replacing
+		// it (Basecamp: custom accent discarded in dark mode). The runtime
+		// contrast guard derives a readable --jt-accent-fg from whatever the
+		// accent resolves to, so a palette accent stays legible on dark.
 		$jt_settings = get_option( 'jetonomy_settings', array() );
 		$palette     = \Jetonomy\Template_Loader::palette_tokens( is_array( $jt_settings ) ? $jt_settings : array() );
 		if ( ! empty( $palette ) ) {
 			$light = array_diff_key( $light, $palette );
+			$dark  = array_diff_key( $dark, $palette );
 			// The bridge derives --jt-accent-hover from the THEME accent;
 			// with the palette accent in charge, that derivation would be a
-			// mismatched leftover. Drop it — Jetonomy's own color-mix()
-			// default recomputes the hover from the palette accent.
+			// mismatched leftover in either mode. Drop it — Jetonomy's own
+			// color-mix() default recomputes the hover from the palette accent.
 			if ( isset( $palette['--jt-accent'] ) ) {
-				unset( $light['--jt-accent-hover'] );
+				unset( $light['--jt-accent-hover'], $dark['--jt-accent-hover'] );
 			}
 		}
 

@@ -814,7 +814,7 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 			<div class="jt-settings-card">
 				<div class="jt-settings-card__head">
 					<p class="jt-settings-card__title"><?php esc_html_e( 'Color Palette', 'jetonomy' ); ?></p>
-					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly — useful when your theme has no color tokens for Jetonomy to inherit. Applied when "Inherit theme colors" is off. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
+					<p class="jt-settings-card__desc"><?php esc_html_e( 'Set the community colors directly — useful when your theme has no color tokens for Jetonomy to inherit. A colour you set here is applied in both light and dark mode and outranks the theme. Leave a field empty to keep the default; secondary shades (hover, muted text) derive automatically.', 'jetonomy' ); ?></p>
 				</div>
 				<table class="form-table">
 					<tr>

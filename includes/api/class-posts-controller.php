@@ -356,9 +356,12 @@ class Posts_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		// Combined space + post-level visibility check.
+		// Combined space + post-level visibility check. Return 404, not 403, to
+		// match the documented can_read_post() contract and the front-end
+		// (single-post.php renders "Post not found."): a viewer who cannot read a
+		// post should not be able to confirm it exists.
 		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
-			return $this->permission_error();
+			return $this->not_found( 'Post' );
 		}
 
 		Post::increment_view_count( $id );
