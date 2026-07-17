@@ -286,6 +286,27 @@ class Flag extends Model {
 	 * @return object[]
 	 */
 	public static function list_pending_in_space( int $space_id, int $limit = 0, int $offset = 0 ): array {
+		return self::list_by_status_in_space( 'pending', $space_id, $limit, $offset );
+	}
+
+	/**
+	 * Flags of a given status, scoped to a single space.
+	 *
+	 * The space-scoped sibling of {@see self::list_by_status()}. It exists because
+	 * the per-space moderation screen could only ever list PENDING flags: the
+	 * status was hardcoded here, so the Upheld/Dismissed chips on that screen
+	 * filtered against a query that could never return them and always came back
+	 * empty. Same dead UI the global screen had, for the same moderator — the
+	 * global route got fixed and this one was never migrated
+	 * (Basecamp 10092724637, 10092652706).
+	 *
+	 * @param string $status   'pending'|'valid'|'dismissed'|'all'.
+	 * @param int    $space_id Space to scope to.
+	 * @param int    $limit    0 = unbounded (kept for the legacy callers only).
+	 * @param int    $offset
+	 * @return object[]
+	 */
+	public static function list_by_status_in_space( string $status, int $space_id, int $limit = 0, int $offset = 0 ): array {
 		if ( $space_id <= 0 ) {
 			return [];
 		}
@@ -295,30 +316,89 @@ class Flag extends Model {
 		$posts_t   = \Jetonomy\table( 'posts' );
 		$replies_t = \Jetonomy\table( 'replies' );
 
+		$where  = [];
+		$params = [];
+
+		if ( 'all' !== $status ) {
+			$where[]  = 'f.status = %s';
+			$params[] = $status;
+		}
+		$where[]  = '( ( f.object_type = %s AND p.space_id = %d ) OR ( f.object_type = %s AND rp.space_id = %d ) )';
+		$params[] = 'post';
+		$params[] = $space_id;
+		$params[] = 'reply';
+		$params[] = $space_id;
+
+		$where_sql = 'WHERE ' . implode( ' AND ', $where );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are trusted; $where_sql is built from literals with placeholders.
 		$base = "SELECT f.* FROM {$flags_t} f
 			 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
 			 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
 			 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
-			 WHERE f.status = 'pending'
-			   AND (
-			     ( f.object_type = 'post'  AND p.space_id  = %d )
-			     OR ( f.object_type = 'reply' AND rp.space_id = %d )
-			   )
+			 {$where_sql}
 			 ORDER BY f.created_at DESC";
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $limit > 0 ) {
-			$rows = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-				$wpdb->prepare( $base . ' LIMIT %d OFFSET %d', $space_id, $space_id, $limit, max( 0, $offset ) )
-			);
-		} else {
-			$rows = $wpdb->get_results(
-				$wpdb->prepare( $base, $space_id, $space_id )
-			);
+			$base    .= ' LIMIT %d OFFSET %d';
+			$params[] = $limit;
+			$params[] = max( 0, $offset );
 		}
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$rows = $wpdb->get_results( $wpdb->prepare( $base, ...$params ) );
+
 		return $rows ?: [];
+	}
+
+	/**
+	 * Count flags of a given status in a space — the counterpart to
+	 * {@see self::list_by_status_in_space()}.
+	 *
+	 * Counting the SAME status that was listed is the whole point: counting
+	 * 'pending' while listing 'valid' makes has_more lie on every filter except
+	 * the default, which is how a paginated queue silently loses rows.
+	 *
+	 * @param string $status   'pending'|'valid'|'dismissed'|'all'.
+	 * @param int    $space_id
+	 * @return int
+	 */
+	public static function count_by_status_in_space( string $status, int $space_id ): int {
+		if ( $space_id <= 0 ) {
+			return 0;
+		}
+
+		global $wpdb;
+		$flags_t   = \Jetonomy\table( 'flags' );
+		$posts_t   = \Jetonomy\table( 'posts' );
+		$replies_t = \Jetonomy\table( 'replies' );
+
+		$where  = [];
+		$params = [];
+
+		if ( 'all' !== $status ) {
+			$where[]  = 'f.status = %s';
+			$params[] = $status;
+		}
+		$where[]  = '( ( f.object_type = %s AND p.space_id = %d ) OR ( f.object_type = %s AND rp.space_id = %d ) )';
+		$params[] = 'post';
+		$params[] = $space_id;
+		$params[] = 'reply';
+		$params[] = $space_id;
+
+		$where_sql = 'WHERE ' . implode( ' AND ', $where );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$flags_t} f
+				 LEFT JOIN {$posts_t}   p  ON f.object_type = 'post'  AND f.object_id = p.id
+				 LEFT JOIN {$replies_t} r  ON f.object_type = 'reply' AND f.object_id = r.id
+				 LEFT JOIN {$posts_t}   rp ON r.post_id = rp.id
+				 {$where_sql}",
+				...$params
+			)
+		);
 	}
 
 	/**

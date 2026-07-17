@@ -326,6 +326,60 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * @param int[] $ids
 	 * @return array<int, object> Keyed by user ID.
 	 */
+	/**
+	 * Attach reporter + resolver identity to a page of moderation flags.
+	 *
+	 * Lives here because there are TWO moderation queues — the global one
+	 * (/moderation/flags) and the per-space one (/spaces/{id}/moderation/flags) —
+	 * showing the same rows to the same moderator. This enrichment was written
+	 * inline in the global controller, so the per-space screen never got it and
+	 * rendered "Reported by unknown" long after the global screen was fixed
+	 * (Basecamp 10092652706, 10092724637). One implementation, both callers: the
+	 * next queue cannot inherit the bug by being written somewhere else.
+	 *
+	 * The raw flag row carries only reporter_id. A moderation queue that cannot
+	 * name the reporter is close to useless — you cannot judge a report without
+	 * knowing who filed it.
+	 *
+	 * Batch-loaded on purpose: one lookup for the whole page, never a
+	 * get_userdata() inside the loop. These pages are 20-50 rows.
+	 *
+	 * @param object[] $flags Flag rows, mutated in place.
+	 * @return object[] The same rows, enriched.
+	 */
+	protected function enrich_flag_actors( array $flags ): array {
+		$user_ids = [];
+		foreach ( $flags as $flag ) {
+			if ( ! empty( $flag->reporter_id ) ) {
+				$user_ids[] = (int) $flag->reporter_id;
+			}
+			if ( ! empty( $flag->resolved_by ) ) {
+				$user_ids[] = (int) $flag->resolved_by;
+			}
+		}
+
+		$users = $this->batch_load_users( $user_ids );
+
+		foreach ( $flags as $flag ) {
+			$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+			$reporter    = $users[ $reporter_id ] ?? null;
+			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
+
+			$flag->reporter = $reporter
+				? [
+					'id'           => $reporter_id,
+					'display_name' => $reporter->display_name ?? '',
+					'user_login'   => $reporter->user_login ?? '',
+					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
+				]
+				: null;
+
+			$flag->resolved_by_name = $resolver->display_name ?? '';
+		}
+
+		return $flags;
+	}
+
 	protected function batch_load_users( array $ids ): array {
 		if ( empty( $ids ) ) {
 			return [];
