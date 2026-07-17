@@ -26,7 +26,26 @@
        "Host-Theme Token Adoption". A var() chain picks the first DEFINED token,
        and these are mutually exclusive per active theme, so order only sets
        precedence for the rare theme exposing two. */
-    --jt-accent: var(--bx-color-accent, var(--reign-colors-theme, var(--brand, var(--wp--preset--color--primary, var(--ast-global-color-0, var(--global-palette1, var(--theme-palette-color-1, var(--wp--preset--color--accent, #3B82F6))))))));
+    /* Adopt the host theme's brand colour. Owners cannot be made to run BuddyX or
+       Reign, so the chain walks the tokens the popular themes actually expose,
+       then WP's own presets, then the Appearance -> Accent default. An explicit
+       accent in Appearance is emitted inline by palette_css() and outranks all
+       of this. Verified against 11 themes; --nv-primary-accent (Neve) was being
+       missed, which is why Neve sites rendered the fallback instead of their brand. */
+    --jt-accent: var(--bx-color-accent, var(--reign-colors-theme, var(--brand, var(--wp--preset--color--primary, var(--ast-global-color-0, var(--global-palette1, var(--theme-palette-color-1, var(--nv-primary-accent, var(--wp--preset--color--accent, #0073aa)))))))));
+
+    /* Readable text ON --jt-accent, derived from whatever colour we ended up
+       adopting. This CANNOT be computed in PHP: --jt-accent usually resolves to a
+       theme token the browser only learns at runtime, so the server never sees it.
+       Hardcoding white failed WCAG AA on 7 of 11 themes measured — including Reign,
+       whose lavender put white text at 2.13 on the "Create free account" button.
+       Pull L out of the accent, snap it past the threshold, chroma 0 => pure
+       black/white. 0.57 is not a guess: sweeping 0.40–0.80 against the real
+       accents of 11 themes, 0.56–0.58 is the only band where all 11 clear AA, and
+       0.57 centres it for themes we have not seen. Older engines keep the plain
+       white fallback below (no worse than today). */
+    --jt-accent-fg: var(--jt-white);
+    --jt-accent-hover-fg: var(--jt-white);
     --jt-accent-hover: #2563EB;
     --jt-accent-hover: color-mix(in srgb, var(--jt-accent) 85%, black);
     --jt-accent-light: #EFF6FF;
@@ -147,6 +166,21 @@
     --jt-warn-dark: color-mix(in srgb, var(--jt-warn) 80%, black);
     --jt-warn-border: #ffe082;
     --jt-warn-border: color-mix(in srgb, var(--jt-warn) 50%, white);
+  }
+
+  /* Derive readable text on the adopted accent. Split from the block above
+     because relative colour syntax must be feature-gated: engines without it
+     would drop the declaration and fall back to --jt-white, which is exactly
+     the current (broken-on-light-accents) behaviour — never worse. */
+  @supports (color: oklch(from red l c h)) {
+    :root,
+    .jt-app {
+      --jt-accent-fg: oklch(from var(--jt-accent) clamp(0, (0.57 - l) * 1000, 1) 0 h);
+      /* Hover is the accent mixed 85% toward black, i.e. strictly darker, so the
+         black/white choice can flip against it. Derive it from the hover colour
+         rather than reusing --jt-accent-fg and hoping. */
+      --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.57 - l) * 1000, 1) 0 h);
+    }
   }
 
   /* Dark mode — class-driven by the theme ONLY. The host theme decides
@@ -449,8 +483,8 @@
 
   /* ── Buttons ── */
   .jt-app .jt-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--jt-radius-full); font-weight: 600; font-size: 0.9375rem; text-decoration: none; transition: all var(--jt-dur) var(--jt-ease); border: none; cursor: pointer; font-family: var(--jt-font); }
-  .jt-app .jt-btn-fill, .jt-app a.jt-btn-fill, .jt-app button.jt-btn-fill { background: var(--jt-accent); color: var(--jt-white); }
-  .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-white); text-decoration: none; }
+  .jt-app .jt-btn-fill, .jt-app a.jt-btn-fill, .jt-app button.jt-btn-fill { background: var(--jt-accent); color: var(--jt-accent-fg); }
+  .jt-app .jt-btn-fill:hover, .jt-app a.jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); text-decoration: none; }
   .jt-app .jt-btn-ghost, .jt-app a.jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
   .jt-app .jt-btn-ghost:hover, .jt-app a.jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); border-color: var(--jt-border-strong); text-decoration: none; }
 
@@ -469,8 +503,8 @@
   /* Re-assert the plugin's own intentional button surfaces/text that the reset
      above (and the theme) would otherwise flatten. Each carries !important to
      beat the blanket; the design tokens keep them theme-adaptive. */
-  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-white) !important; }
-  .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-white) !important; }
+  .jt-app button.jt-btn-fill { background-color: var(--jt-accent) !important; color: var(--jt-accent-fg) !important; }
+  .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
