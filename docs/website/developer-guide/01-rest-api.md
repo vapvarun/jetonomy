@@ -307,6 +307,18 @@ Subscriptions track which Spaces or Posts a user follows for new-content notific
 | POST | `/subscriptions` | Logged in | Create a subscription to a space or post |
 | DELETE | `/subscriptions/{id}` | Logged in | Remove a subscription |
 
+**Target fields on each row (added in 1.8.0)**
+
+`GET /subscriptions` returns the raw row (`id`, `user_id`, `object_type`, `object_id`, `via`, `created_at`) plus three fields resolved from whatever the subscription points at, so a client can render the target's name instead of a row of identical links:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | The post or space title (empty string when the target is gone) |
+| `slug` | string | The target's slug |
+| `exists` | boolean | `false` when the target no longer exists - a hard-deleted post/space, or a post that has been trashed or marked spam. A pending or draft post the caller is subscribed to still returns `exists=true` |
+
+These are batch-loaded - two queries per page (one for posts, one for spaces), never a lookup per row.
+
 ---
 
 ## Moderation
@@ -372,6 +384,20 @@ Returns per-item results so partial failures are visible:
     duration: 7,           // days - omit for permanent ban
 }
 ```
+
+**GET /spaces/{id}/moderation/flags - parameters** *(1.8.0)*
+
+Brought to parity with the global `/moderation/flags` queue: the per-space queue now honours a `status` filter and paginates.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `status` | string | `pending` | `pending`, `valid`, `dismissed`, `all` |
+| `limit` | int | 20 | Page size |
+| `offset` | int | 0 | Offset into the result set |
+
+The response `meta` carries `total`, `has_more`, `count`, `offset`, and `space_id`; `total` and `has_more` reflect the requested `status`, not just the default. Each flag row includes a resolved `reporter` object (`id`, `display_name`, `user_login`, `avatar_url`) plus `resolved_by_name`, so the queue can name who filed and who resolved a report. Reporters are batch-loaded (one lookup per page, not per row).
+
+> **Dev note (1.8.0):** the shared `paginated_response()` now raises a `_doing_it_wrong()` when a route paginates (item count < total) but passes no `offset` - guarding against a "Load more" that never ends. It fires only for the genuinely-paginated, offset-missing case.
 
 ---
 

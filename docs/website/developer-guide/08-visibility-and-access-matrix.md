@@ -106,6 +106,38 @@ Authenticated calls fall through to your route's own permission logic.
 
 ---
 
+## Per-resource visibility (1.8.0)
+
+`Visibility` answers the global "can this caller see ANY community content?" question. The rules below sit *underneath* it and decide which individual spaces and posts a viewer may see. As of 1.8.0 they route through shared primitives so REST, the web, and the app cannot disagree.
+
+### One space-listing predicate for every surface
+
+`Space::listing_visibility_sql( ?int $user_id, string $alias = '' )` (`includes/models/class-space.php:254`) is the single SQL predicate every listing surface applies - the community home, search, full-text, `Space::list_visible()` (`class-space.php:524`), and REST `GET /spaces` (`includes/api/class-spaces-controller.php:349`). Before 1.8.0 the REST listing hand-rolled a "public OR member" rule while the web went through this predicate, so the two drifted (measured live: 32 spaces on the web vs 26 from REST for the same viewer). They now share this one predicate.
+
+What it resolves to:
+
+- **Guest** (`user_id <= 0`): public spaces only.
+- **Member:** public + `private` spaces, plus any `hidden` space they belong to.
+- **Admin** (`manage_options`): all spaces (`1=1`).
+
+Owners can widen or narrow the rule per site with the `jetonomy_space_listing_visibility_sql` filter, which now reaches REST too rather than only half the surfaces.
+
+`private` and `hidden` are distinct states (`Space::visibility_levels()`, `class-space.php:653`): a **private** space is *discoverable but unreadable* (its card shows, its posts do not); a **hidden** space is *neither* - only members can find it. A discoverable card does not leak content: post visibility stays gated separately.
+
+### Hidden spaces are front-end-manageable and forced invite-only
+
+Both front-end space forms - create (`templates/views/new-space.php`) and edit (`templates/views/space-edit.php`) - offer all three visibility levels through `\Jetonomy\space_visibility_options()` (`includes/functions.php:521`), which is derived from `Space::visibility_levels()` so no surface can drift out of sync. A hidden space is forced onto the `invite` join policy by `Space::validate_visibility_join_policy()` (`class-space.php:689`) - a hidden space with an open/approval policy is a contradiction (the listing hides it while the gate lets anyone with the slug self-join). Front-end invite-link generation lives on the members page (`templates/views/space-members.php`), so an owner never has to drop into wp-admin to invite someone into a hidden space.
+
+### Post read gate: trashed/pending content returns 403
+
+`Permission_Engine::can_read_post( int $user_id, object $post )` (`includes/permissions/class-permission-engine.php:357`) is the one status gate, hoisted in 1.8.0 out of `single-post.php` so REST, oEmbed, JSON-LD and the updates poller all inherit it. Deleting a post is a **soft** delete (status set to `trash`, row kept), so any non-`publish` post - trashed or sitting in the moderation queue - returns `false` to anyone who is neither its author nor a space moderator. On `GET /posts/{id}` that surfaces as a `403` (`includes/api/class-posts-controller.php:360`). The author and moderators keep access, matching the established single-post contract.
+
+### Blocked-author content is tombstoned server-side
+
+When a viewer has blocked a post's author, the post's `title`, `content`, and `content_plain` are emptied **server-side** by `Post::apply_block_tombstone()` (`includes/models/class-post.php:241`), applied to the row inside `prepare_post()` before any field is read (`class-posts-controller.php:1136`). The `blocked_author` flag on the response is therefore **advisory only** (`class-posts-controller.php:1236`): a client that ignores it still cannot render the blocked author's words. This runs on the by-id / by-slug (deep-link) paths that bypass the list-query SQL filters; list surfaces already exclude blocked authors in SQL. Guests block nobody, so a crawler sees byte-identical public output.
+
+---
+
 ## The Access Matrix Runner
 
 `bin/access-matrix-check.sh` is the regression safety net that proves the helper actually works. It walks a representative subset of every Jetonomy REST route as every role, makes the real HTTP call, and asserts the response code matches the documented expectation.

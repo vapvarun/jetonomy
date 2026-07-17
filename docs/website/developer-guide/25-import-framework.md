@@ -73,6 +73,27 @@ Links a recovered media item to an imported post/reply via
 [`Attachment::link()`](models.md#link). Always available since attachments
 moved to free in 1.8.0 — no Pro dependency, no filter round-trip.
 
+### `sort_rows_parents_first()`
+
+```php
+sort_rows_parents_first( array $rows, string $id_key, string $parent_key ): array
+```
+
+Reorders source forum rows so every parent is emitted before its children — a
+breadth-first walk from the roots (`parent = 0`) outward. Forum hierarchy is
+preserved by mapping each child's `parent_id` to its already-imported parent,
+which only works if the parent was created first; feeding the raw result set
+straight in dropped any child forum whose parent happened to sort later. Rows
+whose parent never resolves (orphans or cycles) are appended at the end rather
+than lost.
+
+Both free importers sort forum rows parents-first before creating spaces so the
+tree survives the migration, on the one-shot **and** the batched path: bbPress
+calls this shared base helper (`class-bbpress-importer.php:183` and `:449`);
+Asgaros runs an equivalent dependency sort in its own class
+(`class-asgaros-importer.php`). Either way `parent_id` is carried onto the new
+space.
+
 ### `get_errors()`
 
 ```php
@@ -82,7 +103,10 @@ get_errors(): array
 Returns this batch's non-fatal errors as
 `array<int, array{type: string, id: mixed, message: string}>` (e.g. an
 attachment whose file couldn't be recovered). The AJAX handler reads this
-after every batch and accumulates it so a skipped file is reported to the
+after every batch and accumulates it into the `jetonomy_import_errors` option,
+then the import report renders the count plus a sample of up to 50 rows
+(`includes/admin/ajax/class-import-handler.php`,
+`includes/admin/views/import.php`) — so a skipped file is reported to the
 customer instead of vanishing behind a silent "Import complete!".
 
 ## Per-batch time budget
@@ -116,7 +140,9 @@ duplicates already-imported content on resume.
 1. Create `includes/import/class-{source}-importer.php`, extending
    `Jetonomy\Import\Importer`, implementing the abstract methods above.
 2. Use `map_id()` / `get_mapped_id()` to track old-ID → new-ID across
-   forums/topics/replies/profiles.
+   forums/topics/replies/profiles. If the source nests forums, run the forum
+   rows through `sort_rows_parents_first()` before creating spaces so a parent
+   is always mapped before its children reference it.
 3. Call `start_budget()` at the top of `run_batch()`, and `budget_spent()`
    inside the per-row loop.
 4. For inline body media, call `register_body_media( $body, 'your-plugin-folder' )`.

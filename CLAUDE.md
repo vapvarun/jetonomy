@@ -268,7 +268,7 @@ Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
    Dark mode flows automatically - BuddyNext's [data-theme="dark"] overrides the
    underlying tokens, and --jt-* picks them up via the var() cascade. */
 --jt-font:     var(--font-body, var(--wp--preset--font-family--body, inherit))
---jt-accent:   var(--brand, var(--wp--preset--color--primary, #3B82F6))
+--jt-accent:   var(--brand, var(--wp--preset--color--primary, #0073aa))  /* full chain + #0073aa unset sentinel in jetonomy-tokens.css */
 --jt-text:     var(--text-1, var(--wp--preset--color--contrast, #1a1a1a))
 --jt-bg:       var(--bg, var(--wp--preset--color--base, #ffffff))
 --jt-radius:   var(--r-md, var(--wp--custom--border-radius, 8px))

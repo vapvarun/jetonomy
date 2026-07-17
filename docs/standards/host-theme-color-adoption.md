@@ -20,8 +20,9 @@ theme's **dark mode** for free when the theme flips its own token.
 
 ## The canonical accent chain
 
-This is the single source of truth, defined once in `:root,.jt-app`. Mirror it
-verbatim in the `inherit_colors` inline emission (see "Where it's wired").
+This is the single source of truth, defined once on `:root` in
+`assets/css/jetonomy-tokens.css`. Adoption is unconditional — there is no toggle
+gating it (see "Where it's wired").
 
 ```css
 --jt-accent: var(--bx-color-accent,            /* BuddyX / BuddyX Pro 5.1+  */
@@ -31,8 +32,9 @@ verbatim in the `inherit_colors` inline emission (see "Where it's wired").
              var(--ast-global-color-0,          /* Astra                     */
              var(--global-palette1,             /* Kadence                   */
              var(--theme-palette-color-1,       /* Blocksy                   */
+             var(--nv-primary-accent,           /* Neve                      */
              var(--wp--preset--color--accent,   /* GeneratePress + "accent" slug */
-             #3B82F6))))))));                    /* plugin default            */
+             #0073aa)))))))));                   /* plugin default (unset sentinel) */
 ```
 
 Tokens are **mutually exclusive per active theme**, so order only sets precedence
@@ -63,13 +65,19 @@ Stock block themes that expose **no recognizable brand token** — e.g. Twenty
 Twenty-Four / Twenty Twenty-Five use numbered `accent-1..6` slugs (TT5's
 `accent-1` is `#FFEE58`, a low-contrast yellow that would fail WCAG as a button) —
 must NOT be auto-adopted blindly. The chain deliberately falls to the neutral
-plugin default (`#3B82F6`), which is contrast-safe with white text. The plugin is
-never unstyled; it just shows its own clean brand.
+plugin default (`#0073aa`). That value doubles as the "not set" sentinel:
+`palette_tokens()` treats `#0073aa` as "no override, adopt the theme". Button
+text stays readable regardless, because a runtime CSS contrast guard derives
+`--jt-accent-fg` from whatever colour the chain resolves to (see the
+`@supports (color: oklch(from ...))` block in `jetonomy-tokens.css`). The plugin
+is never unstyled; it just shows its own clean brand.
 
 For those themes the site owner has one reliable, theme-agnostic override:
-**Settings → Appearance → Color Palette → uncheck "Inherit theme colors" → set
-Accent Color.** That emits `:root,.jt-app{--jt-accent:<chosen>}` via
-`Template_Loader::palette_tokens()` and outranks the chain on any theme.
+**Settings → Appearance → Color Palette → set Accent Color** to anything other
+than `#0073aa`. That emits `:root{--jt-accent:<chosen>}` via
+`Template_Loader::palette_css()` and outranks the chain on any theme. There is no
+inherit toggle to clear first — the `inherit_colors` setting was removed in 1.8.0
+(it defaulted to on and silently discarded the picked colour).
 
 Do NOT add numbered/decorative slugs (`accent-1`, `palette3`, etc.) to the chain
 to chase auto-matching — a wrong-but-confident color is worse than a clean
@@ -77,10 +85,12 @@ default plus a one-field override.
 
 ## Where it's wired (Jetonomy)
 
-1. `assets/css/jetonomy.css` — the `:root,.jt-app` token block (`--jt-accent`).
-   Source of truth; `grunt cssmin` regenerates `jetonomy.min.css`.
-2. `includes/class-template-loader.php` — the `inherit_colors` inline emission
-   mirrors the same chain so it ships even when the static CSS is overridden.
+1. `assets/css/jetonomy-tokens.css` — the `:root` token block (`--jt-accent`) and
+   the `@supports` contrast guard (`--jt-accent-fg`). Source of truth;
+   `grunt cssmin` regenerates `jetonomy-tokens.min.css`.
+2. `includes/class-template-loader.php` — `palette_css()` emits a `:root{...}`
+   accent override ONLY when the owner sets a non-sentinel accent colour; adoption
+   itself is unconditional and lives in the static CSS above.
 3. `includes/integrations/class-theme-integration.php` — an *optional* PHP bridge
    that resolves a few host themes' Customizer mods to hex literals for themes
    whose tokens aren't exposed as CSS vars. It must only map tokens it can read

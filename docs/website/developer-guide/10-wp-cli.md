@@ -1,6 +1,6 @@
-Jetonomy ships a full WP-CLI surface covering every core domain of the plugin: 14 command roots in the free plugin and 15 command roots in Jetonomy Pro, totalling 75+ subcommands across both plugins.
+Jetonomy ships a full WP-CLI surface covering every core domain of the plugin: 15 command roots in the free plugin and 15 command roots in Jetonomy Pro, totalling 75+ subcommands across both plugins.
 
-The 14 free roots are the 13 domain commands listed under [Free Commands](#free-commands) below (`category`, `space`, `post`, `reply`, `vote`, `flag`, `member`, `mod`, `notification`, `config`, `tag`, `user`, `scenario`), plus the standalone `qa-actions` command, documented under [Testing and QA Commands](#testing-and-qa-commands).
+The 15 free roots are the 14 domain commands listed under [Free Commands](#free-commands) below (`category`, `space`, `post`, `reply`, `vote`, `flag`, `member`, `mod`, `notification`, `config`, `tag`, `user`, `privacy`, `scenario`), plus the standalone `qa-actions` command, documented under [Testing and QA Commands](#testing-and-qa-commands).
 
 All free commands live under `wp jetonomy <subject> <subcommand>`.
 All Pro commands live under `wp jetonomy-pro <subject> <subcommand>` (note the separate root - Pro commands require both plugins active).
@@ -358,6 +358,36 @@ wp jetonomy mod ban --target=5 --issuer=1 --type=space_ban --space=3
 wp jetonomy mod ban --target=5 --issuer=1 --type=silence --expires="2026-05-01 00:00:00"
 wp jetonomy mod unban 5
 wp jetonomy mod is-banned --target=5 --space=3
+```
+
+---
+
+### privacy
+
+Find and remediate orphaned user data - rows still pointing at WordPress accounts that no longer exist. Use this for GDPR cleanup of data left behind by accounts deleted before Jetonomy 1.7.1, when neither the user-delete path nor the multisite removal hooks purged every Jetonomy table (notably raw AI prompt/response logs).
+
+| Subcommand | Description |
+|------------|-------------|
+| `scan` | Report orphaned user data (read-only) |
+| `purge-orphans` | Purge all data belonging to accounts that no longer exist |
+
+`scan` is read-only. It lists each `(table, column)` still holding rows whose user id is absent from `wp_users`, plus the total orphan row and account counts. Rows with user id `0` are never reported - `0` is the anonymized/system sentinel that the eraser and delete path deliberately leave behind.
+
+`purge-orphans` replays the live user-deletion path (it fires the `jetonomy_purge_orphan_user` action, the same one free and Pro already listen to via `on_user_delete()`), so denormalized counters are recomputed and caches busted exactly as a real deletion would - there is no second, drift-prone cleanup list. It is idempotent: purging an orphan removes the rows that made it discoverable, so a second run finds nothing and does nothing. Run `--dry-run` first to preview what would be removed. On multisite it cleans the current site's tables; pass `--url=<site>` per site to sweep a network.
+
+**Flags - scan:** `[--format=<format>]`
+
+Format values: `table` (default), `json`, `csv`.
+
+**Flags - purge-orphans:** `[--dry-run]` (report what would be removed without removing anything) `[--format=<format>]`
+
+Format values: `table` (default), `json`.
+
+```bash
+wp jetonomy privacy scan
+wp jetonomy privacy scan --format=json
+wp jetonomy privacy purge-orphans --dry-run
+wp jetonomy privacy purge-orphans
 ```
 
 ---

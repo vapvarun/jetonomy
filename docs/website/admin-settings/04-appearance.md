@@ -4,8 +4,8 @@ The Appearance settings tab gives you direct control over the visual style of yo
 
 ## What You Will Learn
 
-- How to set a custom accent color
-- What the font and color inheritance toggles do
+- How Jetonomy adopts your theme's brand color automatically
+- How to set a custom accent color to override it
 - How layout density affects the community UI
 - How to use the custom CSS field safely
 
@@ -20,54 +20,37 @@ The Appearance tab gives you a set of override controls on top of that inheritan
 ## Brand Color
 
 **Setting:** `accent_color`
-**Default:** `#0073aa` shown in the picker; the live community adopts your active theme's brand color while **Inherit Colors from Theme** (below) is on
+**Default:** `#0073aa` shown in the picker, which means "not set - adopt the active theme's brand color"
 **Location:** Appearance tab → Colors section
 
 The accent color drives buttons, links, vote arrows, trust-level highlights, and other interactive elements.
 
-While **Inherit Colors from Theme** is on (the default), Jetonomy adopts the active theme's own brand color automatically, with no custom CSS from you. It reads each theme's native brand token, falling back to the next one in this chain until it finds one:
+By default Jetonomy adopts the active theme's own brand color automatically, with no custom CSS from you. It reads each theme's native brand token, falling back to the next one in this chain until it finds one:
 
 1. BuddyX and BuddyX Pro
 2. Reign
-3. Astra
-4. Kadence
-5. GeneratePress and Blocksy
-6. Any theme's WordPress `primary` color preset
-7. A neutral blue default (`#3B82F6`) when the theme exposes none of the above
+3. BuddyNext
+4. Any theme's WordPress `primary` color preset
+5. Astra
+6. Kadence
+7. Blocksy
+8. Neve
+9. GeneratePress (and any theme's WordPress `accent` color preset)
+10. A neutral default (`#0073aa`) when the theme exposes none of the above
 
 Because Jetonomy reads each theme's live token rather than a fixed value, the adopted color follows the theme in **both light and dark mode**. When the theme repaints its brand token for dark mode, Jetonomy's accent repaints with it.
 
 Jetonomy does not inject its own color into your site's global or block-editor color palette. It reads the theme's color rather than overriding it, and the plugin's own `theme.json` is merged in only as a baseline layer, so the active theme's presets always win.
 
-When you first open the picker it shows a blue value (`#0073aa`). While Inherit Colors is on, that stored value is ignored. To set an exact accent instead of the adopted one, turn **Inherit Colors from Theme** off, then pick your color here (or use the Color Palette fields below).
+**To pin an exact accent** instead of the adopted one, set this picker to any value other than the `#0073aa` default. Your chosen color then overrides the theme adoption on every theme, and theme updates no longer change Jetonomy's accent. Leaving the picker at `#0073aa` keeps automatic adoption active.
 
-> **Tip:** Use a color that has at least a 4.5:1 contrast ratio against white (WCAG AA). The community UI places accent colors on white backgrounds frequently.
-
-## Inherit Fonts from Theme
-
-**Setting:** `inherit_fonts`
-**Default:** On
-**Location:** Appearance tab → Typography section
-
-When on, Jetonomy uses `--jt-font: inherit` - the community adopts whatever font your theme sets on the `body` element. This is the correct setting for most sites.
-
-Turn this off only if you want Jetonomy to use a specific font independent of your theme. In that case, define `--jt-font` in the Custom CSS field.
-
-## Inherit Colors from Theme
-
-**Setting:** `inherit_colors`
-**Default:** On
-**Location:** Appearance tab → Colors section
-
-When on, Jetonomy adopts the active theme's brand color through the per-theme token chain described under **Brand Color** above, in both light and dark mode. The accent color stays in sync with your theme, including any theme update that changes the brand color, without you touching a setting.
-
-Turn this off if you want to pin an exact color. The manual **Brand Color** picker and the **Color Palette** fields below then take over, and theme updates no longer change Jetonomy's colors.
+> **Tip:** You do not need to worry about button-text legibility. Jetonomy runs a built-in WCAG contrast guard: it measures the accent color it ends up using and automatically flips button text to black or white so it stays AA-readable, even on pale or muted theme brand colors. The theme's brand color itself is never changed - only the text on top of it adapts.
 
 ## Color Palette
 
 **Location:** Appearance tab → Color Palette section
 
-Beyond the accent color, you can set the community's core surface colors directly. This is useful when your theme has no color tokens for Jetonomy to inherit. These overrides apply when **Inherit Colors from Theme** is off. Leave any field empty to keep the default - secondary shades (hover, muted text) derive automatically.
+Beyond the accent color, you can set the community's core surface colors directly. This is useful when your theme has no color tokens for Jetonomy to inherit, or when you simply want exact surface colors. Any field you set overrides the corresponding default; leave a field empty to keep the default - secondary shades (hover, muted text) derive automatically.
 
 Each field accepts a hex color value:
 

@@ -99,7 +99,9 @@ The payload you receive and return:
 | `noindex` | bool | emit `robots noindex, follow` |
 | `article_meta` | array | `article:*` meta, keyed by property |
 
-**Running a general SEO plugin (Yoast, Rank Math)?** Those plugins don't render Jetonomy's custom-table routes, so there's normally no conflict. If you do want your SEO plugin to own a route instead, return an empty `title`/`desc` from this filter for that route to suppress Jetonomy's tags.
+**Running a general SEO plugin (Yoast, Rank Math)?** They no longer collide with Jetonomy's routes. Every Jetonomy URL is virtual - the rewrite sets a `jetonomy_route` query var that `WP_Query` doesn't recognise, so core used to fall back to `is_home = true`. On a site with a static front page that made Yoast publish the *Posts page's* title and a canonical pointing at it on every Space and topic. Jetonomy now corrects the main query on `parse_query` - `Router::correct_query_state()` clears `is_home`, `is_front_page`, `is_singular`, `is_404`, and the queried object on any `jetonomy_route` request (`includes/class-router.php:106`) - so nothing downstream (core's title, themes, breadcrumbs, or an SEO plugin) reads a stale page's data. The fix is vendor-neutral: it corrects the query state rather than fighting any one plugin, so Yoast, Rank Math, AIOSEO, SEOPress and core all resolve correctly with no SEO-plugin code. Jetonomy then sets its own title, canonical, and OG for that route in `wp_head`. If you'd rather your SEO plugin own a route, return an empty `title`/`desc` from this filter for that route to suppress Jetonomy's tags.
+
+> On a **mapped front page** (the community rendered over a real WP page), Jetonomy emits nothing and leaves SEO to the page's own object and your SEO plugin - the query state there is already correct because a real page backs the URL.
 
 ## SEO Pro (Pro)
 

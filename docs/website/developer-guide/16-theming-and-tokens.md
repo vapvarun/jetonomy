@@ -1,10 +1,11 @@
-Jetonomy uses a single set of CSS custom properties - the `--jt-*` token system - to control every colour, radius, and font across the community UI. All tokens are declared in one place, inherit from the active theme where possible, and can be overridden from multiple layers: the admin palette, the `jetonomy_dynamic_css` filter, or a child-theme stylesheet. This page explains the full layering chain.
+Jetonomy uses a single set of CSS custom properties - the `--jt-*` token system - to control every colour, radius, and font across the community UI. All tokens are declared in one place, adopt the active theme's own brand colour automatically, and can be overridden from multiple layers: the admin accent/palette fields, the `jetonomy_dynamic_css` filter, or a child-theme stylesheet. This page explains the full layering chain.
 
 **Source references:**
-- Token definitions: `assets/css/jetonomy.css` (`:root, .jt-app` block)
+- Token definitions: `assets/css/jetonomy-tokens.css` (`:root` block, handle `jetonomy-tokens`)
+- Token consumer (declares none): `assets/css/jetonomy.css`
 - Dynamic CSS assembly: `includes/class-template-loader.php`, `Template_Loader::render()`
-- `palette_tokens()` method: `includes/class-template-loader.php:773`
-- Host-theme adoption: `docs/standards/host-theme-color-adoption.md`
+- `palette_css()` / `palette_tokens()` methods: `includes/class-template-loader.php:785` / `:819`
+- Host-theme adoption standard: `docs/standards/host-theme-color-adoption.md`
 
 ---
 
@@ -20,24 +21,26 @@ Under **Jetonomy → Settings → Appearance → Color Palette**, site owners ca
 | `bg_subtle_color` | `--jt-bg-subtle` |
 | `border_color` | `--jt-border` |
 
-The plugin emits a single `:root,.jt-app { ... }` block containing only the colors the owner actually set. An empty field means "keep the default", so a site that saves nothing gets zero style change. The legacy default value `#0073aa` for `accent_color` is treated as "unset" and never emitted.
+`palette_css()` emits a single `:root { ... }` block containing only the colors the owner actually set (`includes/class-template-loader.php:785`). An empty field means "keep the default", so a site that saves nothing gets zero style change. The default value `#0073aa` for `accent_color` is treated as "unset, adopt the theme" and never emitted - this is the accent picker's "not set" sentinel (`palette_tokens()`, `includes/class-template-loader.php:819`).
 
-Derived tokens (such as `--jt-accent-hover` and `--jt-text-secondary`) are `color-mix()` expressions over these root tokens, so they recompute automatically when a root token changes. Dark mode is unaffected: the `.jt-dark .jt-app` token block outranks `:root,.jt-app` by specificity.
+Derived tokens (such as `--jt-accent-hover` and `--jt-text-secondary`) are `color-mix()` expressions over these root tokens, so they recompute automatically when a root token changes. Dark mode is unaffected: the `.jt-dark, [data-theme="dark"]` block reassigns the same `:root` tokens on the class the host theme puts on `<body>`, and every `--jt-*` consumer inherits from it.
 
 ---
 
 ## Token catalogue
 
-All `--jt-*` tokens are declared in `:root, .jt-app` in `assets/css/jetonomy.css`. The root tokens inherit from the active theme before falling back to a hard-coded default:
+All `--jt-*` tokens are declared on `:root` **only** in `assets/css/jetonomy-tokens.css` (never on `.jt-app`, and never re-declared per component - see the Dark-mode rule below for why). The root tokens adopt the active theme before falling back to a hard-coded default:
 
 ```css
 /* Root tokens (condensed) */
 --jt-font:   var(--font-body, var(--wp--preset--font-family--body, inherit));
---jt-accent: var(--brand, var(--wp--preset--color--primary, #3B82F6));
---jt-text:   var(--text-1, var(--wp--preset--color--contrast, #1a1a1a));
---jt-bg:     var(--bg, var(--wp--preset--color--base, #ffffff));
+--jt-accent: var(--brand, var(--wp--preset--color--primary, #0073aa)); /* full chain below */
+--jt-text:   var(--bx-color-fg, var(--text-1, var(--wp--preset--color--contrast, #1a1a1a)));
+--jt-bg:     var(--bx-color-bg-elevated, var(--bg, var(--wp--preset--color--base, #ffffff)));
 --jt-radius: var(--r-md, var(--wp--custom--border-radius, 8px));
 ```
+
+The full `--jt-accent` adoption chain and the WCAG contrast guard that derives readable button text on top of it are described in the next section.
 
 | Category | Tokens |
 |----------|--------|
@@ -54,20 +57,22 @@ All `--jt-*` tokens are declared in `:root, .jt-app` in `assets/css/jetonomy.css
 
 ---
 
-## `inherit_colors`: adopting the host theme's palette
+## Host-theme colour adoption (unconditional)
 
-When the `inherit_colors` setting is enabled, Jetonomy injects the full host-theme color-adoption chain:
+Jetonomy **always** adopts the active theme's own brand colour. There is no toggle: the `--jt-accent` chain is declared statically in `:root` in `jetonomy-tokens.css` and resolves to the first token the active theme actually defines:
 
 ```css
-:root, .jt-app {
-    --jt-accent: var(--bx-color-accent,
-                   var(--reign-colors-theme,
-                     var(--brand,
-                       var(--wp--preset--color--primary,
-                         var(--ast-global-color-0,
-                           var(--global-palette1,
-                             var(--theme-palette-color-1,
-                               var(--wp--preset--color--accent, #3B82F6))))))));
+:root {
+    --jt-accent: var(--bx-color-accent,           /* BuddyX / BuddyX Pro 5.1+ */
+                 var(--reign-colors-theme,        /* Reign 8.0+               */
+                 var(--brand,                     /* BuddyNext                */
+                 var(--wp--preset--color--primary,/* "primary"-slug themes    */
+                 var(--ast-global-color-0,        /* Astra                    */
+                 var(--global-palette1,           /* Kadence                  */
+                 var(--theme-palette-color-1,     /* Blocksy                  */
+                 var(--nv-primary-accent,         /* Neve                     */
+                 var(--wp--preset--color--accent, /* GeneratePress + "accent" */
+                 #0073aa)))))))));                 /* neutral default          */
     --jt-text: var(--bx-color-fg,
                  var(--text-1,
                    var(--wp--preset--color--contrast, #1a1a1a)));
@@ -77,9 +82,29 @@ When the `inherit_colors` setting is enabled, Jetonomy injects the full host-the
 }
 ```
 
-The chain resolves in priority order: BuddyX/BuddyX Pro (`--bx-color-*`) → Reign (`--reign-colors-theme`) → BuddyNext (`--brand`) → WP preset slugs (Astra, Kadence, Blocksy, GeneratePress) → hard-coded fallback.
+Source: `assets/css/jetonomy-tokens.css` (the `:root` block, `--jt-accent`). The tokens are mutually exclusive per active theme, so ordering only decides precedence for the rare theme that exposes two. Because each link is `var(token, fallback)`, the accent also follows the theme's **dark mode** for free when the theme flips its own token.
 
-When `inherit_colors` is on, the manual palette fields have no effect - the chain wins.
+> **Removed in 1.8.0.** The `inherit_colors` and `inherit_fonts` settings no longer exist. `inherit_colors` defaulted to checked and, while on, made `palette_tokens()` return nothing - so an owner who picked an accent had it silently discarded. Adoption is now unconditional and the accent field is the single override (see below). `inherit_fonts` emitted `--jt-font:inherit`, which changed nothing because the `--jt-font` chain already ends in `inherit`. Both removals are documented in `includes/class-template-loader.php:218`.
+
+### The accent field is the single override
+
+To pin an exact accent instead of the adopted one, set **Settings → Appearance → Accent Color** to any value other than the `#0073aa` default. That emits `:root{--jt-accent:<chosen>}` inline via `Template_Loader::palette_css()`, which outranks the static chain on every theme. Leaving it at `#0073aa` (the "not set" sentinel) keeps adoption active - `palette_tokens()` deliberately skips that exact value (`includes/class-template-loader.php:819`).
+
+### WCAG contrast guard (1.8.0)
+
+Adopting an arbitrary theme brand colour and painting hard-coded white text on it fails WCAG AA on pale or muted brand colours (measured: 7 of 11 themes failed, Reign's lavender at 2.13:1). The fix cannot run in PHP - `--jt-accent` usually resolves to a theme token the browser only learns at runtime, so the server never sees the final colour. Instead the readable foreground is **derived in CSS** from whatever colour was adopted:
+
+```css
+/* assets/css/jetonomy-tokens.css */
+@supports (color: oklch(from red l c h)) {
+    :root {
+        --jt-accent-fg:       oklch(from var(--jt-accent)       clamp(0, (0.57 - l) * 1000, 1) 0 h);
+        --jt-accent-hover-fg: oklch(from var(--jt-accent-hover) clamp(0, (0.57 - l) * 1000, 1) 0 h);
+    }
+}
+```
+
+It pulls the lightness (`l`) out of the accent, snaps it across the `0.57` threshold, and forces chroma `0` - so the text resolves to pure black on light accents and pure white on dark ones. The threshold is derived, not chosen: sweeping `0.40–0.80` against 11 real theme accents, `0.56–0.58` is the only band where all 11 clear AA. Hover gets its own derivation because `--jt-accent-hover` is the accent mixed 85% toward black and can flip the black/white choice. Buttons consume it - `.jt-btn-fill { color: var(--jt-accent-fg); }` in `assets/css/jetonomy.css`. The rule is feature-gated behind `@supports`; engines without relative-colour syntax fall back to the plain `--jt-accent-fg: var(--jt-white)` default declared in `:root`, so behaviour is never worse than before. The theme's brand colour itself is untouched; only the text on top of it adapts.
 
 See [`docs/standards/host-theme-color-adoption.md`](../standards/host-theme-color-adoption.md) for the full verified token map per theme, the compliance checklist, and guidance on themes that expose no recognizable brand token.
 
@@ -107,7 +132,7 @@ This is the right place for a site owner to make one-off tweaks without a child 
 
 *Since 1.5.0.*
 
-The `jetonomy_dynamic_css` filter fires after the full dynamic CSS string is assembled - container width, palette overrides, font-inherit rules, host-theme color chain, density rules, and the admin `custom_css` - and before it is attached to the page via `wp_add_inline_style()`.
+The `jetonomy_dynamic_css` filter fires after the full dynamic CSS string is assembled - container width, palette overrides (`palette_css()`), layout-density rules, and the admin `custom_css` - and before it is attached to the page via `wp_add_inline_style()`. Note that the host-theme colour-adoption chain and the font tokens are **not** part of this string: they are declared statically in `assets/css/jetonomy-tokens.css`, not injected inline.
 
 Use it from a plugin (companion plugin, add-on) to append token overrides or scoped rules without requiring a child theme.
 
@@ -120,7 +145,7 @@ Use it from a plugin (companion plugin, add-on) to append token overrides or sco
 
 **Returns:** `string` - the modified CSS string.
 
-**Source:** `includes/class-template-loader.php:250`
+**Source:** `includes/class-template-loader.php:264`
 
 ```php
 add_filter( 'jetonomy_dynamic_css', function ( string $css, array $settings ): string {
@@ -134,9 +159,9 @@ You can also branch on `$settings` to conditionally apply a rule:
 
 ```php
 add_filter( 'jetonomy_dynamic_css', function ( string $css, array $settings ): string {
-    if ( ! empty( $settings['inherit_colors'] ) ) {
-        // Only adjust radius when theme colors are inherited (brand already set).
-        $css .= ':root,.jt-app { --jt-radius: 4px; }';
+    // Only tighten radius on spacious communities.
+    if ( 'spacious' === ( $settings['layout_density'] ?? '' ) ) {
+        $css .= ':root { --jt-radius: 4px; }';
     }
     return $css;
 }, 10, 2 );
@@ -165,13 +190,13 @@ For theme-level token changes, override in your child theme's `style.css` (or an
 
 The `.jt-app` selector targets the Jetonomy container specifically without leaking into the rest of the page. The `:root` approach shares the change with any other plugin that reads the same WP preset token.
 
-If you are using the `inherit_colors` setting alongside a child-theme override, note that `inherit_colors` writes to `:root,.jt-app` at the same specificity level as your override. Use a more-specific selector (`.jt-app .jt-container`) or add `!important` (last resort) to guarantee your value wins.
+Both the static adoption chain and the admin accent override are declared on `:root`. A child-theme rule on `.jt-app` is more specific than `:root`, so it wins without `!important`; a child-theme rule on `:root` needs to load after the plugin's stylesheet (or carry higher specificity) to take precedence.
 
 ---
 
 ## Dark-mode rule
 
-Never write per-component dark selectors. Dark mode overrides belong only in `.jt-dark .jt-app` in `jetonomy.css`, reassigning the `--jt-*` root tokens. Individual components inherit dark mode automatically because they reference the tokens:
+Never write per-component dark selectors. Dark mode overrides belong only in the `.jt-dark, [data-theme="dark"]` block in `assets/css/jetonomy-tokens.css`, reassigning the `--jt-*` root tokens on the class the host theme puts on `<body>`. Individual components inherit dark mode automatically because they reference the tokens:
 
 ```css
 /* Correct */

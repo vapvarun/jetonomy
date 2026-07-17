@@ -266,22 +266,38 @@ Each site in a Multisite network gets its own independent community. Network act
 
 = 1.8.0 - July 2026 =
 
-Forum imports now bring attachments across, attachments work with or without Pro, and cached data is never served stale after a change.
+Forum imports bring attachments and hierarchy across, attachments work with or without Pro, moderation and search read the same on the app and the web, and cached data is never served stale after a change.
 
 * New      - Import attachments and media from wpForo, bbPress, and Asgaros, not just the posts and replies.
 * New      - Block another member, and report while blocking, from the mobile app and the REST API.
 * New      - Delete your own account from the app (DELETE /users/me).
+* New      - Generate and revoke space invite links from the front end, so an invite-only space can be run without wp-admin.
 * Improve  - Attachments are shown and served by the free plugin, so a site without Pro keeps displaying its files instead of hiding them.
-* Improve  - An import that cannot recover a file now says so ("N files could not be recovered") instead of reporting a silent success.
+* Improve  - An import that cannot recover a file now lists which files were skipped instead of reporting a silent success.
 * Improve  - Object cache is invalidated the moment you change a space, profile, or membership, so counts and visibility are never a few minutes stale.
-* Improve  - The subscriptions API now returns the title and link of what you are subscribed to.
-* Improve  - Moderation queue items and flags now name the author and the reporter, and the flags status filter is honoured.
-* Fix      - wpForo import no longer flattens the forum hierarchy, miscounts progress, or runs the whole import in a single request that times out on large forums.
+* Improve  - The subscriptions API returns the title and link of what you are subscribed to, and no longer lists content that has been deleted.
+* Improve  - Moderation queue items and flags name the author and reporter, honour the status filter, and page correctly on both the site-wide and per-space screens.
+* Improve  - Hidden spaces can be chosen from the front-end space forms and stay hidden when you save.
+* Improve  - Opening the notification bell and building the moderation queue no longer run extra queries per row.
+* Fix      - Every Jetonomy page sets its own title and canonical again, instead of inheriting an unrelated page's SEO tags when another SEO plugin is active.
+* Fix      - A topic's SEO title uses the title you set rather than its slug, and the title-format settings take effect.
+* Fix      - Profile links in the navigation and in @mentions respect the jetonomy_profile_url filter.
+* Fix      - Saving a hidden space from the front end no longer silently republishes it as public.
+* Fix      - The mobile app and the website agree on which spaces exist for a given member.
+* Fix      - The accent colour you pick in Appearance is applied instead of being discarded.
+* Fix      - The "Create free account" and login buttons stay readable on every theme, including light brand colours.
+* Fix      - The login card follows dark mode instead of rendering white on a dark page.
+* Fix      - A reply notification takes you to that reply on the right page, instead of the top of the topic.
+* Fix      - A blocked member's posts and replies are hidden everywhere, including the browser tab title, without dropping the innocent replies nested beneath them.
+* Fix      - A deleted topic is no longer served to people who should not see it.
+* Fix      - wpForo and bbPress imports keep the forum hierarchy, count progress correctly, and run in batches instead of one request that times out on large forums.
 * Fix      - Migrated inline images and attachments are registered into the media library, so deleting the old forum's uploads folder can no longer break them.
-* Fix      - Blocked members' replies are hidden without dropping the innocent replies nested beneath them.
-* Fix      - One-click email unsubscribe links now save the change; they reported success but the preference never persisted.
+* Fix      - One-click email unsubscribe links save the change; they reported success but the preference never persisted.
+* Fix      - "Small" buttons render at their intended size, and the moderation Approve control renders as a button.
 * Security - A moderator could globally ban the site administrator; banning an admin or a fellow moderator is now refused.
+* Security - AI moderation logs are removed when a member is deleted or their data erased.
 * Dev      - Post and reply REST payloads carry an attachments array (id, url, thumbnail, mime, name, size, type) whether or not Pro is active.
+* Dev      - New WP-CLI commands "wp jetonomy privacy scan" and "wp jetonomy privacy purge-orphans" clear personal data left by accounts deleted before 1.7.1.
 
 = 1.7.0 - July 2026 =
 

@@ -2,7 +2,7 @@
 
 Jetonomy is built to be extended cleanly - every hook below is a real, supported extension point, generated straight from the source so this page never drifts from the code. Each row says what the hook is for and where it fires. New here? Start with the **[developer cookbook](00-index.md)** for step-by-step recipes (add a profile tab, customise a card, theme with tokens, extend the REST API), and the **[Coming from BuddyPress / BuddyBoss](21-coming-from-buddypress-buddyboss.md)** guide.
 
-**205 hooks**, 138 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.
+**208 hooks**, 141 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.
 
 > The 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) are documented with usage examples on the dedicated **[Attachment Hooks](24-attachment-hooks.md)** page.
 
@@ -285,6 +285,9 @@ Jetonomy is built to be extended cleanly - every hook below is a real, supported
 | `jetonomy_link_preview_providers`<br>_filter_ | - | `providers` | `includes/services/links/class-preview-service.php` |
 | `jetonomy_link_preview_user_agent`<br>_filter_ | - | `ua` | `includes/services/links/class-html-fetcher.php` |
 | `jetonomy_oembed_response`<br>_filter_ | Filter the oEmbed response payload for a Jetonomy thread. | `response, post` | `includes/api/class-oembed-controller.php` |
+| `jetonomy_orphan_purge_batch_seconds`<br>_filter_ | Filter the wall-clock budget (default 15) one `wp jetonomy privacy purge-orphans` slice may run before stopping cleanly at a user boundary. | `seconds` | `includes/class-privacy-backfill.php` |
+| `jetonomy_privacy_orphan_columns`<br>_filter_ | Filter the `(table, column, where)` discovery targets scanned for orphaned user ids; Pro adds its own `jt_pro_*` columns here rather than shipping a parallel sweeper. | `columns` | `includes/class-privacy-backfill.php` |
+| `jetonomy_purge_orphan_user`<br>_action_ | Purge every trace of a user id that no longer exists. Fired per orphaned id by `wp jetonomy privacy purge-orphans`; free's and Pro's `Privacy::on_user_delete()` both listen, so it reuses the real delete path. | `user_id` | `includes/class-privacy-backfill.php` |
 | `jetonomy_search_filters`<br>_action_ | - | - | `templates/views/search.php` |
 | `jetonomy_show_community_nav`<br>_filter_ | Filter whether to show the Jetonomy community navigation bar. | `show` | `templates/partials/header.php` |
 | `jetonomy_theme_dark_tokens`<br>_filter_ | Return an empty array to disable the dark override. | `tokens` | `includes/integrations/class-theme-integration.php` |
