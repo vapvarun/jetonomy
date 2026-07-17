@@ -163,6 +163,32 @@
         "audit_notes": "Generate invite link"
       },
       {
+        "route": "/spaces/(?P<id>\\d+)/invites",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Spaces_Controller::get_invites",
+        "permission": "Visibility::rest_check",
+        "purpose": "List a space's invite links",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": null,
+        "audit_notes": "1.8.0: added for the front-end members-page invite panel. Route permission is the community-visibility gate; the space-admin check is in the callback (mirrors get_join_requests). Space ADMIN not privileged - a token is a bearer credential into a possibly-hidden space, so listing is disclosing."
+      },
+      {
+        "route": "/spaces/(?P<id>\\d+)/invites/(?P<invite_id>\\d+)",
+        "methods": [
+          "DELETE"
+        ],
+        "handler": "Spaces_Controller::revoke_invite",
+        "permission": "REST_Auth::auth_mutation (closure)",
+        "purpose": "Revoke a space invite link",
+        "auth": "login_required",
+        "capability": "space_admin",
+        "ownership_check": null,
+        "audit_notes": "1.8.0: added for the front-end members-page invite panel. InviteLink::revoke() scopes the DELETE to id AND space_id, so another space's link cannot be revoked through this route; a false return is a 404."
+      },
+      {
         "route": "/invite/(?P<token>[a-zA-Z0-9]+)",
         "methods": [
           "GET"

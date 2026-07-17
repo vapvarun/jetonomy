@@ -89,6 +89,21 @@ if ( $viewer_is_priv ) {
 	$jt_pending_requests = array_slice( $jt_pending_all, 0, $jt_pending_cap );
 }
 
+// Invite links, surfaced to space ADMINS on the front-end (mirrors the wp-admin
+// Members tab). Space admin, not merely privileged: a token is a bearer
+// credential into a space that may be hidden, so listing them is disclosing
+// them. GET /spaces/{id}/invites applies the same rule server-side — this
+// condition hides the panel, it does not secure it.
+//
+// This exists because 1.8.0 made `hidden` selectable on the front-end space
+// forms, and a hidden space is forced onto the `invite` join policy
+// (Space::save). Without this panel an owner could create a hidden space from
+// the front-end and have no way to invite anyone into it without wp-admin.
+$jt_invites = [];
+if ( $viewer_is_sadm ) {
+	$jt_invites = \Jetonomy\Models\InviteLink::list_by_space( (int) $space->id );
+}
+
 $crumbs = [];
 if ( $category ) {
 	$crumbs[] = [
@@ -180,6 +195,127 @@ $role_labels = [
 							?>
 						</p>
 					<?php endif; ?>
+				</section>
+			<?php endif; ?>
+
+			<?php if ( $viewer_is_sadm ) : ?>
+				<section class="jt-card jt-invite-panel"
+					aria-label="<?php esc_attr_e( 'Invite links', 'jetonomy' ); ?>"
+					data-jt-invite-panel
+					data-space-id="<?php echo absint( $space->id ); ?>"
+					data-jt-uses-format="<?php echo esc_attr__( 'Uses: %1$s of %2$s', 'jetonomy' ); ?>"
+					data-jt-uses-unlimited-format="<?php echo esc_attr__( 'Uses: %s', 'jetonomy' ); ?>"
+					data-jt-no-expiry="<?php esc_attr_e( 'No expiry', 'jetonomy' ); ?>"
+					data-jt-expires-format="<?php echo esc_attr__( 'Expires %s', 'jetonomy' ); ?>"
+					data-jt-copy-label="<?php esc_attr_e( 'Copy', 'jetonomy' ); ?>"
+					data-jt-copy-aria="<?php esc_attr_e( 'Copy invite link', 'jetonomy' ); ?>"
+					data-jt-copied-label="<?php esc_attr_e( 'Copied', 'jetonomy' ); ?>"
+					data-jt-copy-failed="<?php esc_attr_e( 'Press Ctrl+C to copy the selected link.', 'jetonomy' ); ?>"
+					data-jt-revoke-label="<?php esc_attr_e( 'Revoke', 'jetonomy' ); ?>"
+					data-jt-revoke-aria="<?php esc_attr_e( 'Revoke invite link', 'jetonomy' ); ?>"
+					data-jt-revoke-title="<?php esc_attr_e( 'Revoke invite link', 'jetonomy' ); ?>"
+					data-jt-revoke-body="<?php esc_attr_e( 'Revoke this invite link? Anyone still holding it will not be able to join, and the link cannot be restored.', 'jetonomy' ); ?>"
+					data-jt-generate-failed="<?php esc_attr_e( 'Could not generate an invite link. Please try again.', 'jetonomy' ); ?>"
+					data-jt-revoke-failed="<?php esc_attr_e( 'Could not revoke that link. Please try again.', 'jetonomy' ); ?>">
+
+					<h2 class="jt-invite-panel-title"><?php esc_html_e( 'Invite links', 'jetonomy' ); ?></h2>
+
+					<?php
+					// The same honest note wp-admin carries. An invite link is not
+					// coupled to the join policy — it admits its holder whatever the
+					// policy is. Only "Invite only" makes a link the ONLY way in.
+					if ( 'invite' !== ( $space->join_policy ?? 'open' ) ) :
+						?>
+						<p class="jt-form-help"><?php esc_html_e( "Invite links work with any join policy; set Join policy to 'Invite only' to require them.", 'jetonomy' ); ?></p>
+					<?php endif; ?>
+
+					<div class="jt-invite-form">
+						<div class="jt-invite-field">
+							<label class="jt-invite-label" for="jt-invite-max-uses"><?php esc_html_e( 'Max uses', 'jetonomy' ); ?></label>
+							<input type="number" id="jt-invite-max-uses" class="jt-invite-input" data-jt-invite-max-uses min="0" step="1" value="0" inputmode="numeric">
+						</div>
+						<div class="jt-invite-field">
+							<label class="jt-invite-label" for="jt-invite-expires"><?php esc_html_e( 'Expires', 'jetonomy' ); ?></label>
+							<input type="date" id="jt-invite-expires" class="jt-invite-input" data-jt-invite-expires>
+						</div>
+						<button type="button" class="jt-btn jt-btn-fill jt-invite-generate"
+							data-wp-on--click="actions.generateInvite">
+							<?php esc_html_e( 'Generate invite link', 'jetonomy' ); ?>
+						</button>
+					</div>
+					<p class="jt-form-help"><?php esc_html_e( 'Max uses 0 means unlimited. Leave Expires blank for no expiry.', 'jetonomy' ); ?></p>
+
+					<p class="jt-invite-error" role="alert" data-jt-invite-error hidden></p>
+
+					<ul class="jt-invite-list" data-jt-invite-list>
+						<?php foreach ( $jt_invites as $jt_invite ) : ?>
+							<?php
+							$jt_invite_url = home_url(
+								'/' . ( get_option( 'jetonomy_settings', [] )['base_slug'] ?? 'community' ) . '/invite/' . $jt_invite->token . '/'
+							);
+							$jt_invite_max = (int) $jt_invite->max_uses;
+							$jt_invite_use = (int) $jt_invite->use_count;
+							?>
+							<li class="jt-invite-item" data-jt-invite-row data-invite-id="<?php echo absint( $jt_invite->id ); ?>">
+								<div class="jt-invite-main">
+									<code class="jt-invite-url"><?php echo esc_html( $jt_invite_url ); ?></code>
+									<div class="jt-invite-meta">
+										<span>
+											<?php
+											// "Uses: 1" rather than "1 use(s)" on purpose. A count
+											// like this needs _n() to read correctly, and the JS that
+											// renders a freshly generated row cannot reproduce _n()
+											// (locales have up to six plural forms; mirroring that
+											// client-side is a bug waiting to happen). A label +
+											// number sidesteps plurals in every language, and matches
+											// the "Uses" column the wp-admin table already uses.
+											echo esc_html(
+												$jt_invite_max > 0
+													/* translators: 1: times used, 2: maximum uses */
+													? sprintf( __( 'Uses: %1$s of %2$s', 'jetonomy' ), number_format_i18n( $jt_invite_use ), number_format_i18n( $jt_invite_max ) )
+													/* translators: %s: times used */
+													: sprintf( __( 'Uses: %s', 'jetonomy' ), number_format_i18n( $jt_invite_use ) )
+											);
+											?>
+										</span>
+										<span>
+											<?php
+											echo esc_html(
+												$jt_invite->expires_at
+													/* translators: %s: expiry date */
+													? sprintf( __( 'Expires %s', 'jetonomy' ), date_i18n( get_option( 'date_format' ), strtotime( (string) $jt_invite->expires_at ) ) )
+													: __( 'No expiry', 'jetonomy' )
+											);
+											?>
+										</span>
+										<?php if ( ! \Jetonomy\Models\InviteLink::is_valid( $jt_invite ) ) : ?>
+											<span class="jt-invite-dead"><?php esc_html_e( 'No longer works', 'jetonomy' ); ?></span>
+										<?php endif; ?>
+									</div>
+								</div>
+								<div class="jt-invite-actions">
+									<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost"
+										aria-label="<?php esc_attr_e( 'Copy invite link', 'jetonomy' ); ?>"
+										data-jt-invite-url="<?php echo esc_url( $jt_invite_url ); ?>"
+										data-wp-on--click="actions.copyInviteLink">
+										<?php esc_html_e( 'Copy', 'jetonomy' ); ?>
+									</button>
+									<button type="button" class="jt-btn jt-btn-sm jt-btn-ghost jt-invite-revoke"
+										aria-label="<?php esc_attr_e( 'Revoke invite link', 'jetonomy' ); ?>"
+										data-wp-on--click="actions.revokeInvite">
+										<?php esc_html_e( 'Revoke', 'jetonomy' ); ?>
+									</button>
+								</div>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+
+					<p class="jt-invite-empty" data-jt-invite-empty<?php echo empty( $jt_invites ) ? '' : ' hidden'; ?>>
+						<?php
+						/* translators: %s: space label, e.g. "space" */
+						echo esc_html( sprintf( __( 'No invite links yet. Generate one to invite people straight into this %s.', 'jetonomy' ), \Jetonomy\space_label( false, true ) ) );
+						?>
+					</p>
 				</section>
 			<?php endif; ?>
 

@@ -654,6 +654,126 @@ function jtModerateJoinRequest( btn, action ) {
     } );
 }
 
+/**
+ * Copy text to the clipboard, resolving true on success.
+ *
+ * navigator.clipboard.writeText rejects whenever the browser blocks the write
+ * (HTTP pages, iframe permission-policy, older engines behind a flag), so the
+ * legacy hidden-textarea + execCommand path stays as the fallback. One
+ * implementation serves the share dropdown and the invite panel — this was
+ * inlined in the share dropdown until the invite panel needed it too.
+ *
+ * @param {string} text Text to place on the clipboard.
+ * @return {Promise<boolean>} Whether the copy succeeded.
+ */
+async function jtCopyText( text ) {
+    try {
+        if ( navigator.clipboard && navigator.clipboard.writeText ) {
+            await navigator.clipboard.writeText( text );
+            return true;
+        }
+        const ta = document.createElement( 'textarea' );
+        ta.value = text;
+        ta.setAttribute( 'readonly', '' );
+        ta.style.position = 'absolute';
+        ta.style.left = '-9999px';
+        document.body.appendChild( ta );
+        ta.select();
+        const ok = !! ( document.execCommand && document.execCommand( 'copy' ) );
+        document.body.removeChild( ta );
+        return ok;
+    } catch ( _err ) {
+        return false;
+    }
+}
+
+// ── Space invite links (space-members admin panel) ─────────────────────────
+// The panel's translated strings ride on data-* attributes of the section
+// rather than window.jetonomyData.i18n: the rows are built here client-side
+// after a generate, and the server is the only place that can translate.
+
+/**
+ * Render one invite row, matching the SSR markup in
+ * templates/views/space-members.php exactly.
+ *
+ * @param {Element} panel  The [data-jt-invite-panel] section (carries i18n).
+ * @param {Object}  invite REST invite payload.
+ * @return {Element} The <li> row, not yet attached.
+ */
+function jtBuildInviteRow( panel, invite ) {
+    const d = panel.dataset;
+    const li = document.createElement( 'li' );
+    li.className = 'jt-invite-item';
+    li.setAttribute( 'data-jt-invite-row', '' );
+    li.setAttribute( 'data-invite-id', String( invite.id ) );
+
+    const main = document.createElement( 'div' );
+    main.className = 'jt-invite-main';
+
+    const code = document.createElement( 'code' );
+    code.className = 'jt-invite-url';
+    code.textContent = invite.invite_url;
+    main.appendChild( code );
+
+    const meta = document.createElement( 'div' );
+    meta.className = 'jt-invite-meta';
+
+    const uses = document.createElement( 'span' );
+    const used = String( invite.use_count || 0 );
+    uses.textContent = invite.max_uses > 0
+        ? ( d.jtUsesFormat || 'Uses: %1$s of %2$s' ).replace( '%1$s', used ).replace( '%2$s', String( invite.max_uses ) )
+        : ( d.jtUsesUnlimitedFormat || 'Uses: %s' ).replace( '%s', used );
+    meta.appendChild( uses );
+
+    const exp = document.createElement( 'span' );
+    if ( invite.expires_at ) {
+        const parsed = new Date( invite.expires_at.replace( ' ', 'T' ) );
+        const shown  = isNaN( parsed.getTime() ) ? invite.expires_at : parsed.toLocaleDateString();
+        exp.textContent = ( d.jtExpiresFormat || 'Expires %s' ).replace( '%s', shown );
+    } else {
+        exp.textContent = d.jtNoExpiry || 'No expiry';
+    }
+    meta.appendChild( exp );
+    main.appendChild( meta );
+    li.appendChild( main );
+
+    const actions = document.createElement( 'div' );
+    actions.className = 'jt-invite-actions';
+
+    const copy = document.createElement( 'button' );
+    copy.type = 'button';
+    copy.className = 'jt-btn jt-btn-sm jt-btn-ghost';
+    copy.setAttribute( 'aria-label', d.jtCopyAria || 'Copy invite link' );
+    copy.setAttribute( 'data-jt-invite-url', invite.invite_url );
+    copy.setAttribute( 'data-wp-on--click', 'actions.copyInviteLink' );
+    copy.textContent = d.jtCopyLabel || 'Copy';
+    actions.appendChild( copy );
+
+    const revoke = document.createElement( 'button' );
+    revoke.type = 'button';
+    revoke.className = 'jt-btn jt-btn-sm jt-btn-ghost jt-invite-revoke';
+    revoke.setAttribute( 'aria-label', d.jtRevokeAria || 'Revoke invite link' );
+    revoke.setAttribute( 'data-wp-on--click', 'actions.revokeInvite' );
+    revoke.textContent = d.jtRevokeLabel || 'Revoke';
+    actions.appendChild( revoke );
+
+    li.appendChild( actions );
+    return li;
+}
+
+/**
+ * Show / clear the panel's error line.
+ *
+ * @param {Element} panel   The invite panel.
+ * @param {string}  message Message, or '' to hide.
+ */
+function jtInviteError( panel, message ) {
+    const box = panel && panel.querySelector( '[data-jt-invite-error]' );
+    if ( ! box ) return;
+    box.textContent = message || '';
+    box.hidden = ! message;
+}
+
 function jtSetCoverPreview( form, url ) {
     const value  = form.querySelector( '[data-jt-cover-value]' );
     const prev   = form.querySelector( '[data-jt-cover-preview]' );
@@ -928,6 +1048,123 @@ const { state, actions } = store( 'jetonomy', {
                 if ( ! ok ) return;
             }
             yield jtModerateJoinRequest( btn, 'deny' );
+        },
+
+        // ── Invite links (space-members admin panel) ──
+        // All three use triggerOf(event), not getElement(): a row generated
+        // during this page's life is wired by jetonomyHydrateInteractive,
+        // which dispatches from outside the IA render scope where
+        // getElement() has nothing to return.
+        *generateInvite( event ) {
+            const btn   = triggerOf( event );
+            const panel = btn && btn.closest( '[data-jt-invite-panel]' );
+            if ( ! panel ) return;
+
+            const spaceId  = parseInt( panel.getAttribute( 'data-space-id' ), 10 );
+            const maxInput = panel.querySelector( '[data-jt-invite-max-uses]' );
+            const expInput = panel.querySelector( '[data-jt-invite-expires]' );
+            if ( ! spaceId ) return;
+
+            jtInviteError( panel, '' );
+            btn.disabled = true;
+
+            const body = { max_uses: Math.max( 0, parseInt( maxInput && maxInput.value, 10 ) || 0 ) };
+            if ( expInput && expInput.value ) body.expires_at = expInput.value;
+
+            const res = yield window.jetonomyRest.restFetch( '/spaces/' + spaceId + '/invite', {
+                method: 'POST',
+                body,
+            } );
+            btn.disabled = false;
+
+            if ( ! res || ! res.ok || ! res.data || ! res.data.id ) {
+                jtInviteError(
+                    panel,
+                    ( res && res.data && res.data.message ) || panel.dataset.jtGenerateFailed || 'Could not generate an invite link. Please try again.'
+                );
+                return;
+            }
+
+            const list = panel.querySelector( '[data-jt-invite-list]' );
+            const row  = jtBuildInviteRow( panel, res.data );
+            if ( list ) list.insertBefore( row, list.firstChild );
+            // Newest first, matching InviteLink::list_by_space()'s ORDER BY.
+            if ( 'function' === typeof window.jetonomyHydrateInteractive ) {
+                window.jetonomyHydrateInteractive( [ row ] );
+            }
+            const empty = panel.querySelector( '[data-jt-invite-empty]' );
+            if ( empty ) empty.hidden = true;
+        },
+
+        *copyInviteLink( event ) {
+            const btn = triggerOf( event );
+            const url = btn && btn.getAttribute( 'data-jt-invite-url' );
+            if ( ! url ) return;
+
+            const panel  = btn.closest( '[data-jt-invite-panel]' );
+            const labels = ( panel && panel.dataset ) || {};
+            const ok     = yield jtCopyText( url );
+            if ( ! ok ) {
+                jtInviteError( panel, labels.jtCopyFailed || 'Press Ctrl+C to copy the selected link.' );
+                return;
+            }
+            // Confirm in the button itself. A toast is the wrong surface here:
+            // there can be several links on screen and the feedback has to say
+            // WHICH one landed on the clipboard.
+            const original = btn.textContent;
+            btn.textContent = labels.jtCopiedLabel || 'Copied';
+            setTimeout( () => { btn.textContent = original; }, 2000 );
+        },
+
+        *revokeInvite( event ) {
+            const btn   = triggerOf( event );
+            const row   = btn && btn.closest( '[data-jt-invite-row]' );
+            const panel = btn && btn.closest( '[data-jt-invite-panel]' );
+            if ( ! row || ! panel ) return;
+
+            const spaceId  = parseInt( panel.getAttribute( 'data-space-id' ), 10 );
+            const inviteId = parseInt( row.getAttribute( 'data-invite-id' ), 10 );
+            if ( ! spaceId || ! inviteId ) return;
+
+            // Destructive and irreversible — the row is DELETEd, not flagged.
+            if ( 'function' === typeof window.jetonomyConfirm ) {
+                const confirmed = yield window.jetonomyConfirm(
+                    panel.dataset.jtRevokeBody || 'Revoke this invite link?',
+                    {
+                        title: panel.dataset.jtRevokeTitle || 'Revoke invite link',
+                        confirmLabel: panel.dataset.jtRevokeLabel || 'Revoke',
+                        danger: true,
+                    }
+                );
+                if ( ! confirmed ) return;
+            }
+
+            jtInviteError( panel, '' );
+            row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = true; } );
+
+            const res = yield window.jetonomyRest.restFetch(
+                '/spaces/' + spaceId + '/invites/' + inviteId,
+                { method: 'DELETE' }
+            );
+
+            // A 404 means the link is already gone — another admin revoked it
+            // in a parallel session. The row should still disappear: the user
+            // asked for it gone and it IS gone. Only a real failure re-enables.
+            if ( ! res || ( ! res.ok && 404 !== res.status ) ) {
+                row.querySelectorAll( 'button' ).forEach( ( b ) => { b.disabled = false; } );
+                jtInviteError(
+                    panel,
+                    ( res && res.data && res.data.message ) || panel.dataset.jtRevokeFailed || 'Could not revoke that link. Please try again.'
+                );
+                return;
+            }
+
+            const list = row.parentNode;
+            row.remove();
+            if ( list && ! list.querySelector( '[data-jt-invite-row]' ) ) {
+                const empty = panel.querySelector( '[data-jt-invite-empty]' );
+                if ( empty ) empty.hidden = false;
+            }
         },
 
         // ── Space cover image (shared by new-space + edit-space forms) ──
@@ -1712,37 +1949,18 @@ const { state, actions } = store( 'jetonomy', {
                 linkedin: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>',
             };
 
-            // Copy-link handler. navigator.clipboard.writeText returns a
-            // Promise that rejects when the browser blocks the write (HTTP
-            // pages, iframe permissions, permission-policy deny, or an older
-            // browser that exposes the API behind a flag). Without handling
-            // the rejection the user sees nothing happen and assumes the
-            // button is broken. Fall back to document.execCommand('copy')
-            // via a hidden textarea for older engines, and surface a toast
-            // in either outcome.
+            // Copy-link handler. The clipboard mechanics (and the reason the
+            // execCommand fallback still exists) live in jtCopyText; this only
+            // decides how the outcome is surfaced on this particular surface.
             const copyLink = async () => {
-                const okMsg = state.i18n?.linkCopied || 'Link copied';
-                const failMsg = state.i18n?.linkCopyFailed || 'Could not copy the link. Copy it from the address bar.';
-                try {
-                    if ( navigator.clipboard && navigator.clipboard.writeText ) {
-                        await navigator.clipboard.writeText( url );
-                        if ( window.bnToast ) window.bnToast( okMsg );
-                        return;
-                    }
-                    // Legacy fallback: hidden textarea + execCommand.
-                    const ta = document.createElement( 'textarea' );
-                    ta.value = url;
-                    ta.setAttribute( 'readonly', '' );
-                    ta.style.position = 'absolute';
-                    ta.style.left = '-9999px';
-                    document.body.appendChild( ta );
-                    ta.select();
-                    const ok = document.execCommand && document.execCommand( 'copy' );
-                    document.body.removeChild( ta );
-                    if ( window.bnToast ) window.bnToast( ok ? okMsg : failMsg, ok ? undefined : 'error' );
-                } catch ( _err ) {
-                    if ( window.bnToast ) window.bnToast( failMsg, 'error' );
-                }
+                const ok = await jtCopyText( url );
+                if ( ! window.bnToast ) return;
+                window.bnToast(
+                    ok
+                        ? ( state.i18n?.linkCopied || 'Link copied' )
+                        : ( state.i18n?.linkCopyFailed || 'Could not copy the link. Copy it from the address bar.' ),
+                    ok ? undefined : 'error'
+                );
             };
 
             const items = [

@@ -193,6 +193,32 @@ class Spaces_Controller extends Base_Controller {
 			]
 		);
 
+		// List + revoke. Until 1.8.0 these existed ONLY as admin-ajax handlers
+		// (Admin\Ajax\Spaces_Handler), so the front-end had no way to show or
+		// withdraw the links it could already generate. A customer-facing
+		// surface must not call admin-ajax (CLAUDE.md: "Frontend REST-only,
+		// backend AJAX is acceptable"), so the operations get REST routes here
+		// and the admin handlers are left exactly as they are.
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/invites',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_invites' ],
+				'permission_callback' => [ \Jetonomy\Visibility::class, 'rest_check' ],
+			]
+		);
+
+		register_rest_route(
+			$ns,
+			'/spaces/(?P<id>\d+)/invites/(?P<invite_id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'revoke_invite' ],
+				'permission_callback' => REST_Auth::auth_mutation( 'read' ),
+			]
+		);
+
 		register_rest_route(
 			$ns,
 			'/invite/(?P<token>[a-zA-Z0-9]+)',
@@ -1067,18 +1093,118 @@ class Spaces_Controller extends Base_Controller {
 
 		$token = InviteLink::generate( $id, $user_id, $max_uses, $expires_at ?: null );
 
-		$settings   = get_option( 'jetonomy_settings', [] );
-		$base_slug  = $settings['base_slug'] ?? 'community';
-		$invite_url = home_url( '/' . $base_slug . '/invite/' . $token . '/' );
+		// Read the row back so the response carries the same shape GET
+		// /spaces/{id}/invites returns — including the `id` the caller needs to
+		// revoke the link it just made. Returning only the token forced the
+		// front-end to reload the page before its own new link was actionable.
+		$invite = InviteLink::find_by_token( $token );
+
+		return new WP_REST_Response(
+			array_merge(
+				$invite ? $this->prepare_invite( $invite ) : [],
+				[
+					'token'      => $token,
+					'invite_url' => $this->invite_url( $token ),
+					'max_uses'   => $max_uses,
+					'expires_at' => $expires_at ?: null,
+				]
+			),
+			201
+		);
+	}
+
+	/**
+	 * Build the public invite URL for a token.
+	 *
+	 * The admin AJAX handler keeps its own copy of this (with a comment saying
+	 * it mirrors this method) because free's admin layer must not depend on a
+	 * REST controller being loaded. Within this controller there is one copy.
+	 */
+	private function invite_url( string $token ): string {
+		$settings  = get_option( 'jetonomy_settings', [] );
+		$base_slug = $settings['base_slug'] ?? 'community';
+		return home_url( '/' . $base_slug . '/invite/' . $token . '/' );
+	}
+
+	/**
+	 * Shape one invite row for a REST response.
+	 *
+	 * Deliberately omits the raw token: the URL already carries it, and every
+	 * consumer wants a link, not a secret to concatenate itself.
+	 */
+	private function prepare_invite( object $invite ): array {
+		return [
+			'id'         => (int) $invite->id,
+			'invite_url' => $this->invite_url( (string) $invite->token ),
+			'max_uses'   => (int) $invite->max_uses,
+			'use_count'  => (int) $invite->use_count,
+			'expires_at' => $invite->expires_at,
+			'is_valid'   => InviteLink::is_valid( $invite ),
+		];
+	}
+
+	/**
+	 * GET /spaces/{id}/invites — List a space's invite links (space admin only).
+	 */
+	public function get_invites( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id    = absint( $request->get_param( 'id' ) );
+		$space = Space::find( $id );
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
+		}
+
+		// Space ADMIN, not merely privileged — matching generate_invite(). An
+		// invite token is a bearer credential into a space that may be hidden;
+		// listing them is disclosing them, so a moderator is not enough. Note
+		// the route's permission_callback is only the community-visibility
+		// gate; this is the check that actually authorises the caller.
+		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
+			return $this->permission_error();
+		}
+
+		$items = array_map( [ $this, 'prepare_invite' ], InviteLink::list_by_space( $id ) );
 
 		return new WP_REST_Response(
 			[
-				'token'      => $token,
-				'invite_url' => $invite_url,
-				'max_uses'   => $max_uses,
-				'expires_at' => $expires_at ?: null,
+				'data' => $items,
+				'meta' => [ 'total' => count( $items ) ],
 			],
-			201
+			200
+		);
+	}
+
+	/**
+	 * DELETE /spaces/{id}/invites/{invite_id} — Revoke a link (space admin only).
+	 */
+	public function revoke_invite( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$id        = absint( $request->get_param( 'id' ) );
+		$invite_id = absint( $request->get_param( 'invite_id' ) );
+		$space     = Space::find( $id );
+
+		if ( ! $space ) {
+			return $this->not_found( 'Space' );
+		}
+
+		if ( ! $this->is_space_admin( $id, get_current_user_id() ) ) {
+			return $this->permission_error();
+		}
+
+		// InviteLink::revoke() scopes its DELETE to BOTH the row id and the
+		// space, so a link belonging to another space cannot be revoked through
+		// this space's route even if its id is guessed. A false return is
+		// therefore "no such link in THIS space" — a 404, not a failure.
+		if ( ! InviteLink::revoke( $invite_id, $id ) ) {
+			return $this->not_found( 'Invite link' );
+		}
+
+		return new WP_REST_Response(
+			[
+				'revoked'  => true,
+				'id'       => $invite_id,
+				'space_id' => $id,
+			],
+			200
 		);
 	}
 
