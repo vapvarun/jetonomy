@@ -409,6 +409,32 @@ abstract class Base_Controller extends WP_REST_Controller {
 			}
 		}
 
+		// Warm what the CALLERS reach for next, not just what we return.
+		//
+		// This method's own batching was always real — one WHERE ID IN (...), no
+		// get_userdata() in a loop. But every caller then builds an avatar in the
+		// same loop, and get_avatar_url() -> pre_get_avatar_data -> Avatar reaches
+		// for UserProfile + the core user/meta caches, none of which this had
+		// filled. So the batch saved one query and the loop spent three per person:
+		// measured cold on /moderation/flags, 1 reporter = 6 queries, 20 = 63.
+		//
+		// It hid for two reasons worth remembering. The cost lives three layers
+		// below the loop that causes it, so the loop looks innocent; and it only
+		// appears COLD — measured warm, in a process that has already seen those
+		// users, the same code reads clean. That is how "batch-loaded, no N+1"
+		// passed review twice, mine included: a fixture where every row shared one
+		// reporter cannot see a per-person cost at all (Basecamp 10105928436).
+		//
+		// Priming here rather than in each caller: this is the one place that
+		// already knows the whole id set, and a fix living in the callers is a fix
+		// the next caller will not get.
+		if ( ! empty( $ids ) ) {
+			// Core: fills the user + usermeta caches in two queries for the set.
+			cache_users( $ids );
+			// Ours: fills UserProfile's cache in one, which Avatar reads per person.
+			UserProfile::prime( $ids );
+		}
+
 		return $cached;
 	}
 
