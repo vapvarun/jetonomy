@@ -139,11 +139,13 @@ class Subscriptions_Controller extends Base_Controller {
 			$ph        = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 			// Exclude the statuses that mean "gone". DELETE /posts/{id} is a SOFT
-			// delete (Post::delete sets status='trash'), so without this a deleted
+			// delete — the REST controller does it, not the model
+			// (class-posts-controller.php:852 calls Post::update($id, status=>trash);
+			// Post::delete() itself is a HARD delete). Without this filter a deleted
 			// post still resolved to a live title and `exists` stayed true — the
 			// subscription looked tappable and led nowhere. `exists` only ever
 			// caught HARD-deleted rows, which is why the card's suggestion of
-			// "rely on exists" could not work: nothing hard-deletes a post.
+			// "rely on exists" could not work: the REST delete never hard-deletes.
 			//
 			// Excluding rather than allow-listing `publish` on purpose. A pending or
 			// draft post is not gone — its author is subscribed to their own post
