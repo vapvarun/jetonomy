@@ -129,7 +129,8 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |
 | `templates/` | 12 views + 6 partials (theme-overridable) |
-| `assets/css/jetonomy.css` | Theme-adaptive CSS (inherits from theme.json) |
+| `assets/css/jetonomy-tokens.css` | The `--jt-*` token layer (`:root` + dark). Dependency of BOTH `jetonomy` and `jetonomy-blocks` |
+| `assets/css/jetonomy.css` | Theme-adaptive CSS for the community app (consumes the tokens; declares none) |
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |
 
 ## Documentation
@@ -139,7 +140,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
   - `frontend-interactivity.md` — **Frontend Interactivity & Client-Side Navigation Standard** (WP Interactivity API router, declarative regions, `jetonomy:navigated` re-init, no per-route/inline scripts, restFetch, verify-after-client-nav). Jetonomy is the reference implementation. Any new interactive frontend surface MUST pass its Section 5 checklist before release.
   - `background-jobs.md` — **Background-Jobs Standard** (lazy-on-read first, AS-first with WP-Cron fallback, schedule on `action_scheduler_init` not `plugins_loaded`, one group per plugin, no idle polling, clear both schedulers on deactivate). `includes/class-cron.php` is the reference. Known gap: no cron-health Tools note yet (standard §4). Any new job MUST pass its Section 6 checklist.
   - `datetime-timezone.md` — **Date/Time & Timezone Standard** (store UTC, interpret + display in the **site** timezone via `wp_timezone()` / `get_date_from_gmt()`, never the server or browser clock; naive scheduler values are site-local, offsets honoured, date-only resets with a `!`-format). Reference: `sanitize_backdate()` + the scheduled-posts path. Any new date/time surface MUST pass its Section 5 checklist before release.
-  - `host-theme-color-adoption.md` — **Host-Theme Color Adoption Standard** (the plugin reads native to the active theme by chaining `--jt-accent` through the theme's own brand token → WP `primary`/`accent` preset slugs → neutral default; verified token map for BuddyX/Reign/BuddyNext + Astra/Kadence/Blocksy/GeneratePress; clean default + one-field owner override for themes exposing no recognizable brand token; never auto-adopt numbered/decorative slugs). Reference: the `:root,.jt-app` block in `jetonomy.css` + the `inherit_colors` inline in `class-template-loader.php`. Any new frontend surface or plugin adopting host colors MUST pass its Section checklist.
+  - `host-theme-color-adoption.md` — **Host-Theme Color Adoption Standard** (the plugin reads native to the active theme by chaining `--jt-accent` through the theme's own brand token → WP `primary`/`accent` preset slugs → neutral default; verified token map for BuddyX/Reign/BuddyNext + Astra/Kadence/Blocksy/GeneratePress; clean default + one-field owner override for themes exposing no recognizable brand token; never auto-adopt numbered/decorative slugs). Reference: the `:root` block in `jetonomy-tokens.css`. (1.8.0: the `inherit_colors` setting is GONE - it defaulted to checked and made `palette_tokens()` return empty, so an owner who picked an accent had it silently discarded. Adoption is now unconditional; the accent field is the single override, with its `#0073aa` default acting as the "not set" sentinel.) Any new frontend surface or plugin adopting host colors MUST pass its Section checklist.
 
 ## URL Structure
 ```
@@ -230,11 +231,18 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 
 **Golden rule: never write a hardcoded px, hex, or font-family value in any CSS file.**
 
-All values must reference `--jt-*` custom properties. If a token doesn't exist for the value you need, add it to the `:root, .jt-app` block in `jetonomy.css` first.
+All values must reference `--jt-*` custom properties. If a token doesn't exist for the value you need, add it to the `:root` block in `assets/css/jetonomy-tokens.css` first.
 
 ### Where tokens are defined
 
-All `--jt-*` tokens live in `:root, .jt-app` at the top of `assets/css/jetonomy.css`. Root tokens inherit from WP preset tokens so they auto-adapt to the active theme:
+**All `--jt-*` tokens live in `assets/css/jetonomy-tokens.css` (handle `jetonomy-tokens`), declared on `:root` ONLY.** Both `jetonomy` and `jetonomy-blocks` declare it as a dependency, so the token layer reaches every page either one renders on.
+
+Two rules follow from that, and both are load-bearing (1.8.0):
+
+- **Never declare tokens on `.jt-app`.** `:root` is `<html>`, an ancestor of everything, so adding `.jt-app` to the selector buys no reach — it only lets a nested `.jt-app` (every block root carries the class) *re-declare* the set instead of inheriting it. That is how the login block pinned itself to the light chain and rendered a white card on a dark page while the sidebar cards beside it were correct: they inherit, it re-declared.
+- **Never give a component its own token namespace.** The blocks used to ship a parallel `--jtb-*` set so they would style correctly on pages where `jetonomy.css` is absent. It drifted: a shorter chain that never learned about BuddyX/Reign/Astra/Kadence/Blocksy/Neve, and its own third fallback blue. `jetonomy-tokens.css` exists precisely so a block can inherit the real tokens anywhere instead of copying them.
+
+Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 
 ```css
 /* Root tokens inherit from BuddyNext first, then WP theme.json, then hardcoded fallback.
@@ -278,7 +286,7 @@ Derived color tokens use `color-mix()` for modern browsers with a hex fallback f
 
 ### Dark mode rule
 
-Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark .jt-app` in `jetonomy.css` by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
+Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark, [data-theme="dark"]` in `jetonomy-tokens.css`, by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
 
 ```css
 /* Correct - uses tokens, dark mode is automatic */
@@ -298,7 +306,7 @@ There is no spacing scale yet (gap to fill in a future task). Until a `--jt-spac
 ### What to do when adding new CSS
 
 1. Pick the closest existing `--jt-*` token
-2. If no token fits, add one to `:root, .jt-app` - inherit from `--wp--preset--*` if applicable
+2. If no token fits, add one to `:root` in `jetonomy-tokens.css` - inherit from `--wp--preset--*` if applicable. Never declare it on `.jt-app`, and never give a component its own namespace.
 3. Never copy-paste hex or px values from designs - always map them to token names first
 4. Test at 390px viewport width before committing
 
