@@ -144,20 +144,25 @@ if ( $prefix_name && $space ) {
 	}
 }
 
-// Replies sort.
+// Replies sort. The DEFAULT is a contract, not a preference: reply deep links
+// (\Jetonomy\reply_permalink()) carry no ?rsort so that the page they computed
+// under Reply::DEFAULT_SORT is the page this view renders.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest';
+$reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : \Jetonomy\Models\Reply::DEFAULT_SORT;
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
-	$reply_sort = 'oldest';
+	$reply_sort = \Jetonomy\Models\Reply::DEFAULT_SORT;
 }
 // Top-level reply pagination, honouring the global `replies_per_page`
 // setting. Server renders the requested page; pagination-frontend.js
 // fetches the next page and appends in place. No-JS users get classic
 // full-page pagination via the ?rpg=N anchor.
-$total_replies    = (int) $post->reply_count;
-$top_level_count  = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
-$jt_settings      = get_option( 'jetonomy_settings', array() );
-$replies_per_page = max( 1, (int) ( $jt_settings['replies_per_page'] ?? 30 ) );
+$total_replies   = (int) $post->reply_count;
+$top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
+// Via the shared helper, NOT a raw get_option(): \Jetonomy\reply_permalink()
+// computes which page a deep-linked reply lands on using this same value. If
+// the view and the link-builder ever read the setting differently, every
+// notification link silently lands on the wrong page.
+$replies_per_page = \Jetonomy\replies_per_page();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_page        = max( 1, absint( wp_unslash( $_GET['rpg'] ?? 1 ) ) );
 $reply_offset      = ( $reply_page - 1 ) * $replies_per_page;
@@ -243,7 +248,7 @@ wp_interactivity_state(
  * @param object $post  Parent post object.
  * @param int    $depth Current nesting depth (0 = top-level).
  */
-function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = null ) {
+function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = null, $page = 1 ) {
 	$depth         = isset( $reply->depth ) ? (int) $reply->depth : $depth;
 	$wrapper_class = $depth > 0 ? 'jt-nested jt-nested-' . min( $depth, 3 ) : '';
 	?>
@@ -255,6 +260,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				'reply' => $reply,
 				'post'  => $post,
 				'space' => $space,
+				// This page was just rendered, so every card on it — including
+				// nested children, which page with their top-level ancestor —
+				// permalinks to it. Passing it keeps reply_permalink() from
+				// paying a COUNT per card.
+				'permalink_page' => (int) $page,
 			]
 		);
 		?>
@@ -267,13 +277,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
 					<?php foreach ( $reply->children as $child ) : ?>
-						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space ); ?>
+						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space, $page ); ?>
 					<?php endforeach; ?>
 				</div>
 			</div>
 		<?php elseif ( ! empty( $reply->children ) ) : ?>
 			<?php foreach ( $reply->children as $child ) : ?>
-				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space ); ?>
+				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space, $page ); ?>
 			<?php endforeach; ?>
 		<?php endif; ?>
 	</div>
@@ -794,7 +804,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 
 					<div class="jt-replies-list" id="jt-replies-container">
 						<?php foreach ( $reply_batch as $index => $reply ) : ?>
-							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
+							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space, $reply_page ); ?>
 							<?php
 							/**
 							 * Fires after each top-level reply in the replies list.

@@ -332,7 +332,7 @@ $crumbs = [
 					<div class="jt-topics">
 						<?php foreach ( $user_replies as $ur ) : ?>
 							<?php
-							$ur_url   = $base . '/s/' . ( $ur->space_slug ?? '' ) . '/t/' . ( $ur->post_slug ?? '' ) . '/#reply-' . (int) $ur->id;
+							$ur_url   = \Jetonomy\reply_permalink( (string) ( $ur->space_slug ?? '' ), (string) ( $ur->post_slug ?? '' ), (int) $ur->id );
 							$ur_ago   = human_time_diff( strtotime( $ur->created_at ), time() );
 							$ur_space = $jt_space_by_slug( $ur->space_slug ?? '' );
 							?>

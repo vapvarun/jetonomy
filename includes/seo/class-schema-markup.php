@@ -139,7 +139,7 @@ class Schema_Markup {
 							'@type' => 'Person',
 							'name'  => $answer_author ? $answer_author->display_name : 'Anonymous',
 						],
-						'url'         => $base . '#reply-' . $accepted->id,
+						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
 					] : null,
 				],
 			];

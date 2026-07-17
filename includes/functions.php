@@ -197,6 +197,75 @@ function get_profile_url( int $user_id ): string {
 }
 
 /**
+ * Top-level replies rendered per page on a topic.
+ *
+ * Single source of truth for the `replies_per_page` setting, shared by the
+ * view that paginates the thread and by reply_permalink(), which has to
+ * compute the SAME page the view would render or every deep link lands on
+ * the wrong one.
+ *
+ * @return int Always >= 1.
+ */
+function replies_per_page(): int {
+	$settings = get_option( 'jetonomy_settings', array() );
+	return max( 1, (int) ( $settings['replies_per_page'] ?? 30 ) );
+}
+
+/**
+ * Permalink to a single reply, paged to where the reply actually renders.
+ *
+ * THE single producer of reply deep links. Every surface that points at a
+ * reply — notifications (web, REST, email), the profile's reply list, JSON-LD
+ * accepted answers, the FluentCommunity profile block — routes through here.
+ * They each used to concatenate their own '#reply-' . $id, which produced an
+ * anchor for an element that (a) had no matching id in the DOM and (b) was
+ * usually not on the rendered page at all, because the thread paginates.
+ *
+ * Slugs are passed in rather than resolved here: most callers already hold
+ * them from a JOIN, and re-querying Post + Space per link would put two
+ * queries on every row of a notification list.
+ *
+ * ?rpg is omitted for page 1 so the canonical topic URL stays clean — that is
+ * the page a bare topic URL already renders, and adding ?rpg=1 would fork one
+ * page into two URLs for crawlers.
+ *
+ * No ?rsort is emitted, deliberately. Reply::page_of() computes the page under
+ * Reply::DEFAULT_SORT, so the link must let the view fall back to that same
+ * default — inheriting the linking reader's sort would put the anchor on a
+ * different page, and 'best' would make the link rot as votes move. See the
+ * ordering contract on Reply::page_of().
+ *
+ * $page is an optimisation for callers that ALREADY know which page the reply
+ * is on and would otherwise pay a COUNT to re-derive it. The single-post view
+ * is the reason it exists: every reply it renders is on the page it just
+ * fetched, so passing $reply_page turns a per-card query into zero. A 30-reply
+ * thread would otherwise issue 30+ COUNTs to render 30 permalinks — the N+1
+ * the repo's big-site rule exists to prevent. Callers that genuinely don't
+ * know (notifications, the profile reply list, the off-page accepted-answer
+ * callout) omit it and let page_of() resolve.
+ *
+ * @param string   $space_slug Space slug.
+ * @param string   $post_slug  Post (topic) slug.
+ * @param int      $reply_id   Reply ID.
+ * @param int|null $page       Known 1-based page, or null to compute it.
+ * @return string Deep-link URL, or '' when the slugs are unusable.
+ */
+function reply_permalink( string $space_slug, string $post_slug, int $reply_id, ?int $page = null ): string {
+	if ( '' === $space_slug || '' === $post_slug || $reply_id < 1 ) {
+		return '';
+	}
+
+	$url  = base_url() . '/s/' . $space_slug . '/t/' . $post_slug . '/';
+	$page = null !== $page ? max( 1, $page ) : Models\Reply::page_of( $reply_id, replies_per_page() );
+
+	if ( $page > 1 ) {
+		$url = add_query_arg( 'rpg', $page, $url );
+	}
+
+	return $url . '#reply-' . $reply_id;
+}
+
+/**
  * Resolve a deep-link URL for a notification's target object.
  *
  * Single source of truth for notification deep links. Used by the notifier,
@@ -235,7 +304,7 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		if ( ! $space ) {
 			return '';
 		}
-		return base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/#reply-' . $object_id;
+		return reply_permalink( (string) $space->slug, (string) $post->slug, $object_id );
 	}
 
 	if ( 'user' === $object_type ) {

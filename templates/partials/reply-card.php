@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
 // the content and author-facing chrome for THIS row are suppressed.
 if ( ! empty( $reply->is_blocked_author ) ) {
 	?>
-	<div class="jt-reply jt-reply-blocked" data-wp-interactive="jetonomy">
+	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-blocked" data-wp-interactive="jetonomy">
 		<div class="jt-reply-body jt-reply-tombstone">
 			<?php jetonomy_echo_icon( 'shield', 16 ); ?>
 			<span><?php esc_html_e( 'Content hidden — you blocked this user.', 'jetonomy' ); ?></span>
@@ -51,8 +51,33 @@ $jt_reply_viewer       = get_current_user_id();
 $jt_can_moderate_reply = $jt_reply_viewer
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_reply_viewer, 'moderate', (int) ( $post->space_id ?? 0 ) )
 	: false;
+
+// Shareable permalink for THIS reply — the affordance that makes a reply a
+// linkable thing rather than something only a notification can reach. The
+// timestamp carries it (Discourse/Reddit/GitHub convention), so there is no
+// new control to learn and right-click-copy already works. Rendered for
+// guests too: they are the ones who most need to share, and the pre-existing
+// data-reply-id lives on logged-in chrome only.
+//
+// $permalink_page: the caller passes the page it already rendered, so this
+// costs zero queries per card. Absent (off-page accepted-answer callout) it
+// resolves itself. $space may be null on some routes -> empty slug -> '' ->
+// plain text, never a broken link.
+$jt_reply_permalink = \Jetonomy\reply_permalink(
+	(string) ( $space->slug ?? '' ),
+	(string) ( $post->slug ?? '' ),
+	(int) $reply->id,
+	isset( $permalink_page ) ? (int) $permalink_page : null
+);
 ?>
-<div class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
+<?php
+// id="reply-{id}" is the anchor target for every reply deep link — notification
+// links, JSON-LD accepted answers, profile reply lists. It is rendered
+// unconditionally, for GUESTS as well as members: the readers following these
+// links are most often logged-out (email links, crawlers), and the pre-existing
+// data-reply-id only ever rendered on logged-in action chrome.
+?>
+<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply <?php echo $is_accepted ? esc_attr( 'accepted' ) : ''; ?>" data-wp-interactive="jetonomy">
 	<div class="jt-reply-head">
 		<span class="jt-avatar-wrap <?php echo ( ! $jt_is_masked && \Jetonomy\Models\UserProfile::is_online( (int) $reply->author_id ) ) ? esc_attr( 'is-online' ) : ''; ?>">
 			<?php
@@ -96,8 +121,19 @@ $jt_can_moderate_reply = $jt_reply_viewer
 		<span class="jt-reply-time">
 			<?php
 			/* translators: %s: human-readable time difference */
-			echo esc_html( sprintf( __( '%s ago', 'jetonomy' ), $time_ago ) );
+			$jt_time_text = sprintf( __( '%s ago', 'jetonomy' ), $time_ago );
+			// Stored UTC -> site timezone for the machine-readable value, per
+			// the date/time standard. The visible text stays relative.
+			$jt_time_iso = get_date_from_gmt( (string) $reply->created_at, 'c' );
 			?>
+			<?php if ( '' !== $jt_reply_permalink ) : ?>
+				<a class="jt-reply-permalink" href="<?php echo esc_url( $jt_reply_permalink ); ?>"
+					aria-label="<?php esc_attr_e( 'Permalink to this reply', 'jetonomy' ); ?>">
+					<time datetime="<?php echo esc_attr( $jt_time_iso ); ?>"><?php echo esc_html( $jt_time_text ); ?></time>
+				</a>
+			<?php else : ?>
+				<time datetime="<?php echo esc_attr( $jt_time_iso ); ?>"><?php echo esc_html( $jt_time_text ); ?></time>
+			<?php endif; ?>
 		</span>
 		<?php if ( $is_accepted ) : ?>
 			<span class="jt-accepted-tag"><?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>

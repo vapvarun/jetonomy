@@ -521,7 +521,7 @@ class Notifier {
 		}
 
 		$actor_id  = (int) $reply->author_id;
-		$post_url  = $this->get_post_url( $post );
+		$reply_url = $this->get_reply_url( $post, $reply_id );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
@@ -531,14 +531,14 @@ class Notifier {
 				(int) $post->author_id,
 				$actor_id,
 				'reply_to_post',
-				'post',
-				$post_id,
+				'reply',
+				$reply_id,
 				sprintf(
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url,
+				$reply_url,
 				$ctx_extra,
 				$is_anon
 			);
@@ -559,7 +559,7 @@ class Notifier {
 						\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 						mb_substr( $post->title, 0, 50 )
 					),
-					$post_url,
+					$reply_url,
 					$ctx_extra,
 					$is_anon
 				);
@@ -588,7 +588,7 @@ class Notifier {
 		}
 
 		$actor_id  = (int) $reply->author_id;
-		$post_url  = $this->get_post_url( $post );
+		$reply_url = $this->get_reply_url( $post, $reply_id );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
@@ -601,14 +601,14 @@ class Notifier {
 				$sub_user_id,
 				$actor_id,
 				'reply_to_post',
-				'post',
-				$post_id,
+				'reply',
+				$reply_id,
 				sprintf(
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url,
+				$reply_url,
 				$ctx_extra,
 				$is_anon
 			);
@@ -1528,5 +1528,33 @@ class Notifier {
 			return \Jetonomy\base_url() . '/';
 		}
 		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+	}
+
+	/**
+	 * URL for a notification that is ABOUT a specific reply.
+	 *
+	 * Email parity: the link in the email and the link in the web/REST inbox
+	 * are the same paged, anchored deep link, because both resolve through
+	 * \Jetonomy\reply_permalink(). Previously every reply notification —
+	 * email included — carried get_post_url(), landing the reader on the top
+	 * of the thread with no way to find the reply that pinged them.
+	 *
+	 * get_post_url() is deliberately left alone: it still serves the
+	 * notifications that really are about the POST (votes, moderation,
+	 * mentions on the post body), where a reply fragment would be wrong.
+	 *
+	 * @param object $post     Post row.
+	 * @param int    $reply_id Reply the notification concerns.
+	 */
+	private function get_reply_url( object $post, int $reply_id ): string {
+		$space = $post->space_id ? Space::find( (int) $post->space_id ) : null;
+		if ( ! $space ) {
+			return \Jetonomy\base_url() . '/';
+		}
+		// Falls back to the bare topic URL if the reply can't be resolved
+		// (deleted between write and dispatch on the deferred fan-out path) —
+		// a link to the thread beats a link to nothing.
+		$url = \Jetonomy\reply_permalink( (string) $space->slug, (string) $post->slug, $reply_id );
+		return '' !== $url ? $url : $this->get_post_url( $post );
 	}
 }

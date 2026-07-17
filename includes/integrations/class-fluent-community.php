@@ -920,8 +920,8 @@ class Fluent_Community {
 						$slug_post  = isset( $r->post_slug ) ? (string) $r->post_slug : '';
 						$title_post = isset( $r->post_title ) && '' !== $r->post_title ? (string) $r->post_title : __( 'Untitled topic', 'jetonomy' );
 						$reply_id   = isset( $r->id ) ? (int) $r->id : 0;
-						$purl       = ( '' !== $slug_space && '' !== $slug_post )
-							? home_url( '/' . $base . '/s/' . $slug_space . '/t/' . $slug_post . '/' . ( $reply_id ? '#reply-' . $reply_id : '' ) )
+						$purl       = ( '' !== $slug_space && '' !== $slug_post && $reply_id )
+							? \Jetonomy\reply_permalink( $slug_space, $slug_post, $reply_id )
 							: '';
 						?>
 						<li>

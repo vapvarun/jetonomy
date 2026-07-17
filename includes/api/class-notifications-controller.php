@@ -361,7 +361,7 @@ class Notifications_Controller extends Base_Controller {
 		}
 
 		if ( 'reply' === $object_type && ! empty( $notification->reply_post_slug ) && ! empty( $notification->reply_space_slug ) ) {
-			return $base . '/s/' . $notification->reply_space_slug . '/t/' . $notification->reply_post_slug . '/#reply-' . $object_id;
+			return \Jetonomy\reply_permalink( (string) $notification->reply_space_slug, (string) $notification->reply_post_slug, $object_id );
 		}
 
 		// Slow path: per-row model lookup for callers that didn't use the JOIN.

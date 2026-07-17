@@ -50,6 +50,7 @@ class Journey_Tests {
 		try {
 			$this->test_content_journey();
 			$this->test_reply_count_consistency();
+			$this->test_reply_deep_link_targets();
 			$this->test_space_journey();
 			$this->test_member_journey();
 			$this->test_moderation_journey();
@@ -190,6 +191,121 @@ class Journey_Tests {
 			'content: reply_count consistency (create +1 / delete -1)',
 			$ok,
 			$ok ? '' : sprintf( 'baseline=%d create=%d delete=%d', $baseline, $after_create, $after_delete )
+		);
+	}
+
+	/**
+	 * A reply deep link must page to where the reply actually renders.
+	 *
+	 * Guards the ordering contract between Reply::page_of() (which computes a
+	 * link's ?rpg) and Reply::get_threaded() (which slices the rendered page).
+	 * They agree today only because both use Reply::DEFAULT_SORT and the same
+	 * created_at/id tiebreak. Nothing structural stops a future change to
+	 * either side, and the failure is silent — links keep working, they just
+	 * land on the wrong page. So assert the two against each other.
+	 *
+	 * Covers the NESTED case explicitly: a child must resolve to its
+	 * top-level ancestor's page, never a page of its own.
+	 */
+	private function test_reply_deep_link_targets(): void {
+		$label    = 'content: reply deep link targets the page it renders on';
+		$space_id = $this->discover_open_space();
+		if ( ! $space_id ) {
+			$this->record( $label, false, 'no open space found' );
+			return;
+		}
+		$author  = $this->discover_user();
+		$post_id = \Jetonomy\Models\Post::create(
+			[
+				'space_id'  => $space_id,
+				'author_id' => $author,
+				'title'     => 'QA reply deep-link probe ' . uniqid(),
+				'content'   => 'probe',
+				'status'    => 'publish',
+			]
+		);
+		if ( ! is_int( $post_id ) || $post_id <= 0 ) {
+			$this->record( $label, false, 'post create failed' );
+			return;
+		}
+		$this->cleanup[] = [ 'type' => 'post', 'id' => $post_id ];
+
+		// per_page is passed in rather than read from settings, so the probe
+		// stays cheap (5 replies, not replies_per_page + 1) and independent of
+		// the site's configured value.
+		$per_page = 2;
+		$top      = [];
+		for ( $i = 0; $i < 5; $i++ ) {
+			$rid = \Jetonomy\Models\Reply::create(
+				[
+					'post_id'   => $post_id,
+					'author_id' => $author,
+					'content'   => 'probe top-level ' . $i,
+					'status'    => 'publish',
+					// Distinct, ordered timestamps: this test asserts the
+					// page mapping, not MySQL's tie behaviour.
+					'created_at' => gmdate( 'Y-m-d H:i:s', time() + $i ),
+				]
+			);
+			if ( ! is_int( $rid ) || $rid <= 0 ) {
+				$this->record( $label, false, 'reply create failed' );
+				return;
+			}
+			$top[] = $rid;
+		}
+
+		// Child of the 4th top-level reply — that ancestor sits on page 2
+		// under per_page=2, so the child must resolve to page 2 as well.
+		$child = \Jetonomy\Models\Reply::create(
+			[
+				'post_id'    => $post_id,
+				'author_id'  => $author,
+				'parent_id'  => $top[3],
+				'content'    => 'probe nested child',
+				'status'     => 'publish',
+				'created_at' => gmdate( 'Y-m-d H:i:s', time() + 99 ),
+			]
+		);
+		if ( ! is_int( $child ) || $child <= 0 ) {
+			$this->record( $label, false, 'nested reply create failed' );
+			return;
+		}
+
+		$mismatch = [];
+		foreach ( array_merge( $top, [ $child ] ) as $rid ) {
+			$claimed = \Jetonomy\Models\Reply::page_of( $rid, $per_page );
+
+			// Where does the reply ACTUALLY render? Walk the pages the view
+			// would render and find the one containing it (any depth).
+			$actual = 0;
+			for ( $page = 1; $page <= 5; $page++ ) {
+				$batch = \Jetonomy\Models\Reply::get_threaded(
+					$post_id,
+					\Jetonomy\Models\Reply::DEFAULT_SORT,
+					$per_page,
+					( $page - 1 ) * $per_page
+				);
+				if ( \Jetonomy\Models\Reply::tree_contains( $batch, $rid ) ) {
+					$actual = $page;
+					break;
+				}
+			}
+
+			if ( $claimed !== $actual ) {
+				$mismatch[] = sprintf( 'reply %d: link says page %d, renders on page %d', $rid, $claimed, $actual );
+			}
+		}
+
+		$ok = empty( $mismatch );
+		$this->record( $label, $ok, $ok ? '' : implode( '; ', $mismatch ) );
+
+		// Nested child specifically resolves to its ancestor's page.
+		$child_page  = \Jetonomy\Models\Reply::page_of( $child, $per_page );
+		$parent_page = \Jetonomy\Models\Reply::page_of( $top[3], $per_page );
+		$this->record(
+			'content: nested reply deep link resolves to its top-level ancestor page',
+			$child_page === $parent_page,
+			$child_page === $parent_page ? '' : sprintf( 'child page %d != ancestor page %d', $child_page, $parent_page )
 		);
 	}
 

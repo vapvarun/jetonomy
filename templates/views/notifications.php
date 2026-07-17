@@ -177,7 +177,7 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 				if ( 'post' === $notif->object_type && ! empty( $notif->post_slug ) && ! empty( $notif->space_slug ) ) {
 					$notif_url = $base . '/s/' . $notif->space_slug . '/t/' . $notif->post_slug . '/';
 				} elseif ( 'reply' === $notif->object_type && ! empty( $notif->reply_post_slug ) && ! empty( $notif->reply_space_slug ) ) {
-					$notif_url = $base . '/s/' . $notif->reply_space_slug . '/t/' . $notif->reply_post_slug . '/#reply-' . (int) $notif->object_id;
+					$notif_url = \Jetonomy\reply_permalink( (string) $notif->reply_space_slug, (string) $notif->reply_post_slug, (int) $notif->object_id );
 				} elseif ( 'badge' === $notif->object_type ) {
 					$badge_user = get_userdata( (int) $notif->user_id );
 					if ( $badge_user ) {

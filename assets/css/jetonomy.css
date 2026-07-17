@@ -131,6 +131,16 @@
     --jt-space-10: 40px;
     --jt-space-12: 48px;
 
+    /* Landing offset for deep-linked anchors (#reply-{id} from notifications,
+       emails, JSON-LD). Host themes commonly pin a sticky header that CSS
+       cannot measure, so a target scrolled flush to y=0 lands UNDER it — the
+       reply is on screen but its author row is covered. The default clears a
+       typical sticky header (the reference themes run 88-130px); a theme or
+       owner with taller/no chrome overrides this one token rather than
+       patching every anchor. Erring large is deliberate: too small hides
+       content, too large only adds harmless breathing room above the target. */
+    --jt-scroll-offset: 140px;
+
     /* Typography scale — rem-based so OS/theme zoom is respected.
        Components pick a token, never a literal rem value.
        Mobile breakpoint adjusts the visible size via the `fluid` vars. */
@@ -804,6 +814,14 @@
   .jt-reply { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); margin-bottom: var(--jt-space-3); transition: border-color var(--jt-dur); }
   .jt-reply:hover { border-color: var(--jt-border-strong); }
   .jt-reply.accepted { border-color: var(--jt-success); border-width: 2px; }
+  /* Deep-linked reply (#reply-{id} from a notification / email / JSON-LD).
+     :target rather than JS: the browser already scrolls to the fragment on
+     load AND re-evaluates :target on hashchange, so the whole feature needs
+     no script — nothing to re-init after a client-side navigation, nothing to
+     break when JS is off (crawlers, email webviews). scroll-margin-top keeps
+     the card clear of the sticky header it would otherwise land under. */
+  .jt-reply:target { border-color: var(--jt-accent); border-width: 2px; scroll-margin-top: var(--jt-scroll-offset); }
+  .jt-reply:target > .jt-reply-head { background: var(--jt-accent-light); background: color-mix(in srgb, var(--jt-accent) 12%, transparent); }
   /* Translucent green tint (derived from --jt-success) instead of an opaque
      light token, so the accepted-answer header reads correctly in light AND
      dark and never paints a light block on a dark card. Hex token first as the
@@ -1842,6 +1860,16 @@
   .jt-reply-author { font-weight: 600; font-size: 0.9375rem; line-height: 1.4; color: var(--jt-text); text-decoration: none; }
   .jt-reply-author:hover { text-decoration: underline; color: var(--jt-text); }
   .jt-reply-time { color: var(--jt-text-tertiary); font-size: 0.9375rem; line-height: 1.4; white-space: nowrap; }
+  /* Timestamp doubles as the reply's permalink (Discourse/Reddit/GitHub
+     convention) — the only way to share a link to a single reply. It must
+     keep reading as METADATA, not a body link, so colour/underline are
+     explicitly reset: themes style `.jt-app a` aggressively and would
+     otherwise paint it accent-blue and underlined. Underline appears on
+     hover/focus only, which is where the affordance is needed. */
+  .jt-reply-permalink { color: inherit; text-decoration: none; border-radius: var(--jt-radius-sm); }
+  .jt-reply-permalink:visited { color: inherit; }
+  .jt-reply-permalink:hover, .jt-reply-permalink:focus-visible { color: var(--jt-text-secondary); text-decoration: underline; }
+  .jt-reply-permalink:focus-visible { outline: 2px solid var(--jt-accent); outline-offset: 2px; }
   .jt-reply-edit { color: var(--jt-text-tertiary); margin-left: auto; }
 
   /* ── Time stat on post rows ── */

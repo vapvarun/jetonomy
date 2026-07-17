@@ -13,6 +13,27 @@ use function Jetonomy\now;
 
 class Reply extends Model {
 
+	/**
+	 * Hard ceiling on parent-chain walks in top_level_ancestor().
+	 *
+	 * Real threads never approach this — the tree builder renders 3 levels and
+	 * flattens deeper ones. It exists so a cyclic parent_id (only reachable via
+	 * direct DB edits or a future bug) can't hang a page render.
+	 */
+	private const MAX_ANCESTOR_HOPS = 10;
+
+	/**
+	 * Ordering a topic's replies render in when no ?rsort is supplied.
+	 *
+	 * page_of() computes a reply's page under THIS ordering, so it is a
+	 * contract between the link-builder and the view, not a cosmetic default.
+	 * \Jetonomy\reply_permalink() deliberately emits no ?rsort precisely so the
+	 * page it computed is the page that renders. Changing this value without
+	 * revisiting page_of() would silently mis-target every reply deep link;
+	 * Journey_Tests::test_reply_deep_link_targets() fails if they disagree.
+	 */
+	public const DEFAULT_SORT = 'oldest';
+
 	protected static function table_name(): string {
 		return 'replies';
 	}
@@ -226,10 +247,9 @@ class Reply extends Model {
 	 * @param int    $after   Cursor: return replies after this reply ID.
 	 * @return object[]
 	 */
-	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
+	public static function list_by_post( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
-			$settings = get_option( 'jetonomy_settings', array() );
-			$limit    = (int) ( $settings['replies_per_page'] ?? 30 );
+			$limit = \Jetonomy\replies_per_page();
 		}
 		$table = static::table();
 
@@ -455,12 +475,18 @@ class Reply extends Model {
 	 * @param int    $offset  Offset for top-level replies.
 	 * @return array Threaded reply tree.
 	 */
-	public static function get_threaded( int $post_id, string $sort = 'oldest', int $limit = 0, int $offset = 0 ): array {
+	public static function get_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
 		// Fetch ALL replies for this post (we need full tree to build hierarchy).
+		//
+		// `id ASC` is a required tiebreak, not decoration: page_of() breaks
+		// created_at ties on id, and if this query left ties to MySQL's
+		// undefined ordering the two could disagree and land a deep link on
+		// the wrong page. Ties are not hypothetical — bulk imports (bbPress,
+		// wpForo) routinely write a whole thread with one timestamp.
 		$all = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT * FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC",
+				'SELECT * FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC, id ASC",
 				$post_id
 			)
 		);
@@ -664,6 +690,107 @@ class Reply extends Model {
 				$post_id
 			)
 		);
+	}
+
+	/**
+	 * Walk up to the top-level ancestor of a reply.
+	 *
+	 * A deep link to a nested reply has to page to wherever its top-level
+	 * ancestor sits, because pagination slices the TOP-LEVEL list only
+	 * (get_threaded()) — a child is rendered with its root, never on a page
+	 * of its own.
+	 *
+	 * Iterative primary-key lookups rather than a recursive CTE: CTEs need
+	 * MySQL 8 / MariaDB 10.2 and WordPress still supports 5.7. The chain is
+	 * short in practice (build_tree() renders 3 levels and flattens below
+	 * that), and MAX_ANCESTOR_HOPS bounds it regardless of stored depth so a
+	 * corrupted parent cycle can never spin here.
+	 *
+	 * @param object $reply Reply row.
+	 * @return object|null Top-level ancestor (may be $reply itself), or null if the chain is broken.
+	 */
+	public static function top_level_ancestor( object $reply ): ?object {
+		$current = $reply;
+		for ( $hops = 0; $hops < self::MAX_ANCESTOR_HOPS; $hops++ ) {
+			$parent_id = (int) ( $current->parent_id ?? 0 );
+			if ( ! $parent_id ) {
+				return $current;
+			}
+			$parent = static::find( $parent_id );
+			if ( ! $parent ) {
+				// Orphaned child (parent deleted). It renders at top level in
+				// the tree builder, so treat it as its own root.
+				return $current;
+			}
+			$current = $parent;
+		}
+		return null;
+	}
+
+	/**
+	 * Which page of top-level replies a given reply appears on.
+	 *
+	 * Counts siblings ordered before the reply's top-level ancestor in SQL —
+	 * one indexed COUNT (post_created covers post_id + created_at) rather
+	 * than loading the thread. This runs per notification and per deep link,
+	 * on topics that can hold thousands of replies.
+	 *
+	 * ORDERING CONTRACT — read before changing this query. The position is
+	 * computed under self::DEFAULT_SORT only (created_at ASC, id ASC as a
+	 * deterministic tiebreak), matching get_threaded()'s default. That is
+	 * sound only because \Jetonomy\reply_permalink() emits no ?rsort, so the
+	 * target page always renders in this same order. It must stay that way:
+	 *
+	 *   - 'newest' reverses the top-level list, so a reply's page number is
+	 *     different (often mirrored) under it.
+	 *   - 'best' orders by vote_score, which CHANGES AS PEOPLE VOTE. A page
+	 *     number computed under 'best' is not merely different, it rots —
+	 *     yesterday's link points somewhere else today. A permalink must be
+	 *     stable, so it pins the ordering by omitting the param rather than
+	 *     inheriting whatever the linking reader happened to be viewing.
+	 *
+	 * Journey_Tests::test_reply_deep_link_targets() asserts this function and
+	 * the rendered page still agree, so a change to either side fails loudly
+	 * instead of silently mis-targeting every reply link.
+	 *
+	 * @param int $reply_id Reply ID (top-level or nested).
+	 * @param int $per_page Top-level replies per page.
+	 * @return int 1-based page number; 1 when unresolvable.
+	 */
+	public static function page_of( int $reply_id, int $per_page ): int {
+		$per_page = max( 1, $per_page );
+
+		$reply = static::find( $reply_id );
+		if ( ! $reply ) {
+			return 1;
+		}
+
+		$anchor = self::top_level_ancestor( $reply );
+		if ( ! $anchor ) {
+			return 1;
+		}
+
+		// 1-based position of the anchor among its published top-level siblings.
+		$position = (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table()
+					. " WHERE post_id = %d AND (parent_id IS NULL OR parent_id = 0) AND status = 'publish'"
+					. ' AND ( created_at < %s OR ( created_at = %s AND id <= %d ) )',
+				(int) $anchor->post_id,
+				$anchor->created_at,
+				$anchor->created_at,
+				(int) $anchor->id
+			)
+		);
+
+		// 0 means the anchor itself is not published (unapproved/trashed) — it
+		// won't render on any page, so send the reader to page 1 rather than
+		// page 0.
+		if ( $position < 1 ) {
+			return 1;
+		}
+
+		return (int) ceil( $position / $per_page );
 	}
 
 	/**
