@@ -55,6 +55,8 @@ class App_Config_Controller extends Base_Controller {
 			$app_name = (string) get_bloginfo( 'name' );
 		}
 
+		$features = $this->feature_flags( $settings );
+
 		$data = array(
 			'app_name'     => $app_name,
 			'space_label'  => array(
@@ -79,7 +81,18 @@ class App_Config_Controller extends Base_Controller {
 			// Pro" screen and refuses to sign in, so the app never runs against a
 			// free-only (or unlicensed) install. Fail closed.
 			'app_enabled'  => false,
-			'features'     => $this->feature_flags( $settings ),
+			'features'     => $features,
+			// The attachments{} object is ALWAYS present so the app has one
+			// consistent shape whether or not the feature is active. Free ships
+			// the defaults with enabled reflecting the flag; the Pro attachments
+			// extension overrides the limits (and enabled) via the
+			// jetonomy_app_config filter when it is active and licensed.
+			'attachments'  => array(
+				'enabled'        => $features['attachments'],
+				'max_files'      => 5,
+				'max_size_bytes' => 10 * 1024 * 1024,
+				'allowed_types'  => array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'docx', 'xlsx', 'pptx', 'odt', 'txt', 'csv' ),
+			),
 		);
 
 		/**

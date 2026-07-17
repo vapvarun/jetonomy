@@ -28,9 +28,12 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 		$this->assertSame( '', Template_Loader::palette_css( array( 'accent_color' => '#0073aa' ) ) );
 	}
 
-	public function test_single_accent_emits_one_token(): void {
+	public function test_single_accent_emits_accent_and_computed_foreground(): void {
+		// A picked accent also emits a server-computed readable foreground so it
+		// stays legible on any accent in every browser (accent_fg()). #10b981 is
+		// light enough that black text wins.
 		$this->assertSame(
-			':root,.jt-app{--jt-accent:#10b981;}',
+			':root{--jt-accent:#10b981;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}',
 			Template_Loader::palette_css( array( 'accent_color' => '#10b981' ) )
 		);
 	}
@@ -46,7 +49,7 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 			)
 		);
 		$this->assertSame(
-			':root,.jt-app{--jt-accent:#10b981;--jt-text:#111827;--jt-bg:#ffffff;--jt-bg-subtle:#f3f4f6;--jt-border:#e5e7eb;}',
+			':root{--jt-accent:#10b981;--jt-text:#111827;--jt-bg:#ffffff;--jt-bg-subtle:#f3f4f6;--jt-border:#e5e7eb;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}',
 			$css
 		);
 	}
@@ -61,7 +64,7 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 				'border_color'    => '',
 			)
 		);
-		$this->assertSame( ':root,.jt-app{--jt-text:#111827;}', $css );
+		$this->assertSame( ':root{--jt-text:#111827;}', $css );
 	}
 
 	public function test_invalid_values_are_dropped(): void {
@@ -75,7 +78,10 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 		$this->assertSame( '', $css );
 	}
 
-	public function test_inherit_colors_suppresses_palette(): void {
+	public function test_inherit_colors_key_is_ignored(): void {
+		// The `inherit_colors` toggle was removed in 1.8.0 — adoption is
+		// unconditional and the picked palette always wins. A stale key on an
+		// upgraded install no longer suppresses the palette.
 		$css = Template_Loader::palette_css(
 			array(
 				'inherit_colors' => true,
@@ -83,7 +89,19 @@ class TemplateLoaderPaletteTest extends WP_UnitTestCase {
 				'text_color'     => '#111827',
 			)
 		);
-		$this->assertSame( '', $css );
+		$this->assertSame(
+			':root{--jt-accent:#10b981;--jt-text:#111827;--jt-accent-fg:#000000;--jt-accent-hover-fg:#000000;}',
+			$css
+		);
+	}
+
+	public function test_dark_accent_gets_white_foreground(): void {
+		// The computed foreground flips with the accent's luminance: a dark
+		// accent gets white text, a light one black (see the emerald cases above).
+		$this->assertSame(
+			':root{--jt-accent:#7c3aed;--jt-accent-fg:#ffffff;--jt-accent-hover-fg:#ffffff;}',
+			Template_Loader::palette_css( array( 'accent_color' => '#7c3aed' ) )
+		);
 	}
 
 	public function test_sanitizer_persists_valid_hex_and_blanks_invalid(): void {

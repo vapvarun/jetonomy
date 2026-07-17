@@ -17,7 +17,7 @@ class ProfileCacheTest extends WP_UnitTestCase {
 
 	public function test_update_profile_reflects_after_the_write(): void {
 		$uid = self::factory()->user->create();
-		UserProfile::find_by_user( $uid ); // prime
+		UserProfile::find_or_create( $uid ); // provision the row + prime the cache
 
 		$bio = 'cache-t3-' . uniqid();
 		UserProfile::update_profile( $uid, [ 'bio' => $bio ] );
@@ -27,7 +27,7 @@ class ProfileCacheTest extends WP_UnitTestCase {
 
 	public function test_reputation_delta_reflects_after_the_write(): void {
 		$uid = self::factory()->user->create();
-		UserProfile::find_by_user( $uid ); // prime
+		UserProfile::find_or_create( $uid ); // provision the row + prime the cache
 		$before = (int) ( UserProfile::find_by_user( $uid )->reputation ?? 0 );
 
 		UserProfile::_apply_reputation_delta( $uid, 5 );
@@ -37,7 +37,7 @@ class ProfileCacheTest extends WP_UnitTestCase {
 
 	public function test_increment_counts_reflect_after_the_write(): void {
 		$uid = self::factory()->user->create();
-		UserProfile::find_by_user( $uid ); // prime
+		UserProfile::find_or_create( $uid ); // provision the row + prime the cache
 		$before = (int) ( UserProfile::find_by_user( $uid )->reply_count ?? 0 );
 
 		UserProfile::increment_reply_count( $uid, 1 );

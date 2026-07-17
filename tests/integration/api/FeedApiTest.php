@@ -91,7 +91,15 @@ class FeedApiTest extends WP_UnitTestCase {
 	public function test_returns_paginated_feed_and_excludes_private_space_for_anon(): void {
 		wp_set_current_user( 0 );
 
-		$res = $this->server->dispatch( new WP_REST_Request( 'GET', '/jetonomy/v1/feed' ) );
+		// Sort by 'new' so the freshly-created fixtures land on page 1
+		// deterministically. This test asserts VISIBILITY gating, not hot
+		// ranking — under the default 'hot' sort a zero-engagement fixture
+		// ranks behind every older post the shared test DB has accumulated
+		// (custom-table DDL in set_up commits the per-test transaction, so
+		// rows are not rolled back), which would bury it past the LIMIT.
+		$req = new WP_REST_Request( 'GET', '/jetonomy/v1/feed' );
+		$req->set_param( 'sort', 'new' );
+		$res = $this->server->dispatch( $req );
 		$this->assertSame( 200, $res->get_status() );
 
 		$data = $res->get_data();
@@ -125,7 +133,11 @@ class FeedApiTest extends WP_UnitTestCase {
 		SpaceMember::add( $this->private_space_id, $member, 'member' );
 		wp_set_current_user( $member );
 
-		$res = $this->server->dispatch( new WP_REST_Request( 'GET', '/jetonomy/v1/feed' ) );
+		// 'new' sort for deterministic page-1 placement of the fixture (see
+		// the anon test above for why 'hot' is unreliable in the shared DB).
+		$req = new WP_REST_Request( 'GET', '/jetonomy/v1/feed' );
+		$req->set_param( 'sort', 'new' );
+		$res = $this->server->dispatch( $req );
 		$ids = array_map( static fn( $p ) => (int) $p['id'], $res->get_data()['data'] );
 		$this->assertContains( $this->private_post_id, $ids );
 	}

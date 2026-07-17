@@ -140,7 +140,9 @@ class PostsAnonymousRestTest extends WP_UnitTestCase {
 		$data = $this->server->dispatch( new WP_REST_Request( 'GET', "/jetonomy/v1/posts/{$post_id}" ) )->get_data();
 
 		$this->assertSame( 0, $data['author_id'] );
-		$this->assertSame( 'Anonymous', $data['author_name'] );
+		// A deleted account renders distinctly from a deliberately-anonymous Pro
+		// post: "[deleted]", never "Anonymous" and never blank (Author::for_display).
+		$this->assertSame( '[deleted]', $data['author_name'] );
 		$this->assertNotSame( '', $data['author_name'] );
 	}
 
@@ -177,7 +179,8 @@ class PostsAnonymousRestTest extends WP_UnitTestCase {
 		$this->assertNotEmpty( $data['data'] );
 		$reply = $data['data'][0];
 		$this->assertSame( 0, $reply['author_id'] );
-		$this->assertSame( 'Anonymous', $reply['author_name'] );
+		// Deleted account -> "[deleted]", distinct from anonymous masking.
+		$this->assertSame( '[deleted]', $reply['author_name'] );
 		$this->assertNotSame( '', $reply['author_name'] );
 	}
 
