@@ -474,10 +474,12 @@ class Space extends Model {
 		int $offset = 0,
 		string $order_by = 'sort_order ASC, title ASC'
 	): array {
-		$db            = static::db();
-		$spaces_table  = static::table();
-		$members_table = \Jetonomy\table( 'space_members' );
-		$is_admin      = $user_id && user_can( $user_id, 'manage_options' );
+		$db           = static::db();
+		$spaces_table = static::table();
+
+		// $members_table and $is_admin are gone with the membership JOIN and the
+		// hand-rolled gate: listing_visibility_sql() resolves the admin case ("1=1")
+		// and the membership subquery itself.
 
 		$where  = [];
 		$values = [];
@@ -503,18 +505,26 @@ class Space extends Model {
 			$values[] = $visibility;
 		}
 
-		// Viewer visibility gate — ALWAYS applied for non-admins, regardless of
-		// any explicit visibility filter, so the filter can only ever return a
-		// subset of the caller's visible spaces (fail closed).
-		if ( ! $is_admin ) {
-			if ( ! $user_id ) {
-				// Guests see only public spaces.
-				$where[] = "s.visibility = 'public'";
-			} else {
-				// Logged-in non-admin: public OR member of the space.
-				$where[] = "(s.visibility = 'public' OR sm.user_id IS NOT NULL)";
-			}
-		}
+		// Viewer visibility gate — ALWAYS applied, regardless of any explicit
+		// visibility filter, so the filter can only ever return a subset of the
+		// caller's visible spaces (fail closed).
+		//
+		// This used to hand-roll the rule ("public OR member") while every other
+		// listing surface — the community home, search, fulltext — went through
+		// listing_visibility_sql(). The two drifted: `private` spaces are
+		// deliberately DISCOVERABLE (see that method's contract), so /community/
+		// showed them while REST /spaces did not. Same question, two answers,
+		// measured live: 32 spaces rendered vs 26 returned for the same viewer.
+		// One predicate now, so REST, the app, and the web cannot disagree again —
+		// and the jetonomy_space_listing_visibility_sql filter finally reaches REST
+		// too, instead of silently applying to only half the surfaces.
+		//
+		// Content stays gated by content_visibility_sql(): a private space's CARD
+		// is discoverable, its posts are not.
+		[ $vis_where, $vis_values ] = self::listing_visibility_sql( $user_id, 's' );
+
+		$where[] = $vis_where;
+		$values  = array_merge( $values, $vis_values );
 
 		/**
 		 * Filter space query parameters before execution.
@@ -542,21 +552,14 @@ class Space extends Model {
 
 		$where_sql = ! empty( $where ) ? 'WHERE ' . implode( ' AND ', $where ) : '';
 
-		// Use LEFT JOIN for logged-in non-admins (even when not needed for admins/guests,
-		// the JOIN is harmless and keeps the query simple). We use DISTINCT because
-		// the join is 1:1 (unique on space_id + user_id), but DISTINCT guards against
-		// unexpected duplicates.
-		$join_sql = '';
-		if ( $user_id && ! $is_admin ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$join_sql = $db->prepare(
-				"LEFT JOIN {$members_table} sm ON sm.space_id = s.id AND sm.user_id = %d",
-				$user_id
-			);
-		}
+		// No membership JOIN: listing_visibility_sql() expresses membership as a
+		// subquery, so the LEFT JOIN that used to back the inline gate is gone —
+		// and with it the DISTINCT that existed only to guard the join's fan-out.
+		// One fewer join and no de-duplication pass on the space listing, which
+		// matters on the installs that have thousands of spaces.
 
 		// Count query.
-		$count_sql = "SELECT COUNT(DISTINCT s.id) FROM {$spaces_table} s {$join_sql} {$where_sql}";
+		$count_sql = "SELECT COUNT(s.id) FROM {$spaces_table} s {$where_sql}";
 
 		if ( ! empty( $values ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
@@ -568,7 +571,7 @@ class Space extends Model {
 
 		// Data query.
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$data_sql = "SELECT DISTINCT s.* FROM {$spaces_table} s {$join_sql} {$where_sql} ORDER BY s.{$order_by} LIMIT %d OFFSET %d";
+		$data_sql = "SELECT s.* FROM {$spaces_table} s {$where_sql} ORDER BY s.{$order_by} LIMIT %d OFFSET %d";
 
 		$all_values   = $values;
 		$all_values[] = $per_page;
