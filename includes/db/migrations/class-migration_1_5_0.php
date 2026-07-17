@@ -6,7 +6,7 @@
  * no admin, no frontend — only the schema CREATE and a privacy-eraser
  * delete), and jt_space_tags / jt_space_tag_map were never written by any
  * code path, so their read endpoint could only ever return an empty list
- * (audit/full-audit-2026-06-11.md, A5). Pure dead weight in every install.
+ * (../jetonomy-pro/audit/free/full-audit-2026-06-11.md, A5). Pure dead weight in every install.
  *
  * Guarded: each table is dropped only when it is empty. Rows could only
  * exist via third-party SQL — if any are found the table is left alone, so

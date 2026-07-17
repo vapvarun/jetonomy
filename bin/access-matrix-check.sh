@@ -14,7 +14,7 @@
 #
 # This is the master safety net for every code change in 1.4.1. Run before
 # AND after every commit. The full output is also captured to
-# `plan/1.4.1-baselines/A3/access-matrix-baseline.log` on first run — that
+# `audit/baselines/access-matrix-baseline.log` on first run — that
 # becomes the regression baseline for every subsequent package.
 #
 # Usage:
@@ -46,16 +46,38 @@ set -o pipefail
 
 # ── Config ───────────────────────────────────────────────────────────────────
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WP_PATH="${WP_PATH:-/Users/varundubey/Local Sites/forums/app/public}"
-SITE_URL="${SITE_URL:-http://forums.local}"
+
+# Derive the WP root from where this script actually lives
+# (.../wp-content/plugins/<slug>/bin), rather than hardcoding one developer's
+# machine. The previous default pointed at /Users/varundubey/Local Sites/forums —
+# a different user AND a different site — so the script failed for everyone else
+# with a WP-CLI "used path" error that looks like a WP problem, not a stale
+# constant. Override with WP_PATH= to run it against some other install.
+WP_PATH="${WP_PATH:-$(cd "$PLUGIN_DIR/../../.." && pwd)}"
 wp_cli() { wp --path="$WP_PATH" "$@"; }
+
+# Ask WP for its own URL instead of assuming a site name. Same reasoning: the
+# hardcoded http://forums.local only ever matched one machine.
+#
+# Take only the URL: a PHP that fails to load an extension prints its startup
+# warning to STDOUT, not stderr, so `2>/dev/null` does not protect us and the
+# raw value becomes "Warning: ...\nhttp://site.local". curl then gets a garbage
+# URL and every probe returns 000 — which reads as "every endpoint is down"
+# rather than "the URL is malformed".
+SITE_URL="${SITE_URL:-$(wp_cli option get siteurl 2>/dev/null | grep -Eo 'https?://[^[:space:]]+' | tail -n 1)}"
+
+if [ -z "${SITE_URL:-}" ]; then
+  echo "ERROR: could not resolve the site URL from WP_PATH=$WP_PATH" >&2
+  echo "       Pass SITE_URL=http://your-site.local explicitly, or check that WP-CLI runs there." >&2
+  exit 1
+fi
 NS="/wp-json/jetonomy/v1"
 
 QUIET=0
 WRITE_BASELINE=0
 DIFF_BASELINE=0
 MODE="public"
-BASELINE_FILE="$PLUGIN_DIR/plan/1.4.1-baselines/A3/access-matrix-baseline.log"
+BASELINE_FILE="$PLUGIN_DIR/audit/baselines/access-matrix-baseline.log"
 
 for arg in "$@"; do
   case "$arg" in
@@ -111,7 +133,7 @@ fi
 # codes for those (route, role) pairs so the runner can be re-run unchanged
 # in either mode. Routes outside this list (auth/*, admin/*, moderation/*,
 # login_required) keep their original expectations in both modes.
-COMMUNITY_PUBLIC_ROUTES_RE='^(/spaces($|/)|/posts/|/replies($|/)|/categories($|/)|/tags($|/)|/space-tags|/users/|/search|/leaderboards|/updates|/oembed|/invite/|/link-preview)'
+COMMUNITY_PUBLIC_ROUTES_RE='^(/spaces($|/)|/posts/|/replies($|/)|/categories($|/)|/tags($|/)|/users/|/search|/leaderboards|/updates|/oembed|/invite/|/link-preview)'
 # Sub-routes nested under a public prefix that are NOT community-public reads —
 # they hold their own auth gate (cap or membership) regardless of guest_read.
 # `/posts/{id}/flags` (1.4.1 A5) is mod-only, so anon must see 403 in BOTH modes,
@@ -483,8 +505,11 @@ run_check POST "/bookmarks"                              subscriber 200,201  '{"
 # 32. GET /search — public
 run_check GET  "/search?q=test"                          anon       200
 
-# 33. GET /space-tags — public
-run_check GET  "/space-tags"                             anon       200
+# /space-tags is intentionally absent: removed in 1.5.0 because jt_space_tags
+# never gained a writer, so the endpoint could only ever return an empty list
+# (audit A5). See the note in includes/api/class-tags-controller.php. This check
+# outlived the route and had been failing ever since — a suite that always fails
+# is a suite nobody runs, which is how the hardcoded WP_PATH above survived too.
 
 # 34. /votes POST — login required
 run_check POST "/posts/$POST_ID/vote"                    anon       401,403,400  '{}'

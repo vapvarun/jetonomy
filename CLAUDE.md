@@ -1,6 +1,24 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory - 73 REST routes, 43 AJAX handlers, 177 hooks fired, 20 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. **1.6.0 delta (manifest refresh 2026-06-28 + audit 2026-07-04): mobile-app API added (GET /app/config with `app_enabled` Pro-license gate + GET /feed); 5 private/hidden-space content leaks closed; `jetonomy_email_headers` widened to 5 args for pro reply-by-email. Latest full audit: `audit/full-audit-2026-07-04.md`.** **Coverage-gated refresh completed 2026-06-11 (1.5.0-dev, post-audit-fixes): AJAX nonces corrected from check_ajax_referer ground truth, 43 stale permission-callback refs updated, 3 dead tables + /space-tags + 3 dead AJAX actions removed, publish-transition hooks + GET /auth/nonce added, stale jetonomy_recent_activity shortcode entry dropped (see `generated.refresh_2026_06_11`). Full audit findings: `audit/full-audit-2026-06-11.md`; wppqa baseline: `audit/wppqa-baseline-2026-06-11/`. SaaS feature audit: `audit/FEATURE_GAP_ANALYSIS.md`.** v2 schema with `static_analysis` populated (zero dead listeners after 1.4.2; 4 grid 1fr risks documented as design notes since the CSS already implements `minmax(0, 1fr)`). See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md) and [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md). End-to-end customer flows live as runnable PHP scenarios under `includes/cli/scenarios/` and as the pre-release smoke runbook (`/jetonomy-smoke`). For an interactive graph view, run `cd audit && python3 -m http.server 8765` and open <http://localhost:8765/graph.html>. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 73 REST routes, 43 AJAX handlers, 177 hooks fired, 20 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+
+### Where things live (this repo is PUBLIC)
+
+`vapvarun/jetonomy` is public; `vapvarun/jetonomy-pro` is private. **Internal audits and planning live in Pro** — not because they are secret, but because a public repo should carry what a customer or contributor needs, not our working notes. Nothing was deleted; it moved.
+
+| Need | Where |
+|---|---|
+| Canonical inventory, coverage data, graph viewer | **free** `audit/manifest.json`, `audit/qa-coverage.json`, `audit/graph.html` |
+| Build + QA tooling | **free** `bin/` |
+| Customer + developer docs | **free** `docs/website/`, `docs/architecture/`, `docs/developer/`, `ARCHITECTURE.md`, `DESIGN-SYSTEM.md`, `CONTRIBUTING.md` |
+| Engineering standards | **free** `docs/standards/` |
+| Full audits, feature/gap analyses, wppqa baselines, UX punchlists, expectation records | **pro** `../jetonomy-pro/audit/free/` |
+| Implementation plans | **pro** `../jetonomy-pro/docs/plans/free/` |
+
+The manifest deliberately stays in free: four scripts read it (`build-release.sh`, `qa-coverage-check.php`, `qa-stub-gen.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
+
+Interactive graph: `cd audit && python3 -m http.server 8765`, then <http://localhost:8765/graph.html>.
+End-to-end customer flows: runnable PHP scenarios in `includes/cli/scenarios/`, plus the pre-release smoke runbook (`/jetonomy-smoke`).
 
 ## Stability & Manifest-First Rules (enforced)
 
@@ -134,7 +152,7 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |
 
 ## Documentation
-- **Implementation Plans**: `docs/plans/` (only future / unshipped plans kept; shipped ones are pruned each release)
+- **Implementation Plans**: `../jetonomy-pro/docs/plans/free/` — moved to Pro (private) so the public repo carries customer/developer docs, not working notes. Only future / unshipped plans are kept; shipped ones are pruned each release.
 - **Design Prototypes**: `docs/prototype/` (open HTML files in browser)
 - **Standards**: `docs/standards/` — normative engineering standards every change must honour (canonical sources in `~/.claude/workflows/`).
   - `frontend-interactivity.md` — **Frontend Interactivity & Client-Side Navigation Standard** (WP Interactivity API router, declarative regions, `jetonomy:navigated` re-init, no per-route/inline scripts, restFetch, verify-after-client-nav). Jetonomy is the reference implementation. Any new interactive frontend surface MUST pass its Section 5 checklist before release.
