@@ -171,7 +171,8 @@ $role_labels = [
 									<?php endif; ?>
 								</div>
 								<div class="jt-pending-actions">
-									<button type="button" class="jt-btn jt-btn-sm jt-btn-primary"
+									<?php // jt-btn-fill, not jt-btn-primary: the latter has no CSS rule anywhere, so Approve rendered as bare text. The vocabulary is fill/ghost. ?>
+									<button type="button" class="jt-btn jt-btn-sm jt-btn-fill"
 										data-wp-on--click="actions.approveJoinRequest"
 										data-space-id="<?php echo absint( $space->id ); ?>"
 										data-request-id="<?php echo absint( $jt_req->id ); ?>">

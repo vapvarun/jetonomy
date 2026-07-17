@@ -2348,7 +2348,12 @@
 .jt-gate-msg--success { color: var(--jt-success); }
 
 /* ── Follow button ── */
-.jt-btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.75rem; border-radius: var(--jt-radius); }
+/* Scoped to .jt-app so it can actually win. Declared bare (0,1,0) it lost to the
+   `.jt-app .jt-btn` base (0,2,0) that sets the normal padding, so the size
+   modifier never applied ANYWHERE on the site — measured: asks for 4px 12px,
+   rendered 8px 18px. Every "small" button has silently been full-size. Found
+   while building the invite panel, whose revoke/copy controls are jt-btn-sm. */
+.jt-app .jt-btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.75rem; border-radius: var(--jt-radius); }
 .jt-following { background: var(--jt-accent); color: #fff; border-color: var(--jt-accent); }
 .jt-following:hover { background: var(--jt-danger); border-color: var(--jt-danger); }
 
