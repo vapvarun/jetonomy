@@ -753,45 +753,214 @@ class Reply extends Model {
 	 * the rendered page still agree, so a change to either side fails loudly
 	 * instead of silently mis-targeting every reply link.
 	 *
+	 * Thin wrapper over {@see self::pages_of()} so the ordering contract above has
+	 * exactly ONE implementation. Resolving a single reply costs the same either
+	 * way; anything resolving a LIST must call pages_of() directly.
+	 *
 	 * @param int $reply_id Reply ID (top-level or nested).
 	 * @param int $per_page Top-level replies per page.
 	 * @return int 1-based page number; 1 when unresolvable.
 	 */
 	public static function page_of( int $reply_id, int $per_page ): int {
-		$per_page = max( 1, $per_page );
+		$key = $per_page . ':' . $reply_id;
+		if ( isset( self::$page_cache[ $key ] ) ) {
+			return self::$page_cache[ $key ];
+		}
+		return self::pages_of( [ $reply_id ], $per_page )[ $reply_id ] ?? 1;
+	}
 
-		$reply = static::find( $reply_id );
-		if ( ! $reply ) {
-			return 1;
+	/**
+	 * Resolved page numbers for this request, keyed "per_page:reply_id".
+	 *
+	 * @var array<string,int>
+	 */
+	private static array $page_cache = [];
+
+	/**
+	 * Which page each of many replies appears on — in a fixed number of queries.
+	 *
+	 * Same contract as {@see self::page_of()} (read its ORDERING CONTRACT), for a
+	 * set instead of one reply.
+	 *
+	 * This exists because the singular form is a per-row cost, and the surfaces
+	 * that need reply pages are LISTS. The notifications endpoint resolves a deep
+	 * link for every row it returns; at find() + COUNT apiece that was ~2 queries
+	 * per notification — measured 20 queries for 8 rows — so opening the bell on a
+	 * busy account paid dozens of avoidable round-trips. Rendering a topic avoided
+	 * this only because the view already knows which page it drew and hands it to
+	 * reply_permalink() directly.
+	 *
+	 * Cost is O(depth) queries, not O(rows): one to load the requested replies,
+	 * one per ancestor level to climb (nesting is one level in practice; the loop
+	 * is bounded by MAX_ANCESTOR_HOPS regardless), and one to position every
+	 * anchor. The positioning query uses the same indexed predicate as before,
+	 * once per anchor inside a single round-trip, rather than one round-trip per
+	 * anchor.
+	 *
+	 * @param int[] $reply_ids Reply IDs (top-level or nested; unknown IDs are omitted).
+	 * @param int   $per_page  Top-level replies per page.
+	 * @return array<int,int> reply_id => 1-based page. Unresolvable replies map to 1.
+	 */
+	public static function pages_of( array $reply_ids, int $per_page ): array {
+		$per_page  = max( 1, $per_page );
+		$reply_ids = array_values( array_unique( array_filter( array_map( 'intval', $reply_ids ), static fn( $id ) => $id > 0 ) ) );
+		if ( ! $reply_ids ) {
+			return [];
 		}
 
-		$anchor = self::top_level_ancestor( $reply );
-		if ( ! $anchor ) {
-			return 1;
+		$db    = static::db();
+		$table = static::table();
+
+		// Every unresolvable case degrades to page 1, matching page_of().
+		$pages = array_fill_keys( $reply_ids, 1 );
+
+		$rows = self::rows_by_id( $reply_ids );
+		if ( ! $rows ) {
+			return $pages;
 		}
 
-		// 1-based position of the anchor among its published top-level siblings.
-		$position = (int) static::db()->get_var(
-			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table()
-					. " WHERE post_id = %d AND (parent_id IS NULL OR parent_id = 0) AND status = 'publish'"
-					. ' AND ( created_at < %s OR ( created_at = %s AND id <= %d ) )',
-				(int) $anchor->post_id,
-				$anchor->created_at,
-				$anchor->created_at,
-				(int) $anchor->id
-			)
+		// Climb to each reply's top-level ancestor, one batched query per level.
+		// An orphaned child (parent deleted) roots at itself — the tree builder
+		// renders it top-level, so it must page as top-level too.
+		$anchor_of = [];
+		$pending   = [];
+		foreach ( $rows as $id => $row ) {
+			$parent = (int) ( $row->parent_id ?? 0 );
+			if ( $parent ) {
+				$pending[ $id ] = $parent;
+			} else {
+				$anchor_of[ $id ] = $row;
+			}
+		}
+
+		$known = $rows;
+		for ( $hops = 0; $pending && $hops < self::MAX_ANCESTOR_HOPS; $hops++ ) {
+			$need = array_values( array_diff( array_unique( array_values( $pending ) ), array_keys( $known ) ) );
+			if ( $need ) {
+				$known += self::rows_by_id( $need );
+			}
+
+			$next = [];
+			foreach ( $pending as $id => $parent_id ) {
+				$parent = $known[ $parent_id ] ?? null;
+				if ( ! $parent ) {
+					$anchor_of[ $id ] = $rows[ $id ];          // orphan: roots at itself
+					continue;
+				}
+				$grandparent = (int) ( $parent->parent_id ?? 0 );
+				if ( $grandparent ) {
+					$next[ $id ] = $grandparent;
+				} else {
+					$anchor_of[ $id ] = $parent;
+				}
+			}
+			$pending = $next;
+		}
+		// Anything still climbing at the hop limit roots at itself, as page_of() does.
+		foreach ( array_keys( $pending ) as $id ) {
+			$anchor_of[ $id ] = $rows[ $id ];
+		}
+
+		$anchors = [];
+		foreach ( $anchor_of as $anchor ) {
+			$anchors[ (int) $anchor->id ] = $anchor;
+		}
+		if ( ! $anchors ) {
+			return $pages;
+		}
+
+		// Position every anchor among its published top-level siblings in ONE
+		// round-trip. The correlated subquery is the same predicate page_of() used,
+		// and rides the same post_created index.
+		$ids_sql = implode( ',', array_map( 'intval', array_keys( $anchors ) ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a trusted prefixed name; $ids_sql is intval-mapped.
+		$positions = $db->get_results(
+			"SELECT a.id AS anchor_id,
+				( SELECT COUNT(*) FROM {$table} s
+				   WHERE s.post_id = a.post_id
+					 AND ( s.parent_id IS NULL OR s.parent_id = 0 )
+					 AND s.status = 'publish'
+					 AND ( s.created_at < a.created_at
+						OR ( s.created_at = a.created_at AND s.id <= a.id ) )
+				) AS pos
+			 FROM {$table} a
+			 WHERE a.id IN ({$ids_sql})"
 		);
 
-		// 0 means the anchor itself is not published (unapproved/trashed) — it
-		// won't render on any page, so send the reader to page 1 rather than
-		// page 0.
-		if ( $position < 1 ) {
-			return 1;
+		$pos_of = [];
+		foreach ( (array) $positions as $row ) {
+			$pos_of[ (int) $row->anchor_id ] = (int) $row->pos;
 		}
 
-		return (int) ceil( $position / $per_page );
+		foreach ( $anchor_of as $reply_id => $anchor ) {
+			$position = $pos_of[ (int) $anchor->id ] ?? 0;
+			// 0 means the anchor is not published (unapproved/trashed): it renders
+			// on no page, so send the reader to page 1 rather than page 0.
+			$pages[ $reply_id ] = $position < 1 ? 1 : (int) ceil( $position / $per_page );
+		}
+
+		// Memoize for the rest of the request so page_of() — which every
+		// reply_permalink() call reaches when the caller has no page in hand —
+		// answers from here instead of re-querying per row. This is what turns a
+		// primed list into zero further queries without changing reply_permalink()
+		// or any of its seven callers.
+		foreach ( $pages as $reply_id => $page ) {
+			self::$page_cache[ $per_page . ':' . $reply_id ] = $page;
+		}
+
+		return $pages;
 	}
+
+	/**
+	 * Resolve the pages for a set of replies up front, so the per-row lookups
+	 * that follow are free.
+	 *
+	 * Call this from any surface that is about to build deep links for a LIST of
+	 * replies. It is the batching seam: one call here, then every subsequent
+	 * \Jetonomy\reply_permalink() for those replies answers from cache.
+	 *
+	 * Deliberately not required — page_of() still resolves a lone reply on its
+	 * own, so a caller that forgets this is slower, never wrong.
+	 *
+	 * @param int[] $reply_ids Reply IDs about to be linked.
+	 * @param int   $per_page  Top-level replies per page.
+	 */
+	public static function prime_pages( array $reply_ids, int $per_page ): void {
+		$uncached = [];
+		foreach ( $reply_ids as $id ) {
+			$id = (int) $id;
+			if ( $id > 0 && ! isset( self::$page_cache[ $per_page . ':' . $id ] ) ) {
+				$uncached[] = $id;
+			}
+		}
+		if ( $uncached ) {
+			self::pages_of( $uncached, max( 1, $per_page ) );
+		}
+	}
+
+	/**
+	 * Fetch reply rows by ID in one query, keyed by ID.
+	 *
+	 * @param int[] $ids
+	 * @return array<int,object>
+	 */
+	private static function rows_by_id( array $ids ): array {
+		if ( ! $ids ) {
+			return [];
+		}
+		$db      = static::db();
+		$table   = static::table();
+		$ids_sql = implode( ',', array_map( 'intval', $ids ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is trusted; $ids_sql is intval-mapped.
+		$rows = $db->get_results( "SELECT id, parent_id, post_id, created_at, status FROM {$table} WHERE id IN ({$ids_sql})" );
+
+		$out = [];
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->id ] = $row;
+		}
+		return $out;
+	}
+
 
 	/**
 	 * Split a reply (and its children) into a new topic.
