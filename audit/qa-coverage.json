@@ -2,18 +2,18 @@
     "schema_version": "v1",
     "plugin": {
         "slug": "jetonomy",
-        "version": "1.7.1"
+        "version": "1.8.0"
     },
     "generated": {
-        "at": "2026-07-13T09:38:41+00:00",
-        "manifest_at": "2026-07-04T00:00:00Z",
+        "at": "2026-07-17T16:40:41+00:00",
+        "manifest_at": "2026-07-17T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 97,
+            "total": 99,
             "covered": 42,
-            "uncovered": 55,
+            "uncovered": 57,
             "skipped": 0,
             "covered_items": [
                 {
@@ -220,6 +220,16 @@
                     "method": "POST",
                     "route": "/spaces/(?P<id>\\d+)/invite",
                     "stub_command": "bin/qa-stub-gen.php rest POST \"/spaces/(?P<id>\\d+)/invite\""
+                },
+                {
+                    "method": "GET",
+                    "route": "/spaces/(?P<id>\\d+)/invites",
+                    "stub_command": "bin/qa-stub-gen.php rest GET \"/spaces/(?P<id>\\d+)/invites\""
+                },
+                {
+                    "method": "DELETE",
+                    "route": "/spaces/(?P<id>\\d+)/invites/(?P<invite_id>\\d+)",
+                    "stub_command": "bin/qa-stub-gen.php rest DELETE \"/spaces/(?P<id>\\d+)/invites/(?P<invite_id>\\d+)\""
                 },
                 {
                     "method": "GET",
@@ -643,10 +653,10 @@
             ]
         },
         "hooks_fired": {
-            "total": 7,
+            "total": 9,
             "covered": 5,
-            "uncovered": 2,
-            "skipped": 183,
+            "uncovered": 4,
+            "skipped": 184,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -679,6 +689,16 @@
                     "name": "jetonomy_notification_deep_link",
                     "consumer_count": 1,
                     "stub_command": "bin/qa-stub-gen.php hook jetonomy_notification_deep_link"
+                },
+                {
+                    "name": "jetonomy_privacy_orphan_columns",
+                    "consumer_count": 1,
+                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_privacy_orphan_columns"
+                },
+                {
+                    "name": "jetonomy_purge_orphan_user",
+                    "consumer_count": 2,
+                    "stub_command": "bin/qa-stub-gen.php hook jetonomy_purge_orphan_user"
                 }
             ],
             "_note": "Tracks only hooks with non-empty consumed_by. Skipped hooks are pure extensibility surface."
@@ -780,15 +800,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 167,
+        "items_total": 171,
         "items_covered": 55,
-        "items_uncovered": 112,
-        "items_skipped": 183,
-        "coverage_percent": 32.899999999999999
+        "items_uncovered": 116,
+        "items_skipped": 184,
+        "coverage_percent": 32.200000000000003
     },
     "drift": {
-        "previous_uncovered": 112,
-        "current_uncovered": 112,
-        "delta": 0
+        "previous_uncovered": 114,
+        "current_uncovered": 116,
+        "delta": 2
     }
 }
