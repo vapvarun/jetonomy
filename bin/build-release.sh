@@ -18,6 +18,8 @@
 #   11 version mismatch across jetonomy.php / readme.txt
 #   20 composer install failed
 #   30 smoke test failed — plugin fatals on boot
+#   31 qa-coverage gate regressed
+#   32 phpunit gate failed (tests red, or WP test scaffold absent)
 #   40 zip missing expected files
 #
 # The script is intentionally thorough. Shipping a broken zip is a worse
@@ -297,6 +299,34 @@ if [ -f "$ROOT/bin/qa-coverage-check.php" ] && [ -z "${COVERAGE_SKIP:-}" ]; then
 		echo "      verify pass, retry the build." >&2
 		echo "      Bypass (emergency only): COVERAGE_SKIP=1 bin/build-release.sh" >&2
 		exit 31
+	fi
+fi
+
+# --- 6c. PHPUNIT GATE — run the free test matrix CI runs, locally ---------
+# The gap that let red CI ship in 1.8.0: nothing ran PHPUnit before the tag, so
+# a zip whose GitHub test matrix was failing still got packaged and released.
+# Run the exact free testsuites CI runs (JETONOMY_TEST_SKIP_PRO=1) against the
+# source tree ($ROOT keeps its dev deps; staging is a separate --no-dev copy),
+# and fail the build on any failure. FAIL-CLOSED: if the WP test scaffold is
+# absent we STOP rather than skip, so "no tests ran" can never look like green.
+# Bypass (emergencies only): PHPUNIT_SKIP=1 bin/build-release.sh
+if [ -z "${PHPUNIT_SKIP:-}" ]; then
+	echo "==> phpunit gate (free: unit,integration,security,error-paths,concurrency)"
+	PHPUNIT_TESTS_DIR="${WP_TESTS_DIR:-/tmp/wordpress-tests-lib}"
+	if [ ! -f "$PHPUNIT_TESTS_DIR/includes/functions.php" ]; then
+		echo "FAIL: WordPress test library not found at $PHPUNIT_TESTS_DIR." >&2
+		echo "      Install it once, then retry:" >&2
+		echo "        bash bin/install-wp-tests.sh wp_tests root root localhost latest true" >&2
+		echo "      or export WP_TESTS_DIR to an existing scaffold before building." >&2
+		echo "      Bypass (emergency only): PHPUNIT_SKIP=1 bin/build-release.sh" >&2
+		exit 32
+	fi
+	if ! JETONOMY_TEST_SKIP_PRO=1 php "$ROOT/vendor/bin/phpunit" \
+			--testsuite=unit,integration,security,error-paths,concurrency; then
+		echo "FAIL: PHPUnit reported failures — this is the gate that was missing when" >&2
+		echo "      red CI shipped in 1.8.0. Fix the tests/code; do not tag." >&2
+		echo "      Bypass (emergency only): PHPUNIT_SKIP=1 bin/build-release.sh" >&2
+		exit 32
 	fi
 fi
 
