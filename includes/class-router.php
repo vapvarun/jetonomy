@@ -16,7 +16,8 @@ class Router {
 	public function __construct() {
 		add_action( 'init', [ $this, 'add_rewrite_rules' ] );
 		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
-		add_filter( 'request', [ $this, 'maybe_serve_front_page' ] );
+		add_filter( 'request', [ $this, 'suppress_default_query' ] );
+		add_action( 'parse_query', [ $this, 'correct_query_state' ], 1 );
 		add_action( 'template_redirect', [ $this, 'redirect_old_base_slug' ], 5 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ] );
 		// WP's canonical redirect would append a trailing slash to the extension-
@@ -36,33 +37,89 @@ class Router {
 	}
 
 	/**
-	 * Serve the community home on the site front page when the
-	 * "Community as homepage" setting is enabled.
+	 * Is the community rendered on top of the site's real front page?
 	 *
-	 * Purely additive by design: it fires ONLY for the bare front-page
-	 * request, where WP's parsed query vars are completely empty. Every
-	 * other request — feeds (feed=...), pagination (paged=...), posts,
-	 * pages, attachments, and all /{base}/* community routes — carries
-	 * query vars and passes through untouched, so no existing route,
-	 * rewrite rule, or permalink behaviour changes. With the injected
-	 * route var, template_redirect renders the home view through the
-	 * exact same Template_Loader path as /{base}/ itself.
+	 * True only for the "Community as homepage" setting on the front-page
+	 * request itself. In that case a real WP page object backs the URL, so
+	 * WordPress — and any SEO plugin — already owns its title/canonical/OG,
+	 * and Jetonomy defers (see Template_Loader::set_seo_meta()).
+	 */
+	public function is_mapped_front_page(): bool {
+		$settings = get_option( 'jetonomy_settings', [] );
+		return ! empty( $settings['front_page'] ) && is_front_page();
+	}
+
+	/**
+	 * Stop WP_Query resolving a Jetonomy route to somebody else's content.
+	 *
+	 * Every Jetonomy URL is virtual: the rewrite sets `jetonomy_route`, which
+	 * WP_Query does not recognise as a "which content" var. With nothing
+	 * recognised, WP_Query falls back to `is_home = true`, and on a site with a
+	 * static front page that resolves to whatever is set as Settings → Reading →
+	 * "Posts page". Jetonomy then renders the right content at template_redirect
+	 * but never corrects the query, so core's query state stays wrong for the
+	 * whole request — and everything downstream reads that lie: core's
+	 * wp_get_document_title(), themes, breadcrumbs, and SEO plugins.
+	 *
+	 * That is the root cause of Basecamp 10101954870: Yoast read `is_home` and
+	 * published the Posts page's title AND a canonical pointing at it, on every
+	 * Space and topic. Rank Math escaped only because it omits tags it cannot
+	 * confidently build. The fix is not to argue with either plugin — it is to
+	 * stop lying about the query. Doing so is vendor-neutral: it fixes Yoast,
+	 * Rank Math, AIOSEO, SEOPress and core in one move, with no SEO-plugin code.
+	 *
+	 * Mirrors BuddyNext's PageRouter::suppress_default_query().
 	 *
 	 * @param array $query_vars Parsed request vars from WP::parse_request().
-	 * @return array Unchanged vars, or vars + jetonomy_route=home on the front page.
+	 * @return array
 	 */
-	public function maybe_serve_front_page( array $query_vars ): array {
-		if ( ! empty( $query_vars ) ) {
+	public function suppress_default_query( array $query_vars ): array {
+		if ( empty( $query_vars['jetonomy_route'] ) ) {
 			return $query_vars;
 		}
 
-		$settings = get_option( 'jetonomy_settings', [] );
-		if ( empty( $settings['front_page'] ) ) {
-			return $query_vars;
-		}
+		// Strip slug-based lookups: no backing post exists, so leaving these
+		// lets WP_Query try (and fail) to resolve one.
+		unset( $query_vars['pagename'], $query_vars['name'], $query_vars['page'] );
 
-		$query_vars['jetonomy_route'] = 'home';
+		// Return an empty result set — handle_request() renders the output.
+		$query_vars['post__in'] = [ 0 ];
+
 		return $query_vars;
+	}
+
+	/**
+	 * Tell the main query what a Jetonomy route actually is: none of the things
+	 * WordPress would otherwise guess.
+	 *
+	 * Deliberately clears rather than impersonates. Presenting a virtual route as
+	 * singular (BuddyNext does this for its hubs, to make themes render a
+	 * full-width layout) would need a stubbed WP_Post to keep body_class() and the
+	 * theme's singular path from reading a null $post. Jetonomy renders its own
+	 * full template and exits, so it needs no such stub — and claiming to be a
+	 * page we are not is how this bug started.
+	 *
+	 * The front page is intentionally NOT handled here: when the community is
+	 * mapped onto it, a real page backs the URL and WP's own resolution is
+	 * correct. See is_mapped_front_page().
+	 */
+	public function correct_query_state( \WP_Query $query ): void {
+		if ( is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+		if ( ! $query->get( 'jetonomy_route' ) ) {
+			return;
+		}
+
+		$query->is_home           = false;
+		$query->is_front_page     = false;
+		$query->is_archive        = false;
+		$query->is_singular       = false;
+		$query->is_page           = false;
+		$query->is_single         = false;
+		$query->is_404            = false;
+		$query->queried_object    = null;
+		$query->queried_object_id = 0;
 	}
 
 	public function add_rewrite_rules(): void {
@@ -193,7 +250,22 @@ class Router {
 	}
 
 	public function handle_request(): void {
-		$route = get_query_var( 'jetonomy_route' );
+		$route = (string) get_query_var( 'jetonomy_route' );
+
+		// "Community as homepage": derive the route here rather than injecting a
+		// fake query var during `request`. The old approach put jetonomy_route=home
+		// into an otherwise-empty front-page query, which made the vars non-empty
+		// and broke WP's own front-page resolution — is_front_page() went false and
+		// the real page never became the queried object, so the owner's per-page SEO
+		// (their Yoast title on that page) was unreachable. Deriving at
+		// template_redirect leaves WP's resolution intact and still renders the
+		// community through the exact same Template_Loader path as /{base}/.
+		$mapped = false;
+		if ( '' === $route && $this->is_mapped_front_page() ) {
+			$route  = 'home';
+			$mapped = true;
+		}
+
 		if ( empty( $route ) ) {
 			return;
 		}
@@ -204,6 +276,8 @@ class Router {
 			'slug'       => get_query_var( 'jetonomy_slug', '' ),
 			'space_slug' => get_query_var( 'jetonomy_space_slug', '' ),
 			'tab'        => get_query_var( 'jetonomy_tab', '' ),
+			// A real page backs this URL — it, not Jetonomy, owns the SEO.
+			'mapped'     => $mapped,
 		];
 
 		// A resolved Jetonomy route is a real page. WordPress may have flagged

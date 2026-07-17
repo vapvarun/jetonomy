@@ -863,6 +863,15 @@ class Template_Loader {
 	}
 
 	private static function set_seo_meta( array $data ): void {
+		// On a mapped front page the community is rendered over a real WP page.
+		// That page has its own object, its own permalink, and its own SEO fields
+		// in whatever SEO plugin the owner runs — so it owns the title, canonical
+		// and OG, and we emit nothing. Jetonomy supplies SEO only where no other
+		// party can: its virtual routes, which have no WP object to attach to.
+		if ( ! empty( $data['mapped'] ) ) {
+			return;
+		}
+
 		add_filter(
 			'document_title_parts',
 			function ( $parts ) use ( $data ) {
