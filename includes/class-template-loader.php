@@ -816,6 +816,41 @@ class Template_Loader {
 	 * @param array $settings The jetonomy_settings option array.
 	 * @return array<string,string> Token name => sanitized hex color.
 	 */
+	/**
+	 * Black or white, whichever reads better on the given accent hex.
+	 *
+	 * The runtime `oklch()` contrast guard in jetonomy-tokens.css derives
+	 * --jt-accent-fg for a THEME-token accent the server never sees. When the
+	 * owner PICKS an accent, the server knows the exact colour, so it computes
+	 * the readable foreground here and emits it as a concrete hex — which works
+	 * in every browser, including those without relative-colour oklch (Safari
+	 * < 16.4 / Chrome < 111), where the guard would otherwise fall back to plain
+	 * white and turn a light accent's button text invisible.
+	 *
+	 * @param string $hex A #rrggbb / #rgb accent colour.
+	 * @return string '#ffffff' or '#000000'.
+	 */
+	private static function accent_fg( string $hex ): string {
+		$hex = ltrim( $hex, '#' );
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+		if ( 6 !== strlen( $hex ) ) {
+			return '#ffffff';
+		}
+		$lin = static function ( float $c ): float {
+			$c /= 255;
+			return $c <= 0.03928 ? $c / 12.92 : pow( ( $c + 0.055 ) / 1.055, 2.4 );
+		};
+		$lum = 0.2126 * $lin( (float) hexdec( substr( $hex, 0, 2 ) ) )
+			+ 0.7152 * $lin( (float) hexdec( substr( $hex, 2, 2 ) ) )
+			+ 0.0722 * $lin( (float) hexdec( substr( $hex, 4, 2 ) ) );
+		// Contrast of white vs black against this background; pick the higher.
+		$white_ratio = 1.05 / ( $lum + 0.05 );
+		$black_ratio = ( $lum + 0.05 ) / 0.05;
+		return $white_ratio >= $black_ratio ? '#ffffff' : '#000000';
+	}
+
 	public static function palette_tokens( array $settings ): array {
 		$map = array(
 			'accent_color'    => '--jt-accent',
@@ -837,6 +872,16 @@ class Template_Loader {
 			if ( $hex ) {
 				$tokens[ $token ] = $hex;
 			}
+		}
+
+		// A picked accent gets a server-computed readable foreground, so every
+		// accent-backed surface (buttons, the follow pill, level tags, banners)
+		// stays legible on a light accent in ALL browsers — not only those the
+		// oklch guard covers.
+		if ( isset( $tokens['--jt-accent'] ) ) {
+			$fg                             = self::accent_fg( $tokens['--jt-accent'] );
+			$tokens['--jt-accent-fg']       = $fg;
+			$tokens['--jt-accent-hover-fg'] = $fg;
 		}
 
 		return $tokens;

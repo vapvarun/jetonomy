@@ -294,6 +294,7 @@ Forum imports bring attachments and hierarchy across, attachments work with or w
 * Fix      - Migrated inline images and attachments are registered into the media library, so deleting the old forum's uploads folder can no longer break them.
 * Fix      - One-click email unsubscribe links save the change; they reported success but the preference never persisted.
 * Fix      - "Small" buttons render at their intended size, and the moderation Approve control renders as a button.
+* Fix      - A custom accent colour stays readable on every accent-backed surface (buttons, the follow pill, level tags, avatar initials, and the new-replies banner); a light accent no longer leaves white text invisible, in every browser.
 * Security - A moderator could globally ban the site administrator; banning an admin or a fellow moderator is now refused.
 * Security - AI moderation logs are removed when a member is deleted or their data erased.
 * Dev      - Post and reply REST payloads carry an attachments array (id, url, thumbnail, mime, name, size, type) whether or not Pro is active.

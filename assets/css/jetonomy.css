@@ -283,7 +283,7 @@
   .jt-mention-empty { padding: 10px 12px; color: var(--jt-text-tertiary); font-size: 0.875rem; }
 
   /* 1.4.0 C.5: "New" pill on post cards when the viewer has unread replies. */
-  .jt-unread-pill { display: inline-block; margin-inline-start: 8px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: #fff; vertical-align: middle; }
+  .jt-unread-pill { display: inline-block; margin-inline-start: 8px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 6px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); vertical-align: middle; }
 
   /* Front-end forms (G5 edit space, G6 new space). Token-driven so the
      same primitives work for any future REST-backed form. */
@@ -627,10 +627,10 @@
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
   .jt-profile-banner { height: 120px; background: linear-gradient(135deg, var(--jt-accent), #1e40af); background: linear-gradient(135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }
   .jt-profile-body { padding: 0 20px 20px; margin-top: -32px; }
-  .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-white); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
+  .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-accent-fg); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
   .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: wrap; row-gap: 8px; }
   .jt-profile-name > * { flex-shrink: 0; }
-  .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-white); white-space: nowrap; display: inline-block; }
+  .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); white-space: nowrap; display: inline-block; }
 
   .jt-stats-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
   .jt-stat { text-align: center; }
@@ -1923,7 +1923,7 @@
     display: flex; align-items: center; justify-content: center;
     margin: 16px auto; max-width: 300px;
     padding: 10px 20px; border-radius: var(--jt-radius-full);
-    background: var(--jt-accent); color: var(--jt-white);
+    background: var(--jt-accent); color: var(--jt-accent-fg);
     font-weight: 600; cursor: pointer;
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     animation: jt-bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -2355,7 +2355,7 @@
    rendered 8px 18px. Every "small" button has silently been full-size. Found
    while building the invite panel, whose revoke/copy controls are jt-btn-sm. */
 .jt-app .jt-btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.75rem; border-radius: var(--jt-radius); }
-.jt-following { background: var(--jt-accent); color: #fff; border-color: var(--jt-accent); }
+.jt-following { background: var(--jt-accent); color: var(--jt-accent-fg); border-color: var(--jt-accent); }
 .jt-following:hover { background: var(--jt-danger); border-color: var(--jt-danger); }
 
 /* ── Share dropdown ── */
