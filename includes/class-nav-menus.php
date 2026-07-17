@@ -14,9 +14,59 @@ defined( 'ABSPATH' ) || exit;
 
 class Nav_Menus {
 
+	/**
+	 * Placeholder path appended to the community base for the "My Profile"
+	 * menu item. Stored verbatim in postmeta; resolved per-visitor at render
+	 * time by resolve_self_profile_item().
+	 */
+	private const SELF_PROFILE_PATH = 'u/me/';
+
 	public function __construct() {
 		add_action( 'admin_head-nav-menus.php', [ $this, 'add_meta_box' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_filter( 'wp_setup_nav_menu_item', [ $this, 'resolve_self_profile_item' ] );
+	}
+
+	/**
+	 * Resolve the stored `/u/me/` menu item to the visitor's real profile URL.
+	 *
+	 * A nav menu is shared by every visitor, so the "My Profile" item cannot
+	 * store a per-user URL — get_profile_url() needs a user ID, and there is no
+	 * user at the time an admin adds the item. The stored URL therefore stays
+	 * the `/u/me/` placeholder and is resolved here, once per render, for
+	 * whoever is looking at the page. That keeps the item filter-aware
+	 * (get_profile_url() applies `jetonomy_profile_url`, so BuddyPress et al.
+	 * get their URL) without baking anything user-specific into postmeta.
+	 *
+	 * Resolving at render time (rather than only fixing the picker) is what
+	 * makes ALREADY-SAVED menus honour the filter: they store the same
+	 * placeholder, so they get rewritten too.
+	 *
+	 * Frontend only. In wp-admin / REST / AJAX the menu editor must keep seeing
+	 * the stored placeholder — rewriting it there would let the editor save a
+	 * resolved, user-specific URL back into the menu.
+	 *
+	 * @param object $item Menu item being set up.
+	 * @return object
+	 */
+	public function resolve_self_profile_item( $item ) {
+		if ( is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+			return $item;
+		}
+		if ( empty( $item->url ) || ! is_user_logged_in() ) {
+			return $item;
+		}
+
+		$placeholder = base_url() . '/' . self::SELF_PROFILE_PATH;
+		if ( untrailingslashit( $item->url ) !== untrailingslashit( $placeholder ) ) {
+			return $item;
+		}
+
+		$url = get_profile_url( get_current_user_id() );
+		if ( '' !== $url ) {
+			$item->url = $url;
+		}
+		return $item;
 	}
 
 	/**
@@ -84,8 +134,11 @@ class Nav_Menus {
 				'class' => 'jetonomy-notifications',
 			],
 			[
+				// Placeholder URL — resolved per-visitor by
+				// resolve_self_profile_item() so the item honours
+				// `jetonomy_profile_url` without baking a user into postmeta.
 				'title' => __( 'My Profile', 'jetonomy' ),
-				'url'   => $base . 'u/me/',
+				'url'   => $base . self::SELF_PROFILE_PATH,
 				'class' => 'jetonomy-profile',
 			],
 		];
