@@ -287,10 +287,10 @@ class Permission_Engine {
 	}
 
 	/**
-	 * Check if a user can read a specific post, considering private visibility.
+	 * Check if a user can read a specific post, considering status and private visibility.
 	 *
 	 * @param int    $user_id  WP user ID (0 for guest).
-	 * @param object $post     Post row object (must have is_private, author_id, space_id).
+	 * @param object $post     Post row object (must have status, is_private, author_id, space_id).
 	 * @return bool
 	 */
 	public static function can_read_post( int $user_id, object $post ): bool {
@@ -299,6 +299,35 @@ class Permission_Engine {
 		// Space-level check first.
 		if ( ! self::can( $user_id, 'read', $space_id ) ) {
 			return false;
+		}
+
+		// Status gate (1.8.0). Deleting a post is a SOFT delete — the REST
+		// DELETE route and the admin/moderation handlers all set status='trash'
+		// and the row stays in the table — so without this, "deleted" content
+		// stayed fully readable to anyone who knew the id, as did every post
+		// sitting in the moderation queue.
+		//
+		// The rule is not new: single-post.php has enforced exactly this since
+		// before 1.4.0. It just lived inline in one template, so the REST route,
+		// oEmbed, JSON-LD, the updates poller and four Pro extensions — all of
+		// which already call this method for the private-post gate below — never
+		// received it. Hoisted here so there is one status gate, not one per
+		// surface that remembers to ask.
+		//
+		// Author-visible on purpose, matching that established contract: a
+		// pending post is not gone (its author is waiting on moderation and must
+		// still be able to open it), and an author who deletes their own topic
+		// keeps the link working rather than 404-ing on their own words. Anyone
+		// who is neither the author nor a moderator gets a flat false, guests
+		// included.
+		if ( 'publish' !== (string) ( $post->status ?? 'publish' ) ) {
+			if ( ! $user_id ) {
+				return false;
+			}
+			$is_author = (int) $post->author_id === $user_id;
+			if ( ! $is_author && ! self::can( $user_id, 'moderate', $space_id ) ) {
+				return false;
+			}
 		}
 
 		// Public posts are readable by anyone with space access.

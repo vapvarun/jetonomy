@@ -215,7 +215,7 @@
         "auth": "public_with_handler",
         "capability": "ownership_or_edit_others",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1)."
+        "audit_notes": "GET: can_read_post; PATCH/DELETE: ownership or edit_others. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.6.0: GET response adds is_bookmarked + viewer_vote (-1|0|1). 1.8.0: can_read_post now also gates STATUS - a non-publish post (trash/pending/spam) is readable only by its author or a moderator, everyone else gets 403; delete is a soft delete so this is what makes DELETE /posts/{id} actually stop serving the content. 1.8.0: blocked_author is ADVISORY ONLY - title/content/content_plain now come back empty server-side (Post::apply_block_tombstone) when it is true, so a client that ignores the flag still cannot render the blocked author's words."
       },
       {
         "route": "/posts/(?P<id>\\d+)/close",
@@ -321,7 +321,7 @@
         "auth": "public_with_handler",
         "capability": "create_replies",
         "ownership_check": "handler_enforces",
-        "audit_notes": "GET: space-read; POST: create_replies. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode."
+        "audit_notes": "GET: can_read_post on the PARENT post; POST: create_replies. 1.4.1 A11: GET wrapped with Visibility::rest_check - responds 401 in private mode. 1.8.0: GET was space-read only, which left the whole thread under a trashed/pending/private post readable; it now gates on the parent post so deleting a topic takes its conversation with it."
       },
       {
         "route": "/replies/(?P<id>\\d+)",

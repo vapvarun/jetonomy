@@ -211,12 +211,17 @@ class Abilities {
 					],
 				],
 				'execute_callback'    => [ $this, 'execute_get_post' ],
+				// Post-scoped, not space-scoped: check_permission_or_public()
+				// only asks "can you read this SPACE", which returns true for
+				// any guest on a public space and says nothing about the post's
+				// status or is_private. This route reads one post by id, so it
+				// gates on the post (Basecamp 10105628594).
 				'permission_callback' => function ( $input ) {
 					$post = Post::find( (int) $input['post_id'] );
 					if ( ! $post ) {
 						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
-					return $this->check_permission_or_public( 'read', (int) $post->space_id );
+					return Permission_Engine::can_read_post( get_current_user_id(), $post );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -400,12 +405,16 @@ class Abilities {
 					],
 				],
 				'execute_callback'    => [ $this, 'execute_list_replies' ],
+				// Gate on the PARENT post, not just its space: the replies are
+				// themselves status-filtered and block-tombstoned by
+				// Reply::list_by_post(), but a space-level check let the whole
+				// conversation under a trashed or pending post stay readable.
 				'permission_callback' => function ( $input ) {
 					$post = Post::find( (int) $input['post_id'] );
 					if ( ! $post ) {
 						return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
 					}
-					return $this->check_permission_or_public( 'read', (int) $post->space_id );
+					return Permission_Engine::can_read_post( get_current_user_id(), $post );
 				},
 				'meta'                => [
 					'annotations'  => [
@@ -1224,6 +1233,13 @@ class Abilities {
 		if ( ! $post ) {
 			return new WP_Error( 'not_found', __( 'Post not found.', 'jetonomy' ) );
 		}
+		// Same tombstone the REST post shape applies — this route returns the
+		// raw row's title/content, so without it a blocker reading through the
+		// abilities surface gets the words the /posts/{id} response withholds.
+		Post::apply_block_tombstone(
+			$post,
+			\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
+		);
 		$author = get_userdata( (int) $post->author_id );
 		return [
 			'id'          => (int) $post->id,

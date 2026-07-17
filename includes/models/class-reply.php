@@ -591,27 +591,21 @@ class Reply extends Model {
 	/**
 	 * Mark + scrub a reply row authored by a user the viewer has blocked.
 	 *
-	 * Sets `is_blocked_author = true` and nulls the content fields SERVER-SIDE
-	 * so blocked text never reaches the client — the reply-card partial then
-	 * renders a tombstone ("Content hidden — you blocked this user") instead
-	 * of the body. `author_id` is deliberately left intact: the template needs
-	 * it to render the Unblock affordance and to keep avatar/permission checks
-	 * from erroring on a null author.
+	 * The reply-shaped call into the one tombstone —
+	 * {@see BlockedUser::apply_tombstone()}. A reply has no title, so only the
+	 * body fields are emptied; the reply-card partial then renders "Content
+	 * hidden — you blocked this user" instead of the body.
 	 *
-	 * Shared by get_threaded()'s tree builder and the off-page Q&A
-	 * accepted-answer callout (single-post.php), which fetches its reply via
-	 * Reply::find() instead of the tree and must apply the same treatment.
+	 * Kept as a named seam because callers outside this model use it:
+	 * get_threaded()'s tree builder and the off-page Q&A accepted-answer
+	 * callout (single-post.php), which fetches its reply via Reply::find()
+	 * instead of the tree and must get the same treatment.
 	 *
 	 * @param object $reply       Reply row, mutated in place.
 	 * @param int[]  $blocked_ids Viewer's blocked author ids.
 	 */
 	public static function apply_block_tombstone( object $reply, array $blocked_ids ): void {
-		$reply->is_blocked_author = in_array( (int) $reply->author_id, $blocked_ids, true );
-
-		if ( $reply->is_blocked_author ) {
-			$reply->content       = '';
-			$reply->content_plain = '';
-		}
+		BlockedUser::apply_tombstone( $reply, $blocked_ids, array( 'content', 'content_plain' ) );
 	}
 
 	/**
