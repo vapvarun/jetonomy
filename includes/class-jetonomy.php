@@ -275,10 +275,6 @@ final class Jetonomy {
 		// Delete the versioned flush-key so the next activation triggers a fresh flush.
 		delete_option( 'jetonomy_permalinks_flushed_' . JETONOMY_VERSION );
 		Cron::unschedule();
-		// Background-Jobs Standard §3: clear the orphan sweep from BOTH
-		// schedulers too. An unfinished sweep is NOT forgotten — see
-		// Privacy_Backfill::unschedule(); it re-arms itself on reactivation.
-		Privacy_Backfill::unschedule();
 		flush_rewrite_rules();
 	}
 

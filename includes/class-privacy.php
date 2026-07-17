@@ -38,7 +38,6 @@ class Privacy {
 		// this action per id, routing them into the very same body a live
 		// deletion runs — so the cleanup can never drift from the fix.
 		add_action( 'jetonomy_purge_orphan_user', [ $this, 'on_user_delete' ] );
-		Privacy_Backfill::boot();
 	}
 
 	/**

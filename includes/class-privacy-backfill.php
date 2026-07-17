@@ -23,10 +23,23 @@ defined( 'ABSPATH' ) || exit;
  * left its rows sitting in the database, and they are still there.
  *
  * "We stopped creating new violations" is not the same as "we are compliant".
- * A site owner who ran an erasure request last month was told the data was
+ * A site owner who ran an erasure request before 1.7.1 was told the data was
  * gone; it is not. Closing the hole does not remediate what already leaked
  * through it, so the leaked data has to be swept up explicitly. That is this
  * class.
+ *
+ * On-demand, not automatic
+ * ------------------------
+ * This runs ONLY when a site owner asks for it, via `wp jetonomy privacy scan`
+ * and `wp jetonomy privacy purge-orphans`. It is deliberately NOT wired to an
+ * upgrade migration or a scheduled job. An auto-sweep armed by the free
+ * plugin's migration cannot see Pro's tables unless Pro is loaded at that
+ * instant — and WordPress updates plugins one at a time, so free-before-Pro is
+ * the normal order. An auto-sweep that ran in that window would find no
+ * `jt_pro_ai_log` rows, declare the site clean, and disarm — leaving the exact
+ * leak this class exists to remove, permanently, while telling the owner it was
+ * gone. A CLI command has no such race: anyone running `wp jetonomy` has both
+ * plugins loaded, so discovery always sees the full column set.
  *
  * Why it replays the purge instead of writing its own
  * ---------------------------------------------------
@@ -56,35 +69,14 @@ defined( 'ABSPATH' ) || exit;
  * value — seconds, not minutes, and no row bodies are read. Nothing is ever
  * loaded into memory beyond the orphan id list, which is itself capped at
  * {@see DISCOVERY_CAP} per pass. The purge then runs one user at a time under
- * a wall-clock budget, re-queuing itself until drained, so no single request
- * carries the whole sweep.
+ * a wall-clock budget; {@see run_batch()} drains a durable queue a slice at a
+ * time, and the CLI command loops it until the site is clean, so no single
+ * call carries the whole sweep.
  */
 final class Privacy_Backfill {
 
-	/** Self-continuing batch worker (Action Scheduler, WP-Cron fallback). */
-	public const CRON_HOOK = 'jetonomy_purge_orphans_batch';
-
-	/** Action Scheduler group — reuses the plugin's existing one, no new surface. */
-	private const AS_GROUP = 'jetonomy';
-
-	/** Durable queue of orphan user ids still to purge. */
+	/** Durable queue of orphan user ids still to purge across run_batch() calls. */
 	private const QUEUE_OPTION = 'jetonomy_orphan_purge_queue';
-
-	/**
-	 * "A sweep is owed on this site." Set by the 1.8.0 migration, cleared only
-	 * once the site is confirmed clean.
-	 *
-	 * The migration cannot schedule the sweep itself: it runs at
-	 * `plugins_loaded`, and Action Scheduler's data store is not ready until
-	 * `init` — an `as_*` call before that SILENTLY NO-OPS (see the timing gotcha
-	 * in docs/standards/background-jobs.md). A GDPR remediation that silently
-	 * no-ops is the whole bug on this card, repeated. So the migration records
-	 * the intent durably and {@see maybe_enqueue()} arms it once AS is actually
-	 * ready. Autoloaded: it is read once per request while a sweep is owed, and
-	 * a missing option is served from WP's notoptions cache afterwards, so the
-	 * steady state costs no query.
-	 */
-	private const PENDING_OPTION = 'jetonomy_orphan_purge_pending';
 
 	/**
 	 * Max orphan ids discovered per pass.
@@ -95,41 +87,6 @@ final class Privacy_Backfill {
 	 * complete, it just never holds more than this many ids at once.
 	 */
 	private const DISCOVERY_CAP = 5000;
-
-	/** Self-requeue counter, so a non-converging sweep cannot poll forever. */
-	private const PASS_OPTION = 'jetonomy_orphan_purge_passes';
-
-	/**
-	 * Hard ceiling on self-requeues.
-	 *
-	 * The sweep converges because every column {@see columns()} scans maps to
-	 * something `on_user_delete()` actually clears — discovery is derived from
-	 * the purge lists precisely so the two cannot disagree. That invariant is
-	 * load-bearing in a way that is easy to miss: a column added to discovery
-	 * but NOT to a purge list would be re-found on every pass, and the worker
-	 * would re-arm itself forever — an idle poll, which the Background-Jobs
-	 * Standard names as the anti-pattern to delete on sight. This ceiling means
-	 * that mistake degrades into "the sweep stops early" rather than "the
-	 * customer's site grinds". At DISCOVERY_CAP users per pass it allows 2.5M
-	 * deleted accounts, which no real install approaches.
-	 */
-	private const MAX_PASSES = 500;
-
-	/**
-	 * Register the batch worker.
-	 *
-	 * Called from {@see Privacy::__construct()} so the listener exists on every
-	 * request — a scheduled action is worthless if nothing is listening when it
-	 * fires.
-	 */
-	public static function boot(): void {
-		add_action( self::CRON_HOOK, [ self::class, 'run_scheduled' ] );
-
-		// Arm the sweep only once AS's data store is wired up. This is the hook
-		// the Background-Jobs Standard names, and the same one Cron uses for
-		// ensure_scheduled() — NOT `plugins_loaded`, where as_* silently no-ops.
-		add_action( 'action_scheduler_init', [ self::class, 'maybe_enqueue' ] );
-	}
 
 	/**
 	 * Every (table, column) that can hold a user id, derived from the live purge
@@ -322,120 +279,6 @@ final class Privacy_Backfill {
 			'purged'    => $purged,
 			'remaining' => count( $queue ),
 		];
-	}
-
-	/**
-	 * Batch worker. Drains its slice, then re-queues itself until the site is
-	 * clean — including re-running discovery once, so a site with more orphans
-	 * than DISCOVERY_CAP is still fully swept.
-	 */
-	public static function run_scheduled(): void {
-		$passes = (int) get_option( self::PASS_OPTION, 0 ) + 1;
-
-		if ( $passes > self::MAX_PASSES ) {
-			// Not converging. Stop rather than poll forever, and leave a trace —
-			// silently giving up on a GDPR sweep is how this card happened.
-			self::finish();
-			return;
-		}
-
-		$result = self::run_batch();
-
-		if ( $result['remaining'] > 0 || self::find_orphans( 1 ) ) {
-			// Either this slice ran out of budget, or discovery's cap means more
-			// orphans exist than one pass could hold. Go around again.
-			update_option( self::PASS_OPTION, $passes, false );
-			self::requeue();
-			return;
-		}
-
-		// Clean. Disarm — this is what stops the job being a perpetual poll.
-		self::finish();
-	}
-
-	/** Sweep over: drop every trace of it so nothing re-arms. */
-	private static function finish(): void {
-		delete_option( self::PENDING_OPTION );
-		delete_option( self::PASS_OPTION );
-		delete_option( self::QUEUE_OPTION );
-	}
-
-	/**
-	 * Continue the sweep in a fresh action. Safe to call from the worker: AS is
-	 * unambiguously booted by the time a handler of its own is running.
-	 */
-	private static function requeue(): void {
-		if ( ! as_has_scheduled_action( self::CRON_HOOK, [], self::AS_GROUP ) ) {
-			as_enqueue_async_action( self::CRON_HOOK, [], self::AS_GROUP );
-		}
-	}
-
-	/**
-	 * Record that this site owes a sweep. Called by the 1.8.0 migration.
-	 *
-	 * Deliberately neither purges NOR schedules inline. Not purging, because the
-	 * migration runs inside whatever request first noticed the version bump —
-	 * often an admin page load — and a large site's sweep would hang it. Not
-	 * scheduling, because that request is at `plugins_loaded`, where every AS
-	 * call silently no-ops. It only writes down the intent; {@see maybe_enqueue()}
-	 * arms the job on `action_scheduler_init`, which may be this same request or
-	 * the next one.
-	 */
-	public static function schedule(): void {
-		update_option( self::PENDING_OPTION, 1 );
-	}
-
-	/**
-	 * Arm the sweep if one is owed. Runs on `action_scheduler_init`, so AS is
-	 * guaranteed ready here.
-	 *
-	 * Reactive single-shot (Background-Jobs Standard §2 case 2 — "a response to
-	 * an event", the event being the upgrade), NOT a recurring poll: it fires
-	 * only while a sweep is owed and goes dormant the moment the site is clean.
-	 * Lazy-on-read (§2 case 1) does not fit — deleting leaked personal data is a
-	 * write that must happen whether or not anyone reads anything, and a GDPR
-	 * remediation that only runs if someone visits the right page is not a
-	 * remediation.
-	 */
-	public static function maybe_enqueue(): void {
-		if ( ! get_option( self::PENDING_OPTION ) ) {
-			return; // Nothing owed — the common case, and it costs no query.
-		}
-		// Idempotent guard (§5.2) — never stack duplicate sweeps.
-		if ( as_has_scheduled_action( self::CRON_HOOK, [], self::AS_GROUP ) ) {
-			return;
-		}
-		as_enqueue_async_action( self::CRON_HOOK, [], self::AS_GROUP );
-	}
-
-	/**
-	 * Drop any queued work + state. Called on deactivation.
-	 *
-	 * Clears BOTH schedulers (§3 "Deactivation"): AS owns the hook today, but a
-	 * site upgraded from an older build could still carry a legacy WP-Cron entry
-	 * for it, and leaving that armed would fire a handler the plugin no longer
-	 * listens for.
-	 *
-	 * The PENDING flag deliberately SURVIVES. Deactivating mid-sweep must not
-	 * silently abandon a half-finished GDPR remediation — and it would: once
-	 * db_version reads 1.8.0 the migration never runs again, so nothing would
-	 * ever re-arm the job and the remaining leaked rows would sit there
-	 * forever, with the owner still believing they were erased. That is exactly
-	 * the failure this card exists to fix, so we do not reintroduce it one
-	 * layer down. The flag keeps the intent durable; maybe_enqueue() re-arms on
-	 * the next activation's `action_scheduler_init` without needing the
-	 * migration at all.
-	 *
-	 * The queue itself IS dropped — it is rebuildable work state, and discovery
-	 * is authoritative, so nothing is lost by re-deriving it on resume.
-	 */
-	public static function unschedule(): void {
-		if ( function_exists( 'as_unschedule_all_actions' ) ) {
-			as_unschedule_all_actions( self::CRON_HOOK, [], self::AS_GROUP );
-		}
-		wp_clear_scheduled_hook( self::CRON_HOOK );
-		delete_option( self::QUEUE_OPTION );
-		delete_option( self::PASS_OPTION );
 	}
 
 	/** Does a table exist? Pro tables are absent when the extension never ran. */
