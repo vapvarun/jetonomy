@@ -160,11 +160,22 @@ class Template_Loader {
 			return;
 		}
 
-		// Enqueue styles
+		// Enqueue styles. The --jt-* token layer is its own handle: blocks render
+		// on pages this stylesheet never loads on, so the tokens cannot live in
+		// it (see the header of jetonomy-tokens.css). Registering is idempotent —
+		// Blocks::register_block_assets() registers the same handle and WordPress
+		// dedupes — but jetonomy.css consumes tokens it does not declare, so the
+		// dependency below is what guarantees they are parsed first.
+		wp_register_style(
+			'jetonomy-tokens',
+			JETONOMY_URL . 'assets/css/jetonomy-tokens.css',
+			array(),
+			JETONOMY_VERSION
+		);
 		wp_enqueue_style(
 			'jetonomy',
 			JETONOMY_URL . 'assets/css/jetonomy.css',
-			array(),
+			array( 'jetonomy-tokens' ),
 			JETONOMY_VERSION
 		);
 
@@ -777,7 +788,13 @@ class Template_Loader {
 			$vars .= $token . ':' . $hex . ';';
 		}
 
-		return '' !== $vars ? ':root,.jt-app{' . $vars . '}' : '';
+		// `:root` only, never `:root,.jt-app`. The dark tokens are reassigned on
+		// the <body> class and reach .jt-app by inheritance; a declaration made
+		// directly ON .jt-app beats an inherited one no matter its specificity,
+		// so listing .jt-app here would pin every app surface light in dark mode
+		// the moment an owner sets a palette colour. :root is an ancestor of
+		// .jt-app anyway, so the extra selector never bought any reach.
+		return '' !== $vars ? ':root{' . $vars . '}' : '';
 	}
 
 	/**
