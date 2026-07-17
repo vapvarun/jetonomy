@@ -101,7 +101,10 @@ final class Privacy_Backfill {
 		 * Pro adds its own `jt_pro_*` columns here rather than shipping a
 		 * parallel sweeper — free owns the engine, Pro contributes its tables.
 		 *
-		 * @param array<int,array{table:string,column:string,where:string}> $columns Discovery targets.
+		 * `where` is optional: a third-party handler may add a row without it, so
+		 * the loop below reads it defensively.
+		 *
+		 * @param array<int,array{table:string,column:string,where?:string}> $columns Discovery targets.
 		 */
 		$columns = apply_filters( 'jetonomy_privacy_orphan_columns', Privacy::orphan_columns() );
 

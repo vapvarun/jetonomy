@@ -450,12 +450,11 @@ abstract class Base_Controller extends WP_REST_Controller {
 		// Priming here rather than in each caller: this is the one place that
 		// already knows the whole id set, and a fix living in the callers is a fix
 		// the next caller will not get.
-		if ( ! empty( $ids ) ) {
-			// Core: fills the user + usermeta caches in two queries for the set.
-			cache_users( $ids );
-			// Ours: fills UserProfile's cache in one, which Avatar reads per person.
-			UserProfile::prime( $ids );
-		}
+		// $ids is non-empty here — the empty guard at the top already returned.
+		// Core: fills the user + usermeta caches in two queries for the set.
+		cache_users( $ids );
+		// Ours: fills UserProfile's cache in one, which Avatar reads per person.
+		UserProfile::prime( $ids );
 
 		return $cached;
 	}

@@ -111,8 +111,11 @@ class Router {
 			return;
 		}
 
+		// is_front_page is NOT cleared here: WP_Query has no such property (it is a
+		// method that derives from is_home + show_on_front), so is_home = false
+		// above already makes is_front_page() return false. Assigning it would only
+		// create a dynamic property nothing reads.
 		$query->is_home           = false;
-		$query->is_front_page     = false;
 		$query->is_archive        = false;
 		$query->is_singular       = false;
 		$query->is_page           = false;
