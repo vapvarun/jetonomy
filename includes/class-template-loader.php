@@ -208,21 +208,24 @@ class Template_Loader {
 		// Color palette overrides (accent + text/background/subtle/border).
 		$dynamic_css .= self::palette_css( $settings );
 
-		// Inherit fonts: when enabled, don't override theme fonts.
-		if ( ! empty( $settings['inherit_fonts'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-font:inherit;--jt-font-heading:inherit;}';
-		}
-
-		// Inherit colors: when enabled, adopt the active host theme's colors.
-		// Must chain through each theme's own token system first — BuddyX / BuddyX
-		// Pro expose `--bx-color-*` (NOT the WP presets), BuddyNext exposes
-		// `--brand`/`--text-1`/`--bg`, and Reign maps its palette onto the WP
-		// `--wp--preset--color--*`. Falling straight to the WP preset (as this
-		// did) made Jetonomy render its generic blue on BuddyX instead of the
-		// theme accent. Mirrors the static chain in jetonomy.css.
-		if ( ! empty( $settings['inherit_colors'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--bx-color-accent,var(--reign-colors-theme,var(--brand,var(--wp--preset--color--primary,var(--ast-global-color-0,var(--global-palette1,var(--theme-palette-color-1,var(--wp--preset--color--accent,#3B82F6))))))));--jt-text:var(--bx-color-fg,var(--text-1,var(--wp--preset--color--contrast,#1a1a1a)));--jt-bg:var(--bx-color-bg-elevated,var(--bg,var(--wp--preset--color--base,#ffffff)));}';
-		}
+		// Theme adoption is unconditional and lives in jetonomy.css — see the
+		// --jt-accent / --jt-font chains there. Two settings used to gate it here
+		// and both are gone:
+		//
+		// `inherit_fonts` emitted `--jt-font:inherit`. Measured across 11 themes it
+		// changed nothing: the chain already ends in `inherit`, so the token
+		// resolves to empty either way and .jt-app inherits the theme's font from
+		// body regardless. It was a checkbox with no effect, over a font setting
+		// that does not exist.
+		//
+		// `inherit_colors` did have an effect, and it was the wrong one: it made
+		// palette_tokens() return nothing, so an owner who picked an accent had it
+		// silently discarded — the checkbox defaults to checked, which left the
+		// colour picker directly beneath it dead on arrival. The picker already
+		// encodes the same intent honestly (the #0073aa default means "not set,
+		// adopt the theme"), so the toggle was redundant as well as harmful.
+		// It also re-declared the whole accent chain from a stale copy, which had
+		// already drifted from the real one in jetonomy.css.
 
 		// Layout density.
 		if ( ! empty( $settings['layout_density'] ) && 'compact' === $settings['layout_density'] ) {
@@ -783,8 +786,13 @@ class Template_Loader {
 	 * Shared by palette_css() (frontend emission) and by
 	 * Theme_Integration::output_color_bridge(), which subtracts these
 	 * tokens from its automatic theme bridge so an explicit owner choice
-	 * always outranks inherited theme colors. Empty when "Inherit theme
-	 * colors" is on or when no palette field is set.
+	 * always outranks inherited theme colors.
+	 *
+	 * Empty when no palette field is set — which is the normal case, and is
+	 * what makes theme adoption the default: emit nothing, and the chains in
+	 * jetonomy.css resolve to the active theme's own tokens. The accent field
+	 * treats its #0073aa default as "not set" for the same reason, so an owner
+	 * who never touches it keeps matching their theme.
 	 *
 	 * @since 1.5.0
 	 *
@@ -792,12 +800,6 @@ class Template_Loader {
 	 * @return array<string,string> Token name => sanitized hex color.
 	 */
 	public static function palette_tokens( array $settings ): array {
-		// "Inherit theme colors" wins over the manual palette (same
-		// precedence the accent field always had via CSS order).
-		if ( ! empty( $settings['inherit_colors'] ) ) {
-			return array();
-		}
-
 		$map = array(
 			'accent_color'    => '--jt-accent',
 			'text_color'      => '--jt-text',
