@@ -220,6 +220,29 @@ class Post extends Model {
 	}
 
 	/**
+	 * Mark + scrub a post row authored by a user the viewer has blocked.
+	 *
+	 * The post-shaped call into the one tombstone —
+	 * {@see BlockedUser::apply_tombstone()}, the same treatment
+	 * {@see Reply::apply_block_tombstone()} gives a reply. `title` is emptied
+	 * alongside the body because a post title is authored text too: leaving it
+	 * would ship the blocked user's words under a flag that says they were
+	 * hidden.
+	 *
+	 * Needed on the by-id / by-slug paths (GET /posts/{id}, single-post.php).
+	 * Every list surface already excludes blocked authors in SQL, but a deep
+	 * link — a notification, a share, a search result that predates the block —
+	 * reaches the row directly and bypasses that filter entirely.
+	 *
+	 * @since 1.8.0
+	 * @param object $post        Post row, mutated in place.
+	 * @param int[]  $blocked_ids Viewer's blocked author ids.
+	 */
+	public static function apply_block_tombstone( object $post, array $blocked_ids ): void {
+		BlockedUser::apply_tombstone( $post, $blocked_ids, array( 'title', 'content', 'content_plain' ) );
+	}
+
+	/**
 	 * Find a post by its slug.
 	 *
 	 * @param string $slug Post slug.

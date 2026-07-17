@@ -35,25 +35,11 @@ $jt_can_moderate_here = $jt_viewer_id
 	? \Jetonomy\Permissions\Permission_Engine::can( $jt_viewer_id, 'moderate', (int) $post->space_id )
 	: false;
 
-if ( 'publish' !== $post->status ) {
-	$viewer_id = $jt_viewer_id;
-	$is_author = $viewer_id && (int) $post->author_id === $viewer_id;
-	$is_mod    = $jt_can_moderate_here || current_user_can( 'manage_options' );
-
-	if ( ! $is_author && ! $is_mod ) {
-		status_header( 404 );
-		\Jetonomy\Template_Loader::partial(
-			'empty-state',
-			[
-				'icon'      => 'empty-search',
-				'icon_size' => 48,
-				'message'   => __( 'Post not found.', 'jetonomy' ),
-				'tone'      => 'warn',
-			]
-		);
-		return;
-	}
-}
+// The non-published (pending / trash / spam) gate that used to live here is
+// now inside Permission_Engine::can_read_post() below — the same author-or-
+// moderator rule, same 404 + "Post not found" outcome, but enforced for the
+// REST route, oEmbed, JSON-LD and the Pro extensions too, all of which read
+// posts through that method and none of which had it (Basecamp 10105628594).
 
 $space = \Jetonomy\Models\Space::find( (int) $post->space_id );
 
@@ -97,7 +83,15 @@ if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_
 // already filters this author out. We do NOT 404 — the post genuinely
 // exists and moderators/deep-linkers need a real state, not "not found" —
 // we just refuse to ship the content to a viewer who blocked its author.
-if ( in_array( (int) $post->author_id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ) ) {
+// Routed through the shared seam (rather than the inline in_array() this used
+// to do) so this screen and the REST payload decide "is blocked" the same way;
+// it also empties the row's title/body, so the early return below is no longer
+// the only thing standing between a blocked author's words and the page.
+\Jetonomy\Models\Post::apply_block_tombstone(
+	$post,
+	\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
+);
+if ( ! empty( $post->is_blocked_author ) ) {
 	?>
 	<div class="jt-post-blocked-tombstone" data-wp-interactive="jetonomy">
 		<?php jetonomy_echo_icon( 'shield', 32 ); ?>
@@ -144,20 +138,25 @@ if ( $prefix_name && $space ) {
 	}
 }
 
-// Replies sort.
+// Replies sort. The DEFAULT is a contract, not a preference: reply deep links
+// (\Jetonomy\reply_permalink()) carry no ?rsort so that the page they computed
+// under Reply::DEFAULT_SORT is the page this view renders.
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : 'oldest';
+$reply_sort = isset( $_GET['rsort'] ) ? sanitize_key( $_GET['rsort'] ) : \Jetonomy\Models\Reply::DEFAULT_SORT;
 if ( ! in_array( $reply_sort, [ 'oldest', 'newest', 'best' ], true ) ) {
-	$reply_sort = 'oldest';
+	$reply_sort = \Jetonomy\Models\Reply::DEFAULT_SORT;
 }
 // Top-level reply pagination, honouring the global `replies_per_page`
 // setting. Server renders the requested page; pagination-frontend.js
 // fetches the next page and appends in place. No-JS users get classic
 // full-page pagination via the ?rpg=N anchor.
-$total_replies    = (int) $post->reply_count;
-$top_level_count  = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
-$jt_settings      = get_option( 'jetonomy_settings', array() );
-$replies_per_page = max( 1, (int) ( $jt_settings['replies_per_page'] ?? 30 ) );
+$total_replies   = (int) $post->reply_count;
+$top_level_count = \Jetonomy\Models\Reply::count_top_level( (int) $post->id );
+// Via the shared helper, NOT a raw get_option(): \Jetonomy\reply_permalink()
+// computes which page a deep-linked reply lands on using this same value. If
+// the view and the link-builder ever read the setting differently, every
+// notification link silently lands on the wrong page.
+$replies_per_page = \Jetonomy\replies_per_page();
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $reply_page        = max( 1, absint( wp_unslash( $_GET['rpg'] ?? 1 ) ) );
 $reply_offset      = ( $reply_page - 1 ) * $replies_per_page;
@@ -243,7 +242,7 @@ wp_interactivity_state(
  * @param object $post  Parent post object.
  * @param int    $depth Current nesting depth (0 = top-level).
  */
-function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = null ) {
+function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = null, $page = 1 ) {
 	$depth         = isset( $reply->depth ) ? (int) $reply->depth : $depth;
 	$wrapper_class = $depth > 0 ? 'jt-nested jt-nested-' . min( $depth, 3 ) : '';
 	?>
@@ -255,6 +254,11 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				'reply' => $reply,
 				'post'  => $post,
 				'space' => $space,
+				// This page was just rendered, so every card on it — including
+				// nested children, which page with their top-level ancestor —
+				// permalinks to it. Passing it keeps reply_permalink() from
+				// paying a COUNT per card.
+				'permalink_page' => (int) $page,
 			]
 		);
 		?>
@@ -267,13 +271,13 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 				</button>
 				<div class="jt-thread-children" data-wp-class--collapsed="context.collapsed">
 					<?php foreach ( $reply->children as $child ) : ?>
-						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space ); ?>
+						<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space, $page ); ?>
 					<?php endforeach; ?>
 				</div>
 			</div>
 		<?php elseif ( ! empty( $reply->children ) ) : ?>
 			<?php foreach ( $reply->children as $child ) : ?>
-				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space ); ?>
+				<?php jetonomy_render_threaded_reply( $child, $post, $depth + 1, $space, $page ); ?>
 			<?php endforeach; ?>
 		<?php endif; ?>
 	</div>
@@ -794,7 +798,7 @@ function jetonomy_render_threaded_reply( $reply, $post, $depth = 0, $space = nul
 
 					<div class="jt-replies-list" id="jt-replies-container">
 						<?php foreach ( $reply_batch as $index => $reply ) : ?>
-							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space ); ?>
+							<?php jetonomy_render_threaded_reply( $reply, $post, 0, $space, $reply_page ); ?>
 							<?php
 							/**
 							 * Fires after each top-level reply in the replies list.

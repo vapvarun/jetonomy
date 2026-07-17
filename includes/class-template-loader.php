@@ -160,11 +160,22 @@ class Template_Loader {
 			return;
 		}
 
-		// Enqueue styles
+		// Enqueue styles. The --jt-* token layer is its own handle: blocks render
+		// on pages this stylesheet never loads on, so the tokens cannot live in
+		// it (see the header of jetonomy-tokens.css). Registering is idempotent —
+		// Blocks::register_block_assets() registers the same handle and WordPress
+		// dedupes — but jetonomy.css consumes tokens it does not declare, so the
+		// dependency below is what guarantees they are parsed first.
+		wp_register_style(
+			'jetonomy-tokens',
+			JETONOMY_URL . 'assets/css/jetonomy-tokens.css',
+			array(),
+			JETONOMY_VERSION
+		);
 		wp_enqueue_style(
 			'jetonomy',
 			JETONOMY_URL . 'assets/css/jetonomy.css',
-			array(),
+			array( 'jetonomy-tokens' ),
 			JETONOMY_VERSION
 		);
 
@@ -208,21 +219,24 @@ class Template_Loader {
 		// Color palette overrides (accent + text/background/subtle/border).
 		$dynamic_css .= self::palette_css( $settings );
 
-		// Inherit fonts: when enabled, don't override theme fonts.
-		if ( ! empty( $settings['inherit_fonts'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-font:inherit;--jt-font-heading:inherit;}';
-		}
-
-		// Inherit colors: when enabled, adopt the active host theme's colors.
-		// Must chain through each theme's own token system first — BuddyX / BuddyX
-		// Pro expose `--bx-color-*` (NOT the WP presets), BuddyNext exposes
-		// `--brand`/`--text-1`/`--bg`, and Reign maps its palette onto the WP
-		// `--wp--preset--color--*`. Falling straight to the WP preset (as this
-		// did) made Jetonomy render its generic blue on BuddyX instead of the
-		// theme accent. Mirrors the static chain in jetonomy.css.
-		if ( ! empty( $settings['inherit_colors'] ) ) {
-			$dynamic_css .= ':root,.jt-app{--jt-accent:var(--bx-color-accent,var(--reign-colors-theme,var(--brand,var(--wp--preset--color--primary,var(--ast-global-color-0,var(--global-palette1,var(--theme-palette-color-1,var(--wp--preset--color--accent,#3B82F6))))))));--jt-text:var(--bx-color-fg,var(--text-1,var(--wp--preset--color--contrast,#1a1a1a)));--jt-bg:var(--bx-color-bg-elevated,var(--bg,var(--wp--preset--color--base,#ffffff)));}';
-		}
+		// Theme adoption is unconditional and lives in jetonomy.css — see the
+		// --jt-accent / --jt-font chains there. Two settings used to gate it here
+		// and both are gone:
+		//
+		// `inherit_fonts` emitted `--jt-font:inherit`. Measured across 11 themes it
+		// changed nothing: the chain already ends in `inherit`, so the token
+		// resolves to empty either way and .jt-app inherits the theme's font from
+		// body regardless. It was a checkbox with no effect, over a font setting
+		// that does not exist.
+		//
+		// `inherit_colors` did have an effect, and it was the wrong one: it made
+		// palette_tokens() return nothing, so an owner who picked an accent had it
+		// silently discarded — the checkbox defaults to checked, which left the
+		// colour picker directly beneath it dead on arrival. The picker already
+		// encodes the same intent honestly (the #0073aa default means "not set,
+		// adopt the theme"), so the toggle was redundant as well as harmful.
+		// It also re-declared the whole accent chain from a stale copy, which had
+		// already drifted from the real one in jetonomy.css.
 
 		// Layout density.
 		if ( ! empty( $settings['layout_density'] ) && 'compact' === $settings['layout_density'] ) {
@@ -774,7 +788,13 @@ class Template_Loader {
 			$vars .= $token . ':' . $hex . ';';
 		}
 
-		return '' !== $vars ? ':root,.jt-app{' . $vars . '}' : '';
+		// `:root` only, never `:root,.jt-app`. The dark tokens are reassigned on
+		// the <body> class and reach .jt-app by inheritance; a declaration made
+		// directly ON .jt-app beats an inherited one no matter its specificity,
+		// so listing .jt-app here would pin every app surface light in dark mode
+		// the moment an owner sets a palette colour. :root is an ancestor of
+		// .jt-app anyway, so the extra selector never bought any reach.
+		return '' !== $vars ? ':root{' . $vars . '}' : '';
 	}
 
 	/**
@@ -783,8 +803,13 @@ class Template_Loader {
 	 * Shared by palette_css() (frontend emission) and by
 	 * Theme_Integration::output_color_bridge(), which subtracts these
 	 * tokens from its automatic theme bridge so an explicit owner choice
-	 * always outranks inherited theme colors. Empty when "Inherit theme
-	 * colors" is on or when no palette field is set.
+	 * always outranks inherited theme colors.
+	 *
+	 * Empty when no palette field is set — which is the normal case, and is
+	 * what makes theme adoption the default: emit nothing, and the chains in
+	 * jetonomy.css resolve to the active theme's own tokens. The accent field
+	 * treats its #0073aa default as "not set" for the same reason, so an owner
+	 * who never touches it keeps matching their theme.
 	 *
 	 * @since 1.5.0
 	 *
@@ -792,12 +817,6 @@ class Template_Loader {
 	 * @return array<string,string> Token name => sanitized hex color.
 	 */
 	public static function palette_tokens( array $settings ): array {
-		// "Inherit theme colors" wins over the manual palette (same
-		// precedence the accent field always had via CSS order).
-		if ( ! empty( $settings['inherit_colors'] ) ) {
-			return array();
-		}
-
 		$map = array(
 			'accent_color'    => '--jt-accent',
 			'text_color'      => '--jt-text',
@@ -862,7 +881,97 @@ class Template_Loader {
 		);
 	}
 
+	/**
+	 * Resolve the owner's SEO title pattern for a content route.
+	 *
+	 * Ported from Schema_Markup::filter_title(), which is now deleted — it was a
+	 * second document_title_parts producer and this one always overwrote it.
+	 *
+	 * Two behaviours are deliberately preserved from it. `{site_name}` is stripped
+	 * out of the pattern (with any adjacent separator) because WordPress appends
+	 * the site name itself via the title separator; leaving the placeholder in
+	 * would render it twice. And an unresolvable object returns '' rather than a
+	 * half-substituted string, so the caller falls back to the generic label —
+	 * that path is live, since 404s render through here too.
+	 *
+	 * One behaviour is deliberately fixed: this reads \Jetonomy\seo_settings(),
+	 * not get_option() raw. filter_title() gated on `! empty( $settings[...] )`
+	 * against the raw option, so on any install where the owner had not explicitly
+	 * saved a pattern the documented defaults never applied and the whole feature
+	 * silently no-opped.
+	 *
+	 * THE TITLE IS ITS OWN FETCH. This resolves the post independently of
+	 * set_seo_meta()'s $post — which is exactly how the <title> ended up being
+	 * the one thing in the <head> with no permission gate on it at all, while
+	 * og:*, meta description and article:* beside it had been gated since 1.4.0.
+	 * Verified at runtime on 1.8.0: a logged-out crawler on an is_private topic
+	 * got a body reading "Post not found" and a <title> reading the private
+	 * topic's real title, and a viewer who had blocked the author got their
+	 * post title in their browser tab beside a "you blocked this user" body.
+	 *
+	 * @param string               $route 'post' | 'space'.
+	 * @param string               $slug  Object slug from the route.
+	 * @param array<string,mixed>  $seo   Resolved seo_settings().
+	 * @return string|null Title fragment; '' when the object cannot be resolved
+	 *                     (caller falls back to the slug label — that is just the
+	 *                     URL echoed back, so it reveals nothing); null when the
+	 *                     object EXISTS but this viewer may not be shown its text,
+	 *                     which the caller must render as a neutral label. The two
+	 *                     are distinct on purpose: the slug is derived from the
+	 *                     title, so falling back to it for a gated post would
+	 *                     re-leak in hyphens the words the gate just withheld.
+	 */
+	private static function seo_title_from_pattern( string $route, string $slug, array $seo ): ?string {
+		$key     = 'post' === $route ? 'seo_post_title' : 'seo_space_title';
+		$pattern = (string) ( $seo[ $key ] ?? '' );
+		if ( '' === $pattern || '' === $slug ) {
+			return '';
+		}
+
+		// WP appends ' – {site_name}' itself; drop the placeholder and any
+		// separator hugging it so the site name is not printed twice.
+		$pattern = (string) preg_replace( '/\s*[\|\-–—]?\s*\{site_name\}\s*[\|\-–—]?\s*/u', ' ', $pattern );
+		$pattern = trim( (string) preg_replace( '/\s+/u', ' ', $pattern ) );
+		if ( '' === $pattern ) {
+			return '';
+		}
+
+		if ( 'post' === $route ) {
+			$post = \Jetonomy\Models\Post::find_by_slug( $slug );
+			if ( ! $post ) {
+				return '';
+			}
+			// The gate the rest of the <head> already had. Same predicate as the
+			// og:* / description branch in set_seo_meta() so the tab title and the
+			// tags beneath it can never disagree about the same post again.
+			if ( ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
+				return null;
+			}
+			$space = \Jetonomy\Models\Space::find( (int) $post->space_id );
+			return str_replace(
+				[ '{post_title}', '{space_name}' ],
+				[ (string) $post->title, (string) ( $space->title ?? '' ) ],
+				$pattern
+			);
+		}
+
+		$space = \Jetonomy\Models\Space::find_by_slug( $slug );
+		if ( ! $space ) {
+			return '';
+		}
+		return str_replace( '{space_name}', (string) $space->title, $pattern );
+	}
+
 	private static function set_seo_meta( array $data ): void {
+		// On a mapped front page the community is rendered over a real WP page.
+		// That page has its own object, its own permalink, and its own SEO fields
+		// in whatever SEO plugin the owner runs — so it owns the title, canonical
+		// and OG, and we emit nothing. Jetonomy supplies SEO only where no other
+		// party can: its virtual routes, which have no WP object to attach to.
+		if ( ! empty( $data['mapped'] ) ) {
+			return;
+		}
+
 		add_filter(
 			'document_title_parts',
 			function ( $parts ) use ( $data ) {
@@ -870,6 +979,35 @@ class Template_Loader {
 				// so we only set the route-specific title fragment here. Don't
 				// concatenate the site name yourself — it doubles up.
 				$slug_pretty = ucfirst( str_replace( '-', ' ', (string) $data['slug'] ) );
+
+				// Owner-configurable title patterns (Settings → SEO). These are the
+				// documented contract for the two routes that represent real content,
+				// and until now they did nothing at all: Schema_Markup::filter_title
+				// implemented them but read the option raw, so its own defaults never
+				// applied, and this closure ran later and overwrote its result anyway.
+				// Two producers of document_title_parts, and the wrong one won — which
+				// is why every topic's title was its SLUG rather than its title.
+				// One producer now; filter_title is gone.
+				$seo = \Jetonomy\seo_settings();
+				if ( 'post' === $data['route'] || 'space' === $data['route'] ) {
+					$patterned = self::seo_title_from_pattern( $data['route'], (string) $data['slug'], $seo );
+					// null = the post exists but this viewer may not be shown its
+					// text (private/pending/trashed, or they blocked the author).
+					// Neutral label rather than the slug fallback below, which is
+					// built FROM the title and would hand back the same words
+					// (1.8.0).
+					if ( null === $patterned ) {
+						$parts['title'] = __( 'Community', 'jetonomy' );
+						return $parts;
+					}
+					if ( '' !== $patterned ) {
+						$parts['title'] = $patterned;
+						return $parts;
+					}
+					// Fall through to the generic labels below when the object is
+					// missing (404s render through this same path).
+				}
+
 				switch ( $data['route'] ) {
 					case 'home':
 						$parts['title'] = __( 'Community', 'jetonomy' );
@@ -1050,7 +1188,16 @@ class Template_Loader {
 						// description, OG tags, article:* metadata, and oEmbed discovery URL
 						// for a private topic leak into every non-author response's <head>
 						// (Basecamp 9803998504).
-						if ( $post && ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+						//
+						// can_render_post_text() (not can_read_post()) because the <head> is
+						// also where a BLOCKED author's words were still arriving: the body
+						// read "Content hidden — you blocked this user" while <title>,
+						// og:title and — worst — meta description (the whole post body) sat
+						// in the same response. Nulling $post falls through to the generic
+						// community title, which is what a viewer who blocked the author
+						// should get. A guest/crawler blocks nobody, so their <head> is
+						// byte-identical to before (1.8.0).
+						if ( $post && ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 							$post = null;
 						}
 						if ( $post ) {

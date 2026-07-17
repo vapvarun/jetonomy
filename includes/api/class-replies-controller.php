@@ -133,7 +133,13 @@ class Replies_Controller extends Base_Controller {
 			return $this->not_found( 'Post' );
 		}
 
-		if ( ! $this->check_permission( 'read', (int) $post->space_id ) ) {
+		// Gate on the parent POST, not just its space. The rows themselves are
+		// already status-filtered and block-tombstoned by Reply::list_by_post(),
+		// but a space-level check left every reply under a trashed or pending
+		// post readable — so deleting a topic did not take its conversation with
+		// it, and a private topic's thread answered to non-members
+		// (Basecamp 10105628594).
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
 			return $this->permission_error();
 		}
 

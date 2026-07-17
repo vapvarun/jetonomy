@@ -287,10 +287,71 @@ class Permission_Engine {
 	}
 
 	/**
-	 * Check if a user can read a specific post, considering private visibility.
+	 * May this post's AUTHORED TEXT be emitted to this viewer out-of-band?
+	 *
+	 * can_read_post() plus the blocked-author check, for the surfaces that
+	 * broadcast a post's title/body somewhere the viewer cannot be shown a
+	 * tombstone: the <head> (title / og:* / meta description), JSON-LD, and the
+	 * oEmbed unfurl. Those three asked can_read_post() — which knows about
+	 * visibility and status but not blocks — so a blocked author's title and
+	 * (via meta description) their entire body still reached the very person who
+	 * blocked them, beside a body that correctly read "Content hidden — you
+	 * blocked this user" (1.8.0).
+	 *
+	 * DELIBERATELY NOT FOLDED INTO can_read_post(). The two questions differ in
+	 * their negative outcome, and conflating them regresses the tombstone
+	 * shipped earlier in 1.8.0:
+	 *
+	 *   can_read_post() === false  -> 404, the row is not yours to reach.
+	 *   blocked author            -> the row IS yours to reach; we owe you a
+	 *                                "you blocked this user" state and an
+	 *                                Unblock affordance, and we owe the innocent
+	 *                                repliers on that topic their replies.
+	 *
+	 * Teaching can_read_post() about blocks would 404 single-post.php, collapse
+	 * GET /posts/{id}'s blocked_author payload, and orphan every innocent reply
+	 * under a blocked author's topic via the replies-controller parent gate —
+	 * breaking three surfaces to fix three. Surfaces that render a viewer-facing
+	 * state keep can_read_post() + Post::apply_block_tombstone(). Surfaces that
+	 * emit text with no room for a state call this.
+	 *
+	 * DIRECTION IS NOT DECIDED HERE. It comes from BlockedUser::blocked_ids(),
+	 * the one primitive every read surface already shares, so whichever way that
+	 * set is defined this method agrees with the tombstone beside it by
+	 * construction rather than by two places remembering to match.
+	 *
+	 * NO-VIEWER DEFAULT IS "EMIT", explicitly: blocked_ids( 0 ) is [] because a
+	 * guest has blocked nobody. A crawler, cron run, or warm cache therefore
+	 * sees byte-identical output to today — blocking must never deindex a public
+	 * topic. Cost for that path is zero queries; for a member it is one, memoized
+	 * per request and cached for 5 minutes by blocked_ids().
+	 *
+	 * @since 1.8.0
+	 * @param int    $user_id WP user ID (0 for guest).
+	 * @param object $post    Post row object.
+	 * @return bool
+	 */
+	public static function can_render_post_text( int $user_id, object $post ): bool {
+		if ( ! self::can_read_post( $user_id, $post ) ) {
+			return false;
+		}
+
+		if ( $user_id <= 0 ) {
+			return true;
+		}
+
+		return ! in_array(
+			(int) ( $post->author_id ?? 0 ),
+			\Jetonomy\Models\BlockedUser::blocked_ids( $user_id ),
+			true
+		);
+	}
+
+	/**
+	 * Check if a user can read a specific post, considering status and private visibility.
 	 *
 	 * @param int    $user_id  WP user ID (0 for guest).
-	 * @param object $post     Post row object (must have is_private, author_id, space_id).
+	 * @param object $post     Post row object (must have status, is_private, author_id, space_id).
 	 * @return bool
 	 */
 	public static function can_read_post( int $user_id, object $post ): bool {
@@ -299,6 +360,35 @@ class Permission_Engine {
 		// Space-level check first.
 		if ( ! self::can( $user_id, 'read', $space_id ) ) {
 			return false;
+		}
+
+		// Status gate (1.8.0). Deleting a post is a SOFT delete — the REST
+		// DELETE route and the admin/moderation handlers all set status='trash'
+		// and the row stays in the table — so without this, "deleted" content
+		// stayed fully readable to anyone who knew the id, as did every post
+		// sitting in the moderation queue.
+		//
+		// The rule is not new: single-post.php has enforced exactly this since
+		// before 1.4.0. It just lived inline in one template, so the REST route,
+		// oEmbed, JSON-LD, the updates poller and four Pro extensions — all of
+		// which already call this method for the private-post gate below — never
+		// received it. Hoisted here so there is one status gate, not one per
+		// surface that remembers to ask.
+		//
+		// Author-visible on purpose, matching that established contract: a
+		// pending post is not gone (its author is waiting on moderation and must
+		// still be able to open it), and an author who deletes their own topic
+		// keeps the link working rather than 404-ing on their own words. Anyone
+		// who is neither the author nor a moderator gets a flat false, guests
+		// included.
+		if ( 'publish' !== (string) ( $post->status ?? 'publish' ) ) {
+			if ( ! $user_id ) {
+				return false;
+			}
+			$is_author = (int) $post->author_id === $user_id;
+			if ( ! $is_author && ! self::can( $user_id, 'moderate', $space_id ) ) {
+				return false;
+			}
 		}
 
 		// Public posts are readable by anyone with space access.

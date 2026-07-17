@@ -65,9 +65,17 @@ class BBPress_Importer extends Importer {
 	 *   - The body carries NO attachment markup, so there is nothing to strip.
 	 *
 	 * So this is purely a re-link: the file survives untouched either way, and all
-	 * that is missing is the row that makes Jetonomy render it. That link is Pro, so
-	 * on a free site nothing happens here and no file is lost — the media items are
-	 * already in the library, and enabling Pro later reveals them.
+	 * that is missing is the row that makes Jetonomy render it.
+	 *
+	 * That link is FREE as of 1.7.1 — this comment used to say it was Pro, and that
+	 * "enabling Pro later reveals them". Both halves are now false, and the second
+	 * was false in a way that mattered: it promised a reveal that no code performed,
+	 * because link rows were only ever written during import (Basecamp 10093054077).
+	 * Attachments moved to free (Attachments::register() is in the unconditional
+	 * bootstrap; the importer links via the free Attachment model regardless of
+	 * whether Pro is active), so the rows are written here on every site and free
+	 * renders them immediately. Turning Pro off costs previews and the PDF viewer,
+	 * not the attachments.
 	 *
 	 * @param string $object_type   'post' or 'reply'.
 	 * @param int    $source_post_id bbPress topic/reply post ID.
@@ -115,18 +123,65 @@ class BBPress_Importer extends Importer {
 		delete_option( 'jetonomy_import_bbpress_cat_id' );
 	}
 
+	/**
+	 * Create the space for one bbPress forum row, resolving its parent.
+	 *
+	 * Shared by BOTH import paths (run_batch() and run()) on purpose. The parent
+	 * mapping below was missing from each of them independently; giving them one
+	 * body means the next change to forum->space mapping cannot land on one path
+	 * and miss the other.
+	 *
+	 * Callers must have created the parent forum already — see
+	 * sort_rows_parents_first(). A parent that still doesn't resolve (orphan row)
+	 * falls back to top level rather than failing the import.
+	 *
+	 * @param object $forum  bbPress forum post row.
+	 * @param int    $cat_id Import category id.
+	 * @return int Space id, or 0 on failure.
+	 */
+	private function create_space_from_forum( object $forum, int $cat_id ): int {
+		// bbPress nests forums through the ordinary WP post_parent column. Both
+		// paths used to ignore it, so every sub-forum was created as a top-level
+		// space and the customer's whole board structure was flattened on import.
+		$parent_space_id = 0;
+		if ( (int) $forum->post_parent > 0 ) {
+			$mapped = $this->get_mapped_id( 'forum', (int) $forum->post_parent );
+			if ( $mapped ) {
+				$parent_space_id = $mapped;
+			}
+		}
+
+		return (int) Space::create(
+			[
+				'category_id' => $cat_id,
+				'parent_id'   => $parent_space_id,
+				'author_id'   => (int) $forum->post_author ?: 1,
+				'type'        => 'forum',
+				'title'       => $forum->post_title,
+				'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
+				'description' => wp_strip_all_tags( $forum->post_content ),
+				'visibility'  => 'public',
+				'join_policy' => 'open',
+			]
+		);
+	}
+
 	public function run_batch( string $phase, int $offset, int $batch_size ): array {
 		global $wpdb;
 
 		switch ( $phase ) {
 			case 'forums':
-				$forums = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC LIMIT %d OFFSET %d",
-						$batch_size,
-						$offset
-					)
+				// Forums must be created parents-first so a sub-forum can resolve its
+				// parent's new space id, and that ordering has to hold ACROSS batches —
+				// which SQL paging cannot express. So the whole set is ordered once and
+				// then sliced. Forums are a small set (tens; wpForo and Asgaros load
+				// theirs whole for the same reason), unlike the topic and reply phases
+				// below, which stay paged in SQL because they run to thousands.
+				$all_forums = $wpdb->get_results(
+					"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC"
 				);
+				$all_forums = $this->sort_rows_parents_first( (array) $all_forums, 'ID', 'post_parent' );
+				$forums     = array_slice( $all_forums, $offset, $batch_size );
 
 				if ( empty( $forums ) ) {
 					return [
@@ -136,6 +191,16 @@ class BBPress_Importer extends Importer {
 						'processed' => 0,
 					];
 				}
+
+				// Carry forward what earlier batches mapped. Every batch runs in its own
+				// request with a fresh instance, so id_map starts empty; without this the
+				// update_option() below replaced the entire map with only THIS batch's
+				// forums. Two consequences, both silent: a child forum could never see a
+				// parent created in an earlier batch, and every topic under an earlier
+				// batch's forum was skipped as "parent not imported". Verified: 5 forums
+				// at batch_size 2 persisted only the last batch's mapping and imported 0
+				// of 1 topics.
+				$this->id_map = get_option( 'jetonomy_import_id_map', [] );
 
 				// First batch: create import category.
 				if ( 0 === $offset ) {
@@ -152,18 +217,7 @@ class BBPress_Importer extends Importer {
 				$cat_id = (int) get_option( 'jetonomy_import_bbpress_cat_id', 0 );
 
 				foreach ( $forums as $forum ) {
-					$space_id = Space::create(
-						[
-							'category_id' => $cat_id,
-							'author_id'   => (int) $forum->post_author ?: 1,
-							'type'        => 'forum',
-							'title'       => $forum->post_title,
-							'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
-							'description' => wp_strip_all_tags( $forum->post_content ),
-							'visibility'  => 'public',
-							'join_policy' => 'open',
-						]
-					);
+					$space_id = $this->create_space_from_forum( $forum, $cat_id );
 					if ( $space_id ) {
 						$this->map_id( 'forum', $forum->ID, $space_id );
 						++$this->imported;
@@ -172,7 +226,7 @@ class BBPress_Importer extends Importer {
 
 				update_option( 'jetonomy_import_id_map', $this->id_map, false );
 
-				$has_more = count( $forums ) >= $batch_size;
+				$has_more = count( $all_forums ) > $offset + $batch_size;
 				return [
 					'phase'     => $has_more ? 'forums' : 'topics',
 					'offset'    => $has_more ? $offset + $batch_size : 0,
@@ -390,20 +444,13 @@ class BBPress_Importer extends Importer {
 			"SELECT * FROM {$wpdb->posts} WHERE post_type = 'forum' AND post_status = 'publish' ORDER BY menu_order ASC, ID ASC"
 		);
 
+		// Parents before children, so each sub-forum can resolve its parent's new
+		// space id below. Same reason as the batched path.
+		$forums = $this->sort_rows_parents_first( (array) $forums, 'ID', 'post_parent' );
+
 		foreach ( $forums as $forum ) {
 			if ( ! $this->dry_run ) {
-				$space_id = Space::create(
-					[
-						'category_id' => $cat_id,
-						'author_id'   => (int) $forum->post_author ?: 1,
-						'type'        => 'forum',
-						'title'       => $forum->post_title,
-						'slug'        => $forum->post_name ?: sanitize_title( $forum->post_title ),
-						'description' => wp_strip_all_tags( $forum->post_content ),
-						'visibility'  => 'public',
-						'join_policy' => 'open',
-					]
-				);
+				$space_id = $this->create_space_from_forum( $forum, $cat_id );
 			} else {
 				$space_id = 0; // Simulate
 			}

@@ -7,9 +7,12 @@
  * so the block slots in visually whether it sits on the community
  * template or any other theme page.
  *
- * Local token layer: each block root declares its own --jtb-* tokens
- * with fallbacks through WP preset → BuddyNext → hard default. Works
- * even without the main jetonomy.css being on the page.
+ * Tokens are NOT declared here. This file consumes the shared --jt-*
+ * layer from assets/css/jetonomy-tokens.css (handle `jetonomy-tokens`),
+ * which `jetonomy-blocks` declares as a dependency. That handle — not
+ * jetonomy.css, which only loads on /community/ routes — is what makes a
+ * block render correctly on a landing page or widget area. A parallel
+ * --jtb-* copy used to serve that purpose and has been removed.
  */
 
 .jt-nav-block,
@@ -17,24 +20,34 @@
 .jt-user-panel,
 .jt-feed-block,
 .jt-shortcode {
-	--jtb-font:         var(--font-body, var(--wp--preset--font-family--body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif));
-	--jtb-accent:       var(--brand, var(--wp--preset--color--primary, #4b5cff));
-	--jtb-accent-soft:  color-mix(in srgb, var(--jtb-accent) 12%, transparent);
-	--jtb-accent-hover: color-mix(in srgb, var(--jtb-accent) 85%, #000);
-	--jtb-text:         var(--text-1, var(--wp--preset--color--contrast, #1a1d29));
-	--jtb-text-2:       color-mix(in srgb, var(--jtb-text) 70%, transparent);
-	--jtb-text-3:       color-mix(in srgb, var(--jtb-text) 48%, transparent);
-	--jtb-bg:           var(--bg, var(--wp--preset--color--base, #ffffff));
-	--jtb-bg-soft:      color-mix(in srgb, var(--jtb-text) 4%, var(--jtb-bg));
-	--jtb-bg-hover:     color-mix(in srgb, var(--jtb-accent) 6%, var(--jtb-bg));
-	--jtb-border:       color-mix(in srgb, var(--jtb-text) 10%, transparent);
-	--jtb-radius-lg:    14px;
-	--jtb-radius-md:    10px;
-	--jtb-radius-sm:    6px;
-	--jtb-shadow:       0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px -8px rgba(15, 23, 42, 0.08);
-
-	font-family: var(--jtb-font);
-	color: var(--jtb-text);
+	/* No token declarations here — deliberately.
+	 *
+	 * These blocks used to declare a parallel `--jtb-*` set: a second copy of the
+	 * design system, with a SHORTER chain that never learned about BuddyX, Reign,
+	 * Astra, Kadence, Blocksy or Neve, and its own third fallback blue (#4b5cff,
+	 * against jetonomy.css's own). So a block adopted a different colour from the
+	 * app rendered six inches away, on the same theme.
+	 *
+	 * Worse, declaring tokens here made these blocks the only elements on a page
+	 * that RE-DECLARE the token set instead of inheriting it, so they could not
+	 * follow dark mode without a hand-written per-block rule — and one duly
+	 * appeared in jetonomy.css, pinning the login block light on dark pages.
+	 * That rule was the white-card bug; this namespace is why it was written.
+	 *
+	 * Inherit instead. `--jt-*` is declared once, in jetonomy-tokens.css, on
+	 * `:root` — an ancestor of everything, blocks included, wherever they
+	 * render. Dark mode then needs no per-block rule at all: reassigning the
+	 * root tokens is all it ever had to do.
+	 *
+	 * If a block needs a surface that reads as raised or highlighted, pick the
+	 * token that already means that — --jt-bg-subtle is color-mix(in srgb,
+	 * var(--jt-text) 3%, var(--jt-bg)), i.e. a few percent toward the text
+	 * colour, so it lifts in light mode and in dark mode alike. Never introduce
+	 * a new colour, a new percentage, or a new token namespace to make
+	 * something stand out.
+	 */
+	font-family: var(--jt-font);
+	color: var(--jt-text);
 	line-height: 1.5;
 	box-sizing: border-box;
 }
@@ -57,10 +70,10 @@
 /* ─── Navigation block ─────────────────────────────────────────────── */
 
 .jt-nav-block {
-	background: var(--jtb-bg);
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-lg);
-	box-shadow: var(--jtb-shadow);
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-lg);
+	box-shadow: var(--jt-shadow-sm);
 	padding: 20px 20px 12px;
 	margin: 0 0 24px;
 }
@@ -69,10 +82,10 @@
 	font-size: 0.95rem;
 	font-weight: 700;
 	letter-spacing: -0.005em;
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	margin: 0 0 12px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid var(--jtb-border);
+	border-bottom: 1px solid var(--jt-border);
 }
 
 .jt-nav-category {
@@ -82,7 +95,7 @@
 .jt-nav-category + .jt-nav-category {
 	margin-top: 4px;
 	padding-top: 12px;
-	border-top: 1px solid var(--jtb-border);
+	border-top: 1px solid var(--jt-border);
 }
 
 .jt-nav-category-title {
@@ -90,7 +103,7 @@
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	margin: 0 0 6px;
 	padding: 2px 0;
 }
@@ -107,7 +120,7 @@ details.jt-nav-category > summary.jt-nav-category-title {
 	transition: color 0.15s ease;
 }
 details.jt-nav-category > summary.jt-nav-category-title:hover {
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 }
 details.jt-nav-category > summary.jt-nav-category-title::-webkit-details-marker { display: none; }
 details.jt-nav-category > summary.jt-nav-category-title::after {
@@ -140,9 +153,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	justify-content: space-between;
 	gap: 10px;
 	padding: 7px 10px;
-	border-radius: var(--jtb-radius-sm);
+	border-radius: var(--jt-radius-sm);
 	text-decoration: none;
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	font-size: 0.9rem;
 	font-weight: 500;
 	line-height: 1.35;
@@ -150,18 +163,18 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-nav-space > a:hover,
 .jt-nav-space > a:focus-visible {
-	background: var(--jtb-bg-hover);
-	color: var(--jtb-accent);
+	background: var(--jt-bg-hover);
+	color: var(--jt-accent);
 	text-decoration: none;
 }
 .jt-nav-space > a:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: 2px;
 }
 .jt-nav-space.is-active > a,
 .jt-nav-space > a[aria-current="page"] {
-	background: var(--jtb-accent-soft);
-	color: var(--jtb-accent);
+	background: var(--jt-accent-light);
+	color: var(--jt-accent);
 	font-weight: 600;
 }
 .jt-nav-count {
@@ -172,31 +185,39 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	height: 20px;
 	padding: 0 6px;
 	border-radius: 999px;
-	background: var(--jtb-bg-soft);
-	color: var(--jtb-text-3);
+	background: var(--jt-bg-subtle);
+	color: var(--jt-text-tertiary);
 	font-size: 0.7rem;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 }
 .jt-nav-space.is-active .jt-nav-count,
 .jt-nav-space > a[aria-current="page"] .jt-nav-count {
-	background: var(--jtb-accent);
-	color: var(--jtb-bg);
+	background: var(--jt-accent);
+	color: var(--jt-bg);
 }
 
 .jt-nav-spaces-uncategorized {
 	margin-top: 12px;
 	padding-top: 12px;
-	border-top: 1px solid var(--jtb-border);
+	border-top: 1px solid var(--jt-border);
 }
 
 /* ─── Login block ──────────────────────────────────────────────────── */
 
+/* The login card is the call-to-action for every logged-out visitor, so it sits
+   slightly proud of the neutral widgets around it (nav, ABOUT, MANAGED BY),
+   which stay on var(--jt-bg). --jt-bg-subtle is the plugin's existing "raised
+   surface" step — mixed a few percent toward --jt-text — which makes it
+   mode-correct by construction: --jt-text is dark in light mode so the card goes
+   darker, and light in dark mode so it goes lighter. Either way it separates
+   from the page. Hardcoding "darker" would sink the card into a dark page, and a
+   fourth hand-rolled percentage is the duplication this file just removed. */
 .jt-login-block {
-	background: var(--jtb-bg);
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-lg);
-	box-shadow: var(--jtb-shadow);
+	background: var(--jt-bg-subtle);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-lg);
+	box-shadow: var(--jt-shadow-sm);
 	padding: 20px;
 	margin: 0 0 24px;
 	position: relative;
@@ -207,14 +228,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	position: absolute;
 	inset: 0 0 auto 0;
 	height: 3px;
-	background: linear-gradient(90deg, var(--jtb-accent) 0%, color-mix(in srgb, var(--jtb-accent) 45%, transparent) 100%);
+	background: linear-gradient(90deg, var(--jt-accent) 0%, color-mix(in srgb, var(--jt-accent) 45%, transparent) 100%);
 }
 
 .jt-login-title {
 	font-size: 1rem;
 	font-weight: 700;
 	letter-spacing: -0.01em;
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	margin: 2px 0 12px;
 }
 
@@ -231,7 +252,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-user-panel.jt-app .jt-userpanel-title,
 .jt-feed-block.jt-app .jt-feed-title,
 .jt-compose-topic-embed.jt-compose-topic-login .jt-compose-topic-login-title {
-	color: var(--jtb-text);
+	color: var(--jt-text);
 }
 
 /* Margins need the same re-assertion: jetonomy.css resets .jt-app h1-h4 to
@@ -259,33 +280,33 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	gap: 2px;
 	padding: 3px;
 	margin-bottom: 16px;
-	background: var(--jtb-bg-soft);
-	border-radius: var(--jtb-radius-md);
+	background: var(--jt-bg-subtle);
+	border-radius: var(--jt-radius);
 }
 .jt-login-tab {
 	flex: 1;
 	padding: 7px 10px;
 	background: transparent;
 	border: 0;
-	border-radius: calc(var(--jtb-radius-md) - 3px);
+	border-radius: calc(var(--jt-radius) - 3px);
 	font: inherit;
 	font-size: 0.82rem;
 	font-weight: 600;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	cursor: pointer;
 	transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .jt-login-tab:hover,
 .jt-login-tab:focus-visible {
-	color: var(--jtb-text);
+	color: var(--jt-text);
 }
 .jt-login-tab:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: -2px;
 }
 .jt-login-tab.is-active {
-	background: var(--jtb-bg);
-	color: var(--jtb-text);
+	background: var(--jt-bg);
+	color: var(--jt-text);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
@@ -302,43 +323,65 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	gap: 5px;
 	font-size: 0.78rem;
 	font-weight: 600;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	letter-spacing: 0.005em;
 }
+/* Mirrors .jt-input in jetonomy.css — same border weight, same tokens, same
+   single focus ring. It cannot reuse that class: .jt-input lives in
+   jetonomy.css, which never loads on a landing page or widget area, and this
+   block does. A component rule for a block is fine; a second TOKEN system is
+   what was removed.
+   The border is --jt-border-strong, not --jt-border: at 1px/--jt-border the
+   field boundary measured 1.34:1 against the card and read as invisible (WCAG
+   1.4.11 asks 3:1 for a control boundary). The field is now legible primarily
+   because it stays on --jt-bg while the card sits on --jt-bg-subtle, so the
+   input is a distinct surface in BOTH modes rather than a hairline outline. */
 .jt-login-label > input {
 	padding: 9px 12px;
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-md);
-	background: var(--jtb-bg);
-	color: var(--jtb-text);
+	min-height: var(--jt-tap);
+	border: 1.5px solid var(--jt-border-strong);
+	border-radius: var(--jt-radius);
+	background: var(--jt-bg);
+	color: var(--jt-text);
+	caret-color: var(--jt-text);
 	font: inherit;
 	font-size: 0.9rem;
 	font-weight: 400;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.jt-login-label > input:hover { background: var(--jtb-bg-soft); }
-.jt-login-label > input:focus {
-	outline: 0;
-	border-color: var(--jtb-accent);
-	background: var(--jtb-bg);
-	box-shadow: 0 0 0 3px var(--jtb-accent-soft);
-}
+/* No hover background: the card now occupies --jt-bg-subtle, which is exactly
+   what this used to hover to — the field would have dissolved into the card on
+   hover. .jt-input has no hover state either; focus is the affordance. */
+/* One focus indicator, not two. A text input always matches :focus-visible when
+   focused, so pairing a box-shadow halo here with an outline below drew a double
+   ring — jetonomy.css merged the two for this reason and this now matches.
+   No !important here: Reign's `* { box-shadow: none !important }` is scoped to
+   @media print and does not touch the screen ring. Verified by real click, not
+   by scripted .focus() — element.focus() from devtools/automation did not
+   produce the focused computed style and looked like a broken ring. */
+.jt-login-label > input:focus,
 .jt-login-label > input:focus-visible {
-	outline: 2px solid var(--jtb-accent);
-	outline-offset: 2px;
+	outline: 0;
+	border-color: var(--jt-accent);
+	box-shadow: 0 0 0 3px var(--jt-accent-muted);
 }
+.jt-login-label > input::placeholder { color: var(--jt-text-secondary); }
+/* The <label> wraps the checkbox, so the whole row is the hit area — which is
+   why it, not the 15px box, has to carry the tap target. Measured 20.9px at
+   390px before this. */
 .jt-login-remember {
 	display: flex;
 	align-items: center;
+	min-height: var(--jt-tap);
 	gap: 7px;
 	font-size: 0.82rem;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	cursor: pointer;
 }
 .jt-login-remember > input[type="checkbox"] {
 	width: 15px;
 	height: 15px;
-	accent-color: var(--jtb-accent);
+	accent-color: var(--jt-accent);
 	margin: 0;
 }
 
@@ -347,10 +390,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	align-items: center;
 	justify-content: center;
 	padding: 10px 16px;
-	background: var(--jtb-accent);
-	color: var(--jtb-bg);
+	background: var(--jt-accent);
+	color: var(--jt-bg);
 	border: 0;
-	border-radius: var(--jtb-radius-md);
+	border-radius: var(--jt-radius);
 	font: inherit;
 	font-size: 0.9rem;
 	font-weight: 600;
@@ -360,11 +403,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-login-submit:hover,
 .jt-login-submit:focus-visible {
-	background: var(--jtb-accent-hover);
-	color: var(--jtb-bg);
+	background: var(--jt-accent-hover);
+	color: var(--jt-bg);
 }
 .jt-login-submit:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: 2px;
 }
 .jt-login-submit:active { transform: scale(0.98); }
@@ -380,48 +423,48 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	padding: 0;
 	font: inherit;
 	font-size: 0.78rem;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	text-decoration: none;
 	cursor: pointer;
 	transition: color 0.15s ease;
 }
 .jt-login-lostpw:hover,
 .jt-login-lostpw:focus-visible {
-	color: var(--jtb-accent);
+	color: var(--jt-accent);
 	text-decoration: underline;
 }
 .jt-login-lostpw:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: 2px;
-	border-radius: var(--jtb-radius-sm, 4px);
+	border-radius: var(--jt-radius-sm, 4px);
 }
 
 .jt-login-forgot-intro {
 	margin: 0 0 4px;
 	font-size: 0.86rem;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	line-height: 1.45;
 }
 
 .jt-login-message {
 	font-size: 0.82rem;
-	color: color-mix(in srgb, #dc2626 80%, var(--jtb-text));
+	color: color-mix(in srgb, #dc2626 80%, var(--jt-text));
 	margin: 0;
 	min-height: 0;
 	line-height: 1.35;
 }
 .jt-login-message:empty { display: none; }
 .jt-login-message.is-success {
-	color: color-mix(in srgb, #16a34a 80%, var(--jtb-text));
+	color: color-mix(in srgb, #16a34a 80%, var(--jt-text));
 }
 
 /* ─── User Panel block (logged-in companion) ────────────────────────── */
 
 .jt-user-panel {
-	background: var(--jtb-bg);
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-lg);
-	box-shadow: var(--jtb-shadow);
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-lg);
+	box-shadow: var(--jt-shadow-sm);
 	padding: 18px;
 	margin: 0 0 24px;
 	position: relative;
@@ -432,7 +475,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	position: absolute;
 	inset: 0 0 auto 0;
 	height: 3px;
-	background: linear-gradient(90deg, var(--jtb-accent) 0%, color-mix(in srgb, var(--jtb-accent) 45%, transparent) 100%);
+	background: linear-gradient(90deg, var(--jt-accent) 0%, color-mix(in srgb, var(--jt-accent) 45%, transparent) 100%);
 }
 
 .jt-userpanel-head {
@@ -441,20 +484,20 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	gap: 12px;
 	padding-bottom: 14px;
 	margin-bottom: 10px;
-	border-bottom: 1px solid var(--jtb-border);
+	border-bottom: 1px solid var(--jt-border);
 }
 .jt-userpanel-avatar {
 	width: 44px !important;
 	height: 44px !important;
 	border-radius: 50%;
 	flex: 0 0 44px;
-	box-shadow: 0 0 0 2px var(--jtb-bg), 0 0 0 3px var(--jtb-accent-soft);
+	box-shadow: 0 0 0 2px var(--jt-bg), 0 0 0 3px var(--jt-accent-light);
 }
 .jt-userpanel-heading { min-width: 0; flex: 1; }
 .jt-userpanel-title {
 	font-size: 0.95rem;
 	font-weight: 700;
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	margin: 0 0 2px;
 	line-height: 1.2;
 	overflow: hidden;
@@ -466,7 +509,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	align-items: center;
 	gap: 8px;
 	font-size: 0.78rem;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	line-height: 1.2;
 }
 .jt-userpanel-username {
@@ -478,8 +521,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-userpanel-tl {
 	flex: 0 0 auto;
 	padding: 1px 6px;
-	background: var(--jtb-accent-soft);
-	color: var(--jtb-accent);
+	background: var(--jt-accent-light);
+	color: var(--jt-accent);
 	border-radius: 999px;
 	font-weight: 700;
 	font-size: 0.7rem;
@@ -497,8 +540,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	justify-content: space-between;
 	gap: 8px;
 	padding: 8px 10px;
-	border-radius: var(--jtb-radius-sm);
-	color: var(--jtb-text);
+	border-radius: var(--jt-radius-sm);
+	color: var(--jt-text);
 	text-decoration: none;
 	font-size: 0.88rem;
 	font-weight: 500;
@@ -506,24 +549,24 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-userpanel-link:hover,
 .jt-userpanel-link:focus-visible {
-	background: var(--jtb-bg-hover);
-	color: var(--jtb-accent);
+	background: var(--jt-bg-hover);
+	color: var(--jt-accent);
 	text-decoration: none;
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: -2px;
 }
 .jt-userpanel-link--logout {
 	margin-top: 4px;
 	padding-top: 10px;
-	border-top: 1px solid var(--jtb-border);
+	border-top: 1px solid var(--jt-border);
 	border-radius: 0;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	font-size: 0.82rem;
 }
 .jt-userpanel-link--logout:hover,
 .jt-userpanel-link--logout:focus-visible {
 	background: transparent;
-	color: color-mix(in srgb, #dc2626 80%, var(--jtb-text));
+	color: color-mix(in srgb, #dc2626 80%, var(--jt-text));
 }
 .jt-userpanel-badge {
 	display: inline-flex;
@@ -533,8 +576,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	height: 20px;
 	padding: 0 6px;
 	border-radius: 999px;
-	background: var(--jtb-accent);
-	color: var(--jtb-bg);
+	background: var(--jt-accent);
+	color: var(--jt-bg);
 	font-size: 0.72rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
@@ -543,10 +586,10 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 /* ─── Forum Feed + Trending block ─────────────────────────────────── */
 
 .jt-feed-block {
-	background: var(--jtb-bg);
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-lg);
-	box-shadow: var(--jtb-shadow);
+	background: var(--jt-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius-lg);
+	box-shadow: var(--jt-shadow-sm);
 	padding: 20px;
 	margin: 0 0 24px;
 }
@@ -558,14 +601,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	gap: 12px;
 	margin: 0 0 14px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid var(--jtb-border);
+	border-bottom: 1px solid var(--jt-border);
 }
 
 .jt-feed-title {
 	font-size: 0.95rem;
 	font-weight: 700;
 	letter-spacing: -0.005em;
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	margin: 0;
 	line-height: 1.25;
 	min-width: 0;
@@ -578,19 +621,19 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex: 0 0 auto;
 	font-size: 0.78rem;
 	font-weight: 600;
-	color: var(--jtb-accent);
+	color: var(--jt-accent);
 	text-decoration: none;
 	transition: color 0.15s ease;
 }
 .jt-feed-viewall:hover,
 .jt-feed-viewall:focus-visible {
-	color: var(--jtb-accent-hover);
+	color: var(--jt-accent-hover);
 	text-decoration: underline;
 }
 .jt-feed-viewall:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: 2px;
-	border-radius: var(--jtb-radius-sm, 4px);
+	border-radius: var(--jt-radius-sm, 4px);
 }
 
 /* Trending accent bar + number badge */
@@ -603,20 +646,19 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	position: absolute;
 	inset: 0 0 auto 0;
 	height: 3px;
-	background: linear-gradient(90deg, var(--jtb-accent) 0%, color-mix(in srgb, var(--jtb-accent) 35%, transparent) 100%);
+	background: linear-gradient(90deg, var(--jt-accent) 0%, color-mix(in srgb, var(--jt-accent) 35%, transparent) 100%);
 }
 
 /* Shortcode output — works both standalone (any page / page-builder /
-   widget) and nested inside the feed/trending block. The .jt-shortcode
-   root carries the same --jtb-* token block as the parent blocks (see
-   the root selector list at the top of this file), so styles render
-   correctly without depending on the main jetonomy.css. */
+   widget) and nested inside the feed/trending block. Like the blocks, it
+   inherits --jt-* from :root via the `jetonomy-tokens` dependency, so it
+   renders correctly without the main jetonomy.css being on the page. */
 .jt-shortcode {
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
-	font-family: var(--jtb-font);
-	color: var(--jtb-text);
+	font-family: var(--jt-font);
+	color: var(--jt-text);
 	line-height: 1.5;
 }
 
@@ -625,18 +667,18 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex-direction: column;
 	gap: 4px;
 	padding: 10px 10px;
-	border-radius: var(--jtb-radius-sm);
+	border-radius: var(--jt-radius-sm);
 	transition: background-color 0.15s ease;
 }
 .jt-shortcode-post + .jt-shortcode-post {
-	border-top: 1px solid var(--jtb-border);
+	border-top: 1px solid var(--jt-border);
 }
 .jt-shortcode-post:hover {
-	background: var(--jtb-bg-hover);
+	background: var(--jt-bg-hover);
 }
 
 .jt-shortcode-post-title {
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	font-size: 0.92rem;
 	font-weight: 600;
 	line-height: 1.35;
@@ -645,17 +687,17 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 }
 .jt-shortcode-post-title:hover,
 .jt-shortcode-post-title:focus-visible {
-	color: var(--jtb-accent);
+	color: var(--jt-accent);
 	text-decoration: none;
 }
 .jt-shortcode-post-title:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: 2px;
 }
 
 .jt-shortcode-post-meta {
 	font-size: 0.76rem;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	line-height: 1.3;
 }
 
@@ -664,13 +706,13 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	align-items: center;
 	gap: 12px;
 	font-size: 0.74rem;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	font-variant-numeric: tabular-nums;
 }
 
 .jt-shortcode-empty {
 	padding: 18px 12px;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	font-size: 0.88rem;
 	text-align: center;
 }
@@ -686,30 +728,30 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex-direction: column;
 	gap: 6px;
 	padding: 14px;
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-md);
-	background: var(--jtb-bg);
-	color: var(--jtb-text);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius);
+	background: var(--jt-bg);
+	color: var(--jt-text);
 	text-decoration: none;
 	transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .jt-shortcode-space:hover,
 .jt-shortcode-space:focus-visible {
-	background: var(--jtb-bg-hover);
-	border-color: var(--jtb-accent);
+	background: var(--jt-bg-hover);
+	border-color: var(--jt-accent);
 }
 .jt-shortcode-space:focus-visible {
-	outline: 2px solid var(--jtb-accent);
+	outline: 2px solid var(--jt-accent);
 	outline-offset: 2px;
 }
 .jt-shortcode-space-desc {
 	font-size: 0.82rem;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	line-height: 1.4;
 }
 .jt-shortcode-space-stats {
 	font-size: 0.74rem;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -728,20 +770,20 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	justify-content: space-between;
 	gap: 12px;
 	padding: 8px 10px;
-	border-radius: var(--jtb-radius-sm);
+	border-radius: var(--jt-radius-sm);
 }
 .jt-shortcode-leaderboard li + li {
-	border-top: 1px solid var(--jtb-border);
+	border-top: 1px solid var(--jt-border);
 }
 .jt-shortcode-leaderboard a {
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	text-decoration: none;
 	font-weight: 500;
 }
-.jt-shortcode-leaderboard a:hover { color: var(--jtb-accent); }
+.jt-shortcode-leaderboard a:hover { color: var(--jt-accent); }
 .jt-shortcode-rep {
 	font-size: 0.78rem;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -751,29 +793,29 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex-direction: column;
 	gap: 8px;
 	padding: 16px;
-	border: 1px solid var(--jtb-border);
-	border-radius: var(--jtb-radius-md);
-	background: var(--jtb-bg);
+	border: 1px solid var(--jt-border);
+	border-radius: var(--jt-radius);
+	background: var(--jt-bg);
 }
 .jt-shortcode-profile-card a {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	text-decoration: none;
 }
-.jt-shortcode-profile-card a:hover { color: var(--jtb-accent); }
+.jt-shortcode-profile-card a:hover { color: var(--jt-accent); }
 .jt-shortcode-profile-card p {
 	margin: 0;
 	font-size: 0.86rem;
-	color: var(--jtb-text-2);
+	color: var(--jt-text-secondary);
 	line-height: 1.45;
 }
 .jt-shortcode-profile-stats {
 	display: flex;
 	gap: 12px;
 	font-size: 0.78rem;
-	color: var(--jtb-text-3);
+	color: var(--jt-text-tertiary);
 	font-variant-numeric: tabular-nums;
 }
 
@@ -791,14 +833,14 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	padding: 8px 10px;
 }
 .jt-shortcode-member + .jt-shortcode-member {
-	border-top: 1px solid var(--jtb-border);
+	border-top: 1px solid var(--jt-border);
 }
 .jt-shortcode-member a {
-	color: var(--jtb-text);
+	color: var(--jt-text);
 	text-decoration: none;
 	font-weight: 500;
 }
-.jt-shortcode-member a:hover { color: var(--jtb-accent); }
+.jt-shortcode-member a:hover { color: var(--jt-accent); }
 
 /* Trending — two-column layout: rank badge + body */
 .jt-shortcode-trending-post {
@@ -814,9 +856,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	width: 28px;
 	height: 28px;
 	margin-top: 2px;
-	border-radius: var(--jtb-radius-sm);
-	background: var(--jtb-accent-soft);
-	color: var(--jtb-accent);
+	border-radius: var(--jt-radius-sm);
+	background: var(--jt-accent-light);
+	color: var(--jt-accent);
 	font-size: 0.82rem;
 	font-weight: 700;
 	font-variant-numeric: tabular-nums;
@@ -830,8 +872,8 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	gap: 4px;
 }
 .jt-shortcode-trending-post:hover .jt-shortcode-trending-rank {
-	background: var(--jtb-accent);
-	color: var(--jtb-bg);
+	background: var(--jt-accent);
+	color: var(--jt-bg);
 }
 
 /* ─── Responsive (390px) ───────────────────────────────────────────── */
@@ -841,7 +883,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-login-block,
 	.jt-feed-block {
 		padding: 16px;
-		border-radius: var(--jtb-radius-md);
+		border-radius: var(--jt-radius);
 	}
 	.jt-nav-space > a {
 		padding: 9px 10px;
@@ -856,27 +898,22 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	.jt-shortcode-trending-rank { width: 26px; height: 26px; flex-basis: 26px; font-size: 0.78rem; }
 }
 
-/* ─── Dark mode — explicit opt-in only ──────────────────────────────
- * Driven by `.jt-dark` / `[data-theme="dark"]` on an ancestor, which the
- * theme integration (class-theme-integration.php) sets in response to the
- * site's dark-mode toggle. OS-level prefers-color-scheme is intentionally
- * NOT used so logged-out viewers never land on a dark login just because
- * their OS happens to be in dark mode. */
-.jt-dark .jt-nav-block,
-.jt-dark .jt-login-block,
-.jt-dark .jt-user-panel,
-.jt-dark .jt-feed-block,
-.jt-dark .jt-shortcode,
-[data-theme="dark"] .jt-nav-block,
-[data-theme="dark"] .jt-login-block,
-[data-theme="dark"] .jt-user-panel,
-[data-theme="dark"] .jt-feed-block,
-[data-theme="dark"] .jt-shortcode {
-	--jtb-bg:      var(--jt-bg, #171717);
-	--jtb-text:    var(--jt-text, #e5e5e5);
-	--jtb-border:  color-mix(in srgb, var(--jtb-text) 16%, transparent);
-	--jtb-shadow:  0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-}
+/* ─── Dark mode ─────────────────────────────────────────────────────
+ * Nothing here, deliberately.
+ *
+ * There used to be a hand-maintained list of every block class, duplicated
+ * across `.jt-dark` and `[data-theme="dark"]` — ten selectors reassigning the
+ * block tokens. It only existed because these blocks declared their own token
+ * set and therefore could not inherit the dark one. Now that they share
+ * `--jt-*`, dark mode is handled where it always should have been: by
+ * reassigning the root tokens once, in jetonomy.css.
+ *
+ * That list was also a trap. Every new block had to be added to it by hand or
+ * it silently rendered light on a dark page, and the values delegated back with
+ * `var(--jt-bg, #171717)` — a fallback that could never fire, because --jt-bg is
+ * always defined. Miss the list and you got a white card; hit it and you got
+ * whatever --jt-bg already said.
+ */
 
 /* ========================================================================
  * Compose Topic (block + shortcode) — 1.3.7
@@ -888,11 +925,11 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	flex-direction: column;
 	gap: 0.75rem;
 	padding: 1rem;
-	background: var(--jtb-bg, var(--jt-bg, var(--wp--preset--color--base, #ffffff)));
-	border: 1px solid var(--jtb-border, var(--jt-border, #e5e7eb));
+	background: var(--jt-bg, var(--jt-bg, var(--wp--preset--color--base, #ffffff)));
+	border: 1px solid var(--jt-border, var(--jt-border, #e5e7eb));
 	border-radius: var(--jt-radius, 8px);
 	font-family: var(--jt-font, inherit);
-	color: var(--jtb-text, var(--jt-text, var(--wp--preset--color--contrast, #1a1a1a)));
+	color: var(--jt-text, var(--jt-text, var(--wp--preset--color--contrast, #1a1a1a)));
 	box-sizing: border-box;
 	max-width: 100%;
 }
@@ -902,7 +939,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	align-items: flex-start;
 	gap: 1rem;
 	padding: 1.25rem 1.5rem;
-	background: var(--jtb-bg-subtle, var(--jt-bg-subtle, #f9fafb));
+	background: var(--jt-bg-subtle, var(--jt-bg-subtle, #f9fafb));
 }
 
 .jt-compose-topic-login-icon {
@@ -930,7 +967,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	font-size: 1.0625rem;
 	line-height: 1.3;
 	font-weight: 600;
-	color: var(--jtb-text, var(--jt-text, #1a1a1a));
+	color: var(--jt-text, var(--jt-text, #1a1a1a));
 	font-family: var(--jt-font-heading, var(--jt-font, inherit));
 }
 
@@ -941,7 +978,7 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 	color: var(--jt-text-secondary, #4b5563);
 }
 .jt-compose-topic-login-lede strong {
-	color: var(--jtb-text, var(--jt-text, #1a1a1a));
+	color: var(--jt-text, var(--jt-text, #1a1a1a));
 	font-weight: 600;
 }
 
@@ -1020,9 +1057,9 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 .jt-compose-topic-body {
 	width: 100%;
 	padding: 0.5rem 0.75rem;
-	border: 1px solid var(--jtb-border, var(--jt-border, #e5e7eb));
+	border: 1px solid var(--jt-border, var(--jt-border, #e5e7eb));
 	border-radius: var(--jt-radius-sm, 6px);
-	background: var(--jtb-bg, var(--jt-bg, #ffffff));
+	background: var(--jt-bg, var(--jt-bg, #ffffff));
 	color: inherit;
 	font: inherit;
 	box-sizing: border-box;

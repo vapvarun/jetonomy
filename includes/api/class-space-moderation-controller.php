@@ -20,6 +20,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 use Jetonomy\API\REST_Auth;
+use Jetonomy\Models\Flag;
 use Jetonomy\Models\Space;
 use Jetonomy\Moderation\Moderation_Permissions;
 use Jetonomy\Moderation\Moderation_Service;
@@ -37,10 +38,20 @@ class Space_Moderation_Controller extends Base_Controller {
 				'callback'            => [ $this, 'list_flags' ],
 				'permission_callback' => [ $this, 'require_view_space_queue' ],
 				'args'                => [
-					'id' => [
+					'id'     => [
 						'type'     => 'integer',
 						'required' => true,
 						'minimum'  => 1,
+					],
+					// Same contract as the global queue (/moderation/flags). Without
+					// this the Upheld/Dismissed chips on the per-space screen sent a
+					// status the route never registered, WP dropped it silently, and
+					// the filter returned pending rows forever — dead UI that looked
+					// like "no results" rather than "this filter does nothing".
+					'status' => [
+						'type'    => 'string',
+						'default' => 'pending',
+						'enum'    => [ 'pending', 'valid', 'dismissed', 'all' ],
 					],
 				],
 			]
@@ -106,17 +117,44 @@ class Space_Moderation_Controller extends Base_Controller {
 	 */
 	public function list_flags( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$space_id = absint( $request->get_param( 'id' ) );
-		$flags    = Moderation_Service::list_pending_flags( get_current_user_id(), $space_id );
 
-		return new WP_REST_Response(
-			[
-				'data' => $flags,
-				'meta' => [
-					'count'    => count( $flags ),
-					'space_id' => $space_id,
+		// Brought to parity with the global queue (Moderation_Controller::list_flags).
+		// This route shows the SAME rows to the SAME moderator and had none of it:
+		// it listed pending-only regardless of the requested status, returned every
+		// row in the space (limit was ignored — 34 rows against limit=20), and
+		// carried no reporter, no total and no has_more. All three were fixed on the
+		// global route and never migrated here (Basecamp 10092724637, 10092652706).
+		$pagination = $this->get_pagination( $request );
+		$limit      = (int) $pagination['limit'];
+		$offset     = (int) $pagination['offset'];
+		$status     = (string) ( $request->get_param( 'status' ) ?: 'pending' );
+
+		// The permission gate stays in the service — it is what makes this route
+		// space-scoped rather than a way to read another space's queue.
+		if ( ! Moderation_Permissions::can_view_space_queue( get_current_user_id(), $space_id ) ) {
+			return new WP_REST_Response(
+				[
+					'data' => [],
+					'meta' => [ 'total' => 0, 'space_id' => $space_id ],
 				],
-			],
-			200
+				200
+			);
+		}
+
+		$flags = Flag::list_by_status_in_space( $status, $space_id, $limit, $offset );
+		$flags = $this->enrich_flag_actors( $flags );
+
+		// Count the SAME status we listed, or has_more lies on every filter but the
+		// default — the pagination equivalent of the dead-chip bug above.
+		$total = Flag::count_by_status_in_space( $status, $space_id );
+
+		return $this->paginated_response(
+			$flags,
+			[
+				'total'    => $total,
+				'offset'   => $offset,
+				'space_id' => $space_id,
+			]
 		);
 	}
 

@@ -783,19 +783,11 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 				</div>
 				<table class="form-table">
 					<tr>
-						<th scope="row"><?php esc_html_e( 'Inherit from Theme', 'jetonomy' ); ?></th>
+						<th scope="row"><?php esc_html_e( 'Theme appearance', 'jetonomy' ); ?></th>
 						<td>
-							<fieldset>
-								<label>
-									<input type="checkbox" name="jetonomy_settings[inherit_fonts]" value="1" <?php checked( $settings['inherit_fonts'] ?? true ); ?>>
-									<?php esc_html_e( 'Inherit theme fonts', 'jetonomy' ); ?>
-								</label>
-								<br>
-								<label>
-									<input type="checkbox" name="jetonomy_settings[inherit_colors]" value="1" <?php checked( $settings['inherit_colors'] ?? true ); ?>>
-									<?php esc_html_e( 'Inherit theme colors', 'jetonomy' ); ?>
-								</label>
-							</fieldset>
+							<p class="description">
+								<?php esc_html_e( 'Fonts and colours follow your active theme automatically. To use a different accent, set one below — leave it at the default to keep matching your theme.', 'jetonomy' ); ?>
+							</p>
 						</td>
 					</tr>
 					</table>

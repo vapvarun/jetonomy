@@ -99,6 +99,7 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 								);
 								?>
 							</p>
+
 							<p class="description">
 								<strong><?php esc_html_e( 'Warning:', 'jetonomy' ); ?></strong>
 								<?php esc_html_e( 'Re-importing may create duplicate content. Only re-import if the previous import had issues.', 'jetonomy' ); ?>
@@ -193,6 +194,103 @@ $datetime_format  = get_option( 'date_format' ) . ' ' . get_option( 'time_format
 
 					<!-- Results (hidden by default) -->
 					<div class="jetonomy-import-results" data-source="<?php echo esc_attr( $id ); ?>" style="display:none;"></div>
+				</div>
+			<?php endforeach; ?>
+		</div>
+	<?php endif; ?>
+
+	<?php
+	/**
+	 * Past imports — the per-import report this card asked for.
+	 *
+	 * Deliberately OUTSIDE the source-card loop, and outside the
+	 * detected/not-detected branch, because both would hide it exactly when it
+	 * matters. The cards only render when a forum plugin is still installed; the
+	 * whole point of migrating is that you then remove the old forum, and at that
+	 * moment the page fell through to "No Forum Data Detected" and the owner lost
+	 * every record of what their migration did.
+	 *
+	 * The data was always there and always discarded: the skipped COUNT flashed in
+	 * a notice that a 3s reload ate, and the per-item reasons were accumulated
+	 * across batches and then delete_option'd on completion. "27 files skipped" is
+	 * not something an owner can act on; WHICH files is.
+	 *
+	 * Basecamp 10093054077 (gap 2).
+	 */
+	if ( ! empty( $import_history ) ) :
+		?>
+		<div class="jetonomy-import-past">
+			<h2><?php esc_html_e( 'Past imports', 'jetonomy' ); ?></h2>
+
+			<?php foreach ( $import_history as $jt_hist_id => $jt_record ) : ?>
+				<?php
+				$jt_skipped = (int) ( $jt_record['skipped'] ?? 0 );
+				$jt_errors  = (array) ( $jt_record['errors'] ?? [] );
+				$jt_name    = (string) ( $jt_record['source_name'] ?? $jt_hist_id );
+				?>
+				<div class="jetonomy-import-past__item" data-source="<?php echo esc_attr( $jt_hist_id ); ?>">
+					<p>
+						<strong><?php echo esc_html( $jt_name ); ?></strong>
+						&mdash;
+						<?php
+						printf(
+							/* translators: 1: number of records imported, 2: date and time */
+							esc_html__( '%1$s records imported on %2$s', 'jetonomy' ),
+							esc_html( number_format_i18n( (int) ( $jt_record['imported'] ?? 0 ) ) ),
+							esc_html(
+								! empty( $jt_record['completed_at'] )
+									? date_i18n( $datetime_format, strtotime( (string) $jt_record['completed_at'] ) )
+									: __( 'an unknown date', 'jetonomy' )
+							)
+						);
+						?>
+					</p>
+
+					<?php if ( $jt_skipped > 0 ) : ?>
+						<div class="notice notice-warning inline jetonomy-import-skipped">
+							<p>
+								<strong>
+									<?php
+									printf(
+										/* translators: %s: number of items that could not be imported */
+										esc_html( _n( '%s item could not be imported', '%s items could not be imported', $jt_skipped, 'jetonomy' ) ),
+										esc_html( number_format_i18n( $jt_skipped ) )
+									);
+									?>
+								</strong>
+							</p>
+							<?php if ( $jt_errors ) : ?>
+								<ul class="jetonomy-import-error-list">
+									<?php foreach ( $jt_errors as $jt_error ) : ?>
+										<li>
+											<?php if ( ! empty( $jt_error['type'] ) ) : ?>
+												<code><?php echo esc_html( (string) $jt_error['type'] ); ?></code>
+											<?php endif; ?>
+											<?php echo esc_html( (string) ( $jt_error['message'] ?? '' ) ); ?>
+										</li>
+									<?php endforeach; ?>
+								</ul>
+								<?php if ( $jt_skipped > count( $jt_errors ) ) : ?>
+									<p class="description">
+										<?php
+										printf(
+											/* translators: 1: number of examples shown, 2: total number skipped */
+											esc_html__( 'Showing the first %1$s of %2$s.', 'jetonomy' ),
+											esc_html( number_format_i18n( count( $jt_errors ) ) ),
+											esc_html( number_format_i18n( $jt_skipped ) )
+										);
+										?>
+									</p>
+								<?php endif; ?>
+							<?php else : ?>
+								<p class="description">
+									<?php esc_html_e( 'This import ran before per-item reasons were recorded, so only the count is known.', 'jetonomy' ); ?>
+								</p>
+							<?php endif; ?>
+						</div>
+					<?php else : ?>
+						<p class="description"><?php esc_html_e( 'Everything imported cleanly. Nothing was skipped.', 'jetonomy' ); ?></p>
+					<?php endif; ?>
 				</div>
 			<?php endforeach; ?>
 		</div>

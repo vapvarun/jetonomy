@@ -30,6 +30,64 @@ class Privacy {
 		// this listener runs.
 		add_action( 'remove_user_from_blog', [ $this, 'on_user_delete' ] );
 		add_action( 'wpmu_delete_user', [ $this, 'on_user_delete' ] );
+
+		// Remediation for accounts deleted BEFORE the above listeners existed.
+		// Those three hooks only help users deleted from now on; every account
+		// removed while the gap was open left its rows behind, and they are
+		// still in the database. Privacy_Backfill finds those orphans and fires
+		// this action per id, routing them into the very same body a live
+		// deletion runs — so the cleanup can never drift from the fix.
+		add_action( 'jetonomy_purge_orphan_user', [ $this, 'on_user_delete' ] );
+	}
+
+	/**
+	 * Every (table, column) free can leave a user id in, derived from the same
+	 * constants the erase and delete paths use.
+	 *
+	 * Derived, never hand-listed: a hand-written copy of these tables is how
+	 * `ai_log` came to be missing from the purge in the first place — one list
+	 * grew, its twin didn't. {@see Privacy_Backfill} scans whatever the live
+	 * purge lists say, so a table added below is swept with no edit anywhere
+	 * else.
+	 *
+	 * @return array<int,array{table:string,column:string,where:string}>
+	 */
+	public static function orphan_columns(): array {
+		$columns = [];
+
+		foreach ( self::ANON_TABLES as $t ) {
+			$columns[] = [
+				'table'  => table( $t ),
+				'column' => 'author_id',
+				'where'  => '',
+			];
+		}
+		foreach ( self::PURGE_TABLES as [ $t, $col ] ) {
+			$columns[] = [
+				'table'  => table( $t ),
+				'column' => $col,
+				'where'  => '',
+			];
+		}
+		foreach ( self::NULLIFY_TABLES as [ $t, $col ] ) {
+			$columns[] = [
+				'table'  => table( $t ),
+				'column' => $col,
+				'where'  => '',
+			];
+		}
+
+		// blocked_users carries a SECOND user axis: PURGE_TABLES covers the
+		// leaver's own block list (blocker_id), while on_user_delete() also
+		// clears other members' blocks pointing AT them (blocked_id). Both are
+		// orphanable, so both are scanned.
+		$columns[] = [
+			'table'  => table( 'blocked_users' ),
+			'column' => 'blocked_id',
+			'where'  => '',
+		];
+
+		return $columns;
 	}
 
 	public function register_exporters( array $exporters ): array {

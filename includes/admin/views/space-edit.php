@@ -100,9 +100,7 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 					<th scope="row"><label for="space-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label></th>
 					<td>
 						<select id="space-visibility">
-							<option value="public" <?php selected( $space->visibility, 'public' ); ?>><?php esc_html_e( 'Public', 'jetonomy' ); ?></option>
-							<option value="private" <?php selected( $space->visibility, 'private' ); ?>><?php esc_html_e( 'Private', 'jetonomy' ); ?></option>
-							<option value="hidden" <?php selected( $space->visibility, 'hidden' ); ?>><?php esc_html_e( 'Hidden', 'jetonomy' ); ?></option>
+							<?php \Jetonomy\space_visibility_options( (string) $space->visibility, false ); ?>
 						</select>
 					</td>
 				</tr>

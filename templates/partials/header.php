@@ -45,7 +45,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				<span class="jt-nav-label"><?php esc_html_e( 'Leaderboard', 'jetonomy' ); ?></span>
 			</a>
 			<?php if ( $user_id ) : ?>
-				<a href="<?php echo esc_url( $base . '/u/' . wp_get_current_user()->user_login . '/' ); ?>" class="<?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'My Profile', 'jetonomy' ); ?>">
+				<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" class="<?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>" title="<?php esc_attr_e( 'My Profile', 'jetonomy' ); ?>">
 					<?php jetonomy_echo_icon( 'user', 18 ); ?>
 					<span class="jt-nav-label"><?php esc_html_e( 'My Profile', 'jetonomy' ); ?></span>
 				</a>
@@ -116,7 +116,7 @@ if ( ! apply_filters( 'jetonomy_show_community_nav', true ) ) {
 				<span class="jt-mobile-tab-badge"><?php echo (int) $unread; ?></span>
 			<?php endif; ?>
 		</a>
-		<a href="<?php echo esc_url( $base . '/u/' . wp_get_current_user()->user_login . '/' ); ?>" class="jt-mobile-tab <?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>">
+		<a href="<?php echo esc_url( \Jetonomy\get_profile_url( $user_id ) ); ?>" class="jt-mobile-tab <?php echo 'profile' === $current_route ? esc_attr( 'active' ) : ''; ?>">
 			<?php jetonomy_echo_icon( 'users', 20 ); ?>
 			<span><?php esc_html_e( 'Profile', 'jetonomy' ); ?></span>
 		</a>

@@ -489,38 +489,10 @@ class Moderation_Controller extends Base_Controller {
 			? Flag::list_all( $limit, $offset )
 			: Flag::list_by_status( $status, $limit, $offset );
 
-		// Enrich the reporter (and resolver) so the queue can say WHO reported a
-		// thing. The raw row carries only reporter_id, which left every client
-		// rendering "Reported by unknown" — a moderation queue that cannot name
-		// the reporter is close to useless. Batch-loaded: one query for the whole
-		// page, never a get_userdata() inside the loop.
-		$user_ids = [];
-		foreach ( $flags as $flag ) {
-			if ( ! empty( $flag->reporter_id ) ) {
-				$user_ids[] = (int) $flag->reporter_id;
-			}
-			if ( ! empty( $flag->resolved_by ) ) {
-				$user_ids[] = (int) $flag->resolved_by;
-			}
-		}
-		$users = $this->batch_load_users( $user_ids );
-
-		foreach ( $flags as $flag ) {
-			$reporter_id = (int) ( $flag->reporter_id ?? 0 );
-			$reporter    = $users[ $reporter_id ] ?? null;
-			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
-
-			$flag->reporter = $reporter
-				? [
-					'id'           => $reporter_id,
-					'display_name' => $reporter->display_name ?? '',
-					'user_login'   => $reporter->user_login ?? '',
-					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
-				]
-				: null;
-
-			$flag->resolved_by_name = $resolver->display_name ?? '';
-		}
+		// Shared with the per-space queue — see Base_Controller::enrich_flag_actors().
+		// This used to be written out inline here, which is precisely why the
+		// per-space screen still said "Reported by unknown" after this one was fixed.
+		$flags = $this->enrich_flag_actors( $flags );
 
 		// Count for the SAME status we listed, or has_more lies on every filter
 		// other than 'pending'.

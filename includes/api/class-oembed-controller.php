@@ -123,10 +123,13 @@ class OEmbed_Controller extends Base_Controller {
 
 		// Content gate — an oEmbed unfurl must not leak a thread whose parent
 		// space the viewer cannot read (private/hidden unless member), nor an
-		// is_private post. Canonical single-row check covers both axes; a
-		// public-space thread still unfurls for anonymous consumers (Slack/X)
-		// because can_read_post( 0, … ) passes for public spaces.
-		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+		// is_private post, nor (1.8.0) a thread whose author this viewer has
+		// blocked: the unfurl is pure authored text (title + excerpt) with
+		// nowhere to render a tombstone, so it is refused outright rather than
+		// shipped empty. A public-space thread still unfurls for anonymous
+		// consumers (Slack/X) because a guest blocks nobody and
+		// can_render_post_text( 0, … ) passes for public spaces.
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 			return new WP_Error(
 				'jetonomy_oembed_not_found',
 				__( 'Thread not found.', 'jetonomy' ),

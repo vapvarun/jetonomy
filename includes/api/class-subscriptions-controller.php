@@ -138,7 +138,26 @@ class Subscriptions_Controller extends Base_Controller {
 			$posts_tbl = table( 'posts' );
 			$ph        = implode( ',', array_fill( 0, count( $post_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$posts_tbl} WHERE id IN ({$ph})", ...$post_ids ) ) ?: [];
+			// Exclude the statuses that mean "gone". DELETE /posts/{id} is a SOFT
+			// delete — the REST controller does it, not the model
+			// (class-posts-controller.php:852 calls Post::update($id, status=>trash);
+			// Post::delete() itself is a HARD delete). Without this filter a deleted
+			// post still resolved to a live title and `exists` stayed true — the
+			// subscription looked tappable and led nowhere. `exists` only ever
+			// caught HARD-deleted rows, which is why the card's suggestion of
+			// "rely on exists" could not work: the REST delete never hard-deletes.
+			//
+			// Excluding rather than allow-listing `publish` on purpose. A pending or
+			// draft post is not gone — its author is subscribed to their own post
+			// while it waits on moderation — and rendering that as "no longer
+			// available" would be the same silent mis-render as the name/title bug
+			// above, just pointed the other way.
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, title, slug FROM {$posts_tbl} WHERE id IN ({$ph}) AND status NOT IN ('trash','spam')",
+					...$post_ids
+				)
+			) ?: [];
 			foreach ( $rows as $row ) {
 				$titles[ 'post:' . (int) $row->id ] = [
 					'title' => $row->title ?? '',
@@ -151,10 +170,16 @@ class Subscriptions_Controller extends Base_Controller {
 			$spaces_tbl = table( 'spaces' );
 			$ph         = implode( ',', array_fill( 0, count( $space_ids ), '%d' ) );
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, name, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: [];
+			// The column is `title`, not `name` — jt_spaces has never had a `name`.
+			// The wrong name did not throw: the query errored, get_results() returned
+			// [], and the loop simply enriched nothing. So every space subscription
+			// came back title='' slug='' exists=false and the app drew a LIVE space
+			// as "Space no longer available", greyed and untappable — a silent
+			// mis-render rather than a visible failure (Basecamp 10092766769).
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, slug FROM {$spaces_tbl} WHERE id IN ({$ph})", ...$space_ids ) ) ?: [];
 			foreach ( $rows as $row ) {
 				$titles[ 'space:' . (int) $row->id ] = [
-					'title' => $row->name ?? '',
+					'title' => $row->title ?? '',
 					'slug'  => $row->slug ?? '',
 				];
 			}

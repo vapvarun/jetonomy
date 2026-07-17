@@ -523,9 +523,7 @@ class Admin {
 		// ── Appearance tab ──
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
-			$clean['inherit_fonts']  = ! empty( $input['inherit_fonts'] );
-			$clean['inherit_colors'] = ! empty( $input['inherit_colors'] );
-			$clean['accent_color']   = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
+			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
 			$clean['logo_url']       = esc_url_raw( $input['logo_url'] ?? '' );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {

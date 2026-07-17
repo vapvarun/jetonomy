@@ -153,6 +153,45 @@ class BlockedUser extends Model {
 	}
 
 	/**
+	 * Mark + scrub a content row authored by a user the viewer has blocked.
+	 *
+	 * THE tombstone. Sets `is_blocked_author` on the row and empties the named
+	 * authored-text fields SERVER-SIDE, so blocked text never reaches the
+	 * client and no surface depends on a client honouring a flag to hide it.
+	 *
+	 * Rows are tombstoned, never dropped: the caller's row count stays stable
+	 * per viewer (pagination / `has_more` don't shift), a reply keeps its node
+	 * so innocent child replies aren't orphaned, and a deep link resolves to a
+	 * real "you blocked this user" state instead of a lying 404.
+	 *
+	 * `author_id` is deliberately left intact — templates need it to render the
+	 * Unblock affordance, and avatar/permission checks would error on a null
+	 * author.
+	 *
+	 * Callers pass their own authored-text field list because the shapes differ
+	 * (a reply has no title). Everything else about the treatment is identical,
+	 * which is why it lives here once rather than per model.
+	 *
+	 * @since 1.8.0
+	 * @param object   $row         Content row, mutated in place.
+	 * @param int[]    $blocked_ids Viewer's blocked author ids.
+	 * @param string[] $fields      Authored-text fields to empty when blocked.
+	 */
+	public static function apply_tombstone( object $row, array $blocked_ids, array $fields ): void {
+		$row->is_blocked_author = in_array( (int) ( $row->author_id ?? 0 ), $blocked_ids, true );
+
+		if ( ! $row->is_blocked_author ) {
+			return;
+		}
+
+		foreach ( $fields as $field ) {
+			if ( property_exists( $row, $field ) ) {
+				$row->$field = '';
+			}
+		}
+	}
+
+	/**
 	 * EITHER-direction check — the DM gate predicate ONLY.
 	 *
 	 * Deliberately distinct from {@see self::is_blocked()}. Blocking is

@@ -521,7 +521,7 @@ class Notifier {
 		}
 
 		$actor_id  = (int) $reply->author_id;
-		$post_url  = $this->get_post_url( $post );
+		$reply_url = $this->get_reply_url( $post, $reply_id );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
@@ -531,14 +531,14 @@ class Notifier {
 				(int) $post->author_id,
 				$actor_id,
 				'reply_to_post',
-				'post',
-				$post_id,
+				'reply',
+				$reply_id,
 				sprintf(
 					__( '%1$s replied to your post "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url,
+				$reply_url,
 				$ctx_extra,
 				$is_anon
 			);
@@ -559,7 +559,7 @@ class Notifier {
 						\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 						mb_substr( $post->title, 0, 50 )
 					),
-					$post_url,
+					$reply_url,
 					$ctx_extra,
 					$is_anon
 				);
@@ -588,7 +588,7 @@ class Notifier {
 		}
 
 		$actor_id  = (int) $reply->author_id;
-		$post_url  = $this->get_post_url( $post );
+		$reply_url = $this->get_reply_url( $post, $reply_id );
 		$ctx_extra = $this->reply_notification_context( $reply, $post );
 		$is_anon   = (bool) ( $reply->is_anonymous ?? false );
 
@@ -601,14 +601,14 @@ class Notifier {
 				$sub_user_id,
 				$actor_id,
 				'reply_to_post',
-				'post',
-				$post_id,
+				'reply',
+				$reply_id,
 				sprintf(
 					__( '%1$s replied in "%2$s"', 'jetonomy' ),
 					\Jetonomy\Author::for_display( $actor_id, $reply )['name'] ?: __( 'Someone', 'jetonomy' ),
 					mb_substr( $post->title, 0, 50 )
 				),
-				$post_url,
+				$reply_url,
 				$ctx_extra,
 				$is_anon
 			);
@@ -1031,15 +1031,7 @@ class Notifier {
 				]
 			);
 
-			/**
-			 * Fires after a web notification row is created.
-			 *
-			 * $message (rendered human sentence) and $url (deep link) are
-			 * appended so consumers can mirror the notification 1:1 without
-			 * re-deriving them. Backward-compatible: existing 5-arg listeners
-			 * are unaffected.
-			 */
-			do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
+			self::emit_notification_created( $notification_id, $user_id, $actor_id, $type, $object_type, $object_id, $message, $url );
 		}
 
 		// Check email preference via the shared gate (profile + defaults already
@@ -1051,10 +1043,80 @@ class Notifier {
 		// keeps this a no-op for system notifications) — the read-surface
 		// filters already hide it from the recipient, and unblocking restores
 		// the history without needing to re-send anything.
-		$recipient_blocked_actor = $actor_id > 0 && \Jetonomy\Models\BlockedUser::is_blocked( $user_id, $actor_id );
-		if ( ! $recipient_blocked_actor && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
+		if ( ! self::recipient_blocked_actor( $user_id, $actor_id ) && self::should_email( $user_id, $type, $user_prefs, $global_defaults ) ) {
 			$this->send_email_notification( $user_id, $type, $message, $object_type, $object_id, $url, $extra );
 		}
+	}
+
+	/**
+	 * Has $user_id blocked $actor_id? THE outbound-notification block predicate.
+	 *
+	 * One implementation for both things that leave the system (email, push) so
+	 * they cannot disagree about the same event — which is exactly what 1.8.0
+	 * shipped: the email was correctly suppressed while the push for the same
+	 * notification went out, because the gate sat below the hook the push
+	 * listens to.
+	 *
+	 * Direction deliberately matches the read surfaces rather than the DM gate:
+	 * an outbound mirror of a read surface should be suppressed on the same
+	 * terms as the row it mirrors. is_blocked_between() is the DM predicate and
+	 * belongs to a two-party channel, not to a notification about public content.
+	 * System notifications (actor_id 0) are never suppressed.
+	 *
+	 * @since 1.8.0
+	 * @param int $user_id  Recipient.
+	 * @param int $actor_id Actor who triggered the notification (0 = system).
+	 * @return bool
+	 */
+	public static function recipient_blocked_actor( int $user_id, int $actor_id ): bool {
+		return $actor_id > 0 && \Jetonomy\Models\BlockedUser::is_blocked( $user_id, $actor_id );
+	}
+
+	/**
+	 * Fire `jetonomy_notification_created` — the one door to every outbound
+	 * mirror of a web notification.
+	 *
+	 * THE gate for out-of-app dispatch, and the reason it lives here rather
+	 * than in each listener: the only consumer is Pro's web-push extension,
+	 * which subscribed to the raw hook and so fired ABOVE the block check that
+	 * correctly suppressed the matching EMAIL twelve lines below it. Same
+	 * event, same recipient, opposite answers — the email was right and the
+	 * push was wrong, which is the proof the gate belonged lower rather than
+	 * copied into Pro. Pro must not re-derive this (it cannot: the hook's
+	 * signature carries no actor_id), and now it does not have to.
+	 *
+	 * The notification ROW is still written by the caller — only the outbound
+	 * mirror is withheld. The recipient's own list filters the row out via
+	 * Notification::list_for_user()'s actor exclusion, and unblocking restores
+	 * the history without re-sending anything.
+	 *
+	 * @since 1.8.0
+	 * @param int    $notification_id Row ID.
+	 * @param int    $user_id         Recipient.
+	 * @param int    $actor_id        Actor (0 = system; never suppressed).
+	 * @param string $type            Notification type.
+	 * @param string $object_type     Object type.
+	 * @param int    $object_id       Object ID.
+	 * @param string $message         Rendered human sentence.
+	 * @param string $url             Deep link.
+	 */
+	public static function emit_notification_created( int $notification_id, int $user_id, int $actor_id, string $type, string $object_type, int $object_id, string $message, string $url = '' ): void {
+		if ( self::recipient_blocked_actor( $user_id, $actor_id ) ) {
+			return;
+		}
+
+		/**
+		 * Fires after a web notification row is created.
+		 *
+		 * NOT fired when the recipient has blocked the actor — consumers mirror
+		 * the notification out of the app (push, and anything added later), and
+		 * a blocked actor's words must not arrive on the blocker's phone.
+		 *
+		 * $message (rendered human sentence) and $url (deep link) are appended
+		 * so consumers can mirror the notification 1:1 without re-deriving
+		 * them. Backward-compatible: existing 5-arg listeners are unaffected.
+		 */
+		do_action( 'jetonomy_notification_created', $notification_id, $user_id, $type, $object_type, $object_id, $message, $url );
 	}
 
 	/**
@@ -1528,5 +1590,33 @@ class Notifier {
 			return \Jetonomy\base_url() . '/';
 		}
 		return \Jetonomy\base_url() . '/s/' . $space->slug . '/t/' . $post->slug . '/';
+	}
+
+	/**
+	 * URL for a notification that is ABOUT a specific reply.
+	 *
+	 * Email parity: the link in the email and the link in the web/REST inbox
+	 * are the same paged, anchored deep link, because both resolve through
+	 * \Jetonomy\reply_permalink(). Previously every reply notification —
+	 * email included — carried get_post_url(), landing the reader on the top
+	 * of the thread with no way to find the reply that pinged them.
+	 *
+	 * get_post_url() is deliberately left alone: it still serves the
+	 * notifications that really are about the POST (votes, moderation,
+	 * mentions on the post body), where a reply fragment would be wrong.
+	 *
+	 * @param object $post     Post row.
+	 * @param int    $reply_id Reply the notification concerns.
+	 */
+	private function get_reply_url( object $post, int $reply_id ): string {
+		$space = $post->space_id ? Space::find( (int) $post->space_id ) : null;
+		if ( ! $space ) {
+			return \Jetonomy\base_url() . '/';
+		}
+		// Falls back to the bare topic URL if the reply can't be resolved
+		// (deleted between write and dispatch on the deferred fan-out path) —
+		// a link to the thread beats a link to nothing.
+		$url = \Jetonomy\reply_permalink( (string) $space->slug, (string) $post->slug, $reply_id );
+		return '' !== $url ? $url : $this->get_post_url( $post );
 	}
 }

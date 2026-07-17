@@ -83,6 +83,39 @@ class Bookmark extends Model {
 	}
 
 	/**
+	 * The WHERE shared by list_by_user() and count_by_user(), minus the
+	 * `b.user_id = %d` both bind themselves.
+	 *
+	 * Extracted (1.8.0) because the two had drifted: the list filtered
+	 * `p.status = 'publish'` and joined the posts table, while the count read
+	 * the bookmarks table alone and counted every row — so a user whose
+	 * bookmarked topic was later trashed saw a count that promised more than
+	 * the list could ever render, and paged into a short last page. Adding the
+	 * blocked-author exclusion to only one of them would have deepened exactly
+	 * that split, so they now derive the same predicate from one place.
+	 *
+	 * @param int $user_id Bookmark owner — also the viewer, since a bookmark
+	 *                     list is only ever shown to the person who saved it.
+	 * @return array{0:string,1:array} [SQL fragment, bind values]
+	 */
+	private static function visible_sql( int $user_id ): array {
+		$sql = " AND p.status = 'publish'";
+
+		// Blocked-author exclusion. A bookmark can PREDATE a block — you saved
+		// the topic, then blocked its author — so this list reaches rows the
+		// author-filtered feeds never show, and it did so with title and body
+		// fully intact. Dropped rather than tombstoned to match every other
+		// list surface; unblocking brings the bookmark back, since the block
+		// filters the read and never touches the saved row.
+		[ $block_sql, $block_vals ] = BlockedUser::exclusion_sql( $user_id, 'p', 'author_id' );
+		if ( '' !== $block_sql ) {
+			return [ $sql . ' AND ' . $block_sql, $block_vals ];
+		}
+
+		return [ $sql, [] ];
+	}
+
+	/**
 	 * List bookmarked posts for a user with post data.
 	 *
 	 * @return object[]
@@ -91,22 +124,28 @@ class Bookmark extends Model {
 		$b = static::table();
 		$p = table( 'posts' );
 
+		[ $vis_sql, $vis_vals ] = self::visible_sql( $user_id );
+
 		return static::db()->get_results(
 			static::db()->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				"SELECT p.*, b.created_at AS bookmarked_at FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d AND p.status = 'publish' ORDER BY b.created_at DESC LIMIT %d OFFSET %d",
-				$user_id,
-				$limit,
-				$offset
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- $vis_sql inlines absint'd ids; it only adds a %d (spread via $vis_vals) past the 500-block cap.
+				"SELECT p.*, b.created_at AS bookmarked_at FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d{$vis_sql} ORDER BY b.created_at DESC LIMIT %d OFFSET %d",
+				...array_merge( [ $user_id ], $vis_vals, [ $limit, $offset ] )
 			)
 		) ?: [];
 	}
 
 	public static function count_by_user( int $user_id ): int {
+		$b = static::table();
+		$p = table( 'posts' );
+
+		[ $vis_sql, $vis_vals ] = self::visible_sql( $user_id );
+
 		return (int) static::db()->get_var(
 			static::db()->prepare(
-				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE user_id = %d',
-				$user_id
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- see list_by_user().
+				"SELECT COUNT(*) FROM {$b} b JOIN {$p} p ON p.id = b.post_id WHERE b.user_id = %d{$vis_sql}",
+				...array_merge( [ $user_id ], $vis_vals )
 			)
 		);
 	}

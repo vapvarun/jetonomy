@@ -129,6 +129,14 @@ class Notifications_Controller extends Base_Controller {
 		$notifications = Notification::list_for_user_with_targets( $user_id, $limit, $offset, $filter );
 		$total         = Notification::count_for_user( $user_id, $filter );
 
+		// Resolve every reply's page in one batch before building the rows.
+		// Each reply deep link needs the page its reply renders on, and resolving
+		// that per row cost a lookup + a COUNT apiece — measured at 20 queries for
+		// 8 reply notifications, so a full bell paid dozens of round-trips for
+		// nothing. The topic view never had this problem because it already knows
+		// which page it drew; a notification list has to ask. Ask once.
+		$this->prime_reply_pages( $notifications );
+
 		$items = array_map( [ $this, 'prepare_notification' ], $notifications );
 
 		return $this->paginated_response(
@@ -283,6 +291,23 @@ class Notifications_Controller extends Base_Controller {
 	/**
 	 * Format a notification row for API output.
 	 */
+	/**
+	 * Batch-resolve the reply pages this response is about to link to.
+	 *
+	 * @param object[] $notifications Rows from list_for_user_with_targets().
+	 */
+	private function prime_reply_pages( array $notifications ): void {
+		$reply_ids = [];
+		foreach ( $notifications as $notification ) {
+			if ( 'reply' === ( $notification->object_type ?? '' ) && ! empty( $notification->object_id ) ) {
+				$reply_ids[] = (int) $notification->object_id;
+			}
+		}
+		if ( $reply_ids ) {
+			\Jetonomy\Models\Reply::prime_pages( $reply_ids, \Jetonomy\replies_per_page() );
+		}
+	}
+
 	private function prepare_notification( ?object $notification ): array {
 		if ( ! $notification ) {
 			return [];
@@ -361,7 +386,7 @@ class Notifications_Controller extends Base_Controller {
 		}
 
 		if ( 'reply' === $object_type && ! empty( $notification->reply_post_slug ) && ! empty( $notification->reply_space_slug ) ) {
-			return $base . '/s/' . $notification->reply_space_slug . '/t/' . $notification->reply_post_slug . '/#reply-' . $object_id;
+			return \Jetonomy\reply_permalink( (string) $notification->reply_space_slug, (string) $notification->reply_post_slug, $object_id );
 		}
 
 		// Slow path: per-row model lookup for callers that didn't use the JOIN.

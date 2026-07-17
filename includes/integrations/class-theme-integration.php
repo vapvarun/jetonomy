@@ -8,8 +8,9 @@
  * Reign store their colors in Kirki theme mods which are not exposed as
  * CSS variables. This class reads the relevant theme mods on
  * `wp_enqueue_scripts:20` and injects both a light-mode token block
- * (scoped to `:root,.jt-app`) and a dark-mode token block (scoped to
- * `.jt-dark .jt-app`) as inline style on the `jetonomy` handle. A small
+ * (scoped to `:root`) and a dark-mode token block (scoped to `.jt-dark,
+ * [data-theme="dark"]`) as inline style on the `jetonomy` handle — the
+ * same two scopes jetonomy-tokens.css declares, which this overrides. A small
  * inline footer script then mirrors the theme's runtime dark class onto
  * the `<body>` as `.jt-dark` so Jetonomy's existing dark tokens engage
  * in sync with whatever the user actually sees.
@@ -104,12 +105,24 @@ class Theme_Integration {
 		 */
 		$dark = (array) apply_filters( 'jetonomy_theme_dark_tokens', $dark );
 
+		// Both blocks target the same scopes as jetonomy-tokens.css — `:root` for
+		// light, the host theme's dark class on <body> for dark — because this
+		// bridge overrides that file and the two must agree.
+		//
+		// The `.jt-app` these selectors used to carry was not merely redundant
+		// (`:root` is an ancestor of every .jt-app): it was load-bearing in the
+		// wrong direction. A declaration made directly on .jt-app beats an
+		// inherited one regardless of specificity, and $dark is legitimately
+		// EMPTY on BuddyX Free (no dark mode) or for any mod the owner left
+		// unset — so a light `.jt-app` block with no dark counterpart would pin
+		// the app light on a dark page. That asymmetry is exactly the bug this
+		// bridge is supposed to prevent.
 		$css = '';
 		if ( ! empty( $light ) ) {
-			$css .= ':root,.jt-app{' . $this->build_token_css( $light ) . '}';
+			$css .= ':root{' . $this->build_token_css( $light ) . '}';
 		}
 		if ( ! empty( $dark ) ) {
-			$css .= '.jt-dark .jt-app,.jt-app.jt-dark{' . $this->build_token_css( $dark ) . '}';
+			$css .= '.jt-dark,[data-theme="dark"]{' . $this->build_token_css( $dark ) . '}';
 		}
 
 		if ( '' !== $css ) {

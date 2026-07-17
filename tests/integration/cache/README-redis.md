@@ -1,7 +1,7 @@
 # Cache tests — how to run & the persistent-cache requirement
 
 These tests cover the 1.7.1 cache-conformance work (plan:
-`docs/plans/1.7.1-cache-conformance.md`). Read this before trusting a green run.
+`../jetonomy-pro/docs/plans/free/1.7.1-cache-conformance.md` (internal plans live in Pro)). Read this before trusting a green run.
 
 ## Two kinds of cache bug, two kinds of test
 

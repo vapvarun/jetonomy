@@ -1126,9 +1126,17 @@ class Posts_Controller extends Base_Controller {
 	 * post shape instead of duplicating it.
 	 */
 	protected function prepare_post( object $post ): array {
-		$author_id     = (int) ( $post->author_id ?? 0 );
-		$raw_author_id = $author_id; // Pre-anonymization id, used for the block check below.
-		$space         = \Jetonomy\Models\Space::find( (int) $post->space_id );
+		$author_id = (int) ( $post->author_id ?? 0 );
+		$space     = \Jetonomy\Models\Space::find( (int) $post->space_id );
+
+		// Blocked-author tombstone — applied to the ROW, before any field is
+		// read into $data, so every caller of this shape (list, feed, get_item)
+		// is scrubbed by construction rather than by each one remembering to.
+		// blocked_ids() is memoized per request, so this is not an N+1 on lists.
+		\Jetonomy\Models\Post::apply_block_tombstone(
+			$post,
+			\Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() )
+		);
 
 		// Use pre-enriched data if present, otherwise fall back to per-item lookup.
 		if ( isset( $post->author_name ) ) {
@@ -1220,9 +1228,12 @@ class Posts_Controller extends Base_Controller {
 			'space_slug'        => $space ? $space->slug : '',
 			// Has the VIEWER blocked this post's (real, pre-anonymization) author?
 			// Deep-link / by-ID fetches (get_item()) bypass the list-query SQL
-			// filters entirely, so the client needs this flag to tombstone the
-			// post instead of a 404 — deep links and moderation must still work.
-			'blocked_author'    => in_array( $raw_author_id, \Jetonomy\Models\BlockedUser::blocked_ids( get_current_user_id() ), true ),
+			// filters entirely, so the client needs this flag to render a
+			// tombstone instead of a 404 — deep links and moderation must still
+			// work. The flag is now advisory ONLY: as of 1.8.0 the title and body
+			// above are already empty when it is true, so a client that ignores
+			// it still cannot show the blocked author's words.
+			'blocked_author'    => ! empty( $post->is_blocked_author ),
 		);
 
 		// Viewer-relative state (additive, 1.6.0). Null-safe for logged-out

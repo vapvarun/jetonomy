@@ -172,6 +172,28 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * Build a paginated response with cursor support.
 	 */
 	protected function paginated_response( array $items, array $meta = [] ): WP_REST_Response {
+		// has_more is (offset + count) < total. If a paginating caller passes total
+		// but forgets offset, offset silently reads 0 and every page compares
+		// against page 1 — has_more is stuck true, a "Load more" that never ends.
+		// The per-space moderation route shipped exactly this (Basecamp 10105626990).
+		//
+		// offset is not optional when the response actually paginates, so say so out
+		// loud rather than assume it. The fix is not "add the missing line to one
+		// route" — that leaves the next route free to forget — but making the
+		// omission impossible to miss in dev/CI. Costs nothing in production.
+		//
+		// Gated on count < total on purpose: a non-paginated list passes
+		// total = count(items) (one page), where offset cannot change has_more, so
+		// warning there would be a false positive that teaches developers to ignore
+		// the warning. Only the genuinely-paginated, offset-missing case trips it.
+		if ( isset( $meta['total'] ) && ! array_key_exists( 'offset', $meta ) && count( $items ) < (int) $meta['total'] ) {
+			_doing_it_wrong(
+				__METHOD__,
+				esc_html( "paginated_response() paginates (count < total) but was given no 'offset'; has_more will be stuck true past page 1. Pass 'offset' from get_pagination()." ),
+				'1.8.0'
+			);
+		}
+
 		$last_item   = end( $items );
 		$cursor_next = $last_item
 			? ( is_object( $last_item ) ? (int) $last_item->id : (int) ( $last_item['id'] ?? 0 ) )
@@ -326,6 +348,60 @@ abstract class Base_Controller extends WP_REST_Controller {
 	 * @param int[] $ids
 	 * @return array<int, object> Keyed by user ID.
 	 */
+	/**
+	 * Attach reporter + resolver identity to a page of moderation flags.
+	 *
+	 * Lives here because there are TWO moderation queues — the global one
+	 * (/moderation/flags) and the per-space one (/spaces/{id}/moderation/flags) —
+	 * showing the same rows to the same moderator. This enrichment was written
+	 * inline in the global controller, so the per-space screen never got it and
+	 * rendered "Reported by unknown" long after the global screen was fixed
+	 * (Basecamp 10092652706, 10092724637). One implementation, both callers: the
+	 * next queue cannot inherit the bug by being written somewhere else.
+	 *
+	 * The raw flag row carries only reporter_id. A moderation queue that cannot
+	 * name the reporter is close to useless — you cannot judge a report without
+	 * knowing who filed it.
+	 *
+	 * Batch-loaded on purpose: one lookup for the whole page, never a
+	 * get_userdata() inside the loop. These pages are 20-50 rows.
+	 *
+	 * @param object[] $flags Flag rows, mutated in place.
+	 * @return object[] The same rows, enriched.
+	 */
+	protected function enrich_flag_actors( array $flags ): array {
+		$user_ids = [];
+		foreach ( $flags as $flag ) {
+			if ( ! empty( $flag->reporter_id ) ) {
+				$user_ids[] = (int) $flag->reporter_id;
+			}
+			if ( ! empty( $flag->resolved_by ) ) {
+				$user_ids[] = (int) $flag->resolved_by;
+			}
+		}
+
+		$users = $this->batch_load_users( $user_ids );
+
+		foreach ( $flags as $flag ) {
+			$reporter_id = (int) ( $flag->reporter_id ?? 0 );
+			$reporter    = $users[ $reporter_id ] ?? null;
+			$resolver    = $users[ (int) ( $flag->resolved_by ?? 0 ) ] ?? null;
+
+			$flag->reporter = $reporter
+				? [
+					'id'           => $reporter_id,
+					'display_name' => $reporter->display_name ?? '',
+					'user_login'   => $reporter->user_login ?? '',
+					'avatar_url'   => get_avatar_url( $reporter_id, [ 'size' => 48 ] ),
+				]
+				: null;
+
+			$flag->resolved_by_name = $resolver->display_name ?? '';
+		}
+
+		return $flags;
+	}
+
 	protected function batch_load_users( array $ids ): array {
 		if ( empty( $ids ) ) {
 			return [];
@@ -353,6 +429,32 @@ abstract class Base_Controller extends WP_REST_Controller {
 				$cached[ (int) $row->ID ] = $row;
 				Cache::set( "user:{$row->ID}", $row, 300 );
 			}
+		}
+
+		// Warm what the CALLERS reach for next, not just what we return.
+		//
+		// This method's own batching was always real — one WHERE ID IN (...), no
+		// get_userdata() in a loop. But every caller then builds an avatar in the
+		// same loop, and get_avatar_url() -> pre_get_avatar_data -> Avatar reaches
+		// for UserProfile + the core user/meta caches, none of which this had
+		// filled. So the batch saved one query and the loop spent three per person:
+		// measured cold on /moderation/flags, 1 reporter = 6 queries, 20 = 63.
+		//
+		// It hid for two reasons worth remembering. The cost lives three layers
+		// below the loop that causes it, so the loop looks innocent; and it only
+		// appears COLD — measured warm, in a process that has already seen those
+		// users, the same code reads clean. That is how "batch-loaded, no N+1"
+		// passed review twice, mine included: a fixture where every row shared one
+		// reporter cannot see a per-person cost at all (Basecamp 10105928436).
+		//
+		// Priming here rather than in each caller: this is the one place that
+		// already knows the whole id set, and a fix living in the callers is a fix
+		// the next caller will not get.
+		if ( ! empty( $ids ) ) {
+			// Core: fills the user + usermeta caches in two queries for the set.
+			cache_users( $ids );
+			// Ours: fills UserProfile's cache in one, which Avatar reads per person.
+			UserProfile::prime( $ids );
 		}
 
 		return $cached;

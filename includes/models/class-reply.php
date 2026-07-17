@@ -13,6 +13,27 @@ use function Jetonomy\now;
 
 class Reply extends Model {
 
+	/**
+	 * Hard ceiling on parent-chain walks in top_level_ancestor().
+	 *
+	 * Real threads never approach this — the tree builder renders 3 levels and
+	 * flattens deeper ones. It exists so a cyclic parent_id (only reachable via
+	 * direct DB edits or a future bug) can't hang a page render.
+	 */
+	private const MAX_ANCESTOR_HOPS = 10;
+
+	/**
+	 * Ordering a topic's replies render in when no ?rsort is supplied.
+	 *
+	 * page_of() computes a reply's page under THIS ordering, so it is a
+	 * contract between the link-builder and the view, not a cosmetic default.
+	 * \Jetonomy\reply_permalink() deliberately emits no ?rsort precisely so the
+	 * page it computed is the page that renders. Changing this value without
+	 * revisiting page_of() would silently mis-target every reply deep link;
+	 * Journey_Tests::test_reply_deep_link_targets() fails if they disagree.
+	 */
+	public const DEFAULT_SORT = 'oldest';
+
 	protected static function table_name(): string {
 		return 'replies';
 	}
@@ -226,10 +247,9 @@ class Reply extends Model {
 	 * @param int    $after   Cursor: return replies after this reply ID.
 	 * @return object[]
 	 */
-	public static function list_by_post( int $post_id, string $sort = 'oldest', int $limit = -1, int $offset = 0, int $after = 0 ): array {
+	public static function list_by_post( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = -1, int $offset = 0, int $after = 0 ): array {
 		if ( -1 === $limit ) {
-			$settings = get_option( 'jetonomy_settings', array() );
-			$limit    = (int) ( $settings['replies_per_page'] ?? 30 );
+			$limit = \Jetonomy\replies_per_page();
 		}
 		$table = static::table();
 
@@ -455,12 +475,18 @@ class Reply extends Model {
 	 * @param int    $offset  Offset for top-level replies.
 	 * @return array Threaded reply tree.
 	 */
-	public static function get_threaded( int $post_id, string $sort = 'oldest', int $limit = 0, int $offset = 0 ): array {
+	public static function get_threaded( int $post_id, string $sort = self::DEFAULT_SORT, int $limit = 0, int $offset = 0 ): array {
 		// Fetch ALL replies for this post (we need full tree to build hierarchy).
+		//
+		// `id ASC` is a required tiebreak, not decoration: page_of() breaks
+		// created_at ties on id, and if this query left ties to MySQL's
+		// undefined ordering the two could disagree and land a deep link on
+		// the wrong page. Ties are not hypothetical — bulk imports (bbPress,
+		// wpForo) routinely write a whole thread with one timestamp.
 		$all = static::db()->get_results(
 			static::db()->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'SELECT * FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC",
+				'SELECT * FROM ' . static::table() . " WHERE post_id = %d AND status = 'publish' ORDER BY created_at ASC, id ASC",
 				$post_id
 			)
 		);
@@ -565,27 +591,21 @@ class Reply extends Model {
 	/**
 	 * Mark + scrub a reply row authored by a user the viewer has blocked.
 	 *
-	 * Sets `is_blocked_author = true` and nulls the content fields SERVER-SIDE
-	 * so blocked text never reaches the client — the reply-card partial then
-	 * renders a tombstone ("Content hidden — you blocked this user") instead
-	 * of the body. `author_id` is deliberately left intact: the template needs
-	 * it to render the Unblock affordance and to keep avatar/permission checks
-	 * from erroring on a null author.
+	 * The reply-shaped call into the one tombstone —
+	 * {@see BlockedUser::apply_tombstone()}. A reply has no title, so only the
+	 * body fields are emptied; the reply-card partial then renders "Content
+	 * hidden — you blocked this user" instead of the body.
 	 *
-	 * Shared by get_threaded()'s tree builder and the off-page Q&A
-	 * accepted-answer callout (single-post.php), which fetches its reply via
-	 * Reply::find() instead of the tree and must apply the same treatment.
+	 * Kept as a named seam because callers outside this model use it:
+	 * get_threaded()'s tree builder and the off-page Q&A accepted-answer
+	 * callout (single-post.php), which fetches its reply via Reply::find()
+	 * instead of the tree and must get the same treatment.
 	 *
 	 * @param object $reply       Reply row, mutated in place.
 	 * @param int[]  $blocked_ids Viewer's blocked author ids.
 	 */
 	public static function apply_block_tombstone( object $reply, array $blocked_ids ): void {
-		$reply->is_blocked_author = in_array( (int) $reply->author_id, $blocked_ids, true );
-
-		if ( $reply->is_blocked_author ) {
-			$reply->content       = '';
-			$reply->content_plain = '';
-		}
+		BlockedUser::apply_tombstone( $reply, $blocked_ids, array( 'content', 'content_plain' ) );
 	}
 
 	/**
@@ -665,6 +685,276 @@ class Reply extends Model {
 			)
 		);
 	}
+
+	/**
+	 * Walk up to the top-level ancestor of a reply.
+	 *
+	 * A deep link to a nested reply has to page to wherever its top-level
+	 * ancestor sits, because pagination slices the TOP-LEVEL list only
+	 * (get_threaded()) — a child is rendered with its root, never on a page
+	 * of its own.
+	 *
+	 * Iterative primary-key lookups rather than a recursive CTE: CTEs need
+	 * MySQL 8 / MariaDB 10.2 and WordPress still supports 5.7. The chain is
+	 * short in practice (build_tree() renders 3 levels and flattens below
+	 * that), and MAX_ANCESTOR_HOPS bounds it regardless of stored depth so a
+	 * corrupted parent cycle can never spin here.
+	 *
+	 * @param object $reply Reply row.
+	 * @return object|null Top-level ancestor (may be $reply itself), or null if the chain is broken.
+	 */
+	public static function top_level_ancestor( object $reply ): ?object {
+		$current = $reply;
+		for ( $hops = 0; $hops < self::MAX_ANCESTOR_HOPS; $hops++ ) {
+			$parent_id = (int) ( $current->parent_id ?? 0 );
+			if ( ! $parent_id ) {
+				return $current;
+			}
+			$parent = static::find( $parent_id );
+			if ( ! $parent ) {
+				// Orphaned child (parent deleted). It renders at top level in
+				// the tree builder, so treat it as its own root.
+				return $current;
+			}
+			$current = $parent;
+		}
+		return null;
+	}
+
+	/**
+	 * Which page of top-level replies a given reply appears on.
+	 *
+	 * Counts siblings ordered before the reply's top-level ancestor in SQL —
+	 * one indexed COUNT (post_created covers post_id + created_at) rather
+	 * than loading the thread. This runs per notification and per deep link,
+	 * on topics that can hold thousands of replies.
+	 *
+	 * ORDERING CONTRACT — read before changing this query. The position is
+	 * computed under self::DEFAULT_SORT only (created_at ASC, id ASC as a
+	 * deterministic tiebreak), matching get_threaded()'s default. That is
+	 * sound only because \Jetonomy\reply_permalink() emits no ?rsort, so the
+	 * target page always renders in this same order. It must stay that way:
+	 *
+	 *   - 'newest' reverses the top-level list, so a reply's page number is
+	 *     different (often mirrored) under it.
+	 *   - 'best' orders by vote_score, which CHANGES AS PEOPLE VOTE. A page
+	 *     number computed under 'best' is not merely different, it rots —
+	 *     yesterday's link points somewhere else today. A permalink must be
+	 *     stable, so it pins the ordering by omitting the param rather than
+	 *     inheriting whatever the linking reader happened to be viewing.
+	 *
+	 * Journey_Tests::test_reply_deep_link_targets() asserts this function and
+	 * the rendered page still agree, so a change to either side fails loudly
+	 * instead of silently mis-targeting every reply link.
+	 *
+	 * Thin wrapper over {@see self::pages_of()} so the ordering contract above has
+	 * exactly ONE implementation. Resolving a single reply costs the same either
+	 * way; anything resolving a LIST must call pages_of() directly.
+	 *
+	 * @param int $reply_id Reply ID (top-level or nested).
+	 * @param int $per_page Top-level replies per page.
+	 * @return int 1-based page number; 1 when unresolvable.
+	 */
+	public static function page_of( int $reply_id, int $per_page ): int {
+		$key = $per_page . ':' . $reply_id;
+		if ( isset( self::$page_cache[ $key ] ) ) {
+			return self::$page_cache[ $key ];
+		}
+		return self::pages_of( [ $reply_id ], $per_page )[ $reply_id ] ?? 1;
+	}
+
+	/**
+	 * Resolved page numbers for this request, keyed "per_page:reply_id".
+	 *
+	 * @var array<string,int>
+	 */
+	private static array $page_cache = [];
+
+	/**
+	 * Which page each of many replies appears on — in a fixed number of queries.
+	 *
+	 * Same contract as {@see self::page_of()} (read its ORDERING CONTRACT), for a
+	 * set instead of one reply.
+	 *
+	 * This exists because the singular form is a per-row cost, and the surfaces
+	 * that need reply pages are LISTS. The notifications endpoint resolves a deep
+	 * link for every row it returns; at find() + COUNT apiece that was ~2 queries
+	 * per notification — measured 20 queries for 8 rows — so opening the bell on a
+	 * busy account paid dozens of avoidable round-trips. Rendering a topic avoided
+	 * this only because the view already knows which page it drew and hands it to
+	 * reply_permalink() directly.
+	 *
+	 * Cost is O(depth) queries, not O(rows): one to load the requested replies,
+	 * one per ancestor level to climb (nesting is one level in practice; the loop
+	 * is bounded by MAX_ANCESTOR_HOPS regardless), and one to position every
+	 * anchor. The positioning query uses the same indexed predicate as before,
+	 * once per anchor inside a single round-trip, rather than one round-trip per
+	 * anchor.
+	 *
+	 * @param int[] $reply_ids Reply IDs (top-level or nested; unknown IDs are omitted).
+	 * @param int   $per_page  Top-level replies per page.
+	 * @return array<int,int> reply_id => 1-based page. Unresolvable replies map to 1.
+	 */
+	public static function pages_of( array $reply_ids, int $per_page ): array {
+		$per_page  = max( 1, $per_page );
+		$reply_ids = array_values( array_unique( array_filter( array_map( 'intval', $reply_ids ), static fn( $id ) => $id > 0 ) ) );
+		if ( ! $reply_ids ) {
+			return [];
+		}
+
+		$db    = static::db();
+		$table = static::table();
+
+		// Every unresolvable case degrades to page 1, matching page_of().
+		$pages = array_fill_keys( $reply_ids, 1 );
+
+		$rows = self::rows_by_id( $reply_ids );
+		if ( ! $rows ) {
+			return $pages;
+		}
+
+		// Climb to each reply's top-level ancestor, one batched query per level.
+		// An orphaned child (parent deleted) roots at itself — the tree builder
+		// renders it top-level, so it must page as top-level too.
+		$anchor_of = [];
+		$pending   = [];
+		foreach ( $rows as $id => $row ) {
+			$parent = (int) ( $row->parent_id ?? 0 );
+			if ( $parent ) {
+				$pending[ $id ] = $parent;
+			} else {
+				$anchor_of[ $id ] = $row;
+			}
+		}
+
+		$known = $rows;
+		for ( $hops = 0; $pending && $hops < self::MAX_ANCESTOR_HOPS; $hops++ ) {
+			$need = array_values( array_diff( array_unique( array_values( $pending ) ), array_keys( $known ) ) );
+			if ( $need ) {
+				$known += self::rows_by_id( $need );
+			}
+
+			$next = [];
+			foreach ( $pending as $id => $parent_id ) {
+				$parent = $known[ $parent_id ] ?? null;
+				if ( ! $parent ) {
+					$anchor_of[ $id ] = $rows[ $id ];          // orphan: roots at itself
+					continue;
+				}
+				$grandparent = (int) ( $parent->parent_id ?? 0 );
+				if ( $grandparent ) {
+					$next[ $id ] = $grandparent;
+				} else {
+					$anchor_of[ $id ] = $parent;
+				}
+			}
+			$pending = $next;
+		}
+		// Anything still climbing at the hop limit roots at itself, as page_of() does.
+		foreach ( array_keys( $pending ) as $id ) {
+			$anchor_of[ $id ] = $rows[ $id ];
+		}
+
+		$anchors = [];
+		foreach ( $anchor_of as $anchor ) {
+			$anchors[ (int) $anchor->id ] = $anchor;
+		}
+		if ( ! $anchors ) {
+			return $pages;
+		}
+
+		// Position every anchor among its published top-level siblings in ONE
+		// round-trip. The correlated subquery is the same predicate page_of() used,
+		// and rides the same post_created index.
+		$ids_sql = implode( ',', array_map( 'intval', array_keys( $anchors ) ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is a trusted prefixed name; $ids_sql is intval-mapped.
+		$positions = $db->get_results(
+			"SELECT a.id AS anchor_id,
+				( SELECT COUNT(*) FROM {$table} s
+				   WHERE s.post_id = a.post_id
+					 AND ( s.parent_id IS NULL OR s.parent_id = 0 )
+					 AND s.status = 'publish'
+					 AND ( s.created_at < a.created_at
+						OR ( s.created_at = a.created_at AND s.id <= a.id ) )
+				) AS pos
+			 FROM {$table} a
+			 WHERE a.id IN ({$ids_sql})"
+		);
+
+		$pos_of = [];
+		foreach ( (array) $positions as $row ) {
+			$pos_of[ (int) $row->anchor_id ] = (int) $row->pos;
+		}
+
+		foreach ( $anchor_of as $reply_id => $anchor ) {
+			$position = $pos_of[ (int) $anchor->id ] ?? 0;
+			// 0 means the anchor is not published (unapproved/trashed): it renders
+			// on no page, so send the reader to page 1 rather than page 0.
+			$pages[ $reply_id ] = $position < 1 ? 1 : (int) ceil( $position / $per_page );
+		}
+
+		// Memoize for the rest of the request so page_of() — which every
+		// reply_permalink() call reaches when the caller has no page in hand —
+		// answers from here instead of re-querying per row. This is what turns a
+		// primed list into zero further queries without changing reply_permalink()
+		// or any of its seven callers.
+		foreach ( $pages as $reply_id => $page ) {
+			self::$page_cache[ $per_page . ':' . $reply_id ] = $page;
+		}
+
+		return $pages;
+	}
+
+	/**
+	 * Resolve the pages for a set of replies up front, so the per-row lookups
+	 * that follow are free.
+	 *
+	 * Call this from any surface that is about to build deep links for a LIST of
+	 * replies. It is the batching seam: one call here, then every subsequent
+	 * \Jetonomy\reply_permalink() for those replies answers from cache.
+	 *
+	 * Deliberately not required — page_of() still resolves a lone reply on its
+	 * own, so a caller that forgets this is slower, never wrong.
+	 *
+	 * @param int[] $reply_ids Reply IDs about to be linked.
+	 * @param int   $per_page  Top-level replies per page.
+	 */
+	public static function prime_pages( array $reply_ids, int $per_page ): void {
+		$uncached = [];
+		foreach ( $reply_ids as $id ) {
+			$id = (int) $id;
+			if ( $id > 0 && ! isset( self::$page_cache[ $per_page . ':' . $id ] ) ) {
+				$uncached[] = $id;
+			}
+		}
+		if ( $uncached ) {
+			self::pages_of( $uncached, max( 1, $per_page ) );
+		}
+	}
+
+	/**
+	 * Fetch reply rows by ID in one query, keyed by ID.
+	 *
+	 * @param int[] $ids
+	 * @return array<int,object>
+	 */
+	private static function rows_by_id( array $ids ): array {
+		if ( ! $ids ) {
+			return [];
+		}
+		$db      = static::db();
+		$table   = static::table();
+		$ids_sql = implode( ',', array_map( 'intval', $ids ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $table is trusted; $ids_sql is intval-mapped.
+		$rows = $db->get_results( "SELECT id, parent_id, post_id, created_at, status FROM {$table} WHERE id IN ({$ids_sql})" );
+
+		$out = [];
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->id ] = $row;
+		}
+		return $out;
+	}
+
 
 	/**
 	 * Split a reply (and its children) into a new topic.

@@ -158,6 +158,67 @@ abstract class Importer {
 	}
 
 	/**
+	 * Order forum-like rows so every parent appears before its children.
+	 *
+	 * An importer creates one space per source forum and records old id -> new id
+	 * as it goes, so a child can only resolve its parent's new space id if the
+	 * parent was created first. Source order never guarantees that — bbPress
+	 * forums are WP posts ordered by menu_order/ID, and a sub-forum routinely
+	 * carries a LOWER post ID than its parent.
+	 *
+	 * Breadth-first from the roots. Anything orphaned (its parent id points at a
+	 * row that isn't in the set) is appended so it still imports, flat, rather
+	 * than being dropped — losing a customer's content is worse than losing its
+	 * nesting. Cycles can never reach the queue, so they fall out as orphans too
+	 * rather than spinning.
+	 *
+	 * Every source's forum rows are id + parent-id shaped, but the column names
+	 * differ (bbPress: ID/post_parent, wpForo: forumid/parentid, Asgaros:
+	 * id/parent_forum), so the keys are passed in. That difference is the only
+	 * reason this ever got copied per importer — and copying it is why bbPress
+	 * never received the fix wpForo got.
+	 *
+	 * @param object[] $rows       Source forum rows.
+	 * @param string   $id_key     Property holding the row's own id.
+	 * @param string   $parent_key Property holding the row's parent id (0 = root).
+	 * @return object[] Same rows, parents first.
+	 */
+	protected function sort_rows_parents_first( array $rows, string $id_key, string $parent_key ): array {
+		$indexed  = [];
+		$children = [];
+
+		foreach ( $rows as $row ) {
+			$id                    = (int) $row->$id_key;
+			$indexed[ $id ]        = $row;
+			$parent                = (int) ( $row->$parent_key ?? 0 );
+			$children[ $parent ][] = $id;
+		}
+
+		$ordered = [];
+		$queue   = $children[0] ?? [];
+
+		while ( ! empty( $queue ) ) {
+			$id = array_shift( $queue );
+			if ( ! isset( $indexed[ $id ] ) ) {
+				continue;
+			}
+			$ordered[] = $indexed[ $id ];
+			// Drop it from the pool so it can't be emitted twice and so whatever
+			// remains at the end is exactly the orphan/cycle set.
+			unset( $indexed[ $id ] );
+			if ( ! empty( $children[ $id ] ) ) {
+				array_splice( $queue, 0, 0, $children[ $id ] );
+			}
+		}
+
+		foreach ( $indexed as $leftover ) {
+			$ordered[] = $leftover;
+		}
+
+		return $ordered;
+	}
+
+	/**
 	 * Ensure a user profile exists.
 	 */
 	protected function ensure_profile( int $user_id ): void {

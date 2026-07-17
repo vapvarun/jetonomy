@@ -90,8 +90,7 @@ $crumbs = array(
 				<div class="jt-form-row">
 					<label for="jt-ns-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></label>
 					<select id="jt-ns-visibility" name="visibility" class="jt-input">
-						<option value="public"><?php esc_html_e( 'Public: anyone can read', 'jetonomy' ); ?></option>
-						<option value="private"><?php esc_html_e( 'Private: members only', 'jetonomy' ); ?></option>
+						<?php \Jetonomy\space_visibility_options(); ?>
 					</select>
 				</div>
 

@@ -13,69 +13,17 @@ class Schema_Markup {
 
 	public function __construct() {
 		add_action( 'wp_head', [ $this, 'output_schema' ] );
-		// 1.4.0: title patterns are owned by Template_Loader::set_seo_meta
-		// now. The legacy filter here was double-injecting {site_name},
-		// because WP's separator already appends the site name to
-		// $title_parts['title'] — pre-fix titles read "Topic | Site – Site".
-		// Patterns from `seo_post_title` / `seo_space_title` settings are
-		// still honoured: their {site_name} expansion is stripped here so
-		// WP only adds the site name once. When a customer wants the
-		// admin-configured title untouched, they can filter
+		// Title patterns are owned by Template_Loader::set_seo_meta — the comment
+		// here has said so since 1.4.0, but the filter stayed registered right
+		// below it and the two fought. Template_Loader registers on
+		// template_redirect, i.e. later, so it won every time and replaced the
+		// patterned title with the route's generic label. That is why every
+		// topic's <title> was its SLUG rather than its title. The pattern logic
+		// now lives in Template_Loader::seo_title_from_pattern(); this filter and
+		// its filter_title() method are gone.
+		//
+		// Customers wanting the configured title untouched can still filter
 		// `jetonomy_seo_meta` to override `title` directly.
-		add_filter( 'document_title_parts', [ $this, 'filter_title' ] );
-	}
-
-	/**
-	 * Apply admin-configured SEO title patterns. Drops the {site_name}
-	 * placeholder before substitution so WP's separator + tagline path
-	 * doesn't append the site name a second time. Empty patterns are
-	 * ignored so Template_Loader::set_seo_meta keeps owning the title.
-	 *
-	 * Supports placeholders: {post_title}, {space_name}.
-	 */
-	public function filter_title( array $title_parts ): array {
-		$route = get_query_var( 'jetonomy_route' );
-		if ( empty( $route ) ) {
-			return $title_parts;
-		}
-
-		$settings = get_option( 'jetonomy_settings', [] );
-
-		$strip_site_name = static function ( string $pattern ): string {
-			// Drop {site_name} along with any trailing/leading separator.
-			$pattern = (string) preg_replace( '/\s*[\|\-–—]?\s*\{site_name\}\s*[\|\-–—]?\s*/u', ' ', $pattern );
-			$pattern = (string) preg_replace( '/\s+/u', ' ', $pattern );
-			return trim( $pattern );
-		};
-
-		if ( 'post' === $route && ! empty( $settings['seo_post_title'] ) ) {
-			$slug  = get_query_var( 'jetonomy_slug' );
-			$post  = \Jetonomy\Models\Post::find_by_slug( $slug );
-			$space = $post ? \Jetonomy\Models\Space::find( (int) $post->space_id ) : null;
-			if ( $post ) {
-				$pattern              = $strip_site_name( (string) $settings['seo_post_title'] );
-				$title_parts['title'] = str_replace(
-					[ '{post_title}', '{space_name}' ],
-					[ $post->title, $space->title ?? '' ],
-					$pattern
-				);
-			}
-		}
-
-		if ( 'space' === $route && ! empty( $settings['seo_space_title'] ) ) {
-			$slug  = get_query_var( 'jetonomy_slug' );
-			$space = \Jetonomy\Models\Space::find_by_slug( $slug );
-			if ( $space ) {
-				$pattern              = $strip_site_name( (string) $settings['seo_space_title'] );
-				$title_parts['title'] = str_replace(
-					[ '{space_name}' ],
-					[ $space->title ],
-					$pattern
-				);
-			}
-		}
-
-		return $title_parts;
 	}
 
 	public function output_schema(): void {
@@ -151,12 +99,18 @@ class Schema_Markup {
 			return null;
 		}
 
-		// 1.4.0 fix: gate the schema emit on the same can_read_post()
-		// check Template_Loader applies to og:* / meta description /
-		// article:* metadata. Without this, JSON-LD leaks the full
-		// content of a private post to logged-out crawlers even though
-		// the HTML view returns 403/404 (Basecamp 9803998504 regression).
-		if ( ! \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+		// 1.4.0 fix: gate the schema emit on the same check Template_Loader
+		// applies to og:* / meta description / article:* metadata. Without
+		// this, JSON-LD leaks the full content of a private post to
+		// logged-out crawlers even though the HTML view returns 403/404
+		// (Basecamp 9803998504 regression).
+		//
+		// 1.8.0: that shared check is now can_render_post_text(), so this
+		// emit inherits the blocked-author gate too — `headline` and `text`
+		// were shipping a blocked author's title and body verbatim to the
+		// viewer who blocked them. Crawlers are unaffected (they block
+		// nobody), so public topics keep their structured data intact.
+		if ( ! \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 			return null;
 		}
 
@@ -191,7 +145,7 @@ class Schema_Markup {
 							'@type' => 'Person',
 							'name'  => $answer_author ? $answer_author->display_name : 'Anonymous',
 						],
-						'url'         => $base . '#reply-' . $accepted->id,
+						'url'         => \Jetonomy\reply_permalink( $space_slug, $slug, (int) $accepted->id ),
 					] : null,
 				],
 			];
@@ -468,7 +422,11 @@ class Schema_Markup {
 					'url'  => $base . 's/' . $space_slug . '/',
 				];
 			}
-			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_read_post( get_current_user_id(), $post ) ) {
+			// can_render_post_text(): the crumb's `name` IS the post title, so a
+			// blocked author's title rode into BreadcrumbList even though the
+			// page body beside it was tombstoned (1.8.0). Dropping the crumb
+			// leaves a valid shorter chain (Community → Space).
+			if ( $post && \Jetonomy\Permissions\Permission_Engine::can_render_post_text( get_current_user_id(), $post ) ) {
 				$items[] = [
 					'name' => $post->title,
 					'url'  => $base . 's/' . $space_slug . '/t/' . $slug . '/',

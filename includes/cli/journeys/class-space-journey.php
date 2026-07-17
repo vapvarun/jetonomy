@@ -28,7 +28,6 @@ defined( 'ABSPATH' ) || exit;
 final class Space_Journey {
 
 	private const ALLOWED_TYPES         = [ 'forum', 'qa', 'ideas', 'chat' ];
-	private const ALLOWED_VISIBILITIES  = [ 'public', 'private', 'hidden' ];
 	private const ALLOWED_JOIN_POLICIES = [ 'open', 'approval', 'invite' ];
 
 	/**
@@ -54,8 +53,8 @@ final class Space_Journey {
 		if ( ! in_array( $type, self::ALLOWED_TYPES, true ) ) {
 			return Journey_Result::fail( 'type must be one of: ' . implode( ', ', self::ALLOWED_TYPES ) );
 		}
-		if ( ! in_array( $visibility, self::ALLOWED_VISIBILITIES, true ) ) {
-			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', self::ALLOWED_VISIBILITIES ) );
+		if ( ! in_array( $visibility, Space::visibility_values(), true ) ) {
+			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', Space::visibility_values() ) );
 		}
 		if ( ! in_array( $join_policy, self::ALLOWED_JOIN_POLICIES, true ) ) {
 			return Journey_Result::fail( 'join_policy must be one of: ' . implode( ', ', self::ALLOWED_JOIN_POLICIES ) );
@@ -123,8 +122,8 @@ final class Space_Journey {
 		if ( isset( $patch['type'] ) && ! in_array( $patch['type'], self::ALLOWED_TYPES, true ) ) {
 			return Journey_Result::fail( 'type must be one of: ' . implode( ', ', self::ALLOWED_TYPES ) );
 		}
-		if ( isset( $patch['visibility'] ) && ! in_array( $patch['visibility'], self::ALLOWED_VISIBILITIES, true ) ) {
-			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', self::ALLOWED_VISIBILITIES ) );
+		if ( isset( $patch['visibility'] ) && ! in_array( $patch['visibility'], Space::visibility_values(), true ) ) {
+			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', Space::visibility_values() ) );
 		}
 		if ( isset( $patch['join_policy'] ) && ! in_array( $patch['join_policy'], self::ALLOWED_JOIN_POLICIES, true ) ) {
 			return Journey_Result::fail( 'join_policy must be one of: ' . implode( ', ', self::ALLOWED_JOIN_POLICIES ) );
@@ -272,8 +271,8 @@ final class Space_Journey {
 		if ( $id <= 0 ) {
 			return Journey_Result::fail( 'Space id must be positive.' );
 		}
-		if ( ! in_array( $visibility, self::ALLOWED_VISIBILITIES, true ) ) {
-			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', self::ALLOWED_VISIBILITIES ) );
+		if ( ! in_array( $visibility, Space::visibility_values(), true ) ) {
+			return Journey_Result::fail( 'visibility must be one of: ' . implode( ', ', Space::visibility_values() ) );
 		}
 
 		$existing = Space::find( $id );

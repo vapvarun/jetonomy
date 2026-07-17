@@ -17,7 +17,7 @@
 defined( 'ABSPATH' ) || exit;
 
 define( 'JETONOMY_VERSION', '1.8.0' );
-define( 'JETONOMY_DB_VERSION', '1.7.1' );
+define( 'JETONOMY_DB_VERSION', '1.8.0' );
 define( 'JETONOMY_FILE', __FILE__ );
 define( 'JETONOMY_DIR', plugin_dir_path( __FILE__ ) );
 define( 'JETONOMY_URL', plugin_dir_url( __FILE__ ) );
@@ -603,6 +603,12 @@ function jetonomy_format_content( string $content ): string {
 	// the single display-side paragraph layer (mirrors core's `the_content`).
 	$content = wpautop( $content );
 
+	// Resolve every @mention in this content to a profile URL in ONE query,
+	// BEFORE splitting into segments. Mention linkifying itself lives in
+	// Mentions::linkify() — the single implementation — so mention links honour
+	// the `jetonomy_profile_url` filter and only render for real users.
+	$mention_urls = \Jetonomy\Mentions::link_map( $content );
+
 	// Split content into HTML tags and text segments, process only text segments.
 	$parts = preg_split( '/(<[^>]*>)/u', $content, -1, PREG_SPLIT_DELIM_CAPTURE );
 	if ( false === $parts ) {
@@ -628,18 +634,8 @@ function jetonomy_format_content( string $content ): string {
 			continue;
 		}
 
-		// @mentions → profile links. Negative lookbehind prevents matching
-		// inside URL paths like `tiktok.com/@username/video/...` — `/` or
-		// word/email characters immediately before `@` block the match.
-		$part = preg_replace_callback(
-			'/(?<![\w\/.:-])@([a-zA-Z0-9_-]+)/u',
-			function ( $matches ) use ( $base ) {
-				$username = $matches[1];
-				$url      = $base . '/u/' . rawurlencode( $username ) . '/';
-				return '<a href="' . esc_url( $url ) . '" class="jt-mention">@' . esc_html( $username ) . '</a>';
-			},
-			$part
-		);
+		// @mentions → profile links, from the map resolved above.
+		$part = \Jetonomy\Mentions::linkify( $part, $mention_urls );
 
 		// #hashtags → tag page links. Same lookbehind so URL fragments
 		// (`foo.com#section`) don't get linkified as tags.

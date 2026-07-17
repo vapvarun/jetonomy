@@ -1,6 +1,24 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory - 73 REST routes, 43 AJAX handlers, 177 hooks fired, 20 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. **1.6.0 delta (manifest refresh 2026-06-28 + audit 2026-07-04): mobile-app API added (GET /app/config with `app_enabled` Pro-license gate + GET /feed); 5 private/hidden-space content leaks closed; `jetonomy_email_headers` widened to 5 args for pro reply-by-email. Latest full audit: `audit/full-audit-2026-07-04.md`.** **Coverage-gated refresh completed 2026-06-11 (1.5.0-dev, post-audit-fixes): AJAX nonces corrected from check_ajax_referer ground truth, 43 stale permission-callback refs updated, 3 dead tables + /space-tags + 3 dead AJAX actions removed, publish-transition hooks + GET /auth/nonce added, stale jetonomy_recent_activity shortcode entry dropped (see `generated.refresh_2026_06_11`). Full audit findings: `audit/full-audit-2026-06-11.md`; wppqa baseline: `audit/wppqa-baseline-2026-06-11/`. SaaS feature audit: `audit/FEATURE_GAP_ANALYSIS.md`.** v2 schema with `static_analysis` populated (zero dead listeners after 1.4.2; 4 grid 1fr risks documented as design notes since the CSS already implements `minmax(0, 1fr)`). See also [`audit/FEATURE_AUDIT.md`](audit/FEATURE_AUDIT.md) and [`audit/customer-experience-matrix.md`](audit/customer-experience-matrix.md). End-to-end customer flows live as runnable PHP scenarios under `includes/cli/scenarios/` and as the pre-release smoke runbook (`/jetonomy-smoke`). For an interactive graph view, run `cd audit && python3 -m http.server 8765` and open <http://localhost:8765/graph.html>. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 73 REST routes, 43 AJAX handlers, 177 hooks fired, 20 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+
+### Where things live (this repo is PUBLIC)
+
+`vapvarun/jetonomy` is public; `vapvarun/jetonomy-pro` is private. **Internal audits and planning live in Pro** — not because they are secret, but because a public repo should carry what a customer or contributor needs, not our working notes. Nothing was deleted; it moved.
+
+| Need | Where |
+|---|---|
+| Canonical inventory, coverage data, graph viewer | **free** `audit/manifest.json`, `audit/qa-coverage.json`, `audit/graph.html` |
+| Build + QA tooling | **free** `bin/` |
+| Customer + developer docs | **free** `docs/website/`, `docs/architecture/`, `docs/developer/`, `ARCHITECTURE.md`, `DESIGN-SYSTEM.md`, `CONTRIBUTING.md` |
+| Engineering standards | **free** `docs/standards/` |
+| Full audits, feature/gap analyses, wppqa baselines, UX punchlists, expectation records | **pro** `../jetonomy-pro/audit/free/` |
+| Implementation plans | **pro** `../jetonomy-pro/docs/plans/free/` |
+
+The manifest deliberately stays in free: four scripts read it (`build-release.sh`, `qa-coverage-check.php`, `qa-stub-gen.php`, `audit-wiring.php`), and a public repo's build must not depend on a private one. Pro's build excludes `audit/` and `docs/` from its zip, so nothing internal ships to customers either.
+
+Interactive graph: `cd audit && python3 -m http.server 8765`, then <http://localhost:8765/graph.html>.
+End-to-end customer flows: runnable PHP scenarios in `includes/cli/scenarios/`, plus the pre-release smoke runbook (`/jetonomy-smoke`).
 
 ## Stability & Manifest-First Rules (enforced)
 
@@ -129,17 +147,18 @@ See **`~/.claude/CLAUDE.md` -> "Release Notes Style (ALL plugins & themes)"** fo
 | `includes/notifications/class-notifier.php` | Event-driven notification dispatcher |
 | `includes/import/` | bbPress + wpForo import tools |
 | `templates/` | 12 views + 6 partials (theme-overridable) |
-| `assets/css/jetonomy.css` | Theme-adaptive CSS (inherits from theme.json) |
+| `assets/css/jetonomy-tokens.css` | The `--jt-*` token layer (`:root` + dark). Dependency of BOTH `jetonomy` and `jetonomy-blocks` |
+| `assets/css/jetonomy.css` | Theme-adaptive CSS for the community app (consumes the tokens; declares none) |
 | `assets/js/view.js` | Interactivity API store (voting, sorting, polling) |
 
 ## Documentation
-- **Implementation Plans**: `docs/plans/` (only future / unshipped plans kept; shipped ones are pruned each release)
+- **Implementation Plans**: `../jetonomy-pro/docs/plans/free/` — moved to Pro (private) so the public repo carries customer/developer docs, not working notes. Only future / unshipped plans are kept; shipped ones are pruned each release.
 - **Design Prototypes**: `docs/prototype/` (open HTML files in browser)
 - **Standards**: `docs/standards/` — normative engineering standards every change must honour (canonical sources in `~/.claude/workflows/`).
   - `frontend-interactivity.md` — **Frontend Interactivity & Client-Side Navigation Standard** (WP Interactivity API router, declarative regions, `jetonomy:navigated` re-init, no per-route/inline scripts, restFetch, verify-after-client-nav). Jetonomy is the reference implementation. Any new interactive frontend surface MUST pass its Section 5 checklist before release.
   - `background-jobs.md` — **Background-Jobs Standard** (lazy-on-read first, AS-first with WP-Cron fallback, schedule on `action_scheduler_init` not `plugins_loaded`, one group per plugin, no idle polling, clear both schedulers on deactivate). `includes/class-cron.php` is the reference. Known gap: no cron-health Tools note yet (standard §4). Any new job MUST pass its Section 6 checklist.
   - `datetime-timezone.md` — **Date/Time & Timezone Standard** (store UTC, interpret + display in the **site** timezone via `wp_timezone()` / `get_date_from_gmt()`, never the server or browser clock; naive scheduler values are site-local, offsets honoured, date-only resets with a `!`-format). Reference: `sanitize_backdate()` + the scheduled-posts path. Any new date/time surface MUST pass its Section 5 checklist before release.
-  - `host-theme-color-adoption.md` — **Host-Theme Color Adoption Standard** (the plugin reads native to the active theme by chaining `--jt-accent` through the theme's own brand token → WP `primary`/`accent` preset slugs → neutral default; verified token map for BuddyX/Reign/BuddyNext + Astra/Kadence/Blocksy/GeneratePress; clean default + one-field owner override for themes exposing no recognizable brand token; never auto-adopt numbered/decorative slugs). Reference: the `:root,.jt-app` block in `jetonomy.css` + the `inherit_colors` inline in `class-template-loader.php`. Any new frontend surface or plugin adopting host colors MUST pass its Section checklist.
+  - `host-theme-color-adoption.md` — **Host-Theme Color Adoption Standard** (the plugin reads native to the active theme by chaining `--jt-accent` through the theme's own brand token → WP `primary`/`accent` preset slugs → neutral default; verified token map for BuddyX/Reign/BuddyNext + Astra/Kadence/Blocksy/GeneratePress; clean default + one-field owner override for themes exposing no recognizable brand token; never auto-adopt numbered/decorative slugs). Reference: the `:root` block in `jetonomy-tokens.css`. (1.8.0: the `inherit_colors` setting is GONE - it defaulted to checked and made `palette_tokens()` return empty, so an owner who picked an accent had it silently discarded. Adoption is now unconditional; the accent field is the single override, with its `#0073aa` default acting as the "not set" sentinel.) Any new frontend surface or plugin adopting host colors MUST pass its Section checklist.
 
 ## URL Structure
 ```
@@ -230,11 +249,18 @@ For release history, run `git log --oneline` or read `readme.txt`. For architect
 
 **Golden rule: never write a hardcoded px, hex, or font-family value in any CSS file.**
 
-All values must reference `--jt-*` custom properties. If a token doesn't exist for the value you need, add it to the `:root, .jt-app` block in `jetonomy.css` first.
+All values must reference `--jt-*` custom properties. If a token doesn't exist for the value you need, add it to the `:root` block in `assets/css/jetonomy-tokens.css` first.
 
 ### Where tokens are defined
 
-All `--jt-*` tokens live in `:root, .jt-app` at the top of `assets/css/jetonomy.css`. Root tokens inherit from WP preset tokens so they auto-adapt to the active theme:
+**All `--jt-*` tokens live in `assets/css/jetonomy-tokens.css` (handle `jetonomy-tokens`), declared on `:root` ONLY.** Both `jetonomy` and `jetonomy-blocks` declare it as a dependency, so the token layer reaches every page either one renders on.
+
+Two rules follow from that, and both are load-bearing (1.8.0):
+
+- **Never declare tokens on `.jt-app`.** `:root` is `<html>`, an ancestor of everything, so adding `.jt-app` to the selector buys no reach — it only lets a nested `.jt-app` (every block root carries the class) *re-declare* the set instead of inheriting it. That is how the login block pinned itself to the light chain and rendered a white card on a dark page while the sidebar cards beside it were correct: they inherit, it re-declared.
+- **Never give a component its own token namespace.** The blocks used to ship a parallel `--jtb-*` set so they would style correctly on pages where `jetonomy.css` is absent. It drifted: a shorter chain that never learned about BuddyX/Reign/Astra/Kadence/Blocksy/Neve, and its own third fallback blue. `jetonomy-tokens.css` exists precisely so a block can inherit the real tokens anywhere instead of copying them.
+
+Tokens inherit from WP preset tokens so they auto-adapt to the active theme:
 
 ```css
 /* Root tokens inherit from BuddyNext first, then WP theme.json, then hardcoded fallback.
@@ -278,7 +304,7 @@ Derived color tokens use `color-mix()` for modern browsers with a hex fallback f
 
 ### Dark mode rule
 
-Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark .jt-app` in `jetonomy.css` by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
+Never write per-component dark selectors. Dark mode overrides only live in `.jt-dark, [data-theme="dark"]` in `jetonomy-tokens.css`, by reassigning the `--jt-*` root tokens. Individual components automatically get dark mode by using the tokens:
 
 ```css
 /* Correct - uses tokens, dark mode is automatic */
@@ -298,7 +324,7 @@ There is no spacing scale yet (gap to fill in a future task). Until a `--jt-spac
 ### What to do when adding new CSS
 
 1. Pick the closest existing `--jt-*` token
-2. If no token fits, add one to `:root, .jt-app` - inherit from `--wp--preset--*` if applicable
+2. If no token fits, add one to `:root` in `jetonomy-tokens.css` - inherit from `--wp--preset--*` if applicable. Never declare it on `.jt-app`, and never give a component its own namespace.
 3. Never copy-paste hex or px values from designs - always map them to token names first
 4. Test at 390px viewport width before committing
 

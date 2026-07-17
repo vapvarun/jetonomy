@@ -76,6 +76,61 @@ class UserProfile extends Model {
 	}
 
 	/**
+	 * Warm find_by_user()'s cache for many users in ONE query.
+	 *
+	 * find_by_user() caches per user, but nothing ever filled that cache ahead of
+	 * a loop — so a page rendering N distinct people paid N misses. It hid well:
+	 * the miss is inside get_avatar_url() -> pre_get_avatar_data -> Avatar, three
+	 * layers from the loop that causes it, and it only shows COLD. Warm, in a
+	 * process that has already seen those users, the same code measures clean —
+	 * which is exactly how a "batch-loaded, no N+1" claim survived review twice
+	 * (Basecamp 10105928436).
+	 *
+	 * Seeds the same key find_by_user() reads, so callers need no new code path:
+	 * prime once, then call it normally and it answers from cache.
+	 *
+	 * Absent users are cached as null too — otherwise a user with no profile row
+	 * misses on every lookup and re-queries forever, which is the same bug with
+	 * extra steps.
+	 *
+	 * @param int[] $user_ids
+	 */
+	public static function prime( array $user_ids ): void {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ), static fn( $id ) => $id > 0 ) ) );
+		if ( ! $ids ) {
+			return;
+		}
+
+		// Only fetch what is not already cached — priming twice must not re-query.
+		$missing = [];
+		foreach ( $ids as $id ) {
+			if ( false === Cache::get( "profile:{$id}" ) ) {
+				$missing[] = $id;
+			}
+		}
+		if ( ! $missing ) {
+			return;
+		}
+
+		$ph = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$rows = static::db()->get_results(
+			static::db()->prepare( 'SELECT * FROM ' . static::table() . " WHERE user_id IN ({$ph})", ...$missing )
+		) ?: [];
+
+		$found = [];
+		foreach ( $rows as $row ) {
+			$found[ (int) $row->user_id ] = $row;
+			Cache::set( "profile:{$row->user_id}", $row, 120 );
+		}
+		foreach ( $missing as $id ) {
+			if ( ! isset( $found[ $id ] ) ) {
+				Cache::set( "profile:{$id}", null, 120 );
+			}
+		}
+	}
+
+	/**
 	 * Update profile fields for a user and invalidate the cache.
 	 *
 	 * @param int   $user_id
