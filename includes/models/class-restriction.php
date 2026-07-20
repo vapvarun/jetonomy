@@ -235,6 +235,48 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * Map user IDs to their single most-severe active restriction type, in one
+	 * query. Powers the moderator members directory (each row shows a
+	 * banned/silenced badge) without an N+1 per member.
+	 *
+	 * Severity order: global_ban > space_ban > silence. A user with several active
+	 * restrictions is reported at their strongest.
+	 *
+	 * @param int[] $user_ids
+	 * @return array<int,string> [user_id => 'global_ban'|'space_ban'|'silence']
+	 */
+	public static function active_map_for_users( array $user_ids ): array {
+		$ids = array_values( array_unique( array_filter( array_map( 'intval', $user_ids ) ) ) );
+		if ( empty( $ids ) ) {
+			return array();
+		}
+
+		// IDs are ints (intval above), safe to inline; only $now is bound.
+		$in   = implode( ',', $ids );
+		$rows = static::db()->get_results(
+			static::db()->prepare(
+				'SELECT user_id, type FROM ' . static::table() . "
+				WHERE user_id IN ($in)
+				  AND type IN ('global_ban','space_ban','silence')
+				  AND (expires_at IS NULL OR expires_at > %s)
+				ORDER BY FIELD(type,'global_ban','space_ban','silence')",
+				now()
+			)
+		);
+
+		$map = array();
+		foreach ( $rows as $row ) {
+			$uid = (int) $row->user_id;
+			// First row per user is the most severe (FIELD ordering above).
+			if ( ! isset( $map[ $uid ] ) ) {
+				$map[ $uid ] = (string) $row->type;
+			}
+		}
+
+		return $map;
+	}
+
+	/**
 	 * Lift a restriction by its ID.
 	 *
 	 * @param int $id Restriction row ID.

@@ -496,6 +496,19 @@
         "audit_notes": "1.6.0 drift fix: permission callback is `fn() => is_user_logged_in()` (mention autocomplete is login-only), not __return_true/public."
       },
       {
+        "route": "/users",
+        "methods": [
+          "GET"
+        ],
+        "handler": "Users_Controller::list_members",
+        "permission": "require_moderate",
+        "purpose": "Moderator members directory (search + pagination + restriction context)",
+        "auth": "login_required",
+        "capability": "jetonomy_moderate",
+        "ownership_check": null,
+        "audit_notes": "1.8.1: WP_User_Query-backed member list powering the app's Members management screen. Each row joins the member's most-severe active restriction via Restriction::active_map_for_users() (batch, no N+1). Moderator-gated (403 for non-moderators)."
+      },
+      {
         "route": "/notifications",
         "methods": [
           "GET"

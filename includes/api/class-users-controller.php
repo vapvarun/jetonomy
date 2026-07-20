@@ -16,6 +16,7 @@ use Jetonomy\API\REST_Auth;
 use Jetonomy\Models\Post;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Models\SpaceMember;
+use Jetonomy\Models\Restriction;
 use Jetonomy\Trust\Trust_Levels;
 use function Jetonomy\table;
 
@@ -124,6 +125,98 @@ class Users_Controller extends Base_Controller {
 						'sanitize_callback' => 'absint',
 					),
 				),
+			)
+		);
+
+		// Members directory (moderator-only) — powers the app's Members management
+		// surface. WP_User_Query-backed, searchable, paginated, with each member's
+		// most-severe active restriction joined in so a moderator sees who is
+		// banned/silenced. A collection GET on /users (the single-user routes above
+		// are /users/{id}, /users/me, etc.), so no route conflict.
+		register_rest_route(
+			$ns,
+			'/users',
+			array(
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'list_members' ),
+				'permission_callback' => array( $this, 'require_moderate' ),
+				'args'                => array(
+					'search' => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'limit'  => array( 'type' => 'integer' ),
+					'offset' => array( 'type' => 'integer' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Permission callback for the moderator members directory: requires
+	 * jetonomy_moderate (admins hold it). Mirrors the moderation controller's gate.
+	 */
+	public function require_moderate(): bool|WP_Error {
+		return current_user_can( 'jetonomy_moderate' ) ? true : $this->permission_error();
+	}
+
+	/**
+	 * GET /users — moderator members directory.
+	 *
+	 * Paginated WP_User_Query with optional `search` (login / display name /
+	 * email). Each row carries the trust/reputation profile fields plus the
+	 * member's most-severe active restriction (batch-joined, no N+1) so the app's
+	 * Members screen can badge banned/silenced members and offer moderation.
+	 */
+	public function list_members( WP_REST_Request $request ): WP_REST_Response {
+		$pagination = $this->get_pagination( $request );
+		$search     = trim( (string) $request->get_param( 'search' ) );
+
+		$args = array(
+			'number'  => $pagination['limit'],
+			'offset'  => $pagination['offset'],
+			'orderby' => 'display_name',
+			'order'   => 'ASC',
+			'fields'  => array( 'ID', 'display_name', 'user_login' ),
+		);
+		if ( '' !== $search ) {
+			$args['search']         = '*' . $search . '*';
+			$args['search_columns'] = array( 'user_login', 'display_name', 'user_email' );
+		}
+
+		$query = new \WP_User_Query( $args );
+		$users = $query->get_results();
+		$total = (int) $query->get_total();
+
+		$ids = array_map( static fn( $u ) => (int) $u->ID, $users );
+		UserProfile::prime( $ids );
+		$restrictions = Restriction::active_map_for_users( $ids );
+
+		$items = array();
+		foreach ( $users as $user ) {
+			$uid     = (int) $user->ID;
+			$profile = UserProfile::find_by_user( $uid );
+			$rtype   = $restrictions[ $uid ] ?? null;
+
+			$items[] = array(
+				'id'          => $uid,
+				'display_name' => $user->display_name,
+				'user_login'  => $user->user_login,
+				'avatar_url'  => \Jetonomy\Avatar::display_url( $uid, 64 ),
+				'trust_level' => $profile ? (int) $profile->trust_level : 0,
+				'reputation'  => $profile ? (int) $profile->reputation : 0,
+				// Most-severe active restriction, or null. is_banned is the strong
+				// (global) case the app badges most prominently.
+				'restriction' => $rtype,
+				'is_banned'   => 'global_ban' === $rtype,
+			);
+		}
+
+		return $this->paginated_response(
+			$items,
+			array(
+				'total'  => $total,
+				'offset' => $pagination['offset'],
 			)
 		);
 	}
