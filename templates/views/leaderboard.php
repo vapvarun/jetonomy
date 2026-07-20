@@ -52,6 +52,13 @@ foreach ( $leader_users as $lu_obj ) {
 	$leader_user_by_id[ (int) $lu_obj->ID ] = $lu_obj;
 }
 
+// Warm the profile cache for every leader in one WHERE user_id IN (...) query so
+// the avatar partial below (Avatar::display_url() -> UserProfile::find_by_user())
+// does not fire a per-row SELECT on a cold cache. Keeps big-site boards O(1).
+if ( ! empty( $leader_ids ) ) {
+	\Jetonomy\Models\UserProfile::prime( $leader_ids );
+}
+
 $base   = \Jetonomy\base_url();
 $crumbs = [
 	[
@@ -156,7 +163,6 @@ $crumbs = [
 					// when "Load More" appends page 2+ into this same list.
 					$abs_rank    = $offset + (int) $rank;
 					$trust       = (int) $leader->trust_level;
-					$initials    = strtoupper( substr( $lu->display_name, 0, 2 ) );
 					$medal_class = '';
 					if ( 0 === $abs_rank ) {
 						$medal_class = 'jt-medal jt-medal-gold';
@@ -183,7 +189,19 @@ $crumbs = [
 							}
 							?>
 						</span>
-						<span class="jt-avatar jt-avatar-md"><?php echo esc_html( $initials ); ?></span>
+						<?php
+						// Render the real avatar (image with initials fallback) via the
+						// shared partial, consistent with every other member surface. The
+						// profile cache was primed above so this stays O(1) per row.
+						\Jetonomy\Template_Loader::partial(
+							'avatar',
+							[
+								'user_id' => (int) $leader->user_id,
+								'size'    => 36,
+								'class'   => 'jt-avatar-md',
+							]
+						);
+						?>
 						<span class="jt-leader-name">
 							<a href="<?php echo esc_url( \Jetonomy\get_profile_url( (int) $leader->user_id ) ); ?>">
 								<?php echo esc_html( $lu->display_name ); ?>

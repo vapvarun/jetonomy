@@ -116,6 +116,12 @@ class Leaderboards_Controller extends Base_Controller {
 			$by_id[ (int) $u->ID ] = $u;
 		}
 
+		// Warm the profile cache in one query so the per-row Avatar::display_url()
+		// below (-> UserProfile::find_by_user()) does not miss cold on each leader.
+		if ( ! empty( $user_ids ) ) {
+			\Jetonomy\Models\UserProfile::prime( $user_ids );
+		}
+
 		$items = [];
 		$rank  = $offset + 1;
 
