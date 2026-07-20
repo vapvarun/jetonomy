@@ -821,12 +821,12 @@
           "POST"
         ],
         "handler": "Moderation_Controller::list_bans,ban_user",
-        "permission": "REST_Auth::auth_mutation (closure)",
-        "purpose": "List bans or ban user",
+        "permission": "GET require_moderate; POST REST_Auth::auth_mutation('read') + in-handler cap matrix",
+        "purpose": "List active member restrictions (GET) or ban/silence a user (POST)",
         "auth": "login_required",
         "capability": "jetonomy_moderate",
         "ownership_check": "handler_enforces",
-        "audit_notes": "List/create bans"
+        "audit_notes": "1.8.1: GET list_bans implemented (was documented-but-missing) - paginated active restrictions enriched with banned user + issuer + space, backed by Restriction::list_active(). POST ban_user unchanged. Space bans also accept the target space's admin."
       },
       {
         "route": "/moderation/ban/(?P<id>\\d+)",

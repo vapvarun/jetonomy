@@ -18,6 +18,7 @@ use Jetonomy\Models\Post;
 use Jetonomy\Models\Reply;
 use Jetonomy\Moderation\Moderation_Service;
 use Jetonomy\Models\Restriction;
+use Jetonomy\Models\Space;
 use Jetonomy\Models\UserProfile;
 use Jetonomy\Trust\Reputation;
 use function Jetonomy\table;
@@ -253,6 +254,30 @@ class Moderation_Controller extends Base_Controller {
 				'methods'             => \WP_REST_Server::DELETABLE,
 				'callback'            => [ $this, 'unban_user' ],
 				'permission_callback' => REST_Auth::auth_mutation( 'jetonomy_moderate' ),
+			]
+		);
+
+		// List active restrictions (the moderator ban-management surface). This is
+		// a SECOND endpoint on the same /moderation/ban path — register_rest_route
+		// with override=false appends it to the POST endpoint above rather than
+		// clobbering it, so GET (list) and POST (ban) coexist on one route.
+		register_rest_route(
+			$ns,
+			'/moderation/ban',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'list_bans' ],
+				'permission_callback' => [ $this, 'require_moderate' ],
+				'args'                => [
+					'type'     => [
+						'type' => 'string',
+						'enum' => [ 'global_ban', 'space_ban', 'silence' ],
+					],
+					'user_id'  => [ 'type' => 'integer' ],
+					'space_id' => [ 'type' => 'integer' ],
+					'limit'    => [ 'type' => 'integer' ],
+					'offset'   => [ 'type' => 'integer' ],
+				],
 			]
 		);
 	}
@@ -789,6 +814,99 @@ class Moderation_Controller extends Base_Controller {
 				'id'      => $id,
 			],
 			200
+		);
+	}
+
+	/**
+	 * GET /moderation/ban — list active member restrictions for the moderator
+	 * ban-management surface (the app's "Banned members" screen).
+	 *
+	 * Gated on jetonomy_moderate (require_moderate). Paginated + filterable by
+	 * type / user_id / space_id. Each row is enriched with the banned member,
+	 * the issuing moderator, and the space (for space bans), plus UTC-ISO
+	 * timestamps so the app formats expiry/issued time in the site timezone.
+	 */
+	public function list_bans( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$pagination = $this->get_pagination( $request );
+
+		$filters = [
+			'limit'  => $pagination['limit'],
+			'offset' => $pagination['offset'],
+		];
+
+		$type = (string) $request->get_param( 'type' );
+		if ( '' !== $type ) {
+			$filters['type'] = $type;
+		}
+		$user_id = absint( $request->get_param( 'user_id' ) );
+		if ( $user_id ) {
+			$filters['user_id'] = $user_id;
+		}
+		$space_id = $request->get_param( 'space_id' ) ? absint( $request->get_param( 'space_id' ) ) : null;
+		if ( $space_id ) {
+			$filters['space_id'] = $space_id;
+		}
+
+		$rows  = Restriction::list_active( $filters );
+		$total = Restriction::count_active( $filters );
+
+		// Batch-load banned members AND issuing moderators in one query, plus the
+		// spaces referenced by space bans — no per-row get_userdata()/Space::find().
+		$user_ids  = [];
+		$space_ids = [];
+		foreach ( $rows as $row ) {
+			$user_ids[] = (int) $row->user_id;
+			if ( (int) $row->issued_by ) {
+				$user_ids[] = (int) $row->issued_by;
+			}
+			if ( $row->space_id ) {
+				$space_ids[] = (int) $row->space_id;
+			}
+		}
+		$users  = $this->batch_load_users( array_values( array_unique( array_filter( $user_ids ) ) ) );
+		$spaces = [];
+		foreach ( array_unique( array_filter( $space_ids ) ) as $sid ) {
+			$space = Space::find( (int) $sid );
+			if ( $space ) {
+				$spaces[ (int) $sid ] = $space;
+			}
+		}
+
+		$items = [];
+		foreach ( $rows as $row ) {
+			$uid    = (int) $row->user_id;
+			$banned = $users[ $uid ] ?? null;
+			$issuer = isset( $users[ (int) $row->issued_by ] ) ? $users[ (int) $row->issued_by ] : null;
+			$space  = ( $row->space_id && isset( $spaces[ (int) $row->space_id ] ) ) ? $spaces[ (int) $row->space_id ] : null;
+
+			$items[] = [
+				'id'             => (int) $row->id,
+				'user_id'        => $uid,
+				'user'           => [
+					'id'           => $uid,
+					'display_name' => $banned ? $banned->display_name : __( '[deleted]', 'jetonomy' ),
+					'user_login'   => $banned ? $banned->user_login : '',
+					'avatar_url'   => $banned ? \Jetonomy\Avatar::display_url( $uid, 64 ) : '',
+				],
+				'type'           => (string) $row->type,
+				'space_id'       => $row->space_id ? (int) $row->space_id : null,
+				'space_title'    => $space ? $space->title : null,
+				'reason'         => null !== $row->reason ? (string) $row->reason : null,
+				'issued_by'      => (int) $row->issued_by,
+				'issuer_name'    => $issuer ? $issuer->display_name : ( (int) $row->issued_by ? __( '[deleted]', 'jetonomy' ) : __( 'System', 'jetonomy' ) ),
+				'expires_at'     => $row->expires_at ?: null,
+				'expires_at_gmt' => \Jetonomy\to_iso8601_z( $row->expires_at ?? null ),
+				'created_at'     => $row->created_at,
+				'created_at_gmt' => \Jetonomy\to_iso8601_z( $row->created_at ?? null ),
+			];
+		}
+
+		return $this->paginated_response(
+			$items,
+			[
+				'total'  => $total,
+				'offset' => $pagination['offset'],
+			]
 		);
 	}
 

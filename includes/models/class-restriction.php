@@ -154,6 +154,87 @@ class Restriction extends Model {
 	}
 
 	/**
+	 * List active (non-expired) member restrictions, newest first.
+	 *
+	 * Powers the moderator ban-management surface (REST GET /moderation/ban).
+	 * Defaults to the member-facing types (global_ban, space_ban, silence);
+	 * ip_ban / post_restrict are excluded unless an explicit `type` filter asks
+	 * for one, since they are not tied to a listable member. Paginated for
+	 * big-site safety — served by the user_type_space + expires indexes.
+	 *
+	 * @param array $args {type?, user_id?, space_id?, limit?, offset?}
+	 * @return object[] Raw restriction rows (id, user_id, type, space_id, reason,
+	 *                  issued_by, expires_at, created_at).
+	 */
+	public static function list_active( array $args = array() ): array {
+		list( $where, $params ) = self::active_filters( $args );
+
+		$limit  = isset( $args['limit'] ) ? max( 1, min( 100, (int) $args['limit'] ) ) : 20;
+		$offset = isset( $args['offset'] ) ? max( 0, (int) $args['offset'] ) : 0;
+
+		$sql = 'SELECT id, user_id, type, space_id, reason, issued_by, expires_at, created_at
+			FROM ' . static::table() . '
+			WHERE ' . implode( ' AND ', $where ) . '
+			ORDER BY created_at DESC, id DESC
+			LIMIT %d OFFSET %d';
+
+		$params[] = $limit;
+		$params[] = $offset;
+
+		return static::db()->get_results( static::db()->prepare( $sql, $params ) ) ?: array();
+	}
+
+	/**
+	 * Count active (non-expired) member restrictions matching the same filters
+	 * as {@see list_active()}. Used for the has_more pagination cursor.
+	 *
+	 * @param array $args {type?, user_id?, space_id?}
+	 * @return int
+	 */
+	public static function count_active( array $args = array() ): int {
+		list( $where, $params ) = self::active_filters( $args );
+
+		return (int) static::db()->get_var(
+			static::db()->prepare(
+				'SELECT COUNT(*) FROM ' . static::table() . ' WHERE ' . implode( ' AND ', $where ),
+				$params
+			)
+		);
+	}
+
+	/**
+	 * Shared WHERE builder for the active-restriction list + count so the two
+	 * never drift (a mismatched filter makes has_more lie).
+	 *
+	 * @param array $args {type?, user_id?, space_id?}
+	 * @return array{0: string[], 1: array} [where clauses, prepare params]
+	 */
+	private static function active_filters( array $args ): array {
+		$where  = array( '(expires_at IS NULL OR expires_at > %s)' );
+		$params = array( now() );
+
+		if ( ! empty( $args['type'] ) ) {
+			$where[]  = 'type = %s';
+			$params[] = (string) $args['type'];
+		} else {
+			// Member-facing bans only; ip_ban / post_restrict have no listable member.
+			$where[] = "type IN ('global_ban','space_ban','silence')";
+		}
+
+		if ( ! empty( $args['user_id'] ) ) {
+			$where[]  = 'user_id = %d';
+			$params[] = (int) $args['user_id'];
+		}
+
+		if ( isset( $args['space_id'] ) && null !== $args['space_id'] ) {
+			$where[]  = 'space_id = %d';
+			$params[] = (int) $args['space_id'];
+		}
+
+		return array( $where, $params );
+	}
+
+	/**
 	 * Lift a restriction by its ID.
 	 *
 	 * @param int $id Restriction row ID.
