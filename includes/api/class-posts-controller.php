@@ -1218,6 +1218,12 @@ class Posts_Controller extends Base_Controller {
 			'published_at'      => $post->published_at ?? null,
 			'created_at'        => $post->created_at ?? null,
 			'updated_at'        => $post->updated_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instants for app clients; columns are already UTC.
+			'created_at_gmt'    => \Jetonomy\to_iso8601_z( $post->created_at ?? null ),
+			'updated_at_gmt'    => \Jetonomy\to_iso8601_z( $post->updated_at ?? null ),
+			'last_reply_at_gmt' => \Jetonomy\to_iso8601_z( $post->last_reply_at ?? null ),
+			'edited_at_gmt'     => \Jetonomy\to_iso8601_z( $post->edited_at ?? null ),
+			'published_at_gmt'  => \Jetonomy\to_iso8601_z( $post->published_at ?? null ),
 			// Enriched author data (for app clients + JS rendering)
 			'author_name'       => $author_name,
 			'author_avatar'     => $author_avatar,

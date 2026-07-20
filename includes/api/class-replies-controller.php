@@ -817,6 +817,10 @@ class Replies_Controller extends Base_Controller {
 			'created_at'        => $reply->created_at ?? null,
 			// Aliased from created_at since jt_replies has no separate published_at column.
 			'published_at'      => $reply->created_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instants for app clients; columns are already UTC.
+			'created_at_gmt'    => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
+			'published_at_gmt'  => \Jetonomy\to_iso8601_z( $reply->created_at ?? null ),
+			'edited_at_gmt'     => \Jetonomy\to_iso8601_z( $reply->edited_at ?? null ),
 			// Enriched author data (for app clients + JS rendering)
 			'author_name'       => $author_name,
 			'author_avatar'     => $author_avatar,

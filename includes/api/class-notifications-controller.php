@@ -335,6 +335,8 @@ class Notifications_Controller extends Base_Controller {
 			'actor_id'     => $actor_id ?: null,
 			'is_read'      => (bool) ( $notification->is_read ?? false ),
 			'created_at'   => $notification->created_at ?? null,
+			// Additive UTC ISO-8601 (`Z`) instant for app clients; column is already UTC.
+			'created_at_gmt' => \Jetonomy\to_iso8601_z( $notification->created_at ?? null ),
 			// Enriched actor data (for app clients + JS rendering)
 			'message'      => $notification->message ?? '',
 			'actor_name'   => $is_actor_anonymous ? __( 'Anonymous', 'jetonomy' ) : ( $actor ? $actor->display_name : __( 'System', 'jetonomy' ) ),

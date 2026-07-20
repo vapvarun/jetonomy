@@ -85,6 +85,32 @@ function now(): string {
 }
 
 /**
+ * Format a stored UTC MySQL datetime as a UTC ISO-8601 instant with a literal `Z`.
+ *
+ * All Jetonomy datetime columns are written via {@see now()} (`current_time('mysql', true)`),
+ * i.e. already GMT/UTC. This is therefore a pure reformat with no offset math: the value
+ * is reinterpreted as UTC and rendered as `Y-m-d\TH:i:s\Z` (e.g. `2026-06-13T05:17:42Z`).
+ *
+ * Serializers emit this as an additive `*_gmt` field so the app can format relative-then-
+ * absolute time in the site owner's WordPress timezone client-side. The transport contract is
+ * UTC ISO-8601 with `Z`; do NOT convert to site-local here (that is the display layer's job,
+ * per docs/standards/datetime-timezone.md).
+ *
+ * `gmdate('c')` is deliberately avoided because it emits `+00:00` rather than the `Z` the
+ * cross-plugin timestamp standard specifies.
+ *
+ * @param string|null $utc_mysql Stored UTC datetime (`Y-m-d H:i:s`), or null/empty/zero-date.
+ * @return string|null ISO-8601 UTC string ending in `Z`, or null when the input is empty.
+ */
+function to_iso8601_z( ?string $utc_mysql ): ?string {
+	if ( empty( $utc_mysql ) || '0000-00-00 00:00:00' === $utc_mysql ) {
+		return null;
+	}
+	$ts = strtotime( $utc_mysql . ' UTC' );
+	return $ts ? gmdate( 'Y-m-d\TH:i:s\Z', $ts ) : null;
+}
+
+/**
  * Whether the private-messaging (DM) feature is available on this request.
  *
  * The Pro private-messaging extension registers its `/messages/` route via the
