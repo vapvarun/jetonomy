@@ -238,9 +238,22 @@ class Template_Loader {
 		// It also re-declared the whole accent chain from a stale copy, which had
 		// already drifted from the real one in jetonomy.css.
 
-		// Layout density.
-		if ( ! empty( $settings['layout_density'] ) && 'compact' === $settings['layout_density'] ) {
-			$dynamic_css .= '.jt-app{font-size:0.875rem;line-height:1.5;}.jt-row{padding:8px 12px;}.jt-reply-body{padding:12px 14px;}.jt-post-body{padding:16px;}';
+		// Layout density. Comfortable is the baseline (theme defaults, no override);
+		// compact tightens spacing/type, spacious loosens it. Rules are keyed to the
+		// data-jt-density attribute set on the .jt-app wrapper below, matching the
+		// documented mechanism (docs/website/admin-settings/04-appearance.md). All
+		// values reference --jt-* tokens so density inherits theme + dark-mode scaling.
+		$density = $settings['layout_density'] ?? 'comfortable';
+		if ( 'compact' === $density ) {
+			$dynamic_css .= '.jt-app[data-jt-density="compact"]{font-size:var(--jt-text-sm);line-height:var(--jt-leading-normal);}'
+				. '.jt-app[data-jt-density="compact"] .jt-row{padding:var(--jt-space-2) var(--jt-space-3);}'
+				. '.jt-app[data-jt-density="compact"] .jt-reply-body{padding:var(--jt-space-3) var(--jt-space-4);}'
+				. '.jt-app[data-jt-density="compact"] .jt-post-body{padding:var(--jt-space-4);}';
+		} elseif ( 'spacious' === $density ) {
+			$dynamic_css .= '.jt-app[data-jt-density="spacious"]{font-size:var(--jt-text-lg);line-height:1.8;}'
+				. '.jt-app[data-jt-density="spacious"] .jt-row{padding:var(--jt-space-5) var(--jt-space-6);}'
+				. '.jt-app[data-jt-density="spacious"] .jt-reply-body{padding:var(--jt-space-6) var(--jt-space-8);}'
+				. '.jt-app[data-jt-density="spacious"] .jt-post-body{padding:var(--jt-space-8);}';
 		}
 
 		// Custom CSS from settings.
@@ -704,7 +717,7 @@ class Template_Loader {
 		// click to actions.navigate (Phase 2 client-side routing). The action
 		// route-guards which targets are safe to swap vs. full-load, and always
 		// preserves the real <a href> as the fallback.
-		echo '<div id="jetonomy-app" class="jt-app" data-wp-interactive="jetonomy" data-wp-on--click="actions.navigate">';
+		echo '<div id="jetonomy-app" class="jt-app" data-jt-density="' . esc_attr( $density ) . '" data-wp-interactive="jetonomy" data-wp-on--click="actions.navigate">';
 
 		/**
 		 * Fires inside the Jetonomy app wrapper, before the header partial and
