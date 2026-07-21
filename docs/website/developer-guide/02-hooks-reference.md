@@ -1,5 +1,7 @@
 # Hooks Reference
 
+> Looking for the COMPLETE list? The generated [Hooks Index](./02a-hooks-index.md) is derived mechanically from the manifest at every release and cannot drift — when this page and the index disagree on a name or argument, the index wins.
+
 Jetonomy is built to be extended cleanly - every hook below is a real, supported extension point, generated straight from the source so this page never drifts from the code. Each row says what the hook is for and where it fires. New here? Start with the **[developer cookbook](00-index.md)** for step-by-step recipes (add a profile tab, customise a card, theme with tokens, extend the REST API), and the **[Coming from BuddyPress / BuddyBoss](21-coming-from-buddypress-buddyboss.md)** guide.
 
 **208 hooks**, 141 with a description. `filter` = return a modified value; `action` = run a side effect. Args are listed where documented; the source file always has the full signature.

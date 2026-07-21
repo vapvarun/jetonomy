@@ -7,7 +7,9 @@ Use this page as a map: each guide is grouped by what you are trying to do, so y
 Hook into Jetonomy's data and behaviour, or swap out a back-end service.
 
 - [Hooks Reference](./02-hooks-reference.md) - every `jetonomy_*` action and filter, with the arguments each one passes.
+- [Hooks Index (generated)](./02a-hooks-index.md) - the complete machine-generated hook table, regenerated from the manifest at every release.
 - [Attachment Hooks](./24-attachment-hooks.md) - the 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) and the `attachments` array now carried on post/reply REST payloads.
+- [Build a Pro Extension](./25-build-a-pro-extension.md) - the extension SDK (Pro 1.8.1+): `jetonomy_pro_register_extensions`, the base-class contract, lifecycle guarantees, and compatibility rules.
 - [Adapter System](./05-adapters.md) - the membership, search, real-time, and email adapter interfaces you implement to plug in your own service.
 - [Template Overrides](./03-template-overrides.md) - copy any community template into your theme's `jetonomy/` directory to change its layout.
 - [Admin Extensions](./20-admin-extensions.md) - add settings tabs, space-edit tabs, moderation tabs, dashboard widgets, and menu white-label overrides to the Jetonomy wp-admin UI.
