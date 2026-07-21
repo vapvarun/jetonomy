@@ -5,14 +5,14 @@
         "version": "1.8.0"
     },
     "generated": {
-        "at": "2026-07-17T16:40:41+00:00",
+        "at": "2026-07-21T05:06:21+00:00",
         "manifest_at": "2026-07-17T00:00:00Z",
         "manifest_branch": "main"
     },
     "categories": {
         "rest": {
-            "total": 99,
-            "covered": 42,
+            "total": 100,
+            "covered": 43,
             "uncovered": 57,
             "skipped": 0,
             "covered_items": [
@@ -135,6 +135,10 @@
                 {
                     "method": "GET",
                     "route": "/users/(?P<id>\\d+)"
+                },
+                {
+                    "method": "GET",
+                    "route": "/users"
                 },
                 {
                     "method": "GET",
@@ -800,15 +804,15 @@
     },
     "summary": {
         "categories_checked": 5,
-        "items_total": 171,
-        "items_covered": 55,
+        "items_total": 172,
+        "items_covered": 56,
         "items_uncovered": 116,
         "items_skipped": 184,
-        "coverage_percent": 32.200000000000003
+        "coverage_percent": 32.600000000000001
     },
     "drift": {
-        "previous_uncovered": 114,
+        "previous_uncovered": 119,
         "current_uncovered": 116,
-        "delta": 2
+        "delta": -3
     }
 }
