@@ -582,6 +582,15 @@ class Template_Loader {
 					'banMemberTitle'         => esc_html__( 'Ban member', 'jetonomy' ),
 					'banLabel'               => esc_html__( 'Ban', 'jetonomy' ),
 					'banFailed'              => esc_html__( 'Ban failed. Please try again.', 'jetonomy' ),
+					// Frontend member moderation from a profile (site ban / silence / lift).
+					'banSiteConfirmFormat'   => esc_html__( 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.', 'jetonomy' ),
+					'banSiteTitle'           => esc_html__( 'Ban member', 'jetonomy' ),
+					'silenceConfirmFormat'   => esc_html__( 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.', 'jetonomy' ),
+					'silenceTitle'           => esc_html__( 'Silence member', 'jetonomy' ),
+					'silenceLabel'           => esc_html__( 'Silence', 'jetonomy' ),
+					'liftConfirmFormat'      => esc_html__( 'Lift the restriction on %s? They regain full access right away.', 'jetonomy' ),
+					'liftTitle'              => esc_html__( 'Lift restriction', 'jetonomy' ),
+					'liftLabel'              => esc_html__( 'Lift', 'jetonomy' ),
 					// 1.6.1 i18n sweep - role-change + deny-join confirm dialogs (view.js reads
 					// window.jetonomyData.i18n outside the IA store; these were never injected).
 					/* translators: %name%, %from%, %to% are replaced client-side. */

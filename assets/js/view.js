@@ -1033,6 +1033,58 @@ const { state, actions } = store( 'jetonomy', {
             btn.remove();
         },
 
+        // ── Member moderation from a profile (frontend; site moderators) ──
+        // Site-wide ban or silence a member from their profile page. Mirrors
+        // banMember (space_ban) but sends type global_ban / silence with no
+        // space_id. The template only renders the control when the ban is
+        // allowed; the server re-checks and guards self/admin/moderator bans.
+        *restrictMember() {
+            const btn    = getElement().ref;
+            const userId = btn.getAttribute( 'data-user-id' );
+            const name   = btn.getAttribute( 'data-user-name' );
+            const type   = btn.getAttribute( 'data-restrict-type' ) || 'global_ban';
+            if ( ! userId || 'function' !== typeof window.jetonomyConfirm ) return;
+
+            const i18n      = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const isSilence = 'silence' === type;
+            const bodyTpl   = isSilence
+                ? ( i18n.silenceConfirmFormat || 'Silence %s? They stay a member but cannot post, reply, or file reports until you lift it.' )
+                : ( i18n.banSiteConfirmFormat || 'Ban %s from the whole community? They can no longer post, reply, or vote anywhere until you lift the ban.' );
+            const ok = yield window.jetonomyConfirm( bodyTpl.replace( '%s', name || '' ), {
+                title: isSilence ? ( i18n.silenceTitle || 'Silence member' ) : ( i18n.banSiteTitle || 'Ban member' ),
+                confirmLabel: isSilence ? ( i18n.silenceLabel || 'Silence' ) : ( i18n.banLabel || 'Ban' ),
+                danger: true,
+            } );
+            if ( ! ok ) return;
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/moderation/ban', {
+                method: 'POST',
+                body: { user_id: parseInt( userId, 10 ), type },
+            } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            // Reload so the profile re-renders the badge + Lift control server-side.
+            window.location.reload();
+        },
+        *liftRestriction() {
+            const btn = getElement().ref;
+            const rid  = btn.getAttribute( 'data-restriction-id' );
+            const name = btn.getAttribute( 'data-user-name' );
+            if ( ! rid || 'function' !== typeof window.jetonomyConfirm ) return;
+
+            const i18n = ( window.jetonomyData && window.jetonomyData.i18n ) || {};
+            const ok = yield window.jetonomyConfirm(
+                ( i18n.liftConfirmFormat || 'Lift the restriction on %s?' ).replace( '%s', name || '' ),
+                { title: i18n.liftTitle || 'Lift restriction', confirmLabel: i18n.liftLabel || 'Lift' }
+            );
+            if ( ! ok ) return;
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/moderation/ban/' + parseInt( rid, 10 ), { method: 'DELETE' } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            window.location.reload();
+        },
+
         // ── Join requests (space-members mod panel) ──
         *approveJoinRequest() {
             yield jtModerateJoinRequest( getElement().ref, 'approve' );

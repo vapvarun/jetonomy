@@ -33,6 +33,34 @@ $profile_user_id = (int) $user->ID;
 $base            = \Jetonomy\base_url();
 $initials        = strtoupper( substr( $user->display_name, 0, 2 ) );
 
+// Frontend member moderation (parity with the app + wp-admin, since a community
+// moderator cannot reach wp-admin). Shows Ban / Silence / Lift on a member's
+// profile to site moderators. The button is only rendered when the ban would
+// actually be allowed - mirror the server's target guards (never self, never an
+// admin, and - for a non-admin moderator - never another moderator). REST_Auth
+// and ban_user() still enforce the real rules; this just avoids a dead control.
+$jt_viewer_id        = get_current_user_id();
+$jt_target_protected = user_can( $profile_user_id, 'manage_options' )
+	|| ( user_can( $profile_user_id, 'jetonomy_moderate' ) && ! current_user_can( 'manage_options' ) );
+$jt_can_moderate     = is_user_logged_in()
+	&& $jt_viewer_id !== $profile_user_id
+	&& \Jetonomy\Moderation\Moderation_Permissions::can_view_admin_dashboard( $jt_viewer_id )
+	&& ! $jt_target_protected;
+
+// The member's newest active restriction (id + type) for the status badge + the
+// Lift control. Only queried for moderators.
+$jt_restriction = null;
+if ( $jt_can_moderate ) {
+	$jt_rows        = \Jetonomy\Models\Restriction::list_active( array( 'user_id' => $profile_user_id, 'limit' => 1 ) );
+	$jt_restriction = $jt_rows[0] ?? null;
+}
+$jt_restriction_label = '';
+if ( $jt_restriction ) {
+	$jt_restriction_label = 'silence' === $jt_restriction->type
+		? __( 'Silenced', 'jetonomy' )
+		: __( 'Banned', 'jetonomy' );
+}
+
 // Memoised slug -> Space lookup. The Posts/Replies/Votes tabs each need the full
 // space object (for jetonomy_space_allows_voting) per row, but a user's activity
 // spans only a handful of distinct spaces — caching by slug turns a per-row query
@@ -186,6 +214,38 @@ $crumbs = [
 								title="<?php esc_attr_e( 'Report User', 'jetonomy' ); ?>">
 								<?php jetonomy_echo_icon( 'flag', 14 ); ?>
 								<?php esc_html_e( 'Report', 'jetonomy' ); ?>
+							</button>
+						<?php endif; ?>
+
+						<?php // Moderator member-moderation controls (frontend parity). ?>
+						<?php if ( $jt_can_moderate && $jt_restriction ) : ?>
+							<span class="jt-badge jt-badge-danger jt-flex-shrink-0"><?php echo esc_html( $jt_restriction_label ); ?></span>
+							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
+								data-wp-on--click="actions.liftRestriction"
+								data-restriction-id="<?php echo absint( $jt_restriction->id ); ?>"
+								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"
+								title="<?php esc_attr_e( 'Lift this restriction', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
+								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
+							</button>
+						<?php elseif ( $jt_can_moderate ) : ?>
+							<button class="jt-btn jt-btn-ghost jt-flex-shrink-0"
+								data-wp-on--click="actions.restrictMember"
+								data-user-id="<?php echo absint( $profile_user_id ); ?>"
+								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"
+								data-restrict-type="silence"
+								title="<?php esc_attr_e( 'Silence this member', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'hand', 14 ); ?>
+								<?php esc_html_e( 'Silence', 'jetonomy' ); ?>
+							</button>
+							<button class="jt-btn jt-btn-danger jt-flex-shrink-0"
+								data-wp-on--click="actions.restrictMember"
+								data-user-id="<?php echo absint( $profile_user_id ); ?>"
+								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"
+								data-restrict-type="global_ban"
+								title="<?php esc_attr_e( 'Ban this member from the community', 'jetonomy' ); ?>">
+								<?php jetonomy_echo_icon( 'x-circle', 14 ); ?>
+								<?php esc_html_e( 'Ban', 'jetonomy' ); ?>
 							</button>
 						<?php endif; ?>
 					</div>
