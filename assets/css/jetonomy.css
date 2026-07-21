@@ -2514,7 +2514,26 @@
 .jt-modal-msg { font-size: 0.9375rem; line-height: 1.5; margin: 0 0 16px; color: var(--jt-text); }
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-.jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
+/* The confirm/alert/prompt modal is appended to <body>, OUTSIDE .jt-app, so the
+   `.jt-app .jt-btn` rules never reach its buttons - they'd render as bare native
+   controls. Re-declare the full button appearance here, unscoped, driven by the
+   :root tokens (which reach <body>). Keeps modal buttons pixel-consistent with
+   the in-app pills: Cancel = ghost outline, confirm = filled accent, danger
+   confirm = filled red. */
+.jt-modal-actions .jt-btn {
+	min-width: 90px;
+	display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+	padding: 8px 18px; border-radius: var(--jt-radius-full);
+	font-weight: 600; font-size: 0.9375rem; font-family: var(--jt-font);
+	border: none; cursor: pointer; text-decoration: none;
+	transition: all var(--jt-dur) var(--jt-ease);
+}
+.jt-modal-actions .jt-btn-fill { background: var(--jt-accent); color: var(--jt-accent-fg); }
+.jt-modal-actions .jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); }
+.jt-modal-actions .jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
+.jt-modal-actions .jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
+.jt-modal-actions .jt-btn-danger { background: var(--jt-danger); color: #fff; }
+.jt-modal-actions .jt-btn-danger:hover { background: var(--jt-danger); filter: brightness( 0.93 ); color: #fff; }
 @media ( max-width: 640px ) {
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
