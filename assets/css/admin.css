@@ -2049,6 +2049,62 @@ tr.jetonomy-moderated td {
 	margin: 0 0 12px;
 }
 
+/* Role-clarity explainer (Users screen) */
+.jt-roles-explainer {
+	margin: 12px 0 16px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 8px;
+	background: var(--jt-admin-pro-bg);
+}
+
+.jt-roles-explainer summary {
+	cursor: pointer;
+	padding: 12px 16px;
+	font-weight: 600;
+	list-style-position: inside;
+}
+
+.jt-roles-explainer[open] summary {
+	border-bottom: 1px solid var(--jt-admin-border, #dcdcde);
+}
+
+.jt-roles-explainer__body {
+	padding: 16px;
+}
+
+.jt-roles-explainer__lead {
+	margin: 0 0 12px;
+}
+
+.jt-roles-explainer__grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.jt-roles-explainer__col h3 {
+	margin: 0 0 6px;
+	font-size: 13px;
+}
+
+.jt-roles-explainer__col p {
+	margin: 0;
+	color: var(--jt-admin-text-3, #646970);
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+.jt-roles-explainer__foot {
+	margin: 14px 0 0;
+	font-size: 12.5px;
+}
+
+@media (max-width: 782px) {
+	.jt-roles-explainer__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 /* Analytics teaser (live 7-day pulse variant of the upsell card) */
 .jt-pulse-grid {
 	display: grid;
