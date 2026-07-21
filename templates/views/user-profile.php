@@ -191,12 +191,13 @@ $crumbs = [
 					);
 					?>
 				</span>
-					<div class="jt-flex jt-items-start jt-justify-between jt-w-full">
+					<div class="jt-flex jt-items-start jt-justify-between jt-w-full jt-profile-headrow">
 						<h1 class="jt-profile-name">
 							<?php echo esc_html( $user->display_name ); ?>
 							<span class="jt-tl jt-avatar-sm" data-jt-tl="<?php echo esc_attr( (string) $trust ); ?>" title="<?php echo esc_attr( sprintf( __( 'Trust Level %d', 'jetonomy' ), $trust ) ); ?>"><?php echo esc_html( (int) $trust ); ?></span>
 							<span class="jt-level-tag"><?php echo esc_html( sprintf( __( 'Level %d', 'jetonomy' ), $trust ) ); ?></span>
 						</h1>
+						<div class="jt-flex jt-items-center jt-gap-sm jt-flex-shrink-0 jt-profile-head-actions">
 						<?php if ( is_user_logged_in() && get_current_user_id() === $profile_user_id ) : ?>
 							<a href="<?php echo esc_url( $base . '/u/' . $user->user_login . '/edit/' ); ?>" class="jt-btn jt-btn-ghost jt-flex-shrink-0">
 								<?php esc_html_e( 'Edit Profile', 'jetonomy' ); ?>
@@ -248,6 +249,7 @@ $crumbs = [
 								<?php esc_html_e( 'Ban', 'jetonomy' ); ?>
 							</button>
 						<?php endif; ?>
+						</div>
 					</div>
 
 					<?php if ( ! empty( $profile->bio ) ) : ?>

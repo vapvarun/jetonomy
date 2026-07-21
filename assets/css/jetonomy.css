@@ -637,6 +637,9 @@
   .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-accent-fg); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
   .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: wrap; row-gap: 8px; }
   .jt-profile-name > * { flex-shrink: 0; }
+  /* Grouped header actions (Report / Silence / Ban / Message / Edit) sit as one
+     cluster on the right, not spread across the row. */
+  .jt-profile-head-actions { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
   .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); white-space: nowrap; display: inline-block; }
 
   .jt-stats-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
@@ -791,6 +794,10 @@
 
     /* Profile header — allow wrap, keep badges atomic */
     .jt-profile-name > .jt-level-tag { margin-left: var(--jt-space-2); }
+    /* Name + action cluster can't share a line at phone widths — let the row
+       wrap and drop the action group to its own full-width line, left-aligned. */
+    .jt-profile-headrow { flex-wrap: wrap; }
+    .jt-profile-head-actions { width: 100%; justify-content: flex-start; margin-top: var(--jt-space-2); }
 
     /* Multi-column grids collapse to single column on phones */
     .jt-kanban { grid-template-columns: 1fr; }
