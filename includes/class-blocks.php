@@ -654,6 +654,7 @@ class Blocks {
 		$notifs_url    = $base . '/notifications/';
 		$messages_url  = $base . '/messages/';
 		$my_spaces_url = $base . '/my-spaces/';
+		$subs_url      = $base . '/subscriptions/';
 		$new_space_url = $base . '/new-space/';
 
 		// 1.4.0 G6 — show "Create space" link when the viewer is a site
@@ -710,6 +711,9 @@ class Blocks {
 				<?php endif; ?>
 				<a href="<?php echo esc_url( $my_spaces_url ); ?>" class="jt-userpanel-link">
 					<span class="jt-userpanel-link-label"><?php echo esc_html( sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) ) ); ?></span>
+				</a>
+				<a href="<?php echo esc_url( $subs_url ); ?>" class="jt-userpanel-link">
+					<span class="jt-userpanel-link-label"><?php esc_html_e( 'My Subscriptions', 'jetonomy' ); ?></span>
 				</a>
 				<?php if ( $can_create_space ) : ?>
 					<a href="<?php echo esc_url( $new_space_url ); ?>" class="jt-userpanel-link">

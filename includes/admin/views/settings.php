@@ -298,6 +298,13 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						<td><input type="number" id="posts_per_page" name="jetonomy_settings[posts_per_page]" value="<?php echo absint( $settings['posts_per_page'] ?? 20 ); ?>" min="5" max="100" class="small-text"></td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="activity_log_retention_days"><?php esc_html_e( 'Activity Log Retention', 'jetonomy' ); ?></label></th>
+						<td>
+							<input type="number" id="activity_log_retention_days" name="jetonomy_settings[activity_log_retention_days]" value="<?php echo absint( $settings['activity_log_retention_days'] ?? 90 ); ?>" min="1" max="3650" class="small-text">
+							<p class="description"><?php esc_html_e( 'Days to keep activity log entries before the daily prune removes them. Default 90.', 'jetonomy' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="replies_per_page"><?php esc_html_e( 'Replies Per Page', 'jetonomy' ); ?></label></th>
 						<td><input type="number" id="replies_per_page" name="jetonomy_settings[replies_per_page]" value="<?php echo absint( $settings['replies_per_page'] ?? 30 ); ?>" min="5" max="100" class="small-text"></td>
 					</tr>

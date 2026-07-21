@@ -181,6 +181,7 @@ class Router {
 
 		// My spaces (G7) — landing for "Spaces I run" + "Spaces I'm in"
 		add_rewrite_rule( "^{$base}/my-spaces/?$", 'index.php?jetonomy_route=my-spaces', 'top' );
+		add_rewrite_rule( "^{$base}/subscriptions/?$", 'index.php?jetonomy_route=subscriptions', 'top' );
 
 		// My drafts (1.4.1 A9) — top-level standalone view, current user's drafts.
 		// Distinct from /u/:slug/drafts/ on the profile page; this URL is the

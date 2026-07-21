@@ -1085,6 +1085,28 @@ const { state, actions } = store( 'jetonomy', {
             window.location.reload();
         },
 
+        // ── My Subscriptions page ──
+        *unsubscribeRow() {
+            const btn = getElement().ref;
+            const sid = btn.getAttribute( 'data-subscription-id' );
+            if ( ! sid ) return;
+
+            if ( 'function' === typeof window.jetonomyConfirm ) {
+                const ok = yield window.jetonomyConfirm( btn.getAttribute( 'data-confirm' ) || 'Unfollow?' );
+                if ( ! ok ) return;
+            }
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/subscriptions/' + parseInt( sid, 10 ), { method: 'DELETE' } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            // Remove the row in place; reload only when the group emptied so
+            // the empty-state / heading logic re-renders server-side.
+            const row  = btn.closest( '.jt-subs-row' );
+            const list = row && row.closest( '.jt-subs-list' );
+            if ( row ) row.remove();
+            if ( list && ! list.querySelector( '.jt-subs-row' ) ) window.location.reload();
+        },
+
         // ── Join requests (space-members mod panel) ──
         *approveJoinRequest() {
             yield jtModerateJoinRequest( getElement().ref, 'approve' );

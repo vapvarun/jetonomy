@@ -37,7 +37,7 @@ class Template_Loader {
 		}
 
 		// ── Auth redirect for protected routes (BEFORE any output) ──
-		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
+		$auth_required_routes = array( 'notifications', 'messages', 'conversation', 'edit-profile', 'new-post', 'my-spaces', 'subscriptions', 'new-space', 'edit-space', 'moderation', 'space-moderation', 'drafts', 'bookmarks' );
 		if ( in_array( $data['route'], $auth_required_routes, true ) && ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( current_url() ) );
 			exit;
@@ -120,6 +120,7 @@ class Template_Loader {
 			'edit-profile'     => 'views/edit-profile.php',
 			'invite'           => 'views/invite.php',
 			'my-spaces'        => 'views/my-spaces.php',
+			'subscriptions'    => 'views/subscriptions.php',
 			'new-space'        => 'views/new-space.php',
 			'edit-space'       => 'views/space-edit.php',
 			'drafts'           => 'views/drafts.php',
@@ -1166,6 +1167,9 @@ class Template_Loader {
 					case 'my-spaces':
 						$parts['title'] = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						break;
+					case 'subscriptions':
+						$parts['title'] = __( 'My Subscriptions', 'jetonomy' );
+						break;
 					case 'new-space':
 						$parts['title'] = sprintf( __( 'Create a %s', 'jetonomy' ), \Jetonomy\space_label( false, true ) );
 						break;
@@ -1433,6 +1437,13 @@ class Template_Loader {
 						$title     = sprintf( __( 'My %s', 'jetonomy' ), \Jetonomy\space_label( true ) );
 						$desc      = sprintf( __( '%1$s you run and %2$s you are part of on %3$s.', 'jetonomy' ), \Jetonomy\space_label( true ), \Jetonomy\space_label( true, true ), $site_name );
 						$url       = $base . '/my-spaces/';
+						$image_alt = $site_name;
+						$noindex   = true; // Logged-in personal view.
+						break;
+					case 'subscriptions':
+						$title     = __( 'My Subscriptions', 'jetonomy' );
+						$desc      = sprintf( __( 'Topics and %s you follow on %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), $site_name );
+						$url       = $base . '/subscriptions/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
 						break;

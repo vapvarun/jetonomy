@@ -630,6 +630,17 @@
   .jt-progress { height: 4px; background: var(--jt-bg-muted); border-radius: 2px; overflow: hidden; }
   .jt-progress-fill { height: 100%; background: var(--jt-accent); border-radius: 2px; transition: width 0.8s var(--jt-ease); }
 
+  /* ── My Subscriptions ── */
+  .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
+  .jt-subs-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
+  .jt-subs-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
+  .jt-subs-row + .jt-subs-row { border-block-start: 1px solid var(--jt-border); }
+  .jt-subs-main { display: flex; align-items: center; gap: var(--jt-space-3); min-width: 0; }
+  .jt-subs-title { font-weight: 600; color: var(--jt-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jt-subs-title:hover { color: var(--jt-accent); }
+  .jt-subs-title--gone { color: var(--jt-text-tertiary); font-style: italic; font-weight: 400; }
+  .jt-subs-via { font-size: 0.75rem; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); flex-shrink: 0; }
+
   /* ── Profile ── */
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
   .jt-profile-banner { height: 120px; background: linear-gradient(135deg, var(--jt-accent), #1e40af); background: linear-gradient(135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }

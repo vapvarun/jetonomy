@@ -409,6 +409,9 @@ class Admin {
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
 			$clean['posts_per_page']     = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
+			// Activity-log retention: 1 day to ~10 years. Consumed by the daily
+			// jetonomy_prune_activity cron (class-cron.php).
+			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
 			$clean['replies_per_page']   = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
 			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
 			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
