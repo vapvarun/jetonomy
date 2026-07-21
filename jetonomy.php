@@ -80,6 +80,32 @@ if ( file_exists( JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php' ) ) {
 	require_once JETONOMY_DIR . 'libs/edd-sl-sdk/edd-sl-sdk.php';
 }
 
+// Update-screen icon. WordPress only auto-resolves icons for wp.org-hosted
+// plugins; a self-hosted update renders a broken placeholder unless the update
+// object carries icon URLs. The store response MAY provide them — this bundled
+// SVG guarantees the row renders branded even when it does not (asset ships in
+// the zip and is served from the customer's own site, so it can never 404 on a
+// store outage). Store-provided icons win: we only fill the key when empty.
+add_filter(
+	'site_transient_update_plugins',
+	function ( $transient ) {
+		if ( ! is_object( $transient ) ) {
+			return $transient;
+		}
+		$basename = plugin_basename( JETONOMY_FILE );
+		$icon     = plugins_url( 'assets/images/update-icon.svg', JETONOMY_FILE );
+		foreach ( array( 'response', 'no_update' ) as $bucket ) {
+			if ( isset( $transient->{$bucket}[ $basename ] ) && empty( $transient->{$bucket}[ $basename ]->icons ) ) {
+				$transient->{$bucket}[ $basename ]->icons = array(
+					'svg'     => $icon,
+					'default' => $icon,
+				);
+			}
+		}
+		return $transient;
+	}
+);
+
 // Auto-activate the preset license key on first load so downloads work.
 add_action(
 	'admin_init',
