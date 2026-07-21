@@ -33,6 +33,23 @@ if ( ! empty( $reply->is_blocked_author ) ) {
 	return;
 }
 
+// Private-reply tombstone (1.8.1). Set server-side by
+// Reply::apply_private_tombstone() when THIS viewer may not read the text
+// (not the author, not the topic author, not staff). Same keep-the-node
+// contract as the blocked tombstone above: children stay attached, counts
+// and deep-link page math stay viewer-independent (Basecamp 9804279999).
+if ( ! empty( $reply->is_private_hidden ) ) {
+	?>
+	<div id="reply-<?php echo (int) $reply->id; ?>" class="jt-reply jt-reply-private-hidden" data-wp-interactive="jetonomy">
+		<div class="jt-reply-body jt-reply-tombstone">
+			<?php jetonomy_echo_icon( 'lock', 16 ); ?>
+			<span><?php esc_html_e( 'Private reply — visible to the topic author and moderators.', 'jetonomy' ); ?></span>
+		</div>
+	</div>
+	<?php
+	return;
+}
+
 $display = \Jetonomy\Author::for_display( (int) $reply->author_id, $reply );
 // Anonymous-posting leak-audit fix: role pill / online status must never be
 // derived from the raw author_id when the display identity is masked, or
@@ -138,6 +155,9 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 		<?php if ( $is_accepted ) : ?>
 			<span class="jt-accepted-tag"><?php jetonomy_echo_icon( 'check-circle', 14 ); ?> <?php esc_html_e( 'Accepted', 'jetonomy' ); ?></span>
 		<?php endif; ?>
+		<?php if ( ! empty( $reply->is_private ) ) : ?>
+			<span class="jt-private-tag" title="<?php esc_attr_e( 'Only you, the topic author, and moderators can read this reply.', 'jetonomy' ); ?>"><?php jetonomy_echo_icon( 'lock', 12 ); ?> <?php esc_html_e( 'Private', 'jetonomy' ); ?></span>
+		<?php endif; ?>
 	</div>
 	<div class="jt-reply-body">
 		<?php
@@ -240,6 +260,12 @@ $jt_reply_permalink = \Jetonomy\reply_permalink(
 						data-wp-on--click="actions.editReply"
 						data-reply-id="<?php echo (int) $reply->id; ?>">
 						<?php jetonomy_echo_icon( 'edit', 14 ); ?> <?php esc_html_e( 'Edit', 'jetonomy' ); ?>
+					</button>
+					<button class="jt-more-item"
+						data-wp-on--click="actions.toggleReplyPrivacy"
+						data-reply-id="<?php echo (int) $reply->id; ?>"
+						data-private="<?php echo empty( $reply->is_private ) ? '0' : '1'; ?>">
+						<?php jetonomy_echo_icon( 'lock', 14 ); ?> <?php echo empty( $reply->is_private ) ? esc_html__( 'Make Private', 'jetonomy' ) : esc_html__( 'Make Public', 'jetonomy' ); ?>
 					</button>
 					<?php if ( $jt_can_moderate_reply ) : ?>
 					<button class="jt-more-item"

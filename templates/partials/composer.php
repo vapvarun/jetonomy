@@ -71,6 +71,12 @@ $_placeholder = isset( $placeholder ) ? $placeholder : __( 'Write your reply… 
 			: __( 'Markdown · Ctrl+Enter to submit', 'jetonomy' );
 		?>
 		<span class="jt-editor-hint"><?php echo esc_html( $_jt_composer_hint ); ?></span>
+		<?php if ( is_user_logged_in() ) : ?>
+			<label class="jt-reply-private-toggle" title="<?php esc_attr_e( 'Only you, the topic author, and moderators will be able to read it.', 'jetonomy' ); ?>">
+				<input type="checkbox" data-jt-reply-private>
+				<?php esc_html_e( 'Private reply', 'jetonomy' ); ?>
+			</label>
+		<?php endif; ?>
 		<div class="jt-flex jt-items-center jt-gap-sm">
 			<?php if ( $_reply_to ) : ?>
 				<button type="button" class="jt-btn jt-btn-ghost"

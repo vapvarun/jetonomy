@@ -547,7 +547,12 @@ class Notifier {
 		// 2. Notify parent reply author (reply-to-reply) — single recipient.
 		if ( ! empty( $reply->parent_id ) ) {
 			$parent_reply = Reply::find( (int) $reply->parent_id );
-			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id ) {
+			// Private-reply gate (1.8.1): the parent commenter is NOT
+			// automatically allowed to read a private reply (only the topic
+			// author, staff, and the reply author are) — never notify someone
+			// about words they will only ever see as a tombstone.
+			if ( $parent_reply && (int) $parent_reply->author_id !== $actor_id
+				&& \Jetonomy\Permissions\Permission_Engine::can_read_reply( (int) $parent_reply->author_id, $reply, $post ) ) {
 				$this->create_and_maybe_email(
 					(int) $parent_reply->author_id,
 					$actor_id,
@@ -567,6 +572,12 @@ class Notifier {
 		}
 
 		// 3. Notify post subscribers — inline for small threads, deferred for large.
+		// Private replies never fan out (1.8.1): the audience is the topic
+		// author (branch 1), who was already notified. Subscribers would only
+		// receive a link to a tombstone.
+		if ( ! empty( $reply->is_private ) ) {
+			return;
+		}
 		if ( Subscription::count_subscribers( 'post', $post_id ) > self::FANOUT_INLINE_MAX
 			&& $this->enqueue_fanout( 'jetonomy_fanout_reply_subscribers', array( $reply_id, $post_id ) ) ) {
 			return;

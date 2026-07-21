@@ -1107,6 +1107,22 @@ const { state, actions } = store( 'jetonomy', {
             if ( list && ! list.querySelector( '.jt-subs-row' ) ) window.location.reload();
         },
 
+        // ── Private replies (1.8.1) ──
+        *toggleReplyPrivacy() {
+            const btn = getElement().ref;
+            const rid = btn.getAttribute( 'data-reply-id' );
+            if ( ! rid ) return;
+            const makePrivate = '1' !== btn.getAttribute( 'data-private' );
+
+            btn.disabled = true;
+            const res = yield window.jetonomyRest.restFetch( '/replies/' + parseInt( rid, 10 ), {
+                method: 'PATCH',
+                body: { is_private: makePrivate },
+            } );
+            if ( ! res.ok ) { btn.disabled = false; return; }
+            window.location.reload();
+        },
+
         // ── Join requests (space-members mod panel) ──
         *approveJoinRequest() {
             yield jtModerateJoinRequest( getElement().ref, 'approve' );
@@ -3129,10 +3145,12 @@ const { state, actions } = store( 'jetonomy', {
             }
 
             try {
+                const privateBox = editorWrap?.querySelector( '[data-jt-reply-private]' );
                 const payload = {
                     content: body.innerHTML,
                     ...( parentId && { parent_id: parentId } ),
                     ...( captchaToken && { captcha_token: captchaToken } ),
+                    ...( privateBox?.checked && { is_private: true } ),
                 };
 
                 // Generic pre-submit extension point (mirrors composePost's

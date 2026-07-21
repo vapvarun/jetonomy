@@ -411,6 +411,46 @@ class Permission_Engine {
 	}
 
 	/**
+	 * May this viewer read a PRIVATE reply's text? (1.8.1, Basecamp 9804279999)
+	 *
+	 * Companion to {@see self::can_read_post()}'s private-post branch, with one
+	 * addition: the PARENT TOPIC's author always sees private replies on their
+	 * own thread — it is their conversation, and "share the sensitive detail
+	 * privately with the person who asked" is the entire use case.
+	 *
+	 * Callers pass the parent post so no surface re-fetches it per reply. A
+	 * non-private reply is always readable (the thread's space/status gating
+	 * happened at the post level before any reply rendered).
+	 *
+	 * The read surfaces TOMBSTONE on false (Reply::apply_private_tombstone) —
+	 * they never row-filter — so reply counts and reply_permalink() page
+	 * math stay identical for every viewer, same as the blocked-author rule.
+	 *
+	 * @param int    $user_id Viewer ID (0 for guests).
+	 * @param object $reply   Reply row (is_private, author_id).
+	 * @param object $post    Parent post row (author_id, space_id).
+	 * @return bool
+	 */
+	public static function can_read_reply( int $user_id, object $reply, object $post ): bool {
+		if ( empty( $reply->is_private ) ) {
+			return true;
+		}
+		if ( ! $user_id ) {
+			return false;
+		}
+		if ( (int) $reply->author_id === $user_id ) {
+			return true;
+		}
+		if ( (int) $post->author_id === $user_id ) {
+			return true;
+		}
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		return self::is_space_privileged( $user_id, (int) $post->space_id );
+	}
+
+	/**
 	 * Check if a user has moderator or admin role in a space.
 	 *
 	 * @param int $user_id  WP user ID.

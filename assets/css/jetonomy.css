@@ -630,6 +630,11 @@
   .jt-progress { height: 4px; background: var(--jt-bg-muted); border-radius: 2px; overflow: hidden; }
   .jt-progress-fill { height: 100%; background: var(--jt-accent); border-radius: 2px; transition: width 0.8s var(--jt-ease); }
 
+  /* ── Private replies (1.8.1) ── */
+  .jt-private-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--jt-warn); background: var(--jt-warn-light); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); }
+  .jt-reply-private-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); cursor: pointer; user-select: none; }
+  .jt-reply-private-toggle input { margin: 0; }
+
   /* ── My Subscriptions ── */
   .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
   .jt-subs-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }

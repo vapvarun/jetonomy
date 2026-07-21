@@ -261,6 +261,11 @@ class Replies_Controller extends Base_Controller {
 		// `jetonomy_before_create_reply` filter (see Task 12).
 		$reply_data['is_anonymous'] = (int) (bool) $request->get_param( 'is_anonymous' );
 
+		// Private reply (1.8.1): author's choice at compose time. Readable only
+		// by the author, the topic author, admins, and space staff — everyone
+		// else gets a tombstone (Permission_Engine::can_read_reply).
+		$reply_data['is_private'] = (int) (bool) $request->get_param( 'is_private' );
+
 		if ( $akismet_spam ) {
 			$reply_data['status'] = 'spam';
 		}
@@ -406,6 +411,14 @@ class Replies_Controller extends Base_Controller {
 
 		if ( ! $can_edit ) {
 			return $this->permission_error();
+		}
+
+		// Privacy toggle (1.8.1): same author-or-editor gate as content edits.
+		// Only applied when the client actually sent the param, so ordinary
+		// content edits don't silently reset the flag.
+		if ( null !== $request->get_param( 'is_private' ) ) {
+			Reply::set_private( $id, rest_sanitize_boolean( $request->get_param( 'is_private' ) ) );
+			$reply->is_private = (int) rest_sanitize_boolean( $request->get_param( 'is_private' ) );
 		}
 
 		$update_data = array();
@@ -834,6 +847,12 @@ class Replies_Controller extends Base_Controller {
 			// dropping the row, so the children of a blocked author still render;
 			// clients use this flag to draw a tombstone in place of the body.
 			'is_blocked_author' => ! empty( $reply->is_blocked_author ),
+			// Private-reply contract (1.8.1): is_private marks the row for
+			// authorized viewers (badge + toggle UI); is_private_hidden means
+			// THIS viewer may not read it — content arrives blanked (the model
+			// tombstone already stripped it) and clients draw a tombstone.
+			'is_private'        => ! empty( $reply->is_private ),
+			'is_private_hidden' => ! empty( $reply->is_private_hidden ),
 		);
 
 		/**
@@ -863,6 +882,12 @@ class Replies_Controller extends Base_Controller {
 				'minimum'  => 1,
 			),
 			'is_anonymous'   => array(
+				'type'              => 'boolean',
+				'required'          => false,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			),
+			'is_private'     => array(
 				'type'              => 'boolean',
 				'required'          => false,
 				'default'           => false,
