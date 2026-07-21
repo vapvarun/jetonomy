@@ -238,7 +238,7 @@ $crumbs = [
 								<?php jetonomy_echo_icon( 'hand', 14 ); ?>
 								<?php esc_html_e( 'Silence', 'jetonomy' ); ?>
 							</button>
-							<button class="jt-btn jt-btn-danger jt-flex-shrink-0"
+							<button class="jt-btn jt-btn-ghost jt-btn-danger jt-flex-shrink-0"
 								data-wp-on--click="actions.restrictMember"
 								data-user-id="<?php echo absint( $profile_user_id ); ?>"
 								data-user-name="<?php echo esc_attr( $user->display_name ); ?>"

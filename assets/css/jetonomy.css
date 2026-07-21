@@ -243,6 +243,13 @@
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
+  /* Danger-ghost: an outlined pill (same shape as .jt-btn-ghost) that reads as
+     destructive - red label + red-tinted hover. Higher specificity than the
+     neutral ghost rules above so the danger colour wins for a destructive
+     secondary action (member Ban, notification Delete) while the shape stays
+     consistent with its ghost siblings. */
+  .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
      raised surface + accent underline. */
   .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,

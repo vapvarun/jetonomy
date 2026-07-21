@@ -63,6 +63,25 @@ $flags  = $total > 0
 	? Moderation_Service::list_pending_flags( $user_id, null, $per_page, $offset )
 	: [];
 
+// Which panel: the flags overview (default) or the banned-members list. Both are
+// gated by the same moderator check above. The Banned tab lets a moderator see
+// who is restricted and lift it - the frontend home for unbanning, since
+// moderators cannot reach wp-admin.
+$jt_view = sanitize_key( wp_unslash( $_GET['view'] ?? 'flags' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+if ( 'banned' !== $jt_view ) {
+	$jt_view = 'flags';
+}
+// Active member restrictions - the SAME model the app's Banned-members screen
+// and GET /moderation/ban read, so every surface stays in lockstep.
+$jt_bans      = 'banned' === $jt_view
+	? \Jetonomy\Models\Restriction::list_active( array( 'limit' => 100 ) )
+	: array();
+$jt_ban_types = array(
+	'global_ban' => __( 'Banned', 'jetonomy' ),
+	'space_ban'  => __( 'Space ban', 'jetonomy' ),
+	'silence'    => __( 'Silenced', 'jetonomy' ),
+);
+
 // Reason → human label map. Source of truth for the badge text;
 // matches the enum at class-moderation-controller.php:106.
 $jt_reason_labels = [
@@ -110,7 +129,72 @@ $crumbs = [
 		<?php endif; ?>
 	</div>
 
-	<?php if ( empty( $flags ) ) : ?>
+	<?php // Tabs: Flags overview | Banned members. Reuses the profile tab styling. ?>
+	<div class="jt-profile-tabs">
+		<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>">
+			<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
+		</a>
+		<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>">
+			<?php esc_html_e( 'Banned members', 'jetonomy' ); ?>
+		</a>
+	</div>
+
+	<?php if ( 'banned' === $jt_view ) : ?>
+		<?php if ( empty( $jt_bans ) ) : ?>
+			<?php
+			\Jetonomy\Template_Loader::partial(
+				'empty-state',
+				[
+					'message' => __( 'No members are currently banned or silenced.', 'jetonomy' ),
+					'variant' => 'compact',
+				]
+			);
+			?>
+		<?php else : ?>
+			<ul class="jt-mod-flag-list">
+				<?php
+				foreach ( $jt_bans as $jt_ban ) :
+					$jt_banned_user = get_userdata( (int) $jt_ban->user_id );
+					$jt_issuer      = (int) $jt_ban->issued_by ? get_userdata( (int) $jt_ban->issued_by ) : null;
+					$jt_ban_label   = $jt_ban_types[ $jt_ban->type ] ?? $jt_ban_types['global_ban'];
+					$jt_ban_age     = human_time_diff( strtotime( $jt_ban->created_at ), time() );
+					$jt_ban_space   = $jt_ban->space_id ? \Jetonomy\Models\Space::find( (int) $jt_ban->space_id ) : null;
+					?>
+					<li class="jt-mod-flag-row">
+						<div class="jt-mod-flag-row-head">
+							<span class="jt-badge jt-badge-danger"><?php echo esc_html( $jt_ban_label ); ?></span>
+							<a class="jt-mod-flag-space" href="<?php echo esc_url( $base . '/u/' . ( $jt_banned_user ? $jt_banned_user->user_login : '' ) . '/' ); ?>">
+								<?php echo esc_html( $jt_banned_user ? $jt_banned_user->display_name : __( '[deleted]', 'jetonomy' ) ); ?>
+							</a>
+							<?php if ( $jt_ban_space ) : ?>
+								<span class="jt-mod-flag-type"><?php echo esc_html( $jt_ban_space->title ); ?></span>
+							<?php endif; ?>
+							<span class="jt-mod-flag-age">
+								<?php
+								/* translators: 1: issuing moderator name, 2: human-readable time since the restriction */
+								echo esc_html( sprintf( __( 'by %1$s · %2$s ago', 'jetonomy' ), $jt_issuer ? $jt_issuer->display_name : __( 'System', 'jetonomy' ), $jt_ban_age ) );
+								?>
+							</span>
+						</div>
+						<?php if ( ! empty( $jt_ban->reason ) ) : ?>
+							<div class="jt-mod-flag-excerpt"><?php echo esc_html( (string) $jt_ban->reason ); ?></div>
+						<?php endif; ?>
+						<div class="jt-mod-flag-foot">
+							<button type="button"
+								class="jt-btn jt-btn-ghost jt-btn-sm jt-flex-shrink-0"
+								data-wp-on--click="actions.liftRestriction"
+								data-restriction-id="<?php echo absint( $jt_ban->id ); ?>"
+								data-user-name="<?php echo esc_attr( $jt_banned_user ? $jt_banned_user->display_name : '' ); ?>">
+								<?php jetonomy_echo_icon( 'user-check', 14 ); ?>
+								<?php esc_html_e( 'Lift', 'jetonomy' ); ?>
+							</button>
+						</div>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		<?php endif; ?>
+
+	<?php elseif ( empty( $flags ) ) : ?>
 		<?php
 		$jt_empty_message = $is_admin
 			? __( 'No pending flags anywhere. Your community is clean.', 'jetonomy' )
