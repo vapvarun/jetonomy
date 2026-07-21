@@ -93,12 +93,14 @@ add_filter(
 			return $transient;
 		}
 		$basename = plugin_basename( JETONOMY_FILE );
-		$icon     = plugins_url( 'assets/images/update-icon.svg', JETONOMY_FILE );
+		$icon_1x  = plugins_url( 'assets/images/update-icon-128.png', JETONOMY_FILE );
+		$icon_2x  = plugins_url( 'assets/images/update-icon-256.png', JETONOMY_FILE );
 		foreach ( array( 'response', 'no_update' ) as $bucket ) {
 			if ( isset( $transient->{$bucket}[ $basename ] ) && empty( $transient->{$bucket}[ $basename ]->icons ) ) {
 				$transient->{$bucket}[ $basename ]->icons = array(
-					'svg'     => $icon,
-					'default' => $icon,
+					'1x'      => $icon_1x,
+					'2x'      => $icon_2x,
+					'default' => $icon_2x,
 				);
 			}
 		}
