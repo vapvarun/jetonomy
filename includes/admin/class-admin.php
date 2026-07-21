@@ -1009,7 +1009,62 @@ class Admin {
 		$settings  = get_option( 'jetonomy_settings', array() );
 		$base_slug = $settings['base_slug'] ?? 'community';
 
+		// Live 7-day pulse for the analytics teaser (real numbers, not a
+		// blurred screenshot — the widget demonstrates what Pro's analytics
+		// does). Dismissible per user; cached 1h so it costs the dashboard
+		// nothing on repeat views.
+		if ( isset( $_GET['jetonomy_dismiss_pulse'] ) && check_admin_referer( 'jetonomy_dismiss_pulse' ) ) {
+			update_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', 1 );
+		}
+		$pulse = get_user_meta( get_current_user_id(), 'jetonomy_pulse_dismissed', true )
+			? null
+			: $this->weekly_pulse();
+
 		include JETONOMY_DIR . 'includes/admin/views/dashboard.php';
+	}
+
+	/**
+	 * 7-day community pulse for the dashboard analytics teaser.
+	 *
+	 * Four bounded queries (date-windowed COUNTs over indexed created_at
+	 * columns), transient-cached for an hour. Big-site checklist: no
+	 * unbounded scans, the DISTINCT runs over the 7-day activity window only.
+	 *
+	 * @return array{posts:int,replies:int,contributors:int,top_space:?string,top_space_posts:int}
+	 */
+	private function weekly_pulse(): array {
+		$cached = get_transient( 'jetonomy_weekly_pulse' );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		global $wpdb;
+		$posts_t    = table( 'posts' );
+		$replies_t  = table( 'replies' );
+		$spaces_t   = table( 'spaces' );
+		$activity_t = table( 'activity_log' );
+		$since      = gmdate( 'Y-m-d H:i:s', time() - 7 * DAY_IN_SECONDS );
+
+		$top = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT s.title, COUNT(*) AS n FROM {$posts_t} p
+				 INNER JOIN {$spaces_t} s ON s.id = p.space_id
+				 WHERE p.status = 'publish' AND p.created_at >= %s
+				 GROUP BY p.space_id, s.title ORDER BY n DESC LIMIT 1",
+				$since
+			)
+		);
+
+		$pulse = array(
+			'posts'           => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$posts_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
+			'replies'         => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$replies_t} WHERE status = 'publish' AND created_at >= %s", $since ) ),
+			'contributors'    => (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT user_id) FROM {$activity_t} WHERE created_at >= %s", $since ) ),
+			'top_space'       => $top->title ?? null,
+			'top_space_posts' => (int) ( $top->n ?? 0 ),
+		);
+
+		set_transient( 'jetonomy_weekly_pulse', $pulse, HOUR_IN_SECONDS );
+		return $pulse;
 	}
 
 	public function render_categories(): void {

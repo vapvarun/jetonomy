@@ -273,12 +273,41 @@ $stat_cards = array(
 				</table>
 			</div>
 
-			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) ) : ?>
-				<!-- Pro Upsell: Analytics -->
-				<div class="jt-pro-upsell-card">
-					<h3><?php esc_html_e( 'Analytics', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PRO', 'jetonomy' ); ?></span></h3>
-					<p><?php esc_html_e( 'Engagement graphs, user growth, top spaces, and more.', 'jetonomy' ); ?></p>
-					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) && null !== ( $pulse ?? null ) ) : ?>
+				<!-- Analytics teaser: REAL 7-day numbers (cached 1h) + Pro upsell.
+				     Replaces the old static card so the widget itself demonstrates
+				     what Pro's full analytics does. -->
+				<div class="jt-pro-upsell-card jt-pulse-card">
+					<h3><?php esc_html_e( 'This week in your community', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PREVIEW', 'jetonomy' ); ?></span></h3>
+					<div class="jt-pulse-grid">
+						<div class="jt-pulse-stat">
+							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['posts'] ) ); ?></span>
+							<span class="jt-pulse-l"><?php esc_html_e( 'new topics', 'jetonomy' ); ?></span>
+						</div>
+						<div class="jt-pulse-stat">
+							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['replies'] ) ); ?></span>
+							<span class="jt-pulse-l"><?php esc_html_e( 'replies', 'jetonomy' ); ?></span>
+						</div>
+						<div class="jt-pulse-stat">
+							<span class="jt-pulse-n"><?php echo esc_html( number_format_i18n( $pulse['contributors'] ) ); ?></span>
+							<span class="jt-pulse-l"><?php esc_html_e( 'active members', 'jetonomy' ); ?></span>
+						</div>
+					</div>
+					<?php if ( ! empty( $pulse['top_space'] ) ) : ?>
+						<p class="jt-pulse-top">
+							<?php
+							printf(
+								/* translators: 1: space title, 2: post count */
+								esc_html__( 'Most active: %1$s (%2$s new topics)', 'jetonomy' ),
+								'<strong>' . esc_html( $pulse['top_space'] ) . '</strong>',
+								esc_html( number_format_i18n( $pulse['top_space_posts'] ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
+					<p><?php esc_html_e( 'Pro adds full history, engagement and moderation analytics, top contributors, and CSV export.', 'jetonomy' ); ?></p>
+					<a href="https://store.wbcomdesigns.com/jetonomy-pro/" class="button button-primary" target="_blank"><?php esc_html_e( 'Upgrade to Pro', 'jetonomy' ); ?></a>
+					<a class="jt-pulse-dismiss" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'jetonomy_dismiss_pulse', '1' ), 'jetonomy_dismiss_pulse' ) ); ?>"><?php esc_html_e( 'Dismiss', 'jetonomy' ); ?></a>
 				</div>
 			<?php endif; ?>
 

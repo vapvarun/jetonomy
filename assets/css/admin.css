@@ -2049,6 +2049,51 @@ tr.jetonomy-moderated td {
 	margin: 0 0 12px;
 }
 
+/* Analytics teaser (live 7-day pulse variant of the upsell card) */
+.jt-pulse-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+	margin: 0 0 10px;
+}
+
+.jt-pulse-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.jt-pulse-n {
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.jt-pulse-l {
+	font-size: 11px;
+	color: var(--jt-admin-text-3);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.jt-pulse-top {
+	font-size: 12px;
+}
+
+.jt-pulse-dismiss {
+	display: block;
+	margin-top: 8px;
+	font-size: 11px;
+	color: var(--jt-admin-text-3);
+	text-decoration: none;
+}
+
+@media (max-width: 640px) {
+	.jt-pulse-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
 /* Disabled nav tab (Pro locked) */
 .nav-tab.disabled {
 	opacity: 0.5;
