@@ -293,6 +293,34 @@ class Space extends Model {
 	}
 
 	/**
+	 * Should this space's EXISTENCE be concealed from the viewer?
+	 *
+	 * A `hidden` space promises "only members can find this space". Listings
+	 * already honour that (listing_visibility_sql), but a direct URL used to
+	 * answer HTTP 200 with the space's title — disclosing that the space
+	 * exists and what it is called (Basecamp 10105630168; product decision:
+	 * a non-member gets a 404, the stronger reading of "hidden").
+	 *
+	 * Semantics deliberately mirror the single-post space gate
+	 * (templates/views/single-post.php): visible to members and
+	 * `manage_options` only. `private` spaces stay discoverable by design —
+	 * this concerns `hidden` exclusively.
+	 *
+	 * @param object   $space   Space row (needs ->id and ->visibility).
+	 * @param int|null $user_id Viewer ID (0/null for guests).
+	 * @return bool True when the viewer must see a 404, not a gate page.
+	 */
+	public static function concealed_from_viewer( object $space, ?int $user_id ): bool {
+		if ( 'hidden' !== ( $space->visibility ?? '' ) ) {
+			return false;
+		}
+		if ( user_can( (int) $user_id, 'manage_options' ) ) {
+			return false;
+		}
+		return ! ( $user_id && SpaceMember::is_member( (int) $space->id, (int) $user_id ) );
+	}
+
+	/**
 	 * List top-level spaces in a category for a given viewer.
 	 *
 	 * @param int      $category_id Category row ID.

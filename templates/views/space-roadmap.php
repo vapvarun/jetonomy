@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 $space_slug = $data['slug'] ?? '';
 $space      = \Jetonomy\Models\Space::find_by_slug( $space_slug );
 
-if ( ! $space ) {
+if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
 	status_header( 404 );
 	\Jetonomy\Template_Loader::partial(
 		'empty-state',

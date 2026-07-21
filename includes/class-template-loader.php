@@ -1026,6 +1026,12 @@ class Template_Loader {
 		if ( ! $space ) {
 			return '';
 		}
+		// Concealed space: the tab title must not name it. NULL (not '') for the
+		// same reason as the gated-post branch above — the slug fallback would
+		// re-leak in hyphens the words this gate withholds.
+		if ( \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+			return null;
+		}
 		return str_replace( '{space_name}', (string) $space->title, $pattern );
 	}
 
@@ -1047,7 +1053,10 @@ class Template_Loader {
 	private static function seo_display_name( string $route, string $slug, string $fallback ): string {
 		if ( in_array( $route, array( 'space', 'space-members', 'space-roadmap', 'space-moderation' ), true ) ) {
 			$sp = \Jetonomy\Models\Space::find_by_slug( $slug );
-			if ( $sp && ! empty( $sp->title ) ) {
+			// Concealed spaces must not leak their title into <title> — the
+			// viewer gets the prettified slug they themselves typed, nothing
+			// more (pairs with the 404 in maybe_set_404).
+			if ( $sp && ! empty( $sp->title ) && ! \Jetonomy\Models\Space::concealed_from_viewer( $sp, get_current_user_id() ) ) {
 				return (string) $sp->title;
 			}
 		} elseif ( 'category' === $route ) {
@@ -1241,6 +1250,12 @@ class Template_Loader {
 					case 'space-roadmap':
 					case 'space-moderation':
 						$space = \Jetonomy\Models\Space::find_by_slug( (string) $data['slug'] );
+						// A concealed space's <head> must look exactly like a
+						// missing space's: no title/desc/og/image (pairs with the
+						// 404 in maybe_set_404 — Basecamp 10105630168).
+						if ( $space && \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+							$space = null;
+						}
 						if ( $space ) {
 							$is_private = ! empty( $space->visibility ) && 'public' !== $space->visibility;
 
@@ -1615,8 +1630,17 @@ class Template_Loader {
 
 		switch ( $data['route'] ) {
 			case 'space':
-				if ( $slug && ! \Jetonomy\Models\Space::find_by_slug( $slug ) ) {
-					status_header( 404 );
+			case 'space-members':
+			case 'space-roadmap':
+			case 'space-moderation':
+				if ( $slug ) {
+					$space = \Jetonomy\Models\Space::find_by_slug( $slug );
+					// A hidden space answers 404 to non-members — its existence
+					// is concealed, same as the view templates render (Basecamp
+					// 10105630168). Missing and concealed are indistinguishable.
+					if ( ! $space || \Jetonomy\Models\Space::concealed_from_viewer( $space, get_current_user_id() ) ) {
+						status_header( 404 );
+					}
 				}
 				break;
 
