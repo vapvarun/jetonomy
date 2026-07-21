@@ -1952,6 +1952,41 @@ tr.jetonomy-moderated td {
 	position: static;
 }
 
+/* Core's small-screen list-table shows row actions statically under the
+   primary column (see wp-admin users.php on a phone); mirror that so the
+   reserved space isn't a blank gap. */
+@media screen and (max-width: 782px) {
+	.jetonomy-admin .wp-list-table .row-actions {
+		position: static;
+		visibility: visible;
+		padding-top: 4px;
+	}
+
+	/* Expanded-row details: settings-sheet presentation. Core renders plain
+	   bold label + value; upgrade to muted uppercase label left, value right,
+	   hairline dividers between rows. display:flex must out-rank core's
+	   `tr.is-expanded td { display: block !important }`. */
+	.jetonomy-admin .wp-list-table tr.is-expanded td:not(.column-primary):not(.hidden) {
+		display: flex !important;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		padding: 9px 10px;
+		border-top: 1px solid #f0f0f1;
+	}
+
+	.jetonomy-admin .wp-list-table tr.is-expanded td:not(.column-primary)::before {
+		content: attr(data-colname);
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--jt-admin-text-3, #646970);
+		float: none;
+		flex-shrink: 0;
+	}
+}
+
 /* ═══════════════════════════════════════════════════════════
    Color Picker Container
    ═══════════════════════════════════════════════════════════ */

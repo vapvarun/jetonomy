@@ -87,14 +87,17 @@ $trust_labels = array(
 		<table class="wp-list-table widefat fixed striped">
 		<thead>
 			<tr>
-				<th class="column-username"><?php esc_html_e( 'Username', 'jetonomy' ); ?></th>
-				<th class="column-display-name"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></th>
-				<th style="width:120px;"><?php esc_html_e( 'Trust Level', 'jetonomy' ); ?></th>
-				<th style="width:90px;"><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
-				<th style="width:60px;"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></th>
-				<th style="width:70px;"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
-				<th style="width:110px;"><?php esc_html_e( 'Joined', 'jetonomy' ); ?></th>
-				<th style="width:110px;"><?php esc_html_e( 'Last Seen', 'jetonomy' ); ?></th>
+				<?php // Core responsive list-table pattern: column-primary + data-colname
+				      // + toggle-row give us WP core's own small-screen UX (primary column
+				      // with a per-row expander) via core CSS/JS - no custom code. ?>
+				<th scope="col" class="manage-column column-username column-primary"><?php esc_html_e( 'Username', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-display-name"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-trust" style="width:120px;"><?php esc_html_e( 'Trust Level', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-reputation" style="width:90px;"><?php esc_html_e( 'Reputation', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-posts" style="width:60px;"><?php esc_html_e( 'Posts', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-replies" style="width:70px;"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-joined" style="width:110px;"><?php esc_html_e( 'Joined', 'jetonomy' ); ?></th>
+				<th scope="col" class="manage-column column-last-seen" style="width:110px;"><?php esc_html_e( 'Last Seen', 'jetonomy' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -112,9 +115,10 @@ $trust_labels = array(
 			<?php else : ?>
 				<?php foreach ( $users as $u ) : ?>
 					<tr data-user-id="<?php echo absint( $u->user_id ); ?>">
-						<td class="column-username">
+						<td class="column-username column-primary" data-colname="<?php esc_attr_e( 'Username', 'jetonomy' ); ?>">
 							<?php echo get_avatar( $u->user_id, 24 ); ?>
 							<strong><?php echo esc_html( $u->user_login ); ?></strong>
+							<button type="button" class="toggle-row"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
 								<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a> | </span>
@@ -122,19 +126,19 @@ $trust_labels = array(
 								<span class="silence"><a href="#" class="jetonomy-silence-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>"><?php esc_html_e( 'Silence', 'jetonomy' ); ?></a></span>
 							</div>
 						</td>
-						<td class="column-display-name"><?php echo esc_html( $u->wp_display_name ?: $u->display_name ); ?></td>
-						<td>
+						<td class="column-display-name" data-colname="<?php esc_attr_e( 'Display Name', 'jetonomy' ); ?>"><?php echo esc_html( $u->wp_display_name ?: $u->display_name ); ?></td>
+						<td class="column-trust" data-colname="<?php esc_attr_e( 'Trust Level', 'jetonomy' ); ?>">
 							<span class="jetonomy-trust-badge jetonomy-trust-badge--<?php echo absint( $u->trust_level ); ?>" data-user-id="<?php echo absint( $u->user_id ); ?>">
 								<?php echo esc_html( ( $trust_labels[ (int) $u->trust_level ] ?? __( 'Unknown', 'jetonomy' ) ) . ' (' . $u->trust_level . ')' ); ?>
 							</span>
 						</td>
-						<td><?php echo esc_html( number_format_i18n( $u->reputation ) ); ?></td>
-						<td><?php echo absint( $u->post_count ); ?></td>
-						<td><?php echo absint( $u->reply_count ); ?></td>
-						<td>
+						<td class="column-reputation" data-colname="<?php esc_attr_e( 'Reputation', 'jetonomy' ); ?>"><?php echo esc_html( number_format_i18n( $u->reputation ) ); ?></td>
+						<td class="column-posts" data-colname="<?php esc_attr_e( 'Posts', 'jetonomy' ); ?>"><?php echo absint( $u->post_count ); ?></td>
+						<td class="column-replies" data-colname="<?php esc_attr_e( 'Replies', 'jetonomy' ); ?>"><?php echo absint( $u->reply_count ); ?></td>
+						<td class="column-joined" data-colname="<?php esc_attr_e( 'Joined', 'jetonomy' ); ?>">
 							<?php echo esc_html( $u->user_registered ? human_time_diff( strtotime( $u->user_registered ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : '&mdash;' ); ?>
 						</td>
-						<td>
+						<td class="column-last-seen" data-colname="<?php esc_attr_e( 'Last Seen', 'jetonomy' ); ?>">
 							<?php echo esc_html( $u->last_seen_at ? human_time_diff( strtotime( $u->last_seen_at ), time() ) . ' ' . __( 'ago', 'jetonomy' ) : __( 'Never', 'jetonomy' ) ); ?>
 						</td>
 					</tr>
