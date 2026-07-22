@@ -2,27 +2,19 @@
 /**
  * New space view (G6).
  *
- * Front-end create-space form. Permission mirrors REST POST /spaces:
- * site admin (manage_options) + jetonomy_create_spaces cap holders + WP
- * roles the admin allow-listed in Settings. Anyone else sees a friendly
- * empty state instead of a 403.
+ * Front-end create-space form. Permission is resolved by the same gate REST
+ * POST /spaces uses — Capabilities::can_create_space_frontend(): site admins,
+ * plus the WP roles the admin allow-listed in Settings. Anyone else sees a
+ * friendly empty state instead of a 403.
  *
  * @package Jetonomy
  */
 
 defined( 'ABSPATH' ) || exit;
 
-$settings      = get_option( 'jetonomy_settings', array() );
-$user_id       = get_current_user_id();
-$is_site_admin = current_user_can( 'manage_options' );
-$has_cap       = current_user_can( 'jetonomy_create_spaces' );
-$allowed_roles = isset( $settings['frontend_space_creation_roles'] )
-	? array_filter( array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] ) )
-	: array();
-$wp_user       = wp_get_current_user();
-$user_roles    = $wp_user && ! empty( $wp_user->roles ) ? (array) $wp_user->roles : array();
-$role_match    = ! empty( $allowed_roles ) && count( array_intersect( $user_roles, $allowed_roles ) ) > 0;
-$qualifies     = $is_site_admin || $has_cap || $role_match;
+$settings  = get_option( 'jetonomy_settings', array() );
+$user_id   = get_current_user_id();
+$qualifies = \Jetonomy\Permissions\Capabilities::can_create_space_frontend();
 
 $default_type = sanitize_key( (string) ( $settings['default_space_type'] ?? 'forum' ) );
 if ( ! in_array( $default_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ) {

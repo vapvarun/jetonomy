@@ -657,16 +657,10 @@ class Blocks {
 		$subs_url      = $base . '/subscriptions/';
 		$new_space_url = $base . '/new-space/';
 
-		// 1.4.0 G6 — show "Create space" link when the viewer is a site
-		// admin, holds the cap, or matches an admin-allowlisted role.
-		$jt_settings_panel = get_option( 'jetonomy_settings', array() );
-		$jt_allowed_roles  = isset( $jt_settings_panel['frontend_space_creation_roles'] )
-			? array_filter( array_map( 'sanitize_key', (array) $jt_settings_panel['frontend_space_creation_roles'] ) )
-			: array();
-		$jt_user_roles     = ! empty( $user->roles ) ? (array) $user->roles : array();
-		$can_create_space  = current_user_can( 'manage_options' )
-			|| current_user_can( 'jetonomy_create_spaces' )
-			|| ( ! empty( $jt_allowed_roles ) && count( array_intersect( $jt_user_roles, $jt_allowed_roles ) ) > 0 );
+		// 1.4.0 G6 — show "Create space" link only to viewers who could
+		// actually complete the flow. Same gate as the /new-space/ form and
+		// REST POST /spaces, so the link never leads to an empty state.
+		$can_create_space = \Jetonomy\Permissions\Capabilities::can_create_space_frontend();
 		// Only show the Messages (DM) link when the private-messaging extension is
 		// actually active (route registered) - Pro merely being installed is not
 		// enough, or the link 404s. See \Jetonomy\messaging_active().

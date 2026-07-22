@@ -256,9 +256,10 @@ class Spaces_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Permission check: site admin (manage_options) + jetonomy_create_spaces
-	 * cap-holders always qualify. Beyond that, the admin can opt-in specific
-	 * WP roles (Editor, Author, Contributor, etc.) via Settings → General.
+	 * Permission check: site admins always qualify; beyond that the admin opts
+	 * specific WP roles into the front-end create flow via Settings → General.
+	 * Resolved by Capabilities::can_create_space_frontend() so this route, the
+	 * /new-space/ form, and the user-panel link cannot disagree.
 	 *
 	 * Trust-level fallback was considered and dropped — admin should pick
 	 * the roles they trust to create spaces explicitly, not have community
@@ -272,27 +273,10 @@ class Spaces_Controller extends Base_Controller {
 				[ 'status' => 401 ]
 			);
 		}
-		if ( current_user_can( 'manage_options' ) || current_user_can( 'jetonomy_create_spaces' ) ) {
-			return true;
-		}
-
-		// 1.4.0 G6: admin opts specific WP roles into the front-end create
-		// flow. Empty list (default) means admin-only.
-		$settings      = get_option( 'jetonomy_settings', array() );
-		$allowed_roles = isset( $settings['frontend_space_creation_roles'] )
-			? array_filter( array_map( 'sanitize_key', (array) $settings['frontend_space_creation_roles'] ) )
-			: array();
-		if ( empty( $allowed_roles ) ) {
+		if ( ! \Jetonomy\Permissions\Capabilities::can_create_space_frontend() ) {
 			return $this->permission_error();
 		}
 
-		$user = wp_get_current_user();
-		if ( empty( $user->roles ) ) {
-			return $this->permission_error();
-		}
-		if ( count( array_intersect( (array) $user->roles, $allowed_roles ) ) === 0 ) {
-			return $this->permission_error();
-		}
 		return true;
 	}
 
