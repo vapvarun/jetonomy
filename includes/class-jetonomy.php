@@ -293,8 +293,45 @@ final class Jetonomy {
 		$this->load_dependencies();
 		$this->maybe_backfill_activity();
 		$this->maybe_seed_verification_reminder_defaults();
+		$this->maybe_seed_frontend_space_creation_roles();
 
 		Admin_Bar::register();
+	}
+
+	/**
+	 * One-time seed for Settings → General → front-end space creation.
+	 *
+	 * The front-end gate used to OR in `jetonomy_create_spaces`, a cap author
+	 * and up hold cumulatively, so the role allow-list was decorative — it
+	 * could only ever restrict subscribers and contributors (Basecamp
+	 * 10118734782). Now that the allow-list is authoritative, an install that
+	 * never touched the setting would silently LOSE front-end space creation
+	 * for its authors and editors on upgrade.
+	 *
+	 * So: seed the list with the roles that hold the cap today. Effective
+	 * permissions are unchanged, and for the first time the admin screen shows
+	 * the truth — with every box now actually unticking.
+	 *
+	 * Only seeds when the key is ABSENT. An admin who already configured the
+	 * setting (including deliberately ticking nothing) keeps their choice.
+	 * Guarded by a single option, same pattern as the two seeds above.
+	 */
+	private function maybe_seed_frontend_space_creation_roles(): void {
+		if ( get_option( 'jetonomy_frontend_space_roles_seeded' ) ) {
+			return;
+		}
+
+		$settings = get_option( 'jetonomy_settings', array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+
+		if ( ! array_key_exists( 'frontend_space_creation_roles', $settings ) ) {
+			$settings['frontend_space_creation_roles'] = Permissions\Capabilities::roles_with_create_spaces();
+			update_option( 'jetonomy_settings', $settings );
+		}
+
+		update_option( 'jetonomy_frontend_space_roles_seeded', true );
 	}
 
 	/**

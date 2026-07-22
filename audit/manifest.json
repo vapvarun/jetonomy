@@ -3303,6 +3303,14 @@
 			"where": "includes/class-privacy-backfill.php (Privacy_Backfill::run_batch)",
 			"consumed_by": null,
 			"notes": "1.8.0. Wall-clock budget for one orphan-purge slice before it stops at a user boundary. Mirrors jetonomy_import_batch_seconds."
+		},
+		{
+			"name": "jetonomy_can_create_space_frontend",
+			"type": "filter",
+			"args": "$can (bool), $user_id (int, 0 when logged out)",
+			"where": "includes/permissions/class-capabilities.php (Capabilities::can_create_space_frontend)",
+			"consumed_by": null,
+			"notes": "1.8.1. The single front-end space-creation gate, shared by REST POST /spaces, templates/views/new-space.php, and the user-panel block link. Runs AFTER the admin's Settings -> General role allow-list, so a filter can both grant and revoke. Extension point for membership tiers or per-user grants that roles cannot express. The jetonomy_create_spaces cap no longer bypasses this gate (Basecamp 10118734782); it still gates programmatic paths (CLI, Abilities)."
 		}
 	],
 	"buddypress_integration": {
