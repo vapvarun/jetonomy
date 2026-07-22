@@ -300,10 +300,16 @@ class Posts_Controller extends Base_Controller {
 
 		$items = array_map( array( $this, 'prepare_post' ), $posts );
 
+		// `total` drives has_more in paginated_response(), so it must count the
+		// SAME population the listing returned. $space->post_count is the
+		// denormalized all-published counter — it ignores is_private and blocked
+		// authors, so a space with 3 topics of which 2 are invisible to the viewer
+		// reported total=3 against 1 returned row and pinned "Load More" on
+		// forever (Basecamp 10118693115). Mirrors templates/views/space.php.
 		return $this->paginated_response(
 			$items,
 			array(
-				'total'  => (int) ( $space->post_count ?? 0 ),
+				'total'  => Post::count_by_space_visible( $space_id, $user_id, $is_privileged, $pagination['sort'] ),
 				'offset' => (int) $pagination['offset'],
 			)
 		);

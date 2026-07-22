@@ -198,21 +198,6 @@ class Spaces_Handler {
 			if ( is_string( $settings_raw ) ) {
 				$decoded = json_decode( wp_unslash( $settings_raw ), true );
 				if ( is_array( $decoded ) ) {
-					// Sanitize topic prefixes if present.
-					if ( isset( $decoded['prefixes'] ) && is_array( $decoded['prefixes'] ) ) {
-						$sanitized_prefixes = array();
-						foreach ( $decoded['prefixes'] as $pfx ) {
-							$name  = sanitize_text_field( $pfx['name'] ?? '' );
-							$color = sanitize_hex_color( $pfx['color'] ?? '' );
-							if ( $name && $color ) {
-								$sanitized_prefixes[] = array(
-									'name'  => $name,
-									'color' => $color,
-								);
-							}
-						}
-						$decoded['prefixes'] = $sanitized_prefixes;
-					}
 					// Handle BuddyPress group linking (stored in group meta, not space settings).
 					if ( isset( $decoded['bp_group_id'] ) && function_exists( 'bp_is_active' ) && bp_is_active( 'groups' ) ) {
 						$bp_gid = absint( $decoded['bp_group_id'] );
@@ -228,31 +213,9 @@ class Spaces_Handler {
 						unset( $decoded['bp_group_id'] );
 					}
 
-					// Sanitize posts_per_page: clamp to [1, 100] when set, drop key when
-					// null/empty/<=0 so Space::get_posts_per_page() can fall through to
-					// global → 20 instead of being overridden by a phantom per-space value.
-					if ( array_key_exists( 'posts_per_page', $decoded ) ) {
-						$pp = $decoded['posts_per_page'];
-						if ( null === $pp || '' === $pp || (int) $pp <= 0 ) {
-							unset( $decoded['posts_per_page'] );
-							$drop_posts_per_page = true;
-						} else {
-							$decoded['posts_per_page'] = max( 1, min( 100, (int) $pp ) );
-							$drop_posts_per_page       = false;
-						}
-					} else {
-						$drop_posts_per_page = false;
-					}
-
-					// Merge with existing settings so other keys are not wiped.
-					$existing = Space::get_settings( $id );
-					$merged   = array_merge( $existing, $decoded );
-					// If the user cleared the field, also strip the key from the merged
-					// result (otherwise the previous value would persist after merge).
-					if ( $drop_posts_per_page ) {
-						unset( $merged['posts_per_page'] );
-					}
-					$data['settings'] = wp_json_encode( $merged );
+					// Merge + normalize (prefixes, posts_per_page) through the model so
+					// this writer and the REST writer store one shape.
+					$data['settings'] = wp_json_encode( Space::merge_settings( $id, $decoded ) );
 				}
 			}
 		}

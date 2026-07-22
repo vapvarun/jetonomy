@@ -147,11 +147,16 @@ if ( ! in_array( $sort, [ 'latest', 'popular', 'unanswered' ], true ) ) {
 }
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$paged           = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
-$_jt_settings    = get_option( 'jetonomy_settings', [] );
-$_space_settings = \Jetonomy\Models\Space::get_settings( (int) $space->id );
-$limit           = max( 1, (int) ( $_space_settings['posts_per_page'] ?? $_jt_settings['posts_per_page'] ?? 20 ) );
-$offset          = ( $paged - 1 ) * $limit;
+$paged  = max( 1, (int) ( $_GET['pg'] ?? 1 ) );
+// Resolve per-page through the model, never inline. This used to re-implement
+// the space → global → 20 chain with `??`, which only falls through on null —
+// so a stored `posts_per_page: ""` (what the front-end edit form sends for
+// "use the default", view.js) evaluated to (int) '' = 0 and clamped to a limit
+// of 1. The space then rendered a single topic with "Load More" under it while
+// the REST path, which already used the model, correctly said 20 (Basecamp
+// 10118693115). One resolver, one answer, every surface.
+$limit  = \Jetonomy\Models\Space::get_posts_per_page( (int) $space->id );
+$offset = ( $paged - 1 ) * $limit;
 
 // Use the visibility-aware listing so private topics (is_private = 1) are
 // filtered out for non-author, non-privileged viewers — before 1.3.6 this

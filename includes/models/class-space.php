@@ -647,6 +647,63 @@ class Space extends Model {
 	}
 
 	/**
+	 * Merge incoming settings into a space's stored settings, normalized.
+	 *
+	 * Every writer (wp-admin AJAX, REST PATCH, CLI) goes through here so the
+	 * stored JSON has one shape. Two rules it enforces, both learned the hard
+	 * way:
+	 *
+	 * - MERGE, never replace. A caller sending one key must not wipe prefixes,
+	 *   SEO overrides, or feature toggles it never mentioned.
+	 * - A cleared `posts_per_page` DROPS the key instead of storing `""` or 0.
+	 *   The front-end edit form sends `""` for "use the default"; storing that
+	 *   left a phantom per-space value that read back as a limit of 1 on any
+	 *   surface resolving it with `??` (Basecamp 10118693115). Absent means
+	 *   "fall through to global", and only absent says it unambiguously.
+	 *
+	 * @param int   $space_id Space ID.
+	 * @param array $incoming Settings keys the caller wants to change.
+	 * @return array Merged, normalized settings ready to encode.
+	 */
+	public static function merge_settings( int $space_id, array $incoming ): array {
+		if ( isset( $incoming['prefixes'] ) && is_array( $incoming['prefixes'] ) ) {
+			$clean_prefixes = [];
+			foreach ( $incoming['prefixes'] as $prefix ) {
+				$name  = sanitize_text_field( $prefix['name'] ?? '' );
+				$color = sanitize_hex_color( $prefix['color'] ?? '' );
+				if ( $name && $color ) {
+					$clean_prefixes[] = [
+						'name'  => $name,
+						'color' => $color,
+					];
+				}
+			}
+			$incoming['prefixes'] = $clean_prefixes;
+		}
+
+		$clear_per_page = false;
+		if ( array_key_exists( 'posts_per_page', $incoming ) ) {
+			$per_page = $incoming['posts_per_page'];
+			if ( null === $per_page || '' === $per_page || (int) $per_page <= 0 ) {
+				unset( $incoming['posts_per_page'] );
+				$clear_per_page = true;
+			} else {
+				$incoming['posts_per_page'] = max( 1, min( 100, (int) $per_page ) );
+			}
+		}
+
+		$merged = array_merge( self::get_settings( $space_id ), $incoming );
+
+		// The key was cleared, so strip what the merge carried over from the
+		// previously stored value — otherwise "clear this" silently no-ops.
+		if ( $clear_per_page ) {
+			unset( $merged['posts_per_page'] );
+		}
+
+		return $merged;
+	}
+
+	/**
 	 * Just the valid `visibility` values, for validation and REST/ability enums.
 	 *
 	 * Derived from visibility_levels() so a level can never be offerable in a

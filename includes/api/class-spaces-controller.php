@@ -424,15 +424,16 @@ class Spaces_Controller extends Base_Controller {
 
 		$slug = $this->unique_slug( $slug );
 
-		// Handle settings: accept array or JSON string.
+		// Handle settings: accept array or JSON string. Normalized through the
+		// model (space id 0 — nothing to merge into yet) so a space created
+		// with `posts_per_page: ""` doesn't start life with the phantom value
+		// the update path now rejects.
 		$settings_raw = $request->get_param( 'settings' );
 		$settings     = '';
 		if ( $settings_raw ) {
-			if ( is_array( $settings_raw ) ) {
-				$settings = wp_json_encode( $settings_raw );
-			} else {
-				$decoded  = json_decode( $settings_raw, true );
-				$settings = is_array( $decoded ) ? wp_json_encode( $decoded ) : '';
+			$incoming = is_array( $settings_raw ) ? $settings_raw : json_decode( (string) $settings_raw, true );
+			if ( is_array( $incoming ) ) {
+				$settings = wp_json_encode( Space::merge_settings( 0, $incoming ) );
 			}
 		}
 
@@ -574,15 +575,14 @@ class Spaces_Controller extends Base_Controller {
 				$incoming = is_array( $decoded ) ? $decoded : null;
 			}
 			if ( null !== $incoming ) {
-				// MERGE with the existing settings row so callers only need to
-				// send the keys they want to change. PATCHing a single key must
-				// not wipe unrelated settings (prefixes, SEO overrides, feature
-				// toggles, etc.). The admin AJAX handler and the CLI journey
-				// both merge via Space::get_settings() + array_merge; this
-				// brings the REST update path in line with them.
-				$existing         = Space::get_settings( $id );
-				$merged           = array_merge( $existing, $incoming );
-				$data['settings'] = wp_json_encode( $merged );
+				// Merge + normalize through the model, same as the admin AJAX
+				// writer. This path used to array_merge() raw, so the front-end
+				// edit form's `posts_per_page: ""` (its "use the default"
+				// value) was stored verbatim and read back as a limit of 1 —
+				// the admin writer had guarded against exactly that for
+				// releases, and only this path had drifted (Basecamp
+				// 10118693115).
+				$data['settings'] = wp_json_encode( Space::merge_settings( $id, $incoming ) );
 			} elseif ( '' === $settings_raw ) {
 				// Explicit empty string means reset; stored as empty JSON object.
 				$data['settings'] = '';
