@@ -1573,21 +1573,15 @@ class Notifier {
 	/**
 	 * Per-recipient join-request action URL.
 	 *
-	 * WP admin / `jetonomy_manage_spaces` cap-holders go to the wp-admin
-	 * space-edit `join_requests` tab. Everyone else (space-level admins +
-	 * moderators without those caps) gets the front-end space-mod queue.
+	 * Delegates to \Jetonomy\join_request_url_for() so the email, the
+	 * /notifications/ page, and the REST bell dropdown all land the reader on
+	 * the same surface.
 	 *
 	 * @param int         $recipient_id Recipient WP user id.
 	 * @param object|null $space        Space row (may be null).
 	 */
 	private function build_join_request_url_for( int $recipient_id, $space ): string {
-		if ( ! $space ) {
-			return '';
-		}
-		if ( user_can( $recipient_id, 'jetonomy_manage_spaces' ) || user_can( $recipient_id, 'manage_options' ) ) {
-			return admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' );
-		}
-		return \Jetonomy\base_url() . '/s/' . $space->slug . '/mod/';
+		return \Jetonomy\join_request_url_for( $recipient_id, $space );
 	}
 
 	private function get_display_name( int $user_id ): string {

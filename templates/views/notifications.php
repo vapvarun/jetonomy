@@ -189,16 +189,14 @@ $settings_url = $base . '/u/' . rawurlencode( wp_get_current_user()->user_login 
 						$notif_url = $base . '/u/' . rawurlencode( $badge_user->user_login ) . '/#jt-badges';
 					}
 				} elseif ( 'space' === $notif->object_type && 'join_request' === $notif->type ) {
-					// Mirrors Notifier::build_join_request_url_for() so the link
-					// the customer sees on this page matches the link in their
-					// email — and routes to the right surface for who they are.
-					$jr_space = \Jetonomy\Models\Space::find( (int) $notif->object_id );
-					if ( $jr_space ) {
-						if ( current_user_can( 'jetonomy_manage_spaces' ) || current_user_can( 'manage_options' ) ) {
-							$notif_url = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $jr_space->id . '&tab=join_requests' );
-						} else {
-							$notif_url = $base . '/s/' . $jr_space->slug . '/mod/';
-						}
+					// Shared resolver, so the link on this page, the link in the
+					// email, and the link in the bell dropdown are one decision.
+					$jr_url = \Jetonomy\join_request_url_for(
+						(int) $notif->user_id,
+						\Jetonomy\Models\Space::find( (int) $notif->object_id )
+					);
+					if ( '' !== $jr_url ) {
+						$notif_url = $jr_url;
 					}
 				} else {
 					// Anything else (e.g. Pro DM 'message'/'conversation') routes

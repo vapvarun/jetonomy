@@ -337,6 +337,11 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 		return get_profile_url( $object_id );
 	}
 
+	if ( 'space' === $object_type ) {
+		$space = Models\Space::find( $object_id );
+		return $space ? base_url() . '/s/' . $space->slug . '/' : '';
+	}
+
 	/**
 	 * Resolve a deep link for an object type free doesn't know about (e.g. Pro's
 	 * 'message'/'conversation'). Lets Pro map its own object types to URLs
@@ -348,6 +353,41 @@ function notification_deep_link( string $object_type, int $object_id ): string {
 	 * @param int    $object_id   Notification object id.
 	 */
 	return (string) apply_filters( 'jetonomy_notification_deep_link', '', $object_type, $object_id );
+}
+
+/**
+ * Where a given recipient should land to act on a pending join request.
+ *
+ * Single source of truth for the three surfaces that link a `join_request`
+ * notification: the email (Notifier), the /notifications/ page, and the REST
+ * bell dropdown. They used to build this URL independently — the first two
+ * had copies of the same logic and the third had none at all, so the bell
+ * resolved join requests to an empty URL and fell back to /notifications/
+ * (Basecamp 10118686521).
+ *
+ * Recipient-dependent by necessity: wp-admin cap-holders get the Join
+ * Requests tab, everyone else (space admins and moderators who own the space
+ * but not wp-admin) gets the front-end members page. It must NOT be the
+ * space-mod queue at /s/{slug}/mod/, which renders pending FLAGS only — the
+ * approve / reject UI for join requests lives on the members page.
+ *
+ * @param int         $recipient_id WP user id of the notification recipient.
+ * @param object|null $space        Space row.
+ * @return string URL, or '' when the space is gone.
+ */
+function join_request_url_for( int $recipient_id, $space ): string {
+	if ( ! $space ) {
+		return '';
+	}
+
+	if ( user_can( $recipient_id, 'jetonomy_manage_spaces' ) || user_can( $recipient_id, 'manage_options' ) ) {
+		return admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' . (int) $space->id . '&tab=join_requests' );
+	}
+
+	// #jt-pending-requests anchors the pending list on the members page, so a
+	// space with many members doesn't land the reader above the fold and away
+	// from the thing the notification was about.
+	return base_url() . '/s/' . $space->slug . '/members/#jt-pending-requests';
 }
 
 /**

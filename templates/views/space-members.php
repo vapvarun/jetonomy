@@ -147,7 +147,7 @@ $role_labels = [
 			</div>
 
 			<?php if ( $viewer_is_priv && ! empty( $jt_pending_requests ) ) : ?>
-				<section class="jt-card jt-pending-requests" aria-label="<?php esc_attr_e( 'Pending join requests', 'jetonomy' ); ?>">
+				<section id="jt-pending-requests" class="jt-card jt-pending-requests" aria-label="<?php esc_attr_e( 'Pending join requests', 'jetonomy' ); ?>">
 					<h2 class="jt-pending-requests-title">
 						<?php esc_html_e( 'Pending join requests', 'jetonomy' ); ?>
 						<span class="jt-badge-accent"><?php echo esc_html( number_format_i18n( (int) $jt_pending_total ) ); ?></span>

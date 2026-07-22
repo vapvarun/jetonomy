@@ -1644,6 +1644,10 @@
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-member-sub { color: var(--jt-text-tertiary); margin-top: 2px; }
   .jt-pending-requests { margin-bottom: 20px; }
+  /* Deep-linked from a join-request notification (#jt-pending-requests). Same
+     scroll-margin-top treatment as .jt-reply:target — without it the section
+     lands under the sticky header and the reader sees a clipped request. */
+  .jt-pending-requests:target { scroll-margin-top: var(--jt-scroll-offset); }
   .jt-pending-requests-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 12px 16px 0; font-size: 1rem; font-weight: 600; color: var(--jt-text); }
   .jt-pending-item:last-child { border-bottom: none; }
   .jt-pending-message { font-size: 0.875rem; color: var(--jt-text-secondary); margin-top: 2px; }

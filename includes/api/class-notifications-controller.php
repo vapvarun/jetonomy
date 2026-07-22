@@ -380,6 +380,19 @@ class Notifications_Controller extends Base_Controller {
 			return '';
 		}
 
+		// A join request is not a link to the space — it's a link to the queue
+		// where the recipient can approve or reject it, which differs by who
+		// they are. Same resolver the email and the /notifications/ page use;
+		// this path had no case for the type at all, so it fell through to an
+		// empty URL and header.js defaulted to /notifications/ (Basecamp
+		// 10118686521).
+		if ( 'space' === $object_type && 'join_request' === ( $notification->type ?? '' ) ) {
+			return \Jetonomy\join_request_url_for(
+				(int) $notification->user_id,
+				\Jetonomy\Models\Space::find( $object_id )
+			);
+		}
+
 		// Fast path: pre-joined slugs come from list_for_user_with_targets().
 		$base = \Jetonomy\base_url();
 
