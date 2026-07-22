@@ -8,6 +8,7 @@
 namespace Jetonomy\CLI\Commands;
 
 use Jetonomy\CLI\Journeys\Space_Journey;
+use Jetonomy\CLI\Journeys\Space_Orphan_Journey;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -329,5 +330,105 @@ final class Space_Command extends Base_Command {
 		$category_id = (int) ( $assoc['category'] ?? 0 );
 		$result      = ( new Space_Journey() )->list_by_category( $category_id );
 		$this->render_list( $result, $assoc );
+	}
+
+	/**
+	 * Report rows left behind by spaces that were deleted. Read-only.
+	 *
+	 * Space deletion has never cascaded, so every space ever removed left its
+	 * topics, replies, members, join requests and notifications in the database
+	 * pointing at an id that no longer resolves. This answers how much.
+	 *
+	 * Rows with space id 0 are NOT orphans — 0 is the "no space" sentinel.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--format=<format>]
+	 * : Output format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 *   - csv
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy space scan-orphans
+	 *     wp jetonomy space scan-orphans --format=json
+	 *
+	 * @subcommand scan-orphans
+	 */
+	public function scan_orphans( $args, $assoc ): void {
+		$result = ( new Space_Orphan_Journey() )->scan_orphans();
+
+		if ( ! $result->is_success() ) {
+			\WP_CLI::error( $result->first_error() ?? 'Scan failed.' );
+			return;
+		}
+
+		if ( 'json' === (string) ( $assoc['format'] ?? 'table' ) ) {
+			\WP_CLI::log( (string) wp_json_encode( $result->to_array() ) );
+			return;
+		}
+
+		$columns = (array) ( $result->data['columns'] ?? [] );
+		if ( ! $columns ) {
+			\WP_CLI::success( 'No orphaned space data. Nothing to remediate.' );
+			return;
+		}
+
+		\WP_CLI\Utils\format_items(
+			(string) ( $assoc['format'] ?? 'table' ),
+			$columns,
+			'table,column,orphan_rows'
+		);
+		\WP_CLI::warning(
+			sprintf(
+				'%d row(s) belonging to %d deleted space(s) are still stored. Run `wp jetonomy space purge-orphans` to remove them.',
+				(int) $result->data['orphan_rows'],
+				(int) $result->data['orphan_spaces']
+			)
+		);
+	}
+
+	/**
+	 * Purge all data belonging to spaces that no longer exist.
+	 *
+	 * Safe to run repeatedly — a second run finds nothing and does nothing.
+	 * Only ever touches rows whose parent space is ALREADY gone; a live space
+	 * is never a candidate, so this cannot delete a community's content.
+	 *
+	 * On multisite this cleans the CURRENT site's tables. Pass --url=<site>
+	 * per site to sweep a network (each site keeps its own jt_* tables).
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Report what would be removed without removing anything.
+	 *
+	 * [--format=<format>]
+	 * : Output format.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 * ---
+	 *
+	 * ## EXAMPLES
+	 *     wp jetonomy space purge-orphans --dry-run
+	 *     wp jetonomy space purge-orphans
+	 *
+	 * @subcommand purge-orphans
+	 */
+	public function purge_orphans( $args, $assoc ): void {
+		if ( isset( $assoc['dry-run'] ) ) {
+			$this->scan_orphans( $args, $assoc );
+			return;
+		}
+
+		$result = ( new Space_Orphan_Journey() )->purge_orphans();
+		$this->render( $result, $assoc );
 	}
 }

@@ -3311,6 +3311,38 @@
 			"where": "includes/permissions/class-capabilities.php (Capabilities::can_create_space_frontend)",
 			"consumed_by": null,
 			"notes": "1.8.1. The single front-end space-creation gate, shared by REST POST /spaces, templates/views/new-space.php, and the user-panel block link. Runs AFTER the admin's Settings -> General role allow-list, so a filter can both grant and revoke. Extension point for membership tiers or per-user grants that roles cannot express. The jetonomy_create_spaces cap no longer bypasses this gate (Basecamp 10118734782); it still gates programmatic paths (CLI, Abilities)."
+		},
+		{
+			"name": "jetonomy_purge_orphan_space",
+			"type": "action",
+			"args": "$space_id (int)",
+			"where": "includes/class-space-backfill.php (Space_Backfill::run_batch)",
+			"consumed_by": null,
+			"notes": "1.8.1. Fired per orphaned space id by the CLI-driven sweep. Space_Purge listens; Pro listens for its own jt_pro_* space-scoped tables. The backfill IS the forward purge replayed, so there is no second cleanup list to drift. Mirrors jetonomy_purge_orphan_user."
+		},
+		{
+			"name": "jetonomy_space_purged",
+			"type": "action",
+			"args": "$space_id (int), $removed (array<string,int> rows removed per table.column:ref)",
+			"where": "includes/class-space-purge.php (Space_Purge::purge)",
+			"consumed_by": null,
+			"notes": "1.8.1. Fired after a space and every row referencing it, its topics and their replies have been removed."
+		},
+		{
+			"name": "jetonomy_space_relations",
+			"type": "filter",
+			"args": "$relations (array<int,array{table,column,ref,where,self}>)",
+			"where": "includes/class-space-purge.php (Space_Purge::relations)",
+			"consumed_by": null,
+			"notes": "1.8.1. The single declaration of how a space is referenced across the schema. Drives the purge, orphan discovery and the scan report. Pro adds its jt_pro_* tables here rather than shipping a parallel sweeper. `ref` is space|post|reply and names which id set the column holds. Mirrors jetonomy_privacy_orphan_columns."
+		},
+		{
+			"name": "jetonomy_orphan_space_purge_batch_seconds",
+			"type": "filter",
+			"args": "$seconds (float, default 15)",
+			"where": "includes/class-space-backfill.php (Space_Backfill::run_batch)",
+			"consumed_by": null,
+			"notes": "1.8.1. Wall-clock budget for one orphan-space purge slice before it stops at a space boundary. Mirrors jetonomy_orphan_purge_batch_seconds."
 		}
 	],
 	"buddypress_integration": {
@@ -3462,7 +3494,9 @@
 				"update",
 				"delete",
 				"add-member",
-				"remove-member"
+				"remove-member",
+				"scan-orphans",
+				"purge-orphans"
 			]
 		},
 		{

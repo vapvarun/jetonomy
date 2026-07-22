@@ -626,6 +626,11 @@ final class Jetonomy {
 		new Cron();
 		new Privacy();
 
+		// Listens for jetonomy_purge_orphan_space. Nothing fires it in normal
+		// operation — only the CLI-driven Space_Backfill sweep does — but the
+		// listener has to be registered for that sweep to reach free's tables.
+		Space_Purge::register();
+
 		new SEO\Sitemap();
 		new SEO\Schema_Markup();
 
