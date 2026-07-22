@@ -243,6 +243,13 @@
   .jt-app button.jt-btn-fill:hover, .jt-app button.jt-btn-fill:focus-visible { background-color: var(--jt-accent-hover) !important; color: var(--jt-accent-hover-fg) !important; }
   .jt-app button.jt-btn-ghost { background-color: var(--jt-bg) !important; color: var(--jt-text-secondary) !important; border-color: var(--jt-border-strong) !important; }
   .jt-app button.jt-btn-ghost:hover { background-color: var(--jt-bg-hover) !important; color: var(--jt-text) !important; border-color: var(--jt-border-strong) !important; }
+  /* Danger-ghost: an outlined pill (same shape as .jt-btn-ghost) that reads as
+     destructive - red label + red-tinted hover. Higher specificity than the
+     neutral ghost rules above so the danger colour wins for a destructive
+     secondary action (member Ban, notification Delete) while the shape stays
+     consistent with its ghost siblings. */
+  .jt-app button.jt-btn-ghost.jt-btn-danger { color: var(--jt-danger) !important; }
+  .jt-app button.jt-btn-ghost.jt-btn-danger:hover { background-color: var(--jt-danger-light) !important; color: var(--jt-danger) !important; border-color: var(--jt-danger) !important; }
   /* Segmented controls (sort + filter pills, font-scale): active pill keeps its
      raised surface + accent underline. */
   .jt-app button.jt-pill.on, .jt-app button.jt-pill.active,
@@ -623,6 +630,22 @@
   .jt-progress { height: 4px; background: var(--jt-bg-muted); border-radius: 2px; overflow: hidden; }
   .jt-progress-fill { height: 100%; background: var(--jt-accent); border-radius: 2px; transition: width 0.8s var(--jt-ease); }
 
+  /* ── Private replies (1.8.1) ── */
+  .jt-private-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; color: var(--jt-warn); background: var(--jt-warn-light); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); }
+  .jt-reply-private-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--jt-text-secondary); cursor: pointer; user-select: none; }
+  .jt-reply-private-toggle input { margin: 0; }
+
+  /* ── My Subscriptions ── */
+  .jt-subs-heading { font-family: var(--jt-font-heading); font-size: 1rem; font-weight: 600; margin: var(--jt-space-6) 0 var(--jt-space-3); }
+  .jt-subs-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; }
+  .jt-subs-row { display: flex; align-items: center; justify-content: space-between; gap: var(--jt-space-3); padding: var(--jt-space-3) var(--jt-space-4); }
+  .jt-subs-row + .jt-subs-row { border-block-start: 1px solid var(--jt-border); }
+  .jt-subs-main { display: flex; align-items: center; gap: var(--jt-space-3); min-width: 0; }
+  .jt-subs-title { font-weight: 600; color: var(--jt-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jt-subs-title:hover { color: var(--jt-accent); }
+  .jt-subs-title--gone { color: var(--jt-text-tertiary); font-style: italic; font-weight: 400; }
+  .jt-subs-via { font-size: 0.75rem; color: var(--jt-text-tertiary); background: var(--jt-bg-subtle); border-radius: var(--jt-radius-full); padding: 2px var(--jt-space-2); flex-shrink: 0; }
+
   /* ── Profile ── */
   .jt-profile { border: 1px solid var(--jt-border); border-radius: var(--jt-radius-lg); overflow: hidden; margin-bottom: 20px; }
   .jt-profile-banner { height: 120px; background: linear-gradient(-135deg, var(--jt-accent), #1e40af); background: linear-gradient(-135deg, var(--jt-accent), color-mix(in srgb, var(--jt-accent) 60%, black)); }
@@ -630,6 +653,9 @@
   .jt-profile-av { width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--jt-bg); background: var(--jt-accent); color: var(--jt-accent-fg); display: flex; align-items: center; justify-content: center; font-size: 1.375em; font-weight: 700; margin-bottom: 10px; }
   .jt-profile-name { font-family: var(--jt-font-heading); font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: wrap; row-gap: 8px; }
   .jt-profile-name > * { flex-shrink: 0; }
+  /* Grouped header actions (Report / Silence / Ban / Message / Edit) sit as one
+     cluster on the right, not spread across the row. */
+  .jt-profile-head-actions { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
   .jt-level-tag { font-family: var(--jt-font-mono); font-size: 0.9375rem; font-weight: 600; padding: 2px 8px; border-radius: var(--jt-radius-full); background: var(--jt-accent); color: var(--jt-accent-fg); white-space: nowrap; display: inline-block; }
 
   .jt-stats-bar { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; padding: 12px; background: var(--jt-bg-subtle); border-radius: var(--jt-radius); }
@@ -784,6 +810,10 @@
 
     /* Profile header — allow wrap, keep badges atomic */
     .jt-profile-name > .jt-level-tag { margin-right: var(--jt-space-2); }
+    /* Name + action cluster can't share a line at phone widths — let the row
+       wrap and drop the action group to its own full-width line, left-aligned. */
+    .jt-profile-headrow { flex-wrap: wrap; }
+    .jt-profile-head-actions { width: 100%; justify-content: flex-start; margin-top: var(--jt-space-2); }
 
     /* Multi-column grids collapse to single column on phones */
     .jt-kanban { grid-template-columns: 1fr; }
@@ -1614,6 +1644,10 @@
   .jt-member-rep-label { font-weight: 400; color: var(--jt-text-tertiary); }
   .jt-member-sub { color: var(--jt-text-tertiary); margin-top: 2px; }
   .jt-pending-requests { margin-bottom: 20px; }
+  /* Deep-linked from a join-request notification (#jt-pending-requests). Same
+     scroll-margin-top treatment as .jt-reply:target — without it the section
+     lands under the sticky header and the reader sees a clipped request. */
+  .jt-pending-requests:target { scroll-margin-top: var(--jt-scroll-offset); }
   .jt-pending-requests-title { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; padding: 12px 16px 0; font-size: 1rem; font-weight: 600; color: var(--jt-text); }
   .jt-pending-item:last-child { border-bottom: none; }
   .jt-pending-message { font-size: 0.875rem; color: var(--jt-text-secondary); margin-top: 2px; }
@@ -2506,7 +2540,26 @@
 .jt-modal-msg { font-size: 0.9375rem; line-height: 1.5; margin: 0 0 16px; color: var(--jt-text); }
 .jt-modal-input { width: 100%; margin-bottom: 16px; resize: vertical; }
 .jt-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-.jt-modal-actions .jt-btn { min-width: 90px; justify-content: center; }
+/* The confirm/alert/prompt modal is appended to <body>, OUTSIDE .jt-app, so the
+   `.jt-app .jt-btn` rules never reach its buttons - they'd render as bare native
+   controls. Re-declare the full button appearance here, unscoped, driven by the
+   :root tokens (which reach <body>). Keeps modal buttons pixel-consistent with
+   the in-app pills: Cancel = ghost outline, confirm = filled accent, danger
+   confirm = filled red. */
+.jt-modal-actions .jt-btn {
+	min-width: 90px;
+	display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+	padding: 8px 18px; border-radius: var(--jt-radius-full);
+	font-weight: 600; font-size: 0.9375rem; font-family: var(--jt-font);
+	border: none; cursor: pointer; text-decoration: none;
+	transition: all var(--jt-dur) var(--jt-ease);
+}
+.jt-modal-actions .jt-btn-fill { background: var(--jt-accent); color: var(--jt-accent-fg); }
+.jt-modal-actions .jt-btn-fill:hover { background: var(--jt-accent-hover); color: var(--jt-accent-hover-fg); }
+.jt-modal-actions .jt-btn-ghost { color: var(--jt-text-secondary); border: 1.5px solid var(--jt-border-strong); background: var(--jt-bg); }
+.jt-modal-actions .jt-btn-ghost:hover { background: var(--jt-bg-hover); color: var(--jt-text); }
+.jt-modal-actions .jt-btn-danger { background: var(--jt-danger); color: #fff; }
+.jt-modal-actions .jt-btn-danger:hover { background: var(--jt-danger); filter: brightness( 0.93 ); color: #fff; }
 @media ( max-width: 640px ) {
 	.jt-modal-box { padding: 16px; max-width: calc(100vw - 16px); }
 	.jt-modal-actions { flex-direction: column-reverse; gap: 6px; }
