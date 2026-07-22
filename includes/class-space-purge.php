@@ -60,7 +60,20 @@ final class Space_Purge {
 	 * a parallel sweeper.
 	 */
 	public static function register(): void {
-		add_action( 'jetonomy_purge_orphan_space', [ self::class, 'purge' ] );
+		add_action( 'jetonomy_purge_orphan_space', [ self::class, 'on_purge_orphan_space' ] );
+	}
+
+	/**
+	 * Action adapter for `jetonomy_purge_orphan_space`.
+	 *
+	 * purge() returns its per-table counts because callers want them; an action
+	 * callback must not return anything. Rather than make purge() void and lose
+	 * the report, the hook gets a void adapter.
+	 *
+	 * @param mixed $space_id Space id, as passed by do_action().
+	 */
+	public static function on_purge_orphan_space( $space_id ): void {
+		self::purge( (int) $space_id );
 	}
 
 	/**
