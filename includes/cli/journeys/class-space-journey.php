@@ -319,8 +319,7 @@ final class Space_Journey {
 			return Journey_Result::fail( 'settings must not be empty.' );
 		}
 
-		$existing = Space::get_settings( $id );
-		$merged   = array_merge( $existing, $settings );
+		$merged = Space::merge_settings( $id, $settings );
 
 		$ok = Space::update( $id, [ 'settings' => wp_json_encode( $merged ) ] );
 		if ( ! $ok ) {
