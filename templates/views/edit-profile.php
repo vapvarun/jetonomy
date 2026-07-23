@@ -11,6 +11,21 @@ defined( 'ABSPATH' ) || exit;
 $current_user = wp_get_current_user();
 $profile      = \Jetonomy\Models\UserProfile::find_or_create( $current_user->ID );
 $base         = \Jetonomy\base_url();
+$profile_url  = $base . '/u/' . $current_user->user_login . '/';
+
+// Cancel returns the member to wherever they opened the editor from — a member
+// who arrived from a topic or notification was being force-navigated to their
+// profile instead (support ticket 233992000086415470). wp_get_referer() only
+// yields a SAME-ORIGIN referer and already excludes the current request, so a
+// refresh can't loop Cancel back onto the form and a crafted cross-site referer
+// can't bounce the member off-site. When there is no safe place to return to
+// (direct link, notification opened in a fresh tab, referer stripped), it falls
+// back to the profile — today's behaviour, kept as the graceful default rather
+// than a raw history.back() that would strand or off-site the member.
+$cancel_url = wp_get_referer();
+if ( ! $cancel_url ) {
+	$cancel_url = $profile_url;
+}
 
 \Jetonomy\Template_Loader::partial(
 	'breadcrumb',
@@ -37,7 +52,7 @@ $base         = \Jetonomy\base_url();
 	<form id="jt-edit-profile" class="jt-new-post-form"
 			data-wp-interactive="jetonomy"
 			data-wp-on--submit="actions.saveProfile"
-			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $base . '/u/' . $current_user->user_login . '/' ] ); ?>'>
+			data-wp-context='<?php echo wp_json_encode( [ 'profileUrl' => $profile_url ] ); ?>'>
 		<div class="jt-form-group">
 			<label class="jt-label"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></label>
 			<input type="text" name="display_name" class="jt-input" value="<?php echo esc_attr( $current_user->display_name ); ?>" required>
@@ -166,7 +181,7 @@ $base         = \Jetonomy\base_url();
 		?>
 
 		<div class="jt-form-actions">
-			<a href="<?php echo esc_url( $base . '/u/' . $current_user->user_login . '/' ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
+			<a href="<?php echo esc_url( $cancel_url ); ?>" class="jt-btn jt-btn-ghost"><?php esc_html_e( 'Cancel', 'jetonomy' ); ?></a>
 			<button type="submit" class="jt-btn jt-btn-fill" data-wp-bind--disabled="state.isSubmitting"><?php esc_html_e( 'Save Profile', 'jetonomy' ); ?></button>
 		</div>
 	</form>
