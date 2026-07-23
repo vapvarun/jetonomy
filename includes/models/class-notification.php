@@ -26,6 +26,25 @@ class Notification extends Model {
 	 * @return int Inserted row ID.
 	 */
 	public static function create( array $data ): int {
+		/**
+		 * Filter whether ANY Jetonomy notification should be created at all.
+		 *
+		 * Global veto, not a per-type preference (preferences live in the
+		 * notifier's own gates). Mirrors BuddyNext's
+		 * buddynext_notification_should_send: buddynext-importer flips this
+		 * to false for the duration of a migration run so imported forum
+		 * content never fans out a notification per row. The same filter is
+		 * honoured by Notifier::should_email(), so one veto silences rows
+		 * and emails together.
+		 *
+		 * @since 1.8.1
+		 *
+		 * @param bool $should_send Whether to create the notification.
+		 */
+		if ( ! apply_filters( 'jetonomy_notification_should_send', true ) ) {
+			return 0;
+		}
+
 		$data = array_merge(
 			[
 				'is_read'    => 0,

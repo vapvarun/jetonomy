@@ -103,7 +103,7 @@ class Mentions {
 	 * that doesn't resolve to a real user is left as plain text — an @word that
 	 * isn't a member should not render as a broken profile link.
 	 *
-	 * @param string                $text Text segment (no HTML tags).
+	 * @param string               $text Text segment (no HTML tags).
 	 * @param array<string,string> $urls Map from link_map().
 	 * @return string
 	 */
@@ -142,6 +142,14 @@ class Mentions {
 	 * Notify mentioned users.
 	 */
 	public static function notify( array $user_ids, int $actor_id, string $object_type, int $object_id, string $context_title, ?int $space_id = null, bool $is_private = false ): void {
+		// Global veto (documented in Notification::create()) — bail before the
+		// membership/visibility queries and the per-user loop: during an import
+		// run every row would be vetoed anyway, and the parallel email path in
+		// this method must not fire either.
+		if ( ! apply_filters( 'jetonomy_notification_should_send', true ) ) {
+			return;
+		}
+
 		$object          = 'reply' === $object_type
 			? Models\Reply::find( $object_id )
 			: Models\Post::find( $object_id );
@@ -161,8 +169,8 @@ class Mentions {
 			}
 			if ( $is_private && ! empty( $user_ids ) ) {
 				// is_private post: only the author + space admins/moderators.
-				$staff   = array_keys( Models\SpaceMember::roles_for_users( $space_id, $user_ids ) );
-				$allowed = array_merge( $staff, [ $actor_id ] ); // actor filtered out below anyway.
+				$staff    = array_keys( Models\SpaceMember::roles_for_users( $space_id, $user_ids ) );
+				$allowed  = array_merge( $staff, [ $actor_id ] ); // actor filtered out below anyway.
 				$user_ids = array_values( array_intersect( $user_ids, $allowed ) );
 			}
 		}

@@ -1150,6 +1150,12 @@ class Notifier {
 	 * @return bool
 	 */
 	public static function should_email( int $user_id, string $type = '', ?array $user_prefs = null, ?array $global_defaults = null ): bool {
+		// Global veto (documented in Notification::create()) — one filter
+		// silences rows AND emails, e.g. for the duration of an import run.
+		if ( ! apply_filters( 'jetonomy_notification_should_send', true ) ) {
+			return false;
+		}
+
 		// Master kill-switch — suppresses ALL email (web notifications unaffected).
 		if ( get_user_meta( $user_id, 'jetonomy_email_opt_out', true ) ) {
 			return false;
