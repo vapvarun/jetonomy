@@ -582,16 +582,19 @@ class Post extends Model {
 	 * Pass a negative value to decrement. Uses GREATEST() to prevent
 	 * the counter from going below zero.
 	 *
-	 * @param int $id Post ID.
-	 * @param int $by Amount to adjust (default +1).
+	 * @param int         $id Post ID.
+	 * @param int         $by Amount to adjust (default +1).
+	 * @param string|null $at Optional UTC datetime to record as last_reply_at
+	 *                        (importer seam: a backdated reply carries its own
+	 *                        date, not the migration run time). Null = now.
 	 */
-	public static function increment_reply_count( int $id, int $by = 1 ): void {
+	public static function increment_reply_count( int $id, int $by = 1, ?string $at = null ): void {
 		$now = now();
 		static::db()->query(
 			static::db()->prepare(
 				'UPDATE ' . static::table() . ' SET reply_count = GREATEST(reply_count + %d, 0), last_reply_at = %s, updated_at = %s WHERE id = %d',
 				$by,
-				$now,
+				( null !== $at && '' !== $at ) ? $at : $now,
 				$now,
 				$id
 			)

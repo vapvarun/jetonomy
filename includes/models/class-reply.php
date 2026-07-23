@@ -25,7 +25,7 @@ class Reply extends Model {
 	/**
 	 * Ordering a topic's replies render in when no ?rsort is supplied.
 	 *
-	 * page_of() computes a reply's page under THIS ordering, so it is a
+	 * The page_of() helper computes a reply's page under THIS ordering, so it is a
 	 * contract between the link-builder and the view, not a cosmetic default.
 	 * \Jetonomy\reply_permalink() deliberately emits no ?rsort precisely so the
 	 * page it computed is the page that renders. Changing this value without
@@ -73,7 +73,7 @@ class Reply extends Model {
 
 		if ( $id > 0 ) {
 			if ( ! empty( $data['post_id'] ) ) {
-				Post::increment_reply_count( (int) $data['post_id'] );
+				Post::increment_reply_count( (int) $data['post_id'], 1, (string) $data['created_at'] );
 			}
 			if ( ! empty( $data['author_id'] ) ) {
 				UserProfile::increment_reply_count( (int) $data['author_id'] );
@@ -329,8 +329,8 @@ class Reply extends Model {
 		// Private replies tombstone per-viewer (1.8.1) — one post fetch for the
 		// whole list, then O(1) per row. Same never-row-filter contract as the
 		// block tombstone above.
-		$viewer_id    = get_current_user_id();
-		$parent_post  = \Jetonomy\Models\Post::find( $post_id );
+		$viewer_id   = get_current_user_id();
+		$parent_post = \Jetonomy\Models\Post::find( $post_id );
 		foreach ( $rows as $row ) {
 			self::apply_block_tombstone( $row, $blocked_ids );
 			if ( $parent_post ) {
@@ -640,7 +640,7 @@ class Reply extends Model {
 	 * @param \stdClass $post      Parent post row.
 	 * @param int       $viewer_id Viewer user ID (0 for guests).
 	 */
-	public static function apply_private_tombstone( object $reply, object $post, int $viewer_id ): void {
+	public static function apply_private_tombstone( \stdClass $reply, \stdClass $post, int $viewer_id ): void {
 		if ( empty( $reply->is_private ) ) {
 			return;
 		}

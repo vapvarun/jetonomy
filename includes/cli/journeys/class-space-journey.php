@@ -75,6 +75,13 @@ final class Space_Journey {
 			'join_policy' => $join_policy,
 		];
 
+		// Importer seam: forward a validated backdate; the model default (now)
+		// applies otherwise (see Journey_Backdate).
+		$backdate = Journey_Backdate::resolve( $input );
+		if ( null !== $backdate ) {
+			$data['created_at'] = $backdate;
+		}
+
 		$id = Space::create( $data );
 		if ( ! $id ) {
 			return Journey_Result::fail( 'Space::create() returned 0 — insert failed.' );
