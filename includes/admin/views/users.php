@@ -43,7 +43,8 @@ $trust_labels = array(
 				</div>
 				<div class="jt-roles-explainer__col">
 					<h3><?php echo esc_html( sprintf( __( '%s role', 'jetonomy' ), \Jetonomy\space_label( false ) ) ); ?></h3>
-					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %s — granted on that %s’s Members screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
+					<?php /* translators: 1: singular space label, 2: singular space label */ ?>
+					<p><?php echo esc_html( sprintf( __( 'Member, moderator, or admin of ONE %1$s — granted on that %2$s’s Members screen. Never implies wp-admin access.', 'jetonomy' ), \Jetonomy\space_label( false, true ), \Jetonomy\space_label( false, true ) ) ); ?></p>
 				</div>
 			</div>
 			<p class="jt-roles-explainer__foot">

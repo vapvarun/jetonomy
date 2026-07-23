@@ -1442,7 +1442,8 @@ class Template_Loader {
 						break;
 					case 'subscriptions':
 						$title     = __( 'My Subscriptions', 'jetonomy' );
-						$desc      = sprintf( __( 'Topics and %s you follow on %s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), $site_name );
+						/* translators: 1: plural space label (e.g. Spaces), 2: site name */
+						$desc      = sprintf( __( 'Topics and %1$s you follow on %2$s.', 'jetonomy' ), \Jetonomy\space_label( true, true ), $site_name );
 						$url       = $base . '/subscriptions/';
 						$image_alt = $site_name;
 						$noindex   = true; // Logged-in personal view.
