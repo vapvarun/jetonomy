@@ -350,8 +350,8 @@ class Permission_Engine {
 	/**
 	 * Check if a user can read a specific post, considering status and private visibility.
 	 *
-	 * @param int    $user_id  WP user ID (0 for guest).
-	 * @param object $post     Post row object (must have status, is_private, author_id, space_id).
+	 * @param int       $user_id WP user ID (0 for guest).
+	 * @param \stdClass $post    Post row (must have status, is_private, author_id, space_id).
 	 * @return bool
 	 */
 	public static function can_read_post( int $user_id, object $post ): bool {
@@ -426,9 +426,9 @@ class Permission_Engine {
 	 * they never row-filter — so reply counts and reply_permalink() page
 	 * math stay identical for every viewer, same as the blocked-author rule.
 	 *
-	 * @param int    $user_id Viewer ID (0 for guests).
-	 * @param object $reply   Reply row (is_private, author_id).
-	 * @param object $post    Parent post row (author_id, space_id).
+	 * @param int       $user_id Viewer ID (0 for guests).
+	 * @param \stdClass $reply   Reply row (is_private, author_id).
+	 * @param \stdClass $post    Parent post row (author_id, space_id).
 	 * @return bool
 	 */
 	public static function can_read_reply( int $user_id, object $reply, object $post ): bool {

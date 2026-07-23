@@ -256,11 +256,6 @@ parameters:
 			path: includes/moderation/class-akismet.php
 
 		-
-			message: "#^Access to an undefined property object\\:\\:\\$author_id\\.$#"
-			count: 1
-			path: includes/permissions/class-permission-engine.php
-
-		-
 			message: "#^Call to function is_wp_error\\(\\) with WP_REST_Response will always evaluate to false\\.$#"
 			count: 1
 			path: includes/qa/class-pro-tests.php
