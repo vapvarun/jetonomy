@@ -50,6 +50,11 @@ final class Content_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'space_id', 'author_id', 'title', 'content', 'status', 'slug', 'created_at' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$data = [
 			'space_id'  => (int) $input['space_id'],
 			'author_id' => (int) $input['author_id'],
@@ -181,6 +186,11 @@ final class Content_Journey {
 		$missing = $this->require_keys( $input, [ 'post_id', 'author_id', 'content' ] );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
+		}
+
+		$unknown = Journey_Input::error( $input, [ 'post_id', 'author_id', 'content', 'status', 'parent_id', 'created_at' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
 		}
 
 		$data = [
@@ -331,6 +341,11 @@ final class Content_Journey {
 		$missing = $this->require_keys( $input, [ 'object_type', 'object_id', 'reporter_id', 'reason' ] );
 		if ( $missing ) {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
+		}
+
+		$unknown = Journey_Input::error( $input, [ 'object_type', 'object_id', 'reporter_id', 'reason', 'description' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
 		}
 
 		$object_type = (string) $input['object_type'];

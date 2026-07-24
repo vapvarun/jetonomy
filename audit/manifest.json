@@ -1915,6 +1915,14 @@
 	"services": [],
 	"hooks_fired": [
 		{
+			"name": "jetonomy_journey_strict_input",
+			"type": "filter",
+			"args": "$strict (bool, default true), $input (array), $allowed (string[])",
+			"where": "includes/cli/journeys/class-journey-input.php (Journey_Input::unknown_keys)",
+			"consumed_by": null,
+			"notes": "1.8.1. The create journeys now REJECT payload keys they do not accept instead of dropping them in silence - the failure mode that let buddynext-importer send created_at for months while three journeys ignored it and every migrated space/topic/reply carried the run time (BuddyNext card 10124307318). Return false to restore the pre-1.8.1 lenient behaviour for an integration that passes extra keys on purpose."
+		},
+		{
 			"name": "jetonomy_delete_account_network_wide",
 			"type": "filter",
 			"args": "$network_wide (bool, default false), $user_id",

@@ -46,6 +46,11 @@ final class Space_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'title', 'slug', 'category_id', 'type', 'visibility', 'join_policy', 'description', 'created_at' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$type        = (string) ( $input['type'] ?? 'forum' );
 		$visibility  = (string) ( $input['visibility'] ?? 'public' );
 		$join_policy = (string) ( $input['join_policy'] ?? 'open' );

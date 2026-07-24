@@ -42,6 +42,11 @@ final class Taxonomy_Journey {
 			return Journey_Result::fail( sprintf( 'Missing required fields: %s', implode( ', ', $missing ) ) );
 		}
 
+		$unknown = Journey_Input::error( $input, [ 'name', 'slug', 'description', 'parent_id' ] );
+		if ( '' !== $unknown ) {
+			return Journey_Result::fail( $unknown );
+		}
+
 		$data = [
 			'name' => (string) $input['name'],
 			'slug' => (string) $input['slug'],
