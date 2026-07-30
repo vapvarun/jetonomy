@@ -384,14 +384,15 @@ can($user_id, $action, $space_id?)
 
 WP capabilities synced by `Capabilities::register()` (activation, version change, and every save of the Settings → Permissions matrix). Since 1.8.1 the role → capability mapping is **editable**: `jetonomy_role_caps` stores per-role overrides, `register()` adds AND revokes to match `effective_map()`, administrators are pinned to every capability, and editing the mapping itself requires `manage_options`. The table below shows the ROLE_MAP **defaults**:
 
-| Capability | Default roles |
-|------------|--------------|
-| `jetonomy_create_posts` | subscriber+ |
-| `jetonomy_create_replies` | subscriber+ |
-| `jetonomy_moderate_content` | editor+ |
-| `jetonomy_manage_spaces` | editor+ |
-| `jetonomy_manage_users` | administrator |
-| `jetonomy_view_analytics` | administrator |
+| Capability | Default roles (ROLE_MAP is cumulative) |
+|------------|----------------------------------------|
+| `jetonomy_read`, `jetonomy_create_posts`, `jetonomy_create_replies`, `jetonomy_edit_own_posts`, `jetonomy_delete_own_posts`, `jetonomy_vote`, `jetonomy_flag`, `jetonomy_join_spaces` | subscriber+ |
+| `jetonomy_upload_media` | contributor+ |
+| `jetonomy_create_spaces` | author+ |
+| `jetonomy_edit_others_posts`, `jetonomy_delete_others_posts`, `jetonomy_moderate`, `jetonomy_manage_users`, `jetonomy_move_posts`, `jetonomy_close_posts`, `jetonomy_pin_posts` | editor+ |
+| `jetonomy_manage_settings`, `jetonomy_manage_categories`, `jetonomy_manage_spaces`, `jetonomy_manage_badges`, `jetonomy_view_analytics`, `jetonomy_manage_extensions` | administrator |
+
+(There is no `jetonomy_moderate_content` capability — site-wide moderation is `jetonomy_moderate`, held by editor+ by default. `jetonomy_manage_spaces` and `jetonomy_manage_users` defaults above match `Permissions\Capabilities::ROLE_MAP`, the single source of truth.)
 
 ---
 

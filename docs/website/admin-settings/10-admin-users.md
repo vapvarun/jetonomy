@@ -21,7 +21,7 @@ The Users screen and its actions are gated by:
 | Change trust level | `jetonomy_manage_settings` |
 | Search users (AJAX picker in other admin screens) | `jetonomy_manage_spaces` |
 
-The Users page menu is administrator-only (`jetonomy_manage_settings`). Editors receive `jetonomy_moderate` automatically, which powers the inline ban and silence actions, but it does not open the Users page menu. See **Settings → Permissions → WordPress Role Mapping** for the full capability table.
+The Users page menu opens for anyone whose role holds `jetonomy_manage_settings` — administrators by default, and any role you tick it for in the **Settings → Permissions** capability matrix (the mapping is editable; the matrix itself stays administrator-only). Editors hold `jetonomy_moderate` by default, which powers the inline ban and silence actions without opening this menu.
 
 ## Searching and Filtering
 
