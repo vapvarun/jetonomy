@@ -390,6 +390,22 @@ class Admin {
 		// role_caps_submitted marker distinguishes "tab posted with everything
 		// unticked" from "another tab posted".
 		if ( ! empty( $input['role_caps_submitted'] ) ) {
+			// Editing WHO HOLDS WHICH CAPABILITY is role administration, not a
+			// plugin setting: a delegated jetonomy_manage_settings holder could
+			// otherwise grant their own role jetonomy_manage_users/moderate and
+			// escalate. Same bar WP core sets for editing roles.
+			if ( ! current_user_can( 'manage_options' ) ) {
+				// Drop only the mapping - the rest of the Permissions tab
+				// (trust thresholds, rate limits) is still theirs to save.
+				unset( $input['role_caps'], $input['role_caps_submitted'] );
+				add_settings_error(
+					'jetonomy_settings',
+					'jetonomy_role_caps_forbidden',
+					__( 'Only administrators can change the role capability mapping.', 'jetonomy' )
+				);
+			}
+		}
+		if ( ! empty( $input['role_caps_submitted'] ) ) {
 			$valid_caps = \Jetonomy\Permissions\Capabilities::all();
 			$roles      = array_keys( get_editable_roles() );
 			$overrides  = array();

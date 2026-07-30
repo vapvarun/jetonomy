@@ -93,4 +93,43 @@ class RoleCapsMappingTest extends WP_UnitTestCase {
 			$this->assertArrayHasKey( $cap, $labels, "no label for {$cap}" );
 		}
 	}
+
+	/**
+	 * Editing WHO HOLDS WHICH CAPABILITY is role administration: a delegated
+	 * jetonomy_manage_settings holder must not be able to post the role_caps
+	 * branch and grant their own role everything (QA 2026-07-30 escalation
+	 * finding on card 9725751235).
+	 */
+	public function test_role_caps_save_requires_manage_options(): void {
+		Capabilities::register();
+		$admin = new \Jetonomy\Admin\Admin();
+
+		// An editor holds jetonomy_manage_settings (default map) but not manage_options.
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		get_role( 'editor' )->add_cap( 'jetonomy_manage_settings' );
+		wp_set_current_user( $editor );
+
+		$before = get_option( Capabilities::ROLE_CAPS_OPTION );
+		$admin->sanitize_settings(
+			array(
+				'role_caps_submitted' => '1',
+				'role_caps'           => array( 'editor' => Capabilities::all() ),
+			)
+		);
+
+		$this->assertSame( $before, get_option( Capabilities::ROLE_CAPS_OPTION ), 'non-admin post must not change the mapping' );
+		$this->assertFalse( get_role( 'editor' )->has_cap( 'jetonomy_manage_extensions' ), 'no escalation via role_caps' );
+
+		// An administrator CAN save the same payload.
+		$admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin_id );
+		$admin->sanitize_settings(
+			array(
+				'role_caps_submitted' => '1',
+				'role_caps'           => array( 'author' => array( 'jetonomy_read', 'jetonomy_moderate' ) ),
+			)
+		);
+		$this->assertTrue( get_role( 'author' )->has_cap( 'jetonomy_moderate' ), 'admin save still applies' );
+		get_role( 'editor' )->remove_cap( 'jetonomy_manage_settings' );
+	}
 }

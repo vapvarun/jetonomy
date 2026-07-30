@@ -20,7 +20,7 @@ Nothing else to configure. If your membership plugin gates registration, that ga
 
 | Layer | Set by | Controls | Where to manage |
 |---|---|---|---|
-| **WordPress role** (Subscriber, Editor, Administrator…) | You / WordPress | wp-admin access and Jetonomy **capabilities** (`jetonomy_moderate`, `jetonomy_manage_settings`…) granted to roles at activation | WordPress **Users** screen |
+| **WordPress role** (Subscriber, Editor, Administrator…) | You / WordPress | wp-admin access and Jetonomy **capabilities** (`jetonomy_moderate`, `jetonomy_manage_settings`…) per the editable role mapping | Assign roles on the WordPress **Users** screen; edit the role → capability mapping under **Jetonomy → Settings → Permissions** |
 | **Trust level** (0–5: New → Elder) | **Earned automatically** by participation (posts, replies, likes received, days visited) — or pinned manually | Community privileges that should be earned, not assigned: posting links/images, editing wikis, flag weight, rate limits | **Jetonomy → Users** (filter by level, override per user) |
 | **Space role** (member, moderator, admin) | Space owners/admins | Powers *inside one space only*: moderating its topics, managing its members | Each space's **Members** screen |
 
@@ -34,15 +34,15 @@ The three are deliberately independent:
 
 | I want to… | Use |
 |---|---|
-| Let someone moderate the whole community from the frontend | Grant the `jetonomy_moderate` capability (a role manager plugin, or a custom role) |
+| Let someone moderate the whole community from the frontend | Tick `jetonomy_moderate` for their role in the **Settings → Permissions** capability matrix |
 | Let someone run one space | Make them that space's admin/moderator on its Members screen |
 | Let regulars post links/images sooner (or later) | Adjust trust-level thresholds in **Jetonomy → Settings → Trust** |
 | Promote one specific person past the gates | Pin their trust level on **Jetonomy → Users** |
-| Give a client access to Jetonomy settings without full admin | Grant `jetonomy_manage_settings` to their role |
+| Give a client access to Jetonomy settings without full admin | Tick `jetonomy_manage_settings` for their role in **Settings → Permissions** (the role → capability mapping itself stays admin-only) |
 
 ## Capabilities reference
 
-Granted to WordPress roles at activation (Administrator gets all):
+Defaults are seeded per role and fully editable in the **Jetonomy → Settings → Permissions** capability matrix — unticking a box revokes on save. Administrators always hold every capability and cannot be edited (so an owner can never lock themselves out):
 
 | Capability | What it unlocks |
 |---|---|

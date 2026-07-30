@@ -31,11 +31,11 @@ $trust_labels = array(
 	<details class="jt-roles-explainer">
 		<summary><?php esc_html_e( 'How users, roles, and trust levels fit together', 'jetonomy' ); ?></summary>
 		<div class="jt-roles-explainer__body">
-			<p class="jt-roles-explainer__lead"><?php esc_html_e( 'Community members ARE your WordPress users — no separate registration. Anyone who can log in is a member; their community profile is created automatically on first activity. Three independent layers decide what each person can do:', 'jetonomy' ); ?></p>
+			<p class="jt-roles-explainer__lead"><?php esc_html_e( 'Community members ARE your WordPress users — no separate registration. Anyone who can log in is a member; their community profile is created automatically the first time they visit a community page while logged in. Three independent layers decide what each person can do:', 'jetonomy' ); ?></p>
 			<div class="jt-roles-explainer__grid">
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'WordPress role', 'jetonomy' ); ?></h3>
-					<p><?php esc_html_e( 'Subscriber, Editor, Administrator… Controls wp-admin access and which Jetonomy capabilities (moderate, manage settings) a person holds. Managed on the WordPress Users screen.', 'jetonomy' ); ?></p>
+					<p><?php esc_html_e( 'Subscriber, Editor, Administrator… Controls wp-admin access and which Jetonomy capabilities (moderate, manage settings) a person holds. Assign roles on the WordPress Users screen; edit which capabilities each role carries under Jetonomy → Settings → Permissions.', 'jetonomy' ); ?></p>
 				</div>
 				<div class="jt-roles-explainer__col">
 					<h3><?php esc_html_e( 'Trust level (0–5)', 'jetonomy' ); ?></h3>
@@ -52,7 +52,7 @@ $trust_labels = array(
 				printf(
 					/* translators: %s: link to the full guide */
 					esc_html__( 'A Subscriber can be a Level 5 Elder and a space admin — community standing and wp-admin access are separate on purpose. %s', 'jetonomy' ),
-					'<a href="https://jetonomy.org/docs/getting-started/08-users-roles-and-trust/" target="_blank" rel="noopener">' . esc_html__( 'Read the full guide', 'jetonomy' ) . '</a>'
+					'<a href="https://github.com/vapvarun/jetonomy/blob/HEAD/docs/website/getting-started/08-users-roles-and-trust.md" target="_blank" rel="noopener">' . esc_html__( 'Read the full guide', 'jetonomy' ) . '</a>'
 				);
 				?>
 			</p>
