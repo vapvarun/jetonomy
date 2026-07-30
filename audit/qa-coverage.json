@@ -5,7 +5,7 @@
         "version": "1.8.0"
     },
     "generated": {
-        "at": "2026-07-30T08:53:53+00:00",
+        "at": "2026-07-30T17:36:00+00:00",
         "manifest_at": "2026-07-21T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
@@ -474,10 +474,13 @@
         },
         "ajax": {
             "total": 43,
-            "covered": 3,
-            "uncovered": 40,
+            "covered": 4,
+            "uncovered": 39,
             "skipped": 0,
             "covered_items": [
+                {
+                    "action": "jetonomy_update_post"
+                },
                 {
                     "action": "jetonomy_generate_invite"
                 },
@@ -612,10 +615,6 @@
                 {
                     "action": "jetonomy_flush_rules",
                     "stub_command": "bin/qa-stub-gen.php ajax jetonomy_flush_rules"
-                },
-                {
-                    "action": "jetonomy_update_post",
-                    "stub_command": "bin/qa-stub-gen.php ajax jetonomy_update_post"
                 },
                 {
                     "action": "jetonomy_delete_post",
@@ -800,14 +799,14 @@
     "summary": {
         "categories_checked": 5,
         "items_total": 171,
-        "items_covered": 56,
-        "items_uncovered": 115,
+        "items_covered": 57,
+        "items_uncovered": 114,
         "items_skipped": 192,
-        "coverage_percent": 32.700000000000003
+        "coverage_percent": 33.299999999999997
     },
     "drift": {
-        "previous_uncovered": 118,
-        "current_uncovered": 115,
-        "delta": -3
+        "previous_uncovered": 115,
+        "current_uncovered": 114,
+        "delta": -1
     }
 }

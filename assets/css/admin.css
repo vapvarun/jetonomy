@@ -744,6 +744,12 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	-webkit-overflow-scrolling: touch;
+	/* The scroll container is a BFC - beside WP's FLOATED filter forms it
+	   used to shrink into the leftover right half of the page instead of
+	   clearing below them (self-audit 2026-07-30: Users/Activity/Revisions
+	   rendered half-width with clipped columns). */
+	clear: both;
+	min-width: 0;
 }
 
 /* Bare scroll container emitted when a table renders inside its own card
@@ -832,8 +838,8 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	min-width: 32px;
-	height: 32px;
+	min-width: 40px;
+	height: 40px;
 	padding: 0 10px;
 	border: 1px solid var(--jt-admin-border, #dcdcde);
 	border-radius: 6px;
@@ -3638,4 +3644,92 @@ tr.jetonomy-moderated td {
 	#jetonomy-award-modal .button {
 		min-height: 44px;
 	}
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ONE pagination pill family + carded filter toolbars
+   (owner screenshot 2026-07-30: on Revisions the arrows were WP .button
+   blue-outline pills, the disabled arrows grey squares, the page input a
+   bare square, and "of N" floated - four species on one row; the filter
+   controls floated raw on the page background above the card.)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Core WP_List_Table pagination arrows carry .button - restyle them into
+   the SAME pill as .page-numbers: neutral border, white face, accent on
+   hover; disabled spans are the same pill dimmed, not a different grey. */
+.jetonomy-admin .tablenav-pages .pagination-links .button,
+.jetonomy-admin .tablenav-pages .pagination-links a,
+.jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 40px;
+	height: 40px;
+	padding: 0 10px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	background: var(--jt-admin-white, #fff);
+	color: var(--jt-admin-text-wp, #1d2327);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	text-decoration: none;
+	box-shadow: none;
+	margin: 0;
+}
+.jetonomy-admin .tablenav-pages .pagination-links a:hover,
+.jetonomy-admin .tablenav-pages .pagination-links a:focus {
+	background: var(--jt-admin-surface-1, #f6f7f7);
+	border-color: #8c8f94;
+	color: var(--jt-admin-text-wp, #1d2327);
+	outline: none;
+}
+.jetonomy-admin .tablenav-pages .pagination-links a:focus-visible {
+	outline: 2px solid #2271b1;
+	outline-offset: 2px;
+}
+.jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
+	opacity: 0.45;
+}
+.jetonomy-admin .tablenav-pages .current-page {
+	height: 40px;
+	min-width: 52px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	text-align: center;
+	font-size: 13px;
+	margin: 0;
+	box-sizing: border-box;
+}
+.jetonomy-admin .tablenav-pages .tablenav-paging-text {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--jt-admin-text-wp-3, #646970);
+	font-size: 13px;
+}
+
+/* Filter toolbars inside the card strip: every control shares one 40px
+   height, radius, and border - no more mixed-size raw inputs. */
+.jetonomy-admin .tablenav select,
+.jetonomy-admin .tablenav input[type="search"],
+.jetonomy-admin .tablenav input[type="text"],
+.jetonomy-admin .tablenav input[type="date"],
+.jetonomy-admin .tablenav input[type="number"],
+.jetonomy-admin .tablenav .button {
+	height: 40px;
+	min-height: 40px;
+	border: 1px solid var(--jt-admin-border, #dcdcde);
+	border-radius: 6px;
+	box-sizing: border-box;
+	font-size: 13px;
+	margin: 0;
+}
+.jetonomy-admin .tablenav .alignleft.actions {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 0;
 }

@@ -229,11 +229,11 @@ else :
 
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 			<input type="hidden" name="page" value="jetonomy-revisions" />
-			<?php
-			$list_table->render_filters();
-			?>
 			<div class="jt-content-table-wrap">
-				<?php $list_table->display(); ?>
+				<?php
+				$list_table->render_filters();
+				$list_table->display();
+				?>
 			</div>
 		</form>
 	</div>
