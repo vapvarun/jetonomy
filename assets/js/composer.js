@@ -507,13 +507,20 @@ document.addEventListener( 'DOMContentLoaded', () => {
     }
 
     // Shared singleton picker — repositioned beside the active emoji button.
+    // Popup semantics (QA 10149499573): the picker is a named menu, the
+    // trigger carries aria-haspopup/expanded/controls, focus moves into the
+    // menu on open, arrows/Tab move between options, Escape closes and
+    // returns focus to the trigger.
     var sharedPicker = document.createElement('div');
     sharedPicker.className = 'jt-emoji-picker';
+    sharedPicker.id = 'jt-emoji-picker';
+    sharedPicker.setAttribute('role', 'menu');
     sharedPicker.style.display = 'none';
     emojis.forEach(function(emoji) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'jt-emoji-option';
+        btn.setAttribute('role', 'menuitem');
         btn.textContent = emoji;
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -528,11 +535,34 @@ document.addEventListener( 'DOMContentLoaded', () => {
                     }
                 }
             }
-            sharedPicker.style.display = 'none';
+            closePicker();
         });
         sharedPicker.appendChild(btn);
     });
     document.body.appendChild(sharedPicker);
+
+    var pickerTrigger = null;
+
+    function closePicker() {
+        if (sharedPicker.style.display === 'none') { return; }
+        sharedPicker.style.display = 'none';
+        if (pickerTrigger) {
+            pickerTrigger.setAttribute('aria-expanded', 'false');
+            pickerTrigger.focus();
+            pickerTrigger = null;
+        }
+    }
+
+    sharedPicker.addEventListener('keydown', function (e) {
+        var options = Array.prototype.filter.call(sharedPicker.children, function (b) { return b.offsetParent; });
+        var i = options.indexOf(document.activeElement);
+        if (e.key === 'Escape') { e.preventDefault(); closePicker(); return; }
+        var next = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { next = options[(i + 1) % options.length]; }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { next = options[(i - 1 + options.length) % options.length]; }
+        if (e.key === 'Tab') { e.preventDefault(); next = e.shiftKey ? options[(i - 1 + options.length) % options.length] : options[(i + 1) % options.length]; }
+        if (next) { e.preventDefault(); next.focus(); }
+    });
 
     // Delegated click handler — catches emoji buttons in any toolbar, present or future.
     document.addEventListener('click', function(e) {
@@ -545,22 +575,33 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
             var isOpen = sharedPicker.style.display !== 'none' && sharedPicker._activeToolbar === toolbar;
             // Close any open picker first.
-            sharedPicker.style.display = 'none';
+            closePicker();
 
             if (!isOpen) {
                 sharedPicker._activeToolbar = toolbar;
+                pickerTrigger = emojiBtn;
+                emojiBtn.setAttribute('aria-haspopup', 'menu');
+                emojiBtn.setAttribute('aria-controls', 'jt-emoji-picker');
+                emojiBtn.setAttribute('aria-expanded', 'true');
+                // Localized name comes from the trigger's own title.
+                sharedPicker.setAttribute('aria-label', emojiBtn.getAttribute('title') || emojiBtn.getAttribute('aria-label') || 'Insert emoji');
                 if ( sharedPicker.parentElement !== document.body ) {
                     document.body.appendChild( sharedPicker );
                 }
                 sharedPicker.style.display = 'grid';
                 positionEmojiPicker(emojiBtn);
+                var firstOption = sharedPicker.querySelector('.jt-emoji-option');
+                if (firstOption) { firstOption.focus(); }
             }
             return;
         }
 
         // Close picker on any outside click.
         if (!e.target.closest('.jt-emoji-picker')) {
-            sharedPicker.style.display = 'none';
+            if (sharedPicker.style.display !== 'none') {
+                sharedPicker.style.display = 'none';
+                if (pickerTrigger) { pickerTrigger.setAttribute('aria-expanded', 'false'); pickerTrigger = null; }
+            }
         }
     });
 } );

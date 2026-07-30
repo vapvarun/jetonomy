@@ -3174,3 +3174,26 @@ details.jt-nav-category[open] > summary.jt-nav-category-title::after {
 		width: 100%;
 	}
 }
+
+/* Composer toolbar + emoji picker touch floors (Basecamp 10149499573:
+   trigger measured 32x30, options ~37x33 at 320). */
+@media screen and (max-width: 782px) {
+	.jt-editor-bar button,
+	.jt-editor-bar .jt-editor-bar-btn {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+	.jt-emoji-picker .jt-emoji-option {
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+.jt-emoji-picker .jt-emoji-option:focus-visible {
+	outline: 2px solid var(--jt-accent, #0073aa);
+	outline-offset: 1px;
+	border-radius: 4px;
+}

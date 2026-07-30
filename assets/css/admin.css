@@ -3357,6 +3357,60 @@ tr.jetonomy-moderated td {
    clipped ~19px under the card's hidden overflow (QA 2026-07-30, cards
    10146440810/10146297370). Inside Jetonomy settings cards the stacked
    layout simply persists until the row genuinely fits. */
+/* Settings MATRICES get the same squeeze-band treatment as form-tables:
+   at exactly 783px the Email Templates matrix reverted to desktop layout
+   inside a ~463px card - body editors measured 32px wide, actions 24px
+   (QA wave-7 on 10146440810). Non-wide matrices stay stacked until the
+   card genuinely fits them; the role matrix keeps its scroll wrapper. */
+@media screen and (min-width: 783px) and (max-width: 1100px) {
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide),
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) tbody,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) tr,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) th { display: block; width: auto; }
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) thead { display: none; }
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) tr {
+		border: 1px solid var(--jt-admin-border, #dcdcde);
+		border-radius: 6px;
+		padding: 10px 12px;
+		margin-block-end: 10px;
+		background: var(--jt-admin-white, #fff);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:first-child,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) th[scope="row"] {
+		font-weight: 600;
+		padding-block-end: 6px;
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:not(:first-child) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 8px 12px;
+		padding: 8px 0;
+		min-height: 44px;
+		border-top: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) td:not(:first-child)::before {
+		content: attr(data-colname);
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--jt-admin-text-3, #646970);
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) .button,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) input,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) textarea {
+		min-height: 40px;
+		box-sizing: border-box;
+	}
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) textarea,
+	.jetonomy-admin .jt-settings-card table.jt-settings-matrix:not(.jt-settings-matrix--wide) input[type="text"] {
+		width: 100%;
+	}
+}
+
 @media screen and (min-width: 783px) and (max-width: 1100px) {
 	.jetonomy-admin .jt-settings-card .form-table,
 	.jetonomy-admin .jt-settings-card .form-table tbody,

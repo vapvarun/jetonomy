@@ -236,6 +236,11 @@ REQUIRED_FILES=(
 	"assets/vendor/prismjs/prism.min.css"
 	"assets/vendor/prismjs/prism-autoloader.min.js"
 	"assets/vendor/prismjs/components/prism-php.min.js"
+	# MIT notice must ship with the vendored library (QA 10149499675).
+	"assets/vendor/prismjs/LICENSE"
+	# Full language set backs the readme's language claim - kotlin is the
+	# canary the QA probe requested and 404'd on when only 20 shipped.
+	"assets/vendor/prismjs/components/prism-kotlin.min.js"
 )
 for f in "${REQUIRED_FILES[@]}"; do
 	if [ ! -f "$STAGE/$f" ]; then
