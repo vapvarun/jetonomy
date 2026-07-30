@@ -51,10 +51,15 @@ if ( ! $is_admin && ! Moderation_Permissions::can_view_any_queue( $user_id ) ) {
 // PER_PAGE picked at 25 — readable on one screen on desktop, fits
 // mobile after row stacking, and keeps the COUNT query irrelevant
 // to total once a queue grows past a thousand flags.
-$per_page    = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
-$paged       = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$total       = Moderation_Service::count_pending_flags( $user_id );
-$total_pages = max( 1, (int) ceil( $total / $per_page ) );
+$per_page = (int) apply_filters( 'jetonomy_moderation_per_page', 25 );
+// Keep the raw ?paged= separate: $paged below is clamped to the FLAGS page
+// count, and the Banned panel has its own, different total. Clamping the banned
+// list with the flags ceiling pinned it to page 1 whenever there were fewer
+// flags than restrictions - the rows past 25 stayed unreachable.
+$jt_raw_paged = max( 1, absint( wp_unslash( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$paged        = $jt_raw_paged;
+$total        = Moderation_Service::count_pending_flags( $user_id );
+$total_pages  = max( 1, (int) ceil( $total / $per_page ) );
 if ( $paged > $total_pages ) {
 	$paged = $total_pages;
 }
@@ -63,19 +68,56 @@ $flags  = $total > 0
 	? Moderation_Service::list_pending_flags( $user_id, null, $per_page, $offset )
 	: [];
 
-// Which panel: the flags overview (default) or the banned-members list. Both are
-// gated by the same moderator check above. The Banned tab lets a moderator see
-// who is restricted and lift it - the frontend home for unbanning, since
-// moderators cannot reach wp-admin.
+// The Banned tab needs a STRICTER cap than the page itself. The page admits
+// anyone with can_view_any_queue() - which includes a space moderator who holds
+// no site-wide cap - but the list it renders is global (every restriction on the
+// site, not just their spaces) and every Lift button posts to
+// DELETE /moderation/ban/{id}, which requires jetonomy_moderate. So a space mod
+// was shown other spaces' restrictions and a Lift that could only ever 403.
+// Mirror the REST cap exactly: no tab, no panel, no buttons that cannot work.
+$jt_can_manage_bans = user_can( $user_id, 'jetonomy_moderate' );
+
+// Which panel: the flags overview (default) or the banned-members list. The
+// flags list is already scoped per-viewer by Moderation_Service; the banned
+// list is not, hence the extra gate above.
 $jt_view = sanitize_key( wp_unslash( $_GET['view'] ?? 'flags' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-if ( 'banned' !== $jt_view ) {
+if ( 'banned' !== $jt_view || ! $jt_can_manage_bans ) {
 	$jt_view = 'flags';
 }
+
 // Active member restrictions - the SAME model the app's Banned-members screen
 // and GET /moderation/ban read, so every surface stays in lockstep.
-$jt_bans      = 'banned' === $jt_view
-	? \Jetonomy\Models\Restriction::list_active( array( 'limit' => 100 ) )
+// Paginated: this used to take a flat limit=100, which silently truncated on any
+// site with more than 100 active restrictions - the 101st ban was unliftable
+// from the frontend because it never rendered.
+$jt_ban_total = 'banned' === $jt_view ? \Jetonomy\Models\Restriction::count_active() : 0;
+$jt_ban_pages = max( 1, (int) ceil( $jt_ban_total / $per_page ) );
+$jt_ban_paged = min( $jt_raw_paged, $jt_ban_pages );
+$jt_bans      = 'banned' === $jt_view && $jt_ban_total > 0
+	? \Jetonomy\Models\Restriction::list_active(
+		array(
+			'limit'  => $per_page,
+			'offset' => ( $jt_ban_paged - 1 ) * $per_page,
+		)
+	)
 	: array();
+
+// Batch-load the banned members in one query. The per-row get_userdata() below
+// was an N+1: a full page of restrictions issued a query per row.
+if ( $jt_bans ) {
+	$jt_ban_user_ids = array_values( array_unique( array_map( static fn( $r ) => (int) $r->user_id, $jt_bans ) ) );
+	if ( $jt_ban_user_ids ) {
+		// Primes WP's user cache so get_userdata() below is served from memory.
+		get_users(
+			array(
+				'include'     => $jt_ban_user_ids,
+				'fields'      => 'all_with_meta',
+				'number'      => count( $jt_ban_user_ids ),
+				'count_total' => false,
+			)
+		);
+	}
+}
 $jt_ban_types = array(
 	'global_ban' => __( 'Banned', 'jetonomy' ),
 	'space_ban'  => __( 'Space ban', 'jetonomy' ),
@@ -130,14 +172,17 @@ $crumbs = [
 	</div>
 
 	<?php // Tabs: Flags overview | Banned members. Reuses the profile tab styling. ?>
-	<div class="jt-profile-tabs">
-		<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>">
-			<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
-		</a>
-		<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>">
-			<?php esc_html_e( 'Banned members', 'jetonomy' ); ?>
-		</a>
-	</div>
+	<?php // A single tab is not a tabset - only render the strip when the viewer can reach both panels. ?>
+	<?php if ( $jt_can_manage_bans ) : ?>
+		<div class="jt-profile-tabs">
+			<a href="<?php echo esc_url( $base . '/mod/' ); ?>" class="jt-profile-tab <?php echo 'flags' === $jt_view ? 'active' : ''; ?>">
+				<?php esc_html_e( 'Flags', 'jetonomy' ); ?>
+			</a>
+			<a href="<?php echo esc_url( add_query_arg( 'view', 'banned', $base . '/mod/' ) ); ?>" class="jt-profile-tab <?php echo 'banned' === $jt_view ? 'active' : ''; ?>">
+				<?php esc_html_e( 'Banned members', 'jetonomy' ); ?>
+			</a>
+		</div>
+	<?php endif; ?>
 
 	<?php if ( 'banned' === $jt_view ) : ?>
 		<?php if ( empty( $jt_bans ) ) : ?>
@@ -192,6 +237,33 @@ $crumbs = [
 					</li>
 				<?php endforeach; ?>
 			</ul>
+			<?php
+			// Same pagination contract as the flags queue below, so a site with
+			// more than one page of restrictions can reach every one of them.
+			if ( $jt_ban_pages > 1 ) :
+				$jt_ban_base = add_query_arg( 'view', 'banned', $base . '/mod/' );
+				$jt_ban_prev = add_query_arg( 'paged', max( 1, $jt_ban_paged - 1 ), $jt_ban_base );
+				$jt_ban_next = add_query_arg( 'paged', min( $jt_ban_pages, $jt_ban_paged + 1 ), $jt_ban_base );
+				?>
+				<nav class="jt-pagination" aria-label="<?php esc_attr_e( 'Banned members pagination', 'jetonomy' ); ?>">
+					<?php if ( $jt_ban_paged > 1 ) : ?>
+						<a class="jt-pagination-link" href="<?php echo esc_url( $jt_ban_prev ); ?>" rel="prev">
+							<?php esc_html_e( 'Previous', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
+					<span class="jt-pagination-status">
+						<?php
+						/* translators: 1: current page number, 2: total page count */
+						echo esc_html( sprintf( __( 'Page %1$d of %2$d', 'jetonomy' ), $jt_ban_paged, $jt_ban_pages ) );
+						?>
+					</span>
+					<?php if ( $jt_ban_paged < $jt_ban_pages ) : ?>
+						<a class="jt-pagination-link" href="<?php echo esc_url( $jt_ban_next ); ?>" rel="next">
+							<?php esc_html_e( 'Next', 'jetonomy' ); ?>
+						</a>
+					<?php endif; ?>
+				</nav>
+			<?php endif; ?>
 		<?php endif; ?>
 
 	<?php elseif ( empty( $flags ) ) : ?>
