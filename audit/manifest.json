@@ -3239,6 +3239,18 @@
 			"consumed_by": []
 		},
 		{
+			"name": "jetonomy_compose_label",
+			"type": "filter",
+			"args_count": 2,
+			"args_signature": [
+				"string $label",
+				"string $space_type"
+			],
+			"where": "includes/functions.php (Jetonomy\\compose_label)",
+			"consumed_by": [],
+			"notes": "1.8.1. Single source for the \"create something here\" verb per space type (Ask a Question / Share an Idea / New Status / New Topic). Consumed by the composer heading (templates/views/new-post.php), the space CTA button (templates/views/space.php), the BuddyPress tab CTA and the composer route's <title> + SEO title (Template_Loader::compose_route_title). Paired with Jetonomy\\compose_post_type(), which maps the same types to question/idea/status/topic - change both together."
+		},
+		{
 			"name": "jetonomy_author_can_reveal",
 			"type": "filter",
 			"args": "$can_reveal (bool, default false), $object, $viewer_id",
