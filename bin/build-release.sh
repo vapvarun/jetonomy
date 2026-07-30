@@ -65,6 +65,27 @@ if [ -f "$ROOT/Gruntfile.js" ]; then
 	}
 fi
 
+# --- 0b. hooks-index drift gate ---------------------------------------------
+# The generated hooks index (docs/website/developer-guide/02a-hooks-index.md)
+# is derived from audit/manifest.json by bin/gen-hooks-reference.php. It was
+# documented as "regenerated at every release" but nothing enforced that, so
+# it sat one release stale (192 hooks while the manifest carried 200 -
+# Basecamp 10114333907). Regenerate here and FAIL if the committed copy
+# differs: the fix is to commit the regenerated index, same discipline as the
+# clean-tree gate below.
+if [ -f "$ROOT/bin/gen-hooks-reference.php" ]; then
+	echo "==> hooks index regen (from manifest)"
+	( cd "$ROOT" && php bin/gen-hooks-reference.php > /dev/null ) || {
+		echo "FAIL: gen-hooks-reference.php errored - manifest unreadable?" >&2
+		exit 22
+	}
+	if ! git -C "$ROOT" diff --quiet -- docs/website/developer-guide/02a-hooks-index.md; then
+		echo "FAIL: generated hooks index is stale vs audit/manifest.json." >&2
+		echo "    Commit the regenerated docs/website/developer-guide/02a-hooks-index.md and re-run." >&2
+		exit 23
+	fi
+fi
+
 # --- 1. clean-tree gate -----------------------------------------------------
 # Step 0 may have regenerated build artefacts. The gate excludes
 # grunt-generated paths so the build doesn't trip on its own deterministic

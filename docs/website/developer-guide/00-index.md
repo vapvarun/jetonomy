@@ -10,7 +10,7 @@ Hook into Jetonomy's data and behaviour, or swap out a back-end service.
 - [Hooks Index (generated)](./02a-hooks-index.md) - the complete machine-generated hook table, regenerated from the manifest at every release.
 - [Attachment Hooks](./24-attachment-hooks.md) - the 1.8.0 attachment filters (`jetonomy_attachment_card`, `jetonomy_attachments_class`, `jetonomy_rest_attachment_data`) and the `attachments` array now carried on post/reply REST payloads.
 - [Build a Pro Extension](./25-build-a-pro-extension.md) - the extension SDK (Pro 1.8.1+): `jetonomy_pro_register_extensions`, the base-class contract, lifecycle guarantees, and compatibility rules.
-- [Adapter System](./05-adapters.md) - the membership, search, real-time, and email adapter interfaces you implement to plug in your own service.
+- [Adapter System](./05-adapters.md) - the membership, search, email, and AI adapter interfaces you implement to plug in your own service. (Real-time delivery is not adapter-based - see the note in that guide.)
 - [Custom Access Logic](./28-custom-access-logic.md) - compound space-access conditions (AND/OR tag rules) with WP Fusion's `wpf_tags_modified` hook or a capability-backed access rule.
 - [Template Overrides](./03-template-overrides.md) - copy any community template into your theme's `jetonomy/` directory to change its layout.
 - [Admin Extensions](./20-admin-extensions.md) - add settings tabs, space-edit tabs, moderation tabs, dashboard widgets, and menu white-label overrides to the Jetonomy wp-admin UI.

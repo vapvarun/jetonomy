@@ -3200,7 +3200,7 @@
 		},
 		{
 			"name": "jetonomy_pro_first_reaction",
-			"type": "action(consumed)",
+			"type": "action",
 			"args": "object_type, object_id, reactor_id",
 			"where": "CONSUMED by Notifier::on_first_reaction (fired by Pro reactions on 0->1)",
 			"consumed_by": "jetonomy/includes/notifications/class-notifier.php"
