@@ -5,7 +5,7 @@
         "version": "1.8.0"
     },
     "generated": {
-        "at": "2026-07-30T17:36:00+00:00",
+        "at": "2026-07-30T18:51:31+00:00",
         "manifest_at": "2026-07-21T00:00:00Z",
         "manifest_branch": "1.8.1-dev"
     },
@@ -654,7 +654,7 @@
             "total": 9,
             "covered": 5,
             "uncovered": 4,
-            "skipped": 192,
+            "skipped": 193,
             "covered_items": [
                 {
                     "name": "jetonomy_leaderboard_items",
@@ -801,12 +801,12 @@
         "items_total": 171,
         "items_covered": 57,
         "items_uncovered": 114,
-        "items_skipped": 192,
+        "items_skipped": 193,
         "coverage_percent": 33.299999999999997
     },
     "drift": {
-        "previous_uncovered": 115,
+        "previous_uncovered": 114,
         "current_uncovered": 114,
-        "delta": -1
+        "delta": 0
     }
 }
