@@ -277,6 +277,18 @@ if [ "${#CRUFT[@]}" -gt 0 ]; then
 	exit 40
 fi
 
+# --- 5c2. admin-table responsive contract guard -----------------------------
+# Raw <table> markup in admin views bypasses the responsive contract and
+# regresses mobile/iPad rendering (Basecamp 10146443346). The baseline inside
+# the script is shrink-only; a NEW offender fails the build.
+if [ -f "$ROOT/bin/audit-admin-tables.php" ]; then
+	echo "==> admin-table contract guard"
+	php "$ROOT/bin/audit-admin-tables.php" "$ROOT/includes/admin/views" || {
+		echo "FAIL: new admin table bypasses the responsive contract (see above)." >&2
+		exit 41
+	}
+fi
+
 # --- 5d. contract audit (key/hook contract drift, free+pro pair) ----------
 # Static scan for orphan option/meta keys, hooks consumed-never-fired, and
 # AJAX wiring drift. Baseline: .contract-audit-baseline.json (triaged

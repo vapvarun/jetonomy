@@ -104,91 +104,96 @@ defined( 'ABSPATH' ) || exit;
 			</p>
 		</form>
 
-		<table class="wp-list-table widefat fixed striped" id="jetonomy-categories-table">
-		<thead>
-			<tr>
-				<th class="column-drag" style="width:30px;"></th>
-				<th class="column-name"><?php esc_html_e( 'Name', 'jetonomy' ); ?></th>
-				<th class="column-slug"><?php esc_html_e( 'Slug', 'jetonomy' ); ?></th>
-				<th class="column-spaces"><?php echo esc_html( \Jetonomy\space_label( true ) ); ?></th>
-				<th class="column-visibility"><?php esc_html_e( 'Visibility', 'jetonomy' ); ?></th>
-			</tr>
-		</thead>
-		<tbody id="jetonomy-categories-list">
-			<?php if ( empty( $categories ) ) : ?>
-				<?php if ( ! empty( $search ) ) : ?>
-					<?php
-					jetonomy_admin_empty_state(
-						array(
-							'colspan' => 5,
-							'icon'    => 'search',
-							'title'   => __( 'No categories match that search', 'jetonomy' ),
-							'body'    => __( 'Try a different keyword or clear the search to see all categories.', 'jetonomy' ),
-						)
+		<?php
+		// Flatten parents + children into one ordered row list; each row keeps
+		// its child flag so the cell renderer can indent. The renderer emits
+		// the responsive contract (column-primary / data-colname / toggle-row)
+		// this hand-rolled table omitted - which is why it clipped on mobile
+		// (Basecamp 10146440768, root cause 10146443346).
+		$jt_cat_rows = array();
+		foreach ( (array) ( $categories ?? array() ) as $jt_cat ) {
+			$jt_cat->jt_is_child = false;
+			$jt_cat_rows[]       = $jt_cat;
+			foreach ( (array) ( $jt_cat->children ?? array() ) as $jt_child ) {
+				$jt_child->jt_is_child = true;
+				$jt_cat_rows[]         = $jt_child;
+			}
+		}
+
+		jetonomy_admin_table(
+			array(
+				'table_id'  => 'jetonomy-categories-table',
+				'tbody_id'  => 'jetonomy-categories-list',
+				'wrap'      => false,
+				'columns'   => array(
+					'name'       => array(
+						'label'   => __( 'Name', 'jetonomy' ),
+						'primary' => true,
+					),
+					'slug'       => array( 'label' => __( 'Slug', 'jetonomy' ) ),
+					'spaces'     => array(
+						'label' => \Jetonomy\space_label( true ),
+						'width' => 's',
+					),
+					'visibility' => array(
+						'label' => __( 'Visibility', 'jetonomy' ),
+						'width' => 'm',
+					),
+				),
+				'rows'      => $jt_cat_rows,
+				'row_attrs' => static function ( $cat ): array {
+					return array(
+						'data-id' => (int) $cat->id,
+						'class'   => 'jetonomy-category-row' . ( $cat->jt_is_child ? ' jetonomy-category-child' : '' ),
 					);
-					?>
-				<?php else : ?>
-					<?php
-					jetonomy_admin_empty_state(
-						array(
-							'colspan' => 5,
-							'icon'    => 'category',
-							'title'   => __( 'No categories yet', 'jetonomy' ),
-							'body'    => __( 'Categories let you group related spaces. Create your first one using the form above.', 'jetonomy' ),
-						)
-					);
-					?>
-				<?php endif; ?>
-			<?php else : ?>
-				<?php foreach ( $categories as $cat ) : ?>
-					<tr data-id="<?php echo absint( $cat->id ); ?>" class="jetonomy-category-row">
-						<td class="column-drag"><span class="dashicons dashicons-menu jetonomy-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'jetonomy' ); ?>"></span></td>
-						<td class="column-name">
-							<strong><?php echo esc_html( $cat->name ); ?></strong>
-							<?php if ( $cat->description ) : ?>
-								<span class="description"><?php echo esc_html( wp_trim_words( $cat->description, 12 ) ); ?></span>
-							<?php endif; ?>
+				},
+				'empty'     => ! empty( $search )
+					? array(
+						'icon'  => 'search',
+						'title' => __( 'No categories match that search', 'jetonomy' ),
+						'body'  => __( 'Try a different keyword or clear the search to see all categories.', 'jetonomy' ),
+					)
+					: array(
+						'icon'  => 'category',
+						'title' => __( 'No categories yet', 'jetonomy' ),
+						'body'  => __( 'Categories let you group related spaces. Create your first one using the form above.', 'jetonomy' ),
+					),
+				'cell'      => static function ( $cat, string $key ): void {
+					switch ( $key ) {
+						case 'name':
+							// Drag handle lives inside the identity cell now: a
+							// dedicated 30px column had no label to collapse
+							// under and broke the one-primary-cell contract.
+							echo '<span class="dashicons dashicons-menu jetonomy-drag-handle" title="' . esc_attr__( 'Drag to reorder', 'jetonomy' ) . '"></span> ';
+							if ( $cat->jt_is_child ) {
+								echo '<span class="jetonomy-child-indent"></span>';
+							}
+							echo '<strong>' . esc_html( $cat->name ) . '</strong>';
+							if ( ! $cat->jt_is_child && ! empty( $cat->description ) ) {
+								echo '<span class="description">' . esc_html( wp_trim_words( $cat->description, 12 ) ) . '</span>';
+							}
+							?>
 							<div class="row-actions">
 								<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $cat->id ); ?>" data-name="<?php echo esc_attr( $cat->name ); ?>" data-slug="<?php echo esc_attr( $cat->slug ); ?>" data-description="<?php echo esc_attr( $cat->description ?? '' ); ?>" data-parent="<?php echo absint( $cat->parent_id ); ?>" data-icon="<?php echo esc_attr( $cat->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $cat->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $cat->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
 								<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/category/' . $cat->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
 								<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $cat->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
 							</div>
-						</td>
-						<td class="column-slug"><code><?php echo esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $cat->slug . '/' ); ?></code></td>
-						<td class="column-spaces"><?php echo absint( $cat->space_count ); ?></td>
-						<td class="column-visibility">
-							<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $cat->visibility ); ?>"><?php echo esc_html( ucfirst( $cat->visibility ) ); ?></span>
-						</td>
-					</tr>
-					<?php
-					if ( ! empty( $cat->children ) ) :
-						foreach ( $cat->children as $child ) :
-							?>
-						<tr data-id="<?php echo absint( $child->id ); ?>" class="jetonomy-category-row jetonomy-category-child">
-							<td class="column-drag"><span class="dashicons dashicons-menu jetonomy-drag-handle" title="<?php esc_attr_e( 'Drag to reorder', 'jetonomy' ); ?>"></span></td>
-							<td class="column-name">
-								<span class="jetonomy-child-indent"></span>
-								<strong><?php echo esc_html( $child->name ); ?></strong>
-								<div class="row-actions">
-									<span class="edit"><a href="#" class="jetonomy-edit-category" data-id="<?php echo absint( $child->id ); ?>" data-name="<?php echo esc_attr( $child->name ); ?>" data-slug="<?php echo esc_attr( $child->slug ); ?>" data-description="<?php echo esc_attr( $child->description ?? '' ); ?>" data-parent="<?php echo absint( $child->parent_id ); ?>" data-icon="<?php echo esc_attr( $child->icon ?? '' ); ?>" data-color="<?php echo esc_attr( $child->color ?? '' ); ?>" data-visibility="<?php echo esc_attr( $child->visibility ); ?>"><?php esc_html_e( 'Edit', 'jetonomy' ); ?></a> | </span>
-									<span class="view"><a href="<?php echo esc_url( \Jetonomy\base_url() . '/category/' . $child->slug . '/' ); ?>" target="_blank"><?php esc_html_e( 'View', 'jetonomy' ); ?></a> | </span>
-									<span class="delete"><a href="#" class="jetonomy-delete-category" data-id="<?php echo absint( $child->id ); ?>"><?php esc_html_e( 'Delete', 'jetonomy' ); ?></a></span>
-								</div>
-							</td>
-							<td class="column-slug"><code><?php echo esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $child->slug . '/' ); ?></code></td>
-							<td class="column-spaces"><?php echo absint( $child->space_count ); ?></td>
-							<td class="column-visibility">
-								<span class="jt-status-badge jt-status-badge--<?php echo esc_attr( $child->visibility ); ?>"><?php echo esc_html( ucfirst( $child->visibility ) ); ?></span>
-							</td>
-						</tr>
-											<?php
-					endforeach;
-endif;
-					?>
-				<?php endforeach; ?>
-			<?php endif; ?>
-		</tbody>
-	</table>
+							<?php
+							break;
+						case 'slug':
+							echo '<code>' . esc_html( wp_parse_url( \Jetonomy\base_url(), PHP_URL_PATH ) . '/category/' . $cat->slug . '/' ) . '</code>';
+							break;
+						case 'spaces':
+							echo absint( $cat->space_count );
+							break;
+						case 'visibility':
+							echo '<span class="jt-status-badge jt-status-badge--' . esc_attr( $cat->visibility ) . '">' . esc_html( ucfirst( $cat->visibility ) ) . '</span>';
+							break;
+					}
+				},
+			)
+		);
+		?>
 
 	<?php
 	$_cats_pages = isset( $categories_pages ) ? (int) $categories_pages : 0;

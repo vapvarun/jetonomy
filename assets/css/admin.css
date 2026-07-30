@@ -3130,3 +3130,85 @@ tr.jetonomy-moderated td {
 	.jt-fam-header { flex-wrap: wrap; }
 	.jt-companions-grid { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Responsive table contract (Basecamp 10146443346)
+   Emitted by jetonomy_admin_table() — the shared primitive every
+   Free/Pro admin list table renders through. Breakpoints: 782px
+   (core's own list-table collapse point) and 480px. Touch targets:
+   ≥40px admin, ≥44px on small screens.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Column widths are desktop-only CLASSES. Inline pixel widths were half the
+   mobile breakage: they survived into the collapsed layout and forced
+   overflow. Below 782px core's contract stacks cells, so no width applies. */
+@media screen and (min-width: 783px) {
+	.jetonomy-admin .wp-list-table th.jt-col-xs { width: 60px; }
+	.jetonomy-admin .wp-list-table th.jt-col-s  { width: 90px; }
+	.jetonomy-admin .wp-list-table th.jt-col-m  { width: 120px; }
+	.jetonomy-admin .wp-list-table th.jt-col-l  { width: 180px; }
+}
+
+/* The card wrapper used to be overflow:hidden at every size, which CLIPPED
+   any table wider than the viewport — data and row actions simply vanished.
+   Desktop keeps hidden (rounded-corner clipping is the point there and
+   compliant tables fit); small screens allow horizontal scroll as the
+   TEMPORARY fallback for not-yet-migrated tables. Migrated tables collapse
+   via the contract and never need the scrollbar. */
+@media screen and (max-width: 782px) {
+	.jetonomy-admin .jt-content-table-wrap {
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+	}
+	/* Core hides non-primary columns below 782px only for compliant tables;
+	   the expander button must be an easy target. */
+	.jetonomy-admin .wp-list-table .toggle-row {
+		min-width: 44px;
+		min-height: 44px;
+	}
+}
+
+/* ── Settings matrix primitive ─────────────────────────────
+   For EDITABLE configuration tables (permissions grid, email templates,
+   notification toggles): these are forms, not data lists — on small screens
+   the controls must STACK as labelled field rows, not shrink into unusable
+   table cells. Markup contract: .jt-settings-matrix on the <table>, every
+   body <td> carries data-colname, first cell is the row label. */
+@media screen and (max-width: 782px) {
+	.jetonomy-admin table.jt-settings-matrix,
+	.jetonomy-admin table.jt-settings-matrix tbody,
+	.jetonomy-admin table.jt-settings-matrix tr,
+	.jetonomy-admin table.jt-settings-matrix td,
+	.jetonomy-admin table.jt-settings-matrix th { display: block; width: auto; }
+	.jetonomy-admin table.jt-settings-matrix thead { display: none; }
+	.jetonomy-admin table.jt-settings-matrix tr {
+		border: 1px solid var(--jt-admin-border, #dcdcde);
+		border-radius: 6px;
+		padding: 10px 12px;
+		margin-block-end: 10px;
+		background: var(--jt-admin-white, #fff);
+	}
+	.jetonomy-admin table.jt-settings-matrix td:first-child,
+	.jetonomy-admin table.jt-settings-matrix th[scope="row"] {
+		font-weight: 600;
+		padding-block-end: 6px;
+	}
+	.jetonomy-admin table.jt-settings-matrix td:not(:first-child) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 8px 0;
+		min-height: 44px;
+		border-top: 1px solid var(--jt-admin-border-subtle, #f0f0f1);
+	}
+	.jetonomy-admin table.jt-settings-matrix td:not(:first-child)::before {
+		content: attr(data-colname);
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--jt-admin-text-3, #646970);
+	}
+}
