@@ -1532,6 +1532,20 @@
 	// jetonomy_admin_table() on the page, including AJAX-refreshed rows.
 	// requestAnimationFrame lets core's own toggle land first, then the
 	// button mirrors the row's real state.
+	//
+	// Initial state: WP_List_Table screens (Activity, Revisions) print
+	// core's OWN toggle markup, which ships without aria-expanded - stamp
+	// it on load so the button is never stateless before first interaction
+	// (QA wave-5).
+	function stampToggleState(root) {
+		(root || document).querySelectorAll('.jetonomy-admin .toggle-row:not([aria-expanded])').forEach(function (btn) {
+			var tr = btn.closest('tr');
+			btn.setAttribute('aria-expanded', tr && tr.classList.contains('is-expanded') ? 'true' : 'false');
+		});
+	}
+	$(document).ready(function () { stampToggleState(); });
+	$(document).ajaxComplete(function () { stampToggleState(); });
+
 	document.addEventListener('click', function (e) {
 		var btn = e.target.closest ? e.target.closest('.jetonomy-admin .toggle-row') : null;
 		if (!btn) { return; }

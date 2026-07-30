@@ -3224,17 +3224,25 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .wp-list-table .jt-btn,
 	.jetonomy-admin .tablenav .button,
 	.jetonomy-admin .tablenav-pages a,
+	.jetonomy-admin .tablenav-pages .page-numbers,
 	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan,
 	.jetonomy-admin .tablenav-pages .current-page {
 		min-height: 40px;
+		min-width: 40px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		box-sizing: border-box;
 	}
+	/* 40x40 means BOTH axes (QA wave-5 measured widths under 40). */
 	.jetonomy-admin .wp-list-table .row-actions a {
-		display: inline-block;
-		padding: 10px 4px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		min-width: 40px;
+		padding: 10px 8px;
+		box-sizing: border-box;
 	}
 
 	/* The pagination row must WRAP, never widen the document: at 320px the
@@ -3252,6 +3260,35 @@ tr.jetonomy-moderated td {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 4px;
+	}
+}
+
+/* Core .form-table stacking, extended through the squeeze band.
+   Core stacks label/field rows only ≤782px; between 783px and ~960px the
+   folded-menu content column leaves our settings CARDS ~463px wide while a
+   form-table row (200px label + 25em input) needs ~500px+, so controls
+   clipped ~19px under the card's hidden overflow (QA 2026-07-30, cards
+   10146440810/10146297370). Inside Jetonomy settings cards the stacked
+   layout simply persists until the row genuinely fits. */
+@media screen and (min-width: 783px) and (max-width: 1100px) {
+	.jetonomy-admin .jt-settings-card .form-table,
+	.jetonomy-admin .jt-settings-card .form-table tbody,
+	.jetonomy-admin .jt-settings-card .form-table tr,
+	.jetonomy-admin .jt-settings-card .form-table th,
+	.jetonomy-admin .jt-settings-card .form-table td {
+		display: block;
+		width: auto;
+	}
+	.jetonomy-admin .jt-settings-card .form-table th {
+		padding-block-end: 0;
+	}
+	.jetonomy-admin .jt-settings-card .form-table input[type="text"],
+	.jetonomy-admin .jt-settings-card .form-table input[type="url"],
+	.jetonomy-admin .jt-settings-card .form-table input[type="email"],
+	.jetonomy-admin .jt-settings-card .form-table input[type="number"],
+	.jetonomy-admin .jt-settings-card .form-table select,
+	.jetonomy-admin .jt-settings-card .form-table textarea {
+		max-width: 100%;
 	}
 }
 

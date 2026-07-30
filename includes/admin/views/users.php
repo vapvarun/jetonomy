@@ -121,7 +121,7 @@ $trust_labels = array(
 						<td class="column-username column-primary" data-colname="<?php esc_attr_e( 'Username', 'jetonomy' ); ?>">
 							<?php echo get_avatar( $u->user_id, 24 ); ?>
 							<strong><?php echo esc_html( $u->user_login ); ?></strong>
-							<button type="button" class="toggle-row"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
+							<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 							<div class="row-actions">
 								<span class="edit"><a href="<?php echo esc_url( get_edit_user_link( $u->user_id ) ); ?>"><?php esc_html_e( 'View Profile', 'jetonomy' ); ?></a> | </span>
 								<span class="trust"><a href="#" class="jetonomy-change-trust-trigger" data-user-id="<?php echo absint( $u->user_id ); ?>" data-current="<?php echo absint( $u->trust_level ); ?>"><?php esc_html_e( 'Change Trust Level', 'jetonomy' ); ?></a> | </span>

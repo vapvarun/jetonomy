@@ -382,7 +382,7 @@ can($user_id, $action, $space_id?)
 
 ### `Jetonomy\Permissions\Capabilities`
 
-WP capabilities registered at activation and on version change:
+WP capabilities synced by `Capabilities::register()` (activation, version change, and every save of the Settings → Permissions matrix). Since 1.8.1 the role → capability mapping is **editable**: `jetonomy_role_caps` stores per-role overrides, `register()` adds AND revokes to match `effective_map()`, administrators are pinned to every capability, and editing the mapping itself requires `manage_options`. The table below shows the ROLE_MAP **defaults**:
 
 | Capability | Default roles |
 |------------|--------------|

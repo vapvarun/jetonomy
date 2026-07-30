@@ -112,19 +112,19 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 	<?php else : ?>
 
 	<div class="jt-content-table-wrap">
-		<table class="wp-list-table widefat fixed striped" id="jt-posts-table">
+		<table class="wp-list-table widefat fixed striped" id="jt-posts-table"><!-- jetonomy-audit-table-ok: inline-edit rows + bulk check-column need custom markup; core collapse contract implemented by hand (column-primary, data-colname, toggle-row, width classes) -->
 			<thead>
 				<tr>
 					<td class="manage-column column-cb check-column">
 						<input type="checkbox" id="jt-select-all" aria-label="<?php esc_attr_e( 'Select all rows', 'jetonomy' ); ?>">
 					</td>
 					<th class="manage-column column-title column-primary"><?php esc_html_e( 'Title', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:120px;"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:120px;"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:90px;"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:70px;"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:70px;"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
-					<th class="manage-column" style="width:130px;"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php esc_html_e( 'Space', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php esc_html_e( 'Author', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-s"><?php esc_html_e( 'Status', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Replies', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-xs"><?php esc_html_e( 'Views', 'jetonomy' ); ?></th>
+					<th class="manage-column jt-col-m"><?php esc_html_e( 'Date', 'jetonomy' ); ?></th>
 				</tr>
 			</thead>
 			<tbody id="jt-posts-tbody">
@@ -257,6 +257,8 @@ $nonce_value  = wp_create_nonce( 'jetonomy_admin' );
 									</span>
 								<?php endif; ?>
 							</div>
+							<?php // Core small-screen expander: without it the six data-colname cells stayed hidden below 783px with no way to reveal them (QA wave-5). ?>
+							<button type="button" class="toggle-row" aria-expanded="false"><span class="screen-reader-text"><?php esc_html_e( 'Show more details', 'jetonomy' ); ?></span></button>
 						</td>
 						<td data-colname="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
 							<?php echo esc_html( $p->space_title ?? '' ); ?>

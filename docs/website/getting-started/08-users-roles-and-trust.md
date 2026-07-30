@@ -4,7 +4,7 @@ The single most common question from new site owners: *"How does someone become 
 
 ## The one-sentence model
 
-**Jetonomy members ARE your WordPress users.** There is no separate registration, no separate account table, no import step. Anyone with a WordPress account on your site is a community member the moment they visit; a community profile row is created for them automatically on first activity.
+**Jetonomy members ARE your WordPress users.** There is no separate registration, no separate account table, no import step. Anyone with a WordPress account on your site is a community member the moment they visit; a community profile row is created for them automatically the first time they visit a community page while logged in.
 
 ## Registration flow (public communities)
 
@@ -51,4 +51,4 @@ Defaults are seeded per role and fully editable in the **Jetonomy → Settings �
 | `jetonomy_manage_spaces` | Space administration in wp-admin |
 | `jetonomy_create_spaces` | Creating spaces from the frontend |
 
-Assign them to custom roles with any role editor; every check falls back safely to `manage_options`, so Administrators are never locked out.
+Tick the capabilities for any role - custom roles included - in the **Jetonomy → Settings → Permissions** matrix; every check falls back safely to `manage_options`, so Administrators are never locked out.
