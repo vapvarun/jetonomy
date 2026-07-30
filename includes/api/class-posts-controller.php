@@ -435,7 +435,9 @@ class Posts_Controller extends Base_Controller {
 		// update. Every other space type still requires a real title.
 		if ( empty( $title ) ) {
 			if ( 'feed' === ( $space->type ?? '' ) ) {
-				$derived = trim( wp_strip_all_tags( $content ) );
+				// First paragraph only - stripping the whole body ran
+				// paragraphs together in the headline and slug.
+				$derived = jetonomy_first_paragraph_text( $content );
 				$title   = '' !== $derived
 					? trim( (string) mb_substr( $derived, 0, 60 ) )
 					: __( 'Status update', 'jetonomy' );

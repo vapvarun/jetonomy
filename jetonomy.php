@@ -656,9 +656,22 @@ function jetonomy_normalize_editor_html( string $content ): string {
 		return $content;
 	}
 
+	// ANY attributed <div> makes BOTH rewrites unsafe, so such content passes
+	// through byte-identical. The div transform can't tell whose </div> it is,
+	// and the <br><br> rewrite would have wpautop close paragraphs INSIDE the
+	// wrapper, tearing the embed
+	// (`<div class="embed">one<br><br>two</div>` -> `...one</p><p>two</p></div>`).
+	// The detection is whitespace-class based - `<div\tclass=...>` and
+	// `<div\nclass=...>` count, not just the literal "<div " (QA probe,
+	// Basecamp 10138808747 reopen). Composer output never contains attributed
+	// divs, so the reported case is always still covered.
+	if ( preg_match( '/<div\s+[^>]/i', $content ) ) {
+		return $content;
+	}
+
 	$had_soup = false;
 
-	if ( false !== stripos( $content, '<div' ) && false === stripos( $content, '<div ' ) ) {
+	if ( false !== stripos( $content, '<div' ) ) {
 		// Every div is bare, so open/close pairs are unambiguous regardless of
 		// nesting: treat each boundary as a paragraph break and let wpautop
 		// re-wrap. `<div><br></div>` is the editor's empty line - drop the br
@@ -684,6 +697,31 @@ function jetonomy_normalize_editor_html( string $content ): string {
 	// title derivation) read stored content raw, so the paragraph structure
 	// must live in the markup, not wait for a display-side wpautop.
 	return trim( wpautop( trim( $content ) ) );
+}
+
+/**
+ * The first paragraph of a content blob, as plain text.
+ *
+ * The feed-space derived title used to strip the WHOLE body and take the
+ * first 60 characters, so a multi-paragraph status ran its paragraphs
+ * together in the headline and the slug (Basecamp 10138808747 reopen). A
+ * headline is the first paragraph, not the first 60 bytes of everything.
+ *
+ * @param string $content Stored/normalized HTML or plain text.
+ * @return string First non-empty plain-text paragraph, '' if none.
+ */
+function jetonomy_first_paragraph_text( string $content ): string {
+	// Block-level closers become newlines BEFORE tags are stripped, so
+	// `<p>a</p><p>b</p>` splits even without literal newlines in the source.
+	$text = preg_replace( '#</(p|div|li|h[1-6]|blockquote)>#i', "\n", $content );
+	$text = trim( wp_strip_all_tags( (string) $text ) );
+	foreach ( preg_split( '/\n+/', $text ) as $line ) {
+		$line = trim( $line );
+		if ( '' !== $line ) {
+			return $line;
+		}
+	}
+	return '';
 }
 
 function jetonomy_format_content( string $content ): string {

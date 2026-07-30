@@ -59,7 +59,7 @@ final class Content_Journey {
 			'space_id'  => (int) $input['space_id'],
 			'author_id' => (int) $input['author_id'],
 			'title'     => (string) $input['title'],
-			'content'   => (string) $input['content'],
+			'content'   => wp_kses_post( jetonomy_normalize_editor_html( (string) $input['content'] ) ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 			'slug'      => isset( $input['slug'] ) ? (string) $input['slug'] : '',
 		];
@@ -196,7 +196,7 @@ final class Content_Journey {
 		$data = [
 			'post_id'   => (int) $input['post_id'],
 			'author_id' => (int) $input['author_id'],
-			'content'   => (string) $input['content'],
+			'content'   => wp_kses_post( jetonomy_normalize_editor_html( (string) $input['content'] ) ),
 			'status'    => (string) ( $input['status'] ?? 'publish' ),
 		];
 		if ( ! empty( $input['parent_id'] ) ) {

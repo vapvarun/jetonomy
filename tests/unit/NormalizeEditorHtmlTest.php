@@ -61,6 +61,30 @@ class NormalizeEditorHtmlTest extends WP_UnitTestCase {
 		$this->assertSame( $in, jetonomy_normalize_editor_html( $in ) );
 	}
 
+	public function test_tab_attributed_div_is_detected_too(): void {
+		// QA reopen probe: `<div\tclass=...>` slipped past a literal "<div "
+		// check and got torn. Attribute detection is whitespace-class based.
+		$in = "<div\tclass=\"embed\">keep</div><div>bare</div>";
+
+		$this->assertSame( $in, jetonomy_normalize_editor_html( $in ) );
+	}
+
+	public function test_newline_attributed_div_is_detected_too(): void {
+		$in = "<div\nclass=\"embed\">keep</div><div>bare</div>";
+
+		$this->assertSame( $in, jetonomy_normalize_editor_html( $in ) );
+	}
+
+	public function test_double_br_inside_attributed_embed_stays_byte_stable(): void {
+		// QA reopen probe: the br rewrite inside an attributed wrapper made
+		// wpautop close paragraphs INSIDE the embed
+		// (`...one</p><p>two</p></div>`). Attributed divs now gate BOTH
+		// rewrites, so the content passes through untouched.
+		$in = '<div class="embed">one<br><br>two</div>';
+
+		$this->assertSame( $in, jetonomy_normalize_editor_html( $in ) );
+	}
+
 	public function test_nested_bare_divs_do_not_tear_markup(): void {
 		// The card's suggested non-greedy regex broke on nesting; boundary
 		// replacement must not.
@@ -68,6 +92,26 @@ class NormalizeEditorHtmlTest extends WP_UnitTestCase {
 
 		$this->assertSame( "<p>outer</p>\n<p>inner</p>", $out );
 		$this->assertStringNotContainsString( '<div', $out );
+	}
+
+	public function test_first_paragraph_text_takes_only_the_first_paragraph(): void {
+		// Derived titles used to strip the WHOLE body and cap at 60 chars,
+		// running paragraphs together in the headline and slug.
+		$this->assertSame(
+			'Alpha paragraph.',
+			jetonomy_first_paragraph_text( "<p>Alpha paragraph.</p>\n<p>Beta paragraph.</p>" )
+		);
+		// Works without literal newlines between blocks too.
+		$this->assertSame(
+			'Alpha.',
+			jetonomy_first_paragraph_text( '<p>Alpha.</p><p>Beta.</p>' )
+		);
+		// Plain text with paragraph breaks.
+		$this->assertSame(
+			'First line.',
+			jetonomy_first_paragraph_text( "First line.\n\nSecond line." )
+		);
+		$this->assertSame( '', jetonomy_first_paragraph_text( '   ' ) );
 	}
 
 	public function test_display_shim_repairs_legacy_stored_rows(): void {
