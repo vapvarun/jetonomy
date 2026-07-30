@@ -2019,6 +2019,13 @@ tr.jetonomy-moderated td {
 		color: var(--jt-admin-text-3, #646970);
 		float: none;
 		flex-shrink: 0;
+		/* Core keeps td::before ABSOLUTE in a left label lane; unreset, the
+		   label painted over the first ~98px of the value (Basecamp
+		   10150581217, measured 23-38px of text overlap at 390). Static
+		   makes the label a real flex item so label and value occupy
+		   separate lanes at every collapsed width. */
+		position: static;
+		width: auto;
 	}
 }
 
@@ -3195,6 +3202,37 @@ tr.jetonomy-moderated td {
 	.jetonomy-admin .wp-list-table th.jt-col-l  { width: 180px; }
 }
 
+/* The 1024px cliff (Basecamp 10150581904): the media query above keys on
+   the VIEWPORT, but the open wp-admin menu leaves only ~820px of container
+   at 1024 - table-layout:fixed then paid every fixed secondary width and
+   crushed the PRIMARY column to 51-80px (titles fragmenting vertically,
+   and the crushed hidden row-actions stack inflated rows to 200px+).
+   The scroll wrappers are size containers now: when the CONTAINER is too
+   narrow to afford fixed widths, the table reverts to content-driven auto
+   layout (primary keeps the lion's share, secondaries shrink to content)
+   with the wrapper's horizontal scrollbar as the fallback. Fixed widths
+   return as soon as the container genuinely fits them. */
+.jetonomy-admin .jt-content-table-wrap,
+.jetonomy-admin .jt-table-scroll {
+	container-type: inline-size;
+}
+
+@media screen and (min-width: 783px) {
+	@container (max-width: 1099px) {
+		.jetonomy-admin .wp-list-table.fixed { table-layout: auto; }
+		.jetonomy-admin .wp-list-table th.jt-col-xs,
+		.jetonomy-admin .wp-list-table th.jt-col-s,
+		.jetonomy-admin .wp-list-table th.jt-col-m,
+		.jetonomy-admin .wp-list-table th.jt-col-l { width: auto; }
+		/* Keep the identity column from being outvoted by long secondary
+		   content in auto layout. */
+		.jetonomy-admin .wp-list-table th.column-primary { min-width: 240px; }
+		.jetonomy-admin .wp-list-table td,
+		.jetonomy-admin .wp-list-table th { white-space: nowrap; }
+		.jetonomy-admin .wp-list-table td.column-primary { white-space: normal; }
+	}
+}
+
 /* The card wrapper used to be overflow:hidden at every size, which CLIPPED
    any table wider than the viewport — data and row actions simply vanished.
    The wrap now scrolls at EVERY width (see its base rule) so this block
@@ -3221,19 +3259,49 @@ tr.jetonomy-moderated td {
 	   gets the 40px floor here. */
 	.jetonomy-admin .wp-list-table .button,
 	.jetonomy-admin .wp-list-table a.button,
+	.jetonomy-admin .wp-list-table .jt-btn,
 	.jetonomy-admin .tablenav .button,
 	.jetonomy-admin .tablenav-pages a,
+	.jetonomy-admin .tablenav-pages .page-numbers,
 	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan,
 	.jetonomy-admin .tablenav-pages .current-page {
 		min-height: 40px;
+		min-width: 40px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		box-sizing: border-box;
 	}
+	/* 40x40 means BOTH axes (QA wave-5 measured widths under 40). */
 	.jetonomy-admin .wp-list-table .row-actions a {
-		display: inline-block;
-		padding: 10px 4px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		min-width: 40px;
+		padding: 10px 8px;
+		box-sizing: border-box;
+	}
+
+	/* Self-audit 2026-07-30: the remaining sub-40 targets on touch.
+	   Tablenav selects/search measured 36px; primary-cell title links
+	   measured 17px tall (wide, but shallow). */
+	.jetonomy-admin .tablenav select,
+	.jetonomy-admin .tablenav input[type="search"],
+	.jetonomy-admin .jt-content-toolbar select,
+	.jetonomy-admin .jt-content-toolbar input[type="search"] {
+		min-height: 40px;
+	}
+	.jetonomy-admin .wp-list-table td.column-primary a,
+	.jetonomy-admin .wp-list-table td.column-primary strong > a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 40px;
+	}
+	/* Row-action links already carry their own floor above; keep the
+	   primary-cell rule from double-padding them. */
+	.jetonomy-admin .wp-list-table td.column-primary .row-actions a {
+		min-height: 40px;
 	}
 
 	/* The pagination row must WRAP, never widen the document: at 320px the
@@ -3251,6 +3319,35 @@ tr.jetonomy-moderated td {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 4px;
+	}
+}
+
+/* Core .form-table stacking, extended through the squeeze band.
+   Core stacks label/field rows only ≤782px; between 783px and ~960px the
+   folded-menu content column leaves our settings CARDS ~463px wide while a
+   form-table row (200px label + 25em input) needs ~500px+, so controls
+   clipped ~19px under the card's hidden overflow (QA 2026-07-30, cards
+   10146440810/10146297370). Inside Jetonomy settings cards the stacked
+   layout simply persists until the row genuinely fits. */
+@media screen and (min-width: 783px) and (max-width: 1100px) {
+	.jetonomy-admin .jt-settings-card .form-table,
+	.jetonomy-admin .jt-settings-card .form-table tbody,
+	.jetonomy-admin .jt-settings-card .form-table tr,
+	.jetonomy-admin .jt-settings-card .form-table th,
+	.jetonomy-admin .jt-settings-card .form-table td {
+		display: block;
+		width: auto;
+	}
+	.jetonomy-admin .jt-settings-card .form-table th {
+		padding-block-end: 0;
+	}
+	.jetonomy-admin .jt-settings-card .form-table input[type="text"],
+	.jetonomy-admin .jt-settings-card .form-table input[type="url"],
+	.jetonomy-admin .jt-settings-card .form-table input[type="email"],
+	.jetonomy-admin .jt-settings-card .form-table input[type="number"],
+	.jetonomy-admin .jt-settings-card .form-table select,
+	.jetonomy-admin .jt-settings-card .form-table textarea {
+		max-width: 100%;
 	}
 }
 
