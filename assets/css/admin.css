@@ -3333,6 +3333,18 @@ tr.jetonomy-moderated td {
 		box-sizing: border-box;
 	}
 
+	/* Radio help text that is indented to line up under its radio. Core's
+	   mobile rule forces `.form-table span.description { width:100% }`, which
+	   is 100% of the CELL - so the 24px indent pushed it 4px past the card,
+	   and the card clips (Access Control on Settings > General, measured at
+	   390 and 768, self-audit 2026-07-31). `width:auto` lets the block fill
+	   what is actually left after the indent. */
+	.jetonomy-admin .jt-settings-card .form-table span.description[style*="margin-left"],
+	.jetonomy-admin .jt-settings-card .form-table label span.description {
+		width: auto;
+		max-width: 100%;
+	}
+
 	/* Settings matrix on a PHONE (Basecamp 10146440810, self-audit 2026-07-31).
 	   The stacked-matrix rules live in the 783-1100 squeeze band, so below 782
 	   the only thing stacking these tables is core's own .wp-list-table mobile
