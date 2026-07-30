@@ -35,9 +35,24 @@ class Post extends Model {
 	 * @param array $data Column data.
 	 * @return int Inserted row ID.
 	 */
-	public static function create( array $data ): int|\WP_Error {
-		$data = self::sanitize_content_fields( $data );
+	/**
+	 * Insert override: the LAST write barrier for the content pipeline.
+	 *
+	 * Sanitizing only inside create() left two bypasses (QA 2026-07-30):
+	 * a jetonomy_before_create_post filter could replace content AFTER the
+	 * early sanitize ran, and the inherited public Model::insert() skipped
+	 * the pipeline entirely. Sanitizing here - immediately before the row
+	 * is written - closes both: create() reaches insert AFTER its filter,
+	 * and a direct Post::insert() call gets the same treatment.
+	 *
+	 * @param array $data Column data.
+	 * @return int New row id.
+	 */
+	public static function insert( array $data ): int {
+		return parent::insert( self::sanitize_content_fields( $data ) );
+	}
 
+	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter post data before creation. Return WP_Error to abort.
 		 *

@@ -47,9 +47,19 @@ class Reply extends Model {
 	 * @param array $data Column data.
 	 * @return int Inserted row ID.
 	 */
-	public static function create( array $data ): int|\WP_Error {
-		$data = self::sanitize_content_fields( $data );
+	/**
+	 * Insert override: the LAST write barrier for the content pipeline.
+	 * See Post::insert() - closes the post-filter and raw-insert bypasses
+	 * (QA 2026-07-30, card 10138808747).
+	 *
+	 * @param array $data Column data.
+	 * @return int New row id.
+	 */
+	public static function insert( array $data ): int {
+		return parent::insert( self::sanitize_content_fields( $data ) );
+	}
 
+	public static function create( array $data ): int|\WP_Error {
 		/**
 		 * Filter reply data before creation. Return WP_Error to abort.
 		 *

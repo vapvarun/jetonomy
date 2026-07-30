@@ -94,6 +94,43 @@ class NormalizeChokePointTest extends WP_UnitTestCase {
 		$this->assertSame( 'explicit plain copy', (string) $row->content_plain );
 	}
 
+	public function test_filter_injected_soup_is_still_normalized(): void {
+		// QA wave-5 bypass: jetonomy_before_create_post runs AFTER the old
+		// early sanitize, so a filter replacing content used to reach insert
+		// raw. The pipeline now runs at insert - after every filter.
+		$inject = static fn( $data ) => array_merge( (array) $data, array( 'content' => self::SOUP ) );
+		add_filter( 'jetonomy_before_create_post', $inject );
+		$id = $this->make_post( array( 'content' => '<p>clean before filter</p>' ) );
+		remove_filter( 'jetonomy_before_create_post', $inject );
+
+		$this->assertSame( self::NORMALIZED, Post::find( $id )->content, 'filter-injected content must hit the insert barrier' );
+	}
+
+	public function test_raw_insert_path_is_not_a_bypass(): void {
+		// QA wave-5 bypass: the inherited public Model::insert() skipped the
+		// pipeline. Post/Reply now override insert() as the last barrier.
+		$post_id = Post::insert( array(
+			'space_id'   => $this->space_id,
+			'author_id'  => $this->author_id,
+			'title'      => 'Raw insert',
+			'slug'       => 'raw-insert-' . uniqid(),
+			'content'    => self::SOUP,
+			'status'     => 'publish',
+			'created_at' => gmdate( 'Y-m-d H:i:s' ),
+			'updated_at' => gmdate( 'Y-m-d H:i:s' ),
+		) );
+		$this->assertSame( self::NORMALIZED, Post::find( $post_id )->content, 'Post::insert must sanitize' );
+
+		$reply_id = Reply::insert( array(
+			'post_id'    => $post_id,
+			'author_id'  => $this->author_id,
+			'content'    => self::SOUP,
+			'status'     => 'publish',
+			'created_at' => gmdate( 'Y-m-d H:i:s' ),
+		) );
+		$this->assertSame( self::NORMALIZED, Reply::find( $reply_id )->content, 'Reply::insert must sanitize' );
+	}
+
 	public function test_clean_html_passes_byte_identical(): void {
 		// The attributed-div gate: embeds and already-clean HTML must survive
 		// the choke point untouched, or importers would corrupt rich source
