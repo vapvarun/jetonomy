@@ -467,6 +467,23 @@
 	border-radius: var(--jt-admin-radius);
 	padding: 20px 24px;
 	box-shadow: var(--jt-admin-shadow);
+	/* Grid children default to min-width:auto, so a card whose inner table
+	   has a wide min-content width silently stretched past the viewport
+	   (425px doc at 390 - Basecamp 10146406005). */
+	min-width: 0;
+	box-sizing: border-box;
+	max-width: 100%;
+}
+
+/* The info tables inside dashboard cards must shrink with the card: fixed
+   layout caps min-content, and cells wrap instead of propagating width. */
+.jetonomy-dashboard-card table.widefat {
+	width: 100%;
+	table-layout: fixed;
+}
+.jetonomy-dashboard-card table.widefat td,
+.jetonomy-dashboard-card table.widefat th {
+	overflow-wrap: anywhere;
 }
 
 .jetonomy-dashboard-card h2 {

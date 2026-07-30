@@ -98,7 +98,7 @@ $stat_cards = array(
 				);
 				?>
 			<?php else : ?>
-				<table class="widefat striped">
+				<table class="widefat striped"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'User', 'jetonomy' ); ?></th>
@@ -247,7 +247,7 @@ $stat_cards = array(
 			<!-- System Info -->
 			<div class="jetonomy-dashboard-card">
 				<h2><?php esc_html_e( 'System Info', 'jetonomy' ); ?></h2>
-				<table class="widefat">
+				<table class="widefat"><!-- jetonomy-audit-table-ok: 2-col info table; card CSS enforces fixed layout + wrap-anywhere (Basecamp 10146406005) -->
 					<tbody>
 						<tr>
 							<td><strong><?php esc_html_e( 'Plugin Version', 'jetonomy' ); ?></strong></td>
@@ -275,8 +275,8 @@ $stat_cards = array(
 
 			<?php if ( ! defined( 'JETONOMY_PRO_VERSION' ) && null !== ( $pulse ?? null ) ) : ?>
 				<!-- Analytics teaser: REAL 7-day numbers (cached 1h) + Pro upsell.
-				     Replaces the old static card so the widget itself demonstrates
-				     what Pro's full analytics does. -->
+					Replaces the old static card so the widget itself demonstrates
+					what Pro's full analytics does. -->
 				<div class="jt-pro-upsell-card jt-pulse-card">
 					<h3><?php esc_html_e( 'This week in your community', 'jetonomy' ); ?> <span class="jt-pro-badge"><?php esc_html_e( 'PREVIEW', 'jetonomy' ); ?></span></h3>
 					<div class="jt-pulse-grid">
