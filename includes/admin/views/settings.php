@@ -170,10 +170,19 @@ $settings_url = admin_url( 'admin.php?page=jetonomy-settings' );
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="space_label_singular"><?php esc_html_e( 'Space Label', 'jetonomy' ); ?></label></th>
+						<th scope="row"><?php esc_html_e( 'Space Label', 'jetonomy' ); ?></th>
 						<td>
-							<input type="text" id="space_label_singular" name="jetonomy_settings[space_label_singular]" value="<?php echo esc_attr( $settings['space_label_singular'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
-							<input type="text" id="space_label_plural" name="jetonomy_settings[space_label_plural]" value="<?php echo esc_attr( $settings['space_label_plural'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Spaces', 'jetonomy' ); ?>">
+							<?php // Explicit per-field labels + a 12px gap (Basecamp 10150582271: the two inputs touched with 0px gap and the plural relied on placeholder text as its only name). ?>
+							<div class="jt-field-pair">
+								<div class="jt-field-pair__item">
+									<label for="space_label_singular"><?php esc_html_e( 'Singular', 'jetonomy' ); ?></label>
+									<input type="text" id="space_label_singular" name="jetonomy_settings[space_label_singular]" value="<?php echo esc_attr( $settings['space_label_singular'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Space', 'jetonomy' ); ?>">
+								</div>
+								<div class="jt-field-pair__item">
+									<label for="space_label_plural"><?php esc_html_e( 'Plural', 'jetonomy' ); ?></label>
+									<input type="text" id="space_label_plural" name="jetonomy_settings[space_label_plural]" value="<?php echo esc_attr( $settings['space_label_plural'] ?? '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Spaces', 'jetonomy' ); ?>">
+								</div>
+							</div>
 							<p class="description"><?php esc_html_e( 'What to call a Space across the whole community — singular and plural (e.g. Forum / Forums, Discussion / Discussions). Leave empty to keep "Space / Spaces".', 'jetonomy' ); ?></p>
 						</td>
 					</tr>

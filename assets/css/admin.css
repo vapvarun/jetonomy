@@ -3447,3 +3447,25 @@ tr.jetonomy-moderated td {
 		white-space: nowrap;
 	}
 }
+
+/* Grouped field pairs in settings (Basecamp 10150582271): sibling inputs
+   used to touch with 0px gap and the second field's only "label" was its
+   placeholder. The pair primitive gives each field a visible label and a
+   consistent 12px rhythm, stacking on narrow cards. */
+.jetonomy-admin .jt-field-pair {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-block-end: 4px;
+}
+.jetonomy-admin .jt-field-pair__item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+.jetonomy-admin .jt-field-pair__item label {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--jt-admin-text-3, #646970);
+}
