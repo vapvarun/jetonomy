@@ -3494,6 +3494,43 @@ tr.jetonomy-moderated td {
 		display: inline-flex;
 		align-items: center;
 	}
+	/* The 40px floors change link boxes, so EVERYTHING in the pagination
+	   row must share one centered flex baseline - without this the item
+	   count, "of N" text, and current-page input floated at their old
+	   baselines beside the taller pills (owner screenshot, Revisions). */
+	.jetonomy-admin .tablenav-pages {
+		display: inline-flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+	.jetonomy-admin .tablenav-pages .displaying-num {
+		margin-inline-end: 8px;
+	}
+	.jetonomy-admin .tablenav-pages .paging-input {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin: 0 4px;
+	}
+	.jetonomy-admin .tablenav-pages .current-page {
+		min-height: 40px;
+		box-sizing: border-box;
+		margin: 0;
+	}
+	.jetonomy-admin .tablenav-pages .tablenav-paging-text {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+	.jetonomy-admin .tablenav-pages .tablenav-pages-navspan {
+		min-height: 40px;
+		min-width: 40px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
 	.jetonomy-admin .wp-list-table .row-actions a,
 	.jetonomy-admin .wp-list-table .jt-btn,
 	.jetonomy-admin .wp-list-table .button,
