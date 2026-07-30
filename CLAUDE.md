@@ -1,6 +1,6 @@
 # Jetonomy - WordPress Forum Plugin
 
-> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 73 REST routes, 43 AJAX handlers, 177 hooks fired, 20 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
+> **READ FIRST:** [`audit/manifest.json`](audit/manifest.json) is the canonical inventory — 79 REST routes, 43 AJAX handlers, 201 hooks fired, 21 tables, 23 capabilities, 8 blocks, 8 shortcodes, 14 WP-CLI commands, 6 cron hooks, 15 admin pages. Check it before adding any function, hook, route, or helper. Refresh via `/wp-plugin-onboard --refresh` after non-trivial changes; read the `generated.*` deltas for what each release actually changed.
 
 ### Where things live (this repo is PUBLIC)
 
@@ -43,7 +43,7 @@ extra careful; never fix blindly.
    is Q&A-only). Don't "fix" a correct guard.
 5. **Local CI before declaring done** (not just the pre-commit hook):
    - `php bin/audit-rest-routes.php includes/` and `... ../jetonomy-pro/includes/` → both OK
-   - `wp jetonomy qa-actions` → 210/210
+   - `wp jetonomy qa-actions` → 257/257
    - free+pro boot smoke (`../jetonomy-pro/tools/smoke-test.php`)
    - browser-verify every frontend/template change (incl. 390px mobile)
 
@@ -191,7 +191,7 @@ Journey-based CLI architecture for headless testing + automation. Every user/adm
 ```
 wp jetonomy <subject> <subcommand>       # 13 free command roots
 wp jetonomy-pro <subject> <subcommand>   # 15 Pro command roots
-wp jetonomy qa-actions                   # 210/210 smoke tests (4 phases)
+wp jetonomy qa-actions                   # 257/257 smoke tests (4 phases)
 wp jetonomy scenario run <name>          # 5 bundled end-to-end scenarios
 ```
 
