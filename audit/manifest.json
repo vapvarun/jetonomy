@@ -3351,6 +3351,14 @@
 			"where": "includes/class-space-backfill.php (Space_Backfill::run_batch)",
 			"consumed_by": null,
 			"notes": "1.8.1. Wall-clock budget for one orphan-space purge slice before it stops at a space boundary. Mirrors jetonomy_orphan_purge_batch_seconds."
+		},
+		{
+			"name": "jetonomy_membership_adapter_labels",
+			"type": "filter",
+			"args": "$labels (array<string,string>, adapter id => display name)",
+			"where": "includes/adapters/class-adapter-registry.php (Adapter_Registry::membership_labels)",
+			"consumed_by": null,
+			"notes": "1.8.1. Single source of truth for membership-adapter display names, shared by the Access Rules picker (Admin::enqueue_assets) and the saved-rules table (space-edit.php). Replaces the hardcoded prefix table in the view that left every adapter shipped after it - WP Fusion, SureMembers - rendering raw level ids like wpfusion_102 (Basecamp 10126146658). Lets a third-party membership adapter name itself in the UI."
 		}
 	],
 	"buddypress_integration": {

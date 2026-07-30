@@ -408,13 +408,13 @@ class Admin {
 			$clean['space_label_plural']   = sanitize_text_field( $input['space_label_plural'] ?? '' );
 			// Clamp to the UI max (100) so a crafted POST can't store a huge
 			// value that flows straight into a SQL LIMIT on a big-site query.
-			$clean['posts_per_page']     = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
+			$clean['posts_per_page'] = min( 100, max( 1, absint( $input['posts_per_page'] ?? 20 ) ) );
 			// Activity-log retention: 1 day to ~10 years. Consumed by the daily
 			// jetonomy_prune_activity cron (class-cron.php).
 			$clean['activity_log_retention_days'] = min( 3650, max( 1, absint( $input['activity_log_retention_days'] ?? 90 ) ) );
-			$clean['replies_per_page']   = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
-			$raw_space_type              = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
-			$clean['default_space_type'] = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
+			$clean['replies_per_page']            = min( 100, max( 1, absint( $input['replies_per_page'] ?? 30 ) ) );
+			$raw_space_type                       = sanitize_key( (string) ( $input['default_space_type'] ?? 'forum' ) );
+			$clean['default_space_type']          = in_array( $raw_space_type, array( 'forum', 'qa', 'ideas', 'feed' ), true ) ? $raw_space_type : 'forum';
 			// Community access mode — radio stores "1" (public) or "0" (private).
 			$clean['guest_read'] = isset( $input['guest_read'] ) ? (bool) (int) $input['guest_read'] : true;
 			// Community as homepage — unchecked checkboxes don't submit, so
@@ -527,7 +527,7 @@ class Admin {
 		// Only process if accent_color is present (Appearance tab was submitted).
 		if ( isset( $input['accent_color'] ) ) {
 			$clean['accent_color'] = sanitize_hex_color( $input['accent_color'] ?? '#0073aa' );
-			$clean['logo_url']       = esc_url_raw( $input['logo_url'] ?? '' );
+			$clean['logo_url']     = esc_url_raw( $input['logo_url'] ?? '' );
 			// Color palette — empty string means "no override, keep the default".
 			foreach ( array( 'text_color', 'bg_color', 'bg_subtle_color', 'border_color' ) as $palette_key ) {
 				$clean[ $palette_key ] = sanitize_hex_color( (string) ( $input[ $palette_key ] ?? '' ) ) ?: '';
@@ -838,21 +838,9 @@ class Admin {
 		wp_enqueue_media();
 
 		// Gather membership adapters with their levels for the access rules UI.
-		$adapter_labels = array(
-			'wp-roles'    => __( 'WP Role', 'jetonomy' ),
-			'memberpress' => __( 'MemberPress Plan', 'jetonomy' ),
-			'pmpro'       => __( 'PMPro Level', 'jetonomy' ),
-			'woocommerce' => __( 'WooCommerce Membership', 'jetonomy' ),
-			'rcp'         => __( 'RCP Membership', 'jetonomy' ),
-			'learndash'   => __( 'LearnDash Course', 'jetonomy' ),
-			'tutor'       => __( 'Tutor Course', 'jetonomy' ),
-			'lifterlms'   => __( 'LifterLMS Course', 'jetonomy' ),
-			'sensei'      => __( 'Sensei Course', 'jetonomy' ),
-			'masterstudy' => __( 'MasterStudy Course', 'jetonomy' ),
-			'learnomy'    => __( 'Learnomy Course', 'jetonomy' ),
-			'suremembers' => __( 'SureMembers Access Group', 'jetonomy' ),
-			'wpfusion'    => __( 'WP Fusion Tag', 'jetonomy' ),
-		);
+		// Names come from the registry so the picker and the saved-rules table
+		// can never disagree about what an adapter is called.
+		$adapter_labels = \Jetonomy\Adapters\Adapter_Registry::membership_labels();
 
 		$membership_adapters = array();
 		$all_adapters        = \Jetonomy\Adapters\Adapter_Registry::get_all_membership();

@@ -359,32 +359,9 @@ $edit_url   = admin_url( 'admin.php?page=jetonomy-spaces&action=edit&space_id=' 
 							$display_value = ! empty( $rule->rule_value ) ? $rule->rule_value : '—';
 
 							if ( 'membership' === $rule->rule_type && ! empty( $rule->rule_value ) ) {
-								$adapter_prefix_map = array(
-									'tutor_course_'    => array( 'tutor', __( 'Tutor Course', 'jetonomy' ) ),
-									'sensei_course_'   => array( 'sensei', __( 'Sensei Course', 'jetonomy' ) ),
-									'ms_course_'       => array( 'masterstudy', __( 'MasterStudy Course', 'jetonomy' ) ),
-									'lrn_course_'      => array( 'learnomy', __( 'Learnomy Course', 'jetonomy' ) ),
-									'lrn_membership_'  => array( 'learnomy', __( 'Learnomy Membership', 'jetonomy' ) ),
-									'llms_course_'     => array( 'lifterlms', __( 'LifterLMS Course', 'jetonomy' ) ),
-									'llms_membership_' => array( 'lifterlms', __( 'LifterLMS Membership', 'jetonomy' ) ),
-									'ld_course_'       => array( 'learndash', __( 'LearnDash Course', 'jetonomy' ) ),
-									'ld_group_'        => array( 'learndash', __( 'LearnDash Group', 'jetonomy' ) ),
-									'wc_membership_'   => array( 'woocommerce', __( 'WooCommerce Membership', 'jetonomy' ) ),
-									'wc_subscription_' => array( 'woocommerce', __( 'WooCommerce Subscription', 'jetonomy' ) ),
-									'rcp_'             => array( 'rcp', __( 'RCP Membership', 'jetonomy' ) ),
-									'mepr_'            => array( 'memberpress', __( 'MemberPress Plan', 'jetonomy' ) ),
-									'pmpro_'           => array( 'pmpro', __( 'PMPro Level', 'jetonomy' ) ),
-								);
-								foreach ( $adapter_prefix_map as $prefix => $info ) {
-									if ( str_starts_with( $rule->rule_value, $prefix ) ) {
-										$display_type = $info[1];
-										$adapter      = \Jetonomy\Adapters\Adapter_Registry::get_membership( $info[0] );
-										if ( $adapter && $adapter->is_active() ) {
-											$display_value = $adapter->get_level_label( $rule->rule_value );
-										}
-										break;
-									}
-								}
+								$described     = \Jetonomy\Adapters\Adapter_Registry::describe_membership_level( (string) $rule->rule_value );
+								$display_type  = $described['type'];
+								$display_value = $described['value'];
 							}
 							?>
 							<tr data-rule-id="<?php echo absint( $rule->id ); ?>">

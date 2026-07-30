@@ -52,7 +52,7 @@ $trust_labels = array(
 				printf(
 					/* translators: %s: link to the full guide */
 					esc_html__( 'A Subscriber can be a Level 5 Elder and a space admin — community standing and wp-admin access are separate on purpose. %s', 'jetonomy' ),
-					'<a href="https://github.com/vapvarun/jetonomy/blob/main/docs/website/getting-started/08-users-roles-and-trust.md" target="_blank" rel="noopener">' . esc_html__( 'Read the full guide', 'jetonomy' ) . '</a>'
+					'<a href="https://jetonomy.org/docs/getting-started/08-users-roles-and-trust/" target="_blank" rel="noopener">' . esc_html__( 'Read the full guide', 'jetonomy' ) . '</a>'
 				);
 				?>
 			</p>
@@ -88,9 +88,11 @@ $trust_labels = array(
 		<table class="wp-list-table widefat fixed striped">
 		<thead>
 			<tr>
-				<?php // Core responsive list-table pattern: column-primary + data-colname
-				      // + toggle-row give us WP core's own small-screen UX (primary column
-				      // with a per-row expander) via core CSS/JS - no custom code. ?>
+				<?php
+				// Core responsive list-table pattern: column-primary + data-colname
+						// + toggle-row give us WP core's own small-screen UX (primary column
+						// with a per-row expander) via core CSS/JS - no custom code.
+				?>
 				<th scope="col" class="manage-column column-username column-primary"><?php esc_html_e( 'Username', 'jetonomy' ); ?></th>
 				<th scope="col" class="manage-column column-display-name"><?php esc_html_e( 'Display Name', 'jetonomy' ); ?></th>
 				<th scope="col" class="manage-column column-trust" style="width:120px;"><?php esc_html_e( 'Trust Level', 'jetonomy' ); ?></th>
