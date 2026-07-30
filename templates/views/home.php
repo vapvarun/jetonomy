@@ -167,7 +167,8 @@ if ( ! is_user_logged_in() ) :
 								</h2>
 							<?php endif; ?>
 							<?php if ( ! empty( $category->description ) ) : ?>
-								<span class="jt-cat-desc">&mdash; <?php echo esc_html( $category->description ); ?></span>
+								<?php // No hardcoded dash prefix: it dangled as a heading fragment when the duplicate category name above is suppressed (self-audit 2026-07-30), and customer copy carries no em-dashes. Separation comes from the header gap. ?>
+								<span class="jt-cat-desc"><?php echo esc_html( $category->description ); ?></span>
 							<?php endif; ?>
 						</div>
 						<?php jetonomy_render_space_grid( $spaces, $base ); ?>
