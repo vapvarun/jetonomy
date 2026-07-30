@@ -384,3 +384,28 @@ Every customer-visible bug fix ships with:
 3. Both land in the same PR as the fix.
 
 After 2 clean releases of a D row, the row graduates into C/E and the D row is marked `graduated`.
+
+## wp-admin responsive contract sweep (added 2026-07-30 — root cause Basecamp 10146443346)
+
+Every pre-release smoke includes this admin sweep, as ADMIN, at **320 / 390 / 768**:
+
+Screens: Dashboard, Categories, Spaces, Moderation (all four tabs, POPULATED —
+seed a pending post + a flag if the queues are empty), Settings → Permissions,
+Settings → Email, Pro Polls, Pro Badges, Pro Custom Fields, Pro Analytics.
+
+Per screen, all of:
+1. `document.documentElement.scrollWidth <= viewport width` — zero page-level
+   horizontal overflow.
+2. Every `wp-list-table` emitted by `jetonomy_admin_table()` collapses: one
+   `column-primary` cell per row, `.toggle-row` expander ≥40px, expanding shows
+   every secondary column as a labelled sheet row, and row actions render ≥40px
+   INSIDE the expanded sheet at 320.
+3. `jt-settings-matrix` tables stack into labelled ≥44px field rows under 782px.
+4. No table clipped by `overflow:hidden` — a not-yet-migrated table may
+   horizontally scroll inside `.jt-content-table-wrap` (temporary fallback),
+   never lose content.
+
+Static guard: `php bin/audit-admin-tables.php includes/admin/views` and
+`php bin/audit-admin-tables.php ../jetonomy-pro/includes` must both print OK —
+a raw `<table>` outside the contract fails the release build (build-release.sh
+step 5c2). The baseline inside the script is shrink-only.
