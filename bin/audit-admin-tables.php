@@ -31,7 +31,6 @@ $baseline = array(
 	// Free (tranche 2 of Basecamp 10146443346):
 	'includes/admin/views/content.php',
 	'includes/admin/views/dashboard.php',
-	'includes/admin/views/moderation.php',
 	'includes/admin/views/replies.php',
 	'includes/admin/views/revisions.php',
 	'includes/admin/views/space-edit.php',
