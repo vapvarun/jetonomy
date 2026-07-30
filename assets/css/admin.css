@@ -3561,3 +3561,27 @@ tr.jetonomy-moderated td {
 		box-sizing: border-box;
 	}
 }
+
+/* Dialog contract shared chrome (Basecamp 10150582851): every overlay
+   keeps a phone edge gutter and actions on the ladder. */
+.jetonomy-modal .jetonomy-modal__content {
+	margin: 16px;
+}
+.jetonomy-modal .button,
+.jetonomy-modal .jt-btn,
+#jetonomy-award-modal .jt-btn,
+#jetonomy-award-modal .button {
+	min-height: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+}
+@media screen and (max-width: 782px) {
+	.jetonomy-modal .button,
+	.jetonomy-modal .jt-btn,
+	#jetonomy-award-modal .jt-btn,
+	#jetonomy-award-modal .button {
+		min-height: 44px;
+	}
+}

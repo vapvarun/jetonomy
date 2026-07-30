@@ -1556,3 +1556,92 @@
 	});
 
 })(jQuery);
+
+/**
+ * Accessible-dialog enhancer (QA card 10150582851).
+ *
+ * The admin's hand-rolled overlays (Edit Category, Ban, Pro Badge Award)
+ * showed/hid a positioned div with none of the dialog contract. Rather
+ * than rewrite each caller, a MutationObserver watches every overlay's
+ * display state and applies the ONE primitive on open: role=dialog +
+ * aria-modal + labelled title, initial focus (Close first), trapped Tab
+ * order, Escape closes, opener focus restored on close. Callers keep
+ * their own show()/hide() logic untouched.
+ */
+( function () {
+	var active = null;
+
+	function focusables( root ) {
+		return Array.prototype.filter.call(
+			root.querySelectorAll( 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])' ),
+			function ( el ) { return el.offsetParent !== null; }
+		);
+	}
+
+	function onKey( e ) {
+		if ( ! active ) { return; }
+		if ( e.key === 'Escape' ) {
+			e.preventDefault();
+			active.el.style.display = 'none'; // observer runs teardown()
+			return;
+		}
+		if ( e.key !== 'Tab' ) { return; }
+		var f = focusables( active.el );
+		if ( ! f.length ) { e.preventDefault(); return; }
+		var first = f[ 0 ], last = f[ f.length - 1 ];
+		if ( e.shiftKey && document.activeElement === first ) { e.preventDefault(); last.focus(); }
+		else if ( ! e.shiftKey && document.activeElement === last ) { e.preventDefault(); first.focus(); }
+	}
+
+	function boxOf( el ) {
+		return el.querySelector( '.jetonomy-modal__content' ) ||
+			( el.children.length === 1 ? el.children[ 0 ] : el.children[ el.children.length - 1 ] ) || el;
+	}
+
+	function enhance( el ) {
+		var box = boxOf( el );
+		box.setAttribute( 'role', 'dialog' );
+		box.setAttribute( 'aria-modal', 'true' );
+		if ( ! box.getAttribute( 'aria-labelledby' ) ) {
+			var h = box.querySelector( 'h1, h2, h3' );
+			if ( h ) {
+				if ( ! h.id ) { h.id = 'jt-dialog-title-' + Math.random().toString( 36 ).slice( 2, 8 ); }
+				box.setAttribute( 'aria-labelledby', h.id );
+			}
+		}
+		active = { el: el, opener: document.activeElement };
+		document.addEventListener( 'keydown', onKey, true );
+		var target = el.querySelector( '.jetonomy-modal-close' ) || focusables( el )[ 0 ];
+		if ( target ) { target.focus(); }
+	}
+
+	function teardown( el ) {
+		if ( ! active || active.el !== el ) { return; }
+		var opener = active.opener;
+		active = null;
+		document.removeEventListener( 'keydown', onKey, true );
+		if ( opener && opener.focus ) { opener.focus(); }
+	}
+
+	function watch( el ) {
+		// jQuery's .show() clears the inline value to '' and lets the
+		// stylesheet default apply, so open-ness must be read from the
+		// COMPUTED display, never the style attribute.
+		var wasOpen = getComputedStyle( el ).display !== 'none';
+		new MutationObserver( function () {
+			var isOpen = getComputedStyle( el ).display !== 'none';
+			if ( isOpen && ! wasOpen ) { enhance( el ); }
+			if ( ! isOpen && wasOpen ) { teardown( el ); }
+			wasOpen = isOpen;
+		} ).observe( el, { attributes: true, attributeFilter: [ 'style', 'class' ] } );
+	}
+
+	function init() {
+		document.querySelectorAll( '.jetonomy-modal, #jetonomy-award-modal' ).forEach( watch );
+	}
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', init );
+	} else {
+		init();
+	}
+} )();
