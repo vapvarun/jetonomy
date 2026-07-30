@@ -171,7 +171,10 @@
 			if (q.length < 2) { results.textContent = ''; return; }
 			searchTimer = setTimeout(function () {
 				window.jetonomyRest.restFetch('/search?q=' + encodeURIComponent(q) + '&per_page=6').then(function (res) {
-					var data = res.data || [];
+					// restFetch wraps the REST body as {ok, status, data} - the
+					// results array lives one level deeper (QA 10150864518; the
+					// single-unwrap here showed 'No results' for every query).
+					var data = ( res.data && res.data.data ) || [];
 					results.textContent = '';
 					if (!data.length) {
 						results.textContent = D.i18n.noResults;
@@ -237,7 +240,31 @@
 		}
 		if (e.key === 'Enter') {
 			var focused = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
-			if (focused) { focused.click(); return; }
+			if (focused) {
+				// The row is a DIV whose navigation anchor lives inside it -
+				// clicking the div fires nothing (QA 10150866326). Click the
+				// real link so the client-side router intercepts it like any
+				// pointer click; fall back to a hard navigation.
+				var link = focused.matches('a[href]') ? focused : focused.querySelector('.jt-row-title-link, a[href]');
+				if (link) { link.click(); } 
+				return;
+			}
+		}
+		if (e.key === 'l' && !e.metaKey && !e.ctrlKey) {
+			// Documented shortcut (readme FAQ): upvote the focused post
+			// (QA 10150869012 - promised but never implemented).
+			var lRow = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
+			var up = lRow && lRow.querySelector('[data-wp-on--click="actions.voteUp"], .jt-vote-up');
+			if (up) { e.preventDefault(); up.click(); }
+			return;
+		}
+		if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
+			// Documented shortcut: open a reply on the focused post - navigate
+			// to it with the #reply intent; the post view focuses the composer.
+			var rRow = document.querySelector('.jt-row.jt-kb-focus, a.jt-row.jt-kb-focus');
+			var rLink = rRow && (rRow.matches('a[href]') ? rRow : rRow.querySelector('.jt-row-title-link, a[href]'));
+			if (rLink) { e.preventDefault(); window.location.href = rLink.href.split('#')[0] + '#reply'; }
+			return;
 		}
 		if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
 			e.preventDefault();
@@ -255,6 +282,8 @@
 				['/ or Ctrl+K', ( D.i18n && D.i18n.kbSearch ) || 'Search'],
 				['j / k',       ( D.i18n && D.i18n.kbNavigate ) || 'Navigate up/down'],
 				['Enter',       ( D.i18n && D.i18n.kbOpenSelected ) || 'Open selected'],
+				['l',           ( D.i18n && D.i18n.kbUpvote ) || 'Upvote selected'],
+				['r',           ( D.i18n && D.i18n.kbReply ) || 'Reply to selected'],
 				['n',           ( D.i18n && D.i18n.kbHome ) || 'Home'],
 				['?',           ( D.i18n && D.i18n.kbThisHelp ) || 'This help']
 			];

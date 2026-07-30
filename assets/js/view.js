@@ -4224,3 +4224,27 @@ const { state, actions } = store( 'jetonomy', {
     }
     document.addEventListener( 'jetonomy:navigated', highlight );
 } )();
+
+/**
+ * #reply intent: the r keyboard shortcut (and any deep link) lands on a
+ * topic with location.hash === '#reply' - focus the composer so "opens a
+ * reply" is literally true (QA 10150869012). Re-checked after client-side
+ * navigation per the re-init contract.
+ */
+( function () {
+    function focusComposer() {
+        if ( window.location.hash !== '#reply' ) return;
+        var body = document.querySelector( '.jt-editor-body' );
+        if ( body ) {
+            body.scrollIntoView( { block: 'center' } );
+            body.focus();
+        }
+    }
+    if ( document.readyState === 'loading' ) {
+        document.addEventListener( 'DOMContentLoaded', focusComposer );
+    } else {
+        focusComposer();
+    }
+    document.addEventListener( 'jetonomy:navigated', focusComposer );
+    window.addEventListener( 'hashchange', focusComposer );
+} )();
