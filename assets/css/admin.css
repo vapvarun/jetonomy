@@ -3245,6 +3245,27 @@ tr.jetonomy-moderated td {
 		box-sizing: border-box;
 	}
 
+	/* Self-audit 2026-07-30: the remaining sub-40 targets on touch.
+	   Tablenav selects/search measured 36px; primary-cell title links
+	   measured 17px tall (wide, but shallow). */
+	.jetonomy-admin .tablenav select,
+	.jetonomy-admin .tablenav input[type="search"],
+	.jetonomy-admin .jt-content-toolbar select,
+	.jetonomy-admin .jt-content-toolbar input[type="search"] {
+		min-height: 40px;
+	}
+	.jetonomy-admin .wp-list-table td.column-primary a,
+	.jetonomy-admin .wp-list-table td.column-primary strong > a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 40px;
+	}
+	/* Row-action links already carry their own floor above; keep the
+	   primary-cell rule from double-padding them. */
+	.jetonomy-admin .wp-list-table td.column-primary .row-actions a {
+		min-height: 40px;
+	}
+
 	/* The pagination row must WRAP, never widen the document: at 320px the
 	   "N items" count plus the page links pushed the Content screen out to
 	   371px (QA 2026-07-30). */
